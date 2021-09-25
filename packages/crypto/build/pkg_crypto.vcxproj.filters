@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\src\nx_crypto_3des.c" />
+    <ClCompile Include="..\src\nx_crypto_aes.c" />
+    <ClCompile Include="..\src\nx_crypto_cbc.c" />
+    <ClCompile Include="..\src\nx_crypto_ccm.c" />
+    <ClCompile Include="..\src\nx_crypto_ctr.c" />
+    <ClCompile Include="..\src\nx_crypto_des.c" />
+    <ClCompile Include="..\src\nx_crypto_dh.c" />
+    <ClCompile Include="..\src\nx_crypto_drbg.c" />
+    <ClCompile Include="..\src\nx_crypto_ec.c" />
+    <ClCompile Include="..\src\nx_crypto_ec_secp192r1_fixed_points.c" />
+    <ClCompile Include="..\src\nx_crypto_ec_secp224r1_fixed_points.c" />
+    <ClCompile Include="..\src\nx_crypto_ec_secp256r1_fixed_points.c" />
+    <ClCompile Include="..\src\nx_crypto_ec_secp384r1_fixed_points.c" />
+    <ClCompile Include="..\src\nx_crypto_ec_secp521r1_fixed_points.c" />
+    <ClCompile Include="..\src\nx_crypto_ecdh.c" />
+    <ClCompile Include="..\src\nx_crypto_ecdsa.c" />
+    <ClCompile Include="..\src\nx_crypto_ecjpake.c" />
+    <ClCompile Include="..\src\nx_crypto_gcm.c" />
+    <ClCompile Include="..\src\nx_crypto_generic_ciphersuites.c" />
+    <ClCompile Include="..\src\nx_crypto_hkdf.c" />
+    <ClCompile Include="..\src\nx_crypto_hmac.c" />
+    <ClCompile Include="..\src\nx_crypto_hmac_md5.c" />
+    <ClCompile Include="..\src\nx_crypto_hmac_sha1.c" />
+    <ClCompile Include="..\src\nx_crypto_hmac_sha2.c" />
+    <ClCompile Include="..\src\nx_crypto_hmac_sha5.c" />
+    <ClCompile Include="..\src\nx_crypto_huge_number.c" />
+    <ClCompile Include="..\src\nx_crypto_huge_number_extended.c" />
+    <ClCompile Include="..\src\nx_crypto_initialize.c" />
+    <ClCompile Include="..\src\nx_crypto_md5.c" />
+    <ClCompile Include="..\src\nx_crypto_methods.c" />
+    <ClCompile Include="..\src\nx_crypto_module_start.c" />
+    <ClCompile Include="..\src\nx_crypto_null_cipher.c" />
+    <ClCompile Include="..\src\nx_crypto_phash.c" />
+    <ClCompile Include="..\src\nx_crypto_pkcs1_v1.5.c" />
+    <ClCompile Include="..\src\nx_crypto_rsa.c" />
+    <ClCompile Include="..\src\nx_crypto_sha1.c" />
+    <ClCompile Include="..\src\nx_crypto_sha2.c" />
+    <ClCompile Include="..\src\nx_crypto_sha5.c" />
+    <ClCompile Include="..\src\nx_crypto_tls_prf_1.c" />
+    <ClCompile Include="..\src\nx_crypto_tls_prf_sha256.c" />
+    <ClCompile Include="..\src\nx_crypto_tls_prf_sha384.c" />
+    <ClCompile Include="..\src\nx_crypto_tls_prf_sha512.c" />
+    <ClCompile Include="..\src\nx_crypto_xcbc_mac.c" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="pipelines">
+      <UniqueIdentifier>{3eb77828-433c-4f2f-9563-25ff5a9e0667}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\applications\pl_bt_rx_from_msta.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\applications\pl_bt_tx_to_msta.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\applications\pl_meter_rx_from_msta.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\applications\pl_meter_tx_to_msta.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\applications\pl_msta.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\applications\pl_msta_rx_from_bt.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\applications\pl_msta_rx_from_meter.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\applications\pl_msta_rx_from_sta.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\applications\pl_msta_tx_to_bt.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\applications\pl_msta_tx_to_meter.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\applications\pl_msta_tx_to_sta.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\applications\pl_serial.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\applications\pl_sta_rx_from_msta.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\applications\pl_sta_tx_to_msta.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\dl645\fr_645.c" />
+    <ClCompile Include="..\..\..\packages\dlms\pkg_dlms.c" />
+    <ClCompile Include="..\msta.c" />
+    <ClCompile Include="..\..\..\packages\test\test_utils.c" />
+    <ClCompile Include="..\..\..\packages\dl698\fr_698.c" />
+  </ItemGroup>
+</Project>

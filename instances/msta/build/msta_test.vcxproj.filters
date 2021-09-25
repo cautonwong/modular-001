@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="filters">
+      <UniqueIdentifier>{168d6bb5-f7e9-4433-9612-1141be42636e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pipelines">
+      <UniqueIdentifier>{3eb77828-433c-4f2f-9563-25ff5a9e0667}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils">
+      <UniqueIdentifier>{23f51107-fb93-4645-8f0a-af35ab8d3f37}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="test_suites">
+      <UniqueIdentifier>{a95ee076-9df5-473c-8088-83b2ac2fdd02}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\pipelines\pl_msta_rx_from_meter.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pipelines\pl_msta_rx_from_sta.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pipelines\pl_msta_tx_to_meter.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pipelines\pl_msta_tx_to_sta.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pipelines\pl_sta_tx_to_msta.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pipelines\pl_meter_rx_from_msta.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pipelines\pl_meter_tx_to_msta.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pipelines\pl_log.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pipelines\pl_msta.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="test_meter_tx_86_to_msta.c">
+      <Filter>test_suites</Filter>
+    </ClCompile>
+    <ClCompile Include="test_bt_tx_11_to_msta.c">
+      <Filter>test_suites</Filter>
+    </ClCompile>
+    <ClCompile Include="test_msta_read_meter_data_periodicly.c">
+      <Filter>test_suites</Filter>
+    </ClCompile>
+    <ClCompile Include="test_msta_tx_11_to_meter.c">
+      <Filter>test_suites</Filter>
+    </ClCompile>
+    <ClCompile Include="test_sta_tx_07_to_meter.c">
+      <Filter>test_suites</Filter>
+    </ClCompile>
+    <ClCompile Include="test_sta_tx_11_to_msta.c">
+      <Filter>test_suites</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tests\test_utils.c">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tests\cmocka\src\cmocka.c">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="test_mock_data.c">
+      <Filter>test_suites</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pipelines\pl_serial.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="integration_test_sync_time_when_poweron.c">
+      <Filter>test_suites</Filter>
+    </ClCompile>
+    <ClCompile Include="test_msta_tx_86_to_sta.c">
+      <Filter>test_suites</Filter>
+    </ClCompile>
+    <ClCompile Include="test_tasklet.c">
+      <Filter>test_suites</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\filters\fr_645.c">
+      <Filter>filters</Filter>
+    </ClCompile>
+    <ClCompile Include="test_upgrade.c">
+      <Filter>test_suites</Filter>
+    </ClCompile>
+    <ClCompile Include="test_698_rx_entry.c">
+      <Filter>test_suites</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pipelines\pl_sta_rx_from_msta.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\filters\fr_698.c">
+      <Filter>filters</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pipelines\pl_bt_rx_from_msta.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pipelines\pl_bt_tx_to_msta.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pipelines\pl_msta_rx_from_bt.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\pipelines\pl_msta_tx_to_bt.c">
+      <Filter>pipelines</Filter>
+    </ClCompile>
+    <ClCompile Include="test_msta.c" />
+    <ClCompile Include="..\..\filters\fr_dlms.c">
+      <Filter>filters</Filter>
+    </ClCompile>
+    <ClCompile Include="test_dlms_rx_entry.c">
+      <Filter>test_suites</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

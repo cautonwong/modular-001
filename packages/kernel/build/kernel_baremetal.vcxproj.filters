@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{e917302b-ecdd-4b60-9fe4-efc5ac28cb52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="kernel">
+      <UniqueIdentifier>{87551754-f795-4aa8-9ecd-ca10f8671c47}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="arch">
+      <UniqueIdentifier>{060deb46-a935-41d1-a5da-4a64cb84fe36}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\nidavellir\include\kernel\fifo.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nidavellir\include\kernel\list.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nidavellir\include\kernel\memory.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nidavellir\include\kernel\nidavellir.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nidavellir\include\kernel\pipeline.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nidavellir\include\kernel\resource.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nidavellir\include\kernel\utils.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nidavellir\include\types.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nidavellir\include\kernel\test_utils.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\fifo.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\memory.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\nidavellir.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pipeline.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\resource.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rtc.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tasklet.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\utils.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\baremetal\baremetal.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

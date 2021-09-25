@@ -1,0 +1,627 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{e917302b-ecdd-4b60-9fe4-efc5ac28cb52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="kernel">
+      <UniqueIdentifier>{87551754-f795-4aa8-9ecd-ca10f8671c47}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="arch">
+      <UniqueIdentifier>{060deb46-a935-41d1-a5da-4a64cb84fe36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="os">
+      <UniqueIdentifier>{151abcc5-2444-419c-874a-8179efdeba77}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\nidavellir\include\kernel\fifo.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nidavellir\include\kernel\list.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nidavellir\include\kernel\memory.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nidavellir\include\kernel\nidavellir.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nidavellir\include\kernel\pipeline.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nidavellir\include\kernel\resource.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nidavellir\include\kernel\utils.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nidavellir\include\types.h">
+      <Filter>arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nidavellir\include\kernel\test_utils.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\fifo.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\memory.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\nidavellir.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pipeline.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\resource.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rtc.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tasklet.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\utils.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_block_allocate.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_block_pool_cleanup.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_block_pool_create.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_block_pool_delete.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_block_pool_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_block_pool_initialize.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_block_pool_performance_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_block_pool_performance_system_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_block_pool_prioritize.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_block_release.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_byte_allocate.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_byte_pool_cleanup.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_byte_pool_create.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_byte_pool_delete.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_byte_pool_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_byte_pool_initialize.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_byte_pool_performance_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_byte_pool_performance_system_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_byte_pool_prioritize.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_byte_pool_search.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_byte_release.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_event_flags_cleanup.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_event_flags_create.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_event_flags_delete.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_event_flags_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_event_flags_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_event_flags_initialize.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_event_flags_performance_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_event_flags_performance_system_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_event_flags_set.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_event_flags_set_notify.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_initialize_high_level.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_initialize_kernel_enter.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_initialize_kernel_setup.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_misra.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_mutex_cleanup.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_mutex_create.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_mutex_delete.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_mutex_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_mutex_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_mutex_initialize.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_mutex_performance_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_mutex_performance_system_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_mutex_prioritize.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_mutex_priority_change.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_mutex_put.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_queue_cleanup.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_queue_create.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_queue_delete.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_queue_flush.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_queue_front_send.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_queue_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_queue_initialize.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_queue_performance_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_queue_performance_system_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_queue_prioritize.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_queue_receive.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_queue_send.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_queue_send_notify.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_semaphore_ceiling_put.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_semaphore_cleanup.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_semaphore_create.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_semaphore_delete.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_semaphore_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_semaphore_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_semaphore_initialize.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_semaphore_performance_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_semaphore_performance_system_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_semaphore_prioritize.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_semaphore_put.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_semaphore_put_notify.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_create.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_delete.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_entry_exit_notify.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_identify.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_initialize.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_performance_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_performance_system_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_preemption_change.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_priority_change.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_relinquish.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_reset.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_resume.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_shell_entry.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_sleep.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_stack_analyze.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_stack_error_handler.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_stack_error_notify.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_suspend.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_system_preempt_check.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_system_resume.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_system_suspend.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_terminate.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_time_slice.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_time_slice_change.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_timeout.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_thread_wait_abort.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_time_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_time_set.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_timer_activate.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_timer_change.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_timer_create.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_timer_deactivate.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_timer_delete.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_timer_expiration_process.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_timer_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_timer_initialize.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_timer_performance_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_timer_performance_system_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_timer_system_activate.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_timer_system_deactivate.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_timer_thread_entry.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_trace_buffer_full_notify.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_trace_disable.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_trace_enable.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_trace_event_filter.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_trace_event_unfilter.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_trace_initialize.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_trace_interrupt_control.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_trace_isr_enter_insert.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_trace_isr_exit_insert.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_trace_object_register.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_trace_object_unregister.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\tx_trace_user_event_insert.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_block_allocate.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_block_pool_create.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_block_pool_delete.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_block_pool_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_block_pool_prioritize.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_block_release.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_byte_allocate.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_byte_pool_create.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_byte_pool_delete.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_byte_pool_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_byte_pool_prioritize.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_byte_release.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_event_flags_create.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_event_flags_delete.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_event_flags_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_event_flags_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_event_flags_set.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_event_flags_set_notify.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_mutex_create.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_mutex_delete.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_mutex_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_mutex_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_mutex_prioritize.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_mutex_put.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_queue_create.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_queue_delete.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_queue_flush.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_queue_front_send.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_queue_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_queue_prioritize.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_queue_receive.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_queue_send.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_queue_send_notify.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_semaphore_ceiling_put.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_semaphore_create.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_semaphore_delete.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_semaphore_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_semaphore_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_semaphore_prioritize.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_semaphore_put.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_semaphore_put_notify.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_thread_create.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_thread_delete.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_thread_entry_exit_notify.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_thread_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_thread_preemption_change.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_thread_priority_change.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_thread_relinquish.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_thread_reset.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_thread_resume.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_thread_suspend.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_thread_terminate.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_thread_time_slice_change.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_thread_wait_abort.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_timer_activate.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_timer_change.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_timer_create.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_timer_deactivate.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_timer_delete.c">
+      <Filter>os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\threadx\common\src\txe_timer_info_get.c">
+      <Filter>os</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
