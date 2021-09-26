@@ -350,7 +350,7 @@ struct upgrade_info_t
     uint16_t tm_remained;//升级使能剩余时间 0x07fb0302
     uint8_t bits[upgrade_setsize];//升级程序位图信息 0x07fb0303
 };
-
+struct mbase_control_block_t;
 struct instance_t
 { 
     //common control block
@@ -360,7 +360,7 @@ struct instance_t
     uint32_t areas_used[9];//每个内存区域的已用空间 单位字节
     uint32_t  ms;
     struct recipe_t *recipe;
-    
+    struct mbase_control_block_t * mbase_cb;
     uint8_t meter_type;
     struct tm time;//
     struct tm last_poweroff_tm;//msta的上次掉电时刻
