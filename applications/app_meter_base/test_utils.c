@@ -1,10 +1,5 @@
-#ifdef NIDAVELLIR_TEST
 
-#include "nidavellir.h"
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
-#include "cmocka.h"
+#include "kernel\nidavellir.h"
 
 struct coder_t
 {
@@ -266,4 +261,71 @@ int __return_error()
     int r = mock_type(int);
     return r;
 }
-#endif
+
+int nidavellir_n_loop(struct instance_t** instances, size_t n)
+{
+    while (1)
+    {
+        for (size_t i = 0; i < n; i++)
+        {
+            nidavellir_run(instances[i]);
+        }
+    }
+}
+
+
+int nidavellir_loop_n_with_rtc_running(struct instance_t* instance, int n)
+{
+    struct message_t mesg;
+    /*
+    for (size_t i = 0; i < n; i++)
+    {
+        if (msta_context.CCO != 1)
+        {
+            mesg.from = kernel;
+            mesg.to = pid_msta;
+            mesg.ctrl = 0x01;
+            mesg.id = 0x0000001;
+            mesg.len = 4;
+            send_mesg(instance, NULL, &mesg, NULL);
+        }
+        nidavellir_run(instance);
+        nidavellir_run(instance);
+    }*/
+}
+
+int nidavellir_loop_n(struct instance_t* instance, int n)
+{
+    for (size_t i = 0; i < n; i++)
+    {
+        nidavellir_run(instance);
+    }
+}
+
+//从from开始连续运行n seconds
+int nidavellir_run_for_n_seconds_from_time(struct instance_t* instance, int n, struct tm* from)
+{
+    if (from != NULL)
+        memcpy(&instance->time, from, sizeof(struct tm));
+
+    uint32_t ts = rtc_mktime(&instance->time);
+    uint32_t ts_expected = ts + n;
+    clock_t start = clock();
+    struct tm tm_expected;
+    rtc_localtime(ts + n, &tm_expected);
+    struct message_t mesg;
+
+    while (ts <= ts_expected)
+    {
+        mesg.from = kernel;
+        mesg.to = pid_msta;
+        mesg.ctrl = 0x01;
+        mesg.id = 0x0000001;
+        mesg.len = 4;
+        ts += 1;
+        send_mesg(instance, &pl_kernel, &mesg, NULL);
+        nidavellir_run(instance);
+    }
+
+    return 0;
+}

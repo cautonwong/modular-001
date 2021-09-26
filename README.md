@@ -2,8 +2,6 @@
 
 nidavellir devices system
 
-## 测试
-
 
 ## high level design
 
@@ -21,7 +19,7 @@ nidavellir devices system
 
 ```
 
-## packages
+### packages
 
 平台组件  或者叫 包
 
@@ -41,15 +39,24 @@ domain领域层
 
 编程注意事项:
 
-1. 多数包能够使用到多个环境(前后台/多线程/多进程/动态/静态/dll/lib)下，故单个包不能依赖别的包，只依赖fifo和消息。更不能直接操作设备(外设和内设)，特别是业务包不能依赖操作系统包。
+1. 多数package能够使用到多个环境(前后台/多线程/多进程/动态/静态/dll/lib)下，故单个package不能依赖别的package，只依赖fifo、instance->cache和消息。更不能直接操作设备(外设和内设)，特别是业务包不能依赖操作系统包。
 
-2. 同理，包要满足**可重入和多实例**的要求
+2. 同理，package要满足**可重入和多实例**的要求
 
 3. 消息格式设计  'cmd len data cmd' 
 
 4. 此目录单独代码仓库
 
-## applications
+### nidavellir
+
+此层次是发布包。可基于此发布包开发定制的application、test和instance
+
+- bin  //发布的二级制文件和工具集
+- include //发布的开发包
+- samples // 一些例子
+- tests  //测试用例
+
+### applications
 
 调用packages构建的业务强相关的应用
 
@@ -65,7 +72,7 @@ domain领域层
 
 导出 applications.h
 
-###  编程模型
+####  编程模型
 
 总体上，采用消息或事件驱动模型。其中，消息队列的设计如下
 
@@ -103,7 +110,7 @@ int app_entry(struct instance_t* instance,
 }
 ```
 
-## instances
+### instances
 
 产品实例集合
 
@@ -156,4 +163,15 @@ int baremetal_instance_entry(int argc, char** argv)
 ```
 
 ```
+
+## 测试
+
+测试的设计可分为
+
+- package级别的测试
+- application级别的测试
+- instance级别的测试
+
+
+## workflow
 

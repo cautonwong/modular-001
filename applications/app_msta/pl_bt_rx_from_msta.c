@@ -10,8 +10,8 @@ int fr_bt_rx_from_msta_gatekeeper(struct instance_t* instance, struct pipeline_t
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct cache_t* cache = instance->cache2;
     int r = 0;
-    //todo µÚÒ»²ãºÏ·¨ĞÔÅĞ¶Ï Ê¶±ğÍ¨µÀ
-    fifoBuf_removeData(pipeline->in_queue, 10);//°şµôÍâ²ãµÄÍ·
+    //todo ç¬¬ä¸€å±‚åˆæ³•æ€§åˆ¤æ–­ è¯†åˆ«é€šé“
+    fifoBuf_removeData(pipeline->in_queue, 10);//å‰¥æ‰å¤–å±‚çš„å¤´
     ctx_msta_proxy_to_bt.step = 0;
     ctx_msta_proxy_to_bt.cs = 0;
     ctx_msta_proxy_to_bt.min_len = 12;
@@ -20,14 +20,14 @@ int fr_bt_rx_from_msta_gatekeeper(struct instance_t* instance, struct pipeline_t
     ctx->min_len = 0;
     if (fr_rx_645_entry(instance, pipeline, mesg) == 0)
     {
-        //ÄÚ²ã±¨ÎÄ¸ñÊ½²»¶Ô
+        //å†…å±‚æŠ¥æ–‡æ ¼å¼ä¸å¯¹
         pipeline->ctx = &ctx_bt_rx_from_msta;
         return 0;
     }
 
-    //todo ºÏ·¨ĞÔÅĞ¶Ï
-    //todo ÅĞ¶ÏID ¿´¿´ÊÇ²»ÊÇÒª×ª·¢proxy
-    fifoBuf_removeData(fifo, 10);//½«ÄÚ²ãµÄÊı¾İÓòÇ°µÄ×Ö½ÚÇåµô
+    //todo åˆæ³•æ€§åˆ¤æ–­
+    //todo åˆ¤æ–­ID çœ‹çœ‹æ˜¯ä¸æ˜¯è¦è½¬å‘proxy
+    fifoBuf_removeData(fifo, 10);//å°†å†…å±‚çš„æ•°æ®åŸŸå‰çš„å­—èŠ‚æ¸…æ‰
 
     switch (ctx->ctrl)
     {
@@ -35,7 +35,7 @@ int fr_bt_rx_from_msta_gatekeeper(struct instance_t* instance, struct pipeline_t
         r = fr_645_decode_91(instance, pipeline, mesg);
         break;
     default:
-        //todo  ²»ÈÏÊ¶µÄ±¨ÎÄ  ×ª·¢¸ø»ù±í
+        //todo  ä¸è®¤è¯†çš„æŠ¥æ–‡  è½¬å‘ç»™åŸºè¡¨
         break;
     }
 

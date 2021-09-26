@@ -10,7 +10,7 @@
 #include "kernel\nidavellir.h"
 #include "applications.h"
 
-//Ã¿ÃëÖ´ĞĞ
+//æ¯ç§’æ‰§è¡Œ
 uint8_t scond_execute_for_demand(struct demand_ctx_t* ctx, uint32_t power,uint8_t index)
 {
     struct demand_info_t* info = NULL;
@@ -24,7 +24,7 @@ uint8_t scond_execute_for_demand(struct demand_ctx_t* ctx, uint32_t power,uint8_
     {
         info = &ctx->info[index];
 
-        if (info->sec_cnt > 90)  //ÕâÀïµÄ90Ã»ÓĞÊ²Ã´ÒâÒå£¬ÅĞ¶Ï³ö´íÊ¹ÓÃ£¬Ö»Òª´óÓÚ1·ÖÖÓ¶¼ÊÇÓĞÒì³£µÄ£»
+        if (info->sec_cnt > 90)  //è¿™é‡Œçš„90æ²¡æœ‰ä»€ä¹ˆæ„ä¹‰ï¼Œåˆ¤æ–­å‡ºé”™ä½¿ç”¨ï¼Œåªè¦å¤§äº1åˆ†é’Ÿéƒ½æ˜¯æœ‰å¼‚å¸¸çš„ï¼›
         {
             info->cumu_sec += power;
             info->sec_cnt++;
@@ -51,7 +51,7 @@ static uint8_t minute_calculate(struct demand_info_t* info)
     return 0x01;
 }
 
-//ÕâÀïÓĞÁ½ÖÖÄ£Ê½£¬Ä£Ê½0Îª£¬»¬²îÖÜÆÚµ½¸üĞÂĞèÁ¿£¬Ä£Ê½1£ºĞèÁ¿ÖÜÆÚµ½¸üĞÂĞèÁ¿
+//è¿™é‡Œæœ‰ä¸¤ç§æ¨¡å¼ï¼Œæ¨¡å¼0ä¸ºï¼Œæ»‘å·®å‘¨æœŸåˆ°æ›´æ–°éœ€é‡ï¼Œæ¨¡å¼1ï¼šéœ€é‡å‘¨æœŸåˆ°æ›´æ–°éœ€é‡
 uint8_t sliding_period_ok(struct demand_info_t* info, uint8_t mode)
 {
     uint8_t ret = 0x00;
@@ -72,24 +72,24 @@ uint8_t sliding_period_ok(struct demand_info_t* info, uint8_t mode)
         }        
         info->min_cnt = 0x00;
         info->cumu_min = 0x00;
-        //»¬²î¼Ä´æÆ÷Ë÷Òı¸üĞÂ
+        //æ»‘å·®å¯„å­˜å™¨ç´¢å¼•æ›´æ–°
         info->slide_index++;
         if (info->slide_index > info->slide_max - 1)
         {
             info->slide_index = 0x00;
         }
-        //»¬²î¸öÊı¸üĞÂ
+        //æ»‘å·®ä¸ªæ•°æ›´æ–°
         if (info->slide_cnt < info->slide_num)
         {
             info->slide_cnt++;
         }
-        //¸üĞÂ·ÑÂÊĞèÁ¿µÄ»¬²î¸öÊı£»
+        //æ›´æ–°è´¹ç‡éœ€é‡çš„æ»‘å·®ä¸ªæ•°ï¼›
         if (info->fee_cnt < info->slide_num)
         {
             info->fee_cnt++;
         }
 
-        if (mode == 0x01)   //ret=01 ĞèÁ¿ºÍ·ÑÂÊĞèÁ¿¶¼¸üĞÂ£¬ret=02 Ö»¸üĞÂĞèÁ¿£¬ret=03 Ö»¸üĞÂ·ÑÂÊĞèÁ¿
+        if (mode == 0x01)   //ret=01 éœ€é‡å’Œè´¹ç‡éœ€é‡éƒ½æ›´æ–°ï¼Œret=02 åªæ›´æ–°éœ€é‡ï¼Œret=03 åªæ›´æ–°è´¹ç‡éœ€é‡
         {
             if (info->slide_cnt == info->slide_num)
             {
@@ -146,7 +146,7 @@ static uint8_t update_demand(struct demand_info_t* info, uint8_t cnt, uint32_t* 
     return 0x01;
 }
 
-//Ã¿·ÖÖÓÖ´ĞĞ
+//æ¯åˆ†é’Ÿæ‰§è¡Œ
 uint8_t minute_execute_for_demand(struct demand_ctx_t* ctx, uint8_t index, uint8_t mode)
 {
     struct demand_info_t* info = NULL;
@@ -157,18 +157,18 @@ uint8_t minute_execute_for_demand(struct demand_ctx_t* ctx, uint8_t index, uint8
     {
         info = &ctx->info[index];
     }
-    //¸üĞÂ·ÖÖÓÀÛ¼ÆÖµ
+    //æ›´æ–°åˆ†é’Ÿç´¯è®¡å€¼
     minute_calculate(info);
-    //ÅĞ¶Ï»¬²îÖÜÆÚÊÇ·ñµ½ÁË
+    //åˆ¤æ–­æ»‘å·®å‘¨æœŸæ˜¯å¦åˆ°äº†
     ret = sliding_period_ok(info, mode);
     if ((ret == 0x01) || (ret == 0x02))
     {
-        update_demand(info, info->slide_cnt,&lngtemp);  //¸üĞÂĞèÁ¿
+        update_demand(info, info->slide_cnt,&lngtemp);  //æ›´æ–°éœ€é‡
     }
 
     if ((ret == 0x01) || (ret == 0x03))
     {
-        update_demand(info, info->fee_cnt, &tlngtemp);  //¸üĞÂ·ÑÂÊĞèÁ¿
+        update_demand(info, info->fee_cnt, &tlngtemp);  //æ›´æ–°è´¹ç‡éœ€é‡
     }
 
     return ret;
@@ -191,7 +191,7 @@ uint8_t active_demand_min(struct instance_t* instance, uint8_t index, uint8_t mo
     minute_execute_for_demand(ctx,index,mode);
 }
 
-uint8_t demand_calculation(struct instance_t* instance,uint8_t cycle)  //cycle = 0´ú±íÃ¿ÃëÖ´ĞĞ£¬cycle = 1 ´ú±íÃ¿·ÖÖÓÖ´ĞĞ
+uint8_t demand_calculation(struct instance_t* instance,uint8_t cycle)  //cycle = 0ä»£è¡¨æ¯ç§’æ‰§è¡Œï¼Œcycle = 1 ä»£è¡¨æ¯åˆ†é’Ÿæ‰§è¡Œ
 {
     struct mbase_control_block_t* mbase_block = instance->mbase_cb;
     struct demand_ctx_t* ctx = mbase_block->demand_ctx;
@@ -224,7 +224,7 @@ uint8_t demand_init(struct instance_t* instance)
 
     if (instance->mbase_cb != NULL)
     {
-        instance->mbase_cb->demand_ctx = malloc(sizeof(struct demand_ctx_t));//ÄÚ´æ³õÊ¼»¯--todo
+        instance->mbase_cb->demand_ctx = malloc(sizeof(struct demand_ctx_t));//å†…å­˜åˆå§‹åŒ–--todo
         ctx = instance->mbase_cb->demand_ctx;
         ctx->pool = demand_pool;
         ctx->pool_size = demand_register;

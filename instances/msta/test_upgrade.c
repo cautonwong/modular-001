@@ -5,26 +5,26 @@
 #include "cmocka.h"
 #include <stdio.h>
 
-//ÓÃÓÚÉı¼¶ĞÅÏ¢²éÑ¯
+//ç”¨äºå‡çº§ä¿¡æ¯æŸ¥è¯¢
 #pragma pack(1)
 struct device_info_t
 {
-    uint16_t device_type;//Éè±¸Ä£¿éÀàĞÍÂë
-    uint8_t hw_version[8];//Éè±¸Ó²¼ş±¸°¸ºÅ
-    uint8_t hw_serial[16];//Ó²¼şÁ÷Ë®ºÅ
-    uint8_t fw_version[8];//Éè±¸Èí¼ş±¸°¸ºÅ
-    uint8_t fw_update_date[5];//Èí¼ş¸üĞÂÈÕÆÚ
-    uint8_t max_app;//×î¶àÖ§³ÖµÄappÊıÁ¿
-    uint8_t installed_app;//ÒÑÏÂ×°µÄappÊıÁ¿
-    uint8_t fw_upgrade_supported;//ÊÇ·ñÖ§³ÖÈí¼şÉı¼¶
-    uint32_t ram_size;//ram×ÜÈİÁ¿
-    uint32_t ram_remained_size;//ramÊ£ÓàÈİÁ¿
-    uint32_t code_size;//code×ÜÈİÁ¿
-    uint32_t code_remained_size;//codeÊ£ÓàÈİÁ¿
-    uint16_t cpu_load;//cpuÀûÓÃÂÊ
-    uint16_t mtu;//Ö§³ÖÉı¼¶´«Êä¿éµÄ×î´ó³¤¶È
-    uint32_t max_app_size;//Ö§³ÖÉı¼¶¿éµÄ×î´ó³¤¶È
-    uint8_t algo;//ÑéÇ©Ëã·¨ÀàĞÍ
+    uint16_t device_type;//è®¾å¤‡æ¨¡å—ç±»å‹ç 
+    uint8_t hw_version[8];//è®¾å¤‡ç¡¬ä»¶å¤‡æ¡ˆå·
+    uint8_t hw_serial[16];//ç¡¬ä»¶æµæ°´å·
+    uint8_t fw_version[8];//è®¾å¤‡è½¯ä»¶å¤‡æ¡ˆå·
+    uint8_t fw_update_date[5];//è½¯ä»¶æ›´æ–°æ—¥æœŸ
+    uint8_t max_app;//æœ€å¤šæ”¯æŒçš„appæ•°é‡
+    uint8_t installed_app;//å·²ä¸‹è£…çš„appæ•°é‡
+    uint8_t fw_upgrade_supported;//æ˜¯å¦æ”¯æŒè½¯ä»¶å‡çº§
+    uint32_t ram_size;//ramæ€»å®¹é‡
+    uint32_t ram_remained_size;//ramå‰©ä½™å®¹é‡
+    uint32_t code_size;//codeæ€»å®¹é‡
+    uint32_t code_remained_size;//codeå‰©ä½™å®¹é‡
+    uint16_t cpu_load;//cpuåˆ©ç”¨ç‡
+    uint16_t mtu;//æ”¯æŒå‡çº§ä¼ è¾“å—çš„æœ€å¤§é•¿åº¦
+    uint32_t max_app_size;//æ”¯æŒå‡çº§å—çš„æœ€å¤§é•¿åº¦
+    uint8_t algo;//éªŒç­¾ç®—æ³•ç±»å‹
 };
 
 #pragma pack(1)
@@ -35,15 +35,15 @@ struct certficate_t
     uint8_t P0;
     uint8_t P1;
     uint8_t P2;
-    uint32_t FC;//Ö¡ĞòºÅÆğÊ¼Öµ
+    uint32_t FC;//å¸§åºå·èµ·å§‹å€¼
     uint8_t AID;
     uint8_t name[10];
-    uint16_t device_type;//Éè±¸ÀàĞÍÂë
+    uint16_t device_type;//è®¾å¤‡ç±»å‹ç 
     uint16_t fcs;
-    uint16_t len;//Ã¿°ü×Ö½ÚÊı
+    uint16_t len;//æ¯åŒ…å­—èŠ‚æ•°
     uint16_t minutes;
     uint32_t file_size;
-    uint8_t hw_version[8];//Éè±¸Ó²¼ş±¸°¸ºÅ
+    uint8_t hw_version[8];//è®¾å¤‡ç¡¬ä»¶å¤‡æ¡ˆå·
 };
 
 uint8_t* ifile;
@@ -136,7 +136,7 @@ void test_upgrade(void **state)
     memset(ofile, 0xff, info.max_app_size);
     assert_true(info.max_app_size < info.mtu* upgrade_setsize * 8);
     blocks_to_send = (info.max_app_size + info.mtu-1) / info.mtu;
-    generate_data(blocks_failed, 40, 40, 0);//40°ü´«ÊäÊ§°Ü
+    generate_data(blocks_failed, 40, 40, 0);//40åŒ…ä¼ è¾“å¤±è´¥
 
     memcpy(buf, P, 4);
     memcpy(buf+4, C, 4);
@@ -148,7 +148,7 @@ void test_upgrade(void **state)
 
     generate_data(ifile, info.max_app_size, info.max_app_size, 0);
 
-    //¶ÁÈ¡Éı¼¶ĞÅÏ¢ÃèÊö
+    //è¯»å–å‡çº§ä¿¡æ¯æè¿°
     mesg.id = 0x07fb0200;
     mesg.ctrl = 0x11;
     mesg.len = 4;
@@ -161,11 +161,11 @@ void test_upgrade(void **state)
     will_return(__read, &info);
     will_return(__read, sizeof(struct device_info_t));
     nidavellir_loop_n(instance, 3);
-    //ÏÂ·¢Ö¤Êé
+    //ä¸‹å‘è¯ä¹¦
     mesg.id = 0x07fb0201;
     mesg.ctrl = 0x14;
-    //4×Ö½Ú:PAP0P1P2  ÃÜÂëÈ¨ÏŞ¼°ÆäÃÜÂë
-    //4×Ö½Ú:C0C1C2C3  ²Ù×÷Õß´úÂë
+    //4å­—èŠ‚:PAP0P1P2  å¯†ç æƒé™åŠå…¶å¯†ç 
+    //4å­—èŠ‚:C0C1C2C3  æ“ä½œè€…ä»£ç 
     mesg.len = 4 + 4 + 4 + sizeof(struct certficate_t);//
     mesg.from = kernel;
     mesg.to = sta_tx_to_msta;
@@ -176,7 +176,7 @@ void test_upgrade(void **state)
     expect_value(__write, len, sizeof(struct certficate_t));
     nidavellir_loop_n(instance, 3);
     
-    //´«ÊäÉı¼¶ÎÄ¼ş
+    //ä¼ è¾“å‡çº§æ–‡ä»¶
     int fail_this_block = 0;
     for (size_t i = 0; i < blocks_to_send; i++)
     {
@@ -185,7 +185,7 @@ void test_upgrade(void **state)
         {
             if (i == blocks_failed[j])
             {
-                //Ä£Äâ±¾°ü´«ÊäÊ§°Ü
+                //æ¨¡æ‹Ÿæœ¬åŒ…ä¼ è¾“å¤±è´¥
                 fail_this_block = 1;
                 break;
             }
@@ -200,7 +200,7 @@ void test_upgrade(void **state)
     }
     assert_memory_not_equal(ifile, ofile, info.max_app_size);
 
-    //¶ÁÈ¡Éı¼¶Î»Í¼ĞÅÏ¢ ²éÂ©
+    //è¯»å–å‡çº§ä½å›¾ä¿¡æ¯ æŸ¥æ¼
     uint16_t n = 0;
     uint16_t m = 10;
     uint16_t step = 100;
@@ -237,7 +237,7 @@ void test_upgrade(void **state)
 
     assert_memory_equal(blocks, instance->upgrade_info.bits, (blocks_to_send+7)/8);
 
-    //²¹Â©
+    //è¡¥æ¼
     for (size_t i = 0; i < blocks_to_send; i++)
     {
         if (!bit_isset(i, blocks))
@@ -247,14 +247,14 @@ void test_upgrade(void **state)
         assert_true(bit_isset(i, instance->upgrade_info.bits));
     }
 
-    //Éı¼¶³É¹¦
+    //å‡çº§æˆåŠŸ
     assert_memory_equal(ifile, ofile, info.max_app_size);
     free(ifile);
     free(ofile);
     return;
     while (1)
     {
-        //¶ÁÈ¡Éı¼¶×´Ì¬×Ö
+        //è¯»å–å‡çº§çŠ¶æ€å­—
         mesg.id = 0x07fb0301;
         mesg.ctrl = 0x11;
         mesg.len = 4;
@@ -264,7 +264,7 @@ void test_upgrade(void **state)
         nidavellir_loop_n(instance, 3);
     }
 
-    //¶ÁÈ¡Éı¼¶Ê¹ÄÜÊ£ÓàÊ±¼ä
+    //è¯»å–å‡çº§ä½¿èƒ½å‰©ä½™æ—¶é—´
     mesg.id = 0x07fb0302;
     mesg.ctrl = 0x11;
     mesg.len = 4;

@@ -22,11 +22,11 @@ void test_tasklet(void **state)
     instance = (struct instance_t*)*state;
     init_test_environment();
     msta_context.CCO = 0;
-//1. ¼¸ÃëºóÖ´ĞĞÄ³¸ö¶¯×÷
-//2. Ã¿¼¸ÃëÖ´ĞĞÄ³¸ö¶¯×÷
-//4. ¿ÉÒÔÖ»Ö´ĞĞÒ»´Î
+//1. å‡ ç§’åæ‰§è¡ŒæŸä¸ªåŠ¨ä½œ
+//2. æ¯å‡ ç§’æ‰§è¡ŒæŸä¸ªåŠ¨ä½œ
+//4. å¯ä»¥åªæ‰§è¡Œä¸€æ¬¡
  
-    //¿ÉÖØ¸´Ö´ĞĞ
+    //å¯é‡å¤æ‰§è¡Œ
     int tid = add_tasklet(instance, 2, 0, test_func);
     assert_true(tid == 0);
     nidavellir_loop_n_with_rtc_running(instance, 10);
@@ -38,13 +38,13 @@ void test_tasklet(void **state)
     nidavellir_loop_n_with_rtc_running(instance, 10);
     assert_true(called_count == 10);
 
-    //¿ÉÍ£Ö¹ ¿ÉÈ¡Ïû  
+    //å¯åœæ­¢ å¯å–æ¶ˆ  
     stop_tasklet(instance, tid);
     nidavellir_loop_n_with_rtc_running(instance, 10);
     assert_true(called_count == 10);
 
     called_count = 0;
-    //¿É¸Ä±äÖ´ĞĞµÄ¶¯×÷
+    //å¯æ”¹å˜æ‰§è¡Œçš„åŠ¨ä½œ
     tid = add_tasklet(instance, 2, 2, test_func);
     start_tasklet(instance, tid);
     nidavellir_loop_n_with_rtc_running(instance, 10);
