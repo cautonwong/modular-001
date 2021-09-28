@@ -8,12 +8,13 @@ struct energy_ctx_t
     uint32_t pa;
 };
 
-struct demand_pool_t
+struct demand_list_t
 {
-    uint8_t(*_scond)(struct instance_t* instance, uint8_t index);
-    uint8_t(*_minute)(struct instance_t* instance, uint8_t index, uint8_t mode);
-    uint8_t parameter_1;
-    uint8_t parameter_2;
+    struct demand_info_t* info;
+    uint32_t* import;
+    uint32_t output_id;
+    uint8_t mode;
+    struct demand_list_t* next;
 };
 
 struct demand_info_t
@@ -34,13 +35,6 @@ struct demand_info_t
     uint8_t   pre_fee;      //上一个费率
 };
 
-struct demand_ctx_t
-{
-    const struct demand_pool_t* pool;
-    uint8_t pool_size;
-    struct demand_info_t* info;
-};
-
 struct mbase_control_block_t
 {
     int id;
@@ -51,11 +45,11 @@ struct mbase_control_block_t
     //费率数据
     //费用数据
     struct energy_ctx_t* energy_ctx;
-    struct demand_ctx_t* demand_ctx;
+    struct demand_list_t* demand_list;
 };
 
-uint8_t demand_calculation(struct instance_t* instance, uint8_t cycle);
-uint8_t active_demand_sec(struct instance_t* instance, uint8_t index);
-uint8_t active_demand_min(struct instance_t* instance, uint8_t index, uint8_t mode);
+uint8_t scond_execute_for_demand(struct mbase_control_block_t* mbase_block);
+uint8_t minute_execute_for_demand(struct mbase_control_block_t* mbase_block);
+int8_t add_demand_action(struct mbase_control_block_t* mbase_block, uint32_t* import, uint32_t output, uint8_t max_slide, uint8_t mode);
 
 #endif

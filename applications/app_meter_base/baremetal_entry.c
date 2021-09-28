@@ -3,7 +3,7 @@
 //dependencies
     //1.user define
     //2.mesg[秒]
-
+struct mbase_control_block_t mbase_block;
 int meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     int r = 0;
@@ -21,9 +21,9 @@ int meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, s
         //controlData(instance,pipeline,mesg);
         break;
     case 0x89://秒信号  刷新内部计时器  比如需量和事件
-        demand_calculation(instance,0x00);
+        scond_execute_for_demand(&mbase_block);
     case 0x90://分钟消息
-        demand_calculation(instance, 0x01);
+        minute_execute_for_demand(&mbase_block);
         break;
     default:
         break;

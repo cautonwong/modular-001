@@ -11,31 +11,32 @@
 #include "applications.h"
 
 //每秒执行
-uint8_t scond_execute_for_demand(struct demand_ctx_t* ctx, uint32_t power,uint8_t index)
+uint8_t scond_execute_for_demand(struct mbase_control_block_t* mbase_block)
 {
-    struct demand_info_t* info = NULL;
+    struct demand_list_t* list = mbase_block->demand_list;
+    uint32_t this_power = 0;
 
-    if (power < 0)
+    while (NULL != list)
     {
-        power = 0 - power;
-    }
-
-    if ((NULL != ctx->info) && (index < ctx->pool_size))
-    {
-        info = &ctx->info[index];
-
-        if (info->sec_cnt > 90)  //这里的90没有什么意义，判断出错使用，只要大于1分钟都是有异常的；
+        this_power = *list->import;
+        if (this_power < 0)
         {
-            info->cumu_sec += power;
-            info->sec_cnt++;
+            this_power = 0 - this_power;
+        }
+        //这里的90没有什么意义，判断出错使用，只要大于1分钟都是有异常的；
+        if (list->info->sec_cnt > 90)  
+        {
+            list->info->cumu_sec += this_power;
+            list->info->sec_cnt++;
         }
         else
         {
-            info->cumu_sec = 0x00;
-            info->sec_cnt = 0x00;
+            list->info->cumu_sec = 0x00;
+            list->info->sec_cnt = 0x00;
         }
-    }
 
+        list = list->next;
+    }
     return 0x01;
 }
 
@@ -147,96 +148,74 @@ static uint8_t update_demand(struct demand_info_t* info, uint8_t cnt, uint32_t* 
 }
 
 //每分钟执行
-uint8_t minute_execute_for_demand(struct demand_ctx_t* ctx, uint8_t index, uint8_t mode)
+uint8_t minute_execute_for_demand(struct mbase_control_block_t* mbase_block)
 {
-    struct demand_info_t* info = NULL;
+    struct demand_list_t* list = mbase_block->demand_list;
     uint32_t lngtemp = 0, tlngtemp = 0;
     uint8_t ret = 0x00;
 
-    if ((NULL != ctx->info) && (index < ctx->pool_size))
+    while (NULL != list)
     {
-        info = &ctx->info[index];
-    }
-    //更新分钟累计值
-    minute_calculate(info);
-    //判断滑差周期是否到了
-    ret = sliding_period_ok(info, mode);
-    if ((ret == 0x01) || (ret == 0x02))
-    {
-        update_demand(info, info->slide_cnt,&lngtemp);  //更新需量
-    }
+        //更新分钟累计值
+        minute_calculate(list->info);
+        //判断滑差周期是否到了
+        ret = sliding_period_ok(list->info, list->mode);
+        if ((ret == 0x01) || (ret == 0x02))
+        {
+            update_demand(list->info, list->info->slide_cnt, &lngtemp);  //更新需量
+        }
 
-    if ((ret == 0x01) || (ret == 0x03))
-    {
-        update_demand(info, info->fee_cnt, &tlngtemp);  //更新费率需量
+        if ((ret == 0x01) || (ret == 0x03))
+        {
+            update_demand(list->info, list->info->fee_cnt, &tlngtemp);  //更新费率需量
+        }
+        list = list->next;
     }
 
     return ret;
 }
 
-
-uint8_t active_demand_sec(struct instance_t* instance, uint8_t index)
+//import 为输入及功率，output为输出的OAD，mode是模式：mode0 滑差周期到更新需量，mode1为需量周期到更新需量
+int8_t add_demand_action(struct mbase_control_block_t* mbase_block, uint32_t* import, uint32_t output, uint8_t max_slide, uint8_t mode)
 {
-    struct mbase_control_block_t* mbase_block = instance->mbase_cb;
-    struct demand_ctx_t* ctx = mbase_block->demand_ctx;
-    scond_execute_for_demand(ctx, mbase_block->energy_ctx->pa, index);
-    return 0x01;
-}
+    struct demand_list_t* p = NULL, * list = mbase_block->demand_list;
+    uint16_t s_num = 0x00;
 
-uint8_t active_demand_min(struct instance_t* instance, uint8_t index, uint8_t mode)
-{
-    struct mbase_control_block_t* mbase_block = instance->mbase_cb;
-    struct demand_ctx_t* ctx = mbase_block->demand_ctx;
-    uint8_t ret;
-    minute_execute_for_demand(ctx,index,mode);
-}
+    p = malloc(sizeof(struct demand_list_t));//申请内存
 
-uint8_t demand_calculation(struct instance_t* instance,uint8_t cycle)  //cycle = 0代表每秒执行，cycle = 1 代表每分钟执行
-{
-    struct mbase_control_block_t* mbase_block = instance->mbase_cb;
-    struct demand_ctx_t* ctx = mbase_block->demand_ctx;
-    uint8_t i = 0x00;
-
-    for (i = 0x00; i < ctx->pool_size; i++)
+    if (p != NULL)
     {
-        if (cycle == 0x00)
+        p->info = malloc(sizeof(struct demand_info_t));
+        if (p->info == NULL)
         {
-            ctx->pool[i]._scond(instance, ctx->pool->parameter_1);
+            return -1;
         }
-        else
+        p->info->slide_max = max_slide;
+        p->info->slide = malloc(sizeof(uint32_t) * max_slide);
+        if (p->info->slide == NULL)
         {
-            ctx->pool[i]._scond(instance, ctx->pool->parameter_1, ctx->pool->parameter_2);
+            return -1;
         }
+        p->import = import;
+        p->output_id = output;
+        p->mode = mode;
+        p->next = NULL;                             
+
+        if (list == NULL)                            
+        {
+            mbase_block->demand_list = p;                
+        }
+        else                                         
+        {
+            while (list->next != NULL)               
+            {
+                list = list->next;                   
+            }
+            list->next = p;                         
+        }
+        return 1;
     }
-}
-
-
-const struct demand_pool_t demand_pool[] =
-{
-    { active_demand_sec, active_demand_min, 0x00, 0x01 }
-};
-
-uint8_t demand_init(struct instance_t* instance)
-{
-    uint8_t i;
-    struct demand_ctx_t* ctx;
-    uint8_t demand_register = sizeof(demand_pool) / sizeof(demand_pool[0]);
-
-    if (instance->mbase_cb != NULL)
-    {
-        instance->mbase_cb->demand_ctx = malloc(sizeof(struct demand_ctx_t));//内存初始化--todo
-        ctx = instance->mbase_cb->demand_ctx;
-        ctx->pool = demand_pool;
-        ctx->pool_size = demand_register;
-
-        ctx->info = malloc(sizeof(struct demand_info_t) * demand_register);
-        for (i = 0; i < demand_register; i++)
-        {
-            ctx->info->slide_max = 15;
-            ctx->info->slide = malloc(sizeof(uint32_t) * ctx->info->slide_max);
-            ctx->info++;
-        }
-    }
+    return -1;
 }
 
 /**@}*/
