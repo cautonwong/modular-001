@@ -1,4 +1,5 @@
 #include "nidavellir.h"
+#include "fr_axdr.h"
 #include "fr_698.h"
 
 #define GetRequestNormal            1
@@ -17,7 +18,8 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
-
+    uint16_t n = 0;
+    uint8_t password[16];
     uint8_t oad_n = mesg->oad_n;
     if (oad_n == 0) oad_n = 1;
     while (oad_n-- > 0)

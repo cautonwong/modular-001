@@ -182,3 +182,4 @@ int baremetal_instance_entry(int argc, char** argv)
 
     return baremetal_loop(instance);
 }
+

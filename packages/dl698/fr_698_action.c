@@ -1,4 +1,5 @@
 #include "nidavellir.h"
+#include "fr_axdr.h"
 #include "fr_698.h"
 
 #define ActionRequestNormal             1
@@ -28,13 +29,14 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
     p[cache->wr++] = 0x01;
         p[cache->wr++] = 0x05;//type encoder
 
+        uint8_t password[16];
 
     uint8_t oad_n = mesg->oad_n;
     if (oad_n == 0) oad_n = 1;
     while (oad_n-- > 0)
     {
         //apdu分帧处理
-        if (fifoBuf_getFree(cache) < size(oad))
+       // if (fifoBuf_getFree(cache) < size(oad))
         {
             //omd
             fifoBuf_getData(fifo, p + cache->wr, 4);

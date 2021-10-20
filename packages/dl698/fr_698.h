@@ -18,7 +18,7 @@
 #define set_confirm_segment(s)  do{(s |= (2<<14));}while(0)
 #define FC_CODE(ctrl)  ((ctrl)&0x07)
 
-#define CA_TYPE_TER(SA)     ((ca&0xF0) == 0)
+#define CA_TYPE_TER(ca)     ((ca&0xF0) == 0)
 
 /** data-assess-result */
 enum dl698_dar_t

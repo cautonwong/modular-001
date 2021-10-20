@@ -359,6 +359,7 @@ int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, stru
     fifoBuf_getByte(ififo);//fcs-1
     assert(fifoBuf_getByte(ififo) == 0x16);//0x16
     fr_pack_698_head(instance, pipeline, mesg);
+    
     fr_pack_698_apdu(instance, pipeline, mesg);
     fr_pack_698_tail(instance, pipeline, mesg);
     //使能发送
@@ -366,6 +367,9 @@ int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, stru
 }
 
 ////////////////////////////////////////////////////////////
+
+
+
 int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
@@ -380,9 +384,19 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     }
 
     //时标判断
-    fr_timeTag()；
+    //fr_timeTag()；
 
+    if(fr_effective_check(instance, pipeline, mesg))
+    {
+        return 0;
+    }
     return 1;
+}
+
+int fr_apde_effective_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{//协议一致性检查正常，检查APDU是否为有效数据
+
+
 }
 
 int fr_serve_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -418,7 +432,10 @@ int fr_serve_one_object(struct instance_t* instance, struct pipeline_t* pipeline
         //异常处理
         p[cache->wr++] = 0x01;
         p[cache->wr++] = 0x05;//type encoder
+
+        //fifo->rd ++
         int r = __read(mesg->id, p + cache->wr, 4);
+        fifo->rd += r;
         if (r < 0)
         {
             p[cache->wr++] = 0x00;//DAR
@@ -500,22 +517,21 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
 
-    //协议一致性判断
+    //协议一致性判断和apdu合法判断
     if(0 == fr_pack_698_check(instance, pipeline, mesg))
     {
         fifoBuf_removeData(fifo, ctx->min_len + 2);
         return 0;
     }
 
+    
     if(0 == fr_segments_handle(instance, pipeline, mesg))
     {
         return 0;
     }
 
-
     //数据解密
     fr_security_decode(instance, pipeline, mesg);
-
 
     fifoBuf_removeData(fifo, 9 + SA_LEN(ctx->SA));
     ctx->service = fifoBuf_getByte(fifo);
@@ -540,8 +556,12 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         mesg->oad_n = fifoBuf_getByte(fifo);
         fifoBuf_putByte(cache, mesg->oad_n);
     }
-
-    switch (service)
+    if(0 == fr_apde_effective_check(instance, pipeline, mesg))
+    {
+        fifoBuf_removeData(fifo, ctx->min_len + 2);
+        return 0;
+    }
+    switch (ctx->service)
     {
         case CONNECT_Request:
         case RELEASE_Request:

@@ -1,4 +1,5 @@
 #include "nidavellir.h"
+#include "fr_axdr.h"
 #include "fr_698.h"
 
 enum connect_result_e
@@ -72,7 +73,7 @@ struct factory_version_t
     char hardware_date[6];      //硬件版本日期 visible-string(SIZE(6))，
     char vendor_infomation[8];  //厂商扩展信息 visible-string(SIZE(8))
 };
-
+#if 0
 const uint8_t CODE esam_series[6]         = {0x80, 0x36, 0x00, 0x02, 0x00, 0x00};	//序列号
 const uint8_t CODE esam_version[6]        = {0x80, 0x36, 0x00, 0x01, 0x00, 0x00};	//版本号
 const uint8_t CODE esam_key_ver[6]        = {0x80, 0x36, 0x00, 0x04, 0x00, 0x00};	//对称密钥版本
@@ -106,7 +107,7 @@ const uint8_t CODE encrypt_term_3[8]           = {0x82, 0x24, 0x00, 0x13,0x80, 0
 const uint8_t CODE esam_report_request[4]         = {0x80, 0x14, 0x01, 0x03};//上报
 const uint8_t CODE esam_report_response[4]        = {0x80, 0x0e, 0x40, 0x81};//上报确认
 
-
+#endif
 //int nd_get(struct instance_t* instance, uint32_t view_id, uint8_t* buf, uint16_t buf_size)
 //int nd_set(struct instance_t* instance, uint32_t view_id, uint8_t* buf, uint16_t buf_size)
 
@@ -125,7 +126,7 @@ uint8_t __password_process(struct instance_t* instance, struct pipeline_t* pipel
         return DAR_OTHERS_ERROR;
     }
 
-    if(0 == memcmp(password, p_password, p_password[0])
+    if(0 == memcmp(password, p_password, p_password[0]))
     {
         return DAR_SUCCESS;
     }
@@ -144,13 +145,13 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
 
     if(CA_TYPE_TER(ctx->CA))//from 终端
     {
-	    memcopy((uint8_t*)&buf[offset],(uint8_t*)&esam_symauth_term[0],6);
-		dectypt->rn[0] = 64;
+	    //memcopy((uint8_t*)&buf[offset],(uint8_t*)&esam_symauth_term[0],6);
+		//dectypt->rn[0] = 64;
     }
     else //from 主站
     {
-	    memcopy((uint8_t*)&buf[offset],(uint8_t*)&esam_symauth[0],6);
-		dectypt->rn[0] = 48;
+	   // memcopy((uint8_t*)&buf[offset],(uint8_t*)&esam_symauth[0],6);
+		//dectypt->rn[0] = 48;
     }
     offset += 6;
 
@@ -175,10 +176,10 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
 
     if ( false != nd_ioctrl(buf, buf, &offset))
 	{
-		memcopy(&dectypt->rn[1],&buf[0],dectypt->rn[0]);
+		//memcopy(&dectypt->rn[1],&buf[0],dectypt->rn[0]);
         
-		dectypt->mac[0] = 4;
-		memcopy(&dectypt->mac[1],&buf[dectypt->rn[0]],4);
+		//dectypt->mac[0] = 4;
+		//memcopy(&dectypt->mac[1],&buf[dectypt->rn[0]],4);
         
 		return DAR_SUCCESS;
 	}
@@ -187,11 +188,11 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
 }
 
 
-uint32_t __get_connect_info(struct instance_t* instance, uint32_t val, uint32_t cfg_val)
+uint32_t __get_connect_info(uint32_t val, uint32_t cfg_val)
 {
-    if ((connect.client_win_size < session->send_buffer_size) || (connect.client_win_size > para->client_process_apdu_size))
+    //if ((connect.client_win_size < session->send_buffer_size) || (connect.client_win_size > para->client_process_apdu_size))
     {
-        connect.client_win_size = para->client_process_apdu_size;
+    //    connect.client_win_size = para->client_process_apdu_size;
     }
 }
 
@@ -203,7 +204,7 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
     struct connect_request_t connect = {0};
-    struct connect_cfg_info_t p_connect = ctx->connect_info;
+    struct connect_cfg_info_t *p_connect = ctx->connect_info;
 
     uint8_t result = DAR_SUCCESS;
 
@@ -213,7 +214,7 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
         goto err;
     }
 
-    memcpy(connect, p, sizeof(struct connect_request_t));
+    memcpy(&connect, p, sizeof(struct connect_request_t));
 
     if (connect.connect_mode > 4)
     {
@@ -227,18 +228,18 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
         goto err;
     }
 
-    for (i = 0; i < 8; i++)//商定的协议一致性块
+    for (uint8_t i = 0; i < 8; i++)//商定的协议一致性块
     {
-        temp = dl698_byte_swap(*p++);
-        session->protocal_conformance[i] = temp & para->protocal_conformance[i];
-        protocal_conformance[i] = dl698_byte_swap(session->protocal_conformance[i]);
+        //temp = dl698_byte_swap(*p++);
+        //session->protocal_conformance[i] = temp & para->protocal_conformance[i];
+        //protocal_conformance[i] = dl698_byte_swap(session->protocal_conformance[i]);
     }
 
-    for (i = 0; i < 16; i++)//商定的功能一致性块
+    for (uint8_t i = 0; i < 16; i++)//商定的功能一致性块
     {
-        temp = dl698_byte_swap(*p++);
-        session->function_conformance[i] = temp & para->function_conformance[i];
-        function_conformance[i] = dl698_byte_swap(session->function_conformance[i]);
+        //temp = dl698_byte_swap(*p++);
+        //session->function_conformance[i] = temp & para->function_conformance[i];
+        //function_conformance[i] = dl698_byte_swap(session->function_conformance[i]);
     }
     //客户机发送帧最大尺寸
     connect.send_frm_size = __get_connect_info(connect.send_frm_size, p_connect->link_recv_buf_size);
@@ -249,7 +250,7 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
     // 客户机最大可处理帧尺寸
     connect.client_apdu_size = __get_connect_info(connect.client_apdu_size, p_connect->client_process_apdu_size);
     /* 期望的应用连接超时时间 */
-    connect.connect_timeout = __get_connect_info(connect.connect_timeout, p_connect->connect_timeout);
+    connect.connect_time = __get_connect_info(connect.connect_time, p_connect->connect_timeout);
 
     if(0 == connect.connect_mode) //公共连接[0] NullSecurity
     {
@@ -259,7 +260,7 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
     {
         if (DAR_SUCCESS != __password_process(instance, pipeline, mesg))
         {
-            result = DL698_SEC_PASSWORD_ERR;
+            result = CONNECT_RESULT_PASSWORD_ERR;
         }
     }
 
@@ -267,7 +268,7 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
     {
         if (DAR_SUCCESS != __symmetry_security_process(instance, pipeline, mesg))
         {
-            result = DL698_SEC_PASSWORD_ERR;
+            result = CONNECT_RESULT_PASSWORD_ERR;
         }
     }  
 
@@ -278,7 +279,6 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
     }  
 
 err:
-
 
     uint8_t oad_n = mesg->oad_n;
     if (oad_n == 0) oad_n = 1;

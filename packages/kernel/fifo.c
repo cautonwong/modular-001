@@ -285,7 +285,7 @@ int16_t fifoBuf_getBytePeek(struct fifo_t *buf)
     return buf->buf_ptr[rd];            // return the byte
 }
 
-int16_t fifoBuf_getByte(struct fifo_t *buf)
+uint8_t fifoBuf_getByte(struct fifo_t *buf)
 {       // get a data byte from the buffer
 
     uint16_t rd = buf->rd;

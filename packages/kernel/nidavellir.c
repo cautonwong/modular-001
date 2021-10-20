@@ -148,6 +148,16 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     }
 }
 
+int baremetal_instance_entry(struct instance_t *instance)
+{   
+    while (1)
+    {
+        nidavellir_run_baremetal(instance);
+    }
+}
+
+
+
 int nidavellir_loop(struct instance_t *instance)
 {
     /*
@@ -163,7 +173,7 @@ int nidavellir_loop(struct instance_t *instance)
     */
     while(1)
     {
-        nidavellir_run(instance);
+        nidavellir_run_baremetal(instance);
     }
 }
 
