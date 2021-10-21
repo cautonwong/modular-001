@@ -386,14 +386,11 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     //时标判断
     //fr_timeTag()；
 
-    if(fr_effective_check(instance, pipeline, mesg))
-    {
-        return 0;
-    }
+
     return 1;
 }
 
-int fr_apde_effective_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int fr_apdu_effective_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {//协议一致性检查正常，检查APDU是否为有效数据
 
 
@@ -427,14 +424,15 @@ int fr_serve_one_object(struct instance_t* instance, struct pipeline_t* pipeline
 
         //class的处理开始  找到对应class的编解码器
         uint32_t data = 0x12345678;
-        will_return(__read, &data);
-        will_return(__read, 4);
+        //will_return(__read, &data);
+        //will_return(__read, 4);
         //异常处理
         p[cache->wr++] = 0x01;
         p[cache->wr++] = 0x05;//type encoder
 
         //fifo->rd ++
-        int r = __read(mesg->id, p + cache->wr, 4);
+        int r  = 0;
+        //int r = __read(mesg->id, p + cache->wr, 4);
         fifo->rd += r;
         if (r < 0)
         {
@@ -469,6 +467,12 @@ int fr_encode_optional(struct instance_t* instance, struct pipeline_t* pipeline,
     }
     
     return 1;
+}
+
+
+int fr_follow_report(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+
 }
 
 int fr_timeTag(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -523,7 +527,6 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         fifoBuf_removeData(fifo, ctx->min_len + 2);
         return 0;
     }
-
     
     if(0 == fr_segments_handle(instance, pipeline, mesg))
     {
@@ -556,7 +559,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         mesg->oad_n = fifoBuf_getByte(fifo);
         fifoBuf_putByte(cache, mesg->oad_n);
     }
-    if(0 == fr_apde_effective_check(instance, pipeline, mesg))
+    if(0 == fr_apdu_effective_check(instance, pipeline, mesg))
     {
         fifoBuf_removeData(fifo, ctx->min_len + 2);
         return 0;

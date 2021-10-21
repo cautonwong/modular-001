@@ -34,7 +34,7 @@ void ringbuffer_clear(struct fifo_t *buf);
 void fifoBuf_removeData(struct fifo_t *buf, uint16_t len);
 
 int16_t fifoBuf_getBytePeek(struct fifo_t *buf);
-int16_t fifoBuf_getByte(struct fifo_t *buf);
+uint8_t fifoBuf_getByte(struct fifo_t *buf);
 int16_t fifoBuf_peekByteB(struct fifo_t *buf, uint16_t offset);
 int16_t fifoBuf_patchByteB(struct fifo_t *buf,uint8_t b, uint16_t offset);
 

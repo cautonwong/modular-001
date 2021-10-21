@@ -18,6 +18,8 @@
 #include "pipeline.h"
 #include "memory.h"
 
+#include "cmocka.h"
+
 #define VERBOSE
 
 //to-be-deleted

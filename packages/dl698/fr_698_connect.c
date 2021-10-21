@@ -156,14 +156,14 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
     offset += 6;
 
     //  密文 1 octet-string，
-    len_len = a_xdr_decode(TYPE_octet_string, p_apdu, &data_len);
-    memcopy((uint8_t*)&buf[offset], p_apdu + len_len, data_len);
+    len_len = axdr_data_len_decode(TYPE_octet_string, p_apdu, &data_len);
+    //memcopy((uint8_t*)&buf[offset], p_apdu + len_len, data_len);
     offset += data_len;
     p_apdu += len_len + data_len;
 
     //  客户机签名 1 octet-string
-    len_len = a_xdr_decode(TYPE_octet_string, p_apdu, &data_len);
-	memcopy((uint8_t*)&buf[offset], p_apdu + len_len, data_len);
+    len_len = axdr_data_len_decode(TYPE_octet_string, p_apdu, &data_len);
+	//memcopy((uint8_t*)&buf[offset], p_apdu + len_len, data_len);
     offset += data_len;
     p_apdu += len_len + data_len;
 
