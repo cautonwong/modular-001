@@ -121,6 +121,7 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     struct recipe_t* recipe = instance->recipe;
     struct filter_t* filter;
     size_t n = 0;
+    int ret = 0;
     uint8_t pipeline_n = recipe->pipeline_n;
     struct pipeline_t* pipeline;
     struct cache_t* cache = instance->cache2;
@@ -143,7 +144,33 @@ int nidavellir_run_baremetal(struct instance_t* instance)
             filter = pipeline->filters;
             n = pipeline->filter_n;
             //pipeline->entry();
-            filter->on_work(instance, pipeline, &mesg);
+            //filter->on_work(instance, pipeline, &mesg);
+            ////
+            do
+            {
+                ret = filter->on_work(instance, pipeline, &mesg);
+                if (ret > 1)
+                {
+                    filter = id_to_filter(pipeline->filters, n, ret);
+                }
+                else if (ret == 1)
+                {
+                    filter = id_to_filter(pipeline->filters, n, filter->ok_id);
+                }
+                else if (ret == -1)
+                {
+                    filter = id_to_filter(pipeline->filters, n, filter->err_id);
+                }
+                else if (ret < -1)
+                {
+                    filter = id_to_filter(pipeline->filters, n, -ret);
+                }
+                else if (ret == 0)
+                {
+                    filter = NULL;
+                }
+            } while (filter != NULL);
+            /////
         }
     }
 }

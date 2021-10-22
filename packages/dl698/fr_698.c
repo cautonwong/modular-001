@@ -120,8 +120,8 @@ int matcher_698(struct context_698_t* ctx, uint8_t* b)
 
     if((ctx->step > 0) && (ctx->step <= 5))
     {
-        ctx->hcs = update_crc16(0xffff, byte);
-        ctx->fcs = update_crc16(0xffff, byte); 
+        //ctx->hcs = update_crc16(0xffff, byte);
+        //ctx->fcs = update_crc16(0xffff, byte); 
     }
 
     switch (ctx->step)
@@ -135,14 +135,14 @@ int matcher_698(struct context_698_t* ctx, uint8_t* b)
         ctx->step = 1;
         return 0;
     case 1:
-        //ctx->hcs = update_crc16(0xffff, byte);
-        //ctx->fcs = update_crc16(0xffff, byte);
+        ctx->hcs = update_crc16(0xffff, byte);
+        ctx->fcs = update_crc16(0xffff, byte);
         ctx->min_len = byte;
         ctx->step = 2;
         return 0;
     case 2:
-        //ctx->hcs = update_crc16(ctx->hcs, byte);
-        //ctx->fcs = update_crc16(ctx->fcs, byte);
+        ctx->hcs = update_crc16(ctx->hcs, byte);
+        ctx->fcs = update_crc16(ctx->fcs, byte);
         ctx->min_len |= (byte << 8);
         ctx->min_len &= 0x3fff;
         //bit14：帧数据长度单位，0 表示帧数据长度单位为字节，1 表示帧数据长度单位为千字节；
@@ -157,8 +157,8 @@ int matcher_698(struct context_698_t* ctx, uint8_t* b)
         ctx->step = 3;
         return 0;
     case 3:
-        //ctx->hcs = update_crc16(ctx->hcs, byte);
-        //ctx->fcs = update_crc16(ctx->fcs, byte);
+        ctx->hcs = update_crc16(ctx->hcs, byte);
+        ctx->fcs = update_crc16(ctx->fcs, byte);
         if ( (FC_CODE(byte) != 1) && (FC_CODE(byte) != 3))
         {
             ctx->step = 0;
@@ -168,8 +168,8 @@ int matcher_698(struct context_698_t* ctx, uint8_t* b)
         ctx->step = 4;
         return 0;
     case 4:
-        //ctx->hcs = update_crc16(ctx->hcs, byte);
-        //ctx->fcs = update_crc16(ctx->fcs, byte);
+        ctx->hcs = update_crc16(ctx->hcs, byte);
+        ctx->fcs = update_crc16(ctx->fcs, byte);
         ctx->SA = byte;//SA
         ctx->index = 0;
         ctx->step = 6;
@@ -180,16 +180,16 @@ int matcher_698(struct context_698_t* ctx, uint8_t* b)
         return 0;
 
     case 5: //扩展逻辑地址处理
-        //ctx->hcs = update_crc16(ctx->hcs, byte);
-        //ctx->fcs = update_crc16(ctx->fcs, byte);
+        ctx->hcs = update_crc16(ctx->hcs, byte);
+        ctx->fcs = update_crc16(ctx->fcs, byte);
         ctx->LA = byte;
         ctx->index = 0;
         ctx->step = 6;
         return 0;
 
     case 6:
-        //ctx->hcs = update_crc16(ctx->hcs, byte);
-        //ctx->fcs = update_crc16(ctx->fcs, byte);
+        ctx->hcs = update_crc16(ctx->hcs, byte);
+        ctx->fcs = update_crc16(ctx->fcs, byte);
         if (ctx->index == SA_LEN(ctx->SA) + 1)
         {
             ctx->CA = byte;
@@ -357,7 +357,7 @@ int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, stru
 
     fifoBuf_getByte(ififo);//fcs-0
     fifoBuf_getByte(ififo);//fcs-1
-    assert(fifoBuf_getByte(ififo) == 0x16);//0x16
+    //assert(fifoBuf_getByte(ififo) == 0x16);//0x16
     fr_pack_698_head(instance, pipeline, mesg);
     
     fr_pack_698_apdu(instance, pipeline, mesg);
@@ -722,7 +722,7 @@ int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
         uint8_t buf[256];
         ctx->rx_count++;
         uint16_t len = fifoBuf_getDataPeek(fifo, buf, ctx->min_len + 2);
-        printf("                   {%s,recv", get_pipeline_name(instance, pipeline->id));
+        //printf("                   {%s,recv", get_pipeline_name(instance, pipeline->id));
         printf(",");
         for (size_t i = 0; i < r; i++)
         {

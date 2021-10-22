@@ -603,7 +603,7 @@ uint16_t fifoBuf_putData(struct fifo_t *buf, const void *data, uint16_t len)
         wr = buf->wr;
     }
 
-    if (num_bytes < 1)
+    if ((num_bytes < 1) || (buf_size == 0))
         return 0;               // return number of bytes copied
 
     uint8_t *p = (uint8_t *)data;

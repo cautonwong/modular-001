@@ -130,6 +130,10 @@ int baremetal_instance_entry_main(int argc, char** argv)
     //链接和绑定硬件 固件 和 软件
     //运行主循环
  
+
+
+    fifoBuf_init(&stdout_698, malloc(512), 512);
+
     struct recipe_t recipe;
     recipe.layout = memories;
     recipe.layout_n = sizeof(memories) / sizeof(struct layout_t);
@@ -139,10 +143,10 @@ int baremetal_instance_entry_main(int argc, char** argv)
 
     struct instance_t* instance = malloc(sizeof(struct instance_t));
     memset(instance, 0, sizeof(struct instance_t));
-    //instance->recipe = recipe;
+    instance->recipe = &recipe;
     instance->ms = 0;
-    //init_memory(instance, recipe->layout, recipe->layout_n);
-    init_ipc_matrix();
+    init_memory(instance, recipe.layout, recipe.layout_n);
+    //init_ipc_matrix();
     struct tm time =
     {
         .tm_year = 2021 - 1900,   /* years are counted from 1900 */
@@ -154,6 +158,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     };
     memcpy(&instance->time, &time, sizeof(struct tm));
     //#ifdef NIDAVELLIR_SYSTEM_TEST
+    fifoBuf_init(&stdin_698, malloc(512), 512);
     extern int open_serial_port(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
     open_serial_port(instance, &pl_rx_from_serial, NULL);
     //#endif
