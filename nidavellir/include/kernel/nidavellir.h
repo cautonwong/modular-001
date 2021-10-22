@@ -18,7 +18,7 @@
 #include "pipeline.h"
 #include "memory.h"
 
-#include "cmocka.h"
+//#include "kernel\cmocka.h"
 
 #define VERBOSE
 

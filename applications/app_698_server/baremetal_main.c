@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "kernel\nidavellir.h"
 
 const struct layout_t memories[] =
 {
@@ -159,6 +159,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     memcpy(&instance->time, &time, sizeof(struct tm));
     //#ifdef NIDAVELLIR_SYSTEM_TEST
     fifoBuf_init(&stdin_698, malloc(512), 512);
+    fifoBuf_init(&pipe_tx_698_req, malloc(512), 512);
     extern int open_serial_port(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
     open_serial_port(instance, &pl_rx_from_serial, NULL);
     //#endif

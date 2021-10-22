@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "kernel\nidavellir.h"
 
 
 uint16_t randomize_int(uint16_t interval)
