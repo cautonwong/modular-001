@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "kernel\nidavellir.h"
 
 #ifndef RTC_NORMALIZE_COMPAT
 #define RTC_NORMALIZE_COMPAT (0)

@@ -34,7 +34,7 @@ void ringbuffer_clear(struct fifo_t *buf);
 void fifoBuf_removeData(struct fifo_t *buf, uint16_t len);
 
 int16_t fifoBuf_getBytePeek(struct fifo_t *buf);
-int16_t fifoBuf_getByte(struct fifo_t *buf);
+uint8_t fifoBuf_getByte(struct fifo_t *buf);
 int16_t fifoBuf_peekByteB(struct fifo_t *buf, uint16_t offset);
 int16_t fifoBuf_patchByteB(struct fifo_t *buf,uint8_t b, uint16_t offset);
 
@@ -57,10 +57,10 @@ void init_cache(struct cache_t* cache, const void* buffer, uint16_t capacity);
 
 int16_t fifo_pop(struct fifo_t* buf, fifo_callback_t callback, void* ctx);
 
-int ringbuffer_putU16(struct fifo_t* buf, uint16_t data);
-int ringbuffer_putU32(struct fifo_t* buf, uint32_t data);
-int ringbuffer_getU16(struct fifo_t* buf, uint16_t data);
-int ringbuffer_getU32(struct fifo_t* buf, uint32_t data);
+int ringbuffer_putU16(struct fifo_t* buf, uint16_t* data);
+int ringbuffer_putU32(struct fifo_t* buf, uint32_t* data);
+int ringbuffer_getU16(struct fifo_t* buf, uint16_t* data);
+int ringbuffer_getU32(struct fifo_t* buf, uint32_t* data);
 int ringbuffer_popU8(struct fifo_t* buf, uint8_t* data);
 int ringbuffer_pushU8(struct fifo_t* buf, uint8_t* data);
 

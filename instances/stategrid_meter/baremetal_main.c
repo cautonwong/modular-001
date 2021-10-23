@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "kernel\nidavellir.h"
 
 const struct layout_t memories[] =
 {
@@ -182,3 +182,4 @@ int baremetal_instance_entry(int argc, char** argv)
 
     return baremetal_loop(instance);
 }
+

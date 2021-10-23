@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\..\packages\dl698\fr_698.c">
+      <Filter>dl698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\dl698\fr_698_action.c">
+      <Filter>dl698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\dl698\fr_698_connect.c">
+      <Filter>dl698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\dl698\fr_698_get.c">
+      <Filter>dl698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\dl698\fr_698_security.c">
+      <Filter>dl698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\dl698\fr_698_set.c">
+      <Filter>dl698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pl_serial.c" />
+    <ClCompile Include="..\baremetal_main.c" />
+    <ClCompile Include="..\..\..\packages\dl698\fr_axdr.c">
+      <Filter>dl698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\bitarithm.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\fifo.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\memory.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\nidavellir.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\pipeline.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\resource.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\rtc.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\tasklet.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\utils.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\dl698\fr_698_comm.c">
+      <Filter>dl698</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="dl698">
+      <UniqueIdentifier>{1acb2f52-fa7c-4e76-9054-8eb2568c2a96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="kernel">
+      <UniqueIdentifier>{b3b0a5cd-7fca-4053-bfde-fa6917240195}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\packages\dl698\fr_698.h">
+      <Filter>dl698</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\packages\dl698\fr_axdr.h">
+      <Filter>dl698</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

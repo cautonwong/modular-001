@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "kernel\nidavellir.h"
 
 
 uint16_t randomize_int(uint16_t interval)
@@ -90,11 +90,15 @@ void date_from_timestamp(uint32_t timestamp, DateTimeT *date_time)
 	date_time->mday = days + 1;
 }
 
+uint16_t buf_to_uint16_msb(uint8_t* buf)
+{
+	return ((uint16_t)buf[0] << 8) + buf[1];
+}
+
+
 uint32_t buf_to_uint32_msb(uint8_t* buf)
 {
-	uint32_t data = 0;
-	data = ((uint32_t)buf[0] << 24) + ((uint32_t)buf[1] << 16) + ((uint32_t)buf[2] << 8) + buf[3];
-	return data;
+	return ((uint32_t)buf[0] << 24) + ((uint32_t)buf[1] << 16) + ((uint32_t)buf[2] << 8) + buf[3];
 }
 
 uint8_t uint32_to_buf_msb(uint32_t data, uint32_t* buf)

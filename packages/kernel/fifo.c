@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "kernel\nidavellir.h"
 
 // *****************************************************************************
 // circular buffer functions
@@ -285,7 +285,7 @@ int16_t fifoBuf_getBytePeek(struct fifo_t *buf)
     return buf->buf_ptr[rd];            // return the byte
 }
 
-int16_t fifoBuf_getByte(struct fifo_t *buf)
+uint8_t fifoBuf_getByte(struct fifo_t *buf)
 {       // get a data byte from the buffer
 
     uint16_t rd = buf->rd;
@@ -603,7 +603,7 @@ uint16_t fifoBuf_putData(struct fifo_t *buf, const void *data, uint16_t len)
         wr = buf->wr;
     }
 
-    if (num_bytes < 1)
+    if ((num_bytes < 1) || (buf_size == 0))
         return 0;               // return number of bytes copied
 
     uint8_t *p = (uint8_t *)data;

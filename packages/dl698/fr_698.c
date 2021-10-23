@@ -1,100 +1,6 @@
-#include "nidavellir.h"
+#include "kernel\nidavellir.h"
+#include "fr_698.h"
 
-#define is_scrambler_set(ctrl) ((((ctrl)>>3)&0x01) != 0)
-#define DIR(ctrl)  ((((ctrl)>>7)&0x01))
-#define PRM(ctrl)  ((((ctrl)>>6)&0x01))
-#define is_segment_set(ctrl)  ((((ctrl)>>5)&0x01) != 0)
-#define set_segment(ctrl)  (ctrl |= (1<<5))
-#define segment_no(s)  (s & 0xfff)
-#define set_segment_no(s)  (s=(s & 0xfff)+1)
-#define is_confirm_segment(s)  ((((s)>>14)&0x03) == 2)
-#define is_first_segment(s)  ((((s)>>14)&0x03) == 0)
-#define is_middle_segment(s)  ((((s)>>14)&0x03) == 3)
-#define is_last_segment(s)  ((((s)>>14)&0x03) == 1)
-#define set_first_segment_no(s)  do{set_segment_no(s);(s |= (0<<14));}while(0)
-#define set_middle_segment_no(s)  do{set_segment_no(s);(s |= (3<<14));}while(0)
-#define set_last_segment_no(s)  do{set_segment_no(s);(s |= (1<<14));}while(0)
-#define set_confirm_segment(s)  do{(s |= (2<<14));}while(0)
-#define FC_CODE(ctrl)  ((ctrl)&0x07)
-
-/** data-assess-result */
-enum dl698_dar_t
-{
-    DAR_SUCCESS = 0,                        /**< ³É¹¦ £¨ 0£©£¬ */
-    DAR_HARDWARE_INVALID = 1,               /**< Ó²¼şÊ§Ğ§ £¨ 1£©£¬ */
-    DAR_TEMP_INVALID = 2,                   /**< ÔİÊ±Ê§Ğ§ £¨ 2£©£¬ */
-    DAR_RW_REJECT = 3,                      /**< ¾Ü¾ø¶ÁĞ´ £¨ 3£©£¬ */
-    DAR_OBJECT_UNDEF = 4,                   /**< ¶ÔÏóÎ´¶¨Òå £¨ 4£©£¬ */
-    DAR_IC_ERROR = 5,                       /**< ¶ÔÏó½Ó¿ÚÀà²»·ûºÏ £¨ 5£©£¬ */
-    DAR_OBJECT_NOT_EXIST = 6,               /**< ¶ÔÏó²»´æÔÚ £¨ 6£©£¬ */
-    DAR_TYPE_NOT_MATCH = 7,                 /**< ÀàĞÍ²»Æ¥Åä £¨ 7£©£¬ */
-    DAR_BUFFER_OVERFLOW = 8,                /**< Ô½½ç £¨ 8£©£¬ */
-    DAR_BLOCK_DATA_UNUSED = 9,              /**< Êı¾İ¿é²»¿ÉÓÃ £¨ 9£©£¬ */
-    DAR_BLOCK_TRANSFER_CANCEL = 10,         /**< ·ÖÖ¡´«ÊäÒÑÈ¡Ïû £¨ 10£©£¬ */
-    DAR_NOT_IN_BLOCK_TRANSFER_STATE = 11,   /**< ²»´¦ÓÚ·ÖÖ¡´«Êä×´Ì¬ £¨ 11£©£¬ */
-    DAR_BLOCK_WRITE_CANCEL = 12,            /**< ¿éĞ´È¡Ïû £¨ 12£©£¬ */
-    DAR_BLOCK_WRITE_STATE_NOT_EXIST = 13,   /**< ²»´æÔÚ¿éĞ´×´Ì¬ £¨ 13£©£¬ */
-    DAR_BLOCK_NUM_INVALID = 14,             /**< Êı¾İ¿éĞòºÅÎŞĞ§ £¨ 14£©£¬ */
-    DAR_UNAUTHORIZED = 15,                  /**< ÃÜÂë´í/Î´ÊÚÈ¨ £¨ 15£©£¬ */
-    DAR_COMM_SPEED_CANNOT_CHANGE = 16,      /**< Í¨ĞÅËÙÂÊ²»ÄÜ¸ü¸Ä £¨ 16£©£¬ */
-    DAR_TIME_ZONE_EXCEED = 17,              /**< ÄêÊ±ÇøÊı³¬ £¨ 17£©£¬ */
-    DAR_DAY_INTERVAL_EXCEED = 18,           /**< ÈÕÊ±¶ÎÊı³¬ £¨ 18£©£¬ */
-    DAR_TARIFF_NUM_EXCEED = 19,             /**< ·ÑÂÊÊı³¬ £¨ 19£©£¬ */
-    DAR_SECURITY_AUTH_NOT_MATCH = 20,       /**< °²È«ÈÏÖ¤²»Æ¥Åä       £¨20£©£¬ */
-    DAR_REPEAT_TOPUP = 21,                  /**< ÖØ¸´³äÖµ */
-    DAR_ESAM_CHECK_FAILED = 22,             /**< ESAMÑéÖ¤Ê§°Ü        £¨22£©, */
-    DAR_SECURITY_AUTH_FAILED = 23,          /**< °²È«ÈÏÖ¤Ê§°Ü        £¨23£©£¬ */
-    DAR_CUSTOMER_NUM_NOT_MATCH = 24,        /**< ¿Í»§±àºÅ²»Æ¥Åä      £¨24£©£¬ */
-    DAR_TOPUP_TIMES_ERROR = 25,             /**< ³äÖµ´ÎÊı´íÎó        £¨25£©£¬ */
-    DAR_TOPUP_EXCEED_MAX_VALUE = 26,        /**< ¹ºµç³¬¶Ú»ı */
-    DAR_ADDRESS_ABNORMAL = 27,              /**< µØÖ·Òì³£ */
-    DAR_SYMMETRIC_DESCRYPT_ERROR = 28,      /**< ¶Ô³Æ½âÃÜ´íÎó        £¨28£©£¬ */
-    DAR_ASYMMETRIC_DESCRYPT_ERROR = 29,     /**< ·Ç¶Ô³Æ½âÃÜ´íÎó      £¨29£©£¬ */
-    DAR_SIGNATURE_ERROR = 30,               /**< Ç©Ãû´íÎó            £¨30£©£¬ */
-    DAR_METER_SUSPEND = 31,                 /**< µçÄÜ±í¹ÒÆğ */
-    DAR_TIME_TAG_INVALID = 32,              /**< Ê±¼ä±êÇ©ÎŞĞ§         (32)£¬ */
-    DAR_REQUEST_TIMEOUT = 33,               /**< ÇëÇó³¬Ê±             £¨33£©£¬*/
-    DAR_ESAM_P1P2_ERROR = 34,               /**< ESAMµÄP1P2²»ÕıÈ·    £¨34£©£¬*/
-    DAR_ESAM_LC_ERROR = 35,                 /**< ESAMµÄLC´íÎó        £¨35£©£¬*/
-
-    /*×ÔÀ©*/
-    DAR_EX_TAG_ERROR = 251,                 /**< tag´íÎó£¨252£©£¬*/
-    DAR_EX_OI_INVALID = 252,                /**< OIÎŞĞ§   £¨252£©£¬*/
-    DAR_EX_STORAGE_DEPTH_ERROR = 253,       /**< ·ÖÖÓ¶³½á´æ´¢¿Õ¼ä²»×ã£¨253£©£¬*/
-    DAR_EX_READ_WRITE_ERROR = 254,          /**< fs¶ÁĞ´º¯Êı´í        £¨254£©£¬*/
-    /*×ÔÀ©½áÊø*/
-
-    DAR_OTHERS_ERROR = 255,                 /**< ÆäËü £¨ 255£© */
-};
-
-#define WILDCARD_NULL               0x00
-#define WILDCARD_YEAR               0x01
-#define WILDCARD_MONTH              0x02
-#define WILDCARD_DAY                0x04
-#define WILDCARD_WEEK               0x08
-#define WILDCARD_HOUR               0x10
-#define WILDCARD_MINUTE             0x20
-#define WILDCARD_SECOND             0x40
-#define WILDCARD_MILLISECOND        0x80
-#define WILDCARD_ALL                0xFF
-
-#pragma pack(1)
-struct oad_t
-{
-    union
-    {
-        //00H±íÊ¾Õû¸öÊôĞÔÈ«²¿ÄÚÈİ¡£
-        //Èç¹ûÊôĞÔÊÇÒ»¸ö½á¹¹»òÊı×é£¬01HÖ¸Ïò¶ÔÏóÊôĞÔµÄµÚÒ»¸öÔªËØ£»
-        //Èç¹ûÊôĞÔÊÇÒ»¸ö¼ÇÂ¼ĞÍµÄ´æ´¢Çø£¬·ÇÁãÖµn±íÊ¾×î½üµÚn´ÎµÄ¼ÇÂ¼¡£
-        uint8_t  index;
-        uint8_t  no : 5; //ÊôĞÔ±àºÅ  È¡Öµ0¡­31£¬ÆäÖĞ0±íÊ¾Õû¸ö¶ÔÏóÊôĞÔ£¬¼´¶ÔÏóµÄËùÓĞÊôĞÔ£»
-        uint8_t  attr : 3;//ÊôĞÔÌØÕ÷
-        uint16_t oi;
-    }s;
-
-    uint32_t id;
-    struct coder_t* coder;
-};
 
 static const uint16_t crc16_tab[256] =
 {
@@ -164,7 +70,7 @@ int update_hcs_fcs(struct context_698_t* ctx, uint8_t* byte)
 {
     ctx->tx_len++;
     ctx->hcs = update_crc16(ctx->hcs, *byte);
-    ctx->cs = update_crc16(ctx->cs, *byte);
+    ctx->fcs = update_crc16(ctx->fcs, *byte);
     return 0;
 }
 
@@ -175,7 +81,7 @@ int update_fcs(struct context_698_t* ctx, uint8_t* byte)
     {
         *byte += 0x33;
     }
-    ctx->cs = update_crc16(ctx->cs, *byte);
+    ctx->fcs = update_crc16(ctx->fcs, *byte);
     return 0;
 }
 
@@ -187,32 +93,60 @@ int __pack_apdu_byte(struct pipeline_t* pipeline, uint8_t* byte)
     append_byte(fifo, *byte, update_fcs, ctx);
     return 0;
 }
-
+/*
+698.45åè®®åˆ¤æ–­è¿‡ç¨‹
+1 é•¿åº¦åŸŸLéœ€è¦å¤„ç†
+	a é•¿åº¦ä¸º3FFFä½é•¿åº¦
+	b æ•°æ®å¸§é•¿åº¦ä¸ºbit0--bit13
+	c bit14 0è¡¨ç¤ºå­—èŠ‚ï¼Œ1è¡¨ç¤ºåƒå­—èŠ‚
+	d bit15ä¸ºä¿ç•™
+	e æœ€å°é•¿åº¦11  
+	f é•¿åº¦å­—èŠ‚+2 > æ¥æ”¶å­—èŠ‚
+2 æ§åˆ¶åŸŸC
+	a bit7 ä¼ è¾“æ–¹å‘DIR    æ³¨æ„å¯åŠ¨æ–¹å‘ä½ï¼Œè¯†åˆ«åˆ¤æ–­
+	b bit6 å¯åŠ¨æ ‡å¿—ä½PRM  åˆ¤æ–­DIRå’ŒPRMçš„ç»„åˆå½¢å¼
+	c bit5 åˆ†å¸§æ ‡å¿—
+	d bit4 ä¿ç•™
+	e bit3 å¹²æ‰°ç æ ‡å¿—sc
+	f bit2--bit0 åŠŸèƒ½ç   èŒƒå›´åˆ¤æ–­ 1é“¾è·¯ç®¡ç†ï¼Œ3ç”¨æˆ·æ•°æ®
+3 åœ°å€åŸŸ A
+    a sa åœ°å€ç±»å‹,é€»è¾‘åœ°å€,åœ°å€é•¿åº¦
+    b æ‰©å±•é€»è¾‘åœ°å€/åˆ†è·¯åœ°å€
+    c åœ°å€  å¹¿æ’­åœ°å€çš„é•¿åº¦å›ºå®šä¸º1å­—èŠ‚ï¼Œå¹¿æ’­åœ°å€=AAH
+*/
 int matcher_698(struct context_698_t* ctx, uint8_t* b)
 {
     uint8_t byte = *b;
 
+    if((ctx->step > 0) && (ctx->step <= 5))
+    {
+        //ctx->hcs = update_crc16(0xffff, byte);
+        //ctx->fcs = update_crc16(0xffff, byte); 
+    }
+
     switch (ctx->step)
     {
-    case 0:
+    case 0://å¸§å¤´68åˆ¤æ–­
         if (byte != 0x68)
         {
             ctx->err_n++;
             return -1;
         }
         ctx->step = 1;
-        return 0;//Ã»´íÎó  ¼ÌĞø  keep going
+        return 0;
     case 1:
         ctx->hcs = update_crc16(0xffff, byte);
-        ctx->cs = update_crc16(0xffff, byte);
+        ctx->fcs = update_crc16(0xffff, byte);
         ctx->min_len = byte;
         ctx->step = 2;
         return 0;
     case 2:
         ctx->hcs = update_crc16(ctx->hcs, byte);
-        ctx->cs = update_crc16(ctx->cs, byte);
+        ctx->fcs = update_crc16(ctx->fcs, byte);
         ctx->min_len |= (byte << 8);
         ctx->min_len &= 0x3fff;
+        //bit14ï¼šå¸§æ•°æ®é•¿åº¦å•ä½ï¼Œ0 è¡¨ç¤ºå¸§æ•°æ®é•¿åº¦å•ä½ä¸ºå­—èŠ‚ï¼Œ1 è¡¨ç¤ºå¸§æ•°æ®é•¿åº¦å•ä½ä¸ºåƒå­—èŠ‚ï¼›
+        ctx->len_unit = (byte & 0x40) >> 6;
         if (ctx->min_len < 11)
         {
             ctx->step = 0;
@@ -224,83 +158,86 @@ int matcher_698(struct context_698_t* ctx, uint8_t* b)
         return 0;
     case 3:
         ctx->hcs = update_crc16(ctx->hcs, byte);
-        ctx->cs = update_crc16(ctx->cs, byte);
-        if ( (FC_CODE(byte) != 1) &&
-             (FC_CODE(byte) != 3))
+        ctx->fcs = update_crc16(ctx->fcs, byte);
+        if ( (FC_CODE(byte) != 1) && (FC_CODE(byte) != 3))
         {
             ctx->step = 0;
             return -1;
         }
-        ctx->ctrl = byte;//¿ØÖÆÓò
+        ctx->ctrl = byte;//æ§åˆ¶åŸŸ
         ctx->step = 4;
         return 0;
     case 4:
         ctx->hcs = update_crc16(ctx->hcs, byte);
-        ctx->cs = update_crc16(ctx->cs, byte);
+        ctx->fcs = update_crc16(ctx->fcs, byte);
         ctx->SA = byte;//SA
-        ctx->addr_n = 0;
-        ctx->step = 5;
+        ctx->index = 0;
+        ctx->step = 6;
+        if(SA_LOGIC_TYPE(ctx->SA))
+        {
+            ctx->step = 5; 
+        }
         return 0;
-    case 5:
+
+    case 5: //æ‰©å±•é€»è¾‘åœ°å€å¤„ç†
         ctx->hcs = update_crc16(ctx->hcs, byte);
-        ctx->cs = update_crc16(ctx->cs, byte);
-        if (ctx->addr_n == SA_LEN(ctx->SA) + 1)
+        ctx->fcs = update_crc16(ctx->fcs, byte);
+        ctx->LA = byte;
+        ctx->index = 0;
+        ctx->step = 6;
+        return 0;
+
+    case 6:
+        ctx->hcs = update_crc16(ctx->hcs, byte);
+        ctx->fcs = update_crc16(ctx->fcs, byte);
+        if (ctx->index == SA_LEN(ctx->SA) + 1)
         {
             ctx->CA = byte;
-            ctx->step = 6;
+            ctx->step = 7;
         }
         else
         {
-            ctx->addr[ctx->addr_n++] = byte;
+            ctx->addr[ctx->index++] = byte;
         }
         return 0;
-    case 6:
+    case 7:
         ctx->hcs = get_crc16(ctx->hcs);
-        ctx->cs = update_crc16(ctx->cs, byte);
+        ctx->fcs = update_crc16(ctx->fcs, byte);
         if (byte != (ctx->hcs & 0xff))
         {
             ctx->step = 0;
             ctx->err_n++;
             return -1;
         }
-        ctx->step = 7;
+        ctx->step = 8;
         return 0;
-    case 7:
-        ctx->cs = update_crc16(ctx->cs, byte);
+    case 8:
+        ctx->fcs = update_crc16(ctx->fcs, byte);
         if (byte != ((ctx->hcs >> 8) & 0xff))
         {
             ctx->step = 0;
             ctx->err_n++;
             return -1;
         }
-        ctx->addr_n = 0;
-        ctx->step = 8;
+        ctx->index = 0;
+        ctx->step = 9;
         return 0;
-    case 8://ÓÃ»§Á´Â·Êı¾İ
+    case 9://ç”¨æˆ·é“¾è·¯æ•°æ®
         if (is_scrambler_set(ctx->ctrl))
         {
             *b = byte - 0x33;
         }
-        ctx->cs = update_crc16(ctx->cs, byte);
-        if (ctx->addr_n == ctx->min_len - 11 - SA_LEN(ctx->SA))
+        ctx->fcs = update_crc16(ctx->fcs, byte);
+        if (ctx->index == ctx->min_len - 11 - SA_LEN(ctx->SA))
         {
-            ctx->step = 9;
+            ctx->step = 10;
             return 0;
         }
-        ctx->addr_n++;
-        return 0;
-    case 9:
-        ctx->cs = get_crc16(ctx->cs);
-        if (byte != (ctx->cs & 0xff))
-        {
-            ctx->step = 0;
-            ctx->err_n++;
-            return -1;
-        }
-        ctx->step = 10;
+        ctx->index++;
         return 0;
     case 10:
-        if (byte != ((ctx->cs >> 8) & 0xff))
+        ctx->fcs = get_crc16(ctx->fcs);
+        if (byte != (ctx->fcs & 0xff))
         {
             ctx->step = 0;
             ctx->err_n++;
@@ -309,16 +246,154 @@ int matcher_698(struct context_698_t* ctx, uint8_t* b)
         ctx->step = 11;
         return 0;
     case 11:
+        if (byte != ((ctx->fcs >> 8) & 0xff))
+        {
+            ctx->step = 0;
+            ctx->err_n++;
+            return -1;
+        }
+        ctx->step = 12;
+        return 0;
+    case 12:
         if (byte != 0x16)
         {
             ctx->step = 0;
             return -1;
         }
-        return 1;//½ÓÊÕµ½ÍêÕûµÄÒ»Ö¡
+        return 1;//æ¥æ”¶åˆ°å®Œæ•´çš„ä¸€å¸§
     }
 
     assert(0);
     return -1;
+}
+
+
+int fr_pack_698_head(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
+    uint16_t len = mesg->len + SA_LEN(ctx->SA) + 10;
+    ctx->hcs = 0xffff;
+    ctx->fcs = 0xffff;
+    ctx->tx_len = 0;
+    fifoBuf_putByte(fifo, 0x68);
+    ctx->tx_len++;
+    append_byte(fifo, (len & 0xff), update_hcs_fcs, ctx);
+    append_byte(fifo, ((len >> 8) & 0xff), update_hcs_fcs, ctx);
+    ctx->ctrl |= (1 << 7);//DIR=0è¡¨ç¤ºç”±æœåŠ¡å™¨å‘å‡º
+    if (mesg->from != pid_rx_698)
+    {
+        ctx->ctrl &= ~(1 << 6);//PRM=0è¡¨ç¤ºç”±æœåŠ¡å™¨å‘èµ·
+    }
+    append_byte(fifo, ctx->ctrl, update_hcs_fcs, ctx);
+    append_byte(fifo, ctx->SA, update_hcs_fcs, ctx);
+    append_data(fifo, ctx->addr, SA_LEN(ctx->SA) + 1, update_hcs_fcs, ctx);
+    append_byte(fifo, ctx->CA, update_hcs_fcs, ctx);
+
+    ctx->hcs = get_crc16(ctx->hcs);
+    append_byte(fifo, (ctx->hcs & 0xff), update_fcs, ctx);
+    append_byte(fifo, ((ctx->hcs >> 8) & 0xff), update_fcs, ctx);
+    return 1;
+}
+
+int fr_pack_698_tx_head(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
+    uint16_t len = mesg->len + SA_LEN(ctx->SA) + 10;
+    ctx->hcs = 0xffff;
+    ctx->fcs = 0xffff;
+    ctx->tx_len = 0;
+    fifoBuf_putByte(fifo, 0x68);
+    ctx->tx_len++;
+    append_byte(fifo, (len & 0xff), update_hcs_fcs, ctx);
+    append_byte(fifo, ((len >> 8) & 0xff), update_hcs_fcs, ctx);
+    ctx->ctrl |= (1 << 7);//DIR=0è¡¨ç¤ºç”±æœåŠ¡å™¨å‘å‡º
+    if (mesg->from != pid_rx_698)
+    {
+        ctx->ctrl &= ~(1 << 6);//PRM=0è¡¨ç¤ºç”±æœåŠ¡å™¨å‘èµ·
+    }
+    append_byte(fifo, ctx->ctrl, update_hcs_fcs, ctx);
+    append_byte(fifo, ctx->SA, update_hcs_fcs, ctx);
+    append_data(fifo, ctx->addr, SA_LEN(ctx->SA) + 1, update_hcs_fcs, ctx);
+    append_byte(fifo, ctx->CA, update_hcs_fcs, ctx);
+
+    ctx->hcs = get_crc16(ctx->hcs);
+    append_byte(fifo, (ctx->hcs & 0xff), update_fcs, ctx);
+    append_byte(fifo, ((ctx->hcs >> 8) & 0xff), update_fcs, ctx);
+    return 1;
+}
+
+int fr_pack_698_apdu(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
+    uint8_t byte;
+    fifo_popData(ctx->apdu, mesg->len, __pack_apdu_byte, pipeline);
+    return 1;
+}
+
+int fr_pack_698_tail(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
+    ctx->fcs = get_crc16(ctx->fcs);
+    fifoBuf_putByte(fifo, ctx->fcs & 0xff);
+    ctx->tx_len++;
+    fifoBuf_putByte(fifo, ((ctx->fcs >> 8) & 0xff));
+    ctx->tx_len++;
+    fifoBuf_putByte(fifo, 0x16);
+    ctx->tx_len++;
+    return 1;
+}
+
+int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
+    struct message_t* n = (struct message_t*)instance->cache;
+
+    fifoBuf_getByte(ififo);//fcs-0
+    fifoBuf_getByte(ififo);//fcs-1
+    //assert(fifoBuf_getByte(ififo) == 0x16);//0x16
+    fr_pack_698_head(instance, pipeline, mesg);
+    
+    fr_pack_698_apdu(instance, pipeline, mesg);
+    fr_pack_698_tail(instance, pipeline, mesg);
+    //ä½¿èƒ½å‘é€
+    return 0;
+}
+
+////////////////////////////////////////////////////////////
+
+
+
+int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+
+    //åˆæ³•æ€§å’Œä¸€è‡´æ€§åˆ¤æ–­
+    if ((ctx->ctrl & (1 << 7)) == 1)
+    {
+        //è‡ªå·±æ˜¯æœåŠ¡å™¨  æ”¶åˆ°æ¥è‡ªæœåŠ¡å™¨çš„æŠ¥æ–‡  ä¸¢æ‰
+        fifoBuf_removeData(fifo, ctx->min_len + 2);
+        return 0;
+    }
+
+    //æ—¶æ ‡åˆ¤æ–­
+    //fr_timeTag()ï¼›
+
+
+    return 1;
+}
+
+int fr_apdu_effective_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{//åè®®ä¸€è‡´æ€§æ£€æŸ¥æ­£å¸¸ï¼Œæ£€æŸ¥APDUæ˜¯å¦ä¸ºæœ‰æ•ˆæ•°æ®
+
+
 }
 
 int fr_serve_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -347,14 +422,18 @@ int fr_serve_one_object(struct instance_t* instance, struct pipeline_t* pipeline
             //return -1;
         }
 
-        //classµÄ´¦Àí¿ªÊ¼  ÕÒµ½¶ÔÓ¦classµÄ±à½âÂëÆ÷
+        //classçš„å¤„ç†å¼€å§‹  æ‰¾åˆ°å¯¹åº”classçš„ç¼–è§£ç å™¨
         uint32_t data = 0x12345678;
-        will_return(__read, &data);
-        will_return(__read, 4);
-        //Òì³£´¦Àí
+        //will_return(__read, &data);
+        //will_return(__read, 4);
+        //å¼‚å¸¸å¤„ç†
         p[cache->wr++] = 0x01;
         p[cache->wr++] = 0x05;//type encoder
-        int r = __read(mesg->id, p + cache->wr, 4);
+
+        //fifo->rd ++
+        int r  = 0;
+        //int r = __read(mesg->id, p + cache->wr, 4);
+        fifo->rd += r;
         if (r < 0)
         {
             p[cache->wr++] = 0x00;//DAR
@@ -390,128 +469,245 @@ int fr_encode_optional(struct instance_t* instance, struct pipeline_t* pipeline,
     return 1;
 }
 
-int fr_pack_698_head(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
-    uint16_t len = mesg->len + SA_LEN(ctx->SA) + 10;
-    ctx->hcs = 0xffff;
-    ctx->cs = 0xffff;
-    ctx->tx_len = 0;
-    fifoBuf_putByte(fifo, 0x68);
-    ctx->tx_len++;
-    append_byte(fifo, (len & 0xff), update_hcs_fcs, ctx);
-    append_byte(fifo, ((len >> 8) & 0xff), update_hcs_fcs, ctx);
-    ctx->ctrl |= (1 << 7);//DIR=0±íÊ¾ÓÉ·şÎñÆ÷·¢³ö
-    if (mesg->from != pid_rx_698)
-    {
-        ctx->ctrl &= ~(1 << 6);//PRM=0±íÊ¾ÓÉ·şÎñÆ÷·¢Æğ
-    }
-    append_byte(fifo, ctx->ctrl, update_hcs_fcs, ctx);
-    append_byte(fifo, ctx->SA, update_hcs_fcs, ctx);
-    append_data(fifo, ctx->addr, SA_LEN(ctx->SA) + 1, update_hcs_fcs, ctx);
-    append_byte(fifo, ctx->CA, update_hcs_fcs, ctx);
 
-    ctx->hcs = get_crc16(ctx->hcs);
-    append_byte(fifo, (ctx->hcs & 0xff), update_fcs, ctx);
-    append_byte(fifo, ((ctx->hcs >> 8) & 0xff), update_fcs, ctx);
-    return 1;
+int fr_follow_report(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+
 }
 
-int fr_pack_698_tx_head(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int fr_timeTag(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
-    uint16_t len = mesg->len + SA_LEN(ctx->SA) + 10;
-    ctx->hcs = 0xffff;
-    ctx->cs = 0xffff;
-    ctx->tx_len = 0;
-    fifoBuf_putByte(fifo, 0x68);
-    ctx->tx_len++;
-    append_byte(fifo, (len & 0xff), update_hcs_fcs, ctx);
-    append_byte(fifo, ((len >> 8) & 0xff), update_hcs_fcs, ctx);
-    ctx->ctrl |= (1 << 7);//DIR=0±íÊ¾ÓÉ·şÎñÆ÷·¢³ö
-    if (mesg->from != pid_rx_698)
-    {
-        ctx->ctrl &= ~(1 << 6);//PRM=0±íÊ¾ÓÉ·şÎñÆ÷·¢Æğ
-    }
-    append_byte(fifo, ctx->ctrl, update_hcs_fcs, ctx);
-    append_byte(fifo, ctx->SA, update_hcs_fcs, ctx);
-    append_data(fifo, ctx->addr, SA_LEN(ctx->SA) + 1, update_hcs_fcs, ctx);
-    append_byte(fifo, ctx->CA, update_hcs_fcs, ctx);
 
-    ctx->hcs = get_crc16(ctx->hcs);
-    append_byte(fifo, (ctx->hcs & 0xff), update_fcs, ctx);
-    append_byte(fifo, ((ctx->hcs >> 8) & 0xff), update_fcs, ctx);
-    return 1;
 }
 
-int fr_pack_698_apdu(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
-    uint8_t byte;
-    fifo_popData(ctx->apdu, mesg->len, __pack_apdu_byte, pipeline);
-    return 1;
-}
 
-int fr_pack_698_tail(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
-    ctx->cs = get_crc16(ctx->cs);
-    fifoBuf_putByte(fifo, ctx->cs & 0xff);
-    ctx->tx_len++;
-    fifoBuf_putByte(fifo, ((ctx->cs >> 8) & 0xff));
-    ctx->tx_len++;
-    fifoBuf_putByte(fifo, 0x16);
-    ctx->tx_len++;
-    return 1;
-}
-
-int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
-    struct message_t* n = (struct message_t*)instance->cache;
-
-    fifoBuf_getByte(ififo);//fcs-0
-    fifoBuf_getByte(ififo);//fcs-1
-    assert(fifoBuf_getByte(ififo) == 0x16);//0x16
-    fr_pack_698_head(instance, pipeline, mesg);
-    fr_pack_698_apdu(instance, pipeline, mesg);
-    fr_pack_698_tail(instance, pipeline, mesg);
-    //Ê¹ÄÜ·¢ËÍ
-    return 0;
-}
-
-int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
-    struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = cache->buf_ptr;
 
-    uint8_t oad_n = mesg->oad_n;
-    if (oad_n == 0) oad_n = 1;
-    while (oad_n-- > 0)
+    if (is_segment_set(ctx->ctrl))//åˆ†å¸§æ ‡å¿—ä½
     {
-        //todo  apdu·ÖÖ¡
-        //if (fifoBuf_getFree(cache) < size(oad))
+        if (fifoBuf_getUsed(ctx->apdu) > 0)
         {
-            fifoBuf_getData(fifo, p + cache->wr, 4);
-            mesg->id = buf_to_uint32_msb(p + cache->wr);
-            cache->wr += 4;
-            fr_serve_one_object(instance, pipeline, mesg);
-        }
-    }
+            mesg->len = fifoBuf_getUsed(ctx->apdu);
+            if (mesg->len > 512)
+            {
+                set_segment(ctx->ctrl);
+                set_middle_segment_no(ctx->segment);//ä¸­é—´å¸§
+                mesg->len = 512;
+            }
+            else
+            {
+                set_segment(ctx->ctrl);
+                set_last_segment_no(ctx->segment);//æœ€åå¸§
+            }
 
-    fr_encode_optional(instance, pipeline, mesg);//follow-report and time-tag
-    return 1;
+            fr_rx_698_end(instance, pipeline, mesg);
+        }
+        fifoBuf_removeData(fifo, ctx->min_len + 2);//åˆ æ‰æ”¶åˆ°çš„ç¡®è®¤å¸§
+        return 0;
+    }
+    else
+    {
+        //æ”¶åˆ°çš„å¦‚æœä¸æ˜¯åç»­å¸§è¯·æ±‚
+        ringbuffer_clear(ctx->apdu);
+         return 1;
+    }
 }
 
+int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+
+    //åè®®ä¸€è‡´æ€§åˆ¤æ–­å’Œapduåˆæ³•åˆ¤æ–­
+    if(0 == fr_pack_698_check(instance, pipeline, mesg))
+    {
+        fifoBuf_removeData(fifo, ctx->min_len + 2);
+        return 0;
+    }
+    
+    if(0 == fr_segments_handle(instance, pipeline, mesg))
+    {
+        return 0;
+    }
+
+    //æ•°æ®è§£å¯†
+    fr_security_decode(instance, pipeline, mesg);
+
+    fifoBuf_removeData(fifo, 9 + SA_LEN(ctx->SA));
+    ctx->service = fifoBuf_getByte(fifo);
+    ctx->choice = fifoBuf_getByte(fifo);
+    ctx->PIID = fifoBuf_getByte(fifo);
+    ctx->PIID |= (1 << 6);//PIID-ACD
+
+    mesg->from = pipeline->id;//ä»å“ªé‡Œæ¥
+    mesg->to = pid_tx_698;//è¦åˆ°å“ªé‡Œå»
+    mesg->ctrl = ctx->service |(1<<7);
+    mesg->qos = ctx->choice;
+    mesg->id = 0x00;//æš‚æ—¶æ²¡ç”¨
+
+    struct fifo_t* cache = ctx->apdu;
+    fifoBuf_putByte(cache, mesg->ctrl);
+    fifoBuf_putByte(cache, mesg->qos);
+    fifoBuf_putByte(cache, ctx->PIID);
+
+    mesg->oad_n = 0;
+    if (ctx->choice != 1)
+    {
+        mesg->oad_n = fifoBuf_getByte(fifo);
+        fifoBuf_putByte(cache, mesg->oad_n);
+    }
+    if(0 == fr_apdu_effective_check(instance, pipeline, mesg))
+    {
+        fifoBuf_removeData(fifo, ctx->min_len + 2);
+        return 0;
+    }
+    switch (ctx->service)
+    {
+        case CONNECT_Request:
+        case RELEASE_Request:
+            fr_handle_connect(instance, pipeline, mesg);
+            break;   
+
+        case GET_Request:  
+            fr_handle_get_request(instance, pipeline, mesg);
+            break;
+        case SET_Request:
+            fr_handle_set_request(instance, pipeline, mesg);
+            break;
+        case ACTION_Request:
+            fr_handle_action_request(instance, pipeline, mesg);
+            break;
+
+        case REPORT_Response://8ä¸ŠæŠ¥åº”ç­” client
+            break;
+        default:
+            break;
+    }
+
+    //æ•°æ®åŠ å¯†
+    fr_security_encode(instance, pipeline, mesg);
+
+    fr_follow_report(instance, pipeline, mesg);
+
+    fr_timeTag(instance, pipeline, mesg);
+
+    if (fifoBuf_getUsed(ctx->apdu)  > 0)
+    {
+        mesg->len = fifoBuf_getUsed(ctx->apdu);
+        if (mesg->len > 512)
+        {
+            set_segment(ctx->ctrl);
+            set_first_segment_no(ctx->segment);//ç¬¬ä¸€å¸§
+            mesg->len = 512;
+        }
+
+        fr_rx_698_end(instance, pipeline, mesg);
+    }
+    return 0;
+}
+
+int fr_gatekeeper_client(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+
+    //todo åˆæ³•æ€§å’Œä¸€è‡´æ€§åˆ¤æ–­
+    if ((ctx->ctrl & (1 << 7)) == 0)
+    {
+        fifoBuf_removeData(fifo, ctx->min_len + 2);
+        return 0;
+    }
+
+    if (is_segment_set(ctx->ctrl))//åˆ†å¸§æ ‡å¿—ä½
+    {
+        fifoBuf_removeData(fifo, ctx->min_len + 2);
+        if (is_last_segment(ctx->segment) > 0)//æ”¶åˆ°çš„æ˜¯æœ€åå¸§
+        {
+            //æ”¶é½äº†  è§£æ todo
+            //get-next
+        }
+        else
+        {
+            //å‘é€åˆ†å¸§ä¼ è¾“çš„ç¡®è®¤å¸§
+        }
+        return 0;
+    }
+    else
+    {
+        //æ”¶åˆ°çš„å¦‚æœä¸æ˜¯åç»­å¸§è¯·æ±‚
+        ringbuffer_clear(ctx->apdu);
+    }
+    fifoBuf_removeData(fifo, ctx->min_len + 2);
+    return 0;
+    fifoBuf_removeData(fifo, 9 + SA_LEN(ctx->SA));
+    uint8_t service = fifoBuf_getByte(fifo);
+    uint8_t type = fifoBuf_getByte(fifo);
+
+    mesg->from = pipeline->id;//ä»å“ªé‡Œæ¥
+    mesg->to = pid_tx_698;//è¦åˆ°å“ªé‡Œå»
+    mesg->ctrl = service | (1 << 7);
+    mesg->qos = type;
+    mesg->id = 0x00;//æš‚æ—¶æ²¡ç”¨
+    ctx->PIID = fifoBuf_getByte(fifo);
+    ctx->PIID |= (1 << 6);//PIID-ACD
+    struct fifo_t* cache = ctx->apdu;
+    fifoBuf_putByte(cache, mesg->ctrl);
+    fifoBuf_putByte(cache, mesg->qos);
+    fifoBuf_putByte(cache, ctx->PIID);
+    if (type == 1)
+    {
+        mesg->oad_n = 0;
+    }
+    else
+    {
+        mesg->oad_n = fifoBuf_getByte(fifo);
+        fifoBuf_putByte(cache, mesg->oad_n);
+    }
+
+    switch (service)
+    {
+        case 0x85:
+            fr_handle_get_request(instance, pipeline, mesg);
+            break;
+        case 0x86:
+            fr_handle_set_request(instance, pipeline, mesg);
+            break;
+        case 0x87:
+            fr_handle_action_request(instance, pipeline, mesg);
+            break;
+        case 0x02://connect
+        case 0x03://release
+            fr_handle_get_request(instance, pipeline, mesg);
+            break;
+        case 0x08://ä¸ŠæŠ¥åº”ç­” client
+            break;
+        case 136://ä¸ŠæŠ¥é€šçŸ¥ server
+            break;
+        case 110://å¼‚å¸¸å“åº”client
+            break;
+        case 238://å¼‚å¸¸å“åº”server
+            break;
+        case 144://å®‰å…¨å“åº”
+            break;
+    }
+
+    if (fifoBuf_getUsed(ctx->apdu) > 0)
+    {
+        mesg->len = fifoBuf_getUsed(ctx->apdu);
+        if (mesg->len > 512)
+        {
+            set_segment(ctx->ctrl);
+            set_first_segment_no(ctx->segment);//ç¬¬ä¸€å¸§
+            mesg->len = 512;
+        }
+
+        fr_rx_698_end(instance, pipeline, mesg);
+    }
+    return 0;
+}
 
 int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -526,7 +722,7 @@ int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
         uint8_t buf[256];
         ctx->rx_count++;
         uint16_t len = fifoBuf_getDataPeek(fifo, buf, ctx->min_len + 2);
-        printf("                   {%s,recv", get_pipeline_name(instance, pipeline->id));
+        //printf("                   {%s,recv", get_pipeline_name(instance, pipeline->id));
         printf(",");
         for (size_t i = 0; i < r; i++)
         {
@@ -550,7 +746,7 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* cache = ctx->apdu;
-    //client  »òÕß Ö÷¶¯ÉÏ±¨ »òÕß ÑÓÊ±¶ÁÈ¡·¢ËÍ
+    //client  æˆ–è€… ä¸»åŠ¨ä¸ŠæŠ¥ æˆ–è€… å»¶æ—¶è¯»å–å‘é€
     if (recv_mesg_header(instance, pipeline, mesg))
     {
         mesg->len -= 4;
@@ -565,7 +761,7 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
         cache->wr += mesg->len;
         mesg->len += 3;
 
-        //Çø·Ö  ÉÏ±¨IDºÍÉÏ±¨ÄÚÈİ
+        //åŒºåˆ†  ä¸ŠæŠ¥IDå’Œä¸ŠæŠ¥å†…å®¹
         fr_pack_698_head(instance, pipeline, mesg);
         fr_pack_698_apdu(instance, pipeline, mesg);
         fr_pack_698_tail(instance, pipeline, mesg);
@@ -592,205 +788,7 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
     return 0;
 }
 
-int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
 
-    //todo ºÏ·¨ĞÔºÍÒ»ÖÂĞÔÅĞ¶Ï
-    if ((ctx->ctrl & (1 << 7)) == 1)
-    {
-        //×Ô¼ºÊÇ·şÎñÆ÷  ÊÕµ½À´×Ô·şÎñÆ÷µÄ±¨ÎÄ  ¶ªµô
-        fifoBuf_removeData(fifo, ctx->min_len + 2);
-        return 0;
-    }
-
-    if (is_segment_set(ctx->ctrl))//·ÖÖ¡±êÖ¾Î»
-    {
-        if (fifoBuf_getUsed(ctx->apdu) > 0)
-        {
-            mesg->len = fifoBuf_getUsed(ctx->apdu);
-            if (mesg->len > 512)
-            {
-                set_segment(ctx->ctrl);
-                set_middle_segment_no(ctx->segment);//ÖĞ¼äÖ¡
-                mesg->len = 512;
-            }
-            else
-            {
-                set_segment(ctx->ctrl);
-                set_last_segment_no(ctx->segment);//×îºóÖ¡
-            }
-
-            fr_rx_698_end(instance, pipeline, mesg);
-        }
-        fifoBuf_removeData(fifo, ctx->min_len + 2);//É¾µôÊÕµ½µÄÈ·ÈÏÖ¡
-        return 0;
-    }
-    else
-    {
-        //ÊÕµ½µÄÈç¹û²»ÊÇºóĞøÖ¡ÇëÇó
-        ringbuffer_clear(ctx->apdu);
-    }
-
-    fifoBuf_removeData(fifo, 9 + SA_LEN(ctx->SA));
-    uint8_t service = fifoBuf_getByte(fifo);
-    uint8_t type = fifoBuf_getByte(fifo);
-    
-    mesg->from = pipeline->id;//´ÓÄÄÀïÀ´
-    mesg->to = pid_tx_698;//Òªµ½ÄÄÀïÈ¥
-    mesg->ctrl = service|(1<<7);
-    mesg->qos = type;
-    mesg->id = 0x00;//ÔİÊ±Ã»ÓÃ
-    ctx->PIID = fifoBuf_getByte(fifo);
-    ctx->PIID |= (1 << 6);//PIID-ACD
-    struct fifo_t* cache = ctx->apdu;
-    fifoBuf_putByte(cache, mesg->ctrl);
-    fifoBuf_putByte(cache, mesg->qos);
-    fifoBuf_putByte(cache, ctx->PIID);
-    if (type == 1)
-    {
-        mesg->oad_n = 0;
-    }
-    else
-    {
-        mesg->oad_n = fifoBuf_getByte(fifo);
-        fifoBuf_putByte(cache, mesg->oad_n);
-    }
-
-    switch (service)
-    {
-    case 0x05:
-    case 0x06:
-    case 0x07:
-        fr_handle_get_request(instance, pipeline, mesg);
-        break;
-    case 0x02://connect
-    case 0x03://release
-        fr_handle_get_request(instance, pipeline, mesg);
-        break;
-    case 0x08://ÉÏ±¨Ó¦´ğ client
-        break;
-    case 136://ÉÏ±¨Í¨Öª server
-        break;
-    case 110://Òì³£ÏìÓ¦client
-        break;
-    case 238://Òì³£ÏìÓ¦server
-        break;
-    case 16://°²È«ÇëÇó
-        break;
-    }
-
-    if (fifoBuf_getUsed(ctx->apdu)  > 0)
-    {
-        mesg->len = fifoBuf_getUsed(ctx->apdu);
-        if (mesg->len > 512)
-        {
-            set_segment(ctx->ctrl);
-            set_first_segment_no(ctx->segment);//µÚÒ»Ö¡
-            mesg->len = 512;
-        }
-
-        fr_rx_698_end(instance, pipeline, mesg);
-    }
-    return 0;
-}
-
-int fr_gatekeeper_client(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
-
-    //todo ºÏ·¨ĞÔºÍÒ»ÖÂĞÔÅĞ¶Ï
-    if ((ctx->ctrl & (1 << 7)) == 0)
-    {
-        fifoBuf_removeData(fifo, ctx->min_len + 2);
-        return 0;
-    }
-
-    if (is_segment_set(ctx->ctrl))//·ÖÖ¡±êÖ¾Î»
-    {
-        fifoBuf_removeData(fifo, ctx->min_len + 2);
-        if (is_last_segment(ctx->segment) > 0)//ÊÕµ½µÄÊÇ×îºóÖ¡
-        {
-            //ÊÕÆëÁË  ½âÎö todo
-            //get-next
-        }
-        else
-        {
-            //·¢ËÍ·ÖÖ¡´«ÊäµÄÈ·ÈÏÖ¡
-        }
-        return 0;
-    }
-    else
-    {
-        //ÊÕµ½µÄÈç¹û²»ÊÇºóĞøÖ¡ÇëÇó
-        ringbuffer_clear(ctx->apdu);
-    }
-    fifoBuf_removeData(fifo, ctx->min_len + 2);
-    return 0;
-    fifoBuf_removeData(fifo, 9 + SA_LEN(ctx->SA));
-    uint8_t service = fifoBuf_getByte(fifo);
-    uint8_t type = fifoBuf_getByte(fifo);
-
-    mesg->from = pipeline->id;//´ÓÄÄÀïÀ´
-    mesg->to = pid_tx_698;//Òªµ½ÄÄÀïÈ¥
-    mesg->ctrl = service | (1 << 7);
-    mesg->qos = type;
-    mesg->id = 0x00;//ÔİÊ±Ã»ÓÃ
-    ctx->PIID = fifoBuf_getByte(fifo);
-    ctx->PIID |= (1 << 6);//PIID-ACD
-    struct fifo_t* cache = ctx->apdu;
-    fifoBuf_putByte(cache, mesg->ctrl);
-    fifoBuf_putByte(cache, mesg->qos);
-    fifoBuf_putByte(cache, ctx->PIID);
-    if (type == 1)
-    {
-        mesg->oad_n = 0;
-    }
-    else
-    {
-        mesg->oad_n = fifoBuf_getByte(fifo);
-        fifoBuf_putByte(cache, mesg->oad_n);
-    }
-
-    switch (service)
-    {
-    case 0x85:
-    case 0x86:
-    case 0x87:
-        fr_handle_get_request(instance, pipeline, mesg);
-        break;
-    case 0x02://connect
-    case 0x03://release
-        fr_handle_get_request(instance, pipeline, mesg);
-        break;
-    case 0x08://ÉÏ±¨Ó¦´ğ client
-        break;
-    case 136://ÉÏ±¨Í¨Öª server
-        break;
-    case 110://Òì³£ÏìÓ¦client
-        break;
-    case 238://Òì³£ÏìÓ¦server
-        break;
-    case 144://°²È«ÏìÓ¦
-        break;
-    }
-
-    if (fifoBuf_getUsed(ctx->apdu) > 0)
-    {
-        mesg->len = fifoBuf_getUsed(ctx->apdu);
-        if (mesg->len > 512)
-        {
-            set_segment(ctx->ctrl);
-            set_first_segment_no(ctx->segment);//µÚÒ»Ö¡
-            mesg->len = 512;
-        }
-
-        fr_rx_698_end(instance, pipeline, mesg);
-    }
-    return 0;
-}
 
 const struct filter_t fr_rx_698[] =
 {
@@ -827,20 +825,9 @@ struct pipeline_t pl_tx_698 =
     fr_tx_698,
 };
 
-// 1. [] 698-05
-// 2. [] 698-06
-// 3. [] 698-07
-// 4. [] 698-°²È«ÈÏÖ¤
-// 6. [] 698-·ÖÖ¡
-// 7. [] 698Êı¾İÄ£ĞÍºÍ±àÂë
-// 8. [] 698-02
-// 9. [] 698-03
-// 10.[] 698-08
-
-
-//ÄÚ´æÏûºÄ·ÖÎö:  <3.5K
-//´®¿Ú½ÓÊÕFIFO 544  
-//´®¿Ú·¢ËÍFIFO 544 
-//½ÓÊÕ±ğµÄplµÄÖ÷¶¯·¢ËÍFIFO  200
-//ÓÃÀ´×°apduµÄcache fifo  2048
+//å†…å­˜æ¶ˆè€—åˆ†æ:  <3.5K
+//ä¸²å£æ¥æ”¶FIFO 544  
+//ä¸²å£å‘é€FIFO 544 
+//æ¥æ”¶åˆ«çš„plçš„ä¸»åŠ¨å‘é€FIFO  200
+//ç”¨æ¥è£…apduçš„cache fifo  2048
 //ctx

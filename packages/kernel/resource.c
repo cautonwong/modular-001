@@ -1,5 +1,5 @@
-#include "nidavellir.h"
-#include "resource.h"
+#include "kernel\nidavellir.h"
+#include "kernel\resource.h"
 
 
 

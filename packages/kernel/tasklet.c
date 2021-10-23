@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "kernel\nidavellir.h"
 
 int start_tasklet(struct instance_t* instance, int tid)
 {

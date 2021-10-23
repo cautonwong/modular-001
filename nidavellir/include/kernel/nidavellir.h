@@ -18,6 +18,8 @@
 #include "pipeline.h"
 #include "memory.h"
 
+//#include "kernel\cmocka.h"
+
 #define VERBOSE
 
 //to-be-deleted
@@ -159,25 +161,37 @@ struct context_645_t
     struct object_t object;//对象标识
     struct pipeline_t *pipeline;//to-be-deleted
 };
-#define SA_TYPE(SA)  ((SA)>>6) //0-单地址 1-通配地址 2-组地址 3-广播地址
-#define SA_LOGIC(SA) (((SA)>>4)&0x03)
-#define SA_LEN(SA)  ((SA)&0x0f)
+
+#define SA_TYPE(SA)         ((SA)>>6) //0-单地址 1-通配地址 2-组地址 3-广播地址
+#define SA_LOGIC(SA)        (((SA)>>4)&0x01)
+#define SA_LOGIC_TYPE(SA)   (((SA)>>5)&0x01)
+#define SA_LEN(SA)          ((SA)&0x0f)
+
+
 struct context_698_t
 {
     int rx_count;//暂时用下to-be-deleted
-    uint8_t addr_n;//暂时用下to-be-deleted
+    //配置信息
+    struct connect_cfg_info_t *connect_info;
+    struct factory_version_t *factory_version;
     //作为从站方用的临时状态
+    uint16_t index;//临时计数器
     uint8_t SA;
+    uint8_t LA;
     uint8_t ctrl;//接收到的控制字
     uint8_t step;
     uint8_t PIID;
-    uint16_t cs;
+    uint8_t len_unit;
+    uint8_t service;
+    uint8_t choice;
+    uint16_t fcs;
     uint16_t hcs;
     uint16_t min_len;//发送时和接收时的报文总长度
     uint32_t err_n;
     uint8_t addr[16];
     uint8_t CA;
     uint16_t segment;//分帧格式域
+
 
     //作为主站方时用的临时状态
     uint8_t dst_addr[6];//目的地址
