@@ -1,6 +1,7 @@
 #include "kernel\nidavellir.h"
 #include "fr_axdr.h"
 #include "fr_698.h"
+#include "testutil\cmocka.h"
 
 #define GetRequestNormal            1
 #define GetRequestNormalList        2
@@ -30,8 +31,17 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
             fifoBuf_getData(fifo, p + cache->wr, 4);
             mesg->id = buf_to_uint32_msb(p + cache->wr);
             cache->wr += 4;
+#if 0
+            uint32_t data = 0x12345678;
+            will_return(nd_get, &data);
+            will_return(nd_get, &data);
+            will_return(nd_get, 4);
+
+            p[cache->wr++] = 0x01;
+            p[cache->wr++] = 0x05;//type encoder
+#endif
             fr_serve_one_object(instance, pipeline, mesg);
-            if (nd_get(instance, mesg->id, cache->wr, sizeof(password)) < 0)
+            if (nd_get(instance, mesg->id, p + cache->wr, sizeof(password)) < 0)
             {
                 return DAR_OTHERS_ERROR;
             }

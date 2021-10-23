@@ -396,6 +396,18 @@ int fr_apdu_effective_check(struct instance_t* instance, struct pipeline_t* pipe
 
 }
 
+int __read(uint32_t id, uint8_t* buf, int len)
+{
+    //    uint32_t idd = mock_type(uint32_t);
+    uint8_t* p = mock_ptr_type(uint8_t*);
+    int r = mock_type(int);
+    if (r > 0)
+    {
+        memcpy(buf, p, r);
+    }
+    return r;
+}
+
 int fr_serve_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
@@ -424,15 +436,14 @@ int fr_serve_one_object(struct instance_t* instance, struct pipeline_t* pipeline
 
         //class的处理开始  找到对应class的编解码器
         uint32_t data = 0x12345678;
-        //will_return(__read, &data);
-        //will_return(__read, 4);
+        will_return(__read, &data);
+        will_return(__read, 4);
         //异常处理
         p[cache->wr++] = 0x01;
         p[cache->wr++] = 0x05;//type encoder
 
         //fifo->rd ++
-        int r  = 0;
-        //int r = __read(mesg->id, p + cache->wr, 4);
+        int r = __read(mesg->id, p + cache->wr, 4);
         fifo->rd += r;
         if (r < 0)
         {

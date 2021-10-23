@@ -183,3 +183,30 @@ int main(int argc, char** argv)
     baremetal_instance_entry_main(argc, argv);
 }
 
+
+#if 0
+void test_698_rx_entry(void** state)
+{
+    struct instance_t* instance;
+    instance = (struct instance_t*)*state;
+ 
+    baremetal_instance_entry_main(instance);
+
+}
+
+int setup(void** state)
+{
+    return 0;
+}
+
+int main(int argc, char** argv) {
+
+    const struct CMUnitTest tests[] = {
+        cmocka_unit_test(test_698_rx_entry),//测试698报文的解析
+    };
+
+    cmocka_set_test_filter("test_698_rx_entry");
+
+    return cmocka_run_group_tests(tests, setup, NULL);
+}
+#endif
