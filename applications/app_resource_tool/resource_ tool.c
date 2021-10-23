@@ -36,6 +36,23 @@ struct app_data_info_t
     EXTENSION_DATA_ATTR
 };
 
+
+
+struct skip_last_node_t
+{
+    uint8_t key;
+    struct skip_last_node_t* silbing;
+    struct app_data_info_t info;
+};
+
+struct skip_mid_node_t
+{
+    uint8_t key;
+    struct skip_mid_node_t* silbing;
+    struct skip_last_node_t* children;
+};
+
+
 struct skip_list_node_t
 {
     uint8_t key;
@@ -43,26 +60,23 @@ struct skip_list_node_t
     struct skip_list_node_t* children;
 };
 
-struct skip_children_t
-{
-    uint8_t key;
-    struct skip_children_t* silbing;
-    uint32_t data_addr;
-    struct app_data_info_t info;
-};
-
 //应用APP的数据列表
 struct app_list_t
 {
     uint32_t app_name;
-    struct app_info_t* info;
-    struct app_list_t* sibling;
+    uint32_t env_array;
+    uint32_t env_size;
+    uint32_t env_used;
+    struct skip_list_node_t* node;
+    struct list_head* sibling;
 };
 
 struct resource_ctx_t
 {
-    struct app_list_t* app_list;
+    struct list_head* app_list;
     struct list_head* dev_list;
+    uint8_t ram_device_name;
+    uint8_t resource_block_name;
 };
 
 void *__nd_malloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_size)
@@ -78,6 +92,7 @@ void *__nd_malloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_si
 
     return NULL;
 }
+
 
 struct block_device_t* look_up_device(struct resource_ctx_t* ctx, uint8_t device_name)
 {
@@ -96,7 +111,7 @@ struct block_device_t* look_up_device(struct resource_ctx_t* ctx, uint8_t device
     return NULL;
 }
 
-struct block_device_t* look_up_device_block(struct resource_ctx_t* ctx, struct block_device_t* device, uint8_t block_name)
+struct block_device_t* look_up_block(struct resource_ctx_t* ctx, struct block_device_t* device, uint8_t block_name)
 {
     struct block_device_children_t* block = NULL;
     struct list_head* p;
@@ -113,65 +128,151 @@ struct block_device_t* look_up_device_block(struct resource_ctx_t* ctx, struct b
     return NULL;
 }
 
-//注册API
-int8_t add_block_device_block(struct resource_ctx_t* ctx, uint8_t device_name, uint8_t block_name, uint32_t first_addr, uint32_t size)
+void* nd_malloc(struct resource_ctx_t *ctx, uint8_t block_name, uint32_t size)
 {
     struct block_device_t* device = NULL;
     struct block_device_children_t* block = NULL;
 
+    device = look_up_device(ctx, ctx->ram_device_name);
+    if (device == NULL)
+    {
+        return NULL;
+    }
+
+    block = look_up_block(ctx,device, block_name);
+    if (block == NULL)
+    {
+        return NULL;
+    }
+
+    return __nd_malloc(block->first_addr, block->used, size, block->size);
+}
+
+//注册API
+uint32_t *add_block(struct resource_ctx_t* ctx, uint8_t device_name, uint8_t block_name, uint32_t block_size)
+{
+    struct block_device_t* device = NULL;
+    struct block_device_children_t* block = NULL;
+    struct block_device_children_t* resource_block = NULL;
+
     device = look_up_device(ctx,device_name);//先获取device
     if (device != NULL)
     {
-        block = look_up_device_block(ctx, device, block_name);//在找block
+        block = look_up_block(ctx, device, block_name);//在找block
         if (block == NULL)
         {
-            block = __nd_malloc(first_addr, &used, sizeof(struct block_device_t), size);
+            resource_block = look_up_device_block(ctx, ctx->ram_device_name, ctx->resource_block_name);
+            if (resource_block == NULL)
+            {
+                return NULL;
+            }
+
+            block = __nd_malloc(resource_block->first_addr, &resource_block->used, sizeof(struct block_device_children_t), resource_block->size);
+            block->first_addr = device->first_addr + device->used;
+            block->name = block_name;
+            block->sibling = NULL;
+            block->size = block_size;
+            block->used = 0x00;
+            device->used += block_size;
+            list_add_tail(&block->sibling, device->children);
         }
-        return 0;
+
+        return NULL;
     }
 
-    return -1;
+    return block->first_addr;
 }
 
-struct resource_ctx_t *init_resource_manager(uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t resource_blok_size)
+uint32_t *add_inside_block(struct resource_ctx_t* ctx, uint8_t device_name,uint8_t block_name, uint8_t inside_block_name, uint32_t block_size)
+{
+    struct block_device_t* device = NULL;
+    struct block_device_children_t* block = NULL;
+    struct block_device_children_t* inside_block = NULL;
+    struct block_device_children_t* resource_block = NULL;
+
+    device = look_up_device(ctx, device_name);//先获取device
+    if (device != NULL)
+    {
+        block = look_up_block(ctx, device, block_name);//在找block
+        if (block != NULL)
+        {
+            resource_block = look_up_device_block(ctx, ctx->ram_device_name, ctx->resource_block_name);
+            if (resource_block == NULL)
+            {
+                return NULL;
+            }
+
+            inside_block = __nd_malloc(resource_block->first_addr, &resource_block->used, sizeof(struct block_device_children_t), resource_block->size);
+            inside_block->first_addr = block->first_addr + block->used;
+            inside_block->name = inside_block_name;
+            inside_block->sibling = NULL;
+            inside_block->size = block_size;
+            inside_block->used = 0x00;
+            block->used += block_size;
+            list_add_tail(&inside_block->sibling, device->children);
+        }
+
+        return inside_block->first_addr;
+    }
+
+    return NULL;
+}
+
+struct resource_ctx_t *init_resource_manager(uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t resource_blok_size,uint8_t resource_block_name)
 {
     struct resource_ctx_t* ctx = (struct resource_ctx_t*)first_addr;
     struct block_device_t* device = NULL; //创建RAM设备
+    struct block_device_children_t* block = NULL;
     uint32_t used = 0;
 
     //创建RAM设备
     device = __nd_malloc(first_addr,&used,sizeof(struct block_device_t), size);
     if (device != NULL)
     {
-        device->used = used;
+        device->used = resource_blok_size;
         device->driver = NULL;
         device->device_name = device_name;
         device->first_addr = first_addr;
         device->page_size = 0;
         device->size = size;
+        device->sibling = NULL;
+        ctx->ram_device_name = device_name;
+        list_add_tail(&device->sibling, ctx->dev_list);
+        //创建resource_block
+        block = __nd_malloc(first_addr, &used, sizeof(struct block_device_children_t), resource_blok_size);
+        if (block != NULL)
+        {
+            block->first_addr = first_addr;
+            block->name = resource_block_name;
+            block->sibling = NULL;
+            block->size = resource_blok_size;
+            block->used = used;
+            ctx->resource_block_name = resource_block_name;
+            list_add_tail(&block->sibling, device->children);
+
+            return ctx;
+        }
     }
-    list_add_tail(&device->sibling, ctx->dev_list);
-    //创建resource_block
 
-
-    return ctx;
+    return NULL;
 }
 
 //注册设备的API 先创建RAM设备；
-int8_t add_block_device(struct resource_ctx_t* ctx, uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t page_size, struct driver_t* driver, uint8_t ram_name)
+int8_t add_device(struct resource_ctx_t* ctx, uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t page_size, struct driver_t* driver, uint8_t ram_name)
 {
-    struct block_device_t* device = NULL, *ram_device = NULL;
+    struct block_device_t* device = NULL;
+    struct block_device_children_t* block = NULL;
 
-    ram_device = look_up_device(ctx, ram_name);
-    if (ram_device == NULL)
-    {
-        return -1;
-    }
-
-    device = look_up_device(ctx, device_name);
+    device = look_up_device(ctx, device_name);//在分配其他的
     if (device == NULL)
     {
-        device = __nd_malloc(ram_device->first_addr,&ram_device->used,sizeof(struct block_device_t),ram_device->size);
+        block = look_up_device_block(ctx, ctx->ram_device_name, ctx->resource_block_name);
+        if (block == NULL)
+        {
+            return -1;
+        }
+
+        device = __nd_malloc(block->first_addr,&block->used,sizeof(struct block_device_t),block->size);
         if (device == NULL)
         {
             return -1;
@@ -183,22 +284,84 @@ int8_t add_block_device(struct resource_ctx_t* ctx, uint8_t device_name, uint32_
         device->first_addr = first_addr;
         device->page_size = page_size;
         device->size = size;
+        device->sibling = NULL;
+        device->children = NULL;
         list_add_tail(&device->sibling, ctx->dev_list);
     }
     
     return 0;
 }
 
-//应用注册单个数据的API
-int8_t add_app_data(struct resource_ctx_t* ctx, uint32_t aap_name, struct app_data_info_t *info)
+
+
+struct app_list_t* look_up_app(struct resource_ctx_t* ctx, uint8_t app_name)
 {
-    return -1;
+    struct app_list_t* app = NULL;
+    struct list_head* p;
+
+    list_for_each(p, ctx->app_list)
+    {
+        app = list_entry(p, struct app_list_t, sibling);
+        if (app->app_name == app_name)
+        {
+            return app;  //device 找到了
+        }
+    }
+
+    return NULL;
+}
+
+int8_t add_app(struct resource_ctx_t* ctx, uint32_t app_name, uint32_t env_addr, uint32_t env_size)
+{
+    struct app_list_t* app = NULL;
+    struct block_device_children_t* block = NULL;
+
+    app = look_up_app(ctx,app_name);
+    if (app == NULL)
+    {
+        block = look_up_device_block(ctx, ctx->ram_device_name, ctx->resource_block_name);
+        if (block == NULL)
+        {
+            return -1;
+        }
+
+        app = __nd_malloc(block->first_addr, &block->used, sizeof(struct block_device_t), block->size);
+        if (app == NULL)
+        {
+            return -1;
+        }
+        app->app_name = app_name;
+        app->env_array = env_addr;
+        app->env_size = env_size;
+        app->env_used = 0x00;
+        app->node = NULL;
+        app->sibling = NULL;
+        list_add_tail(&app->sibling, ctx->app_list);
+    }
+
+    return 0;
+}
+
+//应用注册单个数据的API
+int8_t add_app_data(struct resource_ctx_t* ctx, uint32_t app_name, struct app_data_info_t *info)
+{
+    struct app_list_t* app = NULL;
+    struct block_device_children_t* resource_block = NULL;
+    //先找APP是否存在
+    app = look_up_app(ctx, app_name);
+    if (app == NULL)
+    {
+        return -1;
+    }
+
+    if (0x00 == skip_list_insert(ctx, app, info))   
+    {
+        return 0x00;
+    }
 }
 
 
-
-
-uint8_t look_up_list(struct instance_t* instance, struct skip_list_node_t* head_node, struct skip_list_last_node_t** last_node, uint16_t* key)
+uint8_t look_up_list(struct resource_ctx_t* ctx, struct skip_list_node_t* head_node, struct skip_last_node_t** last_node, uint16_t* key)
 {
     uint8_t i = 0, level_size = 0x05, ret = 0x33;
 
@@ -206,9 +369,9 @@ uint8_t look_up_list(struct instance_t* instance, struct skip_list_node_t* head_
     {
         if (head_node != NULL)
         {
-            while ((head_node->key != key[i]) && (head_node->next != NULL))
+            while ((head_node->key != key[i]) && (head_node->silbing != NULL))
             {
-                head_node = head_node->next;                    //指向下一个节点
+                head_node = head_node->silbing;                    //指向下一个节点
             }
 
             if (head_node->key == key[i])                       //找到了
@@ -216,7 +379,7 @@ uint8_t look_up_list(struct instance_t* instance, struct skip_list_node_t* head_
                 ret = 0x34 + i;
                 if (NULL != last_node)
                 {
-                    *last_node = (struct skip_list_last_node_t*)head_node;
+                    *last_node = (struct skip_last_node_t*)head_node;
                 }                
 
                 if (i == (level_size - 0x01))
@@ -224,7 +387,7 @@ uint8_t look_up_list(struct instance_t* instance, struct skip_list_node_t* head_
                     break;
                 }
 
-                head_node = (struct skip_list_node_t*)head_node->head_node;
+                head_node = (struct skip_list_node_t*)head_node->children;
                 continue;
             }
         }
@@ -234,22 +397,24 @@ uint8_t look_up_list(struct instance_t* instance, struct skip_list_node_t* head_
     return ret;
 }
 
-uint8_t look_up_lists(struct instance_t* instance, struct app_info_list_t* app_list, struct app_info_list_t** list, struct skip_list_last_node_t** node, uint16_t* key)
+uint8_t look_up_lists(struct resource_ctx_t* ctx, struct list_head* app_list, struct app_info_list_t** list, struct skip_list_last_node_t** node, uint8_t* key)
 {
+    struct app_list_t* app = NULL;
+    struct list_head* p;
     uint8_t ret = 0x33;
 
-    while (NULL != app_list)
+    list_for_each(p, ctx->app_list)
     {
-        ret = look_up_list(instance, app_list->env_list, node, key);
-        if (0x38 == ret)
+        app = list_entry(p, struct app_list_t, sibling);
+        ret = look_up_list(ctx, app->node, node, key);
+        if (0x37 == ret)
         {
             if (NULL != list)
             {
                 *list = app_list;
             }
-            break;   
+            break;
         }
-        app_list = app_list->next;   //指向下一个节点
     }
 
     return ret;
@@ -283,7 +448,7 @@ struct skip_list_node_t* add_new_node(struct instance_t* instance, struct skip_l
     return NULL;
 }
 
-struct skip_list_last_node_t* create_new_list(struct instance_t* instance, struct skip_list_node_t* head_node, struct skip_list_node_t** node, uint8_t level, uint16_t* key)
+struct skip_list_last_node_t* create_new_list(struct resource_ctx_t* ctx, struct skip_list_node_t* head_node, struct skip_list_node_t** node, uint8_t level, uint16_t* key)
 {
     uint16_t size = sizeof(struct skip_list_node_t);
     uint8_t i = 0x00;
@@ -333,18 +498,54 @@ uint32_t nd_allocation_by_storage(struct instance_t* instance, enum device_type_
     return 0xFFFFFFFF;
 }
 
-uint8_t make_dlms_obj(uint16_t* buf, struct dlms_obj_t* obj)
+uint8_t make_key(uint8_t* buf, uint32_t oad)
 {
-    buf[0] = obj->class_idx;
-    buf[1] = (obj->logic_name.a << 8) + obj->logic_name.b;
-    buf[2] = (obj->logic_name.c << 8) + obj->logic_name.d;
-    buf[3] = (obj->logic_name.e << 8) + obj->logic_name.f;
-    buf[4] = obj->attribute_idx;
+    uint8_t i;
+
+    for (i = 0x00; i < 0x04; i++)
+    {
+        buf[i] = (uint8_t)(oad >> ((0x03 - i) * 0x08));
+    }
 
     return 0x01;
 }
 
-uint8_t skip_list_insert(struct instance_t* instance, struct app_info_list_t* p)
+uint8_t skip_list_insert(struct resource_ctx_t* ctx, struct app_list_t* app, struct app_data_info_t* info)
+{
+    struct skip_list_last_node_t* this_node = NULL, * cur_node = NULL;
+    uint8_t key[4] = { 0x00, 0x00, 0x00, 0x00 };
+    uint8_t ret = 0;
+
+    make_key(key, info->data_name);
+    ret = look_up_lists(ctx, ctx->app_list,NULL, &this_node, key);//先查找已有APP中是否已经存在了；
+
+    if ((ret == 0x38) && (NULL != this_node))  //该资源已经存在，需要重新查找
+    {
+        ret = look_up_list(ctx, p->env_list, &cur_node, key);
+        cur_node = create_new_list(ctx, (struct skip_list_node_t*)cur_node, &p->env_list, ret - 0x33, key);
+        if (NULL == cur_node)
+        {
+            return 0x00;//返回创建失败
+        }
+        cur_node->data_addr = this_node->data_addr;
+        cur_node->resources = this_node->resources;
+    }
+    else
+    {
+        this_node = create_new_list(instance, (struct skip_list_node_t*)this_node, &p->env_list, ret - 0x33, key);
+        if (NULL == this_node)
+        {
+            return 0x00;
+        }
+
+        this_node->data_addr = nd_allocation_by_storage(instance, resource[i].device_id, resource[i].length);
+        this_node->resources = &resource[i];
+    }
+}
+return 0x01;
+}
+
+uint8_t skip_list_insert(struct resource_ctx_t* ctx, struct app_list_t* app, struct app_data_info_t* info)
 {
     const struct resource_t* resource = p->info->resources;
     struct skip_list_last_node_t *this_node = NULL, *cur_node = NULL;
@@ -357,7 +558,7 @@ uint8_t skip_list_insert(struct instance_t* instance, struct app_info_list_t* p)
     {
         this_node = NULL;
 
-        make_dlms_obj(key, &resource[i].view.obj);
+        make_key(key,info->data_name);
         ret = look_up_lists(instance, instance->r_ctx.list, NULL, &this_node, key);//先查找已有APP中是否已经存在了；
 
         if ((ret == 0x38) && (NULL != this_node))  //该资源已经存在，需要重新查找
