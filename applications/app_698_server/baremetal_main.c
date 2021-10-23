@@ -105,9 +105,9 @@ struct pipeline_t *pipelines[]=
 {
     &pl_rx_698,
     &pl_tx_698,
-//#ifdef NIDAVELLIR_SYSTEM_TEST
+#ifdef NIDAVELLIR_SYSTEM_TEST
     &pl_tx_to_serial,
-//#endif
+#endif
 };
 
 int update_instance_rtc(struct instance_t* instance)
@@ -130,10 +130,6 @@ int baremetal_instance_entry_main(int argc, char** argv)
     //链接和绑定硬件 固件 和 软件
     //运行主循环
  
-
-
-    fifoBuf_init(&stdout_698, malloc(512), 512);
-
     struct recipe_t recipe;
     recipe.layout = memories;
     recipe.layout_n = sizeof(memories) / sizeof(struct layout_t);
@@ -157,12 +153,13 @@ int baremetal_instance_entry_main(int argc, char** argv)
         .tm_sec = 57
     };
     memcpy(&instance->time, &time, sizeof(struct tm));
-    //#ifdef NIDAVELLIR_SYSTEM_TEST
+#ifdef NIDAVELLIR_SYSTEM_TEST
+	fifoBuf_init(&stdout_698, malloc(512), 512);
     fifoBuf_init(&stdin_698, malloc(512), 512);
     fifoBuf_init(&pipe_tx_698_req, malloc(512), 512);
     extern int open_serial_port(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
     open_serial_port(instance, &pl_rx_from_serial, NULL);
-    //#endif
+#endif
     //指向cache space
     instance->cache = malloc(256);
     instance->cache2 = malloc(sizeof(struct cache_t));
@@ -174,7 +171,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     buf = malloc(4);
     fifoBuf_init(&instance->pipe_rtc, buf, 4);
 
-    return baremetal_instance_entry(instance);
+    return nidavellir_loop(instance);
 }
 
 

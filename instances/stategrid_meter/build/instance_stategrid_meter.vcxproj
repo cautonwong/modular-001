@@ -19,8 +19,29 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\applications\app_698_server\pl_serial.c" />
+    <ClCompile Include="..\..\..\packages\dl698\fr_698.c" />
+    <ClCompile Include="..\..\..\packages\dl698\fr_698_action.c" />
+    <ClCompile Include="..\..\..\packages\dl698\fr_698_comm.c" />
+    <ClCompile Include="..\..\..\packages\dl698\fr_698_connect.c" />
+    <ClCompile Include="..\..\..\packages\dl698\fr_698_get.c" />
+    <ClCompile Include="..\..\..\packages\dl698\fr_698_security.c" />
+    <ClCompile Include="..\..\..\packages\dl698\fr_698_set.c" />
+    <ClCompile Include="..\..\..\packages\dl698\fr_axdr.c" />
+    <ClCompile Include="..\..\..\packages\kernel\bitarithm.c" />
+    <ClCompile Include="..\..\..\packages\kernel\fifo.c" />
+    <ClCompile Include="..\..\..\packages\kernel\memory.c" />
+    <ClCompile Include="..\..\..\packages\kernel\nidavellir.c" />
+    <ClCompile Include="..\..\..\packages\kernel\pipeline.c" />
+    <ClCompile Include="..\..\..\packages\kernel\resource.c" />
+    <ClCompile Include="..\..\..\packages\kernel\rtc.c" />
+    <ClCompile Include="..\..\..\packages\kernel\tasklet.c" />
+    <ClCompile Include="..\..\..\packages\kernel\utils.c" />
     <ClCompile Include="..\baremetal_main.c" />
-    <ClCompile Include="..\multi_threads_main.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\packages\dl698\fr_698.h" />
+    <ClInclude Include="..\..\..\packages\dl698\fr_axdr.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -80,7 +101,7 @@
     <OutDir>$(SolutionDir)\bin\</OutDir>
     <IntDir>$(SolutionDir)\build\$(ProjectName)_$(Configuration)_$(Platform)\</IntDir>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(SolutionDir)\bin;$(SolutionDir)\os\windows;</LibraryPath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(SolutionDir)\bin;$(SolutionDir)\os\windows;.\nidavellir\bin</LibraryPath>
     <TargetName>$(ProjectName)_$(Configuration)_$(Platform)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -96,7 +117,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;HAVE_SNPRINTF;HAVE_STRUCT_TIMESPEC;HAVE_VSNPRINTF;_CRT_SECURE_NO_WARNINGS;_WIN32;NIDAVELLIR_TEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;HAVE_SNPRINTF;HAVE_STRUCT_TIMESPEC;NIDAVELLIR_SYSTEM_TEST;HAVE_VSNPRINTF;_CRT_SECURE_NO_WARNINGS;_WIN32;NIDAVELLIR_TEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <DisableSpecificWarnings>4819</DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -107,7 +128,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>kernel_baremetal_$(Configuration)_$(Platform).lib;cmocka_$(Configuration)_$(Platform).lib;tx_$(Configuration)_$(Platform).lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;Psapi.lib;Ws2_32.lib;iphlpapi.lib;Userenv.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>kernel_baremetal_$(Configuration)_$(Platform).lib;pkg_cmocka_$(Configuration)_$(Platform).lib;kernel32.lib;user32.lib;pkg_cmocka_Debug_Win32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;Psapi.lib;Ws2_32.lib;iphlpapi.lib;Userenv.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\nidavellir\bin\</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>

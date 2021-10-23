@@ -103,8 +103,9 @@ struct pipeline_t pl_tx_dlms;
 
 struct pipeline_t *pipelines[]= 
 {
-    &pl_rx_dlms,
-    &pl_tx_dlms,
+    &pl_rx_698,
+    &pl_tx_698,
+#if 0
     &pl_msta,
     &pl_sta_tx_to_msta,
     &pl_meter_tx_to_msta,
@@ -118,9 +119,10 @@ struct pipeline_t *pipelines[]=
     &pl_msta_tx_to_sta,
     &pl_msta_tx_to_bt,
     &pl_msta_rx_from_bt,
-//#ifdef NIDAVELLIR_SYSTEM_TEST
+#endif
+#ifdef NIDAVELLIR_SYSTEM_TEST
     &pl_tx_to_serial,
-//#endif
+#endif
 };
 
 int update_instance_rtc(struct instance_t* instance)
@@ -132,7 +134,7 @@ int update_instance_rtc(struct instance_t* instance)
     return 0;
 }
 
-int baremetal_instance_entry(int argc, char** argv)
+int baremetal_instance_entry_mian(int argc, char** argv)
 {
     //初始化硬件
     //初始化固件
@@ -151,10 +153,10 @@ int baremetal_instance_entry(int argc, char** argv)
 
     struct instance_t* instance = malloc(sizeof(struct instance_t));
     memset(instance, 0, sizeof(struct instance_t));
-    instance->recipe = recipe;
+    instance->recipe = &recipe;
     instance->ms = 0;
-    init_memory(instance, recipe->layout, recipe->layout_n);
-    init_ipc_matrix();
+    init_memory(instance, recipe.layout, recipe.layout_n);
+    //init_ipc_matrix();
     struct tm time =
     {
         .tm_year = 2021 - 1900,   /* years are counted from 1900 */
@@ -165,10 +167,13 @@ int baremetal_instance_entry(int argc, char** argv)
         .tm_sec = 57
     };
     memcpy(&instance->time, &time, sizeof(struct tm));
-    //#ifdef NIDAVELLIR_SYSTEM_TEST
+#ifdef NIDAVELLIR_SYSTEM_TEST
+	fifoBuf_init(&stdout_698, malloc(512), 512);
+    fifoBuf_init(&stdin_698, malloc(512), 512);
+    fifoBuf_init(&pipe_tx_698_req, malloc(512), 512);
     extern int open_serial_port(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
     open_serial_port(instance, &pl_rx_from_serial, NULL);
-    //#endif
+#endif
     //指向cache space
     instance->cache = malloc(256);
     instance->cache2 = malloc(sizeof(struct cache_t));
@@ -180,6 +185,11 @@ int baremetal_instance_entry(int argc, char** argv)
     buf = malloc(4);
     fifoBuf_init(&instance->pipe_rtc, buf, 4);
 
-    return baremetal_loop(instance);
+    return nidavellir_loop(instance);
 }
 
+
+int main(int argc, char** argv)
+{
+    baremetal_instance_entry_mian(argc, argv);
+}

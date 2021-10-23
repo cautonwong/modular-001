@@ -2,6 +2,73 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="..\baremetal_main.c" />
-    <ClCompile Include="..\multi_threads_main.c" />
+    <ClCompile Include="..\..\..\packages\dl698\fr_698.c">
+      <Filter>app_698_server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\dl698\fr_698_action.c">
+      <Filter>app_698_server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\dl698\fr_698_comm.c">
+      <Filter>app_698_server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\dl698\fr_698_connect.c">
+      <Filter>app_698_server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\dl698\fr_698_get.c">
+      <Filter>app_698_server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\dl698\fr_698_security.c">
+      <Filter>app_698_server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\dl698\fr_698_set.c">
+      <Filter>app_698_server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\dl698\fr_axdr.c">
+      <Filter>app_698_server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\bitarithm.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\fifo.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\memory.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\nidavellir.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\pipeline.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\resource.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\rtc.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\tasklet.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\utils.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\applications\app_698_server\pl_serial.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="app_698_server">
+      <UniqueIdentifier>{bd39b51e-5a24-4e15-aa10-2cb7369f8dcb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="kernel">
+      <UniqueIdentifier>{5aa0e6cd-099b-45c7-b5bb-fe19d3b5f41c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\packages\dl698\fr_698.h">
+      <Filter>app_698_server</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\packages\dl698\fr_axdr.h">
+      <Filter>app_698_server</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
