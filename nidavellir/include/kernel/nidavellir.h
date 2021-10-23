@@ -20,7 +20,7 @@
 
 //#include "kernel\cmocka.h"
 
-#define VERBOSE
+//#define VERBOSE
 
 //to-be-deleted
 extern struct fifo_t pipe_msta_rx_from_meter;//rx fifo
@@ -364,14 +364,25 @@ struct upgrade_info_t
     uint16_t tm_remained;//升级使能剩余时间 0x07fb0302
     uint8_t bits[upgrade_setsize];//升级程序位图信息 0x07fb0303
 };
+
+struct resource_ctx_t
+{
+    struct list_head app_list;
+    struct list_head dev_list;
+    struct list_head map_list;
+    uint8_t ram_device_name;
+    uint8_t resource_block_name;
+};
+
 struct mbase_control_block_t;
 struct instance_t
 { 
     //common control block
-    uint8_t memory[8*1024];//kernel space && user space
-    uint8_t kernel_space[1024];
-    uint8_t user_space[1024];//work + worker
-    uint32_t areas_used[9];//每个内存区域的已用空间 单位字节
+    //uint8_t memory[8*1024];//kernel space && user space
+    //uint8_t kernel_space[1024];
+    //uint8_t user_space[1024];//work + worker
+    //uint32_t areas_used[9];//每个内存区域的已用空间 单位字节
+    struct resource_ctx_t* ctx;
     uint32_t  ms;
     struct recipe_t *recipe;
     struct mbase_control_block_t * mbase_cb;

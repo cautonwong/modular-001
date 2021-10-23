@@ -30,16 +30,10 @@
     <ClCompile Include="..\..\..\packages\kernel\fifo.c">
       <Filter>kernel</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\kernel\memory.c">
-      <Filter>kernel</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\packages\kernel\nidavellir.c">
       <Filter>kernel</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\packages\kernel\pipeline.c">
-      <Filter>kernel</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\packages\kernel\resource.c">
       <Filter>kernel</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\packages\kernel\rtc.c">
@@ -54,6 +48,7 @@
     <ClCompile Include="..\..\..\packages\dl698\fr_698_comm.c">
       <Filter>dl698</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\app_resource_tool\resource_ tool.c" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dl698">
