@@ -6,8 +6,11 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdio.h>
+#ifdef WIN32
 #include <windows.h>
 #include "test_utils.h"
+#endif
+
 
 #include <stdlib.h>
 #include "time.h"
@@ -20,7 +23,7 @@
 
 //#include "kernel\cmocka.h"
 
-#define VERBOSE
+//#define VERBOSE
 
 //to-be-deleted
 extern struct fifo_t pipe_msta_rx_from_meter;//rx fifo

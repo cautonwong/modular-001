@@ -1,1 +1,1 @@
-#include "kernel\nidavellir.h"
+#include "nidavellir.h"

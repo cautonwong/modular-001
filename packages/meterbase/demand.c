@@ -7,7 +7,7 @@
  *
  */
 
-#include "kernel\nidavellir.h"
+#include "nidavellir.h"
 #include "applications.h"
 
 //每秒执行

@@ -1,5 +1,5 @@
 
-#include "kernel\nidavellir.h"
+#include "nidavellir.h"
 
 struct coder_t
 {

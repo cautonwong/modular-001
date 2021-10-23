@@ -1,4 +1,4 @@
-#include "kernel\nidavellir.h"
+#include "nidavellir.h"
 #include "fr_698.h"
 
 
@@ -66,16 +66,18 @@ uint16_t get_crc16(uint16_t cs)
     return cs;
 }
 
-int update_hcs_fcs(struct context_698_t* ctx, uint8_t* byte)
+int update_hcs_fcs(void* pctx, uint8_t* byte)
 {
+    struct context_698_t* ctx = pctx;
     ctx->tx_len++;
     ctx->hcs = update_crc16(ctx->hcs, *byte);
     ctx->fcs = update_crc16(ctx->fcs, *byte);
     return 0;
 }
 
-int update_fcs(struct context_698_t* ctx, uint8_t* byte)
+int update_fcs(void* pctx, uint8_t* byte)
 {
+    struct context_698_t* ctx = pctx;
     ctx->tx_len++;
     if (is_scrambler_set(ctx->ctrl))
     {
@@ -114,9 +116,10 @@ int __pack_apdu_byte(struct pipeline_t* pipeline, uint8_t* byte)
     b 扩展逻辑地址/分路地址
     c 地址  广播地址的长度固定为1字节，广播地址=AAH
 */
-int matcher_698(struct context_698_t* ctx, uint8_t* b)
+int matcher_698(void* pctx, uint8_t* b)
 {
     uint8_t byte = *b;
+    struct context_698_t* ctx = pctx;
 
     if((ctx->step > 0) && (ctx->step <= 5))
     {
