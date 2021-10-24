@@ -90,12 +90,13 @@ struct app_list_t
 void *__nd_malloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_size)
 {
     uint32_t free = block_size - *used;
+    uint32_t start = addr + *used;
 
     if (free >= size)
     {
         *used += size;
-        memset((uint8_t*)(addr + *used), 0x00, size);
-        return (addr + *used);
+        memset((uint8_t*)start, 0x00, size);
+        return start;
     }
 
     return NULL;
@@ -153,7 +154,7 @@ void* nd_malloc(struct resource_ctx_t *ctx, uint8_t block_name, uint32_t size)
         return NULL;
     }
 
-    return __nd_malloc(block->first_addr, block->used, size, block->size);
+    return __nd_malloc(block->first_addr, &block->used, size, block->size);
 }
 
 //注册API

@@ -227,8 +227,8 @@ struct tasklet_t
     struct tm start;
 };
 
-#define upgrade_setsize    1000
-#define tasklet_setsize    16
+#define upgrade_setsize    16
+#define tasklet_setsize    1
 #define bit_set(n, p)  ((p)[(n)/8] |=  (1 << ((n) & 7)))
 #define bit_clr(n, p)  ((p)[(n)/8] &= ~(1 << ((n) & 7)))
 #define bit_isset(n,p) ((p)[(n)/8] &   (1 << ((n) & 7)))
