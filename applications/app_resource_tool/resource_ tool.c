@@ -434,6 +434,46 @@ int8_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t b
     return -1;
 }
 
+int8_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size)
+{
+    struct block_device_t* device = NULL;
+    struct resource_ctx_t* ctx = instance->ctx;
+    struct block_device_children_t* block = NULL;
+
+    //查找设备
+    device = look_up_device(ctx, device_name);
+    if ((device != NULL) && (device->driver != NULL) && (device->driver->read_dev != NULL))
+    {
+        block = look_up_block(ctx, device, block_name);
+        if ((block != NULL) && (buf_size <= block->size))
+        {
+            return device->driver->read_dev(instance, block->first_addr, buf, block->size);
+        }
+    }
+
+    return -1;
+}
+
+int8_t nd_set_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf, uint32_t buf_size)
+{
+    struct block_device_t* device = NULL;
+    struct resource_ctx_t* ctx = instance->ctx;
+    struct block_device_children_t* block = NULL;
+
+    //查找设备
+    device = look_up_device(ctx, device_name);
+    if ((device != NULL) && (device->driver != NULL) && (device->driver->read_dev != NULL))
+    {
+        block = look_up_block(ctx, device, block_name);
+        if ((block != NULL) && (buf_size <= block->size))
+        {
+            return device->driver->write_dev(instance, block->first_addr, buf, block->size);
+        }
+    }
+
+    return -1;
+}
+
 int8_t nd_set(struct instance_t* instance, struct dlms_obj_t* obj, uint8_t* buf, uint16_t buf_size)
 {
     return -1;
