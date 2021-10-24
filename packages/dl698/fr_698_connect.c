@@ -108,8 +108,8 @@ const uint8_t CODE esam_report_request[4]         = {0x80, 0x14, 0x01, 0x03};//�
 const uint8_t CODE esam_report_response[4]        = {0x80, 0x0e, 0x40, 0x81};//上报确认
 
 #endif
-//int nd_get(struct instance_t* instance, uint32_t view_id, uint8_t* buf, uint16_t buf_size)
-//int nd_set(struct instance_t* instance, uint32_t view_id, uint8_t* buf, uint16_t buf_size)
+//int fr_698_get(struct instance_t* instance, uint32_t view_id, uint8_t* buf, uint16_t buf_size)
+//int fr_698_set(struct instance_t* instance, uint32_t view_id, uint8_t* buf, uint16_t buf_size)
 
 
 uint8_t __password_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -121,7 +121,7 @@ uint8_t __password_process(struct instance_t* instance, struct pipeline_t* pipel
     uint8_t password[33] = {0};
     uint32_t oad = 0;
 
-    if (nd_get(instance, oad, password, sizeof(password)) < 0)
+    if (fr_698_get(instance, oad, password, sizeof(password)) < 0)
     {
         return DAR_OTHERS_ERROR;
     }
@@ -169,12 +169,12 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
 
 
     uint32_t oad = 0;
-    if (nd_ioctrl(instance, oad, buf, 20, &offset) < 0)
+    if (fr_698_ioctrl(instance, oad, buf, 20, &offset) < 0)
     {
         return DAR_OTHERS_ERROR;
     }
 
-    if ( false != nd_ioctrl(buf, buf, &offset))
+    if ( false != fr_698_ioctrl(buf, buf, &offset))
 	{
 		//memcopy(&dectypt->rn[1],&buf[0],dectypt->rn[0]);
         

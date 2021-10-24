@@ -396,6 +396,7 @@ int fr_apdu_effective_check(struct instance_t* instance, struct pipeline_t* pipe
 
 }
 
+
 int fr_serve_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
@@ -431,7 +432,7 @@ int fr_serve_one_object(struct instance_t* instance, struct pipeline_t* pipeline
         p[cache->wr++] = 0x05;//type encoder
 
         //fifo->rd ++
-        int r  = 0;
+        int r = 0;
         //int r = __read(mesg->id, p + cache->wr, 4);
         fifo->rd += r;
         if (r < 0)

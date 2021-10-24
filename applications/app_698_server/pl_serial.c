@@ -11,7 +11,11 @@ struct context_serial_t
     HANDLE   handle;
 };
 
+<<<<<<< .mine
 struct context_serial_t ctx_serial_1 = { L"\\\\.\\com1",NULL};
+=======
+struct context_serial_t ctx_serial_1 = { L"\\\\.\\com10",NULL};
+>>>>>>> .theirs
 
 int open_serial_port(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {

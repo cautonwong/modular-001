@@ -20,6 +20,12 @@
 
 #define CA_TYPE_TER(ca)     ((ca&0xF0) == 0)
 
+
+#define fr_698_get nd_get
+#define fr_698_set nd_set
+#define fr_698_ioctrl nd_ioctrl
+
+
 /** data-assess-result */
 enum dl698_dar_t
 {

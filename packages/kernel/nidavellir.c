@@ -127,9 +127,10 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     struct cache_t* cache = instance->cache2;
 
     //中断函数(定时器  串口中断)触发
+#ifdef NIDAVELLIR_SYSTEM_TEST
     extern int fr_rx_data_from_serial(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
     fr_rx_data_from_serial(instance, &pl_rx_from_serial, &mesg);
-
+#endif
     fr_sw_rtc(instance, NULL, &mesg);//在这里接收来自定时器或中断的时钟更新信号
 
     //处理延迟任务 deffered_task

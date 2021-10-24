@@ -9,7 +9,7 @@
 
 int fr_set_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    //if (nd_set(instance, mesg->id, cache->wr, sizeof(password)) < 0)
+    //if (fr_698_set(instance, mesg->id, cache->wr, sizeof(password)) < 0)
     {
         return DAR_OTHERS_ERROR;
     }
@@ -54,7 +54,7 @@ int fr_handle_set_request(struct instance_t* instance, struct pipeline_t* pipeli
                 then_get_delay = buf_to_uint16_msb(then_get_delay);
                 //延时                
                 
-                if (nd_get(instance, get_oad, cache->wr, sizeof(password)) < 0)
+                if (fr_698_get(instance, get_oad, cache->wr, sizeof(password)) < 0)
                 {
                     return DAR_OTHERS_ERROR;
                 }
