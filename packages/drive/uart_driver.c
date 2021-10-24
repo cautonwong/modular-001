@@ -10,6 +10,8 @@
 #include "nidavellir.h"
 #include "type_def.h"
 #include "time_link.h"
+#include "pin_function_def.h"
+
 
 #define MCU_UART_NUM    6
 
@@ -46,7 +48,7 @@ static uint8 txbuffer[512];
 void ndv_uart0_rx(void)
 {
     uint8_t rcv_data = 0;
-    if(true == mcu_uart_recive_byte(0 , &rcv_data))
+    if(true == mcu_uart_recive_byte(&rcv_data , 0))
     {
         fifoBuf_putByte(uart_dev[0].dev_output_fifo, rcv_data);
         uart_contex[0].rx_time_out = 5;
@@ -73,7 +75,7 @@ uint8 uart_time_process(void *tickpara)
     
     if(uart_contex[dev->dev_index].rx_time_out == 1)
     {
-        //
+        mcu_uart_recive_enable(0 , dev->dev_index);
     }
     return true;
 }
@@ -104,11 +106,43 @@ int uart_dev_initialize(struct dev_info_t *dev)
         {
             infrared_enable = 1;
         }
+        if(dev->dev_type == DEV_RS4851)
+        {
+            RS485_RCV_EN();
+            RS485_RX_INPUT();
+            RS485_TX_OUTPUT();
+            RS485_TX_HIGH();
+        }
         ndv_isr_handle_regsit(ndv_uart0_tx , IRQ_UART0_TX+(index<<1));
         ndv_isr_handle_regsit(ndv_uart0_rx , IRQ_UART0_RX+(index<<1));
         mcu_uart_init((void*)dev->cfg, index, infrared_enable);
+        mcu_uart_recive_enable(1 , index);
     }
+    return true;
 }
+
+
+int uart_dev_control(struct dev_info_t* dev, uint8 ctrl , void *ctrl_parameter)
+{
+     
+    return true;
+}
+
+
+int uart_dev_write(struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
+{
+
+
+     return true;
+}
+
+const struct driver_ops_t  CODE uart_driver =
+{
+    uart_dev_initialize,
+    uart_dev_control,
+    __NULL,
+    uart_dev_write,
+};
 
 
 

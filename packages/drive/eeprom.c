@@ -14,6 +14,7 @@
 #define EEPROM_OPERATE_CNTS     300
 #define EEPROM_HARD_ADDR        0x00              //电路属性直接代码写死，包括原来的resource中配置的IO等属性也直接在总线驱动中写死，总线驱动的索引编号由dev里面带进去。
 #define EEPROM_SIZE             (dev->data_size)  //BOM属性从dev里面带进来
+#define EEPROM_PAGE_SIZE        0x80
 
 static uint8    eeprom_err_cnts = 0;
 static uint16    eeprom_operate_cnts = 0;
@@ -124,15 +125,15 @@ uint8 eeprom_write(uint32 physics_addr, INT8U* DataAddr, uint16 Len, struct dev_
     {
         data_addr = physics_addr & 0x0000FFFF;
 
-        tmp = data_addr & (EEPROM_SIZE - 1);
+        tmp = data_addr & (EEPROM_PAGE_SIZE - 1);
 
         if (tmp != 0)
         {
-            length = EEPROM_SIZE - tmp;
+            length = EEPROM_PAGE_SIZE - tmp;
         }
         else
         {
-            length = EEPROM_SIZE;
+            length = EEPROM_PAGE_SIZE;
         }
 
         if (Len < length)
@@ -254,6 +255,7 @@ uint8 eeprom_data_check(uint32 physics_addr, volatile uint8* pData, uint16 Len, 
             if (Len != 0)
             {
                 iic_ops->rx(&readData, index);
+                iic_ops->ctrl(ACK_0 , index);
             }
 
             iic_ops->ctrl(STOP , index);
@@ -381,14 +383,13 @@ int eeprom_control(struct dev_info_t* dev, uint8 ctrl , void *ctrl_parameter)
         }
         
         mcu_clear_watchdog();
-        
-        if(true == eeprom_write(addr, test_wr, len, dev))
+        if(true == eeprom_write_chk(dev, addr, len, test_wr))
         {
             for(i=0;i<300;i++)
             {
                test_rd[i] = 0;
             }            
-            eeprom_data_check(addr, test_rd, len, dev);
+            eeprom_read_chk(dev , addr, len , test_rd); 
             if(mem_compare(test_wr , test_rd , len)!=0)
             {
                 Err = 0x55;

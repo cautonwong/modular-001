@@ -2,6 +2,9 @@
 #ifndef MEA_RN8209_H_
 #define MEA_RN8209_H_
 
+#include "target.h"
+#include "lib_gpio.h"
+
 #define	SYSCON		0x00
 #define	EMUCON		0x01
 #define	HFCONST		0x02
@@ -45,9 +48,16 @@
 #endif
 
 
-#define  PIN_RN8209_RX_OUT_HIGH()   {;}  //根据宏定义配置管脚
-#define  PIN_RN8209_RX_OUT_LOW()    {;}  //根据宏定义配置管脚
-#define  PIN_RN8209_RX_IN_MODE()    {;}  //根据宏定义配置管脚
+/*--------------------------单相RN8209计量芯片控制-------------------------------*/ 
+#define  BITBAND_ADDR(addr, bitnum)   ((((uint32_t)addr) & 0xF0000000) + \
+                                        0x2000000 + ((((uint32_t)addr) & 0xFFFFF) << 5) + (bitnum << 2))
+
+#define  PIN_RN8209_RX_OUT_MODE()   {*((uint32*)GPIOA_OEN) &= ~BIT(15); *((uint32*)GPIOA_IE) &= ~BIT(15);}
+#define  PIN_RN8209_RX_IN_MODE()    {*((uint32*)GPIOA_IE) |= BIT(15);  *((uint32*)GPIOA_OEN) |= BIT(15);}
+#define  PIN_RN8209_RX_OUT_HIGH()   {*((uint32*)BITBAND_ADDR(GPIOA_DAT,15)) = 1;}
+#define  PIN_RN8209_RX_OUT_LOW()    {*((uint32*)BITBAND_ADDR(GPIOA_DAT,15)) = 0;}
+#define  PIN_RN8209_TX_OUT_MODE()   {*((uint32*)GPIOB_OEN) &= ~BIT(5); *((uint32*)GPIOB_IE) &= ~BIT(5);}
+#define  PIN_RN8209_TX_OUT_HIGH()   {*((uint32*)BITBAND_ADDR(GPIOB_DAT,5)) = 1;}
 
 
 
@@ -97,5 +107,3 @@ extern unsigned char Rn8209InitConfig();        //RN8209芯片基本参数设置校表
 extern void MeasureValue(struct dev_info_t* dev);//主程序调用实时数据计算
 
 #endif
-
-

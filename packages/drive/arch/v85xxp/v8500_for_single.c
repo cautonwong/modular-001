@@ -40,6 +40,25 @@ static uint32 get_system_clk(void)
     return temp;
 }
 
+
+void cm0_systick_init(uint8 cmd)
+{
+    uint32 cpu_clk;
+    
+    if(cmd)
+    {
+        cpu_clk = get_system_clk();
+        SysTick->LOAD = cpu_clk / 100 - 1UL;
+        SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_ENABLE_Msk;
+        NVIC_EnableIRQ( SysTick_IRQn );
+    }
+    else
+    {
+        SysTick->CTRL = 0;
+        NVIC_DisableIRQ( SysTick_IRQn );
+    }
+}
+
 static void sysclk_at_3m2768(uint16 flag)
 {
 
@@ -127,6 +146,38 @@ void MComp1Init(void)
     //    KHandlerTabCfg(ANA_IRQn,ANA_COMP1_Interrupt,2);
 }
 
+
+/*全速运行26M */
+void sys_clock_normal(void) 
+{
+    CLK_InitTypeDef CLK_Struct;
+    uint32_t Periphral=0;
+
+    CLK_Struct.ClockType = CLK_TYPE_AHBSRC \
+                        |CLK_TYPE_PLLL   \
+                        |CLK_TYPE_HCLK   \
+                        |CLK_TYPE_PCLK;
+    CLK_Struct.AHBSource      = CLK_AHBSEL_LSPLL;
+    CLK_Struct.PLLL.Frequency = CLK_PLLL_26_2144MHz;
+    CLK_Struct.PLLL.Source    = CLK_PLLLSRC_XTALL;
+    CLK_Struct.PLLL.State     = CLK_PLLL_ON;
+    CLK_Struct.HCLK.Divider   = 1;
+    CLK_Struct.PCLK.Divider   = 1;
+    CLK_ClockConfig(&CLK_Struct);
+    
+    Periphral = CLK_APBPERIPHRAL_PMU | CLK_APBPERIPHRAL_RTC | CLK_APBPERIPHRAL_ANA \
+                | CLK_APBPERIPHRAL_TIMER | CLK_APBPERIPHRAL_UART3 \
+                | CLK_APBPERIPHRAL_UART4 | CLK_APBPERIPHRAL_UART5 \
+                | CLK_APBPERIPHRAL_UART0;
+    CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_LCD | CLK_AHBPERIPHRAL_GPIO), ENABLE);
+    CLK_APBPeriphralCmd(Periphral , ENABLE);
+    
+    // 初始化上电检测?
+    GPIOE->OEN |= (0x00000001 << 5);// powercheck
+    GPIOE->IE  |= (0x00000001 << 5);
+}
+
+
 /***********************************************************
  * @function_name: v85xxp_init
  * @function_file: cpu.c
@@ -168,8 +219,13 @@ void mcu_init(void *init_type)
         __NOP();
     }
     sysclk_at_3m2768(flag);
+    
+    sys_clock_normal();
+    
     v85xxp_clear_watchdog();
-    //NVIC_EnableIRQ(CMP_IRQn);  // 待优化 
+    
+    __enable_irq();
+
 }
 
 
@@ -264,9 +320,10 @@ uint8 mcu_uart_close(uint8 uart_index)
     return true;
 }
 
-void mcu_uart_recive_enable(uint8 ops_enable, uint8 uart_index)
+void mcu_uart_recive_enable(uint8 ops_enable, size_t uart_index)
 {
     UART_TypeDef* UARTx;
+    uint8 tmp = 0;
 
     if (uart_index < 6)
     {
@@ -285,10 +342,12 @@ void mcu_uart_recive_enable(uint8 ops_enable, uint8 uart_index)
             UARTx->CTRL &= ~(UART_CTRL_RXEN + UART_CTRL_RXIE);
         }
         UARTx->STATE = BIT1 | BIT3 | BIT4;
+        
+        tmp = UARTx->DATA;
     }
 }
 
-void mcu_uart_send_byte(uint8 send_data, uint8 uart_index)
+int mcu_uart_send_byte(uint8 send_data, size_t uart_index)
 {
     UART_TypeDef* UARTx;
 
@@ -300,7 +359,7 @@ void mcu_uart_send_byte(uint8 send_data, uint8 uart_index)
     }
 }
 
-uint8 mcu_uart_recive_byte(uint8 uart_index, uint8* byte)
+int mcu_uart_recive_byte(uint8* byte , size_t uart_index)
 {
     UART_TypeDef* UARTx;
 
@@ -328,7 +387,8 @@ uint8 mcu_uart_recive_byte(uint8 uart_index, uint8* byte)
     }
     return false;
 }
-void mcu_uart_send_enable(uint8 ops_enable, uint8 uart_index)
+
+void mcu_uart_send_enable(uint8 ops_enable, size_t uart_index)
 {
     UART_TypeDef* UARTx;
 
@@ -351,7 +411,6 @@ void mcu_uart_send_enable(uint8 ops_enable, uint8 uart_index)
         UARTx->STATE = BIT2 | BIT5;
     }
 }
-
 
 uint8 mcu_uart_set_baud(uint16 baud, uint8 uart_index)
 {
@@ -381,7 +440,7 @@ uint8 mcu_uart_set_baud(uint16 baud, uint8 uart_index)
     return true;
 }
 
-uint8 mcu_uart_get_tx_status(uint8 uart_index)
+int mcu_uart_get_tx_status(size_t uart_index)
 {
     UART_TypeDef* UARTx;
 
@@ -396,7 +455,7 @@ uint8 mcu_uart_get_tx_status(uint8 uart_index)
     return false;
 }
 
-uint8 mcu_uart_get_rx_status(uint8 uart_index)
+int mcu_uart_get_rx_status(size_t uart_index)
 {
     UART_TypeDef* UARTx;
 
@@ -788,6 +847,42 @@ void mcu_exit_sleep_then_enter_normal(void)
 }
 
 
+void mcu_main_power_on_config(void)
+{
+    cm0_systick_init(1);
+
+}
+
+void mcu_main_power_off_config(void)
+{
+    cm0_systick_init(0);
+    
+    
+}
+
+
+
+int emu_uart_init(size_t index)
+{
+    UART_InitType* InitType = (UART_InitType*)index;
+    
+    mcu_uart_init(InitType, 3, 0);
+
+}
+
+const struct bus_ops_t mcu_uart_bus_ops = 
+{
+    BUS_UART,
+    3,
+    emu_uart_init,
+    mcu_uart_send_enable,
+    mcu_uart_send_byte,
+    mcu_uart_recive_enable,
+    mcu_uart_recive_byte,
+    mcu_uart_get_tx_status,
+    mcu_uart_get_rx_status,
+    __NULL, 
+};
 
 
 #ifndef  ASSERT_NDEBUG
@@ -808,4 +903,15 @@ void assert_errhandler(uint8_t* file, uint32_t line)
   {
   }
 }
+
+
+
+
+
+
+
+
+
+
+
 #endif

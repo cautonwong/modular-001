@@ -26,7 +26,7 @@ unsigned char ReadRn8209WithChk(unsigned char ChipAddr, unsigned char* Buf, unsi
         {
             timeout--;
         }
-        bus_ops->rx_enable(1 , index);
+        bus_ops->rx_enable(2 , index);
         bus_ops->tx_enable(0 , index);
         for (i = 0; i < (length + 1); i++)
         {
@@ -50,12 +50,11 @@ unsigned char ReadRn8209WithChk(unsigned char ChipAddr, unsigned char* Buf, unsi
                     check_sum = ~check_sum;
                     if (check_sum == rx_buffer[i])
                     {
-                        memcpy(Buf, (unsigned char*)(rx_buffer), length);
+                        mem_swap_cpy(Buf, (unsigned char*)(rx_buffer), length);
                         return true;
                     }
                 }
             }
-
         }
     }
 
@@ -115,7 +114,7 @@ unsigned char WriteRn8209Check(unsigned char ChipAddr, unsigned char* Buf, unsig
         {
             if (true == ReadRn8209WithChk(ChipAddr, buffer, length , dev))
             {
-                if (0 == DataCompare(scr, buffer, length))
+                if (0 == mem_compare(scr, buffer, length))
                 {
                     return true;
                 }
@@ -177,6 +176,7 @@ unsigned char Rn8209InitConfig(struct dev_info_t* dev)
 
 void ResetRn8209(void)
 {
+    PIN_RN8209_RX_OUT_MODE();
     PIN_RN8209_RX_OUT_HIGH();
     mcu_delay_us(30000);
     PIN_RN8209_RX_OUT_LOW();
@@ -250,26 +250,46 @@ int Rn8209_initialize(struct dev_info_t* dev)
 {
     const struct bus_ops_t *bus_ops = dev->dev_bus_ops;
 
-    return bus_ops->init(bus_ops->bus_index);
+    //return bus_ops->init((size_t)dev->cfg);
+    return 0;
 }
 
 int Rn8209_control(struct dev_info_t* dev , uint8 ctrl , void* ctrl_parameter)
 {
+    const struct bus_ops_t *bus_ops = dev->dev_bus_ops;
+    
+    struct Rn8209AdjSet_t set_test=
+    {
+        0x0000,
+        0x0000,
+        0x0000,
+        0x00,
+    };
+    
     switch (ctrl)
     {
-    case AC_POWER_ON:
-        if (true == Rn8209DeviceIDCheck(dev))
-        {
-            return Rn8209InitConfig(dev);
-        }
-        break;
-    case AC_POWER_OFF:
-        ResetRn8209();
-        break;
-    default:
-        break;
+        case AC_POWER_ON:
+            ResetRn8209();
+            PIN_RN8209_TX_OUT_MODE();
+            PIN_RN8209_TX_OUT_HIGH();
+            
+            bus_ops->init((size_t)dev->cfg);
+            if (true == Rn8209DeviceIDCheck(dev))
+            {
+                Rn8209InitConfig(dev);
+            }
+            
+            Rn8209AdjParaSet(&set_test , dev);
+            break;
+        case AC_POWER_OFF:
+            ResetRn8209();
+            break;
+        default:
+            break;
 
     }
+    
+    return 0;
 }
 
 int Rn8209_read(struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src )
@@ -287,7 +307,7 @@ int Rn8209_write(struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
 
 }
 
-const struct driver_ops_t dev_rn8209_drv =
+const struct driver_ops_t rn8209_drv =
 {
     Rn8209_initialize,
     Rn8209_control,

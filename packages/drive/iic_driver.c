@@ -73,8 +73,8 @@ void iic_ctrl(uint8 ctrl , size_t index)
           IIC_DELAY();
           SCL_DOUT_1();
           SCL_OUTPUT();
-          SCL_DOUT_0();           
-          break; 
+          SCL_DOUT_0();
+          break;
          case ACK_0:
           SDA_DOUT_1();
           SDA_OUTPUT();
@@ -94,41 +94,42 @@ int iic_send_byte(uint8 Data , size_t index)
 {
     register uint8_t i,ACK;
         
-        SDA_OUTPUT();
-	for( i=0;i<8;i++ )
-	{
-            if( Data & 0x00000080 )
-            {
-               SDA_DOUT_1();
-            }
-            else
-            {
-               SDA_DOUT_0();
-            }
-            IIC_DELAY();
-            SCL_DOUT_1();
-            Data=Data<<1;
-            SCL_DOUT_0();
-            IIC_DELAY();
-	}
-        
-        SDA_INPUT();
-	IIC_DELAY();
-	SCL_DOUT_1();
-	IIC_DELAY();
-        
-        while (SDA_GET_DIN() != 0)
+    SCL_DOUT_0();
+    SDA_OUTPUT();
+    for( i=0;i<8;i++ )
+    {
+        if( Data & 0x00000080 )
         {
-            if (++i >= 200)
-            {
-                SCL_DOUT_0();
-                return false;
-            }
+           SDA_DOUT_1();
         }
+        else
+        {
+           SDA_DOUT_0();
+        }
+        IIC_DELAY();
+        SCL_DOUT_1();
+        Data=Data<<1;
         SCL_DOUT_0();
         IIC_DELAY();
-        
-	return ACK;
+    }
+    
+    SDA_INPUT();
+    IIC_DELAY();
+    SCL_DOUT_1();
+    IIC_DELAY();
+    
+    while (SDA_GET_DIN() != 0)
+    {
+        if (++i >= 200)
+        {
+            SCL_DOUT_0();
+            return false;
+        }
+    }
+    SCL_DOUT_0();
+    IIC_DELAY();
+    
+    return true;
 }
 
 
