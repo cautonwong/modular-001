@@ -230,8 +230,8 @@ struct tasklet_t
     struct tm start;
 };
 
-#define upgrade_setsize    1000
-#define tasklet_setsize    16
+#define upgrade_setsize    16
+#define tasklet_setsize    1
 #define bit_set(n, p)  ((p)[(n)/8] |=  (1 << ((n) & 7)))
 #define bit_clr(n, p)  ((p)[(n)/8] &= ~(1 << ((n) & 7)))
 #define bit_isset(n,p) ((p)[(n)/8] &   (1 << ((n) & 7)))
@@ -325,7 +325,7 @@ struct hw_def_t
 {
     uint32_t name;
     dev_id_t id;
-    struct resource_map_t *map;
+//    struct resource_map_t *map;
     struct driver_t *driver;
     //propery;
 };
@@ -367,14 +367,32 @@ struct upgrade_info_t
     uint16_t tm_remained;//升级使能剩余时间 0x07fb0302
     uint8_t bits[upgrade_setsize];//升级程序位图信息 0x07fb0303
 };
+
+struct resource_map_t
+{
+    uint8_t map_name;
+    int8_t(*fun)(struct instance* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj);
+    struct list_head sibling;
+};
+
+struct resource_ctx_t
+{
+    struct list_head app_list;
+    struct list_head dev_list;
+    struct list_head map_list;
+    uint8_t ram_device_name;
+    uint8_t resource_block_name;
+};
+
 struct mbase_control_block_t;
 struct instance_t
 { 
     //common control block
-    uint8_t memory[8*1024];//kernel space && user space
-    uint8_t kernel_space[1024];
-    uint8_t user_space[1024];//work + worker
-    uint32_t areas_used[9];//每个内存区域的已用空间 单位字节
+    //uint8_t memory[8*1024];//kernel space && user space
+    //uint8_t kernel_space[1024];
+    //uint8_t user_space[1024];//work + worker
+    //uint32_t areas_used[9];//每个内存区域的已用空间 单位字节
+    struct resource_ctx_t* ctx;
     uint32_t  ms;
     struct recipe_t *recipe;
     struct mbase_control_block_t * mbase_cb;

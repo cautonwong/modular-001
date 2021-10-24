@@ -105,9 +105,9 @@ struct pipeline_t *pipelines[]=
 {
     &pl_rx_698,
     &pl_tx_698,
-#ifdef NIDAVELLIR_SYSTEM_TEST
+//#ifdef NIDAVELLIR_SYSTEM_TEST
     &pl_tx_to_serial,
-#endif
+//#endif
 };
 
 int update_instance_rtc(struct instance_t* instance)
@@ -119,9 +119,20 @@ int update_instance_rtc(struct instance_t* instance)
     return 0;
 }
 
-
+uint8_t nd_memory[32 * 1024];
+extern void* nd_malloc(struct resource_ctx_t* ctx, uint8_t block_name, uint32_t size);
+extern uint32_t* add_block(struct resource_ctx_t* ctx, uint8_t device_name, uint8_t block_name, uint32_t block_size);
+extern struct resource_map_t* register_map(struct resource_ctx_t* ctx, uint8_t map_name,
+    int8_t(*fun)(struct instance_t* instance, uint32_t id, uint8_t mode, struct resources_obj_t* obj));
+extern int8_t resource_map_698(struct instance* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj);
+//extern int8_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size);
+//extern int8_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size);
+extern struct resource_ctx_t* init_resource_manager(uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t resource_blok_size, uint8_t resource_block_name);
 int baremetal_instance_entry_main(int argc, char** argv)
 {
+    struct resource_ctx_t* ctx;
+    struct instance_t* instance;
+    uint8_t mbase_control_block_name;
     //初始化硬件
     //初始化固件
     //初始化软件
@@ -129,7 +140,15 @@ int baremetal_instance_entry_main(int argc, char** argv)
         //每个application如何访问自己的control block?
     //链接和绑定硬件 固件 和 软件
     //运行主循环
- 
+    //一、初始化resource_manager_ctx;（申请了1K的大小，名称是0x01）
+    ctx = init_resource_manager(0x01, &nd_memory, 32 * 1024, 2 * 1024, 0x01);
+    if (ctx == NULL)
+    {
+        return -1;
+    }
+    ctx->ram_device_name = 0x01;
+    ctx->resource_block_name = 0x01;
+
     struct recipe_t recipe;
     recipe.layout = memories;
     recipe.layout_n = sizeof(memories) / sizeof(struct layout_t);
@@ -137,11 +156,24 @@ int baremetal_instance_entry_main(int argc, char** argv)
     recipe.pipeline_n = sizeof(pipelines)/sizeof(pipelines[0]);
     recipe.name = 0;
 
-    struct instance_t* instance = malloc(sizeof(struct instance_t));
+    instance = nd_malloc(ctx, ctx->resource_block_name, sizeof(struct instance_t));
+    if (instance == NULL)
+    {
+        return -1;
+    }
     memset(instance, 0, sizeof(struct instance_t));
+    instance->ctx = ctx;
     instance->recipe = &recipe;
     instance->ms = 0;
-    init_memory(instance, recipe.layout, recipe.layout_n);
+    //注册一个MAP
+    register_map(ctx, 0x01, resource_map_698);
+    //申请一个BLOCK
+    mbase_control_block_name = 0x02;
+    if (0 > add_block(ctx, 0x01, mbase_control_block_name, 8*1024))
+    {
+        return -1;
+    }
+    //init_memory(instance, recipe.layout, recipe.layout_n);
     //init_ipc_matrix();
     struct tm time =
     {
@@ -153,25 +185,25 @@ int baremetal_instance_entry_main(int argc, char** argv)
         .tm_sec = 57
     };
     memcpy(&instance->time, &time, sizeof(struct tm));
-#ifdef NIDAVELLIR_SYSTEM_TEST
-	fifoBuf_init(&stdout_698, malloc(512), 512);
-    fifoBuf_init(&stdin_698, malloc(512), 512);
-    fifoBuf_init(&pipe_tx_698_req, malloc(512), 512);
+    //#ifdef NIDAVELLIR_SYSTEM_TEST
+    fifoBuf_init(&stdout_698, nd_malloc(ctx, mbase_control_block_name,512), 512);
+    fifoBuf_init(&stdin_698, nd_malloc(ctx, mbase_control_block_name, 512), 512);
+    fifoBuf_init(&pipe_tx_698_req, nd_malloc(ctx, mbase_control_block_name, 512), 512);
     extern int open_serial_port(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
     open_serial_port(instance, &pl_rx_from_serial, NULL);
-#endif
+    //#endif
     //指向cache space
-    instance->cache = malloc(256);
-    instance->cache2 = malloc(sizeof(struct cache_t));
+    instance->cache = nd_malloc(ctx, mbase_control_block_name, 256);
+    instance->cache2 = nd_malloc(ctx, mbase_control_block_name,sizeof(struct cache_t));
     init_cache(instance->cache2, instance->cache, 256);
-    uint8_t* buf = malloc(2048);
-    ctx_698.apdu = malloc(sizeof(struct fifo_t));
+    uint8_t* buf = nd_malloc(ctx, mbase_control_block_name, 2048);
+    ctx_698.apdu = nd_malloc(ctx, mbase_control_block_name, sizeof(struct fifo_t));
     fifoBuf_init(ctx_698.apdu, buf, 2048);
 
-    buf = malloc(4);
+    buf = nd_malloc(ctx, mbase_control_block_name, 4);
     fifoBuf_init(&instance->pipe_rtc, buf, 4);
 
-    return nidavellir_loop(instance);
+    return baremetal_instance_entry(instance);
 }
 
 
@@ -180,30 +212,3 @@ int main(int argc, char** argv)
     baremetal_instance_entry_main(argc, argv);
 }
 
-
-#if 0
-void test_698_rx_entry(void** state)
-{
-    struct instance_t* instance;
-    instance = (struct instance_t*)*state;
- 
-    baremetal_instance_entry_main(instance);
-
-}
-
-int setup(void** state)
-{
-    return 0;
-}
-
-int main(int argc, char** argv) {
-
-    const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_698_rx_entry),//测试698报文的解析
-    };
-
-    cmocka_set_test_filter("test_698_rx_entry");
-
-    return cmocka_run_group_tests(tests, setup, NULL);
-}
-#endif

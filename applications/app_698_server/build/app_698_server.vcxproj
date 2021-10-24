@@ -29,13 +29,12 @@
     <ClCompile Include="..\..\..\packages\dl698\fr_axdr.c" />
     <ClCompile Include="..\..\..\packages\kernel\bitarithm.c" />
     <ClCompile Include="..\..\..\packages\kernel\fifo.c" />
-    <ClCompile Include="..\..\..\packages\kernel\memory.c" />
     <ClCompile Include="..\..\..\packages\kernel\nidavellir.c" />
     <ClCompile Include="..\..\..\packages\kernel\pipeline.c" />
-    <ClCompile Include="..\..\..\packages\kernel\resource.c" />
     <ClCompile Include="..\..\..\packages\kernel\rtc.c" />
     <ClCompile Include="..\..\..\packages\kernel\tasklet.c" />
     <ClCompile Include="..\..\..\packages\kernel\utils.c" />
+    <ClCompile Include="..\..\app_resource_tool\resource_ tool.c" />
     <ClCompile Include="..\baremetal_main.c" />
     <ClCompile Include="..\pl_serial.c" />
   </ItemGroup>
