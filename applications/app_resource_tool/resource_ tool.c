@@ -24,17 +24,6 @@ struct block_device_t
     struct list_head sibling;
 };
 
-#define EXTENSION_DATA_ATTR   
-struct app_data_info_t
-{
-    uint32_t data_name;
-    uint8_t device_name;
-    uint8_t block_name;
-    uint8_t proces_method;
-    uint8_t check_mark;
-    uint16_t data_size;
-    EXTENSION_DATA_ATTR
-};
 
 struct resources_obj_t
 {
@@ -44,41 +33,6 @@ struct resources_obj_t
     uint8_t(*hook) (uint8_t* buf,void *p);  //resource的钩子函数
     void* p;
 };
-
-struct skip_last_node_t
-{
-    uint8_t key;
-    struct skip_last_node_t* silbing;
-    struct app_data_info_t info;
-};
-
-struct skip_mid_node_t
-{
-    uint8_t key;
-    struct skip_mid_node_t* silbing;
-    struct skip_last_node_t* children;
-};
-
-
-struct skip_list_node_t
-{
-    uint8_t key;
-    struct skip_list_node_t* silbing;
-    struct skip_list_node_t* children;
-};
-
-//应用APP的数据列表
-struct app_list_t
-{
-    uint32_t app_name;
-    uint32_t env_array;
-    uint32_t env_size;
-    uint32_t env_used;
-    struct skip_list_node_t* node;
-    struct list_head* sibling;
-};
-
-
 
 void *__nd_malloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_size)
 {
@@ -326,23 +280,6 @@ int8_t resource_map_698(struct instance* instance, uint32_t id, uint8_t* buf, ui
         break;
     }
     return 0x01;
-}
-
-struct app_list_t* look_up_app(struct resource_ctx_t* ctx, uint8_t app_name)
-{
-    struct app_list_t* app = NULL;
-    struct list_head* p;
-
-    list_for_each(p, &ctx->app_list)
-    {
-        app = list_entry(p, struct app_list_t, sibling);
-        if (app->app_name == app_name)
-        {
-            return app;  //device 找到了
-        }
-    }
-
-    return NULL;
 }
 
 struct resource_map_t* register_map(struct resource_ctx_t* ctx,uint8_t map_name,
