@@ -161,16 +161,19 @@ void* nd_malloc(struct resource_ctx_t *ctx, uint8_t block_name, uint32_t size)
 uint32_t *add_block(struct resource_ctx_t* ctx, uint8_t device_name, uint8_t block_name, uint32_t block_size)
 {
     struct block_device_t* device = NULL;
+    struct block_device_t* ram_device = NULL;
     struct block_device_children_t* block = NULL;
     struct block_device_children_t* resource_block = NULL;
 
-    device = look_up_device(ctx,device_name);//先获取device
+    device = look_up_device(ctx,device_name);//先获取自己的device
     if (device != NULL)
     {
         block = look_up_block(ctx, device, block_name);//在找block
-        if (block == NULL)
+        ram_device = look_up_device(ctx, ctx->ram_device_name); //获取ram_device
+
+        if ((block == NULL) && (ram_device != NULL))
         {
-            resource_block = look_up_block(ctx, ctx->ram_device_name, ctx->resource_block_name);
+            resource_block = look_up_block(ctx, ram_device, ctx->resource_block_name);
             if (resource_block == NULL)
             {
                 return NULL;
@@ -190,7 +193,10 @@ uint32_t *add_block(struct resource_ctx_t* ctx, uint8_t device_name, uint8_t blo
             device->used += block_size;
             list_add_tail(&block->sibling, &device->children);           
         }
-        return block->first_addr;
+        if (block != NULL)
+        {
+            return block->first_addr;
+        }        
     }
     return NULL;
 }
@@ -198,6 +204,7 @@ uint32_t *add_block(struct resource_ctx_t* ctx, uint8_t device_name, uint8_t blo
 uint32_t *add_inside_block(struct resource_ctx_t* ctx, uint8_t device_name,uint8_t block_name, uint8_t inside_block_name, uint32_t block_size)
 {
     struct block_device_t* device = NULL;
+    struct block_device_t* ram_device = NULL;
     struct block_device_children_t* block = NULL;
     struct block_device_children_t* inside_block = NULL;
     struct block_device_children_t* resource_block = NULL;
@@ -206,9 +213,11 @@ uint32_t *add_inside_block(struct resource_ctx_t* ctx, uint8_t device_name,uint8
     if (device != NULL)
     {
         block = look_up_block(ctx, device, block_name);//在找block
-        if (block != NULL)
+        ram_device = look_up_device(ctx, ctx->ram_device_name); //获取ram_device
+
+        if ((block != NULL) && (ram_device != NULL))
         {
-            resource_block = look_up_block(ctx, ctx->ram_device_name, ctx->resource_block_name);
+            resource_block = look_up_block(ctx, ram_device, ctx->resource_block_name);
             if (resource_block == NULL)
             {
                 return NULL;
