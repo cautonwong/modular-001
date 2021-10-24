@@ -1,4 +1,4 @@
-#include "kernel\nidavellir.h"
+#include "nidavellir.h"
 
 struct filter_t *id_to_filter(struct filter_t *filters,size_t n, filter_id_t id)
 {

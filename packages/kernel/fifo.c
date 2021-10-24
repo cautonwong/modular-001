@@ -1,4 +1,4 @@
-#include "kernel\nidavellir.h"
+#include "nidavellir.h"
 
 // *****************************************************************************
 // circular buffer functions
@@ -102,7 +102,7 @@ int16_t fifoBuf_patchByteB(struct fifo_t *buf,uint8_t b, uint16_t offset)
     return 0;            // return the byte
 }
 
-uint16_t fifo_popData(struct fifo_t* buf,uint16_t len,fifo_callback_t callback, void* ctx)
+uint16_t fifo_popData(struct fifo_t* buf,uint16_t len, int (*callback)(void* ctx, uint8_t *b), void* ctx)
 {      
     uint16_t rd = buf->rd;
     uint16_t buf_size = buf->buf_size;
@@ -137,7 +137,7 @@ uint16_t fifo_popData(struct fifo_t* buf,uint16_t len,fifo_callback_t callback, 
     return i;                   // return number of bytes copied
 }
 
-int16_t fifo_pop(struct fifo_t* buf, fifo_callback_t callback, void* ctx)
+int16_t fifo_pop(struct fifo_t* buf, int (*callback)(void* ctx, uint8_t *b), void* ctx)
 {   
     uint8_t b;
     uint16_t rd = buf->rd;
@@ -163,7 +163,7 @@ int16_t fifo_pop(struct fifo_t* buf, fifo_callback_t callback, void* ctx)
     return b;                           // return the byte
 }
 
-uint16_t append_byte(struct fifo_t* buf, uint8_t b, fifo_callback_t callback, void* ctx)
+uint16_t append_byte(struct fifo_t* buf, uint8_t b, int (*callback)(void* ctx, uint8_t *b), void* ctx)
 {
     uint16_t wr = buf->wr;
     uint16_t buf_size = buf->buf_size;
@@ -190,7 +190,7 @@ uint16_t append_byte(struct fifo_t* buf, uint8_t b, fifo_callback_t callback, vo
 
 }
 
-int ringbuffer_filter(struct fifo_t *buf,fifo_callback_t callback,void *ctx)
+int ringbuffer_filter(struct fifo_t *buf, int (*callback)(void* ctx, uint8_t *b),void *ctx)
 {       
     uint16_t i = 0;
     uint16_t rd = buf->rd;
@@ -627,7 +627,7 @@ uint16_t fifoBuf_putData(struct fifo_t *buf, const void *data, uint16_t len)
     return i;                   // return number of bytes copied
 }
 
-uint16_t append_data(struct fifo_t* buf, const void* data, uint16_t len, fifo_callback_t callback, void* ctx)
+uint16_t append_data(struct fifo_t* buf, const void* data, uint16_t len, int (*callback)(void* ctx, uint8_t *b), void* ctx)
 {       // add data to the buffer
 
     uint16_t wr = buf->wr;
@@ -681,7 +681,7 @@ void init_cache(struct cache_t* cache, const void* buffer, uint16_t capacity)
     cache->capacity = capacity;
 }
 
-int append_byte_to_cache(struct cache_t* cache, uint8_t b, fifo_callback_t callback, void* ctx)
+int append_byte_to_cache(struct cache_t* cache, uint8_t b, int (*callback)(void* ctx, uint8_t *b), void* ctx)
 {
     uint32_t used = cache->used;
     if (used < cache->capacity)

@@ -1,7 +1,7 @@
-#include "kernel\nidavellir.h"
+#include "nidavellir.h"
 #include "fr_axdr.h"
 #include "fr_698.h"
-#include "testutil\cmocka.h"
+
 
 #define GetRequestNormal            1
 #define GetRequestNormalList        2

@@ -1,4 +1,4 @@
-﻿#include "kernel\nidavellir.h"
+﻿#include "nidavellir.h"
 #include <windows.h>
 #include <process.h>
 #include <fcntl.h>

@@ -1,5 +1,5 @@
-#include "kernel\nidavellir.h"
-#include "kernel\resource_tool.h"
+#include "nidavellir.h"
+#include "resource_tool.h"
 
 uint8_t look_up_list(struct instance_t* instance, struct skip_list_node_t* head_node, struct skip_list_last_node_t** last_node, uint16_t* key)
 {

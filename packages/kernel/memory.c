@@ -1,4 +1,4 @@
-#include "kernel\nidavellir.h"
+#include "nidavellir.h"
 
 int init_memory(struct instance_t *instance,struct layout_t *layouts,int layout_n)
 {

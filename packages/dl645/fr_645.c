@@ -1,4 +1,4 @@
-#include "kernel\nidavellir.h"
+#include "nidavellir.h"
 #define data_max_len 222
 
 int __update_cs(struct context_645_t* ctx, uint8_t* byte)
@@ -46,12 +46,12 @@ int __matcher_645(struct pipeline_t* pipeline, uint8_t* b)
             ctx->step = 2;
             return 0;
         }
-        ctx->addr[ctx->addr_n++] = byte;//ÊÕµ½µÄµØÖ·
+        ctx->addr[ctx->addr_n++] = byte;//ï¿½Õµï¿½ï¿½Äµï¿½Ö·
         return 0;
     case 2:
         ctx->ctrl = byte;
         ctx->cs += byte;
-        //todo  ¹ýÂË¿ØÖÆ×Ö
+        //todo  ï¿½ï¿½ï¿½Ë¿ï¿½ï¿½ï¿½ï¿½ï¿½
         ctx->step = 3;
         return 0;
     case 3:
@@ -64,7 +64,7 @@ int __matcher_645(struct pipeline_t* pipeline, uint8_t* b)
         ctx->min_len = byte + 12;
         if (ctx->min_len > fifoBuf_getUsed(pipeline->in_queue))
         {
-            return 2;//³¤¶È²»¹»  ÏÂ´ÎÔÙÀ´
+            return 2;//ï¿½ï¿½ï¿½È²ï¿½ï¿½ï¿½  ï¿½Â´ï¿½ï¿½ï¿½ï¿½ï¿½
         }
         ctx->cs += byte;
         ctx->addr_n = 0;
@@ -105,11 +105,11 @@ int fr_decode_645_11(struct instance_t* instance, struct pipeline_t* pipeline, s
     mesg->from = pipeline->id;
     mesg->to = sta_rx_from_msta;
     mesg->ctrl = 0x91;
-    mesg->id = 0x00;//ÔÝÊ±Ã»ÓÃ
-    mesg->len = 0;//Êý¾ÝÓòµÄ³¤¶È
+    mesg->id = 0x00;//ï¿½ï¿½Ê±Ã»ï¿½ï¿½
+    mesg->len = 0;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½
     memcpy(instance->cache, mesg, sizeof(struct message_t));
-    uint8_t len = ctx->min_len - 12;//ÊÕµ½µÄÊý¾ÝÓòµÄ³¤¶È
-    uint8_t* p = instance->cache + sizeof(struct message_t);//Êý¾ÝÓòµÄÆðÊ¼
+    uint8_t len = ctx->min_len - 12;//ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½
+    uint8_t* p = instance->cache + sizeof(struct message_t);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼
     fifoBuf_getData(fifo, p + mesg->len, 4);
     uint32_t id = buf_to_uint32_lsb(p + mesg->len);
     mesg->len += 4;
@@ -117,19 +117,19 @@ int fr_decode_645_11(struct instance_t* instance, struct pipeline_t* pipeline, s
 
     if (len == 0x04)
     {
-        r = __read(id, p + mesg->len, 4);//Çø·ÖID  todo
+        r = __read(id, p + mesg->len, 4);//ï¿½ï¿½ï¿½ï¿½ID  todo
         if (r < 0)
         {
             r = 1;
             mesg->ctrl = 0xb1;
-            p[mesg->len++] = -r;//todo ´íÎóÂëÓ³Éä
+            p[mesg->len++] = -r;//todo ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó³ï¿½ï¿½
         }
         else
         {
             mesg->len += r;
         }
     }
-    else if (len == 0x09)//¶ÁÈ¡Î»Í¼
+    else if (len == 0x09)//ï¿½ï¿½È¡Î»Í¼
     {
         if (id == 0x07fb0303)
         {
@@ -137,8 +137,8 @@ int fr_decode_645_11(struct instance_t* instance, struct pipeline_t* pipeline, s
             //SA = p[mesg->len];
             uint16_t n = (p[mesg->len + 1] | (p[mesg->len + 2] << 8));
             uint16_t m = (p[mesg->len + 3] | (p[mesg->len + 4] << 8));
-            //todo ÅÐ¶ÏÆäºÏ·¨ÐÔ
-            r = (m + 7) / 8 - n / 8;//Òª¶ÁÈ¡µÄ×Ü°üÊý
+            //todo ï¿½Ð¶ï¿½ï¿½ï¿½Ï·ï¿½ï¿½ï¿½
+            r = (m + 7) / 8 - n / 8;//Òªï¿½ï¿½È¡ï¿½ï¿½ï¿½Ü°ï¿½ï¿½ï¿½
             mesg->len += 5;
             memcpy(&p[mesg->len], instance->upgrade_info.bits + n / 8, r);
             mesg->len += r;
@@ -153,7 +153,7 @@ int fr_encode_645_11(struct instance_t* instance, struct pipeline_t* pipeline, s
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* fifo = pipeline->in_queue;
     memcpy(instance->cache, mesg, sizeof(struct message_t));
-    uint8_t* p = instance->cache + sizeof(struct message_t);//Êý¾ÝÓòµÄÆðÊ¼
+    uint8_t* p = instance->cache + sizeof(struct message_t);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼
     uint32_to_buf_lsb(mesg->id, p);
     if (mesg->len > 4)
     {
@@ -199,7 +199,7 @@ int fr_encode_645_86(struct instance_t* instance, struct pipeline_t* pipeline, s
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* fifo = pipeline->in_queue;
     memcpy(instance->cache, mesg, sizeof(struct message_t));
-    uint8_t* p = instance->cache + sizeof(struct message_t);//Êý¾ÝÓòµÄÆðÊ¼
+    uint8_t* p = instance->cache + sizeof(struct message_t);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼
     uint32_to_buf_lsb(mesg->id, p);
     if (mesg->len > 4)
     {
@@ -220,7 +220,7 @@ int fr_decode_645_86(struct instance_t* instance, struct pipeline_t* pipeline, s
     uint32_t id;
     mesg->from = pipeline->id;
     mesg->ctrl = 0x06;
-    mesg->len = 0;//Êý¾ÝÓòµÄ³¤¶È
+    mesg->len = 0;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½
     memcpy(instance->cache, mesg, sizeof(struct message_t));
 
     uint8_t len = ctx->min_len - 12;
@@ -240,7 +240,7 @@ int fr_encode_645_08(struct instance_t* instance, struct pipeline_t* pipeline, s
 {
     memcpy(instance->cache, mesg, sizeof(struct message_t));
     uint8_t* p = instance->cache + sizeof(struct message_t);
-    mesg->len -= 4;//¹ã²¥¶ÔÊ±  Ã»ÓÐËÄ×Ö½ÚID
+    mesg->len -= 4;//ï¿½ã²¥ï¿½ï¿½Ê±  Ã»ï¿½ï¿½ï¿½ï¿½ï¿½Ö½ï¿½ID
     fifoBuf_getData(pipeline->in_queue, p, mesg->len);
     return 1;
 }
@@ -267,25 +267,25 @@ int fr_decode_645_14(struct instance_t* instance, struct pipeline_t* pipeline, s
     memcpy(instance->cache, mesg, sizeof(struct message_t));
     uint32_t id;
     uint32_t seq;
-    uint8_t len = ctx->min_len - 12;//ÊÕµ½µÄÊý¾ÝÓòµÄ³¤¶È
-    uint8_t* p = instance->cache + sizeof(struct message_t);//Êý¾ÝÓòµÄÆðÊ¼
+    uint8_t len = ctx->min_len - 12;//ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½
+    uint8_t* p = instance->cache + sizeof(struct message_t);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼
     fifoBuf_getData(fifo, p, len);
     id = buf_to_uint32_lsb(p);
 
-    if (id == 0x07fb0400)//ÎÄ¼þ´«Êä
+    if (id == 0x07fb0400)//ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½
     {
-        //4×Ö½Ú:FC0FC1FC2FC3 °üºÅ
+        //4ï¿½Ö½ï¿½:FC0FC1FC2FC3 ï¿½ï¿½ï¿½ï¿½
         if (((instance->upgrade_info.info >> 7) == 1) &&
             instance->upgrade_info.pid != 0 &&
             instance->upgrade_info.pid != pipeline->id)
         {
-            return 0;//±ðµÄÍ¨µÀÕýÔÚÉý¼¶
+            return 0;//ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         }
 
-        //4×Ö½Ú:DA
-        //4×Ö½Ú:PAP0P1P2  ÃÜÂëÈ¨ÏÞ¼°ÆäÃÜÂë
-        //4×Ö½Ú:C0C1C2C3  ²Ù×÷Õß´úÂë
-        //4×Ö½Ú:FC
+        //4ï¿½Ö½ï¿½:DA
+        //4ï¿½Ö½ï¿½:PAP0P1P2  ï¿½ï¿½ï¿½ï¿½È¨ï¿½Þ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        //4ï¿½Ö½ï¿½:C0C1C2C3  ï¿½ï¿½ï¿½ï¿½ï¿½ß´ï¿½ï¿½ï¿½
+        //4ï¿½Ö½ï¿½:FC
         seq = buf_to_uint32_lsb(p + 12);
         if (seq > upgrade_setsize * 8)
         {
@@ -294,22 +294,22 @@ int fr_decode_645_14(struct instance_t* instance, struct pipeline_t* pipeline, s
 
         if (bit_isset(seq, instance->upgrade_info.bits))
         {
-            //ÅÐ¶ÏÊÇ·ñÐ´¹ýÁË  ÕâÀïÉæ¼°µ½²Á³ý
-            //±¾°üÐ´¹ýÁË  ¾Í²»Ð´ÁË
+            //ï¿½Ð¶ï¿½ï¿½Ç·ï¿½Ð´ï¿½ï¿½ï¿½ï¿½  ï¿½ï¿½ï¿½ï¿½ï¿½æ¼°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            //ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½ï¿½  ï¿½Í²ï¿½Ð´ï¿½ï¿½
             return 0;
         }
 
-        __write(id, p + 12, len - 12);//±¾´Î´«ÊäµÄÎÄ¼þÄÚÈÝ
+        __write(id, p + 12, len - 12);//ï¿½ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½
 
         bit_set(seq, instance->upgrade_info.bits);
-        instance->upgrade_info.info |= 1 << 7;//Éý¼¶ÖÐ
+        instance->upgrade_info.info |= 1 << 7;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         instance->upgrade_info.pid = pipeline->id;
     }
-    else if (id == 0x07fb0201)//ÏÂ·¢Ö¤Êé
+    else if (id == 0x07fb0201)//ï¿½Â·ï¿½Ö¤ï¿½ï¿½
     {
         __write(id, p + 12, len - 12);
     }
-    else if (id == 0x07fb0202)//ÏÂ·¢Éý¼¶³ÌÐò¼¤»îÊ±¿Ì
+    else if (id == 0x07fb0202)//ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ò¼¤»ï¿½Ê±ï¿½ï¿½
     {
         __write(id, p + mesg->len, len - 4);
     }
@@ -329,8 +329,8 @@ int fr_645_decode_91_from_meter(struct instance_t* instance, struct pipeline_t* 
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     uint32_t id;
 
-    uint8_t len = ctx->min_len - 12;//ÊÕµ½µÄÊý¾ÝÓòµÄ³¤¶È
-    uint8_t* p = instance->cache + sizeof(struct message_t);//Êý¾ÝÓòµÄÆðÊ¼
+    uint8_t len = ctx->min_len - 12;//ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½
+    uint8_t* p = instance->cache + sizeof(struct message_t);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼
     fifoBuf_getData(fifo, p, len);
     id = buf_to_uint32_lsb(p);
 
@@ -342,10 +342,10 @@ int fr_645_decode_91_from_meter(struct instance_t* instance, struct pipeline_t* 
     mesg->len = len;
     if (len == 5)
     {
-        // return 1;//´íÎóÂë todo
+        // return 1;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ todo
     }
-    //ÕâÀïÈ«²¿ÖØ¶¨ÏòÖÁpl_mstaÈ¥´¦Àí
-    //ÒªÅª¸öÖØ¶¨Ïò±í¸ñ  todo
+    //ï¿½ï¿½ï¿½ï¿½È«ï¿½ï¿½ï¿½Ø¶ï¿½ï¿½ï¿½ï¿½ï¿½pl_mstaÈ¥ï¿½ï¿½ï¿½ï¿½
+    //ÒªÅªï¿½ï¿½ï¿½Ø¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½  todo
     send_mesg(instance, pipeline, mesg, p + 4);
     return 0;
 }
@@ -370,7 +370,7 @@ int fr_decode_645_13(struct instance_t* instance, struct pipeline_t* pipeline, s
     mesg->id = 0x04000401;
     mesg->len = 0;//
     memcpy(instance->cache, mesg, sizeof(struct message_t));
-    uint8_t len = ctx->min_len - 12;//ÊÕµ½µÄÊý¾ÝÓòµÄ³¤¶È
+    uint8_t len = ctx->min_len - 12;//ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½
     assert(len == 0);
     uint8_t* p = instance->cache + sizeof(struct message_t);
 
@@ -390,11 +390,11 @@ int fr_msta_decode_645_13(struct instance_t* instance, struct pipeline_t* pipeli
     mesg->id = 0x04000401;
     mesg->len = 0;//
     memcpy(instance->cache, mesg, sizeof(struct message_t));
-    uint8_t len = ctx->min_len - 12;//ÊÕµ½µÄÊý¾ÝÓòµÄ³¤¶È
+    uint8_t len = ctx->min_len - 12;//ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½
     assert(len == 0);
     uint8_t* p = instance->cache + sizeof(struct message_t);
     extern struct rtc_context_t msta_context;
-    memcpy(p, &msta_context.addr, 6); //msta_context.addr  ÊÇÉÏµçÊ±³­µ½µÄ»ù±íµØÖ·
+    memcpy(p, &msta_context.addr, 6); //msta_context.addr  ï¿½ï¿½ï¿½Ïµï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ä»ï¿½ï¿½ï¿½ï¿½ï¿½Ö·
     r = 6;
     mesg->len += r;
     return 1;
@@ -405,16 +405,16 @@ int fr_645_decode_93_from_meter(struct instance_t* instance, struct pipeline_t* 
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
 
-    uint8_t len = ctx->min_len - 12;//ÊÕµ½µÄÊý¾ÝÓòµÄ³¤¶È
-    uint8_t* p = instance->cache + sizeof(struct message_t);//Êý¾ÝÓòµÄÆðÊ¼
+    uint8_t len = ctx->min_len - 12;//ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½
+    uint8_t* p = instance->cache + sizeof(struct message_t);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼
     fifoBuf_getData(fifo, p, len);
     fifoBuf_getByte(fifo); fifoBuf_getByte(fifo);
     mesg->to = pid_msta;
     mesg->ctrl = 0x93;
     mesg->id = 0x04000401;
     mesg->len = len + 4;
-    //ÕâÀïÈ«²¿ÖØ¶¨ÏòÖÁpl_mstaÈ¥´¦Àí
-    //ÒªÅª¸öÖØ¶¨Ïò±í¸ñ  todo
+    //ï¿½ï¿½ï¿½ï¿½È«ï¿½ï¿½ï¿½Ø¶ï¿½ï¿½ï¿½ï¿½ï¿½pl_mstaÈ¥ï¿½ï¿½ï¿½ï¿½
+    //ÒªÅªï¿½ï¿½ï¿½Ø¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½  todo
     send_mesg(instance, pipeline, mesg, p);
     return 0;
 }
@@ -425,8 +425,8 @@ int fr_645_decode_91(struct instance_t* instance, struct pipeline_t* pipeline, s
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     uint32_t id;
 
-    uint8_t len = ctx->min_len - 12;//ÊÕµ½µÄÊý¾ÝÓòµÄ³¤¶È
-    uint8_t* p = instance->cache + sizeof(struct message_t);//Êý¾ÝÓòµÄÆðÊ¼
+    uint8_t len = ctx->min_len - 12;//ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½
+    uint8_t* p = instance->cache + sizeof(struct message_t);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼
     fifoBuf_getData(fifo, p, len);
     id = buf_to_uint32_lsb(p);
     mesg->len = 4;
@@ -449,7 +449,7 @@ int fr_pack_645_head(struct instance_t* instance, struct pipeline_t* pipeline, s
     fifoBuf_putByte(fifo, 0xfe);
     fifoBuf_putByte(fifo, 0xfe);
     append_byte(fifo, 0x68, __update_cs, ctx);
-    //todo µØÖ·×ª»»
+    //todo ï¿½ï¿½Ö·×ªï¿½ï¿½
     if (mesg->ctrl == 0x08)
     {
         memset(buf, 0x99, 6);
@@ -527,11 +527,11 @@ int fr_rx_645_end(struct instance_t* instance, struct pipeline_t* pipeline, stru
     fifoBuf_getByte(ififo);//fcs-0
     assert(fifoBuf_getByte(ififo) == 0x16);//0x16
     n->len = mesg->len;
-    //todo  ¿´ÊÇ·ñÒª·¢ËÍ
+    //todo  ï¿½ï¿½ï¿½Ç·ï¿½Òªï¿½ï¿½ï¿½ï¿½
     fr_pack_645_head(instance, pipeline, mesg);
     fr_pack_645_data(instance, pipeline, mesg);
     fr_pack_645_tail(instance, pipeline, mesg);
-    //Ê¹ÄÜ·¢ËÍ
+    //Ê¹ï¿½Ü·ï¿½ï¿½ï¿½
 #ifdef VERBOSE
     if (ctx->tx_len > 0)
     {
@@ -555,11 +555,11 @@ int fr_tx_645_end(struct instance_t* instance, struct pipeline_t* pipeline, stru
 {
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
 
-    //todo  ¿´ÊÇ·ñÒª·¢ËÍ
+    //todo  ï¿½ï¿½ï¿½Ç·ï¿½Òªï¿½ï¿½ï¿½ï¿½
     fr_pack_645_head(instance, pipeline, mesg);
     fr_pack_645_data(instance, pipeline, mesg);
     fr_pack_645_tail(instance, pipeline, mesg);
-    //Ê¹ÄÜ·¢ËÍ
+    //Ê¹ï¿½Ü·ï¿½ï¿½ï¿½
 #ifdef VERBOSE
     if (ctx->tx_len > 0)
     {

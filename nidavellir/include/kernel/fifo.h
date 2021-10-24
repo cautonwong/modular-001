@@ -48,21 +48,25 @@ uint16_t fifoBuf_putData(struct fifo_t *buf, const void *data, uint16_t len);
 
 void fifoBuf_init(struct fifo_t *buf, const void *buffer, const uint16_t buffer_size);
 
-int ringbuffer_filter(struct fifo_t* buf,fifo_callback_t callback, void* ctx);
-uint16_t append_data(struct fifo_t* buf, const void* data, uint16_t len, fifo_callback_t callback, void* ctx);
-uint16_t append_byte(struct fifo_t* buf, uint8_t b, fifo_callback_t callback, void* ctx);
-int append_data_to_cache(struct cache_t* cache, uint8_t* data, size_t len, fifo_callback_t callback, void* ctx);
-int append_byte_to_cache(struct cache_t* cache, uint8_t b, fifo_callback_t callback, void* ctx);
+int ringbuffer_filter(struct fifo_t* buf, int (*callback)(void* ctx, uint8_t *b), void* ctx);
+uint16_t append_data(struct fifo_t* buf, const void* data, uint16_t len, int (*callback)(void* ctx, uint8_t *b), void* ctx);
+
+
+uint16_t append_byte(struct fifo_t* buf, uint8_t b, int (*callback)(void* ctx, uint8_t *b), void* ctx);
+
+
+int append_data_to_cache(struct cache_t* cache, uint8_t* data, size_t len, int (*callback)(void* ctx, uint8_t *b), void* ctx);
+int append_byte_to_cache(struct cache_t* cache, uint8_t b, int (*callback)(void* ctx, uint8_t *b), void* ctx);
 void init_cache(struct cache_t* cache, const void* buffer, uint16_t capacity);
 
-int16_t fifo_pop(struct fifo_t* buf, fifo_callback_t callback, void* ctx);
+int16_t fifo_pop(struct fifo_t* buf, int (*callback)(void* ctx, uint8_t *b), void* ctx);
 
-int ringbuffer_putU16(struct fifo_t* buf, uint16_t* data);
-int ringbuffer_putU32(struct fifo_t* buf, uint32_t* data);
+int ringbuffer_putU16(struct fifo_t* buf, uint16_t data);
+int ringbuffer_putU32(struct fifo_t* buf, uint32_t data);
 int ringbuffer_getU16(struct fifo_t* buf, uint16_t* data);
 int ringbuffer_getU32(struct fifo_t* buf, uint32_t* data);
 int ringbuffer_popU8(struct fifo_t* buf, uint8_t* data);
-int ringbuffer_pushU8(struct fifo_t* buf, uint8_t* data);
+int ringbuffer_pushU8(struct fifo_t* buf, uint8_t data);
 
 #endif /* _FIFO_BUFFER_H_ */
 
