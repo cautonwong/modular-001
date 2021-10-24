@@ -44,6 +44,7 @@ struct mbase_control_block_t
     //事件负荷冻结数据
     //费率数据
     //费用数据
+    uint32_t UA;
     struct energy_ctx_t* energy_ctx;
     struct demand_list_t* demand_list;
 };

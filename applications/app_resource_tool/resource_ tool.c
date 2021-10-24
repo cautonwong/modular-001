@@ -27,9 +27,10 @@ struct block_device_t
 
 struct resources_obj_t
 {
-    uint32_t data_addr;                     //地址
+    uint32_t offset;                        //地址
     uint16_t length;                        //数据存储长度
-    uint8_t device_id;                      //设备标识；
+    uint8_t device_name;                    //设备标识；
+    uint8_t block_name;                     //块名称
     uint8_t(*hook) (uint8_t* buf,void *p);  //resource的钩子函数
     void* p;
 };
@@ -269,13 +270,32 @@ int8_t add_device(struct resource_ctx_t* ctx, uint8_t device_name, uint32_t firs
     return 0;
 }
 
-int8_t resource_map_698(struct instance* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj)
+int8_t resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj)
 {
+    struct mbase_control_block_t* mbase_cb = instance->mbase_cb;
     switch (id)
     {
     case 0x20000200:
-
+    {
+        obj->block_name = 0x0A;//只是举例
+        obj->device_name = 0x0D;//只是举例
+        //obj->offset = container_of(mbase_cb,struct mbase_control_block_t, UA);
+        switch (mode)
+        {
+        case 0x01://读数据
+            //1、直接读缓存的值
+         //   memcpy(buf, (uint8_t*)mbase_cb->UA, 0x04);
+            return 0x01;
+            //2、需要读EPROM
+            return 0x02;
+            break;
+        case 0x02://写数据
+            break;
+        deault:
+            break;
+        }
         break;
+    }
     default:
         break;
     }
@@ -354,12 +374,12 @@ int8_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t b
         return ret;
     }
     //查找设备
-    device = look_up_device(ctx, obj.device_id);
+    device = look_up_device(ctx, obj.device_name);
     if (device != NULL)
     {
         if ((device->driver != NULL) && (device->driver->read_dev != NULL))
         {
-            device->driver->read_dev(instance, obj.data_addr, buf, obj.length);
+            device->driver->read_dev(instance, obj.offset, buf, obj.length);
             if (obj.hook != NULL)
             {
                 obj.hook(buf, obj.p);
