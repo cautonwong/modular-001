@@ -322,7 +322,7 @@ struct hw_def_t
 {
     uint32_t name;
     dev_id_t id;
-    struct resource_map_t *map;
+//    struct resource_map_t *map;
     struct driver_t *driver;
     //propery;
 };
@@ -363,6 +363,13 @@ struct upgrade_info_t
     uint8_t info;//升级状态字  0x07fb0301
     uint16_t tm_remained;//升级使能剩余时间 0x07fb0302
     uint8_t bits[upgrade_setsize];//升级程序位图信息 0x07fb0303
+};
+
+struct resource_map_t
+{
+    uint8_t map_name;
+    int8_t(*fun)(struct instance* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj);
+    struct list_head sibling;
 };
 
 struct resource_ctx_t

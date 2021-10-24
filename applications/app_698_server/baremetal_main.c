@@ -122,6 +122,9 @@ int update_instance_rtc(struct instance_t* instance)
 uint8_t nd_memory[32 * 1024];
 extern void* nd_malloc(struct resource_ctx_t* ctx, uint8_t block_name, uint32_t size);
 extern uint32_t* add_block(struct resource_ctx_t* ctx, uint8_t device_name, uint8_t block_name, uint32_t block_size);
+extern struct resource_map_t* register_map(struct resource_ctx_t* ctx, uint8_t map_name,
+    int8_t(*fun)(struct instance_t* instance, uint32_t id, uint8_t mode, struct resources_obj_t* obj));
+extern int8_t resource_map_698(struct instance* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj);
 //extern int8_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size);
 //extern int8_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size);
 extern struct resource_ctx_t* init_resource_manager(uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t resource_blok_size, uint8_t resource_block_name);
@@ -162,7 +165,9 @@ int baremetal_instance_entry_main(int argc, char** argv)
     instance->ctx = ctx;
     instance->recipe = &recipe;
     instance->ms = 0;
-
+    //注册一个MAP
+    register_map(ctx, 0x01, resource_map_698);
+    //申请一个BLOCK
     mbase_control_block_name = 0x02;
     if (0 > add_block(ctx, 0x01, mbase_control_block_name, 8*1024))
     {

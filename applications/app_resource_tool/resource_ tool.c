@@ -45,13 +45,6 @@ struct resources_obj_t
     void* p;
 };
 
-struct resource_map_t
-{
-    uint8_t map_name;
-    int8_t(*fun)(struct instance* instance, uint32_t id, uint8_t *buf, uint8_t mode, struct resources_obj_t* obj);
-    struct list_head sibling;
-};
-
 struct skip_last_node_t
 {
     uint8_t key;
@@ -125,12 +118,15 @@ struct block_device_t* look_up_block(struct resource_ctx_t* ctx, struct block_de
     struct block_device_children_t* block = NULL;
     struct list_head* p;
 
-    list_for_each(p, &device->children)
+    if (device != NULL)
     {
-        block = list_entry(p, struct block_device_children_t, sibling);
-        if (block->name == block_name)
+        list_for_each(p, &device->children)
         {
-            return block;  //block 找到了
+            block = list_entry(p, struct block_device_children_t, sibling);
+            if (block->name == block_name)
+            {
+                return block;  //block 找到了
+            }
         }
     }
 
@@ -161,7 +157,6 @@ void* nd_malloc(struct resource_ctx_t *ctx, uint8_t block_name, uint32_t size)
 uint32_t *add_block(struct resource_ctx_t* ctx, uint8_t device_name, uint8_t block_name, uint32_t block_size)
 {
     struct block_device_t* device = NULL;
-    struct block_device_t* ram_device = NULL;
     struct block_device_children_t* block = NULL;
     struct block_device_children_t* resource_block = NULL;
 
@@ -169,11 +164,10 @@ uint32_t *add_block(struct resource_ctx_t* ctx, uint8_t device_name, uint8_t blo
     if (device != NULL)
     {
         block = look_up_block(ctx, device, block_name);//在找block
-        ram_device = look_up_device(ctx, ctx->ram_device_name); //获取ram_device
 
-        if ((block == NULL) && (ram_device != NULL))
+        if (block == NULL)
         {
-            resource_block = look_up_block(ctx, ram_device, ctx->resource_block_name);
+            resource_block = look_up_block(ctx, look_up_device(ctx, ctx->ram_device_name), ctx->resource_block_name);
             if (resource_block == NULL)
             {
                 return NULL;
@@ -193,10 +187,7 @@ uint32_t *add_block(struct resource_ctx_t* ctx, uint8_t device_name, uint8_t blo
             device->used += block_size;
             list_add_tail(&block->sibling, &device->children);           
         }
-        if (block != NULL)
-        {
-            return block->first_addr;
-        }        
+        return block->first_addr;       
     }
     return NULL;
 }
@@ -288,12 +279,15 @@ struct resource_ctx_t *init_resource_manager(uint8_t device_name, uint32_t first
 int8_t add_device(struct resource_ctx_t* ctx, uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t page_size, struct driver_t* driver, uint8_t ram_name)
 {
     struct block_device_t* device = NULL;
+    struct block_device_t* ram_device = NULL;
     struct block_device_children_t* block = NULL;
 
     device = look_up_device(ctx, device_name);//在分配其他的
-    if (device == NULL)
+    ram_device = look_up_device(ctx, ctx->ram_device_name); //获取ram_device
+
+    if ((device == NULL) && (ram_device != NULL))
     {
-        block = look_up_block(ctx, ctx->ram_device_name, ctx->resource_block_name);
+        block = look_up_block(ctx, ram_device, ctx->resource_block_name);
         if (block == NULL)
         {
             return -1;
@@ -331,6 +325,7 @@ int8_t resource_map_698(struct instance* instance, uint32_t id, uint8_t* buf, ui
     default:
         break;
     }
+    return 0x01;
 }
 
 struct app_list_t* look_up_app(struct resource_ctx_t* ctx, uint8_t app_name)
@@ -366,7 +361,7 @@ struct resource_map_t* register_map(struct resource_ctx_t* ctx,uint8_t map_name,
         }
     }
 
-    block = look_up_block(ctx, ctx->ram_device_name, ctx->resource_block_name);
+    block = look_up_block(ctx, look_up_device(ctx, ctx->ram_device_name), ctx->resource_block_name);
     if (block == NULL)
     {
         return NULL;
