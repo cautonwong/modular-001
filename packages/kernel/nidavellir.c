@@ -65,8 +65,9 @@ int nidavellir_run(struct instance_t *instance)
 {
     struct message_t mesg;
     struct log_item_t log_item;
-    struct recipe_t *recipe = instance->recipe;
-    struct filter_t *filter;    
+    const struct recipe_t *recipe = instance->recipe;
+    const struct filter_t *filter; 
+    
     int ret = 0;
     size_t n = 0;
     uint8_t pipeline_n = recipe->pipeline_n;
@@ -118,8 +119,8 @@ int nidavellir_run(struct instance_t *instance)
 int nidavellir_run_baremetal(struct instance_t* instance)
 {
     struct message_t mesg;
-    struct recipe_t* recipe = instance->recipe;
-    struct filter_t* filter;
+    const struct recipe_t* recipe = instance->recipe;
+    const struct filter_t* filter;
     size_t n = 0;
     int ret = 0;
     uint8_t pipeline_n = recipe->pipeline_n;
@@ -293,9 +294,11 @@ int recv_mesg_header(struct instance_t* instance, struct pipeline_t* pipeline, s
     if (fifoBuf_getUsed(pipeline->in_queue) >= sizeof(struct message_t))
     {
         r = fifoBuf_getData(pipeline->in_queue, mesg, sizeof(struct message_t));
+#if WIN32
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_BLUE | FOREGROUND_INTENSITY);
         //printf("                   {%s,recv,%s,{0x%02x,%d,0x%04x", get_pipeline_name(instance, pipeline->id), get_pipeline_name(instance, mesg->from), mesg->ctrl, mesg->len, mesg->id);
         //printf("}}\n");
+#endif
         return r;
     }
 

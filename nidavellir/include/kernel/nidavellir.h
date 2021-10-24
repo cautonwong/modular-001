@@ -392,6 +392,7 @@ struct instance_t
     //uint8_t kernel_space[1024];
     //uint8_t user_space[1024];//work + worker
     //uint32_t areas_used[9];//每个内存区域的已用空间 单位字节
+    
     struct resource_ctx_t* ctx;
     uint32_t  ms;
     struct recipe_t *recipe;

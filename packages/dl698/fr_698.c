@@ -87,8 +87,9 @@ int update_fcs(void* pctx, uint8_t* byte)
     return 0;
 }
 
-int __pack_apdu_byte(struct pipeline_t* pipeline, uint8_t* byte)
+int __pack_apdu_byte(void* pctx, uint8_t* byte)
 {
+    struct pipeline_t* pipeline = pctx;
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
 
@@ -332,7 +333,7 @@ int fr_pack_698_apdu(struct instance_t* instance, struct pipeline_t* pipeline, s
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
-    uint8_t byte;
+
     fifo_popData(ctx->apdu, mesg->len, __pack_apdu_byte, pipeline);
     return 1;
 }
@@ -396,7 +397,7 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
 int fr_apdu_effective_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {//协议一致性检查正常，检查APDU是否为有效数据
 
-
+    return 1;
 }
 
 
@@ -476,12 +477,12 @@ int fr_encode_optional(struct instance_t* instance, struct pipeline_t* pipeline,
 
 int fr_follow_report(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-
+    return 1;
 }
 
 int fr_timeTag(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-
+    return 1;
 }
 
 
@@ -713,6 +714,7 @@ int fr_gatekeeper_client(struct instance_t* instance, struct pipeline_t* pipelin
     return 0;
 }
 
+
 int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
@@ -794,7 +796,7 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
 
 
 
-const struct filter_t fr_rx_698[] =
+const struct filter_t fr_rx_698[2] =
 {
     {0x00,fr_rx_698_entry,1,13},
     {0x01,fr_gatekeeper_server,5,13},
@@ -811,7 +813,7 @@ struct pipeline_t pl_rx_698 =
     fr_rx_698,
 };
 
-const struct filter_t fr_tx_698[] =
+const struct filter_t fr_tx_698[1] =
 {
     {0x01,fr_tx_698_entry,1,13},
     //{0x01,fr_gatekeeper_698,5,13},

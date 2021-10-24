@@ -4,6 +4,7 @@
 struct instance_t;
 struct recipe_t;
 struct pipeline_t;
+struct message_t;
 
 struct filter_t
 {
@@ -32,7 +33,7 @@ struct pipeline_t
     void *out_queue;//stdout
     //void *data;//const data
     size_t filter_n;
-    struct filter_t *filters;//本流水线下的所有过滤器共享同一ctx
+    const struct filter_t *filters;//本流水线下的所有过滤器共享同一ctx
 };
 
 struct task_t
@@ -57,6 +58,6 @@ struct pipeline_t
     int (*init)(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
     int (*entry)(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 };*/
-struct filter_t *id_to_filter(struct filter_t *filters,size_t n, filter_id_t id);
+const struct filter_t *id_to_filter(const struct filter_t *filters,size_t n, filter_id_t id);
 
 #endif

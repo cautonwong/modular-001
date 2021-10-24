@@ -1,8 +1,8 @@
 #include "nidavellir.h"
 
-struct filter_t *id_to_filter(struct filter_t *filters,size_t n, filter_id_t id)
+const struct filter_t *id_to_filter(const struct filter_t *filters,size_t n, filter_id_t id)
 {
-    struct filter_t* filter = NULL;
+    const struct filter_t* filter = NULL;
 
     for (size_t i = 0; i < n; i++)
     {

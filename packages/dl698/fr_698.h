@@ -151,4 +151,8 @@ struct oad_t
     struct coder_t* coder;
 };
 
+
+extern int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern uint16_t axdr_get_data_len(const uint8_t *data);
+
 #endif //__FR_698_H__

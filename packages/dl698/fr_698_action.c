@@ -9,7 +9,7 @@
 
 int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-
+    return 0;
 }
 
 int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)

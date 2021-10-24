@@ -116,7 +116,8 @@ uint8_t __password_process(struct instance_t* instance, struct pipeline_t* pipel
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t *p_password = cache + sizeof(struct connect_request_t);
+    uint8_t *p_password = cache->buf_ptr;
+    //uint8_t *p_password = cache + sizeof(struct connect_request_t);
 
     uint8_t password[33] = {0};
     uint32_t oad = 0;
@@ -137,7 +138,9 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t *p_apdu = cache + sizeof(struct connect_request_t);
+    //uint8_t *p_apdu = cache + sizeof(struct connect_request_t);
+    uint8_t *p_apdu = cache->buf_ptr;
+    uint8_t *p_password = cache->buf_ptr;
 	uint8_t  buf[70];
     uint8_t len_len = 0;
     uint16_t data_len = 0;

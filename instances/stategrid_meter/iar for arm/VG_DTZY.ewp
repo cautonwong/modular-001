@@ -349,9 +349,9 @@
                 </option>
                 <option>
                     <name>CCIncludePath2</name>
-                    <state>F:\nidavellir\Blade202109\Blade\packages\</state>
-                    <state>F:\nidavellir\Blade202109\Blade\nidavellir\include\kernel</state>
-                    <state>F:\nidavellir\Blade202109\Blade\nidavellir\include</state>
+                    <state>$PROJ_DIR$\..\..\..\nidavellir\include\kernel</state>
+                    <state>$PROJ_DIR$\..\..\..\nidavellir\include</state>
+                    <state>$PROJ_DIR$\..\..\..\packages\dl698</state>
                 </option>
                 <option>
                     <name>CCStdIncCheck</name>
@@ -1003,7 +1003,7 @@
                 </option>
                 <option>
                     <name>IlinkTrustzoneImportLibraryOut</name>
-                    <state>###Unitialized###</state>
+                    <state>VG_DTZY_import_lib.o</state>
                 </option>
                 <option>
                     <name>OILinkExtraOption</name>
@@ -2155,9 +2155,6 @@
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\fifo.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\kernel\memory.c</name>
-            </file>
-            <file>
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\nidavellir.c</name>
             </file>
             <file>
@@ -2165,12 +2162,6 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\rtc.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\packages\kernel\tasklet.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\packages\kernel\time_link.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\utils.c</name>

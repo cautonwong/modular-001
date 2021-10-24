@@ -59,6 +59,7 @@ int append_data_to_cache(struct cache_t* cache, uint8_t* data, size_t len, int (
 int append_byte_to_cache(struct cache_t* cache, uint8_t b, int (*callback)(void* ctx, uint8_t *b), void* ctx);
 void init_cache(struct cache_t* cache, const void* buffer, uint16_t capacity);
 
+uint16_t fifo_popData(struct fifo_t* buf,uint16_t len, int (*callback)(void* ctx, uint8_t *b), void* ctx);
 int16_t fifo_pop(struct fifo_t* buf, int (*callback)(void* ctx, uint8_t *b), void* ctx);
 
 int ringbuffer_putU16(struct fifo_t* buf, uint16_t data);

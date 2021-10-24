@@ -2421,9 +2421,6 @@
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\fifo.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\kernel\memory.c</name>
-            </file>
-            <file>
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\nidavellir.c</name>
             </file>
             <file>
@@ -2431,12 +2428,6 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\rtc.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\packages\kernel\tasklet.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\packages\kernel\time_link.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\utils.c</name>
