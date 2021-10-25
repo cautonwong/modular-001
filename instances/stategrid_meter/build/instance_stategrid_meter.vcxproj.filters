@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="..\baremetal_main.c" />
+    <ClCompile Include="..\stategrid_meter_entry.c" />
     <ClCompile Include="..\..\..\packages\dl698\fr_698.c">
       <Filter>app_698_server</Filter>
     </ClCompile>
@@ -32,9 +32,6 @@
     <ClCompile Include="..\..\..\packages\kernel\fifo.c">
       <Filter>kernel</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\kernel\memory.c">
-      <Filter>kernel</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\packages\kernel\nidavellir.c">
       <Filter>kernel</Filter>
     </ClCompile>
@@ -54,6 +51,7 @@
       <Filter>kernel</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\applications\app_698_server\pl_serial.c" />
+    <ClCompile Include="..\..\..\applications\app_resource_tool\resource_ tool.c" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="app_698_server">

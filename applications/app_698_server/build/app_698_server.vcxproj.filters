@@ -20,7 +20,7 @@
       <Filter>dl698</Filter>
     </ClCompile>
     <ClCompile Include="..\pl_serial.c" />
-    <ClCompile Include="..\baremetal_main.c" />
+    <ClCompile Include="..\app_698_server_entry.c" />
     <ClCompile Include="..\..\..\packages\dl698\fr_axdr.c">
       <Filter>dl698</Filter>
     </ClCompile>
@@ -48,7 +48,7 @@
     <ClCompile Include="..\..\..\packages\dl698\fr_698_comm.c">
       <Filter>dl698</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\app_resource_tool\resource_ tool.c" />
+    <ClCompile Include="..\test_app_698_server_entry.c" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dl698">

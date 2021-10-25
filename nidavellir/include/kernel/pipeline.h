@@ -32,6 +32,7 @@ struct pipeline_t
     void *in_queue;//stdin 
     void *out_queue;//stdout
     //void *data;//const data
+    int (*on_work)(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
     size_t filter_n;
     const struct filter_t *filters;//本流水线下的所有过滤器共享同一ctx
 };

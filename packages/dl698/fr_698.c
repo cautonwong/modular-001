@@ -429,8 +429,8 @@ int fr_serve_one_object(struct instance_t* instance, struct pipeline_t* pipeline
 
         //class的处理开始  找到对应class的编解码器
         uint32_t data = 0x12345678;
-        //will_return(__read, &data);
-        //will_return(__read, 4);
+        //will_return(nd_get, &data);
+        //will_return(nd_get, 4);
         //异常处理
         p[cache->wr++] = 0x01;
         p[cache->wr++] = 0x05;//type encoder
@@ -721,9 +721,9 @@ int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     ctx->step = 0;
     int r = ringbuffer_filter(fifo, matcher_698, ctx);
-    assert(r == ctx->min_len + 2);
     if (r > 0)
     {
+        assert(r == ctx->min_len + 2);
 #ifdef VERBOSE
         uint8_t buf[256];
         ctx->rx_count++;
@@ -793,43 +793,6 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
 
     return 0;
 }
-
-
-
-const struct filter_t fr_rx_698[2] =
-{
-    {0x00,fr_rx_698_entry,1,13},
-    {0x01,fr_gatekeeper_server,5,13},
-};
-
-struct pipeline_t pl_rx_698 =
-{
-    pid_rx_698,
-    "pl_rx_698",
-    &ctx_698,
-    &stdin_698,//serial driver isr put byte into this 
-    &stdout_698,//pl_rx_698 put apdu into this 
-    sizeof(fr_rx_698) / sizeof(fr_rx_698[0]),
-    fr_rx_698,
-};
-
-const struct filter_t fr_tx_698[1] =
-{
-    {0x01,fr_tx_698_entry,1,13},
-    //{0x01,fr_gatekeeper_698,5,13},
-    //{0x0501,fr_handle_0501,0,13},
-};
-
-struct pipeline_t pl_tx_698 =
-{
-    pid_tx_698,
-    "pl_tx_698",
-    &ctx_698,
-    &pipe_tx_698_req,
-    &stdout_698,
-    sizeof(fr_tx_698) / sizeof(fr_tx_698[0]),
-    fr_tx_698,
-};
 
 //内存消耗分析:  <3.5K
 //串口接收FIFO 544  
