@@ -60,6 +60,8 @@ domain领域层
 
 调用packages构建的业务强相关的应用
 
+
+
 三种形态: `baremetal/thread/process`,分别对应`baremetal_entry.c;thread_entry.c;process_entry.c`。
 
 	如何将单个application方便地"打包"成thread and process?

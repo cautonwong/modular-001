@@ -1,27 +1,5 @@
 #include "kernel\nidavellir.h"
-#include "kernel\task.h"
 #include "applications.h"
-
-
-
-
-// ctrl_block  以下内容放到port.h
-#if 1
-uint8_t emu_err_event_duration_para = 5;/*static:电能表芯片故障事件-判定延时时间 */\
-uint8_t emu_err_event_duration;    /*dyn:当前芯片故障状态持续时间*/\
-
-uint8_t emu_err_flag; /* 当前计量芯片故障标志*/\
-
-uint8_t emu_err_event_activeflag; /*发生标识*/
-uint8_t emu_err_event_recordflag; /*记录标识*/
-uint8_t emu_err_event_resetflag;  /*复位标识*/
-
-uint32_t emu_err_accumulate_time; /*累计时间*/
-
-
-#endif
-
-
 
 static int event_duration_pro(uint8_t duration_para,uint8_t *duration, uint8_t *activeflag, uint8_t *recordflag, uint8_t state)
 {
@@ -75,9 +53,9 @@ static int event_duration_pro(uint8_t duration_para,uint8_t *duration, uint8_t *
 
 // 上电运行期间 每秒调用 
 // 事件 判断:  返回1:记录发生                0:不记录        -1:记录结束
-int emu_err_event_judge(struct instance_t* instance, struct task_t* task, struct message_t* mesg)
+int emu_err_event_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->control_block;
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
 
     uint8_t state = false;
     int8_t result = 0;
@@ -96,7 +74,7 @@ int emu_err_event_judge(struct instance_t* instance, struct task_t* task, struct
     
     result = event_duration_pro(duration_para, duration, activeflag, recordflag, state);
     
-    if(activeflag == true)
+    if(*activeflag == true)
     {
         (*accumulate_time)++;/* 累计时间累加 */
     }    
@@ -107,9 +85,9 @@ int emu_err_event_judge(struct instance_t* instance, struct task_t* task, struct
 
 
 // 事件 清零       返回1:清零                  0:不清零
-int emu_err_event_reset(struct instance_t* instance, struct task_t* task, struct message_t* mesg)
+int emu_err_event_reset(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->control_block;
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
     uint8_t reset_flag = ctrl_block->emu_err_event_resetflag;
     uint32_t *accumulate_time = &ctrl_block->emu_err_accumulate_time;
 
@@ -117,7 +95,7 @@ int emu_err_event_reset(struct instance_t* instance, struct task_t* task, struct
     {
 	    case 0xAAAA:// 待调整 //获取事件复位标识             标识需由通信触发，记录写完后清零？？？
 	        assert(mesg->len == 8);
-	        ringbuffer_getU32(task->std_in, &reset_flag);
+	        //ringbuffer_getU32(task->std_in, &reset_flag);
 	        break;
     }
 

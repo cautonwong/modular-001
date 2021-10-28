@@ -1,26 +1,12 @@
 #include "kernel\nidavellir.h"
-#include "kernel\task.h"
 #include "applications.h"
 
-
-
-// ctrl_block  以下内容放到port.h
-#if 1
-//本模块
-uint8_t meterclr_event_recordflag; /*记录标识*/ // 通过fifo传递
-uint8_t meterclr_event_resetflag; /*复位标识*/
-
-//外部模块
-uint8_t factor_mode; /*工厂模式*/ 
-#endif
-
-
 // 电表清零事件 判断:  返回1:记录发生                0:不记录
-int meterclr_event_judge(struct instance_t* instance, struct task_t* task, struct message_t* mesg)
+int meterclr_event_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->control_block;
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
 
-    /*工厂模式下 不记录清零事件*/ 
+    //工厂模式下 不记录清零事件
     if (ctrl_block->factor_mode == true)
     {
         return 0;
@@ -30,7 +16,7 @@ int meterclr_event_judge(struct instance_t* instance, struct task_t* task, struc
     {
         case 0xAAAA:// 待调整 //获取事件记录标识             标识需由通信触发，记录写完后清零？？？
             assert(mesg->len == 8);
-            ringbuffer_getU32(task->std_in, &ctrl_block->meterclr_event_recordflag);
+            //ringbuffer_getU32(task->std_in, &ctrl_block->meterclr_event_recordflag);
             break;
     }
 
@@ -45,16 +31,16 @@ int meterclr_event_judge(struct instance_t* instance, struct task_t* task, struc
 }
 
 // 电表清零事件 复位  返回1:复位清零                  0:不清零
-int meterclr_event_reset(struct instance_t* instance, struct task_t* task, struct message_t* mesg)
+int meterclr_event_reset(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->control_block;
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
     uint8_t reset_flag = ctrl_block->meterclr_event_resetflag;
 
     switch (mesg->id)
     {
 	    case 0xAAAA:// 待调整 //获取事件复位标识             标识需由通信触发，记录写完后清零？？？
 	        assert(mesg->len == 8);
-	        ringbuffer_getU32(task->std_in, &reset_flag);
+	        //ringbuffer_getU32(task->std_in, &reset_flag);
 	        break;
     }
 
