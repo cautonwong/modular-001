@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "kernel\nidavellir.h"
 #include   "tx_api.h"
 #include   <stdio.h>
 

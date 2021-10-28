@@ -42,23 +42,11 @@ struct task_t
     pid_t id;
     char* name;
     void* std_in;
-    void* task_data;
-    void* task_setting;
-    void (*entry)(void* task_data);
+    void* std_out;
+    void* ctrl_block;//三段式
+    void* setting;
+    int (*entry)(struct instance_t* instance, struct task_t* task, struct message_t* mesg);
 };
-/*
-
-struct pipeline_t
-{
-    pid_t id;
-    char* name;
-    void* ctx;//上下文的地址
-    void* in_queue;//stdin 
-    void* out_queue;//stdout
-    //void *data;//const data
-    int (*init)(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-    int (*entry)(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-};*/
 const struct filter_t *id_to_filter(const struct filter_t *filters,size_t n, filter_id_t id);
 
 #endif

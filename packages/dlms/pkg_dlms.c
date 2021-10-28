@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "kernel\nidavellir.h"
 #include "__enums__.h"
 #include "__errorcodes__.h"
 #include "__internal_api__.h"

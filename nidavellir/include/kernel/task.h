@@ -37,7 +37,7 @@ struct filter_chain_t
 */
 struct task_t
 {
-    pid_t id;
+    pid_t id;  
     #ifdef WIN32
     char* name;
     #endif

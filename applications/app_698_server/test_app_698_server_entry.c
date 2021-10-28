@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "kernel\nidavellir.h"
 #include <stdarg.h>
 #include <stddef.h>
 #include <setjmp.h>

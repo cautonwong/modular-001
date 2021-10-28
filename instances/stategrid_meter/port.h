@@ -39,9 +39,9 @@
                                 int32_t    I_over;/*static:电能表过流事件-电流触发下限 */ \
                                 uint8_t    I_over_duration;/*static:电能表过流事件-判定延时时间 */\
 
-#define Ia_data_fields          int32_t    Ia;\
-#define Ib_data_fields          int32_t    Ib;\
-#define Ic_data_fields          int32_t    Ic;/*dyn:c相电流*/\
+#define Ia_data_fields          int32_t    Ia;
+#define Ib_data_fields          int32_t    Ib;
+#define Ic_data_fields          int32_t    Ic;//dyn:c相电流*/
 
 #define I_common_extension
 
@@ -99,4 +99,52 @@
 #define dyn_persistent_start         uint8_t dyn_persistent_start;\
 #define dyn_persistent_end           uint8_t dyn_persistent_end;\
 
+
+//event_flag_id  event_chain
+#define  event_flags_group_id  0
+#define  event_flags_group_size  16
+#define  max_event_flag    16*8
+
+#define  event_flags_xxx_start  0
+
+#define         PowerReverseLa    9          /**< 有功功率反向 */
+#define         PowerReverseLb 10          /**< 有功功率反向 */
+#define         PowerReverseLc 11          /**< 有功功率反向 */
+#define         PowerReverseLt 12          /**< 有功功率反向 */
+#define         TerminalCoverOpened 13     /**< 开端钮盖 */
+#define         battery2_under4v8 14      /**< 抄表电池欠压 */
+#define         LoadUnbalance 15           /**< 电流不平衡 */
+#define         remote_alarm_flag 16        /**< 远程告警 */
+#define         VoltageUnbalance 17        /**< 电压不平衡 */
+#define         BadPowerFactor 18          /**< 功率因数超限 */
+#define         ReplayError 19             /**< 负荷开关误动作 */
+#define         UnderVoltageL1 20          /**< 欠压 */
+#define         UnderVoltageL2 21          /**< 欠压 */
+#define         UnderVoltageL3 22          /**< 欠压 */
+#define         MeterCoverOpened 23        /**< 开表盖 */
+#define         OverLoadL1 24              /**< 过载 */
+#define         OverLoadL2 25              /**< 过载 */
+#define         OverLoadL3 26              /**< 过载 */
+#define         Voltagesequencereversal 27 /**< 电压逆相序 */
+#define         LostCurrentL1 28           /**< 失流 */
+#define         LostCurrentL2 29           /**< 失流 */
+#define         LostCurrentL3 30           /**< 失流 */
+#define         LostVoltageL1 31           /**< 失压 */
+#define         LostVoltageL2 32           /**< 失压 */
+#define         LostVoltageL3 33           /**< 失压 */
+#define         MissVoltageL1 34           /**< 断相 */
+#define         MissVoltageL2 35           /**< 断相 */
+#define         MissVoltageL3 36           /**< 断相 */
+#define         PositiveDemandOver 37      /**< 有功需量超限 */
+#define         OverVoltageL1 38           /**< 过压 */
+#define         OverVoltageL2 39           /**< 过压 */
+#define         OverVoltageL3 40           /**< 过压 */
+#define         OverCurrentL1 41           /**< 过流 */
+#define         OverCurrentL2 42           /**< 过流 */
+#define         OverCurrentL3 43           /**< 过流 */
+#define         CurrentReversal 44         /**< 电流逆相序 */
+#define         LoadUnbalanceSeverit 45    /**< 电流严重不平衡 */
+#define         Powerdirectionchanged 46   /**< 总有功功率反向 */
+#define         battery1_under2v8 47        /**< 时钟电池欠压 */
+#define         VoltageLostAll 48           /**< 全失压事件 */
 #endif

@@ -24,11 +24,11 @@
     <ProjectGuid>{4EC8332E-F221-4E84-9A28-0EB84F7E00FD}</ProjectGuid>
     <RootNamespace>appmeterbase</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>app_meterbase_baremetal</ProjectName>
+    <ProjectName>test_app_meterbase</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
@@ -92,12 +92,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)\nidavellir\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\nidavellir\include;$(SolutionDir)\instances\stategrid_meter;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>kernel_$(Configuration)_$(Platform).lib;cmocka_$(Configuration)_$(Platform).lib;tx_$(Configuration)_$(Platform).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>pkg_cmocka_$(Configuration)_$(Platform).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\nidavellir\bin\</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -146,7 +146,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\baremetal_entry.c" />
+    <ClCompile Include="..\..\..\packages\kernel\bitarithm.c" />
+    <ClCompile Include="..\..\..\packages\kernel\fifo.c" />
+    <ClCompile Include="..\..\..\packages\kernel\nidavellir.c" />
+    <ClCompile Include="..\..\..\packages\kernel\pipeline.c" />
+    <ClCompile Include="..\..\..\packages\kernel\rtc.c" />
+    <ClCompile Include="..\..\..\packages\kernel\tasklet.c" />
+    <ClCompile Include="..\..\..\packages\meterbase\gs_backlight_ctrl.c" />
+    <ClCompile Include="..\..\..\packages\meterbase\gs_cover_event.c" />
+    <ClCompile Include="..\..\..\packages\meterbase\gs_emu_err_event.c" />
+    <ClCompile Include="..\..\..\packages\meterbase\gs_i_over_event.c" />
+    <ClCompile Include="..\..\..\packages\meterbase\gs_mac_suspend.c" />
+    <ClCompile Include="..\..\..\packages\meterbase\gs_meter_clear_event.c" />
+    <ClCompile Include="..\app_meter_base_entry.c" />
+    <ClCompile Include="..\test_app_meter_base_entry.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

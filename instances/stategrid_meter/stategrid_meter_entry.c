@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "kernel\nidavellir.h"
 
 struct fifo_t stdin_698;
 struct fifo_t pipe_tx_698_req;
@@ -10,8 +10,8 @@ struct pipeline_t* pipelines[] =
     &pl_rx_698,
     &pl_tx_698,
     //#ifdef NIDAVELLIR_SYSTEM_TEST
-        &pl_tx_to_serial,
-        //#endif
+    &pl_tx_to_serial,
+    //#endif
 };
 
 //cautonwong  以上的内容  应该放在instance的入口函数里面去分配和初始化
@@ -35,16 +35,29 @@ extern struct resource_ctx_t* init_resource_manager(uint8_t device_name, uint32_
 int baremetal_instance_entry_main(int argc, char** argv)
 {
     struct resource_ctx_t* ctx;
-    struct instance_t* instance;
     uint8_t mbase_control_block_name;
     //初始化硬件
     //初始化固件
-    //初始化软件
+    struct instance_t*instance = create_instance(resource_def);//用资源描述创建instance
+    //初始化软件  task的创建方式有两种:静态创建和动态创建
+    uint8_t byte_pool[40*1024];
+    byte_pool_create(byte_pool);//给task创建一个字节池
+    struct task_t task_meterbase;
+    //分别是task的ctrl_block的三段的大小  三段:上电清零段+上电恢复但掉电不保存段+掉电保存且上电恢复段
+    create_block_from_e2prom();
+    create_task(&task_meterbase,0x01,300,300,300);//创建一个task
+    set_task_std_in();//设置task的标准输入
+    set_task_std_out();//设置task的标准输出
+    set_task_setting();//设置task的设置参数
+    set_task_ctrl_block();//设置task的控制块
+    add_task(instance);//将此task添加到容器里
+
         //每个application的control block如何初始化?且如何绑定到instance里?
         //每个application如何访问自己的control block?
     //链接和绑定硬件 固件 和 软件
     //运行主循环
     //一、初始化resource_manager_ctx;（申请了1K的大小，名称是0x01）
+
     ctx = init_resource_manager(0x01, &nd_memory, 32 * 1024, 2 * 1024, 0x01);
     if (ctx == NULL)
     {
@@ -75,8 +88,6 @@ int baremetal_instance_entry_main(int argc, char** argv)
     {
         return -1;
     }
-    //init_memory(instance, recipe.layout, recipe.layout_n);
-    //init_ipc_matrix();
     struct tm time =
     {
         .tm_year = 2021 - 1900,   /* years are counted from 1900 */

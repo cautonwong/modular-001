@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "kernel\nidavellir.h"
 #include "dlms\nx_dlms.h"
 
 /*
