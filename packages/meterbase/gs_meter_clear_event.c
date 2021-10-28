@@ -1,4 +1,4 @@
-#include "kernel\nidavellir.h"
+#include "nidavellir.h"
 #include "applications.h"
 
 // 电表清零事件 判断:  返回1:记录发生                0:不记录

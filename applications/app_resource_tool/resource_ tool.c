@@ -1,4 +1,4 @@
-#include "kernel\nidavellir.h"
+#include "nidavellir.h"
 //#include "resource_tool.h"
 
 //单一设备的块链表

@@ -1,4 +1,4 @@
-#include "kernel\nidavellir.h"
+#include "nidavellir.h"
 
 int update_instance_rtc(struct instance_t* instance)
 {

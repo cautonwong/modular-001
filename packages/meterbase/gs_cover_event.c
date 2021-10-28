@@ -1,4 +1,4 @@
-#include "kernel\nidavellir.h"
+#include "nidavellir.h"
 #include "applications.h"
 
 static int event_duration_pro(uint8_t duration_para,uint8_t *duration, uint8_t *activeflag, uint8_t *recordflag, uint8_t state)

@@ -1,4 +1,4 @@
-#include "kernel\nidavellir.h"
+#include "nidavellir.h"
 
 struct fifo_t stdin_698;
 struct fifo_t pipe_tx_698_req;

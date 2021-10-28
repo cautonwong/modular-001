@@ -1,4 +1,4 @@
-#include "kernel\nidavellir.h"
+#include "nidavellir.h"
 #include "applications.h"
 
 // !!!在此app中不做IO操作!!!

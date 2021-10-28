@@ -1,5 +1,5 @@
-#include "kernel\nidavellir.h"
-#include "kernel\pipeline.h"
+#include "nidavellir.h"
+#include "pipeline.h"
 #include "applications.h"
 
 struct alarm_t

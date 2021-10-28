@@ -1,4 +1,4 @@
-#include "kernel\nidavellir.h"
+#include "nidavellir.h"
 #include "applications.h"
 
 // mac挂起处理         每秒调用     过零点清零。

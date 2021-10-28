@@ -1,4 +1,4 @@
-#include "kernel\nidavellir.h"
+#include "nidavellir.h"
 
 char* get_pipeline_name(struct instance_t* instance, pid_t pipeline_id)
 {
