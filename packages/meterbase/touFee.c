@@ -1,4 +1,5 @@
-#include "kernel\nidavellir.h"
+#include "nidavellir.h"
+#include "meterbase.h"
 //dependencies
     //1.user define
     //2.mesg[秒]
@@ -11,38 +12,11 @@
 #define   Season_Table0       0x0006
 #define   TOU_TABLE_LEN       144
 #define   Day_Tou_Num         0x0007
-#define   MaxTouNum           14
+
 #define   Day_Table00         0x0008
 
 
 
-struct fee_t
-{
-    unsigned char   DayTableNo;//日表序号
-    unsigned char	TOUNo;//费率序号
-    unsigned char   STEPNo;//阶梯序号
-    unsigned long	TOUPrice;//费率电价
-    unsigned long	STEPPrice;//阶梯电价
-    unsigned char   SeasonTable;//时区表主副表序号
-    unsigned char   DayTable;//日表主副表序号
-    unsigned char   TouPriceTable;//费率电价表主副表序号
-    unsigned char   StepTable;//阶梯表主副表序号
-    unsigned char	StepSeason;//阶梯时区表主副表序号
-    unsigned long	Price;//当前电价
-    unsigned char	StepNum;//阶梯数
-};
-
-struct mbase_control_block_t
-{
-    int id;
-    //电量数据
-    //瞬时量数据
-    //需量数据
-    //事件负荷冻结数据
-    //费率数据
-    struct fee_t Fee;
-    //费用数据
-};
 
 
 
@@ -162,7 +136,6 @@ void GetTOUFee(struct instance_t* instance, struct pipeline_t* pipeline)
         Now = ((unsigned int)instance->time.tm_hour << 8) + (unsigned int)instance->time.tm_min;
         i = FeeTable_CmpFind(Num, Buffer, Now);//比较查找时段表
         mbase_control_block->Fee.TOUNo = BCD_BYTE(Buffer[3 * i]);
-        FeeNo = mbase_control_block->Fee.TOUNo;
         if ((mbase_control_block->Fee.TOUNo == 0) || (mbase_control_block->Fee.TOUNo > 12))
             mbase_control_block->Fee.TOUNo = 1;
     }
