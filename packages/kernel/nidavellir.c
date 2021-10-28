@@ -145,9 +145,6 @@ int nidavellir_run_baremetal(struct instance_t* instance)
         {
             filter = pipeline->filters;
             n = pipeline->filter_n;
-            //pipeline->entry();
-            //filter->on_work(instance, pipeline, &mesg);
-            ////
             do
             {
                 ret = filter->on_work(instance, pipeline, &mesg);
@@ -172,7 +169,6 @@ int nidavellir_run_baremetal(struct instance_t* instance)
                     filter = NULL;
                 }
             } while (filter != NULL);
-            /////
         }
     }
 }

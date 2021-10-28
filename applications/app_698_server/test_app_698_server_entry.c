@@ -2,10 +2,11 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <setjmp.h>
-#include "testutil\cmocka.h"
+#include "cmocka.h"
 #include <stdio.h>
-extern int app_plc_rx_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-extern int app_plc_tx_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+#include "fr_698.h"
+extern int app_698_rx_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int app_698_tx_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int open_serial_port(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int close_serial_port(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int fr_rx_data_from_serial(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
@@ -51,7 +52,7 @@ int let_nd_get_return_ok(struct instance_t* instance, uint32_t id, uint8_t* buf,
 //准备测试环境
 const struct filter_t fr_rx_698[1] =
 {
-    {0x01,app_plc_rx_entry,0,13},
+    {0x01,app_698_rx_entry,0,13},
 };
 
 struct pipeline_t pl_rx_698 =
@@ -61,14 +62,14 @@ struct pipeline_t pl_rx_698 =
     &ctx_698,
     &stdin_698,//serial driver isr put byte into this 
     &stdout_698,//pl_rx_698 put apdu into this 
-    app_plc_rx_entry,
+    app_698_rx_entry,
     sizeof(fr_rx_698) / sizeof(fr_rx_698[0]),
     fr_rx_698,
 };
 
 const struct filter_t fr_tx_698[1] =
 {
-    {0x01,app_plc_tx_entry,0,13},
+    {0x01,app_698_tx_entry,0,13},
 };
 
 struct pipeline_t pl_tx_698 =
@@ -78,7 +79,7 @@ struct pipeline_t pl_tx_698 =
     &ctx_698,
     &pipe_tx_698_req,
     &stdout_698,
-    app_plc_tx_entry,
+    app_698_tx_entry,
     sizeof(fr_tx_698) / sizeof(fr_tx_698[0]),
     fr_tx_698,
 };
@@ -86,8 +87,14 @@ struct pipeline_t pl_tx_698 =
 struct fifo_t stdin_698;
 struct fifo_t pipe_tx_698_req;
 struct fifo_t stdout_698;
+
+struct fifo_t stdin_client_698;
+struct fifo_t stdout_client_698;
+
 struct context_698_t ctx_698;
-struct context_serial_t ctx_serial_1 = { L"\\\\.\\com5",NULL};
+struct context_698_t ctx_client_698;
+
+struct context_serial_t ctx_serial_1 = { L"\\\\.\\com10",NULL};
 
 const struct filter_t fr_rx_from_serial[] =
 {
@@ -123,12 +130,33 @@ struct pipeline_t pl_tx_to_serial =
     fr_tx_to_serial,
 };
 
+
+const struct filter_t plc_tx_to_meter[1] =
+{
+    {0x01,app_698_tx_entry,0,13},
+};
+
+struct pipeline_t pl_plc_tx_to_meter =
+{
+    pid_client_tx_698,
+    "pl_plc_tx_to_meter",
+    &ctx_client_698,
+    &stdout_client_698,
+    &stdin_698,
+    app_698_tx_entry,
+    sizeof(plc_tx_to_meter) / sizeof(plc_tx_to_meter[0]),
+    plc_tx_to_meter,
+};
+
+
 //本app包含的pipeline
 struct pipeline_t* pipelines[] =
 {
+    &pl_plc_tx_to_meter,   
     &pl_rx_698,
     &pl_tx_698,
-    &pl_tx_to_serial,
+    //&pl_tx_to_serial,
+
 };
 
 //*********************上述的初始化方法要删掉 wong*********************//
@@ -150,6 +178,11 @@ int test_app_setup(void** state)
     uint8_t* buf = malloc(2048);
     ctx_698.apdu = malloc(sizeof(struct fifo_t));
     fifoBuf_init(ctx_698.apdu, buf, 2048);
+
+    fifoBuf_init(&stdin_client_698, malloc(512), 512);
+    fifoBuf_init(&stdout_client_698, malloc(512), 512);
+    ctx_client_698.apdu = malloc(sizeof(struct fifo_t));
+    fifoBuf_init(ctx_client_698.apdu, malloc(2048), 2048);
 
     *state = instance;
     return 0;
@@ -181,7 +214,7 @@ void test_case_running_by_self(void** state)
     while (1)
     {
         fr_rx_data_from_serial(instance, &pl_rx_from_serial, &mesg);
-        app_plc_rx_entry(instance, &pl_rx_698,&mesg);
+        app_698_rx_entry(instance, &pl_rx_698,&mesg);
         fr_tx_data_to_serial(instance, &pl_tx_to_serial, &mesg);
     }
 }
@@ -198,12 +231,54 @@ void test_case_running_with_kernel(void** state)
     }
 }
 
+
+//安全测试用例--0明文/1明文+MAC/2密文/3密文+MAC
+void test_case_fr_698_security(void** state)
+{
+    struct instance_t* instance = (struct instance_t*)*state;
+    struct message_t mesg;
+    struct security_t {
+        uint32_t oad;
+        uint8_t cmd;
+    };
+    struct security_t inf[] = {
+        {0x00000200, GET_Request},
+        {0x40030200, SET_Request},
+        {0x20000200, ACTION_Request},
+    };
+
+    for (uint8_t i = 0; i < 3; i++)
+    {
+        for (uint8_t j = 0; j < 4; j++)
+        {
+            mesg.from = kernel;
+            mesg.to = pid_client_tx_698;
+            mesg.ctrl = inf[i].cmd;;
+            mesg.qos = j; //0明文/1明文+MAC/2密文/3密文+MAC
+            mesg.len = 4;
+            mesg.id = inf[i].oad;
+            mesg.oad_n = 1;
+
+            send_mesg(instance, NULL, &mesg, NULL);
+            nidavellir_run(instance);
+            //判断回应帧是否正常
+        }
+    }
+
+}
+
+
+
+#if 1
 int main(void)
 {
+
     //这是所有的测试用例列表
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_case_1),
         //cmocka_unit_test(test_case_running_by_self),
+        cmocka_unit_test(test_case_fr_698_security),
+
         cmocka_unit_test(test_case_running_with_kernel),
     };
 
@@ -213,3 +288,32 @@ int main(void)
 
     return cmocka_run_group_tests(tests, test_app_setup, NULL);
 }
+#else
+
+int main(void)
+{
+    struct instance_t* instance = malloc(sizeof(struct instance_t));
+    recipe.pipelines = &pipelines[0];
+    recipe.pipeline_n = sizeof(pipelines) / sizeof(pipelines[0]);
+    recipe.name = 0;
+    instance->recipe = &recipe;
+
+    fifoBuf_init(&stdout_698, malloc(512), 512);
+    fifoBuf_init(&stdin_698, malloc(512), 512);
+    fifoBuf_init(&pipe_tx_698_req, malloc(512), 512);
+
+    instance->cache = malloc(256);
+    instance->cache2 = malloc(sizeof(struct cache_t));
+    init_cache(instance->cache2, instance->cache, 256);
+    uint8_t* buf = malloc(2048);
+    ctx_698.apdu = malloc(sizeof(struct fifo_t));
+    fifoBuf_init(ctx_698.apdu, buf, 2048);
+
+    open_serial_port(instance, &pl_rx_from_serial, NULL);
+
+    while (1)
+    {
+        nidavellir_run_baremetal(instance);
+    }
+}
+#endif

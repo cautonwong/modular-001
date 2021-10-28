@@ -5,6 +5,10 @@
 #include <sys/stat.h>
 #include <WinBase.h>
 
+
+
+
+
 struct context_serial_t* create_serial_port(char* filename)
 {
     struct context_serial_t* serial_port = 

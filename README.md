@@ -9,13 +9,13 @@ nidavellir devices system
 四个层次如下：
 
 ```
-	 	  instances//以产品或硬件board为名
+instances//以产品或硬件board为名
 
-	  applications drivers  //应用和公共驱动服务
+applications drivers  //应用和公共驱动服务
 
-		  nidavellir//开发工具包
+nidavellir//开发工具包
 
-		  packages //组件包
+packages //组件包
 
 ```
 
