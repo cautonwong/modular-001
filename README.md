@@ -2,6 +2,14 @@
 
 nidavellir devices system
 
+## milestones
+
+|  时间   | 里程碑  |
+|  ----  | ----  |
+|2021-10-30|   合并代码并能运行<br>按照测试用例分工自测|
+|2021-11-06 |   第一次台体测试|
+|2021-11-13 |  第二次台体测试|
+|2021-11-20  | 提交WG测试|
 
 ## high level design
 
@@ -9,27 +17,82 @@ nidavellir devices system
 四个层次如下：
 
 ```
-instances//以产品或硬件board为名
+		//instances  以产品或硬件board为名
 
-applications drivers  //应用和公共驱动服务
+			//applications  //应用
+	meterbase-x/698_server/dlms-server/dlms_client
 
-nidavellir//开发工具包
+			//开发工具包  
+nidavellir-c  nidavellir-baremetal nidavellir-os nidavellir-x-languages  
+			//packages //组件包  领域层
+baremetal  meterbase  dlms dl645 dl698 
+			//packages //组件包 基础设施层
+resource-manager drivers cpus buses filex levelx crypto
+```
 
-packages //组件包
+----
+
+### 生态系统
+**应用管理**
+- 用户注册
+- 应用申请
+- 开发工具链
+- 应用开发
+- 应用部署前的打包
+
+**测试管理**
+- 包级测试
+- 应用级测试
+- 设备测试
+- 部署测试
+
+**设备管理**  
+
+- 创建设备
+- 设备描述信息和注册
+- 应用部署
+
+### 举例
 
 ```
 
+单相表: nidavellir-baremetal + app_meterbase + app_698_server
+物联网计量芯: nidavellir-baremetal + app_meterbase_1 + app_698_server(2) + app_exchange_with_m33
+物联网管理芯: nidavellir-os + app_meterbase_2 + app_698_server(3) + app_exchange_with_m0
+国网三相表: nidavellir-baremetal + app_meterbase + app_698_server(3)
+
+```
+
+
+协议无关    --》  1. 无id   2. 地址和存储  3. 
+
+其中，协议类应用(app_698_server)跟基表应用(app_meterbase)的数据转换方式如下:
+
+在map中实现转换，确保meterbase的协议无关性
+
+meterbase聚合根  (变量Ua)       <- map ->   ID (1.8.0)
+
+meterbase<-->resource manager  [3个分区 static ]
+
+协议   <--->  resource manager  [driver]
+
+
+map()
+{
+	sw
+}
+
 ### packages
+
+含**业务概念/业务状态/业务规则**
+
+不可单独部署,但要单独发布源码和库，发布时提供移植指南，**方便供第三方进行移植和使用**。
 
 平台组件  或者叫 包
 
 基础服务层
 
 domain领域层
-
-含业务概念/业务状态/业务规则
-
-不可单独部署
 
 不可单独执行
 
@@ -39,9 +102,9 @@ domain领域层
 
 编程注意事项:
 
-1. 多数package能够使用到多个环境(前后台/多线程/多进程/动态/静态/dll/lib)下，故单个package不能依赖别的package，只依赖fifo、instance->cache和消息。更不能直接操作设备(外设和内设)，特别是业务包不能依赖操作系统包。
+1. 多数package能够使用到多个环境(前后台/多线程/多进程/动态/静态/dll/lib)下，故单个package不能依赖别的package，*只依赖fifo、instance->cache和消息*。更不能直接操作设备(外设和内设)，特别是业务包不能依赖操作系统包。(kernel包也不依赖  **考虑中，待定**)
 
-2. 同理，package要满足**可重入和多实例**的要求
+2. 同理，package要满足**可重入和多实例**的要求。因此，代码中不能出现全局变量，甚至文件作用域的变量。
 
 3. 消息格式设计  'cmd len data cmd' 
 
@@ -60,17 +123,15 @@ domain领域层
 
 调用packages构建的业务强相关的应用
 
-
-
-三种形态: `baremetal/thread/process`,分别对应`baremetal_entry.c;thread_entry.c;process_entry.c`。
-
-	如何将单个application方便地"打包"成thread and process?
+本质上只是package的重组和重排
 
 可单独执行
 
 可单独部署
 
 独立仓库
+
+发布时务必提供三种形态: `baremetal/thread/process`,分别对应`baremetal_entry.c;thread_entry.c;process_entry.c`。
 
 导出 applications.h
 
@@ -91,7 +152,7 @@ domain领域层
 
 ```
 int app_entry(struct instance_t* instance, 
-			struct pipeline_t* pipeline, struct message_t* mesg)
+			struct task_t* task, struct message_t* mesg)
 {
     int r = 0;
     //1.接入校验，验证接收到的消息的完整性和合法性
@@ -165,15 +226,30 @@ int baremetal_instance_entry(int argc, char** argv)
 ```
 
 ```
+## message
+
+//未确定
+
+```
+head cmd len data tail
+head: 0x88
+cmd: <= 32 kernel message
+cmd: > 32  user message
+data: 
+tail: 0x88
+```
+
+**说明**:
+
+在前后台环境下，此message通过fifo传递
+在多线程环境下，此message通过queue传递
+
 
 ## 测试
 
-测试的设计可分为
-
-- package级别的测试
-- application级别的测试
-- instance级别的测试
-
-
 ## workflow
 
+## 体系
+
+```
+```
