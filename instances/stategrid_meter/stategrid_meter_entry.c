@@ -85,6 +85,8 @@ int update_instance_rtc(struct instance_t* instance)
 }
 
 uint8_t nd_memory[32 * 1024];
+struct recipe_t recipe;
+
 extern void* nd_malloc(struct instance_t* instance, uint8_t block_name, uint32_t size);
 extern uint32_t* add_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size);
 extern struct resource_map_t* register_map(struct instance_t* instance, uint8_t map_name,
@@ -124,7 +126,6 @@ int baremetal_instance_entry_main(int argc, char** argv)
     //链接和绑定硬件 固件 和 软件
     //运行主循环
 
-    struct recipe_t recipe;
     recipe.pipelines = &pipelines[0];
     recipe.pipeline_n = sizeof(pipelines) / sizeof(pipelines[0]);
     recipe.name = 0;
@@ -172,7 +173,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
 }
 
 
-int app_main(int argc, char** argv)
+int main(int argc, char** argv)
 {
     baremetal_instance_entry_main(argc, argv);
 }

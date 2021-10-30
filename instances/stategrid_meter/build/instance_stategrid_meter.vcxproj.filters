@@ -54,6 +54,24 @@
     <ClCompile Include="..\..\..\applications\app_resource_tool\resource_ tool.c" />
     <ClCompile Include="..\..\..\applications\app_698_server\app_698_server_entry.c" />
     <ClCompile Include="..\..\..\applications\app_meter_base\app_meter_base_entry.c" />
+    <ClCompile Include="..\..\..\packages\meterbase\gs_backlight_ctrl.c">
+      <Filter>app_meter_base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\meterbase\gs_cover_event.c">
+      <Filter>app_meter_base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\meterbase\gs_emu_err_event.c">
+      <Filter>app_meter_base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\meterbase\gs_i_over_event.c">
+      <Filter>app_meter_base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\meterbase\gs_mac_suspend.c">
+      <Filter>app_meter_base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\meterbase\gs_meter_clear_event.c">
+      <Filter>app_meter_base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="app_698_server">
@@ -61,6 +79,9 @@
     </Filter>
     <Filter Include="kernel">
       <UniqueIdentifier>{5aa0e6cd-099b-45c7-b5bb-fe19d3b5f41c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="app_meter_base">
+      <UniqueIdentifier>{5023f214-877f-47af-acff-7a702355669c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

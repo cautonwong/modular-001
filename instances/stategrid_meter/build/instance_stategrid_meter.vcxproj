@@ -39,6 +39,12 @@
     <ClCompile Include="..\..\..\packages\kernel\rtc.c" />
     <ClCompile Include="..\..\..\packages\kernel\tasklet.c" />
     <ClCompile Include="..\..\..\packages\kernel\utils.c" />
+    <ClCompile Include="..\..\..\packages\meterbase\gs_backlight_ctrl.c" />
+    <ClCompile Include="..\..\..\packages\meterbase\gs_cover_event.c" />
+    <ClCompile Include="..\..\..\packages\meterbase\gs_emu_err_event.c" />
+    <ClCompile Include="..\..\..\packages\meterbase\gs_i_over_event.c" />
+    <ClCompile Include="..\..\..\packages\meterbase\gs_mac_suspend.c" />
+    <ClCompile Include="..\..\..\packages\meterbase\gs_meter_clear_event.c" />
     <ClCompile Include="..\stategrid_meter_entry.c" />
   </ItemGroup>
   <ItemGroup>
