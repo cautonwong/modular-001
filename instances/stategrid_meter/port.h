@@ -81,24 +81,24 @@
                                 remote_ctrl_fields  \
                                 local_ctrl_fields 
 
+
+//os相关的字段  比如信号量 队列等
+#define os_fields
+
 //!!!设想!!!
 //每个app的control block分区,每个分区在存储介质中存在独立的实际分区，以便支持页对齐地整块读写。分别是
-//1.掉电保存区且上电需要读出初始化的区域  如电量数据
-//2.上电需要初始化但掉电不需要保存的区域  如参数
-//3.上电需要清零的区域                  如中间状态数据
-//存在的问题
-//1. 要跟协议ID做个映射map
-//2. 数据兼容性
+//1.掉电保存区且上电需要读出初始化的区域  如电量数据     persistent段
+//2.上电需要初始化但掉电不需要保存的区域  如参数         static段
+//3.上电需要清零的区域                  如中间状态数据  cache段 
 
-#define static_start                 uint8_t static_start;\
-#define static_end                   uint8_t static_end;\
+#define static_start                 uint8_t static_section_start;
+#define static_end                   uint8_t static_section_end;
 
-#define dyn_cache_start              uint8_t dyn_cache_start;\
-#define dyn_cache_end                uint8_t dyn_cache_end;\
+#define dyn_cache_start              uint8_t cache_section_start;
+#define dyn_cache_end                uint8_t cache_section_end;
 
-#define dyn_persistent_start         uint8_t dyn_persistent_start;\
-#define dyn_persistent_end           uint8_t dyn_persistent_end;\
-
+#define dyn_persistent_start         uint8_t persistent_section_start;
+#define dyn_persistent_end           uint8_t persistent_section_end;
 
 //event_flag_id  event_chain
 #define  event_flags_group_id  0
@@ -147,4 +147,7 @@
 #define         Powerdirectionchanged 46   /**< 总有功功率反向 */
 #define         battery1_under2v8 47        /**< 时钟电池欠压 */
 #define         VoltageLostAll 48           /**< 全失压事件 */
+
+
+
 #endif
