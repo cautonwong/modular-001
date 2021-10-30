@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\applications\app_698_server\app_698_server_entry.c" />
     <ClCompile Include="..\..\..\applications\app_698_server\pl_serial.c" />
     <ClCompile Include="..\..\..\applications\app_resource_tool\resource_ tool.c" />
     <ClCompile Include="..\..\..\packages\dl698\fr_698.c" />
@@ -123,7 +124,7 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(SolutionDir)\nidavellir\include\;$(SolutionDir)\nidavellir\include\kernel\;$(SolutionDir)\packages\test\cmocka\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\nidavellir\include\;$(SolutionDir)\nidavellir\include\kernel\;$(SolutionDir)\packages\test\cmocka\include\;$(SolutionDir)\instances\stategrid_meter\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

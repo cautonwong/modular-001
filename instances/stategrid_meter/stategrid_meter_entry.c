@@ -1,4 +1,41 @@
 #include "nidavellir.h"
+extern int app_698_rx_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int app_698_tx_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+
+//准备测试环境
+const struct filter_t fr_rx_698[1] =
+{
+    {0x01,app_698_rx_entry,0,13},
+};
+
+struct pipeline_t pl_rx_698 =
+{
+    pid_rx_698,
+    "pl_rx_698",
+    &ctx_698,
+    &stdin_698,//serial driver isr put byte into this 
+    &stdout_698,//pl_rx_698 put apdu into this 
+    app_698_rx_entry,
+    sizeof(fr_rx_698) / sizeof(fr_rx_698[0]),
+    fr_rx_698,
+};
+
+const struct filter_t fr_tx_698[1] =
+{
+    {0x01,app_698_tx_entry,0,13},
+};
+
+struct pipeline_t pl_tx_698 =
+{
+    pid_tx_698,
+    "pl_tx_698",
+    &ctx_698,
+    &pipe_tx_698_req,
+    &stdout_698,
+    app_698_tx_entry,
+    sizeof(fr_tx_698) / sizeof(fr_tx_698[0]),
+    fr_tx_698,
+};
 
 struct fifo_t stdin_698;
 struct fifo_t pipe_tx_698_req;
@@ -29,7 +66,7 @@ uint8_t nd_memory[32 * 1024];
 extern void* nd_malloc(struct instance_t* instance, uint8_t block_name, uint32_t size);
 extern uint32_t* add_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size);
 extern struct resource_map_t* register_map(struct instance_t* instance, uint8_t map_name,
-    int8_t(*fun)(struct instance_t* instance, uint32_t id, uint8_t mode, struct resources_obj_t* obj));
+    int8_t(*fun)(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj));
 extern int8_t resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj);
 extern struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t resource_blok_size, uint8_t resource_block_name);
 int baremetal_instance_entry_main(int argc, char** argv)
@@ -72,7 +109,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
 
     instance->recipe = &recipe;
     instance->ms = 0;
-    //注册一个MAP
+    //注册一个698的MAP
     register_map(instance, 0x01, resource_map_698);
     //申请一个BLOCK
     mbase_control_block_name = 0x02;
@@ -80,6 +117,8 @@ int baremetal_instance_entry_main(int argc, char** argv)
     {
         return -1;
     }
+    //mbase_control_block_name分三块
+    //第一块为
     struct tm time =
     {
         .tm_year = 2021 - 1900,   /* years are counted from 1900 */

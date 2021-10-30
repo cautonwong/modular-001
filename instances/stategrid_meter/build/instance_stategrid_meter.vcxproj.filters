@@ -52,6 +52,7 @@
     </ClCompile>
     <ClCompile Include="..\..\..\applications\app_698_server\pl_serial.c" />
     <ClCompile Include="..\..\..\applications\app_resource_tool\resource_ tool.c" />
+    <ClCompile Include="..\..\..\applications\app_698_server\app_698_server_entry.c" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="app_698_server">
