@@ -1,6 +1,7 @@
 #include "nidavellir.h"
 
 //单一设备的块链表
+#pragma pack(1)
 struct block_device_children_t
 {
     uint8_t name;
@@ -12,6 +13,7 @@ struct block_device_children_t
 
 //设备的链表(这里把RAM也看成一个块设备来处理)
 struct dev_info_t;
+#pragma pack(1)
 struct block_device_t
 {
     uint8_t device_name;
@@ -124,8 +126,7 @@ uint32_t *add_block(struct instance_t* instance, uint8_t device_name, uint8_t bl
             }
             block->first_addr = device->first_addr + device->used;
             block->name = block_name;
-            INIT_LIST_HEAD(&block->sibling);
-            //memset((uint8_t*)&block->sibling, 0x00, sizeof(struct list_head));
+            init_list_head(&block->sibling);
             block->size = block_size;
             block->used = 0x00;
             device->used += block_size;
@@ -163,7 +164,7 @@ uint32_t *add_inside_block(struct instance_t* instance, uint8_t device_name,uint
             {
                 inside_block->first_addr = block->first_addr + block->used;
                 inside_block->name = inside_block_name;
-                INIT_LIST_HEAD(&inside_block->sibling);
+                init_list_head(&inside_block->sibling);
                 inside_block->size = block_size;
                 inside_block->used = 0x00;
                 block->used += block_size;
@@ -182,9 +183,9 @@ struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uin
     struct block_device_children_t* block = NULL;
     uint32_t used = sizeof(struct instance_t);
 
-    INIT_LIST_HEAD(&instance->app_list);
-    INIT_LIST_HEAD(&instance->dev_list);
-    INIT_LIST_HEAD(&instance->map_list);
+    init_list_head(&instance->app_list);
+    init_list_head(&instance->dev_list);
+    init_list_head(&instance->map_list);
     //创建RAM设备
     device = __nd_malloc(first_addr,&used,sizeof(struct block_device_t), size);
     if (device != NULL)
@@ -195,8 +196,8 @@ struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uin
         device->first_addr = first_addr;
         device->page_size = 0;
         device->size = size;
-        INIT_LIST_HEAD(&device->sibling);
-        INIT_LIST_HEAD(&device->children);
+        init_list_head(&device->sibling);
+        init_list_head(&device->children);
         instance->ram_device_name = device_name;
         list_add_tail(&device->sibling, &instance->dev_list);
         //创建resource_block
@@ -205,7 +206,7 @@ struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uin
         {
             block->first_addr = first_addr;
             block->name = resource_block_name;
-            INIT_LIST_HEAD(&block->sibling);
+            init_list_head(&block->sibling);
             block->size = resource_blok_size;
             block->used = used;
             instance->resource_block_name = resource_block_name;
@@ -248,8 +249,8 @@ int8_t add_device(struct instance_t* instance, uint8_t device_name, const struct
         device->first_addr = 0x00000000;
         device->page_size = 0x00;
         device->size = dev->data_size;
-        INIT_LIST_HEAD(&device->sibling);
-        INIT_LIST_HEAD(&device->children);
+        init_list_head(&device->sibling);
+        init_list_head(&device->children);
         list_add_tail(&device->sibling, &instance->dev_list);
     }
     

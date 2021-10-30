@@ -439,6 +439,7 @@ struct resource_map_t
 
 struct mbase_control_block_t;
 //聚合根
+#pragma pack(1)
 struct instance_t
 { 
     ///resourec需要的一些变量

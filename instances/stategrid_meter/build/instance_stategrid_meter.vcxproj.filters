@@ -70,6 +70,9 @@
       <Filter>app_meter_base</Filter>
     </ClCompile>
     <ClCompile Include="..\698_mapper.c" />
+    <ClCompile Include="..\..\..\packages\kernel\list.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="app_698_server">

@@ -33,6 +33,7 @@
     <ClCompile Include="..\..\..\packages\dl698\fr_axdr.c" />
     <ClCompile Include="..\..\..\packages\kernel\bitarithm.c" />
     <ClCompile Include="..\..\..\packages\kernel\fifo.c" />
+    <ClCompile Include="..\..\..\packages\kernel\list.c" />
     <ClCompile Include="..\..\..\packages\kernel\nidavellir.c" />
     <ClCompile Include="..\..\..\packages\kernel\pipeline.c" />
     <ClCompile Include="..\..\..\packages\kernel\rtc.c" />
