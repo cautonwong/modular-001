@@ -16,6 +16,7 @@ struct pipeline_t pl_meter_base =
     NULL,
     NULL,
     NULL,
+    app_meter_base_entry,
     sizeof(fr_meter_base) / sizeof(fr_meter_base[0]),
     fr_meter_base,
 };
@@ -72,9 +73,9 @@ int update_instance_rtc(struct instance_t* instance)
     rtc_localtime(ts, &instance->time);
     return 0;
 }
-#ifdef WIN32
-uint8_t nd_memory[32 * 1024];
-#endif // WIN32
+
+uint8_t nd_memory[20 * 1024];
+
 
 extern void* nd_malloc(struct instance_t* instance, uint8_t block_name, uint32_t size);
 extern uint32_t* add_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size);
@@ -109,11 +110,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     add_task(instance);//将此task添加到容器里
 #endif
     //一、初始化resource_manager_ctx;（申请了1K的大小，名称是0x01）
-#ifdef WIN32
-    instance = create_instance(0x01, &nd_memory, 32 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
-#else
-    instance = create_instance(0x01, &nd_memory, 32 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
-#endif // WIN32
+    instance = create_instance(0x01, (uint32_t)&nd_memory, 20 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
     if (instance == NULL)
     {
         return -1;

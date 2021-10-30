@@ -38,11 +38,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     if(mbase_control_block->voltage_ac < MIN_VOLTAGE)
     {
         mbase_control_block->voltage_ac = 0;
-    }    
-    
-    
-    
-    
+    } 
 }
 
 

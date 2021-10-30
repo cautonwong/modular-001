@@ -92,7 +92,7 @@ void iic_ctrl(uint8 ctrl , size_t index)
 
 int iic_send_byte(uint8 Data , size_t index)
 {
-    register uint8_t i,ACK;
+    register uint8_t i;
         
     SCL_DOUT_0();
     SDA_OUTPUT();

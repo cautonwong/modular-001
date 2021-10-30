@@ -2377,7 +2377,58 @@
             <name>arch</name>
             <group>
                 <name>MCU LIB</name>
+                <file>
+                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_adc.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_ana.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_clk.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_flash.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_gpio.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_misc.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_pmu.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_rtc.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_tmr.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_uart.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_wdt.c</name>
+                </file>
             </group>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp\cpu_v85xxp_isr.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp\lib_CodeRAM.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp\lib_cortex.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp\lib_LoadNVR.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp\startup_target.s</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp\v8500_for_single.c</name>
+            </file>
         </group>
         <group>
             <name>dl698</name>
