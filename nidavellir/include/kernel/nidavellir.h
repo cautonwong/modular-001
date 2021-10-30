@@ -323,12 +323,55 @@ int recv_mesg(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 int send_mesg(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t* payload);
 int recv_mesg_header(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
-struct driver_t
+
+struct bus_ops_t
 {
-    int (*read_dev)(struct instance_t* instance, uint32_t addr, uint8_t* buf, uint16_t buf_size);
-    int (*write_dev)(struct instance_t* instance, uint32_t addr, uint8_t* buf, uint16_t buf_size);
-    int (*ioctrl)(struct instance_t* instance, uint32_t addr, uint8_t* buf, uint16_t buf_size);
+    size_t bus_type;
+    size_t bus_index;
+    int (*init)(size_t index);
+    void (*tx_enable)(uint8_t en , size_t index);
+    int (*tx)(uint8_t byte  , size_t index);
+    void (*rx_enable)(uint8_t en , size_t index);
+    int (*rx)(uint8_t* byte , size_t index );
+    int (*tx_statue)(size_t index);
+    int (*rx_statue)(size_t index);
+    void (*ctrl)(uint8_t ctrl , size_t index); //对于SPI总线的START 表示要拉低CS， STOP表示要拉高CS。对于IIC总线START 和 STOP 分别表示起始和结束
 };
+
+struct dev_info_t;
+struct driver_ops_t
+{
+    int (*dev_initialize)(struct dev_info_t *dev);
+    int (*dev_control)(struct dev_info_t* dev , uint8_t ctrl , void* ctrl_parameter);
+    int (*dev_read)(struct dev_info_t* dev , uint32_t addr , uint16_t len , void* src);
+    int (*dev_write)(struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src);
+};
+
+
+struct dev_sys_ops_t
+{
+    int (*dev_input_isr)();
+    int (*dev_output_isr)();
+    int (*dev_status)(struct dev_info_t* dev);
+    int (*dev_termination)(struct dev_info_t* dev);
+    int (*dev_entry)(struct dev_info_t* dev);
+};
+
+struct dev_info_t
+{
+    size_t dev_type;
+    size_t dev_index;
+    size_t data_size;
+    size_t dev_timer_type;
+    size_t dev_timer_id;
+    const struct bus_ops_t *dev_bus_ops;
+    const struct driver_ops_t *dev_driver_ops;//给资源管理器用
+    const struct dev_sys_ops_t *dev_sys_ops;  //给系统用
+    struct fifo_t* dev_input_fifo;
+    struct fifo_t* dev_output_fifo;
+    const void *cfg;
+};
+//EEPROM，FLASH，EMU，红外，RS4851，RS4852，PLC，RTC
 
 struct hw_def_t
 {
