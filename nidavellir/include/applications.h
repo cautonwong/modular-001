@@ -149,6 +149,4 @@ int8_t add_demand_action(struct mbase_control_block_t* mbase_block, uint32_t* im
 extern const struct dev_info_t eeprom_dev;
 extern const struct dev_info_t nor_flash_dev;
 
-
-
 #endif

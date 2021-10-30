@@ -102,6 +102,7 @@ enum device_id_t
     DEV_EMU           ,
     DEV_ESAM_698      ,
     DEV_CARD          ,
+    DEV_RAM           ,
 
     DEV_RS4851        ,
     DEV_RS4852        ,

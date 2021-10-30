@@ -219,7 +219,7 @@ struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uin
 }
 
 //注册设备的API 先创建RAM设备；
-int8_t add_device(struct instance_t* instance, uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t page_size, struct driver_t* driver, uint8_t ram_name)
+int8_t add_device(struct instance_t* instance, uint8_t device_name, const struct dev_info_t *dev)
 {
     struct block_device_t* device = NULL;
     struct block_device_t* ram_device = NULL;
