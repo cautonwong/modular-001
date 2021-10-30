@@ -20,6 +20,9 @@
 
 #define CA_TYPE_TER(ca)     ((ca&0xF0) == 0)
 
+#define get_OAD_Class(oad)      (uint8_t)((oad&0xF0000000)>>28)
+#define get_OAD_Attribute(oad)  (uint8_t)((oad&0x00000F00)>>8)
+
 
 #define fr_698_get nd_get
 #define fr_698_set nd_set

@@ -1,26 +1,33 @@
-///
+#ifndef __FR_AXDR_H__
+#define __FR_AXDR_H__
 #if 1
 enum data_type_choice_e
 {
-    DTC_NULL                 = 0,
-    DTC_ARRAY                = 1,
-    DTC_STRUCTURE            = 2,
-    DTC_BOOLEAN              = 3,
-    DTC_BIT_STRING           = 4,
-    DTC_DOUBLE_LONG          = 5,   /**< int32 */
-    DTC_DOUBLE_LONG_UNSIGNED = 6,   /**< uint32 */
+    TYPE_null = 0,
+    TYPE_array = 1,
+    TYPE_structure = 2,
+    TYPE_bool = 3,
+    TYPE_bit_string = 4,
+    TYPE_double_long = 5,
+    TYPE_double_long_unsigned = 6,
+
+    ////////////////////////////
     DTC_FLOATING_POINT       = 7,
     DTC_OCTET_STRING         = 9,
     DTC_VISIBLE_STRING       = 10,
     DTC_UTF8_STRING          = 12,
     DTC_BCD                  = 13,
-    DTC_INTEGER              = 15,   /**< int8 */
-    DTC_LONG                 = 16,   /**< int16 */
-    DTC_INTEGER_UNSIGNED     = 17,   /**< uint8 */
-    DTC_LONG_UNSIGNED        = 18,   /**< uint16 */
+
+    TYPE_integer = 15,
+    TYPE_long = 16,
+    TYPE_unsigned = 17,
+    TYPE_long_unsigned = 18,
+
     DTC_COMPACT_ARRAY        = 19,//空缺
-    DTC_LONG64               = 20,   /**< int64 */
-    DTC_LONG64_UNSIGNED      = 21,   /**< uint64 */
+
+    TYPE_long64 = 20,
+    TYPE_long64_unsigned = 21,
+
     DTC_ENUM                 = 22,
     DTC_FLOAT32              = 23,
     DTC_FLOAT64              = 24,
@@ -60,26 +67,16 @@ enum data_type_choice_e
 ///
 enum data_type_222choice_e
 {
-    TYPE_NULL = 0,  
-    TYPE_array = 1,
-    TYPE_structure = 2,
-    TYPE_bool = 3,
-    TYPE_bit_string = 4,  
-    TYPE_double_long = 5,  
-    TYPE_double_long_unsigned = 6, 
+
 
     TYPE_octet_string = 9, 
     TYPE_visible_string = 10,
 
     TYPE_UTF8_string = 12,
 
-    TYPE_integer = 15,
-    TYPE_long = 16,
-    TYPE_unsigned = 17,
-    TYPE_long_unsigned = 18,
 
-    TYPE_long64 = 20,
-    TYPE_long64_unsigned = 21,
+
+
     TYPE_enum = 22,
     TYPE_float32 = 23,
     TYPE_float64 =24,
@@ -107,3 +104,4 @@ enum data_type_222choice_e
     TYPE_RCSD = 96,
     TYPE_VQDS = 97, 
 };
+#endif //__FR_AXDR_H__

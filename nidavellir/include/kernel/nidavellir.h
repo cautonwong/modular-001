@@ -14,6 +14,7 @@
 
 #include <stdlib.h>
 #include "time.h"
+#include "event_flag.h"
 
 #include "utils.h"
 #include "list.h"
@@ -139,6 +140,14 @@ struct object_t
 {
     object_id_t id;//对象ID
 };
+
+#ifdef WIN32
+struct context_serial_t
+{
+    char* file_name;
+    HANDLE   handle;
+};
+#endif
 
 struct context_645_t
 {
@@ -343,8 +352,8 @@ struct recipe_t
 {
     uint32_t name;//产品编号
     uint32_t version;
-    const struct layout_t *layout;//to be deleted
-    uint32_t layout_n;
+    //const struct layout_t *layout;//to be deleted
+    //uint32_t layout_n;
     struct hw_def_t *hw_def;
     uint16_t hw_def_n;
     uint8_t pipeline_n;
@@ -375,25 +384,17 @@ struct resource_map_t
     struct list_head sibling;
 };
 
-struct resource_ctx_t
-{
+struct mbase_control_block_t;
+//聚合根
+struct instance_t
+{ 
+    ///resourec需要的一些变量
     struct list_head app_list;
     struct list_head dev_list;
     struct list_head map_list;
     uint8_t ram_device_name;
     uint8_t resource_block_name;
-};
-
-struct mbase_control_block_t;
-struct instance_t
-{ 
-    //common control block
-    //uint8_t memory[8*1024];//kernel space && user space
-    //uint8_t kernel_space[1024];
-    //uint8_t user_space[1024];//work + worker
-    //uint32_t areas_used[9];//每个内存区域的已用空间 单位字节
-    
-    struct resource_ctx_t* ctx;
+    //////////////////////////
     uint32_t  ms;
     struct recipe_t *recipe;
     struct mbase_control_block_t * mbase_cb;
@@ -408,6 +409,8 @@ struct instance_t
     uint8_t* cache;
     struct cache_t* cache2;
     struct fifo_t pipe_rtc;//只能在定时器函数或时钟秒中断函数里写
+    int event_group_size;
+    uint8_t *event_flags;
 
     //user extended control block
     void* user_setting;//application_setting

@@ -48,33 +48,33 @@ uint16_t axdr_get_data_len(const uint8_t *data)
 #if 0
     switch (*p++)
     {
-    case DTC_NULL:
+    case TYPE_null:
         break;
 
-    case DTC_BOOLEAN:
+    case TYPE_bool:
     case DTC_ENUM:
-    case DTC_INTEGER:
-    case DTC_INTEGER_UNSIGNED:
+    case TYPE_integer:
+    case TYPE_unsigned:
         p += 1;
         break;
 
-    case DTC_LONG:
-    case DTC_LONG_UNSIGNED:
+    case TYPE_long:
+    case TYPE_long_unsigned:
     case DTC_SCALER_UNIT:
         p += 2;
         break;
 
-    case DTC_DOUBLE_LONG:
-    case DTC_DOUBLE_LONG_UNSIGNED:
+    case TYPE_double_long:
+    case TYPE_double_long_unsigned:
         p += 4;
         break;
 
-    case DTC_LONG64:
-    case DTC_LONG64_UNSIGNED:
+    case TYPE_long64:
+    case TYPE_long64_unsigned:
         p += 8;
         break;
 
-    case DTC_BIT_STRING:
+    case TYPE_bit_string:
         len = 0;
         //p  += axdr_data_len_decode((uint8_t *)p, &len);
         p  += (len + 7) / 8;
@@ -107,7 +107,7 @@ uint16_t axdr_get_data_len(const uint8_t *data)
         p += 7;
         break;
 
-    case DTC_ARRAY:
+    case TYPE_array:
         i = *p++;
 
         while (i--)
@@ -117,7 +117,7 @@ uint16_t axdr_get_data_len(const uint8_t *data)
 
         break;
 
-    case DTC_STRUCTURE:
+    case TYPE_structure:
         i = *p++;
 
         while (i--)
@@ -220,7 +220,7 @@ uint16_t axdr_get_data_len(const uint8_t *data)
         else if (i == 1)
         {
             p += 4;
-            if (*p != DTC_DATETIME_S && *p != DTC_DOUBLE_LONG_UNSIGNED)
+            if (*p != DTC_DATETIME_S && *p != TYPE_double_long_unsigned)
             {
             //    return 0;   /*!!!*/
             }
@@ -229,17 +229,17 @@ uint16_t axdr_get_data_len(const uint8_t *data)
         else if (i == 2)
         {
             p += 4;
-            if (*p != DTC_DATETIME_S && *p != DTC_DOUBLE_LONG_UNSIGNED)
+            if (*p != DTC_DATETIME_S && *p != TYPE_double_long_unsigned)
             {
             //    return 0;   /*!!!*/
             }
             p += axdr_get_data_len(p);
-            if (*p != DTC_DATETIME_S && *p != DTC_DOUBLE_LONG_UNSIGNED)
+            if (*p != DTC_DATETIME_S && *p != TYPE_double_long_unsigned)
             {
             //    return 0;   /*!!!*/
             }
             p += axdr_get_data_len(p);
-            if (*p != DTC_TI && *p != DTC_DOUBLE_LONG_UNSIGNED && *p != DTC_NULL)
+            if (*p != DTC_TI && *p != TYPE_double_long_unsigned && *p != TYPE_null)
             {
             //    return 0;   /*!!!*/
             }
@@ -264,4 +264,41 @@ uint16_t axdr_get_data_len(const uint8_t *data)
     }
 #endif
     return (uint16_t)(p - data);
+}
+
+
+uint8_t axdr_encode(uint8_t type, uint8_t* buf, uint16_t* len)
+{
+    if (buf[0] < 128)
+    {
+        if (len != NULL)
+        {
+            *len = buf[0];
+        }
+        return 1;
+    }
+    else if (buf[0] == 0x81)
+    {
+        if (len != NULL)
+        {
+            *len = buf[1];
+        }
+        return 2;
+    }
+    else if (buf[0] == 0x82)
+    {
+        if (len != NULL)
+        {
+            *len = ((uint16_t)buf[1] << 8) + buf[2];
+        }
+        return 3;
+    }
+    else
+    {
+        if (len != NULL)
+        {
+            *len = 0;
+        }
+        return 0;
+    }
 }

@@ -401,57 +401,6 @@ int fr_apdu_effective_check(struct instance_t* instance, struct pipeline_t* pipe
 }
 
 
-int fr_serve_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
-    struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = cache->buf_ptr;
-
-    if (((mesg->ctrl & 0x7f) == 0x06) ||
-        (mesg->ctrl & 0x7f) == 0x07)
-    {
-        uint8_t type = fifoBuf_getByte(fifo);
-        if (type == 0x09)//octet-string
-        {
-            uint8_t len = fifoBuf_getByte(fifo);
-            fifoBuf_getData(fifo, p + cache->wr, len);
-            //todo write data
-            p[cache->wr++] = 0x00;
-        }
-    }
-    else
-    {
-        //if (oad->coder->size() > fifoBuf_getFree(cache))
-        {
-            //return -1;
-        }
-
-        //class的处理开始  找到对应class的编解码器
-        uint32_t data = 0x12345678;
-        //will_return(__read, &data);
-        //will_return(__read, 4);
-        //异常处理
-        p[cache->wr++] = 0x01;
-        p[cache->wr++] = 0x05;//type encoder
-
-        //fifo->rd ++
-        int r = 0;
-        //int r = __read(mesg->id, p + cache->wr, 4);
-        fifo->rd += r;
-        if (r < 0)
-        {
-            p[cache->wr++] = 0x00;//DAR
-            p[cache->wr++] = -r;
-        }
-        else
-        {
-            cache->wr += r;
-        }
-    }
-
-    return 1;
-}
 
 int fr_encode_optional(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -471,17 +420,6 @@ int fr_encode_optional(struct instance_t* instance, struct pipeline_t* pipeline,
         cache->wr += r;
     }
     
-    return 1;
-}
-
-
-int fr_follow_report(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{
-    return 1;
-}
-
-int fr_timeTag(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{
     return 1;
 }
 
@@ -595,9 +533,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     //数据加密
     fr_security_encode(instance, pipeline, mesg);
 
-    fr_follow_report(instance, pipeline, mesg);
-
-    fr_timeTag(instance, pipeline, mesg);
+    fr_encode_optional(instance, pipeline, mesg);
 
     if (fifoBuf_getUsed(ctx->apdu)  > 0)
     {
@@ -721,9 +657,9 @@ int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     ctx->step = 0;
     int r = ringbuffer_filter(fifo, matcher_698, ctx);
-    assert(r == ctx->min_len + 2);
     if (r > 0)
     {
+        assert(r == ctx->min_len + 2);
 #ifdef VERBOSE
         uint8_t buf[256];
         ctx->rx_count++;
@@ -750,7 +686,7 @@ int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
 int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
     struct fifo_t* cache = ctx->apdu;
     //client  或者 主动上报 或者 延时读取发送
     if (recv_mesg_header(instance, pipeline, mesg))
@@ -761,11 +697,18 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
         ctx->addr[0] = 0x08;
         ctx->CA = 0x00;
         fifoBuf_putByte(cache, mesg->ctrl);//05
-        fifoBuf_putByte(cache, mesg->qos);//01
+        fifoBuf_putByte(cache, 0x01);//01
         fifoBuf_putByte(cache, ctx->PIID); 
+
+        ringbuffer_putU32(cache, mesg->id);
+        mesg->len = 7;
+        ringbuffer_putU32(cache, 0);
+        ringbuffer_putU32(cache, 0);
+        mesg->len += 2;
+
         fifoBuf_getData(fifo, cache->buf_ptr + cache->wr, mesg->len);
         cache->wr += mesg->len;
-        mesg->len += 3;
+        
 
         //区分  上报ID和上报内容
         fr_pack_698_head(instance, pipeline, mesg);
@@ -793,43 +736,6 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
 
     return 0;
 }
-
-
-
-const struct filter_t fr_rx_698[2] =
-{
-    {0x00,fr_rx_698_entry,1,13},
-    {0x01,fr_gatekeeper_server,5,13},
-};
-
-struct pipeline_t pl_rx_698 =
-{
-    pid_rx_698,
-    "pl_rx_698",
-    &ctx_698,
-    &stdin_698,//serial driver isr put byte into this 
-    &stdout_698,//pl_rx_698 put apdu into this 
-    sizeof(fr_rx_698) / sizeof(fr_rx_698[0]),
-    fr_rx_698,
-};
-
-const struct filter_t fr_tx_698[1] =
-{
-    {0x01,fr_tx_698_entry,1,13},
-    //{0x01,fr_gatekeeper_698,5,13},
-    //{0x0501,fr_handle_0501,0,13},
-};
-
-struct pipeline_t pl_tx_698 =
-{
-    pid_tx_698,
-    "pl_tx_698",
-    &ctx_698,
-    &pipe_tx_698_req,
-    &stdout_698,
-    sizeof(fr_tx_698) / sizeof(fr_tx_698[0]),
-    fr_tx_698,
-};
 
 //内存消耗分析:  <3.5K
 //串口接收FIFO 544  

@@ -60,3 +60,23 @@ int set_tasklet_deffered_work(struct instance_t* instance, int tid,
     tasklet->deffered_work = deffered_work;
     return 0;
 }
+
+int event_flags_get(struct instance_t* instance, int event_flag_id)
+{
+    assert(event_flag_id < instance->event_group_size*8);
+    return bit_isset(event_flag_id, instance->event_flags);
+}
+
+int event_flags_set(struct instance_t* instance, int event_flag_id)
+{
+    assert(event_flag_id < instance->event_group_size * 8);
+    bit_set(event_flag_id, instance->event_flags);
+    return 0;
+}
+
+int event_flags_clr(struct instance_t* instance, int event_flag_id)
+{
+    assert(event_flag_id < instance->event_group_size * 8);
+    bit_clr(event_flag_id, instance->event_flags);
+    return 0;
+}

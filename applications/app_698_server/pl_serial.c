@@ -5,13 +5,18 @@
 #include <sys/stat.h>
 #include <WinBase.h>
 
-struct context_serial_t
-{
-    char* file_name;
-    HANDLE   handle;
-};
 
-struct context_serial_t ctx_serial_1 = { L"\\\\.\\com1",NULL};
+
+
+
+struct context_serial_t* create_serial_port(char* filename)
+{
+    struct context_serial_t* serial_port = 
+        (struct context_serial_t*)malloc(sizeof(struct context_serial_t));
+    serial_port->file_name = filename;
+
+    return serial_port;
+}
 
 int open_serial_port(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -115,35 +120,5 @@ int fr_tx_data_to_serial(struct instance_t* instance, struct pipeline_t* pipelin
     return 0;
 }
 
-const struct filter_t fr_rx_from_serial[] =
-{
-    {0x01,fr_rx_data_from_serial,0x01,13},
-};
 
-const struct filter_t fr_tx_to_serial[] =
-{
-    {0x01,fr_tx_data_to_serial,0x01,13},
-};
-
-struct pipeline_t pl_rx_from_serial =
-{
-    pid_rx_from_serial,
-    "pl_rx_from_serial",
-    &ctx_serial_1,
-    NULL,
-    &stdin_698,
-    sizeof(fr_rx_from_serial) / sizeof(fr_rx_from_serial[0]),
-    fr_rx_from_serial,
-};
-
-struct pipeline_t pl_tx_to_serial =
-{
-    pid_tx_to_serial,
-    "pl_tx_to_serial",
-    &ctx_serial_1,
-    &stdout_698,
-    NULL,
-    sizeof(fr_tx_to_serial) / sizeof(fr_tx_to_serial[0]),
-    fr_tx_to_serial,
-};
 

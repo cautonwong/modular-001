@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "kernel\nidavellir.h"
 #include "fr_axdr.h"
 #include "fr_698.h"
 
@@ -283,9 +283,9 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
 
 err:
 
-    uint8_t oad_n = mesg->oad_n;
-    if (oad_n == 0) oad_n = 1;
-    while (oad_n-- > 0)
+    //uint8_t oad_n = mesg->oad_n;
+    //if (oad_n == 0) oad_n = 1;
+    //while (oad_n-- > 0)
     {
         //todo  apdu分帧
         //if (fifoBuf_getFree(cache) < size(oad))

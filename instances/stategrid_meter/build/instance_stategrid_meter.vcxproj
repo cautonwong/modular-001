@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\applications\app_698_server\pl_serial.c" />
+    <ClCompile Include="..\..\..\applications\app_resource_tool\resource_ tool.c" />
     <ClCompile Include="..\..\..\packages\dl698\fr_698.c" />
     <ClCompile Include="..\..\..\packages\dl698\fr_698_action.c" />
     <ClCompile Include="..\..\..\packages\dl698\fr_698_comm.c" />
@@ -30,14 +31,13 @@
     <ClCompile Include="..\..\..\packages\dl698\fr_axdr.c" />
     <ClCompile Include="..\..\..\packages\kernel\bitarithm.c" />
     <ClCompile Include="..\..\..\packages\kernel\fifo.c" />
-    <ClCompile Include="..\..\..\packages\kernel\memory.c" />
     <ClCompile Include="..\..\..\packages\kernel\nidavellir.c" />
     <ClCompile Include="..\..\..\packages\kernel\pipeline.c" />
     <ClCompile Include="..\..\..\packages\kernel\resource.c" />
     <ClCompile Include="..\..\..\packages\kernel\rtc.c" />
     <ClCompile Include="..\..\..\packages\kernel\tasklet.c" />
     <ClCompile Include="..\..\..\packages\kernel\utils.c" />
-    <ClCompile Include="..\baremetal_main.c" />
+    <ClCompile Include="..\stategrid_meter_entry.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\packages\dl698\fr_698.h" />

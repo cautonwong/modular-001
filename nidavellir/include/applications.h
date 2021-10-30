@@ -2,7 +2,7 @@
 #define __APPLICATIONS_H__
 
 //当前系统中所有的application注册表容器
-
+#include "port.h"
 struct energy_ctx_t
 {
     uint32_t pa;
@@ -38,15 +38,58 @@ struct demand_info_t
 struct mbase_control_block_t
 {
     int id;
-    //电量数据
-    //瞬时量数据
-    //需量数据
-    //事件负荷冻结数据
-    //费率数据
-    //费用数据
-    uint32_t UA;
+    I_data_fields
     struct energy_ctx_t* energy_ctx;
     struct demand_list_t* demand_list;
+
+    uint32_t backlight_switchOn_Hpriority_sec;/*上电或插卡等高优先级 背光持续打开时间,          赋值后每秒递减           */
+    uint32_t backlight_switchOn_Lpriority_sec;/*背光打开持续时间          赋值后每秒递减 */
+    uint32_t backlight_control_word;/*背光报警配置字 */
+    // para
+    uint32_t backlight_key_time; /*按键背光点亮时间 */
+    uint8_t lcd_poweron_all_dis_time;  /*上电全显时间 */
+    uint8_t lcd_autodis_list_num;    /*轮显屏数 */
+    uint8_t lcd_autodis_keep_sec;    /*轮显持续时间 */
+    uint16_t lcd_checkdis_keep_sec;/*显示查看显示时间 */
+    uint16_t lcd_checkdis_all_keep_sec;/*显示查看全屏显示时间 */
+    uint8_t under_un68; //所有相电压均低于68% 
+    uint8_t auxiliary_power;//辅助电源供电标志
+    //uint8_t remote_alarm_flag; //远程告警命令true-触发告警
+    //uint8_t battery1_under2v8; //时钟电池欠压
+    //uint8_t battery2_under4v8; //停抄电池欠压
+
+    uint8_t cover_event_duration_para;
+    uint8_t cover_event_duration;
+    uint8_t cover_flag; 
+    uint8_t cover_event_activeflag; 
+    uint8_t cover_event_recordflag; 
+    uint8_t cover_event_resetflag;  
+
+    uint32_t cover_accumulate_time;
+    //static:电能表芯片故障事件-判定延时时间
+    uint8_t emu_err_event_duration_para;
+    //dyn:当前芯片故障状态持续时间
+    uint8_t emu_err_event_duration;    
+    uint8_t emu_err_flag; // 当前计量芯片故障标志
+    uint8_t emu_err_event_activeflag; /*发生标识*/
+    uint8_t emu_err_event_recordflag; /*记录标识*/
+    uint8_t emu_err_event_resetflag;  /*复位标识*/
+    uint32_t emu_err_accumulate_time; /*累计时间*/
+    uint8_t i_over_event_duration_para;//static:电能表过流事件-判定延时时间 */ 
+    uint32_t i_over_event_threshold;//static:电能表过流事件-电流触发下限 */ 
+    uint8_t ia_over_event_duration;    //dyn:当前过流状态持续时间*/
+    uint8_t ia_over_event_activeflag;
+    uint8_t ia_over_event_recordflag;
+    uint8_t ia_over_event_resetflag;
+    uint32_t ia_over_accumulate_time; //累计时间*/ 
+    uint8_t mac_err_cnt; // 当日mac错误次数
+    uint8_t mac_suspend_date[3];// mac错误 挂起日期 yymmdd
+
+    uint8_t mac_suspend_state;  // mac挂起状态 协议或显示模块可调用。 true为挂起
+
+    uint8_t meterclr_event_recordflag; //记录标识*/ // 通过fifo传递
+    uint8_t meterclr_event_resetflag; //复位标识
+    uint8_t factor_mode; //工厂模式
 };
 
 uint8_t scond_execute_for_demand(struct mbase_control_block_t* mbase_block);
