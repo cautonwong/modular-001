@@ -35,7 +35,6 @@
     <ClCompile Include="..\..\..\packages\kernel\fifo.c" />
     <ClCompile Include="..\..\..\packages\kernel\nidavellir.c" />
     <ClCompile Include="..\..\..\packages\kernel\pipeline.c" />
-    <ClCompile Include="..\..\..\packages\kernel\resource.c" />
     <ClCompile Include="..\..\..\packages\kernel\rtc.c" />
     <ClCompile Include="..\..\..\packages\kernel\tasklet.c" />
     <ClCompile Include="..\..\..\packages\kernel\utils.c" />

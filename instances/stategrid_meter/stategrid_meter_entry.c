@@ -72,8 +72,10 @@ int update_instance_rtc(struct instance_t* instance)
     rtc_localtime(ts, &instance->time);
     return 0;
 }
-
+#ifdef WIN32
 uint8_t nd_memory[32 * 1024];
+#endif // WIN32
+
 extern void* nd_malloc(struct instance_t* instance, uint8_t block_name, uint32_t size);
 extern uint32_t* add_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size);
 extern struct resource_map_t* register_map(struct instance_t* instance, uint8_t map_name,
@@ -107,7 +109,11 @@ int baremetal_instance_entry_main(int argc, char** argv)
     add_task(instance);//将此task添加到容器里
 #endif
     //一、初始化resource_manager_ctx;（申请了1K的大小，名称是0x01）
+#ifdef WIN32
     instance = create_instance(0x01, &nd_memory, 32 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
+#else
+    instance = create_instance(0x01, &nd_memory, 32 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
+#endif // WIN32
     if (instance == NULL)
     {
         return -1;
@@ -147,7 +153,6 @@ int baremetal_instance_entry_main(int argc, char** argv)
     instance->cache = nd_malloc(instance, control_block_cache, 256);
     instance->cache2 = nd_malloc(instance, control_block_cache, sizeof(struct cache_t));
     init_cache(instance->cache2, instance->cache, 256);
-
     //初始化软时钟
     uint8_t* buf = nd_malloc(instance, control_block_cache, 4);
     fifoBuf_init(&instance->pipe_rtc, buf, 4);
@@ -172,7 +177,6 @@ int baremetal_instance_entry_main(int argc, char** argv)
     pl_tx_698.in_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
     fifoBuf_init(pl_tx_698.in_queue, nd_malloc(instance, control_block_698_name, 512), 512);
     pl_tx_698.out_queue = pl_rx_698.out_queue;
-
 
     ////////////////////////////申请一个mbase应用的BLOCK = 04/////////////////////////////////////////////
     uint8_t mbase_control_block_name = 0x04;

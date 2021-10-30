@@ -38,9 +38,6 @@
     <ClCompile Include="..\..\..\packages\kernel\pipeline.c">
       <Filter>kernel</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\kernel\resource.c">
-      <Filter>kernel</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\packages\kernel\rtc.c">
       <Filter>kernel</Filter>
     </ClCompile>
