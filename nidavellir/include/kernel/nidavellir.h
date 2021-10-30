@@ -384,20 +384,17 @@ struct resource_map_t
     struct list_head sibling;
 };
 
-struct resource_ctx_t
-{
+struct mbase_control_block_t;
+//聚合根
+struct instance_t
+{ 
+    ///resourec需要的一些变量
     struct list_head app_list;
     struct list_head dev_list;
     struct list_head map_list;
     uint8_t ram_device_name;
     uint8_t resource_block_name;
-};
-
-struct mbase_control_block_t;
-//聚合根
-struct instance_t
-{ 
-    struct resource_ctx_t* ctx;
+    //////////////////////////
     uint32_t  ms;
     struct recipe_t *recipe;
     struct mbase_control_block_t * mbase_cb;
