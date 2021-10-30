@@ -19,7 +19,7 @@ struct pipeline_t pl_meter_base =
     &mbase_ctrl_block,
     &meterbase_std_in,
     NULL,
-    app_meter_base_entry,
+    app_meter_base_entry,//
     (sizeof(fr_meter_base) / sizeof(fr_meter_base[0])),
     (const struct filter_t *)fr_meter_base,
 };

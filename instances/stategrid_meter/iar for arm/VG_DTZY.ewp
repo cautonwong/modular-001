@@ -2193,6 +2193,18 @@
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\utils.c</name>
             </file>
         </group>
+        <group>
+            <name>meterbase</name>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\meterbase\electrical measurement.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\meterbase\energy.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\meterbase\touFee.c</name>
+            </file>
+        </group>
     </group>
     <file>
         <name>$PROJ_DIR$\..\698_mapper.c</name>

@@ -43,7 +43,21 @@ struct mbase_control_block_t
     static_end     
     //运行期更改 && 掉电不保存 && 上电不需要IO请求的区域 && 初始化时直接清零
     dyn_cache_start   
-        I_data_fields
+    I_data_fields
+          
+    unsigned char   DayTableNo;//日表序号
+    unsigned char   TOUNo;//费率序号
+    unsigned char   STEPNo;//阶梯序号
+    unsigned long   TOUPrice;//费率电价
+    unsigned long   STEPPrice;//阶梯电价
+    unsigned char   SeasonTable;//时区表主副表序号
+    unsigned char   DayTable;//日表主副表序号
+    unsigned char   TouPriceTable;//费率电价表主副表序号
+    unsigned char   StepTable;//阶梯表主副表序号
+    unsigned char   StepSeason;//阶梯时区表主副表序号
+    unsigned long   Price;//当前电价
+    unsigned char   StepNum;//阶梯数
+          
     dyn_cache_end
     //运行期更改&&掉电或定时保存&&上电需要IO请求的数据分区
     dyn_persistent_start
