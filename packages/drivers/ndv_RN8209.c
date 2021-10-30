@@ -63,7 +63,7 @@ unsigned char ReadRn8209WithChk(unsigned char ChipAddr, unsigned char* Buf, unsi
 
 
 
-unsigned char WriteRn8209(unsigned char ChipAddr, unsigned char* Buf, unsigned char length , struct dev_info_t* dev)
+unsigned char WriteRn8209(unsigned char ChipAddr, unsigned char* Buf, unsigned char length , const struct dev_info_t* dev)
 {
     unsigned char i, j;
     unsigned char tx_buffer[6] = { 0 };
@@ -98,7 +98,7 @@ unsigned char WriteRn8209(unsigned char ChipAddr, unsigned char* Buf, unsigned c
     return false;
 }
 
-unsigned char WriteRn8209Check(unsigned char ChipAddr, unsigned char* Buf, unsigned char length , struct dev_info_t* dev)
+unsigned char WriteRn8209Check(unsigned char ChipAddr, unsigned char* Buf, unsigned char length , const struct dev_info_t* dev)
 {
     unsigned char i;
     unsigned char buffer[12];
@@ -125,7 +125,7 @@ unsigned char WriteRn8209Check(unsigned char ChipAddr, unsigned char* Buf, unsig
     return false;
 }
 
-unsigned char CmdRn8209(unsigned char cmd  , struct dev_info_t* dev)
+unsigned char CmdRn8209(unsigned char cmd  , const struct dev_info_t* dev)
 {
     unsigned long temp32 = cmd;
 
@@ -134,7 +134,7 @@ unsigned char CmdRn8209(unsigned char cmd  , struct dev_info_t* dev)
 
 
 
-unsigned char Rn8209InitConfig(struct dev_info_t* dev)
+unsigned char Rn8209InitConfig(const struct dev_info_t* dev)
 {
     //RN8209初始化配置的参数，直接在这里修改配置。
     unsigned short SysCon = 0x1643;
@@ -186,7 +186,7 @@ void ResetRn8209(void)
     PIN_RN8209_RX_IN_MODE();
 }
 
-unsigned char Rn8209DeviceIDCheck(struct dev_info_t* dev)
+unsigned char Rn8209DeviceIDCheck(const struct dev_info_t* dev)
 {
     unsigned long Rn8209DevID = 0;
 
@@ -203,7 +203,7 @@ unsigned char Rn8209DeviceIDCheck(struct dev_info_t* dev)
 
 
 
-unsigned char Rn8209AdjParaSet(struct Rn8209AdjSet_t* Set , struct dev_info_t* dev)
+unsigned char Rn8209AdjParaSet(struct Rn8209AdjSet_t* Set , const struct dev_info_t* dev)
 {
 
     CmdRn8209(CMD_WR_EN , dev );
@@ -246,7 +246,7 @@ void MeasureValue(struct dev_info_t* dev)
 
 
 
-int Rn8209_initialize(struct dev_info_t* dev)
+int Rn8209_initialize(const struct dev_info_t* dev)
 {
     const struct bus_ops_t *bus_ops = dev->dev_bus_ops;
 
@@ -254,7 +254,7 @@ int Rn8209_initialize(struct dev_info_t* dev)
     return 0;
 }
 
-int Rn8209_control(struct dev_info_t* dev , uint8 ctrl , void* ctrl_parameter)
+int Rn8209_control(const struct dev_info_t* dev , uint8 ctrl , void* ctrl_parameter)
 {
     const struct bus_ops_t *bus_ops = dev->dev_bus_ops;
     
@@ -292,7 +292,7 @@ int Rn8209_control(struct dev_info_t* dev , uint8 ctrl , void* ctrl_parameter)
     return 0;
 }
 
-int Rn8209_read(struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src )
+int Rn8209_read(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src )
 {
 
     return ReadRn8209WithChk(addr, src , len ,dev );
@@ -300,7 +300,7 @@ int Rn8209_read(struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src )
 }
 
 
-int Rn8209_write(struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
+int Rn8209_write(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
 {
     
     return WriteRn8209Check(addr, src, len , dev );

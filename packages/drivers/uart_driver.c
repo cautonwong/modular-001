@@ -80,7 +80,7 @@ uint8 uart_time_process(void *tickpara)
     return true;
 }
 
-int uart_dev_initialize(struct dev_info_t *dev)
+int uart_dev_initialize(const struct dev_info_t *dev)
 {
     uint8_t index = dev->dev_index;
     uint8_t *txbuf;
@@ -92,7 +92,7 @@ int uart_dev_initialize(struct dev_info_t *dev)
         uart_dev[index].dev_type = dev->dev_type;
         uart_dev[index].data_size = dev->data_size;
         uart_dev[index].dev_timer_type = dev->dev_timer_type;
-        uart_dev[index].dev_timer_id = ndv_timer_create(uart_time_process, dev, 1, false);
+        uart_dev[index].dev_timer_id = ndv_timer_create(uart_time_process, (void*)dev, 1, false);
         uart_dev[index].dev_bus_ops = dev->dev_bus_ops;
         uart_dev[index].dev_driver_ops = dev->dev_driver_ops;
         uart_dev[index].dev_sys_ops = dev->dev_sys_ops;
@@ -122,14 +122,14 @@ int uart_dev_initialize(struct dev_info_t *dev)
 }
 
 
-int uart_dev_control(struct dev_info_t* dev, uint8 ctrl , void *ctrl_parameter)
+int uart_dev_control(const struct dev_info_t* dev, uint8 ctrl , void *ctrl_parameter)
 {
      
     return true;
 }
 
 
-int uart_dev_write(struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
+int uart_dev_write(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
 {
 
 

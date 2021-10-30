@@ -68,7 +68,7 @@ static uint8 send_device_addr(uint32 device_addr , const struct bus_ops_t *iic_o
 *                  Index : start from 0,第一块E方为0,第二块E方为1
 * Return         : true / false
 ********************************************************************************/
-uint8 i2c_mem_page_write(uint32 physics_addr, uint8* DataAddr, uint16 Len, struct dev_info_t* dev)
+uint8 i2c_mem_page_write(uint32 physics_addr, uint8* DataAddr, uint16 Len, const struct dev_info_t* dev)
 {
     const struct bus_ops_t *iic_ops = dev->dev_bus_ops;
     uint8 index = iic_ops->bus_index;
@@ -115,7 +115,7 @@ uint8 i2c_mem_page_write(uint32 physics_addr, uint8* DataAddr, uint16 Len, struc
 *                  Index : start from 0,第一块E方为0,第二块E方为1
 * Return         : true / false
 ********************************************************************************/
-uint8 eeprom_write(uint32 physics_addr, INT8U* DataAddr, uint16 Len, struct dev_info_t* dev)
+uint8 eeprom_write(uint32 physics_addr, INT8U* DataAddr, uint16 Len, const struct dev_info_t* dev)
 {
     uint16 length, tmp;
     uint16 data_addr;
@@ -162,7 +162,7 @@ uint8 eeprom_write(uint32 physics_addr, INT8U* DataAddr, uint16 Len, struct dev_
 *                  Index : start from 0,第一块E方为0,第二块E方为1
 * Return         : true / false
 ********************************************************************************/
-uint8 eeprom_read(uint32 physics_addr, uint8* data_addr, uint16 Len, struct dev_info_t* dev)
+uint8 eeprom_read(uint32 physics_addr, uint8* data_addr, uint16 Len, const struct dev_info_t* dev)
 {
     size_t recv_ack;
     const struct bus_ops_t *iic_ops = dev->dev_bus_ops;
@@ -209,7 +209,7 @@ uint8 eeprom_read(uint32 physics_addr, uint8* data_addr, uint16 Len, struct dev_
 }
 
 
-uint8 eeprom_data_check(uint32 physics_addr, volatile uint8* pData, uint16 Len, struct dev_info_t* dev)
+uint8 eeprom_data_check(uint32 physics_addr, volatile uint8* pData, uint16 Len, const struct dev_info_t* dev)
 {
     uint8 RecvACK;
     const struct bus_ops_t *iic_ops = dev->dev_bus_ops;
@@ -270,7 +270,7 @@ uint8 eeprom_data_check(uint32 physics_addr, volatile uint8* pData, uint16 Len, 
     return true;
 }
 
-uint32 get_physics_addr(uint32 addr, uint8* buf, uint16 len , struct dev_info_t* dev)
+uint32 get_physics_addr(uint32 addr, uint8* buf, uint16 len , const struct dev_info_t* dev)
 {
 
     addr &= 0x0000FFFF;
@@ -287,7 +287,7 @@ uint32 get_physics_addr(uint32 addr, uint8* buf, uint16 len , struct dev_info_t*
 
 
 
-int eeprom_initialize(struct dev_info_t* dev)
+int eeprom_initialize(const struct dev_info_t* dev)
 {
     const struct bus_ops_t *iic_ops = dev->dev_bus_ops;
 
@@ -295,7 +295,7 @@ int eeprom_initialize(struct dev_info_t* dev)
 }
 
 
-int eeprom_read_chk(struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src) 
+int eeprom_read_chk(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src) 
 {
     uint32 physics_addr = 0;
     uint8  errcnt;
@@ -325,7 +325,7 @@ int eeprom_read_chk(struct dev_info_t* dev, uint32_t addr, uint16_t len, void* s
     return true;
 
 }
-int eeprom_write_chk(struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
+int eeprom_write_chk(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
 {
     uint8  errcnt;
     uint32 physics_addr = 0;
@@ -366,7 +366,7 @@ int eeprom_write_chk(struct dev_info_t* dev, uint32_t addr, uint16_t len, void* 
 }
 
 
-int eeprom_control(struct dev_info_t* dev, uint8 ctrl , void *ctrl_parameter)
+int eeprom_control(const struct dev_info_t* dev, uint8 ctrl , void *ctrl_parameter)
 {
     uint32 addr = 0;
     uint32 len = 1;

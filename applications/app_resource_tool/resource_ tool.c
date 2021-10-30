@@ -11,6 +11,7 @@ struct block_device_children_t
 };
 
 //设备的链表(这里把RAM也看成一个块设备来处理)
+struct dev_info_t;
 struct block_device_t
 {
     uint8_t device_name;
@@ -18,7 +19,7 @@ struct block_device_t
     uint32_t size;
     uint32_t page_size;
     uint32_t used;
-    struct driver_t* driver;
+    const struct dev_info_t *dev;
     struct list_head children;
     struct list_head sibling;
 };
@@ -163,7 +164,6 @@ uint32_t *add_inside_block(struct instance_t* instance, uint8_t device_name,uint
                 inside_block->first_addr = block->first_addr + block->used;
                 inside_block->name = inside_block_name;
                 INIT_LIST_HEAD(&inside_block->sibling);
-                //memset((uint8_t*)&inside_block->sibling, 0x00, sizeof(struct list_head));
                 inside_block->size = block_size;
                 inside_block->used = 0x00;
                 block->used += block_size;
@@ -190,7 +190,7 @@ struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uin
     if (device != NULL)
     {
         device->used = resource_blok_size;
-        device->driver = NULL;
+        device->dev = NULL;
         device->device_name = device_name;
         device->first_addr = first_addr;
         device->page_size = 0;
@@ -243,11 +243,11 @@ int8_t add_device(struct instance_t* instance, uint8_t device_name, const struct
         }
 
         device->used = 0;
-        device->driver = driver;
+        device->dev = dev;
         device->device_name = device_name;
-        device->first_addr = first_addr;
-        device->page_size = page_size;
-        device->size = size;
+        device->first_addr = 0x00000000;
+        device->page_size = 0x00;
+        device->size = dev->data_size;
         INIT_LIST_HEAD(&device->sibling);
         INIT_LIST_HEAD(&device->children);
         list_add_tail(&device->sibling, &instance->dev_list);
@@ -314,7 +314,8 @@ int8_t look_up_map(struct instance_t* instance,uint32_t id, uint8_t *buf, uint8_
 
 int8_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
 {
-    struct block_device_t* device = NULL;
+    const struct block_device_t* device = NULL;
+    const struct driver_ops_t *driver = NULL;
     struct resources_obj_t obj;
     uint8_t ret = 0x00;
     
@@ -327,11 +328,12 @@ int8_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t b
     }
     //查找设备
     device = look_up_device(instance, obj.device_name);
+    driver = device->dev->dev_driver_ops;
     if (device != NULL)
     {
-        //if ((device->driver != NULL) && (device->driver->read_dev != NULL))
+        if ((driver != NULL) && (driver->dev_read != NULL))
         {
-        //    device->driver->read_dev(instance, obj.offset, buf, obj.length);
+            driver->dev_read(device->dev, obj.offset, obj.length, buf);
             if (obj.hook != NULL)
             {
                 obj.hook(buf, obj.p);

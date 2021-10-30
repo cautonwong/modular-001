@@ -101,7 +101,7 @@ struct CalMesaureValue_t
 //提供给主程序调用的函数申明
 extern void ResetRn8209(void);                  //RN8209芯片硬件复位
 extern unsigned char Rn8209cCommInit(void);     //RN8209芯片串口通讯配置
-extern unsigned char Rn8209AdjParaSet(struct Rn8209AdjSet_t* Set , struct dev_info_t* dev); //RN8209芯片校表参数设置
+extern unsigned char Rn8209AdjParaSet(struct Rn8209AdjSet_t* Set , const struct dev_info_t* dev); //RN8209芯片校表参数设置
 extern unsigned char Rn8209DeviceIDCheck();     //RN8209芯片ID检查
 extern unsigned char Rn8209InitConfig();        //RN8209芯片基本参数设置校表
 extern void MeasureValue(struct dev_info_t* dev);//主程序调用实时数据计算

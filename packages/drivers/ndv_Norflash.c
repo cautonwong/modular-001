@@ -251,7 +251,7 @@ uint8 flash_erase(uint32 address, const struct dev_info_t* dev, uint8 erase_mode
 
 
 
-int flash_read(struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
+int flash_read(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
 {    
     struct spi_io_t spi_io;
     
@@ -277,7 +277,7 @@ int flash_read(struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
     return true;
 }
 
-int flash_write(struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
+int flash_write(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
 {
     struct spi_io_t spi_io;
     uint8 ret;
@@ -358,7 +358,7 @@ int flash_write(struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
 
 
 
-uint8 test_flash(struct dev_info_t* dev)
+uint8 test_flash(const struct dev_info_t* dev)
 {
     uint8 i;
     
@@ -390,7 +390,7 @@ uint8 test_flash(struct dev_info_t* dev)
 
 
 
-int flash_ioctrl(struct dev_info_t* dev , uint8 ctrl , void* ctrl_parameter)
+int flash_ioctrl(const struct dev_info_t* dev , uint8 ctrl , void* ctrl_parameter)
 {
     uint32 *addr = (uint32 *)ctrl_parameter;
 
@@ -422,7 +422,7 @@ int flash_ioctrl(struct dev_info_t* dev , uint8 ctrl , void* ctrl_parameter)
 
 
 
-int flash_init(struct dev_info_t *dev)
+int flash_init(const struct dev_info_t *dev)
 {
     const struct bus_ops_t *bus_ops = dev->dev_bus_ops;
     

@@ -44,7 +44,7 @@ const UART_InitType  Rn8209_Uart_InitType =
     4800,
 };
 
-struct dev_info_t rs485_dev=
+const struct dev_info_t rs485_dev=
 {
     DEV_RS4851,
     0,
@@ -60,7 +60,7 @@ struct dev_info_t rs485_dev=
 };
 
 
-struct dev_info_t rn8209_dev=
+const struct dev_info_t rn8209_dev=
 {
     DEV_EMU,
     0,

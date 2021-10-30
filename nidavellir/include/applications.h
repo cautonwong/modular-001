@@ -3,6 +3,7 @@
 
 //当前系统中所有的application注册表容器
 #include "port.h"
+#include "cpu_surport.h"
 struct energy_ctx_t
 {
     uint32_t pa;

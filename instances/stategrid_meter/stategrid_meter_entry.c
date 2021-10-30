@@ -82,7 +82,7 @@ extern struct resource_map_t* register_map(struct instance_t* instance, uint8_t 
     int8_t(*fun)(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj));
 extern int8_t resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj);
 extern struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t resource_blok_size, uint8_t resource_block_name);
-extern int8_t add_device(struct instance_t* instance, uint8_t device_name, uint8_t ram_name, const struct dev_info_t *dev);
+extern int8_t add_device(struct instance_t* instance, uint8_t device_name,const struct dev_info_t *dev);
 int baremetal_instance_entry_main(int argc, char** argv)
 {
     struct instance_t* instance = NULL;
@@ -188,9 +188,9 @@ int baremetal_instance_entry_main(int argc, char** argv)
     pl_meter_base.out_queue = NULL;
     
     //注册EPROM  
-    add_device(instance,DEV_EEPROM,&eeprom_dev,0x01);
+    add_device(instance,DEV_EEPROM,&eeprom_dev);
     //注册FLASH
-    add_device(instance,DEV_FLASH,&nor_flash_dev,0x01);
+    add_device(instance,DEV_FLASH,&nor_flash_dev);
     //注册一个698的MAP
     register_map(instance, 0x01, resource_map_698);
 
