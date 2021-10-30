@@ -39,6 +39,10 @@ struct mbase_control_block_t
 {
     //上电需要发起IO请求的参数区  运行期不更改
     static_start  
+    float k_u;
+    float k_il;
+    float k_in;
+    float k_p;    
 
     static_end     
     //运行期更改 && 掉电不保存 && 上电不需要IO请求的区域 && 初始化时直接清零
@@ -58,10 +62,26 @@ struct mbase_control_block_t
     unsigned long   Price;//当前电价
     unsigned char   StepNum;//阶梯数
           
+    uint32_t voltage_ac;
+    uint32_t current_l;
+    uint32_t active_power;
+    uint32_t current_n;
+    uint32_t frequency;
+    uint32_t power_factor;
+    uint32_t temperature;
+    uint32_t voltage_battery;    
+    
+    
     dyn_cache_end
     //运行期更改&&掉电或定时保存&&上电需要IO请求的数据分区
     dyn_persistent_start
         //电能数据
+    uint32_t active_p[MAX_FEE_NO+1];
+    uint32_t active_n[MAX_FEE_NO+1];
+    uint32_t month_active_p[MAX_FEE_NO+1];
+    uint32_t month_active_n[MAX_FEE_NO+1];
+    uint16_t active_p_dec[MAX_FEE_NO+1];
+    uint16_t active_n_dec[MAX_FEE_NO+1];
         //需量数据
     dyn_persistent_end
 

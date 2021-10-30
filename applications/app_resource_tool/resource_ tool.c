@@ -257,36 +257,6 @@ int8_t add_device(struct instance_t* instance, uint8_t device_name, uint32_t fir
     return 0;
 }
 
-int8_t resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj)
-{
-    struct mbase_control_block_t* mbase_cb = instance->mbase_cb;
-    switch (id)
-    {
-    case 0x20000200:
-    {
-        obj->block_name = 0x0A;//只是举例
-        obj->device_name = 0x0D;//只是举例
-        //obj->offset = container_of(mbase_cb,struct mbase_control_block_t, UA);
-        switch (mode)
-        {
-        case 0x01://读数据
-            //1、直接读缓存的值
-         //   memcpy(buf, (uint8_t*)mbase_cb->UA, 0x04);
-            return 0x01;
-            //2、需要读EPROM
-            return 0x02;
-            break;
-        case 0x02://写数据
-            break;
-        }
-        break;
-    }
-    default:
-        break;
-    }
-    return 0x01;
-}
-
 struct resource_map_t* register_map(struct instance_t* instance,uint8_t map_name,
     int8_t (*fun)(struct instance_t *instance, uint32_t id,uint8_t *buf, uint8_t mode, struct resources_obj_t* obj))
 {
@@ -360,9 +330,9 @@ int8_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t b
     device = look_up_device(instance, obj.device_name);
     if (device != NULL)
     {
-        if ((device->driver != NULL) && (device->driver->read_dev != NULL))
+        //if ((device->driver != NULL) && (device->driver->read_dev != NULL))
         {
-            device->driver->read_dev(instance, obj.offset, buf, obj.length);
+        //    device->driver->read_dev(instance, obj.offset, buf, obj.length);
             if (obj.hook != NULL)
             {
                 obj.hook(buf, obj.p);
@@ -381,12 +351,12 @@ int8_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t bl
 
     //查找设备
     device = look_up_device(instance, device_name);
-    if ((device != NULL) && (device->driver != NULL) && (device->driver->read_dev != NULL))
+   // if ((device != NULL) && (device->driver != NULL) && (device->driver->read_dev != NULL))
     {
         block = look_up_block(instance, device, block_name);
         if ((block != NULL) && (buf_size <= block->size))
         {
-            return device->driver->read_dev(instance, block->first_addr, buf, block->size);
+   //         return device->driver->read_dev(instance, block->first_addr, buf, block->size);
         }
     }
 
@@ -400,12 +370,12 @@ int8_t nd_set_block(struct instance_t* instance, uint8_t device_name, uint8_t bl
 
     //查找设备
     device = look_up_device(instance, device_name);
-    if ((device != NULL) && (device->driver != NULL) && (device->driver->read_dev != NULL))
+   // if ((device != NULL) && (device->driver != NULL) && (device->driver->read_dev != NULL))
     {
         block = look_up_block(instance, device, block_name);
         if ((block != NULL) && (buf_size <= block->size))
         {
-            return device->driver->write_dev(instance, block->first_addr, buf, block->size);
+   //         return device->driver->write_dev(instance, block->first_addr, buf, block->size);
         }
     }
 

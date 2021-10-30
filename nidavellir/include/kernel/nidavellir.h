@@ -453,10 +453,6 @@ struct instance_t
     struct mbase_control_block_t * mbase_cb;
     uint8_t meter_type;
     struct tm time;//
-    struct tm last_poweroff_tm;//msta的上次掉电时刻
-    struct tm meter_rtc;//
-    uint8_t meter_fee_n;
-    struct tm cco_tm;
     struct tasklet_pool_t tasklet_pool;
     struct upgrade_info_t upgrade_info;
     uint8_t* cache;

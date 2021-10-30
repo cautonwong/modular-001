@@ -149,5 +149,8 @@
 #define         VoltageLostAll 48           /**< 全失压事件 */
 
 
+                                  
+                                  
+#define         MAX_FEE_NO                 12                                  
 
 #endif

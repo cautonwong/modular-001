@@ -2121,6 +2121,9 @@
         <group>
             <name>dl698</name>
             <file>
+                <name>$PROJ_DIR$\..\..\..\applications\app_698_server\app_698_server_entry.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\packages\dl698\fr_698.c</name>
             </file>
             <file>
@@ -2187,7 +2190,13 @@
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\pipeline.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\..\applications\app_resource_tool\resource_ tool.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\rtc.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\kernel\tasklet.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\utils.c</name>
@@ -2196,10 +2205,31 @@
         <group>
             <name>meterbase</name>
             <file>
+                <name>$PROJ_DIR$\..\..\..\applications\app_meter_base\app_meter_base_entry.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\packages\meterbase\electrical measurement.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\meterbase\energy.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_backlight_ctrl.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_cover_event.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_emu_err_event.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_i_over_event.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_mac_suspend.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_meter_clear_event.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\meterbase\touFee.c</name>
@@ -2208,6 +2238,9 @@
     </group>
     <file>
         <name>$PROJ_DIR$\..\698_mapper.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\..\..\nidavellir\include\applications.h</name>
     </file>
     <file>
         <name>$PROJ_DIR$\..\pin_function_def.h</name>
