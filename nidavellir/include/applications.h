@@ -146,4 +146,9 @@ uint8_t scond_execute_for_demand(struct mbase_control_block_t* mbase_block);
 uint8_t minute_execute_for_demand(struct mbase_control_block_t* mbase_block);
 int8_t add_demand_action(struct mbase_control_block_t* mbase_block, uint32_t* import, uint32_t output, uint8_t max_slide, uint8_t mode);
 
+extern const struct dev_info_t eeprom_dev;
+extern const struct dev_info_t nor_flash_dev;
+
+
+
 #endif

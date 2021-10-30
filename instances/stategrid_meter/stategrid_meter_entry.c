@@ -196,6 +196,14 @@ int baremetal_instance_entry_main(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
+    mcu_init(NULL);
+    
+    mcu_main_power_on_config();
+    
+    ndv_timer_init();
+    
+    
+  
     baremetal_instance_entry_main(argc, argv);
 }
 
