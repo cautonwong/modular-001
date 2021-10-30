@@ -24,17 +24,6 @@ struct block_device_t
     struct list_head sibling;
 };
 
-
-struct resources_obj_t
-{
-    uint32_t offset;                        //地址
-    uint16_t length;                        //数据存储长度
-    uint8_t device_name;                    //设备标识；
-    uint8_t block_name;                     //块名称
-    uint8_t(*hook) (uint8_t* buf,void *p);  //resource的钩子函数
-    void* p;
-};
-
 void *__nd_malloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_size)
 {
     uint32_t free = block_size - *used;
