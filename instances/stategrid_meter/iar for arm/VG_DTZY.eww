@@ -1,19 +1,19 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
-
+<?xml version="1.0" encoding="UTF-8"?>
 <workspace>
-  <batchBuild>
-    <batchDefinition>
-      <name>DTZY208C-Z</name>
-      <member>
-        <project>dtzy208c-z</project>
-        <configuration>Debug</configuration>
-      </member>
-      <member>
-        <project>rn8318_boot</project>
-        <configuration>Debug</configuration>
-      </member>
-    </batchDefinition>
-  </batchBuild>
+    <project>
+        <path>$WS_DIR$\VG_DTZY.ewp</path>
+    </project>
+    <batchBuild>
+        <batchDefinition>
+            <name>DTZY208C-Z</name>
+            <member>
+                <project>dtzy208c-z</project>
+                <configuration>Debug</configuration>
+            </member>
+            <member>
+                <project>rn8318_boot</project>
+                <configuration>Debug</configuration>
+            </member>
+        </batchDefinition>
+    </batchBuild>
 </workspace>
-
-

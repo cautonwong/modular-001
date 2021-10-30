@@ -2412,13 +2412,25 @@
         <group>
             <name>drivers</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drive\eeprom.c</name>
+                <name>$PROJ_DIR$\..\..\..\packages\drivers\eeprom.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drive\iic_driver.c</name>
+                <name>$PROJ_DIR$\..\..\..\packages\drivers\iic_driver.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drive\uart_driver.c</name>
+                <name>$PROJ_DIR$\..\..\..\packages\drivers\ndv_Norflash.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\drivers\ndv_RN8209.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\drivers\ndvh_rn8209.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\drivers\spi_driver.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\drivers\uart_driver.c</name>
             </file>
         </group>
         <group>
@@ -2443,4 +2455,16 @@
             </file>
         </group>
     </group>
+    <file>
+        <name>$PROJ_DIR$\..\698_mapper.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\pin_function_def.h</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\port.h</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\stategrid_meter_entry.c</name>
+    </file>
 </project>

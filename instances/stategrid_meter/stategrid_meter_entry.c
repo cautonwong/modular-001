@@ -19,8 +19,9 @@ struct pipeline_t pl_meter_base =
     &mbase_ctrl_block,
     &meterbase_std_in,
     NULL,
-    sizeof(fr_meter_base) / sizeof(fr_meter_base[0]),
-    fr_meter_base,
+    app_meter_base_entry,
+    (sizeof(fr_meter_base) / sizeof(fr_meter_base[0])),
+    (const struct filter_t *)fr_meter_base,
 };
 
 
@@ -99,7 +100,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     //初始化硬件
     //初始化固件
     //一、初始化resource_manager_ctx;（申请了1K的大小，名称是0x01）
-    struct instance_t* instance = create_instance(0x01, &nd_memory, 32 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
+    struct instance_t* instance = create_instance(0x01, (uint32_t)&nd_memory, 32 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
     if (instance == NULL)
     {
         return -1;
