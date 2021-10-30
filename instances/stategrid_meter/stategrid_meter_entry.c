@@ -112,7 +112,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
 #ifdef WIN32
     instance = create_instance(0x01, &nd_memory, 32 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
 #else
-    instance = create_instance(0x01, &nd_memory, 32 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
+    instance = create_instance(0x01, (uint32_t)&nd_memory, 32 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
 #endif // WIN32
     if (instance == NULL)
     {
