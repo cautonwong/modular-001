@@ -72,6 +72,7 @@
     <ClCompile Include="..\..\..\packages\meterbase\gs_meter_clear_event.c">
       <Filter>app_meter_base</Filter>
     </ClCompile>
+    <ClCompile Include="..\698_mapper.c" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="app_698_server">

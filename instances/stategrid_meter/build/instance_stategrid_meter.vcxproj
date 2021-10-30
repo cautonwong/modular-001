@@ -45,6 +45,7 @@
     <ClCompile Include="..\..\..\packages\meterbase\gs_i_over_event.c" />
     <ClCompile Include="..\..\..\packages\meterbase\gs_mac_suspend.c" />
     <ClCompile Include="..\..\..\packages\meterbase\gs_meter_clear_event.c" />
+    <ClCompile Include="..\698_mapper.c" />
     <ClCompile Include="..\stategrid_meter_entry.c" />
   </ItemGroup>
   <ItemGroup>
