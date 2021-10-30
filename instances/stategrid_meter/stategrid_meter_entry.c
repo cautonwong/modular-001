@@ -4,9 +4,6 @@ extern int app_698_rx_entry(struct instance_t* instance, struct pipeline_t* pipe
 extern int app_698_tx_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
-//准备测试环境
-struct fifo_t meterbase_std_in;
-struct mbase_control_block_t mbase_ctrl_block;
 struct filter_t fr_meter_base[] =
 {
     {0,app_meter_base_entry,1,13},
@@ -16,16 +13,13 @@ struct pipeline_t pl_meter_base =
 {
     2,
     "app_meter_base",
-    &mbase_ctrl_block,
-    &meterbase_std_in,
     NULL,
-    app_meter_base_entry,//
-    (sizeof(fr_meter_base) / sizeof(fr_meter_base[0])),
-    (const struct filter_t *)fr_meter_base,
+    NULL,
+    NULL,
+    sizeof(fr_meter_base) / sizeof(fr_meter_base[0]),
+    fr_meter_base,
 };
 
-
-//准备测试环境
 const struct filter_t fr_rx_698[1] =
 {
     {0x01,app_698_rx_entry,0,13},
@@ -35,9 +29,9 @@ struct pipeline_t pl_rx_698 =
 {
     pid_rx_698,
     "pl_rx_698",
-    &ctx_698,
-    &stdin_698,//serial driver isr put byte into this 
-    &stdout_698,//pl_rx_698 put apdu into this 
+    NULL,
+    NULL,//serial driver isr put byte into this 
+    NULL,//pl_rx_698 put apdu into this 
     app_698_rx_entry,
     sizeof(fr_rx_698) / sizeof(fr_rx_698[0]),
     fr_rx_698,
@@ -52,26 +46,20 @@ struct pipeline_t pl_tx_698 =
 {
     pid_tx_698,
     "pl_tx_698",
-    &ctx_698,
-    &pipe_tx_698_req,
-    &stdout_698,
+    NULL,
+    NULL,
+    NULL,
     app_698_tx_entry,
     sizeof(fr_tx_698) / sizeof(fr_tx_698[0]),
     fr_tx_698,
 };
 
-struct fifo_t stdin_698;
-struct fifo_t pipe_tx_698_req;
-struct fifo_t stdout_698;
-struct context_698_t ctx_698;
 
 struct pipeline_t* pipelines[] =
 {
     &pl_rx_698,
     &pl_tx_698,
-    //#ifdef NIDAVELLIR_SYSTEM_TEST
     &pl_meter_base,
-    //#endif
 };
 
 //cautonwong  以上的内容  应该放在instance的入口函数里面去分配和初始化
@@ -84,9 +72,9 @@ int update_instance_rtc(struct instance_t* instance)
     rtc_localtime(ts, &instance->time);
     return 0;
 }
-
+#ifdef WIN32
 uint8_t nd_memory[32 * 1024];
-struct recipe_t recipe;
+#endif // WIN32
 
 extern void* nd_malloc(struct instance_t* instance, uint8_t block_name, uint32_t size);
 extern uint32_t* add_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size);
@@ -96,53 +84,54 @@ extern int8_t resource_map_698(struct instance_t* instance, uint32_t id, uint8_t
 extern struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t resource_blok_size, uint8_t resource_block_name);
 int baremetal_instance_entry_main(int argc, char** argv)
 {
-    uint8_t mbase_control_block_name;
+    struct instance_t* instance = NULL;
+    struct recipe_t *recipe = NULL;
+    struct context_698_t* ctx_698 = NULL;
+
     //初始化硬件
     //初始化固件
-    //一、初始化resource_manager_ctx;（申请了1K的大小，名称是0x01）
-    struct instance_t* instance = create_instance(0x01, (uint32_t)&nd_memory, 32 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
-    if (instance == NULL)
-    {
-        return -1;
-    }
-    memset(instance, 0, sizeof(struct instance_t));
-    instance->ram_device_name = 0x01;
-    instance->resource_block_name = 0x01;
+    //每个application的control block如何初始化?且如何绑定到instance里?
+    //每个application如何访问自己的control block?
+    //链接和绑定硬件 固件 和 软件
+    //运行主循环
 #if 0
-    //初始化软件  task的创建方式有两种:静态创建和动态创建
-    uint8_t byte_pool[40*1024];
+   //初始化软件  task的创建方式有两种:静态创建和动态创建
+    uint8_t byte_pool[40 * 1024];
     byte_pool_create(byte_pool);//给task创建一个字节池
     struct task_t task_meterbase;
     //分别是task的ctrl_block的三段的大小  三段:上电清零段+上电恢复但掉电不保存段+掉电保存且上电恢复段
     create_block_from_e2prom();
-    create_task(&task_meterbase,0x01,300,300,300);//创建一个task
+    create_task(&task_meterbase, 0x01, 300, 300, 300);//创建一个task
     set_task_std_in();//设置task的标准输入
     set_task_std_out();//设置task的标准输出
     set_task_setting();//设置task的设置参数
     set_task_ctrl_block();//设置task的控制块
     add_task(instance);//将此task添加到容器里
 #endif
-    //每个application的control block如何初始化?且如何绑定到instance里?
-    //每个application如何访问自己的control block?
-    //链接和绑定硬件 固件 和 软件
-    //运行主循环
-
-    recipe.pipelines = &pipelines[0];
-    recipe.pipeline_n = sizeof(pipelines) / sizeof(pipelines[0]);
-    recipe.name = 0;
-
-    instance->recipe = &recipe;
-    instance->ms = 0;
-    //注册一个698的MAP
-    register_map(instance, 0x01, resource_map_698);
-    //申请一个BLOCK
-    mbase_control_block_name = 0x02;
-    if (0 > add_block(instance, 0x01, mbase_control_block_name, 8 * 1024))
+    //一、初始化resource_manager_ctx;（申请了1K的大小，名称是0x01）
+#ifdef WIN32
+    instance = create_instance(0x01, &nd_memory, 32 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
+#else
+    instance = create_instance(0x01, &nd_memory, 32 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
+#endif // WIN32
+    if (instance == NULL)
     {
         return -1;
     }
-    //mbase_control_block_name分三块
-    //第一块为
+    instance->ram_device_name = 0x01;
+    instance->resource_block_name = 0x01;
+
+    instance->recipe = nd_malloc(instance, instance->resource_block_name, sizeof(struct recipe_t));
+    recipe = instance->recipe;
+    if (recipe == NULL)
+    {
+        return -1;
+    }
+    recipe->pipelines = &pipelines[0];
+    recipe->pipeline_n = sizeof(pipelines) / sizeof(pipelines[0]);
+    recipe->name = 0;
+    //初始化时间
+    instance->ms = 0;
     struct tm time =
     {
         .tm_year = 2021 - 1900,   /* years are counted from 1900 */
@@ -153,22 +142,56 @@ int baremetal_instance_entry_main(int argc, char** argv)
         .tm_sec = 57
     };
     memcpy(&instance->time, &time, sizeof(struct tm));
-    //#ifdef NIDAVELLIR_SYSTEM_TEST
-    fifoBuf_init(&stdout_698, nd_malloc(instance, mbase_control_block_name, 512), 512);
-    fifoBuf_init(&stdin_698, nd_malloc(instance, mbase_control_block_name, 512), 512);
-    fifoBuf_init(&pipe_tx_698_req, nd_malloc(instance, mbase_control_block_name, 512), 512);
 
-    //#endif
+    ///////////////////////////////申请一个cache的BLOCK = 02/////////////////////////////////////////////
+    uint8_t control_block_cache = 0x02;
+    if (0 > add_block(instance, 0x01, control_block_cache, 500))
+    {
+        return -1;
+    }
     //指向cache space
-    instance->cache = nd_malloc(instance, mbase_control_block_name, 256);
-    instance->cache2 = nd_malloc(instance, mbase_control_block_name, sizeof(struct cache_t));
+    instance->cache = nd_malloc(instance, control_block_cache, 256);
+    instance->cache2 = nd_malloc(instance, control_block_cache, sizeof(struct cache_t));
     init_cache(instance->cache2, instance->cache, 256);
-    uint8_t* buf = nd_malloc(instance, mbase_control_block_name, 2048);
-    ctx_698.apdu = nd_malloc(instance, mbase_control_block_name, sizeof(struct fifo_t));
-    fifoBuf_init(ctx_698.apdu, buf, 2048);
-
-    buf = nd_malloc(instance, mbase_control_block_name, 4);
+    //初始化软时钟
+    uint8_t* buf = nd_malloc(instance, control_block_cache, 4);
     fifoBuf_init(&instance->pipe_rtc, buf, 4);
+
+    /////////////////////////////////////申请一个698应用的BLOCK = 03/////////////////////////////////////////////////
+    uint8_t control_block_698_name = 0x03;
+    if (0 > add_block(instance, 0x01, control_block_698_name, 8 * 1024))
+    {
+        return -1;
+    }
+    //初始化pl_rx_698初始化
+    pl_rx_698.ctx = nd_malloc(instance, control_block_698_name, sizeof(struct context_698_t));
+    ctx_698 = pl_rx_698.ctx;
+    fifoBuf_init(ctx_698->apdu, nd_malloc(instance, control_block_698_name, 2048), 2048);
+    pl_rx_698.in_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
+    fifoBuf_init(pl_rx_698.in_queue, nd_malloc(instance, control_block_698_name, 512), 512);
+    pl_rx_698.out_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
+    fifoBuf_init(pl_rx_698.out_queue, nd_malloc(instance, control_block_698_name, 512), 512);
+
+    //初始化pl_tx_698初始化
+    pl_tx_698.ctx = ctx_698;
+    pl_tx_698.in_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
+    fifoBuf_init(pl_tx_698.in_queue, nd_malloc(instance, control_block_698_name, 512), 512);
+    pl_tx_698.out_queue = pl_rx_698.out_queue;
+
+    ////////////////////////////申请一个mbase应用的BLOCK = 04/////////////////////////////////////////////
+    uint8_t mbase_control_block_name = 0x04;
+    if (0 > add_block(instance, 0x01, mbase_control_block_name, 8 * 1024))
+    {
+        return -1;
+    }
+    //初始化pl_meter_base初始化
+    pl_meter_base.ctx = nd_malloc(instance, mbase_control_block_name, sizeof(struct mbase_control_block_t));
+    pl_meter_base.in_queue = nd_malloc(instance, mbase_control_block_name, sizeof(struct fifo_t));
+    fifoBuf_init(pl_meter_base.in_queue, nd_malloc(instance, mbase_control_block_name, 256), 256);
+    pl_meter_base.out_queue = NULL;
+
+    //注册一个698的MAP
+    register_map(instance, 0x01, resource_map_698);
 
     return baremetal_instance_entry(instance);
 }
