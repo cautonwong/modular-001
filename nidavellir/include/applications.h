@@ -37,8 +37,24 @@ struct demand_info_t
 
 struct mbase_control_block_t
 {
+    //上电需要发起IO请求的参数区  运行期不更改
+    static_start  
+
+    static_end     
+    //运行期更改 && 掉电不保存 && 上电不需要IO请求的区域 && 初始化时直接清零
+    dyn_cache_start   
+        I_data_fields
+    dyn_cache_end
+    //运行期更改&&掉电或定时保存&&上电需要IO请求的数据分区
+    dyn_persistent_start
+        //电能数据
+        //需量数据
+    dyn_persistent_end
+
     int id;
-    I_data_fields
+    //os相关的字段
+    os_fields
+
     struct energy_ctx_t* energy_ctx;
     struct demand_list_t* demand_list;
 
