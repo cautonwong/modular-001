@@ -13,6 +13,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
         if (event_flags_get(instance,i) ==  1)
         {
             //call event_handler(instance,pipeline,mesg);
+
             event_flags_clr(instance, i);
         }
     }
