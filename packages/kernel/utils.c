@@ -128,3 +128,46 @@ uint32_t buf_to_uint32_lsb(uint8_t* buf)
 		buf[0];
 	return data;
 }
+
+void mem_swap_cpy(void* dest, void* src, unsigned short length)
+{
+	unsigned short i;
+	unsigned char* ptrdest = (unsigned char*)dest, * ptrsrc = (unsigned char*)src;
+
+	for (i = 0; i < length; i++)
+	{
+		*(ptrdest + i) = *(ptrsrc + length - 1 - i);
+	}
+}
+
+
+uint8_t mem_compare(void* data1, void* data2, uint16_t length)
+{
+	unsigned char* buff1;
+	unsigned char* buff2;
+
+	buff1 = (unsigned char*)data1;
+	buff2 = (unsigned char*)data2;
+
+	while (length > 0)
+	{
+		length--;
+
+		if (*buff1 != *buff2)
+		{
+			if (*buff1 > *buff2)
+			{
+				return 1;
+			}
+			else
+			{
+				return 2;
+			}
+		}
+
+		buff1++;
+		buff2++;
+	}
+
+	return 0;
+}

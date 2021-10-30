@@ -356,7 +356,11 @@ int mcu_uart_send_byte(uint8 send_data, size_t uart_index)
         UARTx = UART_list[uart_index];
 
         UARTx->DATA = send_data;
+        
+        return true;
     }
+    
+    return false;
 }
 
 int mcu_uart_recive_byte(uint8* byte , size_t uart_index)
@@ -867,7 +871,8 @@ int emu_uart_init(size_t index)
     UART_InitType* InitType = (UART_InitType*)index;
     
     mcu_uart_init(InitType, 3, 0);
-
+    
+    return true;
 }
 
 const struct bus_ops_t mcu_uart_bus_ops = 

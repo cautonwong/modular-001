@@ -2511,6 +2511,9 @@
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\tasklet.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\..\packages\kernel\time_link.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\utils.c</name>
             </file>
         </group>
@@ -2553,6 +2556,9 @@
     </file>
     <file>
         <name>$PROJ_DIR$\..\..\..\nidavellir\include\applications.h</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\driver_entry.c</name>
     </file>
     <file>
         <name>$PROJ_DIR$\..\pin_function_def.h</name>
