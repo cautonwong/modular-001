@@ -44,7 +44,7 @@ void *__nd_malloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_si
     {
         *used += size;
         memset((uint8_t*)start, 0x00, size);
-        return start;
+        return (void *)start;
     }
 
     return NULL;
@@ -68,7 +68,7 @@ struct block_device_t* look_up_device(struct instance_t* instance, uint8_t devic
     return NULL;
 }
 
-struct block_device_t* look_up_block(struct instance_t* instance, struct block_device_t* device, uint8_t block_name)
+struct block_device_children_t* look_up_block(struct instance_t* instance, struct block_device_t* device, uint8_t block_name)
 {
     struct block_device_children_t* block = NULL;
     struct list_head* p;
@@ -142,7 +142,7 @@ uint32_t *add_block(struct instance_t* instance, uint8_t device_name, uint8_t bl
             device->used += block_size;
             list_add_tail(&block->sibling, &device->children);           
         }
-        return block->first_addr;       
+        return (uint32_t *)block->first_addr;       
     }
     return NULL;
 }
@@ -180,7 +180,7 @@ uint32_t *add_inside_block(struct instance_t* instance, uint8_t device_name,uint
                 inside_block->used = 0x00;
                 block->used += block_size;
                 list_add_tail(&inside_block->sibling, &device->children);
-                return inside_block->first_addr;
+                return (uint32_t *)inside_block->first_addr;
             }
         }
     }
@@ -262,8 +262,6 @@ int8_t add_device(struct instance_t* instance, uint8_t device_name, uint32_t fir
         device->size = size;
         INIT_LIST_HEAD(&device->sibling);
         INIT_LIST_HEAD(&device->children);
-        //memset((uint8_t*)&device->sibling, 0x00, sizeof(struct list_head));
-        //memset((uint8_t*)&device->children, 0x00, sizeof(struct list_head));
         list_add_tail(&device->sibling, &instance->dev_list);
     }
     
@@ -291,8 +289,6 @@ int8_t resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, 
             break;
         case 0x02://写数据
             break;
-        deault:
-            break;
         }
         break;
     }
@@ -303,7 +299,7 @@ int8_t resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, 
 }
 
 struct resource_map_t* register_map(struct instance_t* instance,uint8_t map_name,
-    int8_t (*fun)(struct instance_t *instance, uint32_t id,uint8_t mode, struct resources_obj_t* obj))
+    int8_t (*fun)(struct instance_t *instance, uint32_t id,uint8_t *buf, uint8_t mode, struct resources_obj_t* obj))
 {
     struct block_device_children_t* block = NULL;
     struct resource_map_t* map = NULL;

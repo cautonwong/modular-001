@@ -1,14 +1,5 @@
 #include "nidavellir.h"
 
-int update_instance_rtc(struct instance_t* instance)
-{
-    uint32_t ts;
-    ts = rtc_mktime(&instance->time);
-    ts += 1;
-    rtc_localtime(ts, &instance->time);
-    return 0;
-}
-
 //某路uart的接收服务应用程序  调用和重排package的api
 //跟该路uart强相关的事务在此函数内完成
 //要线程化时  可将此函数用while(1)包住 即可完成前后台到os的打包过程

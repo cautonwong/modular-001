@@ -2411,6 +2411,15 @@
         </group>
         <group>
             <name>drivers</name>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\drive\eeprom.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\drive\iic_driver.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\drive\uart_driver.c</name>
+            </file>
         </group>
         <group>
             <name>kernel</name>
