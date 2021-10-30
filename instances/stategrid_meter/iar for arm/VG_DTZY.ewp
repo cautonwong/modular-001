@@ -78,7 +78,7 @@
                 </option>
                 <option>
                     <name>OGChipSelectEditMenu</name>
-                    <state>V85XXP	VANGO V85XXP</state>
+                    <state>V85XX	VANGO V85XX</state>
                 </option>
                 <option>
                     <name>GenLowLevelInterface</name>
@@ -138,7 +138,7 @@
                 </option>
                 <option>
                     <name>GFPUDeviceSlave</name>
-                    <state>V85XXP	VANGO V85XXP</state>
+                    <state>V85XX	VANGO V85XX</state>
                 </option>
                 <option>
                     <name>FPU2</name>

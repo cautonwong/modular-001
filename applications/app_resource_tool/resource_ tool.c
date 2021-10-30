@@ -1,5 +1,4 @@
 #include "nidavellir.h"
-//#include "resource_tool.h"
 
 //单一设备的块链表
 struct block_device_children_t
