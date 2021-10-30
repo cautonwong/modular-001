@@ -1,6 +1,28 @@
 #include "nidavellir.h"
+#include "applications.h"
 extern int app_698_rx_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int app_698_tx_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+
+//准备测试环境
+struct fifo_t meterbase_std_in;
+struct mbase_control_block_t mbase_ctrl_block;
+struct filter_t fr_meter_base[] =
+{
+    {0,app_meter_base_entry,1,13},
+};
+
+struct pipeline_t pl_meter_base =
+{
+    2,
+    "app_meter_base",
+    &mbase_ctrl_block,
+    &meterbase_std_in,
+    NULL,
+    sizeof(fr_meter_base) / sizeof(fr_meter_base[0]),
+    fr_meter_base,
+};
+
 
 //准备测试环境
 const struct filter_t fr_rx_698[1] =
@@ -47,7 +69,7 @@ struct pipeline_t* pipelines[] =
     &pl_rx_698,
     &pl_tx_698,
     //#ifdef NIDAVELLIR_SYSTEM_TEST
-    &pl_tx_to_serial,
+    &pl_meter_base,
     //#endif
 };
 
@@ -133,8 +155,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     fifoBuf_init(&stdout_698, nd_malloc(instance, mbase_control_block_name, 512), 512);
     fifoBuf_init(&stdin_698, nd_malloc(instance, mbase_control_block_name, 512), 512);
     fifoBuf_init(&pipe_tx_698_req, nd_malloc(instance, mbase_control_block_name, 512), 512);
-    extern int open_serial_port(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-    open_serial_port(instance, &pl_rx_from_serial, NULL);
+
     //#endif
     //指向cache space
     instance->cache = nd_malloc(instance, mbase_control_block_name, 256);
