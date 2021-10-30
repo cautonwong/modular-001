@@ -110,12 +110,22 @@ int baremetal_instance_entry_main(int argc, char** argv)
     add_task(instance);//将此task添加到容器里
 #endif
     //一、初始化resource_manager_ctx;（申请了1K的大小，名称是0x01）
+#ifdef WIN32
+    instance = create_instance(0x01, (uint32_t)&nd_memory, 20 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
+#else
     instance = create_instance(DEV_RAM, (uint32_t)&nd_memory, 20 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
+#endif // WIN32
     if (instance == NULL)
     {
         return -1;
     }
+#ifdef WIN32
+    instance->ram_device_name = 0x01;
+#else
     instance->ram_device_name = DEV_RAM;
+#endif // WIN32
+
+    
     instance->resource_block_name = 0x01;
 
     instance->recipe = nd_malloc(instance, instance->resource_block_name, sizeof(struct recipe_t));
@@ -163,7 +173,8 @@ int baremetal_instance_entry_main(int argc, char** argv)
     //初始化pl_rx_698初始化
     pl_rx_698.ctx = nd_malloc(instance, control_block_698_name, sizeof(struct context_698_t));
     ctx_698 = pl_rx_698.ctx;
-    fifoBuf_init(ctx_698->apdu, nd_malloc(instance, control_block_698_name, 2048), 2048);
+    ctx_698->apdu = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
+    fifoBuf_init(ctx_698->apdu, nd_malloc(instance, control_block_698_name, 512), 512);
     pl_rx_698.in_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
     fifoBuf_init(pl_rx_698.in_queue, nd_malloc(instance, control_block_698_name, 512), 512);
     pl_rx_698.out_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
@@ -186,11 +197,12 @@ int baremetal_instance_entry_main(int argc, char** argv)
     pl_meter_base.in_queue = nd_malloc(instance, mbase_control_block_name, sizeof(struct fifo_t));
     fifoBuf_init(pl_meter_base.in_queue, nd_malloc(instance, mbase_control_block_name, 256), 256);
     pl_meter_base.out_queue = NULL;
-    
+#ifndef WIN32
     //注册EPROM  
-    add_device(instance,DEV_EEPROM,&eeprom_dev);
+    add_device(instance, DEV_EEPROM, &eeprom_dev);
     //注册FLASH
-    add_device(instance,DEV_FLASH,&nor_flash_dev);
+    add_device(instance, DEV_FLASH, &nor_flash_dev);
+#endif // !WIN32
     //注册一个698的MAP
     register_map(instance, 0x01, resource_map_698);
 
@@ -200,14 +212,12 @@ int baremetal_instance_entry_main(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
+#ifndef WIN32
     mcu_init(NULL);
-    
     mcu_main_power_on_config();
-    
     ndv_timer_init();
-    
-    
-    
+#endif // !WIN32
+
     baremetal_instance_entry_main(argc, argv);
 }
 
