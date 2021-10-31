@@ -1,10 +1,13 @@
-#include "nidavellir.h"
+﻿#include "nidavellir.h"
 #include <stdarg.h>
 #include <stddef.h>
 #include <setjmp.h>
 #include "cmocka.h"
 #include <stdio.h>
 #include "fr_698.h"
+
+#include "test_app_698_server_uniformity.h"
+
 extern int app_698_rx_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int app_698_tx_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int open_serial_port(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
@@ -12,6 +15,8 @@ extern int close_serial_port(struct instance_t* instance, struct pipeline_t* pip
 extern int fr_rx_data_from_serial(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int fr_tx_data_to_serial(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern struct context_serial_t* create_serial_port(char* filename);
+extern int nidavellir_run_baremetal(struct instance_t* instance);
+
 
 //测试步骤指南
 //1.找到被测试函数
@@ -94,7 +99,7 @@ struct fifo_t stdout_client_698;
 struct context_698_t ctx_698;
 struct context_698_t ctx_client_698;
 
-struct context_serial_t ctx_serial_1 = { L"\\\\.\\com10",NULL};
+struct context_serial_t ctx_serial_1 = { {L"\\\\.\\com10"},NULL };
 
 const struct filter_t fr_rx_from_serial[] =
 {
@@ -148,6 +153,24 @@ struct pipeline_t pl_plc_tx_to_meter =
     plc_tx_to_meter,
 };
 
+const struct filter_t plc_rx_from_meter[1] =
+{
+    {0x01,app_698_rx_entry,0,13},
+};
+
+struct pipeline_t pl_plc_rx_from_meter =
+{
+    pid_client_rx_698,
+    "pl_plc_rx_from_meter",
+    &ctx_client_698,//
+    &stdout_698,//
+    NULL,//
+    app_698_rx_entry,
+    sizeof(plc_rx_from_meter) / sizeof(plc_rx_from_meter[0]),
+    plc_rx_from_meter,
+};
+
+
 
 //本app包含的pipeline
 struct pipeline_t* pipelines[] =
@@ -155,7 +178,7 @@ struct pipeline_t* pipelines[] =
     &pl_plc_tx_to_meter,   
     &pl_rx_698,
     &pl_tx_698,
-    //&pl_tx_to_serial,
+    &pl_plc_rx_from_meter,
 
 };
 
@@ -232,52 +255,64 @@ void test_case_running_with_kernel(void** state)
 }
 
 
-//安全测试用例--0明文/1明文+MAC/2密文/3密文+MAC
-void test_case_fr_698_security(void** state)
-{
-    struct instance_t* instance = (struct instance_t*)*state;
-    struct message_t mesg;
-    struct security_t {
-        uint32_t oad;
-        uint8_t cmd;
-    };
-    struct security_t inf[] = {
-        {0x00000200, GET_Request},
-        {0x40030200, SET_Request},
-        {0x20000200, ACTION_Request},
-    };
-
-    for (uint8_t i = 0; i < 3; i++)
-    {
-        for (uint8_t j = 0; j < 4; j++)
-        {
-            mesg.from = kernel;
-            mesg.to = pid_client_tx_698;
-            mesg.ctrl = inf[i].cmd;;
-            mesg.qos = j; //0明文/1明文+MAC/2密文/3密文+MAC
-            mesg.len = 4;
-            mesg.id = inf[i].oad;
-            mesg.oad_n = 1;
-
-            send_mesg(instance, NULL, &mesg, NULL);
-            nidavellir_run(instance);
-            //判断回应帧是否正常
-        }
-    }
-
-}
-
-
 
 #if 1
 int main(void)
 {
-
     //这是所有的测试用例列表
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_case_1),
-        //cmocka_unit_test(test_case_running_by_self),
-        cmocka_unit_test(test_case_fr_698_security),
+
+        /*test_app_698_server_uniformity*/
+        //数据链路层合法性
+            //test_app_698_server_LINK_get
+                //1 客户机发起正确GET请求测试 如读取读取安全模式参数
+                cmocka_unit_test(test_app_698_server_LINK_get_ok),
+                //2 错误帧起始符测试
+                cmocka_unit_test(test_app_698_server_LINK_get_header_err),
+                //3 错误长度测试
+                cmocka_unit_test(test_app_698_server_LINK_get_len_err),
+                //4 错误控制域测试
+                cmocka_unit_test(test_app_698_server_LINK_get_ctrl_err),
+                //5 错误通信地址测试
+                // test_app_698_server_LINK_get_5(state),
+                //6 错误客户机地址测试
+                // test_app_698_server_LINK_get_5(state),
+                //7 错误逻辑地址测试
+                // test_app_698_server_LINK_get_5(state),
+                //8 错误HCS帧头校验测试
+                // test_app_698_server_LINK_get_5(state),
+                //9 错误GET-Request测试
+                // test_app_698_server_LINK_get_5(state),
+                //10 错误属性测试
+                // test_app_698_server_LINK_get_5(state),
+                //11 错误FCS帧校验测试
+                // test_app_698_server_LINK_get_5(state),
+                //12 结束字符测试
+                // test_app_698_server_LINK_get_5(state),
+
+            //test_app_698_server_LINK_get
+ 
+
+        //建立应用连接测试用例
+
+        //断开应用连接测试用例
+ 
+        //Get-Requeset数据类型测试用例
+ 
+        //Get-Response数据类型测试用例
+
+        //Set-Requeset数据类型测试用例
+
+        //Set-Responset数据类型测试用例
+
+        //Action-Request数据类型测试用例
+
+        //Action-Respons数据类型测试用例
+
+        /*test_app_698_server_class_id*/
+        /*test_app_698_server_function*/
+        /*test_app_698_server_bug*/
 
         cmocka_unit_test(test_case_running_with_kernel),
     };

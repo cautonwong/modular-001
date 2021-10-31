@@ -1,4 +1,4 @@
-#ifndef __FR_AXDR_H__
+﻿#ifndef __FR_AXDR_H__
 #define __FR_AXDR_H__
 #if 1
 enum data_type_choice_e
@@ -104,4 +104,7 @@ enum data_type_222choice_e
     TYPE_RCSD = 96,
     TYPE_VQDS = 97, 
 };
+
+uint8_t axdr_data_len_decode(uint8_t type, uint8_t* buf, uint16_t* len);
+
 #endif //__FR_AXDR_H__

@@ -282,6 +282,7 @@ int time_to_array_1(struct tm* time, uint8_t* buf, size_t len)
     buf[2] = time->tm_hour;
     buf[1] = time->tm_min;
     buf[0] = time->tm_sec;
+    return 0;
 }
 
 int time_to_array_2(struct tm* time, uint8_t* buf, size_t len)

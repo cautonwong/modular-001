@@ -1,5 +1,9 @@
 #include "nidavellir.h"
 
+int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+int fr_gatekeeper_client(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 //某路uart的接收服务应用程序  调用和重排package的api
 //跟该路uart强相关的事务在此函数内完成
 //要线程化时  可将此函数用while(1)包住 即可完成前后台到os的打包过程

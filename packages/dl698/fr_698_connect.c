@@ -1,4 +1,4 @@
-#include "kernel\nidavellir.h"
+﻿#include "nidavellir.h"
 #include "fr_axdr.h"
 #include "fr_698.h"
 
@@ -197,6 +197,7 @@ uint32_t __get_connect_info(uint32_t val, uint32_t cfg_val)
     {
     //    connect.client_win_size = para->client_process_apdu_size;
     }
+    return 1;
 }
 
 
