@@ -69,7 +69,7 @@ int fr_rx_data_from_serial(struct instance_t* instance, struct pipeline_t* pipel
 {
     struct context_serial_t* ctx = (struct context_serial_t*)pipeline->ctx;
 
-    DWORD rx_len = 128;
+    uint16_t rx_len = 128;
     uint8_t buf[128];
     if (ctx->handle == (HANDLE)-1)
     {

@@ -39,16 +39,115 @@
     <ClCompile Include="..\..\..\packages\kernel\rtc.c">
       <Filter>kernel</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\kernel\tasklet.c">
-      <Filter>kernel</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\packages\kernel\utils.c">
       <Filter>kernel</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\packages\dl698\fr_698_comm.c">
       <Filter>dl698</Filter>
     </ClCompile>
-    <ClCompile Include="..\test_app_698_server_entry.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_entry.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_1_eng.c">
+      <Filter>test_case\test_app_698_server_class_id</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_2_de.c">
+      <Filter>test_case\test_app_698_server_class_id</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_3_val.c">
+      <Filter>test_case\test_app_698_server_class_id</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_4_p.c">
+      <Filter>test_case\test_app_698_server_class_id</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_5_ev.c">
+      <Filter>test_case\test_app_698_server_class_id</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_6_ev.c">
+      <Filter>test_case\test_app_698_server_class_id</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_7_ev.c">
+      <Filter>test_case\test_app_698_server_class_id</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_8_ev.c">
+      <Filter>test_case\test_app_698_server_class_id</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_9_ev.c">
+      <Filter>test_case\test_app_698_server_class_id</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_19_ev.c">
+      <Filter>test_case\test_app_698_server_class_id</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_20_ev.c">
+      <Filter>test_case\test_app_698_server_class_id</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_22_ev.c">
+      <Filter>test_case\test_app_698_server_class_id</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_24_ev.c">
+      <Filter>test_case\test_app_698_server_class_id</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_SECURITY_para.c">
+      <Filter>test_case\test_app_698_server_class_id</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Request.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Response.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_CONNECT_Request.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ERROR_Response.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Request.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Response.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_LINK.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_LINK_TimeTag.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_RELEASE_Request.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_REPORT_Notification.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_REPORT_Response.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SECURITY_Request.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SECURITY_Response.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_bug\test_app_698_server_bug1.c">
+      <Filter>test_case\test_app_698_server_bug</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_function\test_app_698_server_function_demand.c">
+      <Filter>test_case\test_app_698_server_function</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_function\test_app_698_server_function_energy.c">
+      <Filter>test_case\test_app_698_server_function</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_function\test_app_698_server_function_metering.c">
+      <Filter>test_case\test_app_698_server_function</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_function\test_app_698_server_function_variable.c">
+      <Filter>test_case\test_app_698_server_function</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dl698">
@@ -56,6 +155,21 @@
     </Filter>
     <Filter Include="kernel">
       <UniqueIdentifier>{b3b0a5cd-7fca-4053-bfde-fa6917240195}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="test_case">
+      <UniqueIdentifier>{fe318169-e0d9-4a86-86bb-c7ef7531d69b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="test_case\test_app_698_server_class_id">
+      <UniqueIdentifier>{80866087-faac-4a5b-88e0-8582314a2ba7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="test_case\test_app_698_server_uniformity">
+      <UniqueIdentifier>{2f7c4331-ca38-4c2c-b2af-ae3c538a99f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="test_case\test_app_698_server_bug">
+      <UniqueIdentifier>{39fe82ea-b698-4a46-b749-33c13bb3f150}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="test_case\test_app_698_server_function">
+      <UniqueIdentifier>{bfebdfd7-1ea2-465b-9aac-ac8d543a3dee}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -67,6 +181,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\packages\dl698\fr_698_comm.h">
       <Filter>dl698</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_uniformity.h">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

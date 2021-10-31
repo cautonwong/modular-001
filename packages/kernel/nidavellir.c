@@ -39,6 +39,7 @@ struct fifo_t* get_pipeline_stdin(struct instance_t* instance, pid_t pipeline_id
 }
 struct instance_t *create_nidavellir(struct recipe_t *recipe)
 {
+    return NULL;
 }
 
 int fr_sw_rtc(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -64,7 +65,7 @@ int fr_sw_rtc(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 int nidavellir_run(struct instance_t *instance)
 {
     struct message_t mesg;
-    struct log_item_t log_item;
+    //struct log_item_t log_item;
     const struct recipe_t *recipe = instance->recipe;
     const struct filter_t *filter; 
     
@@ -114,6 +115,7 @@ int nidavellir_run(struct instance_t *instance)
             } while (filter != NULL);
         }
     }
+    return 1;
 }
 
 int nidavellir_run_baremetal(struct instance_t* instance)
@@ -171,6 +173,7 @@ int nidavellir_run_baremetal(struct instance_t* instance)
             } while (filter != NULL);
         }
     }
+    return 1;
 }
 
 int baremetal_instance_entry(struct instance_t *instance)

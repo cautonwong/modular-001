@@ -1,5 +1,13 @@
-#include "nidavellir.h"
+﻿#include "nidavellir.h"
 #include "fr_698.h"
+
+extern int fr_security_decode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int fr_handle_set_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+
 
 
 static const uint16_t crc16_tab[256] =

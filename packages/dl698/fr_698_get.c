@@ -1,4 +1,4 @@
-#include "kernel\nidavellir.h"
+﻿#include "nidavellir.h"
 #include "fr_axdr.h"
 #include "fr_698.h"
 
@@ -12,7 +12,7 @@
 #define GetRequestSimplifyRecord    23
 
 
-int8_t _fr_698_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
+uint16_t _fr_698_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
 {
     uint16_t i = 0;
     for(i =0 ; i < buf_size ; i++)
@@ -104,7 +104,7 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
     uint16_t n = 0;
-    uint8_t password[16];
+    //uint8_t password[16];
     uint8_t oad_n = mesg->oad_n;
     if (oad_n == 0) oad_n = 1;
     if (oad_n > 10)

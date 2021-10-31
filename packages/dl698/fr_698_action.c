@@ -64,7 +64,7 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
                 get_oad = buf_to_uint32_msb(p + cache->wr);
 
                 fifoBuf_getData(fifo, &then_get_delay, 2);
-                then_get_delay = buf_to_uint16_msb(then_get_delay);
+                then_get_delay = buf_to_uint16_msb((uint8_t *)&then_get_delay);
                 //延时                
                 
                 if (fr_698_get(instance, get_oad, cache->wr, sizeof(password)) < 0)

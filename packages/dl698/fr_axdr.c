@@ -43,9 +43,10 @@ uint16_t axdr_get_data_len(const uint8_t *data)
 {
 
     const uint8_t *p = data;
+#if 0
     uint8_t       i, n;
     uint16_t      len;
-#if 0
+
     switch (*p++)
     {
     case TYPE_null:

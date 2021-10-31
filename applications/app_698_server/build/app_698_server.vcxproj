@@ -32,16 +32,50 @@
     <ClCompile Include="..\..\..\packages\kernel\nidavellir.c" />
     <ClCompile Include="..\..\..\packages\kernel\pipeline.c" />
     <ClCompile Include="..\..\..\packages\kernel\rtc.c" />
-    <ClCompile Include="..\..\..\packages\kernel\tasklet.c" />
     <ClCompile Include="..\..\..\packages\kernel\utils.c" />
     <ClCompile Include="..\app_698_server_entry.c" />
     <ClCompile Include="..\pl_serial.c" />
-    <ClCompile Include="..\test_app_698_server_entry.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_bug\test_app_698_server_bug1.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_19_ev.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_1_eng.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_20_ev.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_22_ev.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_24_ev.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_2_de.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_3_val.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_4_p.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_5_ev.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_6_ev.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_7_ev.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_8_ev.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_9_ev.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_SECURITY_para.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_entry.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_function\test_app_698_server_function_demand.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_function\test_app_698_server_function_energy.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_function\test_app_698_server_function_metering.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_function\test_app_698_server_function_variable.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Request.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Response.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_CONNECT_Request.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ERROR_Response.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Request.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Response.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_LINK.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_LINK_TimeTag.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_RELEASE_Request.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_REPORT_Notification.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_REPORT_Response.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SECURITY_Request.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SECURITY_Response.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\packages\dl698\fr_698.h" />
     <ClInclude Include="..\..\..\packages\dl698\fr_698_comm.h" />
     <ClInclude Include="..\..\..\packages\dl698\fr_axdr.h" />
+    <ClInclude Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_uniformity.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -100,7 +134,7 @@
     <OutDir>$(SolutionDir)\nidavellir\bin\</OutDir>
     <IntDir>$(SolutionDir)\build\$(ProjectName)_$(Configuration)_$(Platform)\</IntDir>
     <TargetName>$(ProjectName)_$(Configuration)_$(Platform)</TargetName>
-    <IncludePath>$(ProjectDir)..\..\..\nidavellir\include\kernel\;$(ProjectDir)..\..\..\nidavellir\include\;$(ProjectDir)..\..\..\packages\dl698\;$(ProjectDir)..\..\..\nidavellir\include\testutil;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\..\..\nidavellir\include\kernel\;$(ProjectDir)..\..\..\nidavellir\include\;$(ProjectDir)..\..\..\packages\dl698\;$(ProjectDir)..\..\..\nidavellir\include\testutil;$(ProjectDir)..\..\..\applications\app_698_server\test_case\test_app_698_server_uniformity;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\..\..\nidavellir\bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -108,7 +142,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>nidavellir\include\kernel\;F:\nidavellir\Blade202109\Blade\nidavellir\include\kernel;F:\nidavellir\Blade202109\Blade\nidavellir\include;F:\nidavellir\Blade202109\Blade\nidavellir\include\testutil;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\..\..\nidavellir\include\kernel\;$(ProjectDir)..\..\..\nidavellir\include\;$(ProjectDir)..\..\..\packages\dl698\;$(ProjectDir)..\..\..\nidavellir\include\testutil\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -120,7 +155,6 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;NIDAVELLIR_SYSTEM_TEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)\nidavellir\include;</AdditionalIncludeDirectories>
-      <DisableSpecificWarnings>4819</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,12 +183,13 @@
     <ClCompile>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
