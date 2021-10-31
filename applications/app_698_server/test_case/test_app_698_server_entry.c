@@ -28,11 +28,11 @@ extern int nidavellir_run_baremetal(struct instance_t* instance);
 //1.测试工程跟app工程分开  
 
 //桩函数  测试时不能依赖resource manager
-//在调用nd_get之前先调用以下代码打桩：
+//在调用_nd_get之前先调用以下代码打桩：
 //uint8_t* mock_data[];
-//will_return(nd_get, mock_data);
-//will_return(nd_get, sizeof(mock_data);
-int8_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
+//will_return(_nd_get, mock_data);
+//will_return(_nd_get, sizeof(mock_data);
+int8_t _nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
 {
     uint8_t* p = mock_ptr_type(uint8_t*);
     int r = mock_type(int);
@@ -183,6 +183,10 @@ struct pipeline_t* pipelines[] =
 };
 
 //*********************上述的初始化方法要删掉 wong*********************//
+uint8_t stdout_698_server_buf[512] = { 0 };
+uint8_t stdin_698_server_buf[512] = { 0 };
+uint8_t stdin_698_client_buf[512] = { 0 };
+uint8_t stdout_698_client_buf[512] = { 0 };
 
 struct recipe_t recipe;
 int test_app_setup(void** state)
@@ -192,8 +196,10 @@ int test_app_setup(void** state)
     recipe.pipeline_n = sizeof(pipelines) / sizeof(pipelines[0]);
     recipe.name = 0;
     instance->recipe = &recipe;
-    fifoBuf_init(&stdout_698, malloc(512), 512);
-    fifoBuf_init(&stdin_698, malloc( 512), 512);
+    //fifoBuf_init(&stdout_698, malloc(512), 512);
+    //fifoBuf_init(&stdin_698, malloc( 512), 512);
+    fifoBuf_init(&stdout_698, stdout_698_server_buf, 512);
+    fifoBuf_init(&stdin_698, stdin_698_server_buf, 512);
     fifoBuf_init(&pipe_tx_698_req, malloc(512), 512);
     instance->cache = malloc(256);
     instance->cache2 = malloc(sizeof(struct cache_t));
@@ -202,8 +208,11 @@ int test_app_setup(void** state)
     ctx_698.apdu = malloc(sizeof(struct fifo_t));
     fifoBuf_init(ctx_698.apdu, buf, 2048);
 
-    fifoBuf_init(&stdin_client_698, malloc(512), 512);
-    fifoBuf_init(&stdout_client_698, malloc(512), 512);
+    //fifoBuf_init(&stdin_client_698, malloc(512), 512);
+    //fifoBuf_init(&stdout_client_698, malloc(512), 512);
+    fifoBuf_init(&stdin_client_698, stdin_698_client_buf, 512);
+    fifoBuf_init(&stdout_client_698, stdout_698_client_buf, 512);
+
     ctx_client_698.apdu = malloc(sizeof(struct fifo_t));
     fifoBuf_init(ctx_client_698.apdu, malloc(2048), 2048);
 
@@ -218,9 +227,9 @@ void test_case_1(void** state)
     uint8_t buf[4];
     uint32_t id = 0x4000;
     uint32_t data = 0x12345678;
-    will_return(nd_get, &data);
-    will_return(nd_get, 4);
-    int r = nd_get(instance, id, buf, 4);
+    will_return(_nd_get, &data);
+    will_return(_nd_get, 4);
+    int r = _nd_get(instance, id, buf, 4);
     assert_true(r == 4);
     assert_memory_equal(buf, &data, 4);
 }
@@ -263,56 +272,79 @@ int main(void)
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_case_1),
 
-        /*test_app_698_server_uniformity*/
-        //数据链路层合法性
-            //test_app_698_server_LINK_get
-                //1 客户机发起正确GET请求测试 如读取读取安全模式参数
-                cmocka_unit_test(test_app_698_server_LINK_get_ok),
-                //2 错误帧起始符测试
-                cmocka_unit_test(test_app_698_server_LINK_get_header_err),
-                //3 错误长度测试
-                cmocka_unit_test(test_app_698_server_LINK_get_len_err),
-                //4 错误控制域测试
-                cmocka_unit_test(test_app_698_server_LINK_get_ctrl_err),
-                //5 错误通信地址测试
-                // test_app_698_server_LINK_get_5(state),
-                //6 错误客户机地址测试
-                // test_app_698_server_LINK_get_5(state),
-                //7 错误逻辑地址测试
-                // test_app_698_server_LINK_get_5(state),
-                //8 错误HCS帧头校验测试
-                // test_app_698_server_LINK_get_5(state),
-                //9 错误GET-Request测试
-                // test_app_698_server_LINK_get_5(state),
-                //10 错误属性测试
-                // test_app_698_server_LINK_get_5(state),
-                //11 错误FCS帧校验测试
-                // test_app_698_server_LINK_get_5(state),
-                //12 结束字符测试
-                // test_app_698_server_LINK_get_5(state),
+        //1 test_app_698_server_uniformity
+        //1.1数据链路层合法性
+        //1.1.1 test_app_698_server_LINK_get
+            //1 客户机发起正确GET请求测试 如读取读取安全模式参数
+            cmocka_unit_test(test_app_698_server_LINK_get_1_ok),
+            //2 错误帧起始符测试
+            cmocka_unit_test(test_app_698_server_LINK_get_2_header_err),
+            //3 错误长度测试
+            cmocka_unit_test(test_app_698_server_LINK_get_3_len_err),
+            //4 错误控制域测试
+            cmocka_unit_test(test_app_698_server_LINK_get_4_ctrl_err),
+            //5 错误通信地址测试
+            cmocka_unit_test(test_app_698_server_LINK_get_5_addr_err),
+            //6 错误客户机地址测试
+            cmocka_unit_test(test_app_698_server_LINK_get_6_CA_err),
+            //7 错误逻辑地址测试
+            cmocka_unit_test(test_app_698_server_LINK_get_7_logic_addr_err),
+            //8 错误HCS帧头校验测试
+            cmocka_unit_test(test_app_698_server_LINK_get_8_hcs_err),
+            //9 错误GET-Request测试
+            cmocka_unit_test(test_app_698_server_LINK_get_9_err),
+            //10 错误属性测试
+            cmocka_unit_test(test_app_698_server_LINK_get_10_attribute_err),
+            //11 错误FCS帧校验测试
+            cmocka_unit_test(test_app_698_server_LINK_get_11_fcs_err),
+            //12 结束字符测试
+            cmocka_unit_test(test_app_698_server_LINK_get_12_end),
 
-            //test_app_698_server_LINK_get
- 
+        //1.1.2 test_app_698_server_LINK_set
+            //1、客户机发起正确SET请求测试
+            cmocka_unit_test(test_app_698_server_LINK_set_1_ok),
+            //2、错误帧起始符测试
+            cmocka_unit_test(test_app_698_server_LINK_set_2_header_err),
+            //3、错误长度测试
+            cmocka_unit_test(test_app_698_server_LINK_set_3_len_err),
+            //4、错误控制域测试
+            cmocka_unit_test(test_app_698_server_LINK_set_4_ctrl_err),
+            //5、错误通信地址测试
+            cmocka_unit_test(test_app_698_server_LINK_set_5_addr_err),
+            //6、错误客户机地址测试
+            cmocka_unit_test(test_app_698_server_LINK_set_6_CA_err),
+            //7、错误逻辑地址测试
+            cmocka_unit_test(test_app_698_server_LINK_set_7_logic_addr_err),
+            //8、错误HCS帧头校验测
+            cmocka_unit_test(test_app_698_server_LINK_set_8_hcs),
+            //9、错误SET-Request测试
+            cmocka_unit_test(test_app_698_server_LINK_set_9_err),
+            //10、错误FCS帧校验测试
+            cmocka_unit_test(test_app_698_server_LINK_set_10_fcs),
+            //11、无结束字符测试
+            cmocka_unit_test(test_app_698_server_LINK_set_11_end),
+        //1.1.3 控制字测试用例
+            //1、传输方向位DIR与启动标志位PRM测试
+            cmocka_unit_test(test_app_698_server_LINK_ctrl_dir_prm),
+            //2、分帧标志测试
+            cmocka_unit_test(test_app_698_server_LINK_ctrl_frm),
+            //3、分帧传输其他测试项
+            cmocka_unit_test(test_app_698_server_LINK_ctrl_frm_other),
+            //4、扰码标志位测试
+            cmocka_unit_test(test_app_698_server_LINK_ctrl_sc),
 
-        //建立应用连接测试用例
+        //1.2 建立应用连接测试用例
+        //1.3 断开应用连接测试用例
+        //1.4 Get-Requeset数据类型测试用例
+        //1.5 Get-Response数据类型测试用例
+        //1.6 Set-Requeset数据类型测试用例
+        //1.7 Set-Responset数据类型测试用例
+        //1.8 Action-Request数据类型测试用例
+        //1.9 Action-Respons数据类型测试用例
 
-        //断开应用连接测试用例
- 
-        //Get-Requeset数据类型测试用例
- 
-        //Get-Response数据类型测试用例
-
-        //Set-Requeset数据类型测试用例
-
-        //Set-Responset数据类型测试用例
-
-        //Action-Request数据类型测试用例
-
-        //Action-Respons数据类型测试用例
-
-        /*test_app_698_server_class_id*/
-        /*test_app_698_server_function*/
-        /*test_app_698_server_bug*/
+        //2 test_app_698_server_class_id
+        //3 test_app_698_server_function
+        //4 test_app_698_server_bug
 
         cmocka_unit_test(test_case_running_with_kernel),
     };

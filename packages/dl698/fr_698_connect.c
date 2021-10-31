@@ -1,5 +1,4 @@
 ﻿#include "nidavellir.h"
-#include "fr_axdr.h"
 #include "fr_698.h"
 
 enum connect_result_e
@@ -172,12 +171,12 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
 
 
     uint32_t oad = 0;
-    if (fr_698_ioctrl(instance, oad, buf, 20, &offset) < 0)
+    if (fr_698_action(instance, oad, buf, 20, &offset) < 0)
     {
         return DAR_OTHERS_ERROR;
     }
 
-    if ( false != fr_698_ioctrl(buf, buf, &offset))
+    if ( false != fr_698_action(buf, buf, &offset))
 	{
 		//memcopy(&dectypt->rn[1],&buf[0],dectypt->rn[0]);
         

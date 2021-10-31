@@ -535,6 +535,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         case REPORT_Response://8上报应答 client
             break;
         default:
+            return 0;
             break;
     }
 

@@ -1,6 +1,9 @@
 #ifndef __FR_698_H__
 #define __FR_698_H__
 
+#include "fr_axdr.h"
+#include "fr_698_comm.h"
+
 #define is_scrambler_set(ctrl) ((((ctrl)>>3)&0x01) != 0)
 #define DIR(ctrl)  ((((ctrl)>>7)&0x01))
 #define PRM(ctrl)  ((((ctrl)>>6)&0x01))
@@ -22,11 +25,6 @@
 
 #define get_OAD_Class(oad)      (uint8_t)((oad&0xF0000000)>>28)
 #define get_OAD_Attribute(oad)  (uint8_t)((oad&0x00000F00)>>8)
-
-
-#define fr_698_get nd_get
-#define fr_698_set nd_set
-#define fr_698_ioctrl nd_ioctrl
 
 
 /** data-assess-result */

@@ -1,7 +1,5 @@
 #include "nidavellir.h"
-#include "fr_axdr.h"
 #include "fr_698.h"
-
 
 #define SetRequestNormal            1
 #define SetRequestNormalList        2

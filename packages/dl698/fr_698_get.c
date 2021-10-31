@@ -1,7 +1,5 @@
 ﻿#include "nidavellir.h"
-#include "fr_axdr.h"
 #include "fr_698.h"
-
 
 #define GetRequestNormal            1
 #define GetRequestNormalList        2
@@ -12,15 +10,6 @@
 #define GetRequestSimplifyRecord    23
 
 
-uint16_t _fr_698_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
-{
-    uint16_t i = 0;
-    for(i =0 ; i < buf_size ; i++)
-    {
-        buf[i] = 0x11*(i+1);
-    }
-    return buf_size;
-}
 
 
 int fr_serve_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -78,7 +67,7 @@ int fr_serve_one_object(struct instance_t* instance, struct pipeline_t* pipeline
             //p[cache->wr++]
         }
 
-        int r = _fr_698_get(instance, oad, p + cache->wr, len);
+        int r = fr_698_get(instance, oad, p + cache->wr, len);
         //fifo->rd += r;
         if (r < 0)
         {
@@ -162,7 +151,6 @@ int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeli
 
     switch (ctx->choice)
     {
-        case 0://
         case GetRequestNormal:
         case GetRequestNormalList:
             __fr_handle_get_normal_request(instance, pipeline, mesg);
