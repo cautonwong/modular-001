@@ -430,6 +430,7 @@ struct resources_obj_t
     void* p;
 };
 
+#pragma pack(4)
 struct resource_map_t
 {
     uint8_t map_name;
@@ -439,7 +440,7 @@ struct resource_map_t
 
 struct mbase_control_block_t;
 //聚合根
-#pragma pack(1)
+#pragma pack(4)
 struct instance_t
 { 
     ///resourec需要的一些变量
@@ -449,10 +450,10 @@ struct instance_t
     uint8_t ram_device_name;
     uint8_t resource_block_name;
     //////////////////////////
+    uint8_t meter_type;
     uint32_t  ms;
     struct recipe_t *recipe;
     struct mbase_control_block_t * mbase_cb;
-    uint8_t meter_type;
     struct tm time;//
     struct tasklet_pool_t tasklet_pool;
     struct upgrade_info_t upgrade_info;
@@ -527,6 +528,13 @@ struct instance_t *create_nidavellir(struct recipe_t *recipe);
 组织成多个pipeline,每个pipeline由多个filter组成，
 pipeline之间由pipe联接,实现ipc
 */
+enum block_device_id_t
+{
+    RES_DEV_RAM,
+    RES_DEV_EEPROM,
+    RES_DEV_FLASH
+};
+
 int nidavellir_loop(struct instance_t *instance);
 int nidavellir_n_loop(struct instance_t **instances,size_t n);
 int nidavellir_run(struct instance_t* instance);

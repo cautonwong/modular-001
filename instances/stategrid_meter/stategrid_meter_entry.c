@@ -4,6 +4,17 @@ extern int app_698_rx_entry(struct instance_t* instance, struct pipeline_t* pipe
 extern int app_698_tx_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
+#ifdef WIN32
+const struct dev_info_t eeprom_dev = 
+{
+    0x00,0x01,0xFFFF,0x00,0x00, NULL, NULL, NULL, NULL, NULL, NULL,
+};
+const struct dev_info_t nor_flash_dev = 
+{
+    0x01,0x01,0xFFFF,0x00,0x00, NULL, NULL, NULL, NULL, NULL, NULL
+};
+#endif // WIN32
+
 struct filter_t fr_meter_base[] =
 {
     {0,app_meter_base_entry,1,13},
@@ -110,23 +121,11 @@ int baremetal_instance_entry_main(int argc, char** argv)
     add_task(instance);//将此task添加到容器里
 #endif
     //一、初始化resource_manager_ctx;（申请了1K的大小，名称是0x01）
-#ifdef WIN32
-    instance = create_instance(0x01, (uint32_t)&nd_memory, 20 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
-#else
-    instance = create_instance(DEV_RAM, (uint32_t)&nd_memory, 20 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
-#endif // WIN32
+    instance = create_instance(RES_DEV_RAM, (uint32_t)&nd_memory, 20 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
     if (instance == NULL)
     {
         return -1;
     }
-#ifdef WIN32
-    instance->ram_device_name = 0x01;
-#else
-    instance->ram_device_name = DEV_RAM;
-#endif // WIN32
-
-    
-    instance->resource_block_name = 0x01;
 
     instance->recipe = nd_malloc(instance, instance->resource_block_name, sizeof(struct recipe_t));
     recipe = instance->recipe;
@@ -152,7 +151,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
 
     ///////////////////////////////申请一个cache的BLOCK = 02/////////////////////////////////////////////
     uint8_t control_block_cache = 0x02;
-    if (0 > add_block(instance, 0x01, control_block_cache, 500))
+    if (NULL == add_block(instance, RES_DEV_RAM, control_block_cache, 500))
     {
         return -1;
     }
@@ -166,7 +165,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
 
     /////////////////////////////////////申请一个698应用的BLOCK = 03/////////////////////////////////////////////////
     uint8_t control_block_698_name = 0x03;
-    if (0 > add_block(instance, 0x01, control_block_698_name, 8 * 1024))
+    if (NULL == add_block(instance, RES_DEV_RAM, control_block_698_name, 8 * 1024))
     {
         return -1;
     }
@@ -188,7 +187,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
 
     ////////////////////////////申请一个mbase应用的BLOCK = 04/////////////////////////////////////////////
     uint8_t mbase_control_block_name = 0x04;
-    if (0 > add_block(instance, 0x01, mbase_control_block_name, 8 * 1024))
+    if (NULL == add_block(instance, RES_DEV_RAM, mbase_control_block_name, 8 * 1024))
     {
         return -1;
     }
@@ -197,14 +196,15 @@ int baremetal_instance_entry_main(int argc, char** argv)
     pl_meter_base.in_queue = nd_malloc(instance, mbase_control_block_name, sizeof(struct fifo_t));
     fifoBuf_init(pl_meter_base.in_queue, nd_malloc(instance, mbase_control_block_name, 256), 256);
     pl_meter_base.out_queue = NULL;
-#ifndef WIN32
+
     //注册EPROM  
-    add_device(instance, DEV_EEPROM, &eeprom_dev);
+    add_device(instance, RES_DEV_EEPROM, &eeprom_dev);
     //注册FLASH
-    add_device(instance, DEV_FLASH, &nor_flash_dev);
-#endif // !WIN32
+    add_device(instance, RES_DEV_FLASH, &nor_flash_dev);
+
     //注册一个698的MAP
-    register_map(instance, 0x01, resource_map_698);
+    uint8_t res_map_698 = 0x01;
+    register_map(instance, res_map_698, resource_map_698);
 
     return baremetal_instance_entry(instance);
 }

@@ -1,7 +1,9 @@
 #include "nidavellir.h"
 
+//内存管理的对齐
+#define RES_ALIGN_TYPE  uint32_t
 //单一设备的块链表
-#pragma pack(1)
+#pragma pack(4)
 struct block_device_children_t
 {
     uint8_t name;
@@ -13,7 +15,7 @@ struct block_device_children_t
 
 //设备的链表(这里把RAM也看成一个块设备来处理)
 struct dev_info_t;
-#pragma pack(1)
+#pragma pack(4)
 struct block_device_t
 {
     uint8_t device_name;
@@ -31,6 +33,7 @@ void *__nd_malloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_si
     uint32_t free = block_size - *used;
     uint32_t start = addr + *used;
 
+    size = (((size + (sizeof(RES_ALIGN_TYPE))) - ((RES_ALIGN_TYPE)1)) / (sizeof(RES_ALIGN_TYPE))) * (sizeof(RES_ALIGN_TYPE));
     if (free >= size)
     {
         *used += size;
@@ -178,11 +181,13 @@ uint32_t *add_inside_block(struct instance_t* instance, uint8_t device_name,uint
 
 struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t resource_blok_size,uint8_t resource_block_name)
 {
-    struct instance_t* instance = (struct instance_t*)first_addr;
+    struct instance_t* instance = NULL;
     struct block_device_t* device = NULL; //创建RAM设备
     struct block_device_children_t* block = NULL;
-    uint32_t used = sizeof(struct instance_t);
+    uint32_t used = 0x00;
 
+    instance = __nd_malloc(first_addr,&used,sizeof(struct instance_t), size);
+    //初始化链表头
     init_list_head(&instance->app_list);
     init_list_head(&instance->dev_list);
     init_list_head(&instance->map_list);
