@@ -1,6 +1,6 @@
 /**
  * @ingroup    drivers_flashdev
- * @brief      nor flash Çı¶¯
+ * @brief      nor flash é©±åŠ¨
  *
  * @{
  * @file
@@ -13,7 +13,7 @@
 
 
 /******************************************************************************
-**¶¨ÒåFlash²Ù×÷ÃüÁî×Ö  MX25L3206E
+**å®šä¹‰Flashæ“ä½œå‘½ä»¤å­—  MX25L3206E
 ******************************************************************************/
 
 /**
@@ -77,13 +77,13 @@ uint8 flash_read_and_compare(struct spi_io_t *read_data, const struct bus_ops_t 
     
     for (ui_i = 0; ui_i < read_data->cmdnum; ui_i ++)
     {
-        /* ·¢ËÍÖ¸ÁîºÍµØÖ· */
+        /* å‘é€æŒ‡ä»¤å’Œåœ°å€ */
         bus_ops->tx(read_data->command[ui_i] , index);
     }
     
     for (ui_i = 0; ui_i < read_data->length; ui_i ++)
     {
-        /* Öğ¸ö½ÓÊÕ×Ö½Ú */
+        /* é€ä¸ªæ¥æ”¶å­—èŠ‚ */
         bus_ops->rx( &rcv_data ,index);
         if (read_data->buffer[ui_i] != rcv_data)
         {
@@ -99,7 +99,7 @@ uint8 flash_read_and_compare(struct spi_io_t *read_data, const struct bus_ops_t 
 
 uint8 flash_write_data(struct spi_io_t *write_data ,  const struct dev_info_t* dev)
 {
-    uint16 ui_i;                         /* Ñ­»·±äÁ¿ */
+    uint16 ui_i;                         /* å¾ªç¯å˜é‡ */
     const struct bus_ops_t *bus_ops = dev->dev_bus_ops;
     uint8 index = bus_ops->bus_index;
     
@@ -112,11 +112,11 @@ uint8 flash_write_data(struct spi_io_t *write_data ,  const struct dev_info_t* d
 
     for (ui_i = 0; ui_i < write_data->cmdnum; ui_i ++)
     {
-        /* ·¢ËÍÖ¸ÁîºÍµØÖ· */
+        /* å‘é€æŒ‡ä»¤å’Œåœ°å€ */
         bus_ops->tx(write_data->command[ui_i] , index);
     }
     
-    /* Ñ­»·Öğ¸ö½ÓÊÕ×Ö½Ú */
+    /* å¾ªç¯é€ä¸ªæ¥æ”¶å­—èŠ‚ */
     for (ui_i = 0; ui_i < write_data->length; ui_i ++)
     { 
         bus_ops->tx(write_data->buffer[ui_i] , index);
@@ -132,7 +132,7 @@ uint8 flash_write_data(struct spi_io_t *write_data ,  const struct dev_info_t* d
 
 uint8 flash_read_data(struct spi_io_t *read_data, const struct dev_info_t* dev)
 {
-    uint16 ui_i;                         /* Ñ­»·±äÁ¿ */
+    uint16 ui_i;                         /* å¾ªç¯å˜é‡ */
     const struct bus_ops_t *bus_ops = dev->dev_bus_ops;
     uint8 index = bus_ops->bus_index;
     
@@ -145,21 +145,21 @@ uint8 flash_read_data(struct spi_io_t *read_data, const struct dev_info_t* dev)
     
     for (ui_i = 0; ui_i < read_data->cmdnum; ui_i ++)
     {
-        /* ·¢ËÍÖ¸ÁîºÍµØÖ· */
+        /* å‘é€æŒ‡ä»¤å’Œåœ°å€ */
         bus_ops->tx(read_data->command[ui_i] , index);
     }
     
     mcu_delay_us(50);
-    /* Ñ­»·Öğ¸ö½ÓÊÕ×Ö½Ú */
+    /* å¾ªç¯é€ä¸ªæ¥æ”¶å­—èŠ‚ */
     for (ui_i = 0; ui_i < read_data->length; ui_i ++)
     {
-        /* Öğ¸ö½ÓÊÕ×Ö½Ú */
+        /* é€ä¸ªæ¥æ”¶å­—èŠ‚ */
         bus_ops->rx( &read_data->buffer[ui_i], index);
     }
     
     bus_ops->ctrl(STOP , index);
     
-    return flash_read_and_compare(read_data , bus_ops);     /**< ·µ»Ø¶Á³ö±È½ÏµÄ½á¹û */
+    return flash_read_and_compare(read_data , bus_ops);     /**< è¿”å›è¯»å‡ºæ¯”è¾ƒçš„ç»“æœ */
 }
 
 
@@ -298,15 +298,15 @@ int flash_write(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void*
     while (len)
     {
         flash_write_enable(dev);
-        tmp = addr & (256 - 1);  /* ²éÕÒÒ»Ò³¿ªÊ¼µÄµØ·½ */
+        tmp = addr & (256 - 1);  /* æŸ¥æ‰¾ä¸€é¡µå¼€å§‹çš„åœ°æ–¹ */
         
         if (tmp != 0)
         {
-            cnt = 256 - tmp;       /* ·ÇÒ»Ò³¿ªÊ¼µÄµØ·½×î¶àÒ»´ÎÄÜĞ´µÄ×Ö½ÚÊı */
+            cnt = 256 - tmp;       /* éä¸€é¡µå¼€å§‹çš„åœ°æ–¹æœ€å¤šä¸€æ¬¡èƒ½å†™çš„å­—èŠ‚æ•° */
         }
         else
         { 
-            cnt = 256;             /* Ò³¿ªÊ¼µÄµØ·½×î¶àÒ»´ÎÄÜĞ´ EEP_PAGE_SIZE */
+            cnt = 256;             /* é¡µå¼€å§‹çš„åœ°æ–¹æœ€å¤šä¸€æ¬¡èƒ½å†™ EEP_PAGE_SIZE */
         }
         
         if (len < cnt)
@@ -316,19 +316,19 @@ int flash_write(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void*
         
         /* page program */
         spi_io.command[0] = MX_CMD_PP;
-        /* µØÖ·¸ß×Ö½Ú */
+        /* åœ°å€é«˜å­—èŠ‚ */
         spi_io.command[1] = (uint8)(addr >> 16);
-        /* µØÖ·ÖĞ×Ö½Ú */
+        /* åœ°å€ä¸­å­—èŠ‚ */
         spi_io.command[2] = (uint8)(addr >> 8);
-        spi_io.command[3] = (uint8)addr;          /* µØÖ·µÍ×Ö½Ú */
+        spi_io.command[3] = (uint8)addr;          /* åœ°å€ä½å­—èŠ‚ */
         
-        spi_io.buffer = src;           /* »º´æÊı¾İ */
-        spi_io.cmdnum = 4;             /* ÃüÁî³¤¶È */
-        spi_io.length = cnt;           /* Êı¾İ³¤¶È */
+        spi_io.buffer = src;           /* ç¼“å­˜æ•°æ® */
+        spi_io.cmdnum = 4;             /* å‘½ä»¤é•¿åº¦ */
+        spi_io.length = cnt;           /* æ•°æ®é•¿åº¦ */
         mcu_delay_us(10);
-        ret = flash_write_data(&spi_io , dev);       /* Ö´ĞĞÃüÁî */
+        ret = flash_write_data(&spi_io , dev);       /* æ‰§è¡Œå‘½ä»¤ */
         mcu_delay_us(10);
-        while (false == get_flash_status(dev))   /* µÈ´ıËüµÄ¿ÕÏĞ */
+        while (false == get_flash_status(dev))   /* ç­‰å¾…å®ƒçš„ç©ºé—² */
         {
             timeout--;
             if(timeout == 0)

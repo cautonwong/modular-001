@@ -29,10 +29,10 @@ uint8 ndv_timer_create(uint8 (*tickfunc)(void *), void *tickpara, uint16 timeout
 
     time_id = 0x01;
 
-    while (p != __NULL)                     /**< Ñ­»·É¨Ãèµ½×îºóµÄtimer */
+    while (p != __NULL)                     /**< å¾ªçŽ¯æ‰«æåˆ°æœ€åŽçš„timer */
     {
-        q       = p;                        /**< ±£ÁôÉÏÒ»¸ö */
-        p       = p->pnext;                 /**< ÏÂÒ»¸ö */
+        q       = p;                        /**< ä¿ç•™ä¸Šä¸€ä¸ª */
+        p       = p->pnext;                 /**< ä¸‹ä¸€ä¸ª */
         time_id = q->timerid;              
 
         if ((q->tickfunc == tickfunc) && (q->tickpara == tickpara))
@@ -69,19 +69,19 @@ uint8 ndv_timer_start(uint8 timerid)
 
     p = gs_timer_link;
 
-    while (p != __NULL)                     /**< Ñ­»·É¨Ãèµ½×îºóµÄtimer */
+    while (p != __NULL)                     /**< å¾ªçŽ¯æ‰«æåˆ°æœ€åŽçš„timer */
     {
-        if (p->timerid == timerid)          /**< ¸ÃIDµÄtimerÒÑ¾­±»´´½¨Ôò·µ»Ø */ 
+        if (p->timerid == timerid)          /**< è¯¥IDçš„timerå·²ç»è¢«åˆ›å»ºåˆ™è¿”å›ž */ 
         {
-            p->stoped = 0;                  /**< Æô¶¯ */
-            p->dlyctr = p->timeout + 1;     /**< ·ÀÖ¹¶¨Ê±Æ÷ÖÐÍ¾Í£Ö¹ºóÖØÐÂÆô¶¯Ê±,dlyctr Öµ²»µÈÓÚ timeout. */
+            p->stoped = 0;                  /**< å¯åŠ¨ */
+            p->dlyctr = p->timeout + 1;     /**< é˜²æ­¢å®šæ—¶å™¨ä¸­é€”åœæ­¢åŽé‡æ–°å¯åŠ¨æ—¶,dlyctr å€¼ä¸ç­‰äºŽ timeout. */
             return true;
         }
 
-        p = p->pnext;                       /**< ÏÂÒ»¸ö */
+        p = p->pnext;                       /**< ä¸‹ä¸€ä¸ª */
     }
 
-    return false;                    /**< ·µ»ØÊÔÍ¼Æô¶¯²»´æÔÚµÄtimer */
+    return false;                    /**< è¿”å›žè¯•å›¾å¯åŠ¨ä¸å­˜åœ¨çš„timer */
 }
 
 
@@ -91,18 +91,18 @@ uint8 ndv_timer_stop(uint8 timerid)
 
     p = gs_timer_link;
 
-    while (p != __NULL)                      /**< Ñ­»·É¨Ãèµ½×îºóµÄtimer */
+    while (p != __NULL)                      /**< å¾ªçŽ¯æ‰«æåˆ°æœ€åŽçš„timer */
     {
-        if (p->timerid == timerid)           /**< ¸ÃIDµÄtimerÒÑ¾­±»´´½¨Ôò·µ»Ø */
+        if (p->timerid == timerid)           /**< è¯¥IDçš„timerå·²ç»è¢«åˆ›å»ºåˆ™è¿”å›ž */
         {
-            p->stoped = 1;                  /**< Í£Ö¹ */
+            p->stoped = 1;                  /**< åœæ­¢ */
             return true;
         }
  
-        p = p->pnext;                       /**< ÏÂÒ»¸ö */
+        p = p->pnext;                       /**< ä¸‹ä¸€ä¸ª */
     }
 
-    return false;                    /**< ·µ»ØÊÔÍ¼Æô¶¯²»´æÔÚµÄtimer */
+    return false;                    /**< è¿”å›žè¯•å›¾å¯åŠ¨ä¸å­˜åœ¨çš„timer */
 }
 
 
@@ -112,24 +112,24 @@ void ndv_timer_tick(void)
 
     if (p != __NULL)
     {
-        while (p != __NULL)                 /**< ²»¶ÏÑ­»·´¦Àí¸÷¸ötimer */
+        while (p != __NULL)                 /**< ä¸æ–­å¾ªçŽ¯å¤„ç†å„ä¸ªtimer */
         {
-            if (p->stoped == 0)             /**< ÅÐ¶ÏÊÇ·ñÆô¶¯ */
+            if (p->stoped == 0)             /**< åˆ¤æ–­æ˜¯å¦å¯åŠ¨ */
             {
-                p->dlyctr--;                /**< µ¹¼ÆÊ± */
+                p->dlyctr--;                /**< å€’è®¡æ—¶ */
 
-                if (p->dlyctr == 0)         /**< µ½0Ôò´¥·¢ */
+                if (p->dlyctr == 0)         /**< åˆ°0åˆ™è§¦å‘ */
                 {
-                    p->dlyctr = p->timeout; /**< timer»Ö¸´È»ºóµ÷ÓÃ»Øµ÷º¯Êý */
+                    p->dlyctr = p->timeout; /**< timeræ¢å¤ç„¶åŽè°ƒç”¨å›žè°ƒå‡½æ•° */
 
                     if (!p->tickfunc(p->tickpara))
                     {
-                        p->stoped = 1;      /**< timer±»Í£Ö¹ÁË */
+                        p->stoped = 1;      /**< timerè¢«åœæ­¢äº† */
                     }
                 }
             }
 
-            p = p->pnext;                   /**< ÏÂÒ»¸ö */
+            p = p->pnext;                   /**< ä¸‹ä¸€ä¸ª */
         }
     }
 }
@@ -141,20 +141,20 @@ uint8 ndv_timer_start_one(uint8 timerid, uint16 count)
 
     p = gs_timer_link;
 
-    while (p != __NULL)                                /**< Ñ­»·É¨Ãèµ½×îºóµÄtimer */
+    while (p != __NULL)                                /**< å¾ªçŽ¯æ‰«æåˆ°æœ€åŽçš„timer */
     {
-        if (p->timerid == timerid)                     /**< ¸ÃIDµÄtimerÒÑ¾­±»´´½¨Ôò·µ»Ø */
+        if (p->timerid == timerid)                     /**< è¯¥IDçš„timerå·²ç»è¢«åˆ›å»ºåˆ™è¿”å›ž */
         {
-            p->stoped  = 0;                            /**< Æô¶¯ */
+            p->stoped  = 0;                            /**< å¯åŠ¨ */
             p->timeout = count;
-            p->dlyctr  = p->timeout + 1;               /**< ·ÀÖ¹¶¨Ê±Æ÷ÖÐÍ¾Í£Ö¹ºóÖØÐÂÆô¶¯Ê±,dlyctr Öµ²»µÈÓÚ timeout. */
+            p->dlyctr  = p->timeout + 1;               /**< é˜²æ­¢å®šæ—¶å™¨ä¸­é€”åœæ­¢åŽé‡æ–°å¯åŠ¨æ—¶,dlyctr å€¼ä¸ç­‰äºŽ timeout. */
             return true;
         }
 
-        p = p->pnext;                                   /**< ÏÂÒ»¸ö */
+        p = p->pnext;                                   /**< ä¸‹ä¸€ä¸ª */
     }
 
-    return false;                                      /**< ·µ»ØÊÔÍ¼Æô¶¯²»´æÔÚµÄtimer */
+    return false;                                      /**< è¿”å›žè¯•å›¾å¯åŠ¨ä¸å­˜åœ¨çš„timer */
 } 
 
 void ndv_timer_init(void)

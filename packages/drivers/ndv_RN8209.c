@@ -136,7 +136,7 @@ unsigned char CmdRn8209(unsigned char cmd  , const struct dev_info_t* dev)
 
 unsigned char Rn8209InitConfig(const struct dev_info_t* dev)
 {
-    //RN8209³õÊ¼»¯ÅäÖÃµÄ²ÎÊı£¬Ö±½ÓÔÚÕâÀïĞŞ¸ÄÅäÖÃ¡£
+    //RN8209åˆå§‹åŒ–é…ç½®çš„å‚æ•°ï¼Œç›´æ¥åœ¨è¿™é‡Œä¿®æ”¹é…ç½®ã€‚
     unsigned short SysCon = 0x1643;
     unsigned short EmuCon = 0x0001;
     unsigned short Hfconst = 0x096F;

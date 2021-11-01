@@ -3,7 +3,7 @@
 #include "cpu_surport.h"
 /**
  * @ingroup    drivers_eepromdev
- * @brief      eeprom Çý¶¯
+ * @brief      eeprom é©±åŠ¨
  *
  * @{
  * @file
@@ -12,8 +12,8 @@
 #define EEPROM_PASSWORD         0xA0
 #define EEPROM_ERR_JUDGE        5
 #define EEPROM_OPERATE_CNTS     300
-#define EEPROM_HARD_ADDR        0x00              //µçÂ·ÊôÐÔÖ±½Ó´úÂëÐ´ËÀ£¬°üÀ¨Ô­À´µÄresourceÖÐÅäÖÃµÄIOµÈÊôÐÔÒ²Ö±½ÓÔÚ×ÜÏßÇý¶¯ÖÐÐ´ËÀ£¬×ÜÏßÇý¶¯µÄË÷Òý±àºÅÓÉdevÀïÃæ´ø½øÈ¥¡£
-#define EEPROM_SIZE             (dev->data_size)  //BOMÊôÐÔ´ÓdevÀïÃæ´ø½øÀ´
+#define EEPROM_HARD_ADDR        0x00              //ç”µè·¯å±žæ€§ç›´æŽ¥ä»£ç å†™æ­»ï¼ŒåŒ…æ‹¬åŽŸæ¥çš„resourceä¸­é…ç½®çš„IOç­‰å±žæ€§ä¹Ÿç›´æŽ¥åœ¨æ€»çº¿é©±åŠ¨ä¸­å†™æ­»ï¼Œæ€»çº¿é©±åŠ¨çš„ç´¢å¼•ç¼–å·ç”±devé‡Œé¢å¸¦è¿›åŽ»ã€‚
+#define EEPROM_SIZE             (dev->data_size)  //BOMå±žæ€§ä»Ždevé‡Œé¢å¸¦è¿›æ¥
 #define EEPROM_PAGE_SIZE        0x80
 
 static uint8    eeprom_err_cnts = 0;
@@ -62,10 +62,10 @@ static uint8 send_device_addr(uint32 device_addr , const struct bus_ops_t *iic_o
 /********************************************************************************
 * Function Name  : E2Rom_Write_Page
 * Description    : Write one page Data To E2Rom
-* Arguments      : E2RomAddr - µØÖ··¶Î§ EEP_Size
-*                  Len       - Êý¾Ý³¤¶È
-*                  DataAddr  - Êý¾ÝÊ×µØÖ·
-*                  Index : start from 0,µÚÒ»¿éE·½Îª0,µÚ¶þ¿éE·½Îª1
+* Arguments      : E2RomAddr - åœ°å€èŒƒå›´ EEP_Size
+*                  Len       - æ•°æ®é•¿åº¦
+*                  DataAddr  - æ•°æ®é¦–åœ°å€
+*                  Index : start from 0,ç¬¬ä¸€å—Eæ–¹ä¸º0,ç¬¬äºŒå—Eæ–¹ä¸º1
 * Return         : true / false
 ********************************************************************************/
 uint8 i2c_mem_page_write(uint32 physics_addr, uint8* DataAddr, uint16 Len, const struct dev_info_t* dev)
@@ -108,11 +108,11 @@ uint8 i2c_mem_page_write(uint32 physics_addr, uint8* DataAddr, uint16 Len, const
 }
 /********************************************************************************
 * Function Name  : E2Rom_Write
-* Description    : Write Data To E2Rom, ¿É¿çÒ³Ð´
-* Arguments      : E2RomAddr - µØÖ··¶Î§ EEP_Size
-*                  Len       - Êý¾Ý³¤¶È
-*                  DataAddr  - Êý¾ÝÊ×µØÖ·
-*                  Index : start from 0,µÚÒ»¿éE·½Îª0,µÚ¶þ¿éE·½Îª1
+* Description    : Write Data To E2Rom, å¯è·¨é¡µå†™
+* Arguments      : E2RomAddr - åœ°å€èŒƒå›´ EEP_Size
+*                  Len       - æ•°æ®é•¿åº¦
+*                  DataAddr  - æ•°æ®é¦–åœ°å€
+*                  Index : start from 0,ç¬¬ä¸€å—Eæ–¹ä¸º0,ç¬¬äºŒå—Eæ–¹ä¸º1
 * Return         : true / false
 ********************************************************************************/
 uint8 eeprom_write(uint32 physics_addr, INT8U* DataAddr, uint16 Len, const struct dev_info_t* dev)
@@ -156,10 +156,10 @@ uint8 eeprom_write(uint32 physics_addr, INT8U* DataAddr, uint16 Len, const struc
 /********************************************************************************
 * Function Name  : E2Rom_Read
 * Description    : Read Data From E2Rom
-* Arguments      : E2RomAddr - µØÖ··¶Î§ EEP_Size
-*                  Len       - Êý¾Ý³¤¶È
-*                  DataAddr  - Êý¾Ý´æ·ÅÊ×µØÖ·
-*                  Index : start from 0,µÚÒ»¿éE·½Îª0,µÚ¶þ¿éE·½Îª1
+* Arguments      : E2RomAddr - åœ°å€èŒƒå›´ EEP_Size
+*                  Len       - æ•°æ®é•¿åº¦
+*                  DataAddr  - æ•°æ®å­˜æ”¾é¦–åœ°å€
+*                  Index : start from 0,ç¬¬ä¸€å—Eæ–¹ä¸º0,ç¬¬äºŒå—Eæ–¹ä¸º1
 * Return         : true / false
 ********************************************************************************/
 uint8 eeprom_read(uint32 physics_addr, uint8* data_addr, uint16 Len, const struct dev_info_t* dev)
@@ -248,7 +248,7 @@ uint8 eeprom_data_check(uint32 physics_addr, volatile uint8* pData, uint16 Len, 
     while (Len-- != 0)
     {
         RecvACK = (Len != 0 ? ACK_1 : ACK_0);
-        iic_ops->rx(&readData, index ); /* ×¢Òâ,´Ë´¦Èç¹û²»ÊÇ×îºóÒ»¸ö×Ö½Ú,ÒªÇóÉè±¸ÏìÓ¦ */
+        iic_ops->rx(&readData, index ); /* æ³¨æ„,æ­¤å¤„å¦‚æžœä¸æ˜¯æœ€åŽä¸€ä¸ªå­—èŠ‚,è¦æ±‚è®¾å¤‡å“åº” */
         iic_ops->ctrl(RecvACK , index);
         if (readData != *pData)
         {
@@ -343,10 +343,10 @@ int eeprom_write_chk(const struct dev_info_t* dev, uint32_t addr, uint16_t len, 
         {
             if (eeprom_write(physics_addr, src, len, dev) == false)
             {
-                mcu_delay_us(3000);//´ýµ÷ÊÔ
+                mcu_delay_us(3000);//å¾…è°ƒè¯•
                 continue;
             }
-            mcu_delay_us(3000);//´ýµ÷ÊÔ
+            mcu_delay_us(3000);//å¾…è°ƒè¯•
         }
         if (eeprom_data_check(physics_addr, src, len, dev) == true)
         {

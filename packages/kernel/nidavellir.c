@@ -46,10 +46,9 @@ int fr_sw_rtc(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 {
     if (fifoBuf_getUsed(&instance->pipe_rtc) > 0)
     {
-        uint8_t byte = fifoBuf_getByte(&instance->pipe_rtc);//Ãë¶¨Ê±Æ÷º¯Êı»òÃëÖĞ¶ÏÀïÍù´ËfifoÀïputÒ»¸ö1
-        if (byte == 1)//ÊÕµ½À´×Ô¶¨Ê±Æ÷»òÖĞ¶ÏµÄÃëĞÅºÅ
+        uint8_t byte = fifoBuf_getByte(&instance->pipe_rtc);
+        if (byte == 1)
         {
-            //·¢ËÍÊ±ÖÓ¸üĞÂĞÅºÅ¸øpl_msta ½øĞĞÈíÊ±ÖÓ¸üĞÂ  ¶¨Ê±³­±í  ·ÑÂÊµçÄÜÍ³¼Æ  ³¬Ê±ºÍÖØ·¢
             mesg->from = kernel;
             mesg->to = pid_msta;
             mesg->ctrl = 0x01;
@@ -75,11 +74,10 @@ int nidavellir_run(struct instance_t *instance)
     struct pipeline_t* pipeline;
     struct cache_t* cache = instance->cache2;
 
-    //ÖĞ¶Ïº¯Êı(¶¨Ê±Æ÷  ´®¿ÚÖĞ¶Ï)´¥·¢
 //    extern int fr_rx_data_from_serial(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
   //  fr_rx_data_from_serial(instance, &pl_rx_from_serial, &mesg);
     
-    fr_sw_rtc(instance,NULL,&mesg);//ÔÚÕâÀï½ÓÊÕÀ´×Ô¶¨Ê±Æ÷»òÖĞ¶ÏµÄÊ±ÖÓ¸üĞÂĞÅºÅ
+    fr_sw_rtc(instance,NULL,&mesg);
 
     for (size_t i = 0; i < pipeline_n; i++)
     {
@@ -129,16 +127,17 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     struct pipeline_t* pipeline;
     struct cache_t* cache = instance->cache2;
 
-    //ÖĞ¶Ïº¯Êı(¶¨Ê±Æ÷  ´®¿ÚÖĞ¶Ï)´¥·¢
 #ifdef NIDAVELLIR_SYSTEM_TEST
     extern int fr_rx_data_from_serial(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
     fr_rx_data_from_serial(instance, &pl_rx_from_serial, &mesg);
 #endif
-    fr_sw_rtc(instance, NULL, &mesg);//ÔÚÕâÀï½ÓÊÕÀ´×Ô¶¨Ê±Æ÷»òÖĞ¶ÏµÄÊ±ÖÓ¸üĞÂĞÅºÅ
+    //æ¥æ”¶æ—¶é’Ÿæ›´æ–°ä¿¡å·çš„å¤„ç†
+    fr_sw_rtc(instance, NULL, &mesg);
 
-    //´¦ÀíÑÓ³ÙÈÎÎñ deffered_task
+    //å¤„ç†äº‹ä»¶æ ‡å¿—ç»„  äº‹ä»¶é©±åŠ¨
+    //handle_event_flags()
 
-    //´¦ÀíÏûÏ¢Ñ­»·
+    //handle message loop
     for (size_t i = 0; i < pipeline_n; i++)
     {
         pipeline = recipe->pipelines[i];
@@ -173,6 +172,9 @@ int nidavellir_run_baremetal(struct instance_t* instance)
             } while (filter != NULL);
         }
     }
+
+    //å¤„ç†æŒä¹…åŒ–äº‹åŠ¡  å¦‚æ‰ç”µä¿å­˜å’Œè®°å½•ä¿å­˜ç­‰  æ¯åœˆä¿å­˜ä¸€æ¬¡
+    //sync_data()
     return 1;
 }
 
@@ -301,29 +303,5 @@ int recv_mesg_header(struct instance_t* instance, struct pipeline_t* pipeline, s
         return r;
     }
 
-    return 0;
-}
-
-int message_filter(void* control_block, uint8_t* b)
-{
-    uint8_t byte = *b;
-    int r = 0;
-
-    return -1;
-}
-
-int fr_pack_message_head(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{
-    
-    return 0;
-}
-
-int fr_pack_message_content(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{
-    return 0;
-}
-
-int fr_pack_message_tail(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{
     return 0;
 }

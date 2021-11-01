@@ -34,7 +34,7 @@ static uint32 get_system_clk(void)
 
     if (!(ANA->REG3 & ANA_REG3_PLLLPDN))
     {
-        temp = 32768;// µ÷Õû
+        temp = 32768;// è°ƒæ•´
     }
 
     return temp;
@@ -85,12 +85,12 @@ void  v85xxp_clear_watchdog(void)
 {
   PMU->WDTCLR = WDTCLR_KEY;
 }
-/* Êµ²âÊÔ10usµ½50msÎó²îÔÚ5%ÒÔÄÚ¡£@ 147435*/
-/* ¸´Î»ÔËĞĞ 3685875*/
-/* ÉÏµçÈ«ËÙÔËĞĞ 14743500*/
-/* »½ĞÑÔËĞĞ7371750*/
-/* ĞİÃßÔËĞĞ327687*/
-/* Êµ²âÊÔ10usµ½50msÎó²îÔÚ5%ÒÔÄÚ¡£@ 147435*/
+/* å®æµ‹è¯•10usåˆ°50msè¯¯å·®åœ¨5%ä»¥å†…ã€‚@ 147435*/
+/* å¤ä½è¿è¡Œ 3685875*/
+/* ä¸Šç”µå…¨é€Ÿè¿è¡Œ 14743500*/
+/* å”¤é†’è¿è¡Œ7371750*/
+/* ä¼‘çœ è¿è¡Œ327687*/
+/* å®æµ‹è¯•10usåˆ°50msè¯¯å·®åœ¨5%ä»¥å†…ã€‚@ 147435*/
 uint8 v85xxp_delay_us(volatile uint16 count)
 {
     uint32 timeout = 1000000;
@@ -107,7 +107,7 @@ uint8 v85xxp_delay_us(volatile uint16 count)
     /* clear interrupt status */
     TMR1->INT = TMR_INT_INT;
     TMR1->RELOAD = 0;
-    TMR1->VALUE  =  count*40; //´ıµ÷Õû   
+    TMR1->VALUE  =  count*40; //å¾…è°ƒæ•´   
     TMR1->CTRL |= TMR_CTRL_EN;
 
     while(0 == (TMR1->INT & 0x00000001))
@@ -134,20 +134,20 @@ void MComp1Init(void)
     GPIOBToF_Init(GPIOE, &GPIO_InitStruct);
     //    GPIOE->OEN |= 0xFFFF;       	                    
     //	GPIOE->IE &=~0xFFFF;
-    ANA->CTRL = (2 << ANA_CTRL_CMP1DEB_Pos) | (3 << ANA_CTRL_COMP1_SEL_Pos);  //3¸öRTCCLKÊ±ÖÓÖÜÆÚÏû¶¶  Ë«±ßÑØ
-    //ANA->REG2  = 1 << ANA_REG2_REFSEL_CMP1_Pos; //±È½ÏµçÑ¹  BGPREF=1.2V
+    ANA->CTRL = (2 << ANA_CTRL_CMP1DEB_Pos) | (3 << ANA_CTRL_COMP1_SEL_Pos);  //3ä¸ªRTCCLKæ—¶é’Ÿå‘¨æœŸæ¶ˆæŠ–  åŒè¾¹æ²¿
+    //ANA->REG2  = 1 << ANA_REG2_REFSEL_CMP1_Pos; //æ¯”è¾ƒç”µå‹  BGPREF=1.2V
 
-    ANA->REG2 |= 1 << ANA_REG2_CMP1_SEL_Pos;    //comp1_nÓëREF
+    ANA->REG2 |= 1 << ANA_REG2_CMP1_SEL_Pos;    //comp1_nä¸REF
 
-    //ANA->REG3 &= ~ANA_REG3_BGPPD;               //ÉÏµçBGP
-    ANA->REG3 |= ANA_REG3_CMP1PDN;              //¿ªÆôCMP1
-    ANA->INTEN |= ANA_INTEN_INTEN2;//¿ªÆôcomp1ÖĞ¶Ï
+    //ANA->REG3 &= ~ANA_REG3_BGPPD;               //ä¸Šç”µBGP
+    ANA->REG3 |= ANA_REG3_CMP1PDN;              //å¼€å¯CMP1
+    ANA->INTEN |= ANA_INTEN_INTEN2;//å¼€å¯comp1ä¸­æ–­
 
     //    KHandlerTabCfg(ANA_IRQn,ANA_COMP1_Interrupt,2);
 }
 
 
-/*È«ËÙÔËĞĞ26M */
+/*å…¨é€Ÿè¿è¡Œ26M */
 void sys_clock_normal(void) 
 {
     CLK_InitTypeDef CLK_Struct;
@@ -172,7 +172,7 @@ void sys_clock_normal(void)
     CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_LCD | CLK_AHBPERIPHRAL_GPIO), ENABLE);
     CLK_APBPeriphralCmd(Periphral , ENABLE);
     
-    // ³õÊ¼»¯ÉÏµç¼ì²â?
+    // åˆå§‹åŒ–ä¸Šç”µæ£€æµ‹?
     GPIOE->OEN |= (0x00000001 << 5);// powercheck
     GPIOE->IE  |= (0x00000001 << 5);
 }
@@ -181,18 +181,18 @@ void sys_clock_normal(void)
 /***********************************************************
  * @function_name: v85xxp_init
  * @function_file: cpu.c
- * @ÃèÊö:mcu³õÊ¼»¯º¯Êı
+ * @æè¿°:mcuåˆå§‹åŒ–å‡½æ•°
  *
- * @²ÎÊı:
- * @·µ»Ø:
- * @×÷Õß:C
+ * @å‚æ•°:
+ * @è¿”å›:
+ * @ä½œè€…:C
  **********************************************************/
 void mcu_init(void *init_type)
 {
     uint16 flag = 0x5aa5;
     uint32 val = 0;
 
-    // ¿´ÃÅ¹·³õÊ¼»¯
+    // çœ‹é—¨ç‹—åˆå§‹åŒ–
     WDT_SetPeriod(WDT_2_SECS);
     WDT_Enable();
 
@@ -200,18 +200,18 @@ void mcu_init(void *init_type)
     __disable_irq();
 
     /**
-    ¸´Î»Ö®ºóÊ×ÏÈÉèÖÃCMPLVD_EN ¡¢RTC_SAR_EN ¡¢WDT_EN ¡¢LCD_EN¡¢ GPIO_EN
+    å¤ä½ä¹‹åé¦–å…ˆè®¾ç½®CMPLVD_EN ã€RTC_SAR_EN ã€WDT_EN ã€LCD_ENã€ GPIO_EN
     */
 
     CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_LCD | CLK_AHBPERIPHRAL_GPIO), ENABLE);
     CLK_APBPeriphralCmd((CLK_APBPERIPHRAL_PMU | CLK_APBPERIPHRAL_RTC | CLK_APBPERIPHRAL_ANA), ENABLE);
 
-    // ³õÊ¼»¯ÉÏµç¼ì²â?
+    // åˆå§‹åŒ–ä¸Šç”µæ£€æµ‹?
     GPIOE->OEN |= (0x00000001 << 5);// powercheck
     GPIOE->IE |= (0x00000001 << 5);
 
     /**
-    MCUµÚÒ»´ÎÉÏµçÊ±£¬ĞèÒªµÈ´ıÔ¼???µÄÆğÕğÊ±¼ä£¬²Å¿ÉÒÔÊ¹ÓÃPLL//´ıµ÷Õû
+    MCUç¬¬ä¸€æ¬¡ä¸Šç”µæ—¶ï¼Œéœ€è¦ç­‰å¾…çº¦???çš„èµ·éœ‡æ—¶é—´ï¼Œæ‰å¯ä»¥ä½¿ç”¨PLL//å¾…è°ƒæ•´
     */
     for (val = 0; val < 20000; val++)
     {
@@ -485,7 +485,7 @@ uint8 mcu_spi_bus_init(uint8 spi_index, uint8 mode)
     SPI2->CTRL = 0x00;
 
     v85xxp_delay_us(10);
-    // CSÈí¼ş¿ØÖÆ /  Ç°±ßÑØ½¨Á¢Êı¾İ / sck¿ÕÏĞ×´Ì¬Îª¸ß / MSBÏÈ´«Êä   / Ö÷»ú/ apbclk 4·ÖÆµ
+    // CSè½¯ä»¶æ§åˆ¶ /  å‰è¾¹æ²¿å»ºç«‹æ•°æ® / sckç©ºé—²çŠ¶æ€ä¸ºé«˜ / MSBå…ˆä¼ è¾“   / ä¸»æœº/ apbclk 4åˆ†é¢‘
     SPI2->CTRL = BIT10 | BIT5 | BIT4 | BIT0;
 
     SPI2->MISC_ |= BIT8;
@@ -500,7 +500,7 @@ uint8 mcu_spi_bus_init(uint8 spi_index, uint8 mode)
 
 uint8 mcu_spi_send_byte(uint8 byte, uint8 spi_index)
 {
-    uint16 timeout = 50000; // ´ıµ÷Õû
+    uint16 timeout = 50000; // å¾…è°ƒæ•´
     uint8  rxd;
 
 
@@ -622,12 +622,12 @@ void  mcu_clear_watchdog(void)
     PMU->WDTCLR = WDTCLR_KEY;
 }
 
-/* Êµ²âÊÔ10usµ½50msÎó²îÔÚ5%ÒÔÄÚ¡£@ 147435*/
-/* ¸´Î»ÔËĞĞ 3685875*/
-/* ÉÏµçÈ«ËÙÔËĞĞ 14743500*/
-/* »½ĞÑÔËĞĞ7371750*/
-/* ĞİÃßÔËĞĞ327687*/
-/* Êµ²âÊÔ10usµ½50msÎó²îÔÚ5%ÒÔÄÚ¡£@ 147435*/
+/* å®æµ‹è¯•10usåˆ°50msè¯¯å·®åœ¨5%ä»¥å†…ã€‚@ 147435*/
+/* å¤ä½è¿è¡Œ 3685875*/
+/* ä¸Šç”µå…¨é€Ÿè¿è¡Œ 14743500*/
+/* å”¤é†’è¿è¡Œ7371750*/
+/* ä¼‘çœ è¿è¡Œ327687*/
+/* å®æµ‹è¯•10usåˆ°50msè¯¯å·®åœ¨5%ä»¥å†…ã€‚@ 147435*/
 uint8 mcu_delay_us(volatile uint16 count)
 {
     uint32 timeout = 1000000;
@@ -644,7 +644,7 @@ uint8 mcu_delay_us(volatile uint16 count)
     /* clear interrupt status */
     TMR1->INT = TMR_INT_INT;
     TMR1->RELOAD = 0;
-    TMR1->VALUE = count * 40; //´ıµ÷Õû   
+    TMR1->VALUE = count * 40; //å¾…è°ƒæ•´   
     TMR1->CTRL |= TMR_CTRL_EN;
 
     while (0 == (TMR1->INT & 0x00000001))
@@ -663,11 +663,11 @@ uint8 mcu_delay_us(volatile uint16 count)
 
 
 
-uint8 poweroff_test = 1;//¸Ä»ØÀ´
+uint8 poweroff_test = 1;//æ”¹å›æ¥
 uint8 ac_power_off_monitor(void)
 {
 #if 0 
-    if (poweroff_test) // ¸Ä»ØÀ´
+    if (poweroff_test) // æ”¹å›æ¥
     {
         return true;
     }
@@ -688,7 +688,7 @@ uint8 ac_power_off_monitor(void)
     }
 #endif    
 
-    if (ANA_GetStatus(ANA_STATUS_VDCINDROP))     //µôµç
+    if (ANA_GetStatus(ANA_STATUS_VDCINDROP))     //æ‰ç”µ
     {
         return true;
     }
@@ -702,7 +702,7 @@ uint8 ac_power_off_monitor(void)
 uint8 ac_power_on_monitor(void)
 {
 #if 0 
-    if (poweroff_test) // ¸Ä»ØÀ´
+    if (poweroff_test) // æ”¹å›æ¥
     {
         return false;
     }
@@ -810,11 +810,11 @@ void mcu_enter_lowpower_then_sleep(void)
     GPIOA->OEN |= BIT14;
     GPIOA->IE |= BIT14;
     GPIOA->DAT |= BIT2;
-    PMU_WakeUpPinConfig(GPIO_Pin_2, IOA_EDGEBOTH);   //Ê¹ÄÜÍâ²¿IO¿Ú»½ĞÑ
+    PMU_WakeUpPinConfig(GPIO_Pin_2, IOA_EDGEBOTH);   //ä½¿èƒ½å¤–éƒ¨IOå£å”¤é†’
     PMU_ClearIOAINTStatus(GPIO_Pin_2);
     PMU_INTConfig(PMU_INT_IOAEN, ENABLE);
     PMU_WakeUpPinConfig(GPIO_Pin_8, IOA_DISABLE);
-    CORTEX_SetPriority_ClearPending_EnableIRQ(PMU_IRQn, 0); //ÓÅÏÈ¼¶¸ß
+    CORTEX_SetPriority_ClearPending_EnableIRQ(PMU_IRQn, 0); //ä¼˜å…ˆçº§é«˜
 
     /*------------------ Low power configuration ------------------*/
 /*        if((Flag.Disp & F_DispOff) == 0)
@@ -838,7 +838,7 @@ void mcu_enter_lowpower_then_sleep(void)
     LowPower_InitStruct.VDCINDetector = PMU_VDCINDET_ENABLE;
     LowPower_InitStruct.VDDDetector = PMU_VDDDET_DISABLE;
     RTC_PLLDIVOutputCmd(DISABLE);
-    MComp1Init();//µç³Ø×´Ì¬¼à²â³õÊ¼»¯
+    MComp1Init();//ç”µæ± çŠ¶æ€ç›‘æµ‹åˆå§‹åŒ–
     WDT_Disable();
     PMU_EnterSleep_LowPower(&LowPower_InitStruct);
 }

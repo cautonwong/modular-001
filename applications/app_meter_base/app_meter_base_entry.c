@@ -2,7 +2,6 @@
 #include "applications.h"
 
 // !!!在此app中不做IO操作!!!
-
 int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     int r = 0;
@@ -31,7 +30,6 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
     default:
         break;
     }
-
 
     //sync_data()
     return 0;
