@@ -1,4 +1,4 @@
-#ifndef __INCLUDE_nidavellir__
+﻿#ifndef __INCLUDE_nidavellir__
 #define __INCLUDE_nidavellir__
 #include "types.h"
 #include <assert.h>
@@ -534,6 +534,16 @@ enum block_device_id_t
     RES_DEV_EEPROM,
     RES_DEV_FLASH
 };
+
+
+enum resource_map_698_e
+{
+    RESOURCE_MAP_698_GET = 1,
+    RESOURCE_MAP_698_SET = 2,
+    RESOURCE_MAP_698_ACTION = 3,
+};
+
+
 
 int nidavellir_loop(struct instance_t *instance);
 int nidavellir_n_loop(struct instance_t **instances,size_t n);

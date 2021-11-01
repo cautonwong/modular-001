@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\698_mapper.c" />
     <ClCompile Include="..\..\..\packages\dl698\fr_698.c" />
     <ClCompile Include="..\..\..\packages\dl698\fr_698_action.c" />
     <ClCompile Include="..\..\..\packages\dl698\fr_698_comm.c" />

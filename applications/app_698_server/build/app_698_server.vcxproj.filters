@@ -148,6 +148,7 @@
     <ClCompile Include="..\test_case\test_app_698_server_function\test_app_698_server_function_variable.c">
       <Filter>test_case\test_app_698_server_function</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\698_mapper.c" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dl698">

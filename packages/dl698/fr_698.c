@@ -712,8 +712,7 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
         ringbuffer_putU32(cache, mesg->id);
         mesg->len = 7;
         ringbuffer_putU32(cache, 0);
-        ringbuffer_putU32(cache, 0);
-        mesg->len += 2;
+        mesg->len += 1;
 
         fifoBuf_getData(fifo, cache->buf_ptr + cache->wr, mesg->len);
         cache->wr += mesg->len;
