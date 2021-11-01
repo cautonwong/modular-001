@@ -48,7 +48,7 @@
 #endif
 
 
-/*--------------------------µ¥ÏàRN8209¼ÆÁ¿Ğ¾Æ¬¿ØÖÆ-------------------------------*/ 
+/*--------------------------å•ç›¸RN8209è®¡é‡èŠ¯ç‰‡æ§åˆ¶-------------------------------*/ 
 #define  BITBAND_ADDR(addr, bitnum)   ((((uint32_t)addr) & 0xF0000000) + \
                                         0x2000000 + ((((uint32_t)addr) & 0xFFFFF) << 5) + (bitnum << 2))
 
@@ -98,12 +98,12 @@ struct CalMesaureValue_t
 
 
 
-//Ìá¹©¸øÖ÷³ÌĞòµ÷ÓÃµÄº¯ÊıÉêÃ÷
-extern void ResetRn8209(void);                  //RN8209Ğ¾Æ¬Ó²¼ş¸´Î»
-extern unsigned char Rn8209cCommInit(void);     //RN8209Ğ¾Æ¬´®¿ÚÍ¨Ñ¶ÅäÖÃ
-extern unsigned char Rn8209AdjParaSet(struct Rn8209AdjSet_t* Set , const struct dev_info_t* dev); //RN8209Ğ¾Æ¬Ğ£±í²ÎÊıÉèÖÃ
-extern unsigned char Rn8209DeviceIDCheck();     //RN8209Ğ¾Æ¬ID¼ì²é
-extern unsigned char Rn8209InitConfig();        //RN8209Ğ¾Æ¬»ù±¾²ÎÊıÉèÖÃĞ£±í
-extern void MeasureValue(struct dev_info_t* dev);//Ö÷³ÌĞòµ÷ÓÃÊµÊ±Êı¾İ¼ÆËã
+//æä¾›ç»™ä¸»ç¨‹åºè°ƒç”¨çš„å‡½æ•°ç”³æ˜
+extern void ResetRn8209(void);                  //RN8209èŠ¯ç‰‡ç¡¬ä»¶å¤ä½
+extern unsigned char Rn8209cCommInit(void);     //RN8209èŠ¯ç‰‡ä¸²å£é€šè®¯é…ç½®
+extern unsigned char Rn8209AdjParaSet(struct Rn8209AdjSet_t* Set , const struct dev_info_t* dev); //RN8209èŠ¯ç‰‡æ ¡è¡¨å‚æ•°è®¾ç½®
+extern unsigned char Rn8209DeviceIDCheck();     //RN8209èŠ¯ç‰‡IDæ£€æŸ¥
+extern unsigned char Rn8209InitConfig();        //RN8209èŠ¯ç‰‡åŸºæœ¬å‚æ•°è®¾ç½®æ ¡è¡¨
+extern void MeasureValue(struct dev_info_t* dev);//ä¸»ç¨‹åºè°ƒç”¨å®æ—¶æ•°æ®è®¡ç®—
 
 #endif

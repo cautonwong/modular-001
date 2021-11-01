@@ -5,18 +5,18 @@
 
 struct fee_t
 {
-    unsigned char   DayTableNo;//ÈÕ±íĞòºÅ
-    unsigned char	TOUNo;//·ÑÂÊĞòºÅ
-    unsigned char   STEPNo;//½×ÌİĞòºÅ
-    unsigned long	TOUPrice;//·ÑÂÊµç¼Û
-    unsigned long	STEPPrice;//½×Ìİµç¼Û
-    unsigned char   SeasonTable;//Ê±Çø±íÖ÷¸±±íĞòºÅ
-    unsigned char   DayTable;//ÈÕ±íÖ÷¸±±íĞòºÅ
-    unsigned char   TouPriceTable;//·ÑÂÊµç¼Û±íÖ÷¸±±íĞòºÅ
-    unsigned char   StepTable;//½×Ìİ±íÖ÷¸±±íĞòºÅ
-    unsigned char	StepSeason;//½×ÌİÊ±Çø±íÖ÷¸±±íĞòºÅ
-    unsigned long	Price;//µ±Ç°µç¼Û
-    unsigned char	StepNum;//½×ÌİÊı
+    unsigned char   DayTableNo;//æ—¥è¡¨åºå·
+    unsigned char	TOUNo;//è´¹ç‡åºå·
+    unsigned char   STEPNo;//é˜¶æ¢¯åºå·
+    unsigned long	TOUPrice;//è´¹ç‡ç”µä»·
+    unsigned long	STEPPrice;//é˜¶æ¢¯ç”µä»·
+    unsigned char   SeasonTable;//æ—¶åŒºè¡¨ä¸»å‰¯è¡¨åºå·
+    unsigned char   DayTable;//æ—¥è¡¨ä¸»å‰¯è¡¨åºå·
+    unsigned char   TouPriceTable;//è´¹ç‡ç”µä»·è¡¨ä¸»å‰¯è¡¨åºå·
+    unsigned char   StepTable;//é˜¶æ¢¯è¡¨ä¸»å‰¯è¡¨åºå·
+    unsigned char	StepSeason;//é˜¶æ¢¯æ—¶åŒºè¡¨ä¸»å‰¯è¡¨åºå·
+    unsigned long	Price;//å½“å‰ç”µä»·
+    unsigned char	StepNum;//é˜¶æ¢¯æ•°
 };
 
 struct energy_t
@@ -43,16 +43,16 @@ struct emu_pluse_t
 struct mbase_control_block_t
 {
     int id;
-    //µçÁ¿Êı¾İ
+    //ç”µé‡æ•°æ®
     uint32 meter_const;
     struct energy_t energy[13];
     struct emu_pluse_t emu_pluse;
-    //Ë²Ê±Á¿Êı¾İ
-    //ĞèÁ¿Êı¾İ
-    //ÊÂ¼ş¸ººÉ¶³½áÊı¾İ
-    //·ÑÂÊÊı¾İ
+    //ç¬æ—¶é‡æ•°æ®
+    //éœ€é‡æ•°æ®
+    //äº‹ä»¶è´Ÿè·å†»ç»“æ•°æ®
+    //è´¹ç‡æ•°æ®
     struct fee_t Fee;
-    //·ÑÓÃÊı¾İ
+    //è´¹ç”¨æ•°æ®
 };
 
 #define   Max_tou_fee         14

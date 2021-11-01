@@ -1,6 +1,6 @@
 /**
  * @ingroup    drivers_spi_bus
- * @brief      spi ×ÜÏßÇı¶¯
+ * @brief      spi æ€»çº¿é©±åŠ¨
  *
  * @{
  * @file
@@ -14,14 +14,14 @@
 
 
 
-#define SPI_DELAY()        {__NOP(); __NOP(); __NOP();__NOP();__NOP();__NOP();__NOP();__NOP();__NOP();__NOP();}//´ıµ÷Õû
+#define SPI_DELAY()        {__NOP(); __NOP(); __NOP();__NOP();__NOP();__NOP();__NOP();__NOP();__NOP();__NOP();}//å¾…è°ƒæ•´
 
 
 
 
 int spi_bus_init(size_t index)
 {  
-    //¿ªÂ©
+    //å¼€æ¼
     SPI_CS_ATT();
     
     SPI_CLK_ATT();

@@ -8,7 +8,7 @@
 #define  BITBAND_ADDR(addr, bitnum)   ((((uint32_t)addr) & 0xF0000000) + \
                                         0x2000000 + ((((uint32_t)addr) & 0xFFFFF) << 5) + (bitnum << 2))
 
-/*--------------EEPROM 对应的电源控制以及IIC总线配置---------------*/
+/*--------------EEPROM 瀵瑰簲鐨勭數婧愭帶鍒朵互鍙奍IC鎬荤嚎閰嶇疆---------------*/
 #define EEVDD_DOUT_1()  {*((uint32*)GPIOC_OEN) &= ~BIT(6); *((uint32*)GPIOC_IE) &= ~BIT(6);\
                          *((uint32*)BITBAND_ADDR(GPIOC_DAT,6)) = 1;}
 
@@ -24,7 +24,7 @@
 #define SDA_DOUT_0()    { *((uint32*)BITBAND_ADDR(GPIOC_DAT,5)) = 0;}
 
 
-/*--------------FLASH 对应的的电源控制以及SPI总线配置---------------*/
+/*--------------FLASH 瀵瑰簲鐨勭殑鐢垫簮鎺у埗浠ュ強SPI鎬荤嚎閰嶇疆---------------*/
 #define  FLS_VDD_OPEN()    {*((uint32*)BITBAND_ADDR(GPIOB_DAT,8)) = 0; *((uint32*)GPIOB_OEN) &= ~BIT(8);}
 #define  FLS_VDD_CLOSE()   {*((uint32*)BITBAND_ADDR(GPIOB_DAT,8)) = 1; *((uint32*)GPIOB_OEN) &= ~BIT(8);}
                            
@@ -44,7 +44,7 @@
 #define  SPI_CLK_ATT()     {*((uint32*)GPIOB_ATT) |= BIT(10);}
 #define  SPI_MOSI_ATT()    {*((uint32*)GPIOB_ATT) |= BIT(12);}                           
 
-/*--------------------------RS485接收控制-------------------------------*/
+/*--------------------------RS485鎺ユ敹鎺у埗-------------------------------*/
 #define  RS485_RCV_EN()    {*((uint32*)BITBAND_ADDR(GPIOA_DAT,7)) = 1;  \
                            *((uint32*)GPIOA_OEN) &= ~BIT(7);}
 #define  RS485_RCV_DIS()   { *((uint32*)BITBAND_ADDR(GPIOA_DAT,7)) = 0;  \
@@ -57,25 +57,25 @@
 
 
                            
-/*--------------------------PLC 模块复位-------------------------------*/                           
+/*--------------------------PLC 妯″潡澶嶄綅-------------------------------*/                           
 #define  PLC_RST_EN()      {*((uint32*)BITBAND_ADDR(GPIOC_DAT,9)) = 0;  \
                            *((uint32*)GPIOC_OEN) &= ~BIT(9);}
 #define  PLC_RST_DIS()     {*((uint32*)BITBAND_ADDR(GPIOC_DAT,9)) = 1;  \
                            *((uint32*)GPIOC_OEN) &= ~BIT(9);}
                            
-/*--------------------------PLC 模块EVENOUT-------------------------------*/                           
+/*--------------------------PLC 妯″潡EVENOUT-------------------------------*/                           
 #define  PLC_EVENOUT_EN()    {*((uint32*)BITBAND_ADDR(GPIOC_DAT,10)) = 1;  \
                              *((uint32*)GPIOC_OEN) &= ~BIT(10);}
 #define  PLC_EVENOUT_DIS()    {*((uint32*)BITBAND_ADDR(GPIOC_DAT,10)) = 0;  \
                              *((uint32*)GPIOC_OEN) &= ~BIT(10);}
                            
-/*--------------------------液晶背光控制-------------------------------*/                           
+/*--------------------------娑叉櫠鑳屽厜鎺у埗-------------------------------*/                           
 #define  LCD_BACK_LIGHT_OPEN()    {*((uint32*)BITBAND_ADDR(GPIOB_DAT,4)) = 1;  \
                                   *((uint32*)GPIOB_OEN) &= ~BIT(4);}
 #define  LCD_BACK_LIGHT_CLOSE()   {*((uint32*)BITBAND_ADDR(GPIOB_DAT,4)) = 0;  \
                                   *((uint32*)GPIOB_OEN) &= ~BIT(4);}
                            
-/*--------------------------磁保持继电器控制-------------------------------*/ 
+/*--------------------------纾佷繚鎸佺户鐢靛櫒鎺у埗-------------------------------*/ 
 #define  REALY_ON_ACTIVE()    {*((uint32*)BITBAND_ADDR(GPIOE_DAT,11)) = 1;  \
                               *((uint32*)GPIOE_OEN) &= ~BIT(11);}
 #define  REALY_ON_DIS_ACTIVE()    {*((uint32*)BITBAND_ADDR(GPIOE_DAT,11)) = 0;  \
