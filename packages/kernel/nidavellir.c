@@ -116,6 +116,23 @@ int nidavellir_run(struct instance_t *instance)
     return 1;
 }
 
+struct pipeline_t* get_pipeline(struct instance_t* instance, pid_t id)
+{
+    const struct recipe_t* recipe = instance->recipe;
+    struct pipeline_t* pipeline;
+
+    for (size_t i = 0; i < recipe->pipeline_n; i++)
+    {
+        pipeline = recipe->pipelines[i];
+        if(id == pipeline->id)
+        {
+            return pipeline;
+        }
+    }
+    return NULL;
+}
+
+
 int nidavellir_run_baremetal(struct instance_t* instance)
 {
     struct message_t mesg;

@@ -202,6 +202,7 @@ struct context_698_t
     uint32_t err_n;
     uint8_t addr[16];
     uint8_t CA;
+    int32_t fr_err;
     uint16_t segment;//分帧格式域
 
 
@@ -307,6 +308,10 @@ struct message_t//command object
     uint16_t len;//data的长度 含id的长度
     uint32_t id;//请求的数据id
     uint8_t oad_n;
+#ifdef WIN32
+    int32_t err_no;
+#endif // 
+
 };
 
 //日志对象

@@ -77,6 +77,15 @@ enum dl698_dar_t
     DAR_OTHERS_ERROR = 255,                 /**< 其它 （ 255） */
 };
 
+enum dl698_fr_err_t
+{
+    FRM_OK = 0,
+    FRM_HEADER_ERR = -1,
+    FRM_LEN_ERR1 = -2,//长度太小
+    FRM_LEN_ERR2 = -3,//长度超出
+    FRM_CTRL_ERR = -4,//控制码错误
+
+};
 
 
 

@@ -218,7 +218,7 @@ int ringbuffer_filter(struct fifo_t *buf, int (*callback)(void* ctx, uint8_t *b)
             }
             if (num_bytes < 1)
             {
-                return -1;//迭代结束  没找到
+                return ret;//-1迭代结束  没找到
             }
 
             if (++rd >= buf_size)//删掉一字节

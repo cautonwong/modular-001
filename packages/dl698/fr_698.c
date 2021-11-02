@@ -142,16 +142,16 @@ int matcher_698(void* pctx, uint8_t* b)
         if (byte != 0x68)
         {
             ctx->err_n++;
-            return -1;
+            return FRM_HEADER_ERR;
         }
         ctx->step = 1;
-        return 0;
+        return FRM_OK;
     case 1:
         ctx->hcs = update_crc16(0xffff, byte);
         ctx->fcs = update_crc16(0xffff, byte);
         ctx->min_len = byte;
         ctx->step = 2;
-        return 0;
+        return FRM_OK;
     case 2:
         ctx->hcs = update_crc16(ctx->hcs, byte);
         ctx->fcs = update_crc16(ctx->fcs, byte);
@@ -163,11 +163,11 @@ int matcher_698(void* pctx, uint8_t* b)
         {
             ctx->step = 0;
             ctx->err_n++;
-            return -1;
+            return FRM_LEN_ERR1;
         }
         //if ((len < 11) || (len + 2 > *bytes) || (0x16 != p[len + 1]))
         ctx->step = 3;
-        return 0;
+        return FRM_OK;
     case 3:
         ctx->hcs = update_crc16(ctx->hcs, byte);
         ctx->fcs = update_crc16(ctx->fcs, byte);
@@ -178,7 +178,7 @@ int matcher_698(void* pctx, uint8_t* b)
         }
         ctx->ctrl = byte;//控制域
         ctx->step = 4;
-        return 0;
+        return FRM_OK;
     case 4:
         ctx->hcs = update_crc16(ctx->hcs, byte);
         ctx->fcs = update_crc16(ctx->fcs, byte);
@@ -189,7 +189,7 @@ int matcher_698(void* pctx, uint8_t* b)
         {
             ctx->step = 5; 
         }
-        return 0;
+        return FRM_OK;
 
     case 5: //扩展逻辑地址处理
         ctx->hcs = update_crc16(ctx->hcs, byte);
@@ -197,7 +197,7 @@ int matcher_698(void* pctx, uint8_t* b)
         ctx->LA = byte;
         ctx->index = 0;
         ctx->step = 6;
-        return 0;
+        return FRM_OK;
 
     case 6:
         ctx->hcs = update_crc16(ctx->hcs, byte);
@@ -211,7 +211,7 @@ int matcher_698(void* pctx, uint8_t* b)
         {
             ctx->addr[ctx->index++] = byte;
         }
-        return 0;
+        return FRM_OK;
     case 7:
         ctx->hcs = get_crc16(ctx->hcs);
         ctx->fcs = update_crc16(ctx->fcs, byte);
@@ -222,7 +222,7 @@ int matcher_698(void* pctx, uint8_t* b)
             return -1;
         }
         ctx->step = 8;
-        return 0;
+        return FRM_OK;
     case 8:
         ctx->fcs = update_crc16(ctx->fcs, byte);
         if (byte != ((ctx->hcs >> 8) & 0xff))
@@ -233,20 +233,20 @@ int matcher_698(void* pctx, uint8_t* b)
         }
         ctx->index = 0;
         ctx->step = 9;
-        return 0;
+        return FRM_OK;
     case 9://用户链路数据
         if (is_scrambler_set(ctx->ctrl))
         {
             *b = byte - 0x33;
         }
         ctx->fcs = update_crc16(ctx->fcs, byte);
-        if (ctx->index == ctx->min_len - 11 - SA_LEN(ctx->SA))
+        if (ctx->index == ctx->min_len - 11 - SA_LEN(ctx->SA))//超过最大长度未测试？？
         {
             ctx->step = 10;
-            return 0;
+            return FRM_OK;
         }
         ctx->index++;
-        return 0;
+        return FRM_OK;
     case 10:
         ctx->fcs = get_crc16(ctx->fcs);
         if (byte != (ctx->fcs & 0xff))
@@ -256,7 +256,7 @@ int matcher_698(void* pctx, uint8_t* b)
             return -1;
         }
         ctx->step = 11;
-        return 0;
+        return FRM_OK;
     case 11:
         if (byte != ((ctx->fcs >> 8) & 0xff))
         {
@@ -265,7 +265,7 @@ int matcher_698(void* pctx, uint8_t* b)
             return -1;
         }
         ctx->step = 12;
-        return 0;
+        return FRM_OK;
     case 12:
         if (byte != 0x16)
         {
@@ -288,8 +288,21 @@ int fr_pack_698_head(struct instance_t* instance, struct pipeline_t* pipeline, s
     ctx->hcs = 0xffff;
     ctx->fcs = 0xffff;
     ctx->tx_len = 0;
+#ifdef WIN32
+    if(mesg->err_no == FRM_HEADER_ERR)
+        fifoBuf_putByte(fifo, 0x66);
+    else
+#endif
+
     fifoBuf_putByte(fifo, 0x68);
     ctx->tx_len++;
+#ifdef WIN32
+    if (mesg->err_no == FRM_LEN_ERR1)
+        append_byte(fifo, ((6) & 0xff), update_hcs_fcs, ctx);
+    else if (mesg->err_no == FRM_LEN_ERR2)
+        append_byte(fifo, ((len + 2) & 0xff), update_hcs_fcs, ctx);
+    else
+#endif
     append_byte(fifo, (len & 0xff), update_hcs_fcs, ctx);
     append_byte(fifo, ((len >> 8) & 0xff), update_hcs_fcs, ctx);
     ctx->ctrl |= (1 << 7);//DIR=0表示由服务器发出
@@ -488,8 +501,16 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     fr_security_decode(instance, pipeline, mesg);
 
     fifoBuf_removeData(fifo, 9 + SA_LEN(ctx->SA));
+
     ctx->service = fifoBuf_getByte(fifo);
     ctx->choice = fifoBuf_getByte(fifo);
+    if ((ctx->service > ERROR_S_Response) || (ctx->choice > 9))
+    {
+        ctx->fr_err = FRM_CTRL_ERR;
+        fifoBuf_removeData(fifo, ctx->min_len + 2);
+        return 0;
+    }
+
     ctx->PIID = fifoBuf_getByte(fifo);
     ctx->PIID |= (1 << 6);//PIID-ACD
 
@@ -665,6 +686,7 @@ int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     ctx->step = 0;
+    ctx->fr_err = 0;
     int r = ringbuffer_filter(fifo, matcher_698, ctx);
     if (r > 0)
     {
@@ -688,7 +710,7 @@ int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
 #endif
         return 1;
     }
-
+    ctx->fr_err = r;
     return 0;
 }
 
@@ -697,6 +719,9 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
     struct fifo_t* cache = ctx->apdu;
+
+    cache->wr = 0;//临时清0
+    cache->rd = 0;
     //client  或者 主动上报 或者 延时读取发送
     if (recv_mesg_header(instance, pipeline, mesg))
     {

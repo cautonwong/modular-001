@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="..\..\..\packages\dl698\fr_698.c">
-      <Filter>dl698</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\packages\dl698\fr_698_action.c">
       <Filter>dl698</Filter>
     </ClCompile>
@@ -47,45 +44,6 @@
     </ClCompile>
     <ClCompile Include="..\test_case\test_app_698_server_entry.c" />
     <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_1_eng.c">
-      <Filter>test_case\test_app_698_server_class_id</Filter>
-    </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_2_de.c">
-      <Filter>test_case\test_app_698_server_class_id</Filter>
-    </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_3_val.c">
-      <Filter>test_case\test_app_698_server_class_id</Filter>
-    </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_4_p.c">
-      <Filter>test_case\test_app_698_server_class_id</Filter>
-    </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_5_ev.c">
-      <Filter>test_case\test_app_698_server_class_id</Filter>
-    </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_6_ev.c">
-      <Filter>test_case\test_app_698_server_class_id</Filter>
-    </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_7_ev.c">
-      <Filter>test_case\test_app_698_server_class_id</Filter>
-    </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_8_ev.c">
-      <Filter>test_case\test_app_698_server_class_id</Filter>
-    </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_9_ev.c">
-      <Filter>test_case\test_app_698_server_class_id</Filter>
-    </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_19_ev.c">
-      <Filter>test_case\test_app_698_server_class_id</Filter>
-    </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_20_ev.c">
-      <Filter>test_case\test_app_698_server_class_id</Filter>
-    </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_22_ev.c">
-      <Filter>test_case\test_app_698_server_class_id</Filter>
-    </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_24_ev.c">
-      <Filter>test_case\test_app_698_server_class_id</Filter>
-    </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_SECURITY_para.c">
       <Filter>test_case\test_app_698_server_class_id</Filter>
     </ClCompile>
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Request.c">
@@ -139,16 +97,10 @@
     <ClCompile Include="..\test_case\test_app_698_server_function\test_app_698_server_function_demand.c">
       <Filter>test_case\test_app_698_server_function</Filter>
     </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_function\test_app_698_server_function_energy.c">
-      <Filter>test_case\test_app_698_server_function</Filter>
+    <ClCompile Include="..\..\..\packages\dl698\fr_698.c">
+      <Filter>dl698</Filter>
     </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_function\test_app_698_server_function_metering.c">
-      <Filter>test_case\test_app_698_server_function</Filter>
-    </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_function\test_app_698_server_function_variable.c">
-      <Filter>test_case\test_app_698_server_function</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\698_mapper.c" />
+    <ClCompile Include="..\698_mapper.c" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dl698">
