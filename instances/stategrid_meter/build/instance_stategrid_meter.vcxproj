@@ -34,6 +34,7 @@
     <ClCompile Include="..\..\..\packages\kernel\bitarithm.c" />
     <ClCompile Include="..\..\..\packages\kernel\fifo.c" />
     <ClCompile Include="..\..\..\packages\kernel\list.c" />
+    <ClCompile Include="..\..\..\packages\kernel\log.c" />
     <ClCompile Include="..\..\..\packages\kernel\nidavellir.c" />
     <ClCompile Include="..\..\..\packages\kernel\pipeline.c" />
     <ClCompile Include="..\..\..\packages\kernel\rtc.c" />
@@ -132,7 +133,7 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(SolutionDir)\nidavellir\include\;$(SolutionDir)\nidavellir\include\kernel\;$(SolutionDir)\packages\test\cmocka\include\;$(SolutionDir)\instances\stategrid_meter\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\nidavellir\include\;$(SolutionDir)\nidavellir\include\kernel\;$(SolutionDir)\packages\test\cmocka\include\;$(SolutionDir)\instances\stategrid_meter\;$(SolutionDir)\packages\dl698\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

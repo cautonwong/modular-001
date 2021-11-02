@@ -73,6 +73,9 @@
     <ClCompile Include="..\..\..\packages\kernel\list.c">
       <Filter>kernel</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\log.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="app_698_server">

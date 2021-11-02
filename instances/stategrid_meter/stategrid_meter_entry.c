@@ -209,6 +209,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     return baremetal_instance_entry(instance);
 }
 
+#include "log.h"
 
 int main(int argc, char** argv)
 {
@@ -217,7 +218,14 @@ int main(int argc, char** argv)
     mcu_main_power_on_config();
     ndv_timer_init();
 #endif // !WIN32
-
+#ifdef WIN32
+    uint8_t buf[1024] = { 0,1,2,3,4 };
+    log_trace("Hello %s", "world");
+    log_info("Hello %s", "world");
+    log_hex(buf, sizeof(buf));
+    log_trace("Hello %s", "world");
+    log_info("Hello %s", "world");
+#endif
     baremetal_instance_entry_main(argc, argv);
 }
 

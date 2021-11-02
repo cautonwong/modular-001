@@ -3,6 +3,7 @@
 
 int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj)
 {
+    /*
     struct mbase_control_block_t* mbase_cb = instance->mbase_cb;
     switch (id)
     {
@@ -20,7 +21,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
             memcpy(buf+3, (uint8_t*)mbase_cb->Ua, 0x02);
             //buf[3] = 0x11;
             //buf[4] = 0x22;
-            return 0x05;
+           // return 0x05;
         case 0x02://写数据
             break;
         }
@@ -28,7 +29,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
     }
     default:
         break;
-    }
+    }*/
     return 0x01;
 }
 
