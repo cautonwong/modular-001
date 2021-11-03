@@ -1,10 +1,10 @@
 /**********************************************************************/
-/*  Òº¾§ÏÔÊ¾³ÌĞò                                                       */
+/*  æ¶²æ™¶æ˜¾ç¤ºç¨‹åº                                                       */
 /***********************************************************************/
 #include "includes.h"
 
 /***********************************************************************/
-/*  Òº¾§ÏÔÊ¾¶ÎÂë¶¨Òå                                                   */
+/*  æ¶²æ™¶æ˜¾ç¤ºæ®µç å®šä¹‰                                                   */
 /***********************************************************************/
 
 /***********************************************************************/
@@ -66,19 +66,19 @@
 
 /*************** CON15 ***************/
 #define     DS_Chr_Comm				0x80
-#define     DS_Chr_Shi				0x40   //Ê±
-#define     DS_Chr_Xiang       		0x20 	//Ïò
-#define     DS_Chr_Jian            	0x10  //¼ä
-#define     DS_Chr_Wu             	0x08  //ÎŞ
+#define     DS_Chr_Shi				0x40   //æ—¶
+#define     DS_Chr_Xiang       		0x20 	//å‘
+#define     DS_Chr_Jian            	0x10  //é—´
+#define     DS_Chr_Wu             	0x08  //æ— 
 #define     DS_Chr_Dot4				0x04
-#define     DS_Chr_Q1				0x02 //IÏóÏŞ
-#define     DS_Chr_Yong				0x01   //ÓÃ
+#define     DS_Chr_Q1				0x02 //Iè±¡é™
+#define     DS_Chr_Yong				0x01   //ç”¨
 
 /*************** CON16 ***************/
-#define     DS_Chr_Q4              0x80 //VÏóÏŞ
+#define     DS_Chr_Q4              0x80 //Vè±¡é™
 #define     DS_Chr_Zong               0x40
 #define     DS_Chr_Kvar       0x20
-#define     DS_Chr_T            0x10    //·ÑÂÊT
+#define     DS_Chr_T            0x10    //è´¹ç‡T
 #define     DS_Chr_P2             0x08
 #define     DS_Chr_TouTable2            0x04
 #define     DS_Chr_TouTable1         0x02
@@ -89,9 +89,9 @@
 #define     DS_Chr_IA               0x40
 #define     DS_Chr_Dot2       0x20
 #define     DS_Chr_ChangShu            0x10
-#define     DS_Chr_Dot22             0x08//Ê±ÖÓĞ¡Êıµã
+#define     DS_Chr_Dot22             0x08//æ—¶é’Ÿå°æ•°ç‚¹
 #define     DS_Chr_kW            0x04
-#define     DS_Chr_L2          0x02//½×ÌİL
+#define     DS_Chr_L2          0x02//é˜¶æ¢¯L
 #define     DS_Chr_Hao              0x01
 
 /*************** CON18 ***************/
@@ -101,22 +101,22 @@
 #define     DS_Chr_Hu            0x10
 #define     DS_Chr_h2             0x08  //kvarh-h
 #define     DS_Chr_StepTable1            0x04
-#define     DS_Chr_Dot42          0x02  //Ê±ÖÓĞ¡Êıµã
-#define     DS_Chr_Q2              0x01 //2ÏóÏŞ
+#define     DS_Chr_Dot42          0x02  //æ—¶é’Ÿå°æ•°ç‚¹
+#define     DS_Chr_Q2              0x01 //2è±¡é™
 
 /*************** CON19 ***************/
 #define     DS_Chr_DianLiang              0x80  
 #define     DS_Chr_LaZha               0x40
 #define     DS_Chr_Biao       0x20
-#define     DS_Chr_Gong            0x10 //¹¤
+#define     DS_Chr_Gong            0x10 //å·¥
 #define     DS_Chr_Lab             0x08  
-#define     DS_Chr_GouDian            0x04  //Çë¹ºµç
-#define     DS_Chr_Duan          0x02  //¶Î
-#define     DS_Chr_You              0x01 //ÓĞ
+#define     DS_Chr_GouDian            0x04  //è¯·è´­ç”µ
+#define     DS_Chr_Duan          0x02  //æ®µ
+#define     DS_Chr_You              0x01 //æœ‰
 
 /*************** CON20 ***************/
-#define     DS_Chr_P1               0x80 //·ÑÂÊ10
-#define     DS_Chr_FeiLv            0x40 //·ÑÂÊ
+#define     DS_Chr_P1               0x80 //è´¹ç‡10
+#define     DS_Chr_FeiLv            0x40 //è´¹ç‡
 #define     DS_Chr_ZuHe             0x20
 #define     DS_Chr_JieTi            0x10
 #define     DS_Chr_Yue              0x08
@@ -131,15 +131,15 @@
 #define     DS_Chr_Fu               0x08
 #define     DS_Chr_Lline            0x04
 #define     DS_Chr_Ping             0x02
-#define     DS_Chr_Jian2            0x01  //·ÑÂÊ¼â2
+#define     DS_Chr_Jian2            0x01  //è´¹ç‡å°–2
 
-//Info16bit¶¨Òå
-// 6 bits	Êı¾İ³¤¶È
+//Info16bitå®šä¹‰
+// 6 bits	æ•°æ®é•¿åº¦
 #define	    DispDataLen				0x003F
-// 1 bits   Êı¾İÕı¸º±êÖ¾
+// 1 bits   æ•°æ®æ­£è´Ÿæ ‡å¿—
 #define		DispData_Sign			0x2000
 
-//ÏÔÊ¾ÄÚÈİ¶¨Òå
+//æ˜¾ç¤ºå†…å®¹å®šä¹‰
 #define		Sign_Null				0
 #define		Sign_1					1//1
 #define		Sign_2					2//2
@@ -163,62 +163,62 @@
 
 #define		Sign_kWh				19//kwh
 #define		Sign_kW					20//kw
-#define		Sign_yuan				21//Ôª
-#define		Sign_dot1				22//1Î»Ğ¡Êıµã
-#define		Sign_dot2				23//2Î»Ğ¡Êıµã
-#define		Sign_dot3				24//3Î»Ğ¡Êıµã
-#define		Sign_dot4				25//4Î»Ğ¡Êıµã
-#define		Sign_time				26//£º £º
+#define		Sign_yuan				21//å…ƒ
+#define		Sign_dot1				22//1ä½å°æ•°ç‚¹
+#define		Sign_dot2				23//2ä½å°æ•°ç‚¹
+#define		Sign_dot3				24//3ä½å°æ•°ç‚¹
+#define		Sign_dot4				25//4ä½å°æ•°ç‚¹
+#define		Sign_time				26//ï¼š ï¼š
 #define		Sign_date				27//- -
-#define		Sign_dangqian			28//µ±Ç°
+#define		Sign_dangqian			28//å½“å‰
 #define		Sign_yue				29
-#define		Sign_shangyue			30//ÉÏÔÂ
-#define		Sign_huhao				31//»§ºÅ
+#define		Sign_shangyue			30//ä¸Šæœˆ
+#define		Sign_huhao				31//æˆ·å·
 
-#define		Sign_FeiLvNum			32//·ÑÂÊºÅ
-#define		Sign_YouGong			33//ÓĞ¹¦
-#define		Sign_WuGong				34//ÎŞ¹¦
-#define		Sign_shengyu			37//Ê£Óà
-#define		Sign_changshu		    38//³£Êı
-#define		Sign_jieti				39//½×Ìİ
-#define		Sign_TouZhiEc			40//ÉŞÇ·
-#define		Sign_yong				41//ÓÃ
-#define		Sign_dian				42//µç
-#define		Sign_liang				43//Á¿
-#define		Sign_jia				44//¼Û
-#define		Sign_shi				45//Ê±
-#define		Sign_jian2				46//¼ä
-#define		Sign_duan				47//¶Î
-#define		Sign_jine				48//½ğ¶î
-#define		Sign_biaohao			49//±íºÅ
-#define		Sign_touzhi				50//Í¸Ö§
-#define		Sign_goudian			51//¹ºµç
+#define		Sign_FeiLvNum			32//è´¹ç‡å·
+#define		Sign_YouGong			33//æœ‰åŠŸ
+#define		Sign_WuGong				34//æ— åŠŸ
+#define		Sign_shengyu			37//å‰©ä½™
+#define		Sign_changshu		    38//å¸¸æ•°
+#define		Sign_jieti				39//é˜¶æ¢¯
+#define		Sign_TouZhiEc			40//èµŠæ¬ 
+#define		Sign_yong				41//ç”¨
+#define		Sign_dian				42//ç”µ
+#define		Sign_liang				43//é‡
+#define		Sign_jia				44//ä»·
+#define		Sign_shi				45//æ—¶
+#define		Sign_jian2				46//é—´
+#define		Sign_duan				47//æ®µ
+#define		Sign_jine				48//é‡‘é¢
+#define		Sign_biaohao			49//è¡¨å·
+#define		Sign_touzhi				50//é€æ”¯
+#define		Sign_goudian			51//è´­ç”µ
 #define		Sign_Err				52//Err-
 #define		Sign_Dianya				53//U-
 #define		Sign_Dianliu			54//I-
 #define		Sign_Gonglv				55//P-
 #define		Sign_Gonglvyinsu		56//PF-
 #define		Sign_Linxiandianliu		57//Ib-
-#define		Sign_Zuhe				58//×éºÏ
-#define		Sign_Zhengxiang			59//ÕıÏò
-#define		Sign_Fanxiang			60//·´Ïò
-#define		Sign_shang				61//ÉÏ
+#define		Sign_Zuhe				58//ç»„åˆ
+#define		Sign_Zhengxiang			59//æ­£å‘
+#define		Sign_Fanxiang			60//åå‘
+#define		Sign_shang				61//ä¸Š
 #define		Sign_doubledot			62//:
-#define		Sign_Page_Sequ			63//ÏÔÊ¾ĞòºÅ
-#define		Sign_Jiesuanri			64//½áËãÈÕ
-#define		Sign_dianliang			65//µçÁ¿
-#define		Sign_dangqianyue        66//µ±Ç°ÔÂ
+#define		Sign_Page_Sequ			63//æ˜¾ç¤ºåºå·
+#define		Sign_Jiesuanri			64//ç»“ç®—æ—¥
+#define		Sign_dianliang			65//ç”µé‡
+#define		Sign_dangqianyue        66//å½“å‰æœˆ
 #define		Sign_Linxian            67
 #define		Sign_HuoXian            68
 
 #define		MaxLcd				22
 
-//ĞèÒªÖØĞÂ¶¨Òå
-#define		Send_DisplayData()	{;;}	//ËÍÏÔÊ¾Êı¾İ
-#define		Init_LCD()			{;;}	//³õÊ¼»¯LCD
+//éœ€è¦é‡æ–°å®šä¹‰
+#define		Send_DisplayData()	{;;}	//é€æ˜¾ç¤ºæ•°æ®
+#define		Init_LCD()			{;;}	//åˆå§‹åŒ–LCD
 #define		P_RELAY_ON			1;		
 #define		P_BACKLIGHT_ON		1;
-#define		KeyPortCheck		1;		//°´¼ü¼ì²â
+#define		KeyPortCheck		1;		//æŒ‰é”®æ£€æµ‹
 
 //Flag.Power
 #define		F_PowerOn			0x0001
@@ -244,11 +244,11 @@
 typedef struct
 {
 	dyn_persistent_start
-		const unsigned long		ID;//ÏÔÊ¾ÏîID
-		const unsigned char		Sequ;//ÏÔÊ¾ÏîĞòºÅ
-		unsigned short			Addr;//Êı¾İµØÖ·
-		const unsigned short	Info;//Êı¾İĞÅÏ¢
-		const unsigned short	Sign;//ÏÔÊ¾ÄÚÈİĞÅÏ¢
+		const unsigned long		ID;//æ˜¾ç¤ºé¡¹ID
+		const unsigned char		Sequ;//æ˜¾ç¤ºé¡¹åºå·
+		unsigned short			Addr;//æ•°æ®åœ°å€
+		const unsigned short	Info;//æ•°æ®ä¿¡æ¯
+		const unsigned short	Sign;//æ˜¾ç¤ºå†…å®¹ä¿¡æ¯
 	dyn_persistent_end
 } DISPLAYTAB;
 
@@ -272,25 +272,25 @@ typedef struct
 {
 	
 	dyn_persistent_start
-		unsigned long	Page_ID;		//Òº¾§ÏÔÊ¾ÄÚÈİ¶ÔÓ¦µÄÊı¾İ±êÊ¶
-		unsigned char   Page_Sequ;		//Òº¾§ÏÔÊ¾ÄÚÈİ¶ÔÓ¦µÄĞòºÅ
-		unsigned char	AutoInv;		//ÂÖÏÔ¼ÆÊ±
-		unsigned char   AutoNum;		//ÂÖÏÔÏîÊı
-		unsigned char	AutoPtr;		//ÂÖÏÔÏîÖ¸Õë
-		unsigned char	KeyInv;			//°´¼üÊ±¼ä
-		unsigned char   KeyNum;			//°´¼üÏÔÊ¾ÏîÊı
-		unsigned char	KeyPtr;			//°´¼üÏÔÊ¾ÏîÖ¸Õë
-		unsigned short 	BackLightTmr;	//±³¹âÑÓÊ±Ê±¼ä
-		unsigned char 	Key;			//°´¼ü±êÖ¾
+		unsigned long	Page_ID;		//æ¶²æ™¶æ˜¾ç¤ºå†…å®¹å¯¹åº”çš„æ•°æ®æ ‡è¯†
+		unsigned char   Page_Sequ;		//æ¶²æ™¶æ˜¾ç¤ºå†…å®¹å¯¹åº”çš„åºå·
+		unsigned char	AutoInv;		//è½®æ˜¾è®¡æ—¶
+		unsigned char   AutoNum;		//è½®æ˜¾é¡¹æ•°
+		unsigned char	AutoPtr;		//è½®æ˜¾é¡¹æŒ‡é’ˆ
+		unsigned char	KeyInv;			//æŒ‰é”®æ—¶é—´
+		unsigned char   KeyNum;			//æŒ‰é”®æ˜¾ç¤ºé¡¹æ•°
+		unsigned char	KeyPtr;			//æŒ‰é”®æ˜¾ç¤ºé¡¹æŒ‡é’ˆ
+		unsigned short 	BackLightTmr;	//èƒŒå…‰å»¶æ—¶æ—¶é—´
+		unsigned char 	Key;			//æŒ‰é”®æ ‡å¿—
 	dyn_persistent_end
 } DISP;
 extern		DISP				Disp;
 
 unsigned char 		Lcdcon[MaxLcd];
 
-//¿Õ±í¸ñ
+//ç©ºè¡¨æ ¼
 const unsigned char  SIGN_NULL[9] = { Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null };
-//Ë²Ê±Á¿
+//ç¬æ—¶é‡
 const unsigned char  SIGN_DIANYA[9] = { Sign_dot1,Sign_Dianya, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null };
 const unsigned char  SIGN_DIANLIU[9] = { Sign_dot3,Sign_Dianliu, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null };
 const unsigned char  SIGN_LINGXIANDIANLIU[9] = { Sign_dot3,Sign_Linxiandianliu, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null };
@@ -298,48 +298,48 @@ const unsigned char  SIGN_GONGLV[9] = { Sign_kW, Sign_dot4, Sign_Gonglv, Sign_Nu
 const unsigned char  SIGN_WUGONGGONGLV[9] = { Sign_kvar, Sign_dot4, Sign_Gonglv, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null };
 const unsigned char  SIGN_GONGLVYINSU[9] = { Sign_dot3,Sign_Gonglvyinsu, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null };
 const unsigned char  SIGN_HuoXianGONGLVYINSU[9] = { Sign_dot3,Sign_Gonglvyinsu, Sign_HuoXian, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null };
-//·ÑÂÊ±í
+//è´¹ç‡è¡¨
 const unsigned char  SIGN_DANGQIANFEILVDANJIA[9] = { Sign_dangqian, Sign_dian, Sign_jia, Sign_dot4, Sign_yuan, Sign_Null, Sign_Null, Sign_Null, Sign_Null };
 const unsigned char  SIGN_DANGQIANJIETIDANJIA[9] = { Sign_dangqian, Sign_jieti, Sign_dian, Sign_jia, Sign_dot4, Sign_yuan, Sign_Null, Sign_Null, Sign_Null };
 const unsigned char  SIGN_DANGQIANDANJIA[9] = { Sign_dangqian, Sign_dian, Sign_jia, Sign_dot4, Sign_yuan, Sign_Null, Sign_Null, Sign_Null, Sign_Null };
-//±íºÅ
+//è¡¨å·
 const unsigned char  SIGN_BIAOHAO[9] = { Sign_biaohao, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null };
-//»§ºÅ
+//æˆ·å·
 const unsigned char  SIGN_HUHAO[9] = { Sign_huhao, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null };
-//µ±Ç°Ê±¼ä
+//å½“å‰æ—¶é—´
 const unsigned char  SIGN_RIQI[9] = { Sign_shi, Sign_jian2, Sign_date, Sign_dangqian, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null };
 const unsigned char  SIGN_SHIJIAN[9] = { Sign_shi, Sign_jian2, Sign_time, Sign_dangqian, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null };
 const unsigned char  SIGN_CHANGSHU[9] = { Sign_changshu, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null };
 const unsigned char  SIGN_JIESUANRI[9] = { Sign_Jiesuanri, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null };
 
-//ÏÔÊ¾±í¸ñ¶¨Òå
+//æ˜¾ç¤ºè¡¨æ ¼å®šä¹‰
 const  DISPLAYTAB DisplayTab[] =
 {
-	//µ±Ç°Ê±¼ä
-	0x04000101,		0x00,		(unsigned int)&Clock_Block.Clock.Day,	DispData_BCD + DispData_RAM + 3,					(unsigned int)SIGN_RIQI,//ÈÕÆÚ
-	0x04000102,		0x00,		(unsigned int)&Clock_Block.Clock.Sec,	DispData_BCD + DispData_RAM + 3,					(unsigned int)SIGN_SHIJIAN,//Ê±¼ä
-	//Ë²Ê±Á¿
-	0x02010100,		0x00,		(unsigned int)&Real.U,				DispData_BCD + DispData_RAM + 2,						(unsigned int)SIGN_DIANYA,//µçÑ¹
-	0x02020100,		0x00,		(unsigned int)&Real.I,				DispData_Sign + DispData_BCD + DispData_RAM + 3,		(unsigned int)SIGN_DIANLIU,//»ğÏßµçÁ÷
-	0x02800001,		0x00,		(unsigned int)&Real.Ib,				DispData_Sign + DispData_BCD + DispData_RAM + 3,		(unsigned int)SIGN_LINGXIANDIANLIU,//ÁãÏßµçÁ÷
-	0x02030100,		0x00,		(unsigned int)&Real.P,				DispData_Sign + DispData_BCD + DispData_RAM + 3,		(unsigned int)SIGN_GONGLV,//AÏà¹¦ÂÊ
-	0x02030000,		0x00,		(unsigned int)&Real.P,				DispData_Sign + DispData_BCD + DispData_RAM + 3,		(unsigned int)SIGN_GONGLV,//AÏà¹¦ÂÊ
-	0x02040000,		0x00,		(unsigned int)&Real.Q,				DispData_Sign + DispData_BCD + DispData_RAM + 3,		(unsigned int)SIGN_WUGONGGONGLV,//ÎŞ¹¦¹¦ÂÊ
-	0x02040100,		0x00,		(unsigned int)&Real.Q,				DispData_Sign + DispData_BCD + DispData_RAM + 3,		(unsigned int)SIGN_WUGONGGONGLV,//ÎŞ¹¦¹¦ÂÊ
-	0x02060100,		0x00,		(unsigned int)&Real.PF,				DispData_Sign + DispData_BCD + DispData_RAM + 2,		(unsigned int)SIGN_GONGLVYINSU,//AÏà¹¦ÂÊÒòÊı
-	0x02060000,		0x00,		(unsigned int)&Real.PF,				DispData_Sign + DispData_BCD + DispData_RAM + 2,		(unsigned int)SIGN_GONGLVYINSU,//AÏà¹¦ÂÊÒòÊı
-	//±íºÅ¡¢¿Í»§±àºÅ
+	//å½“å‰æ—¶é—´
+	0x04000101,		0x00,		(unsigned int)&Clock_Block.Clock.Day,	DispData_BCD + DispData_RAM + 3,					(unsigned int)SIGN_RIQI,//æ—¥æœŸ
+	0x04000102,		0x00,		(unsigned int)&Clock_Block.Clock.Sec,	DispData_BCD + DispData_RAM + 3,					(unsigned int)SIGN_SHIJIAN,//æ—¶é—´
+	//ç¬æ—¶é‡
+	0x02010100,		0x00,		(unsigned int)&Real.U,				DispData_BCD + DispData_RAM + 2,						(unsigned int)SIGN_DIANYA,//ç”µå‹
+	0x02020100,		0x00,		(unsigned int)&Real.I,				DispData_Sign + DispData_BCD + DispData_RAM + 3,		(unsigned int)SIGN_DIANLIU,//ç«çº¿ç”µæµ
+	0x02800001,		0x00,		(unsigned int)&Real.Ib,				DispData_Sign + DispData_BCD + DispData_RAM + 3,		(unsigned int)SIGN_LINGXIANDIANLIU,//é›¶çº¿ç”µæµ
+	0x02030100,		0x00,		(unsigned int)&Real.P,				DispData_Sign + DispData_BCD + DispData_RAM + 3,		(unsigned int)SIGN_GONGLV,//Aç›¸åŠŸç‡
+	0x02030000,		0x00,		(unsigned int)&Real.P,				DispData_Sign + DispData_BCD + DispData_RAM + 3,		(unsigned int)SIGN_GONGLV,//Aç›¸åŠŸç‡
+	0x02040000,		0x00,		(unsigned int)&Real.Q,				DispData_Sign + DispData_BCD + DispData_RAM + 3,		(unsigned int)SIGN_WUGONGGONGLV,//æ— åŠŸåŠŸç‡
+	0x02040100,		0x00,		(unsigned int)&Real.Q,				DispData_Sign + DispData_BCD + DispData_RAM + 3,		(unsigned int)SIGN_WUGONGGONGLV,//æ— åŠŸåŠŸç‡
+	0x02060100,		0x00,		(unsigned int)&Real.PF,				DispData_Sign + DispData_BCD + DispData_RAM + 2,		(unsigned int)SIGN_GONGLVYINSU,//Aç›¸åŠŸç‡å› æ•°
+	0x02060000,		0x00,		(unsigned int)&Real.PF,				DispData_Sign + DispData_BCD + DispData_RAM + 2,		(unsigned int)SIGN_GONGLVYINSU,//Aç›¸åŠŸç‡å› æ•°
+	//è¡¨å·ã€å®¢æˆ·ç¼–å·
 	0x04000401,		0x01,		Comm_Number+4,						DispData_BCD + DispData_E2PROM + 2,						(unsigned int)SIGN_NULL,
 	0x04000401,		0x00,		Comm_Number,						DispData_BCD + DispData_E2PROM + 4,						(unsigned int)SIGN_NULL,
-	0x04000402,		0x01,		Meter_Number+4,						DispData_BCD + DispData_E2PROM + 2,						(unsigned int)SIGN_BIAOHAO,//±íºÅ¸ß4Î»
-	0x04000402,		0x00,		Meter_Number,						DispData_BCD + DispData_E2PROM + 4,						(unsigned int)SIGN_BIAOHAO,//±íºÅµÍ8Î»
-	0x0400040E,		0x01,		User_Number+4,						DispData_BCD + DispData_E2PROM + 2,						(unsigned int)SIGN_HUHAO,//¿Í»§±àºÅ¸ß4Î»
-	0x0400040E,		0x00,		User_Number,						DispData_BCD + DispData_E2PROM + 4,						(unsigned int)SIGN_HUHAO,//¿Í»§±àºÅµÍ8Î»
-	0x04000409,		0x00,		Meter_Const1,						DispData_BCD + DispData_E2PROM + 3,						(unsigned int)SIGN_CHANGSHU,//µç±íÓĞ¹¦³£Êı
-	0x04000B01,		0x00,		Balance_Time1,						DispData_BCD + DispData_E2PROM + 2,						(unsigned int)SIGN_JIESUANRI,//µÚÒ»½áËãÈÕ		
+	0x04000402,		0x01,		Meter_Number+4,						DispData_BCD + DispData_E2PROM + 2,						(unsigned int)SIGN_BIAOHAO,//è¡¨å·é«˜4ä½
+	0x04000402,		0x00,		Meter_Number,						DispData_BCD + DispData_E2PROM + 4,						(unsigned int)SIGN_BIAOHAO,//è¡¨å·ä½8ä½
+	0x0400040E,		0x01,		User_Number+4,						DispData_BCD + DispData_E2PROM + 2,						(unsigned int)SIGN_HUHAO,//å®¢æˆ·ç¼–å·é«˜4ä½
+	0x0400040E,		0x00,		User_Number,						DispData_BCD + DispData_E2PROM + 4,						(unsigned int)SIGN_HUHAO,//å®¢æˆ·ç¼–å·ä½8ä½
+	0x04000409,		0x00,		Meter_Const1,						DispData_BCD + DispData_E2PROM + 3,						(unsigned int)SIGN_CHANGSHU,//ç”µè¡¨æœ‰åŠŸå¸¸æ•°
+	0x04000B01,		0x00,		Balance_Time1,						DispData_BCD + DispData_E2PROM + 2,						(unsigned int)SIGN_JIESUANRI,//ç¬¬ä¸€ç»“ç®—æ—¥		
 	0x0c0c0c0c,		0x00,		(unsigned int)&Disp.Verison,		DispData_BCD + DispData_RAM + 3,						(unsigned int)SIGN_NULL,
 }
-//0-FÏÔÊ¾±í¸ñ
+//0-Fæ˜¾ç¤ºè¡¨æ ¼
 const unsigned char  NumSeg[16] = 
 {
 	DS_Chr_0, DS_Chr_1, DS_Chr_2, DS_Chr_3,
@@ -356,17 +356,17 @@ void ClearLCD(void)
 }
 
 /***********************************************************************/
-/*  º¯ÊıÃû³Æ£ºAllDisplayLCD                                            */
-/*  º¯Êı¹¦ÄÜ£ºÒº¾§È«ÆÁÏÔÊ¾                                             */
+/*  å‡½æ•°åç§°ï¼šAllDisplayLCD                                            */
+/*  å‡½æ•°åŠŸèƒ½ï¼šæ¶²æ™¶å…¨å±æ˜¾ç¤º                                             */
 /***********************************************************************/
 void AllDisplayLCD(void)
 {
 	unsigned char i, Tmr;
 	
-	P_RELAY_ON;		//À­Õ¢µÆ
-	P_BACKLIGHT_ON;	//±³¹â
+	P_RELAY_ON;		//æ‹‰é—¸ç¯
+	P_BACKLIGHT_ON;	//èƒŒå…‰
 	Disp.BackLightTmr = 0;
-	//´ÓEEPROMÖĞ»ñÈ¡È«ÆÁÏÔÊ¾Ê±¼ä
+	//ä»EEPROMä¸­è·å–å…¨å±æ˜¾ç¤ºæ—¶é—´
 	if(Tmr > 30)
 		Tmr = 5;
     Disp.BackLightTmr = Tmr;		
@@ -375,7 +375,7 @@ void AllDisplayLCD(void)
 	{
 		Lcdcon[i] = 0xFF;
 	}
-	Send_DisplayData();	//ËÍÏÔÊ¾Êı¾İ
+	Send_DisplayData();	//é€æ˜¾ç¤ºæ•°æ®
 	Disp.AutoInv = Tmr;
 	Disp.AutoPtr = 0xFF;
 	Disp.Page_ID = 0xFFFFFFFF;
@@ -383,8 +383,8 @@ void AllDisplayLCD(void)
 }
 
 /***********************************************************************/
-/*  º¯ÊıÃû³Æ£ºKey_Display                                              */
-/*  º¯Êı¹¦ÄÜ£º»ñÈ¡°´¼üÏÔµÄÏÔÊ¾ÏîID                                     */
+/*  å‡½æ•°åç§°ï¼šKey_Display                                              */
+/*  å‡½æ•°åŠŸèƒ½ï¼šè·å–æŒ‰é”®æ˜¾çš„æ˜¾ç¤ºé¡¹ID                                     */
 /***********************************************************************/
 void Key_Display(void)
 {
@@ -401,12 +401,12 @@ void Key_Display(void)
 		else
 			Disp.Key &= ~(F_KeyDisp0+F_KeyDisp1);
 	}
-	if( Disp.Key & F_KeyDisp1 )//°´¼üÏÔ
+	if( Disp.Key & F_KeyDisp1 )//æŒ‰é”®æ˜¾
 	{
 		Disp.Key &= ~(F_KeyDisp0+F_KeyDisp1);
 		Flag.Run |= F_Disp;
 		if( Flag.Power & F_PowerOn )
-			Disp.BackLightTmr = 60;//°´¼üÊ±,±³¹âµãÁÁ
+			Disp.BackLightTmr = 60;//æŒ‰é”®æ—¶,èƒŒå…‰ç‚¹äº®
 		else
 		{
 			Flag.Disp &= ~F_DispStop;
@@ -451,12 +451,12 @@ void Key_Display(void)
 		else
 				Disp.KeyInv = 30;
 	}
-	if( (Disp.Key & F_KeyDispay) && (Disp.KeyInv == 0) )//ÍË³ö¼üÏÔ
+	if( (Disp.Key & F_KeyDispay) && (Disp.KeyInv == 0) )//é€€å‡ºé”®æ˜¾
 	{
 		Disp.Key &= ~F_KeyDispay;
 		Disp.AutoPtr = 0xFF;
 		Disp.AutoInv = 0;
-		if( (Flag.Power & F_PowerOn) == 0 )//°´¼üÏÔÊ¾½áÊøºó,½øÈëµôµçÔİÏÔ
+		if( (Flag.Power & F_PowerOn) == 0 )//æŒ‰é”®æ˜¾ç¤ºç»“æŸå,è¿›å…¥æ‰ç”µæš‚æ˜¾
 		{
 			Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
 		}
@@ -464,27 +464,27 @@ void Key_Display(void)
 }
 
 /***********************************************************************/
-/*  º¯ÊıÃû³Æ£ºGet_DisplayPage                                          */
-/*  º¯Êı¹¦ÄÜ£º»ñÈ¡ÂÖÏÔµÄÏÔÊ¾ÏîID                                       */
+/*  å‡½æ•°åç§°ï¼šGet_DisplayPage                                          */
+/*  å‡½æ•°åŠŸèƒ½ï¼šè·å–è½®æ˜¾çš„æ˜¾ç¤ºé¡¹ID                                       */
 /***********************************************************************/
 void Get_DisplayPage(void)
 {
-	if( (Disp.Key & F_KeyDispay) == 0 )//ÂÖÏÔ
+	if( (Disp.Key & F_KeyDispay) == 0 )//è½®æ˜¾
 	{
 		if( Disp.AutoInv == 0 )
 		{
-			if( ((Flag.Power & F_PowerOn) == 0) && ((Disp.AutoPtr == (Disp.AutoNum-1))) )//×Ô¶¯Ñ­»·ÏÔÊ¾Ò»±éºó,½øÈëµôµçÔİÏÔ
+			if( ((Flag.Power & F_PowerOn) == 0) && ((Disp.AutoPtr == (Disp.AutoNum-1))) )//è‡ªåŠ¨å¾ªç¯æ˜¾ç¤ºä¸€éå,è¿›å…¥æ‰ç”µæš‚æ˜¾
 			{
 				Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
 				return;
 			}
-			//»ñÈ¡ÂÖÏÔÏÔÊ¾Ê±¼ä
+			//è·å–è½®æ˜¾æ˜¾ç¤ºæ—¶é—´
 			E2P_Read( (unsigned char*)&Disp.AutoInv, AutoDisp_Inv, 1 );
 			if( (Disp.AutoInv < 0x05) || (Disp.AutoInv > 0x20) )
 				Disp.AutoInv = 5;
 			else
 				Disp.AutoInv = BCD_BYTE( Disp.AutoInv );
-			//»ñÈ¡ÂÖÏÔÏÔÊ¾ÆÁÊı
+			//è·å–è½®æ˜¾æ˜¾ç¤ºå±æ•°
 			E2P_Read( (unsigned char*)&Disp.AutoNum, AutoDisp_Num, 1 );
 			if( Disp.AutoNum == 0 )
 				Disp.AutoNum = 1;
@@ -500,10 +500,10 @@ void Get_DisplayPage(void)
 	}
 }
 /***********************************************************************/
-/*  º¯ÊıÃû³Æ£ºDispNum                                                  */
-/*  º¯Êı¹¦ÄÜ£ºÏÔÊ¾BCDÊı×Ö                                              */
-/*  ÊäÈë²ÎÊı£ºAddr£ºÏÔÊ¾Êı¾İµØÖ·                                       */
-/*            Lenth£ºÊı¾İ³¤¶È                                          */
+/*  å‡½æ•°åç§°ï¼šDispNum                                                  */
+/*  å‡½æ•°åŠŸèƒ½ï¼šæ˜¾ç¤ºBCDæ•°å­—                                              */
+/*  è¾“å…¥å‚æ•°ï¼šAddrï¼šæ˜¾ç¤ºæ•°æ®åœ°å€                                       */
+/*            Lenthï¼šæ•°æ®é•¿åº¦                                          */
 /***********************************************************************/
 void DispNum( unsigned char* Addr, unsigned char Lenth )
 {
@@ -521,12 +521,12 @@ void DispNum( unsigned char* Addr, unsigned char Lenth )
 	}
 }
 /***********************************************************************/
-/*  º¯ÊıÃû³Æ£ºGetDispAddrInfo                                          */
-/*  º¯Êı¹¦ÄÜ£º¸ù¾İ¸ø¶¨µÄID£¬ÕÒ³öÆä¶ÔÓ¦µÄÊı¾İµØÖ·ºÍĞÅÏ¢                 */
-/*  ÊäÈë²ÎÊı£ºID:ÏÔÊ¾ID                                                */
-/*            Addr£ºÊı¾İµØÖ·                                           */
-/*            Info£ºÊı¾İĞÅÏ¢                                           */
-/*  Êä³ö²ÎÊı£º0ÎªID´æÔÚ£¬1ÎªID²»´æÔÚ                                   */
+/*  å‡½æ•°åç§°ï¼šGetDispAddrInfo                                          */
+/*  å‡½æ•°åŠŸèƒ½ï¼šæ ¹æ®ç»™å®šçš„IDï¼Œæ‰¾å‡ºå…¶å¯¹åº”çš„æ•°æ®åœ°å€å’Œä¿¡æ¯                 */
+/*  è¾“å…¥å‚æ•°ï¼šID:æ˜¾ç¤ºID                                                */
+/*            Addrï¼šæ•°æ®åœ°å€                                           */
+/*            Infoï¼šæ•°æ®ä¿¡æ¯                                           */
+/*  è¾“å‡ºå‚æ•°ï¼š0ä¸ºIDå­˜åœ¨ï¼Œ1ä¸ºIDä¸å­˜åœ¨                                   */
 /***********************************************************************/
 unsigned char GetDispAddrInfo( unsigned long ID, unsigned int* Addr, unsigned int* Info, unsigned char* SignBuf )
 {
@@ -544,31 +544,31 @@ unsigned char GetDispAddrInfo( unsigned long ID, unsigned int* Addr, unsigned in
 	IDH0 = (unsigned char)((ID & 0x00FF0000)>>16);
 
 	memcpy( SignBuf, SIGN_NULL, 8 );
-	if(IDH1 == 0x00)//µçÄÜÁ¿Àà
+	if(IDH1 == 0x00)//ç”µèƒ½é‡ç±»
 	{
-		if( IDL0 == 0x00 )//µ±Ç°
+		if( IDL0 == 0x00 )//å½“å‰
 		{
 			*Info = DispData_BCD + DispData_RAM + 5;
 			if(( IDH == 0x0000 ) || (IDH == 0x000B) || (IDH == 0x000C))
-				(*Info) |= DispData_Sign;//×éºÏÓĞ¹¦µçÁ¿×î¸ßÎ»ÊÇ·ûºÅÎ»
-			if((IDH0 == 0x0B)||(IDH0 == 0x0C))//µ±Ç°Ò»ÔÂ
+				(*Info) |= DispData_Sign;//ç»„åˆæœ‰åŠŸç”µé‡æœ€é«˜ä½æ˜¯ç¬¦å·ä½
+			if((IDH0 == 0x0B)||(IDH0 == 0x0C))//å½“å‰ä¸€æœˆ
 			{
 				*SignBuf = Sign_dangqianyue;
 				*(SignBuf+1) = Sign_1;
 			}
 			else
-				*SignBuf = Sign_dangqian;//µ±Ç°
+				*SignBuf = Sign_dangqian;//å½“å‰
 		}
-		else//ÀúÊ·
+		else//å†å²
 		{
 			*Info = DispData_His + DispData_BCD + DispData_E2PROM + 5;
 			if(( IDH == 0x0000 ) || (IDH == 0x000B) || (IDH == 0x000C))
-				(*Info) |= DispData_Sign;//×éºÏÓĞ¹¦µçÁ¿×î¸ßÎ»ÊÇ·ûºÅÎ»
+				(*Info) |= DispData_Sign;//ç»„åˆæœ‰åŠŸç”µé‡æœ€é«˜ä½æ˜¯ç¬¦å·ä½
 			*SignBuf = Sign_1 + j;
 			*(SignBuf+1) = Sign_shangyue;
 		}
 		if((IDH0<0x03) || (IDH0 == 0X0B) || (IDH0 == 0x0C))
-			*(SignBuf+2) = Sign_kWh;//×¢Òâ£ºSign_dot2Ò»¶¨ÒªÔÚSign_kWhÖ®ºóµÄ¼Ä´æÆ÷
+			*(SignBuf+2) = Sign_kWh;//æ³¨æ„ï¼šSign_dot2ä¸€å®šè¦åœ¨Sign_kWhä¹‹åçš„å¯„å­˜å™¨
 		else
 			*(SignBuf+2) = Sign_kvarh;
 		*(SignBuf+3) = Sign_dot2;
@@ -576,26 +576,26 @@ unsigned char GetDispAddrInfo( unsigned long ID, unsigned int* Addr, unsigned in
 		switch(IDH0)
 		{
 			case 0x00:
-				*(SignBuf+5) = Sign_Zuhe;//×éºÏ
-				*(SignBuf+6) = Sign_YouGong;//ÓĞ¹¦
+				*(SignBuf+5) = Sign_Zuhe;//ç»„åˆ
+				*(SignBuf+6) = Sign_YouGong;//æœ‰åŠŸ
 				break;
 			case 0x01:
-				*(SignBuf+5) = Sign_Zhengxiang;//ÕıÏò
-				*(SignBuf+6) = Sign_YouGong;//ÓĞ¹¦
+				*(SignBuf+5) = Sign_Zhengxiang;//æ­£å‘
+				*(SignBuf+6) = Sign_YouGong;//æœ‰åŠŸ
 				break;
 			case 0x02:
-				*(SignBuf+5) = Sign_Fanxiang;//·´Ïò
-				*(SignBuf+6) = Sign_YouGong;//ÓĞ¹¦
+				*(SignBuf+5) = Sign_Fanxiang;//åå‘
+				*(SignBuf+6) = Sign_YouGong;//æœ‰åŠŸ
 				break;
 			case 0x0B:
-			case 0x0C://ÔÂ¾»ÓÃ×éºÏÓĞ¹¦µçÁ¿
+			case 0x0C://æœˆå‡€ç”¨ç»„åˆæœ‰åŠŸç”µé‡
 				*(SignBuf+5) = Sign_yong;
 				*(SignBuf+6) = Sign_Zuhe;
 				break;
 			default:
 				break;
 		}
-		if(((0x0B == IDH0) || (0x0C == IDH0))&&(0 == i))//¾»ÓÃµçÁ¿ÏÔÊ¾Îª¡°µ±Ç°Ò»ÔÂÓÃµçÁ¿¡¢ÉÏÒ»ÔÂÓÃµçÁ¿£¬²»ÏÔÊ¾×Ü¡±
+		if(((0x0B == IDH0) || (0x0C == IDH0))&&(0 == i))//å‡€ç”¨ç”µé‡æ˜¾ç¤ºä¸ºâ€œå½“å‰ä¸€æœˆç”¨ç”µé‡ã€ä¸Šä¸€æœˆç”¨ç”µé‡ï¼Œä¸æ˜¾ç¤ºæ€»â€
 			*(SignBuf+8) = 0;
 		else			
 			*(SignBuf+8) = Sign_FeiLvNum;//T1~T12
@@ -604,14 +604,14 @@ unsigned char GetDispAddrInfo( unsigned long ID, unsigned int* Addr, unsigned in
 }
 
 /***********************************************************************/
-/*  º¯ÊıÃû³Æ£ºDisplay_Meter                                            */
-/*  º¯Êı¹¦ÄÜ£ºÏÔÊ¾µç±íÏà¹ØÖ¸Ê¾ĞÅÏ¢                                     */
+/*  å‡½æ•°åç§°ï¼šDisplay_Meter                                            */
+/*  å‡½æ•°åŠŸèƒ½ï¼šæ˜¾ç¤ºç”µè¡¨ç›¸å…³æŒ‡ç¤ºä¿¡æ¯                                     */
 /***********************************************************************/
 void Display_Meter(void)
 {
 	unsigned char i;
 	unsigned long Bit=0x00000001;
-	if( Disp.Page_ID == 0xFFFFFFFF ) return;//µ±Ç°È«ÆÁÏÔ£¬Ôò·µ»Ø
+	if( Disp.Page_ID == 0xFFFFFFFF ) return;//å½“å‰å…¨å±æ˜¾ï¼Œåˆ™è¿”å›
 	
 	for(i=0;i<Card.KeyNum;i++)
 	{
@@ -627,7 +627,7 @@ void Display_Meter(void)
 	{
 		if( Timer.BleAuthen_Tmr >0 )
 			Lcdcon[14] |= DS_Chr_KeyProgram;
-		//Í¨Ñ¶Ö¸Ê¾
+		//é€šè®¯æŒ‡ç¤º
 		if( Flag.CommDisp & F_CommDisp485 ) 
 		{
 			Flag.CommDisp &= ~F_CommDisp485;
@@ -645,27 +645,27 @@ void Display_Meter(void)
 			Lcdcon[14] |= DS_Chr_CommPLC;
 		}
 
-		//µçÁ÷·´Ïò
+		//ç”µæµåå‘
 		if( Timer.RevCnt >= 5 ) Lcdcon[21] |= DS_Chr_Reverse;
-		//µç³ØÇ·Ñ¹Ö¸Ê¾
+		//ç”µæ± æ¬ å‹æŒ‡ç¤º
 		if( Flag.EletPar & F_Event_BatLow ) Lcdcon[20] |= DS_Chr_Bat;
-		//ÃÜÂëÑéÖ¤±ÕËøÖ¸Ê¾
+		//å¯†ç éªŒè¯é—­é”æŒ‡ç¤º
 		if( (Timer.Pass03Err_Cnt >= 5) || (Timer.Pass04Err_Cnt >= 5) ) Lcdcon[14] |= DS_Chr_Lock;
 		
 		if(Flag.MeterRunCtr & F_Lcd12Mode)
 		{
-			//·ÑÂÊµç¼ÛÖ÷¡¢¸±±íÖ¸Ê¾
+			//è´¹ç‡ç”µä»·ä¸»ã€å‰¯è¡¨æŒ‡ç¤º
 			if( Flag.Fee & F_TOUFeeChangeTm ) Lcdcon[16] |= DS_Chr_TouTable1+DS_Chr_TouTable2;
 			else  Lcdcon[16] |= DS_Chr_TouTable1;
 		}
 		else
 		{
-			//ÈÕÊ±¶ÎÖ÷¡¢¸±±íÖ¸Ê¾
+			//æ—¥æ—¶æ®µä¸»ã€å‰¯è¡¨æŒ‡ç¤º
 			if( Fee.DayTable == 0 ) Lcdcon[16] |= DS_Chr_TouTable1;
 			else if( Fee.DayTable == 1 ) Lcdcon[16] |= DS_Chr_TouTable2;
 		}
 
-		//·ÖÊ±·ÑÂÊÖ¸Ê¾
+		//åˆ†æ—¶è´¹ç‡æŒ‡ç¤º
 		switch(Fee.TOUNo)
 		{
 			case 1:
@@ -694,24 +694,24 @@ void Display_Meter(void)
                     
                 break;
 		}
-		//½×Ìİ·ÑÂÊÖ÷¡¢¸±±íÖ¸Ê¾
+		//é˜¶æ¢¯è´¹ç‡ä¸»ã€å‰¯è¡¨æŒ‡ç¤º
         if(Flag.Fee & F_STEPModeOn)
         {
             if( Flag.Fee & F_STEPChangeTm )  Lcdcon[18] |= DS_Chr_StepTable1+DS_Chr_StepTable2;
             else Lcdcon[18] |= DS_Chr_StepTable1;
-            //½×Ìİ·ÑÂÊÖ¸Ê¾		
+            //é˜¶æ¢¯è´¹ç‡æŒ‡ç¤º		
             if((Fee.STEPNo > 0) && (Fee.STEPNo < 9))
             {
                 Lcdcon[17] |= DS_Chr_L2;
                 Lcdcon[12] |= NumSeg[Fee.STEPNo];
             }
         }
-		//ÉÁË¸
+		//é—ªçƒ
 		if( (Flag.Disp & F_DispFlash) == 0 )
 		{
 			if( Flag.RemoteCmd & F_RemoteAlarm )
 				Lcdcon[19] |=  (DS_Chr_GouDian);
-			if(( Timer.RemoteRelayOff_DelayTmr > 0 ) || (Relay.CmdDtTmr>0))//ÌøÕ¢ÑÓÊ±¹ı³ÌÖĞÖ¸Ê¾(ÉÁË¸"À­Õ¢)
+			if(( Timer.RemoteRelayOff_DelayTmr > 0 ) || (Relay.CmdDtTmr>0))//è·³é—¸å»¶æ—¶è¿‡ç¨‹ä¸­æŒ‡ç¤º(é—ªçƒ"æ‹‰é—¸)
 				Lcdcon[19] |= DS_Chr_LaZha;
             if(Common.Factory == Factory_Mode)
                 Lcdcon[19] |= DS_Chr_Lab;
@@ -726,7 +726,7 @@ void Display_Meter(void)
                 Lcdcon[19] &= ~DS_Chr_Lab;
 
 		}
-		//¼ÌµçÆ÷×´Ì¬Ö¸Ê¾
+		//ç»§ç”µå™¨çŠ¶æ€æŒ‡ç¤º
 		if( (Flag.Relay & F_StateOff) && (Flag.Relay & F_RelayOff) 
 		&& (((Credit_Block.Credit.Amount+MeterPara_Block.MeterPara.OverdraftCredit) <= 0) || ( (Credit_Block.Credit.Amount <= MeterPara_Block.MeterPara.RelayOnCredit)&&(Flag.MeterState & F_RelayOffed) ) || (Flag.RemoteCmd & F_RemoteRelayOff))) 
 			Lcdcon[19] |= DS_Chr_LaZha;
@@ -734,10 +734,10 @@ void Display_Meter(void)
 } 
 
 /***********************************************************************/
-/*  º¯ÊıÃû³Æ£ºDisp_Value                                               */
-/*  º¯Êı¹¦ÄÜ£ºÏÔÊ¾ÊıÖµ                                                 */
-/*  ÊäÈë²ÎÊı£ºAddr£ºÊı¾İµØÖ·                                           */
-/*            Info£ºÊı¾İĞÅÏ¢                                           */
+/*  å‡½æ•°åç§°ï¼šDisp_Value                                               */
+/*  å‡½æ•°åŠŸèƒ½ï¼šæ˜¾ç¤ºæ•°å€¼                                                 */
+/*  è¾“å…¥å‚æ•°ï¼šAddrï¼šæ•°æ®åœ°å€                                           */
+/*            Infoï¼šæ•°æ®ä¿¡æ¯                                           */
 /***********************************************************************/
 void Disp_Value( unsigned int Addr, unsigned int Info )
 {
@@ -747,7 +747,7 @@ void Disp_Value( unsigned int Addr, unsigned int Info )
 	Len = (unsigned char)(Info & DispDataLen);
 	MemType = (unsigned char)((Info>>6) & MEMVALUE);
 	
-	//»ñÈ¡ÏÔÊ¾Êı¾İ
+	//è·å–æ˜¾ç¤ºæ•°æ®
 	
 	if(Disp.Page_ID == 0x04000101)
     {
@@ -763,7 +763,7 @@ void Disp_Value( unsigned int Addr, unsigned int Info )
 	{
 		if(Flag.Power & F_PowerOn)
         {
-			if(( Info & DispData_Sign ) && ((Disp.Page_ID & 0x02000000) == 0x02000000) )//µçÄÜ±í³±Á÷·´ÏòÊ±,ÏÔÊ¾·´Ïò×Ö·û,ÕıÏòÊ±ÏÔÊ¾ÕıÏò×Ö·û
+			if(( Info & DispData_Sign ) && ((Disp.Page_ID & 0x02000000) == 0x02000000) )//ç”µèƒ½è¡¨æ½®æµåå‘æ—¶,æ˜¾ç¤ºåå‘å­—ç¬¦,æ­£å‘æ—¶æ˜¾ç¤ºæ­£å‘å­—ç¬¦
             {
                 if( Buffer[Len-1] & 0x80 )
                 {
@@ -804,9 +804,9 @@ void Disp_Value( unsigned int Addr, unsigned int Info )
 }
 
 /***********************************************************************/
-/*  º¯ÊıÃû³Æ£ºZeroDark                                                 */
-/*  º¯Êı¹¦ÄÜ£º¸ßÎ»0²»ÏÔÊ¾                                              */
-/*  ÊäÈë²ÎÊı£ºi£º×î¶à²»ÏÔÊ¾µÄ¸öÊı                                      */
+/*  å‡½æ•°åç§°ï¼šZeroDark                                                 */
+/*  å‡½æ•°åŠŸèƒ½ï¼šé«˜ä½0ä¸æ˜¾ç¤º                                              */
+/*  è¾“å…¥å‚æ•°ï¼šiï¼šæœ€å¤šä¸æ˜¾ç¤ºçš„ä¸ªæ•°                                      */
 /***********************************************************************/
 void ZeroDark( unsigned char i )
 {
@@ -821,9 +821,9 @@ void ZeroDark( unsigned char i )
 	}
 } 
 /***********************************************************************/
-/*  º¯ÊıÃû³Æ£ºDisp_Char                                                */
-/*  º¯Êı¹¦ÄÜ£ºÏÔÊ¾×Ö·ûºÍµ¥Î»                                           */
-/*  ÊäÈë²ÎÊı£ºi£ºÏÔÊ¾ÏîÔÚÏÔÊ¾±í¸ñÀï¶ÔÓ¦µÄÎ»ÖÃ                          */
+/*  å‡½æ•°åç§°ï¼šDisp_Char                                                */
+/*  å‡½æ•°åŠŸèƒ½ï¼šæ˜¾ç¤ºå­—ç¬¦å’Œå•ä½                                           */
+/*  è¾“å…¥å‚æ•°ï¼šiï¼šæ˜¾ç¤ºé¡¹åœ¨æ˜¾ç¤ºè¡¨æ ¼é‡Œå¯¹åº”çš„ä½ç½®                          */
 /***********************************************************************/
 void Disp_Char( unsigned char* SignBuf )
 {
@@ -866,7 +866,7 @@ void Disp_Char( unsigned char* SignBuf )
 							ZeroDark(7);
 						}
 						else
-							*(SignBuf+1) = Sign_dot1 + (DispPara_Block.DispPara.EnergyDot-1);//×¢Òâ£ºSign_dot2Ò»¶¨ÒªÔÚSign_kWhÖ®ºóµÄ¼Ä´æÆ÷		
+							*(SignBuf+1) = Sign_dot1 + (DispPara_Block.DispPara.EnergyDot-1);//æ³¨æ„ï¼šSign_dot2ä¸€å®šè¦åœ¨Sign_kWhä¹‹åçš„å¯„å­˜å™¨		
 						break;
 					default:
 						break;
@@ -889,7 +889,7 @@ void Disp_Char( unsigned char* SignBuf )
 							ZeroDark(7);
 						}
 						else
-							*(SignBuf+1) = Sign_dot1 + (DispPara_Block.DispPara.PowerDot-1);//×¢Òâ£ºSign_dot2Ò»¶¨ÒªÔÚSign_kWhÖ®ºóµÄ¼Ä´æÆ÷
+							*(SignBuf+1) = Sign_dot1 + (DispPara_Block.DispPara.PowerDot-1);//æ³¨æ„ï¼šSign_dot2ä¸€å®šè¦åœ¨Sign_kWhä¹‹åçš„å¯„å­˜å™¨
 						break;
 					default:
 						break;
@@ -954,64 +954,64 @@ void Disp_Char( unsigned char* SignBuf )
 			case Sign_9:
 				Lcdcon[0] |= NumSeg[*SignBuf];
 				break;
-			case Sign_FeiLvNum://·ÑÂÊºÅ
+			case Sign_FeiLvNum://è´¹ç‡å·
 				if(ID1L >= 10)
 				{
 					Lcdcon[20] |= DS_Chr_P1;
 					Lcdcon[1] |= NumSeg[ID1L&0x0F];
 					Lcdcon[20] |= DS_Chr_FeiLv;
 				}
-				else if(ID1L == 0)//×Ü
+				else if(ID1L == 0)//æ€»
 				{
 					Lcdcon[16] |= DS_Chr_Zong;
 				}
-				else//·ÑÂÊ5~9
+				else//è´¹ç‡5~9
 				{
 					Lcdcon[1] |= NumSeg[ID1L];
 					Lcdcon[20] |= DS_Chr_FeiLv;
 				}
 				break;
-			case Sign_changshu://³£Êı
+			case Sign_changshu://å¸¸æ•°
 				Lcdcon[17] |= DS_Chr_ChangShu;
 				break;
-			case Sign_yong: //ÓÃ
+			case Sign_yong: //ç”¨
 				Lcdcon[15] |= DS_Chr_Yong;
 				break;
-			case Sign_shi://Ê±
+			case Sign_shi://æ—¶
 				Lcdcon[15] |= DS_Chr_Shi;
 				break;
-			case Sign_jian2://¼ä
+			case Sign_jian2://é—´
 				Lcdcon[15] |= DS_Chr_Jian;
 				break;
-			case Sign_duan://¶Î
+			case Sign_duan://æ®µ
 				Lcdcon[19] |= DS_Chr_Duan;
 				break;
-			case Sign_biaohao://±íºÅ
+			case Sign_biaohao://è¡¨å·
 				Lcdcon[19] |= DS_Chr_Biao;
 				Lcdcon[17] |= DS_Chr_Hao;
 				break;
-			case Sign_huhao://»§ºÅ
+			case Sign_huhao://æˆ·å·
 				Lcdcon[18] |= DS_Chr_Hu;
 				Lcdcon[17] |= DS_Chr_Hao;
 				break;
-			case Sign_Dianya://µçÑ¹
+			case Sign_Dianya://ç”µå‹
 				Lcdcon[17] |= DS_Chr_UV;
 				break;
-			case Sign_Dianliu://»ğÏßµçÁ÷
+			case Sign_Dianliu://ç«çº¿ç”µæµ
 				Lcdcon[21] |= DS_Chr_Lline;
 				Lcdcon[17] |= DS_Chr_IA;
 				break;
-			case Sign_Gonglvyinsu://¹¦ÂÊÒòÊı
+			case Sign_Gonglvyinsu://åŠŸç‡å› æ•°
 				Lcdcon[14] |= DS_Chr_COS;
 				break;
-			case Sign_Linxiandianliu://ÁãÏßµçÁ÷
+			case Sign_Linxiandianliu://é›¶çº¿ç”µæµ
 				Lcdcon[21] |= DS_Chr_Nline;
 				Lcdcon[17] |= DS_Chr_IA;
 				break;
-			case Sign_Linxian://ÁãÏßµçÁ÷
+			case Sign_Linxian://é›¶çº¿ç”µæµ
 				Lcdcon[21] |= DS_Chr_Nline;
 				break;		
-			case Sign_HuoXian://»ğÏßµçÁ÷
+			case Sign_HuoXian://ç«çº¿ç”µæµ
 				Lcdcon[21] |= DS_Chr_Lline;
 				break;
 			case Sign_Zuhe:
@@ -1029,9 +1029,9 @@ void Disp_Char( unsigned char* SignBuf )
 				Lcdcon[17] |= DS_Chr_Dot22;
 				Lcdcon[18] |= DS_Chr_Dot42;
 				break;
-			case Sign_Page_Sequ://Ê±¶Î±íÄÚÈİĞòºÅÏÔÊ¾
+			case Sign_Page_Sequ://æ—¶æ®µè¡¨å†…å®¹åºå·æ˜¾ç¤º
 				Tmp = Disp.Page_Sequ;
-				BCDX_INC( (unsigned char*)&Tmp, 1 );//ÏÔÊ¾Ê±´Ó1µ½14ĞòºÅ
+				BCDX_INC( (unsigned char*)&Tmp, 1 );//æ˜¾ç¤ºæ—¶ä»1åˆ°14åºå·
 				Lcdcon[0] |= NumSeg[((Tmp)&0xF0)>>4];
 				Lcdcon[1] |= NumSeg[(Tmp)&0x0F];
 				break;
@@ -1041,10 +1041,10 @@ void Disp_Char( unsigned char* SignBuf )
 			case Sign_dianliang:
 				Lcdcon[19] |= DS_Chr_DianLiang;
 				break;
-			case Sign_jieti://½×Ìİ
+			case Sign_jieti://é˜¶æ¢¯
 				Lcdcon[20] |= DS_Chr_JieTi;
 				break;	
-			case Sign_YouGong://ÓĞ¹¦
+			case Sign_YouGong://æœ‰åŠŸ
 				Lcdcon[19] |= DS_Chr_You;
 				Lcdcon[19] |= DS_Chr_Gong;
 				break;
@@ -1055,8 +1055,8 @@ void Disp_Char( unsigned char* SignBuf )
 	}
 }
 /***********************************************************************/
-/*  º¯ÊıÃû³Æ£ºDisplay_Page                                             */
-/*  º¯Êı¹¦ÄÜ£º»ñÈ¡ÏÔÊ¾ÏîµÄÏÔÊ¾ĞÅÏ¢                                     */
+/*  å‡½æ•°åç§°ï¼šDisplay_Page                                             */
+/*  å‡½æ•°åŠŸèƒ½ï¼šè·å–æ˜¾ç¤ºé¡¹çš„æ˜¾ç¤ºä¿¡æ¯                                     */
 /***********************************************************************/
 void Display_Page(void)
 {
@@ -1064,7 +1064,7 @@ void Display_Page(void)
 	unsigned int Addr,Info;
 	unsigned char SignBuf[9];
 
-	if( Disp.Page_ID == 0xFFFFFFFF ) return;//µ±Ç°È«ÆÁÏÔ,Ôò·µ»Ø
+	if( Disp.Page_ID == 0xFFFFFFFF ) return;//å½“å‰å…¨å±æ˜¾,åˆ™è¿”å›
 	if( GetDispAddrInfo( Disp.Page_ID, (unsigned int*)&Addr, (unsigned int*)&Info, SignBuf ) )
 	{
 		for( i=0;i<DisplayTabNum;i++ )
@@ -1072,36 +1072,36 @@ void Display_Page(void)
 			if( (Disp.Page_ID == DisplayTab[i].ID) && (Disp.Page_Sequ == DisplayTab[i].Sequ) )
 				break;
 		}
-		if( i >= DisplayTabNum )//Èç¹ûÏÔÊ¾ÏîÔÚ±í¸ñÀï²»´æÔÚ,ÔòÏÔÊ¾µÚÒ»ÏîÄÚÈİ
+		if( i >= DisplayTabNum )//å¦‚æœæ˜¾ç¤ºé¡¹åœ¨è¡¨æ ¼é‡Œä¸å­˜åœ¨,åˆ™æ˜¾ç¤ºç¬¬ä¸€é¡¹å†…å®¹
 			i = 0;
 		Addr = DisplayTab[i].Addr;
 		Info = DisplayTab[i].Info;
 		memcpy( SignBuf, (unsigned char*)DisplayTab[i].Sign, 9 );
 	}
 
-	//ÇåÆÁ
+	//æ¸…å±
 	ClearLCD();
-	//ÏÔÊ¾Êı¾İ
+	//æ˜¾ç¤ºæ•°æ®
 	Disp_Value( Addr, Info );
-	//ÏÔÊ¾×Ö·ûºÍµ¥Î»
+	//æ˜¾ç¤ºå­—ç¬¦å’Œå•ä½
 	Disp_Char( SignBuf );
 }
 /***********************************************************************/
-/*  º¯ÊıÃû³Æ£ºDisplay                                                  */
-/*  º¯Êı¹¦ÄÜ£ºÒº¾§ÏÔÊ¾                                                 */
+/*  å‡½æ•°åç§°ï¼šDisplay                                                  */
+/*  å‡½æ•°åŠŸèƒ½ï¼šæ¶²æ™¶æ˜¾ç¤º                                                 */
 /***********************************************************************/
 void Display(void)
 {
-	//»ñÈ¡ÏÔÊ¾ÏîID
+	//è·å–æ˜¾ç¤ºé¡¹ID
     if(Flag.Power & F_PowerOn)
     {
         Get_DisplayPage();
     }
-	//»ñÈ¡ÏÔÊ¾ÏîÄÚÈİ
+	//è·å–æ˜¾ç¤ºé¡¹å†…å®¹
 	Display_Page();
-	//ÏÔÊ¾µç±íÖ¸Ê¾ĞÅÏ¢
+	//æ˜¾ç¤ºç”µè¡¨æŒ‡ç¤ºä¿¡æ¯
 	Display_Meter();
-	//ËÍÏÔÊ¾ÄÚÈİ
+	//é€æ˜¾ç¤ºå†…å®¹
 	Send_DisplayData();
 }
 
