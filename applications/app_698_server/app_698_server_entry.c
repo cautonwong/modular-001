@@ -9,11 +9,15 @@ int fr_gatekeeper_client(struct instance_t* instance, struct pipeline_t* pipelin
 //要线程化时  可将此函数用while(1)包住 即可完成前后台到os的打包过程
 int app_698_rx_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    ctx->fr_err = 0;
     //1.接入校验  接收缓冲中有数据 
-    if (fr_rx_698_entry(instance, pipeline, mesg))
+    ctx->fr_err = fr_rx_698_entry(instance, pipeline, mesg);
+    if (ctx->fr_err > 0)
     {
         //2.switch case 处理各通信命令
-        return fr_gatekeeper_server(instance, pipeline, mesg);
+        ctx->fr_err = fr_gatekeeper_server(instance, pipeline, mesg);
+        return ctx->fr_err;
     }
 
     return 0;

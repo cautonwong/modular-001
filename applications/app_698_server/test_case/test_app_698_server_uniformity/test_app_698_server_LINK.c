@@ -16,20 +16,22 @@ void test_app_698_server_LINK_get_1_ok(void** state)
     struct instance_t* instance = (struct instance_t*)*state;
     struct context_698_t* ctx;
     struct pipeline_t* pl;
-    struct message_t mesg;
+    struct message_t mesg = {0};
     struct security_t {
         uint32_t oad;
         uint8_t cmd;
     };
     //68 17 00 43 05 01 00 00 00 00 00 10 26 F6 05 01 2F F1 01 02 00 00 C4 EE 16
     //68 1B 00 C3 05 01 00 00 00 00 00 00 8F C0 85 01 2F F1 01 02 00 01 16 00 00 00 EE 81 16
+    mesg.magic = MSG_MAGIC;
     mesg.from = kernel;
     mesg.to = pid_client_tx_698;
     mesg.ctrl = GET_Request;;
     mesg.qos = 0; 
-    mesg.len = 4;
+    mesg.len = 0;
     mesg.id = 0xF1010200;
     mesg.oad_n = 1;
+    mesg.check = nd_get_crc16((uint8_t *)&mesg, sizeof(struct message_t) - 2);
 
     send_mesg(instance, NULL, &mesg, NULL);
     nidavellir_run(instance);
@@ -51,20 +53,21 @@ void test_app_698_server_LINK_get_2_header_err(void** state)
     struct instance_t* instance = (struct instance_t*)*state;
     struct context_698_t* ctx;
     struct pipeline_t* pl;
-    struct message_t mesg;
+    struct message_t mesg = {0};
     struct security_t {
         uint32_t oad;
         uint8_t cmd;
     };
-
+    mesg.magic = MSG_MAGIC;
     mesg.from = kernel;
     mesg.to = pid_client_tx_698;
     mesg.ctrl = GET_Request;
     mesg.qos = 0;
-    mesg.len = 4;
+    mesg.len = 0;
     mesg.id = 0xF1010200;
     mesg.oad_n = 1;
     mesg.err_no = FRM_HEADER_ERR;
+    mesg.check = nd_get_crc16((uint8_t*)&mesg, sizeof(struct message_t) - 2);
 
     send_mesg(instance, NULL, &mesg, NULL);
     nidavellir_run(instance);
@@ -85,20 +88,22 @@ void test_app_698_server_LINK_get_3_len_err(void** state)
     struct instance_t* instance = (struct instance_t*)*state;
     struct context_698_t* ctx;
     struct pipeline_t* pl;
-    struct message_t mesg;
+    struct message_t mesg = {0};
     struct security_t {
         uint32_t oad;
         uint8_t cmd;
     };
 
+    mesg.magic = MSG_MAGIC;
     mesg.from = kernel;
     mesg.to = pid_client_tx_698;
     mesg.ctrl = GET_Request;
     mesg.qos = 0;
-    mesg.len = 4;
+    mesg.len = 0;
     mesg.id = 0xF1010200;
     mesg.oad_n = 1;
     mesg.err_no = FRM_LEN_ERR2;
+    mesg.check = nd_get_crc16((uint8_t*)&mesg, sizeof(struct message_t) - 2);
 
     send_mesg(instance, NULL, &mesg, NULL);
     nidavellir_run(instance);
@@ -119,7 +124,7 @@ void test_app_698_server_LINK_get_4_ctrl_err(void** state)
     struct instance_t* instance = (struct instance_t*)*state;
     struct context_698_t* ctx;
     struct pipeline_t* pl;
-    struct message_t mesg;
+    struct message_t mesg = {0};
     struct security_t {
         uint32_t oad;
         uint8_t cmd;
@@ -127,14 +132,16 @@ void test_app_698_server_LINK_get_4_ctrl_err(void** state)
 
     //控制码逐个测试00--255 用例需要补充，
     //控制子码也需要00--255 用例需要补充
+    mesg.magic = MSG_MAGIC;
     mesg.from = kernel;
     mesg.to = pid_client_tx_698;
     mesg.ctrl = 245;
     mesg.qos = 0;
-    mesg.len = 4;
+    mesg.len = 0;
     mesg.id = 0xF1010200;
     mesg.oad_n = 1;
     mesg.err_no = 0;
+    mesg.check = nd_get_crc16((uint8_t*)&mesg, sizeof(struct message_t) - 2);
 
     send_mesg(instance, NULL, &mesg, NULL);
     nidavellir_run(instance);
@@ -155,20 +162,22 @@ void test_app_698_server_LINK_get_5_addr_err(void** state)
     struct instance_t* instance = (struct instance_t*)*state;
     struct context_698_t* ctx;
     struct pipeline_t* pl;
-    struct message_t mesg;
+    struct message_t mesg = {0};
     struct security_t {
         uint32_t oad;
         uint8_t cmd;
     };
 
+    mesg.magic = MSG_MAGIC;
     mesg.from = kernel;
     mesg.to = pid_client_tx_698;
     mesg.ctrl = 245;
     mesg.qos = 0;
-    mesg.len = 4;
+    mesg.len = 0;
     mesg.id = 0xF1010200;
     mesg.oad_n = 1;
     mesg.err_no = 0;
+    mesg.check = nd_get_crc16((uint8_t*)&mesg, sizeof(struct message_t) - 2);
 
     send_mesg(instance, NULL, &mesg, NULL);
     nidavellir_run(instance);
@@ -183,36 +192,51 @@ void test_app_698_server_LINK_get_5_addr_err(void** state)
     }
 }
 
-//6 错误客户机地址测试
+//6 错误客户机地址测试---no
 void test_app_698_server_LINK_get_6_CA_err(void** state)
 {
     struct instance_t* instance = (struct instance_t*)*state;
-    struct message_t mesg;
+    struct context_698_t* ctx;
+    struct pipeline_t* pl;
+    struct message_t mesg = {0};
     struct security_t {
         uint32_t oad;
         uint8_t cmd;
     };
-    struct security_t inf[] = {
-        {0x00000200, GET_Request},
-        {0x40030200, SET_Request},
-        {0x20000200, ACTION_Request},
-    };
 
-    for (uint8_t i = 0; i < 3; i++)
-    {
-        for (uint8_t j = 0; j < 4; j++)
+    uint8_t frm[2][25] = {
         {
-            mesg.from = kernel;
-            mesg.to = pid_client_tx_698;
-            mesg.ctrl = inf[i].cmd;;
-            mesg.qos = j; //0明文/1明文+MAC/2密文/3密文+MAC
-            mesg.len = 4;
-            mesg.id = inf[i].oad;
-            mesg.oad_n = 1;
+            0x68, 0x17, 0x00, 0x43, 0x05, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x26, 0xF6,
+            0x05, 0x01, 0x2F, 0xF1, 0x01, 0x02, 0x00, 0x00, 0xC4, 0xEE, 0x16
+        },
+        {
+            0x68, 0x17, 0x00, 0x43, 0x06, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x26, 0xF6,
+            0x05, 0x01, 0x2F, 0xF1, 0x01, 0x02, 0x00, 0x00, 0xC4, 0xEE, 0x16
+        }
+    };
+    mesg.magic = MSG_MAGIC;
+    mesg.from = kernel;
+    mesg.to = pid_client_tx_698;
+    mesg.ctrl = TEST_CASE_Request;
+    mesg.qos = 0;
+    mesg.len = 25;
+    mesg.id = TEST_CASE_ID;
+    mesg.oad_n = 1;
+    mesg.err_no = 0;
+    mesg.check = nd_get_crc16((uint8_t*)&mesg, sizeof(struct message_t) - 2);
 
-            send_mesg(instance, NULL, &mesg, NULL);
-            nidavellir_run(instance);
-            //判断回应帧是否正常
+    for (uint8_t i = 0; i < 2; i++)
+    {
+        send_mesg(instance, NULL, &mesg, frm[i]);
+        nidavellir_run(instance);
+        //判断回应帧是否正常
+        pl = get_pipeline(instance, pid_rx_698);
+        if (pl != NULL)
+        {
+            ctx = (struct context_698_t*)pl->ctx;
+
+            assert_int_equal(ctx->fr_err, FRM_HEADER_ERR);
+            //同时无数据
         }
     }
 }
@@ -220,32 +244,43 @@ void test_app_698_server_LINK_get_6_CA_err(void** state)
 void test_app_698_server_LINK_get_7_logic_addr_err(void** state)
 {
     struct instance_t* instance = (struct instance_t*)*state;
-    struct message_t mesg;
+    struct context_698_t* ctx;
+    struct pipeline_t* pl;
+    struct message_t mesg = { 0 };
     struct security_t {
         uint32_t oad;
         uint8_t cmd;
     };
-    struct security_t inf[] = {
-        {0x00000200, GET_Request},
-        {0x40030200, SET_Request},
-        {0x20000200, ACTION_Request},
-    };
 
-    for (uint8_t i = 0; i < 3; i++)
-    {
-        for (uint8_t j = 0; j < 4; j++)
+    uint8_t frm[1][25] = {
         {
-            mesg.from = kernel;
-            mesg.to = pid_client_tx_698;
-            mesg.ctrl = inf[i].cmd;;
-            mesg.qos = j; //0明文/1明文+MAC/2密文/3密文+MAC
-            mesg.len = 4;
-            mesg.id = inf[i].oad;
-            mesg.oad_n = 1;
+            0x68, 0x17, 0x00, 0x43, 0x15, 0x14, 0x86, 0x32, 0x00, 0x00, 0x80, 0x11, 0x70, 0xaa, 
+            0x05, 0x01, 0x2f, 0xf1, 0x01, 0x02, 0x00, 0x00, 0xc4, 0xee, 0x16
+        }
+    };
+    mesg.magic = MSG_MAGIC;
+    mesg.from = kernel;
+    mesg.to = pid_client_tx_698;
+    mesg.ctrl = TEST_CASE_Request;
+    mesg.qos = 0;
+    mesg.len = 25;
+    mesg.id = TEST_CASE_ID;
+    mesg.oad_n = 1;
+    mesg.err_no = 0;
+    mesg.check = nd_get_crc16((uint8_t*)&mesg, sizeof(struct message_t) - 2);
 
-            send_mesg(instance, NULL, &mesg, NULL);
-            nidavellir_run(instance);
-            //判断回应帧是否正常
+    for (uint8_t i = 0; i < 1; i++)
+    {
+        send_mesg(instance, NULL, &mesg, frm[i]);
+        nidavellir_run(instance);
+        //判断回应帧是否正常
+        pl = get_pipeline(instance, pid_rx_698);
+        if (pl != NULL)
+        {
+            ctx = (struct context_698_t*)pl->ctx;
+
+            assert_int_equal(ctx->fr_err, FRM_HEADER_ERR);
+            //同时无数据
         }
     }
 }
@@ -253,32 +288,43 @@ void test_app_698_server_LINK_get_7_logic_addr_err(void** state)
 void test_app_698_server_LINK_get_8_hcs_err(void** state)
 {
     struct instance_t* instance = (struct instance_t*)*state;
-    struct message_t mesg;
+    struct context_698_t* ctx;
+    struct pipeline_t* pl;
+    struct message_t mesg = { 0 };
     struct security_t {
         uint32_t oad;
         uint8_t cmd;
     };
-    struct security_t inf[] = {
-        {0x00000200, GET_Request},
-        {0x40030200, SET_Request},
-        {0x20000200, ACTION_Request},
-    };
 
-    for (uint8_t i = 0; i < 3; i++)
-    {
-        for (uint8_t j = 0; j < 4; j++)
+    uint8_t frm[1][25] = {
         {
-            mesg.from = kernel;
-            mesg.to = pid_client_tx_698;
-            mesg.ctrl = inf[i].cmd;;
-            mesg.qos = j; //0明文/1明文+MAC/2密文/3密文+MAC
-            mesg.len = 4;
-            mesg.id = inf[i].oad;
-            mesg.oad_n = 1;
+            0x68, 0x17, 0x00, 0x43, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x26, 0xF7, 
+            0x05, 0x01, 0x2F, 0xF1, 0x01, 0x02, 0x00, 0x00, 0xC4, 0xEE, 0x16
+        }
+    };
+    mesg.magic = MSG_MAGIC;
+    mesg.from = kernel;
+    mesg.to = pid_client_tx_698;
+    mesg.ctrl = TEST_CASE_Request;
+    mesg.qos = 0;
+    mesg.len = 25;
+    mesg.id = TEST_CASE_ID;
+    mesg.oad_n = 1;
+    mesg.err_no = 0;
+    mesg.check = nd_get_crc16((uint8_t*)&mesg, sizeof(struct message_t) - 2);
 
-            send_mesg(instance, NULL, &mesg, NULL);
-            nidavellir_run(instance);
-            //判断回应帧是否正常
+    for (uint8_t i = 0; i < 1; i++)
+    {
+        send_mesg(instance, NULL, &mesg, frm[i]);
+        nidavellir_run(instance);
+        //判断回应帧是否正常
+        pl = get_pipeline(instance, pid_rx_698);
+        if (pl != NULL)
+        {
+            ctx = (struct context_698_t*)pl->ctx;
+
+            assert_int_equal(ctx->fr_err, FRM_HEADER_ERR);
+            //同时无数据
         }
     }
 }
@@ -286,32 +332,43 @@ void test_app_698_server_LINK_get_8_hcs_err(void** state)
 void test_app_698_server_LINK_get_9_err(void** state)
 {
     struct instance_t* instance = (struct instance_t*)*state;
-    struct message_t mesg;
+    struct context_698_t* ctx;
+    struct pipeline_t* pl;
+    struct message_t mesg = { 0 };
     struct security_t {
         uint32_t oad;
         uint8_t cmd;
     };
-    struct security_t inf[] = {
-        {0x00000200, GET_Request},
-        {0x40030200, SET_Request},
-        {0x20000200, ACTION_Request},
-    };
 
-    for (uint8_t i = 0; i < 3; i++)
-    {
-        for (uint8_t j = 0; j < 4; j++)
+    uint8_t frm[1][25] = {
         {
-            mesg.from = kernel;
-            mesg.to = pid_client_tx_698;
-            mesg.ctrl = inf[i].cmd;;
-            mesg.qos = j; //0明文/1明文+MAC/2密文/3密文+MAC
-            mesg.len = 4;
-            mesg.id = inf[i].oad;
-            mesg.oad_n = 1;
+            0x68, 0x17, 0x00, 0x43, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x26, 0xF6, 
+            0x0A, 0x01, 0x2F, 0xF1, 0x01, 0x02, 0x00, 0x00, 0x76, 0x5f, 0x16
+        }
+    };
+    mesg.magic = MSG_MAGIC;
+    mesg.from = kernel;
+    mesg.to = pid_client_tx_698;
+    mesg.ctrl = TEST_CASE_Request;
+    mesg.qos = 0;
+    mesg.len = 25;
+    mesg.id = TEST_CASE_ID;
+    mesg.oad_n = 1;
+    mesg.err_no = 0;
+    mesg.check = nd_get_crc16((uint8_t*)&mesg, sizeof(struct message_t) - 2);
 
-            send_mesg(instance, NULL, &mesg, NULL);
-            nidavellir_run(instance);
-            //判断回应帧是否正常
+    for (uint8_t i = 0; i < 1; i++)
+    {
+        send_mesg(instance, NULL, &mesg, frm[i]);
+        nidavellir_run(instance);
+        //判断回应帧是否正常
+        pl = get_pipeline(instance, pid_rx_698);
+        if (pl != NULL)
+        {
+            ctx = (struct context_698_t*)pl->ctx;
+
+            assert_int_equal(ctx->fr_err, FRM_HEADER_ERR);
+            //同时无数据
         }
     }
 }
@@ -319,32 +376,46 @@ void test_app_698_server_LINK_get_9_err(void** state)
 void test_app_698_server_LINK_get_10_attribute_err(void** state)
 {
     struct instance_t* instance = (struct instance_t*)*state;
-    struct message_t mesg;
+    struct context_698_t* ctx;
+    struct pipeline_t* pl;
+    struct message_t mesg = { 0 };
     struct security_t {
         uint32_t oad;
         uint8_t cmd;
     };
-    struct security_t inf[] = {
-        {0x00000200, GET_Request},
-        {0x40030200, SET_Request},
-        {0x20000200, ACTION_Request},
+
+    uint8_t frm[1][25] = {
+        {
+            0x68, 0x17, 0x00, 0x43, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x26, 0xF6,
+            0x05, 0x01, 0x2F, 0xF1, 0x01, 0x05, 0x00, 0x00, 0xc4, 0xee, 0x16
+        }
     };
 
-    for (uint8_t i = 0; i < 3; i++)
-    {
-        for (uint8_t j = 0; j < 4; j++)
-        {
-            mesg.from = kernel;
-            mesg.to = pid_client_tx_698;
-            mesg.ctrl = inf[i].cmd;;
-            mesg.qos = j; //0明文/1明文+MAC/2密文/3密文+MAC
-            mesg.len = 4;
-            mesg.id = inf[i].oad;
-            mesg.oad_n = 1;
+    //属性错误判断，不回应？？
 
-            send_mesg(instance, NULL, &mesg, NULL);
-            nidavellir_run(instance);
-            //判断回应帧是否正常
+    mesg.magic = MSG_MAGIC;
+    mesg.from = kernel;
+    mesg.to = pid_client_tx_698;
+    mesg.ctrl = TEST_CASE_Request;
+    mesg.qos = 0;
+    mesg.len = 25;
+    mesg.id = TEST_CASE_ID;
+    mesg.oad_n = 1;
+    mesg.err_no = 0;
+    mesg.check = nd_get_crc16((uint8_t*)&mesg, sizeof(struct message_t) - 2);
+
+    for (uint8_t i = 0; i < 1; i++)
+    {
+        send_mesg(instance, NULL, &mesg, frm[i]);
+        nidavellir_run(instance);
+        //判断回应帧是否正常
+        pl = get_pipeline(instance, pid_rx_698);
+        if (pl != NULL)
+        {
+            ctx = (struct context_698_t*)pl->ctx;
+
+            assert_int_equal(ctx->fr_err, FRM_HEADER_ERR);
+            //同时无数据
         }
     }
 }
@@ -352,32 +423,46 @@ void test_app_698_server_LINK_get_10_attribute_err(void** state)
 void test_app_698_server_LINK_get_11_fcs_err(void** state)
 {
     struct instance_t* instance = (struct instance_t*)*state;
-    struct message_t mesg;
+    struct context_698_t* ctx;
+    struct pipeline_t* pl;
+    struct message_t mesg = { 0 };
     struct security_t {
         uint32_t oad;
         uint8_t cmd;
     };
-    struct security_t inf[] = {
-        {0x00000200, GET_Request},
-        {0x40030200, SET_Request},
-        {0x20000200, ACTION_Request},
+
+    uint8_t frm[1][25] = {
+        {
+            0x68, 0x17, 0x00, 0x43, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x26, 0xF6,
+            0x05, 0x01, 0x2F, 0xF1, 0x01, 0x02, 0x00, 0x00, 0xc4, 0xef, 0x16
+        }
     };
 
-    for (uint8_t i = 0; i < 3; i++)
-    {
-        for (uint8_t j = 0; j < 4; j++)
-        {
-            mesg.from = kernel;
-            mesg.to = pid_client_tx_698;
-            mesg.ctrl = inf[i].cmd;;
-            mesg.qos = j; //0明文/1明文+MAC/2密文/3密文+MAC
-            mesg.len = 4;
-            mesg.id = inf[i].oad;
-            mesg.oad_n = 1;
+    //属性错误判断，不回应？？
 
-            send_mesg(instance, NULL, &mesg, NULL);
-            nidavellir_run(instance);
-            //判断回应帧是否正常
+    mesg.magic = MSG_MAGIC;
+    mesg.from = kernel;
+    mesg.to = pid_client_tx_698;
+    mesg.ctrl = TEST_CASE_Request;
+    mesg.qos = 0;
+    mesg.len = 25;
+    mesg.id = TEST_CASE_ID;
+    mesg.oad_n = 1;
+    mesg.err_no = 0;
+    mesg.check = nd_get_crc16((uint8_t*)&mesg, sizeof(struct message_t) - 2);
+
+    for (uint8_t i = 0; i < 1; i++)
+    {
+        send_mesg(instance, NULL, &mesg, frm[i]);
+        nidavellir_run(instance);
+        //判断回应帧是否正常
+        pl = get_pipeline(instance, pid_rx_698);
+        if (pl != NULL)
+        {
+            ctx = (struct context_698_t*)pl->ctx;
+
+            assert_int_equal(ctx->fr_err, FRM_HEADER_ERR);
+            //同时无数据
         }
     }
 }
@@ -385,32 +470,51 @@ void test_app_698_server_LINK_get_11_fcs_err(void** state)
 void test_app_698_server_LINK_get_12_end(void** state)
 {
     struct instance_t* instance = (struct instance_t*)*state;
-    struct message_t mesg;
+    struct context_698_t* ctx;
+    struct pipeline_t* pl;
+    struct message_t mesg = { 0 };
     struct security_t {
         uint32_t oad;
         uint8_t cmd;
     };
-    struct security_t inf[] = {
-        {0x00000200, GET_Request},
-        {0x40030200, SET_Request},
-        {0x20000200, ACTION_Request},
+    uint8_t frm_num = 2;
+    uint8_t frm[2][25] = {
+        {
+            0x68, 0x17, 0x00, 0x43, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x11, 0xaf, 0xe7, 
+            0x05, 0x01, 0x09, 0xf1, 0x01, 0x02, 0x00, 0x00, 0x5e, 0x73
+
+        },
+        {
+            0x68, 0x17, 0x00, 0x43, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x26, 0xF6, 
+            0x05, 0x01, 0x2F, 0xF1, 0x01, 0x02, 0x00, 0x00, 0xC4, 0xEE, 0x19
+    }
     };
 
-    for (uint8_t i = 0; i < 3; i++)
-    {
-        for (uint8_t j = 0; j < 4; j++)
-        {
-            mesg.from = kernel;
-            mesg.to = pid_client_tx_698;
-            mesg.ctrl = inf[i].cmd;;
-            mesg.qos = j; //0明文/1明文+MAC/2密文/3密文+MAC
-            mesg.len = 4;
-            mesg.id = inf[i].oad;
-            mesg.oad_n = 1;
+    //属性错误判断，不回应？？
 
-            send_mesg(instance, NULL, &mesg, NULL);
-            nidavellir_run(instance);
-            //判断回应帧是否正常
+    mesg.magic = MSG_MAGIC;
+    mesg.from = kernel;
+    mesg.to = pid_client_tx_698;
+    mesg.ctrl = TEST_CASE_Request;
+    mesg.qos = 0;
+    mesg.len = 25;
+    mesg.id = TEST_CASE_ID;
+    mesg.oad_n = 1;
+    mesg.err_no = 0;
+    mesg.check = nd_get_crc16((uint8_t*)&mesg, sizeof(struct message_t) - 2);
+
+    for (uint8_t i = 0; i < frm_num; i++)
+    {
+        send_mesg(instance, NULL, &mesg, frm[i]);
+        nidavellir_run(instance);
+        //判断回应帧是否正常
+        pl = get_pipeline(instance, pid_rx_698);
+        if (pl != NULL)
+        {
+            ctx = (struct context_698_t*)pl->ctx;
+
+            assert_int_equal(ctx->fr_err, FRM_HEADER_ERR);
+            //同时无数据
         }
     }
 }

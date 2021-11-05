@@ -58,6 +58,18 @@ uint16_t crc16(uint16_t init, uint8_t* buf, size_t len)
     return cs;
 }
 
+uint16_t nd_get_crc16(uint8_t* buf, size_t len)
+{
+    uint16_t cs = 0xffff;
+
+    while (len--)
+    {
+        cs = (cs >> 8) ^ crc16_tab[(cs ^ *buf++) & 0xff];
+    }
+    cs ^= 0xffff;
+    return cs;
+}
+
 uint16_t update_crc16(uint16_t init, uint8_t byte)
 {
     uint16_t cs = init;/**<  0xffff; */
@@ -407,7 +419,12 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
         fifoBuf_removeData(fifo, ctx->min_len + 2);
         return 0;
     }
-
+    //地址判断
+    if (0 != SA_LOGIC(ctx->SA))
+    {
+        return 0;
+    }
+    
     //时标判断
     //fr_timeTag()；
 
@@ -489,12 +506,12 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     if(0 == fr_pack_698_check(instance, pipeline, mesg))
     {
         fifoBuf_removeData(fifo, ctx->min_len + 2);
-        return 0;
+        return -1;
     }
     
     if(0 == fr_segments_handle(instance, pipeline, mesg))
     {
-        return 0;
+        return -1;
     }
 
     //数据解密
@@ -508,7 +525,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     {
         ctx->fr_err = FRM_CTRL_ERR;
         fifoBuf_removeData(fifo, ctx->min_len + 2);
-        return 0;
+        return -1;
     }
 
     ctx->PIID = fifoBuf_getByte(fifo);
@@ -534,7 +551,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     if(0 == fr_apdu_effective_check(instance, pipeline, mesg))
     {
         fifoBuf_removeData(fifo, ctx->min_len + 2);
-        return 0;
+        return -1;
     }
     switch (ctx->service)
     {
@@ -556,7 +573,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         case REPORT_Response://8上报应答 client
             break;
         default:
-            return 0;
+            return -1;
             break;
     }
 
@@ -686,7 +703,6 @@ int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     ctx->step = 0;
-    ctx->fr_err = 0;
     int r = ringbuffer_filter(fifo, matcher_698, ctx);
     if (r > 0)
     {
@@ -710,21 +726,31 @@ int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
 #endif
         return 1;
     }
-    ctx->fr_err = r;
-    return 0;
+    return r;
 }
 
 int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
+    struct fifo_t* fifo_out = (struct fifo_t*)pipeline->out_queue;
+    struct fifo_t* fifo_in = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* cache = ctx->apdu;
 
-    cache->wr = 0;//临时清0
-    cache->rd = 0;
+
     //client  或者 主动上报 或者 延时读取发送
     if (recv_mesg_header(instance, pipeline, mesg))
     {
+#if WIN32
+        if ((TEST_CASE_Request == mesg->ctrl) && (TEST_CASE_ID == mesg->id))
+        {
+            cache->wr = 0;//临时清0
+            cache->rd = 0;
+            fifoBuf_getData(fifo_in, cache->buf_ptr + cache->wr, mesg->len);
+
+            fifoBuf_putData(fifo_out, cache->buf_ptr + cache->wr, mesg->len);
+            return 0;
+        }
+#endif
         mesg->len -= 4;
         ctx->ctrl = 0x43;
         ctx->SA = 0x05;
@@ -739,7 +765,7 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
         ringbuffer_putU32(cache, 0);
         mesg->len += 1;
 
-        fifoBuf_getData(fifo, cache->buf_ptr + cache->wr, mesg->len);
+        fifoBuf_getData(fifo_out, cache->buf_ptr + cache->wr, mesg->len);
         cache->wr += mesg->len;
         
 

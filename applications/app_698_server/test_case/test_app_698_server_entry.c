@@ -299,7 +299,7 @@ int main(void)
             cmocka_unit_test(test_app_698_server_LINK_get_11_fcs_err),
             //12 结束字符测试
             cmocka_unit_test(test_app_698_server_LINK_get_12_end),
-
+#if 0
         //1.1.2 test_app_698_server_LINK_set
             //1、客户机发起正确SET请求测试
             cmocka_unit_test(test_app_698_server_LINK_set_1_ok),
@@ -332,7 +332,7 @@ int main(void)
             cmocka_unit_test(test_app_698_server_LINK_ctrl_frm_other),
             //4、扰码标志位测试
             cmocka_unit_test(test_app_698_server_LINK_ctrl_sc),
-
+#endif
         //1.2 建立应用连接测试用例
         //1.3 断开应用连接测试用例
         //1.4 Get-Requeset数据类型测试用例

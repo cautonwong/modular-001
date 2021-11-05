@@ -94,6 +94,10 @@ extern struct pipeline_t pl_rx_from_serial;
 extern struct pipeline_t pl_rx_dlms;
 extern struct pipeline_t pl_tx_dlms;
 
+
+//
+#define MSG_MAGIC  0xe8f9ab39
+
 //to-be-deleted
 #define NIDAVELLIR_EPOCH 2020
 
@@ -174,10 +178,6 @@ struct context_645_t
     struct pipeline_t *pipeline;//to-be-deleted
 };
 
-#define SA_TYPE(SA)         ((SA)>>6) //0-单地址 1-通配地址 2-组地址 3-广播地址
-#define SA_LOGIC(SA)        (((SA)>>4)&0x01)
-#define SA_LOGIC_TYPE(SA)   (((SA)>>5)&0x01)
-#define SA_LEN(SA)          ((SA)&0x0f)
 
 
 struct context_698_t
@@ -189,7 +189,6 @@ struct context_698_t
     //作为从站方用的临时状态
     uint16_t index;//临时计数器
     uint8_t SA;
-    uint8_t LA;
     uint8_t ctrl;//接收到的控制字
     uint8_t step;
     uint8_t PIID;
@@ -301,16 +300,19 @@ struct message_t//command object
 #pragma pack(1)
 struct message_t//command object
 {
+    uint32_t magic;
     pid_t from;
     pid_t to;
     uint8_t ctrl;//控制字  用于区分  0代表内核消息 比如中断过来的消息或信号
     uint8_t qos;//重发机制  expire
-    uint16_t len;//data的长度 含id的长度
     uint32_t id;//请求的数据id
+    uint16_t len;//data的长度 含id的长度
     uint8_t oad_n;
+    uint8_t x;
 #ifdef WIN32
     int32_t err_no;
 #endif // 
+    uint16_t check;
 
 };
 

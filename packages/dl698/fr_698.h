@@ -23,6 +23,12 @@
 
 #define CA_TYPE_TER(ca)     ((ca&0xF0) == 0)
 
+#define SA_TYPE(SA)         ((SA&0xC0)>>6) //0-单地址 1-通配地址 2-组地址 3-广播地址
+#define SA_LOGIC(SA)        ((SA&0x30)>>4)
+#define SA_LOGIC_TYPE(SA)   ((SA&0x20)>>5)
+#define SA_LEN(SA)          ((SA)&0x0f)
+
+
 #define get_OAD_Class(oad)      (uint8_t)((oad&0xF0000000)>>28)
 #define get_OAD_Attribute(oad)  (uint8_t)((oad&0x00000F00)>>8)
 
@@ -122,7 +128,13 @@ enum dlt698_command_e
     //SECURITY-APDU
     SECURITY_Request        = 16,
     SECURITY_Response       = 144,
+#if WIN32
+    TEST_CASE_Request       = 255
+#endif
 };
+#if WIN32
+#define TEST_CASE_ID 0xFAFAFAFA
+#endif
 
 enum sa_type_e
 {

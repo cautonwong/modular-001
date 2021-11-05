@@ -260,7 +260,7 @@ int send_mesg(struct instance_t *instance,struct pipeline_t *pipeline,struct mes
         mesg->from = pipeline->id;
     }
     fifoBuf_putData(fifo, mesg, sizeof(struct message_t));
-    if (mesg->len > 4)//payload exist
+    if (mesg->len > 0)//payload exist
     {
 #ifdef VERBOSE
         printf(",");
@@ -269,7 +269,7 @@ int send_mesg(struct instance_t *instance,struct pipeline_t *pipeline,struct mes
             printf("%02x", payload[i]);
         }
 #endif
-        fifoBuf_putData(fifo, payload, mesg->len - 4);
+        fifoBuf_putData(fifo, payload, mesg->len);
     }
 #ifdef VERBOSE
     printf("}}\n");
@@ -309,15 +309,23 @@ int recv_mesg(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 int recv_mesg_header(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     uint16_t r = 0;
+    uint16_t check = 0;
     if (fifoBuf_getUsed(pipeline->in_queue) >= sizeof(struct message_t))
     {
         r = fifoBuf_getData(pipeline->in_queue, mesg, sizeof(struct message_t));
+        if (MSG_MAGIC == mesg->magic)
+        {
+            check = nd_get_crc16((uint8_t*)mesg, sizeof(struct message_t) - 2);
+            if (check == mesg->check)
+            {
 #if WIN32
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_BLUE | FOREGROUND_INTENSITY);
-        //printf("                   {%s,recv,%s,{0x%02x,%d,0x%04x", get_pipeline_name(instance, pipeline->id), get_pipeline_name(instance, mesg->from), mesg->ctrl, mesg->len, mesg->id);
-        //printf("}}\n");
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+                //printf("                   {%s,recv,%s,{0x%02x,%d,0x%04x", get_pipeline_name(instance, pipeline->id), get_pipeline_name(instance, mesg->from), mesg->ctrl, mesg->len, mesg->id);
+                //printf("}}\n");
 #endif
-        return r;
+                return r;
+            }
+        }
     }
 
     return 0;
