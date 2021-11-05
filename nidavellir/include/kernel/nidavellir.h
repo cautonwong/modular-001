@@ -435,6 +435,8 @@ struct resources_obj_t
     uint8_t block_name;                     //块名称
     uint8_t(*hook) (uint8_t* buf, void* p);  //resource的钩子函数
     void* p;
+    uint32_t max_num;
+    uint16_t unit_size;
 };
 
 #pragma pack(4)

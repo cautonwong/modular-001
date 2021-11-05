@@ -28,6 +28,25 @@ struct block_device_t
     struct list_head sibling;
 };
 
+struct log_manager_t
+{
+    uint16_t num;
+    uint16_t wr_ptr;
+    uint16_t unit_size;
+    uint16_t max_num;
+    uint16_t check_sum;
+};
+
+struct circular_info_t
+{
+    uint16_t unit_size;                       //单体记录大小
+    uint16_t record_period;                   //记录周期
+    uint32_t start_mark;                      //搜索时的起始标志
+    uint32_t end_mark;                        //搜索时的结束标志
+    uint16_t read_ptr;                        //读的位置
+    uint16_t valid_num;                       //符合的条数
+};
+
 void *__nd_malloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_size)
 {
     uint32_t free = block_size - *used;
@@ -351,6 +370,42 @@ int8_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t b
     return -1;
 }
 
+
+int8_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
+{
+    const struct block_device_t* device = NULL;
+    const struct driver_ops_t* driver = NULL;
+    struct resources_obj_t obj;
+    uint8_t ret = 0x00;
+
+    memset((uint8_t*)&obj, 0x00, sizeof(obj));
+    ret = look_up_map(instance, id, buf, 0x01, &obj);
+
+    if (ret <= 0x01)
+    {
+        return ret;
+    }
+    //查找设备
+    device = look_up_device(instance, obj.device_name);
+    driver = device->dev->dev_driver_ops;
+    if (device != NULL)
+    {
+        if ((driver != NULL) && (driver->dev_write != NULL))
+        {
+            driver->dev_write(device->dev, obj.offset, obj.length, buf);
+            if (obj.hook != NULL)
+            {
+                obj.hook(buf, obj.p);
+            }
+
+            return 0x01;
+        }
+    }
+
+    return -1;
+}
+
+
 int8_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size)
 {
     struct block_device_t* device = NULL;
@@ -393,9 +448,121 @@ int8_t nd_set_block(struct instance_t* instance, uint8_t device_name, uint8_t bl
     return -1;
 }
 
-int8_t nd_set(struct instance_t* instance, struct dlms_obj_t* obj, uint8_t* buf, uint16_t buf_size)
+#if 1
+uint8_t circular_image_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, struct circular_info_t* info)
 {
-    return -1;
+    struct block_device_t* device = NULL;
+    const struct driver_ops_t* driver = NULL;
+    struct log_manager_t manager;
+    struct resources_obj_t obj;
+    uint8_t ret = 0x00;
+    uint32_t addr = 0x00;
+
+    memset((uint8_t*)&obj, 0x00, sizeof(obj));
+    ret = look_up_map(instance, id, buf, 0x01, &obj);
+
+    memset((uint8_t*)&manager, 0x00, sizeof(struct log_manager_t));
+    device = look_up_device(instance, obj.device_name);
+    driver = device->dev->dev_driver_ops;
+
+    if (driver->dev_read != NULL)//先读管理区
+    {
+        if (true != driver->dev_read(device->dev, obj.offset, sizeof(struct log_manager_t), (uint8_t*)&manager))
+        {
+            return false;
+        }
+
+        if (0xA5A5 + manager.num + manager.unit_size + manager.wr_ptr != manager.check_sum)
+        {
+            manager.max_num = obj.max_num;
+            manager.unit_size = obj.unit_size;
+            manager.num = 0;
+            manager.wr_ptr = 0;
+        }
+    }
+
+    addr = obj.offset + manager.wr_ptr * manager.unit_size + sizeof(struct log_manager_t);
+    if (NULL != driver->dev_write)
+    {
+        ret = driver->dev_write(device->dev, addr, manager.unit_size, buf);
+    }
+
+    manager.wr_ptr++;
+    manager.num++;
+    if (manager.wr_ptr >= manager.max_num)
+    {
+        manager.wr_ptr = 0x00;
+    }
+    if (manager.num >= manager.max_num)
+    {
+        manager.num = manager.max_num;
+    }
+    manager.check_sum = 0xA5A5 + manager.num + manager.unit_size + manager.wr_ptr;
+    if (NULL != driver->dev_write)
+    {
+        ret = driver->dev_write(device->dev, obj.offset, sizeof(struct log_manager_t), (uint8_t*)&manager);
+    }
+
+    return ret;
 }
 
+uint8_t circular_image_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, struct circular_info_t* info)
+{
+    struct block_device_t* device = NULL;
+    const struct driver_ops_t* driver = NULL;
+    struct log_manager_t manager;
+    struct resources_obj_t obj;
+    uint32_t addr = 0x00;
+    uint8_t ret = true;
 
+    if (info != NULL)
+    {
+        memset((uint8_t*)&obj, 0x00, sizeof(obj));
+        ret = look_up_map(instance, id, buf, 0x01, &obj);
+
+        memset((uint8_t*)&manager, 0x00, sizeof(struct log_manager_t));
+        device = look_up_device(instance, obj.device_name);
+        driver = device->dev->dev_driver_ops;
+
+        if (info->valid_num == 0x00)  //第一次读
+        {
+            memset((uint8_t*)&manager, 0x00, sizeof(struct log_manager_t));
+            if (driver->dev_read != NULL)//先读管理区
+            {
+                if (true != driver->dev_read(device->dev, obj.offset, sizeof(struct log_manager_t), (uint8_t*)&manager))
+                {
+                    return false;
+                }
+
+                if (0xA5A5 + manager.num + manager.unit_size + manager.wr_ptr != manager.check_sum)
+                {
+                    return false;
+                }
+            }
+
+            info->valid_num = manager.num;
+            if (manager.num == manager.max_num)
+            {
+                info->read_ptr = manager.wr_ptr;
+            }
+            else
+            {
+                info->read_ptr = 0x00;
+            }
+        }
+
+        addr = obj.offset + info->read_ptr * manager.unit_size + sizeof(struct log_manager_t);
+        if (info->read_ptr < info->valid_num)
+        {
+            info->read_ptr++;
+        }
+
+        if (NULL != driver->dev_read)
+        {
+            ret = driver->dev_read(device->dev, addr, manager.unit_size, buf);
+        }
+    }
+
+    return ret;
+}
+#endif
