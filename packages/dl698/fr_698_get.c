@@ -12,7 +12,7 @@
 
 
 
-int fr_serve_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
@@ -23,7 +23,7 @@ int fr_serve_one_object(struct instance_t* instance, struct pipeline_t* pipeline
     uint16_t offset = 0;
 
     if (((mesg->ctrl & 0x7f) == 0x06) ||
-        (mesg->ctrl & 0x7f) == 0x07)
+        ((mesg->ctrl & 0x7f) == 0x07))
     {
         uint8_t type = fifoBuf_getByte(fifo);
         if (type == 0x09)//octet-string
@@ -106,7 +106,7 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
             mesg->id = buf_to_uint32_msb(p + cache->wr);
             cache->wr += 4;
 
-            if (fr_serve_one_object(instance, pipeline, mesg) < 0)
+            if (fr_get_one_object(instance, pipeline, mesg) < 0)
             {
                 return DAR_OTHERS_ERROR;
             }

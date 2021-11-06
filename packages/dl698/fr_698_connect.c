@@ -293,7 +293,7 @@ err:
             fifoBuf_getData(fifo, p + cache->wr, 4);
             mesg->id = buf_to_uint32_msb(p + cache->wr);
             cache->wr += 4;
-            fr_serve_one_object(instance, pipeline, mesg);
+            //fr_serve_one_object(instance, pipeline, mesg);
         }
     }
 

@@ -246,10 +246,6 @@ int baremetal_loop(struct instance_t* instance)
 
 int send_mesg(struct instance_t *instance,struct pipeline_t *pipeline,struct message_t *mesg, uint8_t* payload)
 {
-#ifdef VERBOSE
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-    printf("                   {%s,send,%s,{0x%02x,%d,0x%04x", get_pipeline_name(instance, pipeline->id), get_pipeline_name(instance, mesg->to), mesg->ctrl, mesg->len,mesg->id);
-#endif
     struct  fifo_t* fifo = get_pipeline_stdin(instance,mesg->to);
     if (pipeline == NULL)
     {
@@ -262,18 +258,9 @@ int send_mesg(struct instance_t *instance,struct pipeline_t *pipeline,struct mes
     fifoBuf_putData(fifo, mesg, sizeof(struct message_t));
     if (mesg->len > 0)//payload exist
     {
-#ifdef VERBOSE
-        printf(",");
-        for (size_t i = 0; i < mesg->len-4; i++)
-        {
-            printf("%02x", payload[i]);
-        }
-#endif
+        log_hex(payload, mesg->len);
         fifoBuf_putData(fifo, payload, mesg->len);
     }
-#ifdef VERBOSE
-    printf("}}\n");
-#endif
     return 0;
 }
 
@@ -283,23 +270,12 @@ int recv_mesg(struct instance_t* instance, struct pipeline_t* pipeline, struct m
     if (fifoBuf_getUsed(pipeline->in_queue) >= sizeof(struct message_t))
     {
         r = fifoBuf_getData(pipeline->in_queue, mesg, sizeof(struct message_t));
-#ifdef VERBOSE
-        printf("                   {%s,recv,%s,{0x%02x,%d,0x%04x", get_pipeline_name(instance, pipeline->id), get_pipeline_name(instance, mesg->from), mesg->ctrl, mesg->len, mesg->id);
-#endif
+
         if (mesg->len > 4)
         {
             fifoBuf_getData(pipeline->in_queue, payload, mesg->len - 4);
-#ifdef VERBOSE
-            printf(",");
-            for (size_t i = 0; i < mesg->len - 4; i++)
-            {
-                printf("%02x", payload[i]);
-            }
-#endif
+            log_hex(payload, mesg->len);
         }
-#ifdef VERBOSE
-        printf("}}\n");
-#endif
         return r;
     }
 

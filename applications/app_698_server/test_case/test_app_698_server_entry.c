@@ -8,8 +8,12 @@
 
 #include "test_app_698_server_uniformity.h"
 
-extern int app_698_rx_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-extern int app_698_tx_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int app_rx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int app_tx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int app_rx_client_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int app_tx_client_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+
+
 extern int open_serial_port(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int close_serial_port(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int fr_rx_data_from_serial(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
@@ -54,50 +58,97 @@ int let_nd_get_return_ok(struct instance_t* instance, uint32_t id, uint8_t* buf,
     return 0;
 }
 
-//准备测试环境
-const struct filter_t fr_rx_698[1] =
-{
-    {0x01,app_698_rx_entry,0,13},
-};
-
-struct pipeline_t pl_rx_698 =
-{
-    pid_rx_698,
-    "pl_rx_698",
-    &ctx_698,
-    &stdin_698,//serial driver isr put byte into this 
-    &stdout_698,//pl_rx_698 put apdu into this 
-    app_698_rx_entry,
-    sizeof(fr_rx_698) / sizeof(fr_rx_698[0]),
-    fr_rx_698,
-};
-
-const struct filter_t fr_tx_698[1] =
-{
-    {0x01,app_698_tx_entry,0,13},
-};
-
-struct pipeline_t pl_tx_698 =
-{
-    pid_tx_698,
-    "pl_tx_698",
-    &ctx_698,
-    &pipe_tx_698_req,
-    &stdout_698,
-    app_698_tx_entry,
-    sizeof(fr_tx_698) / sizeof(fr_tx_698[0]),
-    fr_tx_698,
-};
 
 struct fifo_t stdin_698;
-struct fifo_t pipe_tx_698_req;
 struct fifo_t stdout_698;
+struct fifo_t pipe_tx_698_req;
 
+//表接收处理server_698
+const struct filter_t fr_rx_server_698[1] =
+{
+    {0x01,app_rx_server_698_entry,0,13},
+};
+
+struct context_698_t ctx_rx_server_698;
+struct pipeline_t pl_meter_rx_from_serial =
+{
+    pid_rx_698,
+    "pl_rx_server_698",
+    &ctx_rx_server_698,
+    &stdin_698,//serial driver isr put byte into this 
+    &stdout_698,//pl_rx_server_698 put apdu into this 
+    app_rx_server_698_entry,
+    sizeof(fr_rx_server_698) / sizeof(fr_rx_server_698[0]),
+    fr_rx_server_698,
+};
+
+//表发送处理server_698
+const struct filter_t fr_tx_server_698[1] =
+{
+    {0x01,app_tx_server_698_entry,0,13},
+};
+
+struct context_698_t ctx_tx_server_698;
+struct pipeline_t pl_meter_tx_to_serial =
+{
+    pid_tx_698,
+    "pl_tx_server_698",
+    &ctx_tx_server_698,
+    &pipe_tx_698_req,
+    &stdout_698,
+    app_tx_server_698_entry,
+    sizeof(fr_tx_server_698) / sizeof(fr_tx_server_698[0]),
+    fr_tx_server_698,
+};
+
+/////////////////////////////////////////////////////////
 struct fifo_t stdin_client_698;
 struct fifo_t stdout_client_698;
 
-struct context_698_t ctx_698;
-struct context_698_t ctx_client_698;
+const struct filter_t serial_tx_to_meter[1] =
+{
+    {0x01,app_tx_client_698_entry,0,13},
+};
+struct context_698_t ctx_tx_client_698;
+struct pipeline_t pl_serial_tx_to_meter =
+{
+    pid_client_tx_698,
+    "pl_serial_tx_to_meter",
+    &ctx_tx_client_698,
+    &stdout_client_698,
+    &stdin_698,
+    app_tx_client_698_entry,
+    sizeof(serial_tx_to_meter) / sizeof(serial_tx_to_meter[0]),
+    serial_tx_to_meter,
+};
+
+const struct filter_t serial_rx_from_meter[1] =
+{
+    {0x01,app_rx_client_698_entry,0,13},
+};
+
+struct context_698_t ctx_rx_client_698;
+struct pipeline_t pl_serial_rx_from_meter =
+{
+    pid_client_rx_698,
+    "pl_serial_rx_from_meter",
+    &ctx_rx_client_698,
+    &stdout_698,
+    &stdout_client_698,
+    app_rx_client_698_entry,
+    sizeof(serial_rx_from_meter) / sizeof(serial_rx_from_meter[0]),
+    serial_rx_from_meter,
+};
+
+//本app包含的pipeline
+struct pipeline_t* pipelines[] =
+{
+    &pl_serial_tx_to_meter,
+    &pl_meter_rx_from_serial,
+    &pl_meter_tx_to_serial,
+    &pl_serial_rx_from_meter,
+};
+
 
 struct context_serial_t ctx_serial_1 = { {L"\\\\.\\com10"},NULL };
 
@@ -136,58 +187,7 @@ struct pipeline_t pl_tx_to_serial =
 };
 
 
-const struct filter_t plc_tx_to_meter[1] =
-{
-    {0x01,app_698_tx_entry,0,13},
-};
-
-struct pipeline_t pl_plc_tx_to_meter =
-{
-    pid_client_tx_698,
-    "pl_plc_tx_to_meter",
-    &ctx_client_698,
-    &stdout_client_698,
-    &stdin_698,
-    app_698_tx_entry,
-    sizeof(plc_tx_to_meter) / sizeof(plc_tx_to_meter[0]),
-    plc_tx_to_meter,
-};
-
-const struct filter_t plc_rx_from_meter[1] =
-{
-    {0x01,app_698_rx_entry,0,13},
-};
-
-struct pipeline_t pl_plc_rx_from_meter =
-{
-    pid_client_rx_698,
-    "pl_plc_rx_from_meter",
-    &ctx_client_698,//
-    &stdout_698,//
-    NULL,//
-    app_698_rx_entry,
-    sizeof(plc_rx_from_meter) / sizeof(plc_rx_from_meter[0]),
-    plc_rx_from_meter,
-};
-
-
-
-//本app包含的pipeline
-struct pipeline_t* pipelines[] =
-{
-    &pl_plc_tx_to_meter,   
-    &pl_rx_698,
-    &pl_tx_698,
-    &pl_plc_rx_from_meter,
-
-};
-
 //*********************上述的初始化方法要删掉 wong*********************//
-uint8_t stdout_698_server_buf[512] = { 0 };
-uint8_t stdin_698_server_buf[512] = { 0 };
-uint8_t stdin_698_client_buf[512] = { 0 };
-uint8_t stdout_698_client_buf[512] = { 0 };
-
 struct recipe_t recipe;
 int test_app_setup(void** state)
 {
@@ -196,25 +196,29 @@ int test_app_setup(void** state)
     recipe.pipeline_n = sizeof(pipelines) / sizeof(pipelines[0]);
     recipe.name = 0;
     instance->recipe = &recipe;
-    //fifoBuf_init(&stdout_698, malloc(512), 512);
-    //fifoBuf_init(&stdin_698, malloc( 512), 512);
-    fifoBuf_init(&stdout_698, stdout_698_server_buf, 512);
-    fifoBuf_init(&stdin_698, stdin_698_server_buf, 512);
+
+    fifoBuf_init(&stdout_698, malloc(512), 512);
+    fifoBuf_init(&stdin_698, malloc( 512), 512);
     fifoBuf_init(&pipe_tx_698_req, malloc(512), 512);
+
     instance->cache = malloc(256);
     instance->cache2 = malloc(sizeof(struct cache_t));
     init_cache(instance->cache2, instance->cache, 256);
-    uint8_t* buf = malloc(2048);
-    ctx_698.apdu = malloc(sizeof(struct fifo_t));
-    fifoBuf_init(ctx_698.apdu, buf, 2048);
+    
+    ctx_rx_server_698.apdu = malloc(sizeof(struct fifo_t));
+    fifoBuf_init(ctx_rx_server_698.apdu, malloc(2048), 2048);
 
-    //fifoBuf_init(&stdin_client_698, malloc(512), 512);
-    //fifoBuf_init(&stdout_client_698, malloc(512), 512);
-    fifoBuf_init(&stdin_client_698, stdin_698_client_buf, 512);
-    fifoBuf_init(&stdout_client_698, stdout_698_client_buf, 512);
+    ctx_tx_server_698.apdu = malloc(sizeof(struct fifo_t));
+    fifoBuf_init(ctx_tx_server_698.apdu, malloc(2048), 2048);
+    
+    ctx_rx_client_698.apdu = malloc(sizeof(struct fifo_t));
+    fifoBuf_init(ctx_rx_client_698.apdu, malloc(2048), 2048);
 
-    ctx_client_698.apdu = malloc(sizeof(struct fifo_t));
-    fifoBuf_init(ctx_client_698.apdu, malloc(2048), 2048);
+    ctx_tx_client_698.apdu = malloc(sizeof(struct fifo_t));
+    fifoBuf_init(ctx_tx_client_698.apdu, malloc(2048), 2048);
+    
+    fifoBuf_init(&stdin_client_698, malloc(512), 512);
+    fifoBuf_init(&stdout_client_698, malloc(512), 512);
 
     *state = instance;
     return 0;
@@ -246,7 +250,7 @@ void test_case_running_by_self(void** state)
     while (1)
     {
         fr_rx_data_from_serial(instance, &pl_rx_from_serial, &mesg);
-        app_698_rx_entry(instance, &pl_rx_698,&mesg);
+        app_rx_server_698_entry(instance, &pl_meter_rx_from_serial, &mesg);
         fr_tx_data_to_serial(instance, &pl_tx_to_serial, &mesg);
     }
 }
@@ -312,13 +316,13 @@ int main(void)
             //5、错误通信地址测试
             cmocka_unit_test(test_app_698_server_LINK_set_5_addr_err),
             //6、错误客户机地址测试
-            //cmocka_unit_test(test_app_698_server_LINK_set_6_CA_err), CA是否判断
+            cmocka_unit_test(test_app_698_server_LINK_set_6_CA_err), 
             //7、错误逻辑地址测试
             cmocka_unit_test(test_app_698_server_LINK_set_7_logic_addr_err),
             //8、错误HCS帧头校验测
             cmocka_unit_test(test_app_698_server_LINK_set_8_hcs),
             //9、错误SET-Request测试
-            //cmocka_unit_test(test_app_698_server_LINK_set_9_err),
+            cmocka_unit_test(test_app_698_server_LINK_set_9_err),
             //10、错误FCS帧校验测试
             cmocka_unit_test(test_app_698_server_LINK_set_10_fcs),
             //11、无结束字符测试
@@ -332,7 +336,7 @@ int main(void)
             //3、分帧传输其他测试项
             //cmocka_unit_test(test_app_698_server_LINK_ctrl_frm_other),
             //4、扰码标志位测试
-            //cmocka_unit_test(test_app_698_server_LINK_ctrl_sc),
+            cmocka_unit_test(test_app_698_server_LINK_ctrl_sc),
 
         //1.2 建立应用连接测试用例
         //1.3 断开应用连接测试用例

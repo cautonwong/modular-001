@@ -11,7 +11,7 @@ int __nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t bu
     uint8_t ret = 0x00;
 
     memset((uint8_t*)&obj, 0x00, sizeof(obj));
-    return resource_map_698(instance, id, buf, 0x01, &obj);
+    return resource_map_698(instance, id, buf, RESOURCE_MAP_698_GET, &obj);
 }
 
 int __nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
@@ -22,7 +22,7 @@ int __nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t bu
     uint8_t ret = 0x00;
 
     memset((uint8_t*)&obj, 0x00, sizeof(obj));
-    return resource_map_698(instance, id, buf, 0x02, &obj);
+    return resource_map_698(instance, id, buf, RESOURCE_MAP_698_SET, &obj);
 }
 
 int __nd_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
@@ -33,5 +33,5 @@ int __nd_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t
     uint8_t ret = 0x00;
 
     memset((uint8_t*)&obj, 0x00, sizeof(obj));
-    return resource_map_698(instance, id, buf, 0x03, &obj);
+    return resource_map_698(instance, id, buf, RESOURCE_MAP_698_ACTION, &obj);
 }
