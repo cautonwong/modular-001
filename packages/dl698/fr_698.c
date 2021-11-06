@@ -205,7 +205,7 @@ int matcher_698(void* pctx, uint8_t* b)
     case 5: //扩展逻辑地址处理
         ctx->hcs = update_crc16(ctx->hcs, byte);
         ctx->fcs = update_crc16(ctx->fcs, byte);
-        ctx->LA = byte;
+//        ctx->LA = byte;
         ctx->index = 0;
         ctx->step = 6;
         return FRM_OK;

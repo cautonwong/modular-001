@@ -87,6 +87,7 @@ int update_instance_rtc(struct instance_t* instance)
 
 uint8_t nd_memory[20 * 1024];
 
+extern uint32_t* add_inside_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t inside_block_name, uint32_t block_size);
 extern void* nd_malloc(struct instance_t* instance, uint8_t block_name, uint32_t size);
 extern uint32_t* add_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size);
 extern struct resource_map_t* register_map(struct instance_t* instance, uint8_t map_name,
@@ -196,7 +197,20 @@ int baremetal_instance_entry_main(int argc, char** argv)
     pl_meter_base.in_queue = nd_malloc(instance, mbase_control_block_name, sizeof(struct fifo_t));
     fifoBuf_init(pl_meter_base.in_queue, nd_malloc(instance, mbase_control_block_name, 256), 256);
     pl_meter_base.out_queue = NULL;
-
+    //mbase分三个区
+    //mbase_block_static
+    uint8_t mbase_block_static = 0x05;
+    size_t mbase_block_static_size = offsetof(struct mbase_control_block_t, static_section_start) - offsetof(struct mbase_control_block_t, static_section_end);
+    uint32_t static_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_static, mbase_block_static_size);
+    //mbase_block_cache
+    uint8_t mbase_block_cache = 0x06;
+    size_t mbase_block_cache_size = offsetof(struct mbase_control_block_t, cache_section_start) - offsetof(struct mbase_control_block_t, cache_section_end);
+    uint32_t cache_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_cache, mbase_block_cache_size);
+    //mbase_block_persistent
+    uint8_t mbase_block_persistent = 0x07;
+    size_t mbase_block_persistent_size = offsetof(struct mbase_control_block_t, persistent_section_start) - offsetof(struct mbase_control_block_t, persistent_section_end);
+    uint32_t persistent_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_persistent, mbase_block_persistent_size);
+    
     //注册EPROM  
     add_device(instance, RES_DEV_EEPROM, &eeprom_dev);
     //注册FLASH
