@@ -419,6 +419,15 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
         fifoBuf_removeData(fifo, ctx->min_len + 2);
         return 0;
     }
+    //控制域判断
+    if (!((0 == DIR(ctx->ctrl)) && (1 == PRM(ctx->ctrl))))
+    {
+        return 0;
+    }
+    if(is_cmd(ctx->ctrl))
+    { 
+        return 0;
+    }
     //地址判断
     if (0 != SA_LOGIC(ctx->SA))
     {

@@ -299,7 +299,7 @@ int main(void)
             cmocka_unit_test(test_app_698_server_LINK_get_11_fcs_err),
             //12 结束字符测试
             cmocka_unit_test(test_app_698_server_LINK_get_12_end),
-#if 0
+
         //1.1.2 test_app_698_server_LINK_set
             //1、客户机发起正确SET请求测试
             cmocka_unit_test(test_app_698_server_LINK_set_1_ok),
@@ -312,27 +312,28 @@ int main(void)
             //5、错误通信地址测试
             cmocka_unit_test(test_app_698_server_LINK_set_5_addr_err),
             //6、错误客户机地址测试
-            cmocka_unit_test(test_app_698_server_LINK_set_6_CA_err),
+            //cmocka_unit_test(test_app_698_server_LINK_set_6_CA_err), CA是否判断
             //7、错误逻辑地址测试
             cmocka_unit_test(test_app_698_server_LINK_set_7_logic_addr_err),
             //8、错误HCS帧头校验测
             cmocka_unit_test(test_app_698_server_LINK_set_8_hcs),
             //9、错误SET-Request测试
-            cmocka_unit_test(test_app_698_server_LINK_set_9_err),
+            //cmocka_unit_test(test_app_698_server_LINK_set_9_err),
             //10、错误FCS帧校验测试
             cmocka_unit_test(test_app_698_server_LINK_set_10_fcs),
             //11、无结束字符测试
             cmocka_unit_test(test_app_698_server_LINK_set_11_end),
+
         //1.1.3 控制字测试用例
             //1、传输方向位DIR与启动标志位PRM测试
             cmocka_unit_test(test_app_698_server_LINK_ctrl_dir_prm),
             //2、分帧标志测试
-            cmocka_unit_test(test_app_698_server_LINK_ctrl_frm),
+            //cmocka_unit_test(test_app_698_server_LINK_ctrl_frm),
             //3、分帧传输其他测试项
-            cmocka_unit_test(test_app_698_server_LINK_ctrl_frm_other),
+            //cmocka_unit_test(test_app_698_server_LINK_ctrl_frm_other),
             //4、扰码标志位测试
-            cmocka_unit_test(test_app_698_server_LINK_ctrl_sc),
-#endif
+            //cmocka_unit_test(test_app_698_server_LINK_ctrl_sc),
+
         //1.2 建立应用连接测试用例
         //1.3 断开应用连接测试用例
         //1.4 Get-Requeset数据类型测试用例
