@@ -189,6 +189,7 @@ struct context_698_t
     //作为从站方用的临时状态
     uint16_t index;//临时计数器
     uint8_t SA;
+    uint8_t LA;
     uint8_t ctrl;//接收到的控制字
     uint8_t step;
     uint8_t PIID;
@@ -560,5 +561,6 @@ int nidavellir_run(struct instance_t* instance);
 int nidavellir_loop_n(struct instance_t *instance,int n);
 int nidavellir_loop_n_with_rtc_running(struct instance_t* instance, int n);
 
+struct pipeline_t* get_pipeline(struct instance_t* instance, pid_t id);
 
 #endif

@@ -7,6 +7,7 @@
 #define is_scrambler_set(ctrl) ((((ctrl)>>3)&0x01) != 0)
 #define DIR(ctrl)  ((((ctrl)>>7)&0x01))
 #define PRM(ctrl)  ((((ctrl)>>6)&0x01))
+#define is_cmd(ctrl)  ((ctrl&0x03) != 3)
 #define is_segment_set(ctrl)  ((((ctrl)>>5)&0x01) != 0)
 #define set_segment(ctrl)  (ctrl |= (1<<5))
 #define segment_no(s)  (s & 0xfff)
