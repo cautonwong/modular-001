@@ -193,7 +193,7 @@ uint32_t __get_connect_info(uint32_t val, uint32_t cfg_val)
     return 1;
 }
 
-static __consistency_block(uint8_t *data, uint8_t* cfg_data, uint8_t len)
+static int __consistency_block(uint8_t *data, uint8_t* cfg_data, uint8_t len)
 {
     for (uint8_t i = 0; i < len; i++)//商定的协议一致性块
     {
