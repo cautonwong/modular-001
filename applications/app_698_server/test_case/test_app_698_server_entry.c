@@ -339,6 +339,25 @@ int main(void)
             cmocka_unit_test(test_app_698_server_LINK_ctrl_sc),
 
         //1.2 建立应用连接测试用例
+            //1、期望的应用层协议版本号测试
+            cmocka_unit_test(test_app_698_server_CONNECT_Request_1_version),
+            //2、期望的协议一致性块测试
+            cmocka_unit_test(test_app_698_server_CONNECT_Request_2_pro),
+            //3、期望的功能一致性块测试
+            cmocka_unit_test(test_app_698_server_CONNECT_Request_3_func),
+            //4、客户机发送帧最大尺寸
+            cmocka_unit_test(test_app_698_server_CONNECT_Request_4_tx_max),
+            //5、客户机接收帧最大尺寸
+            cmocka_unit_test(test_app_698_server_CONNECT_Request_5_rx_max),
+            //7、客户机接收帧最大窗口尺寸
+            cmocka_unit_test(test_app_698_server_CONNECT_Request_7_win_max),
+            //8、客户机最大可处理APDU尺寸
+            cmocka_unit_test(test_app_698_server_CONNECT_Request_8_apdu_max),
+            //9、期望的应用连接超时时间
+            cmocka_unit_test(test_app_698_server_CONNECT_Request_9_timeout),
+            //10、认证请求对象
+            cmocka_unit_test(test_app_698_server_CONNECT_Request_10_auth),
+
         //1.3 断开应用连接测试用例
         //1.4 Get-Requeset数据类型测试用例
         //1.5 Get-Response数据类型测试用例

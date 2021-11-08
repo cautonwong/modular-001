@@ -16,8 +16,8 @@ enum connect_result_e
 struct connect_cfg_info_t
 {
     uint32_t version;
-    uint8_t  *protocal_conformance; //=bit-string(SIZE(64))
-    uint8_t  *function_conformance; //=bit-string(SIZE(128))   
+    uint8_t  protocal_conformance[8]; //=bit-string(SIZE(64))
+    uint8_t  function_conformance[16]; //=bit-string(SIZE(128))   
     uint16_t link_send_buf_size;
     uint16_t link_recv_buf_size;   
     uint16_t apply_req_buf_size;
@@ -25,24 +25,18 @@ struct connect_cfg_info_t
     uint8_t  client_window_num;
     uint16_t client_process_apdu_size;
     uint16_t connect_timeout;
-
-
-    //uint16_t block_timeout;
-    //uint8_t  security_mechanism;
-    //uint8_t  acd_and_follow_report_enable; /**< bit0: acd;  bit1:follow */
 };
 
-
+#pragma pack(1)
 struct connect_request_t
 {
-    uint8_t  piid;
-    uint32_t pro_ver;
+    uint16_t pro_ver;
     uint8_t  protocal_conformance[8];   //期望的协议一致性块 ∷=bit-string(SIZE(64))
     uint8_t  function_conformance[16];  //期望的功能一致性块 ∷=bit-string(SIZE(128))
     uint16_t send_frm_size;             //客户机发送帧最大尺寸 long-unsigned
     uint16_t recv_frm_size;             //客户机接收帧最大尺寸 long-unsigned
     uint8_t  client_win_size;           //客户机接收帧最大窗口尺寸 unsigned
-    uint32_t client_apdu_size;          //客户机最大可处理帧尺寸 long-unsigned
+    uint16_t client_apdu_size;          //客户机最大可处理帧尺寸 long-unsigned
     uint32_t connect_time;              //期望的应用连接超时时间 double-long-unsigned，
     uint8_t  connect_mode;              //认证模式enum connect_mode_e
 };
@@ -199,6 +193,15 @@ uint32_t __get_connect_info(uint32_t val, uint32_t cfg_val)
     return 1;
 }
 
+static __consistency_block(uint8_t *data, uint8_t* cfg_data, uint8_t len)
+{
+    for (uint8_t i = 0; i < len; i++)//商定的协议一致性块
+    {
+        //temp = dl698_byte_swap(*p++);
+        //session->protocal_conformance[i] = temp & para->protocal_conformance[i];
+        data[i] = data[i] & cfg_data[i];
+    }
+}
 
 int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -208,7 +211,10 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
     uint8_t* p = cache->buf_ptr;
     struct connect_request_t connect = {0};
     struct connect_cfg_info_t *p_connect = ctx->connect_info;
-
+    struct connect_cfg_info_t cfg = {
+        0
+    };
+    struct connect_cfg_info_t* pcfg_connect = &cfg;
     uint8_t result = DAR_SUCCESS;
 
     if(SA_TYPE_GENERAL == SA_TYPE(ctx->SA)) // 通配地址 拒绝服务
@@ -216,6 +222,8 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
         result = DAR_OTHERS_ERROR;
         goto err;
     }
+
+    fifoBuf_getData(fifo, p, sizeof(struct connect_request_t));
 
     memcpy(&connect, p, sizeof(struct connect_request_t));
 
@@ -225,35 +233,23 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
         goto err;
     }
 
-    if(connect.pro_ver != p_connect->version)//期望的应用层协议版本号
-    {
-        result = DAR_OTHERS_ERROR;
-        goto err;
-    }
+    //if(connect.pro_ver != p_connect->version)//期望的应用层协议版本号 不做判断
 
-    for (uint8_t i = 0; i < 8; i++)//商定的协议一致性块
-    {
-        //temp = dl698_byte_swap(*p++);
-        //session->protocal_conformance[i] = temp & para->protocal_conformance[i];
-        //protocal_conformance[i] = dl698_byte_swap(session->protocal_conformance[i]);
-    }
+    //商定的协议一致性块
+    __consistency_block(connect.protocal_conformance, pcfg_connect->protocal_conformance, 8);
+    //商定的功能一致性块
+    __consistency_block(connect.function_conformance, pcfg_connect->function_conformance, 16);
 
-    for (uint8_t i = 0; i < 16; i++)//商定的功能一致性块
-    {
-        //temp = dl698_byte_swap(*p++);
-        //session->function_conformance[i] = temp & para->function_conformance[i];
-        //function_conformance[i] = dl698_byte_swap(session->function_conformance[i]);
-    }
     //客户机发送帧最大尺寸
-    connect.send_frm_size = __get_connect_info(connect.send_frm_size, p_connect->link_recv_buf_size);
+    connect.send_frm_size = __get_connect_info(connect.send_frm_size, pcfg_connect->link_recv_buf_size);
     // 客户机接收帧最大尺寸
-    connect.recv_frm_size = __get_connect_info(connect.recv_frm_size, p_connect->link_send_buf_size);
+    connect.recv_frm_size = __get_connect_info(connect.recv_frm_size, pcfg_connect->link_send_buf_size);
     // 客户机接收帧最大窗口尺寸
-    connect.client_win_size = __get_connect_info(connect.client_win_size, p_connect->client_process_apdu_size);
+    connect.client_win_size = __get_connect_info(connect.client_win_size, pcfg_connect->client_process_apdu_size);
     // 客户机最大可处理帧尺寸
-    connect.client_apdu_size = __get_connect_info(connect.client_apdu_size, p_connect->client_process_apdu_size);
+    connect.client_apdu_size = __get_connect_info(connect.client_apdu_size, pcfg_connect->client_process_apdu_size);
     /* 期望的应用连接超时时间 */
-    connect.connect_time = __get_connect_info(connect.connect_time, p_connect->connect_timeout);
+    connect.connect_time = __get_connect_info(connect.connect_time, pcfg_connect->connect_timeout);
 
     if(0 == connect.connect_mode) //公共连接[0] NullSecurity
     {

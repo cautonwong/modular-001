@@ -205,7 +205,7 @@ int matcher_698(void* pctx, uint8_t* b)
     case 5: //扩展逻辑地址处理
         ctx->hcs = update_crc16(ctx->hcs, byte);
         ctx->fcs = update_crc16(ctx->fcs, byte);
-//        ctx->LA = byte;
+        ctx->LA = byte;
         ctx->index = 0;
         ctx->step = 6;
         return FRM_OK;
@@ -532,7 +532,10 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     fifoBuf_removeData(fifo, 9 + SA_LEN(ctx->SA));
 
     ctx->service = fifoBuf_getByte(fifo);
-    ctx->choice = fifoBuf_getByte(fifo);
+    if (!((CONNECT_Request == ctx->service) || (RELEASE_Request == ctx->service)))
+    {
+        ctx->choice = fifoBuf_getByte(fifo);
+    }
     if ((ctx->service > ERROR_S_Response) || (ctx->choice > 9))
     {
         ctx->fr_err = FRM_CTRL_ERR;
@@ -555,7 +558,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     fifoBuf_putByte(cache, ctx->PIID);
 
     mesg->oad_n = 0;
-    if (ctx->choice != 1)
+    if (ctx->choice > 1)
     {
         mesg->oad_n = fifoBuf_getByte(fifo);
         fifoBuf_putByte(cache, mesg->oad_n);

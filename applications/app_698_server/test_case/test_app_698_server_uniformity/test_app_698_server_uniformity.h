@@ -68,4 +68,35 @@ void test_app_698_server_LINK_ctrl_frm_other(void** state);
 //4、扰码标志位测试
 void test_app_698_server_LINK_ctrl_sc(void** state);
 
+
+//////////////////////////////////////////////////////////////
+
+//1、期望的应用层协议版本号测试
+void test_app_698_server_CONNECT_Request_1_version(void** state);
+
+//2、期望的协议一致性块测试
+void test_app_698_server_CONNECT_Request_2_pro(void** state);
+
+//3、期望的功能一致性块测试
+void test_app_698_server_CONNECT_Request_3_func(void** state);
+
+//4、客户机发送帧最大尺寸
+void test_app_698_server_CONNECT_Request_4_tx_max(void** state);
+
+//5、客户机接收帧最大尺寸
+void test_app_698_server_CONNECT_Request_5_rx_max(void** state);
+
+//7、客户机接收帧最大窗口尺寸
+void test_app_698_server_CONNECT_Request_7_win_max(void** state);
+
+//8、客户机最大可处理APDU尺寸
+void test_app_698_server_CONNECT_Request_8_apdu_max(void** state);
+
+//9、期望的应用连接超时时间
+void test_app_698_server_CONNECT_Request_9_timeout(void** state);
+
+//10、认证请求对象
+void test_app_698_server_CONNECT_Request_10_auth(void** state);
+
+
 #endif //__test_app_698_server_uniformity_H__
