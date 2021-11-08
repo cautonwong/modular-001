@@ -1,7 +1,7 @@
 #include "nidavellir.h"
 #include "applications.h"
-extern int app_698_rx_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-extern int app_698_tx_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int app_rx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int app_tx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
 #ifdef WIN32
@@ -34,7 +34,7 @@ struct pipeline_t pl_meter_base =
 
 const struct filter_t fr_rx_698[1] =
 {
-    {0x01,app_698_rx_entry,0,13},
+    {0x01,app_rx_server_698_entry,0,13},
 };
 
 struct pipeline_t pl_rx_698 =
@@ -44,14 +44,14 @@ struct pipeline_t pl_rx_698 =
     NULL,
     NULL,//serial driver isr put byte into this 
     NULL,//pl_rx_698 put apdu into this 
-    app_698_rx_entry,
+    app_rx_server_698_entry,
     sizeof(fr_rx_698) / sizeof(fr_rx_698[0]),
     fr_rx_698,
 };
 
 const struct filter_t fr_tx_698[1] =
 {
-    {0x01,app_698_tx_entry,0,13},
+    {0x01,app_tx_server_698_entry,0,13},
 };
 
 struct pipeline_t pl_tx_698 =
@@ -61,7 +61,7 @@ struct pipeline_t pl_tx_698 =
     NULL,
     NULL,
     NULL,
-    app_698_tx_entry,
+    app_tx_server_698_entry,
     sizeof(fr_tx_698) / sizeof(fr_tx_698[0]),
     fr_tx_698,
 };
