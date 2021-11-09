@@ -258,7 +258,9 @@ int send_mesg(struct instance_t *instance,struct pipeline_t *pipeline,struct mes
     fifoBuf_putData(fifo, mesg, sizeof(struct message_t));
     if (mesg->len > 0)//payload exist
     {
+#ifdef WIN32
         log_hex(payload, mesg->len);
+#endif
         fifoBuf_putData(fifo, payload, mesg->len);
     }
     return 0;
@@ -274,7 +276,9 @@ int recv_mesg(struct instance_t* instance, struct pipeline_t* pipeline, struct m
         if (mesg->len > 4)
         {
             fifoBuf_getData(pipeline->in_queue, payload, mesg->len - 4);
+#ifdef WIN32
             log_hex(payload, mesg->len);
+#endif
         }
         return r;
     }

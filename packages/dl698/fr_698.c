@@ -732,7 +732,9 @@ int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
     if (r > 0)
     {
         assert(r == ctx->min_len + 2);
+#ifdef WIN32
         log_hex(fifo->buf_ptr + fifo->rd, fifo->wr - fifo->rd);
+#endif
         return 1;
     }
     return r;
