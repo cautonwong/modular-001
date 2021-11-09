@@ -10,6 +10,7 @@
 #ifdef WIN32
 #include <windows.h>
 #include "test_utils.h"
+#include "log.h"
 #endif
 
 
@@ -23,9 +24,6 @@
 #include "pipeline.h"
 #include "memory.h"
 
-//#include "kernel\cmocka.h"
-
-//#define VERBOSE
 
 //to-be-deleted
 extern struct fifo_t pipe_msta_rx_from_meter;//rx fifo

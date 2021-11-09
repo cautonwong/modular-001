@@ -29,6 +29,7 @@
     <ClCompile Include="..\..\..\packages\dl698\fr_axdr.c" />
     <ClCompile Include="..\..\..\packages\kernel\bitarithm.c" />
     <ClCompile Include="..\..\..\packages\kernel\fifo.c" />
+    <ClCompile Include="..\..\..\packages\kernel\log.c" />
     <ClCompile Include="..\..\..\packages\kernel\nidavellir.c" />
     <ClCompile Include="..\..\..\packages\kernel\pipeline.c" />
     <ClCompile Include="..\..\..\packages\kernel\rtc.c" />
@@ -137,7 +138,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;NIDAVELLIR_SYSTEM_TEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;NIDAVELLIR_SYSTEM_TEST;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)\nidavellir\include;</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4819</DisableSpecificWarnings>

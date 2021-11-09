@@ -99,10 +99,6 @@ int update_fcs(void* pctx, uint8_t* byte)
 {
     struct context_698_t* ctx = pctx;
     ctx->tx_len++;
-    if (is_scrambler_set(ctx->ctrl))
-    {
-        *byte += 0x33;
-    }
     ctx->fcs = update_crc16(ctx->fcs, *byte);
     return 0;
 }
@@ -112,7 +108,10 @@ int __pack_apdu_byte(void* pctx, uint8_t* byte)
     struct pipeline_t* pipeline = pctx;
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
-
+    if (is_scrambler_set(ctx->ctrl))
+    {
+        *byte += 0x33;
+    }
     append_byte(fifo, *byte, update_fcs, ctx);
     return 0;
 }
@@ -206,7 +205,7 @@ int matcher_698(void* pctx, uint8_t* b)
     case 5: //扩展逻辑地址处理
         ctx->hcs = update_crc16(ctx->hcs, byte);
         ctx->fcs = update_crc16(ctx->fcs, byte);
-//        ctx->LA = byte;
+        ctx->LA = byte;
         ctx->index = 0;
         ctx->step = 6;
         return FRM_OK;
@@ -433,7 +432,11 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     {
         return 0;
     }
-    
+    uint8_t addr[6] = {0x01,0,0,0,0,0};
+    if (0 != mem_compare(ctx->addr, addr, SA_LEN(ctx->SA) + 1))
+    {
+        return 0;
+    }
     //时标判断
     //fr_timeTag()；
 
@@ -529,7 +532,10 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     fifoBuf_removeData(fifo, 9 + SA_LEN(ctx->SA));
 
     ctx->service = fifoBuf_getByte(fifo);
-    ctx->choice = fifoBuf_getByte(fifo);
+    if (!((CONNECT_Request == ctx->service) || (RELEASE_Request == ctx->service)))
+    {
+        ctx->choice = fifoBuf_getByte(fifo);
+    }
     if ((ctx->service > ERROR_S_Response) || (ctx->choice > 9))
     {
         ctx->fr_err = FRM_CTRL_ERR;
@@ -552,7 +558,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     fifoBuf_putByte(cache, ctx->PIID);
 
     mesg->oad_n = 0;
-    if (ctx->choice != 1)
+    if (ctx->choice > 1)
     {
         mesg->oad_n = fifoBuf_getByte(fifo);
         fifoBuf_putByte(cache, mesg->oad_n);
@@ -637,6 +643,16 @@ int fr_gatekeeper_client(struct instance_t* instance, struct pipeline_t* pipelin
         //收到的如果不是后续帧请求
         ringbuffer_clear(ctx->apdu);
     }
+    fifoBuf_removeData(fifo, 9 + SA_LEN(ctx->SA));
+
+    ctx->service = fifoBuf_getByte(fifo);
+    ctx->choice = fifoBuf_getByte(fifo);
+    ctx->PIID = fifoBuf_getByte(fifo);
+    ctx->PIID |= (1 << 6);//PIID-ACD
+    fifoBuf_removeData(fifo, (fifo->wr - fifo->rd));
+
+    return 0;
+
     fifoBuf_removeData(fifo, ctx->min_len + 2);
     return 0;
     fifoBuf_removeData(fifo, 9 + SA_LEN(ctx->SA));
@@ -716,23 +732,7 @@ int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
     if (r > 0)
     {
         assert(r == ctx->min_len + 2);
-#ifdef VERBOSE
-        uint8_t buf[256];
-        ctx->rx_count++;
-        uint16_t len = fifoBuf_getDataPeek(fifo, buf, ctx->min_len + 2);
-        //printf("                   {%s,recv", get_pipeline_name(instance, pipeline->id));
-        printf(",");
-        for (size_t i = 0; i < r; i++)
-        {
-            printf("%02x", buf[i]);
-        }
-        printf(",apdu:");
-        for (size_t i = 9 + SA_LEN(ctx->SA); i < len - 3; i++)
-        {
-            printf("%02x", buf[i]);
-        }
-        printf("}\n");
-#endif
+        log_hex(fifo->buf_ptr + fifo->rd, fifo->wr - fifo->rd);
         return 1;
     }
     return r;

@@ -101,15 +101,7 @@ int fr_tx_data_to_serial(struct instance_t* instance, struct pipeline_t* pipelin
     {
         WriteFile(ctx->handle, buf, tx_len, (_Out_opt_ LPDWORD) & len, NULL);
 
-#ifdef VERBOSE
-        printf("                   {%s,send,%s", get_pipeline_name(instance, pipeline->id), get_pipeline_name(instance, mesg->from));
-        printf(",");
-        for (size_t i = 0; i < tx_len; i++)
-        {
-            printf("%02x", buf[i]);
-        }
-        printf("}}\n");
-#endif
+        log_hex(buf, tx_len);
         return 1;//再来一次
     }
     return 0;

@@ -5,12 +5,6 @@
 #include "cmocka.h"
 #include <stdio.h>
 #include "fr_698.h"
-extern int app_698_rx_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-extern int app_698_tx_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-extern int open_serial_port(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-extern int close_serial_port(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-extern int fr_rx_data_from_serial(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-extern int fr_tx_data_to_serial(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
 //Action-Response数据类型测试用例
 //1、操作一个对象属性响应Action-Response数据类型测试

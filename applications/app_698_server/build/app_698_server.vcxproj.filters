@@ -101,6 +101,9 @@
       <Filter>dl698</Filter>
     </ClCompile>
     <ClCompile Include="..\698_mapper.c" />
+    <ClCompile Include="..\..\..\packages\kernel\log.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dl698">
