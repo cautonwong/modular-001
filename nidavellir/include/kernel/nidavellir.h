@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stddef.h>
 #ifdef WIN32
 #include <windows.h>
 #include "test_utils.h"
