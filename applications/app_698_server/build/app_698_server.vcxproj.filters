@@ -104,6 +104,9 @@
     <ClCompile Include="..\..\..\packages\kernel\log.c">
       <Filter>kernel</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\packages\test\u_test\u_test.c">
+      <Filter>utest</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dl698">
@@ -127,6 +130,9 @@
     <Filter Include="test_case\test_app_698_server_function">
       <UniqueIdentifier>{bfebdfd7-1ea2-465b-9aac-ac8d543a3dee}</UniqueIdentifier>
     </Filter>
+    <Filter Include="utest">
+      <UniqueIdentifier>{f661d4ec-89e5-4847-a95b-d6687fb4e8a3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\packages\dl698\fr_698.h">
@@ -140,6 +146,9 @@
     </ClInclude>
     <ClInclude Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_uniformity.h">
       <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\nidavellir\include\mxml\mxml.h">
+      <Filter>utest</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

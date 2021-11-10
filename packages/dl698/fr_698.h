@@ -87,6 +87,7 @@ enum dl698_dar_t
 enum dl698_fr_err_t
 {
     FRM_OK = 0,
+    FRM_RSP_ERR = -1,
     FRM_HEADER_ERR = -1,
     FRM_LEN_ERR1 = -2,//长度太小
     FRM_LEN_ERR2 = -3,//长度超出

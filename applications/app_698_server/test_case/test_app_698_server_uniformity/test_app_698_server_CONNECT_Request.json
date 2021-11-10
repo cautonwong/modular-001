@@ -1,0 +1,55 @@
+{
+	"name": "test_app_698_server_CONNECT_Request",
+	"comment": "建立应用连接测试用例",
+	"version": "0.0.1",
+	"config": "",
+	"suites": [
+		{
+			"suite_comment": "1、期望的应用层协议版本号测试-1 协议版本14",
+            "test_source": {
+				"frame": "68 5E 00 43 05 01 00 00 00 00 00 11 91 C3 02 26 00 14 FF FF FF FF C0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 02 00 02 00 01 07 D0 00 00 1C 20 02 20 13 4B E1 B5 A9 EC DC 99 90 AA C8 AE 71 C3 B2 D3 C4 CA 6C F5 EA EB A9 A3 3A 9A 47 A3 7E 38 29 D4 04 35 FC C6 EA 00 A0 3F 16",
+				"cmd": "frame_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE",
+            },
+			"test_expectation": {
+				"response": "no",
+				"service_choice": "8501",
+				"frame": "68 5E 00 43 05 01 00 00 00 00 00 11 91 C3 02 26 00 14",
+				"cmd": "frame_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE",
+			}
+        },
+		{
+			"suite_comment": "1、期望的应用层协议版本号测试-2 协议版本13",
+            "test_source": {
+				"frmem": "68 5E 00 43 05 01 00 00 00 00 00 11 91 C3 02 26 00 13 FF FF FF FF C0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 02 00 02 00 01 07 D0 00 00 1C 20 02 20 13 4B E1 B5 A9 EC DC 99 90 AA C8 AE 71 C3 B2 D3 C4 CA 6C F5 EA EB A9 A3 3A 9A 47 A3 7E 38 29 D4 04 35 FC C6 EA 00 8b b0 16",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"encryption": "WRITE",
+            },
+			"test_expectation": {
+				"frame": "68 5E 00 43 05 01 00 00 00 00 00 11 91 C3 02 26 00 14",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"encryption": "WRITE",
+			}
+        },
+		{
+			"suite_comment": "2、期望的协议一致性块测试  商定的协议一致性块：ffffffff c0000000",
+            "test_source": {
+				"frmem": "68 5E 00 43 05 01 00 00 00 00 00 11 91 C3 02 26 00 13 FF FF FF FF C0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 02 00 02 00 01 07 D0 00 00 1C 20 02 20 13 4B E1 B5 A9 EC DC 99 90 AA C8 AE 71 C3 B2 D3 C4 CA 6C F5 EA EB A9 A3 3A 9A 47 A3 7E 38 29 D4 04 35 FC C6 EA 00 8b b0 16",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"encryption": "WRITE",
+            },
+			"test_expectation": {
+				"frame": "68 5E 00 43 05 01 00 00 00 00 00 11 91 C3 02 26 00 14",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"encryption": "WRITE",
+			}
+        }
+	],
+}

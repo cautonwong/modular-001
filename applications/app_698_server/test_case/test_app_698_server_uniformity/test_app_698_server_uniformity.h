@@ -71,6 +71,19 @@ void test_app_698_server_LINK_ctrl_sc(void** state);
 
 //////////////////////////////////////////////////////////////
 
+//建立应用连接测试用例
+//1、期望的应用层协议版本号测试
+//2、期望的协议一致性块测试
+//3、期望的功能一致性块测试
+//4、客户机发送帧最大尺寸
+//5、客户机接收帧最大尺寸
+//7、客户机接收帧最大窗口尺寸
+//8、客户机最大可处理APDU尺寸
+//9、期望的应用连接超时时间
+//10、认证请求对象
+
+void test_app_698_server_CONNECT_Request(void** state);
+
 //1、期望的应用层协议版本号测试
 void test_app_698_server_CONNECT_Request_1_version(void** state);
 

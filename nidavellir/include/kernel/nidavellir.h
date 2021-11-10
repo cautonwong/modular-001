@@ -10,6 +10,7 @@
 #ifdef WIN32
 #include <windows.h>
 #include "test_utils.h"
+#include "u_test.h"
 #include "log.h"
 #endif
 

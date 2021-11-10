@@ -171,3 +171,48 @@ uint8_t mem_compare(void* data1, void* data2, uint16_t length)
 
 	return 0;
 }
+
+int hex_to_bin(char ch)
+{
+	if ((ch >= '0') && (ch <= '9'))
+		return ch - '0';
+	ch = tolower(ch);
+	if ((ch >= 'a') && (ch <= 'f'))
+		return ch - 'a' + 10;
+	return -1;
+}
+
+void deblank(char string[]) {
+	char* p = string;
+	char* q = string;
+	int same_space = 0;      //记录相邻的空格
+
+	while (*p != '\0') {
+		/*判断是否存在空格*/
+		if (*p == ' ') {
+			/*进行清除多余的空格操作*/
+			p++;
+			continue;
+		}
+		else {
+			same_space = 0;
+		}
+		*q++ = *p++;
+	}
+	*q = '\0';
+}
+
+
+int hex2bin(unsigned char* dst, char* src, size_t count)
+{
+	deblank(src);
+	while (count--) {
+		int hi = hex_to_bin(*src++);
+		int lo = hex_to_bin(*src++);
+		if ((hi < 0) || (lo < 0))
+			return -1;
+		*dst++ = (hi << 4) | lo;
+	}
+	return 0;
+}
+

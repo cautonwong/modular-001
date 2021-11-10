@@ -205,8 +205,10 @@ int test_app_setup(void** state)
     instance->cache2 = malloc(sizeof(struct cache_t));
     init_cache(instance->cache2, instance->cache, 256);
     
+    ctx_rx_server_698.connect_info = malloc(128);//临时
     ctx_rx_server_698.apdu = malloc(sizeof(struct fifo_t));
     fifoBuf_init(ctx_rx_server_698.apdu, malloc(2048), 2048);
+
 
     ctx_tx_server_698.apdu = malloc(sizeof(struct fifo_t));
     fifoBuf_init(ctx_tx_server_698.apdu, malloc(2048), 2048);
@@ -339,6 +341,8 @@ int main(void)
             cmocka_unit_test(test_app_698_server_LINK_ctrl_sc),
 
         //1.2 建立应用连接测试用例
+        cmocka_unit_test(test_app_698_server_CONNECT_Request),
+
             //1、期望的应用层协议版本号测试
             cmocka_unit_test(test_app_698_server_CONNECT_Request_1_version),
             //2、期望的协议一致性块测试

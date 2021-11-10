@@ -34,6 +34,7 @@
     <ClCompile Include="..\..\..\packages\kernel\pipeline.c" />
     <ClCompile Include="..\..\..\packages\kernel\rtc.c" />
     <ClCompile Include="..\..\..\packages\kernel\utils.c" />
+    <ClCompile Include="..\..\..\packages\test\u_test\u_test.c" />
     <ClCompile Include="..\698_mapper.c" />
     <ClCompile Include="..\app_698_server_entry.c" />
     <ClCompile Include="..\pl_serial.c" />
@@ -58,6 +59,7 @@
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\nidavellir\include\mxml\mxml.h" />
     <ClInclude Include="..\..\..\packages\dl698\fr_698.h" />
     <ClInclude Include="..\..\..\packages\dl698\fr_698_comm.h" />
     <ClInclude Include="..\..\..\packages\dl698\fr_axdr.h" />
@@ -120,7 +122,7 @@
     <OutDir>$(SolutionDir)\nidavellir\bin\</OutDir>
     <IntDir>$(SolutionDir)\build\$(ProjectName)_$(Configuration)_$(Platform)\</IntDir>
     <TargetName>$(ProjectName)_$(Configuration)_$(Platform)</TargetName>
-    <IncludePath>$(ProjectDir)..\..\..\nidavellir\include\kernel\;$(ProjectDir)..\..\..\nidavellir\include\;$(ProjectDir)..\..\..\packages\dl698\;$(ProjectDir)..\..\..\nidavellir\include\testutil;$(ProjectDir)..\..\..\applications\app_698_server\test_case\test_app_698_server_uniformity;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\..\..\nidavellir\include\kernel\;$(ProjectDir)..\..\..\nidavellir\include\;$(ProjectDir)..\..\..\packages\dl698\;$(ProjectDir)..\..\..\nidavellir\include\testutil;$(ProjectDir)..\..\..\applications\app_698_server\test_case\test_app_698_server_uniformity;$(ProjectDir)..\..\..\packages\test\u_test\;$(ProjectDir)..\..\..\nidavellir\include\mxml\;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\..\..\nidavellir\bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -146,7 +148,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>pkg_cmocka_$(Configuration)_$(Platform).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>pkg_cmocka_$(Configuration)_$(Platform).lib;pkg_mxml_$(Configuration)_$(Platform).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\nidavellir\bin\</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>

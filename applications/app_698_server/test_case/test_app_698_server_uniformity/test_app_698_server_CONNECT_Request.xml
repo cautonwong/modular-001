@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test tag="test_app_698_server_CONNECT_Request">
+	<name>"test_app_698_server_CONNECT_Request"</name> 
+	<ut_version>"0.0.1"</ut_version> 
+	<suites num="4">
+		<suite name="1、期望的应用层协议版本号测试-1 协议版本14"> test_source
+			<test_source name="test_source">
+				<frame>68 5E 00 43 05 01 00 00 00 00 00 11 91 C3 02 26 00 14 FF FF FF FF C0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 02 00 02 00 01 07 D0 00 00 1C 20 02 20 13 4B E1 B5 A9 EC DC 99 90 AA C8 AE 71 C3 B2 D3 C4 CA</frame>
+				<cmd>"frame_check"</cmd>	
+				<apdu>"00 11 91 C3 02"</apdu>	
+				<auth>"auth_1"</auth>	
+			</test_source>
+			<test_expectation name="test_expectation">
+				<response>"no"</response>	
+				<service_choice>"8501"</service_choice>
+				<frame>"68 5E 00 43 05 01 00 00 00 00 00 11 91 C3 02 26 00 14"</frame>
+				<cmd>"frame_check"</cmd>
+				<apdu>"00 11 91 C3 02"</apdu>
+				<auth>"auth_1"</auth>	
+			</test_expectation>
+		</suite>
+		<suite name="1、期望的应用层协议版本号测试-2 协议版本13">
+			<test_source name="test_source">
+				<frame>68 5E 00 43 05 01 00 00 00 00 00 11 91 C3 02 26 00 14 FF FF FF FF C0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 02 00 02 00 01 07 D0 00 00 1C 20 02 20 13 4B E1 B5 A9 EC DC 99 90 AA C8 AE 71 C3 B2 D3 C4 CA 6C F5 EA EB A9 A3 3A 9A 47 A3 7E 38 29 D4 04 35 FC C6 EA 00 A0 3F 16
+</frame>
+				<cmd>"frame_check"</cmd>	
+				<apdu>"00 11 91 C3 02"</apdu>	
+				<auth>"auth_1"</auth>	
+			</test_source>
+			<test_expectation name="test_expectation">
+				<response>"no"</response>	
+				<service_choice>"8501"</service_choice>
+				<frame>"68 5E 00 43 05 01 00 00 00 00 00 11 91 C3 02 26 00 14"</frame>
+				<cmd>"frame_check"</cmd>
+				<apdu>"00 11 91 C3 02"</apdu>
+				<auth>"auth_1"</auth>	
+			</test_expectation>
+		</suite>
+	</suites>
+</test>
