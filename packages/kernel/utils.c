@@ -203,7 +203,7 @@ void deblank(char string[]) {
 }
 
 
-int hex2bin(unsigned char* dst, char* src, size_t count)
+int hex2bin(char* dst, char* src, uint16_t count)
 {
 	deblank(src);
 	while (count--) {
