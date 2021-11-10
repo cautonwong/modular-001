@@ -62,6 +62,8 @@ uint32_t buf_to_uint32_lsb(uint8_t* buf);
 uint8_t mem_compare(void* data1, void* data2, uint16_t length);
 void mem_swap_cpy(void* dest, void* src, unsigned short length);
 
+#ifdef WIN32
 int hex2bin(char* dst, const char* src, uint16_t count);
+#endif
 
 #endif

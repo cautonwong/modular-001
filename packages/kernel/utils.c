@@ -172,6 +172,7 @@ uint8_t mem_compare(void* data1, void* data2, uint16_t length)
 	return 0;
 }
 
+#ifdef WIN32
 int hex_to_bin(char ch)
 {
 	if ((ch >= '0') && (ch <= '9'))
@@ -215,4 +216,4 @@ int hex2bin(char* dst, char* src, uint16_t count)
 	}
 	return 0;
 }
-
+#endif
