@@ -15,7 +15,7 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
     
     uint8 fee_index = 0;
     int16 p_pluse , n_pluse;
-    
+#if 0
     if((mbase_control_block->Fee.TOUNo == 0) || (mbase_control_block->Fee.TOUNo> Max_tou_fee))
     {
         fee_index = Max_tou_fee-1;
@@ -69,6 +69,7 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
         mbase_control_block->energy[fee_index].active_n_dec -= mbase_control_block->meter_const;
         mbase_control_block->energy[fee_index].month_active_n += 1;
     }
+#endif
 }
 
 

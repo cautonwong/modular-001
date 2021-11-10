@@ -39,7 +39,7 @@ struct emu_pluse_t
 };
 
 
-
+#if 0
 struct mbase_control_block_t
 {
     int id;
@@ -54,6 +54,8 @@ struct mbase_control_block_t
     struct fee_t Fee;
     //费用数据
 };
+#endif
+
 
 #define   Max_tou_fee         14
 #define   MaxTouNum           14

@@ -24,7 +24,7 @@
 #include "fifo.h"
 #include "pipeline.h"
 #include "memory.h"
-
+#include "applications.h"
 
 //to-be-deleted
 extern struct fifo_t pipe_msta_rx_from_meter;//rx fifo

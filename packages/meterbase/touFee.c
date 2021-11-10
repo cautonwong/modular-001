@@ -65,7 +65,7 @@ void GetFeeTab(struct instance_t* instance , struct pipeline_t * pipeline)
     unsigned char* Buffer = instance->cache;
     struct mbase_control_block_t * mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     unsigned short Now;
-
+#if 0
     //公假日表
     __read((unsigned char*)&Num, HoliDay_Num, 2);
     if (Num > 14) Num = 14;
@@ -111,6 +111,7 @@ void GetFeeTab(struct instance_t* instance , struct pipeline_t * pipeline)
         i = FeeTable_CmpFind(Num, Buffer,  Now);//比较查找时区表
         mbase_control_block->Fee.DayTableNo = Buffer[3 * i];
     }
+#endif
 }
 
 void GetTOUFee(struct instance_t* instance, struct pipeline_t* pipeline)
@@ -121,7 +122,7 @@ void GetTOUFee(struct instance_t* instance, struct pipeline_t* pipeline)
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     unsigned short Now;
 
-
+#if 0
 
     if (mbase_control_block->Fee.DayTable > 1) mbase_control_block->Fee.DayTable = 0;
     if (mbase_control_block->Fee.DayTableNo == 0) mbase_control_block->Fee.DayTableNo = 1;
@@ -139,6 +140,7 @@ void GetTOUFee(struct instance_t* instance, struct pipeline_t* pipeline)
         if ((mbase_control_block->Fee.TOUNo == 0) || (mbase_control_block->Fee.TOUNo > 12))
             mbase_control_block->Fee.TOUNo = 1;
     }
+#endif
 }
 
 
