@@ -9,8 +9,10 @@
 #include <stddef.h>
 #ifdef WIN32
 #include <windows.h>
+#ifdef WIN32_U_TEST
 #include "test_utils.h"
 #include "u_test.h"
+#endif
 #include "log.h"
 #endif
 
