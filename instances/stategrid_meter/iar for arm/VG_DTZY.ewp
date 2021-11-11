@@ -2260,6 +2260,45 @@
             </file>
         </group>
         <group>
+            <name>map</name>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_698\map_698_OIA1_0_Energy.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_698\map_698_OIA1_1_Demand.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_698\map_698_OIA1_2_Variable.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_698\map_698_OIA1_3_Event.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_698\map_698_OIA1_4_Parameter.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_698\map_698_OIA1_5_Frozen.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_698\map_698_OIA1_6_Collection.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_698\map_698_OIA1_7_Aggregate.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_698\map_698_OIA1_8_Control.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_698\map_698_OIA1_e_Monitor.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_698\map_698_OIA1_f_Other.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_698\mapper_698.c</name>
+            </file>
+        </group>
+        <group>
             <name>meterbase</name>
             <file>
                 <name>$PROJ_DIR$\..\..\..\applications\app_meter_base\app_meter_base_entry.c</name>
@@ -2293,9 +2332,6 @@
             </file>
         </group>
     </group>
-    <file>
-        <name>$PROJ_DIR$\..\698_mapper.c</name>
-    </file>
     <file>
         <name>$PROJ_DIR$\..\..\..\nidavellir\include\applications.h</name>
     </file>

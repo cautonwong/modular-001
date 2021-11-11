@@ -3,7 +3,7 @@
 
 
 
-int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj)
+int resource_map_698_OIA1_1_Demand(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj)
 {    
     struct mbase_control_block_t* mbase_cb = instance->mbase_cb;
     switch (id)
@@ -116,5 +116,3 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
     }
     return 0x01;
 }
-
-//职责链模式  过滤器
