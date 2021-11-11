@@ -268,7 +268,7 @@
 #define battery1_under2v8               165 //时钟电池欠压
 #define battery2_under4v8               166 //停抄电池欠压
                                  
-                                    
+#define  DayFrez                        200 // 日冻结                                    
                                   
 #define         MAX_FEE_NO                 12                                  
 

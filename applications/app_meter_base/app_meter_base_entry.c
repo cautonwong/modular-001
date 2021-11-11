@@ -42,14 +42,13 @@ const struct snapshot_item_t  snapshot_item[] =
 
 int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    uint8_t i,mode, obj_cnt;
+    uint8_t i,mode, obj_cnt, scheme, scheme_valid;
     uint8_t BuffTemp[200] = { 0 }, CaptureList[151] = { 0 },  payload[100] = { 0 }, data_buff[400] = { 0 };
     uint8_t *pdata = data_buff;
     uint16_t event_flag_id = 0, data_len = 0, single_len;
-    uint32 tempU32=0, obj;
-    struct tm time;
+    uint32 obj;
     
-    
+
     int r = recv_mesg(instance, pipeline, mesg, &payload[0]);
     if (r > 0)
     {
@@ -84,29 +83,51 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
         data_len = 0;
         for (i = 0; i < (snapshot_item[i].head_type[0] + CaptureList[0]); i++)
         {
+            scheme_valid = false;
             if (i < snapshot_item[i].head_type[0])
             {
                 obj = snapshot_item[i].head_type[1 + i];
+                scheme = 0xFF; //方案FF 固定要存
+                scheme_valid = true;
             }
             else
             {
                 obj = read32_lsb(CaptureList[1 + 4 * i]);
-            }
-            // 如果有payload，优先用payload数据内容。 
-            single_len  = nd_get(instance, obj, &BuffTemp[0], sizeof(BuffTemp)); // 返回值不是长度?
-            if ((data_len + single_len) > sizeof(data_buff))
-            {
-                break;
-            }
-            memccpy((pdata + data_len), &BuffTemp[0], single_len);
-            data_len += single_len;
-            obj_cnt++;
+                scheme = (obj >> 13) & 0x07; //方案号
 
+                // 事件冻结需要分开处理  部分特殊事件仍需特殊处理  
+                if ((mode == 0) && ((scheme == 1) || (scheme == 2))) // 发生前或发生后
+                {
+                    scheme_valid = true;
+                }
+
+                if ((mode == 1) && ((scheme == 3) || (scheme == 4))) // 结束前或结束后
+                {
+                    scheme_valid = true;
+                }
+
+            }
+ 
+            // 如果有payload，优先用payload数据内容。 特殊处理 待添加 
+
+            if (scheme_valid)
+            { 
+                obj &= 0xFF1FFFFF;
+                single_len  = nd_get(instance, obj, &BuffTemp[0], sizeof(BuffTemp)); // 返回值不是长度?
+                if ((data_len + single_len) > sizeof(data_buff))
+                {
+                    break;
+                }
+                memcopy((pdata + data_len), &BuffTemp[0], single_len);
+                data_len += single_len;
+                obj_cnt++;
+            }
         }
 
         //write (event_flag_id, pdata, data_len)       待添加
+        return 1;
     }
-    
+    return 0;
 }
 
 #endif
