@@ -75,7 +75,8 @@ struct mbase_control_block_t
     uint32_t temperature;
     uint32_t voltage_battery;    
     
-    
+
+  
     dyn_cache_end
     //运行期更改&&掉电或定时保存&&上电需要IO请求的数据分区
     dyn_persistent_start
@@ -132,10 +133,10 @@ struct mbase_control_block_t
     uint8_t i_over_event_duration_para;//static:电能表过流事件-判定延时时间 */ 
     uint32_t i_over_event_threshold;//static:电能表过流事件-电流触发下限 */ 
     uint8_t ia_over_event_duration;    //dyn:当前过流状态持续时间*/
-    uint8_t ia_over_event_activeflag;
-    uint8_t ia_over_event_recordflag;
-    uint8_t ia_over_event_resetflag;
-    uint32_t ia_over_accumulate_time; //累计时间*/ 
+    uint8_t ia_over_event_activeflag; // 电能表过流事件的有效标识
+    uint8_t ia_over_event_recordflag; // 电能表过流事件的记录标识
+    uint8_t ia_over_event_resetflag;  // 电能表过流事件的清零标识
+    uint32_t ia_over_accumulate_time; //电能表过流事件的累计时间*/ 
     uint8_t mac_err_cnt; // 当日mac错误次数
     uint8_t mac_suspend_date[3];// mac错误 挂起日期 yymmdd
 
