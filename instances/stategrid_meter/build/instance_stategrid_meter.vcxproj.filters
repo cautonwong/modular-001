@@ -69,12 +69,47 @@
     <ClCompile Include="..\..\..\packages\meterbase\gs_meter_clear_event.c">
       <Filter>app_meter_base</Filter>
     </ClCompile>
-    <ClCompile Include="..\698_mapper.c" />
     <ClCompile Include="..\..\..\packages\kernel\list.c">
       <Filter>kernel</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\packages\kernel\log.c">
       <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_OIA1_0_Energy.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_OIA1_1_Demand.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_OIA1_2_Variable.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_OIA1_3_Event.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_OIA1_4_Parameter.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_OIA1_5_Frozen.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_OIA1_6_Collection.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_OIA1_7_Aggregate.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_OIA1_8_Control.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_OIA1_e_Monitor.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_OIA1_f_Other.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\mapper_698.c">
+      <Filter>mapper_698</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -86,6 +121,9 @@
     </Filter>
     <Filter Include="app_meter_base">
       <UniqueIdentifier>{5023f214-877f-47af-acff-7a702355669c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mapper_698">
+      <UniqueIdentifier>{dbd01600-bc7f-4a5d-b7e6-44ed5e80aa26}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

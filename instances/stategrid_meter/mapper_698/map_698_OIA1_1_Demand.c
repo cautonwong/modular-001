@@ -2,7 +2,8 @@
 #include "fr_698.h"
 
 
-int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj)
+
+int resource_map_698_OIA1_1_Demand(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj)
 {    
     struct mbase_control_block_t* mbase_cb = instance->mbase_cb;
     switch (id)
@@ -110,56 +111,8 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
             }
         }
     break;
-    case 0x20220200://事件记录序号
-    {
-        obj->block_name = 0x0A;//只是举例
-        obj->device_name = 0x0D;//只是举例
-        //obj->offset = container_of(mbase_cb,struct mbase_control_block_t, UA);
-        if (0x01 == mode)
-        {
-            buf[0] = TYPE_double_long_unsigned;
-            memset(&buf[1], 0xFF, 4);
-            return 5;
-        }
-    }
-    break;
-
-    case 0x201E0200://事件发生时间
-    case 0x20200200://事件结束时间    
-    {
-        obj->block_name = 0x0A;//只是举例
-        obj->device_name = 0x0D;//只是举例
-        //obj->offset = container_of(mbase_cb,struct mbase_control_block_t, UA);
-        if (0x01 == mode)
-        {
-            buf[0] = DTC_DATETIME_S;
-            //memcpy(buf + 1, &time->tm_sec, 0x07); // 拷贝当前时间
-            return 8;
-        }
-    }
-    break;
-
-    case 0x20240200:// 时间发生源  
-    case 0x33000200:// 事件上报状态   
-    {
-        obj->block_name = 0x0A;//只是举例
-        obj->device_name = 0x0D;//只是举例
-        //obj->offset = container_of(mbase_cb,struct mbase_control_block_t, UA);
-        if (0x01 == mode)
-        {
-            buf[0] = TYPE_null;
-            return 1;
-        }
-    }
-    
-    break;
-
-
     default:
         break;
     }
     return 0x01;
 }
-
-
-//职责链模式  过滤器

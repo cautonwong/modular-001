@@ -19,6 +19,18 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\mapper_698.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_0_Energy.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_1_Demand.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_2_Variable.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_3_Event.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_4_Parameter.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_5_Frozen.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_6_Collection.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_7_Aggregate.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_8_Control.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_e_Monitor.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_f_Other.c" />
     <ClCompile Include="..\..\..\packages\dl698\fr_698.c" />
     <ClCompile Include="..\..\..\packages\dl698\fr_698_action.c" />
     <ClCompile Include="..\..\..\packages\dl698\fr_698_comm.c" />
@@ -35,7 +47,6 @@
     <ClCompile Include="..\..\..\packages\kernel\rtc.c" />
     <ClCompile Include="..\..\..\packages\kernel\utils.c" />
     <ClCompile Include="..\..\..\packages\test\u_test\u_test.c" />
-    <ClCompile Include="..\698_mapper.c" />
     <ClCompile Include="..\app_698_server_entry.c" />
     <ClCompile Include="..\pl_serial.c" />
     <ClCompile Include="..\test_case\test_app_698_server_bug\test_app_698_server_bug1.c" />

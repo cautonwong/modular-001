@@ -100,12 +100,47 @@
     <ClCompile Include="..\..\..\packages\dl698\fr_698.c">
       <Filter>dl698</Filter>
     </ClCompile>
-    <ClCompile Include="..\698_mapper.c" />
     <ClCompile Include="..\..\..\packages\kernel\log.c">
       <Filter>kernel</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\packages\test\u_test\u_test.c">
       <Filter>utest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_0_Energy.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_1_Demand.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_2_Variable.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_3_Event.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_4_Parameter.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_5_Frozen.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_6_Collection.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_7_Aggregate.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_8_Control.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_e_Monitor.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_f_Other.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\mapper_698.c">
+      <Filter>mapper_698</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -132,6 +167,9 @@
     </Filter>
     <Filter Include="utest">
       <UniqueIdentifier>{f661d4ec-89e5-4847-a95b-d6687fb4e8a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mapper_698">
+      <UniqueIdentifier>{91327029-a6e9-468d-8e71-18ef196aa124}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

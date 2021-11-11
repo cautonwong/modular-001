@@ -29,7 +29,7 @@
 #define SA_LOGIC_TYPE(SA)   ((SA&0x20)>>5)
 #define SA_LEN(SA)          ((SA)&0x0f)
 
-
+#define get_OAD_OIA1(oad)       (uint8_t)((oad&0xF0000000)>>28)
 #define get_OAD_Class(oad)      (uint8_t)((oad&0xF0000000)>>28)
 #define get_OAD_Attribute(oad)  (uint8_t)((oad&0x00000F00)>>8)
 

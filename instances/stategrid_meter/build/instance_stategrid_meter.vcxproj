@@ -46,7 +46,18 @@
     <ClCompile Include="..\..\..\packages\meterbase\gs_i_over_event.c" />
     <ClCompile Include="..\..\..\packages\meterbase\gs_mac_suspend.c" />
     <ClCompile Include="..\..\..\packages\meterbase\gs_meter_clear_event.c" />
-    <ClCompile Include="..\698_mapper.c" />
+    <ClCompile Include="..\mapper_698\mapper_698.c" />
+    <ClCompile Include="..\mapper_698\map_698_OIA1_0_Energy.c" />
+    <ClCompile Include="..\mapper_698\map_698_OIA1_1_Demand.c" />
+    <ClCompile Include="..\mapper_698\map_698_OIA1_2_Variable.c" />
+    <ClCompile Include="..\mapper_698\map_698_OIA1_3_Event.c" />
+    <ClCompile Include="..\mapper_698\map_698_OIA1_4_Parameter.c" />
+    <ClCompile Include="..\mapper_698\map_698_OIA1_5_Frozen.c" />
+    <ClCompile Include="..\mapper_698\map_698_OIA1_6_Collection.c" />
+    <ClCompile Include="..\mapper_698\map_698_OIA1_7_Aggregate.c" />
+    <ClCompile Include="..\mapper_698\map_698_OIA1_8_Control.c" />
+    <ClCompile Include="..\mapper_698\map_698_OIA1_e_Monitor.c" />
+    <ClCompile Include="..\mapper_698\map_698_OIA1_f_Other.c" />
     <ClCompile Include="..\stategrid_meter_entry.c" />
   </ItemGroup>
   <ItemGroup>
