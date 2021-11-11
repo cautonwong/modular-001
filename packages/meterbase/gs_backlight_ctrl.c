@@ -10,10 +10,10 @@ struct alarm_t
 
 const struct alarm_t alarm_control[] =  
 {
-    { 0x00000001, PowerReverseLa },          /**< 有功功率反向 */
-    { 0x00000001, PowerReverseLb },          /**< 有功功率反向 */
-    { 0x00000001, PowerReverseLc },          /**< 有功功率反向 */
-    { 0x00000001, PowerReverseLt },          /**< 有功功率反向 */
+    { 0x00000001, PowerReverseL1 },          /**< 有功功率反向 */
+    { 0x00000001, PowerReverseL2 },          /**< 有功功率反向 */
+    { 0x00000001, PowerReverseL3 },          /**< 有功功率反向 */
+    { 0x00000001, PowerReverseL4 },          /**< 有功功率反向 */
                                              
     { 0x00000002, TerminalCoverOpened },     /**< 开端钮盖 */
     { 0x00000004, 0x00 },                  /**< 预付费报警 */
@@ -64,7 +64,6 @@ const struct alarm_t alarm_control[] =
     { 0x00400000, battery1_under2v8 },/**< 时钟电池欠压 */
     { 0x00800000, VoltageLostAll }           /**< 全失压事件 */
 };
-
 
 /** 事件报警判断---背光*/
 int event_alarm_control(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
