@@ -2,7 +2,6 @@
 #include "fr_698.h"
 
 
-
 int resource_map_698_OIA1_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj)
 {    
     struct mbase_control_block_t* mbase_cb = instance->mbase_cb;
@@ -111,6 +110,9 @@ int resource_map_698_OIA1_0_Energy(struct instance_t* instance, uint32_t id, uin
             }
         }
     break;
+
+
+
     default:
         break;
     }
