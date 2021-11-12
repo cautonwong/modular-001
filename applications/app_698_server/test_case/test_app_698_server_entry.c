@@ -186,6 +186,13 @@ struct pipeline_t pl_tx_to_serial =
     fr_tx_to_serial,
 };
 
+struct pipeline_t* sim_pipelines[] =
+{
+    &pl_meter_rx_from_serial,
+    &pl_meter_tx_to_serial,
+    &pl_tx_to_serial,
+};
+
 
 //*********************上述的初始化方法要删掉 wong*********************//
 struct recipe_t recipe;
@@ -201,6 +208,8 @@ int test_app_setup(void** state)
     fifoBuf_init(&stdin_698, malloc( 512), 512);
     fifoBuf_init(&pipe_tx_698_req, malloc(512), 512);
 
+    instance->mbase_cb = malloc(sizeof(struct mbase_control_block_t));
+    memset(instance->mbase_cb, 0, sizeof(struct mbase_control_block_t));
     instance->cache = malloc(256);
     instance->cache2 = malloc(sizeof(struct cache_t));
     init_cache(instance->cache2, instance->cache, 256);
@@ -388,8 +397,8 @@ int main(void)
 int main(void)
 {
     struct instance_t* instance = malloc(sizeof(struct instance_t));
-    recipe.pipelines = &pipelines[0];
-    recipe.pipeline_n = sizeof(pipelines) / sizeof(pipelines[0]);
+    recipe.pipelines = &sim_pipelines[0];
+    recipe.pipeline_n = sizeof(sim_pipelines) / sizeof(sim_pipelines[0]);
     recipe.name = 0;
     instance->recipe = &recipe;
 
@@ -397,12 +406,29 @@ int main(void)
     fifoBuf_init(&stdin_698, malloc(512), 512);
     fifoBuf_init(&pipe_tx_698_req, malloc(512), 512);
 
+    instance->mbase_cb = malloc(sizeof(struct mbase_control_block_t));
+    memset(instance->mbase_cb, 0x01, sizeof(struct mbase_control_block_t));
+
     instance->cache = malloc(256);
     instance->cache2 = malloc(sizeof(struct cache_t));
     init_cache(instance->cache2, instance->cache, 256);
-    uint8_t* buf = malloc(2048);
-    ctx_698.apdu = malloc(sizeof(struct fifo_t));
-    fifoBuf_init(ctx_698.apdu, buf, 2048);
+
+    ctx_rx_server_698.connect_info = malloc(128);//临时
+    ctx_rx_server_698.apdu = malloc(sizeof(struct fifo_t));
+    fifoBuf_init(ctx_rx_server_698.apdu, malloc(2048), 2048);
+
+
+    ctx_tx_server_698.apdu = malloc(sizeof(struct fifo_t));
+    fifoBuf_init(ctx_tx_server_698.apdu, malloc(2048), 2048);
+
+    ctx_rx_client_698.apdu = malloc(sizeof(struct fifo_t));
+    fifoBuf_init(ctx_rx_client_698.apdu, malloc(2048), 2048);
+
+    ctx_tx_client_698.apdu = malloc(sizeof(struct fifo_t));
+    fifoBuf_init(ctx_tx_client_698.apdu, malloc(2048), 2048);
+
+    fifoBuf_init(&stdin_client_698, malloc(512), 512);
+    fifoBuf_init(&stdout_client_698, malloc(512), 512);
 
     open_serial_port(instance, &pl_rx_from_serial, NULL);
 
