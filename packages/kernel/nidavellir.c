@@ -1,5 +1,5 @@
 #include "nidavellir.h"
-
+#include "cpu_surport.h"
 char* get_pipeline_name(struct instance_t* instance, pid_t pipeline_id)
 {
     struct recipe_t* recipe = instance->recipe;
@@ -47,11 +47,11 @@ int fr_sw_rtc(struct instance_t* instance, struct pipeline_t* pipeline, struct m
     if (fifoBuf_getUsed(&instance->pipe_rtc) > 0)
     {
         uint8_t byte = fifoBuf_getByte(&instance->pipe_rtc);
-        if (byte == 1)
+        if (byte == IRQ_RTC)
         {
             mesg->from = kernel;
-            mesg->to = pid_msta;
-            mesg->ctrl = 0x01;
+            mesg->to = pid_meter_base;
+            mesg->ctrl = MSG_SECOND;
             mesg->id = 0x0000001;
             mesg->len = 4;
             send_mesg(instance, NULL, mesg, NULL);
@@ -149,6 +149,8 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     fr_rx_data_from_serial(instance, &pl_rx_from_serial, &mesg);
 #endif
     //接收时钟更新信号的处理
+    irq_transform_to_instance(instance);
+    
     fr_sw_rtc(instance, NULL, &mesg);
 
     //处理事件标志组  事件驱动

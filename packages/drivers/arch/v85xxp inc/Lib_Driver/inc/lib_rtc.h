@@ -18,6 +18,10 @@
 #endif
 
 #include "target.h"
+
+#define RTCPWD_KEY    0x5AA55AA5
+#define RTCCE_SETKEY  0xA55AA55B
+#define RTCCE_CLRKEY  0xA55AA55A   
    
 /* RTC Time struct */
 typedef struct

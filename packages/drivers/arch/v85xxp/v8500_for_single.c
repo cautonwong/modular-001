@@ -81,48 +81,12 @@ static void sysclk_at_3m2768(uint16 flag)
     }
 }
 
+
 void  v85xxp_clear_watchdog(void)
 {
   PMU->WDTCLR = WDTCLR_KEY;
 }
-/* å®žæµ‹è¯•10usåˆ°50msè¯¯å·®åœ¨5%ä»¥å†…ã€‚@ 147435*/
-/* å¤ä½è¿è¡Œ 3685875*/
-/* ä¸Šç”µå…¨é€Ÿè¿è¡Œ 14743500*/
-/* å”¤é†’è¿è¡Œ7371750*/
-/* ä¼‘çœ è¿è¡Œ327687*/
-/* å®žæµ‹è¯•10usåˆ°50msè¯¯å·®åœ¨5%ä»¥å†…ã€‚@ 147435*/
-uint8 v85xxp_delay_us(volatile uint16 count)
-{
-    uint32 timeout = 1000000;
-    
-    if(count == 0)
-    {
-        return true;
-    }
-    
-    MISC2->PCLKEN |= (0x00000001 << 12);
 
-    /* Disable timer */
-    TMR1->CTRL = 0x00;
-    /* clear interrupt status */
-    TMR1->INT = TMR_INT_INT;
-    TMR1->RELOAD = 0;
-    TMR1->VALUE  =  count*40; //å¾…è°ƒæ•´   
-    TMR1->CTRL |= TMR_CTRL_EN;
-
-    while(0 == (TMR1->INT & 0x00000001))
-    {
-        timeout--;
-        if(timeout < 1)
-        {
-            TMR1->CTRL = 0x00;
-            return false;
-        }
-    } 
-   
-    TMR1->CTRL = 0x00;
-    return true;
-}
 
 void MComp1Init(void)
 {
@@ -178,6 +142,114 @@ void sys_clock_normal(void)
 }
 
 
+
+/* å®žæµ‹è¯?0usåˆ?0msè¯¯å·®åœ?%ä»¥å†…ã€‚@ 147435*/
+/* å¤ä½è¿è¡Œ 3685875*/
+/* ä¸Šç”µå…¨é€Ÿè¿è¡?14743500*/
+/* å”¤é†’è¿è¡Œ7371750*/
+/* ä¼‘çœ è¿è¡Œ327687*/
+/* å®žæµ‹è¯?0usåˆ?0msè¯¯å·®åœ?%ä»¥å†…ã€‚@ 147435*/
+uint8 mcu_delay_us(volatile uint16 count)
+{
+    uint32 timeout = 1000000;
+
+    if (count == 0)
+    {
+        return true;
+    }
+
+    MISC2->PCLKEN |= (0x00000001 << 12);
+
+    /* Disable timer */
+    TMR1->CTRL = 0x00;
+    /* clear interrupt status */
+    TMR1->INT = TMR_INT_INT;
+    TMR1->RELOAD = 0;
+    TMR1->VALUE = count * 40; //å¾…è°ƒæ•?  
+    TMR1->CTRL |= TMR_CTRL_EN;
+
+    while (0 == (TMR1->INT & 0x00000001))
+    {
+        timeout--;
+        if (timeout < 1)
+        {
+            TMR1->CTRL = 0x00;
+            return false;
+        }
+    }
+
+    TMR1->CTRL = 0x00;
+    return true;
+}
+
+static void RTCWriteEnable(void)
+{
+    while(RTC->CE & RTC_CE_BSY)            /* µ±wr_busy=1Ê±£¬RTC¼Ä´æÆ÷Ð´²Ù×÷Ã¦ */
+    {
+    }
+    
+    RTC->PWD = RTCPWD_KEY;
+    RTC->CE = RTCCE_SETKEY;       
+	     
+    mcu_delay_us(500);                  /* delay needed! */
+    while(RTC->CE & RTC_CE_BSY)            /* µ±wr_busy=1Ê±£¬RTC¼Ä´æÆ÷Ð´²Ù×÷Ã¦ */
+    {
+    }
+}
+
+static void RTCWriteDisable(void)
+{
+
+    RTC->PWD = RTCPWD_KEY;
+    RTC->CE = RTCCE_CLRKEY;
+
+  	/* RTC Write disable */
+    mcu_delay_us(500);
+    while(RTC->CE & RTC_CE_BSY)            /* µ±wr_busy=1Ê±£¬RTC¼Ä´æÆ÷Ð´²Ù×÷Ã¦ */
+    {
+    }
+}
+
+uint8 init_v85xxp_rtc( uint8 power_mode )
+{
+    
+    MISC2->PCLKEN |= MISC2_PCLKEN_RTC;
+    
+    RTCWriteEnable();
+    
+    mcu_delay_us(500);
+
+    RTC->INTSTS = 0xFF; 
+    
+    mcu_delay_us(500);
+
+    RTC->WKUSEC = 0;// ÅäÖÃÃ¿ÃëÖÐ¶Ï
+    RTC->INTEN = BIT0;    
+    
+    mcu_delay_us(500);
+
+    NVIC_EnableIRQ ( RTC_IRQn );
+    
+    
+    //switch(power_mode)
+    //{
+    //    case POWER_ON_MODE:
+    //          rtc_out(1 , rtc_hal->multifunction_port);
+    //          break;
+    //    case RESET_MODE:
+    //          rtc_multifunction_port.tmr_id = hfp_tick_timer.create(end_multifunction_port_driver, &rtc_multifunction_port.operate_pin, 8, true);
+              /*×¢Òâ£¬ÕâÀïÃ»ÓÐbreak*/
+    //    default:
+    //          rtc_out(0 , rtc_hal->multifunction_port);
+    //          break;
+    
+    
+    
+    RTCWriteDisable();
+    return true;
+}
+
+
 /***********************************************************
  * @function_name: v85xxp_init
  * @function_file: cpu.c
@@ -225,7 +297,7 @@ void mcu_init(void *init_type)
     v85xxp_clear_watchdog();
     
     __enable_irq();
-
+    
 }
 
 
@@ -343,7 +415,7 @@ void mcu_uart_recive_enable(uint8 ops_enable, size_t uart_index)
         }
         UARTx->STATE = BIT1 | BIT3 | BIT4;
         
-        tmp = UARTx->DATA;
+        tmp = UARTx->DATA;  //³õÊ¼»¯ºóÈ¡Ò»´ÎÊý¾Ý.
     }
 }
 
@@ -484,7 +556,7 @@ uint8 mcu_spi_bus_init(uint8 spi_index, uint8 mode)
 
     SPI2->CTRL = 0x00;
 
-    v85xxp_delay_us(10);
+    mcu_delay_us(10);
     // CSè½¯ä»¶æŽ§åˆ¶ /  å‰è¾¹æ²¿å»ºç«‹æ•°æ® / sckç©ºé—²çŠ¶æ€ä¸ºé«˜ / MSBå…ˆä¼ è¾“   / ä¸»æœº/ apbclk 4åˆ†é¢‘
     SPI2->CTRL = BIT10 | BIT5 | BIT4 | BIT0;
 
@@ -492,7 +564,7 @@ uint8 mcu_spi_bus_init(uint8 spi_index, uint8 mode)
 
     SPI2->CTRL |= (0x00000001 << 15);
 
-    v85xxp_delay_us(10);
+    mcu_delay_us(10);
 
     return true;
 }
@@ -622,44 +694,6 @@ void  mcu_clear_watchdog(void)
     PMU->WDTCLR = WDTCLR_KEY;
 }
 
-/* å®žæµ‹è¯•10usåˆ°50msè¯¯å·®åœ¨5%ä»¥å†…ã€‚@ 147435*/
-/* å¤ä½è¿è¡Œ 3685875*/
-/* ä¸Šç”µå…¨é€Ÿè¿è¡Œ 14743500*/
-/* å”¤é†’è¿è¡Œ7371750*/
-/* ä¼‘çœ è¿è¡Œ327687*/
-/* å®žæµ‹è¯•10usåˆ°50msè¯¯å·®åœ¨5%ä»¥å†…ã€‚@ 147435*/
-uint8 mcu_delay_us(volatile uint16 count)
-{
-    uint32 timeout = 1000000;
-
-    if (count == 0)
-    {
-        return true;
-    }
-
-    MISC2->PCLKEN |= (0x00000001 << 12);
-
-    /* Disable timer */
-    TMR1->CTRL = 0x00;
-    /* clear interrupt status */
-    TMR1->INT = TMR_INT_INT;
-    TMR1->RELOAD = 0;
-    TMR1->VALUE = count * 40; //å¾…è°ƒæ•´   
-    TMR1->CTRL |= TMR_CTRL_EN;
-
-    while (0 == (TMR1->INT & 0x00000001))
-    {
-        timeout--;
-        if (timeout < 1)
-        {
-            TMR1->CTRL = 0x00;
-            return false;
-        }
-    }
-
-    TMR1->CTRL = 0x00;
-    return true;
-}
 
 
 
@@ -764,6 +798,31 @@ void mcu_main_frequency_mode(uint8 clk_mode)
     }
 }
 
+void fnINTTC3_Init(uint8 cmd)//2ms
+{
+        TMR_InitType    TMR_InitStruct;
+
+        TMR_DeInit(TMR3);
+        TMR_InitStruct.ClockSource = TMR_CLKSRC_INTERNAL;
+        TMR_InitStruct.EXTGT = TMR_EXTGT_DISABLE;
+        TMR_InitStruct.Period = 52429;
+        TMR_Init(TMR3, &TMR_InitStruct);
+        
+        TMR_INTConfig(TMR3, ENABLE);  //Enable Timer0 interrupt
+        CORTEX_SetPriority_ClearPending_EnableIRQ(TMR3_IRQn, 2);
+
+        TMR_Cmd(TMR3, ENABLE);  //Enable Timer0
+}
+
+void start_emu_signal_pro(void)
+{
+    PMU_ClearIOAINTStatus(GPIO_Pin_8);
+    PMU_WakeUpPinConfig(GPIO_Pin_8, IOA_RISING);
+    GPIOA->OEN |=BIT8;
+    GPIOA->IE |=BIT8;
+    fnINTTC3_Init(1);
+}
+
 void mcu_enter_lowpower_then_sleep(void)
 {
     GPIO_InitType GPIO_InitStruct;
@@ -844,6 +903,226 @@ void mcu_enter_lowpower_then_sleep(void)
 }
 
 
+int v85xxp_spi_bus_init(size_t index)
+{
+
+    MISC2->PCLKEN |= MISC2_PCLKEN_SPI2;
+    
+    __NOP();
+    __NOP();
+    
+    SPI2->CTRL = 0x00;
+    
+    mcu_delay_us(10);
+    // CSÈí¼þ¿ØÖÆ /  Ç°±ßÑØ½¨Á¢Êý¾Ý / sck¿ÕÏÐ×´Ì¬Îª¸ß / MSBÏÈ´«Êä   / Ö÷»ú/ apbclk 4·ÖÆµ
+    SPI2->CTRL = BIT10 | BIT5 | BIT4 | BIT0;
+
+    SPI2->MISC_ |= BIT8;
+    
+    SPI2->CTRL |= (0x00000001 << 15);
+    
+    mcu_delay_us(10);
+    
+    return true;
+}
+
+
+int v85xxp_spi_send_byte(uint8 byte , size_t index)
+{
+   uint16 timeout = 50000; // ´ýµ÷Õû
+   uint8  rxd;
+    
+
+   while((0 == (SPI2->MISC_ & SPI_MISC_TFE))&&(timeout>0))
+   {
+        timeout--;
+   }
+   
+   SPI2->TXDAT = byte;
+   timeout = 60000;
+   
+   while((SPI2->MISC_ & SPI_MISC_BSY_Msk)&&(timeout>0))
+   {
+        timeout--;
+   }
+   rxd = SPI2->RXDAT;
+   /////
+   if(timeout > 0 )
+   {
+        return true;
+   }
+   //////
+   rxd -= rxd;
+   
+   return false;
+}
+
+int v85xxp_spi_recive_byte(uint8 *byte , size_t index)
+{
+   uint16 timeout = 50000;
+   uint8  rxd = 0;
+   
+   while((0 == (SPI2->MISC_ & SPI_MISC_TFE))&&(timeout>0))
+   {
+        timeout--;
+   }
+
+   SPI2->TXDAT = 0x00;
+   timeout = 50000;
+
+   while((SPI2->MISC_ & SPI_MISC_BSY_Msk)&&(timeout>0))
+   {
+        timeout--;
+   }
+   
+   if(timeout > 0 )
+   {
+        rxd = SPI2->RXDAT;
+        *byte = rxd;
+        return true;
+   }
+   return false;
+}
+
+void v85xxp_spi_ctrl(uint8 ctrl , size_t index)
+{
+    switch(ctrl)
+    {
+        case START:
+             SPI2->CTRL |= SPI_CTRL_SPIEN;
+             GPIOC->OEN &= ~(BIT0 + BIT1 + BIT3);
+             GPIOC->IE &= ~(BIT0 + BIT1 + BIT3);
+             GPIOC->OEN |= BIT2;
+             GPIOC->IE |= BIT2;
+              break;
+        case STOP:
+            SPI2->CTRL &= ~SPI_CTRL_SPIEN;
+            GPIOC->OEN &= ~(BIT0 + BIT1 + BIT2 + BIT3);
+            GPIOC->IE &= ~(BIT0 + BIT1 + BIT2 + BIT3 );
+            GPIOC->DAT &= ~(BIT0 + BIT1 + BIT2 + BIT3);
+              break;
+        default:
+          break;
+    }
+}
+
+
+/* lcd io¿ÚÊä³öÄ£Ê½ÅäÖÃ */
+uint8 lcd_port_config(uint8 mode)
+{
+#if 1
+    //MISC2->HCLKEN &= (~(uint32)BIT6);
+    if(mode == AC_POWER_ON)
+    {
+            GPIOD->OEN   |= (BIT0| BIT1| BIT2| BIT3| BIT4| BIT5| BIT6| BIT7| BIT12| BIT13| BIT14| BIT15);//Ê¹ÄÜÊä³ö
+
+            GPIOE->OEN   |= (BIT0| BIT1| BIT6| BIT7| BIT13| BIT14| BIT15);
+
+            GPIOA->OEN   |= (BIT0| BIT1| BIT4| BIT5| BIT6| BIT9| BIT10| BIT11);
+
+            GPIOB->OEN   |= (BIT13| BIT14| BIT15);
+    }
+    else if(mode == AC_POWER_OFF)//Êä³öµÍµçÆ½
+    {
+            GPIOD->OEN   &= ~(BIT0| BIT1| BIT2| BIT3| BIT4| BIT5| BIT6| BIT7| BIT12| BIT13| BIT14| BIT15);//Ê¹ÄÜÊä³ö
+
+            GPIOE->OEN   &= ~(BIT0| BIT1| BIT6| BIT7| BIT13| BIT14| BIT15);
+
+            GPIOA->OEN   &= ~(BIT0| BIT1| BIT4| BIT5| BIT6| BIT9| BIT10| BIT11);
+
+            GPIOB->OEN   &= ~(BIT13| BIT14| BIT15);
+    }
+    
+    GPIOD->IE    &= ~(BIT0| BIT1| BIT2| BIT3| BIT4| BIT5| BIT6| BIT7| BIT12| BIT13| BIT14| BIT15);//½ûÖ¹ÊäÈë
+    GPIOD->DAT   &= ~(BIT0| BIT1| BIT2| BIT3| BIT4| BIT5| BIT6| BIT7| BIT12| BIT13| BIT14| BIT15);
+
+    GPIOE->IE    &= ~(BIT0| BIT1| BIT6| BIT7| BIT13| BIT14| BIT15);
+    GPIOE->DAT   &= ~(BIT0| BIT1| BIT6| BIT6| BIT13| BIT14| BIT15);
+
+    GPIOA->IE    &= ~(BIT0| BIT1| BIT4| BIT5| BIT6| BIT9| BIT10| BIT11);
+    GPIOA->DAT   &= ~(BIT0| BIT1| BIT4| BIT5| BIT6| BIT9| BIT10| BIT11);
+
+    GPIOB->IE    &= ~(BIT13| BIT14| BIT15);
+    GPIOB->DAT   &= ~(BIT13| BIT14| BIT15);
+#endif
+    return 0;
+}
+
+
+uint8 lcd_init(uint8 power_mode)
+{   
+    LCD_InitType lcd_init_para;
+    LCD_IOInitType lcd_io_para;
+    switch(power_mode)
+    {
+        case AC_POWER_ON:
+          memset((uint8 *)&lcd_init_para, 0x00, sizeof(lcd_init_para));
+          memset((uint8 *)&lcd_io_para,   0x00, sizeof(lcd_init_para));
+          MISC2->HCLKEN |= BIT6;//´ò¿ªlcdÊ±ÖÓ
+          lcd_port_config(AC_POWER_ON);
+
+          lcd_init_para.Type   = LCD_TYPE_6COM;
+          lcd_init_para.Drv    = LCD_DRV_600;
+          lcd_init_para.FRQ    = LCD_FRQ_256H;
+          lcd_init_para.SWPR   = 0x00;
+          lcd_init_para.FBMODE = LCD_FBMODE_BUFA;
+          lcd_init_para.BKFILL = LCD_BKFILL_0;
+
+          lcd_io_para.COMMode  = LCD_TYPE_6COM;
+          lcd_io_para.SegCtrl0 = (BIT2| BIT3| BIT8| BIT9| BIT10| BIT11 | BIT0 | BIT1);
+          lcd_io_para.SegCtrl1 = (BIT29| BIT28| BIT25| BIT24| BIT23| BIT22| BIT21| BIT17| BIT16| BIT15| BIT10| BIT9| BIT8);
+          lcd_io_para.SegCtrl2 = (BIT2| BIT3| BIT4| BIT10| BIT11);
+          
+          LCD_Init(&lcd_init_para);
+          LCD_BiasModeConfig(LCD_BMODE_DIV4);
+          LCD_Cmd(&lcd_io_para, ENABLE);
+            break;
+        default:
+          LCD->SEGCTRL0 = 0;
+          LCD->SEGCTRL1 = 0;
+          LCD->SEGCTRL2 = 0;
+          lcd_port_config(AC_POWER_OFF);
+          lcd_io_para.COMMode  = LCD_TYPE_6COM;
+          lcd_io_para.SegCtrl0 = 0x00;
+          lcd_io_para.SegCtrl1 = 0x00;
+          lcd_io_para.SegCtrl2 = 0x00;
+          LCD->CTRL &=~LCD_CTRL_EN;
+          MISC2->HCLKEN &= (~(uint32)BIT6);
+          LCD_Cmd(&lcd_io_para, DISABLE);
+            break;
+    }
+    return true;
+}
+
+
+#define MAX_LCD_BUF  24
+#define MCU_BUF_MAX  20
+const uint8 CODE mcu_seg_map [] =
+{
+   2, 3, 8, 9, 10, 11, 75, 74, 68, 67, 66, 61, 60, 57, 56, 55, 54, 53, 49, 48, 47, 42, 41, 40,
+};
+uint8 lcd_mapping(uint32 addr, uint8 *buf, uint16 len)
+{ 
+    uint8 i = 0x00, index = 0x00, offset = 0x00;
+    uint32 lcd_tmp[MCU_BUF_MAX] = {0x00};
+	
+    if((addr+len) > MAX_LCD_BUF)
+    {
+        return false;
+    }
+
+    for(i = 0; i < MAX_LCD_BUF; i++)
+    {
+        index  = mcu_seg_map[i] / 4;
+        offset = mcu_seg_map[i] % 4;
+
+        lcd_tmp[index] |= ((uint32)buf[i] << offset * 8);
+    }
+
+    memcpy((uint8*)(&LCD->FB[addr]), (uint8 *)&lcd_tmp[0], sizeof(lcd_tmp));
+	
+    return true;
+}
 
 void mcu_exit_sleep_then_enter_normal(void)
 {
@@ -854,7 +1133,16 @@ void mcu_exit_sleep_then_enter_normal(void)
 void mcu_main_power_on_config(void)
 {
     cm0_systick_init(1);
-
+    
+    init_v85xxp_rtc(1);
+    
+    lcd_init(AC_POWER_ON);
+    
+    start_emu_signal_pro();
+    
+    PMU->CONTROL |= PMU_CONTROL_INT_IOA_EN;
+    
+    NVIC_EnableIRQ(PMU_IRQn);
 }
 
 void mcu_main_power_off_config(void)
@@ -887,6 +1175,20 @@ const struct bus_ops_t mcu_uart_bus_ops =
     mcu_uart_get_tx_status,
     mcu_uart_get_rx_status,
     __NULL, 
+};
+
+const struct bus_ops_t mcu_spi_ops = 
+{
+   BUS_SPI,
+   1,
+   v85xxp_spi_bus_init,
+   __NULL,
+   v85xxp_spi_send_byte,
+   __NULL,
+   v85xxp_spi_recive_byte,
+   __NULL,
+   __NULL,
+   v85xxp_spi_ctrl,
 };
 
 

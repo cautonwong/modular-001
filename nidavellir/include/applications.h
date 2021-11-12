@@ -47,7 +47,7 @@ struct mbase_control_block_t
     float k_il;
     float k_in;
     float k_p;    
-
+    uint32_t meter_const;
     static_end     
     //运行期更改 && 掉电不保存 && 上电不需要IO请求的区域 && 初始化时直接清零
     dyn_cache_start   

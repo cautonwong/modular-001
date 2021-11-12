@@ -353,6 +353,7 @@
                     <state>$PROJ_DIR$\..\..\..\nidavellir\include</state>
                     <state>$PROJ_DIR$\..\..\..\instances\stategrid_meter\</state>
                     <state>$PROJ_DIR$\..\..\..\packages\dl698</state>
+                    <state>$PROJ_DIR$\..\..\..\packages\drivers</state>
                     <state>$PROJ_DIR$\..\..\..\packages\drivers\arch</state>
                     <state>$PROJ_DIR$\..\..\..\packages\drivers\arch\cm0</state>
                     <state>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc</state>
@@ -2132,6 +2133,9 @@
                     <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_gpio.c</name>
                 </file>
                 <file>
+                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_lcd.c</name>
+                </file>
+                <file>
                     <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_misc.c</name>
                 </file>
                 <file>
@@ -2206,6 +2210,9 @@
             <name>drivers</name>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\drivers\eeprom.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\drivers\esam698.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\drivers\iic_driver.c</name>

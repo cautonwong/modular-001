@@ -91,8 +91,18 @@
                              *((uint32*)GPIOE_OEN) &= ~BIT(11);}
                              
 
+/*---------------------------------上翻页键----------------------------------*/                              
+#define DISPLAY_KEY_INPUT()     {*((uint32*)GPIOA_IE) |= BIT(2); *((uint32*)GPIOA_OEN) |= BIT(2);}
+
+#define DISPLAY_KEY_GET_DIN()    *((uint32*)BITBAND_ADDR(GPIOA_STS,2))
+
+/*---------------------------------698 ESAM IO----------------------------------*/ 
+
+#define  ESAM_CS_LOW()    {*((uint32*)GPIOC_OEN) &= ~BIT(0); *((uint32*)GPIOC_IE) |= BIT(0); *((uint32*)BITBAND_ADDR(GPIOC_DAT,0)) = 0;}
+#define  ESAM_CS_HIGH()   {*((uint32*)GPIOC_OEN) &= ~BIT(0); *((uint32*)GPIOC_IE) |= BIT(0); *((uint32*)BITBAND_ADDR(GPIOC_DAT,0)) = 1;}
 
 
-
+#define  ESAM_POWER_CTRL_ON()      {*((uint32*)GPIOC_OEN) &= ~BIT(7); *((uint32*)GPIOC_IE) |= BIT(7);  *((uint32*)BITBAND_ADDR(GPIOC_DAT,7)) = 0;}
+#define  ESAM_POWER_CTRL_OFF()     {*((uint32*)GPIOC_OEN) &= ~BIT(7); *((uint32*)GPIOC_IE) |= BIT(7);  *((uint32*)BITBAND_ADDR(GPIOC_DAT,7)) = 1;}
 
 #endif

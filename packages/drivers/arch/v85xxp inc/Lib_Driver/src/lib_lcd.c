@@ -12,7 +12,7 @@
   */
 #include "lib_lcd.h"
 #include "lib_LoadNVR.h"
-
+#include "lib_conf.h"
 //registers default reset values
 #define LCD_CTRL_RSTValue           0
 #define LCD_CTRL2_RSTValue          0

@@ -9,7 +9,7 @@ unsigned char ReadRn8209WithChk(unsigned char ChipAddr, unsigned char* Buf, unsi
 {
 
     unsigned char i, j;
-    unsigned char rx_buffer[6] = { 0 };
+    unsigned char rx_buffer[6] = { 0, };
     unsigned char check_sum;
     unsigned long timeout = 8000;
     const struct bus_ops_t *bus_ops = dev->dev_bus_ops;
@@ -85,7 +85,7 @@ unsigned char WriteRn8209(unsigned char ChipAddr, unsigned char* Buf, unsigned c
     {
         for (i = 0; i < length + 2; i++)
         {
-            timeout = 100;
+            timeout = 2000;
             dev_bus_ops->tx(tx_buffer[i] , index);
             while ((false == dev_bus_ops->tx_statue(index)) && (timeout > 1))
             {
@@ -145,6 +145,8 @@ unsigned char Rn8209InitConfig(const struct dev_info_t* dev)
 
 
     CmdRn8209(CMD_WR_EN , dev);
+    mcu_delay_us(5000);
+    mcu_delay_us(5000);
     mcu_delay_us(5000);
     mcu_delay_us(5000);
 
@@ -214,7 +216,7 @@ unsigned char Rn8209AdjParaSet(struct Rn8209AdjSet_t* Set , const struct dev_inf
     {
         return false;
     }
-    if (false == WriteRn8209Check(PHSA, (unsigned char*)&Set->Phs, 2, dev))
+    if (false == WriteRn8209Check(PHSA, (unsigned char*)&Set->Phs, 1, dev))
     {
         return false;
     }

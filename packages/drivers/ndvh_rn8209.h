@@ -94,16 +94,36 @@ struct CalMesaureValue_t
 };
 
 
+struct factor_adj_meter_t
+{
+    unsigned char adjen;	//Ð£±íÊ¹ÄÜ	0xAA
+    unsigned char adjsec;	//Ð£±íµ¹¼ÆÊ± 2ÃëºóÐ£±í
+    unsigned char adjflag;	//Ð£±í±êÖ¾Î»
+    unsigned long   Ua;
+    unsigned long   Ia;
+    signed   long   Pa;
+    signed   long   Paw;
+    unsigned long   Ub;
+    unsigned long   Ib;
+    signed   long   Pb;
+    signed   long   Pbw;
+    unsigned long   Uc;
+    unsigned long   Ic;
+    signed   long   Pc;
+    signed   long   Pcw;
+    unsigned long   Ian;
+    unsigned char   null[2];
+};
 
+#define F_ALadj   0x01
+#define F_ANadj   0x10
 
-
-
-//提供给主程序调用的函数申明
-extern void ResetRn8209(void);                  //RN8209芯片硬件复位
-extern unsigned char Rn8209cCommInit(void);     //RN8209芯片串口通讯配置
-extern unsigned char Rn8209AdjParaSet(struct Rn8209AdjSet_t* Set , const struct dev_info_t* dev); //RN8209芯片校表参数设置
-extern unsigned char Rn8209DeviceIDCheck();     //RN8209芯片ID检查
-extern unsigned char Rn8209InitConfig();        //RN8209芯片基本参数设置校表
-extern void MeasureValue(struct dev_info_t* dev);//主程序调用实时数据计算
+//æä¾›ç»™ä¸»ç¨‹åºè°ƒç”¨çš„å‡½æ•°ç”³æ˜Ž
+extern void ResetRn8209(void);                  //RN8209èŠ¯ç‰‡ç¡¬ä»¶å¤ä½
+extern unsigned char Rn8209cCommInit(void);     //RN8209èŠ¯ç‰‡ä¸²å£é€šè®¯é…ç½®
+extern unsigned char Rn8209AdjParaSet(struct Rn8209AdjSet_t* Set , const struct dev_info_t* dev); //RN8209èŠ¯ç‰‡æ ¡è¡¨å‚æ•°è®¾ç½®
+extern unsigned char Rn8209DeviceIDCheck();     //RN8209èŠ¯ç‰‡IDæ£€æŸ¥
+extern unsigned char Rn8209InitConfig();        //RN8209èŠ¯ç‰‡åŸºæœ¬å‚æ•°è®¾ç½®æ ¡è¡¨
+extern void MeasureValue(struct dev_info_t* dev);//ä¸»ç¨‹åºè°ƒç”¨å®žæ—¶æ•°æ®è®¡ç®—
 
 #endif

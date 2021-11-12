@@ -22,7 +22,7 @@ struct filter_t fr_meter_base[] =
 
 struct pipeline_t pl_meter_base =
 {
-    2,
+    pid_meter_base,
     "app_meter_base",
     NULL,
     NULL,
@@ -95,6 +95,10 @@ extern struct resource_map_t* register_map(struct instance_t* instance, uint8_t 
 extern int8_t resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj);
 extern struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t resource_blok_size, uint8_t resource_block_name);
 extern int8_t add_device(struct instance_t* instance, uint8_t device_name,const struct dev_info_t *dev);
+extern void dev_init(void);
+extern void irq_system_init(void);
+extern void irq_transform_to_instance(struct instance_t* instance);
+
 int baremetal_instance_entry_main(int argc, char** argv)
 {
     struct instance_t* instance = NULL;
@@ -102,7 +106,10 @@ int baremetal_instance_entry_main(int argc, char** argv)
     struct context_698_t* ctx_698 = NULL;
 
     //初始化硬件
+    dev_init();
+    
     //初始化固件
+    irq_system_init();
     //每个application的control block如何初始化?且如何绑定到instance里?
     //每个application如何访问自己的control block?
     //链接和绑定硬件 固件 和 软件

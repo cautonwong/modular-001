@@ -125,6 +125,7 @@ extern struct pipeline_t pl_tx_dlms;
 #define pid_client_tx_698   19
 #define pid_server_rx_dlms   20
 #define pid_server_tx_dlms   21
+#define pid_meter_base       22
 
 enum work_type_t 
 {
@@ -555,7 +556,8 @@ enum resource_map_698_e
     RESOURCE_MAP_698_ACTION = 3,
 };
 
-
+#define  MSG_SECOND         0x0001
+#define  MSG_PAGE_KEY_UP    0x0002
 
 int nidavellir_loop(struct instance_t *instance);
 int nidavellir_n_loop(struct instance_t **instances,size_t n);

@@ -39,6 +39,10 @@ extern void mcu_main_power_off_config(void);
 extern void cm0_systick_init(uint8 cmd);
 extern void ndv_isr_handle_regsit(isr_handle isr_handle_f , uint8 irq);
 
+
+#define  DISABLE_ALL_INT()     __enable_irq();
+#define  ENABLE_ALL_INT()      __disable_irq();
+
 #define STOP    0xAA
 #define START   0x55
 #define ACK_1   0x33

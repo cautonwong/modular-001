@@ -2393,6 +2393,9 @@
                     <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_gpio.c</name>
                 </file>
                 <file>
+                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_lcd.c</name>
+                </file>
+                <file>
                     <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_misc.c</name>
                 </file>
                 <file>
@@ -2467,6 +2470,9 @@
             <name>drivers</name>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\drivers\eeprom.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\drivers\esam698.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\drivers\iic_driver.c</name>

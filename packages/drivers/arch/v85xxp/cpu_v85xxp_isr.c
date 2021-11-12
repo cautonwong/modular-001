@@ -1,6 +1,6 @@
 /**
  * @ingroup    RN8318
- * @brief      RN8318 isr����
+ * @brief      RN8318 isr¶¨Òå
  *
  * @{
  * @file
@@ -13,11 +13,21 @@
 #include "lib_conf.h"
 #include "cpu_surport.h"
 
-//bit-band����
+//bit-band²Ù×÷
 #define   IO_DAT(IOX, PINX)  *((volatile unsigned long *)((((uint32_t)IOX) & 0xF0000000)\
                               +0x2000000+((((uint32_t)IOX) &0xFFFFF)<<5)+(PINX<<2)))
 
 #define IS_ACPOWER_OFF  1
+
+static uint8 wpulse_light_flag = 0;
+static uint8 wpulse_light_open = 0;
+static uint8 wpulse_light_open_flag = 0;
+static uint8 wplse_light_width = 0;
+
+static uint8 key_keep_flag = 0;
+static uint8 key_keep_width = 0;
+extern  uint32 over_Imax;
+
 
 
 static isr_handle isr[IRQ_NUM] = {0};
@@ -64,9 +74,9 @@ void HardFault_Handler(void)
 {
     __asm("MOV R0, LR");
     __asm("MOVS R1, #0x04");
-    /* ��ȡSP����δ���,����ʱ���ֶ��鿴MSP��PSP������.*/
+    /* »ñÈ¡SP´úÂëÎ´Íê³É,µ÷ÊÔÊ±ÇëÊÖ¶¯²é¿´MSP»òPSPµÄÄÚÈÝ.*/
     
-    NVIC_SystemReset();  /* ֱ�Ӹ�λCM3����Χ��· */
+    NVIC_SystemReset();  /* Ö±½Ó¸´Î»CM3¼°ÍâÎ§µçÂ· */
 }
 
 /*******************************************************************************
@@ -96,7 +106,7 @@ void SysTick_Handler(void)
     }
 }
 
-//��ʱ��
+//¶¨Ê±Æ÷
 void TMR0_IRQHandler(void)
 {
     
@@ -127,11 +137,69 @@ void TMR2_IRQHandler(void)
   * @param  None
   * @retval None
   */
-void TMR3_IRQHandler(void)      //2ms�ж�
+void TMR3_IRQHandler(void)      //2ms中断
 {
    
-
+    uint8 dly1,dly2=0;
     
+    if( TMR_GetINTStatus(TMR3))
+    {
+        TMR_ClearINTStatus(TMR3);
+        //if (hfp_read(0x6F34, &lowvol, 0x01, __NULL) && lowvol)//大于70A，脉冲宽度减半
+        if(over_Imax == 0x55)
+        {
+                dly1 = 6;
+                dly2 = 14;
+        }
+        else
+        {
+                dly1 = 10;
+                dly2 = 30;
+        }
+        /******************** 消抖 ********************/ 
+        if(wpulse_light_open == 0x5a)
+        {
+                if((GPIOA->STS & BIT8) == BIT8)//消抖    
+                {
+                        wpulse_light_open_flag++;
+                }
+                else
+                {
+                        wpulse_light_open_flag=0;
+                }
+                if(wpulse_light_open_flag >= dly1)//20ms
+                {
+
+                        wpulse_light_open = 0;
+                        wpulse_light_open_flag = 0;
+                        wpulse_light_flag = 0x5A;
+                        wplse_light_width = 0;
+                        
+                }
+        }
+        
+        /******************** 脉宽80ms ********************/ 
+        if(wpulse_light_flag == 0x5a)
+        {
+                wplse_light_width++;
+                if(wplse_light_width > dly2)
+                {
+                        GPIOF->OEN &=~BIT1;
+                        GPIOF->IE &=~BIT1;
+                        GPIOF->ATT &=~BIT1; 
+                        IO_DAT( GPIOF_DAT, 1) = 0;
+                        wplse_light_width = 0;
+                        wpulse_light_flag = 0;
+                }
+                else
+                {
+                        GPIOF->OEN &=~BIT1;
+                        GPIOF->IE &=~BIT1; 
+                        GPIOF->ATT &=~BIT1; 
+                        IO_DAT( GPIOF_DAT, 1) = 1;
+                }
+        }
+    }
 }
 
 /**
@@ -244,8 +312,60 @@ void RTC_IRQHandler(void)
   */
 void PMU_IRQHandler(void)
 {
-   
+    uint16 cnt;
+    
+    if( PMU_GetIOAINTStatus(GPIO_Pin_8))   //有功脉冲
+    {
+        PMU_ClearIOAINTStatus(GPIO_Pin_8);
+        GPIOF->OEN &=~BIT1;
+        GPIOF->IE &=~BIT1; 
+        GPIOF->ATT &=~BIT1; 
+        IO_DAT( GPIOF_DAT, 1) = 1;
+        wpulse_light_open = 0x5a;
+        wpulse_light_flag = 0;
+    }
 
+    if(GPIOA->INT & BIT2)  // 按键
+    {
+        
+        key_keep_flag = 0x5a;
+        key_keep_width = 0;
+        
+        //if(hfp_system_state.power_state == BATTER_SUPPLY)// 停电下按键消抖
+        //if(ANA->COMPOUT & ANA_STATUS_VDCINDROP)
+        {
+             key_keep_flag = 0; // 避免停电下 tick被打开 发两次 按键消息
+             if(ANA->COMPOUT & BIT2)//有电池
+             {
+                 for(cnt = 0; cnt< 10; cnt++)  
+                 {
+                    if(((GPIOA->STS & BIT2) != 0))
+                    {
+                        break;
+                    }
+                 }
+                 if (cnt >= 10)
+                 {
+                    
+                 }
+             }
+
+        }
+
+        PMU->IOAINTSTS = BIT2;
+    }
+
+#if 0    
+    for(i=0;i<8;i++)
+    {
+        if(GPIOA->INT & (0x01<<i))
+        {
+            PMU->IOAINTSTS = (0x01<<i);
+            send_button_req(i);
+        }
+    }
+    GPIOA->INT = 0xFF;
+#endif
 }
 
 
@@ -371,7 +491,7 @@ void UART3_IRQHandler(void)
         UART3->INTSTS = 0x00000062;
     }
 }
-//uint32 test_ir_RX_CNT = 0;//�Ļ���
+//uint32 test_ir_RX_CNT = 0;//¸Ä»ØÀ´
 /*******************************************************************************
 * Function Name  : UART4_HANDLER
 * Description    : This function handles UART4 HANDLER.

@@ -96,12 +96,17 @@ int uart_dev_initialize(const struct dev_info_t *dev)
         uart_dev[index].dev_bus_ops = dev->dev_bus_ops;
         uart_dev[index].dev_driver_ops = dev->dev_driver_ops;
         uart_dev[index].dev_sys_ops = dev->dev_sys_ops;
-        uart_dev[index].dev_input_fifo = &uart_tx_fifo[index];
-        uart_dev[index].dev_output_fifo = &uart_rx_fifo[index];
-        txbuf = txbuffer;
-        rxbuf = rxbuffer;
-        fifoBuf_init(uart_dev[index].dev_input_fifo, txbuf, uart_dev[index].data_size);
-        fifoBuf_init(uart_dev[index].dev_output_fifo, rxbuf, uart_dev[index].data_size);
+        
+        //uart_dev[index].dev_input_fifo = &uart_tx_fifo[index];
+        //uart_dev[index].dev_output_fifo = &uart_rx_fifo[index];
+
+        uart_dev[index].dev_input_fifo = dev->dev_input_fifo;
+        uart_dev[index].dev_output_fifo = dev->dev_output_fifo;
+        
+        //txbuf = txbuffer;
+        //rxbuf = rxbuffer;
+        //fifoBuf_init(uart_dev[index].dev_input_fifo, txbuf, uart_dev[index].data_size);
+        //fifoBuf_init(uart_dev[index].dev_output_fifo, rxbuf, uart_dev[index].data_size);
         if(dev->dev_type == DEV_IR)
         {
             infrared_enable = 1;

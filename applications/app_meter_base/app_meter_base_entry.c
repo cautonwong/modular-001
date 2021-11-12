@@ -157,6 +157,19 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
     case 0x88://control_block控制命令 比如清零
         //controlData(instance,pipeline,mesg);
         break;
+    case MSG_SECOND:
+        
+        Electrical_measurement(instance, pipeline);
+        
+        Energy_Meter(instance, pipeline);
+        
+        //Autodisplay(instance, pipeline);
+        
+        break;
+    case MSG_PAGE_KEY_UP:
+         
+        //Keydisplay(instance, pipeline);
+        break;
     default:
         break;
     }
