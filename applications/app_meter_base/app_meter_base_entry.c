@@ -38,6 +38,33 @@ const struct record_item_t  record_item[] =
     { OverCurrentL1_index, OverCurrentL1_index,     1,      10 },//index
 };
 
+
+int16_t register_event_info(uint16_t event_flag, uint16_t* size, uint16_t* depth)
+{
+    uint8_t i;
+
+    for (i = 0; i < sizeof(record_item) / sizeof(record_item[0]); i++)
+    {
+        if ((event_flag == record_item[i].event_flag_id_start) || (event_flag == record_item[i].event_flag_id_end))
+        {
+            if (size != NULL)
+            {
+                *size = record_item[i].len;
+            }
+
+            if (depth != NULL)
+            {
+                *depth = record_item[i].max_depth;
+            }
+
+            return 0x00;
+        }
+    }
+
+    return -1;
+}
+
+
 #define START_MODE  10
 #define END_MODE  11
 //record_head 记录头 首字节为个数，后续为OAD，  
@@ -222,7 +249,7 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
                 // 读取序号 ++
                 nd_get(instance, SequenceId, &sequence, sizeof(sequence));
                 sequence++;
-                memcopy(data_buff, (uint8_t*)sequence, 4);
+                memcpy(data_buff, (uint8_t*)sequence, 4);
 
                 //调用ND_SET保存数据
                 nd_set(instance, RecordId, data_buff, (pdata - data_buff));
