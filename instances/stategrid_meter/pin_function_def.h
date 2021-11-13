@@ -105,4 +105,12 @@
 #define  ESAM_POWER_CTRL_ON()      {*((uint32*)GPIOC_OEN) &= ~BIT(7); *((uint32*)GPIOC_IE) |= BIT(7);  *((uint32*)BITBAND_ADDR(GPIOC_DAT,7)) = 0;}
 #define  ESAM_POWER_CTRL_OFF()     {*((uint32*)GPIOC_OEN) &= ~BIT(7); *((uint32*)GPIOC_IE) |= BIT(7);  *((uint32*)BITBAND_ADDR(GPIOC_DAT,7)) = 1;}
 
+
+
+
+#define  UART_RS4851_AT_MCU_UART_INDEX   0
+#define  UART_MODULE_AT_MCU_UART_INDEX   4
+#define  UART_IR_AT_MCU_UART_INDEX       5
+    
+
 #endif

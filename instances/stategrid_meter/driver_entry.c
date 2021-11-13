@@ -2,6 +2,8 @@
 #include "nidavellir.h"
 #include "lib_conf.h"
 #include "time_link.h"
+#include "uart_driver.h"
+#include "pin_function_def.h"
 
 extern const struct driver_ops_t  CODE eeprom_driver;
 extern const struct bus_ops_t iic_bus;
@@ -30,13 +32,29 @@ const struct dev_info_t eeprom_dev=
     __NULL,
 };
 
-const UART_InitType  Uart_InitType = 
+const UART_InitType  Uart_InitType_485 = 
 {
     UART_MODE_Msk,
     UART_PARITY_EVEN_LIB,
     UART_WORDLEN_9B,
     UART_FIRSTBIT_LSB,
-    2400,
+    9600,
+};
+const UART_InitType  Uart_InitType_module = 
+{
+    UART_MODE_Msk,
+    UART_PARITY_EVEN_LIB,
+    UART_WORDLEN_9B,
+    UART_FIRSTBIT_LSB,
+    9600,
+};
+const UART_InitType  Uart_InitType_ir = 
+{
+    UART_MODE_Msk,
+    UART_PARITY_EVEN_LIB,
+    UART_WORDLEN_9B,
+    UART_FIRSTBIT_LSB,
+    1200,
 };
 
 const UART_InitType  Rn8209_Uart_InitType = 
@@ -48,20 +66,6 @@ const UART_InitType  Rn8209_Uart_InitType =
     4800,
 };
 
-const struct dev_info_t rs485_dev=
-{
-    DEV_RS4851,
-    0,
-    0xFFFF,
-    0,
-    0,
-    __NULL,
-    &uart_driver,
-    __NULL,
-    __NULL,
-    __NULL,
-    &Uart_InitType,
-};
 
 
 const struct dev_info_t rn8209_dev=
@@ -105,43 +109,49 @@ void RTC_Second(void)
 
 
 
-extern void Electrical_measurement_reset(void);
-extern void Electrical_measurement(void);
 
 
-void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , const struct dev_info_t * chl_dev)
+
+
+   
+
+void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uint8_t chl_type)
 {
-    struct dev_info_t chl_dev_init;
-
-    chl_dev_init.dev_type = chl_dev->dev_type;
-    chl_dev_init.dev_index = chl_dev->dev_index;
-    chl_dev_init.data_size = chl_dev->data_size;
-    chl_dev_init.dev_timer_type = chl_dev->dev_timer_type; 
-    chl_dev_init.dev_timer_id = chl_dev->dev_timer_id;
-    chl_dev_init.dev_bus_ops = chl_dev->dev_bus_ops;   
-    chl_dev_init.dev_driver_ops = chl_dev->dev_driver_ops;
-    chl_dev_init.dev_sys_ops = chl_dev->dev_sys_ops;
-    chl_dev_init.dev_input_fifo = rxfifo;
-    chl_dev_init.dev_output_fifo = txfifo;
-    chl_dev_init.cfg = chl_dev->cfg;
-
-    chl_dev_init.dev_driver_ops->dev_initialize(&chl_dev_init);
+    struct uart_chl_init_t chl_init;
+    
+    switch(chl_type)
+    {
+        case UART_RS4851_CHL:
+             chl_init.uart_cfg = (const void*)&Uart_InitType_485;
+             chl_init.mcu_uart_index = UART_RS4851_AT_MCU_UART_INDEX;
+             break;
+        case UART_IR_CHL:
+             chl_init.uart_cfg = (const void*)&Uart_InitType_ir;
+             chl_init.mcu_uart_index = UART_IR_AT_MCU_UART_INDEX;
+            break;
+        case UART_MODULE_CHL:
+             chl_init.uart_cfg = (const void*)&Uart_InitType_module;
+             chl_init.mcu_uart_index = UART_MODULE_AT_MCU_UART_INDEX;
+            break;
+        default:
+            break;
+    }
+    chl_init.tx_fifo = txfifo;
+    chl_init.rx_fifo = rxfifo;
+    chl_init.chl_type = chl_type;    
+    uart_chl_initialize(&chl_init);
 }
 
 void irq_system_init(void)
 {
-
     fifoBuf_init(&irq_fifo, fifo_buf, 32);
     ndv_isr_handle_regsit(RTC_Second , IRQ_RTC );
-    
-
-
 }
 
 void irq_transform_to_instance(struct instance_t* instance)
 {
     uint8_t fifo_irq = 0;
-    uint8_t i;
+
     
     while(fifoBuf_getUsed(&irq_fifo) >0)
     {
@@ -168,7 +178,6 @@ void dev_init(void)
     
     eeprom_dev.dev_driver_ops->dev_initialize(&eeprom_dev);
     
-    rs485_dev.dev_driver_ops->dev_initialize(&rs485_dev);
     
     rn8209_dev.dev_driver_ops->dev_initialize(&rn8209_dev);
     
