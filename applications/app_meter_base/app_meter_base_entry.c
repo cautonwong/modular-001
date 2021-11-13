@@ -13,25 +13,14 @@
 
 //快照记录头类型
 // 标准事件记录头   事件记录序号、事件发生时间、事件结束时间、时间发生源、事件上报状态
-const uint32_t snapshot_head_t1[] = {5, 0x20220200, 0x201E0200, 0x20200200, 0x20240200, 0x33000200};
+const uint32_t record_head_t0[] = {5, 0x20220200, 0x201E0200, 0x20200200, 0x20240200, 0x33000200};
 
 // 分项事件记录头    事件记录序号、事件发生时间、事件结束时间、事件上报状态
-const uint32_t snapshot_head_t2[] = {4, 0x20220200, 0x201E0200, 0x20200200, 0x33000200};
-
+const uint32_t record_head_t1[] = {4, 0x20220200, 0x201E0200, 0x20200200, 0x33000200};
 // 其他事件记录头种类 待添加
 
 
-struct snapshot_item_t
-{
-    uint16_t  event_flag_id_start;  // 事件代码
-    uint16_t  event_flag_id_end;    // 事件代码2
-    uint16_t capture_addr;  // 关联对象列表（e2p地址） 内容格式 1（数量n）+ n*4 （n个关联对象） 
-    uint16_t save_addr;     // 快照存储地址 e2p：实际地址   flash：起始扇区数
-    uint16_t len;           // 存储空间大小 e2p：字节数   flash：扇区数
-    uint16_t max_depth;     // 默认最大深度
-    const uint32_t*  head_type;     // 快照记录头类型
-    uint8_t  info;          // 存储器件 BIT0:e2p  BIT1: flash;    其他保留 
-};
+
 
 struct record_item_t
 {
@@ -43,33 +32,40 @@ struct record_item_t
 //一个表格只能放在一个存储器上，注册的时候绑定设备
 const struct record_item_t  record_item[] =
 {
-    { OverCurrentL1, OverCurrentEndL1, 800, 10 },
-    { OverCurrentL1_oad, OverCurrentL1_oad, 800, 10 },//oad
-    { OverCurrentL1_index, OverCurrentL1_index, 800, 10 },//index
+    { OverCurrentL1, OverCurrentEndL1,              800,    10 },
+    { OverCurrentL1_oad, OverCurrentL1_oad,         151,    10 },//oad列表
+    { OverCurrentL1_index, OverCurrentL1_index,     1,      10 },//index
 };
 
-const struct snapshot_item_t  snapshot_item[] = 
-{
-    // 事件代码       // 事件代码           // 关联对象列表（e2p地址）     // 记录存储地址     // 存储空间大小   // 默认最大深度 // 记录头类型     //info   
-    {OverCurrentL1,    OverCurrentEndL1,     CAPTURE_E2P_BASE_ADDR,      SNAPSHOT_E2P_B_ADDR,  800,                 10,           snapshot_head_t2,  E2P_MEM},
-    
-};
 
 int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     uint8_t i, mode, obj_cnt, scheme, scheme_valid;
-    uint8_t BuffTemp[200] = { 0 }, CaptureList[151] = { 0 },  payload[100] = { 0 }, data_buff[400] = { 0 };
+    uint8_t BuffTemp[200] = { 0 }, CaptureList[151] = { 0 },  data_buff[400] = { 0 };
     uint8_t *pdata = data_buff;
-    uint16_t event_flag_id = 0, data_len = 0, single_len;
+    uint16_t event_flag_id = 0, data_len = 0, pdata_len = 0, single_len;
     uint32_t obj;
+    const uint32_t* record_head;
+    uint32_t CaptureAddr;
+      
     
     //mesg 的id 就是事件代码
-    int r = recv_mesg_header(instance, pipeline, mesg, &payload[0]);
+    int r = recv_mesg_header(instance, pipeline, mesg);
     if (r > 0)
     {
         switch(mesg->id)
             case OverCurrentL1:
+                record_head = record_head_t0;
+                CaptureAddr = OverCurrentL1_oad;
+
+                //获取关联对象
+                nd_get(instance, CaptureAddr, &CaptureList[0], sizeof(CaptureList));
+
+                pdata += get_record_head(pdata, record_head);
+                pdata += get_record_association(pdata, CaptureList);
+
                 //增加固定的事件头
+                
                 //获取关联对象
                 
                 //调用ND_SET保存数据
