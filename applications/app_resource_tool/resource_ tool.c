@@ -357,7 +357,7 @@ int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
     memset((uint8_t*)&obj, 0x00, sizeof(obj));
     ret = look_up_map(instance, id, buf, 0x01, &obj);
 
-    if (ret <= 0x01)
+    if (ret >= 0x01)
     {
         return ret;
     }
@@ -374,7 +374,7 @@ int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
                 obj.hook(buf, obj.p);
             }
 
-            return 0x01;
+            return obj.length;
         }
     }
     return -1;
@@ -391,7 +391,7 @@ int16_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
     memset((uint8_t*)&obj, 0x00, sizeof(obj));
     ret = look_up_map(instance, id, buf, 0x01, &obj);
 
-    if (ret <= 0x01)
+    if (ret >= 0x01)
     {
         return ret;
     }
@@ -504,7 +504,7 @@ int16_t nd_size(struct instance_t* instance, uint32_t id)
 
     memset((uint8_t*)&obj, 0x00, sizeof(obj));
     ret = look_up_map(instance, id, NULL, 0x01, &obj);
-    if (ret > 0x01)
+    if (ret >= 0x01)
     {
         return obj.length;
     }

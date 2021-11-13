@@ -73,7 +73,6 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
     const uint32_t* record_head;
     uint32_t CaptureAddr;
       
-    
     //mesg 的id 就是事件代码
     int r = recv_mesg_header(instance, pipeline, mesg);
     if (r > 0)
