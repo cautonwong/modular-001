@@ -3,163 +3,123 @@
 #include "time_link.h"
 #include "cpu_surport.h"
 
-typedef struct __ndv_timer
+
+struct tick_timer_list_t
 {
     uint8 (*tickfunc)(void *);
-    void               *tickpara;
-    uint16             timeout;
-    uint16             dlyctr;
-    uint8              timerid;
-    uint8              stoped;
-    struct __ndv_timer *pnext;
-} ndv_timer;
+    void                 *tickpara;
+    uint32_t             timeout;
+    uint32_t             dlyctr;
+    uint8                stoped;
+};
 
-ndv_timer *gs_timer_link;
+static struct tick_timer_list_t tick_timer_list[TIME_OBJ_NUM];
 
 
-ndv_timer link_node[10];
 
-uint8 ndv_timer_create(uint8 (*tickfunc)(void *), void *tickpara, uint16 timeout, uint8 stoped)
-{
-    ndv_timer *p;
-    ndv_timer *q = gs_timer_link, *r;
-    uint8     time_id;
 
-    p = gs_timer_link;
 
-    time_id = 0x01;
 
-    while (p != __NULL)                     /**< 循环扫描到最后的timer */
+uint8 ndv_timer_create(struct tm_list_init_t *tm_init)
+{    
+    if(tm_init->tm_id < TIME_OBJ_NUM)
     {
-        q       = p;                        /**< 保留上一个 */
-        p       = p->pnext;                 /**< 下一个 */
-        time_id = q->timerid;              
-
-        if ((q->tickfunc == tickfunc) && (q->tickpara == tickpara))
-        {
-            return time_id;
-        }
+        tick_timer_list[tm_init->tm_id].tickfunc = tm_init->tickfunc;
+        tick_timer_list[tm_init->tm_id].tickpara = tm_init->tickpara;
+        tick_timer_list[tm_init->tm_id].timeout = tm_init->timeout;
+        tick_timer_list[tm_init->tm_id].dlyctr = tm_init->timeout;
+        tick_timer_list[tm_init->tm_id].stoped = tm_init->stoped;
+        return true;
     }
-
-    r           =   &link_node[time_id-1];
-    r->tickfunc = tickfunc;
-    r->tickpara = tickpara;
-    r->timeout  = timeout;
-    r->dlyctr   = timeout;
-    r->pnext    = __NULL;
-    r->stoped   = stoped;
-
-    if (gs_timer_link == __NULL)
-    {
-        gs_timer_link = r;
-    }
-    else
-    {
-        q->pnext = r;
-    }
-
-    r->timerid = time_id + 1;
-    return r->timerid;
+    
+    return false;
 }
 
 
 uint8 ndv_timer_start(uint8 timerid)
 {
-    ndv_timer *p;
-
-    p = gs_timer_link;
-
-    while (p != __NULL)                     /**< 循环扫描到最后的timer */
+    if(timerid < TIME_OBJ_NUM)
     {
-        if (p->timerid == timerid)          /**< 该ID的timer已经被创建则返回 */ 
+        if(tick_timer_list[timerid].tickfunc != 0)
         {
-            p->stoped = 0;                  /**< 启动 */
-            p->dlyctr = p->timeout + 1;     /**< 防止定时器中途停止后重新启动时,dlyctr 值不等于 timeout. */
+            tick_timer_list[timerid].stoped = 0;
+            tick_timer_list[timerid].dlyctr = tick_timer_list[timerid].timeout + 1;
             return true;
         }
-
-        p = p->pnext;                       /**< 下一个 */
     }
-
-    return false;                    /**< 返回试图启动不存在的timer */
+    return false;
 }
 
 
 uint8 ndv_timer_stop(uint8 timerid)
 {
-    ndv_timer *p;
-
-    p = gs_timer_link;
-
-    while (p != __NULL)                      /**< 循环扫描到最后的timer */
+    if(timerid < TIME_OBJ_NUM)
     {
-        if (p->timerid == timerid)           /**< 该ID的timer已经被创建则返回 */
+        if(tick_timer_list[timerid].tickfunc != 0)
         {
-            p->stoped = 1;                  /**< 停止 */
+            tick_timer_list[timerid].stoped = 1;
             return true;
         }
- 
-        p = p->pnext;                       /**< 下一个 */
     }
-
-    return false;                    /**< 返回试图启动不存在的timer */
+    return false;
 }
 
 
 void ndv_timer_tick(void)
 {
-    ndv_timer *p = gs_timer_link;
-
-    if (p != __NULL)
+    uint8_t i;
+    
+    for(i=0;i<TIME_OBJ_NUM;i++)
     {
-        while (p != __NULL)                 /**< 不断循环处理各个timer */
+        if((tick_timer_list[i].tickfunc == 0) || (tick_timer_list[i].timeout == 0))
         {
-            if (p->stoped == 0)             /**< 判断是否启动 */
+           continue;
+        }
+        if (tick_timer_list[i].stoped == 0) 
+        {
+            tick_timer_list[i].dlyctr--;   
+
+            if (tick_timer_list[i].dlyctr == 0)  
             {
-                p->dlyctr--;                /**< 倒计时 */
-
-                if (p->dlyctr == 0)         /**< 到0则触发 */
+                tick_timer_list[i].dlyctr = tick_timer_list[i].timeout;
+           
+                if (!tick_timer_list[i].tickfunc(tick_timer_list[i].tickpara))
                 {
-                    p->dlyctr = p->timeout; /**< timer恢复然后调用回调函数 */
-
-                    if (!p->tickfunc(p->tickpara))
-                    {
-                        p->stoped = 1;      /**< timer被停止了 */
-                    }
+                    tick_timer_list[i].stoped = 1;
                 }
             }
-
-            p = p->pnext;                   /**< 下一个 */
         }
     }
 }
 
 
-uint8 ndv_timer_start_one(uint8 timerid, uint16 count)
+uint8 ndv_timer_start_one(uint8_t timerid, uint32_t count)
 {
-    ndv_timer *p;
-
-    p = gs_timer_link;
-
-    while (p != __NULL)                                /**< 循环扫描到最后的timer */
+    if(timerid < TIME_OBJ_NUM)
     {
-        if (p->timerid == timerid)                     /**< 该ID的timer已经被创建则返回 */
+        if(tick_timer_list[timerid].tickfunc != 0)
         {
-            p->stoped  = 0;                            /**< 启动 */
-            p->timeout = count;
-            p->dlyctr  = p->timeout + 1;               /**< 防止定时器中途停止后重新启动时,dlyctr 值不等于 timeout. */
+            tick_timer_list[timerid].stoped = 0;
+            tick_timer_list[timerid].timeout = count;
+            tick_timer_list[timerid].dlyctr  = tick_timer_list[timerid].timeout + 1;
             return true;
         }
-
-        p = p->pnext;                                   /**< 下一个 */
     }
-
-    return false;                                      /**< 返回试图启动不存在的timer */
+    return false;
 } 
 
 void ndv_timer_init(void)
 {
-    gs_timer_link = __NULL;
+    uint8_t i;
+    
+    for(i=0;i<TIME_OBJ_NUM;i++)
+    {
+        tick_timer_list[i].tickfunc = 0;
+        tick_timer_list[i].tickpara = 0;
+        tick_timer_list[i].timeout = 0;
+        tick_timer_list[i].dlyctr = 0;
+        tick_timer_list[i].stoped = 0;
+    }
     
     ndv_isr_handle_regsit(ndv_timer_tick , IRQ_SYSTICK);
     

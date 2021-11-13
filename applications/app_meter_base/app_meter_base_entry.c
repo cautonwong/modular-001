@@ -281,37 +281,45 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             event_flags_clr(instance, i);
         }
     }
-
-    switch (mesg->ctrl)
+    
+    int r = recv_mesg_header(instance,pipeline,mesg);
+    uint8_t buf[20];
+    if(r > 0 )
     {
-    case 0x86://采样的外设数据抵达
-        //backlight_pro();
-        break;
-    case 0x87:
-        break;
-    case 0x88://control_block控制命令 比如清零
-        //controlData(instance,pipeline,mesg);
-        break;
-    case MSG_SECOND:
-        
-        Electrical_measurement(instance, pipeline);
-        
-        Energy_Meter(instance, pipeline);
-        
-        //Autodisplay(instance, pipeline);
-        
-        break;
-    case MSG_PAGE_KEY_UP:
-         
-        //Keydisplay(instance, pipeline);
-        break;
-    case MSG_POWERON:
-         Electrical_measurement_poweron(instance, pipeline);
-        break;
-    default:
-        break;
-    }
+      if((mesg->len > 0) && (mesg->len <20))
+      {
+        fifoBuf_getData(pipeline->in_queue,buf,mesg->len);
+      }
 
+      switch (mesg->ctrl)
+      {
+      case 0x86://采样的外设数据抵达
+          //backlight_pro();
+          break;
+      case 0x87:
+          break;
+      case 0x88://control_block控制命令 比如清零
+          //controlData(instance,pipeline,mesg);
+          break;
+      case MSG_SECOND:
+          
+          Electrical_measurement(instance, pipeline);
+          
+          Energy_Meter(instance, pipeline);
+          
+          Display(instance, pipeline);
+          break;
+      case MSG_PAGE_KEY_UP:
+           
+          //Keydisplay(instance, pipeline);
+          break;
+      case MSG_POWERON:
+           Electrical_measurement_poweron(instance, pipeline);
+          break;
+      default:
+          break;
+      }
+    }
     //sync_data()
     return 0;
 }

@@ -60,7 +60,7 @@ int fr_sw_rtc(struct instance_t* instance, struct pipeline_t* pipeline, struct m
             mesg->to = pid_meter_base;
             mesg->ctrl = MSG_SECOND;
             mesg->id = 0x0000001;
-            mesg->len = 4;
+            mesg->len = 0;
             send_mesg(instance, NULL, mesg, NULL);
         }
     }
@@ -150,7 +150,9 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     uint8_t pipeline_n = recipe->pipeline_n;
     struct pipeline_t* pipeline;
     struct cache_t* cache = instance->cache2;
-
+     
+    mcu_clear_watchdog();
+    
 #ifdef NIDAVELLIR_SYSTEM_TEST
     extern int fr_rx_data_from_serial(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
     fr_rx_data_from_serial(instance, &pl_rx_from_serial, &mesg);
@@ -168,7 +170,7 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     {
         pipeline = recipe->pipelines[i];
         cache->used = 0;
-        while (fifoBuf_getUsed(pipeline->in_queue) >= sizeof(struct message_t))
+        if (fifoBuf_getUsed(pipeline->in_queue) >= sizeof(struct message_t))
         {
             filter = pipeline->filters;
             n = pipeline->filter_n;
@@ -302,6 +304,7 @@ int recv_mesg_header(struct instance_t* instance, struct pipeline_t* pipeline, s
     if (fifoBuf_getUsed(pipeline->in_queue) >= sizeof(struct message_t))
     {
         r = fifoBuf_getData(pipeline->in_queue, mesg, sizeof(struct message_t));
+        return r;
         if (MSG_MAGIC == mesg->magic)
         {
             check = nd_get_crc16((uint8_t*)mesg, sizeof(struct message_t) - 2);

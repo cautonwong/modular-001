@@ -58,13 +58,24 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
         mbase_control_block->active_n_dec[fee_index] -= mbase_control_block->meter_const;
         mbase_control_block->month_active_n[fee_index] += 1;        
     }
+}
+
+void Energy_Meter_PowerON(struct instance_t* instance, struct pipeline_t* pipeline)
+{
+
+
+
 
 }
 
 
+void Energy_Meter_PowerOFF(struct instance_t* instance, struct pipeline_t* pipeline)
+{
 
 
 
+
+}
 
 
 
