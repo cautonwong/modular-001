@@ -48,6 +48,31 @@ const struct record_item_t  record_item[] =
     { OverCurrentL1_index, OverCurrentL1_index, 800, 10 },//index
 };
 
+int16_t register_event_info(uint16_t event_flag, uint16_t* size, uint16_t* depth)
+{
+    uint8_t i;
+
+    for (i = 0; i < sizeof(record_item) / sizeof(record_item[0]); i++)
+    {
+        if ((event_flag == record_item[i].event_flag_id_start) || (event_flag == record_item[i].event_flag_id_end))
+        {
+            if (size != NULL)
+            {
+                *size = record_item[i].len;
+            }
+
+            if (depth != NULL)
+            {
+                *depth = record_item[i].max_depth;
+            }
+
+            return 0x00;
+        }
+    }
+
+    return -1;
+}
+
 const struct snapshot_item_t  snapshot_item[] = 
 {
     // 事件代码       // 事件代码           // 关联对象列表（e2p地址）     // 记录存储地址     // 存储空间大小   // 默认最大深度 // 记录头类型     //info   

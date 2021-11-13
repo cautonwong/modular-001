@@ -13,6 +13,16 @@ struct block_device_children_t
     struct list_head sibling;
 };
 
+struct block_device_record_t
+{
+    uint8_t name;
+    uint32_t first_addr;
+    uint32_t size;
+    uint32_t used;
+    int16_t(*hook)(uint16_t id, uint16_t* len, uint16_t* depth);
+    struct list_head sibling;
+};
+
 //设备的链表(这里把RAM也看成一个块设备来处理)
 struct dev_info_t;
 #pragma pack(4)
@@ -566,5 +576,44 @@ uint8_t circular_image_get(struct instance_t* instance, uint32_t id, uint8_t* bu
     return ret;
 }
 #endif
+
+uint32_t *register_event(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size,
+    int16_t (*fun)(uint16_t event_flag, uint16_t* size, uint16_t* depth))
+{
+    struct block_device_t* device = NULL;
+    struct block_device_record_t* block = NULL;
+    struct block_device_children_t* resource_block = NULL;
+
+    device = look_up_device(instance, device_name);//先获取自己的device
+    if (device != NULL)
+    {
+        block = (struct block_device_record_t*)look_up_block(instance, device, block_name);//在找block
+
+        if (block == NULL)
+        {
+            resource_block = look_up_block(instance, look_up_device(instance, instance->ram_device_name), instance->resource_block_name);
+            if (resource_block == NULL)
+            {
+                return NULL;
+            }
+
+            block = __nd_malloc(resource_block->first_addr, &resource_block->used, sizeof(struct block_device_record_t), resource_block->size);
+            if (block == NULL)
+            {
+                return NULL;
+            }
+            block->first_addr = device->first_addr + device->used;
+            block->name = block_name;
+            init_list_head(&block->sibling);
+            block->size = block_size;
+            block->used = 0x00;
+            block->hook = fun;
+            device->used += block_size;
+            list_add_tail(&block->sibling, &device->children);
+        }
+        return (uint32_t*)block->first_addr;
+    }
+    return NULL;
+}
 
 

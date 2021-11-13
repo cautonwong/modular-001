@@ -4,7 +4,7 @@ extern int app_rx_server_698_entry(struct instance_t* instance, struct pipeline_
 extern int app_tx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-
+extern int16_t register_event_info(uint16_t event_flag, uint16_t* size, uint16_t* depth);
 #ifdef WIN32
 const struct dev_info_t eeprom_dev = 
 {
@@ -108,6 +108,8 @@ extern struct resource_map_t* register_map(struct instance_t* instance, uint8_t 
 extern int8_t resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj);
 extern struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t resource_blok_size, uint8_t resource_block_name);
 extern int8_t add_device(struct instance_t* instance, uint8_t device_name,const struct dev_info_t *dev);
+extern uint32_t* register_event(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size,
+    int16_t(*fun)(uint16_t event_flag, uint16_t* size, uint16_t* depth));
 extern void dev_init(void);
 extern void irq_system_init(void);
 extern void irq_transform_to_instance(struct instance_t* instance);
@@ -240,6 +242,10 @@ int baremetal_instance_entry_main(int argc, char** argv)
     add_device(instance, RES_DEV_EEPROM, &eeprom_dev);
     //注册FLASH
     add_device(instance, RES_DEV_FLASH, &nor_flash_dev);
+
+    //注册事件
+    uint8_t mbase_block_event = 0x08;
+    register_event(instance, RES_DEV_EEPROM, mbase_block_event, 50 * 1024, register_event_info);
 
     //注册一个698的MAP
     uint8_t res_map_698 = 0x01;
