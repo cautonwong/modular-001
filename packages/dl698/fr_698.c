@@ -264,7 +264,7 @@ int matcher_698(void* pctx, uint8_t* b)
         {
             ctx->step = 0;
             ctx->err_n++;
-            return -1;
+            return 2;
         }
         ctx->step = 11;
         return FRM_OK;
@@ -273,7 +273,7 @@ int matcher_698(void* pctx, uint8_t* b)
         {
             ctx->step = 0;
             ctx->err_n++;
-            return -1;
+            return 2;
         }
         ctx->step = 12;
         return FRM_OK;
@@ -281,7 +281,7 @@ int matcher_698(void* pctx, uint8_t* b)
         if (byte != 0x16)
         {
             ctx->step = 0;
-            return -1;
+            return 2;
         }
         return 1;//接收到完整的一帧
     }

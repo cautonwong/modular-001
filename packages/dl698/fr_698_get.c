@@ -43,30 +43,6 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
         offset = cache->wr;
         p[cache->wr++] = 0x01;
 
-        //class的处理开始  找到对应class的编解码器
-        if (get_OAD_Class(oad) == 0) //电能量
-        {
-            len = 4;
-            if (get_OAD_Attribute(oad) == 2) 
-                p[cache->wr++] = TYPE_double_long;//type encoder
-            if (get_OAD_Attribute(oad) == 4)
-            {
-                p[cache->wr++] = TYPE_long64_unsigned;//type encoder
-                len = 8;
-            }
-            if (get_OAD_Attribute(oad) == 6)
-            {
-                p[cache->wr++] = TYPE_unsigned;//type encoder
-                len = 1;
-            }
-        }        
-           
-        if (get_OAD_Class(oad) == 1) //需量
-        {
-            //p[cache->wr++] = 2;
-            //p[cache->wr++]
-        }
-
         int r = fr_698_get(instance, oad, p + cache->wr, len);
         //fifo->rd += r;
         if (r < 0)

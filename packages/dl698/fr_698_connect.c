@@ -141,25 +141,25 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
 
     if(CA_TYPE_TER(ctx->CA))//from 终端
     {
-	    //memcopy((uint8_t*)&buf[offset],(uint8_t*)&esam_symauth_term[0],6);
+	    //memcpy((uint8_t*)&buf[offset],(uint8_t*)&esam_symauth_term[0],6);
 		//dectypt->rn[0] = 64;
     }
     else //from 主站
     {
-	   // memcopy((uint8_t*)&buf[offset],(uint8_t*)&esam_symauth[0],6);
+	   // memcpy((uint8_t*)&buf[offset],(uint8_t*)&esam_symauth[0],6);
 		//dectypt->rn[0] = 48;
     }
     offset += 6;
 
     //  密文 1 octet-string，
     len_len = axdr_data_len_decode(TYPE_octet_string, p_apdu, &data_len);
-    //memcopy((uint8_t*)&buf[offset], p_apdu + len_len, data_len);
+    //memcpy((uint8_t*)&buf[offset], p_apdu + len_len, data_len);
     offset += data_len;
     p_apdu += len_len + data_len;
 
     //  客户机签名 1 octet-string
     len_len = axdr_data_len_decode(TYPE_octet_string, p_apdu, &data_len);
-	//memcopy((uint8_t*)&buf[offset], p_apdu + len_len, data_len);
+	//memcpy((uint8_t*)&buf[offset], p_apdu + len_len, data_len);
     offset += data_len;
     p_apdu += len_len + data_len;
 
@@ -172,10 +172,10 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
 
     if ( false != fr_698_action(buf, buf, &offset))
 	{
-		//memcopy(&dectypt->rn[1],&buf[0],dectypt->rn[0]);
+		//memcpy(&dectypt->rn[1],&buf[0],dectypt->rn[0]);
         
 		//dectypt->mac[0] = 4;
-		//memcopy(&dectypt->mac[1],&buf[dectypt->rn[0]],4);
+		//memcpy(&dectypt->mac[1],&buf[dectypt->rn[0]],4);
         
 		return DAR_SUCCESS;
 	}

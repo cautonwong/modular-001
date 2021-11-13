@@ -16,7 +16,7 @@ int resource_map_698_OIA1_2_Variable(struct instance_t* instance, uint32_t id, u
             buf[0] = 0x01;//数组
             buf[1] = 0x01;//单相一个元素
             buf[2] = TYPE_long_unsigned;
-            //memcpy(buf+3, (uint8_t*)&mbase_cb->voltage_ac, 0x02);
+            memcpy(buf+3, (uint8_t*)&mbase_cb->voltage_ac, 0x02);
             return 0x05;
         }
     break;
