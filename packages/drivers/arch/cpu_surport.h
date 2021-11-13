@@ -40,8 +40,8 @@ extern void cm0_systick_init(uint8 cmd);
 extern void ndv_isr_handle_regsit(isr_handle isr_handle_f , uint8 irq);
 
 
-#define  DISABLE_ALL_INT()     __enable_irq();
-#define  ENABLE_ALL_INT()      __disable_irq();
+#define  DISABLE_ALL_INT()     __disable_irq();
+#define  ENABLE_ALL_INT()      __enable_irq();
 
 #define STOP    0xAA
 #define START   0x55
@@ -107,12 +107,6 @@ enum device_id_t
     DEV_ESAM_698      ,
     DEV_CARD          ,
     DEV_RAM           ,
-
-    DEV_RS4851        ,
-    DEV_RS4852        ,
-    DEV_IR            ,
-    DEV_PLC           ,
-    DEV_GPRS          ,
 };
 
 

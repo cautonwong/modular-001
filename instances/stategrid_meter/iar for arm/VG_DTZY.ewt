@@ -2487,6 +2487,9 @@
                 <name>$PROJ_DIR$\..\..\..\packages\drivers\ndvh_rn8209.h</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\..\packages\drivers\relay.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\packages\drivers\spi_driver.c</name>
             </file>
             <file>
@@ -2571,7 +2574,7 @@
                 <name>$PROJ_DIR$\..\..\..\applications\app_meter_base\app_meter_base_entry.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\electrical measurement.c</name>
+                <name>$PROJ_DIR$\..\..\..\packages\meterbase\electrical_measurement.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\meterbase\energy.c</name>
@@ -2601,6 +2604,9 @@
     </group>
     <file>
         <name>$PROJ_DIR$\..\..\..\nidavellir\include\applications.h</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\cpu_surport.h</name>
     </file>
     <file>
         <name>$PROJ_DIR$\..\driver_entry.c</name>

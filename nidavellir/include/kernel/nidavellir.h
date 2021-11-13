@@ -27,6 +27,7 @@
 #include "pipeline.h"
 #include "memory.h"
 #include "applications.h"
+#include "uart_driver.h"
 
 //to-be-deleted
 extern struct fifo_t pipe_msta_rx_from_meter;//rx fifo
@@ -558,6 +559,10 @@ enum resource_map_698_e
 
 #define  MSG_SECOND         0x0001
 #define  MSG_PAGE_KEY_UP    0x0002
+#define  MSG_POWERON        0x0003
+#define  MSG_POWEROFF       0x0004
+
+
 
 int nidavellir_loop(struct instance_t *instance);
 int nidavellir_n_loop(struct instance_t **instances,size_t n);

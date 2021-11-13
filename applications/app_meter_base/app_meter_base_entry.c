@@ -170,6 +170,9 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
          
         //Keydisplay(instance, pipeline);
         break;
+    case MSG_POWERON:
+         Electrical_measurement_poweron(instance, pipeline);
+        break;
     default:
         break;
     }
