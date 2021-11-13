@@ -82,7 +82,7 @@ int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, st
 
     result = event_duration_pro(duration_para, duration, activeflag, recordflag, state);
     
-    if (recordflag == true)
+    if (*recordflag == true)
     {
         mesg->from = kernel;
         mesg->to = pid_resource_manager;
