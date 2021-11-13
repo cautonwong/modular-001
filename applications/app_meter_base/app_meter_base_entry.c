@@ -42,11 +42,11 @@ const struct snapshot_item_t  snapshot_item[] =
 
 int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    uint8_t i,mode, obj_cnt, scheme, scheme_valid;
+    uint8_t i, mode, obj_cnt, scheme, scheme_valid;
     uint8_t BuffTemp[200] = { 0 }, CaptureList[151] = { 0 },  payload[100] = { 0 }, data_buff[400] = { 0 };
     uint8_t *pdata = data_buff;
     uint16_t event_flag_id = 0, data_len = 0, single_len;
-    uint32 obj;
+    uint32_t obj;
     
 
     int r = recv_mesg(instance, pipeline, mesg, &payload[0]);
@@ -55,7 +55,7 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
         event_flag_id = mesg->id; 
    
         // 查表 
-        for (uint8_t i = 0; i < (sizeof(snapshot_item) / sizeof(snapshot_item[0])); i++)
+        for (i = 0; i < (sizeof(snapshot_item) / sizeof(snapshot_item[0])); i++)
         {
             if (event_flag_id == snapshot_item[i].event_flag_id_start)   
             {

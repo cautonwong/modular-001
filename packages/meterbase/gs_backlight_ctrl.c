@@ -32,9 +32,8 @@ const struct alarm_t alarm_control[] =
                                              
     { 0x00000800, OverLoadL1 },              /**< 过载 */
     { 0x00000800, OverLoadL2 },              /**< 过载 */
-    { 0x00000800, OverLoadL3 },              /**< 过载 */
-    
-    { 0x00001000, Voltagesequencereversal }, /**< 电压逆相序 */
+    { 0x00000800, OverLoadL3 },             
+    { 0x00001000, Voltagesequencereversal},
     
     { 0x00002000, LostCurrentL1 },           /**< 失流 */
     { 0x00002000, LostCurrentL2 },           /**< 失流 */

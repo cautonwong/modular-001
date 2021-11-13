@@ -241,10 +241,10 @@
 #define    Quadrant3DemandOver       140 /**< 3象限无功需量超限事件*/  
 #define    Quadrant3DemandOverEnd    141 /**< 3象限无功需量超限事件结束*/
 #define    Quadrant4DemandOver       142 /**< 4象限无功需量超限事件*/  
-#define    Quadrant4DemandOverEnd    143 /**< 4象限无功需量超限事件结束*/
-#define    Voltagesequencereversal   144 /**< 电压逆相序事件 */  
-#define    VoltagesequencereversalEnd   145 /**< 电压逆相序事件结束 */  
-#define    CurrentReversal              146 /**< 电流逆相序事件 */  
+#define    Quadrant4DemandOverEnd    143 //4象限无功需量超限事件结束
+#define    Voltagesequencereversal   144 //电压逆相序事件
+#define    VoltagesequencereversalEnd   145 //电压逆相序事件结束 
+#define    CurrentReversal              146 //电流逆相序事件 
 #define    CurrentReversalEnd           147 /**< 电流逆相序事件结束 */  
 #define    MagneticDisturb              148 /**< 恒定磁场干扰事件 */  
 #define    MagneticDisturbEnd           149 /**< 恒定磁场干扰事件结束 */  
