@@ -221,6 +221,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     }
     //初始化pl_meter_base初始化
     pl_meter_base.ctx = nd_malloc(instance, mbase_control_block_name, sizeof(struct mbase_control_block_t));
+    instance->mbase_cb = pl_meter_base.ctx;
     pl_meter_base.in_queue = nd_malloc(instance, mbase_control_block_name, sizeof(struct fifo_t));
     fifoBuf_init(pl_meter_base.in_queue, nd_malloc(instance, mbase_control_block_name, 256), 256);
     pl_meter_base.out_queue = NULL;
