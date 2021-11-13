@@ -165,7 +165,7 @@ int get_record_association(struct instance_t* instance, uint8_t* databuf, uint8_
 int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     uint8_t i, mode;
-    uint8_t CaptureList[151] = { 0 },  data_buff[400] = { 0 }, payload[200];
+    uint8_t CaptureList[151] = { 0 },  data_buff[400] = { 0 }, payload[100];
     uint8_t *pdata = data_buff;
     uint16_t remain_size, SequenceId, RecordId;
     uint32_t sequence;
@@ -176,9 +176,10 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
     remain_size = sizeof(data_buff);
     
     //mesg 的id 就是事件代码
-    int r = recv_mesg(instance, pipeline, mesg, payload);
+    int r = recv_mesg_header(instance, pipeline, mesg);
     if (r > 0)
     {
+        fifoBuf_getData(pipeline->in_queue, payload, mesg->len);
         switch (mesg->id)
         {
             case OverCurrentL1:
@@ -198,7 +199,7 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
                 // 读取序号 ++
                 nd_get(instance, SequenceId, &sequence, sizeof(sequence));
                 sequence++;
-                memcopy(data_buff, (uint8_t*)sequence, 4);
+                memcpy(data_buff, (uint8_t*)sequence, 4);
 
                 //调用ND_SET保存数据
                 nd_set(instance, RecordId, data_buff, (pdata - data_buff));

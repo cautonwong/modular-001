@@ -56,7 +56,7 @@ static int event_duration_pro(uint8_t duration_para,uint8_t *duration, uint8_t *
 int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
-
+    uint8_t payload[100];
     uint32_t *I = &ctrl_block->Ia;
     uint8_t state = false;
     int8_t result = 0;
@@ -81,6 +81,21 @@ int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, st
     }
 
     result = event_duration_pro(duration_para, duration, activeflag, recordflag, state);
+    
+    if (recordflag == true)
+    {
+        mesg->from = kernel;
+        mesg->to = pid_resource_manager;
+        mesg->ctrl = 0;
+        mesg->qos = 0;
+        mesg->len = 4;
+        mesg->id = OverCurrentL1;
+        mesg->oad_n = 1;
+
+        payload[0] = 1;
+        send_mesg(instance, NULL, mesg, payload);
+    }
+
 
     if(*activeflag == true)
     {
