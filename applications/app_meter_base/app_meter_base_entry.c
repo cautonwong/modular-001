@@ -29,6 +29,7 @@ struct record_item_t
     uint16_t len;
     uint16_t max_depth;     // 默认最大深度
 };
+
 //一个表格只能放在一个存储器上，注册的时候绑定设备
 const struct record_item_t  record_item[] =
 {
@@ -37,141 +38,200 @@ const struct record_item_t  record_item[] =
     { OverCurrentL1_index, OverCurrentL1_index,     1,      10 },//index
 };
 
-int16_t register_event_info(uint16_t event_flag, uint16_t* size, uint16_t* depth)
+#define START_MODE  10
+#define END_MODE  11
+//record_head 记录头 首字节为个数，后续为OAD，  
+//mode 0-7 为冻结方案， 10为 事件发生 11位 结束
+int get_record_head(struct instance_t* instance, uint8_t* databuf, const uint32_t* record_head, uint8_t mode, uint16_t *remain_size)
 {
-    uint8_t i;
+    uint8_t *p , i, scheme_valid = true;
+    uint16_t single_len = 0;
+    uint32_t obj;
 
-    for (i = 0; i < sizeof(record_item) / sizeof(record_item[0]); i++)
+    p = databuf;
+    if (record_head)
     {
-        if ((event_flag == record_item[i].event_flag_id_start) || (event_flag == record_item[i].event_flag_id_end))
+        for (i = 0; i < (record_head[0]); i++)
         {
-            if (size != NULL)
+            obj = record_head[i+1];
+            switch (obj)
             {
-                *size = record_item[i].len;
+                case 0x20220200: //事件记录序号
+                    //空缺
+                    break;
+                case 0x201E0200: //事件发生时间
+                    if (mode == END_MODE)
+                    {
+                        scheme_valid = false;
+                    }
+                    break;
+                case 0x20200200: //事件结束时间
+                    if (mode == START_MODE)
+                    {
+                        scheme_valid = false;
+                    }
+                    break;
+                default:
+                    break;
             }
 
-            if (depth != NULL)
+            single_len = 0;
+            single_len = nd_size(instance, obj);
+            if (single_len > 0)
             {
-                *depth = record_item[i].max_depth;
+                if (true == scheme_valid)
+                {
+                    single_len = nd_get(instance, obj, p, *remain_size);
+                    if (single_len > 0)
+                    {
+                        p += single_len;
+                        *remain_size -= single_len;
+                    }
+                }
+                else
+                {
+                    memset(p, 0xFF, single_len);
+                    p += single_len;
+                    *remain_size -= single_len;
+                }
             }
-
-            return 0x00;
         }
     }
-
-    return -1;
+    return (p - databuf);
 }
+//capturelist 记录头 首字节为个数，后续为OAD，  
+//mode 0-7 为冻结方案， 10为 事件发生 11位 结束
+int get_record_association(struct instance_t* instance, uint8_t* databuf, uint8_t* CaptureList, uint8_t mode, uint16_t* remain_size)
+{
+    uint8_t* p, i, scheme, scheme_valid = true;
+    uint16_t single_len = 0;
+    uint32_t obj;
+
+    p = databuf;
+    if (CaptureList)
+    {
+        for (i = 0; i < (CaptureList[0]); i++)
+        {
+            obj = buf_to_uint32_lsb(&CaptureList[1 + 4 * i]);
+            scheme = (obj >> 13) & 0x07; //方案号
+
+            switch (mode)
+            {
+                case START_MODE:    //发生
+                    if ((scheme = 3) || (scheme = 4))
+                    {
+                        scheme_valid = false;
+                    }
+                    break;
+                case END_MODE:      //结束
+                    if ((scheme = 1)|| (scheme = 2))
+                    {
+                        scheme_valid = false;
+                    }
+                    break;
+                default:
+                    if (mode != scheme)
+                    {
+                        scheme_valid = false;
+                    }
+                    break;
+            }
 
 
+            single_len = 0;
+            single_len = nd_size(instance, obj, p, *remain_size);
+            if (single_len > 0)
+            {
+                if (true == scheme_valid)
+                {
+                    single_len = nd_get(instance, obj, p, *remain_size);
+                    if (single_len > 0)
+                    {
+                        p += single_len;
+                        *remain_size -= single_len;
+                    }
+                }
+                else
+                {
+                    memset(p, 0xFF, single_len);
+                    p += single_len;
+                    *remain_size -= single_len;
+                }
+            }
+        }
+    }
+    return (p - databuf);
+}
 int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    uint8_t i, mode, obj_cnt, scheme, scheme_valid;
-    uint8_t BuffTemp[200] = { 0 }, CaptureList[151] = { 0 },  data_buff[400] = { 0 };
+    uint8_t i, mode;
+    uint8_t CaptureList[151] = { 0 },  data_buff[400] = { 0 }, payload[200];
     uint8_t *pdata = data_buff;
-    uint16_t event_flag_id = 0, data_len = 0, pdata_len = 0, single_len;
-    uint32_t obj;
+    uint16_t remain_size, SequenceId, RecordId;
+    uint32_t sequence;
+
     const uint32_t* record_head;
-    uint32_t CaptureAddr;
+    uint32_t CaptureId;
       
+    remain_size = sizeof(data_buff);
     
     //mesg 的id 就是事件代码
-    int r = recv_mesg_header(instance, pipeline, mesg);
+    int r = recv_mesg(instance, pipeline, mesg, payload);
     if (r > 0)
     {
-        switch(mesg->id)
+        switch (mesg->id)
+        {
             case OverCurrentL1:
                 record_head = record_head_t0;
-                CaptureAddr = OverCurrentL1_oad;
+                RecordId = OverCurrentL1;
+                CaptureId = OverCurrentL1_oad;
+                SequenceId = OverCurrentL1_index;
+                mode = START_MODE;
 
-                //获取关联对象
-                nd_get(instance, CaptureAddr, &CaptureList[0], sizeof(CaptureList));
+                //获取关联对象列表
+                nd_get(instance, CaptureId, &CaptureList[0], sizeof(CaptureList));
+                //组固定的事件头
+                pdata += get_record_head(instance, pdata, record_head, mode, &remain_size);
+                //组配置的关联对象
+                pdata += get_record_association(instance, pdata, CaptureList, mode, &remain_size);
 
-                pdata += get_record_head(pdata, record_head);
-                pdata += get_record_association(pdata, CaptureList);
+                // 读取序号 ++
+                nd_get(instance, SequenceId, &sequence, sizeof(sequence));
+                sequence++;
+                memcopy(data_buff, (uint8_t*)sequence, 4);
 
-                //增加固定的事件头
-                
-                //获取关联对象
-                
                 //调用ND_SET保存数据
+                nd_set(instance, RecordId, data_buff, (pdata - data_buff));
+                nd_set(instance, SequenceId, &sequence, sizeof(sequence));
                 break;
             case OverCurrentEndL1:
+                record_head = record_head_t0;
+                RecordId = OverCurrentL1;
+                CaptureId = OverCurrentL1_oad;
+                SequenceId = OverCurrentL1_index;
+                mode = START_MODE;
 
+                //获取关联对象列表
+                nd_get(instance, CaptureId, &CaptureList[0], sizeof(CaptureList));
+                //组固定的事件头
+                pdata += get_record_head(instance, pdata, record_head, mode, &remain_size);
+                //组配置的关联对象
+                pdata += get_record_association(instance, pdata, CaptureList, mode, &remain_size);
+
+                // 读取序号 ++
+                nd_get(instance, SequenceId, &sequence, sizeof(sequence));
+                sequence++;
+                memcopy(data_buff, (uint8_t*)sequence, 4);
+
+                //调用ND_SET保存数据
+                nd_set(instance, RecordId, data_buff, (pdata - data_buff));
+                nd_set(instance, SequenceId, &sequence, sizeof(sequence));
+                break;
+            default:
 
                 break;
-        event_flag_id = mesg->id; 
-   
-        // 查表 
-        for (i = 0; i < (sizeof(snapshot_item) / sizeof(snapshot_item[0])); i++)
-        {
-            if (event_flag_id == snapshot_item[i].event_flag_id_start)   
-            {
-                mode = 0; 
-                break;
-            }
-            
-            if (event_flag_id == snapshot_item[i].event_flag_id_end)
-            {
-                mode = 1;
-                break;
-            }
         }
-        
-        if (i == (sizeof(snapshot_item) / sizeof(snapshot_item[0])))
-        {
-            return 0;   // 未查到
-        }
-        
-        // 获取 关联对象列表
-        // read(); snapshot_item[i].capture_addr   to  CaptureList[i]  待添加
-
-        // 捕获记录头  和 配置的关联对象 
-        obj_cnt = 0;
-        data_len = 0;
-        for (i = 0; i < (snapshot_item[i].head_type[0] + CaptureList[0]); i++)
-        {
-            scheme_valid = false;
-            if (i < snapshot_item[i].head_type[0])
-            {
-                obj = snapshot_item[i].head_type[1 + i];
-                scheme = 0xFF; //方案FF 固定要存
-                scheme_valid = true;
-            }
-            else
-            {
-                obj = read32_lsb(CaptureList[1 + 4 * i]);
-                scheme = (obj >> 13) & 0x07; //方案号
-
-                // 事件冻结需要分开处理  部分特殊事件仍需特殊处理  
-                if ((mode == 0) && ((scheme == 1) || (scheme == 2))) // 发生前或发生后
-                {
-                    scheme_valid = true;
-                }
-
-                if ((mode == 1) && ((scheme == 3) || (scheme == 4))) // 结束前或结束后
-                {
-                    scheme_valid = true;
-                }
-
-            }
  
-            // 如果有payload，优先用payload数据内容。 特殊处理 待添加 
-
-            if (scheme_valid)
-            { 
-                obj &= 0xFF1FFFFF;
-                single_len  = nd_get(instance, obj, &BuffTemp[0], sizeof(BuffTemp)); // 返回值不是长度?
-                if ((data_len + single_len) > sizeof(data_buff))
-                {
-                    break;
-                }
-                memcopy((pdata + data_len), &BuffTemp[0], single_len);
-                data_len += single_len;
-                obj_cnt++;
-            }
-        }
-
-        //write (event_flag_id, pdata, data_len)       待添加
         return 1;
     }
     return 0;
