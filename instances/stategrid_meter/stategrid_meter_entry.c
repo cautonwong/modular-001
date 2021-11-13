@@ -3,6 +3,7 @@
 extern int app_rx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int app_tx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
 #ifdef WIN32
 const struct dev_info_t eeprom_dev = 
@@ -14,6 +15,18 @@ const struct dev_info_t nor_flash_dev =
     0x01,0x01,0xFFFF,0x00,0x00, NULL, NULL, NULL, NULL, NULL, NULL
 };
 #endif // WIN32
+
+struct pipeline_t pl_resource_manager =
+{
+    pid_resource_manager,
+    "app_resource_manager",
+    NULL,
+    NULL,
+    NULL,
+    sync_data,
+    0x00,
+    NULL,
+};
 
 struct filter_t fr_meter_base[] =
 {
@@ -128,7 +141,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     set_task_ctrl_block();//设置task的控制块
     add_task(instance);//将此task添加到容器里
 #endif
-    //一、初始化resource_manager_ctx;（申请了1K的大小，名称是0x01）
+    //一、初始化instance;（申请了1K的大小，名称是0x01）
     instance = create_instance(RES_DEV_RAM, (uint32_t)&nd_memory, 20 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
     if (instance == NULL)
     {
@@ -144,6 +157,11 @@ int baremetal_instance_entry_main(int argc, char** argv)
     recipe->pipelines = &pipelines[0];
     recipe->pipeline_n = sizeof(pipelines) / sizeof(pipelines[0]);
     recipe->name = 0;
+
+    //初始化pl_resource_manager
+    pl_resource_manager.in_queue = nd_malloc(instance, instance->resource_block_name, sizeof(struct fifo_t));
+    fifoBuf_init(pl_resource_manager.in_queue, nd_malloc(instance, instance->resource_block_name, 256), 256);
+
     //初始化时间
     instance->ms = 0;
     struct tm time =
