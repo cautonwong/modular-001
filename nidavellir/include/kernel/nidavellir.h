@@ -318,7 +318,6 @@ struct message_t//command object
     int32_t err_no;
 #endif // 
     uint16_t check;
-
 };
 
 //日志对象

@@ -33,6 +33,21 @@ struct snapshot_item_t
     uint8_t  info;          // 存储器件 BIT0:e2p  BIT1: flash;    其他保留 
 };
 
+struct record_item_t
+{
+    uint16_t  event_flag_id_start;  // 事件代码
+    uint16_t  event_flag_id_end;    // 事件代码2
+    uint16_t len;
+    uint16_t max_depth;     // 默认最大深度
+};
+//一个表格只能放在一个存储器上，注册的时候绑定设备
+const struct record_item_t  record_item[] =
+{
+    { OverCurrentL1, OverCurrentEndL1, 800, 10 },
+    { OverCurrentL1_oad, OverCurrentL1_oad, 800, 10 },//oad
+    { OverCurrentL1_index, OverCurrentL1_index, 800, 10 },//index
+};
+
 const struct snapshot_item_t  snapshot_item[] = 
 {
     // 事件代码       // 事件代码           // 关联对象列表（e2p地址）     // 记录存储地址     // 存储空间大小   // 默认最大深度 // 记录头类型     //info   
@@ -48,10 +63,21 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
     uint16_t event_flag_id = 0, data_len = 0, single_len;
     uint32_t obj;
     
-
-    int r = recv_mesg(instance, pipeline, mesg, &payload[0]);
+    //mesg 的id 就是事件代码
+    int r = recv_mesg_header(instance, pipeline, mesg, &payload[0]);
     if (r > 0)
     {
+        switch(mesg->id)
+            case OverCurrentL1:
+                //增加固定的事件头
+                //获取关联对象
+                
+                //调用ND_SET保存数据
+                break;
+            case OverCurrentEndL1:
+
+
+                break;
         event_flag_id = mesg->id; 
    
         // 查表 
