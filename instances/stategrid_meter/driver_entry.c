@@ -185,8 +185,6 @@ void dev_init(void)
     
     rn8209_dev.dev_driver_ops->dev_control(&rn8209_dev , AC_POWER_ON , 0);
     
-    Electrical_measurement_reset();
-    
     esam_698_init();
 
 }
