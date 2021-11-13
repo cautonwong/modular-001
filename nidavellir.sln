@@ -12,6 +12,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "msta", "instances\msta\buil
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{87F150F5-A87C-4B49-A294-3D70A32AF2E6}"
 	ProjectSection(SolutionItems) = preProject
+		packages\file\build\filex.vcxproj = packages\file\build\filex.vcxproj
 		README.md = README.md
 	EndProjectSection
 EndProject
@@ -29,7 +30,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "app_dlms_server _multi_thre
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "app_meterbase_multi_threads", "applications\app_meter_base\build\app_meterbase_baremetal.vcxproj", "{47CEA6A3-1AC3-4270-94DA-1FE4555AE887}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "app_meterbase_baremetal", "applications\app_meter_base\build\app_meterbase_muti-threads.vcxproj", "{4EC8332E-F221-4E84-9A28-0EB84F7E00FD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_app_meterbase", "applications\app_meter_base\build\app_meterbase_muti-threads.vcxproj", "{4EC8332E-F221-4E84-9A28-0EB84F7E00FD}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pkg_crypto", "packages\crypto\build\pkg_crypto.vcxproj", "{C0FFE164-70A5-4809-A804-6EFF63C9627A}"
 EndProject
@@ -38,6 +39,10 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pkg_cmocka", "packages\test\pkg_cmocka.vcxproj", "{3D69149E-62C3-4224-9CDB-2DFE1CFB342C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "app_698_server", "applications\app_698_server\build\app_698_server.vcxproj", "{4D3DA979-522C-40DE-95C4-72417A64CC8F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "filex", "packages\file\build\filex.vcxproj", "{6C738CAD-148B-49A9-920C-377DFDB3A3F5}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "demo_filex", "nidavellir\samples\filex\build\demo_filex.vcxproj", "{04F0F065-61CD-4D35-90B9-936E29FF3D4D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -215,6 +220,30 @@ Global
 		{4D3DA979-522C-40DE-95C4-72417A64CC8F}.Template|x64.Build.0 = Debug|x64
 		{4D3DA979-522C-40DE-95C4-72417A64CC8F}.Template|x86.ActiveCfg = Debug|Win32
 		{4D3DA979-522C-40DE-95C4-72417A64CC8F}.Template|x86.Build.0 = Debug|Win32
+		{6C738CAD-148B-49A9-920C-377DFDB3A3F5}.Debug|x64.ActiveCfg = Debug|x64
+		{6C738CAD-148B-49A9-920C-377DFDB3A3F5}.Debug|x64.Build.0 = Debug|x64
+		{6C738CAD-148B-49A9-920C-377DFDB3A3F5}.Debug|x86.ActiveCfg = Debug|Win32
+		{6C738CAD-148B-49A9-920C-377DFDB3A3F5}.Debug|x86.Build.0 = Debug|Win32
+		{6C738CAD-148B-49A9-920C-377DFDB3A3F5}.Release|x64.ActiveCfg = Release|x64
+		{6C738CAD-148B-49A9-920C-377DFDB3A3F5}.Release|x64.Build.0 = Release|x64
+		{6C738CAD-148B-49A9-920C-377DFDB3A3F5}.Release|x86.ActiveCfg = Release|Win32
+		{6C738CAD-148B-49A9-920C-377DFDB3A3F5}.Release|x86.Build.0 = Release|Win32
+		{6C738CAD-148B-49A9-920C-377DFDB3A3F5}.Template|x64.ActiveCfg = Debug|x64
+		{6C738CAD-148B-49A9-920C-377DFDB3A3F5}.Template|x64.Build.0 = Debug|x64
+		{6C738CAD-148B-49A9-920C-377DFDB3A3F5}.Template|x86.ActiveCfg = Debug|Win32
+		{6C738CAD-148B-49A9-920C-377DFDB3A3F5}.Template|x86.Build.0 = Debug|Win32
+		{04F0F065-61CD-4D35-90B9-936E29FF3D4D}.Debug|x64.ActiveCfg = Debug|x64
+		{04F0F065-61CD-4D35-90B9-936E29FF3D4D}.Debug|x64.Build.0 = Debug|x64
+		{04F0F065-61CD-4D35-90B9-936E29FF3D4D}.Debug|x86.ActiveCfg = Debug|Win32
+		{04F0F065-61CD-4D35-90B9-936E29FF3D4D}.Debug|x86.Build.0 = Debug|Win32
+		{04F0F065-61CD-4D35-90B9-936E29FF3D4D}.Release|x64.ActiveCfg = Release|x64
+		{04F0F065-61CD-4D35-90B9-936E29FF3D4D}.Release|x64.Build.0 = Release|x64
+		{04F0F065-61CD-4D35-90B9-936E29FF3D4D}.Release|x86.ActiveCfg = Release|Win32
+		{04F0F065-61CD-4D35-90B9-936E29FF3D4D}.Release|x86.Build.0 = Release|Win32
+		{04F0F065-61CD-4D35-90B9-936E29FF3D4D}.Template|x64.ActiveCfg = Debug|x64
+		{04F0F065-61CD-4D35-90B9-936E29FF3D4D}.Template|x64.Build.0 = Debug|x64
+		{04F0F065-61CD-4D35-90B9-936E29FF3D4D}.Template|x86.ActiveCfg = Debug|Win32
+		{04F0F065-61CD-4D35-90B9-936E29FF3D4D}.Template|x86.Build.0 = Debug|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

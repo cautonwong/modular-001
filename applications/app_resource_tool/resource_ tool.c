@@ -13,6 +13,16 @@ struct block_device_children_t
     struct list_head sibling;
 };
 
+struct block_device_record_t
+{
+    uint8_t name;
+    uint32_t first_addr;
+    uint32_t size;
+    uint32_t used;
+    int16_t(*hook)(uint16_t id, uint16_t* len, uint16_t* depth);
+    struct list_head sibling;
+};
+
 //设备的链表(这里把RAM也看成一个块设备来处理)
 struct dev_info_t;
 #pragma pack(4)
@@ -325,7 +335,7 @@ int8_t look_up_map(struct instance_t* instance,uint32_t id, uint8_t *buf, uint8_
         map = list_entry(p, struct resource_map_t, sibling);
         if (map->fun != NULL)
         {
-            ret = map->fun(instance, id, buf,mode, obj);
+            ret = map->fun(instance, id, buf, mode, obj);
             if (0 < ret)
             {
                 return ret;
@@ -337,7 +347,7 @@ int8_t look_up_map(struct instance_t* instance,uint32_t id, uint8_t *buf, uint8_
 }
 
 
-int8_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
+int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
 {
     const struct block_device_t* device = NULL;
     const struct driver_ops_t *driver = NULL;
@@ -371,7 +381,7 @@ int8_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t b
 }
 
 
-int8_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
+int16_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
 {
     const struct block_device_t* device = NULL;
     const struct driver_ops_t* driver = NULL;
@@ -406,7 +416,7 @@ int8_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t b
 }
 
 
-int8_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size)
+int16_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size)
 {
     struct block_device_t* device = NULL;
     struct block_device_children_t* block = NULL;
@@ -427,7 +437,7 @@ int8_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t bl
     return -1;
 }
 
-int8_t nd_set_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf, uint32_t buf_size)
+int16_t nd_set_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf, uint32_t buf_size)
 {
     struct block_device_t* device = NULL;
     struct block_device_children_t* block = NULL;
@@ -443,6 +453,60 @@ int8_t nd_set_block(struct instance_t* instance, uint8_t device_name, uint8_t bl
         {
             return driver->dev_write(device->dev, block->first_addr, block->size, buf);
         }
+    }
+
+    return -1;
+}
+
+uint32_t* register_event(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size,
+    int16_t(*fun)(uint16_t event_flag, uint16_t* size, uint16_t* depth))
+{
+    struct block_device_t* device = NULL;
+    struct block_device_record_t* block = NULL;
+    struct block_device_children_t* resource_block = NULL;
+
+    device = look_up_device(instance, device_name);//先获取自己的device
+    if (device != NULL)
+    {
+        block = (struct block_device_record_t*)look_up_block(instance, device, block_name);//在找block
+
+        if (block == NULL)
+        {
+            resource_block = look_up_block(instance, look_up_device(instance, instance->ram_device_name), instance->resource_block_name);
+            if (resource_block == NULL)
+            {
+                return NULL;
+            }
+
+            block = __nd_malloc(resource_block->first_addr, &resource_block->used, sizeof(struct block_device_record_t), resource_block->size);
+            if (block == NULL)
+            {
+                return NULL;
+            }
+            block->first_addr = device->first_addr + device->used;
+            block->name = block_name;
+            init_list_head(&block->sibling);
+            block->size = block_size;
+            block->used = 0x00;
+            block->hook = fun;
+            device->used += block_size;
+            list_add_tail(&block->sibling, &device->children);
+        }
+        return (uint32_t*)block->first_addr;
+    }
+    return NULL;
+}
+
+int16_t nd_size(struct instance_t* instance, uint32_t id)
+{
+    struct resources_obj_t obj;
+    uint8_t ret = 0x00;
+
+    memset((uint8_t*)&obj, 0x00, sizeof(obj));
+    ret = look_up_map(instance, id, NULL, 0x01, &obj);
+    if (ret > 0x01)
+    {
+        return obj.length;
     }
 
     return -1;
@@ -566,5 +630,7 @@ uint8_t circular_image_get(struct instance_t* instance, uint32_t id, uint8_t* bu
     return ret;
 }
 #endif
+
+
 
 

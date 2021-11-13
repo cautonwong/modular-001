@@ -1,5 +1,8 @@
 #include "nidavellir.h"
+#ifndef WIN32
 #include "cpu_surport.h"
+#endif // !WIN32
+
 char* get_pipeline_name(struct instance_t* instance, pid_t pipeline_id)
 {
     struct recipe_t* recipe = instance->recipe;
@@ -47,7 +50,11 @@ int fr_sw_rtc(struct instance_t* instance, struct pipeline_t* pipeline, struct m
     if (fifoBuf_getUsed(&instance->pipe_rtc) > 0)
     {
         uint8_t byte = fifoBuf_getByte(&instance->pipe_rtc);
+#if WIN32
+        if (byte == 1)
+#else
         if (byte == IRQ_RTC)
+#endif // WIN32
         {
             mesg->from = kernel;
             mesg->to = pid_meter_base;
