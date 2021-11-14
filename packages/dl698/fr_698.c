@@ -363,8 +363,8 @@ int fr_pack_698_tx_head(struct instance_t* instance, struct pipeline_t* pipeline
 int fr_pack_698_apdu(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
+    //struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
+    //struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
 
     fifo_popData(ctx->apdu, mesg->len, __pack_apdu_byte, pipeline);
     return 1;
@@ -386,10 +386,10 @@ int fr_pack_698_tail(struct instance_t* instance, struct pipeline_t* pipeline, s
 
 int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    //struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
-    struct message_t* n = (struct message_t*)instance->cache;
+    //struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
+    //struct message_t* n = (struct message_t*)instance->cache;
 
     fifoBuf_getByte(ififo);//fcs-0
     fifoBuf_getByte(ififo);//fcs-1
@@ -456,7 +456,7 @@ int fr_encode_optional(struct instance_t* instance, struct pipeline_t* pipeline,
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
-    struct fifo_t* ofifo = (struct fifo_t*)pipeline->out_queue;
+    //struct fifo_t* ofifo = (struct fifo_t*)pipeline->out_queue;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
     int r = 0;

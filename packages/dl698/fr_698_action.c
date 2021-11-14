@@ -17,7 +17,7 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
-    uint8_t* p_apdu = NULL;
+    //uint8_t* p_apdu = NULL;
     uint16_t then_get_delay = 0; //读取延时
     uint32_t get_oad = 0;
     uint16_t len = 0;
@@ -26,9 +26,9 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
     uint8_t dar = DAR_SUCCESS;
 
     p[cache->wr++] = 0x01;
-        p[cache->wr++] = 0x05;//type encoder
+    p[cache->wr++] = 0x05;//type encoder
 
-        uint8_t password[16];
+    uint8_t password[16];
 
     uint8_t oad_n = mesg->oad_n;
     if (oad_n == 0) oad_n = 1;

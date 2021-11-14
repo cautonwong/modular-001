@@ -165,12 +165,13 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
 
 
     uint32_t oad = 0;
-    if (fr_698_action(instance, oad, buf, 20, &offset) < 0)
+    offset = 20;
+    if (fr_698_action(instance, oad, buf, offset) < 0)
     {
         return DAR_OTHERS_ERROR;
     }
 
-    if ( false != fr_698_action(buf, buf, &offset))
+    if ( false != fr_698_action(instance, oad, buf, offset))
 	{
 		//memcpy(&dectypt->rn[1],&buf[0],dectypt->rn[0]);
         
@@ -201,6 +202,7 @@ static int __consistency_block(uint8_t *data, uint8_t* cfg_data, uint8_t len)
         //session->protocal_conformance[i] = temp & para->protocal_conformance[i];
         data[i] = data[i] & cfg_data[i];
     }
+    return 1;
 }
 
 int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -293,7 +295,7 @@ err:
         }
     }
 
-    fr_encode_optional(instance, pipeline, mesg);//follow-report and time-tag
+    //fr_encode_optional(instance, pipeline, mesg);//follow-report and time-tag
     return 1;
 }
 

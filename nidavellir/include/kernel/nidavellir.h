@@ -27,7 +27,9 @@
 #include "pipeline.h"
 #include "memory.h"
 #include "applications.h"
+#ifndef WIN32
 #include "uart_driver.h"
+#endif
 
 //to-be-deleted
 extern struct fifo_t pipe_msta_rx_from_meter;//rx fifo
@@ -569,6 +571,7 @@ int nidavellir_loop_n_with_rtc_running(struct instance_t* instance, int n);
 
 struct pipeline_t* get_pipeline(struct instance_t* instance, pid_t id);
 void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id);
+uint16_t nd_get_crc16(uint8_t* buf, size_t len);
 
 int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size);
 

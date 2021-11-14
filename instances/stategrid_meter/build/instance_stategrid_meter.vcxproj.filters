@@ -75,41 +75,47 @@
     <ClCompile Include="..\..\..\packages\kernel\log.c">
       <Filter>kernel</Filter>
     </ClCompile>
-    <ClCompile Include="..\mapper_698\map_698_OIA1_0_Energy.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\mapper_698\map_698_OIA1_1_Demand.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\mapper_698\map_698_OIA1_2_Variable.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\mapper_698\map_698_OIA1_3_Event.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\mapper_698\map_698_OIA1_4_Parameter.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\mapper_698\map_698_OIA1_5_Frozen.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\mapper_698\map_698_OIA1_6_Collection.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\mapper_698\map_698_OIA1_7_Aggregate.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\mapper_698\map_698_OIA1_8_Control.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\mapper_698\map_698_OIA1_e_Monitor.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\mapper_698\map_698_OIA1_f_Other.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
     <ClCompile Include="..\mapper_698\mapper_698.c">
       <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_get\get_0_Energy.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_get\get_1_Demand.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_get\get_2_Variable.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_get\get_3_Event.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_get\get_4_Parameter.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_get\get_5_Frozen.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_get\get_6_Collection.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_get\get_7_Aggregate.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_get\get_8_Control.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_get\get_e_Monitor.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_get\get_f_Other.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_set\set_4_Parameter.c">
+      <Filter>mapper_698\set</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_action\action_4_Parameter.c">
+      <Filter>mapper_698\action</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -124,6 +130,15 @@
     </Filter>
     <Filter Include="mapper_698">
       <UniqueIdentifier>{dbd01600-bc7f-4a5d-b7e6-44ed5e80aa26}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mapper_698\get">
+      <UniqueIdentifier>{07661025-017f-4525-afdf-0b419a6ab3ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mapper_698\set">
+      <UniqueIdentifier>{3a6f5868-501e-4f53-b6b6-5c2611b18e74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mapper_698\action">
+      <UniqueIdentifier>{6abdfee4-307b-46a7-8a8a-609c5107f996}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

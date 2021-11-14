@@ -106,41 +106,50 @@
     <ClCompile Include="..\..\..\packages\test\u_test\u_test.c">
       <Filter>utest</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_0_Energy.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_1_Demand.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_2_Variable.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_3_Event.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_4_Parameter.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_5_Frozen.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_6_Collection.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_7_Aggregate.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_8_Control.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_e_Monitor.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_OIA1_f_Other.c">
-      <Filter>mapper_698</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\mapper_698.c">
       <Filter>mapper_698</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\test\u_test\cjson_lib.c">
+      <Filter>utest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_0_Energy.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_1_Demand.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_2_Variable.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_3_Event.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_4_Parameter.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_5_Frozen.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_6_Collection.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_7_Aggregate.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_8_Control.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_e_Monitor.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_f_Other.c">
+      <Filter>mapper_698\get</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_4_Parameter.c">
+      <Filter>mapper_698\set</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_4_Parameter.c">
+      <Filter>mapper_698\action</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -171,6 +180,15 @@
     <Filter Include="mapper_698">
       <UniqueIdentifier>{91327029-a6e9-468d-8e71-18ef196aa124}</UniqueIdentifier>
     </Filter>
+    <Filter Include="mapper_698\get">
+      <UniqueIdentifier>{087c2415-143f-484c-8706-dd2ea2b7403b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mapper_698\set">
+      <UniqueIdentifier>{50b58ac7-6eb2-463f-9e9e-6d561a7879e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mapper_698\action">
+      <UniqueIdentifier>{6725aea5-dab3-4295-bb3a-de7717b10945}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\packages\dl698\fr_698.h">
@@ -185,7 +203,10 @@
     <ClInclude Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_uniformity.h">
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\nidavellir\include\mxml\mxml.h">
+    <ClInclude Include="..\..\..\packages\test\u_test\cjson_lib.h">
+      <Filter>utest</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\packages\test\u_test\u_test.h">
       <Filter>utest</Filter>
     </ClInclude>
   </ItemGroup>

@@ -2,14 +2,19 @@
 #define __FR_698_COMM_H__
 
 
-#ifndef U_TEST
+#ifndef WIN32_U_TEST
 #define fr_698_get nd_get
 #define fr_698_set nd_set
-#define fr_698_action __nd_action
+#define fr_698_action nd_action
 #else
 #define fr_698_get __nd_get
 #define fr_698_set __nd_set
 #define fr_698_action __nd_action
+
+int __nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size);
+int __nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size);
+int __nd_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size);
+
 #endif
 
 

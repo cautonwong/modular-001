@@ -208,8 +208,6 @@ int test_app_setup(void** state)
     fifoBuf_init(&stdin_698, malloc( 512), 512);
     fifoBuf_init(&pipe_tx_698_req, malloc(512), 512);
 
-    instance->mbase_cb = malloc(sizeof(struct mbase_control_block_t));
-    memset(instance->mbase_cb, 0, sizeof(struct mbase_control_block_t));
     instance->cache = malloc(256);
     instance->cache2 = malloc(sizeof(struct cache_t));
     init_cache(instance->cache2, instance->cache, 256);
@@ -405,9 +403,6 @@ int main(void)
     fifoBuf_init(&stdout_698, malloc(512), 512);
     fifoBuf_init(&stdin_698, malloc(512), 512);
     fifoBuf_init(&pipe_tx_698_req, malloc(512), 512);
-
-    instance->mbase_cb = malloc(sizeof(struct mbase_control_block_t));
-    memset(instance->mbase_cb, 0x01, sizeof(struct mbase_control_block_t));
 
     instance->cache = malloc(256);
     instance->cache2 = malloc(sizeof(struct cache_t));

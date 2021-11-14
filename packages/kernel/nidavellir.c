@@ -170,9 +170,10 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     uint8_t pipeline_n = recipe->pipeline_n;
     struct pipeline_t* pipeline;
     struct cache_t* cache = instance->cache2;
-     
+#ifndef WIN32
     mcu_clear_watchdog();
-    
+#endif
+
 #ifdef NIDAVELLIR_SYSTEM_TEST
     extern int fr_rx_data_from_serial(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
     fr_rx_data_from_serial(instance, &pl_rx_from_serial, &mesg);
