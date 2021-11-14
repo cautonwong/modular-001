@@ -308,6 +308,10 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
           break;
       case MSG_SECOND:
           
+          instance->time.tm_sec++;
+          
+          rtc_tm_normalize((struct tm*)&instance->time.tm_sec);
+          
           Electrical_measurement(instance, pipeline);
           
           Energy_Meter(instance, pipeline);
