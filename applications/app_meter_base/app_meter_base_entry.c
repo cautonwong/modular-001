@@ -106,19 +106,20 @@ int get_record_head(struct instance_t* instance, uint8_t* databuf, const uint32_
             }
 
             single_len = 0;
-            single_len = nd_size(instance, obj);
-            if (single_len > 0)
+
+            if (true == scheme_valid)
             {
-                if (true == scheme_valid)
+                single_len = nd_get(instance, obj, p, *remain_size);
+                if (single_len > 0)
                 {
-                    single_len = nd_get(instance, obj, p, *remain_size);
-                    if (single_len > 0)
-                    {
-                        p += single_len;
-                        *remain_size -= single_len;
-                    }
+                    p += single_len;
+                    *remain_size -= single_len;
                 }
-                else
+            }
+            else
+            {
+                single_len = nd_size(instance, obj);
+                if (single_len > 0)
                 {
                     memset(p, 0xFF, single_len);
                     p += single_len;
@@ -148,13 +149,13 @@ int get_record_association(struct instance_t* instance, uint8_t* databuf, uint8_
             switch (mode)
             {
                 case START_MODE:    //发生
-                    if ((scheme = 3) || (scheme = 4))
+                    if ((scheme == 3) || (scheme == 4))
                     {
                         scheme_valid = false;
                     }
                     break;
                 case END_MODE:      //结束
-                    if ((scheme = 1)|| (scheme = 2))
+                    if ((scheme == 1)|| (scheme == 2))
                     {
                         scheme_valid = false;
                     }
@@ -169,19 +170,20 @@ int get_record_association(struct instance_t* instance, uint8_t* databuf, uint8_
 
 
             single_len = 0;
-            single_len = nd_size(instance, obj, p, *remain_size);
-            if (single_len > 0)
+
+            if (true == scheme_valid)
             {
-                if (true == scheme_valid)
+                single_len = nd_get(instance, obj, p, *remain_size);
+                if (single_len > 0)
                 {
-                    single_len = nd_get(instance, obj, p, *remain_size);
-                    if (single_len > 0)
-                    {
-                        p += single_len;
-                        *remain_size -= single_len;
-                    }
+                    p += single_len;
+                    *remain_size -= single_len;
                 }
-                else
+            }
+            else
+            {
+                single_len = nd_size(instance, obj);
+                if (single_len > 0)
                 {
                     memset(p, 0xFF, single_len);
                     p += single_len;
@@ -317,6 +319,8 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
           Energy_Meter(instance, pipeline);
           
           Display(instance, pipeline);
+          
+          ia_over_event_judge(instance, pipeline, mesg);
           break;
       case MSG_PAGE_KEY_UP:
            
@@ -339,7 +343,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
         break;
       }
     }
-    //sync_data()
+    //sync_data(instance, pipeline, mesg);
     return 0;
 }
 

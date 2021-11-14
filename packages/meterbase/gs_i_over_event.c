@@ -1,11 +1,53 @@
 #include "nidavellir.h"
 #include "applications.h"
 
-static int event_duration_pro(uint8_t duration_para,uint8_t *duration, uint8_t *activeflag, uint8_t *recordflag, uint8_t state)
+uint8_t get_activeflag(struct pipeline_t* task, uint16_t RecordId)
 {
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
+
+    if (ctrl_block->active_flag[RecordId / 8] & (1 << (RecordId % 8)))
+    {
+        return true;
+    }
+    return false;
+
+}
+void set_activeflag(struct pipeline_t* task, uint16_t RecordId)
+{
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
+
+    ctrl_block->active_flag[RecordId / 8] |= (1 << (RecordId % 8)); 
+}
+
+void clr_activeflag(struct pipeline_t* task, uint16_t RecordId)
+{
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
+
+    ctrl_block->active_flag[RecordId / 8] &=~ (1 << (RecordId % 8));
+}
+
+void set_recordflag(struct pipeline_t* task, uint16_t RecordId)
+{
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
+
+    ctrl_block->record_flag[RecordId / 8] |= (1 << (RecordId % 8));
+}
+
+void clr_recordflag(struct pipeline_t* task, uint16_t RecordId)
+{
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
+
+    ctrl_block->record_flag[RecordId / 8] &= ~(1 << (RecordId % 8));
+}
+
+
+static int event_duration_pro(uint8_t duration_para,uint8_t *duration,uint8_t state, struct pipeline_t* task, uint16_t RecordId)
+{
+    uint8_t activeflag = get_activeflag(task, RecordId);
+    
     if(state) // 发生
     {
-        if (true == *activeflag)
+        if (true == activeflag)
         {
             *duration = duration_para;
         }
@@ -14,20 +56,17 @@ static int event_duration_pro(uint8_t duration_para,uint8_t *duration, uint8_t *
         {
             (*duration)++;
         }
-        else if (false == *activeflag)
+        else if (false == activeflag)
         {
-            if(activeflag)
-            {
-                *activeflag = true;
-            }
+            set_activeflag(task, RecordId);
             
-            *recordflag = true;
+            //set_recordflag(task, RecordId);
             return 1; // 记录发生
         }
     }
     else // 结束
     {
-        if (false == *activeflag)
+        if (false == activeflag)
         {
             *duration = 0;
         }
@@ -36,14 +75,10 @@ static int event_duration_pro(uint8_t duration_para,uint8_t *duration, uint8_t *
         {
             (*duration)--;
         }
-        else if (true == *activeflag)
+        else if (true == activeflag)
         {
-            if(activeflag)
-            {
-                *activeflag = false;
-            }
-            
-            *recordflag = true;
+            clr_activeflag(task, RecordId);
+            //set_recordflag(task, RecordId);
             return -1; // 记录结束
         }
     }
@@ -56,17 +91,16 @@ static int event_duration_pro(uint8_t duration_para,uint8_t *duration, uint8_t *
 int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
-
-    uint32_t *I = &ctrl_block->Ia;
+    uint8_t payload[100];
+    int32_t *I = &ctrl_block->Ia;
     uint8_t state = false;
     int8_t result = 0;
 
     uint8_t duration_para = ctrl_block->i_over_event_duration_para;
     uint32_t threshold = ctrl_block->i_over_event_threshold;     
     uint8_t *duration = &ctrl_block->ia_over_event_duration;
-    uint8_t *activeflag = &ctrl_block->ia_over_event_activeflag;
-    uint8_t *recordflag = &ctrl_block->ia_over_event_recordflag;
     uint32_t *accumulate_time = &ctrl_block->ia_over_accumulate_time;
+    uint16_t RecordId = OverCurrentL1;
 
     
     if (threshold == 0) // 限值为0
@@ -80,9 +114,34 @@ int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, st
         state = true;
     }
 
-    result = event_duration_pro(duration_para, duration, activeflag, recordflag, state);
+    result = event_duration_pro(duration_para, duration, state, task, RecordId);
+    
 
-    if(*activeflag == true)
+    if (result != 0)
+    {
+        mesg->from = kernel;
+        mesg->to = pid_resource_manager;
+        mesg->ctrl = 0;
+        mesg->qos = 0;
+        mesg->len = 4;
+        mesg->id = OverCurrentL1;
+        mesg->oad_n = 1;
+
+        if (result == 1)
+        {
+            mesg->id = OverCurrentL1;
+        }
+        else if(result == -1)
+        {
+            mesg->id = OverCurrentEndL1;
+        }
+
+        set_recordflag(task, mesg->id);
+        payload[0] = 1;
+        send_mesg(instance, NULL, mesg, payload);
+    }
+
+    if(true == get_activeflag(task, OverCurrentL1))
     {
         (*accumulate_time)++;/* 累计时间累加 */
     }

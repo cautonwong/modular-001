@@ -113,6 +113,11 @@ struct mbase_control_block_t
     //uint8_t battery1_under2v8; //时钟电池欠压
     //uint8_t battery2_under4v8; //停抄电池欠压
 
+    uint8_t record_flag[40];  /*事件或冻结记录存储标志 */
+    uint8_t active_flag[40];  /*事件或冻结记录存储标志 */
+
+
+
     uint8_t cover_event_duration_para;
     uint8_t cover_event_duration;
     uint8_t cover_flag; 
