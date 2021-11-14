@@ -10,15 +10,6 @@ struct block_device_children_t
     uint32_t first_addr;
     uint32_t size;
     uint32_t used;
-    struct list_head sibling;
-};
-
-struct block_device_record_t
-{
-    uint8_t name;
-    uint32_t first_addr;
-    uint32_t size;
-    uint32_t used;
     int16_t(*hook)(uint16_t id, uint16_t* len, uint16_t* depth);
     struct list_head sibling;
 };
@@ -324,22 +315,17 @@ struct resource_map_t* register_map(struct instance_t* instance,uint8_t map_name
     return map;
 }
 
-int8_t look_up_map(struct instance_t* instance,uint32_t id, uint8_t *buf, uint8_t mode, struct resources_obj_t* obj)
+int16_t look_up_map(struct instance_t* instance,uint32_t id, uint8_t *buf, uint8_t mode, struct resources_obj_t* obj)
 {
     struct resource_map_t* map = NULL;
     struct list_head* p;
-    uint8_t ret = 0x00;
 
     list_for_each(p, &instance->map_list)
     {
         map = list_entry(p, struct resource_map_t, sibling);
         if (map->fun != NULL)
         {
-            ret = map->fun(instance, id, buf, mode, obj);
-            if (0 < ret)
-            {
-                return ret;
-            }
+            return map->fun(instance, id, buf, mode, obj);
         }
     }
 
@@ -351,32 +337,48 @@ int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
 {
     const struct block_device_t* device = NULL;
     const struct driver_ops_t *driver = NULL;
+    struct block_device_children_t* block = NULL;
     struct resources_obj_t obj;
-    uint8_t ret = 0x00;
+    uint32_t addr = 0x00;
     
     memset((uint8_t*)&obj, 0x00, sizeof(obj));
-    ret = look_up_map(instance, id, buf, RESOURCE_MAP_698_GET, &obj);
-
-    if (ret >= 0x01)
+    if (0x00 < look_up_map(instance, id, buf, 0x01, &obj))
     {
-        return ret;
-    }
-    //查找设备
-    device = look_up_device(instance, obj.device_name);
-    driver = device->dev->dev_driver_ops;
-    if (device != NULL)
-    {
-        if ((driver != NULL) && (driver->dev_read != NULL))
+        //查找设备
+        device = look_up_device(instance, obj.device_name);
+        driver = device->dev->dev_driver_ops;
+        //查找块
+        block = look_up_block(instance, device, obj.block_name);
+        if ((device != NULL) && (block != NULL))
         {
-            driver->dev_read(device->dev, obj.offset, obj.length, buf);
-            if (obj.hook != NULL)
+            if ((driver != NULL) && (driver->dev_read != NULL))
             {
-                obj.hook(buf, obj.p);
-            }
+                //计算地址
+                if (block->hook == NULL)
+                {
+                    addr = block->first_addr + obj.offset;
+                }
+                else
+                {
+                    if (0x00 < block->hook(id, (uint16_t*)&addr, NULL))
+                    {
+                        addr += block->first_addr;
+                    }
+                }
 
-            return obj.length;
+                driver->dev_read(device->dev, addr, obj.length, buf);
+                //这里没判断返回值和校验
+
+                if (obj.hook != NULL)
+                {
+                    obj.hook(buf, obj.p);
+                }
+
+                return obj.length;
+            }
         }
     }
+
     return -1;
 }
 
@@ -385,40 +387,51 @@ int16_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
 {
     const struct block_device_t* device = NULL;
     const struct driver_ops_t* driver = NULL;
+    struct block_device_children_t* block = NULL;
     struct resources_obj_t obj;
-    uint8_t ret = 0x00;
+    uint32_t addr = 0x00;
 
     memset((uint8_t*)&obj, 0x00, sizeof(obj));
-    ret = look_up_map(instance, id, buf, RESOURCE_MAP_698_SET, &obj);
-
-    if (ret >= 0x01)
+    if (0x00 < look_up_map(instance, id, buf, 0x01, &obj))
     {
-        return ret;
-    }
-    //查找设备
-    device = look_up_device(instance, obj.device_name);
-    driver = device->dev->dev_driver_ops;
-    if (device != NULL)
-    {
-        if ((driver != NULL) && (driver->dev_write != NULL))
+        //查找设备
+        device = look_up_device(instance, obj.device_name);
+        driver = device->dev->dev_driver_ops;
+        //查找块
+        block = look_up_block(instance, device, obj.block_name);
+        if ((device != NULL) && (block != NULL))
         {
-            driver->dev_write(device->dev, obj.offset, obj.length, buf);
-            if (obj.hook != NULL)
+            if ((driver != NULL) && (driver->dev_write != NULL))
             {
-                obj.hook(buf, obj.p);
-            }
+                //计算地址
+                if (block->hook == NULL)
+                {
+                    addr = block->first_addr + obj.offset;
+                }
+                else
+                {
+                    if (0x00 < block->hook(id, (uint16_t*)&addr, NULL))
+                    {
+                        addr += block->first_addr;
+                    }
+                }
 
-            return 0x01;
+                driver->dev_write(device->dev, addr, obj.length, buf);
+                //这里没判断返回值和校验
+
+                if (obj.hook != NULL)
+                {
+                    obj.hook(buf, obj.p);
+                }
+
+                return 0x01;
+            }
         }
     }
 
     return -1;
 }
 
-int16_t nd_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
-{
-    return -1;
-}
 
 int16_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size)
 {
@@ -466,7 +479,7 @@ uint32_t* register_event(struct instance_t* instance, uint8_t device_name, uint8
     int16_t(*fun)(uint16_t event_flag, uint16_t* size, uint16_t* depth))
 {
     struct block_device_t* device = NULL;
-    struct block_device_record_t* block = NULL;
+    struct block_device_children_t* block = NULL;
     struct block_device_children_t* resource_block = NULL;
 
     device = look_up_device(instance, device_name);//先获取自己的device
@@ -482,7 +495,7 @@ uint32_t* register_event(struct instance_t* instance, uint8_t device_name, uint8
                 return NULL;
             }
 
-            block = __nd_malloc(resource_block->first_addr, &resource_block->used, sizeof(struct block_device_record_t), resource_block->size);
+            block = __nd_malloc(resource_block->first_addr, &resource_block->used, sizeof(struct block_device_children_t), resource_block->size);
             if (block == NULL)
             {
                 return NULL;
@@ -634,6 +647,14 @@ uint8_t circular_image_get(struct instance_t* instance, uint32_t id, uint8_t* bu
     return ret;
 }
 #endif
+
+//目前resource manger 数据操作介绍
+//全部为数据块的操作，不是单个数据的操作
+//需要操作数据块的单个数据，目前有两种情况：
+// 情况1：当前块的分布是通过结构体来分配的，通过块的首地址和偏移来访问；这种情况需要通过结构体变量名来获取偏移值
+// 情况2：当前块的分布是通过表格来分配的，通过块的收地址和偏移来访问；这种情况需要初始化的时候把数据表格注册到reource；
+
+
 
 
 
