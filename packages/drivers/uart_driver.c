@@ -225,14 +225,9 @@ uint8 uart_time_process(void *tickpara)
         chl->rx_time_out--;
     }
     
-    if(chl->rx_time_out == 1)
-    {
-        mcu_uart_recive_enable(0 , chl->mcu_uart_index);
-    }
-    
     if(chl->tx_time_out > 0)
     {
-        chl->rx_time_out--;
+        chl->tx_time_out--;
     }
     
     if(chl->tx_time_out == 0)
