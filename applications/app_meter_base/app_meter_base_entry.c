@@ -224,7 +224,7 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
                 pdata += get_record_association(instance, pdata, CaptureList, mode, &remain_size);
 
                 // 读取序号 ++
-                nd_get(instance, SequenceId, &sequence, sizeof(sequence));
+                nd_get(instance, SequenceId, (uint8_t *)&sequence, sizeof(sequence));
                 sequence++;
                 memcpy(data_buff, (uint8_t*)sequence, 4);
 
@@ -247,7 +247,7 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
                 pdata += get_record_association(instance, pdata, CaptureList, mode, &remain_size);
 
                 // 读取序号 ++
-                nd_get(instance, SequenceId, &sequence, sizeof(sequence));
+                nd_get(instance, SequenceId, (uint8_t *)&sequence, sizeof(sequence));
                 sequence++;
                 memcpy(data_buff, (uint8_t*)sequence, 4);
 

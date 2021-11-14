@@ -568,5 +568,8 @@ int nidavellir_loop_n(struct instance_t *instance,int n);
 int nidavellir_loop_n_with_rtc_running(struct instance_t* instance, int n);
 
 struct pipeline_t* get_pipeline(struct instance_t* instance, pid_t id);
+void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id);
+
+int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size);
 
 #endif

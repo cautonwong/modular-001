@@ -506,7 +506,7 @@ void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
 	
 	P_BACKLIGHT_ON;	//背光
 	Disp.BackLightTmr = 0;
-	nd_get(instance, 0x40070201, Tmr, 1);//从EEPROM中获取全屏显示时间
+	nd_get(instance, 0x40070201, &Tmr, 1);//从EEPROM中获取全屏显示时间
 	if(Tmr > 30)
 		Tmr = 5;
     Disp.BackLightTmr = Tmr;		
@@ -570,7 +570,7 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline)
 		}
 		else
 		{
-            nd_get(instance, 0xF3010401, Disp.KeyNum, 1);
+            nd_get(instance, 0xF3010401, &Disp.KeyNum, 1);
 			if( Disp.KeyNum == 0 )
 				Disp.KeyNum = 1;
 		}
@@ -581,7 +581,7 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline)
         nd_get(instance, 0xF3010201+Disp.KeyPtr, pageid, 15);
 		if( Flag.Power & F_PowerOn )
 		{
-            nd_get(instance, 0xF3010300, Disp.KeyInv, 1);
+            nd_get(instance, 0xF3010300, &Disp.KeyInv, 1);
 			if( Disp.KeyInv == 0 )
 				Disp.KeyInv = 5;
 		}
@@ -617,13 +617,13 @@ void Get_DisplayPage(void)
 				return;
 			}
 			//获取轮显显示时间
-            nd_get(instance, 0xF3000300, Disp.AutoInv, 1);
+            nd_get(instance, 0xF3000300, &Disp.AutoInv, 1);
 			if( (Disp.AutoInv < 0x05) || (Disp.AutoInv > 0x20) )
 				Disp.AutoInv = 5;
 
             
 			//获取轮显显示屏数
-            nd_get(instance, 0xF3000401, Disp.AutoNum, 1);
+            nd_get(instance, 0xF3000401, &Disp.AutoNum, 1);
 			if( Disp.AutoNum == 0 )
 				Disp.AutoNum = 1;
 

@@ -1,17 +1,21 @@
 #include "nidavellir.h"
 #include "fr_698.h"
+
 extern void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id);
-extern int resource_map_698_OIA1_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
-extern int resource_map_698_OIA1_1_Demand(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
-extern int resource_map_698_OIA1_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
-extern int resource_map_698_OIA1_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
-extern int resource_map_698_OIA1_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
-extern int resource_map_698_OIA1_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
-extern int resource_map_698_OIA1_6_Collection(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
-extern int resource_map_698_OIA1_7_Aggregate(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
-extern int resource_map_698_OIA1_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
-extern int resource_map_698_OIA1_e_Monitor(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
-extern int resource_map_698_OIA1_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+extern int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+extern int GET_1_Demand(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+extern int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+extern int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+extern int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+extern int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+extern int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+
+extern int GET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+extern int GET_6_Collection(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+extern int GET_7_Aggregate(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+extern int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+extern int GET_e_Monitor(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+extern int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
 
 
 int resource_map_698_get(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
@@ -27,57 +31,62 @@ int resource_map_698_get(struct instance_t* instance, uint32_t id, uint8_t* buf,
     switch (get_OAD_OIA1(id))
     {
     case 0x0://电量
-		return resource_map_698_OIA1_0_Energy(instance, id, buf, obj);
+		return GET_0_Energy(instance, id, buf, obj);
 		break;
     case 0x1://需量
-		return resource_map_698_OIA1_1_Demand(instance, id, buf, obj);
+		return GET_1_Demand(instance, id, buf, obj);
 		break;
     case 0x2://变量
-		return resource_map_698_OIA1_2_Variable(instance, id, buf,obj);
+		return GET_2_Variable(instance, id, buf,obj);
 		break;
     case 0x3://事件
-		return resource_map_698_OIA1_3_Event(instance, id, buf,obj);
+		return GET_3_Event(instance, id, buf,obj);
 		break;
     case 0x4://参变量
-		return resource_map_698_OIA1_4_Parameter(instance, id, buf,obj);
+		return GET_4_Parameter(instance, id, buf,obj);
 		break;
     case 0x5://冻结
-		return resource_map_698_OIA1_5_Frozen(instance, id, buf, obj);
+		return GET_5_Frozen(instance, id, buf, obj);
 		break;
     case 0x6://采集
-		return resource_map_698_OIA1_6_Collection(instance, id, buf, obj);
+		return GET_6_Collection(instance, id, buf, obj);
 		break;
     case 0x7://集合
-		return resource_map_698_OIA1_7_Aggregate(instance, id, buf, obj);
+		return GET_7_Aggregate(instance, id, buf, obj);
 		break;
     case 0x8://控制
-		return resource_map_698_OIA1_8_Control(instance, id, buf, obj);
+		return GET_8_Control(instance, id, buf, obj);
 		break;
     case 0xe://监控
-		return resource_map_698_OIA1_e_Monitor(instance, id, buf, obj);
+		return GET_e_Monitor(instance, id, buf, obj);
 		break;
 	case 0xf://其他
-		return resource_map_698_OIA1_f_Other(instance, id, buf, obj);
+		return GET_f_Other(instance, id, buf, obj);
 		break;
     default:
         break;
     }
     return -1;
 }
+
 int resource_map_698_set(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
 {
-    struct mbase_control_block_t* mbase_cb = NULL;
-    
-    mbase_cb = get_pipeline_ctx(instance, pid_meter_base);
-    if(mbase_cb == NULL)
-    {
-        return -1;
-    }
-
 	switch (get_OAD_OIA1(id))
 	{
-	case 0x4://参变量
+    case 0x4://参变量
+		return SET_4_Parameter(instance, id, buf,obj);
+	default:
 		break;
+	}
+	return -1;
+}
+
+int resource_map_698_action(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
+{
+	switch (get_OAD_OIA1(id))
+	{
+    case 0x4://参变量
+		return ACTION_4_Parameter(instance, id, buf,obj);
 	default:
 		break;
 	}
@@ -88,17 +97,19 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
 {
 	switch (mode)
 	{
-	case 0x01:  //读
+	case RESOURCE_MAP_698_GET:  //读
 		return resource_map_698_get(instance,id,buf,obj);
 		break;
-	case 0x02:  //写
+	case RESOURCE_MAP_698_SET:  //写
 		return resource_map_698_set(instance, id, buf, obj);
 		break;
-	case 0x03:  //执行
+	case RESOURCE_MAP_698_ACTION:  //执行
+		return resource_map_698_action(instance, id, buf, obj);
 		break;
 	default:
 		break;
 	}
+    return -1;
 }
 
 #if 0

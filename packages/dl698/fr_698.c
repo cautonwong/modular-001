@@ -393,7 +393,7 @@ int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, stru
 
     fifoBuf_getByte(ififo);//fcs-0
     fifoBuf_getByte(ififo);//fcs-1
-    //assert(fifoBuf_getByte(ififo) == 0x16);//0x16
+    assert(fifoBuf_getByte(ififo) == 0x16);//0x16
     fr_pack_698_head(instance, pipeline, mesg);
     
     fr_pack_698_apdu(instance, pipeline, mesg);

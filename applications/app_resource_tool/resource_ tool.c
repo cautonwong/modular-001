@@ -355,7 +355,7 @@ int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
     uint8_t ret = 0x00;
     
     memset((uint8_t*)&obj, 0x00, sizeof(obj));
-    ret = look_up_map(instance, id, buf, 0x01, &obj);
+    ret = look_up_map(instance, id, buf, RESOURCE_MAP_698_GET, &obj);
 
     if (ret >= 0x01)
     {
@@ -389,7 +389,7 @@ int16_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
     uint8_t ret = 0x00;
 
     memset((uint8_t*)&obj, 0x00, sizeof(obj));
-    ret = look_up_map(instance, id, buf, 0x01, &obj);
+    ret = look_up_map(instance, id, buf, RESOURCE_MAP_698_SET, &obj);
 
     if (ret >= 0x01)
     {

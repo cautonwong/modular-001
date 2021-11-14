@@ -3,9 +3,15 @@
 
 
 
-int resource_map_698_OIA1_e_Monitor(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
+int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
 {    
-    struct mbase_control_block_t* mbase_cb = instance->mbase_cb;
+    struct mbase_control_block_t* mbase_cb;
+    
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    if(mbase_cb == NULL)
+    {
+        return -1;
+    }
     switch (id)
     {
     case 0x20000200://电压
