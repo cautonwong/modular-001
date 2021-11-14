@@ -1,6 +1,9 @@
 #include "nidavellir.h"
 #include "applications.h"
 
+extern int16_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size);
+extern int16_t nd_set_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size);
+extern int16_t get_block_frist_addr(struct instance_t *instance, uint8_t device_name, uint8_t block_name, uint32 *addr);
 #if 1  //  GS
 //存储器件
 #define E2P_MEM  0x01
@@ -270,6 +273,8 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 // !!!在此app中不做IO操作!!!
 int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
+    size_t mbase_block_persistent_size = offsetof(struct mbase_control_block_t, persistent_section_start) - offsetof(struct mbase_control_block_t, persistent_section_end);
+    uint32_t addr = 0;
     //cmd len data cmd 接入校验
     //调用领域层完成业务  要反映用例场景
     for (int i = 0; i < max_event_flag; i++)
@@ -314,10 +319,20 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
           //Keydisplay(instance, pipeline);
           break;
       case MSG_POWERON:
-           Electrical_measurement_poweron(instance, pipeline);
-          break;
+        //上电需要恢复数据
+        //获取对应的RAM地址
+        get_block_frist_addr(instance,RES_DEV_RAM,0x08,&addr);//RAM对应的地址
+        nd_get_block(instance,RES_DEV_EEPROM,0x08,(uint8_t *)addr,mbase_block_persistent_size); //将EPROM中的数据恢复到RAM;        
+        Electrical_measurement_poweron(instance, pipeline);
+        break;
+      case MSG_POWEROFF:
+        //掉电需要保存数据
+        //获取对应的RAM地址
+        get_block_frist_addr(instance,RES_DEV_RAM,0x08,&addr);//RAM对应的地址
+        nd_set_block(instance,RES_DEV_EEPROM,0x08,(uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;        
+        break;
       default:
-          break;
+        break;
       }
     }
     //sync_data()

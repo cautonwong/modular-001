@@ -489,7 +489,7 @@ uint32_t* register_event(struct instance_t* instance, uint8_t device_name, uint8
     device = look_up_device(instance, device_name);//先获取自己的device
     if (device != NULL)
     {
-        block = (struct block_device_children_t*)look_up_block(instance, device, block_name);//在找block
+        block = look_up_block(instance, device, block_name);//在找block
 
         if (block == NULL)
         {
@@ -530,6 +530,25 @@ int16_t nd_size(struct instance_t* instance, uint32_t id)
         return obj.length;
     }
 
+    return -1;
+}
+
+int16_t get_block_frist_addr(struct instance_t *instance, uint8_t device_name, uint8_t block_name, uint32 *addr)
+{
+    struct block_device_t* device = NULL;
+    struct block_device_children_t* block = NULL;
+
+    device = look_up_device(instance, device_name);//先获取自己的device
+    if (device != NULL)
+    {
+        block = look_up_block(instance, device, block_name);//在找block
+        if ((block != NULL) && (addr != NULL))
+        {
+            *addr = block->first_addr;
+            return 1;
+        }
+    }
+    
     return -1;
 }
 
