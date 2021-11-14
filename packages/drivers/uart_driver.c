@@ -57,7 +57,7 @@ void ndv_uart0_rx(void)
     if(true == mcu_uart_recive_byte(&rcv_data , 0))
     {
         fifoBuf_putByte(uart_dev[0].rx_fifo, rcv_data);
-        uart_dev[0].rx_time_out = 5;
+        uart_dev[0].rx_time_out = UART_RX_TIME_OUT;
     }
 }
 
@@ -79,7 +79,7 @@ void ndv_uart1_rx(void)
     if (true == mcu_uart_recive_byte(&rcv_data, 1))
     {
         fifoBuf_putByte(uart_dev[1].rx_fifo, rcv_data);
-        uart_dev[1].rx_time_out = 5;
+        uart_dev[1].rx_time_out = UART_RX_TIME_OUT;
     }
 }
 
@@ -101,7 +101,7 @@ void ndv_uart2_rx(void)
     if (true == mcu_uart_recive_byte(&rcv_data, 2))
     {
         fifoBuf_putByte(uart_dev[2].rx_fifo, rcv_data);
-        uart_dev[2].rx_time_out = 5;
+        uart_dev[2].rx_time_out = UART_RX_TIME_OUT;
     }
 }
 
@@ -123,7 +123,7 @@ void ndv_uart3_rx(void)
     if (true == mcu_uart_recive_byte(&rcv_data, 3))
     {
         fifoBuf_putByte(uart_dev[3].rx_fifo, rcv_data);
-        uart_dev[3].rx_time_out = 5;
+        uart_dev[3].rx_time_out = UART_RX_TIME_OUT;
     }
 }
 
@@ -144,7 +144,7 @@ void ndv_uart4_rx(void)
     if (true == mcu_uart_recive_byte(&rcv_data, 4))
     {
         fifoBuf_putByte(uart_dev[4].rx_fifo, rcv_data);
-        uart_dev[4].rx_time_out = 5;
+        uart_dev[4].rx_time_out = UART_RX_TIME_OUT;
     }
 }
 
@@ -165,7 +165,7 @@ void ndv_uart5_rx(void)
     if (true == mcu_uart_recive_byte(&rcv_data, 5))
     {
         fifoBuf_putByte(uart_dev[5].rx_fifo, rcv_data);
-        uart_dev[5].rx_time_out = 5;
+        uart_dev[5].rx_time_out = UART_RX_TIME_OUT;
     }
 }
 
@@ -186,7 +186,7 @@ void ndv_uart6_rx(void)
     if (true == mcu_uart_recive_byte(&rcv_data, 6))
     {
         fifoBuf_putByte(uart_dev[6].rx_fifo, rcv_data);
-        uart_dev[6].rx_time_out = 5;
+        uart_dev[6].rx_time_out = UART_RX_TIME_OUT;
     }
 }
 
@@ -243,7 +243,7 @@ uint8 uart_time_process(void *tickpara)
         {
             RS485_RCV_DIS();
         }
-        chl->tx_time_out = UART_RX_TIME_OUT;
+        chl->tx_time_out = UART_TX_TIME_OUT;
         send_data = fifoBuf_getByte(chl->tx_fifo);
         mcu_uart_send_byte(send_data , chl->mcu_uart_index);
         mcu_uart_send_enable(1, chl->mcu_uart_index);
@@ -301,20 +301,6 @@ int uart_chl_initialize(struct uart_chl_init_t *uart_chl)
     return true;
 }
 
-
-int uart_dev_control(const struct dev_info_t* dev, uint8 ctrl , void *ctrl_parameter)
-{
-     
-    return true;
-}
-
-
-int uart_dev_write(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
-{
-
-
-     return true;
-}
 
 
 
