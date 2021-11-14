@@ -467,7 +467,6 @@ struct instance_t
     uint8_t meter_type;
     uint32_t  ms;
     struct recipe_t *recipe;
-    struct mbase_control_block_t * mbase_cb;
     struct tm time;//
     struct tasklet_pool_t tasklet_pool;
     struct upgrade_info_t upgrade_info;

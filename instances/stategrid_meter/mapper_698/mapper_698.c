@@ -1,6 +1,6 @@
 #include "nidavellir.h"
 #include "fr_698.h"
-
+extern void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id);
 extern int resource_map_698_OIA1_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
 extern int resource_map_698_OIA1_1_Demand(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
 extern int resource_map_698_OIA1_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
@@ -16,7 +16,13 @@ extern int resource_map_698_OIA1_f_Other(struct instance_t* instance, uint32_t i
 
 int resource_map_698_get(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
 {    
-    struct mbase_control_block_t* mbase_cb = instance->mbase_cb;
+    struct mbase_control_block_t* mbase_cb = NULL;
+    
+    mbase_cb = get_pipeline_ctx(instance, pid_meter_base);
+    if(mbase_cb == NULL)
+    {
+        return -1;
+    }
 
     switch (get_OAD_OIA1(id))
     {
@@ -60,7 +66,13 @@ int resource_map_698_get(struct instance_t* instance, uint32_t id, uint8_t* buf,
 }
 int resource_map_698_set(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
 {
-	struct mbase_control_block_t* mbase_cb = instance->mbase_cb;
+    struct mbase_control_block_t* mbase_cb = NULL;
+    
+    mbase_cb = get_pipeline_ctx(instance, pid_meter_base);
+    if(mbase_cb == NULL)
+    {
+        return -1;
+    }
 
 	switch (get_OAD_OIA1(id))
 	{

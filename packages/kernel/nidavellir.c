@@ -40,6 +40,26 @@ struct fifo_t* get_pipeline_stdin(struct instance_t* instance, pid_t pipeline_id
 
     return NULL;
 }
+void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id)
+{
+    const struct recipe_t* recipe = instance->recipe;
+    struct pipeline_t* pipeline;
+    uint8_t pipeline_n = recipe->pipeline_n;
+
+    for (size_t i = 0; i < pipeline_n; i++)
+    {
+        pipeline = recipe->pipelines[i];
+
+        if (pipeline->id == pipeline_id)
+        {
+            return pipeline->ctx;
+        }
+    }
+
+    return NULL;
+}
+
+
 struct instance_t *create_nidavellir(struct recipe_t *recipe)
 {
     return NULL;
