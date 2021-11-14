@@ -283,7 +283,7 @@ int8_t add_device(struct instance_t* instance, uint8_t device_name, const struct
 }
 
 struct resource_map_t* register_map(struct instance_t* instance,uint8_t map_name,
-    int8_t (*fun)(struct instance_t *instance, uint32_t id,uint8_t *buf, uint8_t mode, struct resources_obj_t* obj))
+    int (*fun)(struct instance_t *instance, uint32_t id,uint8_t *buf, uint8_t mode, struct resources_obj_t* obj))
 {
     struct block_device_children_t* block = NULL;
     struct resource_map_t* map = NULL;
@@ -335,7 +335,7 @@ int16_t look_up_map(struct instance_t* instance,uint32_t id, uint8_t *buf, uint8
 
 int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
 {
-    const struct block_device_t* device = NULL;
+    struct block_device_t* device = NULL;
     const struct driver_ops_t *driver = NULL;
     struct block_device_children_t* block = NULL;
     struct resources_obj_t obj;
@@ -385,14 +385,14 @@ int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
 
 int16_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
 {
-    const struct block_device_t* device = NULL;
+    struct block_device_t* device = NULL;
     const struct driver_ops_t* driver = NULL;
     struct block_device_children_t* block = NULL;
     struct resources_obj_t obj;
     uint32_t addr = 0x00;
 
     memset((uint8_t*)&obj, 0x00, sizeof(obj));
-    if (0x00 < look_up_map(instance, id, buf, 0x01, &obj))
+    if (0x00 < look_up_map(instance, id, buf, 0x02, &obj))
     {
         //查找设备
         device = look_up_device(instance, obj.device_name);
@@ -432,6 +432,10 @@ int16_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
     return -1;
 }
 
+int16_t nd_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
+{
+  return -1;
+}
 
 int16_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size)
 {
@@ -485,7 +489,7 @@ uint32_t* register_event(struct instance_t* instance, uint8_t device_name, uint8
     device = look_up_device(instance, device_name);//先获取自己的device
     if (device != NULL)
     {
-        block = (struct block_device_record_t*)look_up_block(instance, device, block_name);//在找block
+        block = (struct block_device_children_t*)look_up_block(instance, device, block_name);//在找block
 
         if (block == NULL)
         {

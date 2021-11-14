@@ -450,7 +450,7 @@ struct resources_obj_t
 struct resource_map_t
 {
     uint8_t map_name;
-    int16_t(*fun)(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj);
+    int(*fun)(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj);
     struct list_head sibling;
 };
 

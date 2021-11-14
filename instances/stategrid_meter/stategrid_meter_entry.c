@@ -102,8 +102,8 @@ uint8_t nd_memory[20 * 1024];
 extern uint32_t* add_inside_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t inside_block_name, uint32_t block_size);
 extern void* nd_malloc(struct instance_t* instance, uint8_t block_name, uint32_t size);
 extern uint32_t* add_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size);
-extern struct resource_map_t* register_map(struct instance_t* instance, uint8_t map_name,
-    int8_t(*fun)(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj));
+extern struct resource_map_t* register_map(struct instance_t* instance,uint8_t map_name,
+    int (*fun)(struct instance_t *instance, uint32_t id,uint8_t *buf, uint8_t mode, struct resources_obj_t* obj));
 extern int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj);
 extern struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t resource_blok_size, uint8_t resource_block_name);
 extern int8_t add_device(struct instance_t* instance, uint8_t device_name,const struct dev_info_t *dev);
