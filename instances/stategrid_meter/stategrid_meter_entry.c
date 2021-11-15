@@ -6,13 +6,14 @@ extern int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* 
 extern int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int16_t register_event_info(uint16_t event_flag, uint16_t* size, uint16_t* depth);
 #ifdef WIN32
+extern const struct driver_ops_t  eeprom_driver;
 const struct dev_info_t eeprom_dev = 
 {
-    0x00,0x01,0xFFFF,0x00,0x00, NULL, NULL, NULL, NULL, NULL, NULL,
+    0x00,0x01,0xFFFF,0x00,0x00, NULL, &eeprom_driver, NULL, NULL, NULL, NULL,".//e2prom.dat"
 };
 const struct dev_info_t nor_flash_dev = 
 {
-    0x01,0x01,0xFFFF,0x00,0x00, NULL, NULL, NULL, NULL, NULL, NULL
+    0x01,0x01,0xFFFF,0x00,0x00, NULL, NULL, NULL, NULL, NULL, NULL,".//flash.dat"
 };
 #endif // WIN32
 
@@ -119,26 +120,6 @@ int baremetal_instance_entry_main(int argc, char** argv)
     struct recipe_t *recipe = NULL;
     struct context_698_t* ctx_698 = NULL;
 
-
-    //每个application的control block如何初始化?且如何绑定到instance里?
-    //每个application如何访问自己的control block?
-    //链接和绑定硬件 固件 和 软件
-    //运行主循环
-#if 0
-   //初始化软件  task的创建方式有两种:静态创建和动态创建
-    uint8_t byte_pool[40 * 1024];
-    byte_pool_create(byte_pool);//给task创建一个字节池
-    struct task_t task_meterbase;
-    //分别是task的ctrl_block的三段的大小  三段:上电清零段+上电恢复但掉电不保存段+掉电保存且上电恢复段
-    create_block_from_e2prom();
-    create_task(&task_meterbase, 0x01, 300, 300, 300);//创建一个task
-    set_task_std_in();//设置task的标准输入
-    set_task_std_out();//设置task的标准输出
-    set_task_setting();//设置task的设置参数
-    set_task_ctrl_block();//设置task的控制块
-    add_task(instance);//将此task添加到容器里
-#endif
-    //一、初始化instance;（申请了1K的大小，名称是0x01）
     instance = create_instance(RES_DEV_RAM, (uint32_t)&nd_memory, 20 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
     if (instance == NULL)
     {
@@ -282,7 +263,7 @@ int main(int argc, char** argv)
     log_hex(buf, sizeof(buf));
     log_trace("Hello %s", "world");
     log_info("Hello %s", "world");
-
+    eeprom_dev.dev_driver_ops->dev_initialize(&eeprom_dev);
 #endif
     baremetal_instance_entry_main(argc, argv);
 }

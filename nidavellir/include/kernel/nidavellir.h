@@ -384,6 +384,9 @@ struct dev_info_t
     struct fifo_t* dev_input_fifo;
     struct fifo_t* dev_output_fifo;
     const void *cfg;
+#ifdef WIN32
+    char* name;
+#endif
 };
 //EEPROM，FLASH，EMU，红外，RS4851，RS4852，PLC，RTC
 

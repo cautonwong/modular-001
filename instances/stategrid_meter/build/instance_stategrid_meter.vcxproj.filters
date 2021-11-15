@@ -117,6 +117,9 @@
     <ClCompile Include="..\mapper_698\map_698_action\action_4_Parameter.c">
       <Filter>mapper_698\action</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\packages\drivers\eeprom_win.c">
+      <Filter>drivers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="app_698_server">
@@ -139,6 +142,9 @@
     </Filter>
     <Filter Include="mapper_698\action">
       <UniqueIdentifier>{6abdfee4-307b-46a7-8a8a-609c5107f996}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="drivers">
+      <UniqueIdentifier>{8d4f5125-3d5c-436c-a67e-26780230bcff}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
