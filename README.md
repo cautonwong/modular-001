@@ -14,25 +14,15 @@ nidavellir devices system
 ## high level design
 
 
-四个层次如下：
-
-```
-		//instances  以产品或硬件board为名
-
-			//applications  //应用
-	meterbase-x/698_server/dlms-server/dlms_client
-
-			//开发工具包  
-nidavellir-c  nidavellir-baremetal nidavellir-os nidavellir-x-languages  
-			//packages //组件包  领域层
-baremetal  meterbase  dlms dl645 dl698 
-			//packages //组件包 基础设施层
-resource-manager drivers cpus buses filex levelx crypto
-```
-
+|     | 名  | 
+|  ----  | ----  |
+|**instances**| stategrid-meter  | 
+|**applications** |  meterbase-x/698_server/<br>698-client/dlms-server/dlms_client|
+|**nidavellir-api** |nidavellir-c/nidavellir-os/nidavellir-x-languages |
+|**packages**  | meterbase/dlms/dl645/dl698/<br>tx/zx/freertos/windows/liteos/baremetal/<br>resource-manager/drivers/cpus/filex/levelx/crypto|
 ----
 
-### 生态系统
+## 生态系统
 **应用管理**
 - 用户注册
 - 应用申请
@@ -52,7 +42,7 @@ resource-manager drivers cpus buses filex levelx crypto
 - 设备描述信息和注册
 - 应用部署
 
-### 举例
+## 举例
 
 ```
 
@@ -82,7 +72,7 @@ map()
 	sw
 }
 
-### packages
+## packages
 
 含**业务概念/业务状态/业务规则**
 
@@ -110,7 +100,7 @@ domain领域层
 
 4. 此目录单独代码仓库
 
-### nidavellir
+## nidavellir
 
 此层次是发布包。可基于此发布包开发定制的application、test和instance
 
@@ -119,7 +109,7 @@ domain领域层
 - samples // 一些例子
 - tests  //测试用例
 
-### applications
+## applications
 
 调用packages构建的业务强相关的应用
 
@@ -135,7 +125,7 @@ domain领域层
 
 导出 applications.h
 
-####  编程模型
+###  编程模型
 
 总体上，采用消息或事件驱动模型。其中，消息队列的设计如下
 
@@ -172,8 +162,28 @@ int app_entry(struct instance_t* instance,
     return 0;
 }
 ```
+### message
 
-### instances
+
+```
+struct message_t
+
+head cmd len data tail
+head: 0x88
+cmd: <= 32 kernel message
+cmd: > 32  user message
+data: 
+tail: 0x88
+```
+
+**说明**:
+
+在前后台环境下，此message通过fifo传递
+在多线程环境下，此message通过queue传递
+### 资源管理
+
+
+## instances
 
 产品实例集合
 
@@ -226,30 +236,6 @@ int baremetal_instance_entry(int argc, char** argv)
 ```
 
 ```
-## message
-
-//未确定
-
-```
-head cmd len data tail
-head: 0x88
-cmd: <= 32 kernel message
-cmd: > 32  user message
-data: 
-tail: 0x88
-```
-
-**说明**:
-
-在前后台环境下，此message通过fifo传递
-在多线程环境下，此message通过queue传递
-
-
 ## 测试
 
 ## workflow
-
-## 体系
-
-```
-```

@@ -119,11 +119,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     struct recipe_t *recipe = NULL;
     struct context_698_t* ctx_698 = NULL;
 
-    //初始化硬件
-    dev_init();
-    
-    //初始化固件
-    irq_system_init();
+
     //每个application的control block如何初始化?且如何绑定到instance里?
     //每个application如何访问自己的control block?
     //链接和绑定硬件 固件 和 软件
@@ -216,9 +212,9 @@ int baremetal_instance_entry_main(int argc, char** argv)
     fifoBuf_init(pl_tx_698.in_queue, nd_malloc(instance, control_block_698_name, 512), 512);
     pl_tx_698.out_queue = pl_rx_698.out_queue;
     
-    communication_chlx_init(pl_tx_698.out_queue , pl_rx_698.in_queue , UART_RS4851_CHL);
-    communication_chlx_init(pl_tx_698.out_queue , pl_rx_698.in_queue , UART_MODULE_CHL);
-    communication_chlx_init(pl_tx_698.out_queue , pl_rx_698.in_queue , UART_IR_CHL);
+    //communication_chlx_init(pl_tx_698.out_queue , pl_rx_698.in_queue , UART_RS4851_CHL);
+   // communication_chlx_init(pl_tx_698.out_queue , pl_rx_698.in_queue , UART_MODULE_CHL);
+    //communication_chlx_init(pl_tx_698.out_queue , pl_rx_698.in_queue , UART_IR_CHL);
 
     ////////////////////////////申请一个mbase应用的BLOCK = 04/////////////////////////////////////////////
     uint8_t mbase_control_block_name = 0x04;
@@ -259,7 +255,9 @@ int baremetal_instance_entry_main(int argc, char** argv)
     //注册一个698的MAP
     uint8_t res_map_698 = 0x01;
     register_map(instance, res_map_698, resource_map_698);
-
+#ifdef WIN32
+    init_timer(instance);
+#endif
     return baremetal_instance_entry(instance);
 }
 
@@ -271,6 +269,11 @@ int main(int argc, char** argv)
     mcu_init(NULL);
     mcu_main_power_on_config();
     ndv_timer_init();
+    //初始化硬件
+    dev_init();
+
+    //初始化固件
+    irq_system_init(); 
 #endif // !WIN32
 #ifdef WIN32
     uint8_t buf[1024] = { 0,1,2,3,4 };
@@ -279,6 +282,7 @@ int main(int argc, char** argv)
     log_hex(buf, sizeof(buf));
     log_trace("Hello %s", "world");
     log_info("Hello %s", "world");
+
 #endif
     baremetal_instance_entry_main(argc, argv);
 }

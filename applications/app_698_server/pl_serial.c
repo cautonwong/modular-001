@@ -1,13 +1,31 @@
-﻿#include "nidavellir.h"
+﻿#ifdef WIN32
+#include "nidavellir.h"
 #include <windows.h>
 #include <process.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <WinBase.h>
+VOID CALLBACK TimerCallback(PVOID lpParameter, BOOLEAN TimerOrWaitFired)
+{
+    struct instance_t* instance = (struct instance_t*)lpParameter;
+    fifoBuf_putByte(&instance->pipe_rtc, 1);
+}
 
+int init_timer(struct instance_t* instance)
+{
+    HANDLE hTimer = NULL;
+    HANDLE hTimerQueue = CreateTimerQueue();
+    if (!CreateTimerQueueTimer(&hTimer, hTimerQueue, TimerCallback, instance, 0, 1000, WT_EXECUTEDEFAULT))
+    {
+    }
 
+    return 0;
+}
 
+void irq_transform_to_instance(struct instance_t* instance)
+{
 
+}
 
 struct context_serial_t* create_serial_port(char* filename)
 {
@@ -120,5 +138,4 @@ int fr_tx_data_to_serial(struct instance_t* instance, struct pipeline_t* pipelin
     return 0;
 }
 
-
-
+#endif

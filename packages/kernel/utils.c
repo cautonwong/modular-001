@@ -186,12 +186,12 @@ int hex_to_bin(char ch)
 void deblank(char string[]) {
 	char* p = string;
 	char* q = string;
-	int same_space = 0;      //¼ÇÂ¼ÏàÁÚµÄ¿Õ¸ñ
+	int same_space = 0;      //è®°å½•ç›¸é‚»çš„ç©ºæ ¼
 
 	while (*p != '\0') {
-		/*ÅĞ¶ÏÊÇ·ñ´æÔÚ¿Õ¸ñ*/
+		/*åˆ¤æ–­æ˜¯å¦å­˜åœ¨ç©ºæ ¼*/
 		if (*p == ' ') {
-			/*½øĞĞÇå³ı¶àÓàµÄ¿Õ¸ñ²Ù×÷*/
+			/*è¿›è¡Œæ¸…é™¤å¤šä½™çš„ç©ºæ ¼æ“ä½œ*/
 			p++;
 			continue;
 		}

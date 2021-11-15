@@ -159,7 +159,6 @@ struct pipeline_t* get_pipeline(struct instance_t* instance, pid_t id)
     return NULL;
 }
 
-
 int nidavellir_run_baremetal(struct instance_t* instance)
 {
     struct message_t mesg;
@@ -180,7 +179,7 @@ int nidavellir_run_baremetal(struct instance_t* instance)
 #endif
     //接收时钟更新信号的处理
     irq_transform_to_instance(instance);
-    
+
     fr_sw_rtc(instance, NULL, &mesg);
 
     //处理事件标志组  事件驱动

@@ -533,7 +533,7 @@ int16_t nd_size(struct instance_t* instance, uint32_t id)
     return -1;
 }
 
-int16_t get_block_frist_addr(struct instance_t *instance, uint8_t device_name, uint8_t block_name, uint32 *addr)
+int16_t get_block_frist_addr(struct instance_t *instance, uint8_t device_name, uint8_t block_name, uint32_t *addr)
 {
     struct block_device_t* device = NULL;
     struct block_device_children_t* block = NULL;

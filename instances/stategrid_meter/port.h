@@ -156,7 +156,7 @@
 #define    VQualityL1L               55  //A相电压超下限 
 #define    VQualityL1H               56  //A相电压超上限 
 #define    VQualityL1Range           57  //A相电压考核范围内 
-#define    VQualityL2L               58  ///**< B相电压超下限 
+#define    VQualityL2L               58  //B相电压超下限 
 #define    VQualityL2H               59  //B相电压超上限 
 #define    VQualityL2Range           60  //B相电压考核范围内 
 #define    VQualityL3L               61  //C相电压超下限 
