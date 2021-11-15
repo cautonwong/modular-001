@@ -152,8 +152,11 @@ void irq_transform_to_instance(struct instance_t* instance)
 {
     uint8_t fifo_irq = 0;
 
-    
+#ifdef DEBUG
+    if(fifoBuf_getUsed(&irq_fifo) >0)
+#else
     while(fifoBuf_getUsed(&irq_fifo) >0)
+#endif
     {
        fifo_irq = fifoBuf_getByte(&irq_fifo);
        

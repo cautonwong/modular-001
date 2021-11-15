@@ -314,13 +314,11 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
           
           rtc_tm_normalize((struct tm*)&instance->time.tm_sec);
           
-         // Electrical_measurement(instance, pipeline);
+          Electrical_measurement(instance, pipeline);
           
-          //Energy_Meter(instance, pipeline);
+          Energy_Meter(instance, pipeline);
           
-          //Display(instance, pipeline);
-          
-          //ia_over_event_judge(instance, pipeline, mesg);
+          Display(instance, pipeline);
           break;
       case MSG_PAGE_KEY_UP:
            
@@ -331,7 +329,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
         //获取对应的RAM地址
         get_block_frist_addr(instance,RES_DEV_RAM,0x08,&addr);//RAM对应的地址
         nd_get_block(instance,RES_DEV_EEPROM,0x08,(uint8_t *)addr,mbase_block_persistent_size); //将EPROM中的数据恢复到RAM;        
-        //Electrical_measurement_poweron(instance, pipeline);
+        Electrical_measurement_poweron(instance, pipeline);
         break;
       case MSG_POWEROFF:
         //掉电需要保存数据

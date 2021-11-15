@@ -194,9 +194,9 @@ int baremetal_instance_entry_main(int argc, char** argv)
     fifoBuf_init(pl_tx_698.in_queue, nd_malloc(instance, control_block_698_name, 512), 512);
     pl_tx_698.out_queue = pl_rx_698.out_queue;
     
-    //communication_chlx_init(pl_tx_698.out_queue , pl_rx_698.in_queue , UART_RS4851_CHL);
-   // communication_chlx_init(pl_tx_698.out_queue , pl_rx_698.in_queue , UART_MODULE_CHL);
-    //communication_chlx_init(pl_tx_698.out_queue , pl_rx_698.in_queue , UART_IR_CHL);
+    communication_chlx_init(pl_tx_698.out_queue , pl_rx_698.in_queue , UART_RS4851_CHL);
+    communication_chlx_init(pl_tx_698.out_queue , pl_rx_698.in_queue , UART_MODULE_CHL);
+    communication_chlx_init(pl_tx_698.out_queue , pl_rx_698.in_queue , UART_IR_CHL);
 
     ////////////////////////////申请一个mbase应用的BLOCK = 04/////////////////////////////////////////////
     uint8_t mbase_control_block_name = 0x04;

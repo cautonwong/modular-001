@@ -16,6 +16,7 @@
 #include "log.h"
 #endif
 
+#define  DEBUG
 
 #include <stdlib.h>
 #include "time.h"
