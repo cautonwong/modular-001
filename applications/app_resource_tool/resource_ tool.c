@@ -339,13 +339,14 @@ int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
     const struct driver_ops_t *driver = NULL;
     struct block_device_children_t* block = NULL;
     struct resources_obj_t obj;
+    int16_t ret = 0x00;
     uint32_t addr = 0x00;
     
     memset((uint8_t*)&obj, 0x00, sizeof(obj));
-    if (0x00 < look_up_map(instance, id, buf, 0x01, &obj))
-    {
-        //查找设备
-        device = look_up_device(instance, obj.device_name);
+    ret = look_up_map(instance, id, buf, 0x01, &obj);
+    if (0x00 == ret)
+    {        
+        device = look_up_device(instance, obj.device_name);//查找设备
         driver = device->dev->dev_driver_ops;
         //查找块
         block = look_up_block(instance, device, obj.block_name);
@@ -379,7 +380,7 @@ int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
         }
     }
 
-    return -1;
+    return ret;
 }
 
 
@@ -389,13 +390,14 @@ int16_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
     const struct driver_ops_t* driver = NULL;
     struct block_device_children_t* block = NULL;
     struct resources_obj_t obj;
+    int16_t ret = 0x00;
     uint32_t addr = 0x00;
 
     memset((uint8_t*)&obj, 0x00, sizeof(obj));
-    if (0x00 < look_up_map(instance, id, buf, 0x02, &obj))
+    ret = look_up_map(instance, id, buf, 0x01, &obj);
+    if (0x00 == ret)
     {
-        //查找设备
-        device = look_up_device(instance, obj.device_name);
+        device = look_up_device(instance, obj.device_name);//查找设备
         driver = device->dev->dev_driver_ops;
         //查找块
         block = look_up_block(instance, device, obj.block_name);
@@ -429,7 +431,7 @@ int16_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
         }
     }
 
-    return -1;
+    return ret;
 }
 
 int16_t nd_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)

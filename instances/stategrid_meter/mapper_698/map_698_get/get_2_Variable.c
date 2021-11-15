@@ -130,7 +130,13 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, struc
     }
     
     break;    
-    
+    case 0x20000000:  //测试代码
+        obj->block_name = 0x08;//只是举例
+        obj->device_name = RES_DEV_EEPROM;//只是举例
+        obj->offset = 0x00;
+        obj->length = 0x04;
+        return 0x00;
+        break;
     default:
         break;
     }

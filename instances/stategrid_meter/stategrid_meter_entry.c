@@ -240,6 +240,8 @@ int baremetal_instance_entry_main(int argc, char** argv)
 #ifdef WIN32
     init_timer(instance);
 #endif
+    uint8_t s_buf[100];
+    nd_get(instance, 0x20000000, s_buf, 0x00);
     return baremetal_instance_entry(instance);
 }
 
