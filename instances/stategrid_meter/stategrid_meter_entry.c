@@ -86,6 +86,7 @@ struct pipeline_t* pipelines[] =
     &pl_rx_698,
     &pl_tx_698,
     &pl_meter_base,
+    &pl_resource_manager,
 };
 
 //cautonwong  以上的内容  应该放在instance的入口函数里面去分配和初始化
