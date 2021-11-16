@@ -18,6 +18,8 @@ extern int GET_e_Monitor(struct instance_t* instance, uint32_t id, uint8_t* buf,
 extern int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
 
 
+extern int SET_3_ComponentEvent(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+
 int resource_map_698_get(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
 {    
     struct mbase_control_block_t* mbase_cb = NULL;
@@ -75,6 +77,8 @@ int resource_map_698_set(struct instance_t* instance, uint32_t id, uint8_t* buf,
 	{
     case 0x4://参变量
 		return SET_4_Parameter(instance, id, buf,obj);
+    case 0x3:// 事件
+        return SET_3_ComponentEvent(instance, id, buf, obj);
 	default:
 		break;
 	}

@@ -120,6 +120,9 @@
     <ClCompile Include="..\..\..\packages\drivers\eeprom_win.c">
       <Filter>drivers</Filter>
     </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_set\set_3_ComponentEvent.c">
+      <Filter>mapper_698\set</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="app_698_server">

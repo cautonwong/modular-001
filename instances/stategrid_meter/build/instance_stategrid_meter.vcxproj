@@ -60,6 +60,7 @@
     <ClCompile Include="..\mapper_698\map_698_get\get_8_Control.c" />
     <ClCompile Include="..\mapper_698\map_698_get\get_e_Monitor.c" />
     <ClCompile Include="..\mapper_698\map_698_get\get_f_Other.c" />
+    <ClCompile Include="..\mapper_698\map_698_set\set_3_ComponentEvent.c" />
     <ClCompile Include="..\mapper_698\map_698_set\set_4_Parameter.c" />
     <ClCompile Include="..\stategrid_meter_entry.c" />
   </ItemGroup>
