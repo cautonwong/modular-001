@@ -264,10 +264,8 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 
                 break;
         }
- 
-        return 1;
     }
-    return 0;
+    return 0;//返回0代表结束
 }
 
 #endif
@@ -342,7 +340,6 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
         break;
       }
     }
-    sync_data(instance, pipeline, mesg);
     return 0;
 }
 
