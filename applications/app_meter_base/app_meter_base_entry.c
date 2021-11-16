@@ -319,6 +319,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
           Energy_Meter(instance, pipeline);
           
           Display(instance, pipeline);
+          ia_over_event_judge(instance, pipeline, mesg);
           break;
       case MSG_PAGE_KEY_UP:
            
@@ -341,7 +342,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
         break;
       }
     }
-    //sync_data(instance, pipeline, mesg);
+    sync_data(instance, pipeline, mesg);
     return 0;
 }
 
