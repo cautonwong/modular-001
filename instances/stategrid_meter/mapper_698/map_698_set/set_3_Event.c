@@ -23,9 +23,10 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
             buf++;
             buf++;
             memcpy((uint8_t*)&mbase_cb->i_over_event_threshold, buf, 0x04);
+            buf+= 4;
             buf++;
             memcpy((uint8_t*)&mbase_cb->i_over_event_duration_para, buf, 0x01);
-            return 0x05;
+            return 0x09;
         }
     break;
     
