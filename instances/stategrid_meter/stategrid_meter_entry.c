@@ -5,6 +5,7 @@ extern int app_tx_server_698_entry(struct instance_t* instance, struct pipeline_
 extern int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int16_t register_event_info(uint16_t event_flag, uint16_t* size, uint16_t* depth);
+extern int baremetal_instance_entry(struct instance_t* instance);
 #ifdef WIN32
 extern const struct driver_ops_t  eeprom_driver;
 const struct dev_info_t eeprom_dev = 
@@ -17,6 +18,11 @@ const struct dev_info_t nor_flash_dev =
 };
 #endif // WIN32
 
+const struct filter_t fr_resource_manager[] =
+{
+    {0x01,NULL,0,13},
+};
+
 struct pipeline_t pl_resource_manager =
 {
     pid_resource_manager,
@@ -25,8 +31,8 @@ struct pipeline_t pl_resource_manager =
     NULL,
     NULL,
     sync_data,
-    0x00,
-    NULL,
+    sizeof(fr_resource_manager) / sizeof(fr_resource_manager[0]),
+    fr_resource_manager,
 };
 
 struct filter_t fr_meter_base[] =

@@ -264,10 +264,8 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 
                 break;
         }
- 
-        return 1;
     }
-    return 0;
+    return 0;//返回0代表结束
 }
 
 #endif
@@ -319,6 +317,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
           Energy_Meter(instance, pipeline);
           
           Display(instance, pipeline);
+          ia_over_event_judge(instance, pipeline, mesg);
           break;
       case MSG_PAGE_KEY_UP:
            
@@ -341,7 +340,6 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
         break;
       }
     }
-    //sync_data(instance, pipeline, mesg);
     return 0;
 }
 
