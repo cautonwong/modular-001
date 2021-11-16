@@ -2576,6 +2576,9 @@
             <group>
                 <name>set</name>
                 <file>
+                    <name>$PROJ_DIR$\..\mapper_698\map_698_set\set_3_Event.c</name>
+                </file>
+                <file>
                     <name>$PROJ_DIR$\..\mapper_698\map_698_set\set_4_Parameter.c</name>
                 </file>
             </group>
