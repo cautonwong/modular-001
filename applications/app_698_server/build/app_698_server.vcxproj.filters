@@ -58,9 +58,6 @@
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ERROR_Response.c">
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Request.c">
-      <Filter>test_case\test_app_698_server_uniformity</Filter>
-    </ClCompile>
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Response.c">
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </ClCompile>
@@ -83,9 +80,6 @@
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </ClCompile>
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SECURITY_Response.c">
-      <Filter>test_case\test_app_698_server_uniformity</Filter>
-    </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request.c">
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </ClCompile>
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response.c">
@@ -154,6 +148,18 @@
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_3_Event.c">
       <Filter>mapper_698\set</Filter>
     </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Request_0501.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Request_0502.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0601.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0602.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dl698">
@@ -212,5 +218,34 @@
     <ClInclude Include="..\..\..\packages\test\u_test\u_test.h">
       <Filter>utest</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Request.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Response.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_CONNECT_Request.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Request_0501.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Request_0502.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Response.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0601.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0602.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
   </ItemGroup>
 </Project>

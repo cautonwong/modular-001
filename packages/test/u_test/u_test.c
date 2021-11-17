@@ -3,15 +3,109 @@
 
 #define U_TEST_JSON
 
+
 #ifdef U_TEST_JSON
+#include "cjson_lib.h"
+#endif
+
+
+
+
+
+
+int hex_to_bin(char ch)
+{
+    if ((ch >= '0') && (ch <= '9'))
+        return ch - '0';
+    ch = tolower(ch);
+    if ((ch >= 'a') && (ch <= 'f'))
+        return ch - 'a' + 10;
+    return -1;
+}
+
+void deblank(char string[]) {
+    char* p = string;
+    char* q = string;
+    int same_space = 0;      //记录相邻的空格
+
+    while (*p != '\0') {
+        /*判断是否存在空格*/
+        if (*p == ' ') {
+            /*进行清除多余的空格操作*/
+            p++;
+            continue;
+        }
+        else {
+            same_space = 0;
+        }
+        *q++ = *p++;
+    }
+    *q = '\0';
+}
+
+
+int hex2bin(char* dst, char* src, uint16_t count)
+{
+    deblank(src);
+    while (count--) {
+        int hi = hex_to_bin(*src++);
+        int lo = hex_to_bin(*src++);
+        if ((hi < 0) || (lo < 0))
+            return -1;
+        *dst++ = (hi << 4) | lo;
+    }
+    return 0;
+}
+
+#ifdef U_TEST_JSON
+
 struct test_info_t
 {
     char test_file[_MAX_FNAME];
-    mxml_node_t* xml_root;
+    struct cJSON* root;
     int name_len;
 };
 
-static struct test_info_t  _test_info;
+static struct test_info_t  ut_test;
+
+static struct cJSON* get_json_root(const char* path)
+{
+    uint32_t length = 0;
+    char* data = NULL;
+    FILE* fd = NULL;
+    struct cJSON* root = NULL;
+    struct cJSON* child = NULL;
+
+    /// 打开文件，"rb"：访问方式为打开二进制模式，打开成功的返回值为0
+    if (0 != fopen_s(&fd, path, "rb"))
+    {
+        printf("Open json file failed:\"%s\"\n", path);
+        return NULL;
+    }
+
+    fseek(fd, 0, SEEK_END);        ///< 设置文件操作指针fd的位置。指向以SEEK_END为基准，偏移0个字节位置
+    length = ftell(fd);            ///< 文件位置指针当前位置相对于文件首的偏移字节数
+    fseek(fd, 0, SEEK_SET);        ///< 设置文件操作指针fd的位置。指向以SEEK_SET为基准，偏移0个字节位置
+    data = (char*)malloc(length);  ///< 申请内存
+    fread(data, 1, length, fd);    ///< 从输入流fd中读取最多length个字节到数组指针data中
+    fclose(fd);
+    printf("Get json file:%s. length:%d.\n", path, length);
+
+    root = cJSON_Parse(data);
+    if (root != NULL)
+    {
+        child = cJSON_GetObjectItem(root, "name");
+        if (child != NULL)
+        {
+            printf("json name:%s\n", child->valuestring);
+            char* name = malloc(strlen(path) + 1);
+            name = strcpy(name, path);
+            child->valuestring = name;
+        }
+    }
+    return root; ///< 将data数据解析成json结构体返回
+}
+
 
 int init_test_suite(const char *path)
 {
@@ -21,29 +115,19 @@ int init_test_suite(const char *path)
     char fname[_MAX_FNAME];
     char ext[_MAX_EXT];
     
-
     _splitpath(path, drive, dir, fname, ext);
-    _makepath(path_buffer, drive, dir, fname, "yaml");
-    //test(path_buffer);
 
 
-    FILE* fd = fopen(path_buffer, "r");
-    if (fd != NULL)
+    struct cJSON* root = NULL;
+    _makepath(path_buffer, drive, dir, fname, "json");
+
+    root = get_json_root(path_buffer);
+    if (root != NULL)
     {
-        mxml_node_t* root = mxmlLoadFile(NULL, fd, MXML_NO_CALLBACK);
-        fclose(fd);
-        /*
-         *  DESCEND含义是不查看任何的子节点在XML元素层次中，仅查看同级的伙伴
-         *  MXML_DESCEND_FIRST含义是向下搜索到一个节点的第一个匹配子节点，但
-         *  DESCEND含义是不查看任何的子节点在XML元素层次中，
-         * */
-        if (root != NULL)
-        {
-            _test_info.xml_root = root;
-            _test_info.name_len = strlen(fname);
-            memcpy(_test_info.test_file, fname, _test_info.name_len);
-            return 1;
-        }
+        ut_test.root = root;
+        ut_test.name_len = strlen(fname);
+        memcpy(ut_test.test_file, fname, ut_test.name_len);
+        return 1;
     }
     return 0;
 }
@@ -52,87 +136,81 @@ int init_test_suite(const char *path)
 int get_test_suites_num(char* u_test_file)
 {
     init_test_suite(u_test_file);
-    if (NULL != strstr(u_test_file, _test_info.test_file))
+    if (NULL != strstr(u_test_file, ut_test.test_file))
     {
-        mxml_node_t* root = _test_info.xml_root;
-
-        mxml_node_t* node = mxmlFindElement(root, root, "suites", NULL, NULL, MXML_DESCEND);
-        if (node != NULL)
+        struct cJSON* root = ut_test.root;
+        struct cJSON* child = cJSON_GetObjectItem(root, "suites");
+        if (child != NULL)
         {
-            uint8_t* data = mxmlElementGetAttr(node, "num");
-  
-            return data[0] - 0x30;
+            return cJSON_GetArraySize(child);
         }
     }
-#if 0
-        mxml_node_t* china = mxmlFindElement(root, root, "china", NULL, NULL, MXM)
-        while (china)
-            {
-                mxml_node_t* info = mxmlWalkNext(china, root, MXML_DESCEND);
-                while (info)
-                {
-                    mxml_node_t* node = mxmlWalkNext(info, root, MXML_DESCEND_FIRS
-                    printf("context =  %s\n", mxmlGetText(node, 0));
-                    node = mxmlWalkNext(node, root, MXML_NO_DESCEND);
-                    printf("context =  %s\n", mxmlGetText(node, 0));
-                    node = mxmlWalkNext(node, root, MXML_NO_DESCEND);
-                    printf("context =  %s\n", mxmlGetText(node, 0));
-                    node = mxmlWalkNext(node, root, MXML_NO_DESCEND);
-                    printf("context =  %s\n", mxmlGetText(node, 0));
-                    info = mxmlFindElement(info, root, "city", NULL, NULL, MXML_NO_DE
-                }
-                // arg1: 当前节点 arg2: 顶级节点 arg3: 查找的节点名称 arg4: 属性 arg5: value arg6: 查找模式
-                china = mxmlFindElement(china, root, "china", NULL, NULL, MXML_NO_DES
-            }
-    }
-#endif
     return 0;
 }
 
 int get_test_suite_frame(char* u_test_file, uint8_t* data, uint16_t index, uint8_t type)
 {
-    
-    if (NULL != strstr(u_test_file, _test_info.test_file))
+    if (NULL != strstr(u_test_file, ut_test.test_file))
     {
-        mxml_node_t* root = _test_info.xml_root;
+        struct cJSON* root = ut_test.root;
+        struct cJSON* child = NULL;
+        struct cJSON* child_next = NULL;
 
-        mxml_node_t* test_source_node = mxmlFindElement(root, root, "test_source", "name", NULL, MXML_DESCEND);
-        if (test_source_node != NULL)
+        child = cJSON_GetObjectItem(root, "suites");
+        if (child != NULL)
         {
-            mxml_node_t* node = mxmlFindElement(test_source_node, root, "frame", NULL, NULL, MXML_DESCEND);
-            if (NULL != node)
+            child_next = cJSON_GetArrayItem(child, index);
+            if (child_next != NULL)
             {
-                printf("mxmlGetText is %s\n", mxmlGetText(node, NULL));
-                printf("mxmlElementGetAttr is %s\n", mxmlElementGetAttr(node, "frame"));
+                if (TEST_source == type)
+                    child = cJSON_GetObjectItem(child_next, "test_source");
+                if (TEST_expectation == type)
+                    child = cJSON_GetObjectItem(child_next, "test_expectation");
+
+                child = cJSON_GetObjectItem(child, "frame");
+                if((child != NULL) && (strlen(child->valuestring)))
+                { 
+                    int len = strlen(child->valuestring) / 2;
+                    hex2bin(data, child->valuestring, len);
+                    return len;
+                }
+                return 0;
             }
-            mxml_node_t* info = mxmlWalkNext(test_source_node, root, MXML_DESCEND);
-            //hex2bin(frm_buf, frm[i], sizeof(frm[i]) / 2);
-            uint8_t * frame = mxmlElementGetAttr(info, "frame");
-            //hex2bin(data, frame, strlen(frame) / 2);
-            return 1;
         }
     }
     return 0;
 }
 
-int get_test_suite_cmd(char* u_test_file, uint8_t type, uint16_t index)
+int get_test_suite_cmd(char* u_test_file, uint8_t* data, uint16_t index, uint8_t type)
 {
-    if (NULL != strstr(u_test_file, _test_info.test_file))
+    if (NULL != strstr(u_test_file, ut_test.test_file))
     {
-        mxml_node_t* root = _test_info.xml_root;
+        struct cJSON* root = ut_test.root;
+        struct cJSON* child = NULL;
+        struct cJSON* child_next = NULL;
 
-        mxml_node_t* test_source_node = mxmlFindElement(root, root, "test_source", "name", NULL, MXML_DESCEND);
-        if (test_source_node != NULL)
+        child = cJSON_GetObjectItem(root, "suites");
+        if (child != NULL)
         {
-            mxml_node_t* node = mxmlFindElement(test_source_node, root, "cmd", NULL, NULL, MXML_DESCEND);
-            if (NULL != node)
+            child_next = cJSON_GetArrayItem(child, index);
+            if (child_next != NULL)
             {
-                printf("mxmlGetText is %s\n", mxmlGetText(node, NULL));
+                if (TEST_source == type)
+                    child = cJSON_GetObjectItem(child_next, "test_source");
+                if (TEST_expectation == type)
+                    child = cJSON_GetObjectItem(child_next, "test_expectation");
 
-                printf("mxmlElementGetAttr is %s\n", mxmlElementGetAttr(node, "cmd"));
-
+                child = cJSON_GetObjectItem(child, "cmd");
+                if ((child != NULL) && (strlen(child->valuestring)))
+                {
+                    if (strcmp(child->valuestring, "frame_check"))
+                        return TEST_frame_check;
+                    if (strcmp(child->valuestring, "frame_check_no"))
+                        return TEST_frame_check_no;
+                    return 0;
+                }
+                return 0;
             }
-            return 1;
         }
     }
     return 0;
@@ -140,45 +218,67 @@ int get_test_suite_cmd(char* u_test_file, uint8_t type, uint16_t index)
 
 int get_test_suite_apdu(char* u_test_file, uint8_t* data, uint8_t type, uint16_t index)
 {
-    if (NULL != strstr(u_test_file, _test_info.test_file))
+    if (NULL != strstr(u_test_file, ut_test.test_file))
     {
-        mxml_node_t* root = _test_info.xml_root;
+        struct cJSON* root = ut_test.root;
+        struct cJSON* child = NULL;
+        struct cJSON* child_next = NULL;
 
-        mxml_node_t* test_source_node = mxmlFindElement(root, root, "test_source", "name", NULL, MXML_DESCEND);
-        if (test_source_node != NULL)
+        child = cJSON_GetObjectItem(root, "suites");
+        if (child != NULL)
         {
-            mxml_node_t* node = mxmlFindElement(test_source_node, root, "apdu", NULL, NULL, MXML_DESCEND);
-            if (NULL != node)
+            child_next = cJSON_GetArrayItem(child, index);
+            if (child_next != NULL)
             {
-                printf("mxmlGetText is %s\n", mxmlGetText(node, NULL));
+                if (TEST_source == type)
+                    child = cJSON_GetObjectItem(child_next, "test_source");
+                if (TEST_expectation == type)
+                    child = cJSON_GetObjectItem(child_next, "test_expectation");
 
-                printf("mxmlElementGetAttr is %s\n", mxmlElementGetAttr(node, "apdu"));
-
+                child = cJSON_GetObjectItem(child, "apdu");
+                if ((child != NULL) && (strlen(child->valuestring)))
+                {
+                    int len = strlen(child->valuestring) / 2;
+                    hex2bin(data, child->valuestring, len);
+                    return len;
+                }
+                return 0;
             }
-            return 1;
         }
     }
     return 0;
 }
 
-int get_test_suite_auth(char* u_test_file, uint8_t type, uint16_t index)
+int get_test_suite_auth(char* u_test_file, uint8_t* data, uint16_t index, uint8_t type)
 {
-    if (NULL != strstr(u_test_file, _test_info.test_file))
+    if (NULL != strstr(u_test_file, ut_test.test_file))
     {
-        mxml_node_t* root = _test_info.xml_root;
+        struct cJSON* root = ut_test.root;
+        struct cJSON* child = NULL;
+        struct cJSON* child_next = NULL;
 
-        mxml_node_t* test_source_node = mxmlFindElement(root, root, "test_source", "name", NULL, MXML_DESCEND);
-        if (test_source_node != NULL)
+        child = cJSON_GetObjectItem(root, "suites");
+        if (child != NULL)
         {
-            mxml_node_t* node = mxmlFindElement(test_source_node, root, "auth", NULL, NULL, MXML_DESCEND);
-            if (NULL != node)
+            child_next = cJSON_GetArrayItem(child, index);
+            if (child_next != NULL)
             {
-                printf("mxmlGetText is %s\n", mxmlGetText(node, NULL));
+                if (TEST_source == type)
+                    child = cJSON_GetObjectItem(child_next, "test_source");
+                if (TEST_expectation == type)
+                    child = cJSON_GetObjectItem(child_next, "test_expectation");
 
-                printf("mxmlElementGetAttr is %s\n", mxmlElementGetAttr(node, "auth"));
-
+                child = cJSON_GetObjectItem(child, "auth");
+                if ((child != NULL) && (strlen(child->valuestring)))
+                {
+                    if (strcmp(child->valuestring, "auth"))
+                        return TEST_auth;
+                    if (strcmp(child->valuestring, "auth_no"))
+                        return TEST_auth_no;
+                    return 0;
+                }
+                return 0;
             }
-            return 1;
         }
     }
     return 0;
