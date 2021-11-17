@@ -151,6 +151,9 @@
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_4_Parameter.c">
       <Filter>mapper_698\action</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_3_Event.c">
+      <Filter>mapper_698\set</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dl698">
