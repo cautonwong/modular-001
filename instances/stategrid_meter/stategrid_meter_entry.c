@@ -20,7 +20,7 @@ const struct dev_info_t nor_flash_dev =
 
 const struct filter_t fr_resource_manager[] =
 {
-    {0x01,NULL,0,13},
+    {0x01,sync_data,0,13},
 };
 
 struct pipeline_t pl_resource_manager =
