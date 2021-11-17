@@ -6,7 +6,8 @@
 int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
 {    
     struct mbase_control_block_t* mbase_cb;
-    
+    uint8_t* p = buf;
+
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
@@ -14,88 +15,79 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
     }
     switch (id)
     {
-    case 0x20000200://电压
-        {
-            //obj->block_name = 0x0A;//只是举例
-            //obj->device_name = 0x0D;//只是举例
-            //obj->offset = container_of(mbase_cb,struct mbase_control_block_t, UA);
-            buf[0] = 0x01;//数组
-            buf[1] = 0x01;//单相一个元素
-            buf[2] = TYPE_long_unsigned;
-            //memcpy(buf+3, (uint8_t*)mbase_cb->voltage_ac, 0x02);
-            return 0x05;
-        }
-    break;
-    case 0x20010200://电流  current_l current_n
-        {
-            obj->block_name = 0x0A;//只是举例
-            obj->device_name = 0x0D;//只是举例
-            //obj->offset = container_of(mbase_cb,struct mbase_control_block_t, UA);
-            buf[0] = 0x01;//数组
-            buf[1] = 0x01;//单相一个元素
-            buf[2] = TYPE_double_long;
-            memcpy(buf+3, (uint8_t*)mbase_cb->current_l, 0x04);
-            return 0x07;
-        }
-    break;
-    case 0x20040200://active_power 
-        {
-            obj->block_name = 0x0A;//只是举例
-            obj->device_name = 0x0D;//只是举例
-            //obj->offset = container_of(mbase_cb,struct mbase_control_block_t, UA);
-            buf[0] = 0x01;//数组
-            buf[1] = 0x02;//总 分
-            buf[2] = TYPE_double_long;
-            memcpy(buf+3, (uint8_t*)mbase_cb->active_power, 0x04);
-            buf[7] = TYPE_double_long;
-            memcpy(buf+8, (uint8_t*)mbase_cb->active_power, 0x04);
-            return 12;
-        }
-    break;
-    case 0x200F0200://frequency
-        {
-            obj->block_name = 0x0A;//只是举例
-            obj->device_name = 0x0D;//只是举例
-            //obj->offset = container_of(mbase_cb,struct mbase_control_block_t, UA);
-            buf[0] = TYPE_long_unsigned;//数组
-            memcpy(buf+1, (uint8_t*)mbase_cb->frequency, 0x02);
-            return 0x03;
-        }
-    break;
-    case 0x200A0200://power_factor
-        {
-            obj->block_name = 0x0A;//只是举例
-            obj->device_name = 0x0D;//只是举例
-            //obj->offset = container_of(mbase_cb,struct mbase_control_block_t, UA);
-            buf[0] = 0x01;//数组
-            buf[1] = 0x02;//总分
-            buf[2] = TYPE_long;
-            memcpy(buf+3, (uint8_t*)mbase_cb->power_factor, 0x02);
-            buf[5] = TYPE_long;
-            memcpy(buf+6, (uint8_t*)mbase_cb->power_factor, 0x02);
-            return 8;
-        }
-    break;
-    case 0x20100200://temperature
-        {
-            obj->block_name = 0x0A;//只是举例
-            obj->device_name = 0x0D;//只是举例
-            //obj->offset = container_of(mbase_cb,struct mbase_control_block_t, UA);
-            buf[0] = TYPE_long;
-            memcpy(buf+1, (uint8_t*)mbase_cb->temperature, 0x02);
-            return 3;
-        }
-    break;
-    case 0x20110200://voltage_battery
-        {
-            obj->block_name = 0x0A;//只是举例
-            obj->device_name = 0x0D;//只是举例
-            //obj->offset = container_of(mbase_cb,struct mbase_control_block_t, UA);
-            buf[0] = TYPE_long;
-            memcpy(buf+1, (uint8_t*)mbase_cb->voltage_battery, 0x02);
-            return 3;
-        }
-    break;
+    case 0x30050200://关联对象属性表
+    {
+        return 0;
+    }
+    case 0x30050300://当前记录数
+    {
+        return 0;
+    }
+    case 0x30050400://最大记录数
+    {
+        return 0;
+    }
+    case 0x30050500://配置参数 过流阈值
+    {
+        obj->block_name = 0x0A;//只是举例
+        obj->device_name = 0x0D;//只是举例
+        //obj->offset = container_of(mbase_cb,struct mbase_control_block_t, UA);
+        *p++ = TYPE_structure;
+        *p++ = 2;
+        *p++ = TYPE_double_long;
+        memcpy(p, (uint8_t*)&mbase_cb->i_over_event_threshold, 0x04);
+        p += 4;
+        *p++ = TYPE_unsigned;;
+        memcpy(p, (uint8_t*)&mbase_cb->i_over_event_duration_para, 0x01);
+        p++;
+        return (p - buf);
+    }
+    case 0x30050600://事件记录表1
+    {
+        return 0;
+    }
+    case 0x30050700://事件记录表2
+    {
+        return 0;
+    }
+    case 0x30050800://事件记录表3
+    {
+        return 0;
+    }
+    case 0x30050900://事件记录表4
+    {
+        return 0;
+    }
+    case 0x30050A00://当前值记录表
+    {
+        return 0;
+    }
+    case 0x30050B00://上报标识
+    {
+        *p++ = DTC_ENUM;
+        memcpy((uint8_t*)&mbase_cb->i_over_event_report_type, p, 0x01);
+        p++;
+        return (p - buf);
+    }
+    case 0x30050C00://有效标识   固定1
+    {
+        *p++ = TYPE_bool;
+        *p++ = 1;
+        return (p - buf);
+    }
+    case 0x30050E00://时间状态记录表
+    {
+        return 0;
+    }
+    case 0x30050F00://上报方式
+    {
+        *p++ = DTC_ENUM;
+        memcpy((uint8_t*)&mbase_cb->i_over_event_report_mode, p, 0x01);
+        p++;
+        return (p - buf);
+    }
+
+
     default:
         break;
     }

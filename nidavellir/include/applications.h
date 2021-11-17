@@ -135,6 +135,8 @@ struct mbase_control_block_t
     uint8_t emu_err_event_recordflag; /*记录标识*/
     uint8_t emu_err_event_resetflag;  /*复位标识*/
     uint32_t emu_err_accumulate_time; /*累计时间*/
+    uint8_t i_over_event_report_type; //过流事件上报标识
+    uint8_t i_over_event_report_mode; //过流事件上报方式
     uint8_t i_over_event_duration_para;//static:电能表过流事件-判定延时时间 */ 
     uint32_t i_over_event_threshold;//static:电能表过流事件-电流触发下限 */ 
     uint8_t ia_over_event_duration;    //dyn:当前过流状态持续时间*/
