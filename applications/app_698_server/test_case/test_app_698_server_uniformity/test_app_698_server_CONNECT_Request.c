@@ -99,6 +99,7 @@ void test_app_698_server_CONNECT_Request(void** state)
 //1、期望的应用层协议版本号测试
 void test_app_698_server_CONNECT_Request_1_version(void** state)
 {
+#if 0
     struct instance_t* instance = (struct instance_t*)*state;
     struct fifo_t* fifo;
     struct context_698_t* ctx;
@@ -190,6 +191,7 @@ void test_app_698_server_CONNECT_Request_1_version(void** state)
             }
         }
     }
+#endif
 }
 
 

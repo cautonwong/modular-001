@@ -1,0 +1,122 @@
+{
+	"name": "test_app_698_server_GET_Request_0502",
+	"comment": "Get-Requeset测试用例",
+	"version": "0.0.1",
+	"config": "00",
+	"suites": [
+		{
+			"suite_comment": "2、读取若干个对象属性请求Get-RequesetList数据类型测试",
+            "test_source": {
+				"suite_comment": "2.1如读取组合有功总电能、正向有功电能、反向有功电能",
+				"frame": "68 20 00 43 05 11 11 11 11 11 11 11 CA 14 05 02 0A 03 00 00 02 00 00 10 02 00 00 20 02 00 00 22 82 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "2.1成功响应，分别输出组合有功总电能、正向有功电能、反向有功电能",
+				"response": "yes",
+				"service_choice": "8501",
+				"frame": "68 75 00 C3 05 11 11 11 11 11 11 11 99 67 85 02 0A 03 00 00 02 00 01 01 05 05 00 00 00 00 05 00 00 00 00 05 00 00 00 00 05 00 00 00 00 05 00 00 00 00 00 10 02 00 01 01 05 06 00 00 00 00 06 00 00 00 00 06 00 00 00 00 06 00 00 00 00 06 00 00 00 00 00 20 02 00 01 01 05 06 00 00 00 00 06 00 00 00 00 06 00 00 00 00 06 00 00 00 00 06 00 00 00 00 00 00 AE C0 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+			}
+        },
+		{
+			"suite_comment": "2、读取若干个对象属性请求Get-RequesetList数据类型测试",
+            "test_source": {
+				"suite_comment": "2.2 SEQUENCE OF OAD=2 请求实际OAD有3个",
+				"frmem": "68 20 00 43 05 11 11 11 11 11 11 11 CA 14 05 02 0A 02 00 00 02 00 00 10 02 00 00 20 02 00 00 C8 FC 16",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "2.2 异常响应，APDU无法解析",
+				"response": "yes",
+				"service_choice": "8501",
+				"frame": "68 14 00 C3 05 12 11 11 11 11 11 11 E9 B5 EE 0A 01 00 00 5C 40 16",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "auth_no"
+			}
+        },
+		{
+			"suite_comment": "2、读取若干个对象属性请求Get-RequesetList数据类型测试",
+            "test_source": {
+				"suite_comment": "2.3 SEQUENCE OF OAD=4 请求实际OAD有3个",
+				"frmem": "68 20 00 43 05 11 11 11 11 11 11 11 CA 14 05 02 0A 04 00 00 02 00 00 10 02 00 00 20 02 00 00 A5 F2 16",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "2.3 异常响应，APDU无法解析",
+				"response": "yes",
+				"service_choice": "8501",
+				"frame": "68 14 00 C3 05 12 11 11 11 11 11 11 E9 B5 EE 0A 01 00 00 5C 40 16",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "auth_no"
+			}
+        },
+		{
+			"suite_comment": "2、读取若干个对象属性请求Get-RequesetList数据类型测试",
+            "test_source": {
+				"suite_comment": "2.4读取组合有功总电量与各费率电量,读取不存在OAD",
+				"frmem": "68 21 00 43 05 12 11 11 11 11 11 11 35 E9 05 01 0A 00 B0 02 00 01 07 E2 04 19 0B 2D 03 01 00 0A 78 97 16",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "2.4 组合有功总电量与各费率电量响应成功,不存在OAD，响应对象不存在",
+				"response": "yes",
+				"service_choice": "8501",
+				"frame": "68 3B 00 C3 05 12 11 11 11 11 11 11 2F 4B 85 02 16 02 00 00 02 00 01 01 05 05 00 00 00 00 05 00 00 00 00 05 00 00 00 00 05 00 00 00 00 05 00 00 00 00 A0 00 02 00 00 06 00 00 15 AB 16",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "auth_no"
+			}
+        },
+		{
+			"suite_comment": "2、读取若干个对象属性请求Get-RequesetList数据类型测试",
+            "test_source": {
+				"suite_comment": "2.5 读取两个相同OAD",
+				"frmem": "68 1C 00 43 05 11 11 11 11 11 11 11 FA 65 05 02 0A 02 00 00 02 00 00 00 02 00 00 EA E0 16",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "2.5 表计正确响应，返回相同的数据",
+				"response": "yes",
+				"service_choice": "8501",
+				"frame": "xx",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "auth_no"
+			}
+        },
+		{
+			"suite_comment": "2、读取若干个对象属性请求Get-RequesetList数据类型测试",
+            "test_source": {
+				"suite_comment": "2.6 读取大于3个属性同上序号5操作",
+				"frmem": "xx",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "2.6 对应大于3个属性结果输出同上
+				"response": "yes",
+				"service_choice": "8501",
+				"frame": "xx",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "auth_no"
+			}
+        }
+	]
+}

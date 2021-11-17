@@ -1,0 +1,84 @@
+{
+	"name": "test_app_698_server_SET_Request_0602",
+	"comment": "设置一个对象属性请求Set-Requeset数据类型测试",
+	"version": "0.0.1",
+	"config": "00",
+	"suites": [
+		{
+			"suite_comment": "设置一个对象属性请求Set-Requeset数据类型测试",
+            "test_source": {
+				"suite_comment": "1 PIID：05",
+				"frame": "68 1F 00 43 05 11 11 11 11 11 11 11 49 9B 06 01 05 40 01 02 00 09 06 11 11 11 11 11 11 00 4E EE 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "1 成功响应，DAR=00,PIID-ACD：05",
+				"response": "yes",
+				"service_choice": "8501",
+				"frame": "68 19 00 C3 05 11 11 11 11 11 11 11 E9 AA 86 01 05 40 01 02 00 00 00 00 C3 25 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+			}
+        },		
+		{
+			"suite_comment": "设置一个对象属性请求Set-Requeset数据类型测试",
+            "test_source": {
+				"suite_comment": "2 设置通信地址=非法值,PIID：05",
+				"frame": "68 1F 00 43 05 11 11 11 11 11 11 11 49 9B 06 01 05 40 01 02 00 09 06 AA AA AA AA AA AA 00 0F E2 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "2 异常响应，DAR=0x1B； PIID-ACD：05",
+				"response": "yes",
+				"service_choice": "8501",
+				"frame": "68 19 00 C3 05 11 11 11 11 11 11 11 E9 AA 86 01 05 40 01 02 00 1B 00 00 F0 89 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+			}
+        },		
+		{
+			"suite_comment": "设置一个对象属性请求Set-Requeset数据类型测试",
+            "test_source": {
+				"suite_comment": "3 设置通信地址+时间标签",
+				"frame": "xx",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "3 成功响应，DAR=00+时间标签域",
+				"response": "yes",
+				"service_choice": "8501",
+				"frame": "xx",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+			}
+        },		
+		{
+			"suite_comment": "设置一个对象属性请求Set-Requeset数据类型测试",
+            "test_source": {
+				"suite_comment": "4 设置通信地址+错误时间标签",
+				"frame": "xx",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "4 成功响应，DAR=20时间标签无效",
+				"response": "yes",
+				"service_choice": "8501",
+				"frame": "xx",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+			}
+        }
+	]
+}
