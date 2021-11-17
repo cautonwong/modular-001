@@ -340,6 +340,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
         break;
       }
     }
+
     return 0;
 }
 
