@@ -42,14 +42,23 @@ const struct record_item_t  record_item[] =
 };
 
 
-int16_t register_event_info(uint16_t event_flag, uint16_t* size, uint16_t* depth)
+int16_t register_event_info(uint16_t event_flag, uint32_t *addr, uint16_t* size, uint16_t* depth)
 {
-    uint8_t i;
+    uint8_t i,k;
 
     for (i = 0; i < sizeof(record_item) / sizeof(record_item[0]); i++)
     {
         if ((event_flag == record_item[i].event_flag_id_start) || (event_flag == record_item[i].event_flag_id_end))
         {
+            if (addr != NULL)
+            {
+                *addr = 0x00;
+                for (k = 0x00; k < i; k++)
+                {
+                    *addr += record_item[k].len;
+                }               
+            }
+
             if (size != NULL)
             {
                 *size = record_item[i].len;
