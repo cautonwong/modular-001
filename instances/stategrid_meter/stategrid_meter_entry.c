@@ -4,7 +4,7 @@ extern int app_rx_server_698_entry(struct instance_t* instance, struct pipeline_
 extern int app_tx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-extern int16_t register_event_info(uint16_t event_flag, uint16_t* size, uint16_t* depth);
+extern int16_t register_event_info(uint16_t event_flag, uint32_t* addr, uint16_t* size, uint16_t* depth);
 extern int baremetal_instance_entry(struct instance_t* instance);
 #ifdef WIN32
 extern const struct driver_ops_t  eeprom_driver;

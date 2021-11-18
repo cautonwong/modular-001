@@ -10,7 +10,7 @@ struct block_device_children_t
     uint32_t first_addr;
     uint32_t size;
     uint32_t used;
-    int16_t(*hook)(uint16_t id, uint16_t* len, uint16_t* depth);
+    int16_t(*hook)(uint16_t id, uint32_t *addr, uint16_t* len, uint16_t* depth);
     struct list_head sibling;
 };
 
@@ -355,18 +355,7 @@ int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
             if ((driver != NULL) && (driver->dev_read != NULL))
             {
                 //计算地址
-                if (block->hook == NULL)
-                {
-                    addr = block->first_addr + obj.offset;
-                }
-                else
-                {
-                    if (0x00 < block->hook(id, (uint16_t*)&addr, NULL))
-                    {
-                        addr += block->first_addr;
-                    }
-                }
-
+                addr = block->first_addr + obj.offset;
                 driver->dev_read(device->dev, addr, obj.length, buf);
                 //这里没判断返回值和校验
 
@@ -406,18 +395,7 @@ int16_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
             if ((driver != NULL) && (driver->dev_write != NULL))
             {
                 //计算地址
-                if (block->hook == NULL)
-                {
-                    addr = block->first_addr + obj.offset;
-                }
-                else
-                {
-                    if (0x00 < block->hook(id, (uint16_t*)&addr, NULL))
-                    {
-                        addr += block->first_addr;
-                    }
-                }
-
+                addr = block->first_addr + obj.offset;
                 driver->dev_write(device->dev, addr, obj.length, buf);
                 //这里没判断返回值和校验
 
@@ -672,6 +650,76 @@ uint8_t circular_image_get(struct instance_t* instance, uint32_t id, uint8_t* bu
     return ret;
 }
 #endif
+
+int16_t nd_get_index(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t buf_size)
+{
+    struct block_device_t* device = NULL;
+    const struct driver_ops_t* driver = NULL;
+    struct block_device_children_t* block = NULL;
+    uint16_t len = 0x00;
+    uint32_t addr = 0x00;
+
+    device = look_up_device(instance, (uint8_t)(index >> 24));//查找设备
+    driver = device->dev->dev_driver_ops;
+    //查找块
+    block = look_up_block(instance, device, (uint8_t)(index >> 16));
+    if ((device != NULL) && (block != NULL))
+    {
+        if ((driver != NULL) && (driver->dev_read != NULL))
+        {
+            //计算地址
+            if (block->hook != NULL)
+            {
+                if (0x00 < block->hook((uint16_t)index, &addr, &len, NULL))
+                {
+                    addr += block->first_addr;
+                }
+                driver->dev_read(device->dev, addr, len, buf);
+                //这里没判断返回值和校验
+            }
+
+            return len;
+        }
+    }
+
+    return -1;
+}
+
+
+int16_t nd_set_index(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t buf_size)
+{
+    struct block_device_t* device = NULL;
+    const struct driver_ops_t* driver = NULL;
+    struct block_device_children_t* block = NULL;
+    uint16_t len = 0x00;
+    uint32_t addr = 0x00;
+
+    device = look_up_device(instance, (uint8_t)(index >> 24));//查找设备
+    driver = device->dev->dev_driver_ops;
+    //查找块
+    block = look_up_block(instance, device, (uint8_t)(index >> 16));
+    if ((device != NULL) && (block != NULL))
+    {
+        if ((driver != NULL) && (driver->dev_write != NULL))
+        {
+            //计算地址
+            if (block->hook != NULL)
+            {
+                if (0x00 < block->hook((uint16_t)index, &addr, &len, NULL))
+                {
+                    addr += block->first_addr;
+                }
+                driver->dev_write(device->dev, addr, len, buf);
+                //这里没判断返回值和校验
+            }
+
+            return len;
+        }
+    }
+
+    return -1;
+}
+
 
 //目前resource manger 数据操作介绍
 //全部为数据块的操作，不是单个数据的操作
