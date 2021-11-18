@@ -116,7 +116,7 @@ extern int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* b
 extern struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t resource_blok_size, uint8_t resource_block_name);
 extern int8_t add_device(struct instance_t* instance, uint8_t device_name,const struct dev_info_t *dev);
 extern uint32_t* register_event(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size,
-    int16_t(*fun)(uint16_t event_flag, uint16_t* size, uint16_t* depth));
+    int16_t(*fun)(uint16_t id, uint32_t *addr, uint16_t* len, uint16_t* depth));
 extern void dev_init(void);
 extern void irq_system_init(void);
 extern void irq_transform_to_instance(struct instance_t* instance);

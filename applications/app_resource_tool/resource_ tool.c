@@ -460,7 +460,7 @@ int16_t nd_set_block(struct instance_t* instance, uint8_t device_name, uint8_t b
 }
 
 uint32_t* register_event(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size,
-    int16_t(*fun)(uint16_t event_flag, uint16_t* size, uint16_t* depth))
+    int16_t(*fun)(uint16_t id, uint32_t *addr, uint16_t* len, uint16_t* depth))
 {
     struct block_device_t* device = NULL;
     struct block_device_children_t* block = NULL;
