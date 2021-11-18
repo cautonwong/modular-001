@@ -34,4 +34,6 @@ extern void ndv_timer_tick(void);
 
 extern uint8 ndv_timer_start_one(uint8_t timerid, uint32_t count);
 
+extern void ndv_timer_init(void);
+
 #endif

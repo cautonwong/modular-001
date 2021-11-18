@@ -481,6 +481,7 @@ struct instance_t
     struct fifo_t pipe_rtc;//只能在定时器函数或时钟秒中断函数里写
     int event_group_size;
     uint8_t *event_flags;
+    uint8_t ac_power_statue;
 
     //user extended control block
     void* user_setting;//application_setting
@@ -576,6 +577,7 @@ int nidavellir_loop_n_with_rtc_running(struct instance_t* instance, int n);
 struct pipeline_t* get_pipeline(struct instance_t* instance, pid_t id);
 void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id);
 uint16_t nd_get_crc16(uint8_t* buf, size_t len);
+void irq_transform_to_instance(struct instance_t* instance);
 
 int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size);
 

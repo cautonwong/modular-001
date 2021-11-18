@@ -29,7 +29,7 @@ void meterchip_adj_self(void)
     signed short Pgain;
     unsigned long TempUrms=0, TempIrms=0, TempPw=0, CalcPw=0, Corretion_Pw=0, U_value=0, I1_value=0, I2_value=0, P_value=0;
     unsigned long BaseErr,hfconst,RN8209Kpq;
-    float err=0, Ku, Ka, Kb;
+    float err=0;
     
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)&ctx;
     memset((unsigned char*)Buffer,0x00,16);

@@ -228,6 +228,7 @@ uint8_t read_esam_info(uint8_t *esam_info)
     {
         rx_esam(esam_info , &len );
     }
+    return true;
 }
 
 void esam_698_power_ctrl(uint8_t power)

@@ -90,6 +90,53 @@ int fr_sw_rtc(struct instance_t* instance, struct pipeline_t* pipeline, struct m
     return 0;
 }
 
+
+
+int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    if (instance->ac_power_statue == AC_POWER_ON)
+    {
+        if(true == ac_power_off_monitor())
+        {
+            mesg->from = kernel;
+            mesg->to = pid_meter_base;
+            mesg->ctrl = MSG_POWEROFF;
+            mesg->id = 0x0000001;
+            mesg->len = 0;
+            send_mesg(instance, NULL, mesg, NULL);
+            mesg->from = kernel;
+            mesg->to = pid_resource_manager;
+            mesg->ctrl = MSG_POWEROFF;
+            mesg->id = 0x0000001;
+            mesg->len = 0;
+            send_mesg(instance, NULL, mesg, NULL);
+            instance->ac_power_statue = AC_POWER_OFF;
+        }
+    }
+    else
+    {
+        if(true == ac_power_on_monitor())
+        {
+            mesg->from = kernel;
+            mesg->to = pid_meter_base;
+            mesg->ctrl = MSG_POWERON;
+            mesg->id = 0x0000001;
+            mesg->len = 0;
+            send_mesg(instance, NULL, mesg, NULL);
+            mesg->from = kernel;
+            mesg->to = pid_resource_manager;
+            mesg->ctrl = MSG_POWERON;
+            mesg->id = 0x0000001;
+            mesg->len = 0;
+            send_mesg(instance, NULL, mesg, NULL);
+            instance->ac_power_statue = AC_POWER_ON;
+        }
+    }
+    return 0;
+}
+
+
+
 int nidavellir_run(struct instance_t *instance)
 {
     struct message_t mesg;
@@ -107,6 +154,8 @@ int nidavellir_run(struct instance_t *instance)
   //  fr_rx_data_from_serial(instance, &pl_rx_from_serial, &mesg);
     
     fr_sw_rtc(instance,NULL,&mesg);
+    
+    fr_sw_ac_power(instance,NULL,&mesg);
 
     for (size_t i = 0; i < pipeline_n; i++)
     {

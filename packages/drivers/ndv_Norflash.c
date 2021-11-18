@@ -53,13 +53,6 @@ struct spi_io_t
 #define  MX_CMD_RDP      0xAB        /** Realese from Deep power down */
 #define  MX_CMD_RDID     0x9F        /** Read Identification  */
 
-#ifdef  BIT_BAND_EN
-#define  DO_CS_HIGH()      {*(flash_hal->cs->lat_out) = 1;}
-#define  DO_CS_LOW()       {*(flash_hal->cs->lat_out) = 0;}
-#else
-#define  DO_CS_HIGH()      {*(flash_hal->cs->lat_out) |= flash_hal->cs->pin_bit ;}
-#define  DO_CS_LOW()       {*(flash_hal->cs->lat_out) &= ~flash_hal->cs->pin_bit ;}
-#endif
 
 uint8 flash_read_and_compare(struct spi_io_t *read_data, const struct bus_ops_t *bus_ops)
 {

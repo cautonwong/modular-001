@@ -234,7 +234,10 @@ uint8 uart_time_process(void *tickpara)
     {
         mcu_uart_recive_enable(1 , chl->mcu_uart_index);
         mcu_uart_send_enable(0, chl->mcu_uart_index);
-        RS485_RCV_EN();
+        if(chl->chl_type == UART_RS4851_CHL)
+        {
+            RS485_RCV_EN();
+        }
     }
     
     if((fifoBuf_getUsed(chl->tx_fifo) > 0 ) && (chl->tx_time_out == 0))
@@ -245,8 +248,8 @@ uint8 uart_time_process(void *tickpara)
         }
         chl->tx_time_out = UART_TX_TIME_OUT;
         send_data = fifoBuf_getByte(chl->tx_fifo);
-        mcu_uart_send_byte(send_data , chl->mcu_uart_index);
         mcu_uart_send_enable(1, chl->mcu_uart_index);
+        mcu_uart_send_byte(send_data , chl->mcu_uart_index);
         mcu_uart_recive_enable(0 , chl->mcu_uart_index);
     }
 
