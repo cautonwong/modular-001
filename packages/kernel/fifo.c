@@ -294,9 +294,9 @@ uint8_t fifoBuf_getByte(struct fifo_t *buf)
 
     // get number of bytes available
     uint16_t num_bytes = fifoBuf_getUsed(buf);
-    assert(num_bytes >= 1);
+    //assert(num_bytes >= 1);
     if (num_bytes < 1)
-        return -1;                      // no byte returned
+        return 0;                      // no byte returned
 
     uint8_t b = buff[rd];
     if (++rd >= buf_size)

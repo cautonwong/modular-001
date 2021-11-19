@@ -652,7 +652,7 @@ int fr_gatekeeper_client(struct instance_t* instance, struct pipeline_t* pipelin
     fifoBuf_removeData(fifo, (fifo->wr - fifo->rd));
 
     return 0;
-
+#if 0
     fifoBuf_removeData(fifo, ctx->min_len + 2);
     return 0;
     fifoBuf_removeData(fifo, 9 + SA_LEN(ctx->SA));
@@ -720,6 +720,7 @@ int fr_gatekeeper_client(struct instance_t* instance, struct pipeline_t* pipelin
         fr_rx_698_end(instance, pipeline, mesg);
     }
     return 0;
+#endif
 }
 
 
@@ -744,7 +745,7 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo_out = (struct fifo_t*)pipeline->out_queue;
-    struct fifo_t* fifo_in = (struct fifo_t*)pipeline->in_queue;
+    //struct fifo_t* fifo_in = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* cache = ctx->apdu;
 
 

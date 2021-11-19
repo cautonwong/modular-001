@@ -1,60 +1,60 @@
 {
 	"name": "test_app_698_server_SET_Request_0602",
-	"comment": "设置一个对象属性请求Set-Requeset数据类型测试",
+	"comment": "设置若干个对象属性请求Set-RequesetList数据类型测试",
 	"version": "0.0.1",
 	"config": "00",
 	"suites": [
 		{
-			"suite_comment": "设置一个对象属性请求Set-Requeset数据类型测试",
+			"comment": "设置若干个对象属性请求Set-RequesetList数据类型测试",
             "test_source": {
-				"suite_comment": "1 PIID：05",
-				"frame": "68 1F 00 43 05 11 11 11 11 11 11 11 49 9B 06 01 05 40 01 02 00 09 06 11 11 11 11 11 11 00 4E EE 16",
+				"suite_comment": "1 设置通信地址=1111111111 设置客户编号=0000000001 SEQUENCE OF=2 PIID：05",
+				"frame": "68 2C 00 43 05 11 11 11 11 11 11 11 35 F6 06 02 05 02 40 01 02 00 09 06 11 11 11 11 11 11 40 03 02 00 09 06 11 11 11 11 11 11 00 6F 52 16",
 				"cmd": "frame_check",
 				"apdu": "00",
 				"auth": "auth_no"
             },
 			"test_expectation": {
-				"suite_comment": "1 成功响应，DAR=00,PIID-ACD：05",
+				"suite_comment": "1 分别成功响应，DAR=00,PIID-ACD：05",
 				"response": "yes",
-				"service_choice": "8501",
-				"frame": "68 19 00 C3 05 11 11 11 11 11 11 11 E9 AA 86 01 05 40 01 02 00 00 00 00 C3 25 16",
+				"service_choice": "8602",
+				"frame": "68 1F 00 C3 05 11 11 11 11 11 11 11 9E 5F 86 02 05 02 40 01 02 00 00 40 03 02 00 00 00 00 0A A3 16",
 				"cmd": "frame_check",
 				"apdu": "00",
 				"auth": "auth_no"
 			}
         },		
 		{
-			"suite_comment": "设置一个对象属性请求Set-Requeset数据类型测试",
+			"comment": "设置若干个对象属性请求Set-RequesetList数据类型测试",
             "test_source": {
-				"suite_comment": "2 设置通信地址=非法值,PIID：05",
-				"frame": "68 1F 00 43 05 11 11 11 11 11 11 11 49 9B 06 01 05 40 01 02 00 09 06 AA AA AA AA AA AA 00 0F E2 16",
+				"suite_comment": "2 设置电能量=111111111111 设置客户编号=000000000001 ,PIID：05",
+				"frame": "68 2C 00 43 05 11 11 11 11 11 11 11 35 F6 06 02 05 02 00 10 02 00 09 06 11 11 11 11 11 11 40 03 02 00 09 06 11 11 11 11 11 11 00 EF 83 16",
 				"cmd": "frame_check",
 				"apdu": "00",
 				"auth": "auth_no"
             },
 			"test_expectation": {
-				"suite_comment": "2 异常响应，DAR=0x1B； PIID-ACD：05",
+				"suite_comment": "2 响应失败，拒绝读写，成功响应 SEQUENCE OF=2 DAR=0x1B； PIID-ACD：05",
 				"response": "yes",
-				"service_choice": "8501",
-				"frame": "68 19 00 C3 05 11 11 11 11 11 11 11 E9 AA 86 01 05 40 01 02 00 1B 00 00 F0 89 16",
+				"service_choice": "8602",
+				"frame": "68 1F 00 C3 05 11 11 11 11 11 11 11 9E 5F 86 02 05 02 00 10 02 00 03 40 03 02 00 00 00 00 6E 5A 16",
 				"cmd": "frame_check",
 				"apdu": "00",
 				"auth": "auth_no"
 			}
         },		
 		{
-			"suite_comment": "设置一个对象属性请求Set-Requeset数据类型测试",
+			"comment": "设置若干个对象属性请求Set-RequesetList数据类型测试",
             "test_source": {
-				"suite_comment": "3 设置通信地址+时间标签",
+				"suite_comment": "3 设置大于3个对象属性，同上操作",
 				"frame": "xx",
 				"cmd": "frame_check",
 				"apdu": "00",
 				"auth": "auth_no"
             },
 			"test_expectation": {
-				"suite_comment": "3 成功响应，DAR=00+时间标签域",
+				"suite_comment": "3 同上结果输出",
 				"response": "yes",
-				"service_choice": "8501",
+				"service_choice": "8602",
 				"frame": "xx",
 				"cmd": "frame_check",
 				"apdu": "00",
@@ -62,18 +62,56 @@
 			}
         },		
 		{
-			"suite_comment": "设置一个对象属性请求Set-Requeset数据类型测试",
+			"comment": "设置若干个对象属性请求Set-RequesetList数据类型测试",
             "test_source": {
-				"suite_comment": "4 设置通信地址+错误时间标签",
-				"frame": "xx",
+				"suite_comment": "4 设置1个对象属性，实际却有2个",
+				"frame": "68 20 00 43 05 11 11 11 11 11 11 11 CA 14 06 02 00 01 40 0C 02 01 11 01 40 0C 02 02 11 01 00 4E B4 16",
 				"cmd": "frame_check",
 				"apdu": "00",
 				"auth": "auth_no"
             },
 			"test_expectation": {
-				"suite_comment": "4 成功响应，DAR=20时间标签无效",
+				"suite_comment": "4 异常响应，APDU无法解析",
 				"response": "yes",
-				"service_choice": "8501",
+				"service_choice": "8602",
+				"frame": "xx",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+			}
+        },		
+		{
+			"comment": "设置若干个对象属性请求Set-RequesetList数据类型测试",
+            "test_source": {
+				"suite_comment": "5 设置3个对象属性，实际却有2个",
+				"frame": "68 20 00 43 05 11 11 11 11 11 11 11 CA 14 06 02 00 03 40 0C 02 01 11 01 40 0C 02 02 11 01 00 9A 49 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "5 异常响应，APDU无法解析",
+				"response": "yes",
+				"service_choice": "8602",
+				"frame": "xx",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+			}
+        },		
+		{
+			"comment": "设置若干个对象属性请求Set-RequesetList数据类型测试",
+            "test_source": {
+				"suite_comment": "6 设置2个相同对象属性，数据内容不一致",
+				"frame": "68 20 00 43 05 11 11 11 11 11 11 11 CA 14 06 02 00 02 40 0C 02 01 11 01 40 0C 02 01 11 02 00 D5 38 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "6 正确响应，表计数据内容以后一个对象属性数据为准",
+				"response": "yes",
+				"service_choice": "8602",
 				"frame": "xx",
 				"cmd": "frame_check",
 				"apdu": "00",

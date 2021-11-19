@@ -16,7 +16,7 @@
 			"test_expectation": {
 				"suite_comment": "2.1成功响应，分别输出组合有功总电能、正向有功电能、反向有功电能",
 				"response": "yes",
-				"service_choice": "8501",
+				"service_choice": "8502",
 				"frame": "68 75 00 C3 05 11 11 11 11 11 11 11 99 67 85 02 0A 03 00 00 02 00 01 01 05 05 00 00 00 00 05 00 00 00 00 05 00 00 00 00 05 00 00 00 00 05 00 00 00 00 00 10 02 00 01 01 05 06 00 00 00 00 06 00 00 00 00 06 00 00 00 00 06 00 00 00 00 06 00 00 00 00 00 20 02 00 01 01 05 06 00 00 00 00 06 00 00 00 00 06 00 00 00 00 06 00 00 00 00 06 00 00 00 00 00 00 AE C0 16",
 				"cmd": "frame_check",
 				"apdu": "00",
@@ -35,7 +35,7 @@
 			"test_expectation": {
 				"suite_comment": "2.2 异常响应，APDU无法解析",
 				"response": "yes",
-				"service_choice": "8501",
+				"service_choice": "8502",
 				"frame": "68 14 00 C3 05 12 11 11 11 11 11 11 E9 B5 EE 0A 01 00 00 5C 40 16",
 				"cmd": "frmem_check",
 				"apdu": "00 11 91 C3 02",
@@ -54,7 +54,7 @@
 			"test_expectation": {
 				"suite_comment": "2.3 异常响应，APDU无法解析",
 				"response": "yes",
-				"service_choice": "8501",
+				"service_choice": "8502",
 				"frame": "68 14 00 C3 05 12 11 11 11 11 11 11 E9 B5 EE 0A 01 00 00 5C 40 16",
 				"cmd": "frmem_check",
 				"apdu": "00 11 91 C3 02",
@@ -73,7 +73,7 @@
 			"test_expectation": {
 				"suite_comment": "2.4 组合有功总电量与各费率电量响应成功,不存在OAD，响应对象不存在",
 				"response": "yes",
-				"service_choice": "8501",
+				"service_choice": "8502",
 				"frame": "68 3B 00 C3 05 12 11 11 11 11 11 11 2F 4B 85 02 16 02 00 00 02 00 01 01 05 05 00 00 00 00 05 00 00 00 00 05 00 00 00 00 05 00 00 00 00 05 00 00 00 00 A0 00 02 00 00 06 00 00 15 AB 16",
 				"cmd": "frmem_check",
 				"apdu": "00 11 91 C3 02",
@@ -92,7 +92,7 @@
 			"test_expectation": {
 				"suite_comment": "2.5 表计正确响应，返回相同的数据",
 				"response": "yes",
-				"service_choice": "8501",
+				"service_choice": "8502",
 				"frame": "xx",
 				"cmd": "frmem_check",
 				"apdu": "00 11 91 C3 02",
@@ -111,7 +111,7 @@
 			"test_expectation": {
 				"suite_comment": "2.6 对应大于3个属性结果输出同上
 				"response": "yes",
-				"service_choice": "8501",
+				"service_choice": "8502",
 				"frame": "xx",
 				"cmd": "frmem_check",
 				"apdu": "00 11 91 C3 02",
