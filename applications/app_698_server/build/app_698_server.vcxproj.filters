@@ -46,12 +46,6 @@
     <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_1_eng.c">
       <Filter>test_case\test_app_698_server_class_id</Filter>
     </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Request.c">
-      <Filter>test_case\test_app_698_server_uniformity</Filter>
-    </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Response.c">
-      <Filter>test_case\test_app_698_server_uniformity</Filter>
-    </ClCompile>
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_CONNECT_Request.c">
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </ClCompile>
@@ -80,9 +74,6 @@
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </ClCompile>
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SECURITY_Response.c">
-      <Filter>test_case\test_app_698_server_uniformity</Filter>
-    </ClCompile>
-    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response.c">
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </ClCompile>
     <ClCompile Include="..\test_case\test_app_698_server_bug\test_app_698_server_bug1.c">
@@ -220,12 +211,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Request.json">
-      <Filter>test_case\test_app_698_server_uniformity</Filter>
-    </None>
-    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Response.json">
-      <Filter>test_case\test_app_698_server_uniformity</Filter>
-    </None>
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_CONNECT_Request.json">
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </None>
@@ -242,9 +227,6 @@
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </None>
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0602.json">
-      <Filter>test_case\test_app_698_server_uniformity</Filter>
-    </None>
-    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response.json">
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </None>
   </ItemGroup>

@@ -57,8 +57,6 @@
     <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_1_eng.c" />
     <ClCompile Include="..\test_case\test_app_698_server_entry.c" />
     <ClCompile Include="..\test_case\test_app_698_server_function\test_app_698_server_function_demand.c" />
-    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Request.c" />
-    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Response.c" />
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_CONNECT_Request.c" />
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ERROR_Response.c" />
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Request_0501.c" />
@@ -73,7 +71,6 @@
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SECURITY_Response.c" />
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0601.c" />
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0602.c" />
-    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\packages\dl698\fr_698.h" />
@@ -84,15 +81,12 @@
     <ClInclude Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_uniformity.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Request.json" />
-    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Response.json" />
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_CONNECT_Request.json" />
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Request_0501.json" />
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Request_0502.json" />
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Response.json" />
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0601.json" />
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0602.json" />
-    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response.json" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
