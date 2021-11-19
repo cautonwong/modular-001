@@ -380,17 +380,23 @@ int main(void)
         cmocka_unit_test(test_app_698_server_GET_Request_0502),
 
         //1.5 Get-Response数据类型测试用例
-
+#ifdef SET_TEST
         //1.6 Set-Requeset数据类型测试用例
         //1、设置一个对象属性请求Set-Requeset数据类型测试 test_app_698_server_SET_Request_0601
         cmocka_unit_test(test_app_698_server_SET_Request_0601),
         //2、设置若干个对象属性请求Set-RequesetList数据类型测试 test_app_698_server_SET_Request_0602
         cmocka_unit_test(test_app_698_server_SET_Request_0602),
         //3、设置后读取若干个对象属性SetThenGetRequestNormalList数据类型测试 test_app_698_server_SET_Request_0603
+        cmocka_unit_test(test_app_698_server_SET_Request_0603),
 
-
-
-
+        //Set-Responset数据类型测试用例
+        //1、设置一个对象属性响应Set-Response数据类型测试 test_app_698_server_SET_Response_8601
+        cmocka_unit_test(test_app_698_server_SET_Response_8601),
+        //2、设置若干个对象属性响应Set-Response数据类型测试 test_app_698_server_SET_Response_8602
+        cmocka_unit_test(test_app_698_server_SET_Response_8602),
+        //3、设置后读取若干个对象属性响应SetThenGetResponseNormalList数据类型测试 test_app_698_server_SET_Response_8603
+        cmocka_unit_test(test_app_698_server_SET_Response_8603),
+#endif
 
         
         //1.7 Set-Responset数据类型测试用例

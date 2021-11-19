@@ -71,6 +71,10 @@
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SECURITY_Response.c" />
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0601.c" />
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0602.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0603.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response_8601.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response_8602.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response_8603.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\packages\dl698\fr_698.h" />
@@ -87,6 +91,10 @@
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Response.json" />
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0601.json" />
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0602.json" />
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0603.json" />
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response_8601.json" />
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response_8602.json" />
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response_8603.json" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

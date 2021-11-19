@@ -121,16 +121,23 @@ void test_app_698_server_GET_Request_0501(void** state);
 void test_app_698_server_GET_Request_0502(void** state);
 
 
-
+////////////////////////////////////////////////////////////////////////////////////////
 //Set-Requeset数据类型测试用例
 //1、设置一个对象属性请求Set-Requeset数据类型测试 test_app_698_server_SET_Request_0601
 void test_app_698_server_SET_Request_0601(void** state);
 //2、设置若干个对象属性请求Set-RequesetList数据类型测试 test_app_698_server_SET_Request_0602
 void test_app_698_server_SET_Request_0602(void** state);
 //3、设置后读取若干个对象属性SetThenGetRequestNormalList数据类型测试 test_app_698_server_SET_Request_0603
+void test_app_698_server_SET_Request_0603(void** state);
 
-
-
+//Set-Responset数据类型测试用例
+//1、设置一个对象属性响应Set-Response数据类型测试 test_app_698_server_SET_Response_8601
+void test_app_698_server_SET_Response_8601(void** state);
+//2、设置若干个对象属性响应Set-Response数据类型测试 test_app_698_server_SET_Response_8602
+void test_app_698_server_SET_Response_8602(void** state);
+//3、设置后读取若干个对象属性响应SetThenGetResponseNormalList数据类型测试 test_app_698_server_SET_Response_8603
+void test_app_698_server_SET_Response_8603(void** state);
+////////////////////////////////////////////////////////////////////////////////////////
 
 
 #endif //__test_app_698_server_uniformity_H__

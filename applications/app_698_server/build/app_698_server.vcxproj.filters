@@ -151,6 +151,18 @@
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0602.c">
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0603.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response_8601.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response_8602.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response_8603.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dl698">
@@ -227,6 +239,18 @@
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </None>
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0602.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0603.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response_8601.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response_8602.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response_8603.json">
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </None>
   </ItemGroup>

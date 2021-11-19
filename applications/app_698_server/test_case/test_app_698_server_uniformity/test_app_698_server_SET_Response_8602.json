@@ -1,0 +1,65 @@
+{
+	"name": "test_app_698_server_SET_Response_8602",
+	"comment": "设置若干个对象属性响应Set-Response数据类型测试",
+	"version": "0.0.1",
+	"config": "00",
+	"suites": [
+		{
+			"suite_comment": "设置若干个对象属性响应Set-Response数据类型测试",
+            "test_source": {
+				"suite_comment": "1 设置通信地址=1111111111 设置客户编号=0000000001 PIID：05  SEQUENCE OF=2 ",
+				"frame": "68 2C 00 43 05 11 11 11 11 11 11 11 35 F6 06 02 05 02 40 01 02 00 09 06 11 11 11 11 11 11 40 03 02 00 09 06 11 11 11 11 11 11 00 6F 52 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "1 分别成功响应，PIID-ACD：05 SEQUENCE OF=2；0AD=40010200；DAR=00；0AD=40030200；DAR=00；",
+				"response": "yes",
+				"service_choice": "8602",
+				"frame": "68 1F 00 C3 05 11 11 11 11 11 11 11 9E 5F 86 02 05 02 40 01 02 00 00 40 03 02 00 00 00 00 0A A3 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+			}
+        },		
+		{
+			"suite_comment": "设置若干个对象属性响应Set-Response数据类型测试",
+            "test_source": {
+				"suite_comment": "2 设置电能量=111111111111 设置客户编号=000000000001  PIID：05 SEQUENCE OF=2",
+				"frame": "68 2C 00 43 05 11 11 11 11 11 11 11 35 F6 06 02 05 02 00 10 02 00 09 06 11 11 11 11 11 11 40 03 02 00 09 06 11 11 11 11 11 11 00 EF 83 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "2 响应失败，拒绝读写 成功响应 0AD=40010200；DAR=03；0AD=40030200；DAR=00；",
+				"response": "yes",
+				"service_choice": "8602",
+				"frame": "68 1F 00 C3 05 11 11 11 11 11 11 11 9E 5F 86 02 05 02 00 10 02 00 03 40 03 02 00 00 00 00 6E 5A 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+			}
+        },		
+		{
+			"suite_comment": "设置若干个对象属性响应Set-Response数据类型测试",
+            "test_source": {
+				"suite_comment": "3 设置大于3个对象属性，同上操作",
+				"frame": "xx",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "3 同上结果输出",
+				"response": "yes",
+				"service_choice": "8602",
+				"frame": "xx",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+			}
+        }
+	]
+}

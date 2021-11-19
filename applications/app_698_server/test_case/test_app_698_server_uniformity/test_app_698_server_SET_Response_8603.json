@@ -1,0 +1,65 @@
+{
+	"name": "test_app_698_server_SET_Response_8603",
+	"comment": "设置后读取若干个对象属性响应SetThenGetResponseNormalList数据类型测试",
+	"version": "0.0.1",
+	"config": "00",
+	"suites": [
+		{
+			"suite_comment": "设置后读取若干个对象属性响应SetThenGetResponseNormalList数据类型测试",
+            "test_source": {
+				"suite_comment": "1 设置合法地址；读取通信地址；PIID=05；SEQUENCE OF=01；设置0AD=40010200;读OAD=40010200；延时读取时间=05",
+				"frame": "68 26 00 43 05 11 11 11 11 11 11 11 BD E1 06 03 05 01 40 01 02 00 09 06 11 11 11 11 11 11 40 01 02 00 11 05 00 35 A8 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "1 响应成功设置；成功响应读取；PIID-ACD=05；SEQUENCE OF=01；0AD=40010200；DAR=00；读取OAD=40010200",
+				"response": "yes",
+				"service_choice": "8603",
+				"frame": "68 27 00 C3 05 11 11 11 11 11 11 11 FB 70 86 03 05 01 40 01 02 00 00 40 01 02 00 01 09 06 11 11 11 11 11 11 00 00 6E 78 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+			}
+        },		
+		{
+			"suite_comment": "设置后读取若干个对象属性响应SetThenGetResponseNormalList数据类型测试",
+            "test_source": {
+				"suite_comment": "2 设置非法OAD, 读取合法OAD; PIID：05",
+				"frame": "68 26 00 43 05 11 11 11 11 11 11 11 BD E1 06 03 05 01 A0 01 02 00 09 06 11 11 11 11 11 11 40 01 02 00 11 05 00 69 50 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "2 响应设置失败，成功响应读取OAD PIID-ACD：05",
+				"response": "yes",
+				"service_choice": "8603",
+				"frame": "68 27 00 C3 05 11 11 11 11 11 11 11 FB 70 86 03 05 01 A0 01 02 00 06 40 01 02 00 01 09 06 11 11 11 11 11 11 00 00 2C DC 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+			}
+        },		
+		{
+			"suite_comment": "设置后读取若干个对象属性响应SetThenGetResponseNormalList数据类型测试",
+            "test_source": {
+				"suite_comment": "3 设置2个以上对象属性设置后读取结果 SEQUENCE OF=N 同上操作",
+				"frame": "xx",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "3 SEQUENCE OF=N 数据结果同上输出",
+				"response": "yes",
+				"service_choice": "8603",
+				"frame": "xx",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+			}
+        }
+	]
+}
