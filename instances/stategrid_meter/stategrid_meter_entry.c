@@ -30,7 +30,7 @@ struct pipeline_t pl_resource_manager =
     NULL,
     NULL,
     NULL,
-    sync_data,
+    NULL,
     sizeof(fr_resource_manager) / sizeof(fr_resource_manager[0]),
     fr_resource_manager,
 };
@@ -246,8 +246,8 @@ int baremetal_instance_entry_main(int argc, char** argv)
 #ifdef WIN32
     init_timer(instance);
 #endif
-    uint8_t s_buf[100];
-    nd_get(instance, 0x20000000, s_buf, 0x00);
+//    uint8_t s_buf[100];
+//    nd_get(instance, 0x20000000, s_buf, 0x00);
     return baremetal_instance_entry(instance);
 }
 

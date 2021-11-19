@@ -22,9 +22,6 @@ const uint32_t record_head_t0[] = {5, 0x20220200, 0x201E0200, 0x20200200, 0x2024
 const uint32_t record_head_t1[] = {4, 0x20220200, 0x201E0200, 0x20200200, 0x33000200};
 // 其他事件记录头种类 待添加
 
-
-
-
 struct record_item_t
 {
     uint16_t  event_flag_id_start;  // 事件代码

@@ -719,8 +719,6 @@ int16_t nd_set_index(struct instance_t* instance, uint32_t index, uint8_t* buf, 
 
     return -1;
 }
-
-
 //目前resource manger 数据操作介绍
 //全部为数据块的操作，不是单个数据的操作
 //需要操作数据块的单个数据，目前有两种情况：
