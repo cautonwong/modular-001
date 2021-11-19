@@ -745,7 +745,7 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo_out = (struct fifo_t*)pipeline->out_queue;
-    //struct fifo_t* fifo_in = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* fifo_in = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* cache = ctx->apdu;
 
 

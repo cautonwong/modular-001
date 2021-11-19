@@ -94,6 +94,8 @@ int fr_sw_rtc(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 
 int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
+#ifndef WIN32
+
     if (instance->ac_power_statue == AC_POWER_ON)
     {
         if(true == ac_power_off_monitor())
@@ -132,6 +134,7 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
             instance->ac_power_statue = AC_POWER_ON;
         }
     }
+#endif // !WIN32
     return 0;
 }
 
