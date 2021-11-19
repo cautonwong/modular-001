@@ -2,12 +2,15 @@
 #include "fr_698.h"
 
 
-
+extern const uint8_t init_30050200[];
 int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
-
+    uint8_t tempbuf[200];
+    uint8_t* src = tempbuf;
+    uint16_t i;
+    
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
@@ -17,7 +20,34 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
     {
     case 0x30050200://关联对象属性表
     {
-        return 0;
+        uint8_t num,maxnum;
+        uint32_t CaptureId, index;
+        
+        CaptureId = OverCurrentL1_oad;
+        maxnum = ((13*init_30050200[1]+9)/10);
+
+        index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + CaptureId); 
+        nd_get_index(instance, index, &tempbuf[0], sizeof(tempbuf));
+        src = tempbuf;
+        num = *src++;
+
+        *p++ = TYPE_array; //TYPE_array
+        
+        if (num > maxnum)  // 关联对象按个数的1.3倍限制 or 按默认存储空间的1.3倍限制
+        {
+            return DAR_OTHERS_ERROR;
+        }
+        
+        *p++ = num;
+        for (i = 0; i < num; i++)
+        {
+            *p++ = DTC_OAD;
+            mem_swap_cpy(p, src, 4);
+            src += 4;
+            p += 4;            
+        }
+
+        return (p - buf);
     }
     case 0x30050300://当前记录数
     {
