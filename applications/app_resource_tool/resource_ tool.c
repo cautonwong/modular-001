@@ -4,9 +4,10 @@
 #define RES_ALIGN_TYPE  uint32_t
 //单一设备的块链表
 #pragma pack(4)
-struct block_device_children_t
+struct resource_block_t
 {
     uint8_t name;
+    uint8_t relation_name;    //相关联的BLOCK
     uint32_t first_addr;
     uint32_t size;
     uint32_t used;
@@ -81,16 +82,16 @@ struct block_device_t* look_up_device(struct instance_t* instance, uint8_t devic
     return NULL;
 }
 
-struct block_device_children_t* look_up_block(struct instance_t* instance, struct block_device_t* device, uint8_t block_name)
+struct resource_block_t* look_up_block(struct instance_t* instance, struct block_device_t* device, uint8_t block_name)
 {
-    struct block_device_children_t* block = NULL;
+    struct resource_block_t* block = NULL;
     struct list_head* p;
 
     if (device != NULL)
     {
         list_for_each(p, &device->children)
         {
-            block = list_entry(p, struct block_device_children_t, sibling);
+            block = list_entry(p, struct resource_block_t, sibling);
             if (block->name == block_name)
             {
                 return block;  //block 找到了
@@ -104,9 +105,9 @@ struct block_device_children_t* look_up_block(struct instance_t* instance, struc
 void* nd_malloc(struct instance_t *instance, uint8_t block_name, uint32_t size)
 {
     struct block_device_t* device = NULL;
-    struct block_device_children_t* block = NULL;
+    struct resource_block_t* block = NULL;
 
-    device = look_up_device(instance, instance->ram_device_name);
+    device = look_up_device(instance, instance->ram_device);
     if (device == NULL)
     {
         return NULL;
@@ -125,8 +126,8 @@ void* nd_malloc(struct instance_t *instance, uint8_t block_name, uint32_t size)
 uint32_t *add_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size)
 {
     struct block_device_t* device = NULL;
-    struct block_device_children_t* block = NULL;
-    struct block_device_children_t* resource_block = NULL;
+    struct resource_block_t* block = NULL;
+    struct resource_block_t* re_block = NULL;
 
     device = look_up_device(instance,device_name);//先获取自己的device
     if (device != NULL)
@@ -135,13 +136,13 @@ uint32_t *add_block(struct instance_t* instance, uint8_t device_name, uint8_t bl
 
         if (block == NULL)
         {
-            resource_block = look_up_block(instance, look_up_device(instance, instance->ram_device_name), instance->resource_block_name);
-            if (resource_block == NULL)
+            re_block = look_up_block(instance, look_up_device(instance, instance->ram_device), instance->resource_block);
+            if (re_block == NULL)
             {
                 return NULL;
             }
 
-            block = __nd_malloc(resource_block->first_addr, &resource_block->used, sizeof(struct block_device_children_t), resource_block->size);
+            block = __nd_malloc(re_block->first_addr, &re_block->used, sizeof(struct resource_block_t), re_block->size);
             if (block == NULL)
             {
                 return NULL;
@@ -163,25 +164,25 @@ uint32_t *add_inside_block(struct instance_t* instance, uint8_t device_name,uint
 {
     struct block_device_t* device = NULL;
     struct block_device_t* ram_device = NULL;
-    struct block_device_children_t* block = NULL;
-    struct block_device_children_t* inside_block = NULL;
-    struct block_device_children_t* resource_block = NULL;
+    struct resource_block_t* block = NULL;
+    struct resource_block_t* inside_block = NULL;
+    struct resource_block_t* resource_block = NULL;
 
     device = look_up_device(instance, device_name);//先获取device
     if (device != NULL)
     {
         block = look_up_block(instance, device, block_name);//在找block
-        ram_device = look_up_device(instance, instance->ram_device_name); //获取ram_device
+        ram_device = look_up_device(instance, instance->ram_device); //获取ram_device
 
         if ((block != NULL) && (ram_device != NULL))
         {
-            resource_block = look_up_block(instance, ram_device, instance->resource_block_name);
+            resource_block = look_up_block(instance, ram_device, instance->resource_block);
             if (resource_block == NULL)
             {
                 return NULL;
             }
 
-            inside_block = __nd_malloc(resource_block->first_addr, &resource_block->used, sizeof(struct block_device_children_t), resource_block->size);
+            inside_block = __nd_malloc(resource_block->first_addr, &resource_block->used, sizeof(struct resource_block_t), resource_block->size);
             if (inside_block != NULL)
             {
                 inside_block->first_addr = block->first_addr + block->used;
@@ -202,7 +203,7 @@ struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uin
 {
     struct instance_t* instance = NULL;
     struct block_device_t* device = NULL; //创建RAM设备
-    struct block_device_children_t* block = NULL;
+    struct resource_block_t* block = NULL;
     uint32_t used = 0x00;
 
     instance = __nd_malloc(first_addr,&used,sizeof(struct instance_t), size);
@@ -222,10 +223,10 @@ struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uin
         device->size = size;
         init_list_head(&device->sibling);
         init_list_head(&device->children);
-        instance->ram_device_name = device_name;
+        instance->ram_device = device_name;
         list_add_tail(&device->sibling, &instance->dev_list);
         //创建resource_block
-        block = __nd_malloc(first_addr, &used, sizeof(struct block_device_children_t), resource_blok_size);
+        block = __nd_malloc(first_addr, &used, sizeof(struct resource_block_t), resource_blok_size);
         if (block != NULL)
         {
             block->first_addr = first_addr;
@@ -233,7 +234,7 @@ struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uin
             init_list_head(&block->sibling);
             block->size = resource_blok_size;
             block->used = used;
-            instance->resource_block_name = resource_block_name;
+            instance->resource_block = resource_block_name;
             list_add_tail(&block->sibling, &device->children);
 
             return instance;
@@ -248,14 +249,14 @@ int8_t add_device(struct instance_t* instance, uint8_t device_name, const struct
 {
     struct block_device_t* device = NULL;
     struct block_device_t* ram_device = NULL;
-    struct block_device_children_t* block = NULL;
+    struct resource_block_t* block = NULL;
 
     device = look_up_device(instance, device_name);//在分配其他的
-    ram_device = look_up_device(instance, instance->ram_device_name); //获取ram_device
+    ram_device = look_up_device(instance, instance->ram_device); //获取ram_device
 
     if ((device == NULL) && (ram_device != NULL))
     {
-        block = look_up_block(instance, ram_device, instance->resource_block_name);
+        block = look_up_block(instance, ram_device, instance->resource_block);
         if (block == NULL)
         {
             return -1;
@@ -284,7 +285,7 @@ int8_t add_device(struct instance_t* instance, uint8_t device_name, const struct
 struct resource_map_t* register_map(struct instance_t* instance,uint8_t map_name,
     int (*fun)(struct instance_t *instance, uint32_t id,uint8_t *buf, uint8_t mode, struct resources_obj_t* obj))
 {
-    struct block_device_children_t* block = NULL;
+    struct resource_block_t* block = NULL;
     struct resource_map_t* map = NULL;
     struct list_head* p;
 
@@ -297,7 +298,7 @@ struct resource_map_t* register_map(struct instance_t* instance,uint8_t map_name
         }
     }
 
-    block = look_up_block(instance, look_up_device(instance, instance->ram_device_name), instance->resource_block_name);
+    block = look_up_block(instance, look_up_device(instance, instance->ram_device), instance->resource_block);
     if (block == NULL)
     {
         return NULL;
@@ -336,7 +337,7 @@ int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
 {
     struct block_device_t* device = NULL;
     const struct driver_ops_t *driver = NULL;
-    struct block_device_children_t* block = NULL;
+    struct resource_block_t* block = NULL;
     struct resources_obj_t obj;
     int16_t ret = 0x00;
     uint32_t addr = 0x00;
@@ -376,7 +377,7 @@ int16_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
 {
     struct block_device_t* device = NULL;
     const struct driver_ops_t* driver = NULL;
-    struct block_device_children_t* block = NULL;
+    struct resource_block_t* block = NULL;
     struct resources_obj_t obj;
     int16_t ret = 0x00;
     uint32_t addr = 0x00;
@@ -419,7 +420,7 @@ int16_t nd_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16
 int16_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size)
 {
     struct block_device_t* device = NULL;
-    struct block_device_children_t* block = NULL;
+    struct resource_block_t* block = NULL;
     const struct driver_ops_t* driver = NULL;
 
     //查找设备
@@ -440,7 +441,7 @@ int16_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t b
 int16_t nd_set_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf, uint32_t buf_size)
 {
     struct block_device_t* device = NULL;
-    struct block_device_children_t* block = NULL;
+    struct resource_block_t* block = NULL;
     const struct driver_ops_t* driver = NULL;
 
     //查找设备
@@ -458,12 +459,12 @@ int16_t nd_set_block(struct instance_t* instance, uint8_t device_name, uint8_t b
     return -1;
 }
 
-uint32_t* register_event(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size,
+uint32_t* register_log(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t relation_name, uint32_t block_size,
     int16_t(*fun)(uint16_t id, uint32_t *addr, uint16_t* len, uint16_t* depth))
 {
     struct block_device_t* device = NULL;
-    struct block_device_children_t* block = NULL;
-    struct block_device_children_t* resource_block = NULL;
+    struct resource_block_t* block = NULL;
+    struct resource_block_t* re_block = NULL;
 
     device = look_up_device(instance, device_name);//先获取自己的device
     if (device != NULL)
@@ -472,13 +473,13 @@ uint32_t* register_event(struct instance_t* instance, uint8_t device_name, uint8
 
         if (block == NULL)
         {
-            resource_block = look_up_block(instance, look_up_device(instance, instance->ram_device_name), instance->resource_block_name);
-            if (resource_block == NULL)
+            re_block = look_up_block(instance, look_up_device(instance, instance->ram_device), instance->resource_block);
+            if (re_block == NULL)
             {
                 return NULL;
             }
 
-            block = __nd_malloc(resource_block->first_addr, &resource_block->used, sizeof(struct block_device_children_t), resource_block->size);
+            block = __nd_malloc(re_block->first_addr, &re_block->used, sizeof(struct resource_block_t), re_block->size);
             if (block == NULL)
             {
                 return NULL;
@@ -496,6 +497,8 @@ uint32_t* register_event(struct instance_t* instance, uint8_t device_name, uint8
     }
     return NULL;
 }
+
+
 
 int16_t nd_size(struct instance_t* instance, uint32_t id)
 {
@@ -515,7 +518,7 @@ int16_t nd_size(struct instance_t* instance, uint32_t id)
 int16_t get_block_frist_addr(struct instance_t *instance, uint8_t device_name, uint8_t block_name, uint32_t *addr)
 {
     struct block_device_t* device = NULL;
-    struct block_device_children_t* block = NULL;
+    struct resource_block_t* block = NULL;
 
     device = look_up_device(instance, device_name);//先获取自己的device
     if (device != NULL)
@@ -654,7 +657,7 @@ int16_t nd_get_index(struct instance_t* instance, uint32_t index, uint8_t* buf, 
 {
     struct block_device_t* device = NULL;
     const struct driver_ops_t* driver = NULL;
-    struct block_device_children_t* block = NULL;
+    struct resource_block_t* block = NULL;
     uint16_t len = 0x00;
     uint32_t addr = 0x00;
 
@@ -689,7 +692,7 @@ int16_t nd_set_index(struct instance_t* instance, uint32_t index, uint8_t* buf, 
 {
     struct block_device_t* device = NULL;
     const struct driver_ops_t* driver = NULL;
-    struct block_device_children_t* block = NULL;
+    struct resource_block_t* block = NULL;
     uint16_t len = 0x00;
     uint32_t addr = 0x00;
 
@@ -700,8 +703,7 @@ int16_t nd_set_index(struct instance_t* instance, uint32_t index, uint8_t* buf, 
     if ((device != NULL) && (block != NULL))
     {
         if ((driver != NULL) && (driver->dev_write != NULL))
-        {
-            //计算地址
+        {//计算地址            
             if (block->hook != NULL)
             {
                 if (0x00 < block->hook((uint16_t)index, &addr, &len, NULL))

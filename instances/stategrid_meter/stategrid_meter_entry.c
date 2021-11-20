@@ -115,7 +115,7 @@ extern struct resource_map_t* register_map(struct instance_t* instance,uint8_t m
 extern int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj);
 extern struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t resource_blok_size, uint8_t resource_block_name);
 extern int8_t add_device(struct instance_t* instance, uint8_t device_name,const struct dev_info_t *dev);
-extern uint32_t* register_event(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size,
+extern uint32_t* register_log(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size,
     int16_t(*fun)(uint16_t id, uint32_t *addr, uint16_t* len, uint16_t* depth));
 extern void dev_init(void);
 extern void irq_system_init(void);
@@ -133,7 +133,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
         return -1;
     }
 
-    instance->recipe = nd_malloc(instance, instance->resource_block_name, sizeof(struct recipe_t));
+    instance->recipe = nd_malloc(instance, instance->resource_block, sizeof(struct recipe_t));
     recipe = instance->recipe;
     if (recipe == NULL)
     {
@@ -144,8 +144,8 @@ int baremetal_instance_entry_main(int argc, char** argv)
     recipe->name = 0;
 
     //初始化pl_resource_manager
-    pl_resource_manager.in_queue = nd_malloc(instance, instance->resource_block_name, sizeof(struct fifo_t));
-    fifoBuf_init(pl_resource_manager.in_queue, nd_malloc(instance, instance->resource_block_name, 256), 256);
+    pl_resource_manager.in_queue = nd_malloc(instance, instance->resource_block, sizeof(struct fifo_t));
+    fifoBuf_init(pl_resource_manager.in_queue, nd_malloc(instance, instance->resource_block, 256), 256);
 
     //初始化时间
     instance->ms = 0;
@@ -238,7 +238,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     add_block(instance, RES_DEV_EEPROM, mbase_block_persistent_eprom, mbase_block_persistent_size);
     //注册事件
     uint8_t mbase_block_event = 0x09;
-    register_event(instance, RES_DEV_EEPROM, mbase_block_event, 50 * 1024, register_event_info);
+    register_log(instance, RES_DEV_EEPROM, mbase_block_event, 50 * 1024, register_event_info);
 
     //注册一个698的MAP
     uint8_t res_map_698 = 0x01;
