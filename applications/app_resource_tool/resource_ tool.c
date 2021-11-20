@@ -41,7 +41,6 @@ struct log_manager_t
 struct circular_info_t
 {
     uint16_t unit_size;                       //单体记录大小
-    uint16_t record_period;                   //记录周期
     uint32_t start_mark;                      //搜索时的起始标志
     uint32_t end_mark;                        //搜索时的结束标志
     uint16_t read_ptr;                        //读的位置
@@ -501,7 +500,7 @@ uint32_t* register_event(struct instance_t* instance, uint8_t device_name, uint8
 int16_t nd_size(struct instance_t* instance, uint32_t id)
 {
     struct resources_obj_t obj;
-    uint8_t ret = 0x00;
+    int16_t ret = 0x00;
 
     memset((uint8_t*)&obj, 0x00, sizeof(obj));
     ret = look_up_map(instance, id, NULL, 0x01, &obj);
@@ -533,13 +532,13 @@ int16_t get_block_frist_addr(struct instance_t *instance, uint8_t device_name, u
 }
 
 #if 1
-uint8_t circular_image_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, struct circular_info_t* info)
+int16_t circular_image_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, struct circular_info_t* info)
 {
     struct block_device_t* device = NULL;
     const struct driver_ops_t* driver = NULL;
     struct log_manager_t manager;
     struct resources_obj_t obj;
-    uint8_t ret = 0x00;
+    int16_t ret = 0x00;
     uint32_t addr = 0x00;
 
     memset((uint8_t*)&obj, 0x00, sizeof(obj));
@@ -590,14 +589,14 @@ uint8_t circular_image_set(struct instance_t* instance, uint32_t id, uint8_t* bu
     return ret;
 }
 
-uint8_t circular_image_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, struct circular_info_t* info)
+int16_t circular_image_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, struct circular_info_t* info)
 {
     struct block_device_t* device = NULL;
     const struct driver_ops_t* driver = NULL;
     struct log_manager_t manager;
     struct resources_obj_t obj;
     uint32_t addr = 0x00;
-    uint8_t ret = true;
+    int16_t ret = true;
 
     if (info != NULL)
     {
@@ -712,13 +711,14 @@ int16_t nd_set_index(struct instance_t* instance, uint32_t index, uint8_t* buf, 
                 driver->dev_write(device->dev, addr, len, buf);
                 //这里没判断返回值和校验
             }
-
             return len;
         }
     }
-
     return -1;
 }
+
+
+
 //目前resource manger 数据操作介绍
 //全部为数据块的操作，不是单个数据的操作
 //需要操作数据块的单个数据，目前有两种情况：

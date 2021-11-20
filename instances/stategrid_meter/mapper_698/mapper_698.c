@@ -99,20 +99,16 @@ int resource_map_698_action(struct instance_t* instance, uint32_t id, uint8_t* b
 
 int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj)
 {
-	switch (mode)
-	{
-	case RESOURCE_MAP_698_GET:  //读
-		return resource_map_698_get(instance,id,buf,obj);
-		break;
-	case RESOURCE_MAP_698_SET:  //写
-		return resource_map_698_set(instance, id, buf, obj);
-		break;
-	case RESOURCE_MAP_698_ACTION:  //执行
-		return resource_map_698_action(instance, id, buf, obj);
-		break;
-	default:
-		break;
-	}
+    int (*fun[])(struct instance_t* instance, uint32_t id, uint8_t * buf, struct resources_obj_t* obj) =
+    {
+        NULL, resource_map_698_get, resource_map_698_set, resource_map_698_action
+    };
+
+    if ((mode > 0) && (mode < 4))
+    {
+        return fun[mode](instance, id, buf, obj);
+    }
+
     return -1;
 }
 
