@@ -36,7 +36,7 @@ static uint8 send_device_addr(uint32 device_addr , const struct bus_ops_t *iic_o
     {
         cnt++;
 
-        if (cnt >= 10)
+        if (cnt >= 80)
         {
             iic_ops->ctrl(STOP, index);
             if (eeprom_err_cnts < EEPROM_ERR_JUDGE)

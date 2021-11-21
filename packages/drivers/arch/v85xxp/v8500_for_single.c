@@ -7,8 +7,7 @@
 #include "type_def.h"
 #include "lib_conf.h"
 
-#define   IO_DAT(IOX, PINX)  *((volatile unsigned long *)((((uint32_t)IOX) & 0xF0000000)\
-                              +0x2000000+((((uint32_t)IOX) &0xFFFFF)<<5)+(PINX<<2)))
+
 
 #define WDTPASS_KEY 0xAA5555AA
 #define WDTCLR_KEY  0x55AAAA55
@@ -249,7 +248,74 @@ uint8 init_v85xxp_rtc( uint8 power_mode )
     return true;
 }
 
+uint8_t read_v85xxp_rtc(uint8_t addr, uint8_t *buf, uint8_t len)
+{
+    uint8_t time_data[7];
+    uint8_t time_check[7];
+    uint32_t dummy_data = 0;
 
+    /* Wait until the RTC registers be synchronized */
+    RTC_WaitForSynchro();
+    
+    /* Dummy read-operation to RTC->LOAD register */
+    dummy_data = RTC->LOAD;
+    dummy_data += 1;
+    /* Wait until the RTC registers be synchronized */
+    RTC_WaitForSynchro();
+    
+    
+    do
+    {
+        time_data[0] = RTC->SEC;
+        time_data[1] = RTC->MIN;
+        time_data[2] = RTC->HOUR;
+        time_data[3] = RTC->DAY;
+        time_data[4] = RTC->MON;
+        time_data[5] = RTC->YEAR;
+        time_data[6] = RTC->WEEK;
+        
+        mcu_delay_us(10);
+        
+        time_check[0] = RTC->SEC;
+        time_check[1] = RTC->MIN;
+        time_check[2] = RTC->HOUR;
+        time_check[3] = RTC->DAY;
+        time_check[4] = RTC->MON;
+        time_check[5] = RTC->YEAR;
+        time_check[6] = RTC->WEEK;
+        
+    }while(mem_compare(time_data, time_check, 7));
+       
+    memcpy(buf , &time_data[0] , len);
+    return true;
+}
+
+uint8_t write_v85xxp_rtc(uint8_t addr, uint8_t *buf, uint16 len)
+{
+    uint8 time_data[7];
+    
+    RTCWriteEnable();
+    
+    memcpy(time_data , buf , 7);
+
+    RTC->WEEK = time_data[6];
+    mcu_delay_us(1000);
+    RTC->YEAR = time_data[5];
+    mcu_delay_us(1000);
+    RTC->MON = time_data[4];
+    mcu_delay_us(1000);
+    RTC->DAY = time_data[3];
+    mcu_delay_us(1000);
+    RTC->HOUR = time_data[2];
+    mcu_delay_us(1000);
+    RTC->MIN = time_data[1];
+    mcu_delay_us(1000);
+    RTC->SEC = time_data[0];
+    mcu_delay_us(1000);
+    
+    RTCWriteDisable();
+    return true;
+}
 /***********************************************************
  * @function_name: v85xxp_init
  * @function_file: cpu.c

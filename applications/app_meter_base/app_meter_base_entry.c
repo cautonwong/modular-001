@@ -358,16 +358,18 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
           break;
       case MSG_SECOND:
           
-          instance->time.tm_sec++;
+          Rtc_Prossecc(instance, pipeline);
           
-          rtc_tm_normalize((struct tm*)&instance->time.tm_sec);
+          TouFeePro(instance, pipeline);
           
           Electrical_measurement(instance, pipeline);
           
           Energy_Meter(instance, pipeline);
+
+          ia_over_event_judge(instance, pipeline, mesg); //TEST
           
           Display(instance, pipeline);
-          ia_over_event_judge(instance, pipeline, mesg);
+
           break;
       case MSG_PAGE_KEY_UP:
            

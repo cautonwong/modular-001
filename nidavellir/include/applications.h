@@ -55,18 +55,18 @@ struct mbase_control_block_t
     dyn_cache_start   
     I_data_fields
           
-    unsigned char   DayTableNo;//日表序号
-    unsigned char   TOUNo;//费率序号
-    unsigned char   STEPNo;//阶梯序号
-    unsigned long   TOUPrice;//费率电价
-    unsigned long   STEPPrice;//阶梯电价
-    unsigned char   SeasonTable;//时区表主副表序号
-    unsigned char   DayTable;//日表主副表序号
-    unsigned char   TouPriceTable;//费率电价表主副表序号
-    unsigned char   StepTable;//阶梯表主副表序号
-    unsigned char   StepSeason;//阶梯时区表主副表序号
-    unsigned long   Price;//当前电价
-    unsigned char   StepNum;//阶梯数
+    uint8_t   DayTableNo;//日表序号
+    uint8_t   TOUNo;//费率序号
+    uint8_t   STEPNo;//阶梯序号
+    uint8_t   SeasonTable;//时区表主副表序号
+    uint8_t   DayTable;//日表主副表序号
+    uint8_t   TouPriceTable;//费率电价表主副表序号
+    uint8_t   StepTable;//阶梯表主副表序号
+    uint8_t   StepSeason;//阶梯时区表主副表序号
+    uint32_t   Price;//当前电价
+    uint32_t   TOUPrice;//费率电价
+    uint32_t   STEPPrice;//阶梯电价
+    uint8_t   StepNum;//阶梯数
           
     uint32_t voltage_ac;
     uint32_t current_l;
@@ -77,8 +77,13 @@ struct mbase_control_block_t
     uint32_t temperature;
     uint32_t voltage_battery;    
     
-
-  
+    uint8_t  p_pluse;          
+    uint8_t  n_pluse;
+    uint8_t  power_dir;
+    uint8_t  power_qn;
+    
+    
+    
     dyn_cache_end
     //运行期更改&&掉电或定时保存&&上电需要IO请求的数据分区
     dyn_persistent_start
@@ -179,6 +184,8 @@ uint8_t scond_execute_for_demand(struct mbase_control_block_t* mbase_block);
 uint8_t minute_execute_for_demand(struct mbase_control_block_t* mbase_block);
 int8_t add_demand_action(struct mbase_control_block_t* mbase_block, uint32_t* import, uint32_t output, uint8_t max_slide, uint8_t mode);
 
+extern void Rtc_Prossecc(struct instance_t* instance, struct pipeline_t* pipeline);
+extern void TouFeePro(struct instance_t* instance, struct pipeline_t* pipeline);
 
 void Electrical_measurement_poweron(struct instance_t* instance, struct pipeline_t* pipeline);
 void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipeline);
@@ -200,5 +207,14 @@ void irq_transform_to_instance(struct instance_t* instance);
 
 extern const struct dev_info_t eeprom_dev;
 extern const struct dev_info_t nor_flash_dev;
+
+
+enum device_id_t
+{
+    DEV_EEPROM        = 1,
+    DEV_FLASH         ,
+    DEV_EMU           ,
+    DEV_RAM           ,
+};
 
 #endif

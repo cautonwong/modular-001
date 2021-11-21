@@ -99,13 +99,125 @@ const struct dev_info_t nor_flash_dev=
     __NULL,
 };
 
-static uint8 sec_flag;
 
 void RTC_Second(void)
 {
     fifoBuf_putByte(&irq_fifo, IRQ_RTC);
-    sec_flag = 0x55;
 }
+
+static uint8 wpulse_light_flag = 0;
+static uint8 wpulse_light_open = 0;
+static uint8 wpulse_light_open_flag = 0;
+static uint8 wplse_light_width = 0;
+
+static uint8 key_keep_flag = 0;
+static uint8 key_keep_width = 0;
+void IO_Interrupt(void)
+{
+   uint16 cnt;
+    
+    if( PMU_GetIOAINTStatus(GPIO_Pin_8))   //有功脉冲
+    {
+        PMU_ClearIOAINTStatus(GPIO_Pin_8);
+        GPIOF->OEN &=~BIT1;
+        GPIOF->IE &=~BIT1; 
+        GPIOF->ATT &=~BIT1; 
+        IO_DAT( GPIOF_DAT, 1) = 1;
+        wpulse_light_open = 0x5a;
+        wpulse_light_flag = 0;
+    }
+
+    if(GPIOA->INT & BIT2)  // 按键
+    {
+        
+        key_keep_flag = 0x5a;
+        key_keep_width = 0;
+        
+        //if(hfp_system_state.power_state == BATTER_SUPPLY)// 停电下按键消抖
+        //if(ANA->COMPOUT & ANA_STATUS_VDCINDROP)
+        {
+             key_keep_flag = 0; // 避免停电下 tick被打开 发两次 按键消息
+             if(ANA->COMPOUT & BIT2)//有电池
+             {
+                 for(cnt = 0; cnt< 10; cnt++)  
+                 {
+                    if(((GPIOA->STS & BIT2) != 0))
+                    {
+                        break;
+                    }
+                 }
+                 if (cnt >= 10)
+                 {
+                    fifoBuf_putByte(&irq_fifo, IRQ_PMU);
+                 }
+             }
+        }
+        PMU->IOAINTSTS = BIT2;
+    }
+}
+
+extern  uint32 over_Imax;
+
+void timing_ftr(void)
+{
+      uint8 dly1,dly2=0;
+      
+      if(over_Imax == 0x55)
+      {
+              dly1 = 6;
+              dly2 = 14;
+      }
+      else
+      {
+              dly1 = 10;
+              dly2 = 30;
+      }
+      /******************** 消抖 ********************/ 
+      if(wpulse_light_open == 0x5a)
+      {
+              if((GPIOA->STS & BIT8) == BIT8)//消抖    
+              {
+                      wpulse_light_open_flag++;
+              }
+              else
+              {
+                      wpulse_light_open_flag=0;
+              }
+              if(wpulse_light_open_flag >= dly1)//20ms
+              {
+
+                      wpulse_light_open = 0;
+                      wpulse_light_open_flag = 0;
+                      wpulse_light_flag = 0x5A;
+                      wplse_light_width = 0;
+                      
+              }
+      }
+      
+      /******************** 脉宽80ms ********************/ 
+      if(wpulse_light_flag == 0x5a)
+      {
+          wplse_light_width++;
+          if(wplse_light_width > dly2)
+          {
+               GPIOF->OEN &=~BIT1;
+               GPIOF->IE &=~BIT1;
+               GPIOF->ATT &=~BIT1;
+               IO_DAT( GPIOF_DAT, 1) = 0;
+               wplse_light_width = 0;
+               wpulse_light_flag = 0;
+          }
+          else
+          {
+              GPIOF->OEN &=~BIT1;
+              GPIOF->IE &=~BIT1;
+              GPIOF->ATT &=~BIT1; 
+              IO_DAT( GPIOF_DAT, 1) = 1;
+          }
+      }
+}
+
+   
 
 void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uint8_t chl_type)
 {
@@ -137,7 +249,11 @@ void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uin
 void irq_system_init(void)
 {
     fifoBuf_init(&irq_fifo, fifo_buf, 32);
+    
     ndv_isr_handle_regsit(RTC_Second , IRQ_RTC );
+    ndv_isr_handle_regsit(IO_Interrupt , IRQ_PMU );
+    ndv_isr_handle_regsit(timing_ftr , IRQ_TMR3 );
+    
 }
 
 void irq_transform_to_instance(struct instance_t* instance)
@@ -173,6 +289,7 @@ void dev_init(void)
     
     eeprom_dev.dev_driver_ops->dev_initialize(&eeprom_dev);
     
+    DISPLAY_KEY_INPUT();
     
     rn8209_dev.dev_driver_ops->dev_initialize(&rn8209_dev);
     

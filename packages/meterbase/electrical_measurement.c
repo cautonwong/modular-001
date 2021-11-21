@@ -160,6 +160,15 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , POWERPA , 4 , &temp);
     mbase_control_block->active_power = temp * mbase_control_block->k_p;
     
+    if(mbase_control_block->active_power < 0)
+    {
+        mbase_control_block->power_dir = 0;
+    }
+    else
+    {
+        mbase_control_block->power_dir = 1;
+    }
+    
     if(abs(mbase_control_block->current_l) < MIN_CURRENT)
     {
         mbase_control_block->current_l = 0;
@@ -197,6 +206,20 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     }
     
     
+    rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , ENERGYP , 3 , &temp);
+    
+    if(mbase_control_block->power_dir == 1)
+    {
+        mbase_control_block->p_pluse += temp;
+    }
+    else
+    {
+        mbase_control_block->n_pluse += temp;
+    }
+    
+    
+    
+    
 }
 
 
@@ -213,24 +236,34 @@ void Electrical_measurement_poweron(struct instance_t* instance, struct pipeline
     mbase_control_block->frequency = 0;
     mbase_control_block->power_factor = 1000;
     
+    mbase_control_block->p_pluse = 0;
+    mbase_control_block->n_pluse = 0;
+    
     mbase_control_block->k_u = 1.413436490e-2;
     mbase_control_block->k_il = 0.166826248;//»ðÏß
     mbase_control_block->k_in = 0.166826248;
     mbase_control_block->k_p = 0.0155295;
     
-    DISPLAY_KEY_INPUT();
-    
-    key_cnt = 0;
 }
 
 
 void Electrical_measurement_poweroff(struct instance_t* instance, struct pipeline_t* pipeline)
 {
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)&ctx;
+    int32_t temp = 0;
+    
+    rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , ENERGYP , 3 , &temp);
+    
+    if(mbase_control_block->power_dir == 1)
+    {
+        mbase_control_block->p_pluse += temp;
+    }
+    else
+    {
+        mbase_control_block->n_pluse += temp;
+    }
     
     
-
-   
-
 }
 
 

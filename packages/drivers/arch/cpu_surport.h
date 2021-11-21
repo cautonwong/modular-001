@@ -6,6 +6,11 @@
 
 typedef void (*isr_handle)(void);
 
+
+#define   IO_DAT(IOX, PINX)  *((volatile unsigned long *)((((uint32_t)IOX) & 0xF0000000)\
+                              +0x2000000+((((uint32_t)IOX) &0xFFFFF)<<5)+(PINX<<2)))
+
+/*MCU¶ÔÍâÌá¹©µÄ·þÎñ½Ó¿Úº¯ÊýÉùÃ÷*/
 extern void mcu_init(void* init_type);
 
 extern uint8 mcu_uart_init(void* init_config, uint8 uart_index, uint8 infrared_enable);
@@ -99,15 +104,7 @@ enum bus_type
 
 
 
-enum device_id_t
-{
-    DEV_EEPROM        = 1,
-    DEV_FLASH         ,
-    DEV_EMU           ,
-    DEV_ESAM_698      ,
-    DEV_CARD          ,
-    DEV_RAM           ,
-};
+
 
 
 

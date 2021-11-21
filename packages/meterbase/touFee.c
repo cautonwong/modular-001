@@ -144,7 +144,7 @@ void GetTOUFee(struct instance_t* instance, struct pipeline_t* pipeline)
 }
 
 
-void TouFeePro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+void TouFeePro(struct instance_t* instance, struct pipeline_t* pipeline)
 {
 
     GetFeeTab(instance, pipeline);
@@ -154,29 +154,18 @@ void TouFeePro(struct instance_t* instance, struct pipeline_t* pipeline, struct 
 }
 
 
-int meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+void Rtc_Prossecc(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-    //cmd len data cmd 接入校验
-    //调用领域层完成业务  要反映用例场景
-    switch (mesg->ctrl)
+    if(instance->time.tm_sec != 20)//每分鐘的20秒對時
     {
-    case 0x86://采样的外设数据抵达
-        //refresh_control_data(instance,pipeline,mesg);
-        break;
-    case 0x87://外设控制命令  比如校表  可以异步的话就单独弄个tx_entry?
-        //controlDevice(instance,pipeline,mesg);
-        break;
-    case 0x88://control_block控制命令 比如清零
-        //controlData(instance,pipeline,mesg);
-        break;
-    case 0x89://秒信号  刷新内部计时器  比如需量和事件
-        //controlStatus(instance,pipeline,mesg);
-        TouFeePro(instance, pipeline , mesg);
-        break;
-    default:
-        break;
+        instance->time.tm_sec++;
+        
+        rtc_tm_normalize((struct tm*)&instance->time.tm_sec);
     }
-
-    return 0;
+    else
+    {
+        read_v85xxp_rtc(0x00, (uint8_t*)&instance->time.tm_sec, 7);
+    }
 }
+
 
