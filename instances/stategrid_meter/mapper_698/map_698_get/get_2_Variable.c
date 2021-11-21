@@ -113,7 +113,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, struc
         obj->block_name = 0x0A;//只是举例
         obj->device_name = 0x0D;//只是举例
         //obj->offset = container_of(mbase_cb,struct mbase_control_block_t, UA);
-        buf[0] = DTC_DATETIME_S;
+        buf[0] = TYPE_date_time_s;
         //memcpy(buf + 1, &time->tm_sec, 0x07); // 拷贝当前时间
         return 8;
     }

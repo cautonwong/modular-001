@@ -7,7 +7,7 @@
 #include "fr_698.h"
 
 //SECURITY-Response数据类型测试用例
-//1、明文应用数据单元测试
+//1、明文应用数据单元测试test_app_698_server_SET_Response
 //2、密文应用数据单元测试
 //3、异常错误测试
 

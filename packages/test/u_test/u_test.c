@@ -203,9 +203,9 @@ int get_test_suite_cmd(char* u_test_file, uint8_t* data, uint16_t index, uint8_t
                 child = cJSON_GetObjectItem(child, "cmd");
                 if ((child != NULL) && (strlen(child->valuestring)))
                 {
-                    if (strcmp(child->valuestring, "frame_check"))
+                    if (0 == strcmp(child->valuestring, "frame_check"))
                         return TEST_frame_check;
-                    if (strcmp(child->valuestring, "frame_check_no"))
+                    if (0 == strcmp(child->valuestring, "frame_check_no"))
                         return TEST_frame_check_no;
                     return 0;
                 }
@@ -271,9 +271,9 @@ int get_test_suite_auth(char* u_test_file, uint8_t* data, uint16_t index, uint8_
                 child = cJSON_GetObjectItem(child, "auth");
                 if ((child != NULL) && (strlen(child->valuestring)))
                 {
-                    if (strcmp(child->valuestring, "auth"))
+                    if (0==strcmp(child->valuestring, "auth"))
                         return TEST_auth;
-                    if (strcmp(child->valuestring, "auth_no"))
+                    if (0==strcmp(child->valuestring, "auth_no"))
                         return TEST_auth_no;
                     return 0;
                 }

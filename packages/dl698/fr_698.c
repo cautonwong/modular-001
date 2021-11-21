@@ -410,6 +410,7 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    struct mbase_control_block_t* mbase_cb;
 
     //合法性和一致性判断
     if ((ctx->ctrl & (1 << 7)) == 1)
@@ -420,23 +421,25 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     }
     //控制域判断
     if (!((0 == DIR(ctx->ctrl)) && (1 == PRM(ctx->ctrl))))
-    {
         return 0;
-    }
+
     if(is_cmd(ctx->ctrl))
-    { 
         return 0;
-    }
+
     //地址判断
     if (0 != SA_LOGIC(ctx->SA))
-    {
         return 0;
-    }
-    uint8_t addr[6] = {0x01,0,0,0,0,0};
-    if (0 != mem_compare(ctx->addr, addr, SA_LEN(ctx->SA) + 1))
-    {
+
+
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    if(NULL == mbase_cb)
         return 0;
+#if WIN32_U_TEST
+    if (0 != mem_compare(ctx->addr, mbase_cb->tsa, SA_LEN(ctx->SA) + 1))
+    {
+        //return 0;
     }
+#endif
     //时标判断
     //fr_timeTag()；
 
@@ -513,6 +516,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint8_t len = 0;
 
     //协议一致性判断和apdu合法判断
     if(0 == fr_pack_698_check(instance, pipeline, mesg))
@@ -526,12 +530,25 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         return -1;
     }
 
-    //数据解密
-    fr_security_decode(instance, pipeline, mesg);
-
     fifoBuf_removeData(fifo, 9 + SA_LEN(ctx->SA));
-
     ctx->service = fifoBuf_getByte(fifo);
+    if (SECURITY_Request == ctx->service)//数据解密
+    {
+        ctx->choice = fifoBuf_getByte(fifo);
+        len = fifoBuf_getByte(fifo);
+        if (SECURITY_CHOICE_1_Ciphertext == ctx->choice)
+        {
+            fr_security_decode(instance, pipeline, mesg);
+        }
+        else if (SECURITY_CHOICE_0_Plaintext == ctx->choice)
+        {
+            ctx->service = fifoBuf_getByte(fifo);
+        }
+        else
+        {
+            return -1;
+        }
+    }
     if (!((CONNECT_Request == ctx->service) || (RELEASE_Request == ctx->service)))
     {
         ctx->choice = fifoBuf_getByte(fifo);

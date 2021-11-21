@@ -2,10 +2,14 @@
 #include "fr_698.h"
 
 extern void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id);
+
 extern int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
 extern int GET_1_Demand(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
 extern int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+
 extern int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+extern int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+
 extern int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
 extern int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
 extern int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
@@ -18,98 +22,75 @@ extern int GET_e_Monitor(struct instance_t* instance, uint32_t id, uint8_t* buf,
 extern int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
 
 
-extern int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
-
-int resource_map_698_get(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
-{    
-    struct mbase_control_block_t* mbase_cb = NULL;
-    
-    mbase_cb = get_pipeline_ctx(instance, pid_meter_base);
-    if(mbase_cb == NULL)
-    {
-        return -1;
-    }
-
-    switch (get_OAD_OIA1(id))
-    {
-    case 0x0://电量
-		return GET_0_Energy(instance, id, buf, obj);
-		break;
-    case 0x1://需量
-		return GET_1_Demand(instance, id, buf, obj);
-		break;
-    case 0x2://变量
-		return GET_2_Variable(instance, id, buf,obj);
-		break;
-    case 0x3://事件
-		return GET_3_Event(instance, id, buf,obj);
-		break;
-    case 0x4://参变量
-		return GET_4_Parameter(instance, id, buf,obj);
-		break;
-    case 0x5://冻结
-		return GET_5_Frozen(instance, id, buf, obj);
-		break;
-    case 0x6://采集
-		return GET_6_Collection(instance, id, buf, obj);
-		break;
-    case 0x7://集合
-		return GET_7_Aggregate(instance, id, buf, obj);
-		break;
-    case 0x8://控制
-		return GET_8_Control(instance, id, buf, obj);
-		break;
-    case 0xe://监控
-		return GET_e_Monitor(instance, id, buf, obj);
-		break;
-	case 0xf://其他
-		return GET_f_Other(instance, id, buf, obj);
-		break;
-    default:
-        break;
-    }
-    return -1;
-}
-
-int resource_map_698_set(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
-{
-	switch (get_OAD_OIA1(id))
-	{
-    case 0x4://参变量
-		return SET_4_Parameter(instance, id, buf,obj);
-    case 0x3:// 事件
-        return SET_3_Event(instance, id, buf, obj);
-	default:
-		break;
-	}
-	return -1;
-}
-
-int resource_map_698_action(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
-{
-	switch (get_OAD_OIA1(id))
-	{
-    case 0x4://参变量
-		return ACTION_4_Parameter(instance, id, buf,obj);
-	default:
-		break;
-	}
-	return -1;
-}
-
 int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj)
 {
-    int (*fun[])(struct instance_t* instance, uint32_t id, uint8_t * buf, struct resources_obj_t* obj) =
-    {
-        NULL, resource_map_698_get, resource_map_698_set, resource_map_698_action
-    };
-
-    if ((mode > 0) && (mode < 4))
-    {
-        return fun[mode](instance, id, buf, obj);
-    }
-
-    return -1;
+    uint8_t OIA1 = get_OAD_OIA1(id);
+    switch (mode)
+	{
+    case RESOURCE_MAP_698_GET:
+        switch (OIA1)
+        {
+        case 0x0://电量
+            return GET_0_Energy(instance, id, buf, obj);
+            break;
+        case 0x1://需量
+            return GET_1_Demand(instance, id, buf, obj);
+            break;
+        case 0x2://变量
+            return GET_2_Variable(instance, id, buf,obj);
+            break;
+        case 0x3://事件
+            return GET_3_Event(instance, id, buf,obj);
+            break;
+        case 0x4://参变量
+            return GET_4_Parameter(instance, id, buf,obj);
+            break;
+        case 0x5://冻结
+            return GET_5_Frozen(instance, id, buf, obj);
+            break;
+        case 0x6://采集
+            return GET_6_Collection(instance, id, buf, obj);
+            break;
+        case 0x7://集合
+            return GET_7_Aggregate(instance, id, buf, obj);
+            break;
+        case 0x8://控制
+            return GET_8_Control(instance, id, buf, obj);
+            break;
+        case 0xe://监控
+            return GET_e_Monitor(instance, id, buf, obj);
+            break;
+        case 0xf://其他
+            return GET_f_Other(instance, id, buf, obj);
+            break;
+        default:
+            break;
+        }
+        break;
+    case RESOURCE_MAP_698_SET:
+      	switch (OIA1)
+        {
+        case 0x4://参变量
+            return SET_4_Parameter(instance, id, buf,obj);
+        case 0x3:// 事件
+            return SET_3_Event(instance, id, buf, obj);
+        default:
+            break;
+        }
+        break;
+    case RESOURCE_MAP_698_ACTION:
+        switch (OIA1)
+        {
+        case 0x4://参变量
+            return ACTION_4_Parameter(instance, id, buf,obj);
+        default:
+            break;
+        }
+        break;
+	default:
+		break;
+	}
+	return -1;
 }
 
 #if 0
@@ -149,49 +130,50 @@ const struct tag_len_t tag_data_len[] =
      {  TYPE_bit_string             ,  0    },
      {  TYPE_double_long            ,  4    },
      {  TYPE_double_long_unsigned   ,  4    },
-     {  DTC_FLOATING_POINT          ,  4    },
-     {  DTC_OCTET_STRING            ,  0xFF    },
-     {  DTC_VISIBLE_STRING          ,  0xFF    },
-     {  DTC_UTF8_STRING             ,  0xFF    },
-     {  DTC_BCD                     ,  1    },
+
+     {  TYPE_octet_string            ,  0xFF    },
+     {  TYPE_visible_string          ,  0xFF    },
+     {  TYPE_UTF8_string             ,  0xFF    },
+
      {  TYPE_integer                ,  1    },
      {  TYPE_long                   ,  2    },
      {  TYPE_unsigned               ,  1    },
      {  TYPE_long_unsigned          ,  2    },
-     {  DTC_COMPACT_ARRAY           ,  0    },
+
      {  TYPE_long64                 ,  8    },
      {  TYPE_long64_unsigned        ,  8    },
-     {  DTC_ENUM                    ,  0    },
-     {  DTC_FLOAT32                 ,  4    },
-     {  DTC_FLOAT64                 ,  8    },
-     {  DTC_DATE_TIME               ,  10    },
-     {  DTC_DATE                    ,  0    },
-     {  DTC_TIME                    ,  0    },
-     {  DTC_DATETIME_S              ,  7    },
-     {  DTC_OI                      ,  2    },
-     {  DTC_OAD                     ,  4    },
-     {  DTC_ROAD                    ,  0    },
-     {  DTC_OMD                     ,  4    },
-     {  DTC_TI                      ,  0    },
-     {  DTC_TSA                     ,  0    },
-     {  DTC_MAC                     ,  0    },
-     {  DTC_RN                      ,  0    },
-     {  DTC_REGION                  ,  0    },
-     {  DTC_SCALER_UNIT             ,  0    },
-     {  DTC_RSD                     ,  0    },
-     {  DTC_CSD                     ,  0    },
-     {  DTC_MS                      ,  0    },
-     {  DTC_SID                     ,  0    },
-     {  DTC_SID_MAC                     ,  0    },
-     {  DTC_COMDCB                      ,  0    },
-     {  DTC_RCSD                        ,  0    },
-     {  DTC_VQDS                        ,  0    },
-     {  DTC_USER_HIGH_ENERGY_INTEGER    ,  0    },
-     {  DTC_USER_HIGH_ENERGY_UNSIGNED   ,  0    },
-     {  DTC_USER_NOT_CARE               ,  0    },
-     {  DTC_USER_SPECIAL_PROCESS        ,  0    },
-     {  DTC_USER_PUSH_PROCESS           ,  0    },
-     {  DTC_USER_ERROR                  ,  0    },
+     {  TYPE_enum                    ,  0    },
+     {  TYPE_float32                 ,  4    },
+     {  TYPE_float64                 ,  8    },
+     {  TYPE_date_time               ,  10    },
+     {  TYPE_date                    ,  0    },
+     {  TYPE_time                    ,  0    },
+     {  TYPE_date_time_s              ,  7    },
+     {  TYPE_OI                      ,  2    },
+     {  TYPE_OAD                     ,  4    },
+     {  TYPE_ROAD                    ,  0    },
+     {  TYPE_OMD                     ,  4    },
+     {  TYPE_TI                      ,  0    },
+     {  TYPE_TSA                     ,  0    },
+     {  TYPE_MAC                     ,  0    },
+     {  TYPE_RN                      ,  0    },
+     {  TYPE_Region                  ,  0    },
+     {  TYPE_Scaler_Unit             ,  0    },
+     {  TYPE_RSD                     ,  0    },
+     {  TYPE_CSD                     ,  0    },
+     {  TYPE_MS                      ,  0    },
+     {  TYPE_SID                     ,  0    },
+     {  TYPE_SID_MAC                     ,  0    },
+     {  TYPE_COMDCB                      ,  0    },
+     {  TYPE_RCSD                        ,  0    },
+     {  TYPE_VQDS                        ,  0    },
+
+     {  TYPE_USER_HIGH_ENERGY_INTEGER    ,  0    },
+     {  TYPE_USER_HIGH_ENERGY_UNSIGNED   ,  0    },
+     {  TYPE_USER_NOT_CARE               ,  0    },
+     {  TYPE_USER_SPECIAL_PROCESS        ,  0    },
+     {  TYPE_USER_PUSH_PROCESS           ,  0    },
+     {  TYPE_USER_ERROR                  ,  0    },
 };
 
 
@@ -204,7 +186,7 @@ const struct attr_tag_t _0000_tag[] = { {2, _0000_02_tag}, {4, _0000_04_tag}, {6
 const uint8_t _2022_02_tag[] = { TYPE_double_long_unsigned, DT_END };
 const struct attr_tag_t _2022_tag[] = { {2, _2022_02_tag}};
 
-const uint8_t _201E_02_tag[] = { DTC_DATETIME_S, DT_END };
+const uint8_t _201E_02_tag[] = { TYPE_date_time_s, DT_END };
 const struct attr_tag_t _201E_tag[] = { {2, _201E_02_tag} };
 
 const uint8_t _NULL_02_tag[] = { TYPE_null, DT_END };

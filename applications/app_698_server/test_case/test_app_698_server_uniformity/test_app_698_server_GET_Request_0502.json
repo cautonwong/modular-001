@@ -1,11 +1,11 @@
 {
 	"name": "test_app_698_server_GET_Request_0502",
-	"comment": "Get-Requeset测试用例",
+	"comment": "读取若干个对象属性请求Get-RequesetList数据类型测试",
 	"version": "0.0.1",
 	"config": "00",
 	"suites": [
 		{
-			"suite_comment": "2、读取若干个对象属性请求Get-RequesetList数据类型测试",
+			"suite_comment": "读取若干个对象属性请求Get-RequesetList数据类型测试",
             "test_source": {
 				"suite_comment": "2.1如读取组合有功总电能、正向有功电能、反向有功电能",
 				"frame": "68 20 00 43 05 11 11 11 11 11 11 11 CA 14 05 02 0A 03 00 00 02 00 00 10 02 00 00 20 02 00 00 22 82 16",
@@ -24,7 +24,7 @@
 			}
         },
 		{
-			"suite_comment": "2、读取若干个对象属性请求Get-RequesetList数据类型测试",
+			"suite_comment": "读取若干个对象属性请求Get-RequesetList数据类型测试",
             "test_source": {
 				"suite_comment": "2.2 SEQUENCE OF OAD=2 请求实际OAD有3个",
 				"frmem": "68 20 00 43 05 11 11 11 11 11 11 11 CA 14 05 02 0A 02 00 00 02 00 00 10 02 00 00 20 02 00 00 C8 FC 16",
@@ -43,7 +43,7 @@
 			}
         },
 		{
-			"suite_comment": "2、读取若干个对象属性请求Get-RequesetList数据类型测试",
+			"suite_comment": "读取若干个对象属性请求Get-RequesetList数据类型测试",
             "test_source": {
 				"suite_comment": "2.3 SEQUENCE OF OAD=4 请求实际OAD有3个",
 				"frmem": "68 20 00 43 05 11 11 11 11 11 11 11 CA 14 05 02 0A 04 00 00 02 00 00 10 02 00 00 20 02 00 00 A5 F2 16",
@@ -62,7 +62,7 @@
 			}
         },
 		{
-			"suite_comment": "2、读取若干个对象属性请求Get-RequesetList数据类型测试",
+			"suite_comment": "读取若干个对象属性请求Get-RequesetList数据类型测试",
             "test_source": {
 				"suite_comment": "2.4读取组合有功总电量与各费率电量,读取不存在OAD",
 				"frmem": "68 21 00 43 05 12 11 11 11 11 11 11 35 E9 05 01 0A 00 B0 02 00 01 07 E2 04 19 0B 2D 03 01 00 0A 78 97 16",
@@ -81,7 +81,7 @@
 			}
         },
 		{
-			"suite_comment": "2、读取若干个对象属性请求Get-RequesetList数据类型测试",
+			"suite_comment": "读取若干个对象属性请求Get-RequesetList数据类型测试",
             "test_source": {
 				"suite_comment": "2.5 读取两个相同OAD",
 				"frmem": "68 1C 00 43 05 11 11 11 11 11 11 11 FA 65 05 02 0A 02 00 00 02 00 00 00 02 00 00 EA E0 16",
@@ -100,7 +100,7 @@
 			}
         },
 		{
-			"suite_comment": "2、读取若干个对象属性请求Get-RequesetList数据类型测试",
+			"suite_comment": "读取若干个对象属性请求Get-RequesetList数据类型测试",
             "test_source": {
 				"suite_comment": "2.6 读取大于3个属性同上序号5操作",
 				"frmem": "xx",

@@ -52,7 +52,7 @@ uint16_t axdr_get_data_len(const uint8_t *data)
         break;
 
     case TYPE_bool:
-    case DTC_ENUM:
+    case TYPE_enum:
     case TYPE_integer:
     case TYPE_unsigned:
         p += 1;
@@ -60,7 +60,7 @@ uint16_t axdr_get_data_len(const uint8_t *data)
 
     case TYPE_long:
     case TYPE_long_unsigned:
-    case DTC_SCALER_UNIT:
+    case TYPE_Scaler_Unit:
         p += 2;
         break;
 
@@ -80,30 +80,30 @@ uint16_t axdr_get_data_len(const uint8_t *data)
         p  += (len + 7) / 8;
         break;
 
-    case DTC_OCTET_STRING:
-    case DTC_VISIBLE_STRING:
-    case DTC_UTF8_STRING:
-    case DTC_TSA:     /**< 2..17 */
-    case DTC_MAC:
-    case DTC_RN:
+    case TYPE_octet_string:
+    case TYPE_visible_string:
+    case TYPE_UTF8_string:
+    case TYPE_TSA:     /**< 2..17 */
+    case TYPE_MAC:
+    case TYPE_RN:
         len = 0;
         //p  += axdr_data_len_decode((uint8_t *)p, &len);
         p  += len;
         break;
 
-    case DTC_DATE_TIME:
+    case TYPE_date_time:
         p += 10;
         break;
 
-    case DTC_DATE:
+    case TYPE_date:
         p += 5;
         break;
 
-    case DTC_TIME:
+    case TYPE_time:
         p += 3;
         break;
 
-    case DTC_DATETIME_S:
+    case TYPE_date_time_s:
         p += 7;
         break;
 
@@ -127,33 +127,33 @@ uint16_t axdr_get_data_len(const uint8_t *data)
 
         break;
 
-    case DTC_OI:
+    case TYPE_OI:
         p += 2;
         break;
 
-    case DTC_OAD:
-    case DTC_OMD:
+    case TYPE_OAD:
+    case TYPE_OMD:
         p += 4;
         break;
 
-    case DTC_TI:
+    case TYPE_TI:
         p += 3;
         break;
 
-    case DTC_REGION:
+    case TYPE_Region:
         p++;
         p += axdr_get_data_len(p);
         p += axdr_get_data_len(p);
         break;
 
-    case DTC_SID:
+    case TYPE_SID:
         len = 0;
         p  += 4;
         p  += axdr_data_len_decode((uint8_t *)p, &len);
         p  += len;
         break;
 
-    case DTC_SID_MAC:
+    case TYPE_SID_MAC:
         len = 0;
         p  += 4;
         p  += axdr_data_len_decode((uint8_t *)p, &len);
@@ -162,18 +162,18 @@ uint16_t axdr_get_data_len(const uint8_t *data)
         p  += len;
         break;
 
-    case DTC_COMDCB:
+    case TYPE_COMDCB:
         p += 5;
         break;
 
 
-    case DTC_ROAD:
+    case TYPE_ROAD:
         p += 4;
         i  = *p++;
         p += (uint16_t)i * 4;
         break;
 
-    case DTC_CSD:
+    case TYPE_CSD:
         i = *p++;
 
         if (i == 0)
@@ -189,7 +189,7 @@ uint16_t axdr_get_data_len(const uint8_t *data)
 
         break;
 
-    case DTC_RCSD:
+    case TYPE_RCSD:
         n = *p++;
 
         while (n--)
@@ -210,7 +210,7 @@ uint16_t axdr_get_data_len(const uint8_t *data)
 
         break;
 
-    case DTC_RSD:
+    case TYPE_RSD:
         i = *p++;
 
         if (i == 0)
@@ -220,7 +220,7 @@ uint16_t axdr_get_data_len(const uint8_t *data)
         else if (i == 1)
         {
             p += 4;
-            if (*p != DTC_DATETIME_S && *p != TYPE_double_long_unsigned)
+            if (*p != TYPE_date_time_s && *p != TYPE_double_long_unsigned)
             {
             //    return 0;   /*!!!*/
             }
@@ -229,17 +229,17 @@ uint16_t axdr_get_data_len(const uint8_t *data)
         else if (i == 2)
         {
             p += 4;
-            if (*p != DTC_DATETIME_S && *p != TYPE_double_long_unsigned)
+            if (*p != TYPE_date_time_s && *p != TYPE_double_long_unsigned)
             {
             //    return 0;   /*!!!*/
             }
             p += axdr_get_data_len(p);
-            if (*p != DTC_DATETIME_S && *p != TYPE_double_long_unsigned)
+            if (*p != TYPE_date_time_s && *p != TYPE_double_long_unsigned)
             {
             //    return 0;   /*!!!*/
             }
             p += axdr_get_data_len(p);
-            if (*p != DTC_TI && *p != TYPE_double_long_unsigned && *p != TYPE_null)
+            if (*p != TYPE_TI && *p != TYPE_double_long_unsigned && *p != TYPE_null)
             {
             //    return 0;   /*!!!*/
             }
