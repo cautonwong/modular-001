@@ -7,6 +7,7 @@
 struct resource_block_t
 {
     uint8_t name;
+    uint8_t relation_device;  //相关联的device
     uint8_t relation_name;    //相关联的BLOCK
     uint32_t first_addr;
     uint32_t size;
@@ -459,7 +460,7 @@ int16_t nd_set_block(struct instance_t* instance, uint8_t device_name, uint8_t b
     return -1;
 }
 
-uint32_t* register_log(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t relation_name, uint32_t block_size,
+uint32_t* __register(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t relation_device, uint8_t relation_name, uint32_t block_size,
     int16_t(*fun)(uint16_t id, uint32_t *addr, uint16_t* len, uint16_t* depth))
 {
     struct block_device_t* device = NULL;
@@ -489,6 +490,8 @@ uint32_t* register_log(struct instance_t* instance, uint8_t device_name, uint8_t
             init_list_head(&block->sibling);
             block->size = block_size;
             block->used = 0x00;
+            block->relation_device = relation_device;
+            block->relation_name = relation_name;
             block->hook = fun;
             device->used += block_size;
             list_add_tail(&block->sibling, &device->children);
@@ -498,7 +501,17 @@ uint32_t* register_log(struct instance_t* instance, uint8_t device_name, uint8_t
     return NULL;
 }
 
+uint32_t* register_log(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t relation_device, uint8_t relation_name, uint32_t block_size,
+    int16_t(*fun)(uint16_t id, uint32_t* addr, uint16_t* len, uint16_t* depth))
+{
+    return __register(instance, device_name, block_name, relation_device, relation_name, block_size, fun);
+}
 
+uint32_t* register_parameter(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size,
+    int16_t(*fun)(uint16_t id, uint32_t *addr, uint16_t* len))
+{
+    return __register(instance, device_name, block_name, 0x00, 0x00, block_size, (int16_t(*)(uint16_t id, uint32_t * addr, uint16_t * len, uint16_t * depth))fun);
+}
 
 int16_t nd_size(struct instance_t* instance, uint32_t id)
 {

@@ -127,7 +127,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     struct recipe_t *recipe = NULL;
     struct context_698_t* ctx_698 = NULL;
 
-    instance = create_instance(RES_DEV_RAM, (uint32_t)&nd_memory, 20 * 1024, 2 * 1024, 0x01);//用资源描述创建instance
+    instance = create_instance(RES_DEV_RAM, (uint32_t)&nd_memory, 20 * 1024, 2 * 1024, resource_block_name);//用资源描述创建instance
     if (instance == NULL)
     {
         return -1;
@@ -161,7 +161,6 @@ int baremetal_instance_entry_main(int argc, char** argv)
     memcpy(&instance->time, &time, sizeof(struct tm));
 
     ///////////////////////////////申请一个cache的BLOCK = 02/////////////////////////////////////////////
-    uint8_t control_block_cache = 0x02;
     if (NULL == add_block(instance, RES_DEV_RAM, control_block_cache, 500))
     {
         return -1;
@@ -179,7 +178,6 @@ int baremetal_instance_entry_main(int argc, char** argv)
     fifoBuf_init(&instance->pipe_rtc, buf, 4);
 
     /////////////////////////////////////申请一个698应用的BLOCK = 03/////////////////////////////////////////////////
-    uint8_t control_block_698_name = 0x03;
     if (NULL == add_block(instance, RES_DEV_RAM, control_block_698_name, 8 * 1024))
     {
         return -1;
@@ -205,7 +203,6 @@ int baremetal_instance_entry_main(int argc, char** argv)
     communication_chlx_init(pl_tx_698.out_queue , pl_rx_698.in_queue , UART_IR_CHL);
 
     ////////////////////////////申请一个mbase应用的BLOCK = 04/////////////////////////////////////////////
-    uint8_t mbase_control_block_name = 0x04;
     if (NULL == add_block(instance, RES_DEV_RAM, mbase_control_block_name, 8 * 1024))
     {
         return -1;
@@ -217,15 +214,12 @@ int baremetal_instance_entry_main(int argc, char** argv)
     pl_meter_base.out_queue = NULL;
     //mbase分三个区
     //mbase_block_static
-    uint8_t mbase_block_static = 0x05;
     size_t mbase_block_static_size = offsetof(struct mbase_control_block_t, static_section_start) - offsetof(struct mbase_control_block_t, static_section_end);
     uint32_t static_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_static, mbase_block_static_size);
     //mbase_block_cache
-    uint8_t mbase_block_cache = 0x06;
     size_t mbase_block_cache_size = offsetof(struct mbase_control_block_t, cache_section_start) - offsetof(struct mbase_control_block_t, cache_section_end);
     uint32_t cache_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_cache, mbase_block_cache_size);
     //mbase_block_persistent
-    uint8_t mbase_block_persistent = 0x07;
     size_t mbase_block_persistent_size = offsetof(struct mbase_control_block_t, persistent_section_start) - offsetof(struct mbase_control_block_t, persistent_section_end);
     uint32_t persistent_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_persistent, mbase_block_persistent_size);
 
@@ -234,14 +228,11 @@ int baremetal_instance_entry_main(int argc, char** argv)
     //注册FLASH
     add_device(instance, RES_DEV_FLASH, &nor_flash_dev);
     //申请一块掉电保存的EPROM区域
-    uint8_t mbase_block_persistent_eprom = 0x08;
     add_block(instance, RES_DEV_EEPROM, mbase_block_persistent_eprom, mbase_block_persistent_size);
     //注册事件
-    uint8_t mbase_block_event = 0x09;
     register_log(instance, RES_DEV_EEPROM, mbase_block_event, 50 * 1024, register_event_info);
 
     //注册一个698的MAP
-    uint8_t res_map_698 = 0x01;
     register_map(instance, res_map_698, resource_map_698);
 #ifdef WIN32
     init_timer(instance);

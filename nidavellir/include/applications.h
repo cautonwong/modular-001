@@ -154,6 +154,24 @@ struct mbase_control_block_t
     uint8_t factor_mode; //工厂模式
 };
 
+enum resourenc_block_name
+{
+    resource_block_name = 0x01,
+    control_block_cache,
+    control_block_698_name,
+    mbase_control_block_name,
+    mbase_block_static,
+    mbase_block_cache,
+    mbase_block_persistent,
+    mbase_block_persistent_eprom,
+    mbase_block_event,
+};
+
+enum resourenc_map_name
+{
+    res_map_698 = 0x01,
+};
+
 uint8_t scond_execute_for_demand(struct mbase_control_block_t* mbase_block);
 uint8_t minute_execute_for_demand(struct mbase_control_block_t* mbase_block);
 int8_t add_demand_action(struct mbase_control_block_t* mbase_block, uint32_t* import, uint32_t output, uint8_t max_slide, uint8_t mode);
@@ -164,7 +182,6 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
 void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline);
 void Energy_Meter_PowerON(struct instance_t* instance, struct pipeline_t* pipeline);
 void Energy_Meter_PowerOFF(struct instance_t* instance, struct pipeline_t* pipeline);
-
 
 extern const struct dev_info_t eeprom_dev;
 extern const struct dev_info_t nor_flash_dev;
