@@ -61,7 +61,8 @@
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ERROR_Response.c" />
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Request_0501.c" />
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Request_0502.c" />
-    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Response.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Response_8501.c" />
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Response_8502.c" />
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_LINK.c" />
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_LINK_TimeTag.c" />
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_RELEASE_Request.c" />
@@ -88,7 +89,8 @@
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_CONNECT_Request.json" />
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Request_0501.json" />
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Request_0502.json" />
-    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Response.json" />
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Response_8501.json" />
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Response_8502.json" />
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0601.json" />
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0602.json" />
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Request_0603.json" />

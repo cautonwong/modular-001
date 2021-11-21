@@ -1,11 +1,12 @@
 {
 	"name": "test_app_698_server_GET_Request_0501",
-	"comment": "Get-Requeset测试用例",
+	"comment": "读取一个对象属性请求Get-Requeset数据类型测试",
 	"version": "0.0.1",
 	"config": "00",
-	"suites": [
+	"suites": 
+	[
 		{
-			"suite_comment": "1、读取一个对象属性请求Get-Requeset数据类型测试",
+			"suite_comment": "读取一个对象属性请求Get-Requeset数据类型测试",
             "test_source": {
 				"suite_comment": "1.1如读取校时记录关联对象属性(无时间标签)",
 				"frame": "68 2C 00 43 05 12 11 11 11 11 11 11 5B 5E 10 00 08 05 01 09 30 11 03 00 00 01 10 24 38 95 99 CA 0B 0C AA 3D 49 C5 99 0A 5B E9 28 48 1F 16",
@@ -24,7 +25,7 @@
 			}
         },
 		{
-			"suite_comment": "1、读取一个对象属性请求Get-Requeset数据类型测试",
+			"suite_comment": "读取一个对象属性请求Get-Requeset数据类型测试",
             "test_source": {
 				"suite_comment": "1.2如读取校时记录关联对象属性（正确时间标签）",
 				"frmem": "68 36 00 43 05 12 11 11 11 11 11 11 96 38 10 00 12 05 01 0A 30 11 03 00 01 07 E2 04 19 0A 29 28 01 00 0A 01 10 32 C1 49 24 11 1C E2 C8 E1 08 41 9D 5C 1B 40 48 EF 8C 16",
@@ -43,7 +44,7 @@
 			}
         },
 		{
-			"suite_comment": "1、读取一个对象属性请求Get-Requeset数据类型测试",
+			"suite_comment": "读取一个对象属性请求Get-Requeset数据类型测试",
             "test_source": {
 				"suite_comment": "1.3如读取一个不存在的OAD（无时间标签）",
 				"frmem": "68 17 00 43 05 12 11 11 11 11 11 11 8D 8F 05 01 0A 00 B0 02 00 00 E6 96 16",
@@ -62,7 +63,7 @@
 			}
         },
 		{
-			"suite_comment": "1、读取一个对象属性请求Get-Requeset数据类型测试",
+			"suite_comment": "读取一个对象属性请求Get-Requeset数据类型测试",
             "test_source": {
 				"suite_comment": "1.4如读取一个不存在的OAD（正确时间标签）",
 				"frmem": "68 21 00 43 05 12 11 11 11 11 11 11 35 E9 05 01 0A 00 B0 02 00 01 07 E2 04 19 0B 2D 03 01 00 0A 78 97 16",
@@ -81,7 +82,7 @@
 			}
         },
 		{
-			"suite_comment": "1、读取一个对象属性请求Get-Requeset数据类型测试",
+			"suite_comment": "读取一个对象属性请求Get-Requeset数据类型测试",
             "test_source": {
 				"suite_comment": "1.5读取如读取一个OAD（错误或无效时间标签）",
 				"frmem": "68 21 00 43 05 11 11 11 11 11 11 11 5B 41 05 01 04 80 00 04 00 01 07 E1 0C 1F 00 00 00 01 00 0A B9 9B 16",
@@ -100,7 +101,7 @@
 			}
         },
 		{
-			"suite_comment": "1、读取一个对象属性请求Get-Requeset数据类型测试",
+			"suite_comment": "读取一个对象属性请求Get-Requeset数据类型测试",
             "test_source": {
 				"suite_comment": "1.6读取如读取一个OAD(缺失时间标签)",
 				"frmem": "68 21 00 43 05 11 11 11 11 11 11 11 5B 41 05 01 04 80 00 04 00 B9 9B 16",
@@ -110,11 +111,11 @@
             },
 			"test_expectation": {
 				"suite_comment": "1.6无应答",
-				"response": "no",
+				"response": "no"
 			}
         },
 		{
-			"suite_comment": "1、读取一个对象属性请求Get-Requeset数据类型测试",
+			"suite_comment": "读取一个对象属性请求Get-Requeset数据类型测试",
             "test_source": {
 				"suite_comment": "1.7读取当前正向有功总电量，PIID取任何值",
 				"frmem": "68 17 00 43 05 11 11 11 11 11 11 00 EB 26 05 01 02 00 10 02 01 00 5B 0C 16",
@@ -123,10 +124,10 @@
 				"auth": "auth_no"
             },
 			"test_expectation": {
-				"suite_comment": "1.7正常响应,应答帧中PIID与下发帧中的一致",
+				"suite_comment": "1.7 正常响应（PIID无顺序先后，服务器按接收顺序依次处理即可） 应答帧中PIID与下发帧中的一致",
 				"response": "yes",
 				"service_choice": "8501",
-				"frame": "68 1E 00 C3 05 11 11 11 11 11 11 00 07 0B 85 01 42 00 10 02 01 01 06 00 00 00 00 00 00 9F 3C 16",
+				"frame": "xx",
 				"cmd": "frmem_check",
 				"apdu": "00 11 91 C3 02",
 				"auth": "auth_no"

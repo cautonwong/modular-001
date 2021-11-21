@@ -64,7 +64,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
     }
     case 0x30050B00://上报标识
     {
-        *p++ = DTC_ENUM;
+        *p++ = TYPE_enum;
         memcpy((uint8_t*)&mbase_cb->i_over_event_report_type, p, 0x01);
         p++;
         return (p - buf);
@@ -81,7 +81,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
     }
     case 0x30050F00://上报方式
     {
-        *p++ = DTC_ENUM;
+        *p++ = TYPE_enum;
         memcpy((uint8_t*)&mbase_cb->i_over_event_report_mode, p, 0x01);
         p++;
         return (p - buf);

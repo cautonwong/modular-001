@@ -134,6 +134,14 @@ enum dlt698_command_e
     TEST_CASE_Request       = 255
 #endif
 };
+
+enum sec
+{
+    SECURITY_CHOICE_0_Plaintext = 0,     //明文数据单元
+    SECURITY_CHOICE_1_Ciphertext = 1,    //密文数据单元
+};
+
+
 #if WIN32
 #define TEST_CASE_ID 0xFAFAFAFA
 #endif

@@ -28,7 +28,9 @@ void test_app_698_server_GET_Request_0501(void** state)
     };
     uint16_t suites_num = 0;
     uint8_t frm_buf[512] = { 0 };
-    uint8_t apdu[512] = { 0 };
+    uint8_t cmd_buf[16] = { 0 };
+    uint8_t auth_buf[16] = { 0 };
+    uint8_t apdu_buf[512] = { 0 };
     int cmd = 0;
     int auth = 0;
     int response = 0;
@@ -49,15 +51,15 @@ void test_app_698_server_GET_Request_0501(void** state)
         if (get_test_suite_frame(__FILE__, frm_buf, i, TEST_source) < 0)
             continue;
 
-        cmd = get_test_suite_cmd(__FILE__, frm_buf, i, TEST_source);
+        cmd = get_test_suite_cmd(__FILE__, cmd_buf, i, TEST_source);
         if (cmd == TEST_frame_check)//是否对帧校验进行检查
         {
 
         }
-        auth = get_test_suite_auth(__FILE__, frm_buf, i, TEST_source);
+        auth = get_test_suite_auth(__FILE__, auth_buf, i, TEST_source);
         if (auth == 0)//是否对apdu进行加密
         {
-            get_test_suite_apdu(__FILE__, apdu, i, TEST_source);//重新数据帧
+            get_test_suite_apdu(__FILE__, apdu_buf, i, TEST_source);//重新数据帧
         }
 
         mesg.len = frm_buf[1] + 2;

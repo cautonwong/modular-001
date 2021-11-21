@@ -114,11 +114,27 @@ void test_app_698_server_CONNECT_Request_10_auth(void** state);
 
 
 ////////////////////////////////////////////////////////////////////////////////////////
+
 //Get-Requeset数据类型测试用例
 //1、读取一个对象属性请求Get-Requeset数据类型测试 test_app_698_server_GET_Request_0501
 void test_app_698_server_GET_Request_0501(void** state);
 //2、读取若干个对象属性请求Get-RequesetList数据类型测试 test_app_698_server_GET_Request_0502
 void test_app_698_server_GET_Request_0502(void** state);
+//3、读取一个记录型对象属性GetRequestRecord数据类型测试 test_app_698_server_GET_Request_0503
+//4、读取若干个记录型对象属性GetRequestRecordList数据类型测试 test_app_698_server_GET_Request_0504
+//5、读取分帧响应的下一个数据块请求GetRequestNext数据类型测试 
+//6、读取一个对象属的MD5值GetRequestMD5数据类型测试
+
+
+//Get-Response数据类型测试用例
+//1、读取一个对象属性响应Get-Response数据类型测试 test_app_698_server_GET_Response_8501
+void test_app_698_server_GET_Response_8501(void** state);
+//2、读取若干个对象属性响应Get-ResponseList数据类型测试 test_app_698_server_GET_Response_8502
+void test_app_698_server_GET_Response_8502(void** state);
+//3、读取一个记录型对象响应GetResponseRecord数据类型测试 test_app_698_server_GET_Response_8503
+//4、读取若干个记录型对象属性响应GetResponseRecordList数据类型测试 test_app_698_server_GET_Response_8504
+//5、读取分帧响应的下一个数据块响应GetResponseNext数据类型测试  不支持
+//6、读取一个对象属的MD5值响应GetResponseMD5数据类型测试
 
 
 ////////////////////////////////////////////////////////////////////////////////////////

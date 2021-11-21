@@ -285,8 +285,7 @@ int main(void)
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_case_1),
 
-        cmocka_unit_test(test_app_698_server_CONNECT_Request),
-
+#if 0
         //1 test_app_698_server_uniformity
         //1.1数据链路层合法性
         //1.1.1 test_app_698_server_LINK_get
@@ -372,14 +371,25 @@ int main(void)
             cmocka_unit_test(test_app_698_server_CONNECT_Request_10_auth),
 
         //1.3 断开应用连接测试用例
-        
-        //1.4 Get-Requeset数据类型测试用例
+#endif
+
+#define GET_TEST
+#ifdef GET_TEST
+        //Get-Requeset数据类型测试用例
         //1、读取一个对象属性请求Get-Requeset数据类型测试 test_app_698_server_GET_Request_0501
         cmocka_unit_test(test_app_698_server_GET_Request_0501),
         //2、读取若干个对象属性请求Get-RequesetList数据类型测试 test_app_698_server_GET_Request_0502
         cmocka_unit_test(test_app_698_server_GET_Request_0502),
 
-        //1.5 Get-Response数据类型测试用例
+        //Get-Response数据类型测试用例
+        //1、读取一个对象属性响应Get-Response数据类型测试 test_app_698_server_GET_Response_8501
+        cmocka_unit_test(test_app_698_server_GET_Response_8501),
+        //2、读取若干个对象属性响应Get-ResponseList数据类型测试 test_app_698_server_GET_Response_8502
+        cmocka_unit_test(test_app_698_server_GET_Response_8502),
+
+#endif
+
+#define SET_TEST
 #ifdef SET_TEST
         //1.6 Set-Requeset数据类型测试用例
         //1、设置一个对象属性请求Set-Requeset数据类型测试 test_app_698_server_SET_Request_0601
@@ -398,10 +408,11 @@ int main(void)
         cmocka_unit_test(test_app_698_server_SET_Response_8603),
 #endif
 
-        
-        //1.7 Set-Responset数据类型测试用例
+#define ACTION_TEST
+#ifdef ACTION_TEST
         //1.8 Action-Request数据类型测试用例
         //1.9 Action-Respons数据类型测试用例
+#endif
 
         //2 test_app_698_server_class_id
         //3 test_app_698_server_function
