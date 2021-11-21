@@ -527,7 +527,7 @@ uint32_t get_curr_mark(const struct dev_info_t* dev, uint32_t addr, uint8_t mode
     return 0xffffffff;
 }
 
-uint16_t search_enum_way(uint32_t key, uint32_t start, uint32_t end, struct search_tempinfo_t *info, uint8_t direct)
+uint16_t search_enum_way(uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t *info, uint8_t direct)
 {
     uint16_t ptr, next_ptr;
     uint32_t cmp, next_cmp;
@@ -706,7 +706,6 @@ int16_t circular_image_set(struct instance_t* instance, uint32_t index, uint8_t*
     uint32_t addr01 = 0x00, addr02 = 0x00;
     uint16_t len01 = 0x00, len02 = 0x00;
     uint16_t depth = 0x00;
-    int16_t ret = 0x00;
 
     memset((uint8_t*)&manager, 0x00, sizeof(struct log_manager_t));
     device01 = look_up_device(instance, (uint8_t)(index >> 24));//查找设备   
@@ -784,7 +783,6 @@ int16_t circular_image_get(struct instance_t* instance, uint32_t index, uint8_t*
     uint32_t addr01 = 0x00, addr02 = 0x00;
     uint16_t len01 = 0x00, len02 = 0x00;
     uint16_t depth = 0x00;
-    int16_t ret = 0x00;
 
     memset((uint8_t*)&manager, 0x00, sizeof(struct log_manager_t));
     device01 = look_up_device(instance, (uint8_t)(index >> 24));//查找设备   
