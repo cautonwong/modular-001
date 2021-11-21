@@ -4,7 +4,7 @@ extern int app_rx_server_698_entry(struct instance_t* instance, struct pipeline_
 extern int app_tx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-extern int16_t register_event_info(uint16_t event_flag, uint32_t* addr, uint16_t* size, uint16_t* depth);
+extern int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint16_t* size, uint16_t* depth);
 extern int baremetal_instance_entry(struct instance_t* instance);
 #ifdef WIN32
 extern const struct driver_ops_t  eeprom_driver;
@@ -230,7 +230,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     //申请一块掉电保存的EPROM区域
     add_block(instance, RES_DEV_EEPROM, mbase_block_persistent_eprom, mbase_block_persistent_size);
     //注册事件
-    register_log(instance, RES_DEV_EEPROM, mbase_block_event, 50 * 1024, register_event_info);
+    register_log(instance, RES_DEV_EEPROM, mbase_block_event, 50 * 1024, supply_event_info);
 
     //注册一个698的MAP
     register_map(instance, res_map_698, resource_map_698);

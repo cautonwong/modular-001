@@ -18,7 +18,7 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
 {    
     struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
-    uint16 i;
+    uint16_t i;
     uint8_t tempbuf[200];
     uint8_t *des = tempbuf;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);

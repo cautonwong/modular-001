@@ -1,9 +1,7 @@
 #include "nidavellir.h"
 #include "applications.h"
+#include "resource_tool.h"
 
-extern int16_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size);
-extern int16_t nd_set_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size);
-extern int16_t get_block_frist_addr(struct instance_t *instance, uint8_t device_name, uint8_t block_name, uint32_t *addr);
 #if 1  //  GS
 //存储器件
 #define E2P_MEM  0x01
@@ -30,16 +28,27 @@ struct record_item_t
     uint16_t max_depth;     // 默认最大深度
 };
 
+struct parameter_item_t
+{
+    uint8_t paramerer_index;
+    uint16_t len;
+};
+
 //一个表格只能放在一个存储器上，注册的时候绑定设备
 const struct record_item_t  record_item[] =
 {
     { OverCurrentL1, OverCurrentEndL1,              800,    10 },
-    { OverCurrentL1_oad, OverCurrentL1_oad,         45,    10 },//oad列表 1+ 4*11
-    { OverCurrentL1_index, OverCurrentL1_index,     1,      10 },//index
+};
+
+const struct parameter_item_t  parameter_item[] =
+{
+    { OverCurrentL1,       sizeof(struct log_manager_t)},
+    { OverCurrentL1_oad,   45 },//oad列表 1+ 4*11
+    { OverCurrentL1_index, 4  }//index
 };
 
 
-int16_t register_event_info(uint16_t event_flag, uint32_t *addr, uint16_t* size, uint16_t* depth)
+int16_t supply_event_info(uint16_t event_flag, uint32_t *addr, uint16_t* size, uint16_t* depth)
 {
     uint8_t i,k;
 
