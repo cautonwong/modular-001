@@ -41,7 +41,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
         *p++ = num;
         for (i = 0; i < num; i++)
         {
-            *p++ = DTC_OAD;
+            *p++ = TYPE_OAD;
             mem_swap_cpy(p, src, 4);
             src += 4;
             p += 4;            

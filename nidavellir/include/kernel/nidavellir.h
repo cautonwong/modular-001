@@ -558,9 +558,9 @@ enum block_device_id_t
 
 enum resource_map_698_e
 {
-    RESOURCE_MAP_698_GET = 1,
-    RESOURCE_MAP_698_SET = 2,
-    RESOURCE_MAP_698_ACTION = 3,
+    RESOURCE_MAP_698_GET = 0,
+    RESOURCE_MAP_698_SET = 1,
+    RESOURCE_MAP_698_ACTION = 2,
 };
 
 #define  MSG_SECOND         0x0001

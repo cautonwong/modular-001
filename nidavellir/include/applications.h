@@ -43,6 +43,8 @@ struct mbase_control_block_t
 {
     //上电需要发起IO请求的参数区  运行期不更改
     static_start  
+    uint8_t tsa[16];
+
     float k_u;
     float k_il;
     float k_in;
