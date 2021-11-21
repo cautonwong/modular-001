@@ -2514,7 +2514,7 @@
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\pipeline.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\applications\app_resource_tool\resource_ tool.c</name>
+                <name>$PROJ_DIR$\..\..\..\applications\app_resource_tool\resource_tool.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\rtc.c</name>

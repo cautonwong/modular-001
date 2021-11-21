@@ -154,6 +154,24 @@ struct mbase_control_block_t
     uint8_t factor_mode; //工厂模式
 };
 
+enum resourenc_block_name
+{
+    resource_block_name = 0x01,
+    control_block_cache,
+    control_block_698_name,
+    mbase_control_block_name,
+    mbase_block_static,
+    mbase_block_cache,
+    mbase_block_persistent,
+    mbase_block_persistent_eprom,
+    mbase_block_event,
+};
+
+enum resourenc_map_name
+{
+    res_map_698 = 0x01,
+};
+
 uint8_t scond_execute_for_demand(struct mbase_control_block_t* mbase_block);
 uint8_t minute_execute_for_demand(struct mbase_control_block_t* mbase_block);
 int8_t add_demand_action(struct mbase_control_block_t* mbase_block, uint32_t* import, uint32_t output, uint8_t max_slide, uint8_t mode);
@@ -164,7 +182,18 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
 void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline);
 void Energy_Meter_PowerON(struct instance_t* instance, struct pipeline_t* pipeline);
 void Energy_Meter_PowerOFF(struct instance_t* instance, struct pipeline_t* pipeline);
+int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size);
+int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint16_t* size, uint16_t* depth);
+struct resources_obj_t;
+int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj);
+int app_rx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+int app_tx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
+void dev_init(void);
+void irq_system_init(void);
+void irq_transform_to_instance(struct instance_t* instance);
 
 extern const struct dev_info_t eeprom_dev;
 extern const struct dev_info_t nor_flash_dev;

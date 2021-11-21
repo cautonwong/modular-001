@@ -1,12 +1,26 @@
 #include "nidavellir.h"
 #include "fr_698.h"
 
+#define U32toBuf(x)  ((uint8_t)(x)), ((uint8_t)(x>>8)), ((uint8_t)(x>>16)), ((uint8_t)(x>>24))
+// 初始化数据
+// 过流事件关联对象
+const uint8_t init_30050200[] = {0x01,0x08, U32toBuf(0x00102201), U32toBuf(0x00202201), U32toBuf(0x20002200), U32toBuf(0x20012200), U32toBuf(0x20042200), U32toBuf(0x200A2200), U32toBuf(0x00108201), U32toBuf(0x00208201)};
+
+
+//  关联对象检查  待添加
+uint8_t oad_valid_check(uint32_t oad)
+{
+    return true;
+}
 
 
 int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
+    uint16_t i;
+    uint8_t tempbuf[200];
+    uint8_t *des = tempbuf;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
@@ -16,7 +30,37 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
     {
     case 0x30050200://关联对象属性表
     {
-        return 0;
+        uint8_t num,maxnum;
+        uint32_t oad_tmp;
+        uint32_t CaptureId, index;
+        
+        CaptureId = OverCurrentL1_oad;
+        maxnum = ((13*init_30050200[1]+9)/10);
+        // tag 判断  待添加
+        
+        p++; //TYPE_array
+        num = *p++;
+        if (num > maxnum)  // 关联对象按个数的1.3倍限制 or 按默认存储空间的1.3倍限制
+        {
+            return DAR_OTHERS_ERROR;
+        }
+        
+        *des++ = num;
+        for (i = 0; i < num; i++)
+        {
+            p++; // DTC_OAD
+            oad_tmp = buf_to_uint32_lsb(p);
+            if (false == oad_valid_check(oad_tmp))  //无效关联对象
+            {
+                return DAR_OTHERS_ERROR;
+            }
+            mem_swap_cpy(des, p, 4);
+            des += 4;
+            p += 4;            
+        }
+        index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + CaptureId); 
+        nd_set_index(instance, index, &tempbuf[0], (1 + num*4));
+        return (p - buf);
     }
     case 0x30050500://过流阈值
         {

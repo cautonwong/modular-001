@@ -1,9 +1,7 @@
 #include "nidavellir.h"
 #include "applications.h"
+#include "resource_tool.h"
 
-extern int16_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size);
-extern int16_t nd_set_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size);
-extern int16_t get_block_frist_addr(struct instance_t *instance, uint8_t device_name, uint8_t block_name, uint32_t *addr);
 #if 1  //  GS
 //存储器件
 #define E2P_MEM  0x01
@@ -22,9 +20,6 @@ const uint32_t record_head_t0[] = {5, 0x20220200, 0x201E0200, 0x20200200, 0x2024
 const uint32_t record_head_t1[] = {4, 0x20220200, 0x201E0200, 0x20200200, 0x33000200};
 // 其他事件记录头种类 待添加
 
-
-
-
 struct record_item_t
 {
     uint16_t  event_flag_id_start;  // 事件代码
@@ -33,16 +28,56 @@ struct record_item_t
     uint16_t max_depth;     // 默认最大深度
 };
 
+struct parameter_item_t
+{
+    uint8_t paramerer_index;
+    uint16_t len;
+};
+
 //一个表格只能放在一个存储器上，注册的时候绑定设备
 const struct record_item_t  record_item[] =
 {
     { OverCurrentL1, OverCurrentEndL1,              800,    10 },
-    { OverCurrentL1_oad, OverCurrentL1_oad,         151,    10 },//oad列表
-    { OverCurrentL1_index, OverCurrentL1_index,     1,      10 },//index
 };
 
+const struct parameter_item_t  parameter_item[] =
+{
+    { OverCurrentL1,       sizeof(struct log_manager_t)},
+    { OverCurrentL1_oad,   45 },//oad列表 1+ 4*11
+    { OverCurrentL1_index, 4  }//index
+};
 
-int16_t register_event_info(uint16_t event_flag, uint32_t *addr, uint16_t* size, uint16_t* depth)
+int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size)
+{
+    uint8_t i, k;
+
+    for (i = 0; i < sizeof(parameter_item) / sizeof(parameter_item[0]); i++)
+    {
+        if (parameter_item[i].paramerer_index == id)
+        {
+            if (addr != NULL)
+            {
+                *addr = 0x00;
+                for (k = 0x00; k < i; k++)
+                {
+                    *addr += parameter_item[k].len;
+                }
+            }
+
+            if (size != NULL)
+            {
+                *size = parameter_item[i].len;
+            }
+
+            return 0x00;
+        }
+    }
+
+    return -1;
+}
+
+
+int16_t supply_event_info(uint16_t event_flag, uint32_t *addr, uint16_t* size, uint16_t* depth)
 {
     uint8_t i,k;
 
@@ -212,7 +247,7 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
     uint32_t sequence;
 
     const uint32_t* record_head;
-    uint32_t CaptureId;
+    uint32_t CaptureId, index;
       
     remain_size = sizeof(data_buff);
     
@@ -231,20 +266,26 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
                 mode = START_MODE;
 
                 //获取关联对象列表
-                nd_get(instance, CaptureId, &CaptureList[0], sizeof(CaptureList));
+                index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + CaptureId); 
+                nd_get_index(instance, index, &CaptureList[0], sizeof(CaptureList));
+                //nd_get(instance, CaptureId, &CaptureList[0], sizeof(CaptureList));
                 //组固定的事件头
                 pdata += get_record_head(instance, pdata, record_head, mode, &remain_size);
                 //组配置的关联对象
                 pdata += get_record_association(instance, pdata, CaptureList, mode, &remain_size);
 
                 // 读取序号 ++
-                nd_get(instance, SequenceId, (uint8_t *)&sequence, sizeof(sequence));
+                index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + SequenceId);
+                nd_get_index(instance, index, (uint8_t*)&sequence, sizeof(sequence));
+                //nd_get(instance, SequenceId, (uint8_t *)&sequence, sizeof(sequence));
                 sequence++;
-                memcpy(data_buff, (uint8_t*)sequence, 4);
+                memcpy(data_buff, (uint8_t*)&sequence, 4);
 
                 //调用ND_SET保存数据
-                nd_set(instance, RecordId, data_buff, (pdata - data_buff));
-                nd_set(instance, SequenceId, &sequence, sizeof(sequence));
+                index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + RecordId);
+                nd_set_index(instance, index, data_buff, (pdata - data_buff));
+                index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + SequenceId);
+                nd_set_index(instance, index, (uint8_t*)&sequence, sizeof(sequence));
                 break;
             case OverCurrentEndL1:
                 record_head = record_head_t0;

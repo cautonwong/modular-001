@@ -107,14 +107,6 @@ void RTC_Second(void)
     sec_flag = 0x55;
 }
 
-
-
-
-
-
-
-   
-
 void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uint8_t chl_type)
 {
     struct uart_chl_init_t chl_init;

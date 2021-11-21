@@ -467,8 +467,8 @@ struct instance_t
     struct list_head app_list;
     struct list_head dev_list;
     struct list_head map_list;
-    uint8_t ram_device_name;
-    uint8_t resource_block_name;
+    uint8_t ram_device;
+    uint8_t resource_block;
     //////////////////////////
     uint8_t meter_type;
     uint32_t  ms;

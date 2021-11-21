@@ -1,8 +1,8 @@
 #include "nidavellir.h"
+#include "applications.h"
 #include "fr_axdr.h"
 #include "fr_698.h"
 
-extern int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj);
 
 
 int __nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
