@@ -213,8 +213,10 @@ int baremetal_instance_entry_main(int argc, char** argv)
     add_device(instance, RES_DEV_FLASH, &nor_flash_dev);
     //申请一块掉电保存的EPROM区域
     add_block(instance, RES_DEV_EEPROM, mbase_block_persistent_eprom, mbase_block_persistent_size);
+    //注册事件的管理区
+    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter, 2 * 1024, supply_parameter_info);
     //注册事件
-    register_log(instance, RES_DEV_EEPROM, mbase_block_event, 0x00, 0x00, 50 * 1024, supply_event_info);
+    register_log(instance, RES_DEV_EEPROM, mbase_block_event, RES_DEV_EEPROM, mbase_block_parameter, 50 * 1024, supply_event_info);
 
     //注册一个698的MAP
     register_map(instance, res_map_698, resource_map_698);

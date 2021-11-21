@@ -165,6 +165,7 @@ enum resourenc_block_name
     mbase_block_persistent,
     mbase_block_persistent_eprom,
     mbase_block_event,
+    mbase_block_parameter
 };
 
 enum resourenc_map_name

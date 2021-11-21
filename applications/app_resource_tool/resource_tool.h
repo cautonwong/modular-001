@@ -43,10 +43,12 @@ struct log_manager_t
 
 struct circular_info_t
 {
+    uint8_t mode;
     uint16_t unit_size;                       //单体记录大小
     uint32_t start_mark;                      //搜索时的起始标志
     uint32_t end_mark;                        //搜索时的结束标志
     uint16_t read_ptr;                        //读的位置
+    uint16_t curr_num;                        //已经读了多少条
     uint16_t valid_num;                       //符合的条数
 };
 struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t resource_blok_size, uint8_t resource_block_name);

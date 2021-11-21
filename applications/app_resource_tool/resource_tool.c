@@ -1,6 +1,15 @@
 #include "nidavellir.h"
 #include "resource_tool.h"
 
+struct search_tempinfo_t
+{
+    const struct dev_info_t* dev;
+    uint32_t addr;
+    uint16_t offset;
+    uint16_t unit_size;
+    uint8_t mode;
+};
+
 void *__nd_malloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_size)
 {
     uint32_t free = block_size - *used;
@@ -500,121 +509,354 @@ int16_t get_block_frist_addr(struct instance_t *instance, uint8_t device_name, u
 }
 
 #if 1
-int16_t circular_image_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, struct circular_info_t* info)
+uint32_t get_curr_mark(const struct dev_info_t* dev, uint32_t addr, uint8_t mode)
 {
-    struct block_device_t* device = NULL;
+    uint32_t(*fun[2])(struct tm* t) = { rtc_mktime , (uint32_t(*)(struct tm* t))buf_to_uint32_lsb };
     const struct driver_ops_t* driver = NULL;
-    struct log_manager_t manager;
-    struct resources_obj_t obj;
-    int16_t ret = 0x00;
-    uint32_t addr = 0x00;
+    uint8_t buf[10] = { 0 };
 
-    memset((uint8_t*)&obj, 0x00, sizeof(obj));
-    ret = look_up_map(instance, id, buf, 0x01, &obj);
-
-    memset((uint8_t*)&manager, 0x00, sizeof(struct log_manager_t));
-    device = look_up_device(instance, obj.device_name);
-    driver = device->dev->dev_driver_ops;
-
-    if (driver->dev_read != NULL)//先读管理区
+    driver = dev->dev_driver_ops;
+    if ((driver != NULL) && (driver->dev_read))
     {
-        if (true != driver->dev_read(device->dev, obj.offset, sizeof(struct log_manager_t), (uint8_t*)&manager))
+        driver->dev_read(dev, addr, 0x07, buf);
+        if (mode <= 0x01) 
         {
-            return false;
-        }
-
-        if (0xA5A5 + manager.num + manager.unit_size + manager.wr_ptr != manager.check_sum)
-        {
-            manager.max_num = obj.max_num;
-            manager.unit_size = obj.unit_size;
-            manager.num = 0;
-            manager.wr_ptr = 0;
+            return fun[mode]((struct tm*)buf);
         }
     }
-
-    addr = obj.offset + manager.wr_ptr * manager.unit_size + sizeof(struct log_manager_t);
-    if (NULL != driver->dev_write)
-    {
-        ret = driver->dev_write(device->dev, addr, manager.unit_size, buf);
-    }
-
-    manager.wr_ptr++;
-    manager.num++;
-    if (manager.wr_ptr >= manager.max_num)
-    {
-        manager.wr_ptr = 0x00;
-    }
-    if (manager.num >= manager.max_num)
-    {
-        manager.num = manager.max_num;
-    }
-    manager.check_sum = 0xA5A5 + manager.num + manager.unit_size + manager.wr_ptr;
-    if (NULL != driver->dev_write)
-    {
-        ret = driver->dev_write(device->dev, obj.offset, sizeof(struct log_manager_t), (uint8_t*)&manager);
-    }
-
-    return ret;
+    return 0xffffffff;
 }
 
-int16_t circular_image_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, struct circular_info_t* info)
+uint16_t search_enum_way(uint32_t key, uint32_t start, uint32_t end, struct search_tempinfo_t *info, uint8_t direct)
 {
-    struct block_device_t* device = NULL;
-    const struct driver_ops_t* driver = NULL;
-    struct log_manager_t manager;
-    struct resources_obj_t obj;
-    uint32_t addr = 0x00;
-    int16_t ret = true;
+    uint16_t ptr, next_ptr;
+    uint32_t cmp, next_cmp;
 
-    if (info != NULL)
+    ptr = end;
+    next_ptr = ((start + 1) > end) ? start : (end - 1);
+    cmp = get_curr_mark(info->dev,info->addr + info->offset + ptr * info->unit_size, info->mode);
+    while (next_ptr >= start)
     {
-        memset((uint8_t*)&obj, 0x00, sizeof(obj));
-        ret = look_up_map(instance, id, buf, 0x01, &obj);
-
-        memset((uint8_t*)&manager, 0x00, sizeof(struct log_manager_t));
-        device = look_up_device(instance, obj.device_name);
-        driver = device->dev->dev_driver_ops;
-
-        if (info->valid_num == 0x00)  //第一次读
+        next_cmp = get_curr_mark(info->dev, info->addr + info->offset + next_ptr * info->unit_size, info->mode);
+        if (cmp == key)
         {
-            memset((uint8_t*)&manager, 0x00, sizeof(struct log_manager_t));
-            if (driver->dev_read != NULL)//先读管理区
+            return ptr;
+        }
+        else if ((key >= next_cmp) && (key < cmp))
+        {
+            if (key == next_cmp)
             {
-                if (true != driver->dev_read(device->dev, obj.offset, sizeof(struct log_manager_t), (uint8_t*)&manager))
-                {
-                    return false;
-                }
+                return next_ptr;
+            }
+            return (direct == 0x00) ? ptr : next_ptr;
+        }
+        else
+        {
+            ptr = next_ptr;
+            cmp = next_cmp;
 
-                if (0xA5A5 + manager.num + manager.unit_size + manager.wr_ptr != manager.check_sum)
-                {
-                    return false;
-                }
+            if (next_ptr == 0x00)
+            {
+                break;
+            }
+            next_ptr--;
+        }
+    }
+
+    return 0xFFFF;
+}
+
+uint16_t search_mid_way(uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t* info, uint8_t direct)
+{
+    uint16_t min_ptr, max_ptr, mid_ptr = 0xFFFF;
+    uint32_t mid_cmp, temp_cmp;
+
+    min_ptr = start, max_ptr = end;
+    while ((direct < 0x02) && (max_ptr >= min_ptr))
+    {
+        mid_ptr = (min_ptr + max_ptr) / 2;
+        mid_cmp = get_curr_mark(info->dev, info->addr + info->offset + mid_ptr * info->unit_size, info->mode);
+        if (mid_cmp == key)
+        {
+            break;
+        }
+        else if (key > mid_cmp)
+        {
+            if (mid_ptr == max_ptr)
+            {
+                mid_ptr = 0xFFFF; 
+                break;
             }
 
-            info->valid_num = manager.num;
-            if (manager.num == manager.max_num)
+            min_ptr = mid_ptr + 1;
+            temp_cmp = get_curr_mark(info->dev, info->addr + info->offset + min_ptr * info->unit_size, info->mode);
+            if (key == temp_cmp)
             {
-                info->read_ptr = manager.wr_ptr;
+                return min_ptr;
+            }
+
+            if (key <= temp_cmp)
+            {
+                return (min_ptr - direct);
+            }
+        }
+        else
+        {
+            if (mid_ptr == min_ptr)
+            {
+                mid_ptr = 0xFFFF; 
+                break;
+            }
+
+            max_ptr = mid_ptr - 0x01;
+            temp_cmp = get_curr_mark(info->dev, info->addr + info->offset + max_ptr * info->unit_size, info->mode);
+            if (key == temp_cmp)
+            {
+                return max_ptr;
+            }
+
+            if (key > temp_cmp)
+            {
+                return (mid_ptr - direct);
+            }
+        }
+    }
+
+    return mid_ptr;
+}
+
+
+int16_t search_circular(struct instance_t* instance, const struct dev_info_t* dev, uint32_t addr, uint8_t* buf, struct circular_info_t* info, struct log_manager_t* manager)
+{
+    uint16_t ptr[4] = { 0x00,manager->wr_ptr,manager->wr_ptr,manager->max_num };
+    struct search_tempinfo_t tempinfo;
+    uint16_t start_ptr = 0x00, end_ptr = 0x00;
+    uint8_t i, cnt = 0x00;
+
+    memset((uint8_t*)&tempinfo, 0x00, sizeof(struct search_tempinfo_t));
+    tempinfo.dev = dev;
+    tempinfo.addr = addr;
+    tempinfo.unit_size = manager->unit_size;
+
+    if ((info != NULL) && (dev != NULL) && (dev->dev_driver_ops != NULL))
+    {
+        if (manager->num == manager->max_num)//说明已经反转了,反转了需要找2块区域
+        {
+            cnt = 0x02;  //需要找两次；
+        }
+
+        switch (info->mode)
+        {
+        case 0x00:  //全读
+            return 0x00;  //直接返回
+            break;
+        case 0x01:  //序号且是二分
+            tempinfo.mode = 0x01;
+            start_ptr = search_mid_way(info->start_mark,ptr[0],ptr[1],&tempinfo,0x00);
+            if ((start_ptr == 0xFFFF) && (cnt == 0x02))
+            {
+                start_ptr = search_mid_way(info->start_mark, ptr[2], ptr[3], &tempinfo, 0x00);
+            }
+
+            end_ptr = search_mid_way(info->end_mark, ptr[0], ptr[1], &tempinfo, 0x00);
+            if ((end_ptr == 0xFFFF) && (cnt == 0x02))
+            {
+                end_ptr = search_mid_way(info->end_mark, ptr[2], ptr[3], &tempinfo, 0x00);
+            }
+
+            if ((start_ptr != 0xFFFF) && (end_ptr != 0xFFFF) && (end_ptr >= start_ptr))
+            {
+                info->read_ptr = start_ptr;
+                info->valid_num = end_ptr - start_ptr + 0x01;
             }
             else
             {
                 info->read_ptr = 0x00;
+                info->valid_num = 0x00;
+            }
+            return 0x00;
+            break;
+        case 0x02: //时间
+            tempinfo.mode = 0x00;
+            start_ptr = search_mid_way(info->start_mark, ptr[0], ptr[1], &tempinfo, 0x00);
+            if ((start_ptr == 0xFFFF) && (cnt == 0x02))
+            {
+                start_ptr = search_mid_way(info->start_mark, ptr[2], ptr[3], &tempinfo, 0x00);
+            }
+
+            end_ptr = search_mid_way(info->end_mark, ptr[0], ptr[1], &tempinfo, 0x00);
+            if ((end_ptr == 0xFFFF) && (cnt == 0x02))
+            {
+                end_ptr = search_mid_way(info->end_mark, ptr[2], ptr[3], &tempinfo, 0x00);
+            }
+
+            if ((start_ptr != 0xFFFF) && (end_ptr != 0xFFFF) && (end_ptr >= start_ptr))
+            {
+                info->read_ptr = start_ptr;
+                info->valid_num = end_ptr - start_ptr + 0x01;
+            }
+            else
+            {
+                info->read_ptr = 0x00;
+                info->valid_num = 0x00;
+            }
+            return 0x00;
+            break;
+        default:
+            break;
+        }
+    }
+    return -1;
+}
+
+int16_t circular_image_set(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t unit_size, struct circular_info_t* info)
+{
+    struct block_device_t* device01 = NULL, * device02 = NULL;
+    const struct driver_ops_t* driver01 = NULL, * driver02 = NULL;
+    struct resource_block_t* block01 = NULL,* block02 = NULL;
+    struct log_manager_t manager;
+    uint32_t addr01 = 0x00, addr02 = 0x00;
+    uint16_t len01 = 0x00, len02 = 0x00;
+    uint16_t depth = 0x00;
+    int16_t ret = 0x00;
+
+    memset((uint8_t*)&manager, 0x00, sizeof(struct log_manager_t));
+    device01 = look_up_device(instance, (uint8_t)(index >> 24));//查找设备   
+    //查找块
+    block01 = look_up_block(instance, device01, (uint8_t)(index >> 16));
+    if ((device01 != NULL) && (block01 != NULL) && (block01->hook != NULL))
+    {
+        driver01 = device01->dev->dev_driver_ops;
+        block01->hook((uint16_t)index, &addr01, &len01, &depth);
+        //先获取管理区
+        device02 = look_up_device(instance, block01->relation_device);
+        block02 = look_up_block(instance, device02, block01->relation_name);
+        if ((device02 != NULL) && (block02 != NULL) && (block02->hook != NULL))
+        {
+            driver02 = device02->dev->dev_driver_ops;
+            if ((driver02 != NULL) && (driver02->dev_read != NULL))
+            {
+                block02->hook((uint16_t)index, &addr02, &len02, NULL);
+                if (len02 != sizeof(struct log_manager_t))
+                {
+                    return -1;
+                }
+                if (true != driver02->dev_read(device02->dev, addr02, sizeof(struct log_manager_t), (uint8_t*)&manager))
+                {
+                    return false;
+                }
+                if (0xA5A5 + manager.num + manager.unit_size + manager.wr_ptr != manager.check_sum)
+                {
+                    manager.max_num = depth;
+                    manager.unit_size = unit_size;
+                    manager.num = 0;
+                    manager.wr_ptr = 0;
+                }
             }
         }
+        //存储数据
+        addr01 += manager.wr_ptr * manager.unit_size;
+        if ((driver01 != NULL) && (driver01->dev_write != NULL))
+        {
+            if (true != driver01->dev_write(device01->dev, addr01, unit_size, buf))
+            {
+                return false;
+            }
+        }
+        //保存管理区
+        if ((driver02 != NULL) && (driver02->dev_write != NULL))
+        {
+            manager.wr_ptr++;
+            manager.num++;
+            if (manager.wr_ptr >= manager.max_num)
+            {
+                manager.wr_ptr = 0x00;
+            }
+            if (manager.num >= manager.max_num)
+            {
+                manager.num = manager.max_num;
+            }
+            manager.check_sum = 0xA5A5 + manager.num + manager.unit_size + manager.wr_ptr;
+            if (true != driver02->dev_write(device02->dev, addr02, sizeof(struct log_manager_t), (uint8_t*)&manager))
+            {
+                return false;
+            }
+            return 0x00;
+        }
+    }
+    return -1;
+}
 
-        addr = obj.offset + info->read_ptr * manager.unit_size + sizeof(struct log_manager_t);
-        if (info->read_ptr < info->valid_num)
+int16_t circular_image_get(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t buf_size, struct circular_info_t* info)
+{
+    struct block_device_t* device01 = NULL, * device02 = NULL;
+    const struct driver_ops_t* driver01 = NULL, * driver02 = NULL;
+    struct resource_block_t* block01 = NULL, * block02 = NULL;
+    struct log_manager_t manager;
+    uint32_t addr01 = 0x00, addr02 = 0x00;
+    uint16_t len01 = 0x00, len02 = 0x00;
+    uint16_t depth = 0x00;
+    int16_t ret = 0x00;
+
+    memset((uint8_t*)&manager, 0x00, sizeof(struct log_manager_t));
+    device01 = look_up_device(instance, (uint8_t)(index >> 24));//查找设备   
+    //查找块
+    block01 = look_up_block(instance, device01, (uint8_t)(index >> 16));
+    if ((device01 != NULL) && (block01 != NULL) && (block01->hook != NULL))
+    {
+        driver01 = device01->dev->dev_driver_ops;
+        block01->hook((uint16_t)index, &addr01, &len01, &depth);
+        //先获取管理区
+        if ((info != NULL) && (info->valid_num == 0x00))
+        {
+            device02 = look_up_device(instance, block01->relation_device);
+            block02 = look_up_block(instance, device02, block01->relation_name);
+            if ((device02 != NULL) && (block02 != NULL) && (block02->hook != NULL))
+            {
+                driver02 = device02->dev->dev_driver_ops;
+                if ((driver02 != NULL) && (driver02->dev_read != NULL))
+                {
+                    block02->hook((uint16_t)index, &addr02, &len02, NULL);
+                    if (true != driver02->dev_read(device02->dev, addr02, sizeof(struct log_manager_t), (uint8_t*)&manager))
+                    {
+                        return false;
+                    }
+                    if (0xA5A5 + manager.num + manager.unit_size + manager.wr_ptr != manager.check_sum)
+                    {
+                        return -1;
+                    }
+                    info->unit_size = manager.unit_size;
+                    info->valid_num = manager.num;
+                    info->read_ptr = 0x00;
+                    if (manager.num == manager.max_num)
+                    {
+                        info->read_ptr = manager.wr_ptr;
+                    }
+                }
+            }
+            //搜索信息处理
+        }
+    }   
+    //读取数据
+    addr01 = info->read_ptr * info->unit_size;
+    if ((driver01 != NULL) && (driver01->dev_read != NULL))
+    {
+        if (true != driver01->dev_read(device01->dev, addr01, info->unit_size, buf))
+        {
+            return false;
+        }
+        if (info->read_ptr < depth)
         {
             info->read_ptr++;
         }
-
-        if (NULL != driver->dev_read)
+        else
         {
-            ret = driver->dev_read(device->dev, addr, manager.unit_size, buf);
+            info->read_ptr = 0x00;
         }
+        info->curr_num++;
+        return 0x00;
     }
-
-    return ret;
+    return -1;
 }
 #endif
 
@@ -627,11 +869,11 @@ int16_t nd_get_index(struct instance_t* instance, uint32_t index, uint8_t* buf, 
     uint32_t addr = 0x00;
 
     device = look_up_device(instance, (uint8_t)(index >> 24));//查找设备
-    driver = device->dev->dev_driver_ops;
     //查找块
     block = look_up_block(instance, device, (uint8_t)(index >> 16));
     if ((device != NULL) && (block != NULL))
     {
+        driver = device->dev->dev_driver_ops;
         if ((driver != NULL) && (driver->dev_read != NULL))
         {
             //计算地址
@@ -662,11 +904,11 @@ int16_t nd_set_index(struct instance_t* instance, uint32_t index, uint8_t* buf, 
     uint32_t addr = 0x00;
 
     device = look_up_device(instance, (uint8_t)(index >> 24));//查找设备
-    driver = device->dev->dev_driver_ops;
     //查找块
     block = look_up_block(instance, device, (uint8_t)(index >> 16));
     if ((device != NULL) && (block != NULL))
     {
+        driver = device->dev->dev_driver_ops;
         if ((driver != NULL) && (driver->dev_write != NULL))
         {//计算地址            
             if (block->hook != NULL)
