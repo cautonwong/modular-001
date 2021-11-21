@@ -513,6 +513,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint8_t len = 0;
 
     //协议一致性判断和apdu合法判断
     if(0 == fr_pack_698_check(instance, pipeline, mesg))
@@ -531,6 +532,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     if (SECURITY_Request == ctx->service)//数据解密
     {
         ctx->choice = fifoBuf_getByte(fifo);
+        len = fifoBuf_getByte(fifo);
         if (SECURITY_CHOICE_1_Ciphertext == ctx->choice)
         {
             fr_security_decode(instance, pipeline, mesg);
