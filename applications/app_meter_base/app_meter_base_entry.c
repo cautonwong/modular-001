@@ -47,6 +47,35 @@ const struct parameter_item_t  parameter_item[] =
     { OverCurrentL1_index, 4  }//index
 };
 
+int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size)
+{
+    uint8_t i, k;
+
+    for (i = 0; i < sizeof(parameter_item) / sizeof(parameter_item[0]); i++)
+    {
+        if (parameter_item[i].paramerer_index == id)
+        {
+            if (addr != NULL)
+            {
+                *addr = 0x00;
+                for (k = 0x00; k < i; k++)
+                {
+                    *addr += parameter_item[k].len;
+                }
+            }
+
+            if (size != NULL)
+            {
+                *size = parameter_item[i].len;
+            }
+
+            return 0x00;
+        }
+    }
+
+    return -1;
+}
+
 
 int16_t supply_event_info(uint16_t event_flag, uint32_t *addr, uint16_t* size, uint16_t* depth)
 {
