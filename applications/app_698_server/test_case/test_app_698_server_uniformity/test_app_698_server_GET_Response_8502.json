@@ -1,0 +1,61 @@
+{
+	"name": "test_app_698_server_GET_Response_8502",
+	"comment": "读取若干个对象属性响应Get-ResponseList数据类型测试",
+	"version": "0.0.1",
+	"config": "00",
+	"suites": [
+		{
+			"suite_comment": "读取若干个对象属性响应Get-ResponseList数据类型测试",
+            "test_source": {
+				"suite_comment": "1 读取通信地址、时区时段数  PIID：16 ",
+				"frame": "68 31 00 43 05 11 11 11 11 11 11 11 1E 30 10 00 0D 05 02 16 02 40 0C 02 01 40 01 02 00 00 01 10 57 56 30 10 60 E3 B3 C0 DE 0A DA E5 81 E4 A1 40 7E A4 16",
+				"cmd": "frame_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+            },
+			"test_expectation": {
+				"suite_comment": "1 按请求帧OAD排序，依次响应通读地址、时区时段数；PIID-ACD：16 ",
+				"response": "no",
+				"service_choice": "8501",
+				"frame": "68 33 00 C3 05 11 11 11 11 11 11 11 EB 5F 90 00 1A 85 02 16 02 40 0C 02 01 01 11 02 40 01 02 00 01 09 06 11 11 11 11 11 11 00 00 01 00 04 11 15 60 4C 57 AE 16",
+				"cmd": "frame_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+			}
+        },
+		{
+			"suite_comment": "读取若干个对象属性响应Get-ResponseList数据类型测试",
+            "test_source": {	
+				"suite_comment": "2 读取两个不存在的OAD PIID：16",
+				"frmem": "68 31 00 43 05 11 11 11 11 11 11 11 1E 30 10 00 0D 05 02 16 02 A0 0C 02 01 A0 01 02 00 00 01 10 80 71 4B 43 73 65 D2 ED AA 66 95 6A 3A 65 E7 D5 28 3B 16",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+            },
+			"test_expectation": {
+				"suite_comment": "2 异常响应，按照请求顺利分别返回对象不存在; ",
+				"frame": "68 2B 00 C3 05 11 11 11 11 11 11 11 04 92 90 00 12 85 02 16 02 A0 0C 02 01 00 06 A0 01 02 00 00 06 00 00 01 00 04 C4 95 79 72 21 D2 16",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+			}
+        },
+		{
+			"suite_comment": "读取若干个对象属性响应Get-ResponseList数据类型测试",
+            "test_source": {
+				"suite_comment": "3 读取3个以上对象属性，同上操作 ",
+				"frmem": "xx",
+				"cmd": "frmem_check",
+				"apdu": "xx",
+				"auth": "WRITE"
+            },
+			"test_expectation": {
+				"suite_comment": "3 对应3以上对象属性，参考同上结果输出 ",
+				"frame": "xx",
+				"cmd": "frmem_check",
+				"apdu": "xx",
+				"auth": "WRITE"
+			}
+        }
+	]
+}

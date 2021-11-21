@@ -1,0 +1,61 @@
+{
+	"name": "test_app_698_server_GET_Response_8501",
+	"comment": "读取一个对象属性响应Get-Response数据类型测试",
+	"version": "0.0.1",
+	"config": "00",
+	"suites": [
+		{
+			"suite_comment": "读取一个对象属性响应Get-Response数据类型测试",
+            "test_source": {
+				"suite_comment": "1 读取一个通信地址0AD  PIID：16",
+				"frame": "68 17 00 43 05 12 11 11 11 11 11 11 8D 8F 05 01 16 40 01 02 00 00 A7 59 16",
+				"cmd": "frame_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+            },
+			"test_expectation": {
+				"suite_comment": "1 成功响应 PIID-ACD：16",
+				"response": "no",
+				"service_choice": "8501",
+				"frame": "68 21 00 C3 05 12 11 11 11 11 11 11 E2 2D 85 01 16 40 01 02 00 01 09 06 11 11 11 11 11 12 00 00 F2 5C 16",
+				"cmd": "frame_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+			}
+        },
+		{
+			"suite_comment": "读取一个对象属性响应Get-Response数据类型测试",
+            "test_source": {
+				"suite_comment": "读取一个对象属性响应Get-Response数据类型测试",
+				"frmem": "68 5E 00 43 05 01 00 00 00 00 00 11 91 C3 02 26 00 13 FF FF FF FF C0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 02 00 02 00 01 07 D0 00 00 1C 20 02 20 13 4B E1 B5 A9 EC DC 99 90 AA C8 AE 71 C3 B2 D3 C4 CA 6C F5 EA EB A9 A3 3A 9A 47 A3 7E 38 29 D4 04 35 FC C6 EA 00 8b b0 16",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+            },
+			"test_expectation": {
+				"suite_comment": "读取一个对象属性响应Get-Response数据类型测试",
+				"frame": "68 5E 00 43 05 01 00 00 00 00 00 11 91 C3 02 26 00 14",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+			}
+        },
+		{
+			"suite_comment": "读取一个对象属性响应Get-Response数据类型测试",
+            "test_source": {
+				"suite_comment": "2 读时区时段数中不存在属引",
+				"frmem": "68 2C 00 43 05 11 11 11 11 11 11 11 35 F6 10 00 08 05 01 16 40 0C 02 06 00 01 10 21 34 25 C7 C0 C7 1A B8 A5 44 A6 92 D4 6B 5A AE 3B 2C 16",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+            },
+			"test_expectation": {
+				"suite_comment": "2 异常响应，对象不存在",
+				"frame": "68 24 00 C3 05 11 11 11 11 11 11 11 48 8E 90 00 0B 85 01 16 40 0C 02 06 00 03 00 00 01 00 04 5A F0 CF F1 2A F6 16",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+			}
+        }
+	]
+}
