@@ -1,15 +1,15 @@
-#ifndef __RESOURCE_TOOL_H__
+ï»¿#ifndef __RESOURCE_TOOL_H__
 #define __RESOURCE_TOOL_H__
 
-//ÄÚ´æ¹ÜÀíµÄ¶ÔÆë
+//å†…å­˜ç®¡ç†çš„å¯¹é½
 #define RES_ALIGN_TYPE  uint32_t
-//µ¥Ò»Éè±¸µÄ¿éÁ´±í
+//å•ä¸€è®¾å¤‡çš„å—é“¾è¡¨
 #pragma pack(4)
 struct resource_block_t
 {
     uint8_t name;
-    uint8_t relation_device;  //Ïà¹ØÁªµÄdevice
-    uint8_t relation_name;    //Ïà¹ØÁªµÄBLOCK
+    uint8_t relation_device;  //ç›¸å…³è”çš„device
+    uint8_t relation_name;    //ç›¸å…³è”çš„BLOCK
     uint32_t first_addr;
     uint32_t size;
     uint32_t used;
@@ -17,7 +17,7 @@ struct resource_block_t
     struct list_head sibling;
 };
 
-//Éè±¸µÄÁ´±í(ÕâÀï°ÑRAMÒ²¿´³ÉÒ»¸ö¿éÉè±¸À´´¦Àí)
+//è®¾å¤‡çš„é“¾è¡¨(è¿™é‡ŒæŠŠRAMä¹Ÿçœ‹æˆä¸€ä¸ªå—è®¾å¤‡æ¥å¤„ç†)
 struct dev_info_t;
 #pragma pack(4)
 struct block_device_t
@@ -43,11 +43,11 @@ struct log_manager_t
 
 struct circular_info_t
 {
-    uint16_t unit_size;                       //µ¥Ìå¼ÇÂ¼´óĞ¡
-    uint32_t start_mark;                      //ËÑË÷Ê±µÄÆğÊ¼±êÖ¾
-    uint32_t end_mark;                        //ËÑË÷Ê±µÄ½áÊø±êÖ¾
-    uint16_t read_ptr;                        //¶ÁµÄÎ»ÖÃ
-    uint16_t valid_num;                       //·ûºÏµÄÌõÊı
+    uint16_t unit_size;                       //å•ä½“è®°å½•å¤§å°
+    uint32_t start_mark;                      //æœç´¢æ—¶çš„èµ·å§‹æ ‡å¿—
+    uint32_t end_mark;                        //æœç´¢æ—¶çš„ç»“æŸæ ‡å¿—
+    uint16_t read_ptr;                        //è¯»çš„ä½ç½®
+    uint16_t valid_num;                       //ç¬¦åˆçš„æ¡æ•°
 };
 
 int16_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size);
