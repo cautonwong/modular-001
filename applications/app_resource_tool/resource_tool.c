@@ -625,13 +625,47 @@ uint16_t search_mid_way(uint32_t key, uint16_t start, uint16_t end, struct searc
     return mid_ptr;
 }
 
-
-int16_t search_circular(struct instance_t* instance, const struct dev_info_t* dev, uint32_t addr, uint8_t* buf, struct circular_info_t* info, struct log_manager_t* manager)
+int16_t __search_circular(struct circular_info_t* info, struct log_manager_t* manager, struct search_tempinfo_t *tempinfo,
+    uint16_t (*fun)(uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t* info, uint8_t direct))
 {
     uint16_t ptr[4] = { 0x00,manager->wr_ptr,manager->wr_ptr,manager->max_num };
-    struct search_tempinfo_t tempinfo;
     uint16_t start_ptr = 0x00, end_ptr = 0x00;
-    uint8_t i, cnt = 0x00;
+    uint8_t cnt = 0x00;
+
+    if (manager->num == manager->max_num)//说明已经反转了,反转了需要找2块区域
+    {
+        cnt = 0x02;  //需要找两次；
+    }
+
+    start_ptr = fun(info->start_mark, ptr[0], ptr[1], tempinfo, 0x00);
+    if ((start_ptr == 0xFFFF) && (cnt == 0x02))
+    {
+        start_ptr = fun(info->start_mark, ptr[2], ptr[3], tempinfo, 0x00);
+    }
+
+    end_ptr = fun(info->end_mark, ptr[0], ptr[1], tempinfo, 0x00);
+    if ((end_ptr == 0xFFFF) && (cnt == 0x02))
+    {
+        end_ptr = fun(info->end_mark, ptr[2], ptr[3], tempinfo, 0x00);
+    }
+
+    if ((start_ptr != 0xFFFF) && (end_ptr != 0xFFFF) && (end_ptr >= start_ptr))
+    {
+        info->read_ptr = start_ptr;
+        info->valid_num = end_ptr - start_ptr + 0x01;
+    }
+    else
+    {
+        info->read_ptr = 0x00;
+        info->valid_num = 0x00;
+    }
+
+    return 0x00;
+}
+
+int16_t search_circular(struct instance_t* instance, const struct dev_info_t* dev, uint32_t addr, struct circular_info_t* info, struct log_manager_t* manager)
+{
+    struct search_tempinfo_t tempinfo;
 
     memset((uint8_t*)&tempinfo, 0x00, sizeof(struct search_tempinfo_t));
     tempinfo.dev = dev;
@@ -640,68 +674,22 @@ int16_t search_circular(struct instance_t* instance, const struct dev_info_t* de
 
     if ((info != NULL) && (dev != NULL) && (dev->dev_driver_ops != NULL))
     {
-        if (manager->num == manager->max_num)//说明已经反转了,反转了需要找2块区域
-        {
-            cnt = 0x02;  //需要找两次；
-        }
-
         switch (info->mode)
         {
         case 0x00:  //全读
             return 0x00;  //直接返回
-            break;
-        case 0x01:  //序号且是二分
-            tempinfo.mode = 0x01;
-            start_ptr = search_mid_way(info->start_mark,ptr[0],ptr[1],&tempinfo,0x00);
-            if ((start_ptr == 0xFFFF) && (cnt == 0x02))
-            {
-                start_ptr = search_mid_way(info->start_mark, ptr[2], ptr[3], &tempinfo, 0x00);
-            }
-
-            end_ptr = search_mid_way(info->end_mark, ptr[0], ptr[1], &tempinfo, 0x00);
-            if ((end_ptr == 0xFFFF) && (cnt == 0x02))
-            {
-                end_ptr = search_mid_way(info->end_mark, ptr[2], ptr[3], &tempinfo, 0x00);
-            }
-
-            if ((start_ptr != 0xFFFF) && (end_ptr != 0xFFFF) && (end_ptr >= start_ptr))
-            {
-                info->read_ptr = start_ptr;
-                info->valid_num = end_ptr - start_ptr + 0x01;
-            }
-            else
-            {
-                info->read_ptr = 0x00;
-                info->valid_num = 0x00;
-            }
-            return 0x00;
-            break;
-        case 0x02: //时间
-            tempinfo.mode = 0x00;
-            start_ptr = search_mid_way(info->start_mark, ptr[0], ptr[1], &tempinfo, 0x00);
-            if ((start_ptr == 0xFFFF) && (cnt == 0x02))
-            {
-                start_ptr = search_mid_way(info->start_mark, ptr[2], ptr[3], &tempinfo, 0x00);
-            }
-
-            end_ptr = search_mid_way(info->end_mark, ptr[0], ptr[1], &tempinfo, 0x00);
-            if ((end_ptr == 0xFFFF) && (cnt == 0x02))
-            {
-                end_ptr = search_mid_way(info->end_mark, ptr[2], ptr[3], &tempinfo, 0x00);
-            }
-
-            if ((start_ptr != 0xFFFF) && (end_ptr != 0xFFFF) && (end_ptr >= start_ptr))
-            {
-                info->read_ptr = start_ptr;
-                info->valid_num = end_ptr - start_ptr + 0x01;
-            }
-            else
-            {
-                info->read_ptr = 0x00;
-                info->valid_num = 0x00;
-            }
-            return 0x00;
-            break;
+        case 0x01:  //序号二分查找
+            tempinfo.mode = 0x01;   //序号
+            tempinfo.offset = 0x00;
+            return __search_circular(info, manager, &tempinfo, search_mid_way);
+        case 0x02: //时间二分查找
+            tempinfo.mode = 0x00;  //时间
+            tempinfo.offset = 0x04;
+            return __search_circular(info, manager, &tempinfo, search_mid_way);
+        case 0x03: //时间枚举法查找
+            tempinfo.mode = 0x00; //时间
+            tempinfo.offset = 0x04;
+            return __search_circular(info, manager, &tempinfo, search_enum_way);
         default:
             break;
         }
@@ -832,29 +820,33 @@ int16_t circular_image_get(struct instance_t* instance, uint32_t index, uint8_t*
                     {
                         info->read_ptr = manager.wr_ptr;
                     }
+                    //搜索信息处理
+                    search_circular(instance, device01->dev, addr01, info, &manager);
                 }
             }
-            //搜索信息处理
         }
     }   
     //读取数据
-    addr01 = info->read_ptr * info->unit_size;
-    if ((driver01 != NULL) && (driver01->dev_read != NULL))
+    if (info != NULL)
     {
-        if (true != driver01->dev_read(device01->dev, addr01, info->unit_size, buf))
+        addr01 = info->read_ptr * info->unit_size;
+        if ((driver01 != NULL) && (driver01->dev_read != NULL))
         {
-            return false;
+            if (true != driver01->dev_read(device01->dev, addr01, info->unit_size, buf))
+            {
+                return false;
+            }
+            if (info->read_ptr < depth)
+            {
+                info->read_ptr++;
+            }
+            else
+            {
+                info->read_ptr = 0x00;
+            }
+            info->curr_num++;
+            return 0x00;
         }
-        if (info->read_ptr < depth)
-        {
-            info->read_ptr++;
-        }
-        else
-        {
-            info->read_ptr = 0x00;
-        }
-        info->curr_num++;
-        return 0x00;
     }
     return -1;
 }
@@ -886,11 +878,9 @@ int16_t nd_get_index(struct instance_t* instance, uint32_t index, uint8_t* buf, 
                 driver->dev_read(device->dev, addr, len, buf);
                 //这里没判断返回值和校验
             }
-
             return len;
         }
     }
-
     return -1;
 }
 
