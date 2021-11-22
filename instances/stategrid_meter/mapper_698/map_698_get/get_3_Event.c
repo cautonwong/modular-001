@@ -49,6 +49,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
 
         return (p - buf);
     }
+    case 0x30110300://当前记录数
     case 0x30050300://当前记录数
     {
         return 0;

@@ -43,7 +43,7 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
             cache->wr += 4;
             //fr_serve_one_object(instance, pipeline, mesg);
             //data
-            len = axdr_get_data_len(fifo->buf_ptr + fifo->rd);
+            len = axdr_get_len(fifo->buf_ptr + fifo->rd);
             cache->wr++;
             dar_offset = cache->wr;
             p[dar_offset] = dar;

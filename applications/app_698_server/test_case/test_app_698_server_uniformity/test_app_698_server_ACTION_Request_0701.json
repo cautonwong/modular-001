@@ -1,0 +1,84 @@
+{
+	"name": "test_app_698_server_ACTION_Request_0701",
+	"comment": "操作一个对象属性请求Action-Request数据类型测试",
+	"version": "0.0.1",
+	"config": "00",
+	"suites": [
+		{
+			"suite_comment": "操作一个对象属性请求Action-Request数据类型测试",
+            "test_source": {
+				"suite_comment": "1 事件初始化命令,PIID：02",
+				"frame": "68 22 00 43 05 11 11 11 11 11 11 11 E8 BF 07 01 02 43 00 03 00 00 01 07 E2 04 1A 10 2C 33 01 00 0A C0 8F 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "1 成功响应，PIID-ACD：02",
+				"response": "yes",
+				"service_choice": "8701",
+				"frame": "68 24 00 C3 05 11 11 11 11 11 11 11 48 8E 87 01 02 43 00 03 00 00 00 00 01 07 E2 04 1A 10 2C 33 01 00 0A 0B 8A 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+			}
+        },		
+		{
+			"suite_comment": "操作一个对象属性请求Action-Request数据类型测试",
+            "test_source": {
+				"suite_comment": "2 恢复出厂参数命令,PIID：02",
+				"frame": "68 22 00 43 05 11 11 11 11 11 11 11 E8 BF 07 01 02 43 00 04 00 00 01 07 E2 04 1A 11 01 14 01 00 0A FB 3F 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "2 响应拒绝读写 PIID-ACD：02",
+				"response": "yes",
+				"service_choice": "8701",
+				"frame": "68 24 00 C3 05 11 11 11 11 11 11 11 48 8E 87 01 02 43 00 04 00 03 00 00 01 07 E2 04 1A 11 01 14 01 00 0A CA 7B 16",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+			}
+        },		
+		{
+			"suite_comment": "操作一个对象属性请求Action-Request数据类型测试",
+            "test_source": {
+				"suite_comment": "3 操作一个不存在的OMD",
+				"frame": "xx",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "3 返回对象不存在",
+				"response": "yes",
+				"service_choice": "8701",
+				"frame": "xx",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+			}
+        },		
+		{
+			"suite_comment": "操作一个对象属性请求Action-Request数据类型测试",
+            "test_source": {
+				"suite_comment": "4 掉电事件清零,无时间标签",
+				"frame": "xx",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+            },
+			"test_expectation": {
+				"suite_comment": "4 返回时间标签无效",
+				"response": "yes",
+				"service_choice": "8701",
+				"frame": "xx",
+				"cmd": "frame_check",
+				"apdu": "00",
+				"auth": "auth_no"
+			}
+        }
+	]
+}
