@@ -28,7 +28,11 @@ int fr_msta_tx_to_meter_gatekeeper(struct instance_t* instance, struct pipeline_
         r = fr_encode_645_13(instance, pipeline, mesg);
         break;
     default:
-        //todo  不认识的报文  
+				memcpy(instance->cache, mesg, sizeof(struct message_t));
+				uint8_t* p = instance->cache + sizeof(struct message_t);
+				uint32_to_buf_lsb(mesg->id, p);
+				fifoBuf_getData(pipeline->in_queue, p + 4, mesg->len - 4);
+				r = 1;
         break;
     }
 

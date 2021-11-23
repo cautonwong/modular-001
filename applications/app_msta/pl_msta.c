@@ -1,6 +1,10 @@
 #include "nidavellir.h"
 
-struct period_object_t crontab[] =
+extern int update_instance_rtc(struct instance_t* instance);
+extern int stop_tasklet(struct instance_t* instance, int tid);
+extern int start_tasklet(struct instance_t* instance, int tid);
+
+const struct period_object_t crontab[] =
 {
         {0x00002300, 0x0506ff01,100},
         {0x18f00001, 0x0201FF00,6},//电压  xxx.x
@@ -154,7 +158,7 @@ int fr_handle_93_mesg(struct instance_t* instance, struct pipeline_t* pipeline, 
             fifoBuf_getData(pipeline->in_queue, buf, mesg->len -4);
             //todo 识别基表类型 用来判断时钟阈值
             //todo 比对地址  保存地址
-            __write(mesg->id, buf, mesg->len-4);
+            __write(instance, mesg->id, buf, mesg->len-4);
             memcpy(ctx->addr,buf,6);
             ctx->meter_type = 1;//基表类型
             stop_tasklet(instance, 0);
@@ -182,12 +186,12 @@ int fr_handle_91_mesg(struct instance_t *instance, struct pipeline_t *pipeline, 
     switch (mesg->id)
     {
     case 0x04000204://基表费率数
-        assert(mesg->len == 5);
-        __write(mesg->id, buf, mesg->len - 4);
+//        assert(mesg->len == 5);
+        __write(instance, mesg->id, buf, mesg->len - 4);
         instance->meter_fee_n = buf[0];
         break;
     case 0x0400010c://收到了来自基表的时钟
-        __write(mesg->id, buf, mesg->len - 4);
+        __write(instance, mesg->id, buf, mesg->len - 4);
         array_0_to_time(&instance->meter_rtc, buf, mesg->len);
 
         //判断时钟是否正常  
@@ -211,7 +215,7 @@ int fr_handle_91_mesg(struct instance_t *instance, struct pipeline_t *pipeline, 
         break;
 
     case 0x03110101://基表掉电记录发生时刻
-        __write(mesg->id, buf, mesg->len - 4);
+        __write(instance, mesg->id, buf, mesg->len - 4);
         array_0_to_time(&ctx->meter_poweroff_tm, buf, mesg->len);
         if (rtc_tm_valid(&ctx->meter_poweroff_tm))
         {
@@ -226,7 +230,7 @@ int fr_handle_91_mesg(struct instance_t *instance, struct pipeline_t *pipeline, 
         send_mesg(instance, pipeline, mesg, NULL);
         break;
     case 0x03111201://基表掉电记录结束时刻
-        __write(mesg->id, buf, mesg->len - 4);
+        __write(instance, mesg->id, buf, mesg->len - 4);
         array_0_to_time(&ctx->meter_poweron_tm, buf, mesg->len);
         if (rtc_tm_valid(&ctx->meter_poweron_tm))
         {
@@ -241,13 +245,13 @@ int fr_handle_91_mesg(struct instance_t *instance, struct pipeline_t *pipeline, 
         send_mesg(instance, pipeline, mesg, NULL);
         break;
     case 0x22000001://基表电池欠压发生时刻
-        __write(mesg->id, buf, mesg->len - 4);
+        __write(instance, mesg->id, buf, mesg->len - 4);
         make_mesg(mesg, 0x11, 0x0400010c, 4);
         mesg->to = msta_tx_to_meter;
         send_mesg(instance, pipeline, mesg, NULL);
         break;
     default:
-        __write(mesg->id, buf, mesg->len - 4);//todo 费率统计 负荷记录  日冻结 上报
+        __write(instance, mesg->id, buf, mesg->len - 4);//todo 费率统计 负荷记录  日冻结 上报
         break;
     }
 
@@ -270,7 +274,7 @@ int fr_handle_11_mesg(struct instance_t* instance, struct pipeline_t* pipeline, 
     case 0x0400010c:
         break;
     default:
-        __read(mesg->id, buf, mesg->len - 4);
+        __read(instance, mesg->id, buf, mesg->len - 4);
         make_mesg(mesg, 0x91, mesg->id, 4);
         mesg->to = msta_tx_to_sta;
         mesg->len = 4;
@@ -285,7 +289,7 @@ int fr_handle_periodic_task(struct instance_t *instance, struct pipeline_t *pipe
     
     //while(1)
     {
-        struct period_object_t *p;
+        const struct period_object_t *p;
         struct cron_t cron;
         uint32_t id;
         uint8_t mf = 0;
@@ -395,7 +399,7 @@ int __fr_end(struct instance_t* instance, struct pipeline_t* pipeline, struct me
     return 0;
 }
 
-struct filter_t fr_msta[] =
+const struct filter_t fr_msta[] =
 {
     {0x00, fr_msta_entry, 0x01, 0x13},            
     {0x01, fr_handle_kernel_mesg, 0x02, 0x13},

@@ -1,21 +1,21 @@
 #include "nidavellir.h"
-extern int fr_rx_645_entry(struct instance_t *instance,struct pipeline_t *pipeline,struct object_t *object);
-extern int fr_decode_645_86(struct instance_t *instance,struct pipeline_t *pipeline,struct object_t *object);
-extern int fr_645_decode_91(struct instance_t *instance,struct pipeline_t *pipeline,struct object_t *object);
-extern int fr_rx_645_end(struct instance_t *instance,struct pipeline_t *pipeline,struct object_t *object);
+extern int fr_rx_645_entry(struct instance_t *instance,struct pipeline_t *pipeline,struct message_t *mesg);
+extern int fr_decode_645_86(struct instance_t *instance,struct pipeline_t *pipeline,struct message_t *mesg);
+extern int fr_645_decode_91(struct instance_t *instance,struct pipeline_t *pipeline,struct message_t *mesg);
+extern int fr_rx_645_end(struct instance_t *instance,struct pipeline_t *pipeline,struct message_t *mesg);
 int fr_sta_rx_from_msta_gatekeeper(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     int r = 0;
 
-    //todo ºÏ·¨ĞÔÅĞ¶Ï
-    //todo ÅĞ¶ÏID ¿´¿´ÊÇ²»ÊÇÒª×ª·¢proxy
+    //todo åˆæ³•æ€§åˆ¤æ–­
+    //todo åˆ¤æ–­ID çœ‹çœ‹æ˜¯ä¸æ˜¯è¦è½¬å‘proxy
     if (ctx->ctrl == 0x14)
     {
         extern int __return_error();
         int r = __return_error();
-        if (r < 0)//²»»Ø¸´
+        if (r < 0)//ä¸å›å¤
         {
             fifoBuf_removeData(fifo, ctx->min_len);
             return 0;
@@ -30,7 +30,7 @@ int fr_sta_rx_from_msta_gatekeeper(struct instance_t* instance, struct pipeline_
     {
         extern int __return_error();
         int r = __return_error();
-        if (r < 0)//²»»Ø¸´
+        if (r < 0)//ä¸å›å¤
         {
             fifoBuf_removeData(fifo, ctx->min_len);
             return 0;
@@ -38,7 +38,7 @@ int fr_sta_rx_from_msta_gatekeeper(struct instance_t* instance, struct pipeline_
     }
     //else
     {
-        fifoBuf_removeData(fifo, 10);//½«Êı¾İÓòÇ°µÄ×Ö½ÚÇåµô
+        fifoBuf_removeData(fifo, 10);//å°†æ•°æ®åŸŸå‰çš„å­—èŠ‚æ¸…æ‰
     }
 
     switch (ctx->ctrl)
@@ -50,7 +50,7 @@ int fr_sta_rx_from_msta_gatekeeper(struct instance_t* instance, struct pipeline_
         r = fr_decode_645_86(instance, pipeline, mesg);
         break;
     default:
-        //todo  ²»ÈÏÊ¶µÄ±¨ÎÄ  ×ª·¢¸ø»ù±í
+        //todo  ä¸è®¤è¯†çš„æŠ¥æ–‡  è½¬å‘ç»™åŸºè¡¨
         break;
     }
 
