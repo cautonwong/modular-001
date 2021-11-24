@@ -1,0 +1,46 @@
+{
+	"name": "test_app_698_server_ACTION_Response_8702",
+	"comment": "操作若干个对象属性响应Action-ResponseNormalList数据类型测试",
+	"version": "0.0.1",
+	"config": "00",
+	"suites": [
+		{
+			"suite_comment": "操作若干个对象属性响应Action-ResponseNormalList数据类型测试",
+            "test_source": {
+				"suite_comment": "数据初始化命令；事件初始化命令；需量初始化命令；PIID=02；",
+				"frame": "68 2D 00 43 05 11 11 11 11 11 11 11 A4 A3 07 02 02 03 43 00 03 00 00 43 00 05 00 00 43 00 06 00 00 01 07 E2 04 1A 11 06 0D 01 00 0A 21 72 16",
+				"cmd": "frame_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+            },
+			"test_expectation": {
+				"suite_comment": "分别响应初始化成功 PIID-ACD=02",
+				"response": "no",
+				"service_choice": "8702",
+				"frame": "68 31 00 C3 05 11 11 11 11 11 11 11 C9 F4 87 02 02 03 43 00 03 00 00 00 43 00 05 00 00 00 43 00 06 00 00 00 00 01 07 E2 04 1A 11 06 0D 01 00 0A E8 DC 16",
+				"cmd": "frame_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+			}
+        },
+		{
+			"suite_comment": "操作若干个对象属性响应Action-ResponseNormalList数据类型测试",
+            "test_source": {
+				"suite_comment": "数据初始化命令；恢复出厂初始化；事件初始化命令；需量初始化命令；PIID=02",
+				"frmem": "68 32 00 43 05 11 11 11 11 11 11 11 AD CE 07 02 02 04 43 00 03 00 00 43 00 04 00 00 43 00 05 00 00 43 00 06 00 00 01 07 E2 04 1A 11 09 3B 01 00 0A F0 15 16",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+            },
+			"test_expectation": {
+				"suite_comment": "响应成功；响应成功；响应拒绝读写；响应成功；PIID-ACD=02",
+				"response": "no",
+				"service_choice": "8702",
+				"frame": "68 37 00 C3 05 11 11 11 11 11 11 11 BE 01 87 02 02 04 43 00 03 00 00 00 43 00 04 00 03 00 43 00 05 00 00 00 43 00 06 00 00 00 00 01 07 E2 04 1A 11 09 3B 01 00 0A 52 E5 16",
+				"cmd": "frame_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+			}
+        }
+	]
+}

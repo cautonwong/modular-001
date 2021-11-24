@@ -2191,22 +2191,10 @@
                 <name>$PROJ_DIR$\..\..\..\packages\drivers\eeprom.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\esam698.c</name>
-            </file>
-            <file>
                 <name>$PROJ_DIR$\..\..\..\packages\drivers\iic_driver.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\drivers\ndv_Norflash.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\ndv_RN8209.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\ndvh_rn8209.h</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\relay.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\drivers\spi_driver.c</name>
@@ -2229,9 +2217,6 @@
         </group>
         <group>
             <name>libupdate</name>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\packages\boot\lib\libupdate_debug.a</name>
-            </file>
         </group>
         <file>
             <name>$PROJ_DIR$\..\..\..\packages\boot\boot.c</name>

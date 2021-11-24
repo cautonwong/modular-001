@@ -37,6 +37,14 @@ enum dl698_fr_err_t
 
 };
 
+
+enum dlt698_command_e
+{
+    GET_Request             = 5,
+    SET_Request             = 6,
+    ACTION_Request          = 7,
+};
+
 struct context_698_t
 {
     uint16_t index;//临时计数器

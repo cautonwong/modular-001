@@ -1,5 +1,6 @@
 #include "nidavellir.h"
 
+extern void memcopy(void *tb, void *sb, uint16_t length);
 // *****************************************************************************
 // circular buffer functions
 
@@ -90,7 +91,7 @@ int16_t fifoBuf_patchByteB(struct fifo_t *buf,uint8_t b, uint16_t offset)
     if (num_bytes < 1)
         return -1;                         // nothing to remove
 
-    assert(num_bytes >= offset);
+    //assert(num_bytes >= offset);
     if (num_bytes > offset)
         num_bytes = offset;
 
@@ -145,7 +146,7 @@ int16_t fifo_pop(struct fifo_t* buf, int (*callback)(void* ctx, uint8_t *b), voi
     uint8_t* buff = buf->buf_ptr;
 
     uint16_t num_bytes = fifoBuf_getUsed(buf);
-    assert(num_bytes >= 1);
+    //assert(num_bytes >= 1);
     if (num_bytes < 1)
         return -1;                      // no byte returned
 
@@ -170,7 +171,7 @@ uint16_t append_byte(struct fifo_t* buf, uint8_t b, int (*callback)(void* ctx, u
     uint8_t* buff = buf->buf_ptr;
 
     uint16_t num_bytes = fifoBuf_getFree(buf);
-    assert(num_bytes >= 1);//overflow
+    //assert(num_bytes >= 1);//overflow
     if (num_bytes < 1)
         return 0;
 
@@ -260,7 +261,7 @@ int16_t fifoBuf_peekByteB(struct fifo_t *buf, uint16_t offset)
     if (num_bytes < 1)
         return -1;                         // nothing to remove
 
-    assert(num_bytes >= offset);
+    //assert(num_bytes >= offset);
     if (num_bytes > offset)
         num_bytes = offset;
 
@@ -278,7 +279,7 @@ int16_t fifoBuf_getBytePeek(struct fifo_t *buf)
 
     // get number of bytes available
     uint16_t num_bytes = fifoBuf_getUsed(buf);
-    assert(num_bytes >= 1);
+    //assert(num_bytes >= 1);
     if (num_bytes < 1)
         return -1;                      // no byte retuened
 
@@ -315,7 +316,7 @@ int16_t fifoBuf_getByteCount(struct fifo_t* buf,uint16_t *count)
 
     // get number of bytes available
     uint16_t num_bytes = fifoBuf_getUsed(buf);
-    assert(num_bytes >= 1);
+    //assert(num_bytes >= 1);
     if (num_bytes < 1)
         return -1;                      // no byte returned
 
@@ -353,7 +354,7 @@ uint16_t fifoBuf_getDataPeek(struct fifo_t *buf, void *data, uint16_t len)
         uint16_t j = buf_size - rd;
         if (j > num_bytes)
             j = num_bytes;
-        memcpy(p + i, buff + rd, j);
+        memcopy(p + i, buff + rd, j);
         i += j;
         num_bytes -= j;
         rd += j;
@@ -388,7 +389,7 @@ uint16_t fifoBuf_getData(struct fifo_t *buf, void *data, uint16_t len)
         uint16_t j = buf_size - rd;
         if (j > num_bytes)
             j = num_bytes;
-        memcpy(p + i, buff + rd, j);
+        memcopy(p + i, buff + rd, j);
         i += j;
         num_bytes -= j;
         rd += j;
@@ -553,7 +554,7 @@ int fifoBuf_pushU8(struct fifo_t* buf, uint8_t b)
     uint8_t* buff = buf->buf_ptr;
 
     uint16_t num_bytes = fifoBuf_getFree(buf);
-    assert(num_bytes >= 1);//overflow
+    //assert(num_bytes >= 1);//overflow
     if (num_bytes < 1)
         return -1;
 
@@ -614,7 +615,7 @@ uint16_t fifoBuf_putData(struct fifo_t *buf, const void *data, uint16_t len)
         uint16_t j = buf_size - wr;
         if (j > num_bytes)
             j = num_bytes;
-        memcpy(buff + wr, p + i, j);
+        memcopy(buff + wr, p + i, j);
         i += j;
         num_bytes -= j;
         wr += j;
@@ -695,7 +696,7 @@ int append_byte_to_cache(struct cache_t* cache, uint8_t b, int (*callback)(void*
         return 1;
     }
 
-    assert(0);
+    //assert(0);
     return 0;
 }
 

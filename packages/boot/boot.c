@@ -1,13 +1,40 @@
 ﻿#include "boot.h"
 #include "dlt698.h"
 #include "fifo.h"
-
+#include "lib_flash.h"  
 
 struct status_ota_t g_status_ota;
-
 struct map_ota_t g_map_ota = {0};
+struct download_ota_t  g_download_ota = {0};
+
 //no_init_ram
 struct start_ota_t g_start_ota;
+
+
+void memcopy(void *tb, void *sb, uint16_t length)
+{
+    uint8_t *tbuff = tb;
+    uint8_t *sbuff = sb;
+
+    // 先判断是否有正向移动重叠区域
+    if ((sbuff < tbuff) && (sbuff + length > tbuff))
+    {
+        /* 有就从反向移动 */
+        while (length != 0)                 //根据长度进行移动 
+        {
+            length--;
+            tbuff[length] = sbuff[length];  //移动
+        }
+    }
+    else                                    //其它情况进行正向移动
+    {
+        while (length != 0)
+        {
+            length--;
+            *tbuff++ = *sbuff++;            //移动 
+        }
+    }
+} 
 
 
 void ota_mcu_init(void)
@@ -23,7 +50,7 @@ void ota_uart_init(void)
   
 }
 
-uint32_t is_ota()
+uint32_t is_update()
 {
     return 0x8338ddff;
 }
@@ -91,92 +118,91 @@ static int ringbuffer_filter(struct fifo_t *buf, int (*callback)(void* ctx, uint
     return -1;            
 }
 
-static int ota_server(struct fifo_t *fifo, void *ctx)
-{
-#if 0
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
 
+static int ota_server(struct fifo_t *fifo, void *pctx)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pctx;
+    uint32_t oad = 0;
+    uint32_t Addr = 0;
+    uint16_t len = 0;        
+    uint8_t oad_buf[4];
+    uint8_t *apdu;
+    
     fifoBuf_removeData(fifo, 9 + SA_LEN(ctx->SA));
     
-    //数据解密
-    fr_security_decode(instance, pipeline, mesg);
-
-
-
     ctx->service = fifoBuf_getByte(fifo);
-    ctx->choice = fifoBuf_getByte(fifo);
-    if((ctx->choice == 0x01) && ((GET_Request == ctx->service)||(ACTION_Request == ctx->service)))
+    ctx->choice  = fifoBuf_getByte(fifo);
+    if((ctx->choice == 0xFF) && ((GET_Request == ctx->service)||(ACTION_Request == ctx->service)))
     {
         ctx->PIID = fifoBuf_getByte(fifo);
         ctx->PIID |= (1 << 6);//PIID-ACD    
-        
     }
 
-    if (ctx->choice > 1)
-    {
-        mesg->oad_n = fifoBuf_getByte(fifo);
-        fifoBuf_putByte(cache, mesg->oad_n);
-    }
-    if(0 == fr_apdu_effective_check(instance, pipeline, mesg))
-    {
-        fifoBuf_removeData(fifo, ctx->min_len + 2);
-        return -1;
-    }
-    uint8_t oad_buf[4];
     fifoBuf_getData(fifo, oad_buf, 4);
     oad = ((uint32_t)oad_buf[0] << 24) + ((uint32_t)oad_buf[1] << 16) + ((uint32_t)oad_buf[2] << 8) + oad_buf[3];
-    uint16_t len = 1;         
+     
     switch (oad)
     {
-        case status_ota_oad:
-            memcpy(p, (uint8_t*)&g_status_ota, sizeof(struct status_ota_t));
+        case get_status_ota_oad:
+            memcopy(apdu, (uint8_t*)&g_status_ota, sizeof(struct status_ota_t));
             len = sizeof(struct status_ota_t);
             break;
-        case map_ota_oad:
-            memcpy(p, (uint8_t*)&g_map_ota, 4);
-            if(g_map_ota.bit_num > 512)
-                g_map_ota.bit_num = 512;
-            memcpy(p+4, (uint8_t*)&g_map_ota.bitmap, g_map_ota.bit_num);
+        case get_map_ota_oad:
+            memcopy(apdu, (uint8_t*)&g_map_ota, 4);
+            if(g_map_ota.bit_num > 4096)
+                g_map_ota.bit_num = 4096;
+            memcopy(apdu+4, (uint8_t*)&g_map_ota.bitmap, g_map_ota.bit_num);
             len = 4 + g_map_ota.bit_num;
             break;
         case start_ota_oad:
-            memcpy((uint8_t*)&g_start_ota, p, sizeof(struct start_ota_t));
+            memcopy((uint8_t*)&g_start_ota, apdu, sizeof(struct start_ota_t));
             break;
+            
         case download_ota_oad:
-            memcpy((uint8_t*)&g_download_ota, p, 8);
-            g_download_ota.block_data = p+8;
-            //位图检查
-            if(is_bitmap(g_map_ota.bitmap, g_download_ota.block_no))
+            memcopy((uint8_t*)&g_download_ota, apdu, 8);
+            g_download_ota.block_data = apdu+8;
+            if(g_download_ota.block_no == 0)
             {
-                uint32_t Addr = g_download_ota.block_no*g_start_ota.block_size;
-                if(is_sectorerase(g_download_ota.block_no))
+                
+            }
+            if(0x38de82ac == g_start_ota.type)//全包升级
+            {
+                if(is_bitmap(g_map_ota.bitmap, g_download_ota.block_no))
+                {
+                    Addr = g_download_ota.block_no*g_start_ota.block_size;
+                    if(0 == (Addr % 4096))
+                        FLASH_SectorErase(Addr);
+                    
+                    FLASH_ProgramWord(Addr, (uint32_t *)apdu, g_download_ota.block_len);
+                    //位图标记
+                    set_bitmap(g_map_ota.bitmap, g_download_ota.block_no);
+                }
+            }
+            if(0x9267becc == g_start_ota.type)//定点升级
+            {   
+                Addr = g_download_ota.block_no;
+                if(0 == (Addr % 4096))
                     FLASH_SectorErase(Addr);
                 
-                FLASH_ProgramWord(Addr, uint32_t *WordBuffer, g_download_ota.block_len);
-                //位图标记
-                set_bitmap(g_map_ota.bitmap, g_download_ota.block_no);
+                FLASH_ProgramWord(Addr, (uint32_t *)apdu, g_download_ota.block_len);
             }
+            
             break;
         default:
             return -1;//回复异常，记录错误状态
             break;
     }
 
-    //数据加密
-    fr_security_encode(instance, pipeline, mesg);
 
-    fr_encode_optional(instance, pipeline, mesg);
-
-    if (fifoBuf_getUsed(ctx->apdu)  > 0)
-    {
-        fr_rx_698_end(instance, pipeline, mesg);
-    }
-#endif
     return 0;
 }
    
 int main(int argc, char** argv)
 {
+    uint32_t time_out = 0;
+    uint32_t i = 0, bit_num = 0;
+    struct fifo_t *fifo;
+    struct context_698_t ctx = {0};
     //1 配置mcu
     ota_mcu_init();
     //2 配置启动定时器
@@ -185,26 +211,40 @@ int main(int argc, char** argv)
     ota_uart_init();
   
     //4 判断是否进入升级模式
-    if(0x8338ddff == is_ota())
+    if(0x8338ddff == is_update())
     {
-      f13();
-        //5 升级模式数据帧处理
+        //f13();
         for(;;)
         {
-#if 0
-            if (fifoBuf_getUsed(fifo) >= 12)//数据帧大于最小长度
-            {
-                int r = ringbuffer_filter(fifo, matcher_698, ctx);
-                if (r > 0)
-                {
-                    ctx->fr_err = ota_server(fifo, ctx);
-                    return ctx->fr_err;
-                }
-            }
             //超时计时
             time_out++;
-#endif
+            if (fifoBuf_getUsed(fifo) >= 12)//数据帧大于最小长度
+            {
+                int r = ringbuffer_filter(fifo, matcher_698, &ctx);
+                if (r > 0)
+                {
+                    ctx.fr_err = ota_server(fifo, &ctx);
+                    return ctx.fr_err;
+                }
+            }
+            bit_num = 0;
+            for(i = 0 ; i< g_map_ota.bit_num; i++)
+            {
+                if(is_bitmap(g_map_ota.bitmap, i))
+                   bit_num++;
+            }
+            
+            if(bit_num == g_map_ota.bit_num)
+            {
+               //是否计算校验
+               break;
+            }
+            if(time_out > 0xFFFFFFFE)//超时
+            {
+                break;
+            }
         }
     }
+    //jump
 
 }

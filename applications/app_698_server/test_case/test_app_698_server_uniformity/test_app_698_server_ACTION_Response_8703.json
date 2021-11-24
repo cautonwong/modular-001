@@ -1,0 +1,65 @@
+{
+	"name": "test_app_698_server_ACTION_Response_8703",
+	"comment": "操作后读取若干个对象属性响应Action-ThenGetResponseNormalList数据类型测试",
+	"version": "0.0.1",
+	"config": "00",
+	"suites": [
+		{
+			"suite_comment": "操作后读取若干个对象属性响应Action-ThenGetResponseNormalList数据类型测试",
+            "test_source": {
+				"suite_comment": "数据初始化命令；读取通信地址",
+				"frame": "68 28 00 43 05 11 11 11 11 11 11 11 60 A8 07 03 02 01 43 00 03 00 00 40 01 02 00 05 01 07 E2 04 1A 11 23 35 01 00 0A 58 FA 16",
+				"cmd": "frame_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+            },
+			"test_expectation": {
+				"suite_comment": "响应成功 响应成功 PIID-ACD=02",
+				"response": "no",
+				"service_choice": "8703",
+				"frame": "68 32 00 C3 05 11 11 11 11 11 11 11 7A 0A 87 03 02 01 43 00 03 00 00 00 40 01 02 00 01 09 06 11 11 11 11 11 11 00 01 07 E2 04 1A 11 23 35 01 00 0A 3E 30 16",
+				"cmd": "frame_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+			}
+        },
+		{
+			"suite_comment": "操作后读取若干个对象属性响应Action-ThenGetResponseNormalList数据类型测试",
+            "test_source": {
+				"suite_comment": "数据初始化命令失败 读取通信地址  PIID=02",
+				"frmem": "68 28 00 43 05 11 11 11 11 11 11 11 60 A8 07 03 02 01 43 00 04 00 00 40 01 02 00 05 01 07 E2 04 1A 11 3B 11 01 00 0A 4B 09 16",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+            },
+			"test_expectation": {
+				"suite_comment": "响应失败，拒绝读写 成功读取 PIID-ACD=02",
+				"response": "no",
+				"service_choice": "8703",
+				"frame": "68 32 00 C3 05 11 11 11 11 11 11 11 7A 0A 87 03 02 01 43 00 04 00 03 00 40 01 02 00 01 09 06 11 11 11 11 11 11 00 01 07 E2 04 1A 11 3B 11 01 00 0A 8C 2A 16",
+				"cmd": "frame_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+			}
+        },
+		{
+			"suite_comment": "操作后读取若干个对象属性响应Action-ThenGetResponseNormalList数据类型测试",
+            "test_source": {
+				"suite_comment": "SEQUENCE OF=N  N个操作对象方法后读取对象属性   PIID=02",
+				"frmem": "xx",
+				"cmd": "frmem_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+            },
+			"test_expectation": {
+				"suite_comment": "输出N个数据结果 PIID-ACD=02",
+				"response": "no",
+				"service_choice": "8703",
+				"frame": "xx",
+				"cmd": "frame_check",
+				"apdu": "00 11 91 C3 02",
+				"auth": "WRITE"
+			}
+        }
+	]
+}
