@@ -40,6 +40,7 @@ uint8_t axdr_decode(uint8_t type, const uint8_t *buf, uint16_t *len)
 
 uint8_t axdr_encode(uint8_t type, const uint8_t* buf, uint16_t* len)
 {
+  
     if (buf[0] < 128)
     {
         if (len != NULL)
@@ -124,7 +125,7 @@ uint16_t axdr_get_len(const uint8_t *data)
     case TYPE_octet_string:
     case TYPE_visible_string:
     case TYPE_UTF8_string:
-    case TYPE_TSA:     /**< 2..17 */
+    case TYPE_TSA:
     case TYPE_MAC:
     case TYPE_RN:
         type_len = axdr_decode(type, data, &data_len);
@@ -159,53 +160,53 @@ uint16_t axdr_get_len(const uint8_t *data)
         data_len = axdr_get_len(data);
         return (len + data_len);
         break;
-#if 0
-    case TYPE_RSD:
-        i = *p++;
 
-        if (i == 0)
+    case TYPE_RSD:
+        type = data[0];
+        len = 1;
+        if (0 == type)
         {
-            break;
+           len = 1;
         }
-        else if (i == 1)
+        else if (1 == type)
         {
-            p += 4;
-            if (*p != TYPE_date_time_s && *p != TYPE_double_long_unsigned)
-            {
-            //    return 0;   /*!!!*/
-            }
-            p += axdr_get_data_len(p);
+            len += 4;
+            if ((TYPE_date_time_s != data[len]) && (TYPE_double_long_unsigned != data[len]  ))
+                return 0;
+
+            type_len = axdr_decode(data[len], data+len, &data_len);
+            len += type_len + data_len;
         }
-        else if (i == 2)
+        else if (2 == type)
         {
-            p += 4;
-            if (*p != TYPE_date_time_s && *p != TYPE_double_long_unsigned)
-            {
-            //    return 0;   /*!!!*/
-            }
-            p += axdr_get_data_len(p);
-            if (*p != TYPE_date_time_s && *p != TYPE_double_long_unsigned)
-            {
-            //    return 0;   /*!!!*/
-            }
-            p += axdr_get_data_len(p);
-            if (*p != TYPE_TI && *p != TYPE_double_long_unsigned && *p != TYPE_null)
-            {
-            //    return 0;   /*!!!*/
-            }
-            p += axdr_get_data_len(p);
+            len += 4;
+            if ((TYPE_date_time_s != data[len]) && (TYPE_double_long_unsigned != data[len]))
+                return 0;
+
+            type_len = axdr_decode(data[len], data+len, &data_len);
+            len += type_len + data_len;
+
+            if ((TYPE_date_time_s != data[len]) && (TYPE_double_long_unsigned != data[len] ))
+                return 0;
+
+            type_len = axdr_decode(data[len], data+len, &data_len);
+            len += type_len + data_len;
+            if ((TYPE_TI != data[len]) && (TYPE_double_long_unsigned != data[len]) && (TYPE_null != data[len]))
+                return 0;
+
+            len += type_len + data_len;
         }
-        else if (i == 9)
+        else if ( 9 == type)
         {
-            p += 1;
+            len += 1;
         }
         else
         {
             return 0;
         }
-
+        return len;
         break;
-#endif 
+
     case TYPE_CSD:
         len = 1+4;
         if (1 == data[0]){
@@ -221,16 +222,15 @@ uint16_t axdr_get_len(const uint8_t *data)
             type_len = axdr_decode(data[len], data+len, &data_len);
         return (len + type_len + data_len);
         break;
-#if 0
+
     case TYPE_SID_MAC:
         len = 4;
-        p  += 4;
-        p  += axdr_data_len_decode((uint8_t *)p, &len);
-        p  += len;
-        p  += axdr_data_len_decode((uint8_t *)p, &len);
-        p  += len;
+        type_len = axdr_decode(data[len], data+len, &data_len);
+        len += type_len + data_len;
+        type_len = axdr_decode(data[len], data+len, &data_len);
+        return (len + type_len + data_len);
         break;
-#endif
+
     case TYPE_ROAD:
         len = 4;
         num  = data[len];
@@ -238,30 +238,22 @@ uint16_t axdr_get_len(const uint8_t *data)
         return (len);
         break;
 
-
-#if 0
     case TYPE_RCSD:
-        n = *p++;
-
-        while (n--)
+        len = 1;
+        num = data[0];
+        while (num--)
         {
-            i = *p++;
-
-            if (i == 0)
-            {
-                p += 4;
-            }
-            else
-            {
-                p += 4;
-                i  = *p++;
-                p += (uint16_t)(i) * 4;
+            type = data[len];
+            len +=1+4;
+            if (1 == type){
+                num  = data[len];
+                len += num * 4;
             }
         }
-
+        return len;
         break;
 
-
+#if 0
     case DTC_HIGH_ENERGY_INTEGER:
     case DTC_HIGH_ENERGY_UNSIGNED:
         p += 5;
