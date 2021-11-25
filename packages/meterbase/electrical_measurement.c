@@ -143,7 +143,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     //读计量芯片电压
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , URMS , 3 , &temp);
     
-    mbase_control_block->voltage_ac = temp * mbase_control_block->k_u;
+    mbase_control_block->voltage_ac = (uint32_t)(mbase_control_block->k_u * temp);
     if(mbase_control_block->voltage_ac > MAX_VOLTAGE)
     {
         mbase_control_block->voltage_ac = UN_VOLTAGE;
@@ -154,11 +154,11 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     }
     //读计量芯片电流
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , IARMS , 3 , &temp);
-    mbase_control_block->current_l = temp * mbase_control_block->k_il;
+    mbase_control_block->current_l = (int32_t)(mbase_control_block->k_il * temp);
     
     //读计量芯片功率
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , POWERPA , 4 , &temp);
-    mbase_control_block->active_power = temp * mbase_control_block->k_p;
+    mbase_control_block->active_power = (int32_t)(mbase_control_block->k_p * temp);
     
     if(mbase_control_block->active_power < 0)
     {
@@ -186,11 +186,11 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     
     //读计量芯片频率 
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , UFREQ , 2 , &temp);
-    mbase_control_block->frequency = 44744312.5/temp;
+    mbase_control_block->frequency = (uint32_t)(44744312.5/temp);
     
     //读计量芯片零线电流
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , IBRMS , 3 , &temp);
-    mbase_control_block->current_n = temp * mbase_control_block->k_in;
+    mbase_control_block->current_n = (int32_t)(mbase_control_block->k_in * temp);
     if(abs(mbase_control_block->current_n) < MIN_CURRENT)
     {
         mbase_control_block->current_n = 0;
@@ -205,6 +205,35 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
         meterchip_adj_self();
     }
     
+    //計算功率因數
+    if((mbase_control_block->voltage_ac != 0) && (mbase_control_block->current_l != 0))
+    {
+        mbase_control_block->power_factor = mbase_control_block->active_power / (mbase_control_block->voltage_ac * mbase_control_block->current_l);
+    }
+    else
+    {
+        mbase_control_block->power_factor = 1000;
+    }
+    
+    if(true == mcu_adc_start_once(ADC_CHL_TEMP))
+    {
+        if(true == read_mcu_adc_measure_value(ADC_CHL_TEMP , &temp))
+        {
+            mbase_control_block->temperature = temp;
+        }
+    }
+    
+    if(true == mcu_adc_start_once(ADC_CHL_BATTER))
+    {
+        if(true == read_mcu_adc_measure_value(ADC_CHL_BATTER , &temp))
+        {
+            mbase_control_block->voltage_battery = temp;
+            if(temp < 26000)
+            {
+                mbase_control_block->voltage_battery = 0;
+            }
+        }
+    }    
     
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , ENERGYP , 3 , &temp);
     

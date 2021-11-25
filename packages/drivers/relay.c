@@ -32,6 +32,8 @@ uint8_t Magnetic_hold_relay_Init(void)
    tm.stoped = true;
    
    ndv_timer_create(&tm);
+   
+   return true;
 }
 
 
@@ -41,6 +43,8 @@ uint8_t Magnetic_hold_relay_connect(void)
     REALY_ON_ACTIVE();
     
     ndv_timer_start_one(RELAY_TM, RELAY_PLUSE_WD);
+    
+    return true;
 }
 
 
@@ -50,6 +54,8 @@ uint8_t Magnetic_hold_relay_disconnect(void)
     REALY_OFF_ACTIVE();
   
     ndv_timer_start_one(RELAY_TM, RELAY_PLUSE_WD);
+    
+    return true;
 }
 
 

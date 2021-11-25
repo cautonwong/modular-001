@@ -1,6 +1,6 @@
 #include "nidavellir.h"
 
-extern void memcopy(void *tb, void *sb, uint16_t length);
+
 // *****************************************************************************
 // circular buffer functions
 
@@ -354,7 +354,7 @@ uint16_t fifoBuf_getDataPeek(struct fifo_t *buf, void *data, uint16_t len)
         uint16_t j = buf_size - rd;
         if (j > num_bytes)
             j = num_bytes;
-        memcopy(p + i, buff + rd, j);
+        memcpy(p + i, buff + rd, j);
         i += j;
         num_bytes -= j;
         rd += j;
@@ -389,7 +389,7 @@ uint16_t fifoBuf_getData(struct fifo_t *buf, void *data, uint16_t len)
         uint16_t j = buf_size - rd;
         if (j > num_bytes)
             j = num_bytes;
-        memcopy(p + i, buff + rd, j);
+        memcpy(p + i, buff + rd, j);
         i += j;
         num_bytes -= j;
         rd += j;
@@ -615,7 +615,7 @@ uint16_t fifoBuf_putData(struct fifo_t *buf, const void *data, uint16_t len)
         uint16_t j = buf_size - wr;
         if (j > num_bytes)
             j = num_bytes;
-        memcopy(buff + wr, p + i, j);
+        memcpy(buff + wr, p + i, j);
         i += j;
         num_bytes -= j;
         wr += j;
