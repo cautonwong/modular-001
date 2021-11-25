@@ -263,18 +263,33 @@
 #define    NeutralCurrentErr            162 //零线电流异常事件 
 #define    NeutralCurrentErrEnd         163 //零线电流异常事件结束                                    
 //
-#define    remote_alarm_flag               164 //远程告警命令true-触发告警
-#define    battery1_under2v8               165 //时钟电池欠压
-#define    battery2_under4v8               166 //停抄电池欠压
-         
+#define    remote_alarm_flag            164 //远程告警命令true-触发告警
+#define    battery1_under2v8            165 //时钟电池欠压
+#define    battery2_under4v8            166 //停抄电池欠压
+  
+//冻结
+#define    MinuteFreeze1                 170     //分钟冻结记录方案1
+#define    MinuteFreeze2                 171     //分钟冻结记录方案2
+#define    MinuteFreeze3                 172     //分钟冻结记录方案3
+#define    MinuteFreeze4                 173     //分钟冻结记录方案4
+#define    MinuteFreeze5                 174     //分钟冻结记录方案5
+#define    MinuteFreeze6                 175     //分钟冻结记录方案6
+#define    MinuteFreeze7                 176     //分钟冻结记录方案7
+#define    MinuteFreeze8                 177     //分钟冻结记录方案8
 
-//-----关联对象列表
+
+
+//-----关联对象列表 存储EE块号
 #define    OverCurrentL1_oad            200  // A相电能表过流事件 
+
+#define    MinuteFreeze_oad             201     // 分钟冻结关联对象
 
 
 //-----记录序号
 #define    OverCurrentL1_index          300  // A相电能表过流事件 
-                                
+//#define    MinuteFreeze_index             300     // 分钟冻结8个方案的序号存RAM
+
+
                                   
 #define         MAX_FEE_NO                 12                                  
 
