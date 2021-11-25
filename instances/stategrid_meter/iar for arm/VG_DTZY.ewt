@@ -2616,6 +2616,9 @@
                 <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_meter_clear_event.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_record.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\packages\meterbase\touFee.c</name>
             </file>
         </group>

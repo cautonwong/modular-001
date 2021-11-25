@@ -37,14 +37,20 @@ struct parameter_item_t
 //一个表格只能放在一个存储器上，注册的时候绑定设备
 const struct record_item_t  record_item[] =
 {
-    { OverCurrentL1, OverCurrentEndL1,              800,    10 },
+    { OverCurrentL1, OverCurrentEndL1,              800,    10 },// 待调整
 };
 
 const struct parameter_item_t  parameter_item[] =
 {
-    { OverCurrentL1,       sizeof(struct log_manager_t)},
-    { OverCurrentL1_oad,   45 },//oad列表 1+ 4*11
-    { OverCurrentL1_index, 4  }//index
+    { OverCurrentL1,       sizeof(struct log_manager_t)},// 管理区
+
+    //{ MinuteFreeze1,       sizeof(struct log_manager_t)},
+
+    { OverCurrentL1_oad,   45 }, //oad列表 1+ 4*11     默认8个
+    //{ MinuteFreeze_oad,    45 }, //oad列表 1+ 4*11     默认7个
+
+    { OverCurrentL1_index, 4  },//记录序号
+
 };
 
 int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size)
@@ -283,7 +289,7 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 
                 //调用ND_SET保存数据
                 index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + RecordId);
-                nd_set_index(instance, index, data_buff, (pdata - data_buff));
+                circular_image_set(instance, index, data_buff, (pdata - data_buff),NULL);
                 index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + SequenceId);
                 nd_set_index(instance, index, (uint8_t*)&sequence, sizeof(sequence));
                 break;
