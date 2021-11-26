@@ -1,6 +1,6 @@
 #include "nidavellir.h"
 
-extern void memcopy(void *tb, void *sb, uint16_t length);
+
 // *****************************************************************************
 // circular buffer functions
 

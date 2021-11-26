@@ -69,13 +69,13 @@ struct mbase_control_block_t
     uint8_t   StepNum;//阶梯数
           
     uint32_t voltage_ac;
-    uint32_t current_l;
-    uint32_t active_power;
-    uint32_t current_n;
+    int32_t current_l;
+    int32_t active_power;
+    int32_t current_n;
     uint32_t frequency;
-    uint32_t power_factor;
+    int32_t power_factor;
     uint32_t temperature;
-    uint32_t voltage_battery;    
+    uint32_t voltage_battery;
     
     uint8_t  p_pluse;          
     uint8_t  n_pluse;

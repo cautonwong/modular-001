@@ -236,15 +236,6 @@ unsigned char Rn8209AdjParaSet(struct Rn8209AdjSet_t* Set , const struct dev_inf
 
 
 
-void MeasureValue(struct dev_info_t* dev)
-{
-    signed long ChipValue = 0;
-
-
-
-
-
-}
 
 
 
@@ -318,10 +309,6 @@ const struct driver_ops_t rn8209_drv =
 };
 
 
-int Rn8209_task_entry(struct dev_info_t* dev)
-{
-    MeasureValue(dev);
-}
 
 
 const struct dev_sys_ops_t dev_rn8209_sys = 
@@ -330,5 +317,5 @@ const struct dev_sys_ops_t dev_rn8209_sys =
     NULL,
     NULL,
     NULL,
-    Rn8209_task_entry,
+    NULL,
 };

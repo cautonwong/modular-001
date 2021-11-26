@@ -248,7 +248,7 @@ uint8 init_v85xxp_rtc( uint8 power_mode )
     return true;
 }
 
-uint8_t read_v85xxp_rtc(uint8_t addr, uint8_t *buf, uint8_t len)
+uint8_t read_mcu_rtc(uint8_t addr, uint8_t *buf, uint8_t len)
 {
     uint8_t time_data[7];
     uint8_t time_check[7];
@@ -290,7 +290,7 @@ uint8_t read_v85xxp_rtc(uint8_t addr, uint8_t *buf, uint8_t len)
     return true;
 }
 
-uint8_t write_v85xxp_rtc(uint8_t addr, uint8_t *buf, uint16 len)
+uint8_t write_mcu_rtc(uint8_t addr, uint8_t *buf, uint16 len)
 {
     uint8 time_data[7];
     
@@ -1228,6 +1228,108 @@ int emu_uart_init(size_t index)
     
     return true;
 }
+
+
+
+uint8 mcu_adc_start_once(uint8 chl_type)
+{ 
+
+    ADCInitType ADC_InitStruct;
+
+    /* ADC initialization */
+    ADC_DeInit();
+    ADC_InitStruct.TrigMode = ADC_TRIGMODE_MANUAL;
+    ADC_InitStruct.ConvMode = ADC_CONVMODE_SINGLECHANNEL;
+    ADC_InitStruct.Channel = chl_type;
+    ADC_InitStruct.ClockDivider = ADC_CLKDIV_4;
+    ADC_InitStruct.ClockSource = ADC_CLKSRC_RCH;
+    ADC_Init(&ADC_InitStruct);
+
+    if (chl_type == 2)
+    {
+        /* Enable division */
+        ANA->REG1 |= ADC_BAT_CAPDIV;
+    }
+    else if (chl_type == 10)
+    {
+        /* Configure 1/512 down-sampling rate */
+        ADC_CICDownSamRateConfig(ADC_SDRSEL_DIV512);
+    }
+    
+    /* Enable ADC */
+    ADC_Cmd(ENABLE);
+
+    /* Start a manual ADC conversion */
+    ADC_StartManual();
+    /* Waiting last operation done */
+    ADC_WaitForManual();
+    
+    return true;
+
+}
+
+uint32 read_mcu_adc_measure_value(uint8 chl_type , int32 *adc_measure)
+{
+    float value = 0, Vbatcap;
+    int32 ad = 0;
+    int32 P0,P1,P2;
+    uint32 retval;
+    NVR_RTCINFO RTC_DataStruct;
+    NVR_BATMEARES BAT_OffsetInfo;
+    
+    ad =  ADC_GetADCConversionValue(chl_type);
+
+    if (chl_type == 2)
+    {
+
+        /* Get NVR BAT offset information */
+        if (NVR_GetBATOffset(&BAT_OffsetInfo))
+        {
+            return false;
+        }
+        else  
+        {
+            Vbatcap = BAT_OffsetInfo.BATCAPResult; 
+        }
+
+        if (ADC_BAT_CAPDIV & ADC_BAT_CAPDIV)
+        {
+            value = ((float)ad  - 49.588)/7088.91575 + Vbatcap;
+            value *= 10000;
+        }
+        *adc_measure = (int32)value;
+
+    }
+    else if(chl_type == 10)
+    {
+
+        /* Get RTC Px parameters */
+        retval = NVR_GetInfo_LoadRTCData(&RTC_DataStruct);
+        if (retval & 0x1U)
+        {
+            return false;
+        }
+        else
+        {
+            P0 = RTC_DataStruct.RTCTempP0;
+            P1 = RTC_DataStruct.RTCTempP1;
+            P2 = RTC_DataStruct.RTCTempP2;
+        }  
+
+        value = (float)((((P0 * ((ad*ad)>>16)) + P1*ad + P2) >> 8)*10 / 256.0);
+        value *= 100;
+        
+        *adc_measure = (int32)value;
+    }
+
+//    *adc_measure = (uint32)value;
+    
+    /* ADC resource release */
+    ADC_DeInit();
+    
+    return true;  
+}
+
 
 const struct bus_ops_t mcu_uart_bus_ops = 
 {

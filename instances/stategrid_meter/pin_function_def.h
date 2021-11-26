@@ -113,4 +113,8 @@
 #define  UART_IR_AT_MCU_UART_INDEX       5
     
 
+#define  ADC_CHL_TEMP           10
+#define  ADC_CHL_BATTER         2
+
+
 #endif
