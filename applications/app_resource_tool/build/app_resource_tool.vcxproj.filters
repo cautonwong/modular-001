@@ -9,10 +9,40 @@
     <ClCompile Include="..\test_cases\test_nd_malloc.c">
       <Filter>test_cases</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\bitarithm.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\nidavellir.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\pipeline.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\fifo.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\list.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\rtc.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\tasklet.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\utils.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\kernel\log.c">
+      <Filter>kernel</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="test_cases">
       <UniqueIdentifier>{7c7a67ec-ecd9-4fd2-b55c-696845ce1d6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="kernel">
+      <UniqueIdentifier>{fdbd0292-d84b-40bf-b01d-df2df57e2565}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

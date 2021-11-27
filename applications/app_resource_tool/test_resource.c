@@ -62,7 +62,7 @@ const struct dev_info_t nor_flash_dev =
 
 const struct filter_t fr_resource_manager[] =
 {
-    {0x01,sync_data,0,13},
+    {0x01,NULL,0,13},
 };
 
 struct pipeline_t pl_resource_manager =
@@ -144,23 +144,19 @@ int test_resource_setup(int argc, char** argv)
     //注册FLASH
     add_device(instance, RES_DEV_FLASH, &nor_flash_dev);
 
-    //注册一个698的MAP
-    register_map(instance, res_map_698, resource_map_698);
-
     return 0x01;
 }
 
 #include "log.h"
+
+extern void test_add_device(void** state);
 int main(int argc, char** argv)
 {
-#if 0
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(NULL)
+        cmocka_unit_test(test_add_device),     //测试设备增加，和查找
     };
 
     return cmocka_run_group_tests(tests, test_resource_setup, NULL);
-#endif
 
-    return 0;
 }
 

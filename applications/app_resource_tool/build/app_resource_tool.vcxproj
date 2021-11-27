@@ -19,6 +19,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\packages\kernel\bitarithm.c" />
+    <ClCompile Include="..\..\..\packages\kernel\fifo.c" />
+    <ClCompile Include="..\..\..\packages\kernel\list.c" />
+    <ClCompile Include="..\..\..\packages\kernel\log.c" />
+    <ClCompile Include="..\..\..\packages\kernel\nidavellir.c" />
+    <ClCompile Include="..\..\..\packages\kernel\pipeline.c" />
+    <ClCompile Include="..\..\..\packages\kernel\rtc.c" />
+    <ClCompile Include="..\..\..\packages\kernel\tasklet.c" />
+    <ClCompile Include="..\..\..\packages\kernel\utils.c" />
     <ClCompile Include="..\resource_tool.c" />
     <ClCompile Include="..\test_cases\test_nd_get.c" />
     <ClCompile Include="..\test_cases\test_nd_malloc.c" />
@@ -34,7 +43,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
@@ -82,6 +91,7 @@
     <OutDir>$(SolutionDir)\nidavellir\bin</OutDir>
     <IntDir>$(SolutionDir)\build\$(ProjectName)_$(Configuration)_$(Platform)\</IntDir>
     <TargetName>$(ProjectName)_$(Configuration)_$(Platform)</TargetName>
+    <LibraryPath>$(ProjectDir)..\..\..\nidavellir\bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -103,7 +113,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>kernel_$(Configuration)_$(Platform).lib;cmocka_$(Configuration)_$(Platform).lib;tx_$(Configuration)_$(Platform).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>pkg_cmocka_$(Configuration)_$(Platform).lib;pkg_mxml_$(Configuration)_$(Platform).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\nidavellir\bin\</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
