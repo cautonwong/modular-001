@@ -20,6 +20,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\resource_tool.c" />
+    <ClCompile Include="..\test_cases\test_nd_get.c" />
+    <ClCompile Include="..\test_cases\test_nd_malloc.c" />
+    <ClCompile Include="..\test_resource.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

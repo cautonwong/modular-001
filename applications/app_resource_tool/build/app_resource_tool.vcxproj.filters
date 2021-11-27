@@ -2,5 +2,17 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="..\resource_tool.c" />
+    <ClCompile Include="..\test_resource.c" />
+    <ClCompile Include="..\test_cases\test_nd_get.c">
+      <Filter>test_cases</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_cases\test_nd_malloc.c">
+      <Filter>test_cases</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="test_cases">
+      <UniqueIdentifier>{7c7a67ec-ecd9-4fd2-b55c-696845ce1d6d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

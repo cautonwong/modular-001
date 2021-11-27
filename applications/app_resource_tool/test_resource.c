@@ -1,0 +1,166 @@
+#include "nidavellir.h"
+#include <stddef.h>
+#include <setjmp.h>
+#include "cmocka.h"
+#include "applications.h"
+#include "resource_tool.h"
+
+int generate_data(uint8_t* data, size_t n, size_t len, size_t type)
+{
+    time_t t;
+    size_t nn = len;
+    if (len > n)
+    {
+        nn = n;
+    }
+    srand((unsigned)time(&t));
+    for (size_t i = 0; i < nn; i++)
+    {
+        data[i] = rand() % 0xff;
+    }
+    return 0;
+}
+
+int eeprom_read_chk(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
+{
+    uint8_t* p = mock_ptr_type(void *);
+    int r = mock_type(int);
+    memcpy(src, p, r);
+    return r;
+}
+
+int eeprom_write_chk(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
+{
+    check_expected(addr);
+    check_expected(src);
+    check_expected(len);
+    return len;
+}
+
+int eeprom_control(const struct dev_info_t* dev, uint8_t ctrl, void* ctrl_parameter)
+{
+    assert(0);
+    return 0;
+}
+
+const struct driver_ops_t  eeprom_driver =
+{
+    NULL,
+    eeprom_control,
+    eeprom_read_chk,
+    eeprom_write_chk,
+};
+
+const struct dev_info_t eeprom_dev = 
+{
+    0x00,0x01,0xFFFF,0x00,0x00, NULL, &eeprom_driver, NULL, NULL, NULL, NULL,".//e2prom.dat"
+};
+const struct dev_info_t nor_flash_dev = 
+{
+    0x01,0x01,0xFFFF,0x00,0x00, NULL, NULL, NULL, NULL, NULL, NULL,".//flash.dat"
+};
+
+const struct filter_t fr_resource_manager[] =
+{
+    {0x01,sync_data,0,13},
+};
+
+struct pipeline_t pl_resource_manager =
+{
+    pid_resource_manager,
+    "app_resource_manager",
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    sizeof(fr_resource_manager) / sizeof(fr_resource_manager[0]),
+    fr_resource_manager,
+};
+
+struct pipeline_t* pipelines[] =
+{
+    &pl_resource_manager,
+};
+
+uint8_t nd_memory[20 * 1024];
+
+int test_resource_setup(int argc, char** argv)
+{
+    struct instance_t* instance = NULL;
+    struct recipe_t *recipe = NULL;
+
+    instance = create_instance(RES_DEV_RAM, (uint32_t)&nd_memory, 20 * 1024, 2 * 1024, resource_block_name);//用资源描述创建instance
+    if (instance == NULL)
+    {
+        return -1;
+    }
+
+    instance->recipe = nd_malloc(instance, instance->resource_block, sizeof(struct recipe_t));
+    recipe = instance->recipe;
+    if (recipe == NULL)
+    {
+        return -1;
+    }
+    recipe->pipelines = &pipelines[0];
+    recipe->pipeline_n = sizeof(pipelines) / sizeof(pipelines[0]);
+    recipe->name = 0;
+
+    //初始化pl_resource_manager
+    pl_resource_manager.in_queue = nd_malloc(instance, instance->resource_block, sizeof(struct fifo_t));
+    fifoBuf_init(pl_resource_manager.in_queue, nd_malloc(instance, instance->resource_block, 256), 256);
+
+    //初始化时间
+    instance->ms = 0;
+    struct tm time =
+    {
+        .tm_year = 2021 - 1900,   /* years are counted from 1900 */
+        .tm_mon = 3,                      /* 0 = January, 11 = December */
+        .tm_mday = 30,
+        .tm_hour = 23,
+        .tm_min = 59,
+        .tm_sec = 57
+    };
+    memcpy(&instance->time, &time, sizeof(struct tm));
+
+    ///////////////////////////////申请一个cache的BLOCK = 02/////////////////////////////////////////////
+    if (NULL == add_block(instance, RES_DEV_RAM, control_block_cache, 500))
+    {
+        return -1;
+    }
+    //指向cache space
+    instance->cache = nd_malloc(instance, control_block_cache, 256);
+    instance->cache2 = nd_malloc(instance, control_block_cache, sizeof(struct cache_t));
+    init_cache(instance->cache2, instance->cache, 256);
+    
+    instance->event_flags = nd_malloc(instance,control_block_cache,event_flags_group_size);
+    memset(instance->event_flags, 0, event_flags_group_size);
+    instance->event_group_size = event_flags_group_size;//初始化软时钟
+
+    uint8_t* buf = nd_malloc(instance, control_block_cache, 4);
+    fifoBuf_init(&instance->pipe_rtc, buf, 4);
+
+    //注册EPROM  
+    add_device(instance, RES_DEV_EEPROM, &eeprom_dev);
+    //注册FLASH
+    add_device(instance, RES_DEV_FLASH, &nor_flash_dev);
+
+    //注册一个698的MAP
+    register_map(instance, res_map_698, resource_map_698);
+
+    return 0x01;
+}
+
+#include "log.h"
+int main(int argc, char** argv)
+{
+#if 0
+    const struct CMUnitTest tests[] = {
+        cmocka_unit_test(NULL)
+    };
+
+    return cmocka_run_group_tests(tests, test_resource_setup, NULL);
+#endif
+
+    return 0;
+}
+
