@@ -26,7 +26,7 @@
 #define UART_DEVICE_TIME_OUT1     5
 #define UART_DEVICE_TIME_OUT2	  1
 
-#define UART_RX_TIME_OUT   5
+#define UART_RX_TIME_OUT   8
 #define UART_TX_TIME_OUT   3
 
 
@@ -215,9 +215,8 @@ const struct uart_irq_list_t uart_irq_list[] =
 
 
 
-uint8 uart_time_process(void *tickpara)
+uint8 _uart_time_process(struct uart_chl_init_t *chl)
 {
-    struct uart_chl_init_t *chl = (struct uart_chl_init_t *)tickpara;
     uint8_t send_data;
     
     if(chl->rx_time_out > 0)
@@ -256,11 +255,21 @@ uint8 uart_time_process(void *tickpara)
     return true;
 }
 
+int uart_time_process(void)
+{
+    for(uint8_t i =0 ; i<6; i++)
+    {
+        if(uart_dev[i].en == 0xfa)
+            _uart_time_process(&uart_dev[i]);
+    }
+}
+
+
 int uart_chl_initialize(struct uart_chl_init_t *uart_chl)
 {
     uint8_t index;
     uint8_t infrared_enable = 0;
-    struct tm_list_init_t tm;
+    //struct tm_list_init_t tm;
     
     if(uart_chl->mcu_uart_index < MCU_UART_NUM)
     {        
@@ -279,14 +288,14 @@ int uart_chl_initialize(struct uart_chl_init_t *uart_chl)
                  RS485_RX_INPUT();
                  RS485_TX_OUTPUT();
                  RS485_TX_HIGH();
-                 tm.tm_id = RS4851_TM;
+                 //tm.tm_id = RS4851_TM;
                  break;
             case UART_IR_CHL:
                  infrared_enable = 1;
-                 tm.tm_id = IR_TM;
+                 //tm.tm_id = IR_TM;
                 break;
             case UART_MODULE_CHL:
-                tm.tm_id = MODULE_TM;
+                //tm.tm_id = MODULE_TM;
                 break;
             default:
                 break;
@@ -296,10 +305,14 @@ int uart_chl_initialize(struct uart_chl_init_t *uart_chl)
         //tm.tickfunc = uart_time_process;
         //tm.stoped = false;
         //ndv_timer_create(&tm);
-        //ndv_isr_handle_regsit(uart_irq_list[index].tx_fun, IRQ_UART0_TX+(index<<1));
-        //ndv_isr_handle_regsit(uart_irq_list[index].rx_fun, IRQ_UART0_RX+(index<<1));
-        mcu_uart_init((void*)uart_chl->uart_cfg, index, infrared_enable);
-        mcu_uart_recive_enable(1 , index);
+        ndv_isr_handle_regsit(uart_irq_list[index].tx_fun, IRQ_UART0_TX+(index<<1));
+        ndv_isr_handle_regsit(uart_irq_list[index].rx_fun, IRQ_UART0_RX+(index<<1));
+        uint8_t val = mcu_uart_init((void*)uart_chl->uart_cfg, index, infrared_enable);
+        if(val == 1)
+        {
+            mcu_uart_recive_enable(1 , index);
+            uart_dev[index].en = 0xfa;
+        }
     }
     return true;
 }

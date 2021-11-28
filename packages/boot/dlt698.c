@@ -130,13 +130,16 @@ int matcher_698(void* pctx, uint8_t* b)
         ctx->min_len &= 0x3fff;
         //bit14：帧数据长度单位，0 表示帧数据长度单位为字节，1 表示帧数据长度单位为千字节；
         ctx->len_unit = (byte & 0x40) >> 6;
+        
         if (ctx->min_len < 11)
         {
             ctx->step = 0;
             ctx->err_n++;
             return FRM_LEN_ERR1;
         }
-        //if ((len < 11) || (len + 2 > *bytes) || (0x16 != p[len + 1]))
+        //if(ctx->len < ctx->min_len)
+        //    return 2;
+       
         ctx->step = 3;
         return FRM_OK;
     case 3:

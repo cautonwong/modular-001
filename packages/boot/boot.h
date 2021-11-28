@@ -9,6 +9,11 @@
 #include <stdio.h>
 #include <stddef.h>
 
+#include "lib_uart.h"
+
+#define  UART_RS4851_AT_MCU_UART_INDEX   0
+#define  UART_MODULE_AT_MCU_UART_INDEX   4
+#define  UART_IR_AT_MCU_UART_INDEX       5
 
 //测试缓冲区某位是否为1
 #define	is_bitmap(a,x)	((a)[(x)/8] & (1<<((x)%8)))

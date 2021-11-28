@@ -4,6 +4,32 @@
 #include "lib_flash.h"  
 #include "uart_driver.h"
 
+const UART_InitType  Uart_InitType_485 = 
+{
+    UART_MODE_Msk,
+    UART_PARITY_EVEN_LIB,
+    UART_WORDLEN_9B,
+    UART_FIRSTBIT_LSB,
+    9600,
+};
+const UART_InitType  Uart_InitType_module = 
+{
+    UART_MODE_Msk,
+    UART_PARITY_EVEN_LIB,
+    UART_WORDLEN_9B,
+    UART_FIRSTBIT_LSB,
+    9600,
+};
+const UART_InitType  Uart_InitType_ir = 
+{
+    UART_MODE_Msk,
+    UART_PARITY_EVEN_LIB,
+    UART_WORDLEN_9B,
+    UART_FIRSTBIT_LSB,
+    1200,
+};
+
+
 struct status_ota_t g_status_ota;
 struct map_ota_t g_map_ota = {0};
 struct download_ota_t  g_download_ota = {0};
@@ -153,26 +179,25 @@ static int ota_server(struct fifo_t *fifo, void *pctx)
 void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uint8_t chl_type)
 {
     struct uart_chl_init_t chl_init;
-#if 0
+
     switch(chl_type)
     {
-        case UART_RS4851_CHL:
+        case UART_RS4851_AT_MCU_UART_INDEX:
              chl_init.uart_cfg = (const void*)&Uart_InitType_485;
              chl_init.mcu_uart_index = UART_RS4851_AT_MCU_UART_INDEX;
              break;
-        case UART_IR_CHL:
+        case UART_IR_AT_MCU_UART_INDEX:
              chl_init.uart_cfg = (const void*)&Uart_InitType_ir;
              chl_init.mcu_uart_index = UART_IR_AT_MCU_UART_INDEX;
             break;
-        case UART_MODULE_CHL:
+        case UART_MODULE_AT_MCU_UART_INDEX:
              chl_init.uart_cfg = (const void*)&Uart_InitType_module;
              chl_init.mcu_uart_index = UART_MODULE_AT_MCU_UART_INDEX;
             break;
         default:
             break;
     }
-#endif
-    chl_init.mcu_uart_index = chl_type;
+
     chl_init.tx_fifo = txfifo;
     chl_init.rx_fifo = rxfifo;
     chl_init.chl_type = chl_type;    
@@ -183,26 +208,32 @@ void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uin
 
 void ota_mcu_init(void)
 {
+    mcu_init(0);
 }
 
 void ota_timer_init(void)
 {
+    extern int uart_time_process(void);
+    ndv_isr_handle_regsit(uart_time_process , 0);
+    
+    cm0_systick_init(1);
 }
-#define FIFO_RX_BUF_SIZE_RS485 2048
+
+#define FIFO_RX_BUF_SIZE_RS485 1024
 #define FIFO_TX_BUF_SIZE_RS485 512
 struct fifo_t fifo_rx_rs485={0};
 uint8_t rx_rs485_buf[FIFO_RX_BUF_SIZE_RS485] = {0};
 struct fifo_t fifo_tx_rs485={0};
 uint8_t tx_rs485_buf[FIFO_TX_BUF_SIZE_RS485] = {0};
 
-#define FIFO_RX_BUF_SIZE_IR 2048
+#define FIFO_RX_BUF_SIZE_IR 1024
 #define FIFO_TX_BUF_SIZE_IR 512
 struct fifo_t fifo_rx_ir={0};
 uint8_t rx_ir_buf[FIFO_RX_BUF_SIZE_IR] = {0};
 struct fifo_t fifo_tx_ir={0};
 uint8_t tx_ir_buf[FIFO_TX_BUF_SIZE_IR] = {0};
 
-#define FIFO_RX_BUF_SIZE_PLC 2048
+#define FIFO_RX_BUF_SIZE_PLC 1024
 #define FIFO_TX_BUF_SIZE_PLC 512
 struct fifo_t fifo_rx_plc={0};
 uint8_t rx_plc_buf[FIFO_RX_BUF_SIZE_PLC] = {0};
@@ -218,15 +249,15 @@ void ota_uart_init(void)
 {
     fifoBuf_init(&fifo_rx_rs485, rx_rs485_buf, FIFO_RX_BUF_SIZE_RS485);
     fifoBuf_init(&fifo_tx_rs485, tx_rs485_buf, FIFO_TX_BUF_SIZE_RS485);
-    communication_chlx_init(&fifo_rx_rs485, &fifo_tx_rs485, UART_RS4851_AT_MCU_UART_INDEX);
+    communication_chlx_init(&fifo_tx_rs485, &fifo_rx_rs485, UART_RS4851_AT_MCU_UART_INDEX);
     
     fifoBuf_init(&fifo_rx_ir, rx_ir_buf, FIFO_RX_BUF_SIZE_IR);
     fifoBuf_init(&fifo_tx_ir, tx_ir_buf, FIFO_TX_BUF_SIZE_IR);
-    communication_chlx_init(&fifo_rx_ir, &fifo_tx_ir, UART_IR_AT_MCU_UART_INDEX);
+    communication_chlx_init(&fifo_tx_ir, &fifo_rx_ir, UART_IR_AT_MCU_UART_INDEX);
     
     fifoBuf_init(&fifo_rx_plc, rx_plc_buf, FIFO_RX_BUF_SIZE_PLC);
     fifoBuf_init(&fifo_tx_plc, tx_plc_buf, FIFO_TX_BUF_SIZE_PLC);
-    communication_chlx_init(&fifo_rx_plc, &fifo_tx_plc, UART_MODULE_AT_MCU_UART_INDEX);
+    communication_chlx_init(&fifo_tx_plc, &fifo_rx_plc, UART_MODULE_AT_MCU_UART_INDEX);
     
 }
 
@@ -240,7 +271,7 @@ int main(int argc, char** argv)
 {
     uint32_t time_out = 0;
     uint32_t i = 0, bit_num = 0;
-    struct fifo_t *fifo;
+    struct fifo_t *fifo = &fifo_rx_rs485;
     struct context_698_t ctx = {0};
     //1 配置mcu
     ota_mcu_init();
@@ -257,7 +288,7 @@ int main(int argc, char** argv)
         {
             //超时计时
             time_out++;
-            if (fifoBuf_getUsed(fifo) >= 12)//数据帧大于最小长度
+            if (fifoBuf_getUsed(fifo) >= 24)//数据帧大于最小长度
             {
                 int r = ringbuffer_filter(fifo, matcher_698, &ctx);
                 if (r > 0)
@@ -273,7 +304,7 @@ int main(int argc, char** argv)
                    bit_num++;
             }
             
-            if(bit_num == g_map_ota.bit_num)
+            if((bit_num == g_map_ota.bit_num) && (g_map_ota.bit_num != 0))
             {
                //是否计算校验
                break;

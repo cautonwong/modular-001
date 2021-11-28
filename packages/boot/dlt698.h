@@ -47,6 +47,7 @@ enum dlt698_command_e
 
 struct context_698_t
 {
+    uint16_t len;
     uint16_t index;//临时计数器
     uint8_t SA;
     uint8_t LA;

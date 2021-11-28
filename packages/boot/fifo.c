@@ -208,6 +208,7 @@ int ringbuffer_filter(struct fifo_t *buf, int (*callback)(void* ctx, uint8_t *b)
         r = rd + i;
         if (r >= buf_size)
             r -= buf_size;
+
         ret = callback(ctx, buf->buf_ptr+r);
         if(ret < 0)
         {
