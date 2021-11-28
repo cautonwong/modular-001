@@ -66,4 +66,10 @@ void mem_swap_cpy(void* dest, void* src, unsigned short length);
 int hex2bin(char* dst, const char* src, uint16_t count);
 #endif
 
+uint16_t crc16(uint16_t init, uint8_t* buf, size_t len);
+
+uint16_t nd_get_crc16(uint8_t* buf, size_t len);
+
+uint16_t update_crc16(uint16_t init, uint8_t byte);
+
 #endif
