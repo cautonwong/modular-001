@@ -184,6 +184,9 @@
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Response_8703.c">
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_5_Frozen.c">
+      <Filter>mapper_698\set</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dl698">
