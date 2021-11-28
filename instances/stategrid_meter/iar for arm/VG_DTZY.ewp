@@ -2322,6 +2322,9 @@
                 <file>
                     <name>$PROJ_DIR$\..\mapper_698\map_698_set\set_4_Parameter.c</name>
                 </file>
+                <file>
+                    <name>$PROJ_DIR$\..\mapper_698\map_698_set\set_5_Frozen.c</name>
+                </file>
             </group>
             <file>
                 <name>$PROJ_DIR$\..\mapper_698\mapper_698.c</name>

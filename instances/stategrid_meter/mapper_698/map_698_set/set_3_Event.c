@@ -7,6 +7,8 @@
 // 过流事件关联对象
 const uint8_t init_30050200[] = {0x01,0x08, U32toBuf(0x00102201), U32toBuf(0x00202201), U32toBuf(0x20002200), U32toBuf(0x20012200), U32toBuf(0x20042200), U32toBuf(0x200A2200), U32toBuf(0x00108201), U32toBuf(0x00208201)};
 
+const uint8_t init_50020300[] = { 0x01,0x07, U32toBuf(0x00100401), U32toBuf(0x00200401), U32toBuf(0x20000200), U32toBuf(0x20010200), U32toBuf(0x20010400), U32toBuf(0x20040200), U32toBuf(0x200A0200) };
+
 
 //  关联对象检查  待添加
 uint8_t oad_valid_check(uint32_t oad)

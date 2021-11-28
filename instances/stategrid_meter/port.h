@@ -277,8 +277,10 @@
 #define    MinuteFreeze7                 176     //分钟冻结记录方案7
 #define    MinuteFreeze8                 177     //分钟冻结记录方案8
 
+//-----------------------------------------------------------------------
 
 
+//存储EE块号
 //-----关联对象列表 存储EE块号
 #define    OverCurrentL1_oad            200  // A相电能表过流事件 
 
@@ -286,9 +288,9 @@
 
 
 //-----记录序号
-#define    OverCurrentL1_index          300  // A相电能表过流事件 
-//#define    MinuteFreeze_index             300     // 分钟冻结8个方案的序号存RAM
-
+#define    OverCurrentL1_index          230  // A相电能表过流事件 
+#define    MinuteFreeze_period          231  //分钟冻结 周期   3*8   每种方案3个字节，第一个字节为0，表示该周期值无效，非零值表示该周期值有效，后面2个字节表示周期值
+#define    MinuteFreeze_depth           232  //分钟冻结 周期   2*8 
 
                                   
 #define         MAX_FEE_NO                 12                                  

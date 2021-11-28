@@ -126,6 +126,9 @@
     <ClCompile Include="..\..\..\packages\meterbase\gs_record.c">
       <Filter>app_meter_base</Filter>
     </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_set\set_5_Frozen.c">
+      <Filter>mapper_698\set</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="app_698_server">
