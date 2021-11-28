@@ -848,15 +848,13 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
             {
                 return -1;
             }
-            if (info->read_ptr < depth)
-            {
-                info->read_ptr++;
-            }
-            else
+
+            info->curr_num++;
+            info->read_ptr++;
+            if (info->read_ptr >= depth)
             {
                 info->read_ptr = 0x00;
-            }
-            info->curr_num++;
+            }  
             return info->unit_size;
         }
     }
