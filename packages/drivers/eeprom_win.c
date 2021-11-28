@@ -16,12 +16,18 @@ int eeprom_initialize(const struct dev_info_t* dev)
     if (f > 0)
     {
         sd = stat(dev->name, &stat_info);
-        if(stat_info.st_size == 0)
+        if(stat_info.st_size != dev->data_size)
         {
-            p = malloc(512*1024);
-            memset(p, 0xff, 512*1024);
-            write(f, p, 512*1024);      
-            free(p);
+            close(f);
+            _unlink(dev->name);
+            f = open(dev->name, O_CREAT | O_RDWR | O_BINARY, _S_IREAD | _S_IWRITE);
+            if(f > 0)
+            {
+                p = malloc(dev->data_size);
+                memset(p, 0xff, dev->data_size);
+                write(f, p, dev->data_size);
+                free(p);
+            }
         }
         close(f);
     }
@@ -73,6 +79,14 @@ int eeprom_control(const struct dev_info_t* dev, uint8_t ctrl , void *ctrl_param
 }
 
 const struct driver_ops_t  eeprom_driver =
+{
+    eeprom_initialize,
+    eeprom_control,
+    eeprom_read_chk,
+    eeprom_write_chk,
+};
+
+const struct driver_ops_t  flash_driver =
 {
     eeprom_initialize,
     eeprom_control,

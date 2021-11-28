@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\packages\drivers\eeprom_win.c" />
     <ClCompile Include="..\..\..\packages\kernel\bitarithm.c" />
     <ClCompile Include="..\..\..\packages\kernel\fifo.c" />
     <ClCompile Include="..\..\..\packages\kernel\list.c" />
@@ -30,6 +31,7 @@
     <ClCompile Include="..\..\..\packages\kernel\utils.c" />
     <ClCompile Include="..\resource_tool.c" />
     <ClCompile Include="..\test_cases\test_nd_get.c" />
+    <ClCompile Include="..\test_cases\test_nd_log_output.c" />
     <ClCompile Include="..\test_cases\test_nd_malloc.c" />
     <ClCompile Include="..\test_resource.c" />
   </ItemGroup>
@@ -106,7 +108,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;NIDAVELLIR_SYSTEM_TEST;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)\nidavellir\include;$(SolutionDir)\nidavellir\include\kernel\;$(SolutionDir)\packages\test\cmocka\include\;$(SolutionDir)\instances\stategrid_meter\;$(SolutionDir)applications\app_resource_tool\</AdditionalIncludeDirectories>
     </ClCompile>

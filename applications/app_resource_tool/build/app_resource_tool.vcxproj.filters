@@ -36,6 +36,10 @@
     <ClCompile Include="..\..\..\packages\kernel\log.c">
       <Filter>kernel</Filter>
     </ClCompile>
+    <ClCompile Include="..\test_cases\test_nd_log_output.c">
+      <Filter>test_cases</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\drivers\eeprom_win.c" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="test_cases">

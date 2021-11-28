@@ -20,7 +20,7 @@ int generate_data(uint8_t* data, size_t n, size_t len, size_t type)
     }
     return 0;
 }
-
+#if 0
 int eeprom_read_chk(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
 {
     uint8_t* p = mock_ptr_type(void *);
@@ -50,14 +50,17 @@ const struct driver_ops_t  eeprom_driver =
     eeprom_read_chk,
     eeprom_write_chk,
 };
+#endif
 
+extern const struct driver_ops_t  flash_driver;
+extern const struct driver_ops_t  eeprom_driver;
 const struct dev_info_t eeprom_dev = 
 {
     0x00,0x01,0xFFFF,0x00,0x00, NULL, &eeprom_driver, NULL, NULL, NULL, NULL,".//e2prom.dat"
 };
 const struct dev_info_t nor_flash_dev = 
 {
-    0x01,0x01,0xFFFF,0x00,0x00, NULL, NULL, NULL, NULL, NULL, NULL,".//flash.dat"
+    0x01,0x01,0xFFFF,0x00,0x00, NULL, &flash_driver, NULL, NULL, NULL, NULL,".//flash.dat"
 };
 
 const struct filter_t fr_resource_manager[] =
@@ -155,8 +158,14 @@ extern void test_add_block_same_block_name(void** state);
 extern void test_add_block_500_byte(void** state);
 extern void test_add_block_10K_byte(void** state);
 extern void test_add_block_out_of_gauge(void** state);
+extern void test_nd_log_output_search_all(void** state);
+extern void test_nd_log_output_search_all_06(void** state);
+
 int main(int argc, char** argv)
 {
+    eeprom_dev.dev_driver_ops->dev_initialize(&eeprom_dev);
+    nor_flash_dev.dev_driver_ops->dev_initialize(&nor_flash_dev);
+
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_add_device),     //测试设备增加，和查找
         cmocka_unit_test(test_add_block_one_byte),     
@@ -164,6 +173,8 @@ int main(int argc, char** argv)
         cmocka_unit_test(test_add_block_500_byte),     
         cmocka_unit_test(test_add_block_10K_byte),     
         cmocka_unit_test(test_add_block_out_of_gauge),
+        cmocka_unit_test(test_nd_log_output_search_all),
+        cmocka_unit_test(test_nd_log_output_search_all_06),
     };
 
     return cmocka_run_group_tests(tests, test_resource_setup, NULL);

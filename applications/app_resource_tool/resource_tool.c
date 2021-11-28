@@ -711,7 +711,7 @@ int16_t search_circular(struct instance_t* instance, const struct dev_info_t* de
     return -1;
 }
 
-int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t unit_size, struct nd_log_info* info)
+int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t unit_size)
 {
     struct block_device_t* device01 = NULL, * device02 = NULL;
     const struct driver_ops_t* driver01 = NULL, * driver02 = NULL;
@@ -742,9 +742,9 @@ int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf,
                 {
                     return -1;
                 }
-                if (true != driver02->dev_read(device02->dev, addr02, sizeof(struct log_manager_t), (uint8_t*)&manager))
+                if (0x00 > driver02->dev_read(device02->dev, block02->first_addr + addr02, sizeof(struct log_manager_t), (uint8_t*)&manager))
                 {
-                    return false;
+                    return -1;
                 }
                 if (0xA5A5 + manager.num + manager.unit_size + manager.wr_ptr != manager.check_sum)
                 {
@@ -759,9 +759,9 @@ int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf,
         addr01 += manager.wr_ptr * manager.unit_size;
         if ((driver01 != NULL) && (driver01->dev_write != NULL))
         {
-            if (true != driver01->dev_write(device01->dev, addr01, unit_size, buf))
+            if (0x00 > driver01->dev_write(device01->dev, block01->first_addr + addr01, unit_size, buf))
             {
-                return false;
+                return -1;
             }
         }
         //保存管理区
@@ -778,11 +778,11 @@ int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf,
                 manager.num = manager.max_num;
             }
             manager.check_sum = 0xA5A5 + manager.num + manager.unit_size + manager.wr_ptr;
-            if (true != driver02->dev_write(device02->dev, addr02, sizeof(struct log_manager_t), (uint8_t*)&manager))
+            if (0x00 > driver02->dev_write(device02->dev, block02->first_addr + addr02, sizeof(struct log_manager_t), (uint8_t*)&manager))
             {
-                return false;
+                return -1;
             }
-            return 0x00;
+            return unit_size;
         }
     }
     return -1;
@@ -817,9 +817,9 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
                 if ((driver02 != NULL) && (driver02->dev_read != NULL))
                 {
                     block02->hook((uint16_t)index, &addr02, &len02, NULL);
-                    if (true != driver02->dev_read(device02->dev, addr02, sizeof(struct log_manager_t), (uint8_t*)&manager))
+                    if (0x00 > driver02->dev_read(device02->dev, block02->first_addr + addr02, sizeof(struct log_manager_t), (uint8_t*)&manager))
                     {
-                        return false;
+                        return -1;
                     }
                     if (0xA5A5 + manager.num + manager.unit_size + manager.wr_ptr != manager.check_sum)
                     {
@@ -833,7 +833,7 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
                         info->read_ptr = manager.wr_ptr;
                     }
                     //搜索信息处理
-                    search_circular(instance, device01->dev, addr01, info, &manager);
+                    search_circular(instance, device01->dev, block01->first_addr + addr01, info, &manager);
                 }
             }
         }
@@ -844,9 +844,9 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
         addr01 = info->read_ptr * info->unit_size;
         if ((driver01 != NULL) && (driver01->dev_read != NULL))
         {
-            if (true != driver01->dev_read(device01->dev, addr01, info->unit_size, buf))
+            if (0x00 > driver01->dev_read(device01->dev, block01->first_addr + addr01, info->unit_size, buf))
             {
-                return false;
+                return -1;
             }
             if (info->read_ptr < depth)
             {
@@ -857,7 +857,41 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
                 info->read_ptr = 0x00;
             }
             info->curr_num++;
-            return 0x00;
+            return info->unit_size;
+        }
+    }
+    return -1;
+}
+
+int nd_log_clean(struct instance_t* instance, uint32_t index)
+{
+    struct block_device_t* device01 = NULL, * device02 = NULL;
+    const struct driver_ops_t* driver01 = NULL, * driver02 = NULL;
+    struct resource_block_t* block01 = NULL, * block02 = NULL;
+    struct log_manager_t manager;
+    uint32_t addr02 = 0x00;
+    uint16_t len02 = 0x00;
+
+    memset((uint8_t*)&manager, 0x00, sizeof(struct log_manager_t));
+    device01 = look_up_device(instance, (uint8_t)(index >> 24));//查找设备   
+    //查找块
+    block01 = look_up_block(instance, device01, (uint8_t)(index >> 16));
+    if ((device01 != NULL) && (block01 != NULL) && (block01->hook != NULL))
+    {
+        device02 = look_up_device(instance, block01->relation_device);
+        block02 = look_up_block(instance, device02, block01->relation_name);
+        if ((device02 != NULL) && (block02 != NULL) && (block02->hook != NULL))
+        {
+            driver02 = device02->dev->dev_driver_ops;
+            if ((driver02 != NULL) && (driver02->dev_write != NULL))
+            {
+                block02->hook((uint16_t)index, &addr02, &len02, NULL);
+                if (0x00 > driver02->dev_write(device02->dev, block02->first_addr + addr02, sizeof(struct log_manager_t), (uint8_t*)&manager))
+                {
+                    return -1;
+                }
+                return 0x00;
+            }
         }
     }
     return -1;
