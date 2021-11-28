@@ -2,6 +2,7 @@
 #include "dlt698.h"
 #include "fifo.h"
 #include "lib_flash.h"  
+#include "uart_driver.h"
 
 struct status_ota_t g_status_ota;
 struct map_ota_t g_map_ota = {0};
@@ -9,54 +10,6 @@ struct download_ota_t  g_download_ota = {0};
 
 //no_init_ram
 struct start_ota_t g_start_ota;
-
-
-void memcopy(void *tb, void *sb, uint16_t length)
-{
-    uint8_t *tbuff = tb;
-    uint8_t *sbuff = sb;
-
-    // 先判断是否有正向移动重叠区域
-    if ((sbuff < tbuff) && (sbuff + length > tbuff))
-    {
-        /* 有就从反向移动 */
-        while (length != 0)                 //根据长度进行移动 
-        {
-            length--;
-            tbuff[length] = sbuff[length];  //移动
-        }
-    }
-    else                                    //其它情况进行正向移动
-    {
-        while (length != 0)
-        {
-            length--;
-            *tbuff++ = *sbuff++;            //移动 
-        }
-    }
-} 
-
-
-void ota_mcu_init(void)
-{
-}
-
-void ota_timer_init(void)
-{
-}
-
-void ota_uart_init(void)
-{
-  
-}
-
-uint32_t is_update()
-{
-    return 0x8338ddff;
-}
-
-
-
 
 
 static int ringbuffer_filter(struct fifo_t *buf, int (*callback)(void* ctx, uint8_t *b),void *ctx)
@@ -144,22 +97,22 @@ static int ota_server(struct fifo_t *fifo, void *pctx)
     switch (oad)
     {
         case get_status_ota_oad:
-            memcopy(apdu, (uint8_t*)&g_status_ota, sizeof(struct status_ota_t));
+            memcpy(apdu, (uint8_t*)&g_status_ota, sizeof(struct status_ota_t));
             len = sizeof(struct status_ota_t);
             break;
         case get_map_ota_oad:
-            memcopy(apdu, (uint8_t*)&g_map_ota, 4);
+            memcpy(apdu, (uint8_t*)&g_map_ota, 4);
             if(g_map_ota.bit_num > 4096)
                 g_map_ota.bit_num = 4096;
-            memcopy(apdu+4, (uint8_t*)&g_map_ota.bitmap, g_map_ota.bit_num);
+            memcpy(apdu+4, (uint8_t*)&g_map_ota.bitmap, g_map_ota.bit_num);
             len = 4 + g_map_ota.bit_num;
             break;
         case start_ota_oad:
-            memcopy((uint8_t*)&g_start_ota, apdu, sizeof(struct start_ota_t));
+            memcpy((uint8_t*)&g_start_ota, apdu, sizeof(struct start_ota_t));
             break;
             
         case download_ota_oad:
-            memcopy((uint8_t*)&g_download_ota, apdu, 8);
+            memcpy((uint8_t*)&g_download_ota, apdu, 8);
             g_download_ota.block_data = apdu+8;
             if(g_download_ota.block_no == 0)
             {
@@ -196,7 +149,93 @@ static int ota_server(struct fifo_t *fifo, void *pctx)
 
     return 0;
 }
-   
+ 
+void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uint8_t chl_type)
+{
+    struct uart_chl_init_t chl_init;
+#if 0
+    switch(chl_type)
+    {
+        case UART_RS4851_CHL:
+             chl_init.uart_cfg = (const void*)&Uart_InitType_485;
+             chl_init.mcu_uart_index = UART_RS4851_AT_MCU_UART_INDEX;
+             break;
+        case UART_IR_CHL:
+             chl_init.uart_cfg = (const void*)&Uart_InitType_ir;
+             chl_init.mcu_uart_index = UART_IR_AT_MCU_UART_INDEX;
+            break;
+        case UART_MODULE_CHL:
+             chl_init.uart_cfg = (const void*)&Uart_InitType_module;
+             chl_init.mcu_uart_index = UART_MODULE_AT_MCU_UART_INDEX;
+            break;
+        default:
+            break;
+    }
+#endif
+    chl_init.mcu_uart_index = chl_type;
+    chl_init.tx_fifo = txfifo;
+    chl_init.rx_fifo = rxfifo;
+    chl_init.chl_type = chl_type;    
+    uart_chl_initialize(&chl_init);
+}
+
+
+
+void ota_mcu_init(void)
+{
+}
+
+void ota_timer_init(void)
+{
+}
+#define FIFO_RX_BUF_SIZE_RS485 2048
+#define FIFO_TX_BUF_SIZE_RS485 512
+struct fifo_t fifo_rx_rs485={0};
+uint8_t rx_rs485_buf[FIFO_RX_BUF_SIZE_RS485] = {0};
+struct fifo_t fifo_tx_rs485={0};
+uint8_t tx_rs485_buf[FIFO_TX_BUF_SIZE_RS485] = {0};
+
+#define FIFO_RX_BUF_SIZE_IR 2048
+#define FIFO_TX_BUF_SIZE_IR 512
+struct fifo_t fifo_rx_ir={0};
+uint8_t rx_ir_buf[FIFO_RX_BUF_SIZE_IR] = {0};
+struct fifo_t fifo_tx_ir={0};
+uint8_t tx_ir_buf[FIFO_TX_BUF_SIZE_IR] = {0};
+
+#define FIFO_RX_BUF_SIZE_PLC 2048
+#define FIFO_TX_BUF_SIZE_PLC 512
+struct fifo_t fifo_rx_plc={0};
+uint8_t rx_plc_buf[FIFO_RX_BUF_SIZE_PLC] = {0};
+struct fifo_t fifo_tx_plc={0};
+uint8_t tx_plc_buf[FIFO_TX_BUF_SIZE_PLC] = {0};
+
+#define  UART_RS4851_AT_MCU_UART_INDEX   0
+#define  UART_MODULE_AT_MCU_UART_INDEX   4
+#define  UART_IR_AT_MCU_UART_INDEX       5
+
+
+void ota_uart_init(void)
+{
+    fifoBuf_init(&fifo_rx_rs485, rx_rs485_buf, FIFO_RX_BUF_SIZE_RS485);
+    fifoBuf_init(&fifo_tx_rs485, tx_rs485_buf, FIFO_TX_BUF_SIZE_RS485);
+    communication_chlx_init(&fifo_rx_rs485, &fifo_tx_rs485, UART_RS4851_AT_MCU_UART_INDEX);
+    
+    fifoBuf_init(&fifo_rx_ir, rx_ir_buf, FIFO_RX_BUF_SIZE_IR);
+    fifoBuf_init(&fifo_tx_ir, tx_ir_buf, FIFO_TX_BUF_SIZE_IR);
+    communication_chlx_init(&fifo_rx_ir, &fifo_tx_ir, UART_IR_AT_MCU_UART_INDEX);
+    
+    fifoBuf_init(&fifo_rx_plc, rx_plc_buf, FIFO_RX_BUF_SIZE_PLC);
+    fifoBuf_init(&fifo_tx_plc, tx_plc_buf, FIFO_TX_BUF_SIZE_PLC);
+    communication_chlx_init(&fifo_rx_plc, &fifo_tx_plc, UART_MODULE_AT_MCU_UART_INDEX);
+    
+}
+
+uint32_t is_update()
+{
+    return 0x8338ddff;
+}
+
+
 int main(int argc, char** argv)
 {
     uint32_t time_out = 0;

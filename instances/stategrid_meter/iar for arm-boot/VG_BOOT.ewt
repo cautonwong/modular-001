@@ -2451,25 +2451,13 @@
                 <name>$PROJ_DIR$\..\..\..\packages\drivers\iic_driver.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\ndv_Norflash.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\spi_driver.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\uart_driver.c</name>
+                <name>$PROJ_DIR$\..\..\..\packages\boot\uart_driver.c</name>
             </file>
         </group>
         <group>
             <name>kernel</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\kernel\bitarithm.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\packages\kernel\fifo.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\packages\kernel\utils.c</name>
+                <name>$PROJ_DIR$\..\..\..\packages\boot\fifo.c</name>
             </file>
         </group>
         <group>
@@ -2482,7 +2470,4 @@
             <name>$PROJ_DIR$\..\..\..\packages\boot\boot.h</name>
         </file>
     </group>
-    <file>
-        <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\cpu_surport.h</name>
-    </file>
 </project>

@@ -1,16 +1,14 @@
 ﻿#ifndef __BOOT_H__
 #define __BOOT_H__
 
-typedef signed char        int8_t;
-typedef short              int16_t;
-typedef int                int32_t;
-typedef long long          int64_t;
-typedef unsigned char      uint8_t;
-typedef unsigned short     uint16_t;
-typedef unsigned int       uint32_t;
-typedef unsigned long long uint64_t;
+#include "types.h"
+#include <assert.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stddef.h>
 
-typedef unsigned int       size_t;
 
 //测试缓冲区某位是否为1
 #define	is_bitmap(a,x)	((a)[(x)/8] & (1<<((x)%8)))
