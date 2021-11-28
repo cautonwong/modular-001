@@ -32,7 +32,7 @@ static void init_event(log_Event* ev, void* udata)
     if (!ev->time)
     {
         time_t t = time(NULL);
-       // ev->time = localtime(&t);
+        ev->time = localtime(&t);
     }
     ev->udata = udata;
 }

@@ -83,8 +83,7 @@ struct pipeline_t* pipelines[] =
 };
 
 uint8_t nd_memory[20 * 1024];
-
-int test_resource_setup(int argc, char** argv)
+int test_resource_setup(void** state)
 {
     struct instance_t* instance = NULL;
     struct recipe_t *recipe = NULL;
@@ -144,16 +143,27 @@ int test_resource_setup(int argc, char** argv)
     //注册FLASH
     add_device(instance, RES_DEV_FLASH, &nor_flash_dev);
 
-    return 0x01;
+    *state = instance;
+    return 0;
 }
 
 #include "log.h"
 
 extern void test_add_device(void** state);
+extern void test_add_block_one_byte(void** state);
+extern void test_add_block_same_block_name(void** state);
+extern void test_add_block_500_byte(void** state);
+extern void test_add_block_10K_byte(void** state);
+extern void test_add_block_out_of_gauge(void** state);
 int main(int argc, char** argv)
 {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_add_device),     //测试设备增加，和查找
+        cmocka_unit_test(test_add_block_one_byte),     
+        cmocka_unit_test(test_add_block_same_block_name),     
+        cmocka_unit_test(test_add_block_500_byte),     
+        cmocka_unit_test(test_add_block_10K_byte),     
+        cmocka_unit_test(test_add_block_out_of_gauge),
     };
 
     return cmocka_run_group_tests(tests, test_resource_setup, NULL);

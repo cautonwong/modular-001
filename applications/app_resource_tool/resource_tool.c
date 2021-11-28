@@ -94,8 +94,13 @@ uint32_t *add_block(struct instance_t* instance, uint8_t device_name, uint8_t bl
     device = look_up_device(instance,device_name);//先获取自己的device
     if (device != NULL)
     {
-        block = look_up_block(instance, device, block_name);//在找block
+        //判断申请的字节有没有超限
+        if ((device->used + block_size) > device->size)
+        {
+            return NULL;
+        }
 
+        block = look_up_block(instance, device, block_name);//在找block
         if (block == NULL)
         {
             re_block = look_up_block(instance, look_up_device(instance, instance->ram_device), instance->resource_block);
@@ -133,6 +138,11 @@ uint32_t *add_inside_block(struct instance_t* instance, uint8_t device_name,uint
     device = look_up_device(instance, device_name);//先获取device
     if (device != NULL)
     {
+        //判断申请的字节有没有超限
+        if ((device->used + block_size) > device->size)
+        {
+            return NULL;
+        }
         block = look_up_block(instance, device, block_name);//在找block
         ram_device = look_up_device(instance, instance->ram_device); //获取ram_device
 
@@ -241,7 +251,7 @@ int8_t add_device(struct instance_t* instance, uint8_t device_name, const struct
         list_add_tail(&device->sibling, &instance->dev_list);
     }
     
-    return 0;
+    return 1;
 }
 
 struct resource_map_t* register_map(struct instance_t* instance,uint8_t map_name,
@@ -431,8 +441,12 @@ uint32_t* __register(struct instance_t* instance, uint8_t device_name, uint8_t b
     device = look_up_device(instance, device_name);//先获取自己的device
     if (device != NULL)
     {
+        //判断申请的字节有没有超限
+        if ((device->used + block_size) > device->size)
+        {
+            return NULL;
+        }
         block = look_up_block(instance, device, block_name);//在找block
-
         if (block == NULL)
         {
             re_block = look_up_block(instance, look_up_device(instance, instance->ram_device), instance->resource_block);
