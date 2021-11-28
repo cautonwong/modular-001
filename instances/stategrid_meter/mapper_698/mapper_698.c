@@ -15,11 +15,45 @@ extern int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* bu
 extern int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
 
 extern int GET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+extern int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
 extern int GET_6_Collection(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
 extern int GET_7_Aggregate(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
 extern int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
 extern int GET_e_Monitor(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
 extern int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+
+struct record_storage_id_info_t
+{
+    uint16_t save_index;  // 记录存储地址信息
+    uint16_t capture_index; // 关联对象存储地址信息
+    uint16_t sequence_index;// 序号存储地址信息
+};
+// 通过oad 获取 事件相关的存储地址信息
+int get_record_id_info(uint32_t oad, struct record_storage_id_info_t* info)
+{
+ 
+    uint16_t CaptureId, SaveId, SeqId;
+    uint8_t SaveDevice, SaveBlock;
+
+    switch (oad)
+    {
+    case 0x30050700:
+        SaveId = OverCurrentL1;
+        SaveDevice = RES_DEV_EEPROM;
+        SaveBlock = 0x09;
+        CaptureId = OverCurrentL1_oad;
+        SeqId = OverCurrentL1_index;
+        break;
+    default:
+        return -1;
+        break;
+    }
+
+    info->save_index = ((SaveDevice << 24) + (SaveBlock << 16) + SaveId);
+    info->capture_index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + CaptureId);
+    info->sequence_index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + SeqId);
+    return 1;
+}
 
 
 int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj)
