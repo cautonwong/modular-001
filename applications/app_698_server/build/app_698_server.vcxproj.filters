@@ -166,6 +166,24 @@
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Response_8502.c">
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Request_0701.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Request_0702.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Request_0703.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Response_8701.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Response_8702.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Response_8703.c">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dl698">
@@ -257,6 +275,27 @@
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </None>
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Response_8502.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Request_0701.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Request_0702.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Request_0703.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Response_8701.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Response_8702.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Response_8703.json">
+      <Filter>test_case\test_app_698_server_uniformity</Filter>
+    </None>
+    <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_CONNECT_Request.yaml">
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </None>
   </ItemGroup>
