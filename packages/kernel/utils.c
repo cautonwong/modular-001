@@ -95,6 +95,20 @@ uint16_t buf_to_uint16_msb(uint8_t* buf)
 	return ((uint16_t)buf[0] << 8) + buf[1];
 }
 
+uint16_t buf_to_uint16_lsb(uint8_t *buf)
+{
+    uint16_t data = 0;
+
+    data = ((uint16_t)buf[1] << 8) + buf[0];
+    return data;
+}
+
+uint8_t uint16_to_buf_lsb(uint16_t data, uint8_t *buf)
+{
+    buf[0] = (uint8_t)data;
+    buf[1] = (uint8_t)(data >> 8);
+    return 2;
+}
 
 uint32_t buf_to_uint32_msb(uint8_t* buf)
 {

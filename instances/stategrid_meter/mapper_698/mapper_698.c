@@ -70,10 +70,12 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
     case RESOURCE_MAP_698_SET:
       	switch (OIA1)
         {
-        case 0x4://参变量
-            return SET_4_Parameter(instance, id, buf,obj);
         case 0x3:// 事件
             return SET_3_Event(instance, id, buf, obj);
+        case 0x4://参变量
+            return SET_4_Parameter(instance, id, buf,obj);
+        case 0x5:// 事件
+            return SET_5_Frozen(instance, id, buf, obj);
         default:
             break;
         }

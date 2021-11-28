@@ -183,6 +183,19 @@ struct oad_t
     struct coder_t* coder;
 };
 
+// 分钟冻结关联对象 数据信息包
+struct frozen_obj_t
+{
+    uint16_t PeriodId;
+    uint16_t PeriodLen;
+    uint16_t CaptureId;
+    uint16_t CaptureLen;
+    uint16_t DepthId;
+    uint16_t DepthLen;
+};
+
+
+
 
 extern int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 

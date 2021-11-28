@@ -44,12 +44,26 @@ const struct parameter_item_t  parameter_item[] =
 {
     { OverCurrentL1,       sizeof(struct log_manager_t)},// 管理区
 
-    //{ MinuteFreeze1,       sizeof(struct log_manager_t)},
+    { MinuteFreeze1,       sizeof(struct log_manager_t)},// 分冻结8个方案，管理区申请8个？
+    { MinuteFreeze2,       sizeof(struct log_manager_t)},
+    { MinuteFreeze3,       sizeof(struct log_manager_t)},
+    { MinuteFreeze4,       sizeof(struct log_manager_t)},
+    { MinuteFreeze5,       sizeof(struct log_manager_t)},
+    { MinuteFreeze6,       sizeof(struct log_manager_t)},
+    { MinuteFreeze7,       sizeof(struct log_manager_t)},
+    { MinuteFreeze8,       sizeof(struct log_manager_t)},
 
-    { OverCurrentL1_oad,   45 }, //oad列表 1+ 4*11     默认8个
-    //{ MinuteFreeze_oad,    45 }, //oad列表 1+ 4*11     默认7个
+
+    { OverCurrentL1_oad,   61 }, //oad列表 1+ 4*15     默认8个     先统一预留15个关联
+    { MinuteFreeze_oad,    61 }, //oad列表 1+ 4*15     默认7个
 
     { OverCurrentL1_index, 4  },//记录序号
+
+    { MinuteFreeze_period,  24 }, //分钟冻结 周期   3*8     
+    { MinuteFreeze_depth,   31}, //分钟冻结 深度     2*15  统一冻结深度31字节
+    
+
+
 
 };
 
