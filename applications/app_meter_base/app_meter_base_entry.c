@@ -289,7 +289,7 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 
                 //调用ND_SET保存数据
                 index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + RecordId);
-                circular_image_set(instance, index, data_buff, (pdata - data_buff),NULL);
+                nd_log_append(instance, index, data_buff, (pdata - data_buff),NULL);
                 index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + SequenceId);
                 nd_set_index(instance, index, (uint8_t*)&sequence, sizeof(sequence));
                 break;

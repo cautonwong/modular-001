@@ -711,7 +711,7 @@ int16_t search_circular(struct instance_t* instance, const struct dev_info_t* de
     return -1;
 }
 
-int16_t circular_image_set(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t unit_size, struct circular_info_t* info)
+int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t unit_size, struct nd_log_info* info)
 {
     struct block_device_t* device01 = NULL, * device02 = NULL;
     const struct driver_ops_t* driver01 = NULL, * driver02 = NULL;
@@ -788,7 +788,7 @@ int16_t circular_image_set(struct instance_t* instance, uint32_t index, uint8_t*
     return -1;
 }
 
-int16_t circular_image_get(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t buf_size, struct circular_info_t* info)
+int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t buf_size, struct circular_info_t* info)
 {
     struct block_device_t* device01 = NULL, * device02 = NULL;
     const struct driver_ops_t* driver01 = NULL, * driver02 = NULL;
