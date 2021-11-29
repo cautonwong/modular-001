@@ -48,7 +48,7 @@ struct start_ota_t
     uint32_t bin_size;//文件大小 double-long-unsigned，
     uint32_t block_size;//128,256,512,1024,2048
     uint32_t type;//0x38de82ac-全包,0x9267becc-定点,0xa8e62b0c-差分
-    uint8_t  check_VAL[16];//校验值
+    uint16_t check;//校验值
 };
 
 

@@ -2445,12 +2445,6 @@
         <group>
             <name>drivers</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\eeprom.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\iic_driver.c</name>
-            </file>
-            <file>
                 <name>$PROJ_DIR$\..\..\..\packages\boot\uart_driver.c</name>
             </file>
         </group>

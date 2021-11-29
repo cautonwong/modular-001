@@ -214,14 +214,19 @@ const struct uart_irq_list_t uart_irq_list[] =
 };
 
 
-
+extern uint8_t rs485_rx_time_out;
 uint8 _uart_time_process(struct uart_chl_init_t *chl)
 {
     uint8_t send_data;
     
-    if(chl->rx_time_out > 0)
+    if(chl->rx_time_out < 0xFFFFFFF0)
     {
         chl->rx_time_out--;
+        if(chl->rx_time_out == 0)
+        {
+            chl->rx_time_out = 0xFFFFFFFF;
+            rs485_rx_time_out = 1;
+        }
     }
     
     if(chl->tx_time_out > 0)
@@ -279,7 +284,7 @@ int uart_chl_initialize(struct uart_chl_init_t *uart_chl)
         uart_dev[index].uart_cfg = uart_chl->uart_cfg;
         uart_dev[index].mcu_uart_index = uart_chl->mcu_uart_index;
         uart_dev[index].chl_type = uart_chl->chl_type;
-        uart_dev[index].rx_time_out = 0;
+        uart_dev[index].rx_time_out = 0xFFFFFFFF;
         uart_dev[index].tx_time_out = 0;
         switch(uart_chl->chl_type)
         {
