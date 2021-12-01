@@ -24,7 +24,7 @@
 
 
 //F0010300 文件传输状态  get
-#define  get_status_ota_oad  0xF0010300
+#define  get_status_ota_oad  0x000301f0
 struct status_ota_t
 {
     uint16_t statu_1;
@@ -32,7 +32,7 @@ struct status_ota_t
 };
 
 //F0010400 读取位图信息  get
-#define  get_map_ota_oad  0xF0010400
+#define  get_map_ota_oad  0x000401f0
 struct map_ota_t
 {
     uint32_t bit_num;
@@ -41,7 +41,7 @@ struct map_ota_t
 
 
 //F0010700 启动传输      action
-#define start_ota_oad  0xF0010700
+#define start_ota_oad  0x000701f0
 struct start_ota_t
 {
     uint32_t bin_ver; //版本信息    
@@ -53,7 +53,7 @@ struct start_ota_t
 
 
 //F0010800 传输中        action
-#define download_ota_oad 0xF0010800
+#define download_ota_oad 0x000801f0
 struct download_ota_t
 {
     uint32_t block_no;      //块序号

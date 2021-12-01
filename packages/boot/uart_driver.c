@@ -14,7 +14,7 @@
 #include "uart_driver.h"
 
 
-#define MCU_UART_NUM    7
+#define MCU_UART_NUM    6
 
 
 #define BAUD_CHG_FLAG    0x01
@@ -210,7 +210,6 @@ const struct uart_irq_list_t uart_irq_list[] =
     {ndv_uart3_tx,ndv_uart3_rx},
     {ndv_uart4_tx,ndv_uart4_rx},
     {ndv_uart5_tx,ndv_uart5_rx},
-    {ndv_uart6_tx,ndv_uart6_rx},
 };
 
 

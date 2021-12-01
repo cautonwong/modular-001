@@ -1,5 +1,29 @@
 #include "nidavellir.h"
 
+void memcopy(void *tb, void *sb, uint16 length)
+{
+    uint8 *tbuff = tb;
+    uint8 *sbuff = sb;
+
+    if ((sbuff < tbuff) && (sbuff + length > tbuff))
+    {
+        while (length != 0) 
+        {
+            length--;
+            tbuff[length] = sbuff[length]; 
+        }
+    }
+    else  
+    {
+        while (length != 0)
+        {
+            length--;
+            *tbuff++ = *sbuff++; 
+        }
+    }
+} 
+
+
 
 // *****************************************************************************
 // circular buffer functions
@@ -355,7 +379,7 @@ uint16_t fifoBuf_getDataPeek(struct fifo_t *buf, void *data, uint16_t len)
         uint16_t j = buf_size - rd;
         if (j > num_bytes)
             j = num_bytes;
-        memcpy(p + i, buff + rd, j);
+        memcopy(p + i, buff + rd, j);
         i += j;
         num_bytes -= j;
         rd += j;
@@ -390,7 +414,7 @@ uint16_t fifoBuf_getData(struct fifo_t *buf, void *data, uint16_t len)
         uint16_t j = buf_size - rd;
         if (j > num_bytes)
             j = num_bytes;
-        memcpy(p + i, buff + rd, j);
+        memcopy(p + i, buff + rd, j);
         i += j;
         num_bytes -= j;
         rd += j;
@@ -616,7 +640,7 @@ uint16_t fifoBuf_putData(struct fifo_t *buf, const void *data, uint16_t len)
         uint16_t j = buf_size - wr;
         if (j > num_bytes)
             j = num_bytes;
-        memcpy(buff + wr, p + i, j);
+        memcopy(buff + wr, p + i, j);
         i += j;
         num_bytes -= j;
         wr += j;

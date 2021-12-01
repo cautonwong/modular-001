@@ -4,9 +4,9 @@
 #include "lib_flash.h"  
 #include "uart_driver.h"
 
-#define  base_addr  0x2000
+#define  base_addr  0x00002000
 
-const UART_InitType  Uart_InitType_485 = 
+UART_InitType  Uart_InitType_485 = 
 {
     UART_MODE_Msk,
     UART_PARITY_EVEN_LIB,
@@ -14,7 +14,7 @@ const UART_InitType  Uart_InitType_485 =
     UART_FIRSTBIT_LSB,
     9600,
 };
-const UART_InitType  Uart_InitType_module = 
+UART_InitType  Uart_InitType_module = 
 {
     UART_MODE_Msk,
     UART_PARITY_EVEN_LIB,
@@ -22,7 +22,7 @@ const UART_InitType  Uart_InitType_module =
     UART_FIRSTBIT_LSB,
     9600,
 };
-const UART_InitType  Uart_InitType_ir = 
+UART_InitType  Uart_InitType_ir = 
 {
     UART_MODE_Msk,
     UART_PARITY_EVEN_LIB,
@@ -31,7 +31,7 @@ const UART_InitType  Uart_InitType_ir =
     1200,
 };
 
-
+extern void memcopy(void *tb, void *sb, uint16_t length);
 struct status_ota_t g_status_ota;
 struct map_ota_t g_map_ota = {0};
 struct download_ota_t  g_download_ota = {0};
@@ -124,33 +124,31 @@ static int ota_server(struct fifo_t *fifo, void *pctx)
         switch (oad)
         {
             case get_status_ota_oad:
-                memcpy(apdu, (uint8_t*)&g_status_ota, sizeof(struct status_ota_t));
+                memcopy(apdu, (uint8_t*)&g_status_ota, sizeof(struct status_ota_t));
                 len = sizeof(struct status_ota_t);
                 break;
             case get_map_ota_oad:
-                memcpy(apdu, (uint8_t*)&g_map_ota, 4);
+                memcopy(apdu, (uint8_t*)&g_map_ota, 4);
                 if(g_map_ota.bit_num > 4096)
                     g_map_ota.bit_num = 4096;
-                memcpy(apdu+4, (uint8_t*)&g_map_ota.bitmap, g_map_ota.bit_num);
+                memcopy(apdu+4, (uint8_t*)&g_map_ota.bitmap, g_map_ota.bit_num);
                 len = 4 + g_map_ota.bit_num;
                 break;
             case start_ota_oad:
-                memcpy((uint8_t*)&g_start_ota, apdu, sizeof(struct start_ota_t) - 2);
-                fifo->rd += sizeof(struct start_ota_t) - 2;
+                memcopy((uint8_t*)&g_start_ota, apdu, sizeof(struct start_ota_t) - 2);
+                len= sizeof(struct start_ota_t) - 2;
                 break;
                 
             case download_ota_oad:
-                //memcpy((uint8_t*)&g_download_ota, apdu, 8);
+                memcopy((uint8_t*)&g_download_ota, apdu, 8);
                 g_download_ota.block_data = apdu+8;
-                
-                g_download_ota.block_no++;
-                fifo->rd += 512;
+                len = g_download_ota.block_len + 8;
                 
                 if(g_download_ota.block_no == 0)
                 {
                     
                 }
-                //if(0x38de82ac == g_start_ota.type)//全包升级
+                if(0x38de82ac == g_start_ota.type)//全包升级
                 {
                     if(0 == is_bitmap(g_map_ota.bitmap, g_download_ota.block_no))
                     {
@@ -158,7 +156,7 @@ static int ota_server(struct fifo_t *fifo, void *pctx)
                         if(0 == (Addr % 4096))
                             FLASH_SectorErase(Addr);
                         
-                        FLASH_ProgramWord(Addr, (uint32_t *)apdu, g_download_ota.block_len);
+                        FLASH_ProgramWord(Addr, (uint32_t *)g_download_ota.block_data, g_download_ota.block_len);
                         //位图标记
                         set_bitmap(g_map_ota.bitmap, g_download_ota.block_no);
                     }
@@ -178,10 +176,15 @@ static int ota_server(struct fifo_t *fifo, void *pctx)
                 break;
         }
     }
+    for(uint16_t k=0; k<len ; k++)
+        fifoBuf_getByte(fifo);
+    
     fifoBuf_getByte(fifo);
     fifoBuf_getByte(fifo);
     fifoBuf_getByte(fifo);
     fifoBuf_getByte(fifo);//16
+    ctx->step = 0;
+    //memset(ctx, 0, sizeof(struct context_698_t));
     return 0;
 }
  
@@ -300,7 +303,9 @@ int main(int argc, char** argv)
             time_out++;
             if ((rs485_rx_time_out)&&(fifoBuf_getUsed(fifo) >= 24))//数据帧大于最小长度
             {
-                rs485_rx_time_out = 0;
+                //if(fifoBuf_getUsed(fifo) == 0)
+                    rs485_rx_time_out = 0;
+                
                 int r = ringbuffer_filter(fifo, matcher_698, &ctx);
                 if (r > 0)
                 {
