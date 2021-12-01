@@ -12,7 +12,7 @@
   */
 #include "lib_iso7816.h"
 #include "lib_clk.h"
-
+#include "lib_conf.h"
 //registers default reset values
 #define ISO7816_BAUDDIVL_RSTValue   0
 #define ISO7816_BAUDDIVH_RSTValue   0

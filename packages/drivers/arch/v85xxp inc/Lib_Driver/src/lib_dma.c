@@ -11,7 +11,7 @@
   ******************************************************************************
   */
 #include "lib_dma.h"
-
+#include "lib_conf.h"
 //registers default reset values
 #define DMA_CxCTL_RSTValue      (0UL)
 #define DMA_CxSRC_RSTValue      (0UL)

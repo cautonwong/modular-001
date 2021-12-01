@@ -11,7 +11,7 @@
   ******************************************************************************
   */
 #include "lib_i2c.h"
-
+#include "lib_conf.h"
 //registers default reset values
 #define I2C_ADDR_RSTValue       0
 #define I2C_CTRL_RSTValue       0

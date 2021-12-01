@@ -180,26 +180,6 @@ void ndv_uart5_tx(void)
     }
 }
 
-void ndv_uart6_rx(void)
-{
-    uint8_t rcv_data = 0;
-    if (true == mcu_uart_recive_byte(&rcv_data, 6))
-    {
-        fifoBuf_putByte(uart_dev[6].rx_fifo, rcv_data);
-        uart_dev[6].rx_time_out = UART_RX_TIME_OUT;
-    }
-}
-
-void ndv_uart6_tx(void)
-{
-    uint8_t tx_data = 0;
-    if (fifoBuf_getUsed(uart_dev[6].tx_fifo) > 0)
-    {
-        tx_data = fifoBuf_getByte(uart_dev[6].tx_fifo);
-        mcu_uart_send_byte(tx_data, 0);
-        uart_dev[6].tx_time_out = UART_TX_TIME_OUT;
-    }
-}
 
 
 const struct uart_irq_list_t uart_irq_list[] =
@@ -259,7 +239,7 @@ uint8 _uart_time_process(struct uart_chl_init_t *chl)
     return true;
 }
 
-int uart_time_process(void)
+void uart_time_process(void)
 {
     for(uint8_t i =0 ; i<6; i++)
     {
