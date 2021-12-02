@@ -106,7 +106,6 @@ static int ota_server(struct fifo_t *fifo, void *pctx)
     uint32_t oad = 0;
     uint32_t Addr = 0;
     uint16_t len = 0;        
-    uint8_t oad_buf[4];
     uint8_t *apdu;
     
     fifoBuf_removeData(fifo, 9 + SA_LEN(ctx->SA));
@@ -225,7 +224,7 @@ void ota_mcu_init(void)
 
 void ota_timer_init(void)
 {
-    extern int uart_time_process(void);
+    extern void uart_time_process(void);
     ndv_isr_handle_regsit(uart_time_process , 0);
     
     cm0_systick_init(1);

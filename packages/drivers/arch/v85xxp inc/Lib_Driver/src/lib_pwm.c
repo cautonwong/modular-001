@@ -11,7 +11,7 @@
   ******************************************************************************
   */
 #include "lib_pwm.h"
-
+#include "lib_conf.h"
 /**
   * @brief  PWM timebase initialization.
   * @param  PWMx: PWM0~PWM3

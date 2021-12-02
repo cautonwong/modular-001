@@ -11,7 +11,7 @@
   ******************************************************************************
   */
 #include "lib_comp.h"
-
+#include "lib_conf.h"
 extern __IO uint32_t ana_reg3_tmp;
 /**
   * @brief  Comparator debounce configure.

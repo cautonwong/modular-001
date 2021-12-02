@@ -11,7 +11,7 @@
   ******************************************************************************
   */
 #include "lib_crypt.h"
-
+#include "lib_conf.h"
 /**
   * @brief  Configure PTRA register, data in this address will be read out to do 
   *         the CRYPT calculation
