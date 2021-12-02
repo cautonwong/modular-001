@@ -277,6 +277,8 @@
 #define    MinuteFreeze7                 176     //分钟冻结记录方案7
 #define    MinuteFreeze8                 177     //分钟冻结记录方案8
 #define    HourFreeze                    178     //小时冻结
+#define    DayFreeze                     179     //日冻结
+#define    MonthFreeze                   180     //日冻结
 //-----------------------------------------------------------------------
 
 
@@ -293,6 +295,11 @@
 #define    MinuteFreeze_depth           232  //分钟冻结 深度   2*8 
 #define    HourFreeze_period            233  //小时冻结 周期   3
 #define    HourFreeze_depth             234  //小时冻结 深度   2
+#define    DayFreeze_period            233  //小时冻结 周期   3
+#define    DayFreeze_depth             234  //小时冻结 深度   2
+#define    MonthFreeze_period            233  //小时冻结 周期   3
+#define    MonthFreeze_depth             234  //小时冻结 深度   2
+
 
 #define         MAX_FEE_NO                 12                                  
 

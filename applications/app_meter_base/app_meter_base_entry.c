@@ -385,6 +385,8 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
 
           ia_over_event_judge(instance, pipeline, mesg); //TEST
           
+          freeze_pro(instance, pipeline, mesg);
+
           Display(instance, pipeline);
 
           break;

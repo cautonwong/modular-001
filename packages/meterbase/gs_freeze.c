@@ -61,7 +61,6 @@ int minute_freeze_judge(struct instance_t* instance, struct pipeline_t* task, st
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
     uint8_t i, period[24];
-    uint16_t timeinv = 0;
     uint32_t index;
     struct tm record_time;
     uint16_t PeriodID = MinuteFreeze_period;
@@ -87,7 +86,7 @@ int minute_freeze_judge(struct instance_t* instance, struct pipeline_t* task, st
 int hour_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
-    uint8_t i, period[24];
+    uint8_t period[24];
     uint16_t timeinv = 0;
     uint32_t index;
     struct tm record_time;
@@ -110,13 +109,70 @@ int hour_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
     return 1;
 }
 
+int day_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+{
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
+    uint8_t period[24];
+    uint32_t index;
+    struct tm record_time;
+    uint16_t PeriodID = DayFreeze_period;
+    uint16_t FlagID = DayFreeze;
 
+    if ((instance->time.tm_sec != 0) || (instance->time.tm_min != 0) || (instance->time.tm_hour != 0))
+    {
+        return -1;
+    }
+
+    //读最近一次冻结时间 比较当前时间记录是否已存在   待添加
+    //待添加
+
+    // 周期
+    index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + PeriodID);
+    nd_get_index(instance, index, &period[0], sizeof(period));
+
+    if (1 == freeze_judge(instance, &period[0], 60*24, &record_time))
+    {
+        send_recordflag_mesg(instance, task, mesg, FlagID, NULL);
+    }
+
+    return 1;
+}
+
+int month_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+{
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
+    uint8_t period[24];
+    uint32_t index;
+    struct tm record_time;
+    uint16_t PeriodID = MonthFreeze_period;
+    uint16_t FlagID = MonthFreeze;
+
+    if ((instance->time.tm_sec != 0) || (instance->time.tm_min != 0) || (instance->time.tm_hour != 0))
+    {
+        return -1;
+    }
+
+    //读最近一次冻结时间 比较当前时间记录是否已存在   待添加
+    //待添加
+
+    // 周期
+    index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + PeriodID);
+    nd_get_index(instance, index, &period[0], sizeof(period));
+
+    if (1 == freeze_judge(instance, &period[0], 60 * 24, &record_time))
+    {
+        send_recordflag_mesg(instance, task, mesg, FlagID, NULL);
+    }
+
+    return 1;
+}
 
 // 每秒调用
 int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     minute_freeze_judge(instance, task, mesg);
     hour_freeze_judge(instance, task, mesg);
+    day_freeze_judge(instance, task, mesg);
 }
 
 
