@@ -3,7 +3,7 @@
 
 
 
-int SET_4wwwwwwwwww_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
+int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
 {    
     struct mbase_control_block_t* mbase_cb;
     
