@@ -2351,6 +2351,9 @@
                 <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_emu_err_event.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_freeze.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_i_over_event.c</name>
             </file>
             <file>

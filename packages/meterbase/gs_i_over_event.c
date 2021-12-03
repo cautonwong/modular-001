@@ -102,6 +102,7 @@ int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, st
     uint32_t *accumulate_time = &ctrl_block->ia_over_accumulate_time;
     uint16_t RecordId = OverCurrentL1;
 
+    result =  1;
 #if 1    
     if (threshold == 0) // 限值为0
     {
@@ -116,7 +117,7 @@ int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, st
 
     result = event_duration_pro(duration_para, duration, state, task, RecordId);
 #endif   
-    result =  1;
+    
     if (result != 0)
     {
         mesg->from = kernel;

@@ -267,7 +267,7 @@
 #define    battery1_under2v8            165 //时钟电池欠压
 #define    battery2_under4v8            166 //停抄电池欠压
   
-//冻结
+//冻结     需连续
 #define    MinuteFreeze1                 170     //分钟冻结记录方案1
 #define    MinuteFreeze2                 171     //分钟冻结记录方案2
 #define    MinuteFreeze3                 172     //分钟冻结记录方案3
@@ -276,23 +276,31 @@
 #define    MinuteFreeze6                 175     //分钟冻结记录方案6
 #define    MinuteFreeze7                 176     //分钟冻结记录方案7
 #define    MinuteFreeze8                 177     //分钟冻结记录方案8
-
+#define    HourFreeze                    178     //小时冻结
+#define    DayFreeze                     179     //日冻结
+#define    MonthFreeze                   180     //日冻结
 //-----------------------------------------------------------------------
 
 
 //存储EE块号
-//-----关联对象列表 存储EE块号
+        //-----关联对象列表 存储EE块号
 #define    OverCurrentL1_oad            200  // A相电能表过流事件 
 
 #define    MinuteFreeze_oad             201     // 分钟冻结关联对象
 
 
 //-----记录序号
-#define    OverCurrentL1_index          230  // A相电能表过流事件 
+#define    OverCurrentL1_index          230  // A相电能表过流事件 记录序号
 #define    MinuteFreeze_period          231  //分钟冻结 周期   3*8   每种方案3个字节，第一个字节为0，表示该周期值无效，非零值表示该周期值有效，后面2个字节表示周期值
-#define    MinuteFreeze_depth           232  //分钟冻结 周期   2*8 
+#define    MinuteFreeze_depth           232  //分钟冻结 深度   2*8 
+#define    HourFreeze_period            233  //小时冻结 周期   3
+#define    HourFreeze_depth             234  //小时冻结 深度   2
+#define    DayFreeze_period            233  //小时冻结 周期   3
+#define    DayFreeze_depth             234  //小时冻结 深度   2
+#define    MonthFreeze_period            233  //小时冻结 周期   3
+#define    MonthFreeze_depth             234  //小时冻结 深度   2
 
-                                  
+
 #define         MAX_FEE_NO                 12                                  
 
 #endif

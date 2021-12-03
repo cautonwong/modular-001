@@ -282,7 +282,7 @@ int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, struct 
     }
     switch (id)
     {
-    case 0x50050300://关联对象属性表
+    case 0x50020300://关联对象属性表
     {
         uint8_t dar = DAR_SUCCESS;
         struct frozen_obj_t frozen_obj;
