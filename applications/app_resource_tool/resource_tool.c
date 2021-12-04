@@ -386,7 +386,12 @@ int16_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
 
 int16_t nd_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
 {
-  return -1;
+    struct resources_obj_t obj;
+    int16_t ret = 0x00;
+
+    ret = look_up_map(instance, id, buf, 0x02, &obj);
+
+    return ret;
 }
 
 int16_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size)

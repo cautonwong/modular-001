@@ -232,7 +232,9 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     fr_rx_data_from_serial(instance, &pl_rx_from_serial, &mesg);
 #endif
     //接收时钟更新信号的处理
+#ifndef WIN32
     irq_transform_to_instance(instance);
+#endif // !WIN32
 
     fr_sw_rtc(instance, NULL, &mesg);
 
@@ -381,7 +383,7 @@ int recv_mesg_header(struct instance_t* instance, struct pipeline_t* pipeline, s
         return r;
         if (MSG_MAGIC == mesg->magic)
         {
-            check = nd_get_crc16((uint8_t*)mesg, sizeof(struct message_t) - 2);
+//            check = nd_get_crc16((uint8_t*)mesg, sizeof(struct message_t) - 2);
             if (check == mesg->check)
             {
 #if WIN32
