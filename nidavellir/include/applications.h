@@ -111,11 +111,22 @@ struct mbase_control_block_t
     uint32_t backlight_key_time; /*按键背光点亮时间 */
     uint8_t lcd_poweron_all_dis_time;  /*上电全显时间 */
     uint8_t lcd_autodis_list_num;    /*轮显屏数 */
+    uint8_t lcd_keydis_list_num;    /*轮显屏数 */
     uint8_t lcd_autodis_keep_sec;    /*轮显持续时间 */
     uint16_t lcd_checkdis_keep_sec;/*显示查看显示时间 */
+    uint16_t lcd_nopower_key_keep_sec;/*显示查看显示时间 */
     uint16_t lcd_checkdis_all_keep_sec;/*显示查看全屏显示时间 */
-        uint8_t under_un68; //所有相电压均低于68%   
-        uint8_t auxiliary_power;//辅助电源供电标志
+    uint8_t energy_point; //电能显示小数
+    uint8_t power_point;    //功率显示小数
+    uint8_t lcd_12_mean;    //液晶12字样意义
+    uint8_t AutoPtr;    //轮显指针
+    uint8_t AutoInv;
+    uint8_t KeyPtr;
+    uint8_t KeyInv;
+    uint8_t Key;        //按键标志
+    uint16_t Page_ID;   //显示ID
+    uint8_t under_un68; //所有相电压均低于68%   
+    uint8_t auxiliary_power;//辅助电源供电标志
     //uint8_t remote_alarm_flag; //远程告警命令true-触发告警
     //uint8_t battery1_under2v8; //时钟电池欠压
     //uint8_t battery2_under4v8; //停抄电池欠压

@@ -292,20 +292,6 @@ typedef struct
 } FLAG;
 FLAG				Flag;
 
-typedef struct
-{
-		unsigned short	Page_ID;		//液晶显示内容对应的数据标识
-		unsigned char   Page_Sequ;		//液晶显示内容对应的序号
-		unsigned char	AutoInv;		//轮显计时
-		unsigned char   AutoNum;		//轮显项数
-		unsigned char	AutoPtr;		//轮显项指针
-		unsigned char	KeyInv;			//按键时间
-		unsigned char   KeyNum;			//按键显示项数
-		unsigned char	KeyPtr;			//按键显示项指针
-		unsigned short 	BackLightTmr;	//背光延时时间
-		unsigned char 	Key;			//按键标志
-} DISP;
-		DISP				Disp;
 
 unsigned char 		Lcdcon[MaxLcd];
 unsigned char         Buffer[40];
@@ -344,27 +330,162 @@ struct pipeline_t* pipeline;
 const  DISPLAYTAB DisplayTab[] =
 {
     //当前时间
-    0x0001,     0x40000200,     0x00,   DispData_RAM + 3,					    (unsigned int)SIGN_RIQI,//日期
-    0x0002,     0x40000200,     0x00,   DispData_RAM + 3,					    (unsigned int)SIGN_SHIJIAN,//时间
-    //瞬时量
-    0x0003,     0x20000201,     0x00,   DispData_BCD + DispData_RAM + 2,						(unsigned int)SIGN_DIANYA,//电压
-    0x0006,     0x20010201,     0x00,   DispData_Sign + DispData_BCD + DispData_RAM + 3,		(unsigned int)SIGN_DIANLIU,//火线电流
-    0x0009,     0x20010401,     0x00,   DispData_Sign + DispData_BCD + DispData_RAM + 3,		(unsigned int)SIGN_LINGXIANDIANLIU,//零线电流
-    0x000A,     0x20040201,     0x00,   DispData_Sign + DispData_BCD + DispData_RAM + 3,		(unsigned int)SIGN_GONGLV,//A相功率
-    0x000B,     0x20040201,     0x00,   DispData_Sign + DispData_BCD + DispData_RAM + 3,		(unsigned int)SIGN_GONGLV,//A相功率
-    0x0012,     0x200A0201,     0x00,   DispData_Sign + DispData_BCD + DispData_RAM + 2,		(unsigned int)SIGN_GONGLVYINSU,//A相功率因数
-    0x0013,     0x200A0201,     0x00,   DispData_Sign + DispData_BCD + DispData_RAM + 2,		(unsigned int)SIGN_GONGLVYINSU,//A相功率因数
-    //表号、客户编号
-/*    0x01,		Comm_Number+4,						DispData_BCD + DispData_E2PROM + 2,						(unsigned int)SIGN_NULL,
-    0x00,		Comm_Number,						DispData_BCD + DispData_E2PROM + 4,						(unsigned int)SIGN_NULL,
-    0x01,		Meter_Number+4,						DispData_BCD + DispData_E2PROM + 2,						(unsigned int)SIGN_BIAOHAO,//表号高4位
-    0x00,		Meter_Number,						DispData_BCD + DispData_E2PROM + 4,						(unsigned int)SIGN_BIAOHAO,//表号低8位
-    0x01,		User_Number+4,						DispData_BCD + DispData_E2PROM + 2,						(unsigned int)SIGN_HUHAO,//客户编号高4位
-    0x00,		User_Number,						DispData_BCD + DispData_E2PROM + 4,						(unsigned int)SIGN_HUHAO,//客户编号低8位
-    0x00,		Meter_Const1,						DispData_BCD + DispData_E2PROM + 3,						(unsigned int)SIGN_CHANGSHU,//电表有功常数
-    0x00,		Balance_Time1,						DispData_BCD + DispData_E2PROM + 2,						(unsigned int)SIGN_JIESUANRI,//第一结算日		
-*/  
+    0xA001,     0x40000200,     0x00,   DispData_RAM + 3,					                    (unsigned int)SIGN_RIQI,//日期
+    0xA002,     0x40000200,     0x00,   DispData_RAM + 3,					                    (unsigned int)SIGN_SHIJIAN,//时间
+    0xA003,     0x20000201,     0x00,   DispData_RAM + DispData_BCD + 2,						(unsigned int)SIGN_DIANYA,//电压
+    0xA006,     0x20010201,     0x00,   DispData_RAM + DispData_Sign + DispData_BCD + 3,		(unsigned int)SIGN_DIANLIU,//火线电流
+    0xA009,     0x20010401,     0x00,   DispData_RAM + DispData_Sign + DispData_BCD + 3,		(unsigned int)SIGN_LINGXIANDIANLIU,//零线电流
+    0xA00A,     0x20040201,     0x00,   DispData_RAM + DispData_Sign + DispData_BCD + 3,		(unsigned int)SIGN_GONGLV,//A相功率
+    0xA00B,     0x20040201,     0x00,   DispData_RAM + DispData_Sign + DispData_BCD +3,		    (unsigned int)SIGN_GONGLV,//A相功率
+    0xA012,     0x200A0201,     0x00,   DispData_RAM + DispData_Sign + DispData_BCD +2,		    (unsigned int)SIGN_GONGLVYINSU,//A相功率因数
+    0xA013,     0x200A0201,     0x00,   DispData_RAM + DispData_Sign + DispData_BCD + 2,		(unsigned int)SIGN_GONGLVYINSU,//A相功率因数
+    
+    0xB001,		0x40010200,     0x01,   DispData_E2PROM + DispData_BCD +2,						(unsigned int)SIGN_NULL,//表地址高4位
+    0xB002,		0x40010200,     0x02,   DispData_E2PROM + DispData_BCD +4,						(unsigned int)SIGN_NULL,//表地址低8位
+    0xB003,		0x40020200,     0x01,   DispData_E2PROM + DispData_BCD +2,						(unsigned int)SIGN_BIAOHAO,//表号高4位
+    0xB004,		0x40020200,     0x02,   DispData_E2PROM + DispData_BCD +4,						(unsigned int)SIGN_BIAOHAO,//表号低8位
+    0xB005,		0x40030200,     0x01,   DispData_E2PROM + DispData_BCD +2,						(unsigned int)SIGN_HUHAO,//客户编号高4位
+    0xB006,		0x40030200,     0x02,   DispData_E2PROM + DispData_BCD +4,						(unsigned int)SIGN_HUHAO,//客户编号低8位
+    0xB007,		0x41090200,     0x00,   DispData_E2PROM + DispData_BCD +3,						(unsigned int)SIGN_CHANGSHU,//电表有功常数  
+#if 0    
+    //正向电能量
+    //0xC0FF,     0xC000~0xC00C:总，费率1~12;   0xC000~0xC180:当前~上24月正向总电能
+    //反向电能量
+    //0xD0FF,     0xD000~0xD00C:总，费率1~12;   0xD000~0xD180:当前~上24月反向总电能  
+    //组合电能量
+    //0xE0FF,     0xE000~0xE00C:总，费率1~12;   0xE000~0xE180:当前~上24月组合总电能  
+#endif
 };
+
+typedef struct
+{
+    unsigned short  Id;     //显示项ID
+    unsigned char   oad[4]; //oad
+    unsigned char   Sequ;   //序号
+} DISPLAYLIST;
+
+const  DISPLAYLIST   Display_List[] = 
+{
+    0xA001,     0x40,0x00,0x02,0x00,        0x00,   //日期
+    0xA002,     0x40,0x00,0x02,0x00,        0x00,   //时间
+    0xA003,     0x20,0x00,0x02,0x01,        0x00,   //电压
+    0xA006,     0x20,0x01,0x02,0x01,        0x00,   //火线电流
+    0xA009,     0x20,0x01,0x04,0x01,        0x00,   //零线电流
+    0xA00A,     0x20,0x04,0x02,0x01,        0x00,   //A相功率
+    0xA00B,     0x20,0x04,0x02,0x01,        0x00,   //A相功率
+    0xA012,     0x20,0x0A,0x02,0x01,        0x00,   //A相功率因数
+    0xA013,     0x20,0x0A,0x02,0x01,        0x00,   //A相功率因数
+    
+    0xB001,		0x40,0x01,0x02,0x00,        0x01,   //表地址高4位
+    0xB002,		0x40,0x01,0x02,0x00,        0x02,   //表地址低8位
+    0xB003,		0x40,0x02,0x02,0x00,        0x01,   //表号高4位
+    0xB004,		0x40,0x02,0x02,0x00,        0x02,   //表号低8位
+    0xB005,		0x40,0x03,0x02,0x00,        0x01,   //客户编号高4位
+    0xB006,		0x40,0x03,0x02,0x00,        0x02,   //客户编号低8位
+    0xB007,		0x41,0x09,0x02,0x00,        0x00,   //电表有功常数  
+    
+    /************************ 组合电能 ************************/
+	//总电能   0xC1FF,     0xC000~0xC00C:总，费率1~12;   0xC000~0xC180:当前~上24月正向总电能
+	
+	/************************ 正向电能 ************************/
+	
+	/************************ 反向电能 ************************/
+};
+
+#define displaytablenum     sizeof(Display_List)/sizeof(DISPLAYLIST)
+
+unsigned char display_id_to_oad(unsigned short id, unsigned char *oad, unsigned char len)
+{
+    unsigned char i,idh,idmid,idl;
+    unsigned long oad1,oad2;
+    
+    for(i=0; i<displaytablenum; i++)
+    {
+        if(id == Display_List[i].Id)
+        {
+            len = 4;
+            memcpy(oad, (unsigned char *)&Display_List[i].oad, len);
+            return 0;
+        }
+    }
+    oad1 = 0x50050200;//组合电能
+    idh = (unsigned char)((id & 0xF000) >> 12);
+    idmid = (unsigned char)((id & 0x0FF0) >> 4);
+    idl = (unsigned char)(id & 0x000F);
+    if(idl > 0x0c)  return 1;
+    if(idmid > 0x18)    return 1;
+    oad1 = oad1 + idmid;
+    len = 8;
+    switch (idh)
+    {
+        case 0x0C://组合
+            oad2 = 0x00000200 + idl;
+            break;
+        case 0x0B://正向
+            oad2 = 0x00100200 + idl;
+            break;
+        case 0x0E://反向
+            oad2 = 0x00200200 + idl;
+            break;
+        default:
+            return 1;
+            break;
+    }
+    memcpy(oad, (unsigned char*)&oad1, 4);
+    memcpy(oad+4, (unsigned char*)&oad2, 4);
+    return 0;
+}
+
+unsigned short display_oad_to_id(unsigned char *oad, unsigned char len)
+{
+    unsigned char i,idmid,idl;
+    unsigned short id = 0;
+    unsigned long oad1,oad2;
+    
+    if(len == 4)
+    {
+        for(i=0; i<displaytablenum; i++)
+        {
+            if( memcmp( (unsigned char*)&Display_List[i].oad[0], (unsigned char*)&oad, 4 ) == 0 )
+            {
+                id = Display_List[i].Id;
+            }
+        }
+    }
+    else if(len == 8)
+    {
+        memcpy((unsigned char*)&oad1, (unsigned char*)oad, 4);
+        if((oad1 & 0xffffff00) == 0x50050200)//月结算
+        {
+            idmid = (unsigned char)(oad1 & 0x000000ff);
+            if(idmid > 0x18)    return 0;
+            id |= (((unsigned short)(idmid)) << 4);
+            memcpy((unsigned char*)&oad2, (unsigned char*)(oad+4), 4);
+            if(((oad2 & 0xFFFFFF00) != 0x00000200) && ((oad2 & 0xFFFFFF00) != 0x00100200) && ((oad2 & 0xFFFFFF00) != 0x00200200))   return 0;
+            idl = (unsigned char)(oad2 & 0x000000FF);
+            if(idl > 0x0c)  return 0;
+            id |= idl;
+            oad2 = oad2 & 0xFFFFFF00;
+            switch(oad2)
+            {
+                case 0x00000200:
+                    id |= 0xC000;
+                    break;
+                case 0x00100200:
+                    id |= 0xD000;
+                    break;
+                case 0x00200200:
+                    id |= 0xE000;
+                    break;  
+                default:
+                    id = 0;
+                    break;
+            }
+        }
+    }
+    return id;
+}
+
 
 void HEX_BCD( unsigned char* BCD, unsigned long HEX )
 {
@@ -502,24 +623,22 @@ void Send_DisplayData(void)
 /***********************************************************************/
 void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-	unsigned char i, Tmr;
+	unsigned char i;
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
 	
 	P_BACKLIGHT_ON;	//背光
-	Disp.BackLightTmr = 0;
-	nd_get(instance, 0x40070201, &Tmr, 1);//从EEPROM中获取全屏显示时间
-	if(Tmr > 30)
-		Tmr = 5;
-    Disp.BackLightTmr = Tmr;		
+    //mbase_control_block->lcd_poweron_all_dis_time;
+	if(mbase_control_block->lcd_poweron_all_dis_time > 30)
+		mbase_control_block->lcd_poweron_all_dis_time = 5;
 	Flag.Disp |= F_DispAll;
 	for( i=0;i<MaxLcd;i++ )
 	{
 		Lcdcon[i] = 0xFF;
 	}
 	Send_DisplayData();	//送显示数据
-	Disp.AutoInv = Tmr;
-	Disp.AutoPtr = 0xFF;
-	Disp.Page_ID = 0xFFFFFFFF;
-	Disp.Page_Sequ = 0x00;
+	mbase_control_block->lcd_autodis_keep_sec = mbase_control_block->lcd_poweron_all_dis_time;
+	mbase_control_block->AutoPtr = 0xFF;
+	mbase_control_block->Page_ID = 0xFFFF;
 }
 
 /***********************************************************************/
@@ -528,71 +647,73 @@ void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
 /***********************************************************************/
 void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-  unsigned char pageid[15]={0,};
-	if( Disp.Key & F_KeyDisp0 )
+    unsigned char pageid[15]={0,};
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    
+	if( mbase_control_block->Key & F_KeyDisp0 )
 	{
 		if(KeyPortCheck == 0)
 		{
 			//Delay_Xms(1);
 			if(KeyPortCheck == 0)
-				Disp.Key |= F_KeyDisp1;
+				mbase_control_block->Key |= F_KeyDisp1;
 			else 
-				Disp.Key &= ~(F_KeyDisp0+F_KeyDisp1);
+				mbase_control_block->Key &= ~(F_KeyDisp0+F_KeyDisp1);
 		}
 		else
-			Disp.Key &= ~(F_KeyDisp0+F_KeyDisp1);
+			mbase_control_block->Key &= ~(F_KeyDisp0+F_KeyDisp1);
 	}
-	if( Disp.Key & F_KeyDisp1 )//按键显
+	if( mbase_control_block->Key & F_KeyDisp1 )//按键显
 	{
-		Disp.Key &= ~(F_KeyDisp0+F_KeyDisp1);
+		mbase_control_block->Key &= ~(F_KeyDisp0+F_KeyDisp1);
 		Flag.Run |= F_Disp;
 		if( Flag.Power & F_PowerOn )
-			Disp.BackLightTmr = 60;//按键时,背光点亮
+			mbase_control_block->backlight_key_time = 60;//按键时,背光点亮
 		else
 		{
 			Flag.Disp &= ~F_DispStop;
-			if( ((Disp.Key & F_KeyAwake) == 0) && (Flag.Disp & F_DispOff) )
+			if( ((mbase_control_block->Key & F_KeyAwake) == 0) && (Flag.Disp & F_DispOff) )
 			{
 				Flag.Disp &= ~F_DispPause;
-				Disp.Key |= F_KeyAwake;
+				mbase_control_block->Key |= F_KeyAwake;
 				Flag.Disp &= ~F_DispOff;
-				Disp.AutoPtr = 0xFF;
-				Disp.AutoInv = 0;
+				mbase_control_block->AutoPtr = 0xFF;
+				mbase_control_block->AutoInv = 0;
                 Init_LCD();
 				return;
 			}
 		}
 
-		if( (Disp.Key & F_KeyDispay) == 0 )
+		if( (mbase_control_block->Key & F_KeyDispay) == 0 )
 		{
-			Disp.Key |= F_KeyDispay;
-			Disp.KeyPtr = 0xFF;
+			mbase_control_block->Key |= F_KeyDispay;
+			mbase_control_block->KeyPtr = 0xFF;
 		}
 		else
 		{
-            nd_get(instance, 0xF3010401, &Disp.KeyNum, 1);
-			if( Disp.KeyNum == 0 )
-				Disp.KeyNum = 1;
+            nd_get(instance, 0xF3010401, &mbase_control_block->lcd_keydis_list_num, 1);
+			if( mbase_control_block->lcd_keydis_list_num == 0 )
+				mbase_control_block->lcd_keydis_list_num = 1;
 		}
-		if( Disp.KeyPtr >= (Disp.KeyNum-1) )
-			Disp.KeyPtr = 0;
-        	else
-			Disp.KeyPtr++;
-        nd_get(instance, 0xF3010201+Disp.KeyPtr, pageid, 15);
+		if( mbase_control_block->KeyPtr >= (mbase_control_block->lcd_keydis_list_num-1) )
+			mbase_control_block->KeyPtr = 0;
+        else
+			mbase_control_block->KeyPtr++;
+        nd_get(instance, 0xF3010201+mbase_control_block->KeyPtr, pageid, 15);
 		if( Flag.Power & F_PowerOn )
 		{
-            nd_get(instance, 0xF3010300, &Disp.KeyInv, 1);
-			if( Disp.KeyInv == 0 )
-				Disp.KeyInv = 5;
+            nd_get(instance, 0xF3010300, &mbase_control_block->KeyInv, 1);
+			if( mbase_control_block->KeyInv == 0 )
+				mbase_control_block->KeyInv = 5;
 		}
 		else
-				Disp.KeyInv = 30;
+				mbase_control_block->KeyInv = 30;
 	}
-	if( (Disp.Key & F_KeyDispay) && (Disp.KeyInv == 0) )//退出键显
+	if( (mbase_control_block->Key & F_KeyDispay) && (mbase_control_block->KeyInv == 0) )//退出键显
 	{
-		Disp.Key &= ~F_KeyDispay;
-		Disp.AutoPtr = 0xFF;
-		Disp.AutoInv = 0;
+		mbase_control_block->Key &= ~F_KeyDispay;
+		mbase_control_block->AutoPtr = 0xFF;
+		mbase_control_block->AutoInv = 0;
 		if( (Flag.Power & F_PowerOn) == 0 )//按键显示结束后,进入掉电暂显
 		{
 			Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
@@ -606,33 +727,35 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline)
 /***********************************************************************/
 void Get_DisplayPage(void)
 {
-  unsigned char pageid[15]={0,};
-	if( (Disp.Key & F_KeyDispay) == 0 )//轮显
+    unsigned char pageid[15]={0,};
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    
+	if( (mbase_control_block->Key & F_KeyDispay) == 0 )//轮显
 	{
-		if( Disp.AutoInv == 0 )
+		if( mbase_control_block->AutoInv == 0 )
 		{
-			if( ((Flag.Power & F_PowerOn) == 0) && ((Disp.AutoPtr == (Disp.AutoNum-1))) )//自动循环显示一遍后,进入掉电暂显
+			if( ((Flag.Power & F_PowerOn) == 0) && ((mbase_control_block->AutoPtr == (mbase_control_block->lcd_autodis_list_num-1))) )//自动循环显示一遍后,进入掉电暂显
 			{
 				Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
 				return;
 			}
 			//获取轮显显示时间
-            nd_get(instance, 0xF3000300, &Disp.AutoInv, 1);
-			if( (Disp.AutoInv < 0x05) || (Disp.AutoInv > 0x20) )
-				Disp.AutoInv = 5;
+            nd_get(instance, 0xF3000300, &mbase_control_block->AutoInv, 1);
+			if( (mbase_control_block->AutoInv < 0x05) || (mbase_control_block->AutoInv > 0x20) )
+				mbase_control_block->AutoInv = 5;
 
             
 			//获取轮显显示屏数
-            nd_get(instance, 0xF3000401, &Disp.AutoNum, 1);
-			if( Disp.AutoNum == 0 )
-				Disp.AutoNum = 1;
+            nd_get(instance, 0xF3000401, &mbase_control_block->lcd_autodis_list_num, 1);
+			if( mbase_control_block->lcd_autodis_list_num == 0 )
+				mbase_control_block->lcd_autodis_list_num = 1;
 
             
-			if( Disp.AutoPtr >= (Disp.AutoNum-1) )
-				Disp.AutoPtr = 0;
+			if( mbase_control_block->AutoPtr >= (mbase_control_block->lcd_autodis_list_num-1) )
+				mbase_control_block->AutoPtr = 0;
             		else
-				Disp.AutoPtr++;
-            nd_get(instance, 0xF3000201+Disp.AutoPtr, pageid, 15);
+				mbase_control_block->AutoPtr++;
+            nd_get(instance, 0xF3000201+mbase_control_block->AutoPtr, pageid, 15);
 		}
 	}
 }
@@ -665,77 +788,69 @@ void DispNum( unsigned char* Addr, unsigned char Lenth )
 /*            Info：数据信息                                           */
 /*  输出参数：0为ID存在，1为ID不存在                                   */
 /***********************************************************************/
-unsigned char GetDispAddrInfo( unsigned long ID, unsigned int* Addr, unsigned int* Info, unsigned char* SignBuf )
+unsigned char GetDispAddrInfo( struct instance_t* instance, unsigned short ID, unsigned char* data, unsigned long Info, unsigned char* SignBuf )
 {
-	unsigned char i,j;
-	unsigned char IDL0,IDL1;
-	unsigned char IDH0,IDH1;
-	unsigned int IDH;
-	unsigned char Info_Num,Info_Max;
-	unsigned int Info_Addr,Info_Len,Info_BlockLen;
+	unsigned char j=0,D1,D2,D3;
+    unsigned long oad;
 
-	IDH = (unsigned int)((ID & 0xFFFF0000)>>16);
-	IDL1 = (unsigned char)((ID & 0x0000FF00)>>8);
-	IDL0 = (unsigned char)((ID & 0x000000FF));
-	IDH1 = (unsigned char)((ID & 0xFF000000)>>24);
-	IDH0 = (unsigned char)((ID & 0x00FF0000)>>16);
-
+    D2 = (ID & 0x0FF0)>>4;
+    if(D2 > 0x18)   return 1;
+    D3 = (ID & 0x000F);
+    if(D3 > 0x0C)   return 1;    
+    
+    D1 = (ID & 0xF000)>>8;
 	memcpy( SignBuf, SIGN_NULL, 8 );
-	if(IDH1 == 0x00)//电能量类
-	{
-		if( IDL0 == 0x00 )//当前
-		{
-			*Info = DispData_BCD + DispData_RAM + 5;
-			if(( IDH == 0x0000 ) || (IDH == 0x000B) || (IDH == 0x000C))
-				(*Info) |= DispData_Sign;//组合有功电量最高位是符号位
-			if((IDH0 == 0x0B)||(IDH0 == 0x0C))//当前一月
-			{
-				*SignBuf = Sign_dangqianyue;
-				*(SignBuf+1) = Sign_1;
-			}
-			else
-				*SignBuf = Sign_dangqian;//当前
-		}
-		else//历史
-		{
-			*Info = DispData_His + DispData_BCD + DispData_E2PROM + 5;
-			if(( IDH == 0x0000 ) || (IDH == 0x000B) || (IDH == 0x000C))
-				(*Info) |= DispData_Sign;//组合有功电量最高位是符号位
-			*SignBuf = Sign_1 + j;
-			*(SignBuf+1) = Sign_shangyue;
-		}
-		if((IDH0<0x03) || (IDH0 == 0X0B) || (IDH0 == 0x0C))
-			*(SignBuf+2) = Sign_kWh;//注意：Sign_dot2一定要在Sign_kWh之后的寄存器
-
-		*(SignBuf+3) = Sign_dot2;
-		*(SignBuf+4) = Sign_dianliang;
-		switch(IDH0)
-		{
-			case 0x00:
-				*(SignBuf+5) = Sign_Zuhe;//组合
-				*(SignBuf+6) = Sign_YouGong;//有功
-				break;
-			case 0x01:
-				*(SignBuf+5) = Sign_Zhengxiang;//正向
-				*(SignBuf+6) = Sign_YouGong;//有功
-				break;
-			case 0x02:
-				*(SignBuf+5) = Sign_Fanxiang;//反向
-				*(SignBuf+6) = Sign_YouGong;//有功
-				break;
-			case 0x0B:
-			case 0x0C://月净用组合有功电量
-				*(SignBuf+5) = Sign_yong;
-				*(SignBuf+6) = Sign_Zuhe;
-				break;
-			default:
-				break;
-		}
-		if(((0x0B == IDH0) || (0x0C == IDH0))&&(0 == i))//净用电量显示为“当前一月用电量、上一月用电量，不显示总”
-			*(SignBuf+8) = 0;
-		else			
-			*(SignBuf+8) = Sign_FeiLvNum;//T1~T12
-	}
+    
+    Info = DispData_BCD + 5;
+    if(D2 == 0x00)    //当前
+        *SignBuf = Sign_dangqian;//当前
+    else
+    {
+        *SignBuf = Sign_1 + j;
+        *(SignBuf+1) = Sign_shangyue;
+    }
+    *(SignBuf+2) = Sign_kWh;//注意：Sign_dot2一定要在Sign_kWh之后的寄存器
+    *(SignBuf+3) = Sign_dot2;
+    *(SignBuf+4) = Sign_dianliang;
+    switch( D1 )
+    {
+        case 0xC0://正向
+            *(SignBuf+5) = Sign_Zhengxiang;//正向
+            if(D2 == 0x00)  
+                oad = 0x00100200;
+            else 
+                oad = 0x50050200;
+            break;
+        case 0xD0://反向
+            *(SignBuf+5) = Sign_Fanxiang;//反向
+            if(D2 == 0x00)  
+                oad = 0x00200200;
+            else 
+                oad = 0x50050200;
+            break;
+        case 0xE0://组合
+            Info |= DispData_Sign;//组合有功电量最高位是符号位
+            *(SignBuf+5) = Sign_Zuhe;//组合
+            if(D2 == 0x00)  
+                oad = 0x00000200;
+            else 
+                oad = 0x50050200;
+            break;
+        default:
+            return 1;
+            break;
+    }
+    if(D2 == 0x00)//当前
+    {
+        nd_get(instance, oad + D3, data, 5);
+    }
+    else
+    {   
+        nd_get(instance, oad + D3, data, 5);
+    }
+    
+    *(SignBuf+6) = Sign_FeiLvNum;//T1~T12
+    
 	return 0;
 }
 
@@ -743,12 +858,12 @@ unsigned char GetDispAddrInfo( unsigned long ID, unsigned int* Addr, unsigned in
 /*  函数名称：Display_Meter                                            */
 /*  函数功能：显示电表相关指示信息                                     */
 /***********************************************************************/
-void Display_Meter(void)
+void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-	unsigned char i,TOUNo,STEPNo;
-	unsigned long Bit=0x00000001;
-	if( Disp.Page_ID == 0xFFFFFFFF ) return;//当前全屏显，则返回
-	
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+	unsigned char TOUNo=0,STEPNo=0;
+//	unsigned long Bit=0x00000001;
+	if( mbase_control_block->Page_ID == 0xFFFF ) return;//当前全屏显，则返回
 	
     Lcdcon[18] |= DS_Chr_Lab;       //秘钥状态，小房子显示	
     Lcdcon[17] |= DS_Chr_Lock;      //MAC锁
@@ -775,8 +890,13 @@ void Display_Meter(void)
 			Lcdcon[19] |= DS_Chr_CommPLC;
 		}
 
-		//电流反向
-		Lcdcon[18] |= DS_Chr_Reverse;
+        //if(mbase_control_block->factor_mode == true)
+        {
+            //电流反向
+            Lcdcon[18] |= DS_Chr_Reverse;
+        }
+        
+        
 		//电池欠压指示
 		Lcdcon[18] |= DS_Chr_Bat;
 		//密码验证闭锁指示
@@ -835,7 +955,7 @@ void Display_Meter(void)
 				Lcdcon[12] |=  (DS_Chr_GouDian);
 //			if(( Timer.RemoteRelayOff_DelayTmr > 0 ) || (Relay.CmdDtTmr>0))//跳闸延时过程中指示(闪烁"拉闸)
 				Lcdcon[13] |= DS_Chr_LaZha;
- //           if(Common.Factory == Factory_Mode)
+            if(mbase_control_block->factor_mode == true)
                 Lcdcon[18] |= DS_Chr_Lab;
 		}
 		else
@@ -844,7 +964,7 @@ void Display_Meter(void)
 				Lcdcon[12] &= ~(DS_Chr_GouDian);
 //			if(( Timer.RemoteRelayOff_DelayTmr > 0 ) || (Relay.CmdDtTmr>0))
 				Lcdcon[13] &= ~DS_Chr_LaZha;
-//            if(Common.Factory == Factory_Mode)
+            if(mbase_control_block->factor_mode == true)
                 Lcdcon[18] &= ~DS_Chr_Lab;
 
 		}
@@ -863,21 +983,32 @@ void Display_Meter(void)
 /***********************************************************************/
 void Disp_Value( unsigned short id, unsigned char *data, unsigned int Info )
 {
-	unsigned char Len,MemType,i;
+	unsigned char Len,i;
 	unsigned long Tmp=0;
 	unsigned char Sign = 0;
 	Len = (unsigned char)(Info & DispDataLen);
-	MemType = (unsigned char)((Info>>6) & MEMVALUE);
+//	MemType = (unsigned char)((Info>>6) & MEMVALUE);
 	
 	switch(id)
     {
-        case 0x0001://日期
-            for(i=0;i<3;i++)    Buffer[2-i] = BYTE_BCD(*(data+i));
+        case 0xA001://日期
+            for(i=0;i<3;i++)    Buffer[i] = BYTE_BCD(*(data+i));
             break;
-        case 0x0002://时间
-            for(i=0;i<3;i++)    Buffer[2-i] = BYTE_BCD(*(data+3+i));
+        case 0xA002://时间
+            for(i=0;i<3;i++)    Buffer[i] = BYTE_BCD(*(data+i));
+            break;
+        case 0xB001://表地址高4位
+        case 0xB003://表号高4位
+        case 0xB005://客户号高4位
+            memcpy( (unsigned char*)&Buffer, (unsigned char*)(data+4), 2 );
+            break;
+        case 0xB002://表地址低8位
+        case 0xB004://表号低8位
+        case 0xB006://客户号低8位
+            memcpy( (unsigned char*)&Buffer, (unsigned char*)data, 4 );
             break;
         default:
+            memcpy( (unsigned char*)&Buffer, (unsigned char*)data, Len );
             break;
         
     }
@@ -886,17 +1017,17 @@ void Disp_Value( unsigned short id, unsigned char *data, unsigned int Info )
         memcpy( (unsigned char*)&Tmp, (unsigned char*)data, 3 );
         HEX_BCD( Buffer, Tmp );
 	}
-	else//
+	else
 	{
-		if(( Info & DispData_Sign ) && ( ((Disp.Page_ID & 0xFFFF0000) == 0x00000000)
-		||((Disp.Page_ID & 0xFFFF0000) == 0x000B0000)||((Disp.Page_ID & 0xFFFF0000) == 0x000C0000)) )
+/*		if(( Info & DispData_Sign ) && ( ((mbase_control_block->Page_ID & 0xFFFF0000) == 0x00000000)
+		||((mbase_control_block->Page_ID & 0xFFFF0000) == 0x000B0000)||((mbase_control_block->Page_ID & 0xFFFF0000) == 0x000C0000)) )
 		{
 		  	if( Buffer[Len-1] & 0x80 )
 			{
 				Buffer[Len-1] &= 0x7f;
 				Lcdcon[19] |= DS_Chr_Fu;
 			}	     		
-		}
+		}*/
 	}
  	DispNum( Buffer, Len );
 	if( 0x5A == Sign )
@@ -937,9 +1068,11 @@ void ZeroDark( unsigned char i )
 /***********************************************************************/
 void Disp_Char( unsigned char* SignBuf )
 {
-	unsigned char j,Tmp,EnergyDot = 2, PowerDot = 4;
+	unsigned char j,EnergyDot = 2, PowerDot = 4;
 	unsigned char ID1L;
-	ID1L = (unsigned char)((Disp.Page_ID & 0x0000FF00)>>8);
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    
+	ID1L = (unsigned char)(mbase_control_block->Page_ID & 0x000F);
 
 	for( j=0;j<9;j++ )
 	{
@@ -962,8 +1095,8 @@ void Disp_Char( unsigned char* SignBuf )
 						break;
 					case 2:
 						memset( Buffer, NumSeg[0], 8 );
-						memcpy( (unsigned char*)&Buffer[0], (unsigned char*)&Lcdcon[2], 8 );
-						memcpy( (unsigned char*)&Lcdcon[4], Buffer, 8 );
+						memcpy( (unsigned char*)&Buffer[0], (unsigned char*)&Lcdcon[0], 8 );
+						memcpy( (unsigned char*)&Lcdcon[2], Buffer, 6 );
 						*(SignBuf+1) = Sign_dot2;
 						break;
 					case 3:
@@ -1067,6 +1200,7 @@ void Disp_Char( unsigned char* SignBuf )
 			case Sign_FeiLvNum://费率号
 				if(ID1L >= 10)
 				{
+                    ID1L = ID1L - 10;
 					Lcdcon[13] |= DS_Chr_P2;
 					Lcdcon[9] |= NumSeg[ID1L&0x0F];
 					Lcdcon[13] |= DS_Chr_FeiLv;
@@ -1075,7 +1209,7 @@ void Disp_Char( unsigned char* SignBuf )
 				{
 					Lcdcon[12] |= DS_Chr_Zong;
 				}
-				else//费率5~9
+				else
 				{
 					Lcdcon[9] |= NumSeg[ID1L];
 					Lcdcon[13] |= DS_Chr_FeiLv;
@@ -1139,12 +1273,12 @@ void Disp_Char( unsigned char* SignBuf )
 				Lcdcon[16] |= DS_Chr_Dot22;
 				Lcdcon[12] |= DS_Chr_Dot42;
 				break;
-			case Sign_Page_Sequ://时段表内容序号显示
-				Tmp = Disp.Page_Sequ;
+/*			case Sign_Page_Sequ://时段表内容序号显示
+				//Tmp = Disp.Page_Sequ;
 				//BCDX_INC( (unsigned char*)&Tmp, 1 );//显示时从1到14序号
 				Lcdcon[0] |= NumSeg[((Tmp)&0xF0)>>4];
 				Lcdcon[1] |= NumSeg[(Tmp)&0x0F];
-				break;
+				break;*/
 			case Sign_Jiesuanri:
 				Lcdcon[15] |= DS_Chr_Dot2;
 				break;
@@ -1167,27 +1301,60 @@ void Disp_Char( unsigned char* SignBuf )
 /***********************************************************************/
 void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-  unsigned char i,buf[10]={0,};
-	unsigned long oad,Info;
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    unsigned char i,buf[10]={0,},Len=0,j;
+	unsigned long oad,Info=0;
 	unsigned char SignBuf[9];
-
-    Disp.Page_ID = 0x0002;
-    
-	//if( Disp.Page_ID == 0xFFFFFFFF ) return;//当前全屏显,则返回
-    
-    for( i=0;i<DisplayTabNum;i++ )
+    struct idmatch
     {
-        if( (Disp.Page_ID == DisplayTab[i].Id) && (Disp.Page_Sequ == DisplayTab[i].Sequ) )
-            break;
+        unsigned short id;
+        unsigned char* addr;
+    };
+    struct idmatch idbuf[] = 
+    {
+        0xA001, (unsigned char*)&instance->time.tm_mday, //日期
+        0xA002, (unsigned char*)&instance->time.tm_sec,  //时间
+        0xA003, (unsigned char*)&instance->time.tm_mday, //电压
+        0xA006, (unsigned char*)&instance->time.tm_mday, //火线电流
+        0xA009, (unsigned char*)&instance->time.tm_mday, //零线电流
+        0xA00A, (unsigned char*)&instance->time.tm_mday, //A相功率
+        0xA00B, (unsigned char*)&instance->time.tm_mday, //A相功率
+        0xA012, (unsigned char*)&instance->time.tm_mday, //A相功率因数
+        0xA013, (unsigned char*)&instance->time.tm_mday, //A相功率因数
+    };
+    
+    //mbase_control_block->Page_ID = 0xA002;
+    
+	if( mbase_control_block->Page_ID == 0xFFFF ) return;//当前全屏显,则返回
+    
+    if(GetDispAddrInfo( instance, mbase_control_block->Page_ID, buf, Info, SignBuf ))
+    {
+        for( i=0;i<DisplayTabNum;i++ )
+        {
+            if(mbase_control_block->Page_ID == DisplayTab[i].Id) 
+                break;
+        }
+        if( i >= DisplayTabNum )//如果显示项在表格里不存在,则显示第一项内容
+            i = 0;
+        oad = DisplayTab[i].Oad;
+        Info = DisplayTab[i].Info;
+        Len = (unsigned char)(Info & DispDataLen);
+        if((Info & DispData_RAM) == DispData_RAM)
+        {
+            if((DisplayTab[i].Id == 0xA001) || (DisplayTab[i].Id == 0xA002))
+            {
+                for(j=0;j<3;j++)
+                {
+                    buf[j] = *(idbuf[i].addr+j*4);
+                }
+            }
+            else
+                memcpy(buf, (unsigned char*)idbuf[i].addr, Len);
+        }
+        else
+            nd_get(instance, oad, buf, 10);
+        memcpy( SignBuf, (unsigned char*)DisplayTab[i].Sign, 9 );
     }
-    if( i >= DisplayTabNum )//如果显示项在表格里不存在,则显示第一项内容
-        i = 0;
-    oad = DisplayTab[i].Oad;
-    Info = DisplayTab[i].Info;
-    
-    nd_get(instance, oad, buf, 10);
-    
-    memcpy( SignBuf, (unsigned char*)DisplayTab[i].Sign, 9 );
 
 	//清屏
 	ClearLCD();
@@ -1203,7 +1370,7 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
 /***********************************************************************/
 void Display(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-  P_BACKLIGHT_ON;	//背光
+    P_BACKLIGHT_ON;	//背光
 	//获取显示项ID
     if(Flag.Power & F_PowerOn)
     {
@@ -1212,7 +1379,7 @@ void Display(struct instance_t* instance, struct pipeline_t* pipeline)
 	//获取显示项内容
 	Display_Page( instance,  pipeline);
 	//显示电表指示信息
-	Display_Meter();
+	Display_Meter(instance,  pipeline);
 	//送显示内容
 	Send_DisplayData();
 }
