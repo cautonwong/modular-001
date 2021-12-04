@@ -131,6 +131,10 @@ extern struct pipeline_t pl_tx_dlms;
 #define pid_server_tx_dlms   21
 #define pid_meter_base       22
 #define pid_resource_manager 23
+#define pid_plc_rx_698   24
+#define pid_plc_tx_698   25
+#define pid_ir_rx_698    26
+#define pid_ir_tx_698    27
 
 enum work_type_t 
 {

@@ -21,6 +21,8 @@ extern int GET_7_Aggregate(struct instance_t* instance, uint32_t id, uint8_t* bu
 extern int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
 extern int GET_e_Monitor(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
 extern int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+extern int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+
 
 struct record_storage_id_info_t
 {
@@ -110,6 +112,8 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
             return SET_4_Parameter(instance, id, buf,obj);
         case 0x5:// 事件
             return SET_5_Frozen(instance, id, buf, obj);
+        case 0xf://其他
+            return SET_f_Other(instance, id, buf, obj);
         default:
             break;
         }
