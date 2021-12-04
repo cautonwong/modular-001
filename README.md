@@ -2,6 +2,75 @@
 
 nidavellir devices system
 
+## OS项目输出物 TODOs
+
+**Device 设备端**
+
+1. **sdk.a**
+
+`interface`
+
+- [ ] application request lib
+- [ ] callback request
+- [ ] module lib
+
+2. **os.bin**
+
+`application code + kernel + module manager + module lib + drivers`
+
+- [ ] module manager(`kernel thread`)
+- [ ] resource manager(`kernel thread`)
+- [ ] kernel
+- [ ] application init code(`main()`)
+- [ ] module manager(`application life cycle`)
+- [ ] drivers
+
+3. **modules.bin**
+
+可独立分发的应用程序
+
+- [ ] modularize applications(`applications--user thread`)
+	- [ ] base_app.bin
+	- [ ] uart_tx_app.bin*3 
+	- [ ] uart_rx_app.bin*3 
+	- [ ] inter_cpu_communication_app.bin
+- [ ] modularize drivers
+
+- [ ] demos(`iar+keil+gcc`)
+
+4. **utilities**
+- [ ] uploader
+- [ ] debug utilities(`shell + tracex`)
+- [ ] qemu
+
+5. **docs**
+
+- [ ] ppt
+- [ ] 开发文档
+
+**module dashboard**
+
+1. **开发**
+	- [ ] 申请module ID(`access token`)
+	- [ ] 展示本地module.bin
+	- [ ] 上传module到设备端(调试模式)
+	- [ ] 数据管理(上位机)
+	- [ ] 打包(签名) 
+	- [ ] 将本地module.bin发布到云端
+	
+2. **管理和部署**
+	- [ ] 下载云端module.bin列表
+	- [ ] 解析module.bin 
+	- [ ] 展示所有的module(`app store`)
+	- [ ] 发现和联接设备端
+	- [ ] 展示设备信息
+		- [ ] 硬件信息
+		- [ ] 系统信息
+		- [ ] 软件信息
+		- [ ] 运行状态信息
+	- [ ] 上传module到设备端
+	- [ ] 远程操作module
+
 ## milestones
 
 |  时间   | 里程碑  |
