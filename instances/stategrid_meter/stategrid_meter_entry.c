@@ -66,6 +66,32 @@ struct pipeline_t pl_rx_698 =
     fr_rx_698,
 };
 
+struct pipeline_t pl_plc_rx_698 =
+{
+    pid_plc_rx_698,
+    "pl_plc_rx_698",
+    NULL,
+    NULL,
+    NULL,
+    app_rx_server_698_entry,
+    sizeof(fr_rx_698) / sizeof(fr_rx_698[0]),
+    fr_rx_698,
+};
+
+struct pipeline_t pl_ir_rx_698 =
+{
+    pid_ir_rx_698,
+    "pl_ir_rx_698",
+    NULL,
+    NULL,
+    NULL,
+    app_rx_server_698_entry,
+    sizeof(fr_rx_698) / sizeof(fr_rx_698[0]),
+    fr_rx_698,
+};
+
+
+
 const struct filter_t fr_tx_698[1] =
 {
     {0x01,app_tx_server_698_entry,0,13},
@@ -82,6 +108,31 @@ struct pipeline_t pl_tx_698 =
     sizeof(fr_tx_698) / sizeof(fr_tx_698[0]),
     fr_tx_698,
 };
+
+struct pipeline_t pl_plc_tx_698 =
+{
+    pid_plc_tx_698,
+    "pl_plc_tx_698",
+    NULL,
+    NULL,
+    NULL,
+    app_tx_server_698_entry,
+    sizeof(fr_tx_698) / sizeof(fr_tx_698[0]),
+    fr_tx_698,
+};
+
+struct pipeline_t pl_ir_tx_698 =
+{
+    pid_ir_tx_698,
+    "pl_ir_tx_698",
+    NULL,
+    NULL,
+    NULL,
+    app_tx_server_698_entry,
+    sizeof(fr_tx_698) / sizeof(fr_tx_698[0]),
+    fr_tx_698,
+};
+
 
 
 struct pipeline_t* pipelines[] =
@@ -171,6 +222,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     ctx_698 = pl_rx_698.ctx;
     ctx_698->apdu = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
     fifoBuf_init(ctx_698->apdu, nd_malloc(instance, control_block_698_name, 512), 512);
+    
     pl_rx_698.in_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
     fifoBuf_init(pl_rx_698.in_queue, nd_malloc(instance, control_block_698_name, 512), 512);
     pl_rx_698.out_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
@@ -183,8 +235,20 @@ int baremetal_instance_entry_main(int argc, char** argv)
     pl_tx_698.out_queue = pl_rx_698.out_queue;
     
     communication_chlx_init(pl_tx_698.out_queue , pl_rx_698.in_queue , UART_RS4851_CHL);
-    communication_chlx_init(pl_tx_698.out_queue , pl_rx_698.in_queue , UART_MODULE_CHL);
-    communication_chlx_init(pl_tx_698.out_queue , pl_rx_698.in_queue , UART_IR_CHL);
+    
+    pl_plc_rx_698.in_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
+    fifoBuf_init(pl_plc_rx_698.in_queue, nd_malloc(instance, control_block_698_name, 512), 512);
+    pl_plc_rx_698.out_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
+    fifoBuf_init(pl_plc_rx_698.out_queue, nd_malloc(instance, control_block_698_name, 512), 512);
+    pl_plc_tx_698.out_queue = pl_plc_rx_698.out_queue;
+    communication_chlx_init(pl_plc_tx_698.out_queue , pl_plc_rx_698.in_queue , UART_MODULE_CHL);
+    
+    pl_ir_rx_698.in_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
+    fifoBuf_init(pl_ir_rx_698.in_queue, nd_malloc(instance, control_block_698_name, 512), 512);
+    pl_ir_rx_698.out_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
+    fifoBuf_init(pl_ir_rx_698.out_queue, nd_malloc(instance, control_block_698_name, 512), 512);
+    pl_ir_tx_698.out_queue = pl_ir_rx_698.out_queue;
+    communication_chlx_init(pl_ir_tx_698.out_queue , pl_ir_rx_698.in_queue , UART_IR_CHL);
 
     ////////////////////////////申请一个mbase应用的BLOCK = 04/////////////////////////////////////////////
     if (NULL == add_block(instance, RES_DEV_RAM, mbase_control_block_name, 8 * 1024))

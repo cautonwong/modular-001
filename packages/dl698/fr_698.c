@@ -230,21 +230,10 @@ int fr_pack_698_head(struct instance_t* instance, struct pipeline_t* pipeline, s
     ctx->hcs = 0xffff;
     ctx->fcs = 0xffff;
     ctx->tx_len = 0;
-#ifdef WIN32
-    if(mesg->err_no == FRM_HEADER_ERR)
-        fifoBuf_putByte(fifo, 0x66);
-    else
-#endif
 
     fifoBuf_putByte(fifo, 0x68);
     ctx->tx_len++;
-#ifdef WIN32
-    if (mesg->err_no == FRM_LEN_ERR1)
-        append_byte(fifo, ((6) & 0xff), update_hcs_fcs, ctx);
-    else if (mesg->err_no == FRM_LEN_ERR2)
-        append_byte(fifo, ((len + 2) & 0xff), update_hcs_fcs, ctx);
-    else
-#endif
+
     append_byte(fifo, (len & 0xff), update_hcs_fcs, ctx);
     append_byte(fifo, ((len >> 8) & 0xff), update_hcs_fcs, ctx);
     ctx->ctrl |= (1 << 7);//DIR=0表示由服务器发出
@@ -693,7 +682,9 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo_out = (struct fifo_t*)pipeline->out_queue;
+#if WIN32
     struct fifo_t* fifo_in = (struct fifo_t*)pipeline->in_queue;
+#endif
     struct fifo_t* cache = ctx->apdu;
 
 

@@ -156,4 +156,24 @@ void test_app_698_server_SET_Response_8603(void** state);
 ////////////////////////////////////////////////////////////////////////////////////////
 
 
+//Action-Request数据类型测试用例
+//1、操作一个对象属性请求Action-Request数据类型测试 test_app_698_server_ACTION_Request_0701
+void test_app_698_server_ACTION_Request_0701(void** state);
+//2、操作若干个对象属性请求Action-RequestNormalList数据类型测试 test_app_698_server_ACTION_Request_0702
+void test_app_698_server_ACTION_Request_0702(void** state);
+//3、操作后读取若干个对象属性请求Action-ThenGetRequestNormalList数据类型测试 test_app_698_server_ACTION_Request_0703
+void test_app_698_server_ACTION_Request_0703(void** state);
+
+//Action-Response数据类型测试用例
+//1、操作一个对象属性响应Action-Response数据类型测试 test_app_698_server_ACTION_Response_8701
+void test_app_698_server_ACTION_Response_8701(void** state);
+//2、操作若干个对象属性响应Action-ResponseNormalList数据类型测试 test_app_698_server_ACTION_Response_8702
+void test_app_698_server_ACTION_Response_8702(void** state);
+//3、操作后读取若干个对象属性响应Action-ThenGetResponseNormalList数据类型测试 test_app_698_server_ACTION_Response_8703
+void test_app_698_server_ACTION_Response_8703(void** state);
+
+
+
+
+
 #endif //__test_app_698_server_uniformity_H__

@@ -15,9 +15,20 @@ uint16_t fifoBuf_getSize(struct fifo_t *buf)
       return 0;
 }
 
-uint16_t fifoBuf_end(struct fifo_t* buf, uint16_t len)
-{       // return the number of bytes available in the rx buffer
+uint16_t fifoBuf_update_wr(struct fifo_t* buf, uint16_t len)
+{  
+    uint16_t wr = buf->wr;
+    uint16_t buf_size = buf->buf_size;
 
+    wr += len;
+    if (wr >= buf_size)
+        wr -= buf_size;
+    buf->wr = wr;
+    return wr;
+}
+
+uint16_t fifoBuf_update_rd(struct fifo_t* buf, uint16_t len)
+{
     uint16_t rd = buf->rd;
     uint16_t buf_size = buf->buf_size;
 
@@ -25,6 +36,7 @@ uint16_t fifoBuf_end(struct fifo_t* buf, uint16_t len)
     if (rd >= buf_size)
         rd -= buf_size;
 
+    buf->rd = rd;
     return rd;
 }
 

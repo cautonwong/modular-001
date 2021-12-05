@@ -315,7 +315,7 @@ int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
     uint32_t addr = 0x00;
     
     memset((uint8_t*)&obj, 0x00, sizeof(obj));
-    ret = look_up_map(instance, id, buf, 0x01, &obj);
+    ret = look_up_map(instance, id, buf, RESOURCE_MAP_698_GET, &obj);
     if (0x00 == ret)
     {        
         device = look_up_device(instance, obj.device_name);//查找设备
@@ -355,7 +355,7 @@ int16_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
     uint32_t addr = 0x00;
 
     memset((uint8_t*)&obj, 0x00, sizeof(obj));
-    ret = look_up_map(instance, id, buf, 0x02, &obj);
+    ret = look_up_map(instance, id, buf, RESOURCE_MAP_698_SET, &obj);
     if (0x00 == ret)
     {
         device = look_up_device(instance, obj.device_name);//查找设备
@@ -389,7 +389,7 @@ int16_t nd_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16
     struct resources_obj_t obj;
     int16_t ret = 0x00;
 
-    ret = look_up_map(instance, id, buf, 0x02, &obj);
+    ret = look_up_map(instance, id, buf, RESOURCE_MAP_698_ACTION, &obj);
 
     return ret;
 }
