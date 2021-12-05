@@ -1,4 +1,4 @@
-﻿#include "nidavellir.h"
+#include "nidavellir.h"
 #ifndef WIN32
 #include "cpu_surport.h"
 #endif // !WIN32

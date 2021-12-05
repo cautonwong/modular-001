@@ -16,7 +16,7 @@ void test_add_device(void** state)
 		0xF1,0xF0,0xF000,0x00,0x00, NULL, NULL, NULL, NULL, NULL, NULL,".test"
 	};
 
-	//注册test_dev 
+	//娉ㄥ唽test_dev 
 	ret = add_device(instance, test_dev_name, &test_dev);
 	assert_true(ret > 0);
 
@@ -34,7 +34,7 @@ void test_add_block_one_byte(void** state)
 	uint8_t test_block_name = 0xF0;
 	uint32_t ret = 0;
 
-	//申请1个字节的BOLCK
+	//鐢宠1涓瓧鑺傜殑BOLCK
 	ret = add_block(instance, test_dev_name, test_block_name, 0x01);
 	assert_true(ret == 0);
 	block = look_up_block(instance, look_up_device(instance, test_dev_name), test_block_name);
@@ -51,7 +51,7 @@ void test_add_block_same_block_name(void** state)
 	uint8_t test_block_name = 0xF0;
 	uint32_t ret = 0;
 
-	//同名的Blok
+	//鍚屽悕鐨凚lok
 	ret = add_block(instance, test_dev_name, test_block_name, 500);
 	assert_true(ret == 0);
 	block = look_up_block(instance, look_up_device(instance, test_dev_name), test_block_name);
@@ -68,7 +68,7 @@ void test_add_block_500_byte(void** state)
 	uint32_t block_size = 500;
 	uint32_t ret = 0;
 
-	//同名的Blok
+	//鍚屽悕鐨凚lok
 	ret = add_block(instance, test_dev_name, test_block_name, block_size);
 	assert_true(ret > 0);
 	block = look_up_block(instance, look_up_device(instance, test_dev_name), test_block_name);
@@ -85,7 +85,7 @@ void test_add_block_10K_byte(void** state)
 	uint32_t block_size = 10 * 1024;
 	uint32_t ret = 0;
 
-	//同名的Blok
+	//鍚屽悕鐨凚lok
 	ret = add_block(instance, test_dev_name, test_block_name, block_size);
 	assert_true(ret > 0);
 	block = look_up_block(instance, look_up_device(instance, test_dev_name), test_block_name);
@@ -102,7 +102,7 @@ void test_add_block_out_of_gauge(void** state)
 	uint32_t block_size = 50 * 1024;
 	uint32_t ret = 0;
 
-	//同名的Blok
+	//鍚屽悕鐨凚lok
 	ret = add_block(instance, test_dev_name, test_block_name, block_size);
 	assert_true(ret == 0);
 	block = look_up_block(instance, look_up_device(instance, test_dev_name), test_block_name);

@@ -13,7 +13,7 @@ struct event_manager_t
 
 const struct event_manager_t  event_manager_item[] =
 {
-	{ OverCurrentL1,       sizeof(struct log_manager_t)},// ¹ÜÀíÇø
+	{ OverCurrentL1,       sizeof(struct log_manager_t)},// ç®¡ç†åŒº
 };
 
 int16_t stest_event_manager_info(uint16_t id, uint32_t* addr, uint16_t* size)
@@ -47,15 +47,15 @@ int16_t stest_event_manager_info(uint16_t id, uint32_t* addr, uint16_t* size)
 
 struct test_record_item_t
 {
-	uint16_t  event_flag_id_start;  // ÊÂ¼ş´úÂë
-	uint16_t  event_flag_id_end;    // ÊÂ¼ş´úÂë2
+	uint16_t  event_flag_id_start;  // äº‹ä»¶ä»£ç 
+	uint16_t  event_flag_id_end;    // äº‹ä»¶ä»£ç 2
 	uint16_t len;
-	uint16_t max_depth;     // Ä¬ÈÏ×î´óÉî¶È
+	uint16_t max_depth;     // é»˜è®¤æœ€å¤§æ·±åº¦
 };
 
 const struct test_record_item_t  test_record_item[] =
 {
-	{ OverCurrentL1, OverCurrentEndL1,              800,    10 },// ´ıµ÷Õû
+	{ OverCurrentL1, OverCurrentEndL1,              800,    10 },// å¾…è°ƒæ•´
 };
 
 int16_t test_event_info(uint16_t event_flag, uint32_t* addr, uint16_t* size, uint16_t* depth)
@@ -129,27 +129,27 @@ void test_nd_log_output_search_all(void** state)
 	uint32_t index = 0x00;
 	int16_t ret = 0x00;
 
-	//²úÉúÊı¾İ
+	//äº§ç”Ÿæ•°æ®
 	produce_the_event_log(instance);
-	//×¢²áÊÂ¼şµÄ¹ÜÀíÇø
+	//æ³¨å†Œäº‹ä»¶çš„ç®¡ç†åŒº
 	register_parameter(instance, RES_DEV_EEPROM, test_event_manager_name, 1 * 1024, stest_event_manager_info);
-	//×¢²áÊÂ¼ş
+	//æ³¨å†Œäº‹ä»¶
 	register_log(instance, RES_DEV_EEPROM, test_event_record, RES_DEV_EEPROM, test_event_manager_name, 10 * 1024, test_event_info);
 	
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + OverCurrentL1);
-	//ÏÈÇåÒ»ÏÂ¹ÜÀíÇø
+	//å…ˆæ¸…ä¸€ä¸‹ç®¡ç†åŒº
 	ret = nd_log_clean(instance, index);
 	assert_int_equal(ret, 0x00);
-	//Ğ´Êı¾İ
+	//å†™æ•°æ®
 	ret = nd_log_append(instance, index, (uint8_t *)&test_event[0],sizeof(struct test_evnet_log_output_t));
 	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	//¶ÁÊı¾İ
+	//è¯»æ•°æ®
 	struct test_evnet_log_output_t temp_event;
 	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
 	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
 	ret = nd_log_output(instance, index, (uint8_t *)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
 	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	//±È¶ÔÊı¾İ
+	//æ¯”å¯¹æ•°æ®
 	assert_memory_equal(&temp_event, &test_event[0], sizeof(struct test_evnet_log_output_t));
 }
 
@@ -165,16 +165,16 @@ void test_nd_log_output_search_all_06(void** state)
 	uint8_t i = 0x00;
 
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + OverCurrentL1);
-	//ÏÈÇåÒ»ÏÂ¹ÜÀíÇø
+	//å…ˆæ¸…ä¸€ä¸‹ç®¡ç†åŒº
 	ret = nd_log_clean(instance, index);
 	assert_int_equal(ret, 0x00);
-	//Ğ´Êı¾İ
+	//å†™æ•°æ®
 	for (i = 0x00; i < 0x06; i++)
 	{
 		ret = nd_log_append(instance, index, (uint8_t*)&test_event[i], sizeof(struct test_evnet_log_output_t));
 		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
 	}
-	//¶ÁÊı¾İ
+	//è¯»æ•°æ®
 	struct test_evnet_log_output_t temp_event;
 	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
 	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
@@ -204,16 +204,16 @@ void test_nd_log_output_search_all_full(void** state)
 	uint8_t i = 0x00;
 
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + OverCurrentL1);
-	//ÏÈÇåÒ»ÏÂ¹ÜÀíÇø
+	//å…ˆæ¸…ä¸€ä¸‹ç®¡ç†åŒº
 	ret = nd_log_clean(instance, index);
 	assert_int_equal(ret, 0x00);
-	//Ğ´Êı¾İ
+	//å†™æ•°æ®
 	for (i = 0x00; i < 0x0A; i++)
 	{
 		ret = nd_log_append(instance, index, (uint8_t*)&test_event[i], sizeof(struct test_evnet_log_output_t));
 		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
 	}
-	//¶ÁÊı¾İ
+	//è¯»æ•°æ®
 	struct test_evnet_log_output_t temp_event;
 	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
 	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
@@ -243,16 +243,16 @@ void test_nd_log_output_search_all_over(void** state)
 	uint8_t i = 0x00;
 
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + OverCurrentL1);
-	//ÏÈÇåÒ»ÏÂ¹ÜÀíÇø
+	//å…ˆæ¸…ä¸€ä¸‹ç®¡ç†åŒº
 	ret = nd_log_clean(instance, index);
 	assert_int_equal(ret, 0x00);
-	//Ğ´Êı¾İ
+	//å†™æ•°æ®
 	for (i = 0x00; i < 0x0D; i++)
 	{
 		ret = nd_log_append(instance, index, (uint8_t*)&test_event[i], sizeof(struct test_evnet_log_output_t));
 		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
 	}
-	//¶ÁÊı¾İ
+	//è¯»æ•°æ®
 	struct test_evnet_log_output_t temp_event;
 	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
 	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
