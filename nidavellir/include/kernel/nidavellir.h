@@ -567,6 +567,13 @@ enum resource_map_698_e
     RESOURCE_MAP_698_ACTION = 2,
 };
 
+struct record_storage_id_info_t
+{
+    uint16_t save_index;  // 记录存储地址信息
+    uint16_t capture_index; // 关联对象存储地址信息
+    uint16_t sequence_index;// 序号存储地址信息
+};
+
 #define  MSG_SECOND         0x0001
 #define  MSG_PAGE_KEY_UP    0x0002
 #define  MSG_POWERON        0x0003

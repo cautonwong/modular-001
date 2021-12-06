@@ -2315,6 +2315,21 @@
                 </file>
             </group>
             <group>
+                <name>record</name>
+                <file>
+                    <name>$PROJ_DIR$\..\mapper_698\map_698_record\record_sel_0.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\mapper_698\map_698_record\record_sel_1.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\mapper_698\map_698_record\record_sel_2.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\mapper_698\map_698_record\record_sel_9.c</name>
+                </file>
+            </group>
+            <group>
                 <name>set</name>
                 <file>
                     <name>$PROJ_DIR$\..\mapper_698\map_698_set\set_3_Event.c</name>
