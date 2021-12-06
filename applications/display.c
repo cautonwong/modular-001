@@ -440,15 +440,17 @@ unsigned short display_oad_to_id(unsigned char *oad, unsigned char len)
 {
     unsigned char i,idmid,idl;
     unsigned short id = 0;
-    unsigned long oad1,oad2;
+    unsigned long oad1,oad2,temp=0;
     
     if(len == 4)
     {
         for(i=0; i<displaytablenum; i++)
         {
-            if( memcmp( (unsigned char*)&Display_List[i].oad[0], (unsigned char*)&oad, 4 ) == 0 )
+            mem_swap_cpy((unsigned char*)&temp, (unsigned char*)&Display_List[i].oad[0], 4);
+            if( mem_compare( (unsigned char*)&temp, (unsigned char*)&oad, 4 ) == 0 )
             {
                 id = Display_List[i].Id;
+                break;
             }
         }
     }
@@ -628,7 +630,7 @@ void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
 	
 	P_BACKLIGHT_ON;	//背光
     //mbase_control_block->lcd_poweron_all_dis_time;
-	if(mbase_control_block->lcd_poweron_all_dis_time > 30)
+	if((mbase_control_block->lcd_poweron_all_dis_time > 30) || (mbase_control_block->lcd_poweron_all_dis_time == 0))
 		mbase_control_block->lcd_poweron_all_dis_time = 5;
 	Flag.Disp |= F_DispAll;
 	for( i=0;i<MaxLcd;i++ )

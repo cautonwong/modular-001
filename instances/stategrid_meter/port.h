@@ -300,7 +300,13 @@
 #define    MonthFreeze_period            233  //小时冻结 周期   3
 #define    MonthFreeze_depth             234  //小时冻结 深度   2
 
+ 
+#define    AutoDisplayList              400   //轮显项目
+#define    KeyDisplayList               401   //键显项目
 
+                                  
+                                  
+                                  
 #define         MAX_FEE_NO                 12                                  
 
 #endif

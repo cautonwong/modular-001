@@ -6,28 +6,49 @@
 int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
 {    
     struct mbase_control_block_t* mbase_cb;
+    uint16_t oad,displayid;
+    uint8_t index,attribute,i,len,dispalyseque;
+    uint8_t* p = buf;
+    uint32_t displayoad1,displayoad2;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
         return -1;
     }
-    switch (id)
+    
+    oad = (unsigned short)((id & 0xFFFF0000) >> 16);
+    index = (unsigned char)(id & 0x000000FF);
+    attribute = (unsigned char)((id & 0x0000FF00) >> 8);    //属性
+    
+    switch (oad)
     {
-    case 0xf0340200://电压
-        {
-            //obj->block_name = 0x0A;//只是举例
-            //obj->device_name = 0x0D;//只是举例
-            //obj->offset = container_of(mbase_cb,struct mbase_control_block_t, UA);
-            buf[0] = 0x01;//数组
-            buf[1] = 0x01;//单相一个元素
-            buf[2] = TYPE_long_unsigned;
-            //memcpy(buf+3, (uint8_t*)mbase_cb->voltage_ac, 0x02);
-            return 0x05;
-        }
-    break;
-    default:
-        break;
+        case 0xF300:    //循显
+          switch(attribute)
+          {
+              case 0x02://显示对象列表
+                p = p + 5;
+                if(*p++ == 0)
+                  len = 4;
+                else
+                  len = 8;
+                mem_swap_cpy((uint8_t*)&displayoad1, p, 4);
+                if(len == 8)
+                    mem_swap_cpy((uint8_t*)&displayoad2, p+5, 4);
+                displayid = display_oad_to_id(displayoad1, len);
+                break;
+              case 0x03://显示参数
+                break;
+              case 0x04://每个对象显示时间
+                break;
+              default:
+                break;
+          }
+          break;
+        case 0xF301:    //键显
+          break;
+        default:
+            break;
     }
     return 0x01;
 }

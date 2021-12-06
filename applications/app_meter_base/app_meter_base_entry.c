@@ -61,6 +61,9 @@ const struct parameter_item_t  parameter_item[] =
 
     { MinuteFreeze_period,  24 }, //分钟冻结 周期   3*8     
     { MinuteFreeze_depth,   31}, //分钟冻结 深度     2*15  统一冻结深度31字节
+
+
+
     
 };
 
@@ -337,6 +340,13 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 
 #endif
 
+void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
+{
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    
+    if(mbase_control_block->lcd_poweron_all_dis_time > 0)   mbase_control_block->lcd_poweron_all_dis_time--;
+}
+
 // !!!在此app中不做IO操作!!!
 int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -374,6 +384,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
           //controlData(instance,pipeline,mesg);
           break;
       case MSG_SECOND:
+          SecTick_Task(instance, pipeline);  
           
           Rtc_Prossecc(instance, pipeline);
           
@@ -400,6 +411,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
         get_block_frist_addr(instance,RES_DEV_RAM,0x08,&addr);//RAM对应的地址
         nd_get_block(instance,RES_DEV_EEPROM,0x08,(uint8_t *)addr,mbase_block_persistent_size); //将EPROM中的数据恢复到RAM;        
         Electrical_measurement_poweron(instance, pipeline);
+        AllDisplayLCD(instance, pipeline);
         break;
       case MSG_POWEROFF:
         //掉电需要保存数据
