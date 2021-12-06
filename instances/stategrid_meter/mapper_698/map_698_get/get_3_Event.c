@@ -26,7 +26,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
         CaptureId = OverCurrentL1_oad;
         maxnum = ((13*init_30050200[1]+9)/10);
 
-        index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + CaptureId); 
+        index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + CaptureId);
         nd_get_index(instance, index, &tempbuf[0], sizeof(tempbuf));
         src = tempbuf;
         num = *src++;

@@ -139,9 +139,9 @@ int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint16_t* size, u
 
 struct record_storage_id_info_t
 {
-    uint16_t save_index;  // 记录存储地址信息
-    uint16_t capture_index; // 关联对象存储地址信息
-    uint16_t sequence_index;// 序号存储地址信息
+    uint32_t save_index;    // 记录存储地址信息
+    uint32_t capture_index; // 关联对象存储地址信息
+    uint32_t sequence_index;// 序号存储地址信息
 };
 // 通过oad 获取 事件相关的存储地址信息
 int get_record_id_info(uint32_t oad, struct record_storage_id_info_t* info)
@@ -153,11 +153,11 @@ int get_record_id_info(uint32_t oad, struct record_storage_id_info_t* info)
     switch (oad)
     {
     case 0x30050700:
-        SaveId = OverCurrentL1;
+        SaveId = OverCurrentL1;            // 记录存储地址信息
         SaveDevice = RES_DEV_EEPROM;
-        SaveBlock = 0x09;
-        CaptureId = OverCurrentL1_oad;
-        SeqId = OverCurrentL1_index;
+        SaveBlock = mbase_block_event;     
+        CaptureId = OverCurrentL1_oad;     // 关联对象存储地址信息
+        SeqId = OverCurrentL1_index;       // 序号存储地址信息
         break;
     default:
         return -1;
@@ -165,8 +165,8 @@ int get_record_id_info(uint32_t oad, struct record_storage_id_info_t* info)
     }
 
     info->save_index = ((SaveDevice << 24) + (SaveBlock << 16) + SaveId);
-    info->capture_index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + CaptureId);
-    info->sequence_index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + SeqId);
+    info->capture_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + CaptureId);
+    info->sequence_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeqId);
     return 1;
 }
 

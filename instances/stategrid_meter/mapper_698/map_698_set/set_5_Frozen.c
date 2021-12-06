@@ -256,15 +256,15 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
     }
 #endif   
     // write  period
-    index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + PeriodId);
+    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodId);
     nd_set_index(instance, index, &period_buf[0], PeriodLen);
 
     // write  Capture
-    index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + CaptureId);
+    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + CaptureId);
     nd_set_index(instance, index, &tempbuf[0], CaptureLen);
 
     // write  depth
-    index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + DepthId);
+    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + DepthId);
     nd_set_index(instance, index, &depth_buf[0], DepthLen);
 
     dar = DAR_SUCCESS;

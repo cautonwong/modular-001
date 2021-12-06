@@ -71,7 +71,7 @@ int minute_freeze_judge(struct instance_t* instance, struct pipeline_t* task, st
         return -1;
     }
     // 周期
-    index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + PeriodID);
+    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
     nd_get_index(instance, index, &period[0], sizeof(period));
 
     for (i = 0; i < 8; i++)
@@ -98,7 +98,7 @@ int hour_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
         return -1;
     }
     // 周期
-    index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + PeriodID);
+    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
     nd_get_index(instance, index, &period[0], sizeof(period));
 
     if (1 == freeze_judge(instance, &period[0], 60, &record_time))
@@ -127,7 +127,7 @@ int day_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struc
     //待添加
 
     // 周期
-    index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + PeriodID);
+    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
     nd_get_index(instance, index, &period[0], sizeof(period));
 
     if (1 == freeze_judge(instance, &period[0], 60*24, &record_time))
@@ -156,7 +156,7 @@ int month_freeze_judge(struct instance_t* instance, struct pipeline_t* task, str
     //待添加
 
     // 周期
-    index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + PeriodID);
+    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
     nd_get_index(instance, index, &period[0], sizeof(period));
 
     if (1 == freeze_judge(instance, &period[0], 60 * 24, &record_time))

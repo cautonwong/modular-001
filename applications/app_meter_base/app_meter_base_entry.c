@@ -139,6 +139,7 @@ int get_record_association(struct instance_t* instance, uint8_t* databuf, uint8_
     }
     return (p - databuf);
 }
+
 int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     uint8_t i, mode;
@@ -167,7 +168,7 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
                 mode = START_MODE;
 
                 //获取关联对象列表
-                index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + CaptureId); 
+                index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + CaptureId);
                 nd_get_index(instance, index, &CaptureList[0], sizeof(CaptureList));
                 //nd_get(instance, CaptureId, &CaptureList[0], sizeof(CaptureList));
                 //组固定的事件头
@@ -176,16 +177,16 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
                 pdata += get_record_association(instance, pdata, CaptureList, mode, &remain_size);
 
                 // 读取序号 ++
-                index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + SequenceId);
+                index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SequenceId);
                 nd_get_index(instance, index, (uint8_t*)&sequence, sizeof(sequence));
                 //nd_get(instance, SequenceId, (uint8_t *)&sequence, sizeof(sequence));
                 sequence++;
                 memcpy(data_buff, (uint8_t*)&sequence, 4);
 
                 //调用ND_SET保存数据
-                index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + RecordId);
+                index = ((RES_DEV_EEPROM << 24) + (mbase_block_event << 16) + RecordId);
                 nd_log_append(instance, index, data_buff, (pdata - data_buff));
-                index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + SequenceId);
+                index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SequenceId);
                 nd_set_index(instance, index, (uint8_t*)&sequence, sizeof(sequence));
                 break;
             case OverCurrentEndL1:

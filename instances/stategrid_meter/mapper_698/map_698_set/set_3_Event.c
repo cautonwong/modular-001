@@ -61,7 +61,7 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
             des += 4;
             p += 4;            
         }
-        index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + CaptureId); 
+        index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + CaptureId);
         nd_set_index(instance, index, &tempbuf[0], (1 + num*4));
         return (p - buf);
     }
