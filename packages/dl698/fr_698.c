@@ -494,8 +494,10 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     fifoBuf_putByte(cache, mesg->qos);
     fifoBuf_putByte(cache, ctx->PIID);
 
-    mesg->oad_n = 0;
-    if (ctx->choice > 1)
+    mesg->oad_n = 1;
+    if (((GET_Request == ctx->service) &&((ctx->choice ==2)|| (ctx->choice == 4)))||
+        ((SET_Request == ctx->service) && ((ctx->choice == 2) || (ctx->choice == 3)))||
+        ((ACTION_Request == ctx->service) && ((ctx->choice == 2) || (ctx->choice == 3))))
     {
         mesg->oad_n = fifoBuf_getByte(fifo);
         fifoBuf_putByte(cache, mesg->oad_n);
@@ -511,7 +513,6 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         case RELEASE_Request:
             fr_handle_connect(instance, pipeline, mesg);
             break;   
-
         case GET_Request:  
             fr_handle_get_request(instance, pipeline, mesg);
             break;

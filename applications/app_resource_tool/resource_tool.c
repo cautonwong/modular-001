@@ -644,16 +644,106 @@ uint16_t search_mid_way(uint32_t key, uint16_t start, uint16_t end, struct searc
     return mid_ptr;
 }
 
+int __search_smoke(struct circular_info_t* info, struct search_tempinfo_t* tempinfo, uint16_t *sptr,uint8_t mode)
+{
+    uint32_t temp1 = get_curr_mark(tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[0] * tempinfo->unit_size, tempinfo->mode);
+    uint32_t temp2 = get_curr_mark(tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[1] * tempinfo->unit_size, tempinfo->mode);
+
+    if (info->end_mark < info->start_mark)
+    {
+        return -1;
+    }
+
+    switch (mode)
+    {
+    case 0x00: //没反转
+    {
+        if (info->start_mark <= temp1)
+        {
+            info->start_mark = temp1;
+        }
+        if (info->end_mark >= temp2)
+        {
+            info->end_mark = temp2;
+        }
+
+        if ((info->start_mark > temp2) || (info->end_mark < temp1))
+        {
+            return -1;
+        }
+    }
+        break;
+    case 0x02:  //有反转
+    {
+        uint32_t temp3 = get_curr_mark(tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[2] * tempinfo->unit_size, tempinfo->mode);
+        uint32_t temp4 = get_curr_mark(tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[3] * tempinfo->unit_size, tempinfo->mode);
+
+        if (info->start_mark <= temp3)
+        {
+            info->start_mark = temp3;
+        }
+
+        if (info->end_mark >= temp2)
+        {
+            info->end_mark = temp2;
+        }
+
+        if (info->start_mark == temp4)
+        {
+            info->start_mark = temp4;
+        }
+
+        if (info->end_mark == temp1)
+        {
+            info->end_mark = temp1;
+        }
+
+        if ((info->start_mark > temp4) && (info->start_mark <= temp1))
+        {
+            info->start_mark = temp1;
+        }
+
+        if ((info->end_mark >= temp4) && (info->end_mark < temp1))
+        {
+            info->end_mark = temp4;
+        }
+
+        if ((info->start_mark > temp2) || (info->end_mark < temp3))
+        {
+            return -1;
+        }
+    }
+        break;
+    }
+}
+
 int16_t __search_circular(struct circular_info_t* info, struct log_manager_t* manager, struct search_tempinfo_t *tempinfo,
     uint16_t (*fun)(uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t* info, uint8_t direct))
 {
-    uint16_t ptr[4] = { 0x00,manager->wr_ptr,manager->wr_ptr,manager->max_num };
+    uint16_t ptr[4] = { 0x00,0x00,manager->wr_ptr,manager->max_num - 0x01 };
     uint16_t start_ptr = 0x00, end_ptr = 0x00;
     uint8_t cnt = 0x00;
 
+    if (manager->wr_ptr > 0x00)
+    {
+        ptr[1] = manager->wr_ptr - 0x01;
+    }
+   
     if (manager->num == manager->max_num)//说明已经反转了,反转了需要找2块区域
     {
+        if (manager->wr_ptr == 0x00) //说明刚好反转
+        {
+            ptr[1] = manager->max_num - 0x01;
+        }
         cnt = 0x02;  //需要找两次；
+    }
+
+    if (0x00 > __search_smoke(info, tempinfo, ptr, cnt))
+    {
+        info->read_ptr = 0x00;
+        info->valid_num = 0x00;
+
+        return 0x00;
     }
 
     start_ptr = fun(info->start_mark, ptr[0], ptr[1], tempinfo, 0x00);
@@ -662,16 +752,24 @@ int16_t __search_circular(struct circular_info_t* info, struct log_manager_t* ma
         start_ptr = fun(info->start_mark, ptr[2], ptr[3], tempinfo, 0x00);
     }
 
-    end_ptr = fun(info->end_mark, ptr[0], ptr[1], tempinfo, 0x00);
+    end_ptr = fun(info->end_mark, ptr[0], ptr[1], tempinfo, 0x01);
     if ((end_ptr == 0xFFFF) && (cnt == 0x02))
     {
-        end_ptr = fun(info->end_mark, ptr[2], ptr[3], tempinfo, 0x00);
+        end_ptr = fun(info->end_mark, ptr[2], ptr[3], tempinfo, 0x01);
     }
 
-    if ((start_ptr != 0xFFFF) && (end_ptr != 0xFFFF) && (end_ptr >= start_ptr))
+    if ((start_ptr != 0xFFFF) && (end_ptr != 0xFFFF))
     {
         info->read_ptr = start_ptr;
-        info->valid_num = end_ptr - start_ptr + 0x01;
+
+        if (end_ptr >= start_ptr)
+        {
+            info->valid_num = end_ptr - start_ptr + 0x01;
+        }
+        else
+        {
+            info->valid_num = end_ptr + manager->max_num - start_ptr + 0x01;
+        }
     }
     else
     {
@@ -828,7 +926,7 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
                     }
                     if (0xA5A5 + manager.num + manager.unit_size + manager.wr_ptr != manager.check_sum)
                     {
-                        return -1;
+                        return 0x00;
                     }
                     info->unit_size = manager.unit_size;
                     info->valid_num = manager.num;
@@ -838,7 +936,14 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
                         info->read_ptr = manager.wr_ptr;
                     }
                     //搜索信息处理
-                    search_circular(instance, device01->dev, block01->first_addr + addr01, info, &manager);
+                    if (info->valid_num > 0x00)
+                    {
+                        search_circular(instance, device01->dev, block01->first_addr + addr01, info, &manager);
+                    }
+                    else
+                    {
+                        return 0x00;
+                    }
                 }
             }
         }

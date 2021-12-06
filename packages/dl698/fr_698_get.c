@@ -60,8 +60,6 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
 }
 
 
-//请求读取一个对象属性 [1] GetRequestNormal，
-//请求读取若干个对象属性 [2] GetRequestNormalList，
 static int __fr_handle_get_normal_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
@@ -69,11 +67,9 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
     uint16_t n = 0;
-    //uint8_t password[16];
+
     uint8_t oad_n = mesg->oad_n;
-    if (oad_n == 0) oad_n = 1;
-    if (oad_n > 10)
-        oad_n = 10;
+
     while (oad_n-- > 0)
     {
         //if (fifoBuf_getFree(cache) < 2)
@@ -97,6 +93,66 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
 
 static int __fr_handle_get_record_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t* p = cache->buf_ptr;
+    uint16_t n = 0;
+    uint16_t offset = 0;
+    uint8_t Selector = 0;
+    uint8_t last_no = 0;
+    uint8_t rcsd_num = 0;
+ 
+    uint8_t oad_n = mesg->oad_n;
+
+    while (oad_n-- > 0)
+    {
+        //if (fifoBuf_getFree(cache) < 2)
+        {
+            //OAD
+            fifoBuf_getData(fifo, p + cache->wr, 4);
+            mesg->id = buf_to_uint32_msb(p + cache->wr);
+            cache->wr += 4;
+
+            Selector = fifoBuf_getByte(fifo);
+            if ((Selector == 0) || (Selector == 1) || (Selector == 2))
+            {
+                //RSD
+                //RCSD
+            }
+            if (Selector == 9)
+            {
+                //RSD
+                last_no = fifoBuf_getByte(fifo);
+                //RCSD
+                rcsd_num = fifoBuf_getByte(fifo);
+                p[cache->wr++] = rcsd_num;
+                if (rcsd_num)
+                {
+
+                }
+
+                offset = cache->wr++;
+                p[offset] = DAR_SUCCESS;
+                int ret = GET_record_sel_9(instance, mesg->id, p + cache->wr, last_no, 0);
+                if (ret < 0)
+                {
+                    p[offset] = -ret;
+                    return DAR_OTHERS_ERROR;
+                }
+                else
+                {
+                    cache->wr += ret;
+                }
+
+            }
+            
+
+
+        }
+    }
+
+    //fr_encode_optional(instance, pipeline, mesg);//follow-report and time-tag
     return 1;
 }
 
@@ -151,7 +207,6 @@ int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeli
 
 #if 0
     uint8_t oad_n = mesg->oad_n;
-    if (oad_n == 0) oad_n = 1;
     while (oad_n-- > 0)
     {
         //todo  apdu分帧

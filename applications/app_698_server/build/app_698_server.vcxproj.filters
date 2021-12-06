@@ -187,6 +187,24 @@
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_5_Frozen.c">
       <Filter>mapper_698\set</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_f_Other.c">
+      <Filter>mapper_698\set</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_0.c">
+      <Filter>mapper_698\record</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_1.c">
+      <Filter>mapper_698\record</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_2.c">
+      <Filter>mapper_698\record</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_9.c">
+      <Filter>mapper_698\record</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_11.c">
+      <Filter>mapper_698\record</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dl698">
@@ -224,6 +242,9 @@
     </Filter>
     <Filter Include="mapper_698\action">
       <UniqueIdentifier>{6725aea5-dab3-4295-bb3a-de7717b10945}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mapper_698\record">
+      <UniqueIdentifier>{0012c6d5-f6e6-4682-aa55-675dcccf2d9f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

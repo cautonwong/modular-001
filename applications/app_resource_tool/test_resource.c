@@ -162,6 +162,14 @@ extern void test_nd_log_output_search_all(void** state);
 extern void test_nd_log_output_search_all_06(void** state);
 extern void test_nd_log_output_search_all_full(void** state);
 extern void test_nd_log_output_search_all_over(void** state);
+extern void test_nd_log_output_search_index_06_03(void** state);
+extern void test_nd_log_output_search_index_06_04(void** state);
+extern void test_nd_log_output_search_index_06_02(void** state);
+extern void test_nd_log_output_search_index_06_06(void** state);
+extern void test_nd_log_output_search_index_10_05(void** state);
+extern void test_nd_log_output_search_index_10_01(void** state);
+extern void test_nd_log_output_search_index_10_10(void** state);
+extern void test_nd_log_output_search_index_over_05(void** state);
 
 int main(int argc, char** argv)
 {
@@ -179,6 +187,14 @@ int main(int argc, char** argv)
         cmocka_unit_test(test_nd_log_output_search_all_06),
         cmocka_unit_test(test_nd_log_output_search_all_full),
         cmocka_unit_test(test_nd_log_output_search_all_over),
+        cmocka_unit_test(test_nd_log_output_search_index_06_03),
+        cmocka_unit_test(test_nd_log_output_search_index_06_04),
+        cmocka_unit_test(test_nd_log_output_search_index_06_02),
+        cmocka_unit_test(test_nd_log_output_search_index_06_06),
+        cmocka_unit_test(test_nd_log_output_search_index_10_05),
+        cmocka_unit_test(test_nd_log_output_search_index_10_01),
+        cmocka_unit_test(test_nd_log_output_search_index_10_10),
+        cmocka_unit_test(test_nd_log_output_search_index_over_05),
     };
 
     return cmocka_run_group_tests(tests, test_resource_setup, NULL);

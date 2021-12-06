@@ -32,9 +32,15 @@
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_8_Control.c" />
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_e_Monitor.c" />
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_f_Other.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_0.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_1.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_11.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_2.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_9.c" />
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_3_Event.c" />
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_4_Parameter.c" />
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_5_Frozen.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_f_Other.c" />
     <ClCompile Include="..\..\..\packages\dl698\fr_698.c" />
     <ClCompile Include="..\..\..\packages\dl698\fr_698_action.c" />
     <ClCompile Include="..\..\..\packages\dl698\fr_698_comm.c" />
