@@ -295,10 +295,10 @@
 #define    MinuteFreeze_depth           232  //分钟冻结 深度   2*8 
 #define    HourFreeze_period            233  //小时冻结 周期   3
 #define    HourFreeze_depth             234  //小时冻结 深度   2
-#define    DayFreeze_period            233  //小时冻结 周期   3
-#define    DayFreeze_depth             234  //小时冻结 深度   2
-#define    MonthFreeze_period            233  //小时冻结 周期   3
-#define    MonthFreeze_depth             234  //小时冻结 深度   2
+#define    DayFreeze_period             235  //日冻结 周期   3
+#define    DayFreeze_depth              236  //日冻结 深度   2
+#define    MonthFreeze_period           237  //月冻结 周期   3
+#define    MonthFreeze_depth            238  //月冻结 深度   2
 
  
 #define    AutoDisplayList              400   //轮显项目

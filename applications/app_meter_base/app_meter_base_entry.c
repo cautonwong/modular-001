@@ -3,14 +3,6 @@
 #include "resource_tool.h"
 
 #if 1  //  GS
-//存储器件
-#define E2P_MEM  0x01
-#define FLASH_MEM 0x02
-
-//关联对象存储基地址
-#define CAPTURE_E2P_BASE_ADDR   0x2000
-//快照存储基地址
-#define SNAPSHOT_E2P_B_ADDR   0x3000
 
 //快照记录头类型
 // 标准事件记录头   事件记录序号、事件发生时间、事件结束时间、时间发生源、事件上报状态
@@ -19,117 +11,6 @@ const uint32_t record_head_t0[] = {5, 0x20220200, 0x201E0200, 0x20200200, 0x2024
 // 分项事件记录头    事件记录序号、事件发生时间、事件结束时间、事件上报状态
 const uint32_t record_head_t1[] = {4, 0x20220200, 0x201E0200, 0x20200200, 0x33000200};
 // 其他事件记录头种类 待添加
-
-struct record_item_t
-{
-    uint16_t  event_flag_id_start;  // 事件代码
-    uint16_t  event_flag_id_end;    // 事件代码2
-    uint16_t len;
-    uint16_t max_depth;     // 默认最大深度
-};
-
-struct parameter_item_t
-{
-    uint8_t paramerer_index;
-    uint16_t len;
-};
-
-//一个表格只能放在一个存储器上，注册的时候绑定设备
-const struct record_item_t  record_item[] =
-{
-    { OverCurrentL1, OverCurrentEndL1,              800,    10 },// 待调整
-};
-
-const struct parameter_item_t  parameter_item[] =
-{
-    { OverCurrentL1,       sizeof(struct log_manager_t)},// 管理区
-
-    { MinuteFreeze1,       sizeof(struct log_manager_t)},// 分冻结8个方案，管理区申请8个？
-    { MinuteFreeze2,       sizeof(struct log_manager_t)},
-    { MinuteFreeze3,       sizeof(struct log_manager_t)},
-    { MinuteFreeze4,       sizeof(struct log_manager_t)},
-    { MinuteFreeze5,       sizeof(struct log_manager_t)},
-    { MinuteFreeze6,       sizeof(struct log_manager_t)},
-    { MinuteFreeze7,       sizeof(struct log_manager_t)},
-    { MinuteFreeze8,       sizeof(struct log_manager_t)},
-
-
-    { OverCurrentL1_oad,   61 }, //oad列表 1+ 4*15     默认8个     先统一预留15个关联
-    { MinuteFreeze_oad,    61 }, //oad列表 1+ 4*15     默认7个
-
-    { OverCurrentL1_index, 4  },//记录序号
-
-    { MinuteFreeze_period,  24 }, //分钟冻结 周期   3*8     
-    { MinuteFreeze_depth,   31}, //分钟冻结 深度     2*15  统一冻结深度31字节
-
-
-
-    
-};
-
-int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size)
-{
-    uint8_t i, k;
-
-    for (i = 0; i < sizeof(parameter_item) / sizeof(parameter_item[0]); i++)
-    {
-        if (parameter_item[i].paramerer_index == id)
-        {
-            if (addr != NULL)
-            {
-                *addr = 0x00;
-                for (k = 0x00; k < i; k++)
-                {
-                    *addr += parameter_item[k].len;
-                }
-            }
-
-            if (size != NULL)
-            {
-                *size = parameter_item[i].len;
-            }
-
-            return 0x00;
-        }
-    }
-
-    return -1;
-}
-
-
-int16_t supply_event_info(uint16_t event_flag, uint32_t *addr, uint16_t* size, uint16_t* depth)
-{
-    uint8_t i,k;
-
-    for (i = 0; i < sizeof(record_item) / sizeof(record_item[0]); i++)
-    {
-        if ((event_flag == record_item[i].event_flag_id_start) || (event_flag == record_item[i].event_flag_id_end))
-        {
-            if (addr != NULL)
-            {
-                *addr = 0x00;
-                for (k = 0x00; k < i; k++)
-                {
-                    *addr += record_item[k].len;
-                }               
-            }
-
-            if (size != NULL)
-            {
-                *size = record_item[i].len;
-            }
-
-            if (depth != NULL)
-            {
-                *depth = record_item[i].max_depth;
-            }
-
-            return 0x00;
-        }
-    }
-
-    return -1;
-}
 
 
 #define START_MODE  10

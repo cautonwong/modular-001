@@ -1,5 +1,6 @@
 #include "nidavellir.h"
 #include "fr_698.h"
+#include "resource_tool.h"
 
 extern void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id);
 
@@ -22,6 +23,118 @@ extern int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf,
 extern int GET_e_Monitor(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
 extern int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
 extern int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj);
+
+
+
+struct record_item_t
+{
+    uint16_t  event_flag_id_start;  // 事件代码
+    uint16_t  event_flag_id_end;    // 事件代码2
+    uint16_t len;
+    uint16_t max_depth;     // 默认最大深度
+};
+
+struct parameter_item_t
+{
+    uint8_t paramerer_index;
+    uint16_t len;
+};
+
+//一个表格只能放在一个存储器上，注册的时候绑定设备
+const struct record_item_t  record_item[] =
+{
+    { OverCurrentL1, OverCurrentEndL1,              800,    10 },// 待调整
+};
+
+const struct parameter_item_t  parameter_item[] =
+{
+    { OverCurrentL1,       sizeof(struct log_manager_t)},// 管理区
+
+    { MinuteFreeze1,       sizeof(struct log_manager_t)},// 分冻结8个方案，管理区申请8个？
+    { MinuteFreeze2,       sizeof(struct log_manager_t)},
+    { MinuteFreeze3,       sizeof(struct log_manager_t)},
+    { MinuteFreeze4,       sizeof(struct log_manager_t)},
+    { MinuteFreeze5,       sizeof(struct log_manager_t)},
+    { MinuteFreeze6,       sizeof(struct log_manager_t)},
+    { MinuteFreeze7,       sizeof(struct log_manager_t)},
+    { MinuteFreeze8,       sizeof(struct log_manager_t)},
+
+
+    { OverCurrentL1_oad,   61 }, //oad列表 1+ 4*15     默认8个     先统一预留15个关联
+    { MinuteFreeze_oad,    61 }, //oad列表 1+ 4*15     默认7个
+
+    { OverCurrentL1_index, 4  },//记录序号
+
+    { MinuteFreeze_period,  24 }, //分钟冻结 周期   3*8     
+    { MinuteFreeze_depth,   31}, //分钟冻结 深度     2*15  统一冻结深度31字节
+
+};
+
+int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size)
+{
+    uint8_t i, k;
+
+    for (i = 0; i < sizeof(parameter_item) / sizeof(parameter_item[0]); i++)
+    {
+        if (parameter_item[i].paramerer_index == id)
+        {
+            if (addr != NULL)
+            {
+                *addr = 0x00;
+                for (k = 0x00; k < i; k++)
+                {
+                    *addr += parameter_item[k].len;
+                }
+            }
+
+            if (size != NULL)
+            {
+                *size = parameter_item[i].len;
+            }
+
+            return 0x00;
+        }
+    }
+
+    return -1;
+}
+
+
+int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint16_t* size, uint16_t* depth)
+{
+    uint8_t i, k;
+
+    for (i = 0; i < sizeof(record_item) / sizeof(record_item[0]); i++)
+    {
+        if ((event_flag == record_item[i].event_flag_id_start) || (event_flag == record_item[i].event_flag_id_end))
+        {
+            if (addr != NULL)
+            {
+                *addr = 0x00;
+                for (k = 0x00; k < i; k++)
+                {
+                    *addr += record_item[k].len;
+                }
+            }
+
+            if (size != NULL)
+            {
+                *size = record_item[i].len;
+            }
+
+            if (depth != NULL)
+            {
+                *depth = record_item[i].max_depth;
+            }
+
+            return 0x00;
+        }
+    }
+
+    return -1;
+}
+
+
 
 
 struct record_storage_id_info_t
