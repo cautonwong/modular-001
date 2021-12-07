@@ -49,8 +49,8 @@ struct test_record_item_t
 {
 	uint16_t  event_flag_id_start;  // 事件代码
 	uint16_t  event_flag_id_end;    // 事件代码2
-	uint16_t len;
-	uint16_t max_depth;     // 默认最大深度
+	uint32_t len;
+	uint32_t max_depth;     // 默认最大深度
 };
 
 const struct test_record_item_t  test_record_item[] =
@@ -58,7 +58,7 @@ const struct test_record_item_t  test_record_item[] =
 	{ OverCurrentL1, OverCurrentEndL1,              800,    10 },// 待调整
 };
 
-int16_t test_event_info(uint16_t event_flag, uint32_t* addr, uint16_t* size, uint16_t* depth)
+int16_t test_event_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
 {
 	uint8_t i, k;
 

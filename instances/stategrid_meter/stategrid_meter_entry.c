@@ -272,9 +272,9 @@ int baremetal_instance_entry_main(int argc, char** argv)
     uint32_t persistent_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_persistent, mbase_block_persistent_size);
 
     //注册EPROM  
-    add_device(instance, RES_DEV_EEPROM, &eeprom_dev);
+    add_device(instance, RES_DEV_EEPROM, &eeprom_dev,0x00);
     //注册FLASH
-    add_device(instance, RES_DEV_FLASH, &nor_flash_dev);
+    add_device(instance, RES_DEV_FLASH, &nor_flash_dev,4096);
     //申请一块掉电保存的EPROM区域
     add_block(instance, RES_DEV_EEPROM, mbase_block_persistent_eprom, mbase_block_persistent_size);
     //注册事件的管理区

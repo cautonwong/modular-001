@@ -142,9 +142,9 @@ int test_resource_setup(void** state)
     fifoBuf_init(&instance->pipe_rtc, buf, 4);
 
     //注册EPROM  
-    add_device(instance, RES_DEV_EEPROM, &eeprom_dev);
+    add_device(instance, RES_DEV_EEPROM, &eeprom_dev,0x00);
     //注册FLASH
-    add_device(instance, RES_DEV_FLASH, &nor_flash_dev);
+    add_device(instance, RES_DEV_FLASH, &nor_flash_dev,4096);
 
     *state = instance;
     return 0;
