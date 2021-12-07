@@ -206,7 +206,7 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline);
 void Energy_Meter_PowerON(struct instance_t* instance, struct pipeline_t* pipeline);
 void Energy_Meter_PowerOFF(struct instance_t* instance, struct pipeline_t* pipeline);
 int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size);
-int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint16_t* size, uint16_t* depth);
+int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth);
 struct resources_obj_t;
 int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj);
 int app_rx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
