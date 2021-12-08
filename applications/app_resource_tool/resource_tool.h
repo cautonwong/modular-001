@@ -34,8 +34,9 @@ struct block_device_t
 
 struct log_manager_t
 {
+    uint16_t r_ptr;
+    uint16_t w_ptr;
     uint16_t num;
-    uint16_t wr_ptr;
     uint16_t unit_size;
     uint16_t max_num;
     uint16_t check_sum;

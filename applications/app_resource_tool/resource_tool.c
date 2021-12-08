@@ -5,9 +5,9 @@ struct search_tempinfo_t
 {
     const struct dev_info_t* dev;
     uint32_t addr;
+    uint32_t max_num;
     uint16_t offset;
     uint16_t unit_size;
-    uint8_t mode;
 };
 
 void *__nd_malloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_size)
@@ -528,21 +528,19 @@ int16_t get_block_frist_addr(struct instance_t *instance, uint8_t device_name, u
 }
 
 #if 1
-uint32_t get_curr_mark(const struct dev_info_t* dev, uint32_t addr, uint8_t mode)
+uint32_t get_curr_mark(const struct dev_info_t* dev, uint32_t addr)
 {
-    uint32_t(*fun[2])(struct tm* t) = { rtc_mktime , (uint32_t(*)(struct tm* t))buf_to_uint32_lsb };
     const struct driver_ops_t* driver = NULL;
     uint8_t buf[10] = { 0 };
 
     driver = dev->dev_driver_ops;
     if ((driver != NULL) && (driver->dev_read))
     {
-        driver->dev_read(dev, addr, 0x07, buf);
-        if (mode <= 0x01) 
-        {
-            return fun[mode]((struct tm*)buf);
-        }
+        driver->dev_read(dev, addr, 0x04, buf);
+
+        return buf_to_uint32_lsb(buf);
     }
+
     return 0xffffffff;
 }
 
@@ -553,10 +551,10 @@ uint16_t search_enum_way(uint32_t key, uint16_t start, uint16_t end, struct sear
 
     ptr = end;
     next_ptr = ((start + 1) > end) ? start : (end - 1);
-    cmp = get_curr_mark(info->dev,info->addr + info->offset + ptr * info->unit_size, info->mode);
+    cmp = get_curr_mark(info->dev,info->addr + info->offset + ptr * info->unit_size);
     while (next_ptr >= start)
     {
-        next_cmp = get_curr_mark(info->dev, info->addr + info->offset + next_ptr * info->unit_size, info->mode);
+        next_cmp = get_curr_mark(info->dev, info->addr + info->offset + next_ptr * info->unit_size);
         if (cmp == key)
         {
             return ptr;
@@ -594,7 +592,7 @@ uint16_t search_mid_way(uint32_t key, uint16_t start, uint16_t end, struct searc
     while ((direct < 0x02) && (max_ptr >= min_ptr))
     {
         mid_ptr = (min_ptr + max_ptr) / 2;
-        mid_cmp = get_curr_mark(info->dev, info->addr + info->offset + mid_ptr * info->unit_size, info->mode);
+        mid_cmp = get_curr_mark(info->dev, info->addr + info->offset + mid_ptr * info->unit_size);
         if (mid_cmp == key)
         {
             break;
@@ -608,7 +606,7 @@ uint16_t search_mid_way(uint32_t key, uint16_t start, uint16_t end, struct searc
             }
 
             min_ptr = mid_ptr + 1;
-            temp_cmp = get_curr_mark(info->dev, info->addr + info->offset + min_ptr * info->unit_size, info->mode);
+            temp_cmp = get_curr_mark(info->dev, info->addr + info->offset + min_ptr * info->unit_size);
             if (key == temp_cmp)
             {
                 return min_ptr;
@@ -628,7 +626,7 @@ uint16_t search_mid_way(uint32_t key, uint16_t start, uint16_t end, struct searc
             }
 
             max_ptr = mid_ptr - 0x01;
-            temp_cmp = get_curr_mark(info->dev, info->addr + info->offset + max_ptr * info->unit_size, info->mode);
+            temp_cmp = get_curr_mark(info->dev, info->addr + info->offset + max_ptr * info->unit_size);
             if (key == temp_cmp)
             {
                 return max_ptr;
@@ -646,8 +644,8 @@ uint16_t search_mid_way(uint32_t key, uint16_t start, uint16_t end, struct searc
 
 int __search_smoke(struct circular_info_t* info, struct search_tempinfo_t* tempinfo, uint16_t *sptr,uint8_t mode)
 {
-    uint32_t temp1 = get_curr_mark(tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[0] * tempinfo->unit_size, tempinfo->mode);
-    uint32_t temp2 = get_curr_mark(tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[1] * tempinfo->unit_size, tempinfo->mode);
+    uint32_t temp1 = get_curr_mark(tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[0] * tempinfo->unit_size);
+    uint32_t temp2 = get_curr_mark(tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[1] * tempinfo->unit_size);
 
     if (info->end_mark < info->start_mark)
     {
@@ -675,8 +673,8 @@ int __search_smoke(struct circular_info_t* info, struct search_tempinfo_t* tempi
         break;
     case 0x02:  //有反转
     {
-        uint32_t temp3 = get_curr_mark(tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[2] * tempinfo->unit_size, tempinfo->mode);
-        uint32_t temp4 = get_curr_mark(tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[3] * tempinfo->unit_size, tempinfo->mode);
+        uint32_t temp3 = get_curr_mark(tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[2] * tempinfo->unit_size);
+        uint32_t temp4 = get_curr_mark(tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[3] * tempinfo->unit_size);
 
         if (info->start_mark <= temp3)
         {
@@ -686,16 +684,6 @@ int __search_smoke(struct circular_info_t* info, struct search_tempinfo_t* tempi
         if (info->end_mark >= temp2)
         {
             info->end_mark = temp2;
-        }
-
-        if (info->start_mark == temp4)
-        {
-            info->start_mark = temp4;
-        }
-
-        if (info->end_mark == temp1)
-        {
-            info->end_mark = temp1;
         }
 
         if ((info->start_mark > temp4) && (info->start_mark <= temp1))
@@ -722,20 +710,25 @@ int __search_smoke(struct circular_info_t* info, struct search_tempinfo_t* tempi
 int16_t __search_circular(struct circular_info_t* info, struct log_manager_t* manager, struct search_tempinfo_t *tempinfo,
     uint16_t (*fun)(uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t* info, uint8_t direct))
 {
-    uint16_t ptr[4] = { 0x00,0x00,manager->wr_ptr,manager->max_num - 0x01 };
+    uint16_t ptr[4] = { manager->r_ptr, 0x00, 0x00, 0x00 };
+    const struct dev_info_t* dev = tempinfo->dev;
     uint16_t start_ptr = 0x00, end_ptr = 0x00;
     uint8_t cnt = 0x00;
 
-    if (manager->wr_ptr > 0x00)
+    if (manager->w_ptr > 0x00)
     {
-        ptr[1] = manager->wr_ptr - 0x01;
+        ptr[1] = manager->w_ptr - 0x01;
     }
-   
-    if (manager->num == manager->max_num)//说明已经反转了,反转了需要找2块区域
+
+    if ((manager->r_ptr > manager->w_ptr) && (manager->num == manager->max_num))//说明已经反转了,反转了需要找2块区域
     {
-        if (manager->wr_ptr == 0x00) //说明刚好反转
+        ptr[0] = 0x00;
+        ptr[2] = manager->r_ptr;
+        ptr[3] = tempinfo->max_num - 0x01;
+        if (manager->w_ptr == 0x00)  //刚好反转的时候
         {
-            ptr[1] = manager->max_num - 0x01;
+            ptr[0] = manager->r_ptr;
+            ptr[1] = tempinfo->max_num - 0x01;
         }
         cnt = 0x02;  //需要找两次；
     }
@@ -782,7 +775,7 @@ int16_t __search_circular(struct circular_info_t* info, struct log_manager_t* ma
     return 0x00;
 }
 
-int16_t search_circular(struct instance_t* instance, const struct dev_info_t* dev, uint32_t addr, struct circular_info_t* info, struct log_manager_t* manager)
+int16_t search_circular(struct instance_t* instance, const struct dev_info_t* dev, uint32_t addr, struct circular_info_t* info, struct log_manager_t* manager,uint32_t max_num)
 {
     struct search_tempinfo_t tempinfo;
 
@@ -790,6 +783,7 @@ int16_t search_circular(struct instance_t* instance, const struct dev_info_t* de
     tempinfo.dev = dev;
     tempinfo.addr = addr;
     tempinfo.unit_size = manager->unit_size;
+    tempinfo.max_num = max_num;
 
     if ((info != NULL) && (dev != NULL) && (dev->dev_driver_ops != NULL))
     {
@@ -798,15 +792,12 @@ int16_t search_circular(struct instance_t* instance, const struct dev_info_t* de
         case 0x00:  //全读
             return 0x00;  //直接返回
         case 0x01:  //序号二分查找
-            tempinfo.mode = 0x01;   //序号
             tempinfo.offset = 0x00;
             return __search_circular(info, manager, &tempinfo, search_mid_way);
         case 0x02: //时间二分查找
-            tempinfo.mode = 0x00;  //时间
             tempinfo.offset = 0x04;
             return __search_circular(info, manager, &tempinfo, search_mid_way);
         case 0x03: //时间枚举法查找
-            tempinfo.mode = 0x00; //时间
             tempinfo.offset = 0x04;
             return __search_circular(info, manager, &tempinfo, search_enum_way);
         default:
@@ -825,6 +816,7 @@ int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf,
     uint32_t addr01 = 0x00, addr02 = 0x00;
     uint32_t len01 = 0x00, len02 = 0x00;
     uint32_t depth = 0x00;
+    uint32_t over_num = 0x00;
 
     memset((uint8_t*)&manager, 0x00, sizeof(struct log_manager_t));
     device01 = look_up_device(instance, (uint8_t)(index >> 24));//查找设备   
@@ -851,17 +843,22 @@ int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf,
                 {
                     return -1;
                 }
-                if (0xA5A5 + manager.num + manager.unit_size + manager.wr_ptr != manager.check_sum)
+                if (0xA5A5 + manager.r_ptr + manager.num + manager.unit_size + manager.w_ptr != manager.check_sum)
                 {
                     manager.max_num = depth;
                     manager.unit_size = unit_size;
                     manager.num = 0;
-                    manager.wr_ptr = 0;
+                    manager.r_ptr = 0;
+                    manager.w_ptr = 0;
+                }
+                if (manager.unit_size != 0x00)
+                {
+                    over_num = len01 / manager.unit_size;
                 }
             }
         }
         //存储数据
-        addr01 += manager.wr_ptr * manager.unit_size;
+        addr01 += manager.w_ptr * manager.unit_size;
         if ((driver01 != NULL) && (driver01->dev_write != NULL))
         {
             if (0x00 > driver01->dev_write(device01->dev, block01->first_addr + addr01, unit_size, buf))
@@ -872,17 +869,27 @@ int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf,
         //保存管理区
         if ((driver02 != NULL) && (driver02->dev_write != NULL))
         {
-            manager.wr_ptr++;
-            manager.num++;
-            if (manager.wr_ptr >= manager.max_num)
-            {
-                manager.wr_ptr = 0x00;
-            }
             if (manager.num >= manager.max_num)
             {
                 manager.num = manager.max_num;
+                manager.r_ptr++;
             }
-            manager.check_sum = 0xA5A5 + manager.num + manager.unit_size + manager.wr_ptr;
+            else
+            {
+                manager.num++;
+            }
+
+            manager.w_ptr++;           
+            if (manager.w_ptr >= over_num)
+            {
+                manager.w_ptr = 0x00;
+            }
+
+            if (manager.r_ptr >= over_num)
+            {
+                manager.r_ptr = 0x00;
+            }
+            manager.check_sum = 0xA5A5 + manager.num + manager.unit_size + manager.w_ptr + manager.r_ptr;
             if (0x00 > driver02->dev_write(device02->dev, block02->first_addr + addr02, sizeof(struct log_manager_t), (uint8_t*)&manager))
             {
                 return -1;
@@ -902,6 +909,7 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
     uint32_t addr01 = 0x00, addr02 = 0x00;
     uint32_t len01 = 0x00, len02 = 0x00;
     uint32_t depth = 0x00;
+    uint32_t over_num = 0x00;
 
     memset((uint8_t*)&manager, 0x00, sizeof(struct log_manager_t));
     device01 = look_up_device(instance, (uint8_t)(index >> 24));//查找设备   
@@ -926,21 +934,17 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
                     {
                         return -1;
                     }
-                    if (0xA5A5 + manager.num + manager.unit_size + manager.wr_ptr != manager.check_sum)
+                    if (0xA5A5 + manager.num + manager.unit_size + manager.w_ptr + manager.r_ptr != manager.check_sum)
                     {
                         return 0x00;
                     }
                     info->unit_size = manager.unit_size;
                     info->valid_num = manager.num;
-                    info->read_ptr = 0x00;
-                    if (manager.num == manager.max_num)
-                    {
-                        info->read_ptr = manager.wr_ptr;
-                    }
+                    info->read_ptr = manager.r_ptr;
                     //搜索信息处理
-                    if (info->valid_num > 0x00)
+                    if ((info->valid_num > 0x00) &&(manager.unit_size != 0x00))
                     {
-                        search_circular(instance, device01->dev, block01->first_addr + addr01, info, &manager);
+                        search_circular(instance, device01->dev, block01->first_addr + addr01, info, &manager, len01/ manager.unit_size);
                     }
                     else
                     {
@@ -963,7 +967,11 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
 
             info->curr_num++;
             info->read_ptr++;
-            if (info->read_ptr >= depth)
+            if (info->unit_size != 0x00)
+            {
+                over_num = len01 / info->unit_size;
+            }
+            if (info->read_ptr >= over_num)
             {
                 info->read_ptr = 0x00;
             }  
