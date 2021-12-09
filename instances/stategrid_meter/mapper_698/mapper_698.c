@@ -67,6 +67,10 @@ const struct parameter_item_t  parameter_item[] =
 
     { MinuteFreeze_period,  24 }, //分钟冻结 周期   3*8     
     { MinuteFreeze_depth,   31}, //分钟冻结 深度     2*15  统一冻结深度31字节
+    
+    { AutoDisplayList,      200},//100屏*2字节
+    { KeyDisplayList,       200},//100屏*2字节
+    { DisplayPara,          22},
 
 };
 

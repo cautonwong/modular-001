@@ -36,18 +36,20 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
                 uint8_t lens[] = {1, 2, 2, 2, 1, 1, 1};
                 if(index == 0)
                 {
+                    p = p + 2;
                     for(i=0; i<8; i++)
                     {
                         p++;
-                        memcpy((uint8_t*)idbuf[i], p, lens[i]);
+                        mem_swap_cpy((uint8_t*)idbuf[i], p, lens[i]);
                         p = p + lens[i];
                     }
-                    return 1;
+                    return (p-buf);
                 }
                 else if(index < 8)
                 {
                     p++;
-                    memcpy((uint8_t*)idbuf[index-1], p, lens[index-1]);
+                    mem_swap_cpy((uint8_t*)idbuf[index-1], p, lens[index-1]);
+                    p = p + lens[i];
                     return 1;
                 }
                 else

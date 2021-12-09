@@ -300,7 +300,7 @@
 #define    MonthFreeze_period           237  //月冻结 周期   3
 #define    MonthFreeze_depth            238  //月冻结 深度   2
 
- 
+#define    DisplayPara                  399   //显示参数    22
 #define    AutoDisplayList              400   //轮显项目
 #define    KeyDisplayList               401   //键显项目
 

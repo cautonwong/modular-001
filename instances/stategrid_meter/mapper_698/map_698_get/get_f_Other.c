@@ -6,28 +6,95 @@
 int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
 {    
     struct mbase_control_block_t* mbase_cb;
+    uint16_t oad,displayid;
+    uint8_t index,attribute,i,len,dispalyseque,maxnum;
+    uint8_t* p = buf;
+    uint32_t displayoad1,displayoad2;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
         return -1;
     }
-    switch (id)
+    
+    oad = (unsigned short)((id & 0xFFFF0000) >> 16);
+    index = (unsigned char)(id & 0x000000FF);
+    attribute = (unsigned char)((id & 0x0000FF00) >> 8);    //属性
+    
+    if((oad != 0xF300) && (oad != 0xF301))  return -1;
+    
+    switch (attribute)
     {
-    case 0xf0000200://电压
-        {
-            //obj->block_name = 0x0A;//只是举例
-            //obj->device_name = 0x0D;//只是举例
-            //obj->offset = container_of(mbase_cb,struct mbase_control_block_t, UA);
-            buf[0] = 0x01;//数组
-            buf[1] = 0x01;//单相一个元素
-            buf[2] = TYPE_long_unsigned;
-            //memcpy(buf+3, (uint8_t*)mbase_cb->voltage_ac, 0x02);
-            return 0x05;
-        }
-    break;
-    default:
-        break;
+        case 0x02://显示对象列表
+            if(oad == 0xF300)
+                maxnum = mbase_cb->lcd_autodis_list_num;
+            else if(oad == 0xF301)
+                maxnum = mbase_cb->lcd_keydis_list_num;
+            if(index > maxnum)  return -1;
+            
+            if(index != 0)
+            {
+            
+            }
+            else
+            {
+                
+            }
+            break;
+        case 0x03://显示时间
+            if(index != 0)  return -1;
+            *p++ = TYPE_long_unsigned;
+            if(oad == 0xF300)
+                mem_swap_cpy(p, (uint8_t*)&mbase_cb->lcd_autodis_keep_sec, 2);
+            else
+                mem_swap_cpy(p, (uint8_t*)&mbase_cb->lcd_keydis_keep_sec, 2);
+            p = p + 2;
+            return (p - buf);
+            break;
+        case 0x04://显示参数
+            switch(index)
+            {
+                case 0x00:
+                    *p++ = TYPE_structure;
+                    *p++ = 2;
+                    *p++ = TYPE_unsigned;
+                    if(oad == 0xF300)
+                        memcpy(p, (uint8_t*)&mbase_cb->lcd_autodis_list_num, 1);
+                    else
+                        memcpy(p, (uint8_t*)&mbase_cb->lcd_keydis_list_num, 1);
+                    p++;
+                    *p++ = TYPE_unsigned;
+                    if(oad == 0xF300)
+                        memcpy(p, (uint8_t*)&mbase_cb->lcd_autodis_list_maxnum, 1);
+                    else
+                        memcpy(p, (uint8_t*)&mbase_cb->lcd_keydis_list_maxnum, 1);
+                    p = p + 1;
+                    return (p - buf);
+                    break;
+                case 0x01://当前对象数
+                    *p++ = TYPE_unsigned;
+                    if(oad == 0xF300)
+                        memcpy(p, (uint8_t*)&mbase_cb->lcd_autodis_list_num, 1);
+                    else
+                        memcpy(p, (uint8_t*)&mbase_cb->lcd_keydis_list_num, 1);
+                    p = p + 1;
+                    return (p - buf);
+                    break;
+                case 0x02://最大对象数
+                    *p++ = TYPE_unsigned;
+                    if(oad == 0xF300)
+                        memcpy(p, (uint8_t*)&mbase_cb->lcd_autodis_list_maxnum, 1);
+                    else
+                        memcpy(p, (uint8_t*)&mbase_cb->lcd_keydis_list_maxnum, 1);
+                    p = p + 1;
+                    return (p - buf);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        default:
+            break;
     }
     return 0x01;
 }

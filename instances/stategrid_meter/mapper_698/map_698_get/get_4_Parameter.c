@@ -36,22 +36,22 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
                 };
                 uint8_t lens[] = {1, 2, 2, 2, 1, 1, 1};
                 uint8_t tag[] = {TYPE_unsigned, TYPE_long_unsigned, TYPE_long_unsigned, TYPE_long_unsigned, TYPE_unsigned, TYPE_unsigned, TYPE_unsigned};
-                /*if(index == 0)
+                if(index == 0)
                 {
-                    for(i=0; i<8; i++)
+                    *p++ = TYPE_structure;
+                    *p++ = 7;
+                    for(i=0; i<7; i++)
                     {
-                        p++;
-                        memcpy((uint8_t*)idbuf[i], p, lens[i]);
+                        *p++ = tag[i];
+                        mem_swap_cpy(p, (uint8_t*)idbuf[i], lens[i]);
                         p = p + lens[i];
                     }
-                    return 1;
+                    return (p - buf);
                 }
-                else 
-*/
-                if(index < 8)
+                else if(index < 8)
                 {
                     *p++ = tag[index-1];
-                    memcpy(p, (uint8_t*)idbuf[index-1], lens[index-1]);
+                    mem_swap_cpy(p, (uint8_t*)idbuf[index-1], lens[index-1]);
                     p = p + lens[index-1];
                     return (p - buf);
                 }
