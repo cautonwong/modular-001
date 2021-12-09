@@ -2,17 +2,11 @@
 #include <setjmp.h>
 #include "cmocka.h"
 #include "resource_tool.h"
+#include "test_resource.h"
 
 
 #define test_OverCurrentL1 0xA1
 #define test_OverCurrentEndL1 0xA2
-extern int generate_data(uint8_t* data, size_t n, size_t len, size_t type);
-
-struct event_manager_t
-{
-	uint8_t event_name;
-	uint16_t len;
-};
 
 const struct event_manager_t  event_manager_item[] =
 {
@@ -48,17 +42,9 @@ int16_t stest_event_manager_info(uint16_t id, uint32_t* addr, uint16_t* size)
 	return -1;
 }
 
-struct test_record_item_t
-{
-	uint16_t  event_flag_id_start;  // 事件代码
-	uint16_t  event_flag_id_end;    // 事件代码2
-	uint32_t len;
-	uint32_t max_depth;     // 默认最大深度
-};
-
 const struct test_record_item_t  test_record_item[] =
 {
-	{ test_OverCurrentL1, test_OverCurrentEndL1,              800,    10 },// 待调整
+	{ test_OverCurrentL1, test_OverCurrentEndL1,              280,    10 },// 待调整
 };
 
 int16_t test_event_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)

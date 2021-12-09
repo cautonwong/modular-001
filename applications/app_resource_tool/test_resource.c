@@ -178,6 +178,18 @@ extern void test_nd_log_output_search_time_10_05(void** state);
 extern void test_nd_log_output_search_time_10_01(void** state);
 extern void test_nd_log_output_search_time_10_10(void** state);
 extern void test_nd_log_output_search_time_over_05(void** state);
+extern void test_nd_log_output_flash_search_all(void** state);
+extern void test_nd_log_output_flash_search_all_100(void** state);
+extern void test_nd_log_output_flash_search_all_400(void** state);
+extern void test_nd_log_output_flash_search_all_426(void** state);
+extern void test_nd_log_output_flash_search_all_500(void** state);
+extern void test_nd_log_output_flash_search_index_100_30(void** state);
+extern void test_nd_log_output_flash_search_index_100_40(void** state);
+extern void test_nd_log_output_flash_search_index_100_18(void** state);
+extern void test_nd_log_output_flash_search_index_100_100(void** state);
+extern void test_nd_log_output_flash_search_index_400_100(void** state);
+extern void test_nd_log_output_flash_search_index_426_100(void** state);
+extern void test_nd_log_output_flash_search_index_500_100(void** state);
 
 int main(int argc, char** argv)
 {
@@ -191,6 +203,7 @@ int main(int argc, char** argv)
         cmocka_unit_test(test_add_block_500_byte),     
         cmocka_unit_test(test_add_block_10K_byte),     
         cmocka_unit_test(test_add_block_out_of_gauge),
+        
         cmocka_unit_test(test_nd_log_output_search_all),
         cmocka_unit_test(test_nd_log_output_search_all_06),
         cmocka_unit_test(test_nd_log_output_search_all_full),
@@ -211,6 +224,19 @@ int main(int argc, char** argv)
         cmocka_unit_test(test_nd_log_output_search_time_10_01),
         cmocka_unit_test(test_nd_log_output_search_time_10_10),
         cmocka_unit_test(test_nd_log_output_search_time_over_05),
+
+        cmocka_unit_test(test_nd_log_output_flash_search_all),
+        cmocka_unit_test(test_nd_log_output_flash_search_all_100),
+        cmocka_unit_test(test_nd_log_output_flash_search_all_400),
+        cmocka_unit_test(test_nd_log_output_flash_search_all_426),
+        cmocka_unit_test(test_nd_log_output_flash_search_all_500),
+        cmocka_unit_test(test_nd_log_output_flash_search_index_100_30),
+        cmocka_unit_test(test_nd_log_output_flash_search_index_100_40),
+        cmocka_unit_test(test_nd_log_output_flash_search_index_100_18),
+        cmocka_unit_test(test_nd_log_output_flash_search_index_100_100),
+        cmocka_unit_test(test_nd_log_output_flash_search_index_400_100),
+        cmocka_unit_test(test_nd_log_output_flash_search_index_426_100),
+        cmocka_unit_test(test_nd_log_output_flash_search_index_500_100),
     };
 
     return cmocka_run_group_tests(tests, test_resource_setup, NULL);

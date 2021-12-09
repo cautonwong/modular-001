@@ -720,7 +720,7 @@ int16_t __search_circular(struct circular_info_t* info, struct log_manager_t* ma
         ptr[1] = manager->w_ptr - 0x01;
     }
 
-    if ((manager->r_ptr > manager->w_ptr) && (manager->num == manager->max_num))//说明已经反转了,反转了需要找2块区域
+    if ((manager->r_ptr >= manager->w_ptr) && (manager->num == manager->max_num))//说明已经反转了,反转了需要找2块区域
     {
         ptr[0] = 0x00;
         ptr[2] = manager->r_ptr;
@@ -763,7 +763,7 @@ int16_t __search_circular(struct circular_info_t* info, struct log_manager_t* ma
         }
         else
         {
-            info->valid_num = end_ptr + manager->max_num - start_ptr + 0x01;
+            info->valid_num = end_ptr + tempinfo->max_num - start_ptr + 0x01;
         }
     }
     else
