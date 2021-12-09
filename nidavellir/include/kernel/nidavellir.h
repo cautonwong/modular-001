@@ -1,4 +1,4 @@
-﻿#ifndef __INCLUDE_nidavellir__
+#ifndef __INCLUDE_nidavellir__
 #define __INCLUDE_nidavellir__
 #include "types.h"
 #include <assert.h>

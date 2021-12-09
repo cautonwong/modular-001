@@ -30,8 +30,8 @@ struct record_item_t
 {
     uint16_t  event_flag_id_start;  // 事件代码
     uint16_t  event_flag_id_end;    // 事件代码2
-    uint16_t len;
-    uint16_t max_depth;     // 默认最大深度
+    uint32_t len;
+    uint32_t max_depth;     // 默认最大深度
 };
 
 struct parameter_item_t
@@ -104,7 +104,7 @@ int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size)
 }
 
 
-int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint16_t* size, uint16_t* depth)
+int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
 {
     uint8_t i, k;
 

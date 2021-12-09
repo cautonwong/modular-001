@@ -17,7 +17,7 @@ void test_add_device(void** state)
 	};
 
 	//注册test_dev 
-	ret = add_device(instance, test_dev_name, &test_dev);
+	ret = add_device(instance, test_dev_name, &test_dev,0x00);
 	assert_true(ret > 0);
 
 	device = look_up_device(instance, test_dev_name);
