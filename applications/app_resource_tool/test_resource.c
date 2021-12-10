@@ -158,6 +158,8 @@ extern void test_add_block_same_block_name(void** state);
 extern void test_add_block_500_byte(void** state);
 extern void test_add_block_10K_byte(void** state);
 extern void test_add_block_out_of_gauge(void** state);
+extern void test_nd_get(void** state);
+extern void test_nd_get_index(void** state);
 extern void test_nd_log_output_search_all(void** state);
 extern void test_nd_log_output_search_all_06(void** state);
 extern void test_nd_log_output_search_all_full(void** state);
@@ -211,7 +213,11 @@ int main(int argc, char** argv)
         cmocka_unit_test(test_add_block_500_byte),     
         cmocka_unit_test(test_add_block_10K_byte),     
         cmocka_unit_test(test_add_block_out_of_gauge),
+        //测试nd_get 和 nd_set
+        cmocka_unit_test(test_nd_get),
+        cmocka_unit_test(test_nd_get_index),       
         //测试循环存储 EPROM 的搜索
+#if 1
         cmocka_unit_test(test_nd_log_output_search_all),
         cmocka_unit_test(test_nd_log_output_search_all_06),
         cmocka_unit_test(test_nd_log_output_search_all_full),
@@ -252,6 +258,7 @@ int main(int argc, char** argv)
         cmocka_unit_test(test_nd_log_output_flash_search_time_400_100),
         cmocka_unit_test(test_nd_log_output_flash_search_time_426_100),
         cmocka_unit_test(test_nd_log_output_flash_search_time_500_100),
+#endif // 0
     };
 
     return cmocka_run_group_tests(tests, test_resource_setup, NULL);

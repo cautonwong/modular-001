@@ -71,4 +71,10 @@ int nd_log_clean(struct instance_t* instance, uint32_t index);
 int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t unit_size);
 int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t buf_size, struct circular_info_t* info);
 
+int16_t nd_get_index(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t buf_size);
+int16_t nd_set_index(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t buf_size);
+
+int16_t nd_get_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf, uint16_t buf_size);
+int16_t nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf, uint16_t buf_size);
+
 #endif

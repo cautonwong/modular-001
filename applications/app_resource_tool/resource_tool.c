@@ -341,17 +341,17 @@ int16_t look_up_map(struct instance_t* instance,uint32_t id, uint8_t *buf, uint8
 
 int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
 {
-    return look_up_map(instance, id, buf, RESOURCE_MAP_698_GET);
+    return look_up_map(instance, id, buf, RESOURCE_MAP_GET);
 }
 
 int16_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
 {
-    return look_up_map(instance, id, buf, RESOURCE_MAP_698_SET);
+    return look_up_map(instance, id, buf, RESOURCE_MAP_SET);
 }
 
 int16_t nd_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
 {
-    return look_up_map(instance, id, buf, RESOURCE_MAP_698_ACTION);
+    return look_up_map(instance, id, buf, RESOURCE_MAP_ACTION);
 }
 
 int16_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size)

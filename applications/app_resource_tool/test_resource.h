@@ -16,5 +16,4 @@ struct test_record_item_t
 };
 
 extern int generate_data(uint8_t* data, size_t n, size_t len, size_t type);
-
 #endif

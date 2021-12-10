@@ -550,9 +550,9 @@ enum block_device_id_t
 
 enum resource_map_698_e
 {
-    RESOURCE_MAP_698_GET = 0,
-    RESOURCE_MAP_698_SET = 1,
-    RESOURCE_MAP_698_ACTION = 2,
+    RESOURCE_MAP_GET = 0,
+    RESOURCE_MAP_SET = 1,
+    RESOURCE_MAP_ACTION = 2,
 };
 
 struct record_storage_id_info_t

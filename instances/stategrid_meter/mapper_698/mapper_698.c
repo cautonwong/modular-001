@@ -170,7 +170,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
     uint8_t OIA1 = get_OAD_OIA1(id);
     switch (mode)
 	{
-    case RESOURCE_MAP_698_GET:
+    case RESOURCE_MAP_GET:
         switch (OIA1)
         {
         case 0x0://电量
@@ -210,7 +210,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
             break;
         }
         break;
-    case RESOURCE_MAP_698_SET:
+    case RESOURCE_MAP_SET:
       	switch (OIA1)
         {
         case 0x3:// 事件
@@ -225,7 +225,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
             break;
         }
         break;
-    case RESOURCE_MAP_698_ACTION:
+    case RESOURCE_MAP_ACTION:
         switch (OIA1)
         {
         case 0x4://参变量
