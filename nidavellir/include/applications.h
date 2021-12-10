@@ -53,8 +53,7 @@ struct mbase_control_block_t
     static_end     
     //运行期更改 && 掉电不保存 && 上电不需要IO请求的区域 && 初始化时直接清零
     dyn_cache_start   
-    I_data_fields
-          
+    I_data_fields         
     uint8_t   DayTableNo;//日表序号
     uint8_t   TOUNo;//费率序号
     uint8_t   STEPNo;//阶梯序号
@@ -81,9 +80,6 @@ struct mbase_control_block_t
     uint8_t  n_pluse;
     uint8_t  power_dir;
     uint8_t  power_qn;
-    
-    
-    
     dyn_cache_end
     //运行期更改&&掉电或定时保存&&上电需要IO请求的数据分区
     dyn_persistent_start
@@ -208,7 +204,7 @@ void Energy_Meter_PowerOFF(struct instance_t* instance, struct pipeline_t* pipel
 int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size);
 int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth);
 struct resources_obj_t;
-int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj);
+int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode);
 int app_rx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 int app_tx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);

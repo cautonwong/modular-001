@@ -10,6 +10,41 @@ struct search_tempinfo_t
     uint16_t unit_size;
 };
 
+int do_sum(uint8_t* buff, uint16_t length)
+{
+    uint16_t result = 0;
+
+    while (length--)
+    {
+        result += *buff++;
+    }
+
+    return result;
+}
+
+int verify_data(uint8_t* buf, uint16_t len)
+{
+    uint16_t checksum = 0xA5A5, rchecksum = 0;
+
+    checksum += do_sum(buf, len - 0x02);
+    memcpy((uint8_t*)&rchecksum, buf + len - 0x02, 0x02);
+
+    if (checksum != rchecksum)
+    {
+        return -1;
+    }
+
+    return 1;
+}
+
+void update_verify(uint8_t* buf, uint16_t len)
+{
+    uint16_t checksum = 0xA5A5;
+
+    checksum += do_sum(buf, len - 0x02);
+    memcpy(buf + len - 0x02, (uint8_t*)&checksum, 0x02);
+}
+
 void *__nd_malloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_size)
 {
     uint32_t free = block_size - *used;
@@ -25,7 +60,6 @@ void *__nd_malloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_si
 
     return NULL;
 }
-
 
 struct block_device_t* look_up_device(struct instance_t* instance, uint8_t device_name)
 {
@@ -255,7 +289,7 @@ int8_t add_device(struct instance_t* instance, uint8_t device_name, const struct
 }
 
 struct resource_map_t* register_map(struct instance_t* instance,uint8_t map_name,
-    int (*fun)(struct instance_t *instance, uint32_t id,uint8_t *buf, uint8_t mode, struct resources_obj_t* obj))
+    int (*fun)(struct instance_t *instance, uint32_t id,uint8_t *buf, uint8_t mode))
 {
     struct resource_block_t* block = NULL;
     struct resource_map_t* map = NULL;
@@ -287,7 +321,7 @@ struct resource_map_t* register_map(struct instance_t* instance,uint8_t map_name
     return map;
 }
 
-int16_t look_up_map(struct instance_t* instance,uint32_t id, uint8_t *buf, uint8_t mode, struct resources_obj_t* obj)
+int16_t look_up_map(struct instance_t* instance,uint32_t id, uint8_t *buf, uint8_t mode)
 {
     struct resource_map_t* map = NULL;
     struct list_head* p;
@@ -297,7 +331,7 @@ int16_t look_up_map(struct instance_t* instance,uint32_t id, uint8_t *buf, uint8
         map = list_entry(p, struct resource_map_t, sibling);
         if (map->fun != NULL)
         {
-            return map->fun(instance, id, buf, mode, obj);
+            return map->fun(instance, id, buf, mode);
         }
     }
 
@@ -307,91 +341,17 @@ int16_t look_up_map(struct instance_t* instance,uint32_t id, uint8_t *buf, uint8
 
 int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
 {
-    struct block_device_t* device = NULL;
-    const struct driver_ops_t *driver = NULL;
-    struct resource_block_t* block = NULL;
-    struct resources_obj_t obj;
-    int16_t ret = 0x00;
-    uint32_t addr = 0x00;
-    
-    memset((uint8_t*)&obj, 0x00, sizeof(obj));
-    ret = look_up_map(instance, id, buf, RESOURCE_MAP_698_GET, &obj);
-    if (0x00 == ret)
-    {        
-        device = look_up_device(instance, obj.device_name);//查找设备
-        driver = device->dev->dev_driver_ops;
-        //查找块
-        block = look_up_block(instance, device, obj.block_name);
-        if ((device != NULL) && (block != NULL))
-        {
-            if ((driver != NULL) && (driver->dev_read != NULL))
-            {
-                //计算地址
-                addr = block->first_addr + obj.offset;
-                driver->dev_read(device->dev, addr, obj.length, buf);
-                //这里没判断返回值和校验
-
-                if (obj.hook != NULL)
-                {
-                    obj.hook(buf, obj.p);
-                }
-
-                return obj.length;
-            }
-        }
-    }
-
-    return ret;
+    return look_up_map(instance, id, buf, RESOURCE_MAP_698_GET);
 }
-
 
 int16_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
 {
-    struct block_device_t* device = NULL;
-    const struct driver_ops_t* driver = NULL;
-    struct resource_block_t* block = NULL;
-    struct resources_obj_t obj;
-    int16_t ret = 0x00;
-    uint32_t addr = 0x00;
-
-    memset((uint8_t*)&obj, 0x00, sizeof(obj));
-    ret = look_up_map(instance, id, buf, RESOURCE_MAP_698_SET, &obj);
-    if (0x00 == ret)
-    {
-        device = look_up_device(instance, obj.device_name);//查找设备
-        driver = device->dev->dev_driver_ops;
-        //查找块
-        block = look_up_block(instance, device, obj.block_name);
-        if ((device != NULL) && (block != NULL))
-        {
-            if ((driver != NULL) && (driver->dev_write != NULL))
-            {
-                //计算地址
-                addr = block->first_addr + obj.offset;
-                driver->dev_write(device->dev, addr, obj.length, buf);
-                //这里没判断返回值和校验
-
-                if (obj.hook != NULL)
-                {
-                    obj.hook(buf, obj.p);
-                }
-
-                return 0x01;
-            }
-        }
-    }
-
-    return ret;
+    return look_up_map(instance, id, buf, RESOURCE_MAP_698_SET);
 }
 
 int16_t nd_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
 {
-    struct resources_obj_t obj;
-    int16_t ret = 0x00;
-
-    ret = look_up_map(instance, id, buf, RESOURCE_MAP_698_ACTION, &obj);
-
-    return ret;
+    return look_up_map(instance, id, buf, RESOURCE_MAP_698_ACTION);
 }
 
 int16_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size)
@@ -495,17 +455,7 @@ uint32_t* register_parameter(struct instance_t* instance, uint8_t device_name, u
 
 int16_t nd_size(struct instance_t* instance, uint32_t id)
 {
-    struct resources_obj_t obj;
-    int16_t ret = 0x00;
-
-    memset((uint8_t*)&obj, 0x00, sizeof(obj));
-    ret = look_up_map(instance, id, NULL, 0x01, &obj);
-    if (ret >= 0x01)
-    {
-        return obj.length;
-    }
-
-    return -1;
+    return look_up_map(instance, id, NULL, 0x01);  
 }
 
 int16_t get_block_frist_addr(struct instance_t *instance, uint8_t device_name, uint8_t block_name, uint32_t *addr)
@@ -711,7 +661,6 @@ int16_t __search_circular(struct circular_info_t* info, struct log_manager_t* ma
     uint16_t (*fun)(uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t* info, uint8_t direct))
 {
     uint16_t ptr[4] = { manager->r_ptr, 0x00, 0x00, 0x00 };
-    const struct dev_info_t* dev = tempinfo->dev;
     uint16_t start_ptr = 0x00, end_ptr = 0x00;
     uint8_t cnt = 0x00;
 
@@ -1031,16 +980,18 @@ int16_t nd_get_index(struct instance_t* instance, uint32_t index, uint8_t* buf, 
     {
         driver = device->dev->dev_driver_ops;
         if ((driver != NULL) && (driver->dev_read != NULL))
-        {
-            //计算地址
-            if (block->hook != NULL)
+        {            
+            if (block->hook != NULL)  //计算地址
             {
                 if (0x00 < block->hook((uint16_t)index, &addr, &len, NULL))
                 {
                     addr += block->first_addr;
                 }
                 driver->dev_read(device->dev, addr, len, buf);
-                //这里没判断返回值和校验
+                if (0x00 > verify_data(buf, len))
+                {
+                    return -1;
+                }
             }
             return len;
         }
@@ -1058,21 +1009,75 @@ int16_t nd_set_index(struct instance_t* instance, uint32_t index, uint8_t* buf, 
     uint32_t addr = 0x00;
 
     device = look_up_device(instance, (uint8_t)(index >> 24));//查找设备
-    //查找块
-    block = look_up_block(instance, device, (uint8_t)(index >> 16));
+    block = look_up_block(instance, device, (uint8_t)(index >> 16)); //查找块
     if ((device != NULL) && (block != NULL))
     {
         driver = device->dev->dev_driver_ops;
         if ((driver != NULL) && (driver->dev_write != NULL))
-        {//计算地址            
-            if (block->hook != NULL)
+        {           
+            if (block->hook != NULL) //计算地址 
             {
                 if (0x00 < block->hook((uint16_t)index, &addr, &len, NULL))
                 {
                     addr += block->first_addr;
                 }
-                driver->dev_write(device->dev, addr, len, buf);
-                //这里没判断返回值和校验
+                update_verify(buf, len);
+                if (0x00 > driver->dev_write(device->dev, addr, len, buf))
+                {
+                    return -1;
+                }
+            }
+            return len;
+        }
+    }
+    return -1;
+}
+
+int16_t nd_get_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf, uint16_t buf_size)
+{
+    struct block_device_t* device = NULL;
+    const struct driver_ops_t* driver = NULL;
+    struct resource_block_t* block = NULL;
+    uint32_t len = 0x00, addr = 0x00;
+
+    device = look_up_device(instance, (uint8_t)(offset >> 24));//查找设备
+    block = look_up_block(instance, device, (uint8_t)(offset >> 16));//查找块
+    if ((device != NULL) && (block != NULL))
+    {
+        driver = device->dev->dev_driver_ops;
+        if ((driver != NULL) && (driver->dev_read != NULL))
+        {
+            addr = block->first_addr + (uint16_t)offset;
+            driver->dev_read(device->dev, addr, len, buf);
+            if (0x00 > verify_data(buf, len))
+            {
+                return -1;
+            }
+            return len;
+        }
+    }
+    return -1;
+}
+
+int16_t nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf, uint16_t buf_size)
+{
+    struct block_device_t* device = NULL;
+    const struct driver_ops_t* driver = NULL;
+    struct resource_block_t* block = NULL;
+    uint32_t len = 0x00, addr = 0x00;
+
+    device = look_up_device(instance, (uint8_t)(offset >> 24));//查找设备
+    block = look_up_block(instance, device, (uint8_t)(offset >> 16)); //查找块
+    if ((device != NULL) && (block != NULL))
+    {
+        driver = device->dev->dev_driver_ops;
+        if ((driver != NULL) && (driver->dev_write != NULL))
+        {
+            addr = block->first_addr + (uint16_t)offset;
+            update_verify(buf, len);
+            if (0x00 > driver->dev_write(device->dev, addr, len, buf))
+            {
+                return -1;
             }
             return len;
         }

@@ -17,7 +17,7 @@ uint8_t oad_valid_check(uint32_t oad)
 }
 
 
-int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
+int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
