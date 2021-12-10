@@ -91,6 +91,7 @@ struct test_flash_evnet_log_output_t
 
 #define FLASH_EVENT_LONG_NUM  1000
 static struct test_flash_evnet_log_output_t test_flash_event[FLASH_EVENT_LONG_NUM];
+
 void produce_the_flash_event_log(struct instance_t* instance)
 {
 	uint32_t start_time = 41990397;//rtc_mktime(&instance->time);
@@ -776,563 +777,483 @@ void test_nd_log_output_flash_search_index_500_100(void** state)
 	assert_int_equal(info.valid_num, 267);
 }
 
-#if 0
-
-void test_nd_log_output_search_index_over_05(void** state)
+void test_nd_log_output_flash_search_time_100_30(void** state)
 {
 	struct instance_t* instance = (struct instance_t*)*state;
-	uint8_t test_event_manager_name = 0xE0;
-	uint8_t test_event_record = 0xE1;
+	uint8_t test_event_manager_name = 0xE2;
+	uint8_t test_event_record = 0xE3;
 	struct circular_info_t info;
+	uint32_t start_time = 41990397;
 	uint32_t index = 0x00;
 	int16_t ret = 0x00;
-	uint8_t i = 0x00;
+	uint16_t i = 0x00;
 
-	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
+	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
 	assert_int_equal(ret, 0x00);
 	//写数据
-	for (i = 0x00; i < 0x0D; i++)
+	for (i = 0x00; i < 100; i++)
 	{
-		ret = nd_log_append(instance, index, (uint8_t*)&test_event[i], sizeof(struct test_evnet_log_output_t));
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
+		ret = nd_log_append(instance, index, (uint8_t*)&test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
 	}
 	//读数据
-	struct test_evnet_log_output_t temp_event;
+	struct test_flash_evnet_log_output_t temp_event;
 	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
-	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-	info.mode = 0x01;
-	info.start_mark = 0x03;
-	info.end_mark = 0x07;
-	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	assert_int_equal(info.valid_num, 0x05);
-	i = 0x03;
-	assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
+	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
+	info.mode = 0x02;
+	info.start_mark = start_time + 32 * 600;
+	info.end_mark = start_time + 61 * 600 + 15;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 30); i = 32;
+	assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
 
 	while (info.curr_num < info.valid_num)
 	{
 		i++;
-		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-		assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
-	}
-	//跨反转
-	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
-	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-	info.mode = 0x01;
-	info.start_mark = 0x08;
-	info.end_mark = 0x0C;
-	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	assert_int_equal(info.valid_num, 0x05);
-	i = 0x08;
-	assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
-
-	while (info.curr_num < info.valid_num)
-	{
-		i++;
-		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-		assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
-	}
-
-	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
-	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-	info.mode = 0x01;
-	info.start_mark = 0x05;
-	info.end_mark = 0x09;
-	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	assert_int_equal(info.valid_num, 0x05);
-	i = 0x05;
-	assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
-	
-	while (info.curr_num < info.valid_num)
-	{
-		i++;
-		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-		assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
-	}
-
-	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
-	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-	info.mode = 0x01;
-	info.start_mark = 0x0a;
-	info.end_mark = 0x0c;
-	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	assert_int_equal(info.valid_num, 0x03);
-	i = 0x0a;
-	assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
-
-	while (info.curr_num < info.valid_num)
-	{
-		i++;
-		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-		assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
+		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
+		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+		assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
 	}
 }
 
-void test_nd_log_output_search_time_06_03(void** state)
+void test_nd_log_output_flash_search_time_100_40(void** state)
 {
 	struct instance_t* instance = (struct instance_t*)*state;
-	uint8_t test_event_manager_name = 0xE0;
-	uint8_t test_event_record = 0xE1;
+	uint8_t test_event_manager_name = 0xE2;
+	uint8_t test_event_record = 0xE3;
 	struct circular_info_t info;
+	uint32_t start_time = 41990397;
 	uint32_t index = 0x00;
 	int16_t ret = 0x00;
-	uint8_t i = 0x00;
+	uint16_t i = 0x00;
 
-	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
+	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
 	assert_int_equal(ret, 0x00);
 	//写数据
-	for (i = 0x00; i < 0x06; i++)
+	for (i = 0x00; i < 100; i++)
 	{
-		ret = nd_log_append(instance, index, (uint8_t*)&test_event[i], sizeof(struct test_evnet_log_output_t));
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
+		ret = nd_log_append(instance, index, (uint8_t*)&test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
 	}
 	//读数据
-	struct test_evnet_log_output_t temp_event;
+	struct test_flash_evnet_log_output_t temp_event;
 	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
-	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
+	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
 	info.mode = 0x02;
-	info.start_mark = 0x0280BDAD;
-	info.end_mark = 0x0280C26C;
-	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-	assert_int_equal(info.valid_num, 0x03);
-	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	assert_memory_equal(&temp_event, &test_event[2], sizeof(struct test_evnet_log_output_t));
-	i = 0x02;
+	info.start_mark = start_time + 60 * 600;
+	info.end_mark = start_time + 200 * 600 + 15;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 40); i = 60;
+	assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
 
 	while (info.curr_num < info.valid_num)
 	{
 		i++;
-		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-		assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
+		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
+		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+		assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
 	}
+
+	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
+	info.mode = 0x02;
+	info.start_mark = start_time + 100 * 600;
+	info.end_mark = start_time + 200 * 600;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 0);
 }
 
-void test_nd_log_output_search_time_06_04(void** state)
+void test_nd_log_output_flash_search_time_100_18(void** state)
 {
 	struct instance_t* instance = (struct instance_t*)*state;
-	uint8_t test_event_manager_name = 0xE0;
-	uint8_t test_event_record = 0xE1;
+	uint8_t test_event_manager_name = 0xE2;
+	uint8_t test_event_record = 0xE3;
 	struct circular_info_t info;
+	uint32_t start_time = 41990397;
 	uint32_t index = 0x00;
 	int16_t ret = 0x00;
-	uint8_t i = 0x00;
+	uint16_t i = 0x00;
 
-	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
+	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
 	assert_int_equal(ret, 0x00);
 	//写数据
-	for (i = 0x00; i < 0x06; i++)
+	for (i = 0x00; i < 100; i++)
 	{
-		ret = nd_log_append(instance, index, (uint8_t*)&test_event[i], sizeof(struct test_evnet_log_output_t));
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
+		ret = nd_log_append(instance, index, (uint8_t*)&test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
 	}
 	//读数据
-	struct test_evnet_log_output_t temp_event;
+	struct test_flash_evnet_log_output_t temp_event;
 	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
-	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
+	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
 	info.mode = 0x02;
-	info.start_mark = 0x0280BDAD;
-	info.end_mark = 0x0280CBCC;
-	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-	assert_int_equal(info.valid_num, 0x04);
-	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	assert_memory_equal(&temp_event, &test_event[2], sizeof(struct test_evnet_log_output_t));
-	i = 0x02;
+	info.start_mark = start_time;
+	info.end_mark = start_time + 17 * 600 + 15;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 18); i = 0;
+	assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
 
 	while (info.curr_num < info.valid_num)
 	{
 		i++;
-		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-		assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
+		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
+		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+		assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
 	}
 }
 
-void test_nd_log_output_search_time_06_02(void** state)
+void test_nd_log_output_flash_search_time_100_100(void** state)
 {
 	struct instance_t* instance = (struct instance_t*)*state;
-	uint8_t test_event_manager_name = 0xE0;
-	uint8_t test_event_record = 0xE1;
+	uint8_t test_event_manager_name = 0xE2;
+	uint8_t test_event_record = 0xE3;
 	struct circular_info_t info;
+	uint32_t start_time = 41990397;
 	uint32_t index = 0x00;
 	int16_t ret = 0x00;
-	uint8_t i = 0x00;
+	uint16_t i = 0x00;
 
-	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
+	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
 	assert_int_equal(ret, 0x00);
 	//写数据
-	for (i = 0x00; i < 0x06; i++)
+	for (i = 0x00; i < 100; i++)
 	{
-		ret = nd_log_append(instance, index, (uint8_t*)&test_event[i], sizeof(struct test_evnet_log_output_t));
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
+		ret = nd_log_append(instance, index, (uint8_t*)&test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
 	}
 	//读数据
-	struct test_evnet_log_output_t temp_event;
+	struct test_flash_evnet_log_output_t temp_event;
 	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
-	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
+	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
 	info.mode = 0x02;
-	info.start_mark = 0x0280B8FD;
-	info.end_mark = 0x0280BB64;
-	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-	assert_int_equal(info.valid_num, 0x02);
-	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	assert_memory_equal(&temp_event, &test_event[0], sizeof(struct test_evnet_log_output_t));
-	i = 0x00;
+	info.start_mark = start_time ;
+	info.end_mark = start_time + 99 * 600 + 15;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 100); i = 0;
+	assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
 
 	while (info.curr_num < info.valid_num)
 	{
 		i++;
-		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-		assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
+		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
+		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+		assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
 	}
+
+	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
+	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
+	info.mode = 0x02;
+	info.start_mark = start_time;
+	info.end_mark = start_time + 15;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 1); i = 0;
+	assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
 }
 
-void test_nd_log_output_search_time_06_06(void** state)
+void test_nd_log_output_flash_search_time_400_100(void** state)
 {
 	struct instance_t* instance = (struct instance_t*)*state;
-	uint8_t test_event_manager_name = 0xE0;
-	uint8_t test_event_record = 0xE1;
+	uint8_t test_event_manager_name = 0xE2;
+	uint8_t test_event_record = 0xE3;
 	struct circular_info_t info;
+	uint32_t start_time = 41990397;
 	uint32_t index = 0x00;
 	int16_t ret = 0x00;
-	uint8_t i = 0x00;
+	uint16_t i = 0x00;
 
-	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
+	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
 	assert_int_equal(ret, 0x00);
 	//写数据
-	for (i = 0x00; i < 0x06; i++)
+	for (i = 0x00; i < 400; i++)
 	{
-		ret = nd_log_append(instance, index, (uint8_t*)&test_event[i], sizeof(struct test_evnet_log_output_t));
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
+		ret = nd_log_append(instance, index, (uint8_t*)&test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
 	}
 	//读数据
-	struct test_evnet_log_output_t temp_event;
+	struct test_flash_evnet_log_output_t temp_event;
 	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
-	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
+	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
 	info.mode = 0x02;
-	info.start_mark = 0x0280B8FD;
-	info.end_mark = 0x0280C4C4;
-	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-	assert_int_equal(info.valid_num, 0x06);
-	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	assert_memory_equal(&temp_event, &test_event[0], sizeof(struct test_evnet_log_output_t));
-	i = 0x00;
+	info.start_mark = start_time + 47 * 600;
+	info.end_mark = start_time + 158 * 600 + 15;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 100); i = 59;
+	assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
 
 	while (info.curr_num < info.valid_num)
 	{
 		i++;
-		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-		assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
+		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
+		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+		assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
 	}
+
+	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
+	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
+	info.mode = 0x02;
+	info.start_mark = start_time + 47 * 600;
+	info.end_mark = start_time + 400 * 600 + 15;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 341); i = 59;
+	assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+
+	while (info.curr_num < info.valid_num)
+	{
+		i++;
+		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
+		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+		assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+	}
+
+	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
+	info.mode = 0x02;
+	info.start_mark = start_time;
+	info.end_mark = start_time + 58 * 600 + 15;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 0);
+
+	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
+	info.mode = 0x02;
+	info.start_mark = start_time + 400 * 600;
+	info.end_mark = start_time + 420 * 600 + 15;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 0);
 }
 
-void test_nd_log_output_search_time_10_05(void** state)
+void test_nd_log_output_flash_search_time_426_100(void** state)
 {
 	struct instance_t* instance = (struct instance_t*)*state;
-	uint8_t test_event_manager_name = 0xE0;
-	uint8_t test_event_record = 0xE1;
+	uint8_t test_event_manager_name = 0xE2;
+	uint8_t test_event_record = 0xE3;
 	struct circular_info_t info;
+	uint32_t start_time = 41990397;
 	uint32_t index = 0x00;
 	int16_t ret = 0x00;
-	uint8_t i = 0x00;
+	uint16_t i = 0x00;
 
-	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
+	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
 	assert_int_equal(ret, 0x00);
 	//写数据
-	for (i = 0x00; i < 0x0A; i++)
+	for (i = 0x00; i < 426; i++)
 	{
-		ret = nd_log_append(instance, index, (uint8_t*)&test_event[i], sizeof(struct test_evnet_log_output_t));
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
+		ret = nd_log_append(instance, index, (uint8_t*)&test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
 	}
 	//读数据
-	struct test_evnet_log_output_t temp_event;
+	struct test_flash_evnet_log_output_t temp_event;
 	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
-	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
+	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
 	info.mode = 0x02;
-	info.start_mark = 0x0280B8FD;
-	info.end_mark = 0x0280C26C;
-	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	assert_int_equal(info.valid_num, 0x05);
-	assert_memory_equal(&temp_event, &test_event[0], sizeof(struct test_evnet_log_output_t));
-	i = 0x00;
+	info.start_mark = start_time + 66 * 600;
+	info.end_mark = start_time + 184 * 600 + 15;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 100); i = 85;
+	assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
 
 	while (info.curr_num < info.valid_num)
 	{
 		i++;
-		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-		assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
+		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
+		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+		assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
 	}
+
+	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
+	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
+	info.mode = 0x02;
+	info.start_mark = start_time + 32 * 600;
+	info.end_mark = start_time + 426 * 600 + 15;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 341); i = 85;
+	assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+
+	while (info.curr_num < info.valid_num)
+	{
+		i++;
+		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
+		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+		assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+	}
+
+	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
+	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
+	info.mode = 0x02;
+	info.start_mark = start_time + 226 * 600;
+	info.end_mark = start_time + 426 * 600 + 15;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 200); i = 226;
+	assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+
+	while (info.curr_num < info.valid_num)
+	{
+		i++;
+		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
+		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+		assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+	}
+
+	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
+	info.mode = 0x02;
+	info.start_mark = start_time;
+	info.end_mark = start_time + 58 * 600 + 15;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 0);
+
+	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
+	info.mode = 0x02;
+	info.start_mark = start_time + 400 * 600;
+	info.end_mark = start_time + 420 * 600 + 15;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 21);
 }
 
-void test_nd_log_output_search_time_10_01(void** state)
+void test_nd_log_output_flash_search_time_500_100(void** state)
 {
 	struct instance_t* instance = (struct instance_t*)*state;
-	uint8_t test_event_manager_name = 0xE0;
-	uint8_t test_event_record = 0xE1;
+	uint8_t test_event_manager_name = 0xE2;
+	uint8_t test_event_record = 0xE3;
 	struct circular_info_t info;
+	uint32_t start_time = 41990397;
 	uint32_t index = 0x00;
 	int16_t ret = 0x00;
-	uint8_t i = 0x00;
+	uint16_t i = 0x00;
 
-	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
+	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
 	assert_int_equal(ret, 0x00);
 	//写数据
-	for (i = 0x00; i < 0x0A; i++)
+	for (i = 0x00; i < 500; i++)
 	{
-		ret = nd_log_append(instance, index, (uint8_t*)&test_event[i], sizeof(struct test_evnet_log_output_t));
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
+		ret = nd_log_append(instance, index, (uint8_t*)&test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
 	}
 	//读数据
-	struct test_evnet_log_output_t temp_event;
+	struct test_flash_evnet_log_output_t temp_event;
 	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
-	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
+	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
 	info.mode = 0x02;
-	info.start_mark = 0x0280B8FD;
-	info.end_mark = 0x0280B90C;
-	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	assert_int_equal(info.valid_num, 0x01);
-	assert_memory_equal(&temp_event, &test_event[0], sizeof(struct test_evnet_log_output_t));
+	info.start_mark = start_time + 426 * 600;
+	info.end_mark = start_time + 500 * 600 + 15;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 74); i = 426;
+	assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+
+	while (info.curr_num < info.valid_num)
+	{
+		i++;
+		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
+		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+		assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+	}
 
 	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
-	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
+	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
 	info.mode = 0x02;
-	info.start_mark = 0x0280CE15;
-	info.end_mark = 0x0280CE24;
-	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	assert_int_equal(info.valid_num, 0x01);
-	assert_memory_equal(&temp_event, &test_event[9], sizeof(struct test_evnet_log_output_t));
+	info.start_mark = start_time + 159 * 600;
+	info.end_mark = start_time + 426 * 600 + 15;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 268); i = 159;
+	assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+
+	while (info.curr_num < info.valid_num)
+	{
+		i++;
+		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
+		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+		assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+	}
 
 	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
-	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
+	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
 	info.mode = 0x02;
-	info.start_mark = 0x0280CE15;
-	info.end_mark = 0x0280D07C;
-	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	assert_int_equal(info.valid_num, 0x01);
-	assert_memory_equal(&temp_event, &test_event[9], sizeof(struct test_evnet_log_output_t));
+	info.start_mark = start_time;
+	info.end_mark = start_time + 600 * 600;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 341); i = 159;
+	assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+
+	while (info.curr_num < info.valid_num)
+	{
+		i++;
+		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
+		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+		assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+	}
+
+	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
+	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
+	info.mode = 0x02;
+	info.start_mark = start_time + 401 * 600;
+	info.end_mark = start_time + 472 * 600 + 15;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 72); i = 401;
+	assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+
+	while (info.curr_num < info.valid_num)
+	{
+		i++;
+		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_flash_evnet_log_output_t));
+		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+		assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+		assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
+	}
+
+	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
+	info.mode = 0x02;
+	info.start_mark = start_time;
+	info.end_mark = start_time + 58 * 600 + 15;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 0);
+
+	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
+	info.mode = 0x02;
+	info.start_mark = start_time + 159 * 600;
+	info.end_mark = start_time + 425 * 600 + 15;
+	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_flash_evnet_log_output_t), &info);
+	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
+	assert_int_equal(info.valid_num, 267);
 }
-
-void test_nd_log_output_search_time_10_10(void** state)
-{
-	struct instance_t* instance = (struct instance_t*)*state;
-	uint8_t test_event_manager_name = 0xE0;
-	uint8_t test_event_record = 0xE1;
-	struct circular_info_t info;
-	uint32_t index = 0x00;
-	int16_t ret = 0x00;
-	uint8_t i = 0x00;
-
-	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
-	//先清一下管理区
-	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
-	//写数据
-	for (i = 0x00; i < 0x0A; i++)
-	{
-		ret = nd_log_append(instance, index, (uint8_t*)&test_event[i], sizeof(struct test_evnet_log_output_t));
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	}
-	//读数据
-	struct test_evnet_log_output_t temp_event;
-	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
-	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-	info.mode = 0x02;
-	info.start_mark = 0x0280B8FD;
-	info.end_mark = 0x0280CE24;
-	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	assert_int_equal(info.valid_num, 0x0a);
-	assert_memory_equal(&temp_event, &test_event[0], sizeof(struct test_evnet_log_output_t));
-	i = 0x00;
-
-	while (info.curr_num < info.valid_num)
-	{
-		i++;
-		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-		assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
-	}
-
-	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
-	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-	info.mode = 0x02;
-	info.start_mark = 0x0280B8FD;
-	info.end_mark = 0x0280D07C;
-	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	assert_int_equal(info.valid_num, 0x0a);
-	assert_memory_equal(&temp_event, &test_event[0], sizeof(struct test_evnet_log_output_t));
-	i = 0x00;
-
-	while (info.curr_num < info.valid_num)
-	{
-		i++;
-		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-		assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
-	}
-
-	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
-	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-	info.mode = 0x02;
-	info.start_mark = 0x0280B8FD;
-	info.end_mark = 0x0280DC34;
-	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	assert_int_equal(info.valid_num, 0x0a);
-	assert_memory_equal(&temp_event, &test_event[0], sizeof(struct test_evnet_log_output_t));
-	i = 0x00;
-
-	while (info.curr_num < info.valid_num)
-	{
-		i++;
-		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-		assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
-	}
-}
-
-
-void test_nd_log_output_search_time_over_05(void** state)
-{
-	struct instance_t* instance = (struct instance_t*)*state;
-	uint8_t test_event_manager_name = 0xE0;
-	uint8_t test_event_record = 0xE1;
-	struct circular_info_t info;
-	uint32_t index = 0x00;
-	int16_t ret = 0x00;
-	uint8_t i = 0x00;
-
-	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
-	//先清一下管理区
-	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
-	//写数据
-	for (i = 0x00; i < 0x0D; i++)
-	{
-		ret = nd_log_append(instance, index, (uint8_t*)&test_event[i], sizeof(struct test_evnet_log_output_t));
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	}
-	//读数据
-	struct test_evnet_log_output_t temp_event;
-	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
-	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-	info.mode = 0x02;
-	info.start_mark = 0x0280C005;
-	info.end_mark = 0x0280C974;
-	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	assert_int_equal(info.valid_num, 0x05);
-	i = 0x03;
-	assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
-
-	while (info.curr_num < info.valid_num)
-	{
-		i++;
-		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-		assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
-	}
-	//跨反转
-	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
-	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-	info.mode = 0x02;
-	info.start_mark = 0x0280CBBD;
-	info.end_mark = 0x0280D52C;
-	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	assert_int_equal(info.valid_num, 0x05);
-	i = 0x08;
-	assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
-
-	while (info.curr_num < info.valid_num)
-	{
-		i++;
-		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-		assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
-	}
-
-	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
-	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-	info.mode = 0x02;
-	info.start_mark = 0x0280C4B5;
-	info.end_mark = 0x0280CE24;
-	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	assert_int_equal(info.valid_num, 0x05);
-	i = 0x05;
-	assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
-
-	while (info.curr_num < info.valid_num)
-	{
-		i++;
-		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-		assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
-	}
-
-	memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
-	memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-	info.mode = 0x02;
-	info.start_mark = 0x0280D06D;
-	info.end_mark = 0x0280D52C;
-	ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-	assert_int_equal(info.valid_num, 0x03);
-	i = 0x0a;
-	assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
-
-	while (info.curr_num < info.valid_num)
-	{
-		i++;
-		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
-		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
-		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
-		assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
-	}
-}
-#endif // 0
