@@ -2,7 +2,7 @@
 #include "fr_698.h"
 
 
-int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
+int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {    
     struct mbase_control_block_t* mbase_cb;
     
@@ -15,9 +15,6 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct 
     {
     case 0x00000200://电压
         {
-            //obj->block_name = 0x0A;//只是举例
-            //obj->device_name = 0x0D;//只是举例
-            //obj->offset = container_of(mbase_cb,struct mbase_control_block_t, UA);
             buf[0] = 0x01;//数组
             buf[1] = 0x01;//单相一个元素
             buf[2] = TYPE_long_unsigned;

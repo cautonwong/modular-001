@@ -40,6 +40,9 @@
       <Filter>test_cases</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\packages\drivers\eeprom_win.c" />
+    <ClCompile Include="..\test_cases\test_nd_log_output_flash.c">
+      <Filter>test_cases</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="test_cases">

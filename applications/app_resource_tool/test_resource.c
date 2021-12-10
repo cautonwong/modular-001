@@ -158,6 +158,9 @@ extern void test_add_block_same_block_name(void** state);
 extern void test_add_block_500_byte(void** state);
 extern void test_add_block_10K_byte(void** state);
 extern void test_add_block_out_of_gauge(void** state);
+extern void test_nd_get(void** state);
+extern void test_nd_get_index(void** state);
+extern void test_nd_get_offset(void** state);
 extern void test_nd_log_output_search_all(void** state);
 extern void test_nd_log_output_search_all_06(void** state);
 extern void test_nd_log_output_search_all_full(void** state);
@@ -178,6 +181,25 @@ extern void test_nd_log_output_search_time_10_05(void** state);
 extern void test_nd_log_output_search_time_10_01(void** state);
 extern void test_nd_log_output_search_time_10_10(void** state);
 extern void test_nd_log_output_search_time_over_05(void** state);
+extern void test_nd_log_output_flash_search_all(void** state);
+extern void test_nd_log_output_flash_search_all_100(void** state);
+extern void test_nd_log_output_flash_search_all_400(void** state);
+extern void test_nd_log_output_flash_search_all_426(void** state);
+extern void test_nd_log_output_flash_search_all_500(void** state);
+extern void test_nd_log_output_flash_search_index_100_30(void** state);
+extern void test_nd_log_output_flash_search_index_100_40(void** state);
+extern void test_nd_log_output_flash_search_index_100_18(void** state);
+extern void test_nd_log_output_flash_search_index_100_100(void** state);
+extern void test_nd_log_output_flash_search_index_400_100(void** state);
+extern void test_nd_log_output_flash_search_index_426_100(void** state);
+extern void test_nd_log_output_flash_search_index_500_100(void** state);
+extern void test_nd_log_output_flash_search_time_100_30(void** state);
+extern void test_nd_log_output_flash_search_time_100_40(void** state);
+extern void test_nd_log_output_flash_search_time_100_18(void** state);
+extern void test_nd_log_output_flash_search_time_100_100(void** state);
+extern void test_nd_log_output_flash_search_time_400_100(void** state);
+extern void test_nd_log_output_flash_search_time_426_100(void** state);
+extern void test_nd_log_output_flash_search_time_500_100(void** state);
 
 int main(int argc, char** argv)
 {
@@ -185,12 +207,19 @@ int main(int argc, char** argv)
     nor_flash_dev.dev_driver_ops->dev_initialize(&nor_flash_dev);
 
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_add_device),     //测试设备增加，和查找
+        //测试设备增加，和查找
+        cmocka_unit_test(test_add_device),     
         cmocka_unit_test(test_add_block_one_byte),     
         cmocka_unit_test(test_add_block_same_block_name),     
         cmocka_unit_test(test_add_block_500_byte),     
         cmocka_unit_test(test_add_block_10K_byte),     
         cmocka_unit_test(test_add_block_out_of_gauge),
+        //测试nd_get 和 nd_set
+        cmocka_unit_test(test_nd_get),
+        cmocka_unit_test(test_nd_get_index),
+        cmocka_unit_test(test_nd_get_offset),      
+        //测试循环存储 EPROM 的搜索
+#if 1
         cmocka_unit_test(test_nd_log_output_search_all),
         cmocka_unit_test(test_nd_log_output_search_all_06),
         cmocka_unit_test(test_nd_log_output_search_all_full),
@@ -211,6 +240,27 @@ int main(int argc, char** argv)
         cmocka_unit_test(test_nd_log_output_search_time_10_01),
         cmocka_unit_test(test_nd_log_output_search_time_10_10),
         cmocka_unit_test(test_nd_log_output_search_time_over_05),
+        //测试循环存储 FLASH 的搜索
+        cmocka_unit_test(test_nd_log_output_flash_search_all),
+        cmocka_unit_test(test_nd_log_output_flash_search_all_100),
+        cmocka_unit_test(test_nd_log_output_flash_search_all_400),
+        cmocka_unit_test(test_nd_log_output_flash_search_all_426),
+        cmocka_unit_test(test_nd_log_output_flash_search_all_500),
+        cmocka_unit_test(test_nd_log_output_flash_search_index_100_30),
+        cmocka_unit_test(test_nd_log_output_flash_search_index_100_40),
+        cmocka_unit_test(test_nd_log_output_flash_search_index_100_18),
+        cmocka_unit_test(test_nd_log_output_flash_search_index_100_100),
+        cmocka_unit_test(test_nd_log_output_flash_search_index_400_100),
+        cmocka_unit_test(test_nd_log_output_flash_search_index_426_100),
+        cmocka_unit_test(test_nd_log_output_flash_search_index_500_100),
+        cmocka_unit_test(test_nd_log_output_flash_search_time_100_30),
+        cmocka_unit_test(test_nd_log_output_flash_search_time_100_40),
+        cmocka_unit_test(test_nd_log_output_flash_search_time_100_18),
+        cmocka_unit_test(test_nd_log_output_flash_search_time_100_100),
+        cmocka_unit_test(test_nd_log_output_flash_search_time_400_100),
+        cmocka_unit_test(test_nd_log_output_flash_search_time_426_100),
+        cmocka_unit_test(test_nd_log_output_flash_search_time_500_100),
+#endif // 0
     };
 
     return cmocka_run_group_tests(tests, test_resource_setup, NULL);

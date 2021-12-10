@@ -3,7 +3,7 @@
 
 
 extern const uint8_t init_30050200[];
-int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
+int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
@@ -60,9 +60,6 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
     }
     case 0x30050500://配置参数 过流阈值
     {
-        obj->block_name = 0x0A;//只是举例
-        obj->device_name = 0x0D;//只是举例
-        //obj->offset = container_of(mbase_cb,struct mbase_control_block_t, UA);
         *p++ = TYPE_structure;
         *p++ = 2;
         *p++ = TYPE_double_long;

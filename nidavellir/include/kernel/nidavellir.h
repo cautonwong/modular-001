@@ -442,23 +442,11 @@ struct upgrade_info_t
     uint8_t bits[upgrade_setsize];//升级程序位图信息 0x07fb0303
 };
 
-struct resources_obj_t
-{
-    uint32_t offset;                        //地址
-    uint16_t length;                        //数据存储长度
-    uint8_t device_name;                    //设备标识；
-    uint8_t block_name;                     //块名称
-    uint8_t(*hook) (uint8_t* buf, void* p);  //resource的钩子函数
-    void* p;
-    uint32_t max_num;
-    uint16_t unit_size;
-};
-
 #pragma pack(4)
 struct resource_map_t
 {
     uint8_t map_name;
-    int(*fun)(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, struct resources_obj_t* obj);
+    int(*fun)(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode);
     struct list_head sibling;
 };
 
@@ -562,9 +550,9 @@ enum block_device_id_t
 
 enum resource_map_698_e
 {
-    RESOURCE_MAP_698_GET = 0,
-    RESOURCE_MAP_698_SET = 1,
-    RESOURCE_MAP_698_ACTION = 2,
+    RESOURCE_MAP_GET = 0,
+    RESOURCE_MAP_SET = 1,
+    RESOURCE_MAP_ACTION = 2,
 };
 
 struct record_storage_id_info_t
