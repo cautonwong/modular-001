@@ -133,3 +133,84 @@ void test_nd_get_index(void** state)
         assert_memory_equal(test_buf, buf, test_para_tab[i].len);
     }
 }
+
+struct test_ctrl_parameter_t
+{
+    uint32_t para1;
+    uint8_t sss1;
+    uint16_t ttt6;
+    uint32_t para5;
+    uint8_t aaa1[5];
+};
+
+void test_nd_get_offset(void** state)
+{
+    struct instance_t* instance = (struct instance_t*)*state;
+    uint8_t test_parameter_name = 0xD5;
+    uint8_t test_parameter_name_e2 = 0xD6;
+    uint8_t buf[50], test_buf[50];
+    uint32_t index = 0x00;
+    uint16_t len = 0x00;
+    uint32_t* p = NULL;
+    int16_t ret = 0x00;
+    uint8_t i;
+
+    //增加一个BLOCK
+    add_block(instance, RES_DEV_RAM, test_parameter_name_e2, sizeof(struct test_ctrl_parameter_t));
+    add_block(instance, RES_DEV_EEPROM, test_parameter_name, sizeof(struct test_ctrl_parameter_t));
+    //第一个参数
+    index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_parameter_name << 16) + 
+        offsetof(struct test_ctrl_parameter_t, para1));
+    generate_data(test_buf, 50, 50, 0x00);
+    len = offsetof(struct test_ctrl_parameter_t, sss1) - offsetof(struct test_ctrl_parameter_t, para1);
+    ret = nd_set_offset(instance, index, test_buf, len);
+    assert_true(ret > 0x00);
+    memset(buf, 0x00, 50); 
+    ret = nd_get_offset(instance, index, buf, len);
+    assert_int_equal(ret, len);
+    assert_memory_equal(test_buf, buf, len);
+    //第二参数
+    index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_parameter_name << 16) +
+        offsetof(struct test_ctrl_parameter_t, sss1));
+    generate_data(test_buf, 50, 50, 0x00);
+    len = offsetof(struct test_ctrl_parameter_t, ttt6) - offsetof(struct test_ctrl_parameter_t, sss1);
+    ret = nd_set_offset(instance, index, test_buf, len);
+    assert_true(ret > 0x00);
+    memset(buf, 0x00, 50);   
+    ret = nd_get_offset(instance, index, buf, len);
+    assert_int_equal(ret, len);
+    assert_memory_equal(test_buf, buf, len);
+    //第三参数
+    index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_parameter_name << 16) +
+        offsetof(struct test_ctrl_parameter_t, ttt6));
+    generate_data(test_buf, 50, 50, 0x00);
+    len = offsetof(struct test_ctrl_parameter_t, para5) - offsetof(struct test_ctrl_parameter_t, ttt6);
+    ret = nd_set_offset(instance, index, test_buf, len);
+    assert_true(ret > 0x00);
+    memset(buf, 0x00, 50);  
+    ret = nd_get_offset(instance, index, buf, len);
+    assert_int_equal(ret, len);
+    assert_memory_equal(test_buf, buf, len);
+    //第四参数
+    index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_parameter_name << 16) +
+        offsetof(struct test_ctrl_parameter_t, para5));
+    generate_data(test_buf, 50, 50, 0x00);
+    len = offsetof(struct test_ctrl_parameter_t, aaa1) - offsetof(struct test_ctrl_parameter_t, para5);
+    ret = nd_set_offset(instance, index, test_buf, len);
+    assert_true(ret > 0x00);
+    memset(buf, 0x00, 50);
+    ret = nd_get_offset(instance, index, buf, len);
+    assert_int_equal(ret, len);
+    assert_memory_equal(test_buf, buf, len);
+    //第五参数
+    index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_parameter_name << 16) +
+        offsetof(struct test_ctrl_parameter_t, aaa1));
+    generate_data(test_buf, 50, 50, 0x00);
+    len = sizeof(struct test_ctrl_parameter_t) - offsetof(struct test_ctrl_parameter_t, aaa1);
+    ret = nd_set_offset(instance, index, test_buf, len);
+    assert_true(ret > 0x00);
+    memset(buf, 0x00, 50);
+    ret = nd_get_offset(instance, index, buf, len);
+    assert_int_equal(ret, len);
+    assert_memory_equal(test_buf, buf, len);
+}

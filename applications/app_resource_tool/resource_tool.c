@@ -1033,12 +1033,12 @@ int16_t nd_set_index(struct instance_t* instance, uint32_t index, uint8_t* buf, 
     return -1;
 }
 
-int16_t nd_get_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf, uint16_t buf_size)
+int16_t nd_get_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf, uint16_t len)
 {
     struct block_device_t* device = NULL;
     const struct driver_ops_t* driver = NULL;
     struct resource_block_t* block = NULL;
-    uint32_t len = 0x00, addr = 0x00;
+    uint32_t addr = 0x00;
 
     device = look_up_device(instance, (uint8_t)(offset >> 24));//查找设备
     block = look_up_block(instance, device, (uint8_t)(offset >> 16));//查找块
@@ -1049,22 +1049,22 @@ int16_t nd_get_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf
         {
             addr = block->first_addr + (uint16_t)offset;
             driver->dev_read(device->dev, addr, len, buf);
-            if (0x00 > verify_data(buf, len))
-            {
-                return -1;
-            }
+            //if (0x00 > verify_data(buf, len))
+            //{
+            //    return -1;
+            //}
             return len;
         }
     }
     return -1;
 }
 
-int16_t nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf, uint16_t buf_size)
+int16_t nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf, uint16_t len)
 {
     struct block_device_t* device = NULL;
     const struct driver_ops_t* driver = NULL;
     struct resource_block_t* block = NULL;
-    uint32_t len = 0x00, addr = 0x00;
+    uint32_t addr = 0x00;
 
     device = look_up_device(instance, (uint8_t)(offset >> 24));//查找设备
     block = look_up_block(instance, device, (uint8_t)(offset >> 16)); //查找块
@@ -1074,7 +1074,7 @@ int16_t nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf
         if ((driver != NULL) && (driver->dev_write != NULL))
         {
             addr = block->first_addr + (uint16_t)offset;
-            update_verify(buf, len);
+            //update_verify(buf, len);
             if (0x00 > driver->dev_write(device->dev, addr, len, buf))
             {
                 return -1;

@@ -160,6 +160,7 @@ extern void test_add_block_10K_byte(void** state);
 extern void test_add_block_out_of_gauge(void** state);
 extern void test_nd_get(void** state);
 extern void test_nd_get_index(void** state);
+extern void test_nd_get_offset(void** state);
 extern void test_nd_log_output_search_all(void** state);
 extern void test_nd_log_output_search_all_06(void** state);
 extern void test_nd_log_output_search_all_full(void** state);
@@ -215,7 +216,8 @@ int main(int argc, char** argv)
         cmocka_unit_test(test_add_block_out_of_gauge),
         //测试nd_get 和 nd_set
         cmocka_unit_test(test_nd_get),
-        cmocka_unit_test(test_nd_get_index),       
+        cmocka_unit_test(test_nd_get_index),
+        cmocka_unit_test(test_nd_get_offset),      
         //测试循环存储 EPROM 的搜索
 #if 1
         cmocka_unit_test(test_nd_log_output_search_all),
