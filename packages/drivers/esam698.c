@@ -215,15 +215,27 @@ uint8 write_esam(uint32 addr, uint8 *buf, uint16 len)
     return false;
 }
 
+uint8_t read_esam_no(uint8_t *esam_info)
+{
+    uint8_t apdu[] = { 0x80, 0x2C, 0x00, 0x01, 0, 5, 0, 0, 0, 0, 0x0D };
+    
+    uint16_t len;
+    
+    if(true == tx_esam(apdu , &apdu[4] , 7))
+    {
+        rx_esam(esam_info , &len );
+    }
+    return true;
+}
 
 
-
-uint8_t read_esam_info(uint8_t *esam_info)
+uint8_t read_esam_info(uint8_t *esam_info, uint8_t index)
 {
     uint8_t apdu[4] = {0x80 , 0x36 , 0x00 , 0xFF };
     
     uint16_t len;
     
+    apdu[3] = index;
     if(true == tx_esam(apdu , __NULL , 0))
     {
         rx_esam(esam_info , &len );
@@ -255,7 +267,21 @@ void esam_698_init(void)
 
     esam_698_power_ctrl(1);
     
-    read_esam_info(esam_test);
+    read_esam_info(esam_test, 0xff);
     
 }
+/*
 
+void esam_consult_key(uint8_t cmd)
+{
+    uint8_t head[6] = {0x00, 0x02, 0x00, 0x00, 0x00, 0x24};
+    uint16_t len=0;
+    uint32_t addr = 0;
+    head[0] = cmd;
+      
+    mem_swap_cpy((unsigned char*)&addr, (unsigned char*)&head[0], 4);
+    mem_swap_cpy((unsigned char*)&len, (unsigned char*)&head[4], 2);
+    write_esam(addr , &head[4] , len);
+
+}
+*/

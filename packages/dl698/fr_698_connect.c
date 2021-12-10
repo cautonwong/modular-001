@@ -1,6 +1,8 @@
 ﻿#include "nidavellir.h"
 #include "fr_698.h"
 
+extern void esam_consult_key(uint8_t cmd);
+
 enum connect_result_e
 {
     CONNECT_RESULT_SUCCESS               = 0,    /**< 允许建立应用连接 */
@@ -146,6 +148,7 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
     }
     else //from 主站
     {
+        //esam_consult_key( 0x81 );
 	   // memcpy((uint8_t*)&buf[offset],(uint8_t*)&esam_symauth[0],6);
 		//dectypt->rn[0] = 48;
     }
