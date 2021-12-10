@@ -25,7 +25,12 @@ int do_sum(uint8_t* buff, uint16_t length)
 int verify_data(uint8_t* buf, uint16_t len)
 {
     uint16_t checksum = 0xA5A5, rchecksum = 0;
-
+    
+    if(len <= 2)
+    {
+        return -1;
+    }
+    
     checksum += do_sum(buf, len - 0x02);
     memcpy((uint8_t*)&rchecksum, buf + len - 0x02, 0x02);
 
