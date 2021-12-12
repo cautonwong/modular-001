@@ -82,7 +82,7 @@ int fr_handle_set_request(struct instance_t* instance, struct pipeline_t* pipeli
 
             r = fr_set_one_object(instance, pipeline, mesg);
             //cache->wr+n;
-            fifo->rd += r;
+            fifoBuf_update_rd(fifo, r);
             
             if(SetThenGetRequestNormalList == ctx->choice)
             {

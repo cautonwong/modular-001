@@ -114,7 +114,7 @@ void test_nd_get_index(void** state)
     uint8_t buf[50],test_buf[50];
     uint32_t index = 0x00;
     uint32_t* p = NULL;
-    uint16_t ret = 0x00;
+    int16_t ret = 0x00;
     uint8_t i;
 
     //注册一个参数
@@ -125,14 +125,91 @@ void test_nd_get_index(void** state)
     {
         index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_parameter_name << 16) + test_para_tab[i].name);
         generate_data(test_buf, 50, 50, 0x00);
-        ret = nd_set_index(instance, index, test_buf, 50);
+        ret = nd_set_index(instance, index, test_buf, test_para_tab[i].len);
         assert_true(ret > 0x00);
         memset(buf, 0x00, 50);
-        ret = nd_get_index(instance, index, buf, 50);
+        ret = nd_get_index(instance, index, buf, test_para_tab[i].len);
         assert_int_equal(ret, test_para_tab[i].len);
         assert_memory_equal(test_buf, buf, test_para_tab[i].len);
     }
 }
+struct test_parameter_info_same_t
+{
+    uint16_t name;
+    uint16_t same;
+    uint16_t len;
+};
+
+const struct test_parameter_info_same_t   parameter_info_same[] =
+{
+    {0x01, 0x05, 0x04},
+    {0x10, 0x05, 0x04},
+    {0x20, 0x05, 0x04},
+    {0x30, 0x05, 0x04},
+    {0x40, 0x05, 0x04}
+};
+
+#define TEST_POINTER_EMPTY(a) if(a == NULL) {return NULL;}
+int16_t test_parameter_info_same(uint16_t id, uint32_t* addr, uint16_t* size)
+{
+    uint16_t i, k;
+    uint16_t offset;
+
+    for (i = 0; i < sizeof(parameter_info_same) / sizeof(parameter_info_same[0]); i++)
+    {
+        if ((parameter_info_same[i].name + (parameter_info_same[i].same - 0x01) >= id) &&
+            (parameter_info_same[i].name <= id))
+        {
+            TEST_POINTER_EMPTY(addr);
+            *addr = 0x00;
+
+            for (k = 0x00; k < i; k++)
+            {
+                *addr += parameter_info_same[k].len * parameter_info_same[k].same + 0x02;  //加两个字节的校验码；
+            }
+            offset = (id - parameter_info_same[i].name) * parameter_info_same[k].len;
+            *addr += offset;
+
+            TEST_POINTER_EMPTY(size);
+            *size = parameter_info_same[i].len;
+
+            return 1;
+        }
+    }
+
+    return -1;
+}
+
+void test_nd_get_index_same(void** state)
+{
+    struct instance_t* instance = (struct instance_t*)*state;
+    uint8_t test_parameter_name = 0xD4;
+    uint8_t buf[50], test_buf[50];
+    uint32_t index = 0x00;
+    uint32_t* p = NULL;
+    int16_t ret = 0x00;
+    uint8_t i,k;
+
+    //注册一个参数
+    p = register_parameter(instance, RES_DEV_EEPROM, test_parameter_name, 1 * 1024, test_parameter_info_same);
+    // assert_non_null(p);
+
+    for (i = 0x00; i < sizeof(parameter_info_same) / sizeof(parameter_info_same[0]); i++)
+    {
+        for (k = 0x00; k < parameter_info_same[i].same; k++)
+        {
+            index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_parameter_name << 16) + parameter_info_same[i].name + k);
+            generate_data(test_buf, 50, 50, 0x00);
+            ret = nd_set_index(instance, index, test_buf, parameter_info_same[i].len);
+            assert_true(ret > 0x00);
+            memset(buf, 0x00, 50);
+            ret = nd_get_index(instance, index, buf, parameter_info_same[i].len);
+            assert_int_equal(ret, parameter_info_same[i].len);
+            assert_memory_equal(test_buf, buf, parameter_info_same[i].len);
+        }
+    }
+}
+
 
 struct test_ctrl_parameter_t
 {
