@@ -132,8 +132,13 @@ uint8_t __password_process(struct instance_t* instance, struct pipeline_t* pipel
 uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* cache = ctx->apdu;
     //uint8_t *p_apdu = cache + sizeof(struct connect_request_t);
+
+    //p_data 使用后偏移，需要调用 fifoBuf_update_rd(fifo, 已经使用长度)
+    uint8_t *p_data = fifo->buf_ptr;
+    
     uint8_t *p_apdu = cache->buf_ptr;
     uint8_t *p_password = cache->buf_ptr;
 	uint8_t  buf[70];
@@ -227,7 +232,7 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
         result = DAR_OTHERS_ERROR;
         goto err;
     }
-
+    
     fifoBuf_getData(fifo, p, sizeof(struct connect_request_t));
 
     memcpy(&connect, p, sizeof(struct connect_request_t));
