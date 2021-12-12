@@ -24,8 +24,7 @@ extern int GET_e_Monitor(struct instance_t* instance, uint32_t id, uint8_t* buf)
 extern int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf);
 
-
-
+#define POINTER_EMPTY(a)  if(a == NULL) { return -1; }
 struct record_item_t
 {
     uint16_t  event_flag_id_start;  // 事件代码
@@ -36,7 +35,8 @@ struct record_item_t
 
 struct parameter_item_t
 {
-    uint8_t paramerer_index;
+    uint16_t paramerer_index;
+    uint16_t same;
     uint16_t len;
 };
 
@@ -48,54 +48,57 @@ const struct record_item_t  record_item[] =
 
 const struct parameter_item_t  parameter_item[] =
 {
-    { OverCurrentL1,       sizeof(struct log_manager_t)},// 管理区
+    { OverCurrentL1,  0x01,   sizeof(struct log_manager_t)},// 管理区
 
-    { MinuteFreeze1,       sizeof(struct log_manager_t)},// 分冻结8个方案，管理区申请8个？
-    { MinuteFreeze2,       sizeof(struct log_manager_t)},
-    { MinuteFreeze3,       sizeof(struct log_manager_t)},
-    { MinuteFreeze4,       sizeof(struct log_manager_t)},
-    { MinuteFreeze5,       sizeof(struct log_manager_t)},
-    { MinuteFreeze6,       sizeof(struct log_manager_t)},
-    { MinuteFreeze7,       sizeof(struct log_manager_t)},
-    { MinuteFreeze8,       sizeof(struct log_manager_t)},
+    { MinuteFreeze1,  0x01,   sizeof(struct log_manager_t)},// 分冻结8个方案，管理区申请8个？
+    { MinuteFreeze2,  0x01,   sizeof(struct log_manager_t)},
+    { MinuteFreeze3,  0x01,   sizeof(struct log_manager_t)},
+    { MinuteFreeze4,  0x01,   sizeof(struct log_manager_t)},
+    { MinuteFreeze5,  0x01,   sizeof(struct log_manager_t)},
+    { MinuteFreeze6,  0x01,   sizeof(struct log_manager_t)},
+    { MinuteFreeze7,  0x01,   sizeof(struct log_manager_t)},
+    { MinuteFreeze8,  0x01,   sizeof(struct log_manager_t)},
 
 
-    { OverCurrentL1_oad,   61 }, //oad列表 1+ 4*15     默认8个     先统一预留15个关联
-    { MinuteFreeze_oad,    61 }, //oad列表 1+ 4*15     默认7个
+    { OverCurrentL1_oad, 0x01,  61    }, //oad列表 1+ 4*15     默认8个     先统一预留15个关联
+    { MinuteFreeze_oad,  0x01,  61    }, //oad列表 1+ 4*15     默认7个
 
-    { OverCurrentL1_index, 4  },//记录序号
+    { OverCurrentL1_index, 0x01, 4    },//记录序号
 
-    { MinuteFreeze_period,  24 }, //分钟冻结 周期   3*8     
-    { MinuteFreeze_depth,   31}, //分钟冻结 深度     2*15  统一冻结深度31字节
-    
-    { AutoDisplayList,      200},//100屏*2字节
-    { KeyDisplayList,       200},//100屏*2字节
-    { DisplayPara,          22},
+    { MinuteFreeze_period, 0x01, 24   }, //分钟冻结 周期   3*8     
+    { MinuteFreeze_depth,  0x01, 31   }, //分钟冻结 深度     2*15  统一冻结深度31字节
+                         
+    { AutoDisplayList,     0x64,   2   },//100屏*2字节
+    { KeyDisplayList,      0x64,   2   },//100屏*2字节
+    { DisplayPara,         0x01,  22  },
 
 };
 
+
+
 int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size)
 {
-    uint8_t i, k;
+    uint16_t i, k;
+    uint16_t offset;
 
     for (i = 0; i < sizeof(parameter_item) / sizeof(parameter_item[0]); i++)
     {
-        if (parameter_item[i].paramerer_index == id)
+        if ((parameter_item[i].paramerer_index + (parameter_item[i].same - 0x01) >= id) && 
+            (parameter_item[i].paramerer_index <= id))
         {
-            if (addr != NULL)
+            POINTER_EMPTY(addr)
+            *addr = 0x00;    
+            
+            for (k = 0x00; k < i; k++)
             {
-                *addr = 0x00;
-                for (k = 0x00; k < i; k++)
-                {
-                    *addr += parameter_item[k].len;
-                }
-            }
-
-            if (size != NULL)
-            {
-                *size = parameter_item[i].len;
-            }
-
+                *addr += parameter_item[k].len * parameter_item[k].same + 0x02;  //加两个字节的校验码；
+            }            
+            offset = (id - parameter_item[i].paramerer_index) * parameter_item[k].len;
+            *addr += offset; 
+            
+            POINTER_EMPTY(size)               
+            *size = parameter_item[i].len;
+            
             return 0x00;
         }
     }
@@ -106,31 +109,25 @@ int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size)
 
 int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
 {
-    uint8_t i, k;
+    uint16_t i, k;
 
     for (i = 0; i < sizeof(record_item) / sizeof(record_item[0]); i++)
     {
-        if ((event_flag == record_item[i].event_flag_id_start) || (event_flag == record_item[i].event_flag_id_end))
+        if ((event_flag == record_item[i].event_flag_id_start) || 
+            (event_flag == record_item[i].event_flag_id_end))
         {
-            if (addr != NULL)
+            POINTER_EMPTY(addr); 
+            *addr = 0x00;
+            for (k = 0x00; k < i; k++)
             {
-                *addr = 0x00;
-                for (k = 0x00; k < i; k++)
-                {
-                    *addr += record_item[k].len;
-                }
+                *addr += record_item[k].len;
             }
 
-            if (size != NULL)
-            {
-                *size = record_item[i].len;
-            }
+            POINTER_EMPTY(addr); 
+            *size = record_item[i].len;
 
-            if (depth != NULL)
-            {
-                *depth = record_item[i].max_depth;
-            }
-
+            POINTER_EMPTY(depth); 
+            *depth = record_item[i].max_depth;
             return 0x00;
         }
     }
