@@ -53,19 +53,25 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct 
           
         case 0x0010:
         {
-            buf[0] = 0x01;//数组
-            buf[2] = TYPE_long_unsigned;
             if(attr_index==0)
             {
-                memcpy(buf+3, (uint8_t*)&mbase_cb->active_p[0], 48);
-                len = 51;
+                buf[0] = 0x01;//数组
                 buf[1] = 13;//数据块
+                len = 2;
+                ptr = &buf[2];
+                for(i=0;i<13;i++)
+                {
+                    *ptr++ = TYPE_double_long_unsigned;
+                    memcpy(ptr, (uint8_t*)&mbase_cb->active_p[i], 4);
+                    ptr += 4;
+                    len += 5;
+                }
             }
             else if(attr_index<13)
             {
-                memcpy(buf+3, (uint8_t*)&mbase_cb->active_p[attr_index], 4);
-                len = 7;
-                buf[1] = 1;
+                buf[0] = TYPE_double_long_unsigned;
+                memcpy(&buf[1], (uint8_t*)&mbase_cb->active_p[attr_index], 4);
+                len = 5;
             }
             else
             {
@@ -76,19 +82,25 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct 
         
         case 0x0020:
         {
-            buf[0] = 0x01;//数组
-            buf[2] = TYPE_long_unsigned;
             if(attr_index==0)
             {
-                memcpy(buf+3, (uint8_t*)&mbase_cb->active_n[0], 48);
-                len = 51;
+                buf[0] = 0x01;//数组
                 buf[1] = 13;//数据块
+                len = 2;
+                ptr = &buf[2];
+                for(i=0;i<13;i++)
+                {
+                    *ptr++ = TYPE_double_long_unsigned;
+                    memcpy(ptr, (uint8_t*)&mbase_cb->active_n[i], 4);
+                    ptr += 4;
+                    len += 5;
+                }
             }
             else if(attr_index<13)
             {
-                memcpy(buf+3, (uint8_t*)&mbase_cb->active_n[attr_index], 4);
-                len = 7;
-                buf[1] = 1;
+                buf[0] = TYPE_double_long_unsigned;
+                memcpy(&buf[1], (uint8_t*)&mbase_cb->active_n[attr_index], 4);
+                len = 5;
             }
             else
             {
