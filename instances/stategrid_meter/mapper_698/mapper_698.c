@@ -76,29 +76,28 @@ const struct parameter_item_t  parameter_item[] =
 
 
 
-int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size)
+int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size,uint16_t *offset)
 {
     uint16_t i, k;
-    uint16_t offset;
 
     for (i = 0; i < sizeof(parameter_item) / sizeof(parameter_item[0]); i++)
     {
         if ((parameter_item[i].paramerer_index + (parameter_item[i].same - 0x01) >= id) && 
             (parameter_item[i].paramerer_index <= id))
         {
-            POINTER_EMPTY(addr)
-            *addr = 0x00;    
-            
+            POINTER_EMPTY(addr);
+            *addr = 0x00;     
             for (k = 0x00; k < i; k++)
             {
                 *addr += parameter_item[k].len * parameter_item[k].same + 0x02;  //加两个字节的校验码；
             }            
-            offset = (id - parameter_item[i].paramerer_index) * parameter_item[k].len;
-            *addr += offset; 
             
-            POINTER_EMPTY(size)               
-            *size = parameter_item[i].len;
+            POINTER_EMPTY(size);
+            *size = parameter_item[i].same * parameter_item[i].len + 0x02;
             
+            POINTER_EMPTY(offset);
+            *offset = (id - parameter_item[i].paramerer_index) * parameter_item[k].len;
+
             return 1;
         }
     }
@@ -128,7 +127,8 @@ int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, u
 
             POINTER_EMPTY(depth); 
             *depth = record_item[i].max_depth;
-            return 0x00;
+
+            return 1;
         }
     }
 

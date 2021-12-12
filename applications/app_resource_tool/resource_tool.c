@@ -24,24 +24,160 @@ int do_sum(uint8_t* buff, uint16_t length)
     return result;
 }
 
-int verify_data(uint8_t* buf, uint16_t len)
+int16_t verify_data(uint32_t addr, uint16_t offset, uint8_t* buf, uint16_t size, uint16_t len, const struct dev_info_t* dev)
 {
+    const struct driver_ops_t* driver = NULL;
+    uint16_t row[] = { offset, offset + size, len - 0x02, len - 0x01 };
+    uint16_t coordinate[4][2] = { {0,0}, {0,0}, {0,0}, {0,0} };
     uint16_t checksum = 0xA5A5, rchecksum = 0;
-    
-    res_conditions_true(len <= 2, -1);
-    checksum += do_sum(buf, len - 0x02);
-    memcpy((uint8_t*)&rchecksum, buf + len - 0x02, 0x02);
+    uint16_t i, u_len, s, j, m, n, k, cnt;
+    uint8_t s_buf[128];
+
+    driver = dev->dev_driver_ops;
+    if (len <= 128)  //小于128字节
+    {
+        res_conditions_true(0x00 > driver->dev_read(dev, addr, len, s_buf), -1);
+        memcpy(buf, s_buf + offset, size);
+        checksum += do_sum(s_buf, len - 0x02);
+        rchecksum = ((uint16_t)s_buf[len - 0x02] << 8);
+        rchecksum += s_buf[len - 0x01];
+        res_conditions_true(checksum != rchecksum, -1);
+        return 1;
+    }
+
+    for (i = 0; i < 0x04; i++)
+    {
+        coordinate[i][0] = row[i] / 128;
+        coordinate[i][1] = row[i] % 128;
+    }
+
+    cnt = len / 128;
+    s = 0x00; i = 0x00; n = 0x00; m = coordinate[0][1];
+
+    for (k = 0x00; k < cnt + 1; k++)
+    {
+        u_len = (k == cnt) ? (len % 128) : 128;
+        res_conditions_true(0x00 > driver->dev_read(dev, addr + k * 128, u_len, s_buf), -1);
+        //更新数据类容
+        if ((k >= coordinate[0][0]) && (k <= coordinate[1][0]))
+        {
+            while (s < size)
+            {
+                buf[s++] = s_buf[m++];
+                if (m == u_len)
+                {
+                    m = 0x00; break;
+                }
+            }
+        }
+        //更新校验码
+        while (i < len)
+        {
+            if (i < len - 0x02)
+            {
+                checksum += s_buf[n];
+            }
+
+            if ((k == coordinate[2][0]) && (n == coordinate[2][1]))
+            {
+                rchecksum = ((uint16_t)s_buf[n] << 8);
+            }
+
+            if ((k == coordinate[3][0]) && (n == coordinate[3][1]))
+            {
+                rchecksum += s_buf[n];
+            }
+            i++; n++;
+
+            if (n == u_len)
+            {
+                n = 0x00; break;
+            }
+        }
+    }
     res_conditions_true(checksum != rchecksum, -1);
 
     return 1;
 }
 
-void update_verify(uint8_t* buf, uint16_t len)
+int16_t update_verify(uint32_t addr, uint16_t offset, uint8_t* buf, uint16_t size, uint16_t len, const struct dev_info_t* dev)
 {
+    const struct driver_ops_t* driver = NULL;
+    uint16_t row[] = { offset, offset + size, len - 0x02, len - 0x01 };
+    uint16_t coordinate[4][2] = { {0,0}, {0,0}, {0,0}, {0,0} };
     uint16_t checksum = 0xA5A5;
+    uint16_t i,u_len,s, j, m, n, k, cnt;
+    uint8_t s_buf[128];
 
-    checksum += do_sum(buf, len - 0x02);
-    memcpy(buf + len - 0x02, (uint8_t*)&checksum, 0x02);
+    driver = dev->dev_driver_ops;
+    if (len <= 128)  //小于128字节
+    {
+        res_conditions_true(0x00 > driver->dev_read(dev,addr,len,s_buf), -1);
+        memcpy(s_buf + offset, buf, size);
+        checksum += do_sum(s_buf, len - 0x02);
+        s_buf[len - 0x02] = (uint8_t)(checksum >> 8);
+        s_buf[len - 0x01] = (uint8_t)checksum;
+        res_conditions_true(0x00 > driver->dev_write(dev, addr, len, s_buf), -1);
+
+        return 1;
+    }
+
+    for (i = 0; i < 0x04; i++)
+    {
+        coordinate[i][0] = row[i] / 128;
+        coordinate[i][1] = row[i] % 128;
+    }
+
+    cnt = len / 128;
+    s = 0x00; i = 0x00; n = 0x00; m = coordinate[0][1];
+    
+    for (k = 0x00; k < cnt + 1; k++)
+    {
+        u_len = (k == cnt) ? (len % 128) : 128;
+        res_conditions_true(0x00 > driver->dev_read(dev, addr + k * 128, u_len, s_buf), -1);
+        //更新数据类容
+        if ((k >= coordinate[0][0]) && (k <= coordinate[1][0]))
+        {            
+            while (s < size)
+            {
+                s_buf[m++] = buf[s++];
+                if (m == u_len)
+                {
+                    m = 0x00; break;
+                }
+            }
+        }
+        //更新校验码
+        while (i < len)
+        {
+            if (i < len - 0x02)
+            {
+                checksum += s_buf[n];
+            }
+            
+            if ((k == coordinate[2][0]) && (n == coordinate[2][1]))
+            {
+                s_buf[n] = (uint8_t)(checksum >> 8);
+            }
+
+            if ((k == coordinate[3][0]) && (n == coordinate[3][1]))
+            {
+                s_buf[n] = (uint8_t)checksum;
+            }
+
+            i++; n++;
+
+            if (n == u_len)
+            {
+                n = 0x00; break;
+            }
+        }
+        //保存数据
+        res_conditions_true(0x00 > driver->dev_write(dev, addr + k * 128, u_len, s_buf), -1);
+    }
+
+
+    return 1;
 }
 
 void *__nd_malloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_size)
@@ -275,7 +411,6 @@ int16_t look_up_map(struct instance_t* instance,uint32_t id, uint8_t *buf, uint8
     list_for_each(p, &instance->map_list)
     {
         map = list_entry(p, struct resource_map_t, sibling);
-
         res_conditions_true(map->fun != NULL, map->fun(instance, id, buf, mode));
     }
 
@@ -804,22 +939,21 @@ int16_t nd_get_index(struct instance_t* instance, uint32_t index, uint8_t* buf, 
     struct block_device_t* device = NULL;
     const struct driver_ops_t* driver = NULL;
     struct resource_block_t* block = NULL;
-    uint32_t len = 0x00;
-    uint32_t addr = 0x00;
+    uint32_t len = 0x00, addr = 0x00, offset = 0;
 
     device = look_up_device(instance, (uint8_t)(index >> 24));//查找设备
     res_conditions_true(device == NULL,-1);
     //查找块
     block = look_up_block(instance, device, (uint8_t)(index >> 16));
     res_conditions_true((block == NULL) || (block->hook == NULL), -1);
-    res_conditions_true(0x00 > block->hook((uint16_t)index, &addr, &len, NULL), -1);
+    res_conditions_true(0x00 > block->hook((uint16_t)index, &addr, &len, &offset), -1);
     addr += block->first_addr;
-    res_conditions_true(addr + size > block->first_addr + block->size, -1);
+    res_conditions_true(addr + offset + size > block->first_addr + block->size, -1);
     //获取数据
     driver = device->dev->dev_driver_ops;
     res_conditions_true((driver == NULL) || (driver->dev_read == NULL), -1);  
-    res_conditions_true(0x00 > driver->dev_read(device->dev, addr, size, buf), -1);
-    //res_conditions_true(0x00 > verify_data(buf, len), -1);
+    res_conditions_true(0x00 > verify_data(addr, offset, buf, size, len, device->dev), -1);
+
     return size;
 }
 
@@ -829,21 +963,19 @@ int16_t nd_set_index(struct instance_t* instance, uint32_t index, uint8_t* buf, 
     struct block_device_t* device = NULL;
     const struct driver_ops_t* driver = NULL;
     struct resource_block_t* block = NULL;
-    uint32_t len = 0x00;
-    uint32_t addr = 0x00;
+    uint32_t len = 0x00, addr = 0x00, offset = 0;
 
     device = look_up_device(instance, (uint8_t)(index >> 24));//查找设备
     res_conditions_true(device == NULL, -1);
     block = look_up_block(instance, device, (uint8_t)(index >> 16)); //查找块
     res_conditions_true((block == NULL) || (block->hook == NULL), -1);
-    res_conditions_true(0x00 > block->hook((uint16_t)index, &addr, &len, NULL), -1);
+    res_conditions_true(0x00 > block->hook((uint16_t)index, &addr, &len, &offset), -1);
     addr += block->first_addr;
-    res_conditions_true(addr + size > block->first_addr + block->size, -1);
+    res_conditions_true(addr + offset + size > block->first_addr + block->size, -1);
 
-    //update_verify(buf, len);
     driver = device->dev->dev_driver_ops;
-    res_conditions_true((driver == NULL) || (driver->dev_write == NULL), -1);
-    res_conditions_true(0x00 > driver->dev_write(device->dev, addr, size, buf), -1);
+    res_conditions_true((driver == NULL) || (driver->dev_write == NULL) || (driver->dev_read == NULL), -1);
+    res_conditions_true(0x00 > update_verify(addr, offset, buf, size, len, device->dev), -1);
 
     return size;
 }

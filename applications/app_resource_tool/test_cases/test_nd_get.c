@@ -78,7 +78,7 @@ struct test_para_info_t test_para_tab[] =
     { 0x11, 0x05}, { 0x12, 0x05}, { 0x13, 0x09}, { 0x14, 0x07}, { 0x15, 0x05}, { 0x16, 0x0C}, { 0x17, 0x05}
 };
 
-int16_t test_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size)
+int16_t test_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size, uint16_t* offset)
 {
     uint8_t i, k;
 
@@ -91,13 +91,13 @@ int16_t test_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size)
                 *addr = 0x00;
                 for (k = 0x00; k < i; k++)
                 {
-                    *addr += test_para_tab[k].len;
+                    *addr += test_para_tab[k].len + 0x02;
                 }
             }
 
             if (size != NULL)
             {
-                *size = test_para_tab[i].len;
+                *size = test_para_tab[i].len + 0x02;
             }
 
             return 0x00;
@@ -111,7 +111,7 @@ void test_nd_get_index(void** state)
 {
     struct instance_t* instance = (struct instance_t*)*state;
     uint8_t test_parameter_name = 0xD3;
-    uint8_t buf[50],test_buf[50];
+    uint8_t buf[500],test_buf[500];
     uint32_t index = 0x00;
     uint32_t* p = NULL;
     int16_t ret = 0x00;
@@ -124,10 +124,10 @@ void test_nd_get_index(void** state)
     for (i = 0x00; i < sizeof(test_para_tab) / sizeof(test_para_tab[0]); i++)
     {
         index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_parameter_name << 16) + test_para_tab[i].name);
-        generate_data(test_buf, 50, 50, 0x00);
+        generate_data(test_buf, 500, 500, 0x00);
         ret = nd_set_index(instance, index, test_buf, test_para_tab[i].len);
         assert_true(ret > 0x00);
-        memset(buf, 0x00, 50);
+        memset(buf, 0x00, 500);
         ret = nd_get_index(instance, index, buf, test_para_tab[i].len);
         assert_int_equal(ret, test_para_tab[i].len);
         assert_memory_equal(test_buf, buf, test_para_tab[i].len);
@@ -142,18 +142,23 @@ struct test_parameter_info_same_t
 
 const struct test_parameter_info_same_t   parameter_info_same[] =
 {
-    {0x01, 0x05, 0x04},
+    {0x01, 0x01, 0x81},
+    {0x02, 0x64, 0x02},
+    {0xF003, 0x03, 0x64},
+    {0xF013, 0x01, 0x80},
+    {0xF014, 0x01, 0x7F},
+#if 1
     {0x10, 0x05, 0x04},
     {0x20, 0x05, 0x04},
     {0x30, 0x05, 0x04},
     {0x40, 0x05, 0x04}
+#endif
 };
 
 #define TEST_POINTER_EMPTY(a) if(a == NULL) {return NULL;}
-int16_t test_parameter_info_same(uint16_t id, uint32_t* addr, uint16_t* size)
+int16_t test_parameter_info_same(uint16_t id, uint32_t* addr, uint16_t* size, uint16_t *offset)
 {
     uint16_t i, k;
-    uint16_t offset;
 
     for (i = 0; i < sizeof(parameter_info_same) / sizeof(parameter_info_same[0]); i++)
     {
@@ -162,16 +167,16 @@ int16_t test_parameter_info_same(uint16_t id, uint32_t* addr, uint16_t* size)
         {
             TEST_POINTER_EMPTY(addr);
             *addr = 0x00;
-
             for (k = 0x00; k < i; k++)
             {
                 *addr += parameter_info_same[k].len * parameter_info_same[k].same + 0x02;  //加两个字节的校验码；
             }
-            offset = (id - parameter_info_same[i].name) * parameter_info_same[k].len;
-            *addr += offset;
 
             TEST_POINTER_EMPTY(size);
-            *size = parameter_info_same[i].len;
+            *size = parameter_info_same[i].len * parameter_info_same[i].same + 0x02;
+
+            TEST_POINTER_EMPTY(offset);
+            *offset = (id - parameter_info_same[i].name) * parameter_info_same[k].len;
 
             return 1;
         }
@@ -179,16 +184,17 @@ int16_t test_parameter_info_same(uint16_t id, uint32_t* addr, uint16_t* size)
 
     return -1;
 }
-
+extern int do_sum(uint8_t* buff, uint16_t length);
 void test_nd_get_index_same(void** state)
 {
     struct instance_t* instance = (struct instance_t*)*state;
     uint8_t test_parameter_name = 0xD4;
-    uint8_t buf[50], test_buf[50];
+    uint8_t buf[500], test_buf[500];
     uint32_t index = 0x00;
     uint32_t* p = NULL;
     int16_t ret = 0x00;
     uint8_t i,k;
+    uint32_t s_sum = 0xa5a5;
 
     //注册一个参数
     p = register_parameter(instance, RES_DEV_EEPROM, test_parameter_name, 1 * 1024, test_parameter_info_same);
@@ -199,10 +205,11 @@ void test_nd_get_index_same(void** state)
         for (k = 0x00; k < parameter_info_same[i].same; k++)
         {
             index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_parameter_name << 16) + parameter_info_same[i].name + k);
-            generate_data(test_buf, 50, 50, 0x00);
+            generate_data(test_buf, 500, 500, 0x00);
+            s_sum += do_sum(test_buf, parameter_info_same[i].len * parameter_info_same[i].same);
             ret = nd_set_index(instance, index, test_buf, parameter_info_same[i].len);
             assert_true(ret > 0x00);
-            memset(buf, 0x00, 50);
+            memset(buf, 0x00, 500);
             ret = nd_get_index(instance, index, buf, parameter_info_same[i].len);
             assert_int_equal(ret, parameter_info_same[i].len);
             assert_memory_equal(test_buf, buf, parameter_info_same[i].len);
