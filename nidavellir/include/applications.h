@@ -50,6 +50,7 @@ struct mbase_control_block_t
     float k_in;
     float k_p;    
     uint32_t meter_const;
+    uint8_t  active_energy_cal_word;
     static_end     
     //运行期更改 && 掉电不保存 && 上电不需要IO请求的区域 && 初始化时直接清零
     dyn_cache_start   
@@ -204,6 +205,8 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
 void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline);
 void Energy_Meter_PowerON(struct instance_t* instance, struct pipeline_t* pipeline);
 void Energy_Meter_PowerOFF(struct instance_t* instance, struct pipeline_t* pipeline);
+int32_t Get_Cal_Active_Energy(struct mbase_control_block_t* , uint8_t index);
+
 int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size);
 int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth);
 struct resources_obj_t;
@@ -216,6 +219,7 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 void dev_init(void);
 void irq_system_init(void);
 void irq_transform_to_instance(struct instance_t* instance);
+void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uint8_t chl_type);
 
 extern const struct dev_info_t eeprom_dev;
 extern const struct dev_info_t nor_flash_dev;

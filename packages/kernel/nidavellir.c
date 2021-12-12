@@ -237,6 +237,8 @@ int nidavellir_run_baremetal(struct instance_t* instance)
 #endif // !WIN32
 
     fr_sw_rtc(instance, NULL, &mesg);
+    
+    fr_sw_ac_power(instance,NULL,&mesg);
 
     //处理事件标志组  事件驱动
     //handle_event_flags()
