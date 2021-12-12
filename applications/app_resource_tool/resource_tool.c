@@ -1,6 +1,8 @@
 #include "nidavellir.h"
 #include "resource_tool.h"
 
+#define res_conditions_true(a,b) if(a) { return b; } //a的调整满足返回b
+
 struct search_tempinfo_t
 {
     const struct dev_info_t* dev;
@@ -26,18 +28,10 @@ int verify_data(uint8_t* buf, uint16_t len)
 {
     uint16_t checksum = 0xA5A5, rchecksum = 0;
     
-    if(len <= 2)
-    {
-        return -1;
-    }
-    
+    res_conditions_true(len <= 2, -1);
     checksum += do_sum(buf, len - 0x02);
     memcpy((uint8_t*)&rchecksum, buf + len - 0x02, 0x02);
-
-    if (checksum != rchecksum)
-    {
-        return -1;
-    }
+    res_conditions_true(checksum != rchecksum, -1);
 
     return 1;
 }
@@ -74,10 +68,7 @@ struct block_device_t* look_up_device(struct instance_t* instance, uint8_t devic
     list_for_each(p, &instance->dev_list)
     {
         device = list_entry(p, struct block_device_t, sibling);
-        if (device->device_name == device_name)
-        {
-            return device;  //device 找到了
-        }
+        res_conditions_true(device->device_name == device_name, device)
     }
 
     return NULL;
@@ -93,10 +84,7 @@ struct resource_block_t* look_up_block(struct instance_t* instance, struct block
         list_for_each(p, &device->children)
         {
             block = list_entry(p, struct resource_block_t, sibling);
-            if (block->name == block_name)
-            {
-                return block;  //block 找到了
-            }
+            res_conditions_true(block->name == block_name, block)
         }
     }
 
@@ -109,16 +97,10 @@ void* nd_malloc(struct instance_t *instance, uint8_t block_name, uint32_t size)
     struct resource_block_t* block = NULL;
 
     device = look_up_device(instance, instance->ram_device);
-    if (device == NULL)
-    {
-        return NULL;
-    }
+    res_conditions_true(device == NULL, NULL)
 
     block = look_up_block(instance, device, block_name);
-    if (block == NULL)
-    {
-        return NULL;
-    }
+    res_conditions_true(block == NULL, NULL)
 
     return __nd_malloc(block->first_addr, &block->used, size, block->size);
 }
@@ -131,39 +113,27 @@ uint32_t *add_block(struct instance_t* instance, uint8_t device_name, uint8_t bl
     struct resource_block_t* re_block = NULL;
 
     device = look_up_device(instance,device_name);//先获取自己的device
-    if (device != NULL)
-    {
-        //判断申请的字节有没有超限
-        if ((device->used + block_size) > device->size)
-        {
-            return NULL;
-        }
+    res_conditions_true(device == NULL, NULL);
+    //判断申请的字节有没有超限
+    res_conditions_true((device->used + block_size) > device->size, NULL);
+    block = look_up_block(instance, device, block_name);//在找block
+    res_conditions_true(block != NULL, (uint32_t*)block->first_addr);
 
-        block = look_up_block(instance, device, block_name);//在找block
-        if (block == NULL)
-        {
-            re_block = look_up_block(instance, look_up_device(instance, instance->ram_device), instance->resource_block);
-            if (re_block == NULL)
-            {
-                return NULL;
-            }
+    re_block = look_up_block(instance, look_up_device(instance, instance->ram_device), instance->resource_block);
+    res_conditions_true(re_block == NULL, NULL);
 
-            block = __nd_malloc(re_block->first_addr, &re_block->used, sizeof(struct resource_block_t), re_block->size);
-            if (block == NULL)
-            {
-                return NULL;
-            }
-            block->first_addr = device->first_addr + device->used;
-            block->name = block_name;
-            init_list_head(&block->sibling);
-            block->size = block_size;
-            block->used = 0x00;
-            device->used += block_size;
-            list_add_tail(&block->sibling, &device->children);           
-        }
-        return (uint32_t *)block->first_addr;       
-    }
-    return NULL;
+    block = __nd_malloc(re_block->first_addr, &re_block->used, sizeof(struct resource_block_t), re_block->size);
+    res_conditions_true(block == NULL, NULL);
+
+    block->first_addr = device->first_addr + device->used;
+    block->name = block_name;
+    init_list_head(&block->sibling);
+    block->size = block_size;
+    block->used = 0x00;
+    device->used += block_size;
+    list_add_tail(&block->sibling, &device->children);   
+
+    return (uint32_t *)block->first_addr;       
 }
 
 uint32_t *add_inside_block(struct instance_t* instance, uint8_t device_name,uint8_t block_name, uint8_t inside_block_name, uint32_t block_size)
@@ -175,39 +145,28 @@ uint32_t *add_inside_block(struct instance_t* instance, uint8_t device_name,uint
     struct resource_block_t* resource_block = NULL;
 
     device = look_up_device(instance, device_name);//先获取device
-    if (device != NULL)
-    {
-        //判断申请的字节有没有超限
-        if ((device->used + block_size) > device->size)
-        {
-            return NULL;
-        }
-        block = look_up_block(instance, device, block_name);//在找block
-        ram_device = look_up_device(instance, instance->ram_device); //获取ram_device
+    res_conditions_true(device == NULL, NULL);
+    //判断申请的字节有没有超限
+    res_conditions_true((device->used + block_size) > device->size, NULL);
+    block = look_up_block(instance, device, block_name);//在找block
+    res_conditions_true(block == NULL, NULL);
+    ram_device = look_up_device(instance, instance->ram_device); //获取ram_device
+    res_conditions_true(ram_device == NULL, NULL);
 
-        if ((block != NULL) && (ram_device != NULL))
-        {
-            resource_block = look_up_block(instance, ram_device, instance->resource_block);
-            if (resource_block == NULL)
-            {
-                return NULL;
-            }
+    resource_block = look_up_block(instance, ram_device, instance->resource_block);
+    res_conditions_true(resource_block == NULL, NULL);
 
-            inside_block = __nd_malloc(resource_block->first_addr, &resource_block->used, sizeof(struct resource_block_t), resource_block->size);
-            if (inside_block != NULL)
-            {
-                inside_block->first_addr = block->first_addr + block->used;
-                inside_block->name = inside_block_name;
-                init_list_head(&inside_block->sibling);
-                inside_block->size = block_size;
-                inside_block->used = 0x00;
-                block->used += block_size;
-                list_add_tail(&inside_block->sibling, &device->children);
-                return (uint32_t *)inside_block->first_addr;
-            }
-        }
-    }
-    return NULL;
+    inside_block = __nd_malloc(resource_block->first_addr, &resource_block->used, sizeof(struct resource_block_t), resource_block->size);
+    res_conditions_true(inside_block == NULL, NULL);
+
+    inside_block->first_addr = block->first_addr + block->used;
+    inside_block->name = inside_block_name;
+    init_list_head(&inside_block->sibling);
+    inside_block->size = block_size;
+    inside_block->used = 0x00;
+    block->used += block_size;
+    list_add_tail(&inside_block->sibling, &device->children);
+    return (uint32_t *)inside_block->first_addr;
 }
 
 struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t resource_blok_size,uint8_t resource_block_name)
@@ -224,35 +183,31 @@ struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uin
     init_list_head(&instance->map_list);
     //创建RAM设备
     device = __nd_malloc(first_addr,&used,sizeof(struct block_device_t), size);
-    if (device != NULL)
-    {
-        device->used = resource_blok_size;
-        device->dev = NULL;
-        device->device_name = device_name;
-        device->first_addr = first_addr;
-        device->page_size = 0;
-        device->size = size;
-        init_list_head(&device->sibling);
-        init_list_head(&device->children);
-        instance->ram_device = device_name;
-        list_add_tail(&device->sibling, &instance->dev_list);
-        //创建resource_block
-        block = __nd_malloc(first_addr, &used, sizeof(struct resource_block_t), resource_blok_size);
-        if (block != NULL)
-        {
-            block->first_addr = first_addr;
-            block->name = resource_block_name;
-            init_list_head(&block->sibling);
-            block->size = resource_blok_size;
-            block->used = used;
-            instance->resource_block = resource_block_name;
-            list_add_tail(&block->sibling, &device->children);
+    res_conditions_true(device == NULL, NULL);
 
-            return instance;
-        }
-    }
+    device->used = resource_blok_size;
+    device->dev = NULL;
+    device->device_name = device_name;
+    device->first_addr = first_addr;
+    device->page_size = 0;
+    device->size = size;
+    init_list_head(&device->sibling);
+    init_list_head(&device->children);
+    instance->ram_device = device_name;
+    list_add_tail(&device->sibling, &instance->dev_list);
+    //创建resource_block
+    block = __nd_malloc(first_addr, &used, sizeof(struct resource_block_t), resource_blok_size);
+    res_conditions_true(block == NULL, NULL);
 
-    return NULL;
+    block->first_addr = first_addr;
+    block->name = resource_block_name;
+    init_list_head(&block->sibling);
+    block->size = resource_blok_size;
+    block->used = used;
+    instance->resource_block = resource_block_name;
+    list_add_tail(&block->sibling, &device->children);
+
+    return instance;
 }
 
 //注册设备的API 先创建RAM设备；
@@ -263,32 +218,25 @@ int8_t add_device(struct instance_t* instance, uint8_t device_name, const struct
     struct resource_block_t* block = NULL;
 
     device = look_up_device(instance, device_name);//在分配其他的
+    res_conditions_true(device != NULL, 1);
+
     ram_device = look_up_device(instance, instance->ram_device); //获取ram_device
+    res_conditions_true(ram_device == NULL, -1);
+    block = look_up_block(instance, ram_device, instance->resource_block);
+    res_conditions_true(block == NULL, -1);
 
-    if ((device == NULL) && (ram_device != NULL))
-    {
-        block = look_up_block(instance, ram_device, instance->resource_block);
-        if (block == NULL)
-        {
-            return -1;
-        }
+    device = __nd_malloc(block->first_addr,&block->used,sizeof(struct block_device_t),block->size);
+    res_conditions_true(device == NULL, -1);
 
-        device = __nd_malloc(block->first_addr,&block->used,sizeof(struct block_device_t),block->size);
-        if (device == NULL)
-        {
-            return -1;
-        }
-
-        device->used = 0;
-        device->dev = dev;
-        device->device_name = device_name;
-        device->first_addr = 0x00000000;
-        device->page_size = sector;
-        device->size = dev->data_size;
-        init_list_head(&device->sibling);
-        init_list_head(&device->children);
-        list_add_tail(&device->sibling, &instance->dev_list);
-    }
+    device->used = 0;
+    device->dev = dev;
+    device->device_name = device_name;
+    device->first_addr = 0x00000000;
+    device->page_size = sector;
+    device->size = dev->data_size;
+    init_list_head(&device->sibling);
+    init_list_head(&device->children);
+    list_add_tail(&device->sibling, &instance->dev_list);
     
     return 1;
 }
@@ -303,22 +251,15 @@ struct resource_map_t* register_map(struct instance_t* instance,uint8_t map_name
     list_for_each(p, &instance->map_list)
     {
         map = list_entry(p, struct resource_map_t, sibling);
-        if (map->map_name == map_name)
-        {
-            return map;  //device 找到了
-        }
+        res_conditions_true(map->map_name == map_name, map);
     }
 
     block = look_up_block(instance, look_up_device(instance, instance->ram_device), instance->resource_block);
-    if (block == NULL)
-    {
-        return NULL;
-    }
+    res_conditions_true(block == NULL, NULL);
+
     map = __nd_malloc(block->first_addr, &block->used, sizeof(struct block_device_t), block->size);
-    if (map == NULL)
-    {
-        return NULL;
-    }
+    res_conditions_true(map == NULL, NULL);
+
     map->map_name = map_name;
     map->fun = fun;
     list_add_tail(&map->sibling, &instance->map_list);
@@ -334,10 +275,8 @@ int16_t look_up_map(struct instance_t* instance,uint32_t id, uint8_t *buf, uint8
     list_for_each(p, &instance->map_list)
     {
         map = list_entry(p, struct resource_map_t, sibling);
-        if (map->fun != NULL)
-        {
-            return map->fun(instance, id, buf, mode);
-        }
+
+        res_conditions_true(map->fun != NULL, map->fun(instance, id, buf, mode));
     }
 
     return -1;
@@ -367,17 +306,18 @@ int16_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t b
 
     //查找设备
     device = look_up_device(instance, device_name);
+    res_conditions_true(device == NULL, -1);
     driver = device->dev->dev_driver_ops;
-    if ((driver != NULL) && (driver->dev_read != NULL))
-    {
-        block = look_up_block(instance, device, block_name);
-        if ((block != NULL) && (buf_size <= block->size))
-        {
-            return driver->dev_read(device->dev, block->first_addr, block->size, buf);
-        }
-    }
 
-    return -1;
+    res_conditions_true(driver == NULL, -1);
+    res_conditions_true(driver->dev_read == NULL, -1);
+
+    block = look_up_block(instance, device, block_name);
+
+    res_conditions_true((block != NULL) && (buf_size <= block->size),
+        driver->dev_read(device->dev, block->first_addr, block->size, buf));
+
+    return 1;
 }
 
 int16_t nd_set_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf, uint32_t buf_size)
@@ -388,17 +328,17 @@ int16_t nd_set_block(struct instance_t* instance, uint8_t device_name, uint8_t b
 
     //查找设备
     device = look_up_device(instance, device_name);
+    res_conditions_true(device == NULL, -1);
     driver = device->dev->dev_driver_ops;
-    if ((driver != NULL) && (driver->dev_write != NULL))
-    {
-        block = look_up_block(instance, device, block_name);
-        if ((block != NULL) && (buf_size <= block->size))
-        {
-            return driver->dev_write(device->dev, block->first_addr, block->size, buf);
-        }
-    }
 
-    return -1;
+    res_conditions_true(driver == NULL, -1);
+    res_conditions_true(driver->dev_write == NULL, -1);
+
+    block = look_up_block(instance, device, block_name);
+    res_conditions_true((block != NULL) && (buf_size <= block->size), 
+        driver->dev_write(device->dev, block->first_addr, block->size, buf));
+
+    return 1;
 }
 
 uint32_t* __register(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t relation_device, uint8_t relation_name, uint32_t block_size,
@@ -409,41 +349,30 @@ uint32_t* __register(struct instance_t* instance, uint8_t device_name, uint8_t b
     struct resource_block_t* re_block = NULL;
 
     device = look_up_device(instance, device_name);//先获取自己的device
-    if (device != NULL)
-    {
-        //判断申请的字节有没有超限
-        if ((device->used + block_size) > device->size)
-        {
-            return NULL;
-        }
-        block = look_up_block(instance, device, block_name);//在找block
-        if (block == NULL)
-        {
-            re_block = look_up_block(instance, look_up_device(instance, instance->ram_device), instance->resource_block);
-            if (re_block == NULL)
-            {
-                return NULL;
-            }
+    res_conditions_true(device == NULL, NULL);
 
-            block = __nd_malloc(re_block->first_addr, &re_block->used, sizeof(struct resource_block_t), re_block->size);
-            if (block == NULL)
-            {
-                return NULL;
-            }
-            block->first_addr = device->first_addr + device->used;
-            block->name = block_name;
-            init_list_head(&block->sibling);
-            block->size = block_size;
-            block->used = 0x00;
-            block->relation_device = relation_device;
-            block->relation_name = relation_name;
-            block->hook = fun;
-            device->used += block_size;
-            list_add_tail(&block->sibling, &device->children);
-        }
-        return (uint32_t*)block->first_addr;
-    }
-    return NULL;
+    //判断申请的字节有没有超限
+    res_conditions_true((device->used + block_size) > device->size, NULL);
+    block = look_up_block(instance, device, block_name);//在找block
+    res_conditions_true(block != NULL, (uint32_t*)block->first_addr);
+
+    re_block = look_up_block(instance, look_up_device(instance, instance->ram_device), instance->resource_block);
+    res_conditions_true(re_block == NULL, NULL);
+
+    block = __nd_malloc(re_block->first_addr, &re_block->used, sizeof(struct resource_block_t), re_block->size);
+    res_conditions_true(block == NULL, NULL);
+
+    block->first_addr = device->first_addr + device->used;
+    block->name = block_name;
+    init_list_head(&block->sibling);
+    block->size = block_size;
+    block->used = 0x00;
+    block->relation_device = relation_device;
+    block->relation_name = relation_name;
+    block->hook = fun;
+    device->used += block_size;
+    list_add_tail(&block->sibling, &device->children);
+    return (uint32_t*)block->first_addr;
 }
 
 uint32_t* register_log(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t relation_device, uint8_t relation_name, uint32_t block_size,
@@ -469,17 +398,13 @@ int16_t get_block_frist_addr(struct instance_t *instance, uint8_t device_name, u
     struct resource_block_t* block = NULL;
 
     device = look_up_device(instance, device_name);//先获取自己的device
-    if (device != NULL)
-    {
-        block = look_up_block(instance, device, block_name);//在找block
-        if ((block != NULL) && (addr != NULL))
-        {
-            *addr = block->first_addr;
-            return 1;
-        }
-    }
-    
-    return -1;
+    res_conditions_true(device == NULL, -1);
+
+    block = look_up_block(instance, device, block_name);//在找block
+    res_conditions_true((block == NULL) || (addr == NULL), -1);
+
+    *addr = block->first_addr;
+    return 1;
 }
 
 #if 1
@@ -489,14 +414,10 @@ uint32_t get_curr_mark(const struct dev_info_t* dev, uint32_t addr)
     uint8_t buf[10] = { 0 };
 
     driver = dev->dev_driver_ops;
-    if ((driver != NULL) && (driver->dev_read))
-    {
-        driver->dev_read(dev, addr, 0x04, buf);
+    res_conditions_true((driver == NULL) || (driver->dev_read == NULL), 0xFFFFFFFF);
 
-        return buf_to_uint32_lsb(buf);
-    }
-
-    return 0xffffffff;
+    driver->dev_read(dev, addr, 0x04, buf);
+    return buf_to_uint32_lsb(buf);
 }
 
 uint16_t search_enum_way(uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t *info, uint8_t direct)
@@ -510,31 +431,21 @@ uint16_t search_enum_way(uint32_t key, uint16_t start, uint16_t end, struct sear
     while (next_ptr >= start)
     {
         next_cmp = get_curr_mark(info->dev, info->addr + info->offset + next_ptr * info->unit_size);
-        if (cmp == key)
+        res_conditions_true(cmp == key, ptr);
+
+        if ((key >= next_cmp) && (key < cmp))
         {
-            return ptr;
-        }
-        else if ((key >= next_cmp) && (key < cmp))
-        {
-            if (key == next_cmp)
-            {
-                return next_ptr;
-            }
+            res_conditions_true(key == next_cmp, next_ptr);
             return (direct == 0x00) ? ptr : next_ptr;
         }
         else
         {
             ptr = next_ptr;
             cmp = next_cmp;
-
-            if (next_ptr == 0x00)
-            {
-                break;
-            }
+            res_conditions_true(next_ptr == 0x00, 0xFFFF)
             next_ptr--;
         }
     }
-
     return 0xFFFF;
 }
 
@@ -548,52 +459,25 @@ uint16_t search_mid_way(uint32_t key, uint16_t start, uint16_t end, struct searc
     {
         mid_ptr = (min_ptr + max_ptr) / 2;
         mid_cmp = get_curr_mark(info->dev, info->addr + info->offset + mid_ptr * info->unit_size);
-        if (mid_cmp == key)
-        {
-            break;
-        }
-        else if (key > mid_cmp)
-        {
-            if (mid_ptr == max_ptr)
-            {
-                mid_ptr = 0xFFFF; 
-                break;
-            }
+        res_conditions_true(mid_cmp == key, mid_ptr);
 
+        if (key > mid_cmp)
+        {
+            res_conditions_true(mid_ptr == max_ptr, 0xFFFF);
             min_ptr = mid_ptr + 1;
             temp_cmp = get_curr_mark(info->dev, info->addr + info->offset + min_ptr * info->unit_size);
-            if (key == temp_cmp)
-            {
-                return min_ptr;
-            }
-
-            if (key <= temp_cmp)
-            {
-                return (min_ptr - direct);
-            }
+            res_conditions_true(key == temp_cmp, min_ptr);
+            res_conditions_true(key < temp_cmp, (min_ptr - direct));
         }
         else
         {
-            if (mid_ptr == min_ptr)
-            {
-                mid_ptr = 0xFFFF; 
-                break;
-            }
-
+            res_conditions_true(mid_ptr == min_ptr, 0xFFFF);
             max_ptr = mid_ptr - 0x01;
             temp_cmp = get_curr_mark(info->dev, info->addr + info->offset + max_ptr * info->unit_size);
-            if (key == temp_cmp)
-            {
-                return max_ptr;
-            }
-
-            if (key > temp_cmp)
-            {
-                return (mid_ptr - direct);
-            }
+            res_conditions_true(key == temp_cmp, max_ptr);
+            res_conditions_true(key > temp_cmp, (mid_ptr - direct));
         }
     }
-
     return mid_ptr;
 }
 
@@ -602,11 +486,7 @@ int __search_smoke(struct circular_info_t* info, struct search_tempinfo_t* tempi
     uint32_t temp1 = get_curr_mark(tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[0] * tempinfo->unit_size);
     uint32_t temp2 = get_curr_mark(tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[1] * tempinfo->unit_size);
 
-    if (info->end_mark < info->start_mark)
-    {
-        return -1;
-    }
-
+    res_conditions_true(info->end_mark < info->start_mark, -1);
     switch (mode)
     {
     case 0x00: //没反转
@@ -619,11 +499,7 @@ int __search_smoke(struct circular_info_t* info, struct search_tempinfo_t* tempi
         {
             info->end_mark = temp2;
         }
-
-        if ((info->start_mark > temp2) || (info->end_mark < temp1))
-        {
-            return -1;
-        }
+        res_conditions_true((info->start_mark > temp2) || (info->end_mark < temp1), -1);
     }
         break;
     case 0x02:  //有反转
@@ -650,11 +526,7 @@ int __search_smoke(struct circular_info_t* info, struct search_tempinfo_t* tempi
         {
             info->end_mark = temp4;
         }
-
-        if ((info->start_mark > temp2) || (info->end_mark < temp3))
-        {
-            return -1;
-        }
+        res_conditions_true((info->start_mark > temp2) || (info->end_mark < temp3), -1);
     }
         break;
     }
@@ -789,14 +661,9 @@ int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf,
             if ((driver02 != NULL) && (driver02->dev_read != NULL))
             {
                 block02->hook((uint16_t)index, &addr02, &len02, NULL);
-                if (len02 != sizeof(struct log_manager_t))
-                {
-                    return -1;
-                }
-                if (0x00 > driver02->dev_read(device02->dev, block02->first_addr + addr02, sizeof(struct log_manager_t), (uint8_t*)&manager))
-                {
-                    return -1;
-                }
+                res_conditions_true(len02 != sizeof(struct log_manager_t), -1);
+                res_conditions_true(0x00 > driver02->dev_read(device02->dev, block02->first_addr + addr02, 
+                    sizeof(struct log_manager_t), (uint8_t*)&manager), -1);
                 if (0xA5A5 + manager.r_ptr + manager.num + manager.unit_size + manager.w_ptr != manager.check_sum)
                 {
                     manager.max_num = depth;
@@ -813,13 +680,8 @@ int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf,
         }
         //存储数据
         addr01 += manager.w_ptr * manager.unit_size;
-        if ((driver01 != NULL) && (driver01->dev_write != NULL))
-        {
-            if (0x00 > driver01->dev_write(device01->dev, block01->first_addr + addr01, unit_size, buf))
-            {
-                return -1;
-            }
-        }
+        res_conditions_true((driver01 == NULL) || (driver01->dev_write == NULL), -1);
+        res_conditions_true(0x00 > driver01->dev_write(device01->dev, block01->first_addr + addr01, unit_size, buf), -1);
         //保存管理区
         if ((driver02 != NULL) && (driver02->dev_write != NULL))
         {
@@ -844,10 +706,8 @@ int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf,
                 manager.r_ptr = 0x00;
             }
             manager.check_sum = 0xA5A5 + manager.num + manager.unit_size + manager.w_ptr + manager.r_ptr;
-            if (0x00 > driver02->dev_write(device02->dev, block02->first_addr + addr02, sizeof(struct log_manager_t), (uint8_t*)&manager))
-            {
-                return -1;
-            }
+            res_conditions_true(0x00 > driver02->dev_write(device02->dev, block02->first_addr + addr02, 
+                sizeof(struct log_manager_t), (uint8_t*)&manager), -1);
             return unit_size;
         }
     }
@@ -992,11 +852,10 @@ int16_t nd_get_index(struct instance_t* instance, uint32_t index, uint8_t* buf, 
                 {
                     addr += block->first_addr;
                 }
+
+                res_conditions_true(addr + len > block->size, -1);
                 driver->dev_read(device->dev, addr, len, buf);
-                if (0x00 > verify_data(buf, len))
-                {
-                    return -1;
-                }
+                res_conditions_true(0x00 > verify_data(buf, len), -1);
             }
             return len;
         }
