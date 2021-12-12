@@ -58,7 +58,8 @@ uint16_t buf_to_uint16_msb(uint8_t* buf);
 uint16_t buf_to_uint16_lsb(uint8_t *buf);
 
 uint8_t uint16_to_buf_lsb(uint16_t data, uint8_t *buf);
-uint8_t uint32_to_buf_msb(uint32_t data, uint32_t* buf);
+uint8_t uint16_to_buf_msb(uint16_t data, uint8_t *buf);
+uint8_t uint32_to_buf_msb(uint32_t data, uint8_t* buf);
 uint8_t uint32_to_buf_lsb(uint32_t data, uint8_t* buf);
 uint32_t buf_to_uint32_lsb(uint8_t* buf);
 uint8_t mem_compare(void* data1, void* data2, uint16_t length);

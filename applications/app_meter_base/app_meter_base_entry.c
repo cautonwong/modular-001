@@ -17,22 +17,33 @@ const uint32_t record_head_t1[] = {4, 0x20220200, 0x201E0200, 0x20200200, 0x3300
 #define END_MODE  11
 //record_head 记录头 首字节为个数，后续为OAD，  
 //mode 0-7 为冻结方案， 10为 事件发生 11位 结束
-int get_record_head(struct instance_t* instance, uint8_t* databuf, const uint32_t* record_head, uint8_t mode, uint16_t *remain_size)
+int get_record_head(struct instance_t* instance, uint8_t* databuf, const uint32_t* record_head, uint8_t mode, uint16_t *remain_size,  struct record_storage_id_info_t *record_id_info)
 {
-    uint8_t *p , i, scheme_valid = true;
-    uint16_t single_len = 0;
-    uint32_t obj;
+    uint8_t *p , i, scheme_valid = true,  normal_type;
+    int16_t single_len = 0;
+    uint32_t obj,seq;
 
+ 
+    
     p = databuf;
     if (record_head)
     {
         for (i = 0; i < (record_head[0]); i++)
         {
+            normal_type = 1;
+            scheme_valid = true;
             obj = record_head[i+1];
             switch (obj)
             {
                 case 0x20220200: //事件记录序号
-                    //空缺
+#if 0                    
+                    nd_get_index(instance, record_id_info->sequence_index, (uint8_t *)&seq, sizeof(seq));
+                    *p++ = 0x06;
+                    memcpy(p, &seq, 4);
+                    p += 4;
+                    single_len = 1 + 4;
+                    //normal_type = 0;
+#endif                    
                     break;
                 case 0x201E0200: //事件发生时间
                     if (mode == END_MODE)
@@ -50,26 +61,40 @@ int get_record_head(struct instance_t* instance, uint8_t* databuf, const uint32_
                     break;
             }
 
-            single_len = 0;
+            if (normal_type)
+            {
+                single_len = 0;
 
-            if (true == scheme_valid)
-            {
-                single_len = nd_get(instance, obj, p, *remain_size);
-                if (single_len > 0)
+                if (true == scheme_valid)
                 {
-                    p += single_len;
-                    *remain_size -= single_len;
+                    single_len = nd_get(instance, obj, p, *remain_size);
+                    if (single_len > 0)
+                    {
+                        p += single_len;
+                    }
+                    else
+                    {
+                        memset(p, 0, single_len); //找不到填 NULL 
+                        p += single_len;
+                    }
                 }
-            }
-            else
-            {
-                single_len = nd_size(instance, obj);
-                if (single_len > 0)
+                else
                 {
-                    memset(p, 0xFF, single_len);
-                    p += single_len;
-                    *remain_size -= single_len;
+                    single_len = nd_size(instance, obj);
+                    if (single_len > 0)
+                    {
+                        memset(p, 0xFF, single_len);
+                        p += single_len;
+                    }
+                    else
+                    {
+                        single_len = 1;
+                        memset(p, 0, single_len); //找不到填 NULL 
+                        p += single_len;
+                        
+                    }
                 }
+                *remain_size -= single_len;
             }
         }
     }
@@ -77,10 +102,10 @@ int get_record_head(struct instance_t* instance, uint8_t* databuf, const uint32_
 }
 //capturelist 记录头 首字节为个数，后续为OAD，  
 //mode 0-7 为冻结方案， 10为 事件发生 11位 结束
-int get_record_association(struct instance_t* instance, uint8_t* databuf, uint8_t* CaptureList, uint8_t mode, uint16_t* remain_size)
+int get_record_association(struct instance_t* instance, uint8_t* databuf, uint8_t* CaptureList, uint8_t mode, uint16_t* remain_size,  struct record_storage_id_info_t *record_id_info)
 {
     uint8_t* p, i, scheme, scheme_valid = true;
-    uint16_t single_len = 0;
+    int16_t single_len = 0;
     uint32_t obj;
 
     p = databuf;
@@ -88,6 +113,7 @@ int get_record_association(struct instance_t* instance, uint8_t* databuf, uint8_
     {
         for (i = 0; i < (CaptureList[0]); i++)
         {
+            scheme_valid = true;
             obj = buf_to_uint32_lsb(&CaptureList[1 + 4 * i]);
             scheme = (obj >> 13) & 0x07; //方案号
 
@@ -113,7 +139,6 @@ int get_record_association(struct instance_t* instance, uint8_t* databuf, uint8_
                     break;
             }
 
-
             single_len = 0;
 
             if (true == scheme_valid)
@@ -124,6 +149,12 @@ int get_record_association(struct instance_t* instance, uint8_t* databuf, uint8_
                     p += single_len;
                     *remain_size -= single_len;
                 }
+                else
+                {
+                    memset(p, 0, 1); //找不到填 NULL 
+                    p += 1;
+                    *remain_size -= single_len;
+                }
             }
             else
             {
@@ -132,6 +163,12 @@ int get_record_association(struct instance_t* instance, uint8_t* databuf, uint8_
                 {
                     memset(p, 0xFF, single_len);
                     p += single_len;
+                    *remain_size -= single_len;
+                }
+                else
+                {
+                    memset(p, 0, 1); //找不到填 NULL 
+                    p += 1;
                     *remain_size -= single_len;
                 }
             }
@@ -145,48 +182,59 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
     uint8_t i, mode;
     uint8_t CaptureList[151] = { 0 },  data_buff[400] = { 0 }, payload[100];
     uint8_t *pdata = data_buff;
-    uint16_t remain_size, SequenceId, RecordId;
-    uint32_t sequence;
-
+    uint16_t remain_size;
+    uint32_t sequence,Oad;
+    struct record_storage_id_info_t record_id_info; 
+    
     const uint32_t* record_head;
-    uint32_t CaptureId, index;
+    uint32_t CaptureId, SequenceId, RecordId, index;
+    int ret;
       
     remain_size = sizeof(data_buff);
     
     //mesg 的id 就是事件代码
     int r = recv_mesg_header(instance, pipeline, mesg);
+    
     if (r > 0)
     {
         fifoBuf_getData(pipeline->in_queue, payload, mesg->len);
         switch (mesg->id)
         {
             case OverCurrentL1:
+                Oad = 0x30050700;
+                mode = START_MODE;                
                 record_head = record_head_t0;
-                RecordId = OverCurrentL1;
-                CaptureId = OverCurrentL1_oad;
-                SequenceId = OverCurrentL1_index;
-                mode = START_MODE;
+   
+                ret = get_record_id_info(Oad, &record_id_info);
+                if (ret <= 0)
+                {   
+                    return -1;
+                }       
+
+                RecordId = record_id_info.save_index;
+                CaptureId = record_id_info.capture_index;
+                SequenceId = record_id_info.sequence_index;
 
                 //获取关联对象列表
-                index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + CaptureId);
+                index = CaptureId;
                 nd_get_index(instance, index, &CaptureList[0], sizeof(CaptureList));
                 //nd_get(instance, CaptureId, &CaptureList[0], sizeof(CaptureList));
                 //组固定的事件头
-                pdata += get_record_head(instance, pdata, record_head, mode, &remain_size);
+                pdata += get_record_head(instance, pdata, record_head, mode, &remain_size, &record_id_info);
                 //组配置的关联对象
-                pdata += get_record_association(instance, pdata, CaptureList, mode, &remain_size);
+                pdata += get_record_association(instance, pdata, CaptureList, mode, &remain_size, &record_id_info);
 
                 // 读取序号 ++
-                index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SequenceId);
+                index = SequenceId;
                 nd_get_index(instance, index, (uint8_t*)&sequence, sizeof(sequence));
                 //nd_get(instance, SequenceId, (uint8_t *)&sequence, sizeof(sequence));
                 sequence++;
-                memcpy(data_buff, (uint8_t*)&sequence, 4);
+                memcpy(data_buff+1, (uint8_t*)&sequence, 4);
 
                 //调用ND_SET保存数据
-                index = ((RES_DEV_EEPROM << 24) + (mbase_block_event << 16) + RecordId);
+                index = RecordId;
                 nd_log_append(instance, index, data_buff, (pdata - data_buff));
-                index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SequenceId);
+                index = SequenceId;
                 nd_set_index(instance, index, (uint8_t*)&sequence, sizeof(sequence));
                 break;
             case OverCurrentEndL1:
@@ -199,9 +247,9 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
                 //获取关联对象列表
                 nd_get(instance, CaptureId, &CaptureList[0], sizeof(CaptureList));
                 //组固定的事件头
-                pdata += get_record_head(instance, pdata, record_head, mode, &remain_size);
+                pdata += get_record_head(instance, pdata, record_head, mode, &remain_size, &record_id_info);
                 //组配置的关联对象
-                pdata += get_record_association(instance, pdata, CaptureList, mode, &remain_size);
+                pdata += get_record_association(instance, pdata, CaptureList, mode, &remain_size, &record_id_info);
 
                 // 读取序号 ++
                 nd_get(instance, SequenceId, (uint8_t *)&sequence, sizeof(sequence));

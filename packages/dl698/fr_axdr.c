@@ -267,3 +267,73 @@ uint16_t axdr_get_len(const uint8_t *data)
 }
 
 
+
+//
+int record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src)
+{
+    uint32_t i, k, n;
+    uint8_t *p_des = des, *p_src = src;
+    int single_len;
+    
+    for(i=1; i < (rcsd_req[0] + 1); i++)
+    {
+        p_src = src;
+        for(k=1; k < (rcsd_src[0] + 1); k++)
+        {
+            if (rcsd_req[i] == rcsd_src[k])  // 
+            {
+                single_len = nd_size(instance, rcsd_src[k]);
+                if (single_len > 0)
+                {
+                    // 个别数据仍需特殊处理
+                    for (n = 0; n < single_len; n++) // 数据全f时 转空
+                    {
+                        if (p_src[n] != 0xff)
+                        {
+                            break;
+                        }
+                    }
+                    if (n >= single_len)
+                    {
+                        *p_des++ = TYPE_null;
+                        p_src += single_len;
+                    }
+                    else
+                    {
+                        memcpy(p_des, p_src, single_len);
+                        p_des += single_len;
+                        p_src += single_len;
+                    }
+                    
+                }
+                else
+                {
+                    *p_des++ = TYPE_null;
+                    p_src++;
+                }
+                break;
+            }
+            else
+            {
+                single_len = nd_size(instance, rcsd_src[k]);
+                if (single_len > 0)
+                {
+                    p_src += single_len;
+                }
+                else
+                {
+                    p_src++;
+                }
+            }
+        }
+        
+        if (k >= (rcsd_src[0]+1))
+        {
+            *p_des++ = TYPE_null;
+        }
+    }  
+    
+    return (p_des - des);
+}
+
+

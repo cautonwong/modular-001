@@ -110,12 +110,19 @@ uint8_t uint16_to_buf_lsb(uint16_t data, uint8_t *buf)
     return 2;
 }
 
+uint8_t uint16_to_buf_msb(uint16_t data, uint8_t *buf)
+{
+    buf[0] = (uint8_t)(data >> 8);
+    buf[1] = (uint8_t)data;
+    return 2;
+}
+
 uint32_t buf_to_uint32_msb(uint8_t* buf)
 {
 	return ((uint32_t)buf[0] << 24) + ((uint32_t)buf[1] << 16) + ((uint32_t)buf[2] << 8) + buf[3];
 }
 
-uint8_t uint32_to_buf_msb(uint32_t data, uint32_t* buf)
+uint8_t uint32_to_buf_msb(uint32_t data, uint8_t* buf)
 {
 	buf[3] = (uint8_t)data;
 	buf[2] = (uint8_t)(data >> 8);

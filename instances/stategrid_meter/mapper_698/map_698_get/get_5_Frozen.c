@@ -24,18 +24,18 @@ int get_frozen_obj(struct instance_t* instance, uint32_t id, uint8_t* buf, struc
 
     maxnum = (CaptureLen - 1) / 4;
 
-    index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + CaptureId);
+    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + CaptureId);
     nd_get_index(instance, index, &tempbuf[0], sizeof(tempbuf));
     oadlist = tempbuf;
     num = *oadlist++;
 
     // 周期
-    index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + PeriodId);
+    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodId);
     nd_get_index(instance, index, &period[0], sizeof(period));
     tmp0 = period;
 
     // 深度
-    index = ((RES_DEV_EEPROM << 24) + (0x09 << 16) + DepthId);
+    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + DepthId);
     nd_get_index(instance, index, &depth[0], sizeof(depth));
     tmp1 = depth;
 
@@ -67,6 +67,10 @@ int get_frozen_obj(struct instance_t* instance, uint32_t id, uint8_t* buf, struc
         *p++ = TYPE_long_unsigned;
 
         scheme = ((*(oadlist + 1)) >> 13) & 0x07; //方案号
+        if (OI != 0x5002)
+        {
+            scheme = 0;
+        }
         *p++ = *(tmp0 + scheme * 3 + 2);
         *p++ = *(tmp0 + scheme * 3 + 1);
 
@@ -83,8 +87,8 @@ int get_frozen_obj(struct instance_t* instance, uint32_t id, uint8_t* buf, struc
         }
         else
         {
-            *p++ = *(tmp1 + i * 2 + 1);
-            *p++ = *(tmp1 + i * 2);
+            *p++ = *(tmp1 + 1); // *(tmp1 + i * 2 + 1)
+            *p++ = *(tmp1);// *(tmp1 + i * 2)
         }
     }
 

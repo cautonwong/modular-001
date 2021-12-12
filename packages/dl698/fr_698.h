@@ -195,6 +195,7 @@ struct frozen_obj_t
 };
 
 
+#define REQ_RCSD_MAXNUM 50 
 
 
 extern int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);

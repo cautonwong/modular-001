@@ -2,6 +2,11 @@
 #include "fr_698.h"
 #include "resource_tool.h"
 
+
+extern const uint32_t record_head_t1[];
+extern const uint32_t record_head_t0[];
+
+
 extern void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id);
 
 extern int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf);
@@ -28,9 +33,9 @@ extern int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf);
 struct record_item_t
 {
     uint16_t  event_flag_id_start;  // 事件代码
-    uint16_t  event_flag_id_end;    // 事件代码2
-    uint32_t len;
-    uint32_t max_depth;     // 默认最大深度
+    uint16_t  event_flag_id_end;    // 事件代码2   若无填0
+    uint32_t len;                   // 申请e2p时 为字节长度，申请flash时为扇区数
+    uint32_t max_depth;             // 默认最大深度
 };
 
 struct parameter_item_t
@@ -45,6 +50,29 @@ const struct record_item_t  record_item[] =
 {
     { OverCurrentL1, OverCurrentEndL1,              800,    10 },// 待调整
 };
+
+//一个表格只能放在一个存储器上，注册的时候绑定设备   FLASH  分钟冻结
+const struct record_item_t  record_item_1[] =
+{
+    { MinuteFreeze1, 0,    830 * 4096,    35040 },// 待调整
+    { MinuteFreeze2, 0,    830 * 4096,    35040 },// 待调整
+    { MinuteFreeze3, 0,    830 * 4096,    35040 },// 待调整
+    { MinuteFreeze4, 0,    830 * 4096,    35040 },// 待调整
+    { MinuteFreeze5, 0,    830 * 4096,    35040 },// 待调整
+    { MinuteFreeze6, 0,    830 * 4096,    35040 },// 待调整
+    { MinuteFreeze7, 0,    830 * 4096,    35040 },// 待调整
+    { MinuteFreeze8, 0,    830 * 4096,    35040 },// 待调整
+};
+
+
+//一个表格只能放在一个存储器上，注册的时候绑定设备   FLASH  其他
+const struct record_item_t  record_item_2[] =
+{
+    { HourFreeze , 0,     5 * 4096,    254 },//小时冻结
+    { DayFreeze  , 0,    27 * 4096,    365 },//日冻结
+    { MonthFreeze, 0,     5 * 4096,     24 },//日冻结
+};
+
 
 const struct parameter_item_t  parameter_item[] =
 {
@@ -62,12 +90,24 @@ const struct parameter_item_t  parameter_item[] =
 
     { OverCurrentL1_oad, 0x01,  61    }, //oad列表 1+ 4*15     默认8个     先统一预留15个关联
     { MinuteFreeze_oad,  0x01,  61    }, //oad列表 1+ 4*15     默认7个
+    { HourFreeze_oad,    0x01,  61 }, //oad列表 1+ 4*15     
+    { DayFreeze_oad,     0x01,  61 }, //oad列表 1+ 4*15     
+    { MonthFreeze_oad,   0x01,  61 }, //oad列表 1+ 4*15     
 
     { OverCurrentL1_index, 0x01, 4    },//记录序号
 
-    { MinuteFreeze_period, 0x01, 24   }, //分钟冻结 周期   3*8     
-    { MinuteFreeze_depth,  0x01, 31   }, //分钟冻结 深度     2*15  统一冻结深度31字节
-                         
+
+    { OverCurrentL1_index,  0x01,  4  }, //记录序号
+
+    { MinuteFreeze_period,  0x01, 24 }, //分钟冻结 周期   3*8     
+    { MinuteFreeze_depth,   0x01, 31 }, //分钟冻结 深度     2*15  统一冻结深度31字节
+    { HourFreeze_period,    0x01, 24 }, //小时冻结 周期 3
+    { HourFreeze_depth,     0x01, 31 }, //小时冻结 深度 2
+    { DayFreeze_period,     0x01, 24 }, //日冻结 周期   3
+    { DayFreeze_depth,      0x01, 31 }, //日冻结 深度   2
+    { MonthFreeze_period,   0x01, 24 }, //月冻结 周期   3
+    { MonthFreeze_depth,    0x01, 31 }, //月冻结 深度   2
+    
     { AutoDisplayList,     0x64,   2   },//100屏*2字节
     { KeyDisplayList,      0x64,   2   },//100屏*2字节
     { DisplayPara,         0x01,  22  },
@@ -138,12 +178,14 @@ int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, u
 
 
 
+
 // 通过oad 获取 事件相关的存储地址信息
 int get_record_id_info(uint32_t oad, struct record_storage_id_info_t* info)
 {
  
     uint16_t CaptureId, SaveId, SeqId;
     uint8_t SaveDevice, SaveBlock;
+    
 
     switch (oad)
     {
@@ -153,6 +195,8 @@ int get_record_id_info(uint32_t oad, struct record_storage_id_info_t* info)
         SaveBlock = mbase_block_event;     
         CaptureId = OverCurrentL1_oad;     // 关联对象存储地址信息
         SeqId = OverCurrentL1_index;       // 序号存储地址信息
+        
+        info->record_head = record_head_t0; //事件记录单元
         break;
     default:
         return -1;
@@ -165,6 +209,65 @@ int get_record_id_info(uint32_t oad, struct record_storage_id_info_t* info)
     return 1;
 }
 
+
+// 通过oad 获取 事件rcsd
+// mode = 1，获取记录头；   mode=2，获取配置关联对象， mode = 3，获取所有关联对象
+int get_record_rcsd_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_list, uint8_t mode)
+{
+    struct record_storage_id_info_t info;
+    uint8_t i, num;
+    uint32_t *p = (rcsd_list + 1);
+    uint32_t rcsd_num = 0;
+    uint8_t tempbuf[200];//待调整  读取e2p关联对象缓存
+    
+    int ret = get_record_id_info(oad, &info);
+    
+    if (ret < 0)
+    {
+        return -1;
+    }
+   
+    if(mode & 0x01)
+    {
+        if (info.record_head != NULL)
+        {
+            num = info.record_head[0];
+            
+            if (info.record_head[0] > REQ_RCSD_MAXNUM)
+            {
+                return -1;
+            }
+            
+            for(i = 0; i < num; i++)
+            {
+                memcpy(p, (info.record_head+1+i), 4);
+                p++;
+                rcsd_num += 1;
+            }
+        }
+    }
+
+    if(mode & 0x02)
+    {  
+        nd_get_index(instance, info.capture_index, &tempbuf[0], sizeof(tempbuf));
+     
+        num = tempbuf[0];
+        if (num > REQ_RCSD_MAXNUM)
+        {
+            return -1;
+        }
+
+        for(i = 0; i < num; i++)
+        {
+            memcpy(p, (tempbuf+1+4*i), 4);
+            p++;
+            rcsd_num += 1;
+        }
+     }  
+    *rcsd_list =  rcsd_num;
+    
+    return 1;
+}
 
 int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode)
 {

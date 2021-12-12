@@ -36,8 +36,11 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
         uint8_t num,maxnum;
         uint32_t oad_tmp;
         uint32_t CaptureId, index;
+        uint32_t ManageId;
+        
         
         CaptureId = OverCurrentL1_oad;
+        ManageId = OverCurrentL1;
         maxnum = ((13*init_30050200[1]+9)/10);
         // tag 判断  待添加
         
@@ -63,6 +66,10 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
         }
         index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + CaptureId);
         nd_set_index(instance, index, &tempbuf[0], (1 + num*4));
+        
+        index = ((RES_DEV_EEPROM << 24) + (mbase_block_event << 16) + ManageId);
+        nd_log_clean(instance, index);
+        
         return (p - buf);
     }
     case 0x30050500://过流阈值
