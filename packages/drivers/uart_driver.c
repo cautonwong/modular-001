@@ -26,7 +26,7 @@
 #define UART_DEVICE_TIME_OUT1     5
 #define UART_DEVICE_TIME_OUT2	  1
 
-#define UART_RX_TIME_OUT   5
+#define UART_RX_TIME_OUT   10
 #define UART_TX_TIME_OUT   3
 
 
@@ -230,7 +230,7 @@ uint8 uart_time_process(void *tickpara)
         chl->tx_time_out--;
     }
     
-    if(chl->tx_time_out == 0)
+    if((chl->tx_time_out == 0) && (chl->rx_time_out == 0))
     {
         mcu_uart_recive_enable(1 , chl->mcu_uart_index);
         mcu_uart_send_enable(0, chl->mcu_uart_index);

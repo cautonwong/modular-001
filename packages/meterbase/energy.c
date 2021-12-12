@@ -5,7 +5,10 @@
 
 #define Max_tou_fee 12
 
-
+#define  ADD_POS    0x01
+#define  DEC_POS    0x02
+#define  ADD_NEG    0x04
+#define  DEC_NEG    0x08
 
 
 
@@ -76,5 +79,39 @@ void Energy_Meter_PowerOFF(struct instance_t* instance, struct pipeline_t* pipel
 
 }
 
-
-
+int32_t Get_Cal_Active_Energy(struct mbase_control_block_t* mbase_control_block, uint8_t index)
+{
+    int32_t energy_kwh = 0;
+    int32_t energy_pulse = 0;
+    
+    uint8_t word = mbase_control_block->active_energy_cal_word;
+    
+    if((mbase_control_block->meter_const==0) || (index>Max_tou_fee))
+    {
+        return 0;
+    }
+    if(word & ADD_POS)
+    {
+        energy_kwh += mbase_control_block->active_p[index];
+        energy_pulse += mbase_control_block->active_p_dec[index];
+    }
+    if(word & DEC_POS)
+    {
+        energy_kwh -= mbase_control_block->active_p[index];
+        energy_pulse -= mbase_control_block->active_p_dec[index];
+    }
+    if(word & ADD_NEG)
+    {
+        energy_kwh += mbase_control_block->active_n[index];
+        energy_pulse += mbase_control_block->active_n_dec[index];
+    }
+    if(word & DEC_NEG)
+    {
+        energy_kwh -= mbase_control_block->active_n[index];
+        energy_pulse -= mbase_control_block->active_n_dec[index];
+    }
+    
+    energy_kwh = energy_kwh + energy_pulse / mbase_control_block->meter_const;
+    
+    return energy_kwh;
+}

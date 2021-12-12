@@ -689,11 +689,11 @@ uint8 mcu_spi_recive_byte(uint8* byte, uint8 spi_index)
     if (timeout > 0)
     {
         rxd = SPI2->RXDAT;
+        *byte = rxd;
+        return true;
     }
+    return false;
 
-    *byte = rxd;
-
-    return true;
 }
 
 
