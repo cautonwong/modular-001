@@ -221,7 +221,7 @@ int main(int argc, char** argv)
         cmocka_unit_test(test_nd_get_offset),  
         cmocka_unit_test(test_nd_get_index_same),       
         //测试循环存储 EPROM 的搜索
-#if 0
+#if 1
         cmocka_unit_test(test_nd_log_output_search_all),
         cmocka_unit_test(test_nd_log_output_search_all_06),
         cmocka_unit_test(test_nd_log_output_search_all_full),

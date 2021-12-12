@@ -130,7 +130,7 @@ void test_nd_log_output_flash_search_all(void** state)
 	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	ret = nd_log_append(instance, index, (uint8_t *)&test_flash_event[0],sizeof(struct test_flash_evnet_log_output_t));
 	assert_int_equal(ret, sizeof(struct test_flash_evnet_log_output_t));
@@ -157,7 +157,7 @@ void test_nd_log_output_flash_search_all_100(void** state)
 	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 100; i++)
 	{
@@ -196,7 +196,7 @@ void test_nd_log_output_flash_search_all_400(void** state)
 	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 400; i++)
 	{
@@ -236,7 +236,7 @@ void test_nd_log_output_flash_search_all_426(void** state)
 	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 426; i++)
 	{
@@ -276,7 +276,7 @@ void test_nd_log_output_flash_search_all_500(void** state)
 	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 500; i++)
 	{
@@ -316,7 +316,7 @@ void test_nd_log_output_flash_search_index_100_30(void** state)
 	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 100; i++)
 	{
@@ -358,7 +358,7 @@ void test_nd_log_output_flash_search_index_100_40(void** state)
 	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 100; i++)
 	{
@@ -408,7 +408,7 @@ void test_nd_log_output_flash_search_index_100_18(void** state)
 	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 100; i++)
 	{
@@ -450,7 +450,7 @@ void test_nd_log_output_flash_search_index_100_100(void** state)
 	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 100; i++)
 	{
@@ -502,7 +502,7 @@ void test_nd_log_output_flash_search_index_400_100(void** state)
 	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 400; i++)
 	{
@@ -579,7 +579,7 @@ void test_nd_log_output_flash_search_index_426_100(void** state)
 	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 426; i++)
 	{
@@ -675,7 +675,7 @@ void test_nd_log_output_flash_search_index_500_100(void** state)
 	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 500; i++)
 	{
@@ -791,7 +791,7 @@ void test_nd_log_output_flash_search_time_100_30(void** state)
 	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 100; i++)
 	{
@@ -834,7 +834,7 @@ void test_nd_log_output_flash_search_time_100_40(void** state)
 	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 100; i++)
 	{
@@ -885,7 +885,7 @@ void test_nd_log_output_flash_search_time_100_18(void** state)
 	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 100; i++)
 	{
@@ -928,7 +928,7 @@ void test_nd_log_output_flash_search_time_100_100(void** state)
 	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 100; i++)
 	{
@@ -981,7 +981,7 @@ void test_nd_log_output_flash_search_time_400_100(void** state)
 	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 400; i++)
 	{
@@ -1059,7 +1059,7 @@ void test_nd_log_output_flash_search_time_426_100(void** state)
 	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 426; i++)
 	{
@@ -1156,7 +1156,7 @@ void test_nd_log_output_flash_search_time_500_100(void** state)
 	index = ((uint32_t)(RES_DEV_FLASH << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL2);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 500; i++)
 	{

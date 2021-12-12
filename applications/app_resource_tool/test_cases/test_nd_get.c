@@ -114,7 +114,7 @@ void test_nd_get_index(void** state)
     uint8_t buf[50],test_buf[50];
     uint32_t index = 0x00;
     uint32_t* p = NULL;
-    uint16_t ret = 0x00;
+    int16_t ret = 0x00;
     uint8_t i;
 
     //注册一个参数
@@ -125,7 +125,7 @@ void test_nd_get_index(void** state)
     {
         index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_parameter_name << 16) + test_para_tab[i].name);
         generate_data(test_buf, 50, 50, 0x00);
-        ret = nd_set_index(instance, index, test_buf, 50);
+        ret = nd_set_index(instance, index, test_buf, test_para_tab[i].len);
         assert_true(ret > 0x00);
         memset(buf, 0x00, 50);
         ret = nd_get_index(instance, index, buf, test_para_tab[i].len);
@@ -187,7 +187,7 @@ void test_nd_get_index_same(void** state)
     uint8_t buf[50], test_buf[50];
     uint32_t index = 0x00;
     uint32_t* p = NULL;
-    uint16_t ret = 0x00;
+    int16_t ret = 0x00;
     uint8_t i,k;
 
     //注册一个参数

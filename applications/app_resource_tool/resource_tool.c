@@ -407,7 +407,6 @@ int16_t get_block_frist_addr(struct instance_t *instance, uint8_t device_name, u
     return 1;
 }
 
-#if 1
 uint32_t get_curr_mark(const struct dev_info_t* dev, uint32_t addr)
 {
     const struct driver_ops_t* driver = NULL;
@@ -650,10 +649,10 @@ int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf,
     //查找块
     block01 = look_up_block(instance, device01, (uint8_t)(index >> 16));
     res_conditions_true((block01 == NULL) || (block01->hook == NULL), -1);
+    block01->hook((uint16_t)index, &addr01, &len01, &depth);
 
     driver01 = device01->dev->dev_driver_ops;
     res_conditions_true((driver01 == NULL) || (driver01->dev_write == NULL), -1);
-    block01->hook((uint16_t)index, &addr01, &len01, &depth);
     //先获取管理区
     device02 = look_up_device(instance, block01->relation_device);
     res_conditions_true(device02 == NULL, -1);
@@ -724,72 +723,51 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
 
     memset((uint8_t*)&manager, 0x00, sizeof(struct log_manager_t));
     device01 = look_up_device(instance, (uint8_t)(index >> 24));//查找设备   
+    res_conditions_true(device01 == NULL, -1);
     //查找块
     block01 = look_up_block(instance, device01, (uint8_t)(index >> 16));
-    if ((device01 != NULL) && (block01 != NULL) && (block01->hook != NULL))
-    {
-        driver01 = device01->dev->dev_driver_ops;
-        block01->hook((uint16_t)index, &addr01, &len01, &depth);
-        //先获取管理区
-        if ((info != NULL) && (info->valid_num == 0x00))
-        {
-            device02 = look_up_device(instance, block01->relation_device);
-            block02 = look_up_block(instance, device02, block01->relation_name);
-            if ((device02 != NULL) && (block02 != NULL) && (block02->hook != NULL))
-            {
-                driver02 = device02->dev->dev_driver_ops;
-                if ((driver02 != NULL) && (driver02->dev_read != NULL))
-                {
-                    block02->hook((uint16_t)index, &addr02, &len02, NULL);
-                    if (0x00 > driver02->dev_read(device02->dev, block02->first_addr + addr02, sizeof(struct log_manager_t), (uint8_t*)&manager))
-                    {
-                        return -1;
-                    }
-                    if (0xA5A5 + manager.num + manager.unit_size + manager.w_ptr + manager.r_ptr != manager.check_sum)
-                    {
-                        return 0x00;
-                    }
-                    info->unit_size = manager.unit_size;
-                    info->valid_num = manager.num;
-                    info->read_ptr = manager.r_ptr;
-                    //搜索信息处理
-                    if ((info->valid_num > 0x00) &&(manager.unit_size != 0x00))
-                    {
-                        search_circular(instance, device01->dev, block01->first_addr + addr01, info, &manager, len01/ manager.unit_size);
-                    }
-                    else
-                    {
-                        return 0x00;
-                    }
-                }
-            }
-        }
-    }   
-    //读取数据
-    if (info != NULL)
-    {
-        addr01 = info->read_ptr * info->unit_size;
-        if ((driver01 != NULL) && (driver01->dev_read != NULL))
-        {
-            if (0x00 > driver01->dev_read(device01->dev, block01->first_addr + addr01, info->unit_size, buf))
-            {
-                return -1;
-            }
+    res_conditions_true((block01 == NULL) || (block01->hook == NULL), -1);
+    block01->hook((uint16_t)index, &addr01, &len01, &depth);
 
-            info->curr_num++;
-            info->read_ptr++;
-            if (info->unit_size != 0x00)
-            {
-                over_num = len01 / info->unit_size;
-            }
-            if (info->read_ptr >= over_num)
-            {
-                info->read_ptr = 0x00;
-            }  
-            return info->unit_size;
-        }
+    driver01 = device01->dev->dev_driver_ops;
+    res_conditions_true((driver01 == NULL) || (driver01->dev_read == NULL), -1);
+    res_conditions_true(info == NULL, -1);
+    //先获取管理区
+    if (info->valid_num == 0x00)
+    {
+        device02 = look_up_device(instance, block01->relation_device);
+        res_conditions_true(device02 == NULL, -1);
+        block02 = look_up_block(instance, device02, block01->relation_name);
+        res_conditions_true((block02 == NULL) || (block02->hook == NULL), -1);
+        block02->hook((uint16_t)index, &addr02, &len02, NULL);
+
+        driver02 = device02->dev->dev_driver_ops;
+        res_conditions_true((driver02 == NULL) || (driver02->dev_read == NULL), -1);
+        res_conditions_true(0x00 > driver02->dev_read(device02->dev, block02->first_addr + addr02, sizeof(struct log_manager_t), (uint8_t*)&manager), -1);
+        res_conditions_true(0xA5A5 + manager.num + manager.unit_size + manager.w_ptr + manager.r_ptr != manager.check_sum, -1);
+
+        info->unit_size = manager.unit_size;
+        info->valid_num = manager.num;
+        info->read_ptr = manager.r_ptr;
+        res_conditions_true((info->valid_num == 0x00) || (manager.unit_size == 0x00), 0x00);
+        search_circular(instance, device01->dev, block01->first_addr + addr01, info, &manager, len01 / manager.unit_size);
     }
-    return -1;
+    //读取数据
+    addr01 = info->read_ptr * info->unit_size;
+    res_conditions_true(0x00 > driver01->dev_read(device01->dev, block01->first_addr + addr01, info->unit_size, buf), -1);
+
+    info->curr_num++;
+    info->read_ptr++;
+    if (info->unit_size != 0x00)
+    {
+        over_num = len01 / info->unit_size;
+    }
+    if (info->read_ptr >= over_num)
+    {
+        info->read_ptr = 0x00;
+    }  
+
+    return info->unit_size;
 }
 
 int nd_log_clean(struct instance_t* instance, uint32_t index)
@@ -802,30 +780,24 @@ int nd_log_clean(struct instance_t* instance, uint32_t index)
     uint32_t len02 = 0x00;
 
     memset((uint8_t*)&manager, 0x00, sizeof(struct log_manager_t));
-    device01 = look_up_device(instance, (uint8_t)(index >> 24));//查找设备   
+    device01 = look_up_device(instance, (uint8_t)(index >> 24));//查找设备  
+    res_conditions_true(device01 == NULL, -1);
     //查找块
     block01 = look_up_block(instance, device01, (uint8_t)(index >> 16));
-    if ((device01 != NULL) && (block01 != NULL) && (block01->hook != NULL))
-    {
-        device02 = look_up_device(instance, block01->relation_device);
-        block02 = look_up_block(instance, device02, block01->relation_name);
-        if ((device02 != NULL) && (block02 != NULL) && (block02->hook != NULL))
-        {
-            driver02 = device02->dev->dev_driver_ops;
-            if ((driver02 != NULL) && (driver02->dev_write != NULL))
-            {
-                block02->hook((uint16_t)index, &addr02, &len02, NULL);
-                if (0x00 > driver02->dev_write(device02->dev, block02->first_addr + addr02, sizeof(struct log_manager_t), (uint8_t*)&manager))
-                {
-                    return -1;
-                }
-                return 0x00;
-            }
-        }
-    }
-    return -1;
+    res_conditions_true(block01 == NULL, -1);
+
+    device02 = look_up_device(instance, block01->relation_device);
+    res_conditions_true(device02 == NULL, -1);
+    block02 = look_up_block(instance, device02, block01->relation_name);
+    res_conditions_true((block02 == NULL) || (block02->hook == NULL), -1);
+    block02->hook((uint16_t)index, &addr02, &len02, NULL);
+
+    driver02 = device02->dev->dev_driver_ops;
+    res_conditions_true((driver02 == NULL) || (driver02->dev_write == NULL), -1);
+    res_conditions_true(0x00 > driver02->dev_write(device02->dev, block02->first_addr + addr02, sizeof(struct log_manager_t), (uint8_t*)&manager), -1);
+
+    return 1;
 }
-#endif
 
 int16_t nd_get_index(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t size)
 {
@@ -836,28 +808,19 @@ int16_t nd_get_index(struct instance_t* instance, uint32_t index, uint8_t* buf, 
     uint32_t addr = 0x00;
 
     device = look_up_device(instance, (uint8_t)(index >> 24));//查找设备
+    res_conditions_true(device == NULL,-1);
     //查找块
     block = look_up_block(instance, device, (uint8_t)(index >> 16));
-    if ((device != NULL) && (block != NULL))
-    {
-        driver = device->dev->dev_driver_ops;
-        if ((driver != NULL) && (driver->dev_read != NULL))
-        {            
-            if (block->hook != NULL)  //计算地址
-            {
-                if (0x00 < block->hook((uint16_t)index, &addr, &len, NULL))
-                {
-                    addr += block->first_addr;
-                }
-
-                res_conditions_true(addr + size > block->first_addr + block->size, -1);
-                driver->dev_read(device->dev, addr, size, buf);
-                //res_conditions_true(0x00 > verify_data(buf, len), -1);
-            }
-            return size;
-        }
-    }
-    return -1;
+    res_conditions_true((block == NULL) || (block->hook == NULL), -1);
+    res_conditions_true(0x00 > block->hook((uint16_t)index, &addr, &len, NULL), -1);
+    addr += block->first_addr;
+    res_conditions_true(addr + size > block->first_addr + block->size, -1);
+    //获取数据
+    driver = device->dev->dev_driver_ops;
+    res_conditions_true((driver == NULL) || (driver->dev_read == NULL), -1);  
+    res_conditions_true(0x00 > driver->dev_read(device->dev, addr, size, buf), -1);
+    //res_conditions_true(0x00 > verify_data(buf, len), -1);
+    return size;
 }
 
 
@@ -870,29 +833,19 @@ int16_t nd_set_index(struct instance_t* instance, uint32_t index, uint8_t* buf, 
     uint32_t addr = 0x00;
 
     device = look_up_device(instance, (uint8_t)(index >> 24));//查找设备
+    res_conditions_true(device == NULL, -1);
     block = look_up_block(instance, device, (uint8_t)(index >> 16)); //查找块
-    if ((device != NULL) && (block != NULL))
-    {
-        driver = device->dev->dev_driver_ops;
-        if ((driver != NULL) && (driver->dev_write != NULL))
-        {           
-            if (block->hook != NULL) //计算地址 
-            {
-                if (0x00 < block->hook((uint16_t)index, &addr, &len, NULL))
-                {
-                    addr += block->first_addr;
-                }
-                res_conditions_true(addr + size > block->first_addr + block->size, -1);
-                //update_verify(buf, len);
-                if (0x00 > driver->dev_write(device->dev, addr, size, buf))
-                {
-                    return -1;
-                }
-            }
-            return size;
-        }
-    }
-    return -1;
+    res_conditions_true((block == NULL) || (block->hook == NULL), -1);
+    res_conditions_true(0x00 > block->hook((uint16_t)index, &addr, &len, NULL), -1);
+    addr += block->first_addr;
+    res_conditions_true(addr + size > block->first_addr + block->size, -1);
+
+    //update_verify(buf, len);
+    driver = device->dev->dev_driver_ops;
+    res_conditions_true((driver == NULL) || (driver->dev_write == NULL), -1);
+    res_conditions_true(0x00 > driver->dev_write(device->dev, addr, size, buf), -1);
+
+    return size;
 }
 
 int16_t nd_get_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf, uint16_t len)
@@ -903,22 +856,18 @@ int16_t nd_get_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf
     uint32_t addr = 0x00;
 
     device = look_up_device(instance, (uint8_t)(offset >> 24));//查找设备
+    res_conditions_true(device == NULL, -1);
     block = look_up_block(instance, device, (uint8_t)(offset >> 16));//查找块
-    if ((device != NULL) && (block != NULL))
-    {
-        driver = device->dev->dev_driver_ops;
-        if ((driver != NULL) && (driver->dev_read != NULL))
-        {
-            addr = block->first_addr + (uint16_t)offset;
-            driver->dev_read(device->dev, addr, len, buf);
-            //if (0x00 > verify_data(buf, len))
-            //{
-            //    return -1;
-            //}
-            return len;
-        }
-    }
-    return -1;
+    res_conditions_true(block == NULL, -1);
+    addr = block->first_addr + (uint16_t)offset;
+    res_conditions_true(addr + len > block->first_addr + block->size, -1);
+
+    driver = device->dev->dev_driver_ops;
+    res_conditions_true((driver == NULL) || (driver->dev_read == NULL), -1);
+    res_conditions_true(0x00 > driver->dev_read(device->dev, addr, len, buf), -1);
+    //res_conditions_true(0x00 > verify_data(buf, len), -1);
+
+    return len;
 }
 
 int16_t nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf, uint16_t len)
@@ -929,22 +878,18 @@ int16_t nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf
     uint32_t addr = 0x00;
 
     device = look_up_device(instance, (uint8_t)(offset >> 24));//查找设备
+    res_conditions_true(device == NULL, -1);
     block = look_up_block(instance, device, (uint8_t)(offset >> 16)); //查找块
-    if ((device != NULL) && (block != NULL))
-    {
-        driver = device->dev->dev_driver_ops;
-        if ((driver != NULL) && (driver->dev_write != NULL))
-        {
-            addr = block->first_addr + (uint16_t)offset;
-            //update_verify(buf, len);
-            if (0x00 > driver->dev_write(device->dev, addr, len, buf))
-            {
-                return -1;
-            }
-            return len;
-        }
-    }
-    return -1;
+    res_conditions_true(block == NULL, -1);
+    addr = block->first_addr + (uint16_t)offset;
+    res_conditions_true(addr + len > block->first_addr + block->size, -1);
+
+    driver = device->dev->dev_driver_ops;
+    res_conditions_true((driver == NULL) || (driver->dev_write == NULL), -1);
+    //update_verify(buf, len);
+    res_conditions_true(0x00 > driver->dev_write(device->dev, addr, len, buf), -1);
+
+    return len;
 }
 
 //目前resource manger 数据操作介绍

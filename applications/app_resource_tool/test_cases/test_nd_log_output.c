@@ -129,7 +129,7 @@ void test_nd_log_output_search_all(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	ret = nd_log_append(instance, index, (uint8_t *)&test_event[0],sizeof(struct test_evnet_log_output_t));
 	assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
@@ -157,7 +157,7 @@ void test_nd_log_output_search_all_06(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 0x06; i++)
 	{
@@ -196,7 +196,7 @@ void test_nd_log_output_search_all_full(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 0x0A; i++)
 	{
@@ -235,7 +235,7 @@ void test_nd_log_output_search_all_over(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 0x0D; i++)
 	{
@@ -274,7 +274,7 @@ void test_nd_log_output_search_index_06_03(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 0x06; i++)
 	{
@@ -317,7 +317,7 @@ void test_nd_log_output_search_index_06_04(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 0x06; i++)
 	{
@@ -360,7 +360,7 @@ void test_nd_log_output_search_index_06_02(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 0x06; i++)
 	{
@@ -403,7 +403,7 @@ void test_nd_log_output_search_index_06_06(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 0x06; i++)
 	{
@@ -446,7 +446,7 @@ void test_nd_log_output_search_index_10_05(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 0x0A; i++)
 	{
@@ -489,7 +489,7 @@ void test_nd_log_output_search_index_10_01(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 0x0A; i++)
 	{
@@ -542,7 +542,7 @@ void test_nd_log_output_search_index_10_10(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 0x0A; i++)
 	{
@@ -626,7 +626,7 @@ void test_nd_log_output_search_index_over_05(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 0x0D; i++)
 	{
@@ -729,7 +729,7 @@ void test_nd_log_output_search_time_06_03(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 0x06; i++)
 	{
@@ -772,7 +772,7 @@ void test_nd_log_output_search_time_06_04(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 0x06; i++)
 	{
@@ -815,7 +815,7 @@ void test_nd_log_output_search_time_06_02(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 0x06; i++)
 	{
@@ -858,7 +858,7 @@ void test_nd_log_output_search_time_06_06(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 0x06; i++)
 	{
@@ -901,7 +901,7 @@ void test_nd_log_output_search_time_10_05(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 0x0A; i++)
 	{
@@ -944,7 +944,7 @@ void test_nd_log_output_search_time_10_01(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 0x0A; i++)
 	{
@@ -997,7 +997,7 @@ void test_nd_log_output_search_time_10_10(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 0x0A; i++)
 	{
@@ -1081,7 +1081,7 @@ void test_nd_log_output_search_time_over_05(void** state)
 	index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)test_event_record << 16) + test_OverCurrentL1);
 	//先清一下管理区
 	ret = nd_log_clean(instance, index);
-	assert_int_equal(ret, 0x00);
+	assert_true(ret > 0x00);
 	//写数据
 	for (i = 0x00; i < 0x0D; i++)
 	{
