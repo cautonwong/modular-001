@@ -30,7 +30,7 @@ int16_t verify_data(uint32_t addr, uint16_t offset, uint8_t* buf, uint16_t size,
     uint16_t row[] = { offset, offset + size, len - 0x02, len - 0x01 };
     uint16_t coordinate[4][2] = { {0,0}, {0,0}, {0,0}, {0,0} };
     uint16_t checksum = 0xA5A5, rchecksum = 0;
-    uint16_t i, u_len, s, j, m, n, k, cnt;
+    uint16_t i, u_len, s, m, n, k, cnt;
     uint8_t s_buf[128];
 
     driver = dev->dev_driver_ops;
@@ -106,7 +106,7 @@ int16_t update_verify(uint32_t addr, uint16_t offset, uint8_t* buf, uint16_t siz
     uint16_t row[] = { offset, offset + size, len - 0x02, len - 0x01 };
     uint16_t coordinate[4][2] = { {0,0}, {0,0}, {0,0}, {0,0} };
     uint16_t checksum = 0xA5A5;
-    uint16_t i,u_len,s, j, m, n, k, cnt;
+    uint16_t i,u_len,s, m, n, k, cnt;
     uint8_t s_buf[128];
 
     driver = dev->dev_driver_ops;
@@ -517,7 +517,7 @@ uint32_t* register_log(struct instance_t* instance, uint8_t device_name, uint8_t
 }
 
 uint32_t* register_parameter(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size,
-    int16_t(*fun)(uint16_t id, uint32_t *addr, uint16_t* len))
+    int16_t(*fun)(uint16_t id, uint32_t *addr, uint16_t* len, uint16_t *offset))
 {
     return __register(instance, device_name, block_name, 0x00, 0x00, block_size, (int16_t(*)(uint16_t id, uint32_t * addr, uint32_t * len, uint32_t * depth))fun);
 }
