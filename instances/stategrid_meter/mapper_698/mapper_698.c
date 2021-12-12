@@ -99,7 +99,7 @@ int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size)
             POINTER_EMPTY(size)               
             *size = parameter_item[i].len;
             
-            return 0x00;
+            return 1;
         }
     }
 
