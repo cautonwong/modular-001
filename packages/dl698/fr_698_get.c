@@ -90,7 +90,7 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
     return 1;
 }
 
-
+#define REQ_RCSD_MAXNUM 50 
 static int __fr_handle_get_record_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
@@ -101,10 +101,12 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
     uint16_t offset = 0;
     uint8_t Selector = 0;
     uint8_t last_no = 0;
-    uint8_t rcsd_num = 0;
- 
     uint8_t oad_n = mesg->oad_n;
+    uint32_t rcsd_list[4*(REQ_RCSD_MAXNUM+1)]; //个数 + n个OAD  //[0][]协议筛选  [1][]事件全关联对象
 
+    
+    uint32_t i;
+        
     while (oad_n-- > 0)
     {
         //if (fifoBuf_getFree(cache) < 2)
@@ -125,23 +127,50 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
                 //RSD
                 last_no = fifoBuf_getByte(fifo);
                 //RCSD
-                rcsd_num = fifoBuf_getByte(fifo);
-                p[cache->wr++] = rcsd_num;
-                if (rcsd_num)
+                rcsd_list[0] = fifoBuf_getByte(fifo); 
+                
+                if (rcsd_list[0] > REQ_RCSD_MAXNUM) // 请求的rcsd个数超出，返回错误 
                 {
-
+                     // 待添加
+                }
+                else // 赋值rcsd  
+                {
+                    if (rcsd_list[0] == 0) //全选
+                    {
+                        get_record_rcsd_list(instance, mesg->id, rcsd_list, 3);
+                    
+                        p[cache->wr++] = rcsd_list[0];
+                        for (i = 0; i < rcsd_list[0]; i++ )
+                        {
+                            p[cache->wr++] = 0; // rcsd:oad
+                            uint32_to_buf_msb(rcsd_list[1 + i], &p[cache->wr]);
+                            cache->wr += 4;
+                        }
+                    }
+                    else
+                    {
+                        p[cache->wr++] = rcsd_list[0];
+                        for (i = 0; i < rcsd_list[0]; i++ )
+                        {
+                            p[cache->wr++] = fifoBuf_getByte(fifo); // csd
+                            fifoBuf_getData(fifo, &p[cache->wr], 4);
+                            rcsd_list[1 + i] = buf_to_uint32_msb(&p[cache->wr]);
+                            cache->wr += 4;
+                        }
+                    }
                 }
 
                 offset = cache->wr++;
-                p[offset] = DAR_SUCCESS;
-                int ret = GET_record_sel_9(instance, mesg->id, p + cache->wr, last_no, 0);
+                int ret = GET_record_sel_9(instance, mesg->id, p + cache->wr, last_no, &rcsd_list[0]);
                 if (ret < 0)
                 {
-                    p[offset] = -ret;
+                    p[offset] = 0; // 无记录
+                    p[offset+1] = -ret;
                     return DAR_OTHERS_ERROR;
                 }
                 else
                 {
+                    p[offset] = 1;// 有记录
                     cache->wr += ret;
                 }
 

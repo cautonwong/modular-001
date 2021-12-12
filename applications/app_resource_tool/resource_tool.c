@@ -389,7 +389,7 @@ uint32_t* register_parameter(struct instance_t* instance, uint8_t device_name, u
 
 int16_t nd_size(struct instance_t* instance, uint32_t id)
 {
-    return look_up_map(instance, id, NULL, 0x01);  
+    return look_up_map(instance, id, NULL, RESOURCE_MAP_GET);  
 }
 
 int16_t get_block_frist_addr(struct instance_t *instance, uint8_t device_name, uint8_t block_name, uint32_t *addr)

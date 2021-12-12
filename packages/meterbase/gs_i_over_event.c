@@ -86,6 +86,7 @@ static int event_duration_pro(uint8_t duration_para,uint8_t *duration,uint8_t st
     return 0; // 不记录
 }
 
+uint8_t test_record_ = 0;
 // 上电运行期间 每秒的调用 
 // 掉电事件 判断:  返回1:记录发生                0:不记录        -1:记录结束
 int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
@@ -103,7 +104,9 @@ int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, st
     uint16_t RecordId = OverCurrentL1;
 
     result =  1;
-#if 1    
+if (test_record_ != 0x5A)   
+{   test_record_ = 0;
+    
     if (threshold == 0) // 限值为0
     {
         return 0;
@@ -116,7 +119,8 @@ int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, st
     }
 
     result = event_duration_pro(duration_para, duration, state, task, RecordId);
-#endif   
+}
+  
     
     if (result != 0)
     {

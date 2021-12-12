@@ -6,7 +6,9 @@
 int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {    
     struct mbase_control_block_t* mbase_cb;
-    
+    uint8_t* p = buf;
+
+
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
@@ -86,9 +88,16 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf)
     case 0x201E0200://事件发生时间
     case 0x20200200://事件结束时间    
     {
-        buf[0] = TYPE_date_time_s;
-        //memcpy(buf + 1, &time->tm_sec, 0x07); // 拷贝当前时间
-        return 8;
+        uint16_t year_temp = instance->time.tm_year;// +2000;
+        *p++ = TYPE_date_time_s;
+        p += uint16_to_buf_msb(year_temp, p);
+        *p++ = (uint8_t)instance->time.tm_mon;
+        *p++ = (uint8_t)instance->time.tm_mday;
+        *p++ = (uint8_t)instance->time.tm_hour;
+        *p++ = (uint8_t)instance->time.tm_min;
+        *p++ = (uint8_t)instance->time.tm_sec;
+
+        return (p-buf);
     }
     break;
 
