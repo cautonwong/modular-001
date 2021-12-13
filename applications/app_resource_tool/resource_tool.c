@@ -888,6 +888,8 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
         search_circular(instance, device01->dev, block01->first_addr + addr01, info, &manager, len01 / manager.unit_size);
     }
     //读取数据
+    res_conditions_true(info->curr_num >= info->valid_num, 0);
+
     res_conditions_true(info->unit_size == 0x00, -1);
     over_num = len01 / info->unit_size;
 

@@ -181,6 +181,17 @@ void test_nd_log_output_search_all_06(void** state)
 		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
 		assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
 	}
+	//上N条数据 数据存储是先进先出
+	i = 1;
+	while (i <= info.valid_num)
+	{
+		info.curr_num = info.valid_num - i;
+		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
+		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
+		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
+		assert_memory_equal(&temp_event, &test_event[info.valid_num - i], sizeof(struct test_evnet_log_output_t));
+		i++;
+	}
 }
 
 void test_nd_log_output_search_all_full(void** state)
@@ -258,6 +269,18 @@ void test_nd_log_output_search_all_over(void** state)
 		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
 		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
 		assert_memory_equal(&temp_event, &test_event[i], sizeof(struct test_evnet_log_output_t));
+	}
+
+	//上N条数据 数据存储是先进先出
+	i = 1;
+	while (i <= info.valid_num)
+	{
+		info.curr_num = info.valid_num - i;
+		memset((uint8_t*)&temp_event, 0x00, sizeof(struct test_evnet_log_output_t));
+		ret = nd_log_output(instance, index, (uint8_t*)&temp_event, sizeof(struct test_evnet_log_output_t), &info);
+		assert_int_equal(ret, sizeof(struct test_evnet_log_output_t));
+		assert_memory_equal(&temp_event, &test_event[info.valid_num - i + 3], sizeof(struct test_evnet_log_output_t));
+		i++;
 	}
 }
 
