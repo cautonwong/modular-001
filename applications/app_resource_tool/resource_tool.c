@@ -853,8 +853,8 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
     struct log_manager_t manager;
     uint32_t addr01 = 0x00, addr02 = 0x00;
     uint32_t len01 = 0x00, len02 = 0x00;
-    uint32_t depth = 0x00;
-    uint32_t over_num = 0x00;
+    uint32_t depth = 0x00, over_num = 0x00;
+    uint16_t ut_ptr = 0x00;
 
     memset((uint8_t*)&manager, 0x00, sizeof(struct log_manager_t));
     device01 = look_up_device(instance, (uint8_t)(index >> 24));//查找设备   
@@ -888,19 +888,21 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
         search_circular(instance, device01->dev, block01->first_addr + addr01, info, &manager, len01 / manager.unit_size);
     }
     //读取数据
-    addr01 = info->read_ptr * info->unit_size;
-    res_conditions_true(0x00 > driver01->dev_read(device01->dev, block01->first_addr + addr01, info->unit_size, buf), -1);
+    res_conditions_true(info->unit_size == 0x00, -1);
+    over_num = len01 / info->unit_size;
 
-    info->curr_num++;
-    info->read_ptr++;
-    if (info->unit_size != 0x00)
+    if ((info->read_ptr + info->curr_num) >= over_num)
     {
-        over_num = len01 / info->unit_size;
+        ut_ptr = (info->read_ptr + info->curr_num) - over_num;
     }
-    if (info->read_ptr >= over_num)
+    else
     {
-        info->read_ptr = 0x00;
-    }  
+        ut_ptr = info->read_ptr + info->curr_num;
+    }
+
+    addr01 = ut_ptr * info->unit_size;
+    res_conditions_true(0x00 > driver01->dev_read(device01->dev, block01->first_addr + addr01, info->unit_size, buf), -1);
+    info->curr_num++;
 
     return info->unit_size;
 }
