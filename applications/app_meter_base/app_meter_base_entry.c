@@ -185,7 +185,7 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
     uint16_t remain_size;
     uint32_t sequence,Oad;
     struct record_storage_id_info_t record_id_info; 
-    
+
     const uint32_t* record_head;
     uint32_t CaptureId, SequenceId, RecordId, index;
     int ret;

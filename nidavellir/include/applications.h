@@ -224,7 +224,6 @@ void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uin
 extern const struct dev_info_t eeprom_dev;
 extern const struct dev_info_t nor_flash_dev;
 
-
 enum device_id_t
 {
     DEV_EEPROM        = 1,
@@ -232,5 +231,24 @@ enum device_id_t
     DEV_EMU           ,
     DEV_RAM           ,
 };
+
+
+
+
+
+// GS-----start
+struct record_storage_id_info_t
+{
+    uint32_t save_index;  // 记录存储地址信息
+    uint32_t capture_index; // 关联对象存储地址信息
+    uint32_t sequence_index;// 序号存储地址信息
+    const uint32_t *record_head;  // 记录头
+};
+extern int get_record_id_info(uint32_t oad, struct record_storage_id_info_t* info);
+extern int clr_record(struct instance_t* instance, uint32_t oad);
+
+//GS----end
+
+
 
 #endif

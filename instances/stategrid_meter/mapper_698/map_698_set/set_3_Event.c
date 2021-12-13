@@ -24,23 +24,35 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
     uint16_t i;
     uint8_t tempbuf[200];
     uint8_t *des = tempbuf;
+
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
         return -1;
     }
+
+    uint16_t oi;
+    uint8_t attr, index;
+    oi = (uint16_t)((id & 0xFFFF0000) >> 16);
+    attr = (uint8_t)((id & 0x0000FF00) >> 8);
+    index = (uint8_t)(id & 0x000000FF);
+
+
+
     switch (id)
     {
     case 0x30050200://关联对象属性表
     {
         uint8_t num,maxnum;
         uint32_t oad_tmp;
-        uint32_t CaptureId, index;
-        uint32_t ManageId;
+
+        struct record_storage_id_info_t info;
+        int ret = get_record_id_info(0x30050700, &info);
+        if (ret < 0)
+        {
+            return -1;
+        }
         
-        
-        CaptureId = OverCurrentL1_oad;
-        ManageId = OverCurrentL1;
         maxnum = ((13*init_30050200[1]+9)/10);
         // tag 判断  待添加
         
@@ -64,12 +76,10 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
             des += 4;
             p += 4;            
         }
-        index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + CaptureId);
-        nd_set_index(instance, index, &tempbuf[0], (1 + num*4));
+
+        nd_set_index(instance, info.capture_index, &tempbuf[0], (1 + num*4));
         
-        index = ((RES_DEV_EEPROM << 24) + (mbase_block_event << 16) + ManageId);
-        nd_log_clean(instance, index);
-        
+        clr_record(instance, 0x30050700);
         return (p - buf);
     }
     case 0x30050500://过流阈值

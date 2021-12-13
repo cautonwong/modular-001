@@ -214,12 +214,12 @@ int get_record_id_info(uint32_t oad, struct record_storage_id_info_t* info)
 // mode = 1，获取记录头；   mode=2，获取配置关联对象， mode = 3，获取所有关联对象
 int get_record_rcsd_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_list, uint8_t mode)
 {
-    struct record_storage_id_info_t info;
+
     uint8_t i, num;
     uint32_t *p = (rcsd_list + 1);
     uint32_t rcsd_num = 0;
     uint8_t tempbuf[200];//待调整  读取e2p关联对象缓存
-    
+    struct record_storage_id_info_t info;
     int ret = get_record_id_info(oad, &info);
     
     if (ret < 0)
