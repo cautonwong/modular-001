@@ -1,7 +1,7 @@
 ﻿#include "nidavellir.h"
 #include "fr_698.h"
 
-extern void esam_consult_key(uint8_t cmd);
+extern void esam_consult_key(uint8_t cmd, uint8_t *p);
 
 enum connect_result_e
 {
@@ -146,6 +146,7 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
     uint16_t data_len = 0;
     uint16_t offset = 0;
 
+    fifoBuf_getData(fifo, buf, 38);
     if(CA_TYPE_TER(ctx->CA))//from 终端
     {
 	    //memcpy((uint8_t*)&buf[offset],(uint8_t*)&esam_symauth_term[0],6);
@@ -153,12 +154,17 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
     }
     else //from 主站
     {
-        //esam_consult_key( 0x81 );
+        esam_consult_key( 0x81 , buf+1 );
 	   // memcpy((uint8_t*)&buf[offset],(uint8_t*)&esam_symauth[0],6);
 		//dectypt->rn[0] = 48;
     }
-    offset += 6;
-
+    
+    fifoBuf_putByte(cache, 48);//长度
+    fifoBuf_putData(cache, buf+1, 48);
+    fifoBuf_putByte(cache, 4);//长度
+    fifoBuf_putData(cache, buf+50, 4);//MAC
+    
+    return DAR_SUCCESS;
     //  密文 1 octet-string，
     len_len = axdr_decode(TYPE_octet_string, p_apdu, &data_len);
     //memcpy((uint8_t*)&buf[offset], p_apdu + len_len, data_len);

@@ -50,7 +50,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     p++;
                     mem_swap_cpy((uint8_t*)idbuf[index-1], p, lens[index-1]);
                     p = p + lens[i];
-                    return 1;
+                    return (p-buf);
                 }
                 else
                 {

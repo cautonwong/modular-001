@@ -192,7 +192,7 @@ uint8 read_esam(uint32 addr, uint8 *buf, uint16 len)
 }
 
 
-uint8 write_esam(uint32 addr, uint8 *buf, uint16 len)
+uint16 write_esam(uint32 addr, uint8 *buf, uint16 len)
 {   
     uint16 rx_len, sw = 0;
     
@@ -203,7 +203,7 @@ uint8 write_esam(uint32 addr, uint8 *buf, uint16 len)
     sw = rx_esam(buf , &rx_len);
     if(0x9000 == sw)
     {
-        return true;
+        return rx_len;
     }
     esam_error_apdu.sw = sw;
     if(sw > 0)
@@ -270,18 +270,24 @@ void esam_698_init(void)
     read_esam_info(esam_test, 0xff);
     
 }
-/*
 
-void esam_consult_key(uint8_t cmd)
+
+void esam_consult_key(uint8_t cmd, uint8_t *p)
 {
     uint8_t head[6] = {0x00, 0x02, 0x00, 0x00, 0x00, 0x24};
-    uint16_t len=0;
+    uint8_t buf[40] = {0,};
+    uint16_t len=0,rxlen = 0;
     uint32_t addr = 0;
     head[0] = cmd;
       
-    mem_swap_cpy((unsigned char*)&addr, (unsigned char*)&head[0], 4);
+    memcpy((unsigned char*)&addr, (unsigned char*)&head[0], 4);
     mem_swap_cpy((unsigned char*)&len, (unsigned char*)&head[4], 2);
-    write_esam(addr , &head[4] , len);
-
+    memcpy((unsigned char*)&buf[0], p, 32);
+    memcpy((unsigned char*)&buf[32], p+33, 4);
+    
+    rxlen = write_esam(addr , buf , len);
+    
+    memcpy(p, buf, 52);//48+4
+    
 }
-*/
+

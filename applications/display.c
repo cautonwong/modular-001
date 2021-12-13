@@ -638,7 +638,7 @@ void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
 		Lcdcon[i] = 0xFF;
 	}
 	Send_DisplayData();	//送显示数据
-	mbase_control_block->lcd_autodis_keep_sec = mbase_control_block->lcd_poweron_all_dis_time;
+	mbase_control_block->AutoInv = mbase_control_block->lcd_poweron_all_dis_time;
 	mbase_control_block->AutoPtr = 0xFF;
 	mbase_control_block->Page_ID = 0xFFFF;
 }
@@ -727,37 +727,40 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline)
 /*  函数名称：Get_DisplayPage                                          */
 /*  函数功能：获取轮显的显示项ID                                       */
 /***********************************************************************/
-void Get_DisplayPage(void)
+void Get_DisplayPage(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-    unsigned char pageid[15]={0,};
+    uint16_t pageid;
+    uint32_t s_index = 0;
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     
 	if( (mbase_control_block->Key & F_KeyDispay) == 0 )//轮显
 	{
 		if( mbase_control_block->AutoInv == 0 )
 		{
-			if( ((Flag.Power & F_PowerOn) == 0) && ((mbase_control_block->AutoPtr == (mbase_control_block->lcd_autodis_list_num-1))) )//自动循环显示一遍后,进入掉电暂显
+			/*if( ((Flag.Power & F_PowerOn) == 0) && ((mbase_control_block->AutoPtr == (mbase_control_block->lcd_autodis_list_num-1))) )//自动循环显示一遍后,进入掉电暂显
 			{
 				Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
 				return;
-			}
+			}*/
 			//获取轮显显示时间
-            nd_get(instance, 0xF3000300, &mbase_control_block->AutoInv, 1);
+            //nd_get(instance, 0xF3000300, &mbase_control_block->AutoInv, 1);
 			if( (mbase_control_block->AutoInv < 0x05) || (mbase_control_block->AutoInv > 0x20) )
 				mbase_control_block->AutoInv = 5;
-
             
 			//获取轮显显示屏数
-            nd_get(instance, 0xF3000401, &mbase_control_block->lcd_autodis_list_num, 1);
+            //nd_get(instance, 0xF3000401, &mbase_control_block->lcd_autodis_list_num, 1);
 			if( mbase_control_block->lcd_autodis_list_num == 0 )
 				mbase_control_block->lcd_autodis_list_num = 1;
-
             
 			if( mbase_control_block->AutoPtr >= (mbase_control_block->lcd_autodis_list_num-1) )
 				mbase_control_block->AutoPtr = 0;
-            		else
+            else
 				mbase_control_block->AutoPtr++;
-            nd_get(instance, 0xF3000201+mbase_control_block->AutoPtr, pageid, 15);
+            
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AutoDisplayList + mbase_control_block->AutoPtr);
+            nd_get_index(instance, s_index, &pageid, 2);
+            
+            mbase_control_block->Page_ID = pageid;
 		}
 	}
 }
@@ -1316,13 +1319,13 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
     {
         0xA001, (unsigned char*)&instance->time.tm_mday, //日期
         0xA002, (unsigned char*)&instance->time.tm_sec,  //时间
-        0xA003, (unsigned char*)&instance->time.tm_mday, //电压
-        0xA006, (unsigned char*)&instance->time.tm_mday, //火线电流
-        0xA009, (unsigned char*)&instance->time.tm_mday, //零线电流
-        0xA00A, (unsigned char*)&instance->time.tm_mday, //A相功率
-        0xA00B, (unsigned char*)&instance->time.tm_mday, //A相功率
-        0xA012, (unsigned char*)&instance->time.tm_mday, //A相功率因数
-        0xA013, (unsigned char*)&instance->time.tm_mday, //A相功率因数
+        0xA003, (unsigned char*)&mbase_control_block->voltage_ac, //电压
+        0xA006, (unsigned char*)&mbase_control_block->current_l, //火线电流
+        0xA009, (unsigned char*)&mbase_control_block->current_n, //零线电流
+        0xA00A, (unsigned char*)&mbase_control_block->active_power, //A相功率
+        0xA00B, (unsigned char*)&mbase_control_block->active_power, //A相功率
+        0xA012, (unsigned char*)&mbase_control_block->power_factor, //A相功率因数
+        0xA013, (unsigned char*)&mbase_control_block->power_factor, //A相功率因数
     };
     
     //mbase_control_block->Page_ID = 0xA002;
@@ -1374,9 +1377,9 @@ void Display(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     P_BACKLIGHT_ON;	//背光
 	//获取显示项ID
-    if(Flag.Power & F_PowerOn)
+    //if(Flag.Power & F_PowerOn)
     {
-        Get_DisplayPage();
+        Get_DisplayPage(instance,  pipeline);
     }
 	//获取显示项内容
 	Display_Page( instance,  pipeline);
