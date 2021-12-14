@@ -158,11 +158,13 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
 	   // memcpy((uint8_t*)&buf[offset],(uint8_t*)&esam_symauth[0],6);
 		//dectypt->rn[0] = 48;
     }
-    
-    fifoBuf_putByte(cache, 48);//长度
-    fifoBuf_putData(cache, buf+1, 48);
-    fifoBuf_putByte(cache, 4);//长度
-    fifoBuf_putData(cache, buf+50, 4);//MAC
+    *(p_apdu+cache->wr) = 48;
+    cache->wr++;
+    memcpy((p_apdu+cache->wr), buf+1,48);//随机数
+    cache->wr = cache->wr + 48;
+    memcpy((p_apdu+cache->wr), buf+50,4);//MAC
+    *(p_apdu+cache->wr) = 4;
+    cache->wr++;
     
     return DAR_SUCCESS;
     //  密文 1 octet-string，
@@ -249,6 +251,10 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
         goto err;
     }
 
+    *p = 0x1A;
+    cache->wr++;
+    memset((p+cache->wr), 0x30, 32);
+    cache->wr = cache->wr + 32;
     //if(connect.pro_ver != p_connect->version)//期望的应用层协议版本号 不做判断
 
     //商定的协议一致性块
@@ -266,6 +272,9 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
     connect.client_apdu_size = __get_connect_info(connect.client_apdu_size, pcfg_connect->client_process_apdu_size);
     /* 期望的应用连接超时时间 */
     connect.connect_time = __get_connect_info(connect.connect_time, pcfg_connect->connect_timeout);
+    
+    memcpy( (p+cache->wr), &connect, sizeof(struct connect_request_t));
+    cache->wr = cache->wr + 35;
 
     if(0 == connect.connect_mode) //公共连接[0] NullSecurity
     {
