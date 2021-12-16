@@ -172,6 +172,14 @@ struct mbase_control_block_t
     uint8_t meterclr_event_recordflag; //记录标识*/ // 通过fifo传递
     uint8_t meterclr_event_resetflag; //复位标识
     uint8_t factor_mode; //工厂模式
+    
+    //RELAY
+    uint8_t cmd;	    //控制命令  0x1A , 0x1B....
+    uint8_t mode;     //拉合闸方式（直接、允许）
+	uint8_t sta;      //命令状态
+    uint32_t alarmmin; //跳闸延时(min)
+    uint32_t limitmin; //限电时间(min)
+    uint32_t imaxmin;  //大电流延时跳闸（min）
 };
 
 enum resourenc_block_name

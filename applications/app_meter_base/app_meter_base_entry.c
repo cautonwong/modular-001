@@ -329,6 +329,8 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
           freeze_pro(instance, pipeline, mesg);
 
           Display(instance, pipeline);
+          
+          do_relay(instance, pipeline);
 
           break;
       case MSG_PAGE_KEY_UP:

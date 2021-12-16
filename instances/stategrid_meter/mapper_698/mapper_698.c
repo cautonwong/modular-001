@@ -18,7 +18,9 @@ extern int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf);
 
 extern int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf);
+
 extern int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf);
+extern int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf);
 
 extern int GET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf);
@@ -334,6 +336,8 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
         {
         case 0x4://参变量
             return ACTION_4_Parameter(instance, id, buf);
+        case 0x8://控制类
+            return ACTION_8_Parameter(instance, id, buf);
         default:
             break;
         }
