@@ -65,6 +65,22 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
                 return -1;
             }
             break;
+        case 0x4001://表地址
+            if(attribute == 0x02)
+            {
+                *p++ = TYPE_octet_string;
+                *p++ = 6;
+                memset(p, 0x11, 6); //待修改
+                //nd_get(instance, 0x40010200, p, 6);
+                //mem_swap_cpy(p, temp, 6);
+                p = p + 6;
+                return (p - buf);
+            }
+            else
+            {
+                return -1;
+            }
+            break;
         case 0x4002://表号
             if(attribute == 0x02)
             {

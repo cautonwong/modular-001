@@ -1,7 +1,7 @@
 ﻿#include "nidavellir.h"
 #include "fr_698.h"
 
-extern int fr_security_decode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int fr_security_decode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t len);
 extern int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
@@ -458,7 +458,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         len = fifoBuf_getByte(fifo);
         if (SECURITY_CHOICE_1_Ciphertext == ctx->choice)
         {
-            fr_security_decode(instance, pipeline, mesg);
+            fr_security_decode(instance, pipeline, mesg, len);
         }
         else if (SECURITY_CHOICE_0_Plaintext == ctx->choice)
         {

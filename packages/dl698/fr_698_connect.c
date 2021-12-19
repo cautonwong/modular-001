@@ -1,7 +1,7 @@
 ﻿#include "nidavellir.h"
 #include "fr_698.h"
 
-extern void esam_consult_key(uint8_t cmd, uint8_t *p);
+extern uint8_t esam_consult_key(uint8_t cmd, uint8_t *p);
 
 enum connect_result_e
 {
@@ -145,6 +145,14 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
     uint8_t len_len = 0;
     uint16_t data_len = 0;
     uint16_t offset = 0;
+    struct connect_request_t connect = {0x1500, 
+    0xFF,0xFF,0xFF,0xff,0xc0,0x00,0x00,0x00,
+    0xFF,0xFE,0xC4,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x0002,
+    0x0002,
+    0x01,
+    0xd007,
+    0x201c0000};
 
     fifoBuf_getData(fifo, buf, 38);
     if(CA_TYPE_TER(ctx->CA))//from 终端
@@ -154,17 +162,60 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
     }
     else //from 主站
     {
-        esam_consult_key( 0x81 , buf+1 );
+        len_len = esam_consult_key( 0x81 , buf+1 );
 	   // memcpy((uint8_t*)&buf[offset],(uint8_t*)&esam_symauth[0],6);
 		//dectypt->rn[0] = 48;
     }
+    cache->wr = cache->wr - 3;
+    *(p_apdu+cache->wr) |= 0x82;  //应答
+    cache->wr++;
+    *(p_apdu+cache->wr) = 0;  //PIID
+    cache->wr++;
+    memset((p_apdu+cache->wr), 0x30, 32);//厂家信息
+    cache->wr = cache->wr + 32;
     
-    fifoBuf_putByte(cache, 48);//长度
-    fifoBuf_putData(cache, buf+1, 48);
-    fifoBuf_putByte(cache, 4);//长度
-    fifoBuf_putData(cache, buf+50, 4);//MAC
+    memcpy((p_apdu+cache->wr), (uint8_t*)&connect.pro_ver, 2);//版本号
+    cache->wr = cache->wr + 2;
+    memcpy((p_apdu+cache->wr), (uint8_t*)&connect.protocal_conformance, 8);//期望协议一致性块
+    cache->wr = cache->wr + 8;
+    memcpy((p_apdu+cache->wr), (uint8_t*)&connect.function_conformance, 16);  //期望的功能一致性块 
+    cache->wr = cache->wr + 16;
+    memcpy((p_apdu+cache->wr), (uint8_t*)&connect.send_frm_size, 2);    //发送最大尺寸
+    cache->wr = cache->wr + 2;
+    memcpy((p_apdu+cache->wr), (uint8_t*)&connect.recv_frm_size, 2);    //接收最大尺寸
+    cache->wr = cache->wr + 2;
+    *(p_apdu+cache->wr) = connect.client_win_size;//客户机接收帧最大窗口尺寸
+    cache->wr = cache->wr + 1;
+    memcpy((p_apdu+cache->wr), (uint8_t*)&connect.client_apdu_size, 2);    //客户机最大可处理帧尺寸
+    cache->wr = cache->wr + 2;
+    memcpy((p_apdu+cache->wr), (uint8_t*)&connect.connect_time, 4);     //期望的应用连接超时时间    
+    cache->wr = cache->wr + 4;
     
-    return DAR_SUCCESS;
+    if(len_len == 52)
+    {
+        *(p_apdu+cache->wr) = 0;//允许建立应用连接
+        cache->wr++;
+        *(p_apdu+cache->wr) = 1;//认证附加信息
+        cache->wr++;
+        *(p_apdu+cache->wr) = 48;//长度
+        cache->wr++;
+        memcpy((p_apdu+cache->wr), buf+1,48);//随机数
+        cache->wr = cache->wr + 48;
+        *(p_apdu+cache->wr) = 4;
+        cache->wr++;
+        memcpy((p_apdu+cache->wr), buf+49,4);//MAC
+        cache->wr = cache->wr + 4;
+        return DAR_SUCCESS;
+    }
+    else
+    {
+        *(p_apdu+cache->wr) = 1;//允许建立应用连接
+        cache->wr++;
+        *(p_apdu+cache->wr) = 0;//认证附加信息
+        cache->wr++;
+        return DAR_ESAM_CHECK_FAILED;
+    }
+#if 0    
     //  密文 1 octet-string，
     len_len = axdr_decode(TYPE_octet_string, p_apdu, &data_len);
     //memcpy((uint8_t*)&buf[offset], p_apdu + len_len, data_len);
@@ -187,15 +238,16 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
 
     if ( false != fr_698_action(instance, oad, buf, offset))
 	{
-		//memcpy(&dectypt->rn[1],&buf[0],dectypt->rn[0]);
+//		memcpy(&dectypt->rn[1],&buf[0],dectypt->rn[0]);
         
-		//dectypt->mac[0] = 4;
-		//memcpy(&dectypt->mac[1],&buf[dectypt->rn[0]],4);
+//		dectypt->mac[0] = 4;
+//		memcpy(&dectypt->mac[1],&buf[dectypt->rn[0]],4);
         
 		return DAR_SUCCESS;
 	}
     
     return DAR_ESAM_CHECK_FAILED;
+#endif
 }
 
 
@@ -291,7 +343,9 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
     {
         result = DAR_OTHERS_ERROR;
         goto err;
-    }  
+    } 
+    
+    return 1;
 
 err:
 

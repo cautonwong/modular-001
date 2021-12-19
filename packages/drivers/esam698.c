@@ -272,10 +272,10 @@ void esam_698_init(void)
 }
 
 
-void esam_consult_key(uint8_t cmd, uint8_t *p)
+uint8_t esam_consult_key(uint8_t cmd, uint8_t *p)
 {
     uint8_t head[6] = {0x00, 0x02, 0x00, 0x00, 0x00, 0x24};
-    uint8_t buf[40] = {0,};
+    uint8_t buf[52] = {0,};
     uint16_t len=0,rxlen = 0;
     uint32_t addr = 0;
     head[0] = cmd;
@@ -289,5 +289,6 @@ void esam_consult_key(uint8_t cmd, uint8_t *p)
     
     memcpy(p, buf, 52);//48+4
     
+    return rxlen;
 }
 

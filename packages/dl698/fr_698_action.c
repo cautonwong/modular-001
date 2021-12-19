@@ -8,7 +8,50 @@
 
 int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    return 0;
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t* p = cache->buf_ptr;
+    uint32_t oad = mesg->id;
+    uint16_t len = 0;
+    uint16_t offset = 0;
+    int r = 0;
+
+    if (((mesg->ctrl & 0x7f) == 0x09) ||
+        (mesg->ctrl & 0x7f) == 0x09)
+    {
+        uint8_t type = fifoBuf_getByte(fifo);
+        if (type == 0x09)//octet-string
+        {
+            uint8_t len = fifoBuf_getByte(fifo);
+            fifoBuf_getData(fifo, p + cache->wr, len);
+            //todo write data
+            p[cache->wr++] = 0x00;
+        }
+    }
+    else
+    {
+        //if (oad->coder->size() > fifoBuf_getFree(cache))
+        {
+            //return -1;
+        }
+        offset = cache->wr;
+        p[cache->wr++] = 0x01;
+
+        r = fr_698_action(instance, oad, fifo->buf_ptr + fifo->rd, len);
+        //
+        if (r < 0)
+        {
+            p[cache->wr++] = 0x00;//DAR
+            p[cache->wr++] = -r;
+        }
+        else
+        {
+            cache->wr += r;
+        }
+    }
+
+    return r;
 }
 
 int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
