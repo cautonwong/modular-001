@@ -212,7 +212,6 @@ void test_nd_log_output_flash_search_all_400(void** state)
 	assert_int_equal(info.valid_num, 341); i = 59;
 	assert_memory_equal(&temp_event, &test_flash_event[i], sizeof(struct test_flash_evnet_log_output_t));
 	
-
 	while (info.curr_num < info.valid_num)
 	{
 		i++;

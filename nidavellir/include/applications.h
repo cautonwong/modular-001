@@ -181,6 +181,7 @@ enum resourenc_block_name
     control_block_698_name,
     mbase_control_block_name,
     mbase_block_static,
+    mbase_block_static_eprom,
     mbase_block_cache,
     mbase_block_persistent,
     mbase_block_persistent_eprom,

@@ -262,19 +262,21 @@ int baremetal_instance_entry_main(int argc, char** argv)
     pl_meter_base.out_queue = NULL;
     //mbase分三个区
     //mbase_block_static
-    size_t mbase_block_static_size = offsetof(struct mbase_control_block_t, static_section_start) - offsetof(struct mbase_control_block_t, static_section_end);
+    size_t mbase_block_static_size = offsetof(struct mbase_control_block_t, static_section_end) - offsetof(struct mbase_control_block_t, static_section_start);
     uint32_t static_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_static, mbase_block_static_size);
     //mbase_block_cache
-    size_t mbase_block_cache_size = offsetof(struct mbase_control_block_t, cache_section_start) - offsetof(struct mbase_control_block_t, cache_section_end);
+    size_t mbase_block_cache_size = offsetof(struct mbase_control_block_t, cache_section_end) -  offsetof(struct mbase_control_block_t, cache_section_start);
     uint32_t cache_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_cache, mbase_block_cache_size);
     //mbase_block_persistent
-    size_t mbase_block_persistent_size = offsetof(struct mbase_control_block_t, persistent_section_start) - offsetof(struct mbase_control_block_t, persistent_section_end);
+    size_t mbase_block_persistent_size = offsetof(struct mbase_control_block_t, persistent_section_end) - offsetof(struct mbase_control_block_t, persistent_section_start);
     uint32_t persistent_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_persistent, mbase_block_persistent_size);
 
     //注册EPROM  
     add_device(instance, RES_DEV_EEPROM, &eeprom_dev,0x00);
     //注册FLASH
     add_device(instance, RES_DEV_FLASH, &nor_flash_dev,4096);
+    //申请一块参数保存区的EPROM区域
+    add_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, mbase_block_static_size);
     //申请一块掉电保存的EPROM区域
     add_block(instance, RES_DEV_EEPROM, mbase_block_persistent_eprom, mbase_block_persistent_size);
     //注册事件的管理区
