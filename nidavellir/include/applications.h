@@ -194,7 +194,8 @@ enum resourenc_block_name
     mbase_block_persistent,
     mbase_block_persistent_eprom,
     mbase_block_event,
-    mbase_block_parameter
+    mbase_block_parameter,
+    mbase_block_event_flash,
 };
 
 enum resourenc_map_name
@@ -251,9 +252,29 @@ struct record_storage_id_info_t
     uint32_t save_index;  // 记录存储地址信息
     uint32_t capture_index; // 关联对象存储地址信息
     uint32_t sequence_index;// 序号存储地址信息
+    uint32_t period_index;  // 周期存储地址信息
     const uint32_t *record_head;  // 记录头
 };
+
+enum format_conversion_mode // record_change_format
+{
+    RFC_WRITE,           //存储写入转换
+    RFC_READ,            //协议读出转换
+    RFC_GET_ORIGINAL_LEN,//获取原协议格式len
+    RFC_GET_STORE_LEN,   //获取存储格式len
+};
+
+struct format_conversion_t
+{
+    uint32_t oad;
+    uint16_t original_len;
+    uint16_t store_len;
+    int (*format_fun)(uint8_t *des, uint8_t* src, enum format_conversion_mode mode);
+};
+
+
 extern int get_record_id_info(uint32_t oad, struct record_storage_id_info_t* info);
+extern int record_change_format(uint8_t *des,  uint8_t* src, uint32_t oad, uint16_t len, enum format_conversion_mode mode);
 extern int clr_record(struct instance_t* instance, uint32_t oad);
 
 //GS----end

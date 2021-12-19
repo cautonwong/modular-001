@@ -1,6 +1,6 @@
 #include "nidavellir.h"
 #include "fr_698.h"
-
+#include "resource_tool.h"
 
 uint8_t axdr_decode(uint8_t type, const uint8_t *buf, uint16_t *len)
 {
@@ -38,43 +38,39 @@ uint8_t axdr_decode(uint8_t type, const uint8_t *buf, uint16_t *len)
     }
 }
 
-uint8_t axdr_encode(uint8_t type, const uint8_t* buf, uint16_t* len)
+uint8_t axdr_len_encode(uint8_t* buf, uint16_t len)
 {
-  
-    if (buf[0] < 128)
+    if (len < 128)
     {
-        if (len != NULL)
+        if (buf != NULL)
         {
-            *len = buf[0];
+            buf[0] = (uint8_t)len;
         }
+
         return 1;
     }
-    else if (buf[0] == 0x81)
+    else if (len < 256)
     {
-        if (len != NULL)
+        if (buf != NULL)
         {
-            *len = buf[1];
+            buf[0] = 0x81;
+            buf[1] = (uint8_t)len;
         }
+
         return 2;
-    }
-    else if (buf[0] == 0x82)
-    {
-        if (len != NULL)
-        {
-            *len = ((uint16_t)buf[1] << 8) + buf[2];
-        }
-        return 3;
     }
     else
     {
-        if (len != NULL)
+        if (buf != NULL)
         {
-            *len = 0;
+            buf[0] = 0x82;
+            buf[1] = (uint8_t)(len >> 8);
+            buf[2] = (uint8_t)len;
         }
-        return 0;
+
+        return 3;
     }
 }
-
 
 uint16_t axdr_get_len(const uint8_t *data)
 {
@@ -266,14 +262,605 @@ uint16_t axdr_get_len(const uint8_t *data)
     return 0;
 }
 
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+//GS   暂存
+
+uint32_t datetimes_to_second(struct data_time_s_t* dt)
+{
+    struct tm time;
+
+    time.tm_sec = dt->second;
+    time.tm_min = dt->minute;
+    time.tm_hour = dt->hour;
+    time.tm_mday = dt->day;
+    time.tm_mon = dt->month;
+    time.tm_year = (uint8_t)(dt->year - 1900);
+
+    return rtc_mktime(&time);
+}
+
+//year, month, day, hour, minute, secon
+uint32_t dt_buf_to_second(uint8_t* dt)
+{
+    uint16_t year;
+    struct tm time;
 
 
-//
-int record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src)
+    year = buf_to_uint16_msb(dt);
+    dt += 2;
+
+    time.tm_year = (uint8_t)(year - 1900);
+    time.tm_mon = *dt++;
+    time.tm_mday = *dt++;
+    time.tm_hour = *dt++;
+    time.tm_min = *dt++;
+    time.tm_sec = *dt++;
+
+    return rtc_mktime(&time);
+}
+
+//year, month, day, hour, minute, secon
+int second_to_dt_buf(uint32_t timesec, uint8_t* dt)
+{
+    uint8_t* p = dt;
+    uint16_t year_temp;
+    struct tm time;
+
+    rtc_localtime(timesec, &time);
+
+    year_temp = (time.tm_year + 1900);
+
+    p += uint16_to_buf_msb(year_temp, p);
+    *p++ = (uint8_t)time.tm_mon;
+    *p++ = (uint8_t)time.tm_mday;
+    *p++ = (uint8_t)time.tm_hour;
+    *p++ = (uint8_t)time.tm_min;
+    *p++ = (uint8_t)time.tm_sec;
+
+    return (p - dt);
+}
+
+uint32_t ti_to_second(uint8_t unit, uint16_t interval)
+{
+    uint32_t tmp = 0;
+
+    switch (unit)
+    {
+    case 0: // second
+        tmp = interval;
+        break;
+    case 1: // minute
+        tmp = interval * 60l;
+        break;
+    case 2: // hour 
+        tmp = interval * 3600l;
+        break;
+    case 3: // day 
+        tmp = interval * 3600l * 24;
+        break;
+    case 4: // month 
+        tmp = interval * 3600l * 30 * 12;
+        break;
+    case 5: // year 
+        tmp = interval * 3600l * 30 * 12 * 365;
+        break;
+    default:
+        break;
+    }
+
+    return tmp;
+}
+//year, month, day, hour, minute, secon
+uint32_t dt_buf_to_month(uint8_t* dt)
+{
+    uint16_t time[2];
+    uint16_t year;
+    uint32_t month;
+
+    year = buf_to_uint16_msb(dt);
+    dt += 2;
+
+    time[1] = (year - 2000);
+    time[0] = *dt++;
+    month = time[1] * 12;
+    month += time[0];
+
+    return month;
+}
+
+
+
+
+// 方法1 事件rsd解析
+int decode_rsd_event_selector_1(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
+    uint32_t rsd_oad;
+
+    fifoBuf_getData(fifo, p, 4);
+    rsd_oad = buf_to_uint32_msb(p);
+
+    switch (rsd_oad)
+    {
+    case 0x201e0200: // 事件发生时间
+    case 0x20200200: // 事件结束时间 
+        fifoBuf_getData(fifo, p, 1);
+        if (*p != TYPE_date_time_s)
+        {
+            return -1;
+        }
+        fifoBuf_getData(fifo, p, 7);
+        rsd_info->start_mark = dt_buf_to_second(p);
+        rsd_info->end_mark = rsd_info->start_mark;
+
+        if (rsd_oad == 0x201e0200)
+        {
+            rsd_info->mode = 2;
+        }
+        else
+        {
+            rsd_info->mode = 3; 
+        }
+        break;
+
+    case 0x20220200: //事件记录序号
+        fifoBuf_getData(fifo, p, 1);
+        if (*p != TYPE_double_long_unsigned)
+        {
+            return -1;
+        }
+        fifoBuf_getData(fifo, p, 4);
+        rsd_info->start_mark = buf_to_uint32_msb(p);
+        rsd_info->end_mark = rsd_info->start_mark;
+        rsd_info->mode = 1;
+        break;
+
+    default:
+        return -1;
+    }
+
+    return (1);
+}
+// 非周期性冻结判断
+int frz_non_period_type_judge(uint16_t oi)
+{
+
+    if ((oi <= 0x5007) && (oi >= 0x5001) && (oi != 0x5005))
+    {
+        return -1;   //周期性冻结
+    }
+
+    return 1;        //非周期性冻结
+}
+struct frz_period_t
+{
+    uint16_t oi;
+    uint16_t period_id;
+    uint32_t one_period;// 秒
+};
+const struct frz_period_t frz_period_tab[] =
+{
+    {0x5002, MinuteFreeze_period,   1 * 60,             },
+    {0x5003, HourFreeze_period,     1 * 60 * 60,        }, 
+    {0x5004, DayFreeze_period,      1 * 60 * 60 * 24,   },
+};
+
+
+//周期性冻结(除去月冻结) 用方法1 时间点筛选时 给予时间点开始再加一个周期的时间范围搜索
+int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
+
+    uint32_t rcsd, range_sec = 0,index;
+    uint16_t frz_oi = (uint16_t)((oad&0xFFFF0000) >> 16);
+    uint16_t PeriodId = 0xFFFF;
+    uint8_t period_buf[24], scheme = 0, i, period = 0, rcsd_num = 0;
+    int ret;
+
+    //判断是否为周期冻结
+    if ((1 == frz_non_period_type_judge(frz_oi)) || (frz_oi == 0x5006))
+    {
+        return -1;
+    }
+
+    //根据冻结 获取冻结周期
+    for (i = 0; i < sizeof(frz_period_tab) / sizeof(frz_period_tab[0]); i++)
+    {
+        if (frz_oi == frz_period_tab[i].oi)
+        {
+            PeriodId = frz_period_tab[i].period_id;
+            range_sec = frz_period_tab[i].one_period;
+            break;
+        }
+    }
+
+    if (PeriodId == 0xFFFF)
+    {
+        return -1;
+    }
+
+    //获取捕获周期
+    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodId);
+    nd_get_index(instance, index, &period_buf[0], sizeof(period_buf));
+
+    fifoBuf_getDataPeek(fifo, p, 15);
+    rcsd_num = *(p+0); //待调整
+    if (rcsd_num)
+    {
+        rcsd = buf_to_uint32_msb(p + 2);//暂取第一个rcsd
+        scheme = get_OAD_Schem(rcsd);
+    }
+
+    if (scheme > 7)
+    {
+        scheme = 0;
+    }
+
+    if (period_buf[scheme * 3] != 0)
+    {
+        period = period_buf[scheme * 3 + 1];
+    }
+    range_sec = range_sec * period;
+    // 结束时间  增加 周期s的时间
+    rsd_info->end_mark += (range_sec);
+
+    return true;
+}
+
+int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad,  struct rsd_info_t* rsd_info)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
+
+
+    uint32_t rsd_oad;
+
+    fifoBuf_getData(fifo, p, 4);
+    rsd_oad = buf_to_uint32_msb(p);
+
+    switch (rsd_oad)
+    {
+    case 0x20210200: // 冻结时间    
+        fifoBuf_getData(fifo, p, 1);
+        if (*p != TYPE_date_time_s)
+        {
+            return -1;
+        }
+        fifoBuf_getData(fifo, p, 7);
+        rsd_info->start_mark = dt_buf_to_second(p);
+        rsd_info->end_mark = rsd_info->start_mark;
+        rsd_info->mode = 2;
+        frz_selector_1_add_period(instance,pipeline,oad, rsd_info);
+        break;
+
+    case 0x20230200: // 冻结记录序号
+        fifoBuf_getData(fifo, p, 1);
+        if (*p != TYPE_double_long_unsigned)
+        {
+            return -1;
+        }
+        fifoBuf_getData(fifo, p, 4);
+        rsd_info->start_mark = buf_to_uint32_msb(p);
+        rsd_info->end_mark = rsd_info->start_mark;
+        rsd_info->mode = 1;
+        break;
+
+    default:
+        return -1;
+    }
+
+    return (1);
+}
+int selector_2_seq(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t* rsd_info)
+{
+    return 1;//待调整
+}
+int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
+
+    uint16_t value;
+    uint32_t rsd_oad;
+    uint16_t oi = get_OAD_OI(oad);
+
+    rsd_oad = buf_to_uint32_msb(p);
+    p += 4;
+
+    switch (rsd_oad)
+    {
+    case 0x20210200: // 冻结时间   
+        fifoBuf_getData(fifo, p, 1);
+        if (*p != TYPE_date_time_s)
+        {
+            return -1;
+        }
+        fifoBuf_getData(fifo, p, 7);
+        rsd_info->start_mark = dt_buf_to_second(p);
+
+        fifoBuf_getData(fifo, p, 1);
+        if (*p != TYPE_date_time_s)
+        {
+            return -1;
+        }
+        fifoBuf_getData(fifo, p, 7);
+        rsd_info->end_mark = dt_buf_to_second(p);
+
+        // 协议搜索范围前闭后开 ，表内部读取驱动为前闭后闭 
+        if ((rsd_info->start_mark == 0) && (rsd_info->end_mark == 0))
+        {
+            rsd_info->start_mark = 1; 
+        }
+        if (rsd_info->end_mark > 0)
+        {
+            rsd_info->end_mark--;
+        }
+
+        fifoBuf_getDataPeek(fifo, p, 4);
+        if (*p != TYPE_null)
+        {
+            //周期性冻结  间隔必须与冻结周期单位一致,否则返回 DAR=3
+            if ((oi <= 0x5007) && (oi >= 0x5001) && (oi != 0x5005))
+            {
+                //只支持秒，分，时，日, 月 间隔
+                if ((p[0] != TYPE_TI) || (p[1] > 5))
+                {
+                    return -1;
+                }
+
+                //只有冻结支持冻结间隔搜索
+                if ((oi < 0x5000) || (oi > 0x5011))
+                {
+                    return -1;
+                }
+                
+                p++;
+                value = buf_to_uint16_msb(p + 1);
+
+                if (!(((p[0] == 1) && (oi == 0x5002)) || ((p[0] == 2) && (oi == 0x5003))
+                    || ((p[0] == 3) && (oi == 0x5004)) || ((p[0] == 4) && (oi == 0x5006))
+                    || ((p[0] == 0) && (oi == 0x5001)) || ((p[0] == 5) && (oi == 0x5007))))
+                {
+                    return -1;
+                }
+
+                rsd_info->interval = ti_to_second(*p, value);
+                if ((p[0] == 4) && (oi == 0x5006) && (value != 0))    //月冻结月间隔特殊处理
+                {
+                    rsd_info->interval_special = value;
+                }
+            }
+            else
+            {
+                rsd_info->interval = 0;
+                rsd_info->interval_special = 0;
+            }
+
+            fifoBuf_getData(fifo, p, 3); // 剪切3个字节
+        }
+
+        fifoBuf_getData(fifo, p, 1);// 剪切1个字节
+ 
+
+        rsd_info->mode = 2;
+        break;
+
+    case 0x20230200: // 冻结记录序号     selector_2_seq()
+        fifoBuf_getData(fifo, p, 1);
+        if (*p != TYPE_double_long_unsigned)
+        {
+            return -1;
+        }
+        
+        fifoBuf_getData(fifo, p, 4);
+        rsd_info->start_mark = buf_to_uint32_msb(p);
+        
+        fifoBuf_getData(fifo, p, 1);
+        if (*p != TYPE_double_long_unsigned)
+        {
+            return -1;
+        }
+
+        fifoBuf_getData(fifo, p, 4);
+        rsd_info->end_mark = buf_to_uint32_msb(p);
+
+        if ((rsd_info->start_mark == 0) && (rsd_info->end_mark == 0))
+        {
+            rsd_info->start_mark = 1;
+        }
+        if (rsd_info->end_mark > 0)
+        {
+            rsd_info->end_mark--;
+        }
+
+        fifoBuf_getData(fifo, p, 1);
+        if (*p != TYPE_null)
+        {
+            if (*p != TYPE_double_long_unsigned)
+            {
+                return -1;
+            }
+
+            fifoBuf_getData(fifo, p, 4);
+            rsd_info->interval = buf_to_uint32_msb(p);
+        }
+
+        rsd_info->mode = 1;
+
+        break;
+
+    default:
+        return -1;
+    }
+
+    return (1);
+}
+
+int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
+
+    uint16_t value;
+    uint32_t rsd_oad;
+    uint16_t oi = get_OAD_OI(oad);
+
+    fifoBuf_getData(fifo, p, 4);
+    rsd_oad = buf_to_uint32_msb(p);
+
+    switch (rsd_oad)
+    {
+    case 0x201e0200: // 事件发生时间
+    case 0x20200200: // 事件结束时间 
+        fifoBuf_getData(fifo, p, 1);
+        if (*p != TYPE_date_time_s)
+        {
+            return -1;
+        }
+
+        fifoBuf_getData(fifo, p, 7);
+        rsd_info->start_mark = dt_buf_to_second(p);
+
+        fifoBuf_getData(fifo, p, 1);
+        if (*p != TYPE_date_time_s)
+        {
+            return -1;
+        }
+
+        fifoBuf_getData(fifo, p, 7);
+        rsd_info->end_mark = dt_buf_to_second(p);
+
+        // 协议搜索范围前闭后开 ，表内部读取驱动为前闭后闭 
+        if ((rsd_info->start_mark == 0) && (rsd_info->end_mark == 0))
+        {
+            rsd_info->start_mark = 1;
+        }
+        if (rsd_info->end_mark > 0)
+        {
+            rsd_info->end_mark--;
+        }
+        
+        fifoBuf_getDataPeek(fifo, p, 4);
+        if (*p != TYPE_null)
+        {
+            //只支持秒，分，时，日间隔
+            if ((p[0] != TYPE_TI) || (p[1] > 5))
+            {
+                //return -1;
+            }
+
+            p++;
+            value = buf_to_uint16_msb(p + 1);
+
+            if ((p[0] == 4 || p[0] == 5) && (value != 0))
+            {
+                //return -1;
+            }
+
+            rsd_info->interval = ti_to_second(*p, value);
+            fifoBuf_getData(fifo, p, 3);
+        }
+        fifoBuf_getData(fifo, p, 1);
+
+        rsd_info->mode = 2;
+
+        if (rsd_oad == 0x20200200)
+        {
+            rsd_info->mode = 3;
+        }
+
+        break;
+
+    case 0x20220200: // 事件记录序号 
+        fifoBuf_getData(fifo, p, 1);
+        if (*p != TYPE_double_long_unsigned)
+        {
+            return -1;
+        }
+
+        fifoBuf_getData(fifo, p, 4);
+        rsd_info->start_mark = buf_to_uint32_msb(p);
+
+        fifoBuf_getData(fifo, p, 1);
+        if (*p != TYPE_double_long_unsigned)
+        {
+            return -1;
+        }
+
+        fifoBuf_getData(fifo, p, 4);
+        rsd_info->end_mark = buf_to_uint32_msb(p);
+
+        if ((rsd_info->start_mark == 0) && (rsd_info->end_mark == 0))
+        {
+            rsd_info->start_mark = 1;
+        }
+        if (rsd_info->end_mark > 0)
+        {
+            rsd_info->end_mark--;
+        }
+
+        fifoBuf_getData(fifo, p, 1);
+        if (*p != TYPE_null)
+        {
+            if (*p != TYPE_double_long_unsigned)
+            {
+                return -1;
+            }
+
+            fifoBuf_getData(fifo, p, 4);
+            rsd_info->interval = buf_to_uint32_msb(p);
+        }
+
+        rsd_info->mode = 1;
+
+        break;
+
+
+    default:
+        return -1;
+    }
+
+    return (1);
+}
+
+int decode_rsd_selector_9(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
+
+    fifoBuf_getData(fifo, p, 1);
+    rsd_info->last_no = *p;
+
+    rsd_info->start_mark = 0;
+    rsd_info->end_mark = 0xffffffffU;
+    rsd_info->mode = 0;
+
+    return (1);
+}
+
+//协议列选打包    rcsd_req:列选oad，   rcsd_src：原关联对象oad，   
+//mode：0，不拷贝数据，只计算长度   1，  解析数据，并返回长度 
+int _record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src, uint8_t mode)
 {
     uint32_t i, k, n;
     uint8_t *p_des = des, *p_src = src;
-    int single_len;
+    int single_len, store_len, orig_len;
+    uint8_t tmpbuf[200];//单个oad最大长度
     
     for(i=1; i < (rcsd_req[0] + 1); i++)
     {
@@ -282,7 +869,14 @@ int record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t *
         {
             if (rcsd_req[i] == rcsd_src[k])  // 
             {
-                single_len = nd_size(instance, rcsd_src[k]);
+                //特殊rcsd长度处理
+                single_len = record_change_format(tmpbuf, p_src, rcsd_req[i], single_len, RFC_GET_STORE_LEN);
+                if (single_len < 0)
+                {
+                    //正常处理
+                    single_len = nd_size(instance, rcsd_req[i]);
+                }
+
                 if (single_len > 0)
                 {
                     // 个别数据仍需特殊处理
@@ -295,27 +889,53 @@ int record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t *
                     }
                     if (n >= single_len)
                     {
-                        *p_des++ = TYPE_null;
+                        if (mode)
+                        {
+                            *p_des = TYPE_null;
+                        }
+                        p_des++;
                         p_src += single_len;
                     }
                     else
                     {
-                        memcpy(p_des, p_src, single_len);
-                        p_des += single_len;
+                        if (mode)
+                        {
+                            orig_len = record_change_format(tmpbuf, p_src, rcsd_req[i], single_len, RFC_READ);
+                            if (orig_len >= 0)
+                            {
+                                memcpy(p_des, tmpbuf, orig_len);
+                            }
+                            else
+                            {
+                                orig_len = single_len;
+                                memcpy(p_des, p_src, single_len);
+                            }
+
+                        }
+                        p_des += orig_len;
                         p_src += single_len;
                     }
                     
                 }
                 else
                 {
-                    *p_des++ = TYPE_null;
+                    if (mode)
+                    {
+                        *p_des = TYPE_null;
+                    }
+                    p_des++;
                     p_src++;
                 }
                 break;
             }
             else
             {
-                single_len = nd_size(instance, rcsd_src[k]);
+                single_len = record_change_format(tmpbuf, p_src, rcsd_src[k], single_len, RFC_GET_STORE_LEN);
+                if (single_len < 0)
+                {
+                    single_len = nd_size(instance, rcsd_src[k]);
+                }
+
                 if (single_len > 0)
                 {
                     p_src += single_len;
@@ -329,11 +949,242 @@ int record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t *
         
         if (k >= (rcsd_src[0]+1))
         {
-            *p_des++ = TYPE_null;
+            if (mode)
+            {
+                *p_des = TYPE_null;
+            }
+            p_des++;
         }
     }  
     
     return (p_des - des);
 }
 
+//获取协议列选打包长度   rcsd_req:列选oad，   rcsd_src：原关联对象oad，   mode：0，不拷贝数据，只计算长度。  1，  解析数据，并返回长度 
+int get_package_01_len(struct instance_t* instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src)
+{
+    return _record_data_package_01(instance,  des, src, rcsd_req, rcsd_src, 0);
+}
+
+//协议列选打包   rcsd_req:列选oad，   rcsd_src：原关联对象oad，   mode：0，不拷贝数据，只计算长度。  1，  解析数据，并返回长度 
+int record_package_01(struct instance_t* instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src)
+{
+    return _record_data_package_01(instance,  des, src, rcsd_req, rcsd_src, 1);
+}
+
+
+//rsd 解析
+int rsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
+
+    int ret;
+    uint8_t dar;
+    uint8_t oad_type = (uint8_t)(oad>>28);
+
+
+    memset((uint8_t *)rsd_info, 0, sizeof(struct rsd_info_t));
+    fifoBuf_getData(fifo, p, 1);
+    rsd_info->select = *p;
+
+    switch (rsd_info->select)
+    {
+
+    case 0: // NULL
+
+        break;
+
+    case 1: 
+        // 周期性冻结方法1 需至少多搜索一个周期  // 待添加
+        if (oad_type == 5)// 冻结
+        {
+            ret = decode_rsd_freeze_selector_1(instance, pipeline, oad, rsd_info);
+        }
+        else // 事件
+        {
+            ret = decode_rsd_event_selector_1(instance, pipeline, oad, rsd_info);
+        }
+        break;
+
+    case 2: 
+        if (oad_type == 5)
+        {
+            ret = decode_rsd_freeze_selector_2(instance, pipeline, oad, rsd_info);
+        }
+        else
+        {
+            ret = decode_rsd_event_selector_2(instance, pipeline, oad, rsd_info);
+        }
+        break;
+
+    case 9: 
+        ret = decode_rsd_selector_9(instance, pipeline, oad, rsd_info);
+        break;
+
+    default:
+        break;
+    }
+
+
+    return ret;
+}
+
+//rcsd 解析   到rcsd_list[]. 第一个元素为 rcsd个数
+int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad,  uint32_t *rcsd_list)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t* p = cache->buf_ptr;
+    uint8_t i;
+    //int ret;
+
+    //RCSD 个数
+    rcsd_list[0] = fifoBuf_getByte(fifo);
+
+    if (rcsd_list[0] > REQ_RCSD_MAXNUM) // 请求的rcsd个数超出，返回错误 
+    {
+        // 待添加
+        return -1;
+    }
+    else // 赋值rcsd  
+    {
+        if (rcsd_list[0] == 0) //全选
+        {
+            get_capture_list(instance, oad, rcsd_list, 3);
+
+            p[cache->wr++] = rcsd_list[0];
+            for (i = 0; i < rcsd_list[0]; i++)
+            {
+                p[cache->wr++] = 0; // rcsd:oad
+                uint32_to_buf_msb(rcsd_list[1 + i], &p[cache->wr]);
+                cache->wr += 4;
+            }
+        }
+        else
+        {
+            p[cache->wr++] = rcsd_list[0];
+            for (i = 0; i < rcsd_list[0]; i++)
+            {
+                p[cache->wr++] = fifoBuf_getByte(fifo); // csd
+                fifoBuf_getData(fifo, &p[cache->wr], 4);
+                rcsd_list[1 + i] = buf_to_uint32_msb(&p[cache->wr]);
+                cache->wr += 4;
+            }
+        }
+    }
+    
+    return 1;
+}
+
+int record_response_null(uint8_t *resbuf)
+{
+    resbuf[0] = 0;
+    return 1;
+}
+
+
+//读记录型数据打包
+int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info)
+{
+    struct record_storage_id_info_t record_id_info; 
+    struct circular_info_t circular_info = {0};
+    uint32_t *rcsd_req = (uint32_t *)rcsd_info; // 待定
+    uint8_t temp[2000]; //待调整 需要替换协议共用缓存 2k 
+    uint32_t rcsd_src[50];//待调整   设置的关联对象，用于与请求的关联对象作比对筛选
+    uint16_t i, read_num, number = 0;
+    uint16_t one_len = 0,len = 0;
+    uint8_t count = 0;
+    uint8_t *p = (buf + 3); // 预留3个字节条数
+    int ret = 0;
+    
+    ret = get_record_id_info(oad, &record_id_info);
+    if(ret < 0)
+    {
+        return -1;
+    }
+
+    circular_info.start_mark = rsd_info->start_mark;
+    circular_info.end_mark = rsd_info->end_mark;
+    circular_info.mode =   rsd_info->mode;
+
+    ret = nd_log_output(instance, record_id_info.save_index,  temp, 1, &circular_info);
+
+    if (circular_info.valid_num == 0)
+    {
+        return record_response_null(p);
+    }
+    
+    switch(rsd_info->select)
+    {
+        case 0:
+            //ret = GET_record_sel_0(instance, pipeline, mesg);
+            //circular_info.curr_num--;
+            break;
+            
+        case 1:
+            //circular_info.curr_num--;
+            break;
+            
+        case 2:
+            //circular_info.curr_num--;
+            break;
+            
+        case 9: //上n次
+            if ((rsd_info->last_no == 0) || (rsd_info->last_no > circular_info.valid_num))
+            {
+                return record_response_null(p);
+            }
+            circular_info.curr_num = circular_info.valid_num - rsd_info->last_no;
+            circular_info.valid_num = circular_info.curr_num + 1;
+            break;
+        default:
+            break;
+    }
+
+    get_capture_list(instance, oad, rcsd_src, 3);
+    
+    read_num = circular_info.valid_num;
+    for (i = circular_info.curr_num; i < read_num; i++)
+    {
+        ret = nd_log_output(instance, record_id_info.save_index,  temp, circular_info.unit_size, &circular_info);
+        if(ret < 0)
+        {
+            return -1;
+        }
+        
+        //长度判断
+        if (one_len == 0)
+        {   
+            //预算打包长度
+            one_len = get_package_01_len(instance, p+len, temp, rcsd_req, rcsd_src);
+        }
+
+        if((p - buf + len + one_len) > 2000) //待调整
+        {
+            //DAR_BUFFER_OVERFLOW;
+            return -1;
+        }
+        //开始打包
+        one_len = record_package_01(instance, p+len, temp, rcsd_req, rcsd_src);
+        len += one_len;
+        number++;
+    }      
+        
+    count = axdr_len_encode(buf, number);
+
+    if (count < 3)
+    {
+        memcpy(buf + count, p, len);
+    }
+    len += count;
+             
+    return len;
+}
+//GS   暂存
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
 

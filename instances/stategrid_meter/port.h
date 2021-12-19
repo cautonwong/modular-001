@@ -293,7 +293,7 @@
 
 
 //-----记录序号
-#define    OverCurrentL1_index          230  // A相电能表过流事件 记录序号
+#define    OverCurrentL1_seq          230  // A相电能表过流事件 记录序号
 
 #define    MinuteFreeze_period          231  //分钟冻结 周期   3*8   每种方案3个字节，第一个字节为0，表示该周期值无效，非零值表示该周期值有效，后面2个字节表示周期值
 #define    MinuteFreeze_depth           232  //分钟冻结 深度   2*8 
@@ -303,6 +303,23 @@
 #define    DayFreeze_depth              236  //日冻结 深度   2
 #define    MonthFreeze_period           237  //月冻结 周期   3
 #define    MonthFreeze_depth            238  //月冻结 深度   2
+#define    MinuteFreeze1_seq            239     //分钟冻结记录方案1 记录序号
+#define    MinuteFreeze2_seq            240     //分钟冻结记录方案2 记录序号
+#define    MinuteFreeze3_seq            241     //分钟冻结记录方案3 记录序号
+#define    MinuteFreeze4_seq            242     //分钟冻结记录方案4 记录序号
+#define    MinuteFreeze5_seq            243     //分钟冻结记录方案5 记录序号
+#define    MinuteFreeze6_seq            244     //分钟冻结记录方案6 记录序号
+#define    MinuteFreeze7_seq            245     //分钟冻结记录方案7 记录序号
+#define    MinuteFreeze8_seq            246     //分钟冻结记录方案8 记录序号
+#define    HourFreeze_seq               247     //小时冻结  记录序号
+#define    DayFreeze_seq                248     //日冻结    记录序号
+#define    MonthFreeze_seq              249     //日冻结    记录序号
+
+
+
+
+
+
 
 #define    DisplayPara                  399   //显示参数    22
 #define    AutoDisplayList              400   //轮显项目400-500

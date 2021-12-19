@@ -88,7 +88,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf)
     case 0x201E0200://事件发生时间
     case 0x20200200://事件结束时间    
     {
-        uint16_t year_temp = instance->time.tm_year;// +2000;
+        uint16_t year_temp = instance->time.tm_year + 1900;// +2000;
         *p++ = TYPE_date_time_s;
         p += uint16_to_buf_msb(year_temp, p);
         *p++ = (uint8_t)instance->time.tm_mon;

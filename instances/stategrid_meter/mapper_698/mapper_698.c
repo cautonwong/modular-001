@@ -96,27 +96,23 @@ const struct parameter_item_t  parameter_item[] =
     { DayFreeze_oad,     0x01,  61 }, //oad列表 1+ 4*15     
     { MonthFreeze_oad,   0x01,  61 }, //oad列表 1+ 4*15     
 
-    { OverCurrentL1_index, 0x01, 4    },//记录序号
+    { OverCurrentL1_seq, 0x01, 4    },//记录序号
 
-
-    { OverCurrentL1_index,  0x01,  4  }, //记录序号
 
     { MinuteFreeze_period,  0x01, 24 }, //分钟冻结 周期   3*8     
     { MinuteFreeze_depth,   0x01, 31 }, //分钟冻结 深度     2*15  统一冻结深度31字节
-    { HourFreeze_period,    0x01, 24 }, //小时冻结 周期 3
-    { HourFreeze_depth,     0x01, 31 }, //小时冻结 深度 2
-    { DayFreeze_period,     0x01, 24 }, //日冻结 周期   3
-    { DayFreeze_depth,      0x01, 31 }, //日冻结 深度   2
-    { MonthFreeze_period,   0x01, 24 }, //月冻结 周期   3
-    { MonthFreeze_depth,    0x01, 31 }, //月冻结 深度   2
+    { HourFreeze_period,    0x01,  3 }, //小时冻结 周期 3
+    { HourFreeze_depth,     0x01,  2 }, //小时冻结 深度 2
+    { DayFreeze_period,     0x01,  3 }, //日冻结 周期   3
+    { DayFreeze_depth,      0x01,  2 }, //日冻结 深度   2
+    { MonthFreeze_period,   0x01,  3 }, //月冻结 周期   3
+    { MonthFreeze_depth,    0x01,  2 }, //月冻结 深度   2
     
     { AutoDisplayList,     0x64,   2   },//100屏*2字节
     { KeyDisplayList,      0x64,   2   },//100屏*2字节
     { DisplayPara,         0x01,  22  },
 
 };
-
-
 
 int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size,uint16_t *offset)
 {
@@ -178,6 +174,13 @@ int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, u
 }
 
 
+//快照记录头类型
+// 标准事件记录头   事件记录序号、事件发生时间、事件结束时间、时间发生源、事件上报状态
+const uint32_t record_head_t0[] = {5, 0x20220200, 0x201E0200, 0x20200200, 0x20240200, 0x33000200};
+
+// 分项事件记录头    事件记录序号、事件发生时间、事件结束时间、事件上报状态
+const uint32_t record_head_t1[] = {4, 0x20220200, 0x201E0200, 0x20200200, 0x33000200};
+// 其他事件记录头种类 待添加
 
 
 
@@ -185,9 +188,11 @@ int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, u
 int get_record_id_info(uint32_t oad, struct record_storage_id_info_t* info)
 {
  
-    uint16_t CaptureId, SaveId, SeqId;
+    uint16_t CaptureId = 0, SaveId = 0, SeqId = 0, PeriodId = 0;
     uint8_t SaveDevice, SaveBlock;
     
+    memset((uint8_t*)info, 0, sizeof(struct record_storage_id_info_t));
+    info->record_head = record_head_t0; //默认事件记录单元
 
     switch (oad)
     {
@@ -196,9 +201,26 @@ int get_record_id_info(uint32_t oad, struct record_storage_id_info_t* info)
         SaveDevice = RES_DEV_EEPROM;
         SaveBlock = mbase_block_event;     
         CaptureId = OverCurrentL1_oad;     // 关联对象存储地址信息
-        SeqId = OverCurrentL1_index;       // 序号存储地址信息
-        
+        SeqId = OverCurrentL1_seq;       // 序号存储地址信息
         info->record_head = record_head_t0; //事件记录单元
+        break;
+    case 0x50020200:
+        SaveId = MinuteFreeze1;            // 记录存储地址信息
+        SaveDevice = RES_DEV_FLASH;
+        SaveBlock = mbase_block_event_flash;
+        CaptureId = MinuteFreeze_oad;     // 关联对象存储地址信息
+        SeqId = MinuteFreeze1_seq;       // 序号存储地址信息
+        PeriodId = MinuteFreeze_period;  // 周期存储地址信息
+        //info->record_head = record_head_t0; // 待调整 事件记录单元
+        break;
+    case 0x50040200:
+        SaveId = HourFreeze;            // 记录存储地址信息
+        SaveDevice = RES_DEV_FLASH;
+        SaveBlock = mbase_block_event_flash;
+        CaptureId = HourFreeze_oad;     // 关联对象存储地址信息
+        SeqId = HourFreeze_seq;       // 序号存储地址信息
+        PeriodId = HourFreeze_period;  // 周期存储地址信息
+        //info->record_head = record_head_t0; // 待调整 事件记录单元
         break;
     default:
         return -1;
@@ -208,15 +230,14 @@ int get_record_id_info(uint32_t oad, struct record_storage_id_info_t* info)
     info->save_index = ((SaveDevice << 24) + (SaveBlock << 16) + SaveId);
     info->capture_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + CaptureId);
     info->sequence_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeqId);
+    info->period_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodId);
     return 1;
 }
 
-
 // 通过oad 获取 事件rcsd
 // mode = 1，获取记录头；   mode=2，获取配置关联对象， mode = 3，获取所有关联对象
-int get_record_rcsd_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_list, uint8_t mode)
+int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_list, uint8_t mode)
 {
-
     uint8_t i, num;
     uint32_t *p = (rcsd_list + 1);
     uint32_t rcsd_num = 0;
@@ -270,6 +291,74 @@ int get_record_rcsd_list(struct instance_t* instance, uint32_t oad, uint32_t *rc
     
     return 1;
 }
+
+
+
+// data_time_s 转4字节
+int fc_fun_01(uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
+{
+    uint32_t temp;
+    uint8_t *p = des;
+
+    //tag 处理
+    *p++ = *src++;
+    if (mode == RFC_WRITE)
+    {
+        temp = dt_buf_to_second(src);
+        p += uint32_to_buf_msb(temp, p);
+    }
+    else if (mode == RFC_READ)
+    {
+        temp = buf_to_uint32_msb(src);
+        p += second_to_dt_buf(temp, p);  
+    }
+    return (p - des);
+}
+// record存储格式特殊处理的 oad
+const struct format_conversion_t format_conversion_tab[] =
+{
+    {   0x201E0200,     8,      5,      fc_fun_01   },
+    {   0x20200200,     8,      5,      fc_fun_01   },
+};
+
+//enum format_conversion_mode // record_change_format
+//
+//    RFC_WRITE,           //存储写入转换
+//    RFC_READ,            //协议读出转换
+//    RFC_GET_ORIGINAL_LEN,//获取原协议格式len
+//    RFC_GET_STORE_LEN,   //获取存储格式len
+//
+int record_change_format(uint8_t *des,  uint8_t* src, uint32_t oad, uint16_t len, enum format_conversion_mode mode)
+{
+    uint16_t i;
+
+    for (i = 0; i < (sizeof(format_conversion_tab) / sizeof(format_conversion_tab[0])); i++)
+    {
+        if (oad == format_conversion_tab[i].oad)
+        {
+            break;
+        }
+    }
+
+    if (i >= (sizeof(format_conversion_tab) / sizeof(format_conversion_tab[0])))
+    {
+        return -1;
+    }
+
+    if (mode == RFC_GET_ORIGINAL_LEN)
+    {
+        return format_conversion_tab[i].original_len;
+    }
+    else if (mode == RFC_GET_STORE_LEN)
+    {
+        return format_conversion_tab[i].store_len;
+    }
+    else
+    {
+        return format_conversion_tab[i].format_fun(des, src, mode);
+    }
+}
+
 
 int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode)
 {

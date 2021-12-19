@@ -59,7 +59,6 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
     return 1;
 }
 
-
 static int __fr_handle_get_normal_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
@@ -91,6 +90,7 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
 }
 
 #define REQ_RCSD_MAXNUM 50 
+
 static int __fr_handle_get_record_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
@@ -103,8 +103,9 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
     uint8_t last_no = 0;
     uint8_t oad_n = mesg->oad_n;
     uint32_t rcsd_list[4*(REQ_RCSD_MAXNUM+1)]; //个数 + n个OAD  //[0][]协议筛选  [1][]事件全关联对象
-
+    struct rsd_info_t rsd_info;
     
+    int ret;
     uint32_t i;
         
     while (oad_n-- > 0)
@@ -116,52 +117,54 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
             mesg->id = buf_to_uint32_msb(p + cache->wr);
             cache->wr += 4;
 
-            Selector = fifoBuf_getByte(fifo);
-            if ((Selector == 0) || (Selector == 1) || (Selector == 2))
+            //RSD
+            ret = rsd_decode(instance, pipeline, mesg->id, &rsd_info);
+            if (ret < 0)
             {
-                //RSD
-                //RCSD
+                //p[offset] = 0; // 无记录
+                //p[offset+1] = -ret;
+                return DAR_RW_REJECT;  // 想返回dar  如何处理 ？？
             }
-            if (Selector == 9)
+            else
             {
-                //RSD
-                last_no = fifoBuf_getByte(fifo);
-                //RCSD
-                rcsd_list[0] = fifoBuf_getByte(fifo); 
-                
-                if (rcsd_list[0] > REQ_RCSD_MAXNUM) // 请求的rcsd个数超出，返回错误 
-                {
-                     // 待添加
-                }
-                else // 赋值rcsd  
-                {
-                    if (rcsd_list[0] == 0) //全选
-                    {
-                        get_record_rcsd_list(instance, mesg->id, rcsd_list, 3);
-                    
-                        p[cache->wr++] = rcsd_list[0];
-                        for (i = 0; i < rcsd_list[0]; i++ )
-                        {
-                            p[cache->wr++] = 0; // rcsd:oad
-                            uint32_to_buf_msb(rcsd_list[1 + i], &p[cache->wr]);
-                            cache->wr += 4;
-                        }
-                    }
-                    else
-                    {
-                        p[cache->wr++] = rcsd_list[0];
-                        for (i = 0; i < rcsd_list[0]; i++ )
-                        {
-                            p[cache->wr++] = fifoBuf_getByte(fifo); // csd
-                            fifoBuf_getData(fifo, &p[cache->wr], 4);
-                            rcsd_list[1 + i] = buf_to_uint32_msb(&p[cache->wr]);
-                            cache->wr += 4;
-                        }
-                    }
-                }
-
+                //cache->wr += ret;
+            }  
+            Selector = rsd_info.select;
+            
+            //RCSD
+            ret = rcsd_decode(instance, pipeline,mesg->id, rcsd_list);
+            if (ret < 0)
+            {
+                //p[offset] = 0; // 无记录
+                //p[offset+1] = -ret;
+                return DAR_RW_REJECT;  // 想返回dar  如何处理 ？？
+            }
+            else
+            {
+                //cache->wr += ret;
+            } 
+            
+            if ((Selector == 0) || (Selector == 1) || (Selector == 2)|| (Selector == 9))
+            {
                 offset = cache->wr++;
-                int ret = GET_record_sel_9(instance, mesg->id, p + cache->wr, last_no, &rcsd_list[0]);
+                switch(Selector)
+                {
+                    case 0:
+                        //ret = GET_record_sel_0(instance, pipeline, mesg);
+                        break;
+                    case 1:
+                        ret = GET_record_sel_1(instance, mesg->id, p + cache->wr, &rsd_info, rcsd_list); //指定时间或序号
+                        break;
+                    case 2:
+                        ret = GET_record_sel_2(instance, mesg->id, p + cache->wr, &rsd_info, rcsd_list);// 按序号、时间范围搜索，带间隔
+                        break;
+                    case 9:
+                        ret = GET_record_sel_9(instance, mesg->id, p + cache->wr, &rsd_info, rcsd_list);// 上X次
+                        break;
+                    default:
+                        break;
+                }
+                
                 if (ret < 0)
                 {
                     p[offset] = 0; // 无记录
@@ -173,11 +176,7 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
                     p[offset] = 1;// 有记录
                     cache->wr += ret;
                 }
-
-            }
-            
-
-
+            }            
         }
     }
 

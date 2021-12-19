@@ -551,7 +551,7 @@ uint32_t get_curr_mark(const struct dev_info_t* dev, uint32_t addr)
     res_conditions_true((driver == NULL) || (driver->dev_read == NULL), 0xFFFFFFFF);
 
     driver->dev_read(dev, addr, 0x04, buf);
-    return buf_to_uint32_lsb(buf);
+    return buf_to_uint32_msb(buf);
 }
 
 uint16_t search_enum_way(uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t *info, uint8_t direct)
@@ -752,10 +752,10 @@ int16_t search_circular(struct instance_t* instance, const struct dev_info_t* de
         case 0x00:  //全读
             return 0x00;  //直接返回
         case 0x01:  //序号二分查找
-            tempinfo.offset = 0x00;
+            tempinfo.offset = 0x01;
             return __search_circular(info, manager, &tempinfo, search_mid_way);
         case 0x02: //时间二分查找
-            tempinfo.offset = 0x04;
+            tempinfo.offset = 0x06;
             return __search_circular(info, manager, &tempinfo, search_mid_way);
         case 0x03: //时间枚举法查找
             tempinfo.offset = 0x04;
@@ -794,7 +794,7 @@ int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf,
     block02 = look_up_block(instance, device02, block01->relation_name);
     res_conditions_true((block02 == NULL) || (block02->hook == NULL), -1);
     block02->hook((uint16_t)index, &addr02, &len02, NULL);
-    res_conditions_true(len02 != sizeof(struct log_manager_t), -1);
+    res_conditions_true(len02 != (sizeof(struct log_manager_t)+2), -1);
     //读管理区
     driver02 = device02->dev->dev_driver_ops;
     res_conditions_true((driver02 == NULL) || (driver02->dev_read == NULL) || (driver02->dev_write == NULL), -1);
@@ -889,7 +889,7 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
     }
     //读取数据
     res_conditions_true(info->curr_num >= info->valid_num, 0);
-
+    res_conditions_true(info->unit_size > buf_size, 0);
     res_conditions_true(info->unit_size == 0x00, -1);
     over_num = len01 / info->unit_size;
 

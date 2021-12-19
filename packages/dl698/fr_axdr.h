@@ -66,4 +66,22 @@ uint8_t axdr_data_len_decode(uint8_t type, uint8_t* buf, uint16_t* len);
 
 uint16_t axdr_get_len(const uint8_t *data);
 
+
+
+struct rsd_info_t
+{
+    uint8_t select;
+    uint8_t mode;                             // 0- 全部访问   1-按序号搜索    2-按发生时间搜索
+    uint8_t last_no;                          //方法9上n次
+    uint32_t start_mark;                      //搜索时的起始标志
+    uint32_t end_mark;                        //搜索时的结束标志
+    uint32_t interval;                        //搜索间隔
+    uint32_t interval_special;                //搜索间隔 特殊间隔 月
+};
+
+
+
+extern int rsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info);
+extern int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad,  uint32_t *rcsd_list);
+extern int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info);
 #endif //__FR_AXDR_H__

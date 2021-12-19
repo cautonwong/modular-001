@@ -32,7 +32,8 @@
 #define get_OAD_OIA1(oad)       (uint8_t)((oad&0xF0000000)>>28)
 #define get_OAD_Class(oad)      (uint8_t)((oad&0xF0000000)>>28)
 #define get_OAD_Attribute(oad)  (uint8_t)((oad&0x00000F00)>>8)
-
+#define get_OAD_Schem(oad)      (uint8_t)(0x07 & (uint8_t)(oad >> 13))
+#define get_OAD_OI(oad)         ((uint16_t)((oad&0xFFFF0000) >> 16))
 
 /** data-assess-result */
 enum dl698_dar_t
@@ -195,10 +196,24 @@ struct frozen_obj_t
 };
 
 
+/** 日期和时间的十六进制格式。 */
+/** year = FFFF表示无效。 */
+/** month、day、hour、minute、second = FF表示无效。 */
+struct data_time_s_t
+{
+    uint8_t  second;
+    uint8_t  minute;
+    uint8_t  hour;
+    uint8_t  day;
+    uint8_t  month;
+    uint16_t year;
+};
+
 #define REQ_RCSD_MAXNUM 50 
 
 
 extern int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-
+extern uint32_t dt_buf_to_second(uint8_t* dt);
+extern int second_to_dt_buf(uint32_t timesec, uint8_t* dt);
 
 #endif //__FR_698_H__
