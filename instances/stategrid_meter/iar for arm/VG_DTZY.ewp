@@ -2277,6 +2277,9 @@
                 <file>
                     <name>$PROJ_DIR$\..\mapper_698\map_698_action\action_4_Parameter.c</name>
                 </file>
+                <file>
+                    <name>$PROJ_DIR$\..\mapper_698\map_698_action\action_8_Control.c</name>
+                </file>
             </group>
             <group>
                 <name>get</name>
@@ -2382,6 +2385,9 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_record.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\meterbase\relay_control.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\meterbase\touFee.c</name>
