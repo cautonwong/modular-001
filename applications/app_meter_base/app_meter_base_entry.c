@@ -338,18 +338,21 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
           //Keydisplay(instance, pipeline);
           break;
       case MSG_POWERON:
+        //上电恢复参数
+        get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_static, &addr);//RAM对应的地址
+        nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, (uint8_t*)addr, mbase_block_persistent_size); //将EPROM中的数据恢复到RAM; 
         //上电需要恢复数据
         //获取对应的RAM地址
-        get_block_frist_addr(instance,RES_DEV_RAM,0x08,&addr);//RAM对应的地址
-        nd_get_block(instance,RES_DEV_EEPROM,0x08,(uint8_t *)addr,mbase_block_persistent_size); //将EPROM中的数据恢复到RAM;        
+        get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent, &addr);//RAM对应的地址
+        nd_get_block(instance,RES_DEV_EEPROM,mbase_block_persistent_eprom,(uint8_t *)addr,mbase_block_persistent_size); //将EPROM中的数据恢复到RAM;        
         Electrical_measurement_poweron(instance, pipeline);
         AllDisplayLCD(instance, pipeline);
         break;
       case MSG_POWEROFF:
         //掉电需要保存数据
         //获取对应的RAM地址
-        get_block_frist_addr(instance,RES_DEV_RAM,0x08,&addr);//RAM对应的地址
-        nd_set_block(instance,RES_DEV_EEPROM,0x08,(uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;        
+        get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent, &addr);//RAM对应的地址
+        nd_set_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom, (uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;        
         break;
       default:
         break;
