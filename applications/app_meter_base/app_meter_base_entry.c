@@ -9,7 +9,7 @@
 
 enum scheme_mode
 {
-    FRZ_1 = 0,
+    FRZ_1 = 0,  //顺序固定
     FRZ_2,
     FRZ_3,
     FRZ_4,
@@ -113,13 +113,19 @@ int read_record_head(struct instance_t* instance, uint8_t* databuf, const uint32
 uint8_t check_scheme(enum scheme_mode mode, uint32_t obj)
 {
     uint8_t scheme, scheme_valid;
-
+    scheme = (uint8_t)(0x07 & (uint8_t)(obj >> 13));
     scheme_valid = true;
     //记录头
     switch (obj)
     {
+    case 0x20210200: //冻结时间
+    case 0x20230200: //冻结记录
+        break;
     case 0x20220200: //事件记录序号
-
+        if (mode == END_MODE)
+        {
+            scheme_valid = false;
+        }
         break;
     case 0x201E0200: //事件发生时间
         if (mode == END_MODE)
@@ -133,6 +139,7 @@ uint8_t check_scheme(enum scheme_mode mode, uint32_t obj)
             scheme_valid = false;
         }
         break;
+        
     default:
         //配置关联对象
         switch (mode)
@@ -189,7 +196,7 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
             {
                 single_len = nd_get(instance, obj, p, *remain_size);
                 // format改变，长度改变
-                ret = record_change_format(tmpbuf, p, obj, single_len, RFC_WRITE);
+                ret = record_change_format(tmpbuf, p, obj, RFC_WRITE);
                 if (ret >= 0)
                 {
                     single_len = ret;
@@ -210,7 +217,7 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
             else
             {
                 single_len = nd_size(instance, obj);
-                ret = record_change_format(tmpbuf, p, obj, single_len, RFC_GET_STORE_LEN);
+                ret = record_change_format(tmpbuf, p, obj, RFC_GET_STORE_LEN);
                 if (ret >= 0)
                 {
                     single_len = ret;
@@ -259,12 +266,25 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
             case OverCurrentL1: //过流事件发生
                 Oad = 0x30050700;
                 mode = START_MODE;                
-
                 break;
             case OverCurrentEndL1: //过流事件结束
                 Oad = 0x30050700;
                 mode = END_MODE;
                 break;
+              
+            case MinuteFreeze1: //分钟冻结记录方案1
+            case MinuteFreeze2: //分钟冻结记录方案2
+            case MinuteFreeze3: //分钟冻结记录方案3
+            case MinuteFreeze4: //分钟冻结记录方案4
+            case MinuteFreeze5: //分钟冻结记录方案5
+            case MinuteFreeze6: //分钟冻结记录方案6
+            case MinuteFreeze7: //分钟冻结记录方案7
+            case MinuteFreeze8: //分钟冻结记录方案8 
+                uint8_t freez_scheme = (mesg->id - MinuteFreeze1);//(uint8_t)(0x07 & (uint8_t)(oad >> 13))
+                Oad = 0x50020200 + (freez_scheme<<13);
+                mode = FRZ_1 + freez_scheme;                
+                break;                
+                
             default:
 
                 break;

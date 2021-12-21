@@ -278,42 +278,54 @@
 #define    MinuteFreeze8                 177     //分钟冻结记录方案8
 #define    HourFreeze                    178     //小时冻结
 #define    DayFreeze                     179     //日冻结
-#define    MonthFreeze                   180     //日冻结
+#define    MonthFreeze                   180     //月冻结
+
+#define    RECORD_ID_END                 200   
 //-----------------------------------------------------------------------
 
 
 //mbase_block_parameter  E2P存储ID------开始
-//-----关联对象列表 存储EE块号
-#define    OverCurrentL1_oad            200  // A相电能表过流事件 
+//从201后开始  前200用于冻结或事件记录的存储id，e2p管理区id 与记录id
+enum block_parameter_item_id
+{
+    //-----关联对象列表 存储EE块号
+    OverCurrentL1_oad      =     201,      // A相电能表过流事件 关联对象
 
-#define    MinuteFreeze_oad             221     // 分钟冻结关联对象
-#define    HourFreeze_oad               222     // 小时冻结关联对象
-#define    DayFreeze_oad                223     // 日冻结关联对象
-#define    MonthFreeze_oad              224     // 月冻结关联对象
+    MinuteFreeze_oad       =     221,      // 分钟冻结关联对象
+    HourFreeze_oad         =     222,      // 小时冻结关联对象
+    DayFreeze_oad          =     223,      // 日冻结关联对象
+    MonthFreeze_oad        =     224,      // 月冻结关联对象
+   
+
+    //-----记录序号
+    OverCurrentL1_seq      =     230, // A相电能表过流事件 记录序号
+
+    MinuteFreeze_period    =     231, //分钟冻结 周期   3*8   每种方案3个字节，第一个字节为0，表示该周期值无效，非零值表示该周期值有效，后面2个字节表示周期值
+    MinuteFreeze_depth     =     232, //分钟冻结 深度   2*8 
+    HourFreeze_period      =     233, //小时冻结 周期   3
+    HourFreeze_depth       =     234, //小时冻结 深度   2
+    DayFreeze_period       =     235, //日冻结 周期   3
+    DayFreeze_depth        =     236, //日冻结 深度   2
+    MonthFreeze_period     =     237, //月冻结 周期   3
+    MonthFreeze_depth      =     238, //月冻结 深度   2
+    MinuteFreeze1_seq      =     239, //分钟冻结记录方案1 记录序号
+    MinuteFreeze2_seq      =     240, //分钟冻结记录方案2 记录序号
+    MinuteFreeze3_seq      =     241, //分钟冻结记录方案3 记录序号
+    MinuteFreeze4_seq      =     242, //分钟冻结记录方案4 记录序号
+    MinuteFreeze5_seq      =     243, //分钟冻结记录方案5 记录序号
+    MinuteFreeze6_seq      =     244, //分钟冻结记录方案6 记录序号
+    MinuteFreeze7_seq      =     245, //分钟冻结记录方案7 记录序号
+    MinuteFreeze8_seq      =     246, //分钟冻结记录方案8 记录序号
+    HourFreeze_seq         =     247, //小时冻结  记录序号
+    DayFreeze_seq          =     248, //日冻结    记录序号
+    MonthFreeze_seq        =     249, //日冻结    记录序号
+
+    DisplayPara            =     399,  //显示参数    22
+    AutoDisplayList        =     400,  //轮显项目400-500
+    KeyDisplayList         =     500,  //键显项目500-600
+};               
 
 
-//-----记录序号
-#define    OverCurrentL1_seq          230  // A相电能表过流事件 记录序号
-
-#define    MinuteFreeze_period          231  //分钟冻结 周期   3*8   每种方案3个字节，第一个字节为0，表示该周期值无效，非零值表示该周期值有效，后面2个字节表示周期值
-#define    MinuteFreeze_depth           232  //分钟冻结 深度   2*8 
-#define    HourFreeze_period            233  //小时冻结 周期   3
-#define    HourFreeze_depth             234  //小时冻结 深度   2
-#define    DayFreeze_period             235  //日冻结 周期   3
-#define    DayFreeze_depth              236  //日冻结 深度   2
-#define    MonthFreeze_period           237  //月冻结 周期   3
-#define    MonthFreeze_depth            238  //月冻结 深度   2
-#define    MinuteFreeze1_seq            239     //分钟冻结记录方案1 记录序号
-#define    MinuteFreeze2_seq            240     //分钟冻结记录方案2 记录序号
-#define    MinuteFreeze3_seq            241     //分钟冻结记录方案3 记录序号
-#define    MinuteFreeze4_seq            242     //分钟冻结记录方案4 记录序号
-#define    MinuteFreeze5_seq            243     //分钟冻结记录方案5 记录序号
-#define    MinuteFreeze6_seq            244     //分钟冻结记录方案6 记录序号
-#define    MinuteFreeze7_seq            245     //分钟冻结记录方案7 记录序号
-#define    MinuteFreeze8_seq            246     //分钟冻结记录方案8 记录序号
-#define    HourFreeze_seq               247     //小时冻结  记录序号
-#define    DayFreeze_seq                248     //日冻结    记录序号
-#define    MonthFreeze_seq              249     //日冻结    记录序号
 
 
 
@@ -321,9 +333,9 @@
 
 
 
-#define    DisplayPara                  399   //显示参数    22
-#define    AutoDisplayList              400   //轮显项目400-500
-#define    KeyDisplayList               500   //键显项目500-600
+
+
+
 
 //mbase_block_parameter E2P存储ID------结束                           
                                   

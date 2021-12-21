@@ -92,7 +92,7 @@ const struct dev_info_t nor_flash_dev=
     0,
     0,
     &spi_mode3,
-    &rn8209_drv,
+    &nor_flash_driver,
     __NULL,
     __NULL,
     __NULL,

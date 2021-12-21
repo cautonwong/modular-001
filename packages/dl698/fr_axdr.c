@@ -870,7 +870,7 @@ int _record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t 
             if (rcsd_req[i] == rcsd_src[k])  // 
             {
                 //特殊rcsd长度处理
-                single_len = record_change_format(tmpbuf, p_src, rcsd_req[i], single_len, RFC_GET_STORE_LEN);
+                single_len = record_change_format(tmpbuf, p_src, rcsd_req[i], RFC_GET_STORE_LEN);
                 if (single_len < 0)
                 {
                     //正常处理
@@ -900,7 +900,7 @@ int _record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t 
                     {
                         if (mode)
                         {
-                            orig_len = record_change_format(tmpbuf, p_src, rcsd_req[i], single_len, RFC_READ);
+                            orig_len = record_change_format(tmpbuf, p_src, rcsd_req[i], RFC_READ);
                             if (orig_len >= 0)
                             {
                                 memcpy(p_des, tmpbuf, orig_len);
@@ -930,7 +930,7 @@ int _record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t 
             }
             else
             {
-                single_len = record_change_format(tmpbuf, p_src, rcsd_src[k], single_len, RFC_GET_STORE_LEN);
+                single_len = record_change_format(tmpbuf, p_src, rcsd_src[k], RFC_GET_STORE_LEN);
                 if (single_len < 0)
                 {
                     single_len = nd_size(instance, rcsd_src[k]);
