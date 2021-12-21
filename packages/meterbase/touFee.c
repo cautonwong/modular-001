@@ -5,7 +5,7 @@
     //2.mesg[秒]
 
 #define   HoliDay_Num         0x0000
-#define   HoliDay_Table       0x0001
+//#define   HoliDay_Table       0x0001
 #define   Weekend             0x0003
 #define   Season_Table_Num    0x0004
 #define   MaxSeasonNum        0x0005
@@ -13,7 +13,7 @@
 #define   TOU_TABLE_LEN       144
 #define   Day_Tou_Num         0x0007
 
-#define   Day_Table00         0x0008
+//#define   Day_Table00         0x0008
 
 
 

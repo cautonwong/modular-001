@@ -44,7 +44,7 @@ struct log_manager_t
 
 struct circular_info_t
 {
-    uint8_t mode;
+    uint8_t mode;                             // 0- 全部访问   1-按序号搜索    2-按发生时间搜索
     uint16_t unit_size;                       //单体记录大小
     uint32_t start_mark;                      //搜索时的起始标志
     uint32_t end_mark;                        //搜索时的结束标志

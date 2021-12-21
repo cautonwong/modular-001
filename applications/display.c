@@ -224,7 +224,6 @@
 #define     KeyPortCheck        (GPIOA->STS & BIT2)
 
 //Flag.Power
-#define		F_PowerOn			0x0001
 //Flag.Key
 #define		F_KeyDisp0			0x01
 #define		F_KeyDisp1			0x02
@@ -268,6 +267,15 @@
 #define	    Mem_E2PROM               3
 #define     MEMVALUE                 0x03
 
+#define     F_RemoteNull            0x00    //合闸
+#define		F_RemoteRelayOn  	    0x01	//保电
+#define		F_RemoteRelayOff 	    0x02    //拉闸
+#define		F_RemoteAlarm	  	    0x04    //告警
+#define		F_RemoteGaoJing0	    0x08    //预跳闸
+#define		F_RemoteGaoJing1	    0x10    //预跳闸
+#define     F_RemoteRelayOnAllow    0x20    //合闸允许
+#define     F_RemoteRelayOnDirect   0x40    //直接允许
+
 typedef struct
 {
     unsigned short  Id; //显示项ID
@@ -284,10 +292,8 @@ typedef struct
 typedef struct
 {
 		unsigned char   Alarm;
-		unsigned short	Power;
 		unsigned char   Disp;
 		unsigned char   Key;
-		unsigned char	CommDisp;
         unsigned char Run;
 } FLAG;
 FLAG				Flag;
@@ -366,8 +372,8 @@ typedef struct
 
 const  DISPLAYLIST   Display_List[] = 
 {
-    0xA001,     0x40,0x00,0x02,0x00,        0x00,   //日期
-    0xA002,     0x40,0x00,0x02,0x00,        0x00,   //时间
+    0xA001,     0x40,0x00,0x02,0x00,        0x01,   //日期
+    0xA002,     0x40,0x00,0x02,0x00,        0x02,   //时间
     0xA003,     0x20,0x00,0x02,0x01,        0x00,   //电压
     0xA006,     0x20,0x01,0x02,0x01,        0x00,   //火线电流
     0xA009,     0x20,0x01,0x04,0x01,        0x00,   //零线电流
@@ -631,7 +637,9 @@ void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
 	P_BACKLIGHT_ON;	//背光
     //mbase_control_block->lcd_poweron_all_dis_time;
 	if((mbase_control_block->lcd_poweron_all_dis_time > 30) || (mbase_control_block->lcd_poweron_all_dis_time == 0))
-		mbase_control_block->lcd_poweron_all_dis_time = 5;
+		mbase_control_block->lcd_poweron_all_dis_time_tick = 5;
+    else
+        mbase_control_block->lcd_poweron_all_dis_time_tick = mbase_control_block->lcd_poweron_all_dis_time;
 	Flag.Disp |= F_DispAll;
 	for( i=0;i<MaxLcd;i++ )
 	{
@@ -669,7 +677,7 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline)
 	{
 		mbase_control_block->Key &= ~(F_KeyDisp0+F_KeyDisp1);
 		Flag.Run |= F_Disp;
-		if( Flag.Power & F_PowerOn )
+		if( instance->ac_power_statue == AC_POWER_ON )
 			mbase_control_block->backlight_key_time = 60;//按键时,背光点亮
 		else
 		{
@@ -702,7 +710,7 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline)
         else
 			mbase_control_block->KeyPtr++;
         nd_get(instance, 0xF3010201+mbase_control_block->KeyPtr, pageid, 15);
-		if( Flag.Power & F_PowerOn )
+		if( instance->ac_power_statue == AC_POWER_ON )
 		{
             nd_get(instance, 0xF3010300, &mbase_control_block->KeyInv, 1);
 			if( mbase_control_block->KeyInv == 0 )
@@ -716,7 +724,7 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline)
 		mbase_control_block->Key &= ~F_KeyDispay;
 		mbase_control_block->AutoPtr = 0xFF;
 		mbase_control_block->AutoInv = 0;
-		if( (Flag.Power & F_PowerOn) == 0 )//按键显示结束后,进入掉电暂显
+		if( instance->ac_power_statue == AC_POWER_OFF )//按键显示结束后,进入掉电暂显
 		{
 			Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
 		}
@@ -737,11 +745,6 @@ void Get_DisplayPage(struct instance_t* instance, struct pipeline_t* pipeline)
 	{
 		if( mbase_control_block->AutoInv == 0 )
 		{
-			/*if( ((Flag.Power & F_PowerOn) == 0) && ((mbase_control_block->AutoPtr == (mbase_control_block->lcd_autodis_list_num-1))) )//自动循环显示一遍后,进入掉电暂显
-			{
-				Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
-				return;
-			}*/
 			//获取轮显显示时间
             //nd_get(instance, 0xF3000300, &mbase_control_block->AutoInv, 1);
 			if( (mbase_control_block->AutoInv < 0x05) || (mbase_control_block->AutoInv > 0x20) )
@@ -866,108 +869,90 @@ unsigned char GetDispAddrInfo( struct instance_t* instance, unsigned short ID, u
 void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
-	unsigned char TOUNo=0,STEPNo=0;
-//	unsigned long Bit=0x00000001;
+
 	if( mbase_control_block->Page_ID == 0xFFFF ) return;//当前全屏显，则返回
 	
-    Lcdcon[18] |= DS_Chr_Lab;       //秘钥状态，小房子显示	
-    Lcdcon[17] |= DS_Chr_Lock;      //MAC锁
+    if( mbase_control_block->key_state == true )   //秘钥状态，小房子显示	
+        Lcdcon[18] |= DS_Chr_Lab;  
+    if( mbase_control_block->mac_suspend_state == true )   //MAC锁
+        Lcdcon[17] |= DS_Chr_Lock;      
 	
-	if( Flag.Power & F_PowerOn )
+	if( instance->ac_power_statue == AC_POWER_ON )
 	{
-		//红外认证有效
-        Lcdcon[17] |= DS_Chr_KeyProgram;
+		if( mbase_control_block->irauthen_tmr > 0 )//红外认证有效
+            Lcdcon[17] |= DS_Chr_KeyProgram;
 		//通讯指示
-		if( Flag.CommDisp & F_CommDisp485 ) 
+		if( mbase_control_block->commdisp & F_CommDisp485 ) 
 		{
-			Flag.CommDisp &= ~F_CommDisp485;
+			mbase_control_block->commdisp &= ~F_CommDisp485;
 			Lcdcon[18] |= DS_Chr_Comm;
 		}
-		if( Flag.CommDisp & F_CommDispIr ) 
+		if( mbase_control_block->commdisp & F_CommDispIr ) 
 		{
-			Flag.CommDisp &= ~F_CommDispIr;
+			mbase_control_block->commdisp &= ~F_CommDispIr;
 			Lcdcon[18] |= DS_Chr_Comm;
 		}		
 		
-		if( Flag.CommDisp & F_CommDispPlc ) 
+		if( mbase_control_block->commdisp & F_CommDispPlc ) 
 		{
-			Flag.CommDisp &= ~F_CommDispPlc;
+			mbase_control_block->commdisp &= ~F_CommDispPlc;
 			Lcdcon[19] |= DS_Chr_CommPLC;
 		}
 
-        //if(mbase_control_block->factor_mode == true)
+        if( mbase_control_block->power_dir == true )  //电流反向
         {
-            //电流反向
             Lcdcon[18] |= DS_Chr_Reverse;
         }
         
-        
-		//电池欠压指示
-		Lcdcon[18] |= DS_Chr_Bat;
+		if( mbase_control_block->voltage_battery < 0x300 )//电池欠压指示
+            Lcdcon[18] |= DS_Chr_Bat;
 		//密码验证闭锁指示
-		Lcdcon[17] |= DS_Chr_Lock;
+		//Lcdcon[17] |= DS_Chr_Lock;
 		
-//		if(Flag.MeterRunCtr & F_Lcd12Mode)
+		if( mbase_control_block->lcd_12_mean == true )
 		{
 			//费率电价主、副表指示
-			//if( Flag.Fee & F_TOUFeeChangeTm ) 
+			if( mbase_control_block->TouPriceTable == true ) 
 			{
 				Lcdcon[15] |= DS_Chr_TouTable1;
 				Lcdcon[14] |= DS_Chr_TouTable2;
 			}
-			//else  
+			else  
               Lcdcon[15] |= DS_Chr_TouTable1;
 		}
-//		else
+		else
 		{
 			//日时段主、副表指示
-			//if( Fee.DayTable == 0 ) 
+			if( mbase_control_block->DayTable == 0 ) 
               Lcdcon[15] |= DS_Chr_TouTable1;
-			//else if( Fee.DayTable == 1 ) 
+			else 
               Lcdcon[14] |= DS_Chr_TouTable2;
 		}
 
 		//分时费率指示
-		if(TOUNo != 0)
-		{
-			Lcdcon[14] |= DS_Chr_T;
-			if(TOUNo < 10)    Lcdcon[11] |= NumSeg[TOUNo];
-			else
-			{
-				Lcdcon[13] |= DS_Chr_P2;
-				Lcdcon[11] |= NumSeg[TOUNo-10];
-			}
-		}                    
-                    
-		//阶梯费率主、副表指示
- //       if(Flag.Fee & F_STEPModeOn)
+        Lcdcon[14] |= DS_Chr_T;
+        if(mbase_control_block->TOUNo < 10)    Lcdcon[11] |= NumSeg[mbase_control_block->TOUNo];
+        else
         {
- //           if( Flag.Fee & F_STEPChangeTm )  
-              Lcdcon[15] |= DS_Chr_StepTable1+DS_Chr_StepTable2;
- //           else 
-              Lcdcon[15] |= DS_Chr_StepTable1;
-            //阶梯费率指示		
- //           if((Fee.STEPNo > 0) && (Fee.STEPNo < 9))
-            {
-                Lcdcon[15] |= DS_Chr_L13;
-                Lcdcon[10] |= NumSeg[STEPNo];
-            }
+            Lcdcon[13] |= DS_Chr_P2;
+            Lcdcon[11] |= NumSeg[mbase_control_block->TOUNo-10];
         }
+                    
 		//闪烁
 		if( (Flag.Disp & F_DispFlash) == 0 )
 		{
-//			if( Flag.RemoteCmd & F_RemoteAlarm )
+			if( mbase_control_block->sta & F_RemoteAlarm )
 				Lcdcon[12] |=  (DS_Chr_GouDian);
-//			if(( Timer.RemoteRelayOff_DelayTmr > 0 ) || (Relay.CmdDtTmr>0))//跳闸延时过程中指示(闪烁"拉闸)
+			if((mbase_control_block->alarmmin == 0) || (mbase_control_block->imaxmin == 0))//跳闸延时过程中指示(闪烁"拉闸)
 				Lcdcon[13] |= DS_Chr_LaZha;
             if(mbase_control_block->factor_mode == true)
                 Lcdcon[18] |= DS_Chr_Lab;
 		}
 		else
 		{
-//			if( Flag.RemoteCmd & F_RemoteAlarm ) 
+			if( mbase_control_block->sta & F_RemoteAlarm )
 				Lcdcon[12] &= ~(DS_Chr_GouDian);
-//			if(( Timer.RemoteRelayOff_DelayTmr > 0 ) || (Relay.CmdDtTmr>0))
+			if((mbase_control_block->alarmmin == 0) || (mbase_control_block->imaxmin == 0))
 				Lcdcon[13] &= ~DS_Chr_LaZha;
             if(mbase_control_block->factor_mode == true)
                 Lcdcon[18] &= ~DS_Chr_Lab;
@@ -976,7 +961,10 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 		//继电器状态指示
 //		if( (Flag.Relay & F_StateOff) && (Flag.Relay & F_RelayOff) 
 //		&& (((Credit_Block.Credit.Amount+MeterPara_Block.MeterPara.OverdraftCredit) <= 0) || ( (Credit_Block.Credit.Amount <= MeterPara_Block.MeterPara.RelayOnCredit)&&(Flag.MeterState & F_RelayOffed) ) || (Flag.RemoteCmd & F_RemoteRelayOff))) 
-			Lcdcon[13] |= DS_Chr_LaZha;
+		if(mbase_control_block->sta & F_RemoteRelayOff)   //拉闸
+        {
+            if((mbase_control_block->alarmmin == 0) && (mbase_control_block->imaxmin == 0))   Lcdcon[13] |= DS_Chr_LaZha;
+        }
 	}
 } 
 
@@ -1377,7 +1365,7 @@ void Display(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     P_BACKLIGHT_ON;	//背光
 	//获取显示项ID
-    //if(Flag.Power & F_PowerOn)
+    if(instance->ac_power_statue == AC_POWER_ON)
     {
         Get_DisplayPage(instance,  pipeline);
     }

@@ -113,12 +113,14 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
             mesg->len = 0;
             send_mesg(instance, NULL, mesg, NULL);
             instance->ac_power_statue = AC_POWER_OFF;
+            device_power_close(instance);
         }
     }
     else
     {
         if(true == ac_power_on_monitor())
         {
+            device_power_open(instance);
             mesg->from = kernel;
             mesg->to = pid_meter_base;
             mesg->ctrl = MSG_POWERON;
@@ -281,6 +283,12 @@ int nidavellir_run_baremetal(struct instance_t* instance)
 
     //处理持久化事务  如掉电保存和记录保存等  每圈保存一次
     //sync_data()
+    if(instance->ac_power_statue == AC_POWER_OFF)
+    {
+        cpu_io_lowpower_cfg_chk(instance);
+        cpu_sleep_manage();
+    }
+    
     return 1;
 }
 

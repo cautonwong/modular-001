@@ -293,7 +293,7 @@
 
 
 //-----记录序号
-#define    OverCurrentL1_index          230  // A相电能表过流事件 记录序号
+#define    OverCurrentL1_seq          230  // A相电能表过流事件 记录序号
 
 #define    MinuteFreeze_period          231  //分钟冻结 周期   3*8   每种方案3个字节，第一个字节为0，表示该周期值无效，非零值表示该周期值有效，后面2个字节表示周期值
 #define    MinuteFreeze_depth           232  //分钟冻结 深度   2*8 
@@ -303,13 +303,63 @@
 #define    DayFreeze_depth              236  //日冻结 深度   2
 #define    MonthFreeze_period           237  //月冻结 周期   3
 #define    MonthFreeze_depth            238  //月冻结 深度   2
+#define    MinuteFreeze1_seq            239     //分钟冻结记录方案1 记录序号
+#define    MinuteFreeze2_seq            240     //分钟冻结记录方案2 记录序号
+#define    MinuteFreeze3_seq            241     //分钟冻结记录方案3 记录序号
+#define    MinuteFreeze4_seq            242     //分钟冻结记录方案4 记录序号
+#define    MinuteFreeze5_seq            243     //分钟冻结记录方案5 记录序号
+#define    MinuteFreeze6_seq            244     //分钟冻结记录方案6 记录序号
+#define    MinuteFreeze7_seq            245     //分钟冻结记录方案7 记录序号
+#define    MinuteFreeze8_seq            246     //分钟冻结记录方案8 记录序号
+#define    HourFreeze_seq               247     //小时冻结  记录序号
+#define    DayFreeze_seq                248     //日冻结    记录序号
+#define    MonthFreeze_seq              249     //日冻结    记录序号
 
-#define    DisplayPara                  399   //显示参数    22
+
+
+
+
+
+
 #define    AutoDisplayList              400   //轮显项目400-500
 #define    KeyDisplayList               500   //键显项目500-600
 
 //mbase_block_parameter E2P存储ID------结束                           
                                   
+#define     Comm_Number                 600 //表地址
+#define     Meter_Number                601 //表号
+#define     User_Number                 602 //客户编号
+#define     Meter_Num                   603 //计量元件数
+#define     SeasonTable_Changetime      604 //两套时区切换时间
+#define     DayTable_Changetime         605 //两套时段切换时间
+#define     SeasonDay_Para              606 //时区时段参数（年时区数、日时段表数、日时段数、费率数、公共假日数）
+#define     SecretKey_Num               611 //秘钥总条数
+#define     HoliDay_Table               612 //公共假日表，10张，每张6字节
+#define     Weekend                     622 //周休日特征字
+#define     WeekendFee                  623 //周休日采用费率号
+#define     Season_Table0               624 //当前套时区表，≤14
+#define     Season_Table1               638 //备用套时区表，≤14
+#define     Day_Table00                 642 //当前套日时段表数据 ≤8
+#define     Day_Table10                 650 //备用套日时段表数据 ≤8
+#define     Meter_CT                    658 //CT
+#define     Meter_PT                    659 //PT
+#define     Pulse_Width                 660 //脉冲宽度
+#define     ASCII_AssetsMan             661 //资产管理编码
+#define     ASCII_Un                    662 //额定电压
+#define     ASCII_Ib                    663 //额定电流
+#define     ASCII_Imax                  664 //最大电流
+#define     ASCII_AccuracyClass1        665 //有功准确度等级
+#define     Meter_Const1                666 //有功脉冲常数
+#define     ASCII_MeterType             667 //电能表型号
+#define     MeterRunWord                668 //电能表运行特征字
+#define     SoftWareNo                  669 //软件备案号
+#define     Measure_Mode                670 //有功组合特征字
+#define     Balance_Time                671 //结算日
+#define     Meter_Password              674 //应用连接密码     
+                                  
+#define     Meter_Location1             675 //设备地理位置经度
+#define     Meter_Location2             676 //设备地理位置纬度
+#define     Meter_Location3             677 //设备地理位置高度      
                                   
 #define         MAX_FEE_NO                 12                                  
 

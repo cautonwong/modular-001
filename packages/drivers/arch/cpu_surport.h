@@ -50,6 +50,11 @@ extern uint8_t write_mcu_rtc(uint8_t addr, uint8_t *buf, uint16 len);
 extern uint8 mcu_adc_start_once(uint8 chl_type);
 extern uint32 read_mcu_adc_measure_value(uint8 chl_type , int32 *adc_measure);
 
+extern void device_power_close(struct instance_t* instance);
+extern void device_power_open(struct instance_t* instance);
+extern void cpu_io_lowpower_cfg_chk(struct instance_t *instance);
+extern void cpu_sleep_manage(void);
+
 
 #define  DISABLE_ALL_INT()     __disable_irq();
 #define  ENABLE_ALL_INT()      __enable_irq();

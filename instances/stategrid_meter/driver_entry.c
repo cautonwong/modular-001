@@ -301,6 +301,50 @@ void dev_init(void)
 
 }
 
+//关闭用电大户外设的电源，比如背光，LED，串口，高速定时器，tick
+ void device_power_close(struct instance_t* instance)
+ {
+ 
+   
+   
+ 
+ }
+
+
+//打开串口，高速定时器，tick，初始化IO上电配置
+ void device_power_open(struct instance_t* instance)
+ {
+ 
+ 
+ 
+ 
+ }
+
+//初始化IO低功耗配置，初始化系统低功耗配置，准备进入sleep模式。
+void cpu_io_lowpower_cfg_chk(struct instance_t* instance)
+{
+
+
+
+
+
+
+
+}
+
+//此处放sleep函数，以及唤醒后的系统基本处理
+void cpu_sleep_manage(void)
+{
+
+
+
+
+
+
+}
+
+
+
 /*
 void main(void)
 {    
