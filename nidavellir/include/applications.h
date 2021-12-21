@@ -212,6 +212,7 @@ extern void TouFeePro(struct instance_t* instance, struct pipeline_t* pipeline);
 
 void Electrical_measurement_poweron(struct instance_t* instance, struct pipeline_t* pipeline);
 void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipeline);
+void Energy_Pluse_Count(struct instance_t* instance, struct pipeline_t* pipeline);
 void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline);
 void Energy_Meter_PowerON(struct instance_t* instance, struct pipeline_t* pipeline);
 void Energy_Meter_PowerOFF(struct instance_t* instance, struct pipeline_t* pipeline);

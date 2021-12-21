@@ -23,6 +23,7 @@ uint32 over_Imax;
 static uint8 Buffer[50];
 static struct factor_adj_meter_t Factory3;
 static uint8 key_cnt;
+
 void meterchip_adj_self(void)
 {
     unsigned char i=0, Tofst , j=0;
@@ -234,21 +235,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
             }
         }
     }    
-    
-    rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , ENERGYP , 3 , &temp);
-    
-    if(mbase_control_block->power_dir == 1)
-    {
-        mbase_control_block->p_pluse += temp;
-    }
-    else
-    {
-        mbase_control_block->n_pluse += temp;
-    }
-    
-    
-    
-    
+
 }
 
 
@@ -278,19 +265,7 @@ void Electrical_measurement_poweron(struct instance_t* instance, struct pipeline
 
 void Electrical_measurement_poweroff(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)&ctx;
-    int32_t temp = 0;
-    
-    rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , ENERGYP , 3 , &temp);
-    
-    if(mbase_control_block->power_dir == 1)
-    {
-        mbase_control_block->p_pluse += temp;
-    }
-    else
-    {
-        mbase_control_block->n_pluse += temp;
-    }
+
     
     
 }

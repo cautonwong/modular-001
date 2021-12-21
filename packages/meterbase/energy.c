@@ -10,7 +10,7 @@
 #define  ADD_NEG    0x04
 #define  DEC_NEG    0x08
 
-
+static uint32 ec_pluse_cnt = 0;
 
 void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 {
@@ -64,7 +64,7 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 
 void Energy_Meter_PowerON(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-
+    ec_pluse_cnt = 0;
 
 
 
@@ -115,3 +115,30 @@ int32_t Get_Cal_Active_Energy(struct mbase_control_block_t* mbase_control_block,
     
     return energy_kwh;
 }
+
+
+void Energy_Pluse_Count(struct instance_t* instance, struct pipeline_t* pipeline)
+{
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    
+    //DISABLE_ALL_INT();
+    if((ec_pluse_cnt < 64) && (ec_pluse_cnt > 0))
+    {
+        if(mbase_control_block->power_dir == 1)
+        {
+            mbase_control_block->p_pluse += ec_pluse_cnt;
+        }
+        else
+        {
+            mbase_control_block->n_pluse += ec_pluse_cnt;
+        }
+        ec_pluse_cnt = 0;
+    }
+    //ENABLE_ALL_INT();
+}
+
+void Energy_Pluse_Add(void)
+{
+    ec_pluse_cnt++;
+}
+
