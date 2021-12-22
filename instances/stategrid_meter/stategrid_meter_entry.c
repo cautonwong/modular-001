@@ -212,6 +212,8 @@ int baremetal_instance_entry_main(int argc, char** argv)
     uint8_t* buf = nd_malloc(instance, control_block_cache, 4);
     fifoBuf_init(&instance->pipe_rtc, buf, 4);
 
+    buf = nd_malloc(instance, control_block_cache, 8);
+    fifoBuf_init(&instance->pipe_key, buf, 8);
     /////////////////////////////////////申请一个698应用的BLOCK = 03/////////////////////////////////////////////////
     if (NULL == add_block(instance, RES_DEV_RAM, control_block_698_name, 8 * 1024))
     {

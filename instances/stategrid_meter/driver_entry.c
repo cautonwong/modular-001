@@ -274,11 +274,13 @@ void irq_transform_to_instance(struct instance_t* instance)
        {
            case IRQ_RTC:
                 fifoBuf_putByte(&instance->pipe_rtc, IRQ_RTC);
-             break;
+                break;
              
-             
+           case IRQ_PMU:
+                fifoBuf_putByte(&instance->pipe_key, IRQ_PMU);
+                break;                 
            default:
-             break;
+                break;
        }
     }
 }
