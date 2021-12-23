@@ -77,7 +77,9 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf)
             return 3;
         }
     break;
+
     case 0x20220200://事件记录序号
+    case 0x20230200://冻结记录序号
     {
         buf[0] = TYPE_double_long_unsigned;
         memset(&buf[1], 0xFF, 4);
@@ -85,8 +87,10 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf)
     }
     break;
 
+    
     case 0x201E0200://事件发生时间
-    case 0x20200200://事件结束时间    
+    case 0x20200200://事件结束时间 
+    case 0x20210200://冻结时间
     {
         uint16_t year_temp = instance->time.tm_year + 1900;// +2000;
         *p++ = TYPE_date_time_s;

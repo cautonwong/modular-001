@@ -88,7 +88,7 @@ int period_check2(uint8_t scheme, uint16_t period, uint8_t* period_buf)
 
     for (i = 0; i < 8; i++)
     {
-        value = buf_to_uint16_msb(tmp + 1);
+        value = buf_to_uint16_lsb(tmp + 1);
 
         if (tmp[0] != 0)
         {
@@ -179,7 +179,7 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
         return -1;
     }
 
-    tempbuf[0] = num;
+    //tempbuf[0] = num;
     for (i = 0; i < num; i++)
     {
         if ((p[0] != TYPE_structure) || (p[1] != 3) || (p[2] != TYPE_long_unsigned) || (p[5] != TYPE_OAD) || (p[10] != TYPE_long_unsigned))
@@ -191,7 +191,7 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
         p += 3;
         period = buf_to_uint16_msb(p);
         p += 3;
-        oad = buf_to_uint16_msb(p);
+        oad = buf_to_uint32_msb(p);
         p += 5;
         depth = buf_to_uint16_msb(p);
         p += 2;

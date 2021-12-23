@@ -92,7 +92,7 @@ const struct dev_info_t nor_flash_dev=
     0,
     0,
     &spi_mode3,
-    &rn8209_drv,
+    &nor_flash_driver,
     __NULL,
     __NULL,
     __NULL,
@@ -133,7 +133,7 @@ void IO_Interrupt(void)
         key_keep_flag = 0x5a;
         key_keep_width = 0;
         
-        //if(hfp_system_state.power_state == BATTER_SUPPLY)// 停电下按键消抖
+        //// 停电下按键消抖
         //if(ANA->COMPOUT & ANA_STATUS_VDCINDROP)
         {
              key_keep_flag = 0; // 避免停电下 tick被打开 发两次 按键消息
@@ -157,6 +157,7 @@ void IO_Interrupt(void)
 }
 
 extern  uint32 over_Imax;
+extern void Energy_Pluse_Add(void);
 
 void timing_ftr(void)
 {
@@ -206,6 +207,7 @@ void timing_ftr(void)
                IO_DAT( GPIOF_DAT, 1) = 0;
                wplse_light_width = 0;
                wpulse_light_flag = 0;
+               Energy_Pluse_Add();
           }
           else
           {
@@ -272,11 +274,13 @@ void irq_transform_to_instance(struct instance_t* instance)
        {
            case IRQ_RTC:
                 fifoBuf_putByte(&instance->pipe_rtc, IRQ_RTC);
-             break;
+                break;
              
-             
+           case IRQ_PMU:
+                fifoBuf_putByte(&instance->pipe_key, IRQ_PMU);
+                break;                 
            default:
-             break;
+                break;
        }
     }
 }

@@ -471,6 +471,7 @@ struct instance_t
     uint8_t* cache;
     struct cache_t* cache2;
     struct fifo_t pipe_rtc;//只能在定时器函数或时钟秒中断函数里写
+    struct fifo_t pipe_key;//用于按键类中断缓存
     int event_group_size;
     uint8_t *event_flags;
     uint8_t ac_power_statue;

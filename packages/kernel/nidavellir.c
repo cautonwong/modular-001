@@ -90,7 +90,29 @@ int fr_sw_rtc(struct instance_t* instance, struct pipeline_t* pipeline, struct m
     return 0;
 }
 
+int fr_sw_key(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
 
+    if (fifoBuf_getUsed(&instance->pipe_key) > 0)
+    {
+        uint8_t byte = fifoBuf_getByte(&instance->pipe_key);
+#if WIN32
+        if (byte == 2)
+#else
+        if (byte == IRQ_PMU)
+#endif // WIN32
+        {
+            mesg->from = kernel;
+            mesg->to = pid_meter_base;
+            mesg->ctrl = MSG_PAGE_KEY_UP;
+            mesg->id = 0x0000001;
+            mesg->len = 0;
+            send_mesg(instance, NULL, mesg, NULL);
+        }
+    }
+
+    return 0;
+}
 
 int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -159,6 +181,8 @@ int nidavellir_run(struct instance_t *instance)
   //  fr_rx_data_from_serial(instance, &pl_rx_from_serial, &mesg);
     
     fr_sw_rtc(instance,NULL,&mesg);
+    
+    fr_sw_key(instance,NULL,&mesg);
     
     fr_sw_ac_power(instance,NULL,&mesg);
 

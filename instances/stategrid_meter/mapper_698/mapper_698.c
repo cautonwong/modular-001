@@ -53,6 +53,8 @@ const struct record_item_t  record_item[] =
     { OverCurrentL1, OverCurrentEndL1,              800,    10 },// 待调整
 };
 
+
+
 //一个表格只能放在一个存储器上，注册的时候绑定设备   FLASH  分钟冻结
 const struct record_item_t  record_item_1[] =
 {
@@ -209,8 +211,39 @@ int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, u
     return -1;
 }
 
+int16_t supply_event_flash_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
+{
+    uint16_t i, k;
+
+    for (i = 0; i < sizeof(record_item_1) / sizeof(record_item_1[0]); i++)
+    {
+        if ((event_flag == record_item_1[i].event_flag_id_start) ||
+            (event_flag == record_item_1[i].event_flag_id_end))
+        {
+            POINTER_EMPTY(addr);
+            *addr = 0x00;
+            for (k = 0x00; k < i; k++)
+            {
+                *addr += record_item_1[k].len;
+            }
+
+            POINTER_EMPTY(addr);
+            *size = record_item_1[i].len;
+
+            POINTER_EMPTY(depth);
+            *depth = record_item_1[i].max_depth;
+
+            return 1;
+        }
+    }
+
+    return -1;
+}
 
 //快照记录头类型
+// 冻结记录头
+const uint32_t record_head_freez[] = {2, 0x20230200, 0x20210200 };
+
 // 标准事件记录头   事件记录序号、事件发生时间、事件结束时间、时间发生源、事件上报状态
 const uint32_t record_head_t0[] = {5, 0x20220200, 0x201E0200, 0x20200200, 0x20240200, 0x33000200};
 
@@ -247,7 +280,7 @@ int get_record_id_info(uint32_t oad, struct record_storage_id_info_t* info)
         CaptureId = MinuteFreeze_oad;     // 关联对象存储地址信息
         SeqId = MinuteFreeze1_seq;       // 序号存储地址信息
         PeriodId = MinuteFreeze_period;  // 周期存储地址信息
-        //info->record_head = record_head_t0; // 待调整 事件记录单元
+        info->record_head = record_head_freez; // 待调整 事件记录单元
         break;
     case 0x50040200:
         SaveId = HourFreeze;            // 记录存储地址信息
@@ -355,6 +388,7 @@ const struct format_conversion_t format_conversion_tab[] =
 {
     {   0x201E0200,     8,      5,      fc_fun_01   },
     {   0x20200200,     8,      5,      fc_fun_01   },
+    {   0x20210200,     8,      5,      fc_fun_01   },
 };
 
 //enum format_conversion_mode // record_change_format
@@ -364,7 +398,7 @@ const struct format_conversion_t format_conversion_tab[] =
 //    RFC_GET_ORIGINAL_LEN,//获取原协议格式len
 //    RFC_GET_STORE_LEN,   //获取存储格式len
 //
-int record_change_format(uint8_t *des,  uint8_t* src, uint32_t oad, uint16_t len, enum format_conversion_mode mode)
+int record_change_format(uint8_t *des,  uint8_t* src, uint32_t oad, enum format_conversion_mode mode)
 {
     uint16_t i;
 

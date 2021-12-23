@@ -212,6 +212,8 @@ int baremetal_instance_entry_main(int argc, char** argv)
     uint8_t* buf = nd_malloc(instance, control_block_cache, 4);
     fifoBuf_init(&instance->pipe_rtc, buf, 4);
 
+    buf = nd_malloc(instance, control_block_cache, 8);
+    fifoBuf_init(&instance->pipe_key, buf, 8);
     /////////////////////////////////////申请一个698应用的BLOCK = 03/////////////////////////////////////////////////
     if (NULL == add_block(instance, RES_DEV_RAM, control_block_698_name, 8 * 1024))
     {
@@ -283,6 +285,9 @@ int baremetal_instance_entry_main(int argc, char** argv)
     register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter, 2 * 1024, supply_parameter_info);
     //注册事件
     register_log(instance, RES_DEV_EEPROM, mbase_block_event, RES_DEV_EEPROM, mbase_block_parameter, 50 * 1024, supply_event_info);
+
+    //注册冻结
+    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash, RES_DEV_EEPROM, mbase_block_parameter, 50 * 4 * 1024, supply_event_flash_info);
 
     //注册一个698的MAP
     register_map(instance, res_map_698, resource_map_698);
