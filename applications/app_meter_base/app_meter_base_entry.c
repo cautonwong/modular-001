@@ -267,15 +267,20 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
         fifoBuf_getData(pipeline->in_queue, payload, mesg->len);
         switch (mesg->id)
         {
-            case OverCurrentL1: //过流事件发生
+            case OverCurrentL1:         //过流事件发生
                 Oad = 0x30050700;
                 mode = START_MODE;                
                 break;
-            case OverCurrentEndL1: //过流事件结束
+            case OverCurrentEndL1:      //过流事件结束
                 Oad = 0x30050700;
                 mode = END_MODE;
                 break;
-              
+          
+            case InstantFreeze:         //瞬时冻结
+                Oad = 0x50030200;
+                mode = FRZ_1;
+                break;
+
             case MinuteFreeze1: //分钟冻结记录方案1
             case MinuteFreeze2: //分钟冻结记录方案2
             case MinuteFreeze3: //分钟冻结记录方案3
@@ -287,8 +292,24 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
                 uint8_t freez_scheme = (mesg->id - MinuteFreeze1);//(uint8_t)(0x07 & (uint8_t)(oad >> 13))
                 Oad = 0x50020200 + (freez_scheme<<13);
                 mode = FRZ_1 + freez_scheme;                
-                break;                
-                
+                break;     
+
+            case SeasonTabCutFreeze:    //时区表切换冻结
+            case DayTabCutFreeze:       //日时段表切换冻结
+            case FeePriceCutFreeze:     //费率电价切换冻结
+            case StepCutFreeze:         //阶梯切换冻结
+            case MonthFreeze:           //月冻结
+            case BillFreeze:            //结算日冻结
+            case DayFreeze:             //日冻结
+            case HourFreeze:            //小时冻结
+                Oad = 0x50030200 + ((mesg->id - HourFreeze)<<16);
+                mode = FRZ_1;
+                break;
+
+            case StepBillFreeze:        //阶梯结算冻结
+                Oad = 0x50110200;
+                mode = FRZ_1;
+                break;
             default:
 
                 break;

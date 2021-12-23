@@ -268,61 +268,107 @@
 #define    battery2_under4v8            166 //停抄电池欠压
   
 //冻结     需连续
-#define    MinuteFreeze1                 170     //分钟冻结记录方案1
-#define    MinuteFreeze2                 171     //分钟冻结记录方案2
-#define    MinuteFreeze3                 172     //分钟冻结记录方案3
-#define    MinuteFreeze4                 173     //分钟冻结记录方案4
-#define    MinuteFreeze5                 174     //分钟冻结记录方案5
-#define    MinuteFreeze6                 175     //分钟冻结记录方案6
-#define    MinuteFreeze7                 176     //分钟冻结记录方案7
-#define    MinuteFreeze8                 177     //分钟冻结记录方案8
-#define    HourFreeze                    178     //小时冻结
-#define    DayFreeze                     179     //日冻结
-#define    MonthFreeze                   180     //月冻结
+#define    MinuteFreeze1                170     //分钟冻结记录方案1
+#define    MinuteFreeze2                171     //分钟冻结记录方案2
+#define    MinuteFreeze3                172     //分钟冻结记录方案3
+#define    MinuteFreeze4                173     //分钟冻结记录方案4
+#define    MinuteFreeze5                174     //分钟冻结记录方案5
+#define    MinuteFreeze6                175     //分钟冻结记录方案6
+#define    MinuteFreeze7                176     //分钟冻结记录方案7
+#define    MinuteFreeze8                177     //分钟冻结记录方案8
+#define    HourFreeze                   178     //小时冻结
+#define    DayFreeze                    179     //日冻结
+#define    BillFreeze                   180     //结算日冻结
+#define    MonthFreeze                  181     //月冻结
+#define    YearFreeze                   182     //年冻结 （不要求，但需占用位置）
+#define    SeasonTabCutFreeze           183     //时区表切换冻结
+#define    DayTabCutFreeze              184     //日时段表切换冻结
+#define    FeePriceCutFreeze            185     //费率电价切换冻结
+#define    StepCutFreeze                186     //阶梯切换冻结
+#define    StepBillFreeze               187     //阶梯结算冻结
+#define    InstantFreeze                188     //瞬时冻结
 
-#define    RECORD_ID_END                 200   
+#define    RECORD_ID_END                200   
 //-----------------------------------------------------------------------
-
 
 //mbase_block_parameter  E2P存储ID------开始
 //从201后开始  前200用于冻结或事件记录的存储id，e2p管理区id 与记录id
 enum block_parameter_item_id
 {
     //-----关联对象列表 存储EE块号
-    OverCurrentL1_oad      =     201,      // A相电能表过流事件 关联对象
+    //冻结关联对象  冻结相关所以顺序不能变
+    MinuteFreeze_oad        =        300,      // 分钟冻结关联对象
+    HourFreeze_oad          =        301,      // 小时冻结关联对象
+    DayFreeze_oad           =        302,      // 日冻结关联对象
+    BillFreeze_oad          =        303,      //结算日冻结   
+    MonthFreeze_oad         =        304,      //月冻结    
+    YearFreeze_oad          =        305,      //年冻结 （不要求，但需占用位置） 
+    SeasonTabCutFreeze_oad  =        306,      //时区表切换冻结 
+    DayTabCutFreeze_oad     =        307,      //日时段表切换冻结 
+    FeePriceCutFreeze_oad   =        308,      //费率电价切换冻结 
+    StepCutFreeze_oad       =        309,      //阶梯切换冻结 
+    StepBillFreeze_oad      =        310,      //阶梯结算冻结 
+    InstantFreeze_oad       =        311,      //瞬时冻结 
+    //冻结周期                       312
+    MinuteFreeze_period     =        313, //分钟冻结 周期   3*8   每种方案3个字节，第一个字节为0，表示该周期值无效，非零值表示该周期值有效，后面2个字节表示周期值
+    HourFreeze_period       =        314, //小时冻结 周期   3
+    DayFreeze_period        =        315, //日冻结 周期   3
+    BillFreeze_period       =        316, //结算日冻结 周期 3
+    MonthFreeze_period      =        317, //月冻结 周期   3
+    YearFreeze_period       =        318, //年冻结 （不要求，但需占用位置）冻结 周期   3
+    SeasonTabCutFreeze_period =      319, //时区表切换冻结 冻结 周期   3
+    DayTabCutFreeze_period  =        320, //日时段表切换冻结 冻结 周期   3
+    FeePriceCutFreeze_period=        321, //费率电价切换冻结 冻结 周期   3
+    StepCutFreeze_period    =        322, //阶梯切换冻结 冻结 周期   3
+    StepBillFreeze_period   =        323, //阶梯结算冻结 冻结 周期   3
+    InstantFreeze_period    =        324, //瞬时冻结 冻结 周期   3
+    //冻结深度                       325
+    MinuteFreeze_depth      =        326, //分钟冻结 深度   2*8 
+    HourFreeze_depth        =        327, //小时冻结 深度   2
+    DayFreeze_depth         =        328, //日冻结 深度   2
+    BillFreeze_depth        =        329, //结算日 深度     2
+    MonthFreeze_depth       =        330, //月冻结 深度   2
+    YearFreeze_depth        =        331, //年冻结 （不要求，但需占用位置）冻结 深度   2
+    SeasonTabCutFreeze_depth=        332, //时区表切换冻结冻结 深度   2
+    DayTabCutFreeze_depth   =        333, //日时段表切换冻结冻结 深度   2
+    FeePriceCutFreeze_depth =        334, //费率电价切换冻结冻结 深度   2
+    StepCutFreeze_depth     =        335, //阶梯切换冻结冻结 深度   2
+    StepBillFreeze_depth    =        336, //阶梯结算冻结冻结 深度   2
+    InstantFreeze_depth     =        337, //瞬时冻结冻结 深度   2
+    //冻结记录序号                   338
+    MinuteFreeze1_seq       =        339, //分钟冻结记录方案1 记录序号
+    MinuteFreeze2_seq       =        340, //分钟冻结记录方案2 记录序号
+    MinuteFreeze3_seq       =        341, //分钟冻结记录方案3 记录序号
+    MinuteFreeze4_seq       =        342, //分钟冻结记录方案4 记录序号
+    MinuteFreeze5_seq       =        343, //分钟冻结记录方案5 记录序号
+    MinuteFreeze6_seq       =        344, //分钟冻结记录方案6 记录序号
+    MinuteFreeze7_seq       =        345, //分钟冻结记录方案7 记录序号
+    MinuteFreeze8_seq       =        346, //分钟冻结记录方案8 记录序号
+    HourFreeze_seq          =        347, //小时冻结  记录序号
+    DayFreeze_seq           =        348, //日冻结    记录序号
+    BillFreeze_seq          =        349, //月冻结    记录序号
+    MonthFreeze_seq         =        350, //月冻结    记录序号
+    YearFreeze_seq          =        351, //年冻结 （不要求，但需占用位置）冻结    记录序号
+    SeasonTabCutFreeze_seq  =        352, //时区表切换冻结冻结    记录序号
+    DayTabCutFreeze_seq     =        353, //日时段表切换冻结冻结    记录序号
+    FeePriceCutFreeze_seq   =        354, //费率电价切换冻结冻结    记录序号
+    StepCutFreeze_seq       =        355, //阶梯切换冻结冻结    记录序号
+    StepBillFreeze_seq      =        356, //阶梯结算冻结冻结    记录序号
+    InstantFreeze_seq       =        357, //瞬时冻结冻结    记录序号
 
-    MinuteFreeze_oad       =     221,      // 分钟冻结关联对象
-    HourFreeze_oad         =     222,      // 小时冻结关联对象
-    DayFreeze_oad          =     223,      // 日冻结关联对象
-    MonthFreeze_oad        =     224,      // 月冻结关联对象
-   
 
-    //-----记录序号
-    OverCurrentL1_seq      =     230, // A相电能表过流事件 记录序号
 
-    MinuteFreeze_period    =     231, //分钟冻结 周期   3*8   每种方案3个字节，第一个字节为0，表示该周期值无效，非零值表示该周期值有效，后面2个字节表示周期值
-    MinuteFreeze_depth     =     232, //分钟冻结 深度   2*8 
-    HourFreeze_period      =     233, //小时冻结 周期   3
-    HourFreeze_depth       =     234, //小时冻结 深度   2
-    DayFreeze_period       =     235, //日冻结 周期   3
-    DayFreeze_depth        =     236, //日冻结 深度   2
-    MonthFreeze_period     =     237, //月冻结 周期   3
-    MonthFreeze_depth      =     238, //月冻结 深度   2
-    MinuteFreeze1_seq      =     239, //分钟冻结记录方案1 记录序号
-    MinuteFreeze2_seq      =     240, //分钟冻结记录方案2 记录序号
-    MinuteFreeze3_seq      =     241, //分钟冻结记录方案3 记录序号
-    MinuteFreeze4_seq      =     242, //分钟冻结记录方案4 记录序号
-    MinuteFreeze5_seq      =     243, //分钟冻结记录方案5 记录序号
-    MinuteFreeze6_seq      =     244, //分钟冻结记录方案6 记录序号
-    MinuteFreeze7_seq      =     245, //分钟冻结记录方案7 记录序号
-    MinuteFreeze8_seq      =     246, //分钟冻结记录方案8 记录序号
-    HourFreeze_seq         =     247, //小时冻结  记录序号
-    DayFreeze_seq          =     248, //日冻结    记录序号
-    MonthFreeze_seq        =     249, //日冻结    记录序号
+    //事件关联对象
+    OverCurrentL1_oad       =        400,      // A相电能表过流事件 关联对象
 
-    DisplayPara            =     399,  //显示参数    22
-    AutoDisplayList        =     400,  //轮显项目400-500
-    KeyDisplayList         =     500,  //键显项目500-600
+    //事件记录序号                  
+    OverCurrentL1_seq       =        450, // A相电能表过流事件 记录序号
+
+
+                         
+    DisplayPara             =        600,  //显示参数    22
+    AutoDisplayList         =        700,  //轮显项目700-800
+    KeyDisplayList          =        800,  //键显项目800-900
 };               
 
 

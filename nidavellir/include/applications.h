@@ -207,7 +207,8 @@ enum resourenc_block_name
     mbase_block_persistent_eprom,
     mbase_block_event,
     mbase_block_parameter,
-    mbase_block_event_flash,
+    mbase_block_event_flash1,
+    mbase_block_event_flash2,
 };
 
 enum resourenc_map_name
@@ -232,7 +233,8 @@ int32_t Get_Cal_Active_Energy(struct mbase_control_block_t* , uint8_t index);
 
 int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size,uint16_t *offset);
 int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth);
-int16_t supply_event_flash_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth);
+int16_t supply_event_flash_1_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth);
+int16_t supply_event_flash_2_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth);
 struct resources_obj_t;
 int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode);
 int app_rx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
@@ -263,10 +265,14 @@ enum device_id_t
 // GS-----start
 struct record_storage_id_info_t
 {
-    uint32_t save_index;  // 记录存储地址信息
-    uint32_t capture_index; // 关联对象存储地址信息
-    uint32_t sequence_index;// 序号存储地址信息
-    uint32_t period_index;  // 周期存储地址信息
+    uint32_t save_index;    // 记录存储地址
+    uint32_t sequence_index;// 序号存储地址
+    uint32_t capture_index; // 关联对象存储地址
+    uint32_t period_index;  // 周期存储地址
+    uint32_t depth_index;   // 深度存储地址
+    uint16_t capture_len;   // 关联对象存储长度
+    uint16_t period_len;    // 周期存储长度
+    uint16_t depth_len;     // 深度存储长度
     const uint32_t *record_head;  // 记录头
 };
 

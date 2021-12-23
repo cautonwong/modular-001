@@ -282,12 +282,15 @@ int baremetal_instance_entry_main(int argc, char** argv)
     //申请一块掉电保存的EPROM区域
     add_block(instance, RES_DEV_EEPROM, mbase_block_persistent_eprom, mbase_block_persistent_size);
     //注册事件的管理区
-    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter, 2 * 1024, supply_parameter_info);
+    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter, 20 * 1024, supply_parameter_info);
     //注册事件
     register_log(instance, RES_DEV_EEPROM, mbase_block_event, RES_DEV_EEPROM, mbase_block_parameter, 50 * 1024, supply_event_info);
 
-    //注册冻结
-    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash, RES_DEV_EEPROM, mbase_block_parameter, 50 * 4 * 1024, supply_event_flash_info);
+    //注册冻结1
+    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash1, RES_DEV_EEPROM, mbase_block_parameter, 830 * 4 * 1024, supply_event_flash_1_info);
+
+    //注册冻结2
+    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash2, RES_DEV_EEPROM, mbase_block_parameter, 37 * 4 * 1024, supply_event_flash_2_info);
 
     //注册一个698的MAP
     register_map(instance, res_map_698, resource_map_698);

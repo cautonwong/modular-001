@@ -2,8 +2,8 @@
 #include "fr_698.h"
 
 
-
-int get_frozen_obj(struct instance_t* instance, uint32_t id, uint8_t* buf, struct frozen_obj_t frozen_obj, uint8_t* dar)
+// 获取冻结关联对象
+int get_frozen_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct frozen_obj_t frozen_obj, uint8_t* dar)
 {
 
     uint8_t i, num, maxnum, scheme;
@@ -11,38 +11,46 @@ int get_frozen_obj(struct instance_t* instance, uint32_t id, uint8_t* buf, struc
     uint8_t* tmp0, * tmp1;
     uint8_t* p = buf;
     uint8_t* oadlist = tempbuf;
-    uint16_t OI, CaptureId, PeriodId, DepthId, CaptureLen, PeriodLen, DepthLen;
-    uint32_t index;
+    uint16_t OI, CaptureLen, PeriodLen, DepthLen;
+    uint32_t CaptureId, PeriodId, DepthId;
+    struct record_storage_id_info_t  record_id_info;
+    int ret;
 
-    CaptureId = frozen_obj.CaptureId;
-    PeriodId = frozen_obj.PeriodId;
-    DepthId = frozen_obj.DepthId;
-    CaptureLen = frozen_obj.CaptureLen;  // 
-    PeriodLen = frozen_obj.PeriodLen;
-    DepthLen = frozen_obj.DepthLen;
-    OI = (uint16_t)(id >> 16);
+    ret = get_record_id_info(oad, &record_id_info);
+    if (ret <= 0)
+    {
+        return -1;
+    }
 
+    CaptureId = record_id_info.capture_index;
+    PeriodId = record_id_info.period_index;
+    DepthId = record_id_info.depth_index;
+    CaptureLen = record_id_info.capture_len;// 
+    PeriodLen = record_id_info.period_len;
+    DepthLen = record_id_info.depth_len;
     maxnum = (CaptureLen - 1) / 4;
 
-    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + CaptureId);
-    nd_get_index(instance, index, &tempbuf[0], sizeof(tempbuf));
+    //CaptureId = frozen_obj.CaptureId;
+    //PeriodId = frozen_obj.PeriodId;
+    //DepthId = frozen_obj.DepthId;
+    //CaptureLen = frozen_obj.CaptureLen;  // 
+    //PeriodLen = frozen_obj.PeriodLen;
+    //DepthLen = frozen_obj.DepthLen;
+    
+    OI = (uint16_t)(oad >> 16);
+
+    nd_get_index(instance, CaptureId, &tempbuf[0], sizeof(tempbuf));
     oadlist = tempbuf;
     num = *oadlist++;
 
     // 周期
-    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodId);
-    nd_get_index(instance, index, &period[0], sizeof(period));
+    nd_get_index(instance, PeriodId, &period[0], sizeof(period));
     tmp0 = period;
 
     // 深度
-    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + DepthId);
-    nd_get_index(instance, index, &depth[0], sizeof(depth));
+    nd_get_index(instance, DepthId, &depth[0], sizeof(depth));
     tmp1 = depth;
 
-    if (OI != 0x5002)
-    {
-        tmp1++;
-    }
     /*
     //三组 个数应一致
     if ((depth[0] != period[0]) || (depth[0] != num))
@@ -96,7 +104,7 @@ int get_frozen_obj(struct instance_t* instance, uint32_t id, uint8_t* buf, struc
     return (p - buf);
 }
 
-int GET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf)
+int GET_5_Frozen(struct instance_t* instance, uint32_t oad, uint8_t* buf)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint8_t dar = DAR_SUCCESS;
@@ -105,20 +113,26 @@ int GET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf)
     {
         return -1;
     }
-    switch (id)
-    {
-    case 0x50020300://关联对象属性表
-    {
-        struct frozen_obj_t frozen_obj;
 
+    switch (oad & 0x0000FF00)
+    {
+    //case 0x50020300://关联对象属性表
+    //case 0x50030300://关联对象属性表
+    //case 0x50040300://关联对象属性表
+    //case 0x50050300://关联对象属性表
+    case 0x00000300://关联对象属性表
+    {
+
+        struct frozen_obj_t frozen_obj;
+#if 0
         frozen_obj.CaptureId = MinuteFreeze_oad;
         frozen_obj.PeriodId = MinuteFreeze_period;
         frozen_obj.DepthId = MinuteFreeze_depth;
-        frozen_obj.CaptureLen = 1 + 4 * 15;  // 
+        frozen_obj.CaptureLen = 1 + 4 * 15;  
         frozen_obj.PeriodLen = 24;
         frozen_obj.DepthLen = 31;
-
-        return get_frozen_obj(instance, id, buf, frozen_obj, &dar);
+#endif
+        return get_frozen_obj(instance, oad, buf, frozen_obj, &dar);
     }
     break;
     default:

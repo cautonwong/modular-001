@@ -50,7 +50,8 @@ struct parameter_item_t
 //一个表格只能放在一个存储器上，注册的时候绑定设备
 const struct record_item_t  record_item[] =
 {
-    { OverCurrentL1, OverCurrentEndL1,              800,    10 },// 待调整
+    { OverCurrentL1,    OverCurrentEndL1,               800,    10 },// 过流 预留空间待调整
+    { BillFreeze,       0,                              4000,   10 },// 结算日冻结
 };
 
 
@@ -80,36 +81,94 @@ const struct record_item_t  record_item_2[] =
 
 const struct parameter_item_t  parameter_item[] =
 {
-    { OverCurrentL1,  0x01,   sizeof(struct log_manager_t)},// 管理区
+    // 管理区
+    { OverCurrentL1     ,  0x01,   sizeof(struct log_manager_t)},// 管理区
 
-    { MinuteFreeze1,  0x01,   sizeof(struct log_manager_t)},// 分冻结8个方案，管理区申请8个？
-    { MinuteFreeze2,  0x01,   sizeof(struct log_manager_t)},
-    { MinuteFreeze3,  0x01,   sizeof(struct log_manager_t)},
-    { MinuteFreeze4,  0x01,   sizeof(struct log_manager_t)},
-    { MinuteFreeze5,  0x01,   sizeof(struct log_manager_t)},
-    { MinuteFreeze6,  0x01,   sizeof(struct log_manager_t)},
-    { MinuteFreeze7,  0x01,   sizeof(struct log_manager_t)},
-    { MinuteFreeze8,  0x01,   sizeof(struct log_manager_t)},
+    { MinuteFreeze1     ,  0x01,   sizeof(struct log_manager_t)},// 分冻结8个方案，管理区申请8个？
+    { MinuteFreeze2     ,  0x01,   sizeof(struct log_manager_t)},
+    { MinuteFreeze3     ,  0x01,   sizeof(struct log_manager_t)},
+    { MinuteFreeze4     ,  0x01,   sizeof(struct log_manager_t)},
+    { MinuteFreeze5     ,  0x01,   sizeof(struct log_manager_t)},
+    { MinuteFreeze6     ,  0x01,   sizeof(struct log_manager_t)},
+    { MinuteFreeze7     ,  0x01,   sizeof(struct log_manager_t)},
+    { MinuteFreeze8     ,  0x01,   sizeof(struct log_manager_t)},
+
+    { HourFreeze        ,  0x01,   sizeof(struct log_manager_t)},  //小时冻结  管理区
+    { DayFreeze         ,  0x01,   sizeof(struct log_manager_t)},  //日冻结    管理区
+    { BillFreeze        ,  0x01,   sizeof(struct log_manager_t)},  //结算日冻结 管理区
+    { MonthFreeze       ,  0x01,   sizeof(struct log_manager_t)},  //月冻结 管理区 
+    { SeasonTabCutFreeze,  0x01,   sizeof(struct log_manager_t)},  //时区表切换冻结 管理区
+    { DayTabCutFreeze   ,  0x01,   sizeof(struct log_manager_t)},  //日时段表切换冻结 管理区
+    { FeePriceCutFreeze ,  0x01,   sizeof(struct log_manager_t)},  //费率电价切换冻结 管理区
+    { StepCutFreeze     ,  0x01,   sizeof(struct log_manager_t)},  //阶梯切换冻结 管理区
+    { StepBillFreeze    ,  0x01,   sizeof(struct log_manager_t)},  //阶梯结算冻结 管理区
+    { InstantFreeze     ,  0x01,   sizeof(struct log_manager_t)},  //瞬时冻结 管理区
 
 
-    { OverCurrentL1_oad, 0x01,  61    }, //oad列表 1+ 4*15     默认8个     先统一预留15个关联
-    { MinuteFreeze_oad,  0x01,  61    }, //oad列表 1+ 4*15     默认7个
-    { HourFreeze_oad,    0x01,  61 }, //oad列表 1+ 4*15     
-    { DayFreeze_oad,     0x01,  61 }, //oad列表 1+ 4*15     
-    { MonthFreeze_oad,   0x01,  61 }, //oad列表 1+ 4*15     
+    //关联对象
+    { OverCurrentL1_oad     , 0x01,  61  }, //oad列表 1+ 4*15     默认8个     先统一预留15个关联
+    { MinuteFreeze_oad      , 0x01,  61  }, //oad列表 1+ 4*15     默认7个
+    { HourFreeze_oad        , 0x01,  61  }, //oad列表 1+ 4*15     
+    { DayFreeze_oad         , 0x01,  61  }, //oad列表 1+ 4*15     
+    { BillFreeze_oad        , 0x01,  61  }, //oad列表 1+ 4*15   
+    { MonthFreeze_oad       , 0x01,  61  }, //oad列表 1+ 4*15     
+    { SeasonTabCutFreeze_oad, 0x01,  61 }, //oad列表 1+ 4*15   
+    { DayTabCutFreeze_oad   , 0x01,  61 }, //oad列表 1+ 4*15   
+    { FeePriceCutFreeze_oad , 0x01,  61 }, //oad列表 1+ 4*15   
+    { StepCutFreeze_oad     , 0x01,  61 }, //oad列表 1+ 4*15   
+    { StepBillFreeze_oad    , 0x01,  61 }, //oad列表 1+ 4*15   
+    { InstantFreeze_oad     , 0x01,  61 }, //oad列表 1+ 4*15   
 
-    { OverCurrentL1_seq, 0x01, 4    },//记录序号
+
+    //记录序号
+    { OverCurrentL1_seq     , 0x01, 4    },//记录序号
+
+    { MinuteFreeze1_seq     , 0x01, 4    },//分钟冻结记录方案1 记录序号
+    { MinuteFreeze2_seq     , 0x01, 4    },//分钟冻结记录方案2 记录序号
+    { MinuteFreeze3_seq     , 0x01, 4    },//分钟冻结记录方案3 记录序号
+    { MinuteFreeze4_seq     , 0x01, 4    },//分钟冻结记录方案4 记录序号
+    { MinuteFreeze5_seq     , 0x01, 4    },//分钟冻结记录方案5 记录序号
+    { MinuteFreeze6_seq     , 0x01, 4    },//分钟冻结记录方案6 记录序号
+    { MinuteFreeze7_seq     , 0x01, 4    },//分钟冻结记录方案7 记录序号
+    { MinuteFreeze8_seq     , 0x01, 4    },//分钟冻结记录方案8 记录序号
+    { HourFreeze_seq        , 0x01, 4    },//小时冻结  记录序号
+    { DayFreeze_seq         , 0x01, 4    },//日冻结    记录序号
+    { BillFreeze_seq        , 0x01, 4    },//月冻结    记录序号
+    { MonthFreeze_seq       , 0x01, 4    },//月冻结    记录序号
+    { SeasonTabCutFreeze_seq, 0x01, 4    },//时区表切换冻结冻结    记录序号
+    { DayTabCutFreeze_seq   , 0x01, 4    },//日时段表切换冻结冻结    记录序号
+    { FeePriceCutFreeze_seq , 0x01, 4    },//费率电价切换冻结冻结    记录序号
+    { StepCutFreeze_seq     , 0x01, 4    },//阶梯切换冻结冻结    记录序号
+    { StepBillFreeze_seq    , 0x01, 4    },//阶梯结算冻结冻结    记录序号
+    { InstantFreeze_seq     , 0x01, 4    },//瞬时冻结冻结    记录序号
+
+    //冻结周期                       
+    { MinuteFreeze_period      ,  0x01, 24 }, //分钟冻结 周期   3*8  
+    { HourFreeze_period        ,  0x01,  3 }, //小时冻结冻结 周期   3 
+    { DayFreeze_period         ,  0x01,  3 }, //日冻结冻结 周期   3 
+    { BillFreeze_period        ,  0x01,  3 }, //结算日冻结冻结 周期   3 
+    { MonthFreeze_period       ,  0x01,  3 }, //月冻结冻结 周期   3 
+    { SeasonTabCutFreeze_period,  0x01,  3 }, //时区表切换冻结冻结 周期   3 
+    { DayTabCutFreeze_period   ,  0x01,  3 }, //日时段表切换冻结冻结 周期   3 
+    { FeePriceCutFreeze_period ,  0x01,  3 }, //费率电价切换冻结冻结 周期   3 
+    { StepCutFreeze_period     ,  0x01,  3 }, //阶梯切换冻结冻结 周期   3 
+    { StepBillFreeze_period    ,  0x01,  3 }, //阶梯结算冻结冻结 周期   3 
+    { InstantFreeze_period     ,  0x01,  3 }, //瞬时冻结冻结 周期   3 
+
+    //冻结深度                    
+    { MinuteFreeze_depth      ,   0x01, 31 }, //分钟冻结 深度     2*15  
+    { HourFreeze_depth        ,   0x01,  2 }, //分钟冻结 深度     2   
+    { DayFreeze_depth         ,   0x01,  2 }, //分钟冻结 深度     2   
+    { BillFreeze_depth        ,   0x01,  2 }, //分钟冻结 深度     2   
+    { MonthFreeze_depth       ,   0x01,  2 }, //分钟冻结 深度     2   
+    { SeasonTabCutFreeze_depth,   0x01,  2 }, //分钟冻结 深度     2   
+    { DayTabCutFreeze_depth   ,   0x01,  2 }, //分钟冻结 深度     2   
+    { FeePriceCutFreeze_depth ,   0x01,  2 }, //分钟冻结 深度     2   
+    { StepCutFreeze_depth     ,   0x01,  2 }, //分钟冻结 深度     2   
+    { StepBillFreeze_depth    ,   0x01,  2 }, //分钟冻结 深度     2   
+    { InstantFreeze_depth     ,   0x01,  2 }, //分钟冻结 深度     2   
 
 
-    { MinuteFreeze_period,  0x01, 24 }, //分钟冻结 周期   3*8     
-    { MinuteFreeze_depth,   0x01, 31 }, //分钟冻结 深度     2*15  统一冻结深度31字节
-    { HourFreeze_period,    0x01,  3 }, //小时冻结 周期 3
-    { HourFreeze_depth,     0x01,  2 }, //小时冻结 深度 2
-    { DayFreeze_period,     0x01,  3 }, //日冻结 周期   3
-    { DayFreeze_depth,      0x01,  2 }, //日冻结 深度   2
-    { MonthFreeze_period,   0x01,  3 }, //月冻结 周期   3
-    { MonthFreeze_depth,    0x01,  2 }, //月冻结 深度   2
-    
     { AutoDisplayList,     0x64,   2 },//100屏*2字节
     { KeyDisplayList,      0x64,   2 },//100屏*2字节
 //    { DisplayPara,         0x01,  22 },
@@ -211,7 +270,7 @@ int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, u
     return -1;
 }
 
-int16_t supply_event_flash_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
+int16_t supply_event_flash_1_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
 {
     uint16_t i, k;
 
@@ -239,7 +298,34 @@ int16_t supply_event_flash_info(uint16_t event_flag, uint32_t* addr, uint32_t* s
 
     return -1;
 }
+int16_t supply_event_flash_2_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
+{
+    uint16_t i, k;
 
+    for (i = 0; i < sizeof(record_item_2) / sizeof(record_item_2[0]); i++)
+    {
+        if ((event_flag == record_item_2[i].event_flag_id_start) ||
+            (event_flag == record_item_2[i].event_flag_id_end))
+        {
+            POINTER_EMPTY(addr);
+            *addr = 0x00;
+            for (k = 0x00; k < i; k++)
+            {
+                *addr += record_item_2[k].len;
+            }
+
+            POINTER_EMPTY(addr);
+            *size = record_item_2[i].len;
+
+            POINTER_EMPTY(depth);
+            *depth = record_item_2[i].max_depth;
+
+            return 1;
+        }
+    }
+
+    return -1;
+}
 //快照记录头类型
 // 冻结记录头
 const uint32_t record_head_freez[] = {2, 0x20230200, 0x20210200 };
@@ -257,49 +343,135 @@ const uint32_t record_head_t1[] = {4, 0x20220200, 0x201E0200, 0x20200200, 0x3300
 int get_record_id_info(uint32_t oad, struct record_storage_id_info_t* info)
 {
  
-    uint16_t CaptureId = 0, SaveId = 0, SeqId = 0, PeriodId = 0;
+    uint16_t SaveId = 0, SeqId = 0, CaptureId = 0, PeriodId = 0, DepthId = 0;
     uint8_t SaveDevice, SaveBlock;
+    uint8_t schem = get_OAD_Schem(oad);
+    uint8_t temp = 0;
     
     memset((uint8_t*)info, 0, sizeof(struct record_storage_id_info_t));
     info->record_head = record_head_t0; //默认事件记录单元
 
-    switch (oad)
+    switch (oad&0xF0000000)
     {
-    case 0x30050700:
-        SaveId = OverCurrentL1;            // 记录存储地址信息
-        SaveDevice = RES_DEV_EEPROM;
-        SaveBlock = mbase_block_event;     
-        CaptureId = OverCurrentL1_oad;     // 关联对象存储地址信息
-        SeqId = OverCurrentL1_seq;       // 序号存储地址信息
-        info->record_head = record_head_t0; //事件记录单元
+        case 0x30000000: //事件类
+        {
+            switch (oad&0xFFFF0000)// OI
+            {
+                case 0x30050000:
+                    SaveId = OverCurrentL1;                 // 记录存储地址信息
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = OverCurrentL1_oad;          // 关联对象存储地址信息
+                    SeqId = OverCurrentL1_seq;              // 序号存储地址信息
+                    info->record_head = record_head_t0;     // 记录单元
+                    break;
+
+
+                default:
+                    return -1;
+                    break;
+            } 
+            
+        }
         break;
-    case 0x50020200:
-        SaveId = MinuteFreeze1;            // 记录存储地址信息
-        SaveDevice = RES_DEV_FLASH;
-        SaveBlock = mbase_block_event_flash;
-        CaptureId = MinuteFreeze_oad;     // 关联对象存储地址信息
-        SeqId = MinuteFreeze1_seq;       // 序号存储地址信息
-        PeriodId = MinuteFreeze_period;  // 周期存储地址信息
-        info->record_head = record_head_freez; // 待调整 事件记录单元
+        case 0x50000000: //冻结类
+        {
+            info->capture_len = 61;
+            info->period_len = 3;
+            info->depth_len = 2;
+            info->record_head = record_head_freez;  // 记录单元
+            switch (oad&0xFFFF0000)// OI
+            {
+                case 0x50000000://瞬时冻结
+                    SaveId = InstantFreeze;                    // 记录存储地址信息
+                    SaveDevice = RES_DEV_FLASH;
+                    SaveBlock = mbase_block_event_flash2;
+                    CaptureId = InstantFreeze_oad;             // 关联对象存储地址信息
+                    SeqId = InstantFreeze_seq;                 // 序号存储地址信息
+                    PeriodId = InstantFreeze_period;           // 周期存储地址信息
+                    DepthId = InstantFreeze_depth;             // 深度存储地址信息
+                    break;
+
+                case 0x50020000://8方案 待调整
+                    SaveId = MinuteFreeze1;                 // + schem 记录存储地址信息
+                    SaveDevice = RES_DEV_FLASH;
+                    SaveBlock = mbase_block_event_flash1;
+                    CaptureId = MinuteFreeze_oad;           // 关联对象存储地址信息
+                    SeqId = MinuteFreeze1_seq;              // 序号存储地址信息
+                    PeriodId = MinuteFreeze_period;         // 周期存储地址信息
+                    DepthId = MinuteFreeze_depth;           // 深度存储地址信息
+
+                    info->period_len = 24;
+                    info->depth_len = 31;
+                    break;
+
+                
+                case 0x50030000://小时冻结
+                case 0x50040000://日冻结
+                //case 0x50050000://结算日冻结
+                case 0x50060000://月冻结
+                //case 0x50070000://年冻结 （不要求，但需占用位置）
+                case 0x50080000://时区表切换冻结
+                case 0x50090000://日时段表切换冻结
+                case 0x500A0000://费率电价切换冻结
+                case 0x500B0000://阶梯切换冻结
+                    temp = (((oad & 0xFFFF0000) - 0x50030000) >> 16);
+                    SaveId = HourFreeze + temp;                    // 记录存储地址信息
+                    SaveDevice = RES_DEV_FLASH;
+                    SaveBlock = mbase_block_event_flash2;
+                    CaptureId = HourFreeze_oad + temp;             // 关联对象存储地址信息
+                    SeqId = HourFreeze_seq + temp;                 // 序号存储地址信息
+                    PeriodId = HourFreeze_period + temp;           // 周期存储地址信息
+                    DepthId = HourFreeze_depth + temp;             // 深度存储地址信息
+                    break;
+
+                case 0x50050000: //结算日冻结
+                    SaveId = BillFreeze;                    // 记录存储地址信息
+                    SaveDevice = RES_DEV_FLASH;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = BillFreeze_oad;             // 关联对象存储地址信息
+                    SeqId = BillFreeze_seq;                 // 序号存储地址信息
+                    PeriodId = BillFreeze_period;           // 周期存储地址信息
+                    DepthId = BillFreeze_depth;             // 深度存储地址信息
+                    break;
+
+
+                case 0x50110000://阶梯结算冻结
+                    SaveId = StepBillFreeze;                    // 记录存储地址信息
+                    SaveDevice = RES_DEV_FLASH;
+                    SaveBlock = mbase_block_event_flash2;
+                    CaptureId = StepBillFreeze_oad;             // 关联对象存储地址信息
+                    SeqId = StepBillFreeze_seq;                 // 序号存储地址信息
+                    PeriodId = StepBillFreeze_period;           // 周期存储地址信息
+                    DepthId = StepBillFreeze_depth;             // 深度存储地址信息
+                    break;
+
+                default:
+                    return -1;
+                    break;
+            }
+            
+        }
         break;
-    case 0x50040200:
-        SaveId = HourFreeze;            // 记录存储地址信息
-        SaveDevice = RES_DEV_FLASH;
-        SaveBlock = mbase_block_event_flash;
-        CaptureId = HourFreeze_oad;     // 关联对象存储地址信息
-        SeqId = HourFreeze_seq;       // 序号存储地址信息
-        PeriodId = HourFreeze_period;  // 周期存储地址信息
-        //info->record_head = record_head_t0; // 待调整 事件记录单元
-        break;
-    default:
-        return -1;
-        break;
+        default:
+            return -1;
+            break;
     }
+
 
     info->save_index = ((SaveDevice << 24) + (SaveBlock << 16) + SaveId);
     info->capture_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + CaptureId);
     info->sequence_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeqId);
-    info->period_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodId);
+
+    if (PeriodId)
+    {
+        info->period_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodId);
+    }
+    if (DepthId)
+    {
+        info->depth_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + DepthId);
+    }
+
     return 1;
 }
 

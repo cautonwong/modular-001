@@ -141,16 +141,36 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
     uint8_t i,num, maxnum, scheme, offset;
     uint8_t tempbuf[200],period_buf[3 * 8], depth_buf[1 + 2 * 15];
     uint8_t* p = buf;
-    uint16_t period, depth, OI;
-    uint16_t CaptureId, PeriodId, DepthId, CaptureLen, PeriodLen, DepthLen;
-    uint32_t index, oad;
+    uint16_t period, depth, OI, CaptureLen, PeriodLen, DepthLen;
+    uint32_t CaptureId, PeriodId, DepthId;
+    uint32_t oad;
 
+    struct record_storage_id_info_t  record_id_info;
+    int ret;
+
+    ret = get_record_id_info(id, &record_id_info);
+    if (ret <= 0)
+    {
+        return -1;
+    }
+
+    CaptureId = record_id_info.capture_index;
+    PeriodId = record_id_info.period_index;
+    DepthId = record_id_info.depth_index;
+    CaptureLen = record_id_info.capture_len;// 
+    PeriodLen = record_id_info.period_len;
+    DepthLen = record_id_info.depth_len;
+    maxnum = (CaptureLen - 1) / 4;
+
+
+#if 0
     CaptureId = frozen_obj.CaptureId;
     PeriodId = frozen_obj.PeriodId;
     DepthId = frozen_obj.DepthId;
     CaptureLen = frozen_obj.CaptureLen;  // 
     PeriodLen = frozen_obj.PeriodLen;
     DepthLen = frozen_obj.DepthLen;
+#endif
 
     OI = (uint16_t)(id >> 16);
     scheme = (uint8_t)((id >> 13) & 0x07); //方案号
@@ -159,7 +179,7 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
     memset(depth_buf, 0, sizeof(depth_buf));
     memset(tempbuf, 0, sizeof(depth_buf));
 
-    maxnum = (CaptureLen-1)/4;
+ 
     /*
     if (req->oad.elem.index != 0)
     {
@@ -237,13 +257,12 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
         }
         else
         {
-            if ((0 != scheme) || ((i != 0) && (depth_buf[0] > 0) && (depth != buf_to_uint16_lsb(depth_buf + 1))))   /*其他冻结 属性特征固定0,每个关联对象周期、深度必须一致*/
+            if ((0 != scheme) || ((i != 0) && (depth_buf[0] > 0) && (depth != buf_to_uint16_lsb(depth_buf ))))   /*其他冻结 属性特征固定0,每个关联对象周期、深度必须一致*/
             {
                 *dar = DAR_OTHERS_ERROR;
                 return -1;
             }
-            depth_buf[0]++;
-            offset = i * 2 + 1;
+            offset = i * 2;
         }
         uint16_to_buf_lsb(depth, depth_buf + offset);
     }
@@ -256,16 +275,16 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
     }
 #endif   
     // write  period
-    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodId);
-    nd_set_index(instance, index, &period_buf[0], PeriodLen);
+    //index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodId);
+    nd_set_index(instance, PeriodId, &period_buf[0], PeriodLen);
 
     // write  Capture
-    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + CaptureId);
-    nd_set_index(instance, index, &tempbuf[0], CaptureLen);
+    //index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + CaptureId);
+    nd_set_index(instance, CaptureId, &tempbuf[0], CaptureLen);
 
     // write  depth
-    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + DepthId);
-    nd_set_index(instance, index, &depth_buf[0], DepthLen);
+    //index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + DepthId);
+    nd_set_index(instance, DepthId, &depth_buf[0], DepthLen);
 
     dar = DAR_SUCCESS;
     return (p - buf);// 
@@ -280,9 +299,14 @@ int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf)
     {
         return -1;
     }
-    switch (id)
+    switch (id&0x0000FF00) //属性
     {
-    case 0x50020300://关联对象属性表
+    //case 0x50020300://关联对象属性表
+    //case 0x50030300://关联对象属性表
+    //case 0x50040300://关联对象属性表
+    //case 0x50050300://关联对象属性表
+    //case 0x50050300://关联对象属性表
+    case 0x00000300://关联对象属性表
     {
         uint8_t dar = DAR_SUCCESS;
         struct frozen_obj_t frozen_obj;
