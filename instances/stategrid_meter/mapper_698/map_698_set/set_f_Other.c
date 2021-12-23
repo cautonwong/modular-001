@@ -7,7 +7,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
 {    
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad,displayid;
-    uint8_t index,attribute,i,len,dispalyseque;
+    uint8_t index,attribute,i,len,dispalyseque,num=0;
     uint8_t* p = buf;
     uint32_t displayoad1,displayoad2,s_index=0;
     
@@ -26,17 +26,29 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
     switch (attribute)
     {
           case 0x02://显示对象列表
+                if(index == 0)
                 {
-                    uint32_t s_index = 0x00;
-                  
-                    p = p + 5;
+                    num = *(p+1);
+                    p = p + 2;
+                }
+                else
+                {
+                    num = 1;
+                }
+                for(i=0;i<num;i++)
+                {
+                    p = p + 3;
                     if(*p++ == 0)
                       len = 4;
                     else
                       len = 8;
                     mem_swap_cpy((uint8_t*)&displayoad1, p, 4);
+                    p = p + 4;
                     if(len == 8)
+                    {
                         mem_swap_cpy((uint8_t*)&displayoad2, p+5, 4);
+                        p = p + 5;
+                    }
                     displayid = display_oad_to_id(displayoad1, len);
                     if(oad == 0xF300)
                     {
@@ -56,6 +68,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                         nd_set_index(instance, s_index, &displayid, 2); 
                     else
                         nd_set_index(instance, s_index, &displayid, 2); 
+                    p = p + 2;
                 }
                 break;
           case 0x04://显示参数

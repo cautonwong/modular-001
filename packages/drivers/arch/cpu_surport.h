@@ -53,7 +53,7 @@ extern uint32 read_mcu_adc_measure_value(uint8 chl_type , int32 *adc_measure);
 extern void device_power_close(struct instance_t* instance);
 extern void device_power_open(struct instance_t* instance);
 extern void cpu_io_lowpower_cfg_chk(struct instance_t *instance);
-extern void cpu_sleep_manage(void);
+extern void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline);
 
 
 #define  DISABLE_ALL_INT()     __disable_irq();

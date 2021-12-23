@@ -1,6 +1,10 @@
 #include "nidavellir.h"
 #include "applications.h"
 #include "resource_tool.h"
+#include "target.h"
+
+#define     P_BACKLIGHT_ON      GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT |= 0x10; //推挽输出高
+#define     P_BACKLIGHT_OFF     GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT &=~0x10; //推挽输出低
 
 #if 1  //  GS
 
@@ -328,6 +332,17 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     
     if(mbase_control_block->lcd_poweron_all_dis_time > 0)   mbase_control_block->lcd_poweron_all_dis_time--;
+    
+    if(mbase_control_block->backlight_key_time > 0) mbase_control_block->backlight_key_time--;
+
+    if(mbase_control_block->backlight_key_time == 0)    
+    {
+        P_BACKLIGHT_OFF;
+    }
+    else
+    {
+        P_BACKLIGHT_ON;
+    }
 }
 
 // !!!在此app中不做IO操作!!!
@@ -389,8 +404,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
 
           break;
       case MSG_PAGE_KEY_UP:
-           
-          //Keydisplay(instance, pipeline);
+           Key_Display(instance, pipeline);
           break;
       case MSG_POWERON:
         //上电恢复参数

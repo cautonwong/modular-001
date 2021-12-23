@@ -264,6 +264,8 @@ int nidavellir_run_baremetal(struct instance_t* instance)
 
     fr_sw_rtc(instance, NULL, &mesg);
     
+    fr_sw_key(instance,NULL,&mesg);
+    
     fr_sw_ac_power(instance,NULL,&mesg);
 
     //处理事件标志组  事件驱动
@@ -310,7 +312,7 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     if(instance->ac_power_statue == AC_POWER_OFF)
     {
         cpu_io_lowpower_cfg_chk(instance);
-        cpu_sleep_manage();
+        cpu_sleep_manage(instance, pipeline);
     }
     
     return 1;

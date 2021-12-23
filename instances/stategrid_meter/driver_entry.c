@@ -134,7 +134,7 @@ void IO_Interrupt(void)
         key_keep_width = 0;
         
         //// 停电下按键消抖
-        //if(ANA->COMPOUT & ANA_STATUS_VDCINDROP)
+        if(ANA->COMPOUT & ANA_STATUS_VDCINDROP)
         {
              key_keep_flag = 0; // 避免停电下 tick被打开 发两次 按键消息
              if(ANA->COMPOUT & BIT2)//有电池
@@ -152,6 +152,7 @@ void IO_Interrupt(void)
                  }
              }
         }
+        fifoBuf_putByte(&irq_fifo, IRQ_PMU);
         PMU->IOAINTSTS = BIT2;
     }
 }
@@ -337,14 +338,77 @@ void cpu_io_lowpower_cfg_chk(struct instance_t* instance)
 }
 
 //此处放sleep函数，以及唤醒后的系统基本处理
-void cpu_sleep_manage(void)
+void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
 {
+    LCD_InitType lcd_init_para;
+	LCD_IOInitType lcd_io_para;
+    uint32 lcd_tmp[20] = {0,};
 
+    cm0_systick_init(0);
+    GPIO_InitType GPIO_InitStruct;
+    PMU_LowPWRTypeDef LowPower_InitStruct;
 
+    MISC_IRCmd(MISC_IREN_TX5, DISABLE);
+    TMR_INTConfig(TMR0, DISABLE);
+    TMR_INTConfig(TMR3, DISABLE);
+    TMR_Cmd(TMR0, DISABLE);
+    TMR_Cmd(TMR3, DISABLE);
+    UART_INTConfig(UART0, UART_INT_RX | UART_INT_TXDONE, DISABLE);
+    UART_INTConfig(UART3, UART_INT_RX | UART_INT_TXDONE, DISABLE);
+    UART_INTConfig(UART4, UART_INT_RX | UART_INT_TXDONE, DISABLE);
+    UART_INTConfig(UART5, UART_INT_RX | UART_INT_TXDONE, DISABLE);
+    
+    LCD->CTRL |= LCD_CTRL_EN;
+    MISC2->HCLKEN |= (uint32)BIT6;
+    memcpy((uint8*)(&LCD->FB[0]), (uint8 *)&lcd_tmp[0], sizeof(lcd_tmp));
+//    lcd_init(__NULL , POWER_OFF_MODE);
 
+    /*------------------ Forbidden all GPIOs ------------------*/
+    GPIO_InitStruct.GPIO_Mode = GPIO_Mode_FORBIDDEN;
+    GPIO_InitStruct.GPIO_Pin  = GPIO_Pin_All;
+    //GPIOA_Init(GPIOA, &GPIO_InitStruct);
+    GPIOBToF_Init(GPIOB, &GPIO_InitStruct);
+//    if (hfp_system_state.power_off_sencond > 5)
+    {
+        GPIOBToF_Init(GPIOC, &GPIO_InitStruct);
+    }
+    GPIOBToF_Init(GPIOD, &GPIO_InitStruct);
+    GPIOBToF_Init(GPIOE, &GPIO_InitStruct);
+    GPIOBToF_Init(GPIOF, &GPIO_InitStruct);
+    
+    GPIOA->OEN |= (BIT0|BIT1|BIT2|BIT3|BIT4|BIT5|BIT6|BIT7|
+                BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
+    GPIOA->IE &= ~(BIT0|BIT1|BIT3|BIT4|BIT5|BIT6|BIT7|
+                BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
+  
+  
+    GPIOA->OEN |=BIT14; 
+    GPIOA->IE |=BIT14;
+    GPIOA->DAT |= BIT2;
+    PMU_WakeUpPinConfig(GPIO_Pin_2, IOA_EDGEBOTH);   //使能外部IO口唤醒
+    PMU_ClearIOAINTStatus(GPIO_Pin_2);
+    PMU_INTConfig(PMU_INT_IOAEN, ENABLE);
+    PMU_WakeUpPinConfig(GPIO_Pin_8, IOA_DISABLE);
+    CORTEX_SetPriority_ClearPending_EnableIRQ(PMU_IRQn, 0); //优先级高
 
+    LowPower_InitStruct.AHBPeriphralDisable = PMU_AHB_ALL;
+    LowPower_InitStruct.LCDPower            = PMU_LCDPWER_OFF;
+    LowPower_InitStruct.APBPeriphralDisable = PMU_APB_ALL;
+    LowPower_InitStruct.BGPPower            = PMU_BGPPWR_OFF;
+    LowPower_InitStruct.COMP1Power          = PMU_COMP1PWR_ON;//PMU_COMP1PWR_OFF;
+    LowPower_InitStruct.COMP2Power          = PMU_COMP2PWR_OFF;
+    LowPower_InitStruct.AVCCPower           = PMU_AVCCPWR_OFF;
+    LowPower_InitStruct.TADCPower           = PMU_TADCPWR_OFF;
+    LowPower_InitStruct.VDCINDetector       = PMU_VDCINDET_ENABLE;
+    LowPower_InitStruct.VDDDetector         = PMU_VDDDET_DISABLE;
+    RTC_PLLDIVOutputCmd(DISABLE);
+    //MComp1Init();//电池状态监测初始化
+    WDT_Disable();
+    PMU_EnterSleep_LowPower(&LowPower_InitStruct);
 
-
+    Key_Display(instance, pipeline);
+  
+    Display(instance, pipeline);
 }
 
 

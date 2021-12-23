@@ -225,8 +225,8 @@
 
 //Flag.Power
 //Flag.Key
-#define		F_KeyDisp0			0x01
-#define		F_KeyDisp1			0x02
+//#define		F_KeyDisp0			0x01
+//#define		F_KeyDisp1			0x02
 #define		F_KeyDispay			0x04
 #define		F_KeyAwake			0x08
 //Flag.Disp
@@ -635,7 +635,6 @@ void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
 	
 	P_BACKLIGHT_ON;	//背光
-    //mbase_control_block->lcd_poweron_all_dis_time;
 	if((mbase_control_block->lcd_poweron_all_dis_time > 30) || (mbase_control_block->lcd_poweron_all_dis_time == 0))
 		mbase_control_block->lcd_poweron_all_dis_time_tick = 5;
     else
@@ -657,73 +656,61 @@ void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
 /***********************************************************************/
 void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-    unsigned char pageid[15]={0,};
+    uint16 pageid=0;
+    uint32_t    s_index = 0;
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     
-	if( mbase_control_block->Key & F_KeyDisp0 )
-	{
-		if(KeyPortCheck == 0)
-		{
-			//Delay_Xms(1);
-			if(KeyPortCheck == 0)
-				mbase_control_block->Key |= F_KeyDisp1;
-			else 
-				mbase_control_block->Key &= ~(F_KeyDisp0+F_KeyDisp1);
-		}
-		else
-			mbase_control_block->Key &= ~(F_KeyDisp0+F_KeyDisp1);
-	}
-	if( mbase_control_block->Key & F_KeyDisp1 )//按键显
-	{
-		mbase_control_block->Key &= ~(F_KeyDisp0+F_KeyDisp1);
-		Flag.Run |= F_Disp;
-		if( instance->ac_power_statue == AC_POWER_ON )
-			mbase_control_block->backlight_key_time = 60;//按键时,背光点亮
-		else
-		{
-			Flag.Disp &= ~F_DispStop;
-			if( ((mbase_control_block->Key & F_KeyAwake) == 0) && (Flag.Disp & F_DispOff) )
-			{
-				Flag.Disp &= ~F_DispPause;
-				mbase_control_block->Key |= F_KeyAwake;
-				Flag.Disp &= ~F_DispOff;
-				mbase_control_block->AutoPtr = 0xFF;
-				mbase_control_block->AutoInv = 0;
-                Init_LCD();
-				return;
-			}
-		}
+    Flag.Run |= F_Disp;
+    if( instance->ac_power_statue == AC_POWER_ON )
+        mbase_control_block->backlight_key_time = 60;//按键时,背光点亮
+    else
+    {
+        Flag.Disp &= ~F_DispStop;
+        if( ((mbase_control_block->Key & F_KeyAwake) == 0) && (Flag.Disp & F_DispOff) )
+        {
+            Flag.Disp &= ~F_DispPause;
+            mbase_control_block->Key |= F_KeyAwake;
+            Flag.Disp &= ~F_DispOff;
+            mbase_control_block->AutoPtr = 0xFF;
+            mbase_control_block->AutoInv = 0;
+            Init_LCD();
+            return;
+        }
+    }
 
-		if( (mbase_control_block->Key & F_KeyDispay) == 0 )
-		{
-			mbase_control_block->Key |= F_KeyDispay;
-			mbase_control_block->KeyPtr = 0xFF;
-		}
-		else
-		{
-            nd_get(instance, 0xF3010401, &mbase_control_block->lcd_keydis_list_num, 1);
-			if( mbase_control_block->lcd_keydis_list_num == 0 )
-				mbase_control_block->lcd_keydis_list_num = 1;
-		}
-		if( mbase_control_block->KeyPtr >= (mbase_control_block->lcd_keydis_list_num-1) )
-			mbase_control_block->KeyPtr = 0;
-        else
-			mbase_control_block->KeyPtr++;
-        nd_get(instance, 0xF3010201+mbase_control_block->KeyPtr, pageid, 15);
-		if( instance->ac_power_statue == AC_POWER_ON )
-		{
-            nd_get(instance, 0xF3010300, &mbase_control_block->KeyInv, 1);
-			if( mbase_control_block->KeyInv == 0 )
-				mbase_control_block->KeyInv = 5;
-		}
-		else
-				mbase_control_block->KeyInv = 30;
-	}
-	if( (mbase_control_block->Key & F_KeyDispay) && (mbase_control_block->KeyInv == 0) )//退出键显
+    if( (mbase_control_block->Key & F_KeyDispay) == 0 )
+    {
+        mbase_control_block->Key |= F_KeyDispay;
+        mbase_control_block->KeyPtr = 0xFF;
+    }
+    else
+    {
+        if(mbase_control_block->lcd_keydis_list_num == 0)
+            mbase_control_block->lcd_keydis_list_num = 1;
+    }
+
+    if( mbase_control_block->KeyPtr >= (mbase_control_block->lcd_keydis_list_num-1) )
+        mbase_control_block->KeyPtr = 0;
+    else
+        mbase_control_block->KeyPtr++;
+    
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + mbase_control_block->KeyPtr);
+    nd_get_index(instance, s_index, &pageid, 2); 
+    mbase_control_block->Page_ID = pageid;
+    
+    if( instance->ac_power_statue == AC_POWER_ON )
+    {
+        if( mbase_control_block->lcd_keydis_keep_sec == 0 )
+            mbase_control_block->lcd_keydis_keep_sec = 5;
+    }
+    else
+        mbase_control_block->lcd_keydis_keep_sec = 30;
+
+    if( (mbase_control_block->Key & F_KeyDispay) && (mbase_control_block->lcd_keydis_keep_sec == 0) )//退出键显
 	{
 		mbase_control_block->Key &= ~F_KeyDispay;
 		mbase_control_block->AutoPtr = 0xFF;
-		mbase_control_block->AutoInv = 0;
+		mbase_control_block->lcd_keydis_keep_sec = 0;
 		if( instance->ac_power_statue == AC_POWER_OFF )//按键显示结束后,进入掉电暂显
 		{
 			Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
@@ -1363,7 +1350,6 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
 /***********************************************************************/
 void Display(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-    P_BACKLIGHT_ON;	//背光
 	//获取显示项ID
     if(instance->ac_power_statue == AC_POWER_ON)
     {
