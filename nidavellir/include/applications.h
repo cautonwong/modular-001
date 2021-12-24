@@ -100,6 +100,12 @@ struct mbase_control_block_t
     uint8_t  power_dir;
     uint8_t  power_qn;
     
+    uint8_t  meter_cover_sta;
+    uint8_t  realy_err_move;
+    uint8_t  power_abnormal;
+    uint8_t  rtc_chip_abnormal;
+    uint8_t  meter_chip_abnormal;
+    
     uint8_t AutoPtr;    //轮显指针
     uint8_t AutoInv;
     uint8_t KeyPtr;
@@ -258,6 +264,7 @@ void dev_init(void);
 void irq_system_init(void);
 void irq_transform_to_instance(struct instance_t* instance);
 void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uint8_t chl_type);
+void IOStateCheck(struct instance_t* instance, struct pipeline_t* pipeline);
 
 extern const struct dev_info_t eeprom_dev;
 extern const struct dev_info_t nor_flash_dev;

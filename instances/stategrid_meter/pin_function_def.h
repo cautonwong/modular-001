@@ -96,6 +96,12 @@
 
 #define DISPLAY_KEY_GET_DIN()    *((uint32*)BITBAND_ADDR(GPIOA_STS,2))
 
+/*---------------------------------开表盖----------------------------------*/                              
+#define METER_COVER_INPUT()     {*((uint32*)GPIOA_IE) |= BIT(14); *((uint32*)GPIOA_OEN) |= BIT(14);}
+
+#define METER_COVER_GET_DIN()    *((uint32*)BITBAND_ADDR(GPIOA_STS,14))
+
+#define METER_COVER_OPEN_LEVE   1
 /*---------------------------------698 ESAM IO----------------------------------*/ 
 
 #define  ESAM_CS_LOW()    {*((uint32*)GPIOC_OEN) &= ~BIT(0); *((uint32*)GPIOC_IE) |= BIT(0); *((uint32*)BITBAND_ADDR(GPIOC_DAT,0)) = 0;}

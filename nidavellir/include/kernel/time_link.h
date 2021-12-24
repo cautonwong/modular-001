@@ -12,6 +12,7 @@ enum tick_time_id_t
     MODULE_TM,
     IR_TM,
     RELAY_TM,
+    METER_COVER_TM,
     TIME_OBJ_NUM,
 };
 

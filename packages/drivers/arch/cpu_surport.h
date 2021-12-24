@@ -71,7 +71,8 @@ extern void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pip
 #define  CTRL_FLS_BLOCK_ERASE   0x02
 #define  CTRL_FLS_TEST          0x03
 
-
+#define  EVENT_SET  0xAA
+#define  EVENT_RESET  0x55
 
 
 enum irq_en

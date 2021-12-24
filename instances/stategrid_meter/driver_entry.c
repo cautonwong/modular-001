@@ -16,6 +16,7 @@ extern void esam_698_init(void);
 
 static uint8_t fifo_buf[32];
 static struct fifo_t irq_fifo;
+static uint8_t meter_cover_cnt;
 
 const struct dev_info_t eeprom_dev=
 {
@@ -286,6 +287,8 @@ void irq_transform_to_instance(struct instance_t* instance)
     }
 }
 
+
+
 void dev_init(void)
 {
     mcu_main_power_on_config();
@@ -411,6 +414,62 @@ void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
     Display(instance, pipeline);
 }
 
+
+
+static uint8 IOState(void *ptr)
+{
+    if(METER_COVER_GET_DIN() == METER_COVER_OPEN_LEVE)
+    {
+        if(meter_cover_cnt < 50)
+        {
+            meter_cover_cnt++;
+        }
+    }
+    else
+    {
+        if(meter_cover_cnt > 0)
+        {
+            meter_cover_cnt--;
+        }
+    }
+    
+    return 1;
+}
+
+
+void IOStateCheckInit(void)
+{
+   struct tm_list_init_t tm;
+
+   tm.timeout = 2;
+   tm.tickpara = 0;
+   tm.tickfunc = IOState;
+   tm.tm_id = METER_COVER_TM;
+   tm.stoped = true;
+   
+   ndv_timer_create(&tm);
+
+   meter_cover_cnt = 0;
+
+}
+
+
+
+void IOStateCheck(struct instance_t* instance, struct pipeline_t* pipeline)
+{
+    
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    
+    METER_COVER_INPUT();
+    if(meter_cover_cnt==50)
+    {
+        mbase_control_block->meter_cover_sta = EVENT_SET;
+    }
+    else if(meter_cover_cnt==0)
+    {
+        mbase_control_block->meter_cover_sta = EVENT_RESET;
+    }
+}
 
 
 /*
