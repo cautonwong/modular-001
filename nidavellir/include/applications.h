@@ -87,6 +87,8 @@ struct mbase_control_block_t
     uint32_t voltage_ac;
     int32_t current_l;
     int32_t active_power;
+    int32_t active_avg_power;
+    uint32_t apparent_power;
     int32_t current_n;
     uint32_t frequency;
     int32_t power_factor;
@@ -115,6 +117,9 @@ struct mbase_control_block_t
     uint8_t commdisp;    //通讯符号显示
     uint8_t lcd_poweron_all_dis_time_tick;//全显倒计时
     
+    //运行状态字
+    uint16_t run_state[7];
+    
     dyn_cache_end
     //运行期更改&&掉电或定时保存&&上电需要IO请求的数据分区
     dyn_persistent_start
@@ -133,9 +138,14 @@ struct mbase_control_block_t
     uint32_t alarmmin; //跳闸延时(min)
     uint32_t limitmin; //限电时间(min)
     uint32_t imaxmin;  //大电流延时跳闸（min）
+    uint16_t cmd_dostate;  //控制命令执行状态字
+    uint16_t cmd_errstate;  //控制命令错误状态字
     
     uint8_t mac_suspend_state;  // mac挂起状态 协议或显示模块可调用。 true为挂起
     uint8_t key_state;  //秘钥状态，显示调用，true为公钥
+    
+    //report
+    uint32_t report_state;//跟随上报状态字
     
         //需量数据
     dyn_persistent_end
@@ -191,6 +201,8 @@ struct mbase_control_block_t
     uint8_t meterclr_event_recordflag; //记录标识*/ // 通过fifo传递
     uint8_t meterclr_event_resetflag; //复位标识
     uint8_t factor_mode; //工厂模式
+    
+    uint32_t battery_used_time; //电池使用时间
     
 };
 

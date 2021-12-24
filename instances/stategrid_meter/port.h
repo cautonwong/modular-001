@@ -418,7 +418,23 @@ enum block_parameter_item_id
                                   
 #define     Meter_Location1             675 //设备地理位置经度
 #define     Meter_Location2             676 //设备地理位置纬度
-#define     Meter_Location3             677 //设备地理位置高度      
+#define     Meter_Location3             677 //设备地理位置高度    
+                                  
+#define     Device_descriptor           679 //设备描述符
+#define     Factory_No                  680 //厂家代码
+#define     Version_SoftWare            681 //软件版本
+#define     Date_SoftWare               682 //软件版本日期
+#define     Version_HardWare            683 //硬件版本
+#define     Date_HardWare               684 //硬件版本日期
+#define     Extend_Info                 685 //扩展信息
+#define     Produced_Date               686 //生产日期
+#define     Subset_List                 687 //子设备列表
+#define     Protocol_List               688 //协议列表
+#define     FollowReport_en             689 //允许跟随上报
+#define     ActiveReport_en             690 //允许主动上报
+#define     Comm_Master_en              691 //允许与主站通讯
+#define     Report_channel              692 //上报通道
+                                  
                                   
 #define         MAX_FEE_NO                 12                                  
 

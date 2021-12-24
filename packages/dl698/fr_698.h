@@ -143,6 +143,40 @@ enum sec
 };
 
 
+enum unit_type_t
+{
+    unit_year      = 1,
+    unit_month     = 2,
+    unit_week      = 3,
+    unit_day       = 4,
+    unit_hour      = 5,
+    unit_minute    = 6,
+    unit_second    = 7,
+    unit_angle     = 8,   /**< 度 */
+    unit_tempture  = 9,   /**< 温度 */
+    unit_currency  = 10,  /**< 货币 */
+    unit_W         = 27,  /**< 有功功率,W */
+    unit_kW        = 28,  /**< 有功功率,kW */
+    unit_VA        = 29,  /**< 视在功率,VA */
+    unit_kVA       = 30,  /**< 视在功率,kVA */
+    unit_var       = 31,  /**< 无功功率,var */
+    unit_kvar      = 32,  /**< 无功功率,kvar */
+    unit_kWh       = 33,  /**< 有功电能,kWh */
+    unit_kVAh      = 34,  /**< 视在电能,kVAh */
+    unit_kvarh     = 35,  /**< 无功电能,kvarh */
+    unit_A         = 36,  /**< 电流（ I） */
+    unit_V         = 38,  /**< 电压（ U） */
+    unit_Hz        = 47,  /**< 频率 */
+    unit_percent   = 51,  /**< 百分比 % */
+    unit_byte      = 52,  /**< 字节 */
+    unit_price     = 54,  /**< 电价 */
+    unit_Ah        = 55,  /**< 安时 */
+                          
+    unit_ohters    = 254, /**< 其他单位 */
+    unit_undefined = 255  /**< 无单位、缺单位、计数 */
+};
+
+
 #if WIN32
 #define TEST_CASE_ID 0xFAFAFAFA
 #endif

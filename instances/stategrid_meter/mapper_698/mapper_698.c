@@ -207,6 +207,24 @@ const struct parameter_item_t  parameter_item[] =
     { Meter_Location1,     0x01,   10},//设备地理位置经度
     { Meter_Location2,     0x01,   10},//设备地理位置纬度
     { Meter_Location3,     0x01,   5 },//设备地理位置高度
+    
+    { Device_descriptor,   0x01,   32},//设备描述符
+    
+    { Factory_No,          0x01,    4}, //厂家代码
+    { Version_SoftWare,    0x01,    4}, //软件版本
+    { Date_SoftWare,       0x01,    6}, //软件版本日期
+    { Version_HardWare,    0x01,    4}, //硬件版本
+    { Date_HardWare,       0x01,    4}, //硬件版本日期
+    { Extend_Info,         0x01,    6}, //扩展信息
+    
+    { Produced_Date,       0x01,    7}, //生产日期
+//    { Subset_List,         0x05,    2}, //子设备列表(num+2*oi)
+    { Protocol_List,       0x01,   20}, //协议列表
+    { FollowReport_en,     0x01,    1}, //允许跟随上报
+    { ActiveReport_en,     0x01,    1}, //允许主动上报
+    { Comm_Master_en,      0x01,    1}, //允许与主站通讯
+    { Report_channel,      0x03,    4}, //上报通道
+
 };
 
 

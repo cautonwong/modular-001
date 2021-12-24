@@ -13,6 +13,26 @@ typedef struct
     uint8_t     len;        //长度
 }general_set4;
 
+const general_set4  set4300_table[] = 
+{
+     Device_descriptor,   0x0200,   0x02,   32,//设备描述符
+    
+     Factory_No,          0x0301,   0x02,    4, //厂家代码
+     Version_SoftWare,    0x0302,   0x02,    4, //软件版本
+     Date_SoftWare,       0x0303,   0x02,    6, //软件版本日期
+     Version_HardWare,    0x0304,   0x02,    4, //硬件版本
+     Date_HardWare,       0x0305,   0x02,    6, //硬件版本日期
+     Extend_Info,         0x0306,   0x02,    8, //扩展信息
+    
+     Produced_Date,       0x0400,   0x02,    7, //生产日期
+//     Subset_List,       0x0500,  0x05,    2, //子设备列表(num+2*oi)
+     Protocol_List,       0x0601,   0x02,   20, //协议列表
+     FollowReport_en,     0x0700,   0x01,    1, //允许跟随上报
+     ActiveReport_en,     0x0800,   0x01,    1, //允许主动上报
+     Comm_Master_en,      0x0900,   0x01,    1, //允许与主站通讯
+     Report_channel,      0x0A00,   0x03,    4, //上报通道
+};
+
 const general_set4  general_set4_talble[] =
 {
      Comm_Number,               0x4001,     0x02,   6,//表地址
@@ -113,6 +133,36 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
             {
                 return -1;
             }
+        }
+    }
+    return -1;
+}
+
+int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
+{
+    struct mbase_control_block_t* mbase_cb;
+    uint8_t i;
+    uint8_t* p = buf;
+    uint32_t addr=0;
+    uint16_t idl = 0;
+    
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    if(mbase_cb == NULL)
+    {
+        return -1;
+    }
+    
+    idl = (uint16_t)(id & 0x0000FFFF);
+    
+    for(i=0; i<sizeof(set4300_table)/sizeof(general_set4); i++)
+    {
+        if(idl == set4300_table[i].oad)
+        {
+            p = p + set4300_table[i].offset;
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + set4300_table[i].s_index);
+            nd_set_index(instance, addr, p, set4300_table[i].len); 
+            p = p + set4300_table[i].len;
+            return (p-buf);
         }
     }
     return -1;
@@ -417,6 +467,8 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
             else
                 return -1;
             break;
+        case 0x4300://设备信息
+            return set4300(instance, id, buf);
         default:
             break;
     }

@@ -11,6 +11,28 @@ typedef struct
     uint8_t     len;        //长度
 }general_get4;
 
+const general_get4  get4300_table[] = 
+{
+     Device_descriptor,   0x0200,   TYPE_visible_string,   32,//设备描述符
+    
+     Factory_No,          0x0301,   TYPE_visible_string,    4, //厂家代码
+     Version_SoftWare,    0x0302,   TYPE_visible_string,    4, //软件版本
+     Date_SoftWare,       0x0303,   TYPE_visible_string,    6, //软件版本日期
+     Version_HardWare,    0x0304,   TYPE_visible_string,    4, //硬件版本
+     Date_HardWare,       0x0305,   TYPE_visible_string,    6, //硬件版本日期
+     Extend_Info,         0x0306,   TYPE_visible_string,    8, //扩展信息
+    
+     Produced_Date,       0x0400,   TYPE_visible_string,    7, //生产日期
+//     Subset_List,       0x0500,  0x05,    2, //子设备列表(num+2*oi)
+     Protocol_List,       0x0600,   TYPE_visible_string,    20, //协议列表
+     Protocol_List,       0x0601,   TYPE_array,             20, //协议列表
+     FollowReport_en,     0x0700,   TYPE_bool,              1, //允许跟随上报
+     ActiveReport_en,     0x0800,   TYPE_bool,              1, //允许主动上报
+     Comm_Master_en,      0x0900,   TYPE_bool,              1, //允许与主站通讯
+     Report_channel,      0x0A00,   TYPE_array,             4, //上报通道
+};
+
+
 const general_get4  general_get4_talble[] =
 {
      Comm_Number,               0x4001,     TYPE_octet_string,      6,//表地址
@@ -37,6 +59,50 @@ const general_get4  general_get4_talble[] =
      Meter_Password,            0x4401,     TYPE_visible_string,    8,//应用连接密码
 };
 #define		get4num			sizeof(general_get4_talble)/sizeof(general_get4)
+
+
+int get4300_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
+{
+    uint16_t idl=0;
+    uint8_t i;
+    uint8_t* p = buf;
+    uint32_t addr = 0;
+    
+    idl = (uint16_t)(id & 0x0000FFFF);
+    
+    for(i=0; i< sizeof(get4300_table)/sizeof(general_get4); i++)
+    {
+        if(idl == get4300_table[i].oad)
+        {
+            *p++ = get4300_table[i].tag;
+            if(get4300_table[i].tag == TYPE_visible_string)
+            {
+                *p++ = get4300_table[i].len;
+            }
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + get4300_table[i].s_index);
+            nd_get_index(instance, addr, p, get4300_table[i].len); 
+            p = p + get4300_table[i].len;
+            return (p-buf);
+        }
+    }
+    if(idl == 0x0300)//版本信息
+    {
+        *p++ = TYPE_structure;
+        *p++ = 6;
+        for(i=0; i<6; i++)
+        {
+            *p++ = TYPE_visible_string;
+            *p++ = get4300_table[1+i].len;
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + get4300_table[1+i].s_index);
+            nd_get_index(instance, addr, p, get4300_table[1+i].len); 
+            p = p + get4300_table[1+i].len;
+        }
+        return (p-buf);
+    }
+    
+    return -1;
+}
+
 
 int general_get_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {
@@ -411,6 +477,9 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
             }
             else
                 return -1;
+            break;
+        case 0x4300:
+            return get4300_para(instance,  id,  buf);
             break;
         default:
             break;
