@@ -27,6 +27,7 @@ extern int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int GET_6_Collection(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int GET_7_Aggregate(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf);
+extern int SET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int GET_e_Monitor(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf);
@@ -224,6 +225,9 @@ const struct parameter_item_t  parameter_item[] =
     { ActiveReport_en,     0x01,    1}, //允许主动上报
     { Comm_Master_en,      0x01,    1}, //允许与主站通讯
     { Report_channel,      0x03,    4}, //上报通道
+    
+    { ImaxProtectValue,    0x01,    4}, //继电器拉闸电流门限值
+    { ImaxProtectTime,     0x01,    2}, //超电流门限保护延时时间
 
 };
 
@@ -674,6 +678,8 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
             return SET_4_Parameter(instance, id, buf);
         case 0x5:// 事件
             return SET_5_Frozen(instance, id, buf);
+        case 0x8:// 控制类
+            return SET_8_Control(instance, id, buf);
         case 0xf://其他
             return SET_f_Other(instance, id, buf);
         default:

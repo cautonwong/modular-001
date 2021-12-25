@@ -7,9 +7,9 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct 
     struct mbase_control_block_t* mbase_cb;
     uint8_t i;
     uint16_t OI;
-    uint8_t attr_index;
+    uint8_t attr_index, attribute;
     int16_t len=-1;
-    uint8_t *ptr;
+    uint8_t *ptr, *p=buf;
     int32_t tmp=0;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
@@ -18,6 +18,23 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct 
     }
     OI = (uint16_t)(id>>16);
     attr_index = (uint8_t)(id&0x000000FF);
+    attribute = (unsigned char)((id & 0x0000FF00) >> 8);
+    
+    if(attribute == 0x03)
+    {
+        *p++ = TYPE_Scaler_Unit;
+        *p++ = -2;
+        *p++ = unit_kWh;
+        return (p-buf);
+    }
+    else if(attribute == 0x05)
+    {
+        *p++ = TYPE_Scaler_Unit;
+        *p++ = -4;
+        *p++ = unit_kWh;
+        return (p-buf);
+    }
+    
     switch(OI)
     {
         case 0x0000:

@@ -2603,6 +2603,9 @@
                     <name>$PROJ_DIR$\..\mapper_698\map_698_set\set_5_Frozen.c</name>
                 </file>
                 <file>
+                    <name>$PROJ_DIR$\..\mapper_698\map_698_set\set_8_Control.c</name>
+                </file>
+                <file>
                     <name>$PROJ_DIR$\..\mapper_698\map_698_set\set_f_Other.c</name>
                 </file>
             </group>

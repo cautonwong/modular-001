@@ -435,6 +435,8 @@ enum block_parameter_item_id
 #define     Comm_Master_en              691 //允许与主站通讯
 #define     Report_channel              692 //上报通道
                                   
+#define     ImaxProtectValue            693 //继电器拉闸电流门限值
+#define     ImaxProtectTime             694 //超电流门限保护延时时间
                                   
 #define         MAX_FEE_NO                 12                                  
 
