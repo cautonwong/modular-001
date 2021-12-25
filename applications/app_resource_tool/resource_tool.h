@@ -56,7 +56,7 @@ struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uin
 int16_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size);
 int16_t nd_set_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size);
 int16_t get_block_frist_addr(struct instance_t *instance, uint8_t device_name, uint8_t block_name, uint32_t *addr);
-uint32_t* add_inside_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t inside_block_name, uint32_t block_size);
+uint32_t* add_inside_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t inside_block_name, uint32_t block_size, uint32_t offset);
 void* nd_malloc(struct instance_t* instance, uint8_t block_name, uint32_t size);
 uint32_t* add_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size);
 int8_t add_device(struct instance_t* instance, uint8_t device_name, const struct dev_info_t* dev, uint32_t sector);

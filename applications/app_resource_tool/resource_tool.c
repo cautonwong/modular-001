@@ -272,7 +272,7 @@ uint32_t *add_block(struct instance_t* instance, uint8_t device_name, uint8_t bl
     return (uint32_t *)block->first_addr;       
 }
 
-uint32_t *add_inside_block(struct instance_t* instance, uint8_t device_name,uint8_t block_name, uint8_t inside_block_name, uint32_t block_size)
+uint32_t *add_inside_block(struct instance_t* instance, uint8_t device_name,uint8_t block_name, uint8_t inside_block_name, uint32_t block_size, uint32_t offset)
 {
     struct block_device_t* device = NULL;
     struct block_device_t* ram_device = NULL;
@@ -295,7 +295,7 @@ uint32_t *add_inside_block(struct instance_t* instance, uint8_t device_name,uint
     inside_block = __nd_malloc(resource_block->first_addr, &resource_block->used, sizeof(struct resource_block_t), resource_block->size);
     res_conditions_true(inside_block == NULL, NULL);
 
-    inside_block->first_addr = block->first_addr + block->used;
+    inside_block->first_addr = block->first_addr + offset;
     inside_block->name = inside_block_name;
     init_list_head(&inside_block->sibling);
     inside_block->size = block_size;

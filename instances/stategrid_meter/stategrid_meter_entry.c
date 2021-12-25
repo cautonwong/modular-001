@@ -265,13 +265,13 @@ int baremetal_instance_entry_main(int argc, char** argv)
     //mbase分三个区
     //mbase_block_static
     size_t mbase_block_static_size = offsetof(struct mbase_control_block_t, static_section_end) - offsetof(struct mbase_control_block_t, static_section_start);
-    uint32_t static_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_static, mbase_block_static_size);
+    uint32_t static_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_static, mbase_block_static_size, 0x00);
     //mbase_block_cache
     size_t mbase_block_cache_size = offsetof(struct mbase_control_block_t, cache_section_end) -  offsetof(struct mbase_control_block_t, cache_section_start);
-    uint32_t cache_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_cache, mbase_block_cache_size);
+    uint32_t cache_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_cache, mbase_block_cache_size, mbase_block_static_size);
     //mbase_block_persistent
     size_t mbase_block_persistent_size = offsetof(struct mbase_control_block_t, persistent_section_end) - offsetof(struct mbase_control_block_t, persistent_section_start);
-    uint32_t persistent_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_persistent, mbase_block_persistent_size);
+    uint32_t persistent_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_persistent, mbase_block_persistent_size, mbase_block_static_size + mbase_block_cache_size);
 
     //注册EPROM  
     add_device(instance, RES_DEV_EEPROM, &eeprom_dev,0x00);
