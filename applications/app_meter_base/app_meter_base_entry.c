@@ -370,6 +370,7 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
 int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     size_t mbase_block_persistent_size = offsetof(struct mbase_control_block_t, persistent_section_start) - offsetof(struct mbase_control_block_t, persistent_section_end);
+    size_t mbase_block_static_size = offsetof(struct mbase_control_block_t, static_section_end) - offsetof(struct mbase_control_block_t, static_section_start);
     uint32_t addr = 0;
     //cmd len data cmd 接入校验
     //调用领域层完成业务  要反映用例场景
@@ -432,7 +433,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
       case MSG_POWERON:
         //上电恢复参数
         get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_static, &addr);//RAM对应的地址
-        nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, (uint8_t*)addr, mbase_block_persistent_size); //将EPROM中的数据恢复到RAM;  
+        nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, (uint8_t*)addr, mbase_block_static_size); //将EPROM中的数据恢复到RAM;  
         //上电需要恢复数据
         //获取对应的RAM地址
         get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
