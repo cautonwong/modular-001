@@ -26,13 +26,13 @@ int16_t test_flash_event_manager_info(uint16_t id, uint32_t* addr, uint16_t* siz
 				*addr = 0x00;
 				for (k = 0x00; k < i; k++)
 				{
-					*addr += flash_event_manager_item[k].len;
+					*addr += flash_event_manager_item[k].len + 0x02;
 				}
 			}
 
 			if (size != NULL)
 			{
-				*size = flash_event_manager_item[i].len;
+				*size = flash_event_manager_item[i].len + 0x02;
 			}
 
 			return 0x00;

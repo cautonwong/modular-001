@@ -24,10 +24,7 @@
     <ClCompile Include="..\..\..\packages\kernel\fifo.c" />
     <ClCompile Include="..\..\..\packages\kernel\list.c" />
     <ClCompile Include="..\..\..\packages\kernel\log.c" />
-    <ClCompile Include="..\..\..\packages\kernel\nidavellir.c" />
-    <ClCompile Include="..\..\..\packages\kernel\pipeline.c" />
     <ClCompile Include="..\..\..\packages\kernel\rtc.c" />
-    <ClCompile Include="..\..\..\packages\kernel\tasklet.c" />
     <ClCompile Include="..\..\..\packages\kernel\utils.c" />
     <ClCompile Include="..\resource_tool.c" />
     <ClCompile Include="..\test_cases\test_nd_get.c" />

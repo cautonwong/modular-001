@@ -12,12 +12,6 @@
     <ClCompile Include="..\..\..\packages\kernel\bitarithm.c">
       <Filter>kernel</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\kernel\nidavellir.c">
-      <Filter>kernel</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\packages\kernel\pipeline.c">
-      <Filter>kernel</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\packages\kernel\fifo.c">
       <Filter>kernel</Filter>
     </ClCompile>
@@ -25,9 +19,6 @@
       <Filter>kernel</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\packages\kernel\rtc.c">
-      <Filter>kernel</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\packages\kernel\tasklet.c">
       <Filter>kernel</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\packages\kernel\utils.c">

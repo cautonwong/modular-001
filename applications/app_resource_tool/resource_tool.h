@@ -39,7 +39,6 @@ struct log_manager_t
     uint16_t num;
     uint16_t unit_size;
     uint16_t max_num;
-    uint16_t check_sum;
 };
 
 struct circular_info_t

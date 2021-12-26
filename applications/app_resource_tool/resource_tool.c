@@ -551,6 +551,7 @@ uint32_t get_curr_mark(const struct dev_info_t* dev, uint32_t addr)
     res_conditions_true((driver == NULL) || (driver->dev_read == NULL), 0xFFFFFFFF);
 
     driver->dev_read(dev, addr, 0x04, buf);
+    //return buf_to_uint32_lsb(buf);
     return buf_to_uint32_msb(buf);
 }
 
@@ -753,9 +754,11 @@ int16_t search_circular(struct instance_t* instance, const struct dev_info_t* de
             return 0x00;  //直接返回
         case 0x01:  //序号二分查找
             tempinfo.offset = 0x01;
+            //tempinfo.offset = 0x00;
             return __search_circular(info, manager, &tempinfo, search_mid_way);
         case 0x02: //时间二分查找
             tempinfo.offset = 0x06;
+            //tempinfo.offset = 0x04;
             return __search_circular(info, manager, &tempinfo, search_mid_way);
         case 0x03: //时间枚举法查找
             tempinfo.offset = 0x04;
@@ -798,10 +801,8 @@ int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf,
     //读管理区
     driver02 = device02->dev->dev_driver_ops;
     res_conditions_true((driver02 == NULL) || (driver02->dev_read == NULL) || (driver02->dev_write == NULL), -1);
-    res_conditions_true(0x00 > driver02->dev_read(device02->dev, block02->first_addr + addr02, 
-        sizeof(struct log_manager_t), (uint8_t*)&manager), -1);
-
-    if (0xA5A5 + manager.r_ptr + manager.num + manager.unit_size + manager.w_ptr != manager.check_sum)
+    if (0x00 > verify_data(block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
+        sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02, device02->dev))
     {
         manager.max_num = depth;
         manager.unit_size = unit_size;
@@ -838,10 +839,8 @@ int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf,
     {
         manager.r_ptr = 0x00;
     }
-    manager.check_sum = 0xA5A5 + manager.num + manager.unit_size + manager.w_ptr + manager.r_ptr;
-    res_conditions_true(0x00 > driver02->dev_write(device02->dev, block02->first_addr + addr02, 
-        sizeof(struct log_manager_t), (uint8_t*)&manager), -1);
-
+    res_conditions_true(0x00 > update_verify(block02->first_addr + addr02, 0x00, (uint8_t*)&manager, 
+        sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02, device02->dev), -1);
     return unit_size;
 }
 
@@ -878,9 +877,8 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
 
         driver02 = device02->dev->dev_driver_ops;
         res_conditions_true((driver02 == NULL) || (driver02->dev_read == NULL), -1);
-        res_conditions_true(0x00 > driver02->dev_read(device02->dev, block02->first_addr + addr02, sizeof(struct log_manager_t), (uint8_t*)&manager), -1);
-        res_conditions_true(0xA5A5 + manager.num + manager.unit_size + manager.w_ptr + manager.r_ptr != manager.check_sum, -1);
-
+        res_conditions_true(0x00 > verify_data(block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
+            sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02, device02->dev), -1);
         info->unit_size = manager.unit_size;
         info->valid_num = manager.num;
         info->read_ptr = manager.r_ptr;
@@ -914,11 +912,9 @@ int nd_log_clean(struct instance_t* instance, uint32_t index)
     struct block_device_t* device01 = NULL, * device02 = NULL;
     const struct driver_ops_t* driver02 = NULL;
     struct resource_block_t* block01 = NULL, * block02 = NULL;
-    struct log_manager_t manager;
-    uint32_t addr02 = 0x00;
-    uint32_t len02 = 0x00;
+    uint32_t addr02 = 0x00, len02 = 0x00;
+    uint8_t buf[20];
 
-    memset((uint8_t*)&manager, 0x00, sizeof(struct log_manager_t));
     device01 = look_up_device(instance, (uint8_t)(index >> 24));//查找设备  
     res_conditions_true(device01 == NULL, -1);
     //查找块
@@ -931,9 +927,10 @@ int nd_log_clean(struct instance_t* instance, uint32_t index)
     res_conditions_true((block02 == NULL) || (block02->hook == NULL), -1);
     block02->hook((uint16_t)index, &addr02, &len02, NULL);
 
+    memset(buf, 0x00, 20);
     driver02 = device02->dev->dev_driver_ops;
     res_conditions_true((driver02 == NULL) || (driver02->dev_write == NULL), -1);
-    res_conditions_true(0x00 > driver02->dev_write(device02->dev, block02->first_addr + addr02, sizeof(struct log_manager_t), (uint8_t*)&manager), -1);
+    res_conditions_true(0x00 > driver02->dev_write(device02->dev, block02->first_addr + addr02, len02, buf), -1);
 
     return 1;
 }

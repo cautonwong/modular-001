@@ -140,11 +140,35 @@ int test_resource_setup(void** state)
 
     uint8_t* buf = nd_malloc(instance, control_block_cache, 4);
     fifoBuf_init(&instance->pipe_rtc, buf, 4);
-
+#if 0
+    ////////////////////////////申请一个mbase应用的BLOCK = 04/////////////////////////////////////////////
+    if (NULL == add_block(instance, RES_DEV_RAM, mbase_control_block_name, 8 * 1024))
+    {
+        return -1;
+    }
+    //mbase分三个区
+    //mbase_block_static
+    size_t mbase_block_static_size = offsetof(struct mbase_control_block_t, static_section_end) - offsetof(struct mbase_control_block_t, static_section_start);
+    uint32_t static_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_static, mbase_block_static_size);
+    //mbase_block_cache
+    size_t mbase_block_cache_size = offsetof(struct mbase_control_block_t, cache_section_end) - offsetof(struct mbase_control_block_t, cache_section_start);
+    uint32_t cache_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_cache, mbase_block_cache_size);
+    //mbase_block_persistent
+    size_t mbase_block_persistent_size = offsetof(struct mbase_control_block_t, persistent_section_end) - offsetof(struct mbase_control_block_t, persistent_section_start);
+    uint32_t persistent_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_persistent, mbase_block_persistent_size);
+#endif
     //注册EPROM  
     add_device(instance, RES_DEV_EEPROM, &eeprom_dev,0x00);
     //注册FLASH
     add_device(instance, RES_DEV_FLASH, &nor_flash_dev,4096);
+#if 0
+    //申请一块参数保存区的EPROM区域
+    add_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, mbase_block_static_size);
+    uint32_t addr = 0x00;
+    //上电恢复参数
+    get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_static, &addr);//RAM对应的地址
+    nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, (uint8_t*)addr, mbase_block_static_size); //将EPROM中的数据恢复到RAM;  
+#endif // 0
 
     *state = instance;
     return 0;
