@@ -113,6 +113,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         if(relayon_type == 0)   mbase_cb->sta |= F_RemoteGaoJing0;
                         else if(relayon_type == 1)   mbase_cb->sta |= F_RemoteGaoJing1;
                     }
+                    return (p-buf);
                     //if()    mbase_control_block->imaxmin = ;   //大电流延时时间赋值
                     break;
                 case 0x82://合闸
@@ -124,12 +125,15 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     if(method == 0x83)
                     {
                         mem_swap_cpy(password, p+3, 8);//判断密码
+                        p = p + 3;
                     }
                     if(*p == 0) 
                         mbase_cb->sta |= F_RemoteRelayOnAllow;  //合闸允许
                     else
                         mbase_cb->sta |= F_RemoteRelayOnDirect; //直接合闸
+                    p++;
                     mbase_cb->sta &= ~F_RemoteRelayOff;
+                    return (p-buf);
                     break;
                 default:
                     break;

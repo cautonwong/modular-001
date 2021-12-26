@@ -86,17 +86,19 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
             cache->wr += 4;
             //fr_serve_one_object(instance, pipeline, mesg);
             //data
-            len = axdr_get_len(fifo->buf_ptr + fifo->rd);
-            cache->wr++;
-            dar_offset = cache->wr;
-            p[dar_offset] = dar;
-            if (data_len = fr_action_one_object(instance, pipeline, mesg) < 0)
+            //len = axdr_get_len(fifo->buf_ptr + fifo->rd);
+            //cache->wr++;
+            //dar_offset = cache->wr;
+            //p[dar_offset] = dar;
+            data_len = fr_action_one_object(instance, pipeline, mesg);
+            if (data_len < 0)
             {
                 p[dar_offset]  = DAR_OTHERS_ERROR;
                 return DAR_OTHERS_ERROR;
             }
-            p[dar_offset] = dar;
-            cache->wr += data_len;
+            //p[dar_offset] = dar;
+            //cache->wr += data_len;
+            fifoBuf_update_rd(fifo, data_len);
             
             if(ActionThenGetRequestNormalList == ctx->choice)
             {
