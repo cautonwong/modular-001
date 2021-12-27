@@ -197,10 +197,10 @@
 #define    LostCurrentEndL1          96  //A相电能表失流事件结束 
 #define    LostCurrentEndL2          97  // B相电能表失流事件结束 
 #define    LostCurrentEndL3          98  // C相电能表失流事件结束 
-#define    OverCurrentL1             99  // A相电能表过流事件 
+//#define    OverCurrentL1             99  // A相电能表过流事件 
 #define    OverCurrentL2             100 // B相电能表过流事件 
 #define    OverCurrentL3             101 // C相电能表过流事件 
-#define    OverCurrentEndL1          102 // A相电能表过流事件结束 
+//#define    OverCurrentEndL1          102 // A相电能表过流事件结束 
 #define    OverCurrentEndL2          103 // B相电能表过流事件结束 
 #define    OverCurrentEndL3          104 // C相电能表过流事件结束 
 #define    MissCurrentL1             105 // A相电能表断流事件 
@@ -266,7 +266,50 @@
 #define    remote_alarm_flag            164 //远程告警命令true-触发告警
 #define    battery1_under2v8            165 //时钟电池欠压
 #define    battery2_under4v8            166 //停抄电池欠压
-  
+//------------------------事件ID 新定义
+enum record_flag_id_t
+{
+    //顺序间隔不能改变
+    //class24
+    OverCurrentAS = 11,             //  0x3005    A过流发生 
+    OverCurrentAE = 12,             //  0x3005    A过流结束 
+
+    PowerOffS                    ,  //  0x3011    电能表掉电事件                                               
+    PowerOffE                    ,  //  0x3011    电能表掉电事件                                               
+    MeterWrS                     ,  //  0x3012    电能表编程事件                                              
+    MeterWrE                     ,  //  0x3012    电能表编程事件    
+    MeterClrS                    ,  //  0x3013    电能表清零事件                                                        
+    EventClrS                    ,  //  0x3015    电能表事件清零事件                                
+    SetTimeS                     ,  //  0x3016    电能表校时事件                                    
+    DayTabWrS                    ,  //  0x3017    电能表时段表编程事件                                        
+    SeasonTabWrS                 ,  //  0x3018    电能表时区表编程事件                                
+    WeekTabWrS                   ,  //  0x3019    电能表周休日编程事件                                              
+    BillDayWrS                   ,  //  0x301A    电能表结算日编程事件  
+    CoverOpenS                   ,  //  0x301B    电能表开盖事件                                      
+    CoverOpenE                   ,  //  0x301B    电能表开盖事件 
+    SwitchOffS                   ,  //  0x301F    电能表跳闸事件                                                                           
+    SwitchOnS                    ,  //  0x3020    电能表合闸事件                                          
+    HolidayWrS                   ,  //  0x3021    电能表节假日编程事件                                                
+    ActCombWrS                   ,  //  0x3022    电能表有功组合方式编程事件                                            
+    FeeTabWrS                    ,  //  0x3024    电能表费率参数表编程事件                                    
+    StepTabWrS                   ,  //  0x3025    电能表阶梯表编程事件                                           
+    SecretKeyWrS                 ,  //  0x3026    电能表密钥更新事件 
+    ErrPlugCardS                 ,  //  0x3027    电能表异常插卡事件                                           
+    RechargeS                    ,  //  0x3028    电能表购电记录                                       
+    RefundS                      ,  //  0x3029    电能表退费记录  
+    SwitchErrS                   ,  //  0x302B    电能表负荷开关误动作事件                                               
+    SwitchErrE                   ,  //  0x302B    电能表负荷开关误动作事件                                            
+    PowerAbnormalS               ,  //  0x302C    电能表电源异常事件 
+    PowerAbnormalE               ,  //  0x302C    电能表电源异常事件 
+    RTCErrS                      ,  //  0x302E    电能表时钟故障事件 
+    RTCErrE                      ,  //  0x302E    电能表时钟故障事件 
+    EmuErrS                      ,  //  0x302F    电能表计量芯片故障事件
+    EmuErrE                      ,  //  0x302F    电能表计量芯片故障事件
+    BroadcastTimeS               ,  //  0x303C    广播校时事件 
+    ZeroLineErrS                 ,  //  0x3040    零线电流异常事件  
+    ZeroLineErrE                 ,  //  0x3040    零线电流异常事件   
+};
+
 //冻结     需连续
 #define    MinuteFreeze1                170     //分钟冻结记录方案1
 #define    MinuteFreeze2                171     //分钟冻结记录方案2
@@ -292,24 +335,24 @@
 //-----------------------------------------------------------------------
 
 //mbase_block_parameter  E2P存储ID------开始
-//从201后开始  前200用于冻结或事件记录的存储id，e2p管理区id 与记录id
-enum block_parameter_item_id
+//从201后开始  前200用于冻结或事件记录的存储id，e2p管理区id 
+enum block_parameter_item_id_t
 {
     //-----关联对象列表 存储EE块号
-    //冻结关联对象  冻结相关所以顺序不能变
-    MinuteFreeze_oad        =        300,      // 分钟冻结关联对象
-    HourFreeze_oad          =        301,      // 小时冻结关联对象
-    DayFreeze_oad           =        302,      // 日冻结关联对象
-    BillFreeze_oad          =        303,      //结算日冻结   
-    MonthFreeze_oad         =        304,      //月冻结    
-    YearFreeze_oad          =        305,      //年冻结 （不要求，但需占用位置） 
-    SeasonTabCutFreeze_oad  =        306,      //时区表切换冻结 
-    DayTabCutFreeze_oad     =        307,      //日时段表切换冻结 
-    FeePriceCutFreeze_oad   =        308,      //费率电价切换冻结 
-    StepCutFreeze_oad       =        309,      //阶梯切换冻结 
-    StepBillFreeze_oad      =        310,      //阶梯结算冻结 
-    InstantFreeze_oad       =        311,      //瞬时冻结 
-    //冻结周期                       312
+    //冻结关联对象  冻结相关所有顺序不随意改变
+    MinuteFreeze_oad        =        300, // 分钟冻结关联对象
+    HourFreeze_oad          =        301, // 小时冻结关联对象
+    DayFreeze_oad           =        302, // 日冻结关联对象
+    BillFreeze_oad          =        303, //结算日冻结   
+    MonthFreeze_oad         =        304, //月冻结    
+    YearFreeze_oad          =        305, //年冻结 （不要求，但需占用位置） 
+    SeasonTabCutFreeze_oad  =        306, //时区表切换冻结 
+    DayTabCutFreeze_oad     =        307, //日时段表切换冻结 
+    FeePriceCutFreeze_oad   =        308, //费率电价切换冻结 
+    StepCutFreeze_oad       =        309, //阶梯切换冻结 
+    StepBillFreeze_oad      =        310, //阶梯结算冻结 
+    InstantFreeze_oad       =        311, //瞬时冻结 
+    //冻结周期   顺序不随意改变  
     MinuteFreeze_period     =        313, //分钟冻结 周期   3*8   每种方案3个字节，第一个字节为0，表示该周期值无效，非零值表示该周期值有效，后面2个字节表示周期值
     HourFreeze_period       =        314, //小时冻结 周期   3
     DayFreeze_period        =        315, //日冻结 周期   3
@@ -322,7 +365,7 @@ enum block_parameter_item_id
     StepCutFreeze_period    =        322, //阶梯切换冻结 冻结 周期   3
     StepBillFreeze_period   =        323, //阶梯结算冻结 冻结 周期   3
     InstantFreeze_period    =        324, //瞬时冻结 冻结 周期   3
-    //冻结深度                       325
+    //冻结深度    顺序不随意改变
     MinuteFreeze_depth      =        326, //分钟冻结 深度   2*8 
     HourFreeze_depth        =        327, //小时冻结 深度   2
     DayFreeze_depth         =        328, //日冻结 深度   2
@@ -335,7 +378,7 @@ enum block_parameter_item_id
     StepCutFreeze_depth     =        335, //阶梯切换冻结冻结 深度   2
     StepBillFreeze_depth    =        336, //阶梯结算冻结冻结 深度   2
     InstantFreeze_depth     =        337, //瞬时冻结冻结 深度   2
-    //冻结记录序号                   338
+    //冻结记录序号  顺序不随意改变 
     MinuteFreeze1_seq       =        339, //分钟冻结记录方案1 记录序号
     MinuteFreeze2_seq       =        340, //分钟冻结记录方案2 记录序号
     MinuteFreeze3_seq       =        341, //分钟冻结记录方案3 记录序号
@@ -348,7 +391,7 @@ enum block_parameter_item_id
     DayFreeze_seq           =        348, //日冻结    记录序号
     BillFreeze_seq          =        349, //月冻结    记录序号
     MonthFreeze_seq         =        350, //月冻结    记录序号
-    YearFreeze_seq          =        351, //年冻结 （不要求，但需占用位置）冻结    记录序号
+    YearFreeze_seq          =        351, //年冻结 冻结    记录序号 （不要求，但需占用位置）
     SeasonTabCutFreeze_seq  =        352, //时区表切换冻结冻结    记录序号
     DayTabCutFreeze_seq     =        353, //日时段表切换冻结冻结    记录序号
     FeePriceCutFreeze_seq   =        354, //费率电价切换冻结冻结    记录序号
@@ -358,11 +401,67 @@ enum block_parameter_item_id
 
 
 
-    //事件关联对象
-    OverCurrentL1_oad       =        400,      // A相电能表过流事件 关联对象
+    //事件关联对象 顺序不随意改变 
+    OverCurrentAS_oad                   ,   //关联对象    电能表A相过流事件
+    PowerOffS_oad                       ,   //关联对象    电能表掉电事件            
+    MeterWrS_oad                        ,   //关联对象    电能表编程事件            
+    MeterClrS_oad                       ,   //关联对象    电能表清零事件            
+    EventClrS_oad                       ,   //关联对象    电能表事件清零事件        
+    SetTimeS_oad                        ,   //关联对象    电能表校时事件            
+    DayTabWrS_oad                       ,   //关联对象    电能表时段表编程事件      
+    SeasonTabWrS_oad                    ,   //关联对象    电能表时区表编程事件      
+    WeekTabWrS_oad                      ,   //关联对象    电能表周休日编程事件      
+    BillDayWrS_oad                      ,   //关联对象    电能表结算日编程事件  
+    CoverOpenS_oad                      ,   //关联对象    电能表开盖事件            
+    SwitchOffS_oad                      ,   //关联对象    电能表跳闸事件            
+    SwitchOnS_oad                       ,   //关联对象    电能表合闸事件            
+    HolidayWrS_oad                      ,   //关联对象    电能表节假日编程事件      
+    ActCombWrS_oad                      ,   //关联对象    电能表有功组合方式编程事件
+    FeeTabWrS_oad                       ,   //关联对象    电能表费率参数表编程事件  
+    StepTabWrS_oad                      ,   //关联对象    电能表阶梯表编程事件      
+    SecretKeyWrS_oad                    ,   //关联对象    电能表密钥更新事件 
+    ErrPlugCardS_oad                    ,   //关联对象    电能表异常插卡事件        
+    RechargeS_oad                       ,   //关联对象    电能表购电记录            
+    RefundS_oad                         ,   //关联对象    电能表退费记录  
+    SwitchErrS_oad                      ,   //关联对象    电能表负荷开关误动作事件  
+    PowerAbnormalS_oad                  ,   //关联对象    电能表电源异常事件 
+    RTCErrS_oad                         ,   //关联对象    电能表时钟故障事件 
+    EmuErrS_oad                         ,   //关联对象    电能表计量芯片故障事件
+    BroadcastTimeS_oad                  ,   //关联对象    广播校时事件 
+    ZeroLineErrS_oad                    ,   //关联对象    零线电流异常事件 
 
-    //事件记录序号                  
-    OverCurrentL1_seq       =        450, // A相电能表过流事件 记录序号
+
+
+    //事件记录序号 顺序不随意改变               
+    OverCurrentAS_seq                   ,   //记录序号  电能表A相过流事件
+    PowerOffS_seq                       ,   //记录序号  电能表掉电事件            
+    MeterWrS_seq                        ,   //记录序号  电能表编程事件            
+    MeterClrS_seq                       ,   //记录序号  电能表清零事件            
+    EventClrS_seq                       ,   //记录序号  电能表事件清零事件        
+    SetTimeS_seq                        ,   //记录序号  电能表校时事件            
+    DayTabWrS_seq                       ,   //记录序号  电能表时段表编程事件      
+    SeasonTabWrS_seq                    ,   //记录序号  电能表时区表编程事件      
+    WeekTabWrS_seq                      ,   //记录序号  电能表周休日编程事件      
+    BillDayWrS_seq                      ,   //记录序号  电能表结算日编程事件  
+    CoverOpenS_seq                      ,   //记录序号  电能表开盖事件            
+    SwitchOffS_seq                      ,   //记录序号  电能表跳闸事件            
+    SwitchOnS_seq                       ,   //记录序号  电能表合闸事件            
+    HolidayWrS_seq                      ,   //记录序号  电能表节假日编程事件      
+    ActCombWrS_seq                      ,   //记录序号  电能表有功组合方式编程事件
+    FeeTabWrS_seq                       ,   //记录序号  电能表费率参数表编程事件  
+    StepTabWrS_seq                      ,   //记录序号  电能表阶梯表编程事件      
+    SecretKeyWrS_seq                    ,   //记录序号  电能表密钥更新事件 
+    ErrPlugCardS_seq                    ,   //记录序号  电能表异常插卡事件        
+    RechargeS_seq                       ,   //记录序号  电能表购电记录            
+    RefundS_seq                         ,   //记录序号  电能表退费记录  
+    SwitchErrS_seq                      ,   //记录序号  电能表负荷开关误动作事件  
+    PowerAbnormalS_seq                  ,   //记录序号  电能表电源异常事件 
+    RTCErrS_seq                         ,   //记录序号  电能表时钟故障事件 
+    EmuErrS_seq                         ,   //记录序号  电能表计量芯片故障事件
+    BroadcastTimeS_seq                  ,   //记录序号  广播校时事件 
+    ZeroLineErrS_seq                    ,   //记录序号  零线电流异常事件 
+    //以上不能改变顺序
+
 
 
                          
@@ -378,8 +477,44 @@ enum block_parameter_item_id
 
 
 
+//mbase_block_parameter E2P存储ID------结束                           
+                                  
+#define     Comm_Number                 900 //表地址
+#define     Meter_Number                901 //表号
+#define     User_Number                 902 //客户编号
+#define     Meter_Num                   903 //计量元件数
+#define     SeasonTable_Changetime      904 //两套时区切换时间
+#define     DayTable_Changetime         905 //两套时段切换时间
+#define     SeasonDay_Para              906 //时区时段参数（年时区数、日时段表数、日时段数、费率数、公共假日数）
+#define     SecretKey_Num               911 //秘钥总条数
+#define     HoliDay_Table               912 //公共假日表，10张，每张6字节
+#define     Weekend                     922 //周休日特征字
+#define     WeekendFee                  923 //周休日采用费率号
+#define     Season_Table0               924 //当前套时区表，≤14
+#define     Season_Table1               938 //备用套时区表，≤14
+#define     Day_Table00                 942 //当前套日时段表数据 ≤8
+#define     Day_Table10                 950 //备用套日时段表数据 ≤8
+#define     Meter_CT                    958 //CT
+#define     Meter_PT                    959 //PT
+#define     Pulse_Width                 960 //脉冲宽度
+#define     ASCII_AssetsMan             961 //资产管理编码
+#define     ASCII_Un                    962 //额定电压
+#define     ASCII_Ib                    963 //额定电流
+#define     ASCII_Imax                  964 //最大电流
+#define     ASCII_AccuracyClass1        965 //有功准确度等级
+#define     Meter_Const1                966 //有功脉冲常数
+#define     ASCII_MeterType             967 //电能表型号
+#define     MeterRunWord                968 //电能表运行特征字
+#define     SoftWareNo                  969 //软件备案号
+#define     Measure_Mode                970 //有功组合特征字
+#define     Balance_Time                971 //结算日
+#define     Meter_Password              974 //应用连接密码     
 
+#define     Meter_Location1             975 //设备地理位置经度
+#define     Meter_Location2             976 //设备地理位置纬度
+#define     Meter_Location3             977 //设备地理位置高度      
 
+#define         MAX_FEE_NO              12                                  
 
 
 

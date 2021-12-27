@@ -16,7 +16,7 @@ int get_frozen_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, stru
     struct record_storage_id_info_t  record_id_info;
     int ret;
 
-    ret = get_record_id_info(oad, &record_id_info);
+    ret = get_record_id_info(instance, oad, &record_id_info);
     if (ret <= 0)
     {
         return -1;

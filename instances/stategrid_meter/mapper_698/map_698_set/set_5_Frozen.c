@@ -148,7 +148,7 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
     struct record_storage_id_info_t  record_id_info;
     int ret;
 
-    ret = get_record_id_info(id, &record_id_info);
+    ret = get_record_id_info(instance, id, &record_id_info);
     if (ret <= 0)
     {
         return -1;
@@ -162,7 +162,7 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
     DepthLen = record_id_info.depth_len;
     maxnum = (CaptureLen - 1) / 4;
 
-
+ 
 #if 0
     CaptureId = frozen_obj.CaptureId;
     PeriodId = frozen_obj.PeriodId;

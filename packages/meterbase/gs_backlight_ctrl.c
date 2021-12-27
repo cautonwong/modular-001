@@ -53,7 +53,7 @@ const struct alarm_t alarm_control[] =
     { 0x00020000, OverVoltageL2 },           /**< 过压 */
     { 0x00020000, OverVoltageL3 },           /**< 过压 */
                                              
-    { 0x00040000, OverCurrentL1 },           /**< 过流 */
+    { 0x00040000, OverCurrentAS },           /**< 过流 */
     { 0x00040000, OverCurrentL2 },           /**< 过流 */
     { 0x00040000, OverCurrentL3 },           /**< 过流 */
                                              

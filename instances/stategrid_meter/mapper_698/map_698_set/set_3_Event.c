@@ -47,7 +47,7 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
         uint32_t oad_tmp;
 
         struct record_storage_id_info_t info;
-        int ret = get_record_id_info(0x30050700, &info);
+        int ret = get_record_id_info(instance,0x30050700, &info);
         if (ret < 0)
         {
             return -1;

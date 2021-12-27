@@ -267,15 +267,18 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
         fifoBuf_getData(pipeline->in_queue, payload, mesg->len);
         switch (mesg->id)
         {
-            case OverCurrentL1:         //过流事件发生
+            case OverCurrentAE:         //过流事件结束
+            case OverCurrentAS:         //过流事件发生
                 Oad = 0x30050700;
-                mode = START_MODE;                
+                mode = START_MODE + (mesg->id - OverCurrentAE);
                 break;
-            case OverCurrentEndL1:      //过流事件结束
-                Oad = 0x30050700;
-                mode = END_MODE;
+ 
+            case CoverOpenE:            //开盖事件结束
+            case CoverOpenS:            //开盖事件发生
+                Oad = 0x301B0200;
+                mode = START_MODE + (mesg->id - OverCurrentAE);
                 break;
-          
+
             case InstantFreeze:         //瞬时冻结
                 Oad = 0x50030200;
                 mode = FRZ_1;
@@ -321,7 +324,7 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
         }
         //以下部分共用
         //获取 存储地址信息
-        ret = get_record_id_info(Oad, &record_id_info);
+        ret = get_record_id_info(instance, Oad, &record_id_info);
         if (ret <= 0)
         {
             return -1;

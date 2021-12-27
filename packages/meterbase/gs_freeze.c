@@ -1,24 +1,11 @@
 #include "nidavellir.h"
 #include "applications.h"
+#include "gs_record.h"
 
-extern void set_recordflag(struct pipeline_t* task, uint16_t RecordId);
+//extern void set_recordflag(struct pipeline_t* task, uint16_t RecordId);
 
 
-void send_recordflag_mesg(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg, uint16_t FlagId, uint8_t* payload)
-{
 
-    mesg->from = kernel;
-    mesg->to = pid_resource_manager;
-    mesg->ctrl = 0;
-    mesg->qos = 0;
-    mesg->len = 4;
-    mesg->id = FlagId;
-    mesg->oad_n = 1;
-
-    set_recordflag(task, mesg->id);
-
-    send_mesg(instance, NULL, mesg, payload);
-}
 
 
 
@@ -173,6 +160,7 @@ int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct mess
     minute_freeze_judge(instance, task, mesg);
     hour_freeze_judge(instance, task, mesg);
     day_freeze_judge(instance, task, mesg);
+    month_freeze_judge(instance, task, mesg);
 }
 
 

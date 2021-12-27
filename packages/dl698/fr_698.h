@@ -31,7 +31,7 @@
 
 #define get_OAD_OIA1(oad)       (uint8_t)((oad&0xF0000000)>>28)
 #define get_OAD_Class(oad)      (uint8_t)((oad&0xF0000000)>>28)
-#define get_OAD_Attribute(oad)  (uint8_t)((oad&0x00000F00)>>8)
+#define get_OAD_Attribute(oad)  (uint8_t)((oad&0x00001F00)>>8)
 #define get_OAD_Schem(oad)      (uint8_t)(0x07 & (uint8_t)(oad >> 13))
 #define get_OAD_OI(oad)         ((uint16_t)((oad&0xFFFF0000) >> 16))
 

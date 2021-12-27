@@ -12,7 +12,7 @@ int _record_sel_9(struct instance_t* instance, uint32_t oad, uint8_t* buf, struc
     uint32_t rcsd_src[50];//待调整   源关联对象
     int len = -1;
     
-    int ret = get_record_id_info(oad, &record_id_info);
+    int ret = get_record_id_info(instance, oad, &record_id_info);
     
     if(ret > 0)
     {

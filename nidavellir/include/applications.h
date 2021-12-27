@@ -171,27 +171,21 @@ struct mbase_control_block_t
     //uint8_t battery1_under2v8; //时钟电池欠压
     //uint8_t battery2_under4v8; //停抄电池欠压
 
-    uint8_t record_flag[40];  //事件或冻结记录存储标志 
-    uint8_t active_flag[40];  //事件或冻结记录存储标志 
+    uint8_t record_flag[50];  //事件或冻结记录存储标志 
+    uint8_t active_flag[50];  //事件或冻结记录存储标志 
     uint32_t minute_freeze_index[8]; //分钟冻结8个序号 
 
-    uint8_t cover_event_duration_para;
-    uint8_t cover_event_duration;
-    uint8_t cover_flag; 
-    uint8_t cover_event_activeflag; 
-    uint8_t cover_event_recordflag; 
-    uint8_t cover_event_resetflag;  
+    uint8_t CoverOpen_status;      //开盖标志
+    uint8_t CoverOpen_duration_para;
+    uint8_t CoverOpen_duration;
+    uint32_t CoverOpen_acc_time; //开盖累计时间
 
-    uint32_t cover_accumulate_time;
-    //static:电能表芯片故障事件-判定延时时间
-    uint8_t emu_err_event_duration_para;
-    //dyn:当前芯片故障状态持续时间
-    uint8_t emu_err_event_duration;    
-    uint8_t emu_err_flag; // 当前计量芯片故障标志
-    uint8_t emu_err_event_activeflag; /*发生标识*/
-    uint8_t emu_err_event_recordflag; /*记录标识*/
-    uint8_t emu_err_event_resetflag;  /*复位标识*/
-    uint32_t emu_err_accumulate_time; /*累计时间*/
+    uint8_t EmuErr_status;         //当前计量芯片故障标志
+    uint8_t EmuErr_duration_para;
+    uint8_t EmuErr_duration;
+    uint32_t EmuErr_acc_time;    //累计时间
+
+
     uint8_t i_over_event_report_type; //过流事件上报标识
     uint8_t i_over_event_report_mode; //过流事件上报方式
     uint8_t i_over_event_duration_para;//static:电能表过流事件-判定延时时间 */ 
@@ -292,6 +286,7 @@ struct record_storage_id_info_t
     uint16_t capture_len;   // 关联对象存储长度
     uint16_t period_len;    // 周期存储长度
     uint16_t depth_len;     // 深度存储长度
+    uint32_t acc_time;     // 事件累计时间
     const uint32_t *record_head;  // 记录头
 };
 
@@ -312,7 +307,7 @@ struct format_conversion_t
 };
 
 
-extern int get_record_id_info(uint32_t oad, struct record_storage_id_info_t* info);
+extern int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_storage_id_info_t* info);
 extern int record_change_format(uint8_t *des,  uint8_t* src, uint32_t oad, enum format_conversion_mode mode);
 extern int clr_record(struct instance_t* instance, uint32_t oad);
 

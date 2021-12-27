@@ -17,7 +17,7 @@ int _record_sel_2(struct instance_t* instance, uint32_t oad, uint8_t* buf, struc
     uint8_t *p = (buf + 3); // 预留3个字节条数
     int ret = 0;
     
-    ret = get_record_id_info(oad, &record_id_info);
+    ret = get_record_id_info(instance, oad, &record_id_info);
     if(ret < 0)
     {
         return -1;
