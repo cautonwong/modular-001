@@ -472,11 +472,6 @@ enum block_parameter_item_id_t
 
 
 
-
-
-
-
-
 //mbase_block_parameter E2P存储ID------结束                           
                                   
 #define     Comm_Number                 900 //表地址
@@ -509,70 +504,29 @@ enum block_parameter_item_id_t
 #define     Measure_Mode                970 //有功组合特征字
 #define     Balance_Time                971 //结算日
 #define     Meter_Password              974 //应用连接密码     
-
+                                  
 #define     Meter_Location1             975 //设备地理位置经度
 #define     Meter_Location2             976 //设备地理位置纬度
-#define     Meter_Location3             977 //设备地理位置高度      
+#define     Meter_Location3             977 //设备地理位置高度    
+                                  
+#define     Device_descriptor           979 //设备描述符
+#define     Factory_No                  980 //厂家代码
+#define     Version_SoftWare            981 //软件版本
+#define     Date_SoftWare               982 //软件版本日期
+#define     Version_HardWare            983 //硬件版本
+#define     Date_HardWare               984 //硬件版本日期
+#define     Extend_Info                 985 //扩展信息
+#define     Produced_Date               986 //生产日期
+#define     Subset_List                 987 //子设备列表
+#define     Protocol_List               988 //协议列表
+#define     FollowReport_en             989 //允许跟随上报
+#define     ActiveReport_en             990 //允许主动上报
+#define     Comm_Master_en              991 //允许与主站通讯
+#define     Report_channel              992 //上报通道
 
-#define         MAX_FEE_NO              12                                  
+#define     ImaxProtectValue            993 //继电器拉闸电流门限值
+#define     ImaxProtectTime             994 //超电流门限保护延时时间
 
-
-
-//mbase_block_parameter E2P存储ID------结束                           
-                                  
-#define     Comm_Number                 600 //表地址
-#define     Meter_Number                601 //表号
-#define     User_Number                 602 //客户编号
-#define     Meter_Num                   603 //计量元件数
-#define     SeasonTable_Changetime      604 //两套时区切换时间
-#define     DayTable_Changetime         605 //两套时段切换时间
-#define     SeasonDay_Para              606 //时区时段参数（年时区数、日时段表数、日时段数、费率数、公共假日数）
-#define     SecretKey_Num               611 //秘钥总条数
-#define     HoliDay_Table               612 //公共假日表，10张，每张6字节
-#define     Weekend                     622 //周休日特征字
-#define     WeekendFee                  623 //周休日采用费率号
-#define     Season_Table0               624 //当前套时区表，≤14
-#define     Season_Table1               638 //备用套时区表，≤14
-#define     Day_Table00                 642 //当前套日时段表数据 ≤8
-#define     Day_Table10                 650 //备用套日时段表数据 ≤8
-#define     Meter_CT                    658 //CT
-#define     Meter_PT                    659 //PT
-#define     Pulse_Width                 660 //脉冲宽度
-#define     ASCII_AssetsMan             661 //资产管理编码
-#define     ASCII_Un                    662 //额定电压
-#define     ASCII_Ib                    663 //额定电流
-#define     ASCII_Imax                  664 //最大电流
-#define     ASCII_AccuracyClass1        665 //有功准确度等级
-#define     Meter_Const1                666 //有功脉冲常数
-#define     ASCII_MeterType             667 //电能表型号
-#define     MeterRunWord                668 //电能表运行特征字
-#define     SoftWareNo                  669 //软件备案号
-#define     Measure_Mode                670 //有功组合特征字
-#define     Balance_Time                671 //结算日
-#define     Meter_Password              674 //应用连接密码     
-                                  
-#define     Meter_Location1             675 //设备地理位置经度
-#define     Meter_Location2             676 //设备地理位置纬度
-#define     Meter_Location3             677 //设备地理位置高度    
-                                  
-#define     Device_descriptor           679 //设备描述符
-#define     Factory_No                  680 //厂家代码
-#define     Version_SoftWare            681 //软件版本
-#define     Date_SoftWare               682 //软件版本日期
-#define     Version_HardWare            683 //硬件版本
-#define     Date_HardWare               684 //硬件版本日期
-#define     Extend_Info                 685 //扩展信息
-#define     Produced_Date               686 //生产日期
-#define     Subset_List                 687 //子设备列表
-#define     Protocol_List               688 //协议列表
-#define     FollowReport_en             689 //允许跟随上报
-#define     ActiveReport_en             690 //允许主动上报
-#define     Comm_Master_en              691 //允许与主站通讯
-#define     Report_channel              692 //上报通道
-                                  
-#define     ImaxProtectValue            693 //继电器拉闸电流门限值
-#define     ImaxProtectTime             694 //超电流门限保护延时时间
-                                  
 #define         MAX_FEE_NO                 12                                  
 
 #endif
