@@ -70,6 +70,10 @@ void ndv_uart0_tx(void)
         mcu_uart_send_byte(tx_data, 0);
         uart_dev[0].tx_time_out = UART_TX_TIME_OUT;
     }
+    else
+    {
+        mcu_uart_send_enable(0, 0);
+    }
 }
 
 
@@ -89,8 +93,12 @@ void ndv_uart1_tx(void)
     if (fifoBuf_getUsed(uart_dev[1].tx_fifo) > 0)
     {
         tx_data = fifoBuf_getByte(uart_dev[1].tx_fifo);
-        mcu_uart_send_byte(tx_data, 0);
+        mcu_uart_send_byte(tx_data, 1);
         uart_dev[1].tx_time_out = UART_TX_TIME_OUT;
+    }
+    else
+    {
+        mcu_uart_send_enable(0, 1);
     }
 }
 
@@ -111,8 +119,12 @@ void ndv_uart2_tx(void)
     if (fifoBuf_getUsed(uart_dev[2].tx_fifo) > 0)
     {
         tx_data = fifoBuf_getByte(uart_dev[2].tx_fifo);
-        mcu_uart_send_byte(tx_data, 0);
+        mcu_uart_send_byte(tx_data, 2);
         uart_dev[2].tx_time_out = UART_TX_TIME_OUT;
+    }
+    else
+    {
+        mcu_uart_send_enable(0, 2);
     }
 }
 
@@ -133,8 +145,12 @@ void ndv_uart3_tx(void)
     if (fifoBuf_getUsed(uart_dev[3].tx_fifo) > 0)
     {
         tx_data = fifoBuf_getByte(uart_dev[3].tx_fifo);
-        mcu_uart_send_byte(tx_data, 0);
+        mcu_uart_send_byte(tx_data, 3);
         uart_dev[3].tx_time_out = UART_TX_TIME_OUT;
+    }
+    else
+    {
+        mcu_uart_send_enable(0, 3);
     }
 }
 
@@ -154,8 +170,12 @@ void ndv_uart4_tx(void)
     if (fifoBuf_getUsed(uart_dev[4].tx_fifo) > 0)
     {
         tx_data = fifoBuf_getByte(uart_dev[4].tx_fifo);
-        mcu_uart_send_byte(tx_data, 0);
+        mcu_uart_send_byte(tx_data, 4);
         uart_dev[4].tx_time_out = UART_TX_TIME_OUT;
+    }
+    else
+    {
+        mcu_uart_send_enable(0, 4);
     }
 }
 
@@ -175,8 +195,12 @@ void ndv_uart5_tx(void)
     if (fifoBuf_getUsed(uart_dev[5].tx_fifo) > 0)
     {
         tx_data = fifoBuf_getByte(uart_dev[5].tx_fifo);
-        mcu_uart_send_byte(tx_data, 0);
+        mcu_uart_send_byte(tx_data, 5);
         uart_dev[5].tx_time_out = UART_TX_TIME_OUT;
+    }
+    else
+    {
+        mcu_uart_send_enable(0, 5);
     }
 }
 
@@ -196,8 +220,12 @@ void ndv_uart6_tx(void)
     if (fifoBuf_getUsed(uart_dev[6].tx_fifo) > 0)
     {
         tx_data = fifoBuf_getByte(uart_dev[6].tx_fifo);
-        mcu_uart_send_byte(tx_data, 0);
+        mcu_uart_send_byte(tx_data, 6);
         uart_dev[6].tx_time_out = UART_TX_TIME_OUT;
+    }
+    else
+    {
+        mcu_uart_send_enable(0, 6);
     }
 }
 
@@ -233,7 +261,6 @@ uint8 uart_time_process(void *tickpara)
     if((chl->tx_time_out == 0) && (chl->rx_time_out == 0))
     {
         mcu_uart_recive_enable(1 , chl->mcu_uart_index);
-        mcu_uart_send_enable(0, chl->mcu_uart_index);
         if(chl->chl_type == UART_RS4851_CHL)
         {
             RS485_RCV_EN();
@@ -250,7 +277,6 @@ uint8 uart_time_process(void *tickpara)
         send_data = fifoBuf_getByte(chl->tx_fifo);
         mcu_uart_send_enable(1, chl->mcu_uart_index);
         mcu_uart_send_byte(send_data , chl->mcu_uart_index);
-        mcu_uart_recive_enable(0 , chl->mcu_uart_index);
     }
 
     return true;
