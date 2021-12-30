@@ -3,6 +3,10 @@
 
 extern uint8_t read_esam_info(uint8_t *esam_info, uint8_t index);
 
+const uint8_t name_rs485[5] = {'R', 'S', '4', '8', '5'};
+const uint8_t name_ir[5] = {'I', 'N', 'F', 'R', 'A'};
+const uint8_t name_plc[3] = {'P', 'L', 'C'};
+const uint8_t name_relay[5] = {'R', 'E', 'L', 'A', 'Y'};
 
 int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
 {    
@@ -23,8 +27,104 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
     index = (unsigned char)(id & 0x000000FF);
     attribute = (unsigned char)((id & 0x0000FF00) >> 8);    //属性
    
+    if((oad == 0xF201) || (oad == 0xF202) || (oad == 0xF209) || (oad == 0xF205) || (oad == 0xF207))
+    {
+        if(attribute == 0x03)//设备对象数量
+        {
+            *p++ = TYPE_unsigned;
+            *p++ = 1;
+            return (p-buf);
+        }
+    }
+    
     switch (oad)
     {
+        case 0xF201://rs485
+        case 0xF202://红外 
+        case 0xF209://载波模块
+            if(attribute == 0x02)
+            {
+                if(index >1 )   return -1;
+                if(index == 0x00)
+                {
+                    *p++ = TYPE_array;
+                    *p++ = 1;
+                }
+                *p++ = TYPE_structure;
+                *p++ = 3;
+                *p++ = TYPE_visible_string;
+                if(oad == 0xF201)
+                {
+                    *p++ = 5;
+                    memcpy(p, name_rs485, 5);
+                    p = p + 5;
+                }
+                else if(oad == 0xF202)
+                {
+                    *p++ = 5;
+                    memcpy(p, name_ir, 5);
+                    p = p + 5;
+                }
+                else
+                {
+                    *p++ = 3;
+                    memcpy(p, name_plc, 3);
+                    p = p + 3;
+                }
+                *p++ = TYPE_COMDCB;
+                if(oad == 0xF201)   *p++ = mbase_cb->Baut_rs485;    //485波特率
+                else if(oad == 0xF202)   *p++ = 2;    //红外波特率
+                else if(oad == 0xF209)   *p++ = mbase_cb->Baut_plc;    //载波波特率
+                *p++ = 0x02;    //偶效验
+                *p++ = 0x08;    //8个数据位
+                *p++ = 0x01;    //1个停止位
+                *p++ = 0x00;    //无流控
+                if(oad == 0xF209)
+                {
+                    *p++ = 0;
+                }
+                else
+                {
+                    *p++ = TYPE_enum;
+                    *p++ = 0;
+                }
+            }
+            else
+                return -1;
+            return (p-buf);
+        case 0xF205://继电器输出
+            if(attribute == 0x02)
+            {
+                *p++ = TYPE_array;
+                *p++ = 1;
+                *p++ = TYPE_structure;
+                *p++ = 4;
+                *p++ = TYPE_visible_string;
+                *p++ = 5;
+                memcpy(p, name_relay, 5);
+                p = p + 5;
+                *p++ = TYPE_enum;
+                *p++ = mbase_cb->relay_true_sta;
+                *p++ = TYPE_enum;
+                *p++ = mbase_cb->relay_ctl_mode;
+                *p++ = TYPE_enum;
+                *p++ = 0;
+            }
+            else
+                return -1;
+            return (p-buf);
+            break;
+        case 0xF207://多功能端子
+            if(attribute == 0x02)
+            {
+                *p++ = TYPE_array;
+                *p++ = 1;
+                *p++ = TYPE_enum;
+                *p++ = mbase_cb->MulPortMode;
+            }
+            else
+                return -1;
+            return (p-buf);
         case 0xF300://循环显示
         case 0xF301://按键显示
             switch (attribute)

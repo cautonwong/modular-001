@@ -67,6 +67,13 @@ struct mbase_control_block_t
     uint16_t lcd_nopower_key_keep_sec;/*显示查看显示时间 */
     uint16_t lcd_checkdis_all_keep_sec;/*显示查看全屏显示时间 */
     
+    uint8_t Baut_rs485; //485波特率
+    uint8_t Baut_plc;   //载波波特率
+    
+    uint8_t MulPortMode;    //多功能口模式
+    
+    uint8_t relay_ctl_mode; //继电器控制方式（0：脉冲式，1：保持式）
+    
     static_end     
     //运行期更改 && 掉电不保存 && 上电不需要IO请求的区域 && 初始化时直接清零
     dyn_cache_start   
@@ -83,6 +90,7 @@ struct mbase_control_block_t
     uint32_t   TOUPrice;//费率电价
     uint32_t   STEPPrice;//阶梯电价
     uint8_t   StepNum;//阶梯数
+    uint8_t    Fee;
           
     uint32_t voltage_ac;
     int32_t current_l;
@@ -125,6 +133,10 @@ struct mbase_control_block_t
     
     //运行状态字
     uint16_t run_state[7];
+    
+    uint8_t dar;//DAR错误
+    
+    uint8_t relay_true_sta;//继电器实际状态
     
     dyn_cache_end
     //运行期更改&&掉电或定时保存&&上电需要IO请求的数据分区

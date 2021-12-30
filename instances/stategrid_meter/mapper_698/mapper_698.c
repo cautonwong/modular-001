@@ -21,6 +21,7 @@ extern int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* bu
 
 extern int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf);
+extern int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf);
 
 extern int GET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf);
@@ -339,6 +340,21 @@ const struct parameter_item_t  parameter_item[] =
     
     { ImaxProtectValue,    0x01,    4}, //继电器拉闸电流门限值
     { ImaxProtectTime,     0x01,    2}, //超电流门限保护延时时间
+    
+    { KeyDisp_Num,         0x01,    1}, //按键显示屏数
+    { KeyDisp_MaxNum,      0x01,    1}, //按键显示屏数
+    { KeyDisp_Inv,         0x01,    2}, //按键显示等待时间
+    { AutoDisp_Num,        0x01,    1}, //循环显示屏数
+    { AutoDisp_MaxNum,     0x01,    1}, //循环显示屏数
+    { AutoDisp_Inv,        0x01,    2}, //循环显示等待时间
+
+    { AllDisp_Tmr,         0x01,    1}, //全显时间
+    { BlkLed_Key_Tmr,      0x01,    2}, //按键背光点亮时间
+    { BlkLed_Com_Tmr,      0x01,    2}, //液晶查看背光点亮时间
+    { DispOn_Pd_Tmr,       0x01,    2}, //无电按键显示驻留时间
+    { Disp_EnergyDot,      0x01,    1}, //电能小数
+    { Disp_PowerDot,       0x01,    1}, //功率小数
+    { DispMean12Show,      0x01,    1}, //液晶12字符意义
 
 };
 
@@ -811,6 +827,8 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
             return ACTION_4_Parameter(instance, id, buf);
         case 0x8://控制类
             return ACTION_8_Parameter(instance, id, buf);
+        case 0xf://其他
+            return ACTION_F_Other(instance, id, buf);
         default:
             break;
         }

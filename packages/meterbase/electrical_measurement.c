@@ -6,7 +6,7 @@
 #include "cpu_surport.h"
 #include "pin_function_def.h"
 
-#define MAX_VOLTAGE  40000 //400v
+#define MAX_VOLTAGE  4000 //400v
 #define MIN_VOLTAGE  500 //50v
 #define UN_VOLTAGE   220000 //220v
 #define MAX_CURRENT  120000 //120A
@@ -138,13 +138,14 @@ void meterchip_adj_self(void)
 void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)&ctx;
+    //struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)&ctx;
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     int32_t temp = 0;
    
     //读计量芯片电压
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , URMS , 3 , &temp);
     
-    mbase_control_block->voltage_ac = (uint32_t)(mbase_control_block->k_u * temp);
+    mbase_control_block->voltage_ac = (uint32_t)(mbase_control_block->k_u * temp)/10;
     if(mbase_control_block->voltage_ac > MAX_VOLTAGE)
     {
         mbase_control_block->voltage_ac = UN_VOLTAGE;
@@ -154,10 +155,15 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
         mbase_control_block->voltage_ac = 0;
     }
     //读计量芯片电流
+    temp = 0;
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , IARMS , 3 , &temp);
-    mbase_control_block->current_l = (int32_t)(mbase_control_block->k_il * temp);
+    mbase_control_block->current_l = (int32_t)(mbase_control_block->k_il * temp)/10;
+    
+    //视在功率
+    mbase_control_block->apparent_power = mbase_control_block->current_l * mbase_control_block->voltage_ac/1000;
     
     //读计量芯片功率
+    temp = 0;
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , POWERPA , 4 , &temp);
     mbase_control_block->active_power = (int32_t)(mbase_control_block->k_p * temp);
     
@@ -186,10 +192,12 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     
     
     //读计量芯片频率 
+    temp = 0;
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , UFREQ , 2 , &temp);
     mbase_control_block->frequency = (uint32_t)(44744312.5/temp);
     
     //读计量芯片零线电流
+    temp = 0;
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , IBRMS , 3 , &temp);
     mbase_control_block->current_n = (int32_t)(mbase_control_block->k_in * temp);
     if(abs(mbase_control_block->current_n) < MIN_CURRENT)
@@ -220,7 +228,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     {
         if(true == read_mcu_adc_measure_value(ADC_CHL_TEMP , &temp))
         {
-            mbase_control_block->temperature = temp;
+            mbase_control_block->temperature = temp/100;
         }
     }
     
@@ -228,7 +236,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     {
         if(true == read_mcu_adc_measure_value(ADC_CHL_BATTER , &temp))
         {
-            mbase_control_block->voltage_battery = temp;
+            mbase_control_block->voltage_battery = temp/100;
             if(temp < 26000)
             {
                 mbase_control_block->voltage_battery = 0;

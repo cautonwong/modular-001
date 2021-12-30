@@ -2280,6 +2280,9 @@
                 <file>
                     <name>$PROJ_DIR$\..\mapper_698\map_698_action\action_8_Control.c</name>
                 </file>
+                <file>
+                    <name>$PROJ_DIR$\..\mapper_698\map_698_action\action_f_Other.c</name>
+                </file>
             </group>
             <group>
                 <name>get</name>

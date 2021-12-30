@@ -527,7 +527,23 @@ enum block_parameter_item_id_t
 #define     ImaxProtectValue            993 //继电器拉闸电流门限值
 #define     ImaxProtectTime             994 //超电流门限保护延时时间
 
-#define         MAX_FEE_NO                 12                                  
+#define     KeyDisp_Num                 695 //按键显示屏数
+#define     KeyDisp_MaxNum              696 //按键显示屏数
+#define     KeyDisp_Inv                 697 //按键显示等待时间
+#define     AutoDisp_Num                698 //循环显示屏数
+#define     AutoDisp_MaxNum             699 //循环显示屏数
+#define     AutoDisp_Inv                700 //循环显示等待时间
+
+#define		AllDisp_Tmr                 701 //全显时间
+#define     BlkLed_Key_Tmr              702 //按键背光点亮时间
+#define     BlkLed_Com_Tmr              703 //液晶查看背光点亮时间
+#define     DispOn_Pd_Tmr               704 //无电按键显示驻留时间
+#define		Disp_EnergyDot			    705 //电能小数
+#define		Disp_PowerDot               706 //功率小数
+#define     DispMean12Show              707 //液晶12字符意义
+
+                                  
+#define     MAX_FEE_NO                  12                                  
 
 #endif
 
