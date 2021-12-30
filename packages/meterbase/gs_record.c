@@ -23,8 +23,8 @@ int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_
         {
             struct para_698_tag_t OverCurrentAS_para[2] =
             {
-                {TYPE_double_long,      (uint8_t*)&mbase_cb->i_over_event_threshold,      4},
-                {TYPE_unsigned,         (uint8_t*)&mbase_cb->i_over_event_duration_para,  1},
+                {TYPE_double_long,      (uint8_t*)&mbase_cb->OverCurrent_threshold,      4},
+                {TYPE_unsigned,         (uint8_t*)&mbase_cb->OverCurrent_duration_para,  1},
             };
             
             memcpy((uint8_t*)para_pack->event_para, (uint8_t*)OverCurrentAS_para , sizeof(OverCurrentAS_para));
@@ -253,4 +253,10 @@ int clr_record(struct instance_t* instance, uint32_t oad)
     nd_log_clean(instance, info.save_index);
     //清序号
     nd_set_index(instance, info.sequence_index, &temp, 4);
+
+    //累计时间清零
+    if (info.acc_time)
+    {
+        *info.acc_time = 0;
+    }
 }

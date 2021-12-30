@@ -11,10 +11,10 @@ int EmuErr_judge(struct instance_t* instance, struct pipeline_t* task, struct me
     uint8_t payload[100];
     int8_t result = 0;
 
-    uint8_t duration_para       =  ctrl_block->EmuErr_duration_para;
-    uint8_t *duration           = &ctrl_block->EmuErr_duration;
-    uint32_t* accumulate_time   = &ctrl_block->EmuErr_acc_time;
-    uint8_t state               =  ctrl_block->EmuErr_status;
+    uint8_t duration_para       =  ctrl_block->EmuErrS_duration_para;
+    uint8_t *duration           = &ctrl_block->EmuErrS_duration;
+    uint32_t* accumulate_time   = &ctrl_block->EmuErrS_acc_time;
+    uint8_t state               =  ctrl_block->EmuErrS_status;
 
     uint16_t RecordId           = EmuErrS;
 
@@ -38,7 +38,7 @@ int EmuErr_judge(struct instance_t* instance, struct pipeline_t* task, struct me
 int EmuErr_reset(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
-    uint32_t *accumulate_time = &ctrl_block->EmuErr_acc_time;
+    uint32_t *accumulate_time = &ctrl_block->EmuErrS_acc_time;
 
 	*accumulate_time = 0; /* 累计时间清零*/
 	return 1;

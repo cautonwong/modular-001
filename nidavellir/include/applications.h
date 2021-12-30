@@ -163,9 +163,9 @@ struct mbase_control_block_t
     struct energy_ctx_t* energy_ctx;
     struct demand_list_t* demand_list;
 
-    uint32_t backlight_switchOn_Hpriority_sec;/*上电或插卡等高优先级 背光持续打开时间,          赋值后每秒递减           */
-    uint32_t backlight_switchOn_Lpriority_sec;/*背光打开持续时间          赋值后每秒递减 */
-    uint32_t backlight_control_word;/*背光报警配置字 */
+    uint32_t backlight_switchOn_Hpriority_sec;//上电或插卡等高优先级 背光持续打开时间,          赋值后每秒递减           */
+    uint32_t backlight_switchOn_Lpriority_sec;//背光打开持续时间          赋值后每秒递减 */
+    uint32_t backlight_control_word;//背光报警配置字 
     
     //uint8_t remote_alarm_flag; //远程告警命令true-触发告警
     //uint8_t battery1_under2v8; //时钟电池欠压
@@ -175,26 +175,50 @@ struct mbase_control_block_t
     uint8_t active_flag[50];  //事件或冻结记录存储标志 
     uint32_t minute_freeze_index[8]; //分钟冻结8个序号 
 
-    uint8_t CoverOpen_status;      //开盖标志
-    uint8_t CoverOpen_duration_para;
-    uint8_t CoverOpen_duration;
-    uint32_t CoverOpen_acc_time; //开盖累计时间
 
-    uint8_t EmuErr_status;         //当前计量芯片故障标志
-    uint8_t EmuErr_duration_para;
-    uint8_t EmuErr_duration;
-    uint32_t EmuErr_acc_time;    //累计时间
+    uint8_t OverCurrent_report_type; //过流事件上报标识
+    uint8_t OverCurrent_report_mode; //过流事件上报方式
+ 
+
+    uint8_t OverCurrentAS_activeflag; // 电能表过流事件的有效标识
+    uint8_t OverCurrentAS_recordflag; // 电能表过流事件的记录标识
+    uint8_t OverCurrentAS_resetflag;  // 电能表过流事件的清零标识
+
+    uint32_t OverCurrent_threshold;     //参数 电能表过流事件-电流触发下限 
+
+    uint8_t OverCurrent_duration_para;  //参数 判定延时时间  
+    uint8_t PowerOffS_duration_para;    //参数 判定延时时间  
+    uint8_t CoverOpenS_duration_para;   //参数 判定延时时间  
+    uint8_t SwitchErrS_duration_para;   //参数 判定延时时间  
+    uint8_t EmuErrS_duration_para;      //参数 判定延时时间  
+    uint8_t ZeroLineErrS_duration_para; //参数 判定延时时间  
 
 
-    uint8_t i_over_event_report_type; //过流事件上报标识
-    uint8_t i_over_event_report_mode; //过流事件上报方式
-    uint8_t i_over_event_duration_para;//static:电能表过流事件-判定延时时间 */ 
-    uint32_t i_over_event_threshold;//static:电能表过流事件-电流触发下限 */ 
-    uint8_t ia_over_event_duration;    //dyn:当前过流状态持续时间*/
-    uint8_t ia_over_event_activeflag; // 电能表过流事件的有效标识
-    uint8_t ia_over_event_recordflag; // 电能表过流事件的记录标识
-    uint8_t ia_over_event_resetflag;  // 电能表过流事件的清零标识
-    uint32_t ia_over_accumulate_time; //电能表过流事件的累计时间*/ 
+    uint8_t CoverOpenS_status;          //当前状态标志 电能表开盖事件
+    uint8_t SwitchErrS_status;          //当前状态标志 电能表负荷开关误动作事件
+    uint8_t PowerAbnormalS_status;      //当前状态标志 电能表电源异常事件
+    uint8_t EmuErrS_status;             //当前状态标志 计量芯片故障事件
+
+
+    
+    uint8_t OverCurrentAS_duration;     //当前状态持续时间 电能表过流事件
+    uint8_t PowerOffS_duration;         //当前状态持续时间 电能表掉电事件
+    uint8_t CoverOpenS_duration;        //当前状态持续时间 电能表开盖事件
+    uint8_t SwitchErrS_duration;        //当前状态持续时间 电能表负荷开关误动作事件
+    uint8_t PowerAbnormalS_duration;    //当前状态持续时间 电能表电源异常事件 
+    uint8_t EmuErrS_duration;           //当前状态持续时间 计量芯片故障事件
+    uint8_t ZeroLineErrS_duration;      //当前状态持续时间 零线电流异常事件  
+
+    uint32_t OverCurrentAS_acc_time;    //累计时间 电能表过流事件
+    uint32_t PowerOffS_acc_time;        //累计时间 电能表掉电事件
+    uint32_t CoverOpenS_acc_time;       //累计时间 电能表开盖事件
+    uint32_t SwitchErrS_acc_time;       //累计时间 电能表负荷开关误动作事件
+    uint32_t PowerAbnormalS_acc_time;   //累计时间 电能表电源异常事件 
+    uint32_t EmuErrS_acc_time;          //累计时间 计量芯片故障事件
+    uint32_t ZeroLineErrS_acc_time;     //累计时间 零线电流异常事件  
+
+
+
     uint8_t mac_err_cnt; // 当日mac错误次数
     uint8_t mac_suspend_date[3];// mac错误 挂起日期 yymmdd
 
@@ -286,7 +310,7 @@ struct record_storage_id_info_t
     uint16_t capture_len;   // 关联对象存储长度
     uint16_t period_len;    // 周期存储长度
     uint16_t depth_len;     // 深度存储长度
-    uint32_t acc_time;     // 事件累计时间
+    uint32_t *acc_time;     // 事件累计时间   使用前需判断是否位null
     const uint32_t *record_head;  // 记录头
 };
 

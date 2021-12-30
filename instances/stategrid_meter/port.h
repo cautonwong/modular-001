@@ -276,8 +276,7 @@ enum record_flag_id_t
 
     PowerOffS                    ,  //  0x3011    电能表掉电事件                                               
     PowerOffE                    ,  //  0x3011    电能表掉电事件                                               
-    MeterWrS                     ,  //  0x3012    电能表编程事件                                              
-    MeterWrE                     ,  //  0x3012    电能表编程事件    
+    MeterWrS                     ,  //  0x3012    电能表编程事件                                                
     MeterClrS                    ,  //  0x3013    电能表清零事件                                                        
     EventClrS                    ,  //  0x3015    电能表事件清零事件                                
     SetTimeS                     ,  //  0x3016    电能表校时事件                                    

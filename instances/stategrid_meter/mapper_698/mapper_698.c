@@ -469,6 +469,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
     uint8_t SaveDevice, SaveBlock;
     uint8_t schem = get_OAD_Schem(oad);
     uint8_t temp = 0;
+    uint16_t OI;
+    uint8_t attr, class = 7;
 
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -478,16 +480,28 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
     }
 
     memset((uint8_t*)info, 0, sizeof(struct record_storage_id_info_t));
+    
+    OI = get_OAD_OI(oad);
+    attr = get_OAD_Attribute(oad);
+
+    if (((OI >= 0x3000) && (OI <= 0x3008)) || (OI == 0x300B))
+    {
+        class = 24;
+    }
+
+
+    
     info->record_head = record_head_t0; //默认事件记录单元
 
     switch (oad&0xF0000000)
     {
         case 0x30000000: //事件类
         {
+            info->capture_len = 61;
+            info->record_head = record_head_t0;     // 记录单元
+            info->acc_time = NULL;
             switch (oad&0xFFFF0000)// OI
             {
-                info->capture_len = 61;
-                info->record_head = record_head_t0;     // 记录单元
 
                 case 0x30050000:
                 {
@@ -497,7 +511,163 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     CaptureId = OverCurrentAS_oad;          // 关联对象存储地址信息
                     SeqId = OverCurrentAS_seq;              // 序号存储地址信息
                     info->record_head = record_head_t0;     // 记录单元
-                    info->acc_time = mbase_cb->ia_over_accumulate_time; 
+                    info->acc_time = &mbase_cb->OverCurrentAS_acc_time;
+                }
+                break;
+                
+                case 0x30110000:
+                {
+                    SaveId = PowerOffS;                 // 记录存储地址信息
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = PowerOffS_oad;          // 关联对象存储地址信息
+                    SeqId = PowerOffS_seq;              // 序号存储地址信息
+                    info->record_head = record_head_t0;     // 记录单元
+                    info->acc_time = &mbase_cb->PowerOffS_acc_time;
+                }
+                break;
+                case 0x30120000:
+                {
+                    SaveId = MeterWrS;                 // 记录存储地址信息
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = MeterWrS_oad;          // 关联对象存储地址信息
+                    SeqId = MeterWrS_seq;              // 序号存储地址信息
+                    info->record_head = record_head_t0;     // 记录单元
+                }
+                break;
+                case 0x30130000:
+                {
+                    SaveId = MeterClrS;                 // 记录存储地址信息
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = MeterClrS_oad;          // 关联对象存储地址信息
+                    SeqId = MeterClrS_seq;              // 序号存储地址信息
+                    info->record_head = record_head_t0;     // 记录单元
+                }
+                break;
+
+                case 0x301A0000:
+                case 0x30190000:
+                case 0x30180000:
+                case 0x30170000:
+                case 0x30160000:
+                case 0x30150000:
+                {
+                    temp = (((oad & 0xFFFF0000) - 0x30150000) >> 16);
+                    SaveId = EventClrS + temp;                 // 记录存储地址信息
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = EventClrS_oad + temp;          // 关联对象存储地址信息
+                    SeqId = EventClrS_seq + temp;              // 序号存储地址信息
+                    info->record_head = record_head_t0;     // 记录单元
+                }
+                break;
+                case 0x301B0000:
+                {
+                    SaveId = CoverOpenS;                 // 记录存储地址信息
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = CoverOpenS_oad;          // 关联对象存储地址信息
+                    SeqId = CoverOpenS_seq;              // 序号存储地址信息
+                    info->record_head = record_head_t0;     // 记录单元
+                    info->acc_time = &mbase_cb->CoverOpenS_acc_time;
+                }
+                break;
+
+
+                case 0x30220000:
+                case 0x30210000:
+                case 0x30200000:
+                case 0x301F0000:
+                {
+                    temp = (((oad & 0xFFFF0000) - 0x301F0000) >> 16);
+                    SaveId = SwitchOffS + temp;                 // 记录存储地址信息
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = SwitchOffS_oad + temp;          // 关联对象存储地址信息
+                    SeqId = SwitchOffS_seq + temp;              // 序号存储地址信息
+                    info->record_head = record_head_t0;     // 记录单元
+                }
+                break;
+                case 0x30290000:
+                case 0x30280000:
+                case 0x30270000:
+                case 0x30260000:
+                case 0x30250000:
+                case 0x30240000:
+                {
+                    temp = (((oad & 0xFFFF0000) - 0x30240000) >> 16);
+                    SaveId = FeeTabWrS + temp;                 // 记录存储地址信息
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = FeeTabWrS_oad + temp;          // 关联对象存储地址信息
+                    SeqId = FeeTabWrS_seq + temp;              // 序号存储地址信息
+                    info->record_head = record_head_t0;     // 记录单元
+                }
+                break;
+                case 0x302B0000:
+                {
+                    SaveId = SwitchErrS;                 // 记录存储地址信息
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = SwitchErrS_oad;          // 关联对象存储地址信息
+                    SeqId = SwitchErrS_seq;              // 序号存储地址信息
+                    info->record_head = record_head_t0;     // 记录单元
+                    info->acc_time = &mbase_cb->SwitchErrS_acc_time;
+                }
+                break;
+                case 0x302C0000:
+                {
+                    SaveId = PowerAbnormalS;                 // 记录存储地址信息
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = PowerAbnormalS_oad;          // 关联对象存储地址信息
+                    SeqId = PowerAbnormalS_seq;              // 序号存储地址信息
+                    info->record_head = record_head_t0;     // 记录单元
+                    info->acc_time = &mbase_cb->PowerAbnormalS_acc_time;
+                }
+                break;
+                case 0x302E0000:
+                {
+                    SaveId = RTCErrS;                 // 记录存储地址信息
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = RTCErrS_oad;          // 关联对象存储地址信息
+                    SeqId = RTCErrS_seq;              // 序号存储地址信息
+                    info->record_head = record_head_t0;     // 记录单元
+                }
+                break;
+                case 0x302F0000:
+                {
+                    SaveId = EmuErrS;                 // 记录存储地址信息
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = EmuErrS_oad;          // 关联对象存储地址信息
+                    SeqId = EmuErrS_seq;              // 序号存储地址信息
+                    info->record_head = record_head_t0;     // 记录单元
+                    info->acc_time = &mbase_cb->EmuErrS_acc_time;
+                }
+                break;
+                case 0x303C0000:
+                {
+                    SaveId = BroadcastTimeS;                 // 记录存储地址信息
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = BroadcastTimeS_oad;          // 关联对象存储地址信息
+                    SeqId = BroadcastTimeS_seq;              // 序号存储地址信息
+                    info->record_head = record_head_t0;     // 记录单元
+                }
+                break;
+                case 0x30400000:
+                {
+                    SaveId = ZeroLineErrS;                 // 记录存储地址信息
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = ZeroLineErrS_oad;          // 关联对象存储地址信息
+                    SeqId = ZeroLineErrS_seq;              // 序号存储地址信息
+                    info->record_head = record_head_t0;     // 记录单元
+                    info->acc_time = &mbase_cb->ZeroLineErrS_acc_time;
                 }
                 break;
 

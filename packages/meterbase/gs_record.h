@@ -39,7 +39,7 @@ void send_recordflag_mesg(struct instance_t* instance, struct pipeline_t* task, 
 void send_event_mesg_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg, uint16_t RecordId, uint8_t* payload, int mode);
 int get_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* buf,  uint8_t* dar);
 
-
+int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
 int CoverOpen_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
 
 #endif //__GS_RECORD_H__

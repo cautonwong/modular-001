@@ -11,14 +11,14 @@ int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, st
     uint8_t state = false;
     int8_t result = 0;
 
-    uint8_t duration_para       = ctrl_block->i_over_event_duration_para;  
-    uint8_t *duration           = &ctrl_block->ia_over_event_duration;
-    uint32_t* accumulate_time   = &ctrl_block->ia_over_accumulate_time;
+    uint8_t duration_para       = ctrl_block->OverCurrent_duration_para;  
+    uint8_t *duration           = &ctrl_block->OverCurrentAS_duration;
+    uint32_t* accumulate_time   = &ctrl_block->OverCurrentAS_acc_time;
     
     uint16_t RecordId           = OverCurrentAS;
 
     int32_t* I                  = &ctrl_block->Ia;
-    uint32_t threshold          = ctrl_block->i_over_event_threshold;
+    uint32_t threshold          = ctrl_block->OverCurrent_threshold;
 
     if (threshold == 0) // 限值为0
     {
@@ -50,8 +50,8 @@ int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, st
 int ia_over_event_reset(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
-    uint8_t reset_flag = ctrl_block->ia_over_event_resetflag;
-    uint32_t *accumulate_time = &ctrl_block->ia_over_accumulate_time;
+    uint8_t reset_flag = ctrl_block->OverCurrentAS_resetflag;
+    uint32_t *accumulate_time = &ctrl_block->OverCurrentAS_acc_time;
 
     switch (mesg->id)
     {

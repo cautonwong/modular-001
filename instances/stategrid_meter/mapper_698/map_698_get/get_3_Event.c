@@ -228,7 +228,7 @@ uint8_t get_current_value(struct instance_t* instance, uint32_t oad, uint8_t* bu
         //事件累计时间/
         *p++ = TYPE_double_long_unsigned;
 
-        p += uint32_to_buf_msb(record_id_info.acc_time, p);
+        p += uint32_to_buf_msb(*record_id_info.acc_time, p);
     }
 
     *dar = DAR_SUCCESS;
@@ -273,9 +273,9 @@ int get_current_value_one_element_ic_24(struct instance_t* instance, uint32_t oa
     //事件累计时间
     *p++ = TYPE_double_long_unsigned;
 
-    p += uint32_to_buf_msb(record_id_info.acc_time, p);
+    p += uint32_to_buf_msb(*record_id_info.acc_time, p);
     value->cnts = sequence;
-    value->times = record_id_info.acc_time;
+    value->times = *record_id_info.acc_time;
 
     *dar = DAR_SUCCESS;
     return (p - buf);
@@ -820,7 +820,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 break;
                 case 4: // 最大记录数 
                 {
-                    return get_current_record_number(instance, id, p, &dar);
+                    return get_max_record_number(instance, id, p, &dar);
                 }
                 break;
                 case 5: // 配置参数 
