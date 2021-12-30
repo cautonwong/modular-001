@@ -355,7 +355,9 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     
-    if(mbase_control_block->lcd_poweron_all_dis_time > 0)   mbase_control_block->lcd_poweron_all_dis_time--;
+    if(mbase_control_block->AutoInv > 0)   mbase_control_block->AutoInv--;
+    
+    if(mbase_control_block->KeyInv > 0)    mbase_control_block->KeyInv--;
     
     if(mbase_control_block->backlight_key_time > 0) mbase_control_block->backlight_key_time--;
 

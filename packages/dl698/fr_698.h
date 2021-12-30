@@ -177,6 +177,12 @@ enum unit_type_t
 };
 
 
+enum MultiPort
+{
+    F_PortSec       = 0,   //秒信号
+    F_PortTouCut    = 2    //时段投切
+};
+
 #if WIN32
 #define TEST_CASE_ID 0xFAFAFAFA
 #endif

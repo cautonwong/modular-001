@@ -424,13 +424,13 @@ unsigned char display_id_to_oad(unsigned short id, unsigned char *oad, unsigned 
     len = 8;
     switch (idh)
     {
-        case 0x0C://组合
+        case 0x0E://组合
             oad2 = 0x00000200 + idl;
             break;
-        case 0x0B://正向
+        case 0x0C://正向
             oad2 = 0x00100200 + idl;
             break;
-        case 0x0E://反向
+        case 0x0D://反向
             oad2 = 0x00200200 + idl;
             break;
         default:
@@ -459,6 +459,27 @@ unsigned short display_oad_to_id(unsigned char *oad, unsigned char len)
                 break;
             }
         }
+        memcpy((unsigned char*)&oad2, (unsigned char*)&oad, 4);
+        if(((oad2 & 0xFFFFFF00) != 0x00000200) && ((oad2 & 0xFFFFFF00) != 0x00100200) && ((oad2 & 0xFFFFFF00) != 0x00200200))   return 0;
+        idl = (unsigned char)(oad2 & 0x000000FF);
+        if(idl > 0x0c)  return 0;
+        id |= idl;
+        oad2 = oad2 & 0xFFFFFF00;
+        switch(oad2)
+        {
+            case 0x00000200:
+                id |= 0xE000;
+                break;
+            case 0x00100200:
+                id |= 0xC000;
+                break;
+            case 0x00200200:
+                id |= 0xD000;
+                break;  
+            default:
+                id = 0;
+                break;
+        }
     }
     else if(len == 8)
     {
@@ -477,13 +498,13 @@ unsigned short display_oad_to_id(unsigned char *oad, unsigned char len)
             switch(oad2)
             {
                 case 0x00000200:
-                    id |= 0xC000;
+                    id |= 0xE000;
                     break;
                 case 0x00100200:
-                    id |= 0xD000;
+                    id |= 0xC000;
                     break;
                 case 0x00200200:
-                    id |= 0xE000;
+                    id |= 0xD000;
                     break;  
                 default:
                     id = 0;
@@ -636,16 +657,15 @@ void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
 	
 	P_BACKLIGHT_ON;	//背光
 	if((mbase_control_block->lcd_poweron_all_dis_time > 30) || (mbase_control_block->lcd_poweron_all_dis_time == 0))
-		mbase_control_block->lcd_poweron_all_dis_time_tick = 5;
+		mbase_control_block->AutoInv = 5;
     else
-        mbase_control_block->lcd_poweron_all_dis_time_tick = mbase_control_block->lcd_poweron_all_dis_time;
+        mbase_control_block->AutoInv = mbase_control_block->lcd_poweron_all_dis_time;
 	Flag.Disp |= F_DispAll;
 	for( i=0;i<MaxLcd;i++ )
 	{
 		Lcdcon[i] = 0xFF;
 	}
 	Send_DisplayData();	//送显示数据
-	mbase_control_block->AutoInv = mbase_control_block->lcd_poweron_all_dis_time;
 	mbase_control_block->AutoPtr = 0xFF;
 	mbase_control_block->Page_ID = 0xFFFF;
 }
@@ -705,8 +725,10 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline)
     }
     else
         mbase_control_block->lcd_keydis_keep_sec = 30;
+    
+    mbase_control_block->KeyInv = mbase_control_block->lcd_keydis_keep_sec;
 
-    if( (mbase_control_block->Key & F_KeyDispay) && (mbase_control_block->lcd_keydis_keep_sec == 0) )//退出键显
+    if( (mbase_control_block->Key & F_KeyDispay) && (mbase_control_block->KeyInv == 0) )//退出键显
 	{
 		mbase_control_block->Key &= ~F_KeyDispay;
 		mbase_control_block->AutoPtr = 0xFF;
@@ -733,7 +755,7 @@ void Get_DisplayPage(struct instance_t* instance, struct pipeline_t* pipeline)
 		if( mbase_control_block->AutoInv == 0 )
 		{
 			//获取轮显显示时间
-            //nd_get(instance, 0xF3000300, &mbase_control_block->AutoInv, 1);
+            mbase_control_block->AutoInv = mbase_control_block->lcd_autodis_keep_sec;
 			if( (mbase_control_block->AutoInv < 0x05) || (mbase_control_block->AutoInv > 0x20) )
 				mbase_control_block->AutoInv = 5;
             
@@ -783,10 +805,10 @@ void DispNum( unsigned char* Addr, unsigned char Lenth )
 /*            Info：数据信息                                           */
 /*  输出参数：0为ID存在，1为ID不存在                                   */
 /***********************************************************************/
-unsigned char GetDispAddrInfo( struct instance_t* instance, unsigned short ID, unsigned char* data, unsigned long Info, unsigned char* SignBuf )
+unsigned long GetDispAddrInfo( struct instance_t* instance, unsigned short ID, unsigned char* data, unsigned long Info, unsigned char* SignBuf )
 {
 	unsigned char j=0,D1,D2,D3;
-    unsigned long oad;
+    unsigned long oad,temp=0;
 
     D2 = (ID & 0x0FF0)>>4;
     if(D2 > 0x18)   return 1;
@@ -796,7 +818,7 @@ unsigned char GetDispAddrInfo( struct instance_t* instance, unsigned short ID, u
     D1 = (ID & 0xF000)>>8;
 	memcpy( SignBuf, SIGN_NULL, 8 );
     
-    Info = DispData_BCD + 5;
+    temp = DispData_BCD + 5;
     if(D2 == 0x00)    //当前
         *SignBuf = Sign_dangqian;//当前
     else
@@ -824,7 +846,7 @@ unsigned char GetDispAddrInfo( struct instance_t* instance, unsigned short ID, u
                 oad = 0x50050200;
             break;
         case 0xE0://组合
-            Info |= DispData_Sign;//组合有功电量最高位是符号位
+            temp |= DispData_Sign;//组合有功电量最高位是符号位
             *(SignBuf+5) = Sign_Zuhe;//组合
             if(D2 == 0x00)  
                 oad = 0x00000200;
@@ -845,8 +867,8 @@ unsigned char GetDispAddrInfo( struct instance_t* instance, unsigned short ID, u
     }
     
     *(SignBuf+6) = Sign_FeiLvNum;//T1~T12
-    
-	return 0;
+    Info = temp;
+	return Info;
 }
 
 /***********************************************************************/
@@ -1046,14 +1068,15 @@ void ZeroDark( unsigned char i )
 /*  函数功能：显示字符和单位                                           */
 /*  输入参数：i：显示项在显示表格里对应的位置                          */
 /***********************************************************************/
-void Disp_Char( unsigned char* SignBuf )
+void Disp_Char( struct instance_t* instance, struct pipeline_t* pipeline, unsigned char* SignBuf )
 {
 	unsigned char j,EnergyDot = 2, PowerDot = 4;
 	unsigned char ID1L;
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     
 	ID1L = (unsigned char)(mbase_control_block->Page_ID & 0x000F);
-
+    if(ID1L >= 1)    ID1L = ID1L - 1;
+    
 	for( j=0;j<9;j++ )
 	{
 		switch( (*SignBuf) )
@@ -1283,8 +1306,8 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     unsigned char i,buf[10]={0,},Len=0,j;
-	unsigned long oad,Info=0;
-	unsigned char SignBuf[9];
+	unsigned long oad,Info=0,Info1;
+	unsigned char SignBuf[9]={0,};
     struct idmatch
     {
         unsigned short id;
@@ -1306,8 +1329,8 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
     //mbase_control_block->Page_ID = 0xA002;
     
 	if( mbase_control_block->Page_ID == 0xFFFF ) return;//当前全屏显,则返回
-    
-    if(GetDispAddrInfo( instance, mbase_control_block->Page_ID, buf, Info, SignBuf ))
+    Info1 = GetDispAddrInfo( instance, mbase_control_block->Page_ID, buf, Info, SignBuf );
+    if(Info1 == 1)
     {
         for( i=0;i<DisplayTabNum;i++ )
         {
@@ -1335,13 +1358,12 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
             nd_get(instance, oad, buf, 10);
         memcpy( SignBuf, (unsigned char*)DisplayTab[i].Sign, 9 );
     }
-
 	//清屏
 	ClearLCD();
 	//显示数据
-	Disp_Value( DisplayTab[i].Id, buf, Info );
+	Disp_Value( DisplayTab[i].Id, buf, Info1 );
 	//显示字符和单位
-	Disp_Char( SignBuf );
+	Disp_Char( instance, pipeline, SignBuf );
 }
 
 /***********************************************************************/
@@ -1362,16 +1384,6 @@ void Display(struct instance_t* instance, struct pipeline_t* pipeline)
 	//送显示内容
 	Send_DisplayData();
 }
-
-
-
-
-
-
-
-
-
-
 
 
 
