@@ -237,7 +237,6 @@
 #define		F_DispPause			0x10
 #define		F_DispRst			0x20
 #define		F_DispIr_BG			0x40
-#define		F_DispAll			0x80
 //Flag.CommDisp
 #define		F_CommDisp485		0x10
 #define		F_CommDispIr		0x20
@@ -563,9 +562,19 @@ void ClearLCD(void)
 }
 
 //送显示数据
-void Send_DisplayData(void)	
+void Send_DisplayData(struct instance_t* instance, struct pipeline_t* pipeline)	
 {
     unsigned long bf[4];
+    uint8_t i;
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    
+    if(mbase_control_block->Page_ID == 0xFFFF)
+    {
+        for( i=0;i<MaxLcd;i++ )
+        {
+            Lcdcon[i] = 0xFF;
+        }
+    }
 //    memset((unsigned char*)&Lcdcon[0], 0x00, 20);
 //    memset((unsigned char*)&Lcdcon[0], NumSeg[i], 12);
 
@@ -660,12 +669,12 @@ void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
 		mbase_control_block->AutoInv = 5;
     else
         mbase_control_block->AutoInv = mbase_control_block->lcd_poweron_all_dis_time;
-	Flag.Disp |= F_DispAll;
+    /*
 	for( i=0;i<MaxLcd;i++ )
 	{
 		Lcdcon[i] = 0xFF;
-	}
-	Send_DisplayData();	//送显示数据
+	}*/
+	//Send_DisplayData();	//送显示数据
 	mbase_control_block->AutoPtr = 0xFF;
 	mbase_control_block->Page_ID = 0xFFFF;
 }
@@ -1382,7 +1391,7 @@ void Display(struct instance_t* instance, struct pipeline_t* pipeline)
 	//显示电表指示信息
 	Display_Meter(instance,  pipeline);
 	//送显示内容
-	Send_DisplayData();
+	Send_DisplayData(instance,  pipeline);
 }
 
 

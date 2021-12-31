@@ -1,155 +1,330 @@
+
 #include "nidavellir.h"
 #include "applications.h"
+#include "fr_698.h"
 //dependencies
     //1.user define
     //2.mesg[秒]
 
-#define   HoliDay_Num         0x0000
-//#define   HoliDay_Table       0x0001
-#define   Weekend             0x0003
-#define   Season_Table_Num    0x0004
-#define   MaxSeasonNum        0x0005
-#define   Season_Table0       0x0006
-#define   TOU_TABLE_LEN       144
-#define   Day_Tou_Num         0x0007
+#define     MaxSeasonNum    		14
+#define 	MaxTouNum     			14
+#define 	MaxFeeNum     			12
+#define     MaxHolidayNum   		10
+#define		MaxTouTabNum			8
 
-//#define   Day_Table00         0x0008
+//Fee
+#define		F_TOUChange			0x01
+#define     F_DAYTABChange      0x02
+#define		F_TOUFeeChangeTm    0x04
+#define		F_ChangeTmOn        0x08
 
+uint8_t Buf[60];
 
+const unsigned char  MonTab[13] = {	0,31,28,31,30,31,30,31,31,30,31,30,31};
+const unsigned int  DayTab[13] = { 0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
 
-
-
-
-
-
-
-
-
-unsigned char FeeTable_CmpFind(unsigned char Num, unsigned char* Buffer, unsigned int Now)
+unsigned char BYTE_BCD( unsigned char HEX )
 {
-    unsigned char i;
-    unsigned int Int, Int1;
+	if( HEX > 99 )
+		return 0x00;
 
-    //比较查找
-    for (i = 0; i < Num; i++)
-    {
-        Int = ((unsigned int)Buffer[3 * i + 2] << 8) + (unsigned int)Buffer[3 * i + 1];
-        Int1 = ((unsigned int)Buffer[3 * ((i + 1) % Num) + 2] << 8) + (unsigned int)Buffer[3 * ((i + 1) % Num) + 1];
-        if (Int < Int1)
-        {
-            if ((Now >= Int) && (Now < Int1))
-                break;
-        }
-        else if (Int == Int1)
-        {
-            if (Now >= Int)
-                break;
-        }
-        else
-        {
-            if ((Now >= Int) || (Now < Int1))//过0点判断
-                break;
-        }
-    }
-    if (i >= Num)
-        i = Num - 1;
-
-    if (Num == 1) return 0;
-    else return i;
+	return( (HEX/10)*0x10 + HEX%10 );
 }
 
-void GetFeeTab(struct instance_t* instance , struct pipeline_t * pipeline)
+
+unsigned char BCD_BYTE( unsigned char BCD )
 {
-    unsigned char i, Weekstate, Num0;
-    unsigned int Num, Num1 = 0;
-    unsigned char* Buffer = instance->cache;
-    struct mbase_control_block_t * mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
-    unsigned short Now;
-#if 0
-    //公假日表
-    __read((unsigned char*)&Num, HoliDay_Num, 2);
-    if (Num > 14) Num = 14;
-    while (Num > 0)
-    {
-        if (Num > 25)
-            Num0 = 25;
-        else
-            Num0 = (unsigned char)Num;
-        __read(Buffer, HoliDay_Table + Num1 * 4, 4 * Num0);
-        for (i = 0; i < Num0; i++)
-        {
-            if ((Buffer[4 * i + 3] == instance->time.tm_year) && (Buffer[4 * i + 2] == instance->time.tm_mon) && (Buffer[4 * i + 1] == instance->time.tm_mday))
-            {
-                mbase_control_block->DayTableNo = Buffer[4 * i + 0];//年月日相同，获取日时段表号
-                return;
-            }
-        }
-        Num -= Num0;
-        Num1 += Num0;
-    }
-
-    //周休日表
-    __read(Buffer, Weekend, 2);
-    Weekstate = 0x01;
-    Weekstate <<= instance->time.tm_wday;
-    if ((Weekstate & Buffer[0]) == 0)//0表示休息日
-    {
-        mbase_control_block->DayTableNo = Buffer[1];
-        return;
-    }
-
-    //时区表
-    if (mbase_control_block->SeasonTable > 1) mbase_control_block->SeasonTable = 0;
-    __read((unsigned char*)&Num, Season_Table_Num, 1);//读取时区表个数
-    if (Num == 0)
-        mbase_control_block->DayTableNo = 1;
-    else
-    {
-        if (Num > MaxSeasonNum) Num = MaxSeasonNum;
-        __read(Buffer, Season_Table0 + TOU_TABLE_LEN * mbase_control_block->SeasonTable, (unsigned char)Num * 3);//读取当前时区表
-        Now = ((unsigned int)instance->time.tm_mon << 8) + (unsigned int)instance->time.tm_mday;
-        i = FeeTable_CmpFind(Num, Buffer,  Now);//比较查找时区表
-        mbase_control_block->DayTableNo = Buffer[3 * i];
-    }
-#endif
+     return( ((BCD>>4) & 0x0F)*10 + (BCD & 0x0F) );
 }
+
+unsigned int GetTotalDay( unsigned char* Addr )
+{
+  	unsigned int Day,Mon,Year;
+
+	Year= BCD_BYTE( *(Addr+2) );
+	Mon = BCD_BYTE( *(Addr+1) );
+	Day = BCD_BYTE( *Addr );
+	Day = Day + DayTab[Mon] + Year*365 + (Year>>2) + 1;
+	if( ((Year&0x03) == 0) && (Mon <= 2) )
+		Day--;
+   	return Day;
+}
+
+unsigned long GetTotalMin( unsigned char* Addr )
+{
+	unsigned long Min,Hour,Day;
+
+	Day = GetTotalDay( Addr+2 );
+	Hour = BCD_BYTE( *(Addr+1) );
+	Min = BCD_BYTE( *Addr );
+	Min = Min + Hour*60 + Day*60*24;
+	return Min;
+}
+
+unsigned char GetMonMaxDay( unsigned char* Addr )
+{
+	unsigned char MaxDay;
+
+	MaxDay = ((*Addr == 2) && ((BCD_BYTE(*(Addr+1)) & 0x03) == 0)) ? 0x29 : BYTE_BCD( MonTab[BCD_BYTE(*Addr)] );
+    return MaxDay;
+}
+
+unsigned char ChangeTime_Format_Check( unsigned char* Addr )
+{
+	if( (*Addr > 0x59) || (*(Addr+1) > 0x23) )//时、分
+	    return 1;
+	if( ((*(Addr+2) < 0x01) || (*(Addr+2) > 0x31)) || ((*(Addr+3) < 0x01) || (*(Addr+3) > 0x12)) )//日、月
+	    return 1;
+	if( *(Addr+2) > GetMonMaxDay( Addr+3 ) )//大小月判断
+  	    return 1;
+
+	return 0;
+}
+
+void FeeTable_Change(struct instance_t* instance, struct pipeline_t* pipeline)
+{
+	unsigned char i,*ptr;
+	unsigned long CurrentTime,ChangeTime,addr=0; 
+    struct mbase_control_block_t* mbase_cb;
+    
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+	ptr = (unsigned char*)&mbase_cb->SeasonTable;
+	CurrentTime = GetTotalMin( (unsigned char*)&instance->time.tm_min );
+
+	for( i=0;i<2;i++ )
+	{
+        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonTable_Changetime + i);
+        nd_get_index(instance, addr, Buf, 7); 
+        
+		ChangeTime = GetTotalMin( Buf );
+
+		if( ChangeTime_Format_Check( Buf ) != 0 )//切换时间合法性判断
+			continue;
+		if( CurrentTime >= ChangeTime )
+		{
+			switch( i )
+			{
+				case 0:
+					//HisRecord_Write( SeasonTabFroze, START );//时区表切换冻结
+					mbase_cb->Fee |= (F_TOUChange+F_DAYTABChange);
+					break;
+				case 1:
+					//HisRecord_Write( DayTabFroze, START );//日时段表切换冻结
+					mbase_cb->Fee |= F_TOUChange;
+					break;
+                default:
+					break;
+			}
+			if( *(ptr+i) == 0 )
+				*(ptr+i) = 1;
+			else
+				*(ptr+i) = 0;
+			//MEM_DBWrite( FeeTab_ChangeNO+i, ptr+i, 1, Mem_E2PROM );
+			memset( Buf, 0x00, 5 );
+			//MEM_DBWrite( SeasonTable_Changetime+5*i, Buf, 5, Mem_E2PROM );//切换完成后要清掉切换时间
+		}
+	}
+}
+
+
+unsigned char FeeTable_CmpFind( struct instance_t* instance, struct pipeline_t* pipeline, unsigned char Num, unsigned char Table )
+{
+	unsigned char i;
+	unsigned int Now,Int,Int1;
+    struct mbase_control_block_t* mbase_cb;
+    
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+	//获取当前时间
+	if( Table == 0 )
+		Now = ((unsigned int)instance->time.tm_mon<<8) + (unsigned int)instance->time.tm_mday;
+	else 
+		Now = ((unsigned int)instance->time.tm_hour<<8) + (unsigned int)instance->time.tm_min;
+
+	//比较查找
+	for( i=0;i<Num;i++ )
+	{
+		Int = ((unsigned int)Buf[3*i+2]<<8) + (unsigned int)Buf[3*i+1];
+		Int1 = ((unsigned int)Buf[3*((i+1)%Num)+2]<<8) + (unsigned int)Buf[3*((i+1)%Num)+1];
+		if( Int < Int1 )
+   	    	{
+   		    if( (Now >= Int) && (Now < Int1) )
+   		        break;
+        	}
+   	    	else if( Int == Int1 )
+   	    	{
+   		    if( Now >= Int )
+   		        break;
+        	}
+   	    	else
+   	    	{
+   		    if( (Now >= Int) || (Now < Int1) )//过0点判断
+   		        break;
+        	}
+	}
+	if( i >= Num)
+		i = Num - 1;	
+	//时段投切信号
+	if( Table == 1 )
+	{
+		if( Num == 1 )	
+			mbase_cb->TouBefNo = Buf[0];
+		else
+			mbase_cb->TouBefNo = Buf[3*i];
+		
+		if( ((Now == Int) || (mbase_cb->TouBefNo != mbase_cb->TOUNo)) && (mbase_cb->MulPortMode == F_PortTouCut) )
+		{
+			//MulPort_Set( mbase_cb->MulPortMode );
+			//Timer.MulPortCnt = 16;//80ms
+            //QF_ON;
+		}
+
+	}
+	
+	if( Num == 1 ) return 0;
+	else return i;
+}
+
+
+void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
+{
+	uint8_t i,Weekstate,Num0;
+	uint32_t Num=0,Num1=0;
+    uint32_t s_index= 0,addr=0;
+    struct mbase_control_block_t* mbase_cb;
+    
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+	//公假日表
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 4);
+    nd_get_index(instance, s_index, Num, 1); 
+	if( Num > MaxHolidayNum ) Num = MaxHolidayNum;
+	while( Num > 0 )
+	{
+		if( Num > 25 )
+			Num0 = 25;
+		else
+			Num0 = (unsigned char)Num;
+        
+        for(i=0; i<Num0; i++)
+        {
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + HoliDay_Table + i);
+            nd_get_index(instance, s_index, Buf[i*6], 6); 
+        }
+        
+		for( i=0;i<Num0;i++ )
+		{
+			if( (Buf[4*i+3] == instance->time.tm_year) && (Buf[4*i+2] == instance->time.tm_mon) && (Buf[4*i+1] == instance->time.tm_mday) )
+			{
+				mbase_cb->DayTableNo = Buf[4*i+0];//年月日相同，获取日时段表号
+				return;
+			}
+		}
+		Num -= Num0;
+		Num1 += Num0;
+	}
+
+	//周休日表
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Weekend);
+    nd_get_index(instance, s_index, (uint8_t*)&Buf[0], 1);
+	Weekstate = 0x01;
+	Weekstate <<= instance->time.tm_wday;
+	if( (Weekstate & Buf[0]) == 0 )//0表示休息日
+	{
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + WeekendFee);//周休日表
+        nd_get_index(instance, s_index, (uint8_t*)&Buf[1], 1);
+	  	mbase_cb->DayTableNo = Buf[1];
+	    return;
+	}
+
+	//时区表
+	if( mbase_cb->SeasonTable > 1 ) mbase_cb->SeasonTable = 0;
+    
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para);//读取时区表个数
+    nd_get_index(instance, s_index, Num, 1);
+    
+    if(Num>14) Num = 14;
+	if( Num == 0 )
+		mbase_cb->DayTableNo = 1;
+	else
+	{
+		if( Num > MaxSeasonNum ) Num = MaxSeasonNum;
+        
+        if(mbase_cb->SeasonTable == 0) 
+            addr = Season_Table0;
+        else 
+            addr = Season_Table1;
+        
+        for(i=0; i<Num; i++)
+        {
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);  //读取当前时区表
+            nd_get_index(instance, s_index, (uint8_t*)&Buf[i*3], 3);
+        }
+        
+		i = FeeTable_CmpFind( instance, pipeline, (unsigned char)Num, 0 );//比较查找时区表
+		mbase_cb->DayTableNo = Buf[3*i];
+	}
+}
+
 
 void GetTOUFee(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-    unsigned char i, Num;
-
-    unsigned char* Buffer = instance->cache;
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
-    unsigned short Now;
-
-#if 0
-
-    if (mbase_control_block->DayTable > 1) mbase_control_block->DayTable = 0;
-    if (mbase_control_block->DayTableNo == 0) mbase_control_block->DayTableNo = 1;
-    if (mbase_control_block->DayTableNo > 14) mbase_control_block->DayTableNo = 14;
-    __read((unsigned char*)&Num, Day_Tou_Num, 1);
-    if (Num == 0)
-        mbase_control_block->TOUNo = 1;
-    else
-    {
-        if (Num > MaxTouNum) Num = MaxTouNum;
-        __read(Buffer, Day_Table00 + TOU_TABLE_LEN * mbase_control_block->DayTable + ((unsigned int)(mbase_control_block->DayTableNo - 1)) * 3 * MaxTouNum, 3 * Num);//¶ÁÈ¡µ±Ç°ÈÕÊ±¶Î±í
-        Now = ((unsigned int)instance->time.tm_hour << 8) + (unsigned int)instance->time.tm_min;
-        i = FeeTable_CmpFind(Num, Buffer, Now);//比较查找时段表
-        mbase_control_block->TOUNo = BCD_BYTE(Buffer[3 * i]);
-        if ((mbase_control_block->TOUNo == 0) || (mbase_control_block->TOUNo > 12))
-            mbase_control_block->TOUNo = 1;
-    }
-#endif
+    uint8_t i,Num=0;
+    uint32_t s_index=0;
+    struct mbase_control_block_t* mbase_cb;
+    
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
+	if( mbase_cb->DayTable > 1 ) mbase_cb->DayTable = 0;
+	if( mbase_cb->DayTableNo == 0 ) mbase_cb->DayTableNo = 1;
+	if( mbase_cb->DayTableNo > MaxTouTabNum ) mbase_cb->DayTableNo = MaxTouTabNum;
+    
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 2);    //读取日时段个数
+    nd_get_index(instance, s_index, Num, 1);
+    
+	if( Num == 0 )
+		mbase_cb->TOUNo = 1;
+	else
+	{
+		if( Num > MaxTouNum ) Num = MaxTouNum;
+        
+        if(mbase_cb->DayTable == 0)
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Day_Table00 + (mbase_cb->DayTableNo-1));
+        else
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Day_Table10 + (mbase_cb->DayTableNo-1));
+        nd_get_index(instance, s_index, Buf, 3*Num);//读取当前日时段表
+        
+		i = FeeTable_CmpFind( instance, pipeline, Num, 1 );//比较查找日时段表
+		mbase_cb->TOUNo = BCD_BYTE(Buf[3*i]);
+		if( (mbase_cb->TOUNo == 0) || (mbase_cb->TOUNo > MaxFeeNum) ) //若时段表中费率号超出，则按照尖费率处理
+			mbase_cb->TOUNo = 1;
+	}
 }
-
 
 void TouFeePro(struct instance_t* instance, struct pipeline_t* pipeline)
 {
+    struct mbase_control_block_t* mbase_cb;
+    
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
+    
+    if( mbase_cb->Fee & F_ChangeTmOn )
+	{
+		mbase_cb->Fee &= ~F_ChangeTmOn;
+		FeeTable_Change(instance, pipeline);
+	}
 
-    GetFeeTab(instance, pipeline);
-
-    GetTOUFee(instance, pipeline);
+	if( mbase_cb->Fee & F_DAYTABChange )
+	{
+		mbase_cb->Fee &= ~F_DAYTABChange;
+		GetFeeTab(instance, pipeline);
+	}
+	if( mbase_cb->Fee & F_TOUChange )
+	{
+		mbase_cb->Fee &= ~F_TOUChange;
+		GetTOUFee(instance, pipeline);
+	}
 
 }
 

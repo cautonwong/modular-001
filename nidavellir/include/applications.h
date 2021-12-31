@@ -81,16 +81,13 @@ struct mbase_control_block_t
     uint8_t   DayTableNo;//日表序号
     uint8_t   TOUNo;//费率序号
     uint8_t   STEPNo;//阶梯序号
-    uint8_t   SeasonTable;//时区表主副表序号
-    uint8_t   DayTable;//日表主副表序号
-    uint8_t   TouPriceTable;//费率电价表主副表序号
-    uint8_t   StepTable;//阶梯表主副表序号
     uint8_t   StepSeason;//阶梯时区表主副表序号
     uint32_t   Price;//当前电价
     uint32_t   TOUPrice;//费率电价
     uint32_t   STEPPrice;//阶梯电价
     uint8_t   StepNum;//阶梯数
     uint8_t    Fee;
+    uint8_t TouBefNo;
           
     uint32_t voltage_ac;
     int32_t current_l;
@@ -115,7 +112,7 @@ struct mbase_control_block_t
     uint8_t  meter_chip_abnormal;
     
     uint8_t AutoPtr;    //轮显指针
-    uint8_t AutoInv;
+    uint16_t AutoInv;
     uint8_t KeyPtr;
     uint8_t KeyInv;
     uint8_t Key;        //按键标志
@@ -164,6 +161,11 @@ struct mbase_control_block_t
     
     //report
     uint32_t report_state;//跟随上报状态字
+    
+    uint8_t   SeasonTable;//时区表主副表序号
+    uint8_t   DayTable;//日表主副表序号
+    uint8_t   TouPriceTable;//费率电价表主副表序号
+    uint8_t   StepTable;//阶梯表主副表序号
     
         //需量数据
     dyn_persistent_end
