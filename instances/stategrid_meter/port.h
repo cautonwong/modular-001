@@ -464,7 +464,7 @@ enum block_parameter_item_id_t
 
 
                          
-    DisplayPara             =        600,  //显示参数    22
+//    DisplayPara             =        600,  //显示参数    22
     AutoDisplayList         =        700,  //轮显项目700-800
     KeyDisplayList          =        800,  //键显项目800-900
 };               
@@ -525,7 +525,7 @@ enum block_parameter_item_id_t
 
 #define     ImaxProtectValue            993 //继电器拉闸电流门限值
 #define     ImaxProtectTime             994 //超电流门限保护延时时间
-
+/*
 #define     KeyDisp_Num                 695 //按键显示屏数
 #define     KeyDisp_MaxNum              696 //按键显示屏数
 #define     KeyDisp_Inv                 697 //按键显示等待时间
@@ -540,7 +540,7 @@ enum block_parameter_item_id_t
 #define		Disp_EnergyDot			    705 //电能小数
 #define		Disp_PowerDot               706 //功率小数
 #define     DispMean12Show              707 //液晶12字符意义
-
+*/
                                   
 #define     MAX_FEE_NO                  12                                  
 

@@ -94,9 +94,14 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                                     mbase_cb->lcd_autodis_list_maxnum = *p;
                                 else
                                     mbase_cb->lcd_keydis_list_maxnum = *p;
-                                len = 2;
-                                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_cb << 16) + 
-                                offsetof(struct mbase_control_block_t, lcd_autodis_list_num));
+                                //len = 2;
+                                //s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_cb << 16) + 
+                                //offsetof(struct mbase_control_block_t, lcd_autodis_list_num));
+                                
+                                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                                offsetof(struct mbase_control_block_t, backlight_key_time));
+                                uint16_t len = offsetof(struct mbase_control_block_t, lcd_checkdis_all_keep_sec) - offsetof(struct mbase_control_block_t, backlight_key_time);
+                                nd_set_offset(instance, s_index, &mbase_cb->backlight_key_time, len);
                                 break;
                             case 0x01://当前总对象数
                                 p = p + 1;
@@ -105,10 +110,15 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                                 else
                                     mbase_cb->lcd_keydis_list_num = *p;
 
+                                //s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                                //offsetof(struct mbase_control_block_t, lcd_autodis_list_num));
+                                //len = offsetof(struct mbase_control_block_t, lcd_autodis_list_maxnum) - offsetof(struct mbase_control_block_t, lcd_autodis_list_num);
+                                //nd_set_offset(instance, s_index, p, len);
+                                
                                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                                offsetof(struct mbase_control_block_t, lcd_autodis_list_num));
-                                len = offsetof(struct mbase_control_block_t, lcd_autodis_list_maxnum) - offsetof(struct mbase_control_block_t, lcd_autodis_list_num);
-                                nd_set_offset(instance, s_index, p, len);
+                                offsetof(struct mbase_control_block_t, backlight_key_time));
+                                len = offsetof(struct mbase_control_block_t, lcd_checkdis_all_keep_sec) - offsetof(struct mbase_control_block_t, backlight_key_time);
+                                nd_set_offset(instance, s_index, &mbase_cb->backlight_key_time, len);
                                 break;
                             case 0x02://允许最大对象数
                                 p = p + 1;
@@ -116,9 +126,14 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                                     mbase_cb->lcd_autodis_list_maxnum = *p;
                                 else
                                     mbase_cb->lcd_keydis_list_maxnum = *p;
-                                len = 1;
-                                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_cb << 16) + 
-                                offsetof(struct mbase_control_block_t, lcd_autodis_list_maxnum));
+                                //len = 1;
+                                //s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_cb << 16) + 
+                                //offsetof(struct mbase_control_block_t, lcd_autodis_list_maxnum));
+                                
+                                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                                offsetof(struct mbase_control_block_t, backlight_key_time));
+                                len = offsetof(struct mbase_control_block_t, lcd_checkdis_all_keep_sec) - offsetof(struct mbase_control_block_t, backlight_key_time);
+                                nd_set_offset(instance, s_index, &mbase_cb->backlight_key_time, len);
                                 break;
                             default:
                                 return -1;
@@ -136,6 +151,11 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                                 mem_swap_cpy((unsigned char*)&mbase_cb->lcd_keydis_keep_sec, p, 2);
                             //index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + DisplayPara);
                             //nd_set_index(instance, index, (unsigned char*)&mbase_cb->backlight_key_time, 22);
+                            
+                            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                            offsetof(struct mbase_control_block_t, backlight_key_time));
+                            len = offsetof(struct mbase_control_block_t, lcd_checkdis_all_keep_sec) - offsetof(struct mbase_control_block_t, backlight_key_time);
+                            nd_set_offset(instance, s_index, &mbase_cb->backlight_key_time, len);
                         }
                         else
                         {

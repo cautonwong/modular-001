@@ -278,13 +278,14 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     {
                         p++;
                         mem_swap_cpy((uint8_t*)idbuf[i], p, lens[i]);
-                        
-                        s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, lcd_poweron_all_dis_time) + offset[i]);
-                        nd_set_offset(instance, s_index, p, lens[i]);
-                        
                         p = p + lens[i];
                     }
+                    
+                    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                    offsetof(struct mbase_control_block_t, backlight_key_time));
+                    uint16_t s_len = offsetof(struct mbase_control_block_t, lcd_checkdis_all_keep_sec) - offsetof(struct mbase_control_block_t, backlight_key_time);
+                    nd_set_offset(instance, s_index, &mbase_cb->backlight_key_time, s_len);
+                    
                     return (p-buf);
                 }
                 else if(index < 8)
@@ -480,3 +481,21 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
     }
     return (p-buf);
 }
+
+/*
+struct inis_para_t 
+{
+    uint8_t Device_descriptor[8];           979 //设备描述符
+    uint8_t Factory_No[8];                  980 //厂家代码
+    uint8_t Version_SoftWare[2];            981 //软件版本
+      uint32_t xx[];
+}
+
+
+const struct inis_para_t inis_para =
+{
+  {0,0,0,},  //设备描述符
+  {},  //厂家代码
+  {},  //软件版本
+}
+*/

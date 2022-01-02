@@ -9,13 +9,13 @@ int fr_security_decode(struct instance_t* instance, struct pipeline_t* pipeline,
     struct fifo_t* cache = ctx->apdu;
     uint8_t *p_apdu = cache->buf_ptr;
     uint32_t addr;
-    uint8_t buf[100],Temp08,rxlen;
+    uint8_t Temp08,rxlen;
     uint16_t txlen=0,temp=0,offset=0;
     
     offset = fifo->rd;
     
-    fifoBuf_getData(fifo, buf, len+1);   //明文/密文数据
-    Temp08 = buf[len];
+    fifoBuf_getData(fifo, ctx->keybuf, len+1);   //明文/密文数据
+    Temp08 = ctx->keybuf[len];
     if( (Temp08 == 1) || (Temp08 == 2) ) //RN(1)、RN_MAC(2)
     {
         
@@ -30,16 +30,16 @@ int fr_security_decode(struct instance_t* instance, struct pipeline_t* pipeline,
 	//MAC
 	if( (Temp08 != 1) && (Temp08 != 3) )  //SID_MAC、RN_MAC
 	{
-        fifoBuf_getData(fifo, &buf[len], 1);//跳过tag
-		fifoBuf_getData(fifo, &buf[len], 4);
+        fifoBuf_getData(fifo, &ctx->keybuf[len], 1);//跳过tag
+		fifoBuf_getData(fifo, &ctx->keybuf[len], 4);
 	}
     
     mem_swap_cpy((uint8_t*)&txlen, (uint8_t*)&temp, 2);
     
-    rxlen = write_esam(addr , buf , txlen);
+    rxlen = write_esam(addr , ctx->keybuf , txlen);
     
     fifo->wr = offset;
-    fifoBuf_putData(fifo, buf, rxlen);
+    fifoBuf_putData(fifo, ctx->keybuf, rxlen);
     
 	return 1;
 }

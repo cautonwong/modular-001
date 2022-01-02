@@ -227,7 +227,7 @@ struct context_698_t
     uint16_t tx_len;
 
     struct fifo_t* apdu;
-
+    uint8_t keybuf[1800];//秘钥缓存
     //接收和发送都要用的状态
     struct object_t object;//对象标识
     struct pipeline_t* pipeline;//to-be-deleted

@@ -116,6 +116,7 @@ struct mbase_control_block_t
     uint8_t KeyPtr;
     uint8_t KeyInv;
     uint8_t Key;        //按键标志
+    uint32_t BackLightTmr;
     uint16_t Page_ID;   //显示ID
     uint8_t under_un68; //所有相电压均低于68%   
     uint8_t auxiliary_power;//辅助电源供电标志

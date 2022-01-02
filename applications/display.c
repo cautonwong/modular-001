@@ -337,13 +337,13 @@ const  DISPLAYTAB DisplayTab[] =
     //当前时间
     0xA001,     0x40000200,     0x00,   DispData_RAM + 3,					                    (unsigned int)SIGN_RIQI,//日期
     0xA002,     0x40000200,     0x00,   DispData_RAM + 3,					                    (unsigned int)SIGN_SHIJIAN,//时间
-    0xA003,     0x20000201,     0x00,   DispData_RAM + DispData_BCD + 2,						(unsigned int)SIGN_DIANYA,//电压
-    0xA006,     0x20010201,     0x00,   DispData_RAM + DispData_Sign + DispData_BCD + 3,		(unsigned int)SIGN_DIANLIU,//火线电流
-    0xA009,     0x20010401,     0x00,   DispData_RAM + DispData_Sign + DispData_BCD + 3,		(unsigned int)SIGN_LINGXIANDIANLIU,//零线电流
-    0xA00A,     0x20040201,     0x00,   DispData_RAM + DispData_Sign + DispData_BCD + 3,		(unsigned int)SIGN_GONGLV,//A相功率
-    0xA00B,     0x20040201,     0x00,   DispData_RAM + DispData_Sign + DispData_BCD +3,		    (unsigned int)SIGN_GONGLV,//A相功率
-    0xA012,     0x200A0201,     0x00,   DispData_RAM + DispData_Sign + DispData_BCD +2,		    (unsigned int)SIGN_GONGLVYINSU,//A相功率因数
-    0xA013,     0x200A0201,     0x00,   DispData_RAM + DispData_Sign + DispData_BCD + 2,		(unsigned int)SIGN_GONGLVYINSU,//A相功率因数
+    0xA003,     0x20000201,     0x00,   DispData_RAM + DispData_HEX + 2,						(unsigned int)SIGN_DIANYA,//电压
+    0xA006,     0x20010201,     0x00,   DispData_RAM + DispData_Sign + DispData_HEX + 3,		(unsigned int)SIGN_DIANLIU,//火线电流
+    0xA009,     0x20010401,     0x00,   DispData_RAM + DispData_Sign + DispData_HEX + 3,		(unsigned int)SIGN_LINGXIANDIANLIU,//零线电流
+    0xA00A,     0x20040201,     0x00,   DispData_RAM + DispData_Sign + DispData_HEX + 3,		(unsigned int)SIGN_GONGLV,//A相功率
+    0xA00B,     0x20040201,     0x00,   DispData_RAM + DispData_Sign + DispData_HEX +3,		    (unsigned int)SIGN_GONGLV,//A相功率
+    0xA012,     0x200A0201,     0x00,   DispData_RAM + DispData_Sign + DispData_HEX +2,		    (unsigned int)SIGN_GONGLVYINSU,//A相功率因数
+    0xA013,     0x200A0201,     0x00,   DispData_RAM + DispData_Sign + DispData_HEX + 2,		(unsigned int)SIGN_GONGLVYINSU,//A相功率因数
     
     0xB001,		0x40010200,     0x01,   DispData_E2PROM + DispData_BCD +2,						(unsigned int)SIGN_NULL,//表地址高4位
     0xB002,		0x40010200,     0x02,   DispData_E2PROM + DispData_BCD +4,						(unsigned int)SIGN_NULL,//表地址低8位
@@ -398,6 +398,30 @@ const  DISPLAYLIST   Display_List[] =
 };
 
 #define displaytablenum     sizeof(Display_List)/sizeof(DISPLAYLIST)
+
+void HEX_BCD( unsigned char* BCD, unsigned long HEX )
+{
+	unsigned char i;
+
+	if( HEX > 99999999 )
+	{
+		*BCD = 0x00;
+		*(BCD+1) = 0x00;
+		*(BCD+2) = 0x00;
+		*(BCD+3) = 0x00;
+	}
+	else
+	{
+		for( i=0;i<4;i++ )
+		{
+			*BCD = (unsigned char)(HEX%10);
+	        	HEX = HEX/10;
+	        	*BCD += (unsigned char)((HEX%10)<<4) & 0xF0;
+	        	HEX = HEX/10;
+	        	BCD++;
+		}
+	}
+}
 
 unsigned char display_id_to_oad(unsigned short id, unsigned char *oad, unsigned char len)
 {
@@ -455,7 +479,7 @@ unsigned short display_oad_to_id(unsigned char *oad, unsigned char len)
             if( mem_compare( (unsigned char*)&temp, (unsigned char*)&oad, 4 ) == 0 )
             {
                 id = Display_List[i].Id;
-                break;
+                return id;
             }
         }
         memcpy((unsigned char*)&oad2, (unsigned char*)&oad, 4);
@@ -514,30 +538,6 @@ unsigned short display_oad_to_id(unsigned char *oad, unsigned char len)
     return id;
 }
 
-
-void HEX_BCD( unsigned char* BCD, unsigned long HEX )
-{
-	unsigned char i;
-
-	if( HEX > 99999999 )
-	{
-		*BCD = 0x00;
-		*(BCD+1) = 0x00;
-		*(BCD+2) = 0x00;
-		*(BCD+3) = 0x00;
-	}
-	else
-	{
-		for( i=0;i<4;i++ )
-		{
-			*BCD = (unsigned char)(HEX%10);
-	        	HEX = HEX/10;
-	        	*BCD += (unsigned char)((HEX%10)<<4) & 0xF0;
-	        	HEX = HEX/10;
-	        	BCD++;
-		}
-	}
-}
 unsigned char BYTE_BCD( unsigned char HEX )
 {
 	if( HEX > 99 )
@@ -691,7 +691,7 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline)
     
     Flag.Run |= F_Disp;
     if( instance->ac_power_statue == AC_POWER_ON )
-        mbase_control_block->backlight_key_time = 60;//按键时,背光点亮
+        mbase_control_block->BackLightTmr = mbase_control_block->backlight_key_time;//按键时,背光点亮
     else
     {
         Flag.Disp &= ~F_DispStop;
@@ -758,6 +758,8 @@ void Get_DisplayPage(struct instance_t* instance, struct pipeline_t* pipeline)
     uint16_t pageid;
     uint32_t s_index = 0;
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    
+    //mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
 	if( (mbase_control_block->Key & F_KeyDispay) == 0 )//轮显
 	{
@@ -982,6 +984,10 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 		if(mbase_control_block->sta & F_RemoteRelayOff)   //拉闸
         {
             if((mbase_control_block->alarmmin == 0) && (mbase_control_block->imaxmin == 0))   Lcdcon[13] |= DS_Chr_LaZha;
+        }
+        else
+        {
+            Lcdcon[13] &= ~DS_Chr_LaZha;
         }
 	}
 } 
@@ -1349,9 +1355,9 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
         if( i >= DisplayTabNum )//如果显示项在表格里不存在,则显示第一项内容
             i = 0;
         oad = DisplayTab[i].Oad;
-        Info = DisplayTab[i].Info;
-        Len = (unsigned char)(Info & DispDataLen);
-        if((Info & DispData_RAM) == DispData_RAM)
+        Info1 = DisplayTab[i].Info;
+        Len = (unsigned char)(Info1 & DispDataLen);
+        if((Info1 & DispData_RAM) == DispData_RAM)
         {
             if((DisplayTab[i].Id == 0xA001) || (DisplayTab[i].Id == 0xA002))
             {

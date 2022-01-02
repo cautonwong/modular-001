@@ -21,6 +21,7 @@
 uint8_t Buf[60];
 
 const unsigned char  MonTab[13] = {	0,31,28,31,30,31,30,31,31,30,31,30,31};
+/*
 const unsigned int  DayTab[13] = { 0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
 
 unsigned char BYTE_BCD( unsigned char HEX )
@@ -48,7 +49,7 @@ unsigned int GetTotalDay( unsigned char* Addr )
 	if( ((Year&0x03) == 0) && (Mon <= 2) )
 		Day--;
    	return Day;
-}
+}*/
 
 unsigned long GetTotalMin( unsigned char* Addr )
 {

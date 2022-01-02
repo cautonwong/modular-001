@@ -355,20 +355,23 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     
+    
     if(mbase_control_block->AutoInv > 0)   mbase_control_block->AutoInv--;
     
     if(mbase_control_block->KeyInv > 0)    mbase_control_block->KeyInv--;
     
-    if(mbase_control_block->backlight_key_time > 0) mbase_control_block->backlight_key_time--;
+    if(mbase_control_block->BackLightTmr > 0) mbase_control_block->BackLightTmr--;
 
-    if(mbase_control_block->backlight_key_time == 0)    
+/*    if(mbase_control_block->BackLightTmr == 0)    
     {
         P_BACKLIGHT_OFF;
     }
     else
     {
         P_BACKLIGHT_ON;
-    }
+    }*/
+    
+    backlight_pro(instance, pipeline);
 }
 
 // !!!在此app中不做IO操作!!!
@@ -445,6 +448,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
         nd_get_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)addr,mbase_block_persistent_size); //将EPROM中的数据恢复到RAM;        
         Electrical_measurement_poweron(instance, pipeline);
         AllDisplayLCD(instance, pipeline);
+        Magnetic_hold_relay_Init();
         break;
       case MSG_POWEROFF:
         //掉电需要保存数据
