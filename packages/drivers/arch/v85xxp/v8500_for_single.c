@@ -1206,6 +1206,11 @@ void mcu_main_power_on_config(void)
     
     start_emu_signal_pro();
     
+    GPIOA->OEN |=BIT2; 
+    GPIOA->IE |=BIT2;
+    PMU_WakeUpPinConfig(GPIO_Pin_2, IOA_EDGEBOTH);   //使能外部IO口唤醒
+    PMU_ClearIOAINTStatus(GPIO_Pin_2);
+    
     PMU->CONTROL |= PMU_CONTROL_INT_IOA_EN;
     
     NVIC_EnableIRQ(PMU_IRQn);
