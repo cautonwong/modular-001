@@ -2,7 +2,6 @@
 #include "fr_698.h"
 
 
-
 int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {    
     struct mbase_control_block_t* mbase_cb;
@@ -23,8 +22,8 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
         case 0x4300://电压
             switch(method)
             {
-                case 0x04:
-                      dar = DAR_RW_REJECT;
+                case 0x04://出厂参数初始化
+                      para_init( instance );
                       break;
                 case 0x03://数据初始化（电表清零）
                     break;

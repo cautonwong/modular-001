@@ -3,8 +3,9 @@
 #include "resource_tool.h"
 
 extern const uint8_t CODE init_AutoDisplayList[];
+extern const uint8_t CODE init_KeyDisplayList[];
 
-extern const uint8_t CODE  inital_Comm_Number[];//表地址
+extern const uint8_t CODE  init_Comm_Number[];//表地址
 extern const uint8_t CODE  init_Meter_Number[];//表号
 extern const uint8_t CODE  init_User_Number[];//客户编号
 extern const uint8_t CODE  init_Meter_Num[];//计量元件数
@@ -97,13 +98,13 @@ struct record_item_t
     uint32_t max_depth;             // 默认最大深度
 };
 
-struct parameter_item_t
+typedef struct 
 {
     uint16_t paramerer_index;
     uint16_t same;
     uint16_t len;
     const uint8_t CODE *data;  //默认参数常亮数组地址
-};
+}parameter_item_t;
 
 //一个表格只能放在一个存储器上，注册的时候绑定设备
 const struct record_item_t  record_item[] =
@@ -163,7 +164,7 @@ const struct record_item_t  record_item_2[] =
 };
 
 
-const struct parameter_item_t  parameter_item[] =
+const  parameter_item_t  parameter_item[] =
 {
     // 管理区
 
@@ -339,7 +340,7 @@ const struct parameter_item_t  parameter_item[] =
 
 
     { AutoDisplayList,     0x64,   2,       init_AutoDisplayList },//100屏*2字节
-    { KeyDisplayList,      0x64,   2,       0 },//100屏*2字节
+    { KeyDisplayList,      0x64,   2,       init_KeyDisplayList },//100屏*2字节
     
     //4XXX
     { Comm_Number,         0x01,   6,       init_Comm_Number },//表地址
@@ -402,7 +403,7 @@ const struct parameter_item_t  parameter_item[] =
 
 int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size,uint16_t *offset)
 {
-    uint16_t i, k;
+    uint16_t i;
 
     POINTER_EMPTY(addr);
     *addr = 0x00;
@@ -417,7 +418,7 @@ int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size,uint16
             *size = parameter_item[i].same * parameter_item[i].len + 0x02;
             
             POINTER_EMPTY(offset);
-            *offset = (id - parameter_item[i].paramerer_index) * parameter_item[k].len;
+            *offset = (id - parameter_item[i].paramerer_index) * parameter_item[i].len;
 
             return 1;
         }
@@ -1246,23 +1247,46 @@ int record_data_add_tag(uint8_t* des, uint8_t* src, uint32_t* obj_list, uint8_t 
 // 00000001 00000001 00000001 00000001
 // 01 13 06  XXXX 06 XXXX
 
-uint8_t para_init(struct instance_t* instance, struct pipeline_t* pipeline)
+#endif
+uint8_t para_init(struct instance_t* instance )
 {
-    uint16_t i,num=0;
+    uint16_t i,num=0,s_len;
     uint32_t s_index=0;
+    struct mbase_control_block_t* mbase_cb;
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     num = sizeof(parameter_item)/sizeof(parameter_item_t);
+    
     //RAM部分更新
-  
+    mbase_cb->lcd_poweron_all_dis_time = 5;            //上电全显时间
+    mbase_cb->backlight_key_time = 60;                  //背光点亮时间
+    mbase_cb->lcd_checkdis_keep_sec = 10;               //显示查看背光点亮时间
+    mbase_cb->lcd_nopower_key_keep_sec = 30;            //无电按键驻留时间
+    mbase_cb->energy_point = 2;                        //电能小数显示位
+    mbase_cb->power_point = 4;                         //功率小数显示位
+    mbase_cb->lcd_12_mean = 0;                         //液晶12字样意义
+    mbase_cb->lcd_autodis_list_num = 5;                           //轮显屏数
+    mbase_cb->lcd_autodis_list_maxnum = 99;                       //最大轮显屏数
+    mbase_cb->lcd_keydis_list_num = 23;                           //键显屏数
+    mbase_cb->lcd_keydis_list_maxnum = 99;      //键显最大屏数
+    mbase_cb->lcd_autodis_keep_sec = 5;                           /*轮显持续时间 */
+    mbase_cb->lcd_keydis_keep_sec = 60;                           /*按键轮显持续时间 */
+    mbase_cb->Baut_rs485 = 6;
+    mbase_cb->Baut_plc = 6;
+    
+    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+    offsetof(struct mbase_control_block_t, backlight_key_time));
+    s_len = offsetof(struct mbase_control_block_t, Baut_plc) - offsetof(struct mbase_control_block_t, backlight_key_time);
+    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->backlight_key_time, s_len);
+    
+    //EE部分更新
     for(i=0; i<num; i++)
     {
         if( parameter_item[i].data != 0 )
         {
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + parameter_item[i].paramerer_index);
-            nd_set_index(instance, s_index, (parameter_item[i].data+1), *(parameter_item[i].data)); 
+            nd_set_index(instance, s_index, (uint8_t*)(parameter_item[i].data+1), *(parameter_item[i].data)); 
         }
     }
-  
+    return 0;
 }
-
-#endif

@@ -2354,6 +2354,9 @@
                 </file>
             </group>
             <file>
+                <name>$PROJ_DIR$\..\mapper_698\factory_cfg.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\mapper_698\mapper_698.c</name>
             </file>
         </group>

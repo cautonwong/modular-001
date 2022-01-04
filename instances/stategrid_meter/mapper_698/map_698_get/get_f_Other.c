@@ -14,7 +14,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
     uint16_t oad,displayid;
     uint8_t index,attribute,i,len,dispalyseque,maxnum;
     uint8_t* p = buf;
-    uint32_t displayoad1,displayoad2;
+    uint32_t displayoad1,displayoad2,addr=0,s_index=0;
     uint8_t esam_inf[45]; 
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -131,19 +131,89 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
             {
                 case 0x02://显示对象列表
                     if(oad == 0xF300)
+                    {
                         maxnum = mbase_cb->lcd_autodis_list_num;
+                        addr = AutoDisplayList;
+                    }
                     else if(oad == 0xF301)
+                    {
                         maxnum = mbase_cb->lcd_keydis_list_num;
-                    if(index > maxnum)  return -1;
+                        addr = KeyDisplayList;
+                    }
+                    if(index > maxnum)  return -DAR_OBJECT_NOT_EXIST;
                     
                     if(index != 0)
                     {
-                    
+                        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
+                        nd_get_index(instance, s_index, &displayid, 2);
+                        len = display_id_to_oad( displayid, esam_inf );
+                        if(len == 5)
+                        {
+                            *p++ = TYPE_structure;
+                            *p++ = 2;
+                            *p++ = TYPE_CSD;
+                            *p++ = 0;
+                            mem_swap_cpy(p, esam_inf, 4);
+                            p = p + 4;
+                            *p++ = TYPE_unsigned;
+                            *p++ = esam_inf[4];
+                        }
+                        else if(len == 9)
+                        {
+                            *p++ = TYPE_structure;
+                            *p++ = 2;
+                            *p++ = TYPE_CSD;
+                            *p++ = 1;
+                            mem_swap_cpy(p, esam_inf, 4);
+                            p = p + 4;
+                            *p++ = 1;
+                            mem_swap_cpy(p, &esam_inf[4], 4);
+                            p = p + 4;
+                            *p++ = TYPE_unsigned;
+                            *p++ = esam_inf[8];
+                        }
+                        else
+                            return -DAR_OTHERS_ERROR;
                     }
                     else
                     {
-                        
+                        *p++ = TYPE_array;
+                        *p++ = maxnum;
+                        for(i=0;i<maxnum;i++)
+                        {
+                            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
+                            nd_get_index(instance, s_index, &displayid, 2);
+                            len = display_id_to_oad( displayid, esam_inf );
+                            if(len == 5)
+                            {
+                                *p++ = TYPE_structure;
+                                *p++ = 2;
+                                *p++ = TYPE_CSD;
+                                *p++ = 0;
+                                mem_swap_cpy(p, esam_inf, 4);
+                                p = p + 4;
+                                *p++ = TYPE_unsigned;
+                                *p++ = esam_inf[4];
+                            }
+                            else if(len == 9)
+                            {
+                                *p++ = TYPE_structure;
+                                *p++ = 2;
+                                *p++ = TYPE_CSD;
+                                *p++ = 1;
+                                mem_swap_cpy(p, esam_inf, 4);
+                                p = p + 4;
+                                *p++ = 1;
+                                mem_swap_cpy(p, &esam_inf[4], 4);
+                                p = p + 4;
+                                *p++ = TYPE_unsigned;
+                                *p++ = esam_inf[8];
+                            }
+                            else
+                                return -DAR_OTHERS_ERROR;
+                        }
                     }
+                    return (p-buf);
                     break;
                 case 0x03://显示时间
                     if(index != 0)  return -1;
