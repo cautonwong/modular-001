@@ -63,14 +63,10 @@ struct mbase_control_block_t
     uint8_t lcd_12_mean;    //液晶12字样意义
     uint16_t lcd_autodis_keep_sec;    /*轮显持续时间 */
     uint16_t lcd_keydis_keep_sec;    /*按键轮显持续时间 */
-    uint16_t lcd_checkdis_keep_sec;/*显示查看显示时间 */
     uint16_t lcd_nopower_key_keep_sec;/*显示查看显示时间 */
-    uint16_t lcd_checkdis_all_keep_sec;/*显示查看全屏显示时间 */
     
     uint8_t Baut_rs485; //485波特率
     uint8_t Baut_plc;   //载波波特率
-    
-    uint8_t MulPortMode;    //多功能口模式
     
     uint8_t relay_ctl_mode; //继电器控制方式（0：脉冲式，1：保持式）
     
@@ -88,6 +84,8 @@ struct mbase_control_block_t
     uint8_t   StepNum;//阶梯数
     uint8_t    Fee;
     uint8_t TouBefNo;
+    
+    uint8_t MulPortMode;    //多功能口模式
           
     uint32_t voltage_ac;
     int32_t current_l;
@@ -111,6 +109,8 @@ struct mbase_control_block_t
     uint8_t  rtc_chip_abnormal;
     uint8_t  meter_chip_abnormal;
     
+    uint16_t lcd_checkdis_keep_sec;/*显示查看显示时间 */
+    uint16_t lcd_checkdis_all_keep_sec;/*显示查看全屏显示时间 */
     uint8_t AutoPtr;    //轮显指针
     uint16_t AutoInv;
     uint8_t KeyPtr;
@@ -349,7 +349,7 @@ struct format_conversion_t
 extern int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_storage_id_info_t* info);
 extern int record_change_format(uint8_t *des,  uint8_t* src, uint32_t oad, enum format_conversion_mode mode);
 extern int clr_record(struct instance_t* instance, uint32_t oad);
-
+extern uint8_t para_init(struct instance_t* instance );
 //GS----end
 
 

@@ -12,7 +12,7 @@ int fr_security_decode(struct instance_t* instance, struct pipeline_t* pipeline,
     uint8_t Temp08,rxlen;
     uint16_t txlen=0,temp=0,offset=0;
     
-    offset = fifo->rd;
+//    offset = fifo->rd;
     
     fifoBuf_getData(fifo, ctx->keybuf, len+1);   //明文/密文数据
     Temp08 = ctx->keybuf[len];
@@ -38,7 +38,7 @@ int fr_security_decode(struct instance_t* instance, struct pipeline_t* pipeline,
     
     rxlen = write_esam(addr , ctx->keybuf , txlen);
     
-    fifo->wr = offset;
+    fifo->wr = fifo->rd;
     fifoBuf_putData(fifo, ctx->keybuf, rxlen);
     
 	return 1;

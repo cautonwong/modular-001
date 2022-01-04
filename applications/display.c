@@ -423,17 +423,18 @@ void HEX_BCD( unsigned char* BCD, unsigned long HEX )
 	}
 }
 
-unsigned char display_id_to_oad(unsigned short id, unsigned char *oad, unsigned char len)
+unsigned char display_id_to_oad(unsigned short id, unsigned char *oad)
 {
-    unsigned char i,idh,idmid,idl;
+    unsigned char i,idh,idmid,idl,len=0;
     unsigned long oad1,oad2;
     
     for(i=0; i<displaytablenum; i++)
     {
         if(id == Display_List[i].Id)
         {
-            len = 4;
-            memcpy(oad, (unsigned char *)&Display_List[i].oad, len);
+            len = 5;
+            memcpy(oad, (unsigned char *)&Display_List[i].oad, 4);
+            *(oad+4) = Display_List[i].Sequ;
             return 0;
         }
     }
@@ -444,7 +445,6 @@ unsigned char display_id_to_oad(unsigned short id, unsigned char *oad, unsigned 
     if(idl > 0x0c)  return 1;
     if(idmid > 0x18)    return 1;
     oad1 = oad1 + idmid;
-    len = 8;
     switch (idh)
     {
         case 0x0E://组合
@@ -460,9 +460,20 @@ unsigned char display_id_to_oad(unsigned short id, unsigned char *oad, unsigned 
             return 1;
             break;
     }
-    memcpy(oad, (unsigned char*)&oad1, 4);
-    memcpy(oad+4, (unsigned char*)&oad2, 4);
-    return 0;
+    if(idmid == 0)
+    {
+        memcpy(oad, (unsigned char*)&oad2, 4);
+        *(oad+4) = 0;
+        len = 5;
+    }
+    else
+    {
+        memcpy(oad, (unsigned char*)&oad1, 4);
+        memcpy(oad+4, (unsigned char*)&oad2, 4);
+        *(oad+8) = 0;
+        len = 9;
+    }
+    return len;
 }
 
 unsigned short display_oad_to_id(unsigned char *oad, unsigned char len)

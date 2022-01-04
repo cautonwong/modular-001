@@ -459,6 +459,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         if (SECURITY_CHOICE_1_Ciphertext == ctx->choice)
         {
             fr_security_decode(instance, pipeline, mesg, len);
+            ctx->service = fifoBuf_getByte(fifo);
         }
         else if (SECURITY_CHOICE_0_Plaintext == ctx->choice)
         {

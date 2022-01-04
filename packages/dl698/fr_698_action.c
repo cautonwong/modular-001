@@ -36,18 +36,18 @@ int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipelin
             //return -1;
         }
         offset = cache->wr;
-        p[cache->wr++] = 0x01;
+        //p[cache->wr++] = 0x01;
 
         r = fr_698_action(instance, oad, fifo->buf_ptr + fifo->rd, len);
-        //
+        cache->wr = offset;
         if (r < 0)
         {
-            p[cache->wr++] = 0x00;//DAR
-            p[cache->wr++] = -r;
+            p[cache->wr++] = -r;//DAR
         }
         else
         {
-            cache->wr += r;
+            p[cache->wr++] = 0;
+            //cache->wr += r;
         }
     }
 

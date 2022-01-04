@@ -35,18 +35,20 @@ int fr_set_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
             //return -1;
         }
         offset = cache->wr;
-        p[cache->wr++] = 0x01;
+//        p[cache->wr++] = 0x01;
 
         r = fr_698_set(instance, oad, fifo->buf_ptr + fifo->rd, len);
-        //
+        
+        cache->wr = offset;
         if (r < 0)
         {
-            p[cache->wr++] = 0x00;//DAR
+            //p[cache->wr++] = 0x00;//DAR
             p[cache->wr++] = -r;
         }
         else
         {
-            cache->wr += r;
+            p[cache->wr++] = 0x00;//DAR
+            //cache->wr += r;
         }
     }
 
