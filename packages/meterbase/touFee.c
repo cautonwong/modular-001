@@ -342,6 +342,11 @@ void Rtc_Prossecc(struct instance_t* instance, struct pipeline_t* pipeline)
     {
         read_mcu_rtc(0x00, (uint8_t*)&instance->time.tm_sec, 7);
     }
+    
+    if(instance->time.tm_sec == 0)
+    {
+        TouFeePro(instance, pipeline);
+    }
 }
 
 

@@ -416,8 +416,6 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
           
           Rtc_Prossecc(instance, pipeline);
           
-          TouFeePro(instance, pipeline);
-          
           Electrical_measurement(instance, pipeline);
           
           Energy_Pluse_Count(instance, pipeline);
