@@ -409,8 +409,7 @@ int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size,uint16
     *addr = 0x00;
 
     for (i = 0; i < sizeof(parameter_item) / sizeof(parameter_item[0]); i++)
-    {
-        *addr += parameter_item[i].len * parameter_item[i].same + 0x02;  //加两个字节的校验码；
+    {        
         if ((parameter_item[i].paramerer_index + (parameter_item[i].same - 0x01) >= id) && 
             (parameter_item[i].paramerer_index <= id))
         {
@@ -422,6 +421,7 @@ int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size,uint16
 
             return 1;
         }
+        *addr += parameter_item[i].len * parameter_item[i].same + 0x02;  //加两个字节的校验码；
     }
     *addr = 0x00;
     return -1;
