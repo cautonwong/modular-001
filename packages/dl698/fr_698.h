@@ -249,6 +249,24 @@ struct data_time_s_t
     uint16_t year;
 };
 
+struct para_698_tag_t
+{
+    uint8_t tag;
+    uint8_t* ctrlblock_para;
+    uint8_t datalen;  //数据长度 不包含tag
+};
+
+
+struct event_para_pack_t
+{
+    struct para_698_tag_t event_para[10]; //预留10个参数
+    uint8_t para_num;
+};
+
+extern int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_para_pack_t *para_pack);
+
+
+
 #define REQ_RCSD_MAXNUM 50 
 
 

@@ -3,7 +3,6 @@
 #include "gs_record.h"
 #include "fr_698.h"
 
-
 // 获取事件参数配置表
 int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_para_pack_t *para_pack)
 {
@@ -38,54 +37,7 @@ int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_
     }
 }
 
-int get_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* buf,  uint8_t* dar)
-{
-    struct event_para_pack_t para_pack;
-    uint8_t* p;
-    uint16_t ret;
-    uint8_t i, count = 0, index = (uint8_t)oad;
-    p = buf;
 
-    memset((uint8_t*)&para_pack, 0, sizeof(struct event_para_pack_t));
-
-    ret = get_event_para_pack(instance, oad, &para_pack);
-    if (ret < 0)
-    {
-        *p++ = TYPE_structure;
-        *p++ = 0;
-        return (p-buf);
-    }
-
-    count = para_pack.para_num;
-
-    if (index > count)
-    {
-        *dar = DAR_OTHERS_ERROR;
-        return -1;
-    }
-
-    if (index == 0)
-    {
-        *p++ = TYPE_structure;
-        *p++ = count;
-        for (i = 0; i < count; i++)
-        {
-            *p++ = para_pack.event_para[i].tag;
-            memcpy(p,  (uint8_t*)para_pack.event_para[i].ctrlblock_para,  para_pack.event_para[i].datalen);
-            p += para_pack.event_para[i].datalen;
-        }
-    }
-    else
-    {
-        i = index - 1;
-        *p++ = para_pack.event_para[i].tag;
-        memcpy(p, (uint8_t*)para_pack.event_para[i].ctrlblock_para, para_pack.event_para[i].datalen);
-        p += para_pack.event_para[i].datalen;
-    }
-
-    *dar = DAR_SUCCESS;
-    return (p-buf);
-}
 
 
 uint8_t get_activeflag(struct pipeline_t* task, uint16_t RecordId)

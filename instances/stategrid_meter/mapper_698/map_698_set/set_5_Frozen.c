@@ -269,7 +269,7 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
 
     // 待添加
 #if 0
-    if (false == whether_storage_depth_overruns(pobject, pdepth, req->oad.elem.oi))
+    if (false == whether_storage_depth_overruns(pobject, pdepth, oi))
     {
         return  /*DAR_EX_STORAGE_DEPTH_ERROR;*/ DAR_OTHERS_ERROR;
     }

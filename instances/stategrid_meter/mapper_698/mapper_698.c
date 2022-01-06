@@ -75,7 +75,9 @@ extern int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf);
 
+extern int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf);
+extern int ACTION_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf);
 
@@ -516,6 +518,21 @@ const uint32_t record_head_t0[] = {5, 0x20220200, 0x201E0200, 0x20200200, 0x2024
 const uint32_t record_head_t1[] = {4, 0x20220200, 0x201E0200, 0x20200200, 0x33000200};
 // 其他事件记录头种类 待添加
 
+//
+//const uint32_t record_head_t2[] = {  };
+
+// 事件清零事件记录头   事件记录序号、事件发生时间、事件结束时间、时间发生源、事件上报状态 、事件清零列表
+const uint32_t record_head_t3[] = { 6, 0x20220200, 0x201E0200, 0x20200200, 0x20240200, 0x33000200, 0x330C0206 };
+
+// 编程记录事件记录头  事件记录序号、事件发生时间、事件结束时间、时间发生源、事件上报状态 、编程对象列表
+const uint32_t record_head_t4[] = { 6, 0x20220200, 0x201E0200, 0x20200200, 0x20240200, 0x33000200, 0x33020206 };
+
+// 时段表编程事件记录头  事件记录序号、事件发生时间、事件结束时间、时间发生源、事件上报状态 、编程时段表对象、编程前时段表  日时段表
+const uint32_t record_head_t5[] = { 7, 0x20220200, 0x201E0200, 0x20200200, 0x20240200, 0x33000200, 0x33140206, 0x33140207 };
+
+// 节假日编程事件记录头  事件记录序号、事件发生时间、事件结束时间、时间发生源、事件上报状态 、编程节假日对象、编程前节假日内容  公共假日
+const uint32_t record_head_t6[] = { 7, 0x20220200, 0x201E0200, 0x20200200, 0x20240200, 0x33000200, 0x33150206, 0x33150207 };
+
 
 
 // 通过oad 获取 事件相关的存储地址信息
@@ -583,14 +600,14 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     info->acc_time = &mbase_cb->PowerOffS_acc_time;
                 }
                 break;
-                case 0x30120000:
+                case 0x30120000: //编程事件
                 {
                     SaveId = MeterWrS;                 // 记录存储地址信息
                     SaveDevice = RES_DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = MeterWrS_oad;          // 关联对象存储地址信息
                     SeqId = MeterWrS_seq;              // 序号存储地址信息
-                    info->record_head = record_head_t0;     // 记录单元
+                    info->record_head = record_head_t4;     // 记录单元
                 }
                 break;
                 case 0x30130000:
@@ -607,9 +624,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 case 0x301A0000:
                 case 0x30190000:
                 case 0x30180000:
-                case 0x30170000:
                 case 0x30160000:
-                case 0x30150000:
+                //case 0x30150000://事件清零
                 {
                     temp = (((oad & 0xFFFF0000) - 0x30150000) >> 16);
                     SaveId = EventClrS + temp;                 // 记录存储地址信息
@@ -618,6 +634,28 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     CaptureId = EventClrS_oad + temp;          // 关联对象存储地址信息
                     SeqId = EventClrS_seq + temp;              // 序号存储地址信息
                     info->record_head = record_head_t0;     // 记录单元
+                }
+                break;
+                case 0x30150000://事件清零
+                {
+                    temp = (((oad & 0xFFFF0000) - 0x30150000) >> 16);
+                    SaveId = EventClrS + temp;                 // 记录存储地址信息
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = EventClrS_oad + temp;          // 关联对象存储地址信息
+                    SeqId = EventClrS_seq + temp;              // 序号存储地址信息
+                    info->record_head = record_head_t3;     // 记录单元
+                }
+                break;
+                case 0x30170000:    //电能表时段表编程事件
+                {
+                    //temp = (((oad & 0xFFFF0000) - 0x30150000) >> 16);
+                    SaveId = DayTabWrS;                 // 记录存储地址信息
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = DayTabWrS_oad;          // 关联对象存储地址信息
+                    SeqId = DayTabWrS_seq;              // 序号存储地址信息
+                    info->record_head = record_head_t5;     // 记录单元
                 }
                 break;
                 case 0x301B0000:
@@ -634,7 +672,6 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
 
 
                 case 0x30220000:
-                case 0x30210000:
                 case 0x30200000:
                 case 0x301F0000:
                 {
@@ -647,6 +684,21 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     info->record_head = record_head_t0;     // 记录单元
                 }
                 break;
+
+                case 0x30210000: //电能表节假日编程事件   
+                {
+                    //temp = (((oad & 0xFFFF0000) - 0x301F0000) >> 16);
+                    SaveId = HolidayWrS;                 // 记录存储地址信息
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = HolidayWrS_oad;          // 关联对象存储地址信息
+                    SeqId = HolidayWrS_seq;              // 序号存储地址信息
+                    info->record_head = record_head_t6;     // 记录单元
+                }
+                break;
+                
+
+
                 case 0x30290000:
                 case 0x30280000:
                 case 0x30270000:
@@ -1034,8 +1086,12 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
     case RESOURCE_MAP_ACTION:
         switch (OIA1)
         {
+        case 0x3://事件
+            return ACTION_3_Event(instance, id, buf);
         case 0x4://参变量
             return ACTION_4_Parameter(instance, id, buf);
+        case 0x5://冻结
+            return ACTION_5_Frozen(instance, id, buf);
         case 0x8://控制类
             return ACTION_8_Parameter(instance, id, buf);
         case 0xf://其他

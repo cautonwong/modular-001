@@ -132,6 +132,12 @@
     <ClCompile Include="..\..\..\packages\meterbase\gs_freeze.c">
       <Filter>app_meter_base</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\packages\meterbase\gs_power_off_event.c">
+      <Filter>app_meter_base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_action\action_3_Event.c">
+      <Filter>mapper_698\action</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="app_698_server">

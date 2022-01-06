@@ -10,19 +10,6 @@ struct event_duration_t
 };
 
 
-struct para_698_tag_t
-{
-    uint8_t tag;
-    uint8_t *ctrlblock_para;
-    uint8_t datalen;  //数据长度 不包含tag
-};
-
-
-struct event_para_pack_t
-{
-    struct para_698_tag_t event_para[10]; //预留10个参数
-    uint8_t para_num;
-};
 
 
 uint8_t get_activeflag(struct pipeline_t* task, uint16_t RecordId);

@@ -541,6 +541,15 @@ enum block_parameter_item_id_t
 #define		Disp_PowerDot               706 //功率小数
 #define     DispMean12Show              707 //液晶12字符意义
 */
+
+
+
+
+
+
+
+#define     EventClr_List              1500 //事件清零列表  array OMD   事件清零事件记录用
+
                                   
 #define     MAX_FEE_NO                  12                                  
 

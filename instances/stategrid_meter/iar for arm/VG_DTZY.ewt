@@ -2534,7 +2534,13 @@
             <group>
                 <name>action</name>
                 <file>
+                    <name>$PROJ_DIR$\..\mapper_698\map_698_action\action_3_Event.c</name>
+                </file>
+                <file>
                     <name>$PROJ_DIR$\..\mapper_698\map_698_action\action_4_Parameter.c</name>
+                </file>
+                <file>
+                    <name>$PROJ_DIR$\..\mapper_698\map_698_action\action_5_Frozen.c</name>
                 </file>
                 <file>
                     <name>$PROJ_DIR$\..\mapper_698\map_698_action\action_8_Control.c</name>
