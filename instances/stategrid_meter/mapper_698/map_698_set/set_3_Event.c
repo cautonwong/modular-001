@@ -216,7 +216,7 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
         break;
         case 5: // 配置参数 
         {
-            //return get_struct_event_para_t(instance, id, p, &dar);
+            return set_struct_event_para_t(instance, id, p, &dar);
         }
         break;
 

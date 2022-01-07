@@ -43,6 +43,36 @@ int freeze_judge(struct instance_t* instance, uint8_t* pperiod, uint16_t unit, s
 
 }
 
+int instant_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+{
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
+    struct tm record_time;
+
+    uint16_t FlagID = InstantFreeze;
+
+
+    if (ctrl_block->trigger_insfreeze_delay_sec == 0xFFFF)
+    {
+        return -1;
+    }
+
+    if (ctrl_block->trigger_insfreeze_delay_sec > 0)
+    {
+        ctrl_block->trigger_insfreeze_delay_sec--;
+    }
+
+    if (ctrl_block->trigger_insfreeze_delay_sec == 0)
+    {
+        ctrl_block->trigger_insfreeze_delay_sec = 0xFFFF;
+        memcpy((uint8_t*)&record_time.tm_sec, (uint8_t*)&instance->time.tm_sec, sizeof(struct tm));
+        send_recordflag_mesg(instance, task, mesg, (FlagID), NULL);
+        return 1;
+    }
+
+    return -1;
+}
+
+
 
 int minute_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
@@ -160,7 +190,8 @@ int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct mess
     minute_freeze_judge(instance, task, mesg);
     hour_freeze_judge(instance, task, mesg);
     day_freeze_judge(instance, task, mesg);
-    month_freeze_judge(instance, task, mesg);
+    month_freeze_judge(instance, task, mesg);  
+    instant_freeze_judge(instance, task, mesg); //瞬时冻结
 }
 
 

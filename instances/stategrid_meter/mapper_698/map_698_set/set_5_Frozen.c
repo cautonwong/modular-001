@@ -172,12 +172,12 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
     DepthLen = frozen_obj.DepthLen;
 #endif
 
-    OI = (uint16_t)(id >> 16);
-    scheme = (uint8_t)((id >> 13) & 0x07); //方案号
 
+    OI = (uint16_t)(id >> 16);
+    
     memset(period_buf, 0, sizeof(period_buf));
     memset(depth_buf, 0, sizeof(depth_buf));
-    memset(tempbuf, 0, sizeof(depth_buf));
+    memset(tempbuf, 0, sizeof(tempbuf));
 
  
     /*
@@ -216,6 +216,9 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
         depth = buf_to_uint16_msb(p);
         p += 2;
 
+        
+        scheme = (uint8_t)((oad >> 13) & 0x07); //方案号
+        
         // oad check 
 
         // period check
@@ -257,12 +260,12 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
         }
         else
         {
-            if ((0 != scheme) || ((i != 0) && (depth_buf[0] > 0) && (depth != buf_to_uint16_lsb(depth_buf ))))   /*其他冻结 属性特征固定0,每个关联对象周期、深度必须一致*/
+            if ((0 != scheme) || ((i != 0) && (period_buf[0] > 1) && (depth != buf_to_uint16_lsb(depth_buf ))))   /*其他冻结 属性特征固定0,每个关联对象周期、深度必须一致*/
             {
                 *dar = DAR_OTHERS_ERROR;
                 return -1;
             }
-            offset = i * 2;
+            offset = 0;
         }
         uint16_to_buf_lsb(depth, depth_buf + offset);
     }
