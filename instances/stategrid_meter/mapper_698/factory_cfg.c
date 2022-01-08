@@ -279,7 +279,7 @@ const uint8_t CODE init_HoliDay_Table[] =
   0xff,0xff,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0xff,0xff,0x00,
   0xff,0xff,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0xff,0xff,0x00}; /**< 公共假日表 */
 
-const uint8_t CODE init_Weekend[] = { 1,0x7f }; /**< 周休日特征字 */
+const uint8_t CODE init_Weekend[] = { 1,0xFE }; /**< 周休日特征字 */
 const uint8_t CODE init_WeekendFee[] = { 1,1 }; /**< 周休日釆用的日时段表号 */
 const uint8_t CODE init_Season_Table0[] = 
 { 42,
@@ -391,7 +391,7 @@ const uint8_t CODE init_ASCII_MeterType[] =
     0x00, 0x00
 }; 
 const uint8_t CODE init_SoftWareNo[] = { 16, 'A', 'A', 'A', 'A', 'A', 'A',  'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',  'A', 'A' }; /**< 软件备案号 */
-const uint8_t CODE init_Measure_Mode[] = {1, 0x05 }; /**< 有功组合方式特征字 */
+const uint8_t CODE init_Measure_Mode[] = {1, 0xA0 }; /**< 有功组合方式特征字 */
 const uint8_t CODE init_Balance_Time[] = { 6,0, 1, 0x63, 0x63, 0x63, 0x63 }; /**< 结算日 */
 const uint8_t CODE init_Meter_Password[] = {8, '0', '0', '0', '0', '0', '0', '0', '0' }; /**< 认证密码 */
 const uint8_t CODE init_MeterRunWord[] = { 1,0 };//运行特征字
@@ -415,11 +415,11 @@ const uint8_t CODE init_Device_descriptor[] =
     0x00, 0x00 }; /**< 设备描述符 32 bytes */
 const uint8_t CODE init_Factory_No[] = { 4, 'X', 'X', 'X', 'X' }; /**< 厂商代码       visible-string(SIZE (4)) */
 const uint8_t CODE init_Version_SoftWare[] = { 4, 'X', 'X', 'X', 'X' }; /**< 软件版本号     visible-string(SIZE (4)) */
-const uint8_t CODE init_Date_SoftWare[] = {  6,'2', '1', '0', '7', '1', '7' }; /**< 软件版本日期   visible-string(SIZE (6)) */
+const uint8_t CODE init_Date_SoftWare[] = {  6,'X', 'X', 'X', 'X', 'X', 'X' }; /**< 软件版本日期   visible-string(SIZE (6)) */
 const uint8_t CODE init_Version_HardWare[] = { 4, 'X', 'X', 'X', 'X' }; /**< 硬件版本号     visible-string(SIZE (4)) */
-const uint8_t CODE init_Date_HardWare[] = { 6, '2', '1', '0', '7', '1', '7' }; /**< 硬件版本日期   visible-string(SIZE (6)) */
+const uint8_t CODE init_Date_HardWare[] = { 6, 'X', 'X', 'X', 'X', 'X', 'X' }; /**< 硬件版本日期   visible-string(SIZE (6)) */
 const uint8_t CODE init_Extend_Info[] = { 8, 'X', 'X', 'X', 'X','X', 'X', 'X', 'X' }; /**< 厂家扩展信息   visible-string(SIZE (8)) */
-const uint8_t CODE init_Produced_Date[] = { 7, 0x00, 0x00, 0x00, 0x15, 0x08, 0xe4, 0x07 }; /**< 生产日期 - 设备的出厂日期，数据格式date_time_s */
+const uint8_t CODE init_Produced_Date[] = { 7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; /**< 生产日期 - 设备的出厂日期，数据格式date_time_s */
 const uint8_t CODE init_Subset_List[] = { 1,0x00 }; /**< 子设备列表 1+2*3  */
 const uint8_t CODE init_Protocol_List[] = { 20, 'D', 'L', '/', 'T', '6', '9', '8', '.', '4', '5' ,'-', '2' , '0', '1', '7', '-', '2', '0', '2', '0' }; /**< 支持规约列表1+16*3 */
 const uint8_t CODE init_FollowReport_en[] = { 1,0x00 }; /**< 允许跟随上报 */
@@ -445,8 +445,8 @@ const uint8_t CODE init_2522[] = { 32, 0, 0, 0, 0 };    /**< 跟随上报状态字2 rs4
 const uint8_t CODE init_2523[] = { 32, 0x00, 0x00, 0x00, 0x00 }; /**< 跟随上报模式字 */
 const uint8_t CODE init_2524[] = { 0x1e, 0x00, 0x00, 0x00 }; /**< 红外认证时效门限 */
 
-const uint8_t CODE init_ImaxProtectValue[] = { 4, 0xe0, 0x93, 0x04, 0x00 }; /**< 继电器拉闸控制电流门限值  - 继电器拉闸电流门限值 */
-const uint8_t CODE init_ImaxProtectTime[] = { 4, 0xa0, 0x05 }; /**< 超拉闸控制电流门限保护延时时间  - 超电流门限保护延时时间 */
+const uint8_t CODE init_ImaxProtectValue[] = { 4, 0x00, 0x04, 0x93, 0xe0 }; /**< 继电器拉闸控制电流门限值  - 继电器拉闸电流门限值 */
+const uint8_t CODE init_ImaxProtectTime[] = { 2, 0x05, 0xa0 }; /**< 超拉闸控制电流门限保护延时时间  - 超电流门限保护延时时间 */
 
 const uint8_t CODE init_2144[] = { 0x3c, 0x00 }; /**< 按键显示退出时间 */
 const uint8_t CODE init_2145[] = { 0x05, 0x00 }; /**< 自动轮显每屏显示时间 */

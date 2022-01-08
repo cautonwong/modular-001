@@ -22,7 +22,7 @@ const general_get4  get4300_table[] =
      Date_HardWare,       0x0305,   TYPE_visible_string,    6, //硬件版本日期
      Extend_Info,         0x0306,   TYPE_visible_string,    8, //扩展信息
     
-     Produced_Date,       0x0400,   TYPE_visible_string,    7, //生产日期
+     Produced_Date,       0x0400,   TYPE_date_time_s,       7, //生产日期
 //     Subset_List,       0x0500,  0x05,    2, //子设备列表(num+2*oi)
      Protocol_List,       0x0600,   TYPE_visible_string,    20, //协议列表
      Protocol_List,       0x0601,   TYPE_array,             20, //协议列表
@@ -74,6 +74,11 @@ int get4300_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
     {
         if(idl == get4300_table[i].oad)
         {
+            if((idl == 0x0600) || (idl == 0x0601))
+            {
+                *p++ = TYPE_array;
+                *p++ = 1;
+            }
             *p++ = get4300_table[i].tag;
             if(get4300_table[i].tag == TYPE_visible_string)
             {
@@ -125,6 +130,10 @@ int general_get_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 if((general_get4_talble[i].tag == TYPE_octet_string) || (general_get4_talble[i].tag == TYPE_visible_string))
                 {
                     *p++ = general_get4_talble[i].len;
+                }
+                else if(general_get4_talble[i].tag == TYPE_bit_string)
+                {
+                    *p++ = general_get4_talble[i].len * 8;
                 }
                 addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + general_get4_talble[i].s_index);
                 nd_get_index(instance, addr, p, general_get4_talble[i].len); 
@@ -308,7 +317,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
             if(index == 0)
             {
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 4);
-                nd_get_index(instance, s_index, num, 1);
+                nd_get_index(instance, s_index, &num, 1);
                 if(num>10) num = 10;
                 *p++ = TYPE_array;
                 *p++ = num;
@@ -352,7 +361,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
             if(index == 0)
             {
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para);
-                nd_get_index(instance, s_index, num, 1);
+                nd_get_index(instance, s_index, &num, 1);
                 if(num>14) num = 14;
                 *p++ = TYPE_array;
                 *p++ = num;
@@ -412,6 +421,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
                     {
                         *p++ = TYPE_structure;
                         *p++ = 3;
+                        *p++ = TYPE_unsigned;
                         *p++ = temp[0+i*3];
                         *p++ = TYPE_unsigned;
                         *p++ = temp[1+i*3];
@@ -428,12 +438,13 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
                 nd_get_index(instance, s_index, p, 1);
                 num_hourtab = *p++; 
                 
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + j);
+                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
                 nd_get_index(instance, s_index, temp, 3*num_hourtab);
                 for(i=0; i<num_hourtab; i++)
                 {
                     *p++ = TYPE_structure;
                     *p++ = 3;
+                    *p++ = TYPE_unsigned;
                     *p++ = temp[0+i*3];
                     *p++ = TYPE_unsigned;
                     *p++ = temp[1+i*3];

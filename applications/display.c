@@ -433,9 +433,9 @@ unsigned char display_id_to_oad(unsigned short id, unsigned char *oad)
         if(id == Display_List[i].Id)
         {
             len = 5;
-            memcpy(oad, (unsigned char *)&Display_List[i].oad, 4);
+            mem_swap_cpy(oad, (unsigned char *)&Display_List[i].oad, 4);
             *(oad+4) = Display_List[i].Sequ;
-            return 0;
+            return len;
         }
     }
     oad1 = 0x50050200;//组合电能

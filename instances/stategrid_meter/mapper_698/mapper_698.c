@@ -385,8 +385,8 @@ const  parameter_item_t  parameter_item[] =
     { Version_SoftWare,    0x01,    4,      init_Version_SoftWare }, //软件版本
     { Date_SoftWare,       0x01,    6,      init_Date_SoftWare }, //软件版本日期
     { Version_HardWare,    0x01,    4,      init_Version_HardWare }, //硬件版本
-    { Date_HardWare,       0x01,    4,      init_Date_HardWare }, //硬件版本日期
-    { Extend_Info,         0x01,    6,      init_Extend_Info }, //扩展信息
+    { Date_HardWare,       0x01,    6,      init_Date_HardWare }, //硬件版本日期
+    { Extend_Info,         0x01,    8,      init_Extend_Info }, //扩展信息
     
     { Produced_Date,       0x01,    7,      init_Produced_Date }, //生产日期
     { Subset_List,         0x01,    1,      init_Subset_List }, //子设备列表(num+2*oi)
