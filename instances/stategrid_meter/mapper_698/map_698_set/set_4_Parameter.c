@@ -172,7 +172,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad;
-    uint8_t index,attribute,i,len=0,num,buffer[42]={0},num_hourtab=0,j;
+    uint8_t index,attribute,i,len=0,num,buffer[42]={0},num_hourtab=0,j,year;
     uint8_t* p = buf;
     uint32_t s_index = 0x00,addr=0;
     
@@ -198,23 +198,18 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
             {
                 uint8_t settimebuf[8]={0};
                 p++;
-                instance->time.tm_year = 0;
-                mem_swap_cpy((uint8_t*)&instance->time.tm_year, p, 2);
+                mem_swap_cpy((uint8_t*)&oad, p, 2);
+                year = oad - 2000;
                 p = p + 2;
-                instance->time.tm_mon = *p++;//
-                instance->time.tm_mday = *p++;//
-                instance->time.tm_hour = *p++;
-                instance->time.tm_min = *p++;
-                instance->time.tm_sec = *p++;
-                //秒、分、时、日、月、年、周
-                settimebuf[0] = BYTE_BCD((uint8_t)instance->time.tm_sec);
-                settimebuf[1] = BYTE_BCD((uint8_t)instance->time.tm_min);
-                settimebuf[2] = BYTE_BCD((uint8_t)instance->time.tm_hour);
-                settimebuf[3] = BYTE_BCD((uint8_t)instance->time.tm_mday);
-                settimebuf[4] = BYTE_BCD((uint8_t)instance->time.tm_mon);
-                HEX_BCD( &settimebuf[5], instance->time.tm_year );//年
+                settimebuf[5] = BYTE_BCD(year);//年
+                settimebuf[4] = BYTE_BCD(*p++);//月
+                settimebuf[3] = BYTE_BCD(*p++);//日
+                settimebuf[2] = BYTE_BCD(*p++);//时
+                settimebuf[1] = BYTE_BCD(*p++);//分
+                settimebuf[0] = BYTE_BCD(*p++);//秒
                 settimebuf[6] = GetWeek(&settimebuf[3]);
                 write_mcu_rtc(0, settimebuf, 7);
+                read_mcu_rtc(0x00, instance);
                 return (p-buf);
             }
             break;

@@ -248,7 +248,7 @@ uint8 init_v85xxp_rtc( uint8 power_mode )
     return true;
 }
 
-uint8_t read_mcu_rtc(uint8_t addr, uint8_t *buf, uint8_t len)
+uint8_t read_mcu_rtc(uint8_t addr, struct instance_t* instance)
 {
     uint8_t time_data[7];
     uint8_t time_check[7];
@@ -285,8 +285,15 @@ uint8_t read_mcu_rtc(uint8_t addr, uint8_t *buf, uint8_t len)
         time_check[6] = RTC->WEEK;
         
     }while(mem_compare(time_data, time_check, 7));
-       
-    memcpy(buf , &time_data[0] , len);
+    
+    //memcpy(buf, time_data,7);
+    
+    instance->time.tm_sec = BCD_BYTE(time_data[0]);
+    instance->time.tm_min = BCD_BYTE(time_data[1]);
+    instance->time.tm_hour = BCD_BYTE(time_data[2]);
+    instance->time.tm_mday = BCD_BYTE(time_data[3]);
+    instance->time.tm_mon = BCD_BYTE(time_data[4]) - 1;
+    instance->time.tm_year = BCD_BYTE(time_data[5]) + 2000 - 1900;
     return true;
 }
 

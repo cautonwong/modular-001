@@ -44,7 +44,7 @@ extern void mcu_main_power_off_config(void);
 extern void cm0_systick_init(uint8 cmd);
 extern void ndv_isr_handle_regsit(isr_handle isr_handle_f , uint8 irq);
 
-extern uint8_t read_mcu_rtc(uint8_t addr, uint8_t *buf, uint8_t len);
+extern uint8_t read_mcu_rtc(uint8_t addr, struct instance_t* instance);
 extern uint8_t write_mcu_rtc(uint8_t addr, uint8_t *buf, uint16 len);
 
 extern uint8 mcu_adc_start_once(uint8 chl_type);

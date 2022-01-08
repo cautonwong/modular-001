@@ -180,13 +180,22 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
             if(attribute == 0x02)
             {
                 *p++ = TYPE_date_time_s;
+                rtc_get_from_tm(instance,temp);
+                *p++ = temp[6];
+                *p++ = temp[5];
+                *p++ = temp[4];
+                *p++ = temp[3];
+                *p++ = temp[2];
+                *p++ = temp[1];
+                *p++ = temp[0];
+                /*
                 mem_swap_cpy(p, (uint8_t*)&instance->time.tm_year, 2);
                 p = p + 2;
                 *p++ = (uint8_t)instance->time.tm_mon;//
                 *p++ = (uint8_t)instance->time.tm_mday;//
                 *p++ = (uint8_t)instance->time.tm_hour;
                 *p++ = (uint8_t)instance->time.tm_min;
-                *p++ = (uint8_t)instance->time.tm_sec;
+                *p++ = (uint8_t)instance->time.tm_sec;*/
                 return (p-buf);
             }
             break;

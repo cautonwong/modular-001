@@ -329,9 +329,21 @@ void TouFeePro(struct instance_t* instance, struct pipeline_t* pipeline)
 
 }
 
-
+void rtc_get_from_tm(struct instance_t* instance, uint8_t* p)
+{
+    unsigned long temp = 0;
+    *p = instance->time.tm_sec;
+    *(p+1) = instance->time.tm_min;
+    *(p+2) = instance->time.tm_hour;
+    *(p+3) = instance->time.tm_mday;
+    *(p+4)= instance->time.tm_mon + 1;
+    temp = instance->time.tm_year + 1900;
+    memcpy((uint8_t*)(p+5), (uint8_t*)&temp, 2);
+}
+    
 void Rtc_Prossecc(struct instance_t* instance, struct pipeline_t* pipeline)
 {
+    uint8_t buf[7];
     if(instance->time.tm_sec != 20)//每分鐘的20秒對時
     {
         instance->time.tm_sec++;
@@ -340,7 +352,7 @@ void Rtc_Prossecc(struct instance_t* instance, struct pipeline_t* pipeline)
     }
     else
     {
-        read_mcu_rtc(0x00, (uint8_t*)&instance->time.tm_sec, 7);
+        read_mcu_rtc(0x00, instance);
     }
     
     if(instance->time.tm_sec == 0)

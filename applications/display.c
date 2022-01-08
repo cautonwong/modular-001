@@ -1331,9 +1331,10 @@ void Disp_Char( struct instance_t* instance, struct pipeline_t* pipeline, unsign
 void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
-    unsigned char i,buf[10]={0,},Len=0,j;
+    unsigned char i,buf[10]={0,},Len=0,j,temp[7];
 	unsigned long oad,Info=0,Info1;
 	unsigned char SignBuf[9]={0,};
+    uint16_t year;
     struct idmatch
     {
         unsigned short id;
@@ -1372,9 +1373,19 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
         {
             if((DisplayTab[i].Id == 0xA001) || (DisplayTab[i].Id == 0xA002))
             {
-                for(j=0;j<3;j++)
+                rtc_get_from_tm(instance, temp);
+                if(DisplayTab[i].Id == 0xA001)
                 {
-                    buf[j] = *(idbuf[i].addr+j*4);
+                    memcpy((uint8_t*)&year, (uint8_t*)&temp[5],2);
+                    buf[0] = (temp[3]);
+                    buf[1] = (temp[4]);
+                    buf[2] = (year-2000);
+                }
+                else
+                {
+                    buf[0] = (temp[0]);
+                    buf[1] = (temp[1]);
+                    buf[2] = (temp[2]);
                 }
             }
             else
