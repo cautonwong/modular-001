@@ -525,6 +525,26 @@ enum block_parameter_item_id_t
 
 #define     ImaxProtectValue            993 //继电器拉闸电流门限值
 #define     ImaxProtectTime             994 //超电流门限保护延时时间
+
+/***************** 计量相关 *****************/
+#define     Heat_Value_10L              1000    //1.0L自热补偿
+#define     Heat_Value_05L              1015    //0.5L自热补偿
+
+#define     U80_Value                   1030    //80%Un补偿
+#define     U90_Value                   1031    //90%Un补偿
+#define     U100_Value                  1032    //110%Un补偿
+#define     U115_Value                  1033    //110%Un补偿
+
+#define 	ADJ_Pgain0                  1040    //功率增益
+#define 	ADJ_Pofst0                  1041    //功率偏移
+#define 	ADJ_Ph0                     1042    //相位补偿
+#define     ADJ_Pstart                  1043    //启动阈值
+#define     ADJ_Hfcont                  1044    //Hfconst
+#define     ADJ_Kp                      1045    //Kp
+#define     ADJ_Ku                      1046    //Ku
+#define     ADJ_Ki                      1047    //Ki
+#define     ADJ_Kin                     1048    //零线K系数
+
 /*
 #define     KeyDisp_Num                 695 //按键显示屏数
 #define     KeyDisp_MaxNum              696 //按键显示屏数

@@ -361,6 +361,10 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     if(mbase_control_block->KeyInv > 0)    mbase_control_block->KeyInv--;
     
     if(mbase_control_block->BackLightTmr > 0) mbase_control_block->BackLightTmr--;
+    
+    if(mbase_control_block->commdisp_ir485 > 0) mbase_control_block->commdisp_ir485--;
+    
+    if(mbase_control_block->commdisp_plc > 0)   mbase_control_block->commdisp_plc--;
 
 /*    if(mbase_control_block->BackLightTmr == 0)    
     {

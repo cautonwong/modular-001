@@ -126,8 +126,10 @@ struct mbase_control_block_t
     uint32_t authen_tmr;    //应用连接有效时间
     
     //显示相关
-    uint8_t commdisp;    //通讯符号显示
+    uint8_t commdisp_plc;    //通讯符号显示
+    uint8_t commdisp_ir485;    //通讯符号显示
     uint8_t lcd_poweron_all_dis_time_tick;//全显倒计时
+    
     
     //运行状态字
     uint16_t run_state[7];
