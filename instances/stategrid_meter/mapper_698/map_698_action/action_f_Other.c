@@ -6,10 +6,10 @@
 int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {    
     struct mbase_control_block_t* mbase_cb;
-    uint8_t  method,dar=0;
-    uint16_t oad,pageid=0;
+    uint8_t  method,dar=0,buffer[15],keybuf[30],len1=0,len2=0;
+    uint16_t oad,pageid=0,txlen=0;
     uint8_t *p = buf;
-    uint32_t temp = 0,s_index=0;
+    uint32_t temp = 0,s_index=0,addr=0;
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
     method = (unsigned char)((id & 0x0000FF00) >> 8);    //方法
@@ -22,6 +22,43 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf)
     
     switch (oad)
     {
+        case 0xF100://ESAM
+            if(method == 0x03)  //ESAM数据读取
+            {
+                p++;
+                memcpy((uint8_t*)&addr, p, 4);//sid
+                p = p + 4;
+                txlen = *p++;
+                memcpy(keybuf, p, txlen);
+                p = p + txlen;
+                read_esam_data(addr , keybuf , txlen);
+                
+                return (p-buf);
+            }
+            else if(method == 0x04) //ESAM数据更新
+            {
+                p = p + 3;
+                len1 = *p++;
+                memcpy(buffer, p, len1);//oad+data
+                p = p + len1;
+                p++;
+                memcpy((uint8_t*)&addr, p, 4);//sid
+                p = p + 4;
+                len2 = *p++;
+                mem_swap_cpy((uint8_t*)&txlen, p, 2);//len
+                p = p + 2;
+                memcpy(keybuf, p, len2-2);
+                p = p + len2-2;
+                p++;
+                memcpy((uint8_t*)&keybuf[len2-2], buffer, len1);
+                memcpy((uint8_t*)&keybuf[len2-2+len1], p, 4);//MAC
+                p = p + 4;
+                write_esam(addr , keybuf , txlen);
+                addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Number);
+                nd_set_index(instance, addr, (p - 23), 6); 
+                return (p-buf);
+            }
+            break;
         case 0xF201://RS485
             if(method == 127)
             {

@@ -39,13 +39,14 @@ int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipelin
         //p[cache->wr++] = 0x01;
 
         r = fr_698_action(instance, oad, fifo->buf_ptr + fifo->rd, len);
-        cache->wr = offset;
+        //cache->wr = offset;
         if (r < 0)
         {
             p[cache->wr++] = -r;//DAR
         }
         else
         {
+            p[cache->wr++] = 0;
             p[cache->wr++] = 0;
             //cache->wr += r;
         }
@@ -68,8 +69,8 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
     uint16_t dar_offset = 0;
     uint8_t dar = DAR_SUCCESS;
 
-    p[cache->wr++] = 0x01;
-    p[cache->wr++] = 0x05;//type encoder
+//    p[cache->wr++] = 0x01;
+//    p[cache->wr++] = 0x05;//type encoder
 
     uint8_t password[16];
 
