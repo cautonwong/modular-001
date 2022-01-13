@@ -7,7 +7,7 @@ extern int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pip
 extern int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int fr_handle_set_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-
+extern int fr_mw_sid_mac(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t len);
 
 
 
@@ -363,7 +363,15 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     //时标判断
     //fr_timeTag()；
 
-
+    if((pipeline->id == pid_rx_698) || (pipeline->id == pid_ir_rx_698))
+    {
+        mbase_cb->commdisp_ir485 = 2;
+    }
+    else if(pipeline->id == pid_plc_rx_698)
+    {
+        mbase_cb->commdisp_plc = 2;
+    }
+    
     return 1;
 }
 
@@ -431,12 +439,14 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
          return 1;
     }
 }
-
+extern uint8_t Security_Mode;
+uint8_t SECURITY_Request_MODE;//安全传输模式
 int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     uint8_t len = 0;
+    uint16_t rd,wr;
 
     //协议一致性判断和apdu合法判断
     if(0 == fr_pack_698_check(instance, pipeline, mesg))
@@ -454,15 +464,30 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     ctx->service = fifoBuf_getByte(fifo);
     if (SECURITY_Request == ctx->service)//数据解密
     {
+        SECURITY_Request_MODE = SECURITY_Request;
         ctx->choice = fifoBuf_getByte(fifo);
         len = fifoBuf_getByte(fifo);
-        if (SECURITY_CHOICE_1_Ciphertext == ctx->choice)
+        if (SECURITY_CHOICE_1_Ciphertext == ctx->choice)//密文
         {
             fr_security_decode(instance, pipeline, mesg, len);
             ctx->service = fifoBuf_getByte(fifo);
         }
-        else if (SECURITY_CHOICE_0_Plaintext == ctx->choice)
+        else if (SECURITY_CHOICE_0_Plaintext == ctx->choice)//明文
         {
+            rd = fifo->rd;
+            wr = fifo->wr;
+            fifo->rd = fifo->rd + len;
+            if(fifoBuf_getByte(fifo) == 0)
+            {
+                fifo->rd = rd;
+                fifo->wr = wr;
+                if(fr_mw_sid_mac(instance, pipeline, mesg, len) == 0)//MAC效验错误
+                {
+                    return -1;
+                }
+            }
+            fifo->rd = rd;
+            fifo->wr = wr;
             ctx->service = fifoBuf_getByte(fifo);
         }
         else
@@ -523,7 +548,6 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         case ACTION_Request:
             fr_handle_action_request(instance, pipeline, mesg);
             break;
-
         case REPORT_Response://8上报应答 client
             break;
         default:
@@ -532,10 +556,15 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     }
 
     //数据加密
-    fr_security_encode(instance, pipeline, mesg);
-
     fr_encode_optional(instance, pipeline, mesg);
-
+    
+    if (SECURITY_Request_MODE == SECURITY_Request)
+    {
+        fr_security_encode(instance, pipeline, mesg);
+        SECURITY_Request_MODE = 0;
+    }
+    Security_Mode = 0;
+    
     if (fifoBuf_getUsed(ctx->apdu)  > 0)
     {
         mesg->len = fifoBuf_getUsed(ctx->apdu);

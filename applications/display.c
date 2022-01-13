@@ -913,20 +913,13 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 		if( mbase_control_block->irauthen_tmr > 0 )//红外认证有效
             Lcdcon[17] |= DS_Chr_KeyProgram;
 		//通讯指示
-		if( mbase_control_block->commdisp & F_CommDisp485 ) 
+		if( mbase_control_block->commdisp_ir485 > 0 ) 
 		{
-			mbase_control_block->commdisp &= ~F_CommDisp485;
 			Lcdcon[18] |= DS_Chr_Comm;
 		}
-		if( mbase_control_block->commdisp & F_CommDispIr ) 
-		{
-			mbase_control_block->commdisp &= ~F_CommDispIr;
-			Lcdcon[18] |= DS_Chr_Comm;
-		}		
 		
-		if( mbase_control_block->commdisp & F_CommDispPlc ) 
+		if( mbase_control_block->commdisp_plc > 0 ) 
 		{
-			mbase_control_block->commdisp &= ~F_CommDispPlc;
 			Lcdcon[19] |= DS_Chr_CommPLC;
 		}
 

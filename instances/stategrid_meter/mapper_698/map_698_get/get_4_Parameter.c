@@ -205,7 +205,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
                 *p++ = TYPE_octet_string;
                 *p++ = 6;
                 read_esam_no(temp);
-                mem_swap_cpy(p, temp, 6);
+                memcpy(p, temp+7, 6);
                 p = p + 6;
                 return (p - buf);
             }

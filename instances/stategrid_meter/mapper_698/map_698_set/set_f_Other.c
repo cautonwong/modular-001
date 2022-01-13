@@ -23,6 +23,16 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
     
     switch(oad)
     {
+        case 0xF100://ESAM
+            if(attribute == 0x0E)//红外认证时效
+            {
+                p++;
+                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + IrAuthenTime);
+                nd_set_index(instance, s_index, p, 4);
+                p = p + 4;
+                return (p-buf);
+            }
+            break;
         case 0xF201://rs485
         case 0xF202://红外
         case 0xF205://继电器输出

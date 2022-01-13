@@ -234,11 +234,6 @@ unsigned char Rn8209AdjParaSet(struct Rn8209AdjSet_t* Set , const struct dev_inf
     return true;
 }
 
-
-
-
-
-
 int Rn8209_initialize(const struct dev_info_t* dev)
 {
     const struct bus_ops_t *bus_ops = dev->dev_bus_ops;
@@ -285,19 +280,212 @@ int Rn8209_control(const struct dev_info_t* dev , uint8 ctrl , void* ctrl_parame
     return 0;
 }
 
-int Rn8209_read(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src )
+int Rn8209_read(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void *src)
 {
+    uint8_t lenth=0;
+    int16 data=0,tmp[15]={0};
+    uint32_t s_index=0;
+    uint8_t* buf = src;
+/*        
+    if(addr == 0x1091)//万能读
+    {
+        if(*buf >= 0xA0)////频率影响量
+        {
+            ;;//暂时不加
+        }
+        else if(*buf >= 0x90)//自热影响量
+        {
+            if(*buf >= 0x9F)	return false;
 
-    return ReadRn8209WithChk(addr, src , len ,dev );
-
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Heat_Value_10L);
+            nd_get_index(instance, s_index, tmp, 30); //读取EE中的补偿值
+            memset((buf+1),0x00,4);
+            memcpy((buf+1), (uint8*)&tmp[*buf-0x90], 2);
+            return true;
+        }
+        else if(*buf >= 0x80)//电压影响量
+        {
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + U80_Value);
+            nd_get_index(instance, s_index, (uint8 *)&tmp[0], 8); //读取EE中的补偿值
+            memset((buf+1),0x00,4);
+            switch(*buf)
+            {
+                case 0x80://80%
+                    memcpy((buf+1), (uint8*)&tmp[0], 2);
+                    break;
+                case 0x81://90%
+                    memcpy((buf+1), (uint8*)&tmp[1], 2);
+                    break;
+                case 0x82://110%
+                    memcpy((buf+1), (uint8*)&tmp[2], 2);
+                    break;
+                case 0x83://115%
+                    memcpy((buf+1), (uint8*)&tmp[3], 2);
+                    break;
+                default:
+                    return false;
+                    break;
+            }
+            return true;
+            
+        }
+        else if(*buf <= 0x17)
+        {
+            if((*buf==0x07)||(*buf == 0x08))
+                lenth = 1;
+            else
+                lenth = 2;
+            if(true == ReadRn8209WithChk(addr, (uint8*)&data , lenth ,dev ))
+            {
+                memset((buf+1),0x00,4);
+                if(*buf == 0x17)
+                {
+                    data = data>>8;
+                }
+                memcpy((buf+1), (uint8*)&data, lenth);
+            }
+            return true;
+        }
+        else if((*buf == 0x20) || (*buf == 0x26))
+        {
+            if(*buf == 0x20)
+                lenth = 2;
+            else if(*buf == 0x26)
+                lenth = 4;
+            if(true == ReadRn8209WithChk(addr, (uint8*)&data , lenth ,dev ))
+            {
+                memset((buf+1),0x00,4);
+                memcpy((buf+1), (uint8*)&data, lenth);
+            }
+            return true;
+        }
+        else 
+        {
+            return false;
+        }
+    }
+    else*/
+    {
+        return ReadRn8209WithChk(addr, buf , len ,dev );
+    }
+    return false;
 }
 
 
-int Rn8209_write(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
+int Rn8209_write(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void *src)
 {
-    
-    return WriteRn8209Check(addr, src, len , dev );
-
+    int result = true;
+	uint8 lenth=0,temp_buffer[8]={0};
+	int16 tmp=0,data=0,temp[30]={0};
+    uint32_t s_index = 0;
+    uint8_t* buf = src;
+ /*   
+    if(addr < 3)
+    {
+        CmdRn8209(CMD_WR_EN , dev );
+        mcu_delay_us(5000);
+        mcu_delay_us(5000);
+        result = WriteRn8209Check(addr, buf, len , dev );
+        CmdRn8209(CMD_WR_DIS, dev);
+        return result;
+    }
+    else if(addr == 0x1091) //万能写
+    {
+        addr = *(buf+4);//地址
+        memcpy((uint8*)&data, (uint8*)buf, 2);//数据
+        
+        if((addr==0x07)||(addr==0x08))//相位寄存器
+            lenth = 1;
+        else
+            lenth = 2;
+        
+        if( addr <= 0x17 )//00~17H,需要效验
+        {
+            CmdRn8209(CMD_WR_EN , dev );
+            mcu_delay_us(5000);
+            mcu_delay_us(5000);
+            if(addr == 0x17)
+            {
+                ReadRn8209WithChk(EMUCON2, (uint8*)&tmp, 2 , dev);
+                mcu_delay_us(5000);
+                mcu_delay_us(5000);
+                if(data == 0x01)
+                {
+                    data = tmp | 0x0100;
+                }
+                else
+                {
+                    data = tmp & 0xFEFF;
+                }
+            }
+            result = WriteRn8209Check(addr, (uint8*)&data, lenth , dev );
+            memcpy((uint8*)&tmp, (uint8*)&data, lenth);
+            CmdRn8209(CMD_WR_DIS, dev);
+            
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Pgain0);
+            nd_get_index(instance, s_index, (uint8_t*)&temp_buffer[0], 6); //读取EE中的补偿值
+            switch(addr)//存入EEPROM
+            {
+                case 0x05://增益
+                    temp_buffer[0] = (uint8)data;
+                    temp_buffer[1] = (uint8)(data>>8);
+                    break;
+                case 0x07://相位
+                    temp_buffer[4] = (uint8)data;
+                    break;
+                case 0x0A://功率偏置
+                    temp_buffer[2] = (uint8)data;
+                    temp_buffer[3] = (uint8)(data>>8);
+                    break;
+                case 0x17://相位微调
+                    temp_buffer[5] = (uint8)(data>>8);
+                    break;
+            }
+            nd_set_index(instance, s_index, (uint8_t*)&temp_buffer[0], 6); 
+        }
+        else if(addr>=0x90)//自热影响
+        {
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Heat_Value_10L);
+            nd_get_index(instance, s_index, temp, 30); //读取EE中的补偿值
+            memcpy((uint8*)&temp[addr-0x90], (uint8*)(buf), 2);
+            nd_set_index(instance, s_index, (uint8_t*)temp, 30);
+        }
+        else if(addr>=0x80)//电压影响量
+        {
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + U80_Value);
+            nd_get_index(instance, s_index, (uint8 *)&temp[0], 8); //读取EE中的补偿值
+            switch(addr)
+            {
+                case 0x80:
+                    memcpy((uint8*)&temp[0], (uint8*)&data, 2);
+                    break;
+                case 0x81:
+                    memcpy((uint8*)&temp[1], (uint8*)&data, 2);
+                    break;
+                case 0x82:
+                    memcpy((uint8*)&temp[2], (uint8*)&data, 2);
+                    break;
+                case 0x83:
+                    memcpy((uint8*)&temp[3], (uint8*)&data, 2);
+                    break;
+                default:
+                    return false;
+                    break;
+            }
+            nd_set_index(instance, s_index, (uint8 *)&temp[0], 8);
+        }
+        else if(addr>=0xA0)//频率影响量
+        {
+            ;;//暂时不加
+        }
+        else
+            result = false;
+    }
+    else*/
+    {
+        return WriteRn8209Check(addr, buf, len , dev );
+    }
+    //return result;
 }
 
 const struct driver_ops_t rn8209_drv =

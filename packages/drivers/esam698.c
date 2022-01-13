@@ -194,7 +194,7 @@ uint8 read_esam(uint32 addr, uint8 *buf, uint16 len)
 
 uint16 write_esam(uint32 addr, uint8 *buf, uint16 len)
 {   
-    uint16 rx_len, sw = 0;
+    uint16 rx_len=1, sw = 0;
     
     memset(&esam_error_apdu.apdu[0] , 0xFF , 6);
     
@@ -241,6 +241,70 @@ uint8_t read_esam_info(uint8_t *esam_info, uint8_t index)
         rx_esam(esam_info , &len );
     }
     return true;
+}
+
+
+uint8 tx_esam_nolen(uint8 *tx_apdu , uint8 *tx_data , uint16 len)
+{
+    uint8 value = 0;
+    uint8 len1 , len2;
+    uint8 lrc1 = 0;
+    uint16 i;
+
+    
+    ESAM_CS_LOW();
+    
+    len1 = (uint8)(len>>8);
+    len2 = (uint8)len;
+    mcu_delay_us(120);
+    mcu_clear_watchdog();
+
+    DISABLE_ALL_INT();
+    
+    mcu_spi_ops.tx(0x55 , 0);
+
+    lrc1 = tx_apdu[0] ^ tx_apdu[1] ^ tx_apdu[2] ^ tx_apdu[3];
+    for(i=0;i<4;i++)
+    {
+        value += *tx_apdu;
+        mcu_spi_ops.tx(*tx_apdu , 0);
+        tx_apdu++;
+    }
+    //lrc1 ^= len1;
+    //lrc1 ^= len2;
+
+    //value += len1;
+    //value += len2;
+    //mcu_spi_ops.tx(len1 , 0);
+    //mcu_spi_ops.tx(len2 , 0);
+    
+    for(i=0;i<len;i++)
+    {
+        value += *tx_data;
+        lrc1 ^= *tx_data;
+        mcu_spi_ops.tx(*tx_data , 0);
+        tx_data++;
+    }
+    mcu_spi_ops.tx(~lrc1 , 0);
+    ENABLE_ALL_INT();
+
+    mcu_delay_us(15);
+    ESAM_CS_HIGH();
+    mcu_delay_us(55);
+
+    return true;
+}
+
+
+uint8_t read_esam_data(uint32 addr, uint8 *buf, uint16 len)
+{
+    uint16 lenth=false;
+    if(true == tx_esam_nolen((uint8_t*)&addr , buf , len))
+    {
+        rx_esam(buf , &len );
+        lenth = len;
+    }
+    return lenth;
 }
 
 void esam_698_power_ctrl(uint8_t power)

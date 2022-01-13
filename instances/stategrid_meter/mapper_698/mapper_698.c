@@ -58,6 +58,8 @@ extern const uint8_t CODE init_Comm_Master_en[]; //允许与主站通讯
 extern const uint8_t CODE init_ImaxProtectValue[]; //继电器拉闸电流门限值
 extern const uint8_t CODE init_ImaxProtectTime[]; //超电流门限保护延时时间
 
+extern const uint8_t CODE init_IrAuthenTime[];//红外认证时效
+
 
 extern const uint32_t record_head_t1[];
 extern const uint32_t record_head_t0[];
@@ -398,6 +400,28 @@ const  parameter_item_t  parameter_item[] =
     
     { ImaxProtectValue,    0x01,    4,      init_ImaxProtectValue }, //继电器拉闸电流门限值
     { ImaxProtectTime,     0x01,    2,      init_ImaxProtectTime }, //超电流门限保护延时时间
+    { IrAuthenTime,        0x01,    4,      init_IrAuthenTime }, //红外认证时效
+    
+    
+    
+    /***************** 计量相关 *****************/
+    { Heat_Value_10L,      15,      2,      0 },              //1.0L自热补偿
+    { Heat_Value_05L,      15,      2,      0 },              //0.5L自热补偿
+
+    { U80_Value,           0x01,    2,      0 },                //80%Un补偿
+    { U90_Value,           0x01,    2,      0 },                //90%Un补偿
+    { U100_Value,          0x01,    2,      0 },                //110%Un补偿
+    { U115_Value,          0x01,    2,      0 },                //115%Un补偿
+
+    { ADJ_Pgain0,          0x01,    2,      0 },    //功率增益
+    { ADJ_Pofst0,          0x01,    2,      0 },    //功率偏移
+    { ADJ_Ph0,             0x01,    2,      0 },    //相位补偿
+    { ADJ_Pstart,          0x01,    1,      0 },    //启动阈值
+    { ADJ_Hfcont,          0x01,    2,      0 },    //Hfconst
+    { ADJ_Kp,              0x01,    4,      0 },    //Kp
+    { ADJ_Ku,              0x01,    4,      0 },    //Ku
+    { ADJ_Ki,              0x01,    4,      0 },    //Ki
+    { ADJ_Kin,             0x01,    4,      0 },    //零线K系数
 
 };
 

@@ -36,7 +36,7 @@ const general_set4  set4300_table[] =
 const general_set4  general_set4_talble[] =
 {
      Comm_Number,               0x4001,     0x02,   6,//表地址
-     Meter_Number,              0x4002,     0x02,   6,//表号
+//     Meter_Number,              0x4002,     0x02,   6,//表号
      User_Number,               0x4003,     0x02,   6,//客户编号
 //     Meter_Location,            0x4004,     0x01,   27,//设备地理位置
      SeasonTable_Changetime,    0x4008,     0x01,   7,//两套时区切换时间
@@ -172,19 +172,20 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad;
-    uint8_t index,attribute,i,len=0,num,buffer[42]={0},num_hourtab=0,j,year;
+    uint8_t index,attribute,i,num,buffer[42]={0},num_hourtab=0,j,year;
     uint8_t* p = buf;
     uint32_t s_index = 0x00,addr=0;
+    int len=0;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
         return -1;
     }
-    
-    if(general_set_4_para(instance, id, buf) != -1)
+    len = general_set_4_para(instance, id, buf);
+    if(len != -1)
     {
-        return 1;
+        return len;
     }
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
