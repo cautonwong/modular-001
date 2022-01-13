@@ -2405,6 +2405,9 @@
                 <name>$PROJ_DIR$\..\..\..\packages\meterbase\relay_control.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\..\packages\meterbase\runstatus.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\packages\meterbase\touFee.c</name>
             </file>
         </group>

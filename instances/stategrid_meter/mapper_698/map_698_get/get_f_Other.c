@@ -14,7 +14,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
     uint16_t oad,displayid;
     uint8_t index,attribute,i,len,dispalyseque,maxnum;
     uint8_t* p = buf;
-    uint32_t displayoad1,displayoad2,addr=0,s_index=0;
+    uint32_t displayoad1,displayoad2,addr=0,s_index=0,atrtime=0;
     uint8_t esam_inf[45]; 
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -300,7 +300,6 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                     break;
                 case 0x05://会话时效门限
                     *p++ = TYPE_double_long_unsigned;
-                    //*p++ = 4;
                     read_esam_info(esam_inf,0X05);
                     memcpy(p, (uint8_t*)&esam_inf[0], 4);
                     p = p + 4;
@@ -308,9 +307,8 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                     break;
                 case 0x06://会话时效剩余时间
                     *p++ = TYPE_double_long_unsigned;
-                    //*p++ = 4;
-                    read_esam_info(esam_inf,0X05);
-                    memcpy(p, (uint8_t*)&esam_inf[4], 4);
+                    atrtime = mbase_cb->authen_tmr/60;
+                    mem_swap_cpy(p, (uint8_t*)&atrtime, 4);
                     p = p + 4;
                     return (p - buf);
                     break;
@@ -324,6 +322,20 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                         memcpy(p, (uint8_t*)&esam_inf[0], 4);
                         p = p + 4;
                     }
+                    return (p - buf);
+                    break;
+                case 0x0E://红外认证时效
+                    *p++ = TYPE_double_long_unsigned;
+                    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + IrAuthenTime);
+                    nd_get_index(instance, addr, p, 4); 
+                    p = p + 4;
+                    return (p - buf);
+                    break;
+                case 0x0F://剩余红外认证时效
+                    *p++ = TYPE_double_long_unsigned;
+                    atrtime = mbase_cb->irauthen_tmr/60;
+                    mem_swap_cpy(p, (uint8_t*)&atrtime, 4); 
+                    p = p + 4;
                     return (p - buf);
                     break;
             }

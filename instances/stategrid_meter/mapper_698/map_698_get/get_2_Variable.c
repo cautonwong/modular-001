@@ -132,7 +132,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 {
                     *p++ = TYPE_array;
                     *p++ = 7;
-                    for(i=0; i<7; i++)
+                    for(i=1; i<8; i++)
                     {
                         *p++ = TYPE_bit_string;
                         *p++ = 16;
@@ -145,7 +145,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 {
                     *p++ = TYPE_bit_string;
                     *p++ = 16;
-                    memcpy(p, (uint8_t*)&mbase_cb->run_state[index-1], 0x02);
+                    mem_swap_cpy(p, (uint8_t*)&mbase_cb->run_state[index], 0x02);
                     p = p + 2;
                     return (p-buf);
                 }

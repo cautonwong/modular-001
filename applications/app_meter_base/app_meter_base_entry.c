@@ -366,16 +366,12 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     
     if(mbase_control_block->commdisp_plc > 0)   mbase_control_block->commdisp_plc--;
 
-/*    if(mbase_control_block->BackLightTmr == 0)    
-    {
-        P_BACKLIGHT_OFF;
-    }
-    else
-    {
-        P_BACKLIGHT_ON;
-    }*/
+    if(mbase_control_block->irauthen_tmr > 0)   mbase_control_block->irauthen_tmr--;
+    
+    if(mbase_control_block->authen_tmr > 0)   mbase_control_block->authen_tmr--;
     
     backlight_pro(instance, pipeline);
+    Meter_Run_State(instance, pipeline);//运行状态字刷新
 }
 
 // !!!在此app中不做IO操作!!!

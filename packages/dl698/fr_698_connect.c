@@ -131,6 +131,9 @@ uint8_t __password_process(struct instance_t* instance, struct pipeline_t* pipel
 
 uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
+    struct mbase_control_block_t* mbase_cb;
+    
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* cache = ctx->apdu;
@@ -205,6 +208,10 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
         cache->wr++;
         memcpy((p_apdu+cache->wr), buf+49,4);//MAC
         cache->wr = cache->wr + 4;
+        
+        read_esam_info(buf,0X05);
+        mem_swap_cpy((uint8_t*)&mbase_cb->authen_tmr, (uint8_t*)&buf[0], 4);
+        mbase_cb->authen_tmr = mbase_cb->authen_tmr * 60;
         return DAR_SUCCESS;
     }
     else

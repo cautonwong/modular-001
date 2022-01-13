@@ -58,6 +58,8 @@ extern const uint8_t CODE init_Comm_Master_en[]; //允许与主站通讯
 extern const uint8_t CODE init_ImaxProtectValue[]; //继电器拉闸电流门限值
 extern const uint8_t CODE init_ImaxProtectTime[]; //超电流门限保护延时时间
 
+extern const uint8_t CODE init_IrAuthenTime[];//红外认证时效
+
 
 extern const uint32_t record_head_t1[];
 extern const uint32_t record_head_t0[];
@@ -398,6 +400,7 @@ const  parameter_item_t  parameter_item[] =
     
     { ImaxProtectValue,    0x01,    4,      init_ImaxProtectValue }, //继电器拉闸电流门限值
     { ImaxProtectTime,     0x01,    2,      init_ImaxProtectTime }, //超电流门限保护延时时间
+    { IrAuthenTime,        0x01,    4,      init_IrAuthenTime }, //红外认证时效
     
     
     

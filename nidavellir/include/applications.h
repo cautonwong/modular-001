@@ -130,12 +130,9 @@ struct mbase_control_block_t
     uint8_t commdisp_ir485;    //通讯符号显示
     uint8_t lcd_poweron_all_dis_time_tick;//全显倒计时
     
-    
     //运行状态字
     uint16_t run_state[7];
-    
-    uint8_t dar;//DAR错误
-    
+   
     uint8_t relay_true_sta;//继电器实际状态
     
     dyn_cache_end

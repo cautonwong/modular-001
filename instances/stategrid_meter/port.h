@@ -525,6 +525,7 @@ enum block_parameter_item_id_t
 
 #define     ImaxProtectValue            993 //继电器拉闸电流门限值
 #define     ImaxProtectTime             994 //超电流门限保护延时时间
+#define     IrAuthenTime                995 //红外认证时效
 
 /***************** 计量相关 *****************/
 #define     Heat_Value_10L              1000    //1.0L自热补偿
