@@ -117,7 +117,7 @@ uint8_t __password_process(struct instance_t* instance, struct pipeline_t* pipel
     uint8_t password[33] = {0};
     uint32_t oad = 0;
 
-    if (fr_698_get(instance, oad, password, sizeof(password)) < 0)
+    if (fr_698_get(instance, oad, password, sizeof(password), NULL) < 0)
     {
         return DAR_OTHERS_ERROR;
     }

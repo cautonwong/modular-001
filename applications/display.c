@@ -881,11 +881,11 @@ unsigned long GetDispAddrInfo( struct instance_t* instance, unsigned short ID, u
     }
     if(D2 == 0x00)//当前
     {
-        nd_get(instance, oad + D3, data, 5);
+        nd_get(instance, oad + D3, data, 5, NULL);
     }
     else
     {   
-        nd_get(instance, oad + D3, data, 5);
+        nd_get(instance, oad + D3, data, 5, NULL);
     }
     
     *(SignBuf+6) = Sign_FeiLvNum;//T1~T12
@@ -1385,7 +1385,7 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
                 memcpy(buf, (unsigned char*)idbuf[i].addr, Len);
         }
         else
-            nd_get(instance, oad, buf, 10);
+            nd_get(instance, oad, buf, 10, NULL);
         memcpy( SignBuf, (unsigned char*)DisplayTab[i].Sign, 9 );
     }
 	//清屏

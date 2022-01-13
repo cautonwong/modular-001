@@ -446,7 +446,7 @@ struct upgrade_info_t
 struct resource_map_t
 {
     uint8_t map_name;
-    int(*fun)(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode);
+    int(*fun)(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx, uint8_t mode);
     struct list_head sibling;
 };
 
@@ -574,6 +574,6 @@ void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id);
 uint16_t nd_get_crc16(uint8_t* buf, size_t len);
 void irq_transform_to_instance(struct instance_t* instance);
 
-int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size);
+int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx);
 
 #endif

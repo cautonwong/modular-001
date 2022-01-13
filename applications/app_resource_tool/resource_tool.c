@@ -378,7 +378,7 @@ int8_t add_device(struct instance_t* instance, uint8_t device_name, const struct
 }
 
 struct resource_map_t* register_map(struct instance_t* instance,uint8_t map_name,
-    int (*fun)(struct instance_t *instance, uint32_t id,uint8_t *buf, uint8_t mode))
+    int (*fun)(struct instance_t *instance, uint32_t id,uint8_t *buf, uint16_t buf_size, void *ctx, uint8_t mode))
 {
     struct resource_block_t* block = NULL;
     struct resource_map_t* map = NULL;
@@ -403,7 +403,7 @@ struct resource_map_t* register_map(struct instance_t* instance,uint8_t map_name
     return map;
 }
 
-int16_t look_up_map(struct instance_t* instance,uint32_t id, uint8_t *buf, uint8_t mode)
+int16_t look_up_map(struct instance_t* instance,uint32_t id, uint8_t *buf, uint16_t buf_size, void *ctx,uint8_t mode)
 {
     struct resource_map_t* map = NULL;
     struct list_head* p;
@@ -411,26 +411,26 @@ int16_t look_up_map(struct instance_t* instance,uint32_t id, uint8_t *buf, uint8
     list_for_each(p, &instance->map_list)
     {
         map = list_entry(p, struct resource_map_t, sibling);
-        res_conditions_true(map->fun != NULL, map->fun(instance, id, buf, mode));
+        res_conditions_true(map->fun != NULL, map->fun(instance, id, buf, buf_size, ctx, mode));
     }
 
     return -1;
 }
 
 
-int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
+int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx)
 {
-    return look_up_map(instance, id, buf, RESOURCE_MAP_GET);
+    return look_up_map(instance, id, buf, buf_size, ctx, RESOURCE_MAP_GET);
 }
 
-int16_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
+int16_t nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx)
 {
-    return look_up_map(instance, id, buf, RESOURCE_MAP_SET);
+    return look_up_map(instance, id, buf, buf_size, ctx,RESOURCE_MAP_SET);
 }
 
-int16_t nd_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
+int16_t nd_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx)
 {
-    return look_up_map(instance, id, buf, RESOURCE_MAP_ACTION);
+    return look_up_map(instance, id, buf, buf_size, ctx,RESOURCE_MAP_ACTION);
 }
 
 int16_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size)
@@ -524,7 +524,7 @@ uint32_t* register_parameter(struct instance_t* instance, uint8_t device_name, u
 
 int16_t nd_size(struct instance_t* instance, uint32_t id)
 {
-    return look_up_map(instance, id, NULL, RESOURCE_MAP_GET);  
+    return look_up_map(instance, id, NULL, 0, NULL, RESOURCE_MAP_GET);  
 }
 
 int16_t get_block_frist_addr(struct instance_t *instance, uint8_t device_name, uint8_t block_name, uint32_t *addr)

@@ -1045,7 +1045,7 @@ int record_change_format(uint8_t *des,  uint8_t* src, uint32_t oad, enum format_
 }
 
 
-int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode)
+int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx, uint8_t mode)
 {
     uint8_t OIA1 = get_OAD_OIA1(id);
     switch (mode)

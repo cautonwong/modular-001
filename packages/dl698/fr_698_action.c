@@ -38,7 +38,7 @@ int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipelin
         offset = cache->wr;
         //p[cache->wr++] = 0x01;
 
-        r = fr_698_action(instance, oad, fifo->buf_ptr + fifo->rd, len);
+        r = fr_698_action(instance, oad, fifo->buf_ptr + fifo->rd, len, (void*)ctx);
         //cache->wr = offset;
         if (r < 0)
         {
@@ -112,7 +112,7 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
                 then_get_delay = buf_to_uint16_msb((uint8_t *)&then_get_delay);
                 //延时                
                 
-                if (fr_698_get(instance, get_oad, p+cache->wr, sizeof(password)) < 0)
+                if (fr_698_get(instance, get_oad, p+cache->wr, sizeof(password), NULL) < 0)
                 {
                     return DAR_OTHERS_ERROR;
                 }

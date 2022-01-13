@@ -78,7 +78,7 @@ int read_record_head(struct instance_t* instance, uint8_t* databuf, const uint32
                 
                 if (true == scheme_valid)
                 {
-                    single_len = nd_get(instance, obj, p, *remain_size);
+                    single_len = nd_get(instance, obj, p, *remain_size, NULL);
                     if (single_len > 0)
                     {
                         p += single_len;
@@ -198,7 +198,7 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
  
             if (true == scheme_valid)
             {
-                single_len = nd_get(instance, obj, p, *remain_size);
+                single_len = nd_get(instance, obj, p, *remain_size, NULL);
                 // format改变，长度改变
                 ret = record_change_format(tmpbuf, p, obj, RFC_WRITE);
                 if (ret >= 0)

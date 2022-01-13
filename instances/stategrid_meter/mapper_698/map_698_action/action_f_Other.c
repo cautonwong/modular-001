@@ -3,9 +3,15 @@
 
 
 
-int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf)
+int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx)
 {    
     struct mbase_control_block_t* mbase_cb;
+    
+    
+    struct context_698_t* p_ctx = (struct context_698_t*)ctx;
+    struct fifo_t* cache = p_ctx->apdu;
+    
+    
     uint8_t  method,dar=0,buffer[15],keybuf[30],len1=0,len2=0;
     uint16_t oad,pageid=0,txlen=0;
     uint8_t *p = buf;
