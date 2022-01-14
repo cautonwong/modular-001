@@ -63,6 +63,9 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+   // else
+   // struct fifo_t* fifo = (struct fifo_t*)ctx->keybuf;
+    
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
     uint16_t n = 0;
