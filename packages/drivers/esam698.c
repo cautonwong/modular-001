@@ -331,7 +331,7 @@ void esam_698_init(void)
 
     esam_698_power_ctrl(1);
     
-    read_esam_info(esam_test, 0xff);
+    //read_esam_info(esam_test, 0xff);
     
 }
 
