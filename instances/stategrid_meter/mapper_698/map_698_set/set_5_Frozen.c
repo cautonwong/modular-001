@@ -251,7 +251,7 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
         // check depth
         if (0x5002 == OI)
         {
-            offset = scheme * 2;
+            offset = scheme * 2 ;
             if ((i != 0) && ((period_buf[scheme * 3] > 1) && (depth != buf_to_uint16_lsb(depth_buf + offset))))
             {
                 *dar = DAR_OTHERS_ERROR;

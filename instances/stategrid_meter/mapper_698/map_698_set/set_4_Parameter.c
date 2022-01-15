@@ -7,68 +7,68 @@ extern void HEX_BCD( unsigned char* BCD, unsigned long HEX );
 
 typedef struct 
 {
-    uint32_t    s_index;    //åœ°å€
+    uint32_t    s_index;    //µØÖ·
     uint16_t    oad;        
-    uint8_t     offset;     //åç§»
-    uint8_t     len;        //é•¿åº¦
+    uint8_t     offset;     //Æ«ÒÆ
+    uint8_t     len;        //³¤¶È
 }general_set4;
 
 const general_set4  set4300_table[] = 
 {
-     Device_descriptor,   0x0200,   0x02,   32,//è®¾å¤‡æè¿°ç¬¦
+     Device_descriptor,   0x0200,   0x02,   32,//Éè±¸ÃèÊö·û
     
-     Factory_No,          0x0301,   0x02,    4, //å‚å®¶ä»£ç 
-     Version_SoftWare,    0x0302,   0x02,    4, //è½¯ä»¶ç‰ˆæœ¬
-     Date_SoftWare,       0x0303,   0x02,    6, //è½¯ä»¶ç‰ˆæœ¬æ—¥æœŸ
-     Version_HardWare,    0x0304,   0x02,    4, //ç¡¬ä»¶ç‰ˆæœ¬
-     Date_HardWare,       0x0305,   0x02,    6, //ç¡¬ä»¶ç‰ˆæœ¬æ—¥æœŸ
-     Extend_Info,         0x0306,   0x02,    8, //æ‰©å±•ä¿¡æ¯
+     Factory_No,          0x0301,   0x02,    4, //³§¼Ò´úÂë
+     Version_SoftWare,    0x0302,   0x02,    4, //Èí¼ş°æ±¾
+     Date_SoftWare,       0x0303,   0x02,    6, //Èí¼ş°æ±¾ÈÕÆÚ
+     Version_HardWare,    0x0304,   0x02,    4, //Ó²¼ş°æ±¾
+     Date_HardWare,       0x0305,   0x02,    6, //Ó²¼ş°æ±¾ÈÕÆÚ
+     Extend_Info,         0x0306,   0x02,    8, //À©Õ¹ĞÅÏ¢
     
-     Produced_Date,       0x0400,   0x02,    7, //ç”Ÿäº§æ—¥æœŸ
-//     Subset_List,       0x0500,  0x05,    2, //å­è®¾å¤‡åˆ—è¡¨(num+2*oi)
-     Protocol_List,       0x0601,   0x02,   20, //åè®®åˆ—è¡¨
-     FollowReport_en,     0x0700,   0x01,    1, //å…è®¸è·Ÿéšä¸ŠæŠ¥
-     ActiveReport_en,     0x0800,   0x01,    1, //å…è®¸ä¸»åŠ¨ä¸ŠæŠ¥
-     Comm_Master_en,      0x0900,   0x01,    1, //å…è®¸ä¸ä¸»ç«™é€šè®¯
-     Report_channel,      0x0A00,   0x03,    4, //ä¸ŠæŠ¥é€šé“
+     Produced_Date,       0x0400,   0x02,    7, //Éú²úÈÕÆÚ
+//     Subset_List,       0x0500,  0x05,    2, //×ÓÉè±¸ÁĞ±í(num+2*oi)
+     Protocol_List,       0x0601,   0x02,   20, //Ğ­ÒéÁĞ±í
+     FollowReport_en,     0x0700,   0x01,    1, //ÔÊĞí¸úËæÉÏ±¨
+     ActiveReport_en,     0x0800,   0x01,    1, //ÔÊĞíÖ÷¶¯ÉÏ±¨
+     Comm_Master_en,      0x0900,   0x01,    1, //ÔÊĞíÓëÖ÷Õ¾Í¨Ñ¶
+     Report_channel,      0x0A00,   0x03,    4, //ÉÏ±¨Í¨µÀ
 };
 
 const general_set4  general_set4_talble[] =
 {
-     Comm_Number,               0x4001,     0x02,   6,//è¡¨åœ°å€
-//     Meter_Number,              0x4002,     0x02,   6,//è¡¨å·
-     User_Number,               0x4003,     0x02,   6,//å®¢æˆ·ç¼–å·
-//     Meter_Location,            0x4004,     0x01,   27,//è®¾å¤‡åœ°ç†ä½ç½®
-     SeasonTable_Changetime,    0x4008,     0x01,   7,//ä¸¤å¥—æ—¶åŒºåˆ‡æ¢æ—¶é—´
-     DayTable_Changetime,       0x4009,     0x01,   7,//ä¸¤å¥—æ—¶æ®µåˆ‡æ¢æ—¶é—´
-     SecretKey_Num,             0x400F,     0x01,   1,//ç§˜é’¥æ€»æ¡æ•°
-     Meter_Num,                 0x4010,     0x01,   1,//è®¡é‡å…ƒä»¶ä¸ªæ•°
-     Weekend,                   0x4012,     0x01,   1,//å‘¨ä¼‘æ—¥ç‰¹å¾å­—
-     WeekendFee,                0x4013,     0x01,   1,//å‘¨ä¼‘æ—¥é‡‡ç”¨è´¹ç‡å·
+     Comm_Number,               0x4001,     0x02,   6,//±íµØÖ·
+//     Meter_Number,              0x4002,     0x02,   6,//±íºÅ
+     User_Number,               0x4003,     0x02,   6,//¿Í»§±àºÅ
+//     Meter_Location,            0x4004,     0x01,   27,//Éè±¸µØÀíÎ»ÖÃ
+     SeasonTable_Changetime,    0x4008,     0x01,   7,//Á½Ì×Ê±ÇøÇĞ»»Ê±¼ä
+     DayTable_Changetime,       0x4009,     0x01,   7,//Á½Ì×Ê±¶ÎÇĞ»»Ê±¼ä
+     SecretKey_Num,             0x400F,     0x01,   1,//ÃØÔ¿×ÜÌõÊı
+     Meter_Num,                 0x4010,     0x01,   1,//¼ÆÁ¿Ôª¼ş¸öÊı
+     Weekend,                   0x4012,     0x01,   1,//ÖÜĞİÈÕÌØÕ÷×Ö
+     WeekendFee,                0x4013,     0x01,   1,//ÖÜĞİÈÕ²ÉÓÃ·ÑÂÊºÅ
      Meter_CT,                  0x401C,     0x01,   4,//CT
      Meter_PT,                  0x401D,     0x01,   4,//PT
-     Pulse_Width,               0x4102,     0x01,   1,//è„‰å†²å®½åº¦
-     ASCII_AssetsMan,           0x4103,     0x01,   32,//èµ„äº§ç®¡ç†ç¼–ç 
-     ASCII_Un,                  0x4104,     0x01,   6,//é¢å®šç”µå‹
-     ASCII_Ib,                  0x4105,     0x01,   6,//é¢å®šç”µæµ
-     ASCII_Imax,                0x4106,     0x01,   6,//æœ€å¤§ç”µæµ
-     ASCII_AccuracyClass1,      0x4107,     0x01,   4,//æœ‰åŠŸå‡†ç¡®åº¦ç­‰çº§
-     Meter_Const1,              0x4109,     0x01,   4,//æœ‰åŠŸè„‰å†²å¸¸æ•°
-     ASCII_MeterType,           0x410B,     0x01,   32,//ç”µèƒ½è¡¨å‹å·
-     MeterRunWord,              0x4110,     0x01,   1,//ç”µèƒ½è¡¨è¿è¡Œç‰¹å¾å­—
-     SoftWareNo,                0x4111,     0x01,   16,//è½¯ä»¶å¤‡æ¡ˆå·
-     Measure_Mode,              0x4112,     0x01,   1,//æœ‰åŠŸç»„åˆç‰¹å¾å­—
-     Meter_Password,            0x4401,     0x01,   8,//åº”ç”¨è¿æ¥å¯†ç 
+     Pulse_Width,               0x4102,     0x01,   1,//Âö³å¿í¶È
+     ASCII_AssetsMan,           0x4103,     0x01,   32,//×Ê²ú¹ÜÀí±àÂë
+     ASCII_Un,                  0x4104,     0x01,   6,//¶î¶¨µçÑ¹
+     ASCII_Ib,                  0x4105,     0x01,   6,//¶î¶¨µçÁ÷
+     ASCII_Imax,                0x4106,     0x01,   6,//×î´óµçÁ÷
+     ASCII_AccuracyClass1,      0x4107,     0x01,   4,//ÓĞ¹¦×¼È·¶ÈµÈ¼¶
+     Meter_Const1,              0x4109,     0x01,   4,//ÓĞ¹¦Âö³å³£Êı
+     ASCII_MeterType,           0x410B,     0x01,   32,//µçÄÜ±íĞÍºÅ
+     MeterRunWord,              0x4110,     0x01,   1,//µçÄÜ±íÔËĞĞÌØÕ÷×Ö
+     SoftWareNo,                0x4111,     0x01,   16,//Èí¼ş±¸°¸ºÅ
+     Measure_Mode,              0x4112,     0x01,   1,//ÓĞ¹¦×éºÏÌØÕ÷×Ö
+     Meter_Password,            0x4401,     0x01,   8,//Ó¦ÓÃÁ¬½ÓÃÜÂë
 };
 #define		set4num			sizeof(general_set4_talble)/sizeof(general_set4)
 
 const unsigned int  DayTab[13] = { 0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
 
 /***********************************************************************/
-/*  å‡½æ•°åç§°ï¼šBCD_BYTE                                                 */
-/*  å‡½æ•°åŠŸèƒ½ï¼šå°†å•å­—èŠ‚BCDç è½¬æ¢ä¸ºå•å­—èŠ‚HEXç                            */
-/*  è¾“å…¥å‚æ•°ï¼šBCDï¼šå•å­—èŠ‚BCDç æ•°æ®                                     */
-/*  è¾“å‡ºå‚æ•°ï¼šå•å­—èŠ‚HEXç æ•°æ®                                          */
+/*  º¯ÊıÃû³Æ£ºBCD_BYTE                                                 */
+/*  º¯Êı¹¦ÄÜ£º½«µ¥×Ö½ÚBCDÂë×ª»»Îªµ¥×Ö½ÚHEXÂë                           */
+/*  ÊäÈë²ÎÊı£ºBCD£ºµ¥×Ö½ÚBCDÂëÊı¾İ                                     */
+/*  Êä³ö²ÎÊı£ºµ¥×Ö½ÚHEXÂëÊı¾İ                                          */
 /***********************************************************************/
 unsigned char BCD_BYTE( unsigned char BCD )
 {
@@ -76,10 +76,10 @@ unsigned char BCD_BYTE( unsigned char BCD )
 }
 
 /***********************************************************************/
-/*  å‡½æ•°åç§°ï¼šGetTotalDay                                              */
-/*  å‡½æ•°åŠŸèƒ½ï¼šæ ¹æ®å¹´æœˆæ—¥è®¡ç®—æ€»å¤©æ•°                                     */
-/*  è¾“å…¥å‚æ•°ï¼šAddrï¼šå¹´æœˆæ—¥æ•°æ®åœ°å€                                     */
-/*  è¾“å‡ºå‚æ•°ï¼šæ€»å¤©æ•°                                                   */
+/*  º¯ÊıÃû³Æ£ºGetTotalDay                                              */
+/*  º¯Êı¹¦ÄÜ£º¸ù¾İÄêÔÂÈÕ¼ÆËã×ÜÌìÊı                                     */
+/*  ÊäÈë²ÎÊı£ºAddr£ºÄêÔÂÈÕÊı¾İµØÖ·                                     */
+/*  Êä³ö²ÎÊı£º×ÜÌìÊı                                                   */
 /***********************************************************************/
 unsigned int GetTotalDay( unsigned char* Addr )
 {
@@ -95,10 +95,10 @@ unsigned int GetTotalDay( unsigned char* Addr )
 }
 
 /***********************************************************************/
-/*  å‡½æ•°åç§°ï¼šGetWeek                                                  */
-/*  å‡½æ•°åŠŸèƒ½ï¼šæ ¹æ®å¹´æœˆæ—¥è®¡ç®—å‘¨                                         */
-/*  è¾“å…¥å‚æ•°ï¼šAddrï¼šå¹´æœˆæ—¥æ•°æ®åœ°å€                                     */
-/*  è¾“å‡ºå‚æ•°ï¼šå‘¨                                                       */
+/*  º¯ÊıÃû³Æ£ºGetWeek                                                  */
+/*  º¯Êı¹¦ÄÜ£º¸ù¾İÄêÔÂÈÕ¼ÆËãÖÜ                                         */
+/*  ÊäÈë²ÎÊı£ºAddr£ºÄêÔÂÈÕÊı¾İµØÖ·                                     */
+/*  Êä³ö²ÎÊı£ºÖÜ                                                       */
 /***********************************************************************/
 unsigned char GetWeek( unsigned char* Addr )
 {
@@ -172,7 +172,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad;
-    uint8_t index,attribute,i,num,buffer[42]={0},num_hourtab=0,j,year;
+    uint8_t index,attribute,i,num,buffer[42]={0},temp[10]={0},num_hourtab=0,j,year;
     uint8_t* p = buf;
     uint32_t s_index = 0x00,addr=0;
     int len=0;
@@ -194,27 +194,54 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
     
     switch (oad)
     {
-        case 0x4000://æ—¶é—´
+        case 0x4000://Ê±¼ä
             if(attribute == 0x02)
             {
                 uint8_t settimebuf[8]={0};
                 p++;
+                
+                //±£´æĞ£Ê±Ç°Ê±¼ä 
+                rtc_get_from_tm(instance,temp);
+                buffer[0] = temp[6];
+                buffer[1] = temp[5];
+                buffer[2] = temp[4];
+                buffer[3] = temp[3];
+                buffer[4] = temp[2];
+                buffer[5] = temp[1];
+                buffer[6] = temp[0];
+                addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
+                nd_set_index(instance, addr, buffer, 7);
+                
+               
                 mem_swap_cpy((uint8_t*)&oad, p, 2);
                 year = oad - 2000;
                 p = p + 2;
-                settimebuf[5] = BYTE_BCD(year);//å¹´
-                settimebuf[4] = BYTE_BCD(*p++);//æœˆ
-                settimebuf[3] = BYTE_BCD(*p++);//æ—¥
-                settimebuf[2] = BYTE_BCD(*p++);//æ—¶
-                settimebuf[1] = BYTE_BCD(*p++);//åˆ†
-                settimebuf[0] = BYTE_BCD(*p++);//ç§’
+                settimebuf[5] = BYTE_BCD(year);//Äê
+                settimebuf[4] = BYTE_BCD(*p++);//ÔÂ
+                settimebuf[3] = BYTE_BCD(*p++);//ÈÕ
+                settimebuf[2] = BYTE_BCD(*p++);//Ê±
+                settimebuf[1] = BYTE_BCD(*p++);//·Ö
+                settimebuf[0] = BYTE_BCD(*p++);//Ãë
                 settimebuf[6] = GetWeek(&settimebuf[3]);
                 write_mcu_rtc(0, settimebuf, 7);
                 read_mcu_rtc(0x00, instance);
+                
+                //±£´æĞ£Ê±ºóÊ±¼ä 
+                rtc_get_from_tm(instance,temp);
+                buffer[0] = temp[6];
+                buffer[1] = temp[5];
+                buffer[2] = temp[4];
+                buffer[3] = temp[3];
+                buffer[4] = temp[2];
+                buffer[5] = temp[1];
+                buffer[6] = temp[0];
+                addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
+                nd_set_index(instance, addr, buffer, 7);
+               
                 return (p-buf);
             }
             break;
-        case 0x4004://åœ°ç†ä½ç½®
+        case 0x4004://µØÀíÎ»ÖÃ
             if(attribute != 0x02)   return -1;
             if(index == 0)
             {
@@ -253,17 +280,17 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 return -1;
             }
             break;
-        case 0x4007://LCDå‚æ•°
+        case 0x4007://LCD²ÎÊı
             if(attribute == 0x02)
             {
                 uint32_t idbuf[] = {
-                (uint32_t)&mbase_cb->lcd_poweron_all_dis_time,            //ä¸Šç”µå…¨æ˜¾æ—¶é—´
-                (uint32_t)&mbase_cb->backlight_key_time,                  //èƒŒå…‰ç‚¹äº®æ—¶é—´
-                (uint32_t)&mbase_cb->lcd_checkdis_keep_sec,               //æ˜¾ç¤ºæŸ¥çœ‹èƒŒå…‰ç‚¹äº®æ—¶é—´
-                (uint32_t)&mbase_cb->lcd_nopower_key_keep_sec,            //æ— ç”µæŒ‰é”®é©»ç•™æ—¶é—´
-                (uint32_t)&mbase_cb->energy_point,                        //ç”µèƒ½å°æ•°æ˜¾ç¤ºä½
-                (uint32_t)&mbase_cb->power_point,                         //åŠŸç‡å°æ•°æ˜¾ç¤ºä½
-                (uint32_t)&mbase_cb->lcd_12_mean,                         //æ¶²æ™¶12å­—æ ·æ„ä¹‰
+                (uint32_t)&mbase_cb->lcd_poweron_all_dis_time,            //ÉÏµçÈ«ÏÔÊ±¼ä
+                (uint32_t)&mbase_cb->backlight_key_time,                  //±³¹âµãÁÁÊ±¼ä
+                (uint32_t)&mbase_cb->lcd_checkdis_keep_sec,               //ÏÔÊ¾²é¿´±³¹âµãÁÁÊ±¼ä
+                (uint32_t)&mbase_cb->lcd_nopower_key_keep_sec,            //ÎŞµç°´¼ü×¤ÁôÊ±¼ä
+                (uint32_t)&mbase_cb->energy_point,                        //µçÄÜĞ¡ÊıÏÔÊ¾Î»
+                (uint32_t)&mbase_cb->power_point,                         //¹¦ÂÊĞ¡ÊıÏÔÊ¾Î»
+                (uint32_t)&mbase_cb->lcd_12_mean,                         //Òº¾§12×ÖÑùÒâÒå
                 };
                 uint8_t lens[] = {1, 2, 2, 2, 1, 1, 1};
                 uint8_t offset[] = {0, 1, 3, 5, 7, 8, 9};
@@ -306,7 +333,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 return -1;
             }
             break;
-        case 0x400C://æ—¶åŒºæ—¶æ®µæ•°
+        case 0x400C://Ê±ÇøÊ±¶ÎÊı
             if(index > 5)   return -1;
             if(index == 0)
             {
@@ -329,7 +356,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 return (p-buf);
             }
             break;
-        case 0x4011://å…¬å…±å‡æ—¥è¡¨
+        case 0x4011://¹«¹²¼ÙÈÕ±í
             if((index == 0) || (index > 10))    return -1;
             p = p + 3;
             memcpy(buffer, p, 5);
@@ -339,8 +366,8 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
             nd_set_index(instance, s_index, buffer, 6); 
             return (p-buf);
             break;
-        case 0x4014://å½“å‰å¥—æ—¶åŒºè¡¨
-        case 0x4015://å¤‡ç”¨å¥—æ—¶åŒºè¡¨
+        case 0x4014://µ±Ç°Ì×Ê±Çø±í
+        case 0x4015://±¸ÓÃÌ×Ê±Çø±í
             if(index > 14)    return -1;
             if(oad == 0x4014)   
                 addr = Season_Table0;
@@ -377,8 +404,8 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 return (p-buf);
             }
             break;
-        case 0x4016://å½“å‰å¥—æ—¥æ—¶æ®µè¡¨
-        case 0x4017://å¤‡ç”¨å¥—æ—¥æ—¶æ®µè¡¨
+        case 0x4016://µ±Ç°Ì×ÈÕÊ±¶Î±í
+        case 0x4017://±¸ÓÃÌ×ÈÕÊ±¶Î±í
             if(index > 0x08)    return -1;
             if(oad == 0x4016)
                 addr = Day_Table00;
@@ -391,7 +418,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 for(j=0;j<num;j++)
                 {
                     p++;
-                    num_hourtab = *p++; //æ—¥æ—¶æ®µæ•°ï¼Œæ¯æ—¥åˆ‡æ¢æ•°
+                    num_hourtab = *p++; //ÈÕÊ±¶ÎÊı£¬Ã¿ÈÕÇĞ»»Êı
                     for(i=0; i<num_hourtab; i++)
                     {
                         p = p + 3;
@@ -410,7 +437,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
             else
             {
                 p++;
-                num_hourtab = *p++; //æ—¥æ—¶æ®µæ•°ï¼Œæ¯æ—¥åˆ‡æ¢æ•°
+                num_hourtab = *p++; //ÈÕÊ±¶ÎÊı£¬Ã¿ÈÕÇĞ»»Êı
                 for(i=0; i<num_hourtab; i++)
                 {
                     p = p + 3;
@@ -426,7 +453,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
             }
             break;
         
-        case 0x4116://ç»“ç®—æ—¥
+        case 0x4116://½áËãÈÕ
             if(index == 0)
             {
                 if(*(p+1) > 0x03)    return -1;
@@ -464,7 +491,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
             else
                 return -1;
             break;
-        case 0x4300://è®¾å¤‡ä¿¡æ¯
+        case 0x4300://Éè±¸ĞÅÏ¢
             return set4300(instance, id, buf);
         default:
             break;
@@ -481,17 +508,17 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
 /*
 struct inis_para_t 
 {
-    uint8_t Device_descriptor[8];           979 //è®¾å¤‡æè¿°ç¬¦
-    uint8_t Factory_No[8];                  980 //å‚å®¶ä»£ç 
-    uint8_t Version_SoftWare[2];            981 //è½¯ä»¶ç‰ˆæœ¬
+    uint8_t Device_descriptor[8];           979 //Éè±¸ÃèÊö·û
+    uint8_t Factory_No[8];                  980 //³§¼Ò´úÂë
+    uint8_t Version_SoftWare[2];            981 //Èí¼ş°æ±¾
       uint32_t xx[];
 }
 
 
 const struct inis_para_t inis_para =
 {
-  {0,0,0,},  //è®¾å¤‡æè¿°ç¬¦
-  {},  //å‚å®¶ä»£ç 
-  {},  //è½¯ä»¶ç‰ˆæœ¬
+  {0,0,0,},  //Éè±¸ÃèÊö·û
+  {},  //³§¼Ò´úÂë
+  {},  //Èí¼ş°æ±¾
 }
 */

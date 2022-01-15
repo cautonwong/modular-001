@@ -73,7 +73,8 @@ struct mbase_control_block_t
     static_end     
     //运行期更改 && 掉电不保存 && 上电不需要IO请求的区域 && 初始化时直接清零
     dyn_cache_start   
-    I_data_fields         
+    I_data_fields   
+    U_data_fields
     uint8_t   DayTableNo;//日表序号
     uint8_t   TOUNo;//费率序号
     uint8_t   STEPNo;//阶梯序号
@@ -195,34 +196,38 @@ struct mbase_control_block_t
     uint8_t OverCurrent_report_type; //过流事件上报标识
     uint8_t OverCurrent_report_mode; //过流事件上报方式
  
-
     uint8_t OverCurrentAS_activeflag; // 电能表过流事件的有效标识
     uint8_t OverCurrentAS_recordflag; // 电能表过流事件的记录标识
     uint8_t OverCurrentAS_resetflag;  // 电能表过流事件的清零标识
 
     uint32_t OverCurrent_threshold;     //参数 电能表过流事件-电流触发下限 
 
+    uint16_t ZeroLineErrS_rate_threshold;    // 电能表零线电流异常事件 限值
+    uint32_t ZeroLineErrS_Current_threshold; // 电能表零线电流异常事件-电流触发下限
+
     uint8_t OverCurrent_duration_para;  //参数 判定延时时间  
     uint8_t PowerOffS_duration_para;    //参数 判定延时时间  
     uint8_t CoverOpenS_duration_para;   //参数 判定延时时间  
     uint8_t SwitchErrS_duration_para;   //参数 判定延时时间  
     uint8_t EmuErrS_duration_para;      //参数 判定延时时间  
+    uint8_t RTCErrS_duration_para;      //参数 判定延时时间  
     uint8_t ZeroLineErrS_duration_para; //参数 判定延时时间  
-
 
     uint8_t CoverOpenS_status;          //当前状态标志 电能表开盖事件
     uint8_t SwitchErrS_status;          //当前状态标志 电能表负荷开关误动作事件
+    uint8_t SwitchErrS_Record_En;       //当前状态标志 负荷开关 误动作 使能记录 标志 
     uint8_t PowerAbnormalS_status;      //当前状态标志 电能表电源异常事件
     uint8_t EmuErrS_status;             //当前状态标志 计量芯片故障事件
+    uint8_t RTCErrS_status;             //当前状态标志 时钟故障事件
+    uint16_t Un_60;                     //当前状态标志 60%Un值  // 待调整
 
-
-    
     uint8_t OverCurrentAS_duration;     //当前状态持续时间 电能表过流事件
     uint8_t PowerOffS_duration;         //当前状态持续时间 电能表掉电事件
     uint8_t CoverOpenS_duration;        //当前状态持续时间 电能表开盖事件
     uint8_t SwitchErrS_duration;        //当前状态持续时间 电能表负荷开关误动作事件
     uint8_t PowerAbnormalS_duration;    //当前状态持续时间 电能表电源异常事件 
     uint8_t EmuErrS_duration;           //当前状态持续时间 计量芯片故障事件
+    uint8_t RTCErrS_duration;           //当前状态持续时间 时钟故障事件
     uint8_t ZeroLineErrS_duration;      //当前状态持续时间 零线电流异常事件  
 
     uint32_t OverCurrentAS_acc_time;    //累计时间 电能表过流事件
@@ -231,9 +236,8 @@ struct mbase_control_block_t
     uint32_t SwitchErrS_acc_time;       //累计时间 电能表负荷开关误动作事件
     uint32_t PowerAbnormalS_acc_time;   //累计时间 电能表电源异常事件 
     uint32_t EmuErrS_acc_time;          //累计时间 计量芯片故障事件
+    //uint32_t RTCErrS_acc_time;          //累计时间 时钟故障事件
     uint32_t ZeroLineErrS_acc_time;     //累计时间 零线电流异常事件  
-
-
 
     uint8_t mac_err_cnt; // 当日mac错误次数
     uint8_t mac_suspend_date[3];// mac错误 挂起日期 yymmdd
@@ -243,7 +247,6 @@ struct mbase_control_block_t
     uint8_t factor_mode; //工厂模式
     
     uint32_t battery_used_time; //电池使用时间
-    
 };
 
 enum resourenc_block_name

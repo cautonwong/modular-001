@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -48,11 +48,16 @@
     <ClCompile Include="..\..\..\packages\meterbase\gs_i_over_event.c" />
     <ClCompile Include="..\..\..\packages\meterbase\gs_mac_suspend.c" />
     <ClCompile Include="..\..\..\packages\meterbase\gs_meter_clear_event.c" />
+    <ClCompile Include="..\..\..\packages\meterbase\gs_neutral_current _err_event.c" />
+    <ClCompile Include="..\..\..\packages\meterbase\gs_power_abnormal_event .c" />
     <ClCompile Include="..\..\..\packages\meterbase\gs_power_off_event.c" />
     <ClCompile Include="..\..\..\packages\meterbase\gs_record.c" />
+    <ClCompile Include="..\..\..\packages\meterbase\gs_relay_err_event.c" />
+    <ClCompile Include="..\..\..\packages\meterbase\gs_rtc_err_event.c" />
     <ClCompile Include="..\mapper_698\mapper_698.c" />
     <ClCompile Include="..\mapper_698\map_698_action\action_3_Event.c" />
     <ClCompile Include="..\mapper_698\map_698_action\action_4_Parameter.c" />
+    <ClCompile Include="..\mapper_698\map_698_action\action_5_Frozen.c" />
     <ClCompile Include="..\mapper_698\map_698_get\get_0_Energy.c" />
     <ClCompile Include="..\mapper_698\map_698_get\get_1_Demand.c" />
     <ClCompile Include="..\mapper_698\map_698_get\get_2_Variable.c" />
@@ -153,7 +158,7 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(SolutionDir)\nidavellir\include\;$(SolutionDir)\nidavellir\include\kernel\;$(SolutionDir)\packages\test\cmocka\include\;$(SolutionDir)\instances\stategrid_meter\;$(SolutionDir)\packages\dl698\;$(SolutionDir)applications\app_resource_tool\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\nidavellir\include\;$(SolutionDir)\nidavellir\include\kernel\;$(SolutionDir)\packages\test\cmocka\include\;$(SolutionDir)\instances\stategrid_meter\;$(SolutionDir)\packages\dl698\;$(SolutionDir)applications\app_resource_tool\;$(SolutionDir)\packages\meterbase\</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8</AdditionalOptions>
     </ClCompile>
     <Link>

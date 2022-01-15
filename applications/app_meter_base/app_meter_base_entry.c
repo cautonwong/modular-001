@@ -246,7 +246,7 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
 
 int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    enum scheme_mode mode;
+    enum scheme_mode mode = START_MODE;
     uint8_t data_buff[400] = { 0 }, payload[100];
     uint8_t *pdata = data_buff;
     uint16_t remain_size;
@@ -270,13 +270,91 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
             case OverCurrentAE:         //过流事件结束
             case OverCurrentAS:         //过流事件发生
                 Oad = 0x30050700;
-                mode = START_MODE + (mesg->id - OverCurrentAE);
+                mode = START_MODE + (mesg->id - OverCurrentAS);
                 break;
- 
+            case PowerOffE:             //电能表掉电事件结束
+            case PowerOffS:             //电能表掉电事件发生
+                Oad = 0x30110200;
+                mode = START_MODE + (mesg->id - PowerOffS);
+                break;
+            case MeterWrS:             //电能表编程事件  
+                Oad = 0x30120200;
+                mode = START_MODE;
+                break;
+            case MeterClrS:      
+                Oad = 0x30130200;
+                mode = START_MODE;
+                break;
+            case EventClrS:
+                Oad = 0x30150200;
+                mode = START_MODE;
+                break;
+            case SetTimeS:
+                Oad = 0x30160200;
+                mode = START_MODE;
+                break;
+            
+            case DayTabWrS:
+            case SeasonTabWrS:
+            case WeekTabWrS:
+            case BillDayWrS:
+                Oad = 0x30170200 + ((mesg->id - DayTabWrS) << 16);
+                mode = START_MODE ;
+                break;
+
             case CoverOpenE:            //开盖事件结束
             case CoverOpenS:            //开盖事件发生
                 Oad = 0x301B0200;
-                mode = START_MODE + (mesg->id - OverCurrentAE);
+                mode = START_MODE + (mesg->id - CoverOpenS);
+                break;
+
+            case SwitchOffS:
+            case SwitchOnS:
+            case HolidayWrS:
+            case ActCombWrS:
+                Oad = 0x301F0200 + ((mesg->id - SwitchOffS) << 16);
+                mode = START_MODE;
+                break;
+
+            case FeeTabWrS:
+            case StepTabWrS:
+            case SecretKeyWrS:
+            case ErrPlugCardS:
+            case RechargeS:
+            case RefundS:
+                Oad = 0x30240200 + ((mesg->id - FeeTabWrS) << 16);
+                mode = START_MODE;
+                break;
+
+            case SwitchErrE:            
+            case SwitchErrS:            
+                Oad = 0x302B0200;
+                mode = START_MODE + (mesg->id - SwitchErrS);
+                break;
+            case PowerAbnormalE:
+            case PowerAbnormalS:
+                Oad = 0x302C0200;
+                mode = START_MODE + (mesg->id - PowerAbnormalS);
+                break;
+            case RTCErrE:
+            case RTCErrS:
+                Oad = 0x302E0200;
+                mode = START_MODE + (mesg->id - RTCErrS);
+                break;
+            case EmuErrE:
+            case EmuErrS:
+                Oad = 0x302F0200;
+                mode = START_MODE + (mesg->id - EmuErrS);
+                break;
+
+            case BroadcastTimeS:
+                Oad = 0x303C0200;
+                mode = START_MODE;
+                break;
+            case ZeroLineErrE:
+            case ZeroLineErrS:
+                Oad = 0x30400200;
+                mode = START_MODE + (mesg->id - ZeroLineErrS);
                 break;
 
             case InstantFreeze:         //瞬时冻结
@@ -422,9 +500,9 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
           
           Energy_Meter(instance, pipeline);
 
-          ia_over_event_judge(instance, pipeline, mesg); //TEST
-          
           freeze_pro(instance, pipeline, mesg);
+          
+          event_pro(instance, pipeline, mesg);
 
           Display(instance, pipeline);
           
