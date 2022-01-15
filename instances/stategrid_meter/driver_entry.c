@@ -258,6 +258,8 @@ void irq_system_init(void)
     ndv_isr_handle_regsit(IO_Interrupt , IRQ_PMU );
     ndv_isr_handle_regsit(timing_ftr , IRQ_TMR3 );
     
+    __enable_irq();
+    
 }
 
 void irq_transform_to_instance(struct instance_t* instance)

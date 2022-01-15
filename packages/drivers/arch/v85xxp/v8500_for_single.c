@@ -369,7 +369,7 @@ void mcu_init(void *init_type)
     
     v85xxp_clear_watchdog();
     
-    __enable_irq();
+    //__enable_irq();
     
 }
 
@@ -1215,7 +1215,7 @@ void mcu_main_power_on_config(void)
     
     GPIOA->OEN |=BIT2; 
     GPIOA->IE |=BIT2;
-    PMU_WakeUpPinConfig(GPIO_Pin_2, IOA_EDGEBOTH);   //使能外部IO口唤醒
+    PMU_WakeUpPinConfig(GPIO_Pin_2, IOA_FALLING);   //使能外部IO口唤醒
     PMU_ClearIOAINTStatus(GPIO_Pin_2);
     
     PMU->CONTROL |= PMU_CONTROL_INT_IOA_EN;
