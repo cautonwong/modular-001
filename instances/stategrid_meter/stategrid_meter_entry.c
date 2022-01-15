@@ -2,7 +2,8 @@
 #include "applications.h"
 #include "resource_tool.h"
 
-#define Max698len   1024
+#define Max698len       2048
+#define pl_tx_698_len   128
 
 extern int baremetal_instance_entry(struct instance_t* instance);
 #ifdef WIN32
@@ -160,6 +161,34 @@ int update_instance_rtc(struct instance_t* instance)
     return 0;
 }
 
+int communication_channel_init(struct instance_t* p_instance, struct pipeline_t *pl_rx, struct pipeline_t *pl_tx, uint8_t chl_type)
+{
+    struct context_698_t* ctx_698 = NULL;
+    
+    //初始化pl_rx_698初始化
+    pl_rx->ctx = nd_malloc(p_instance, control_block_698_name, sizeof(struct context_698_t));
+    ctx_698 = pl_rx->ctx;
+    ctx_698->apdu = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
+    fifoBuf_init(ctx_698->apdu, nd_malloc(p_instance, control_block_698_name, Max698len), Max698len);
+    ctx_698->apdu_rx = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
+    fifoBuf_init(ctx_698->apdu_rx, nd_malloc(p_instance, control_block_698_name, Max698len), Max698len);
+    
+    pl_rx->in_queue = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
+    fifoBuf_init(pl_rx->in_queue, nd_malloc(p_instance, control_block_698_name, Max698len), Max698len);
+    pl_rx->out_queue = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
+    fifoBuf_init(pl_rx->out_queue, nd_malloc(p_instance, control_block_698_name, Max698len), Max698len);
+
+    //初始化pl_tx_698初始化
+    pl_tx->ctx = ctx_698;
+    pl_tx->in_queue = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
+    fifoBuf_init(pl_tx->in_queue, nd_malloc(p_instance, control_block_698_name, pl_tx_698_len), pl_tx_698_len);
+    pl_tx->out_queue = pl_rx->out_queue;
+    
+    communication_chlx_init((struct fifo_t*)pl_tx->out_queue, (struct fifo_t*)pl_rx->in_queue, chl_type);
+}
+
+
+
 uint8_t nd_memory[25 * 1024];
 
 int baremetal_instance_entry_main(int argc, char** argv)
@@ -225,11 +254,20 @@ int baremetal_instance_entry_main(int argc, char** argv)
     {
         return -1;
     }
+#if 1  
+    communication_channel_init(instance, &pl_rx_698, &pl_tx_698, UART_RS4851_CHL);
+    communication_channel_init(instance, &pl_plc_rx_698, &pl_plc_tx_698 , UART_MODULE_CHL);
+    communication_channel_init(instance, &pl_ir_rx_698, &pl_ir_tx_698, UART_IR_CHL);
+#endif
+#if 0
     //初始化pl_rx_698初始化
     pl_rx_698.ctx = nd_malloc(instance, control_block_698_name, sizeof(struct context_698_t));
     ctx_698 = pl_rx_698.ctx;
     ctx_698->apdu = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
     fifoBuf_init(ctx_698->apdu, nd_malloc(instance, control_block_698_name, Max698len), Max698len);
+    
+    ctx_698->apdu_rx = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
+    fifoBuf_init(ctx_698->apdu_rx, nd_malloc(instance, control_block_698_name, Max698len), Max698len);
     
     pl_rx_698.in_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
     fifoBuf_init(pl_rx_698.in_queue, nd_malloc(instance, control_block_698_name, Max698len), Max698len);
@@ -239,16 +277,18 @@ int baremetal_instance_entry_main(int argc, char** argv)
     //初始化pl_tx_698初始化
     pl_tx_698.ctx = ctx_698;
     pl_tx_698.in_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
-    fifoBuf_init(pl_tx_698.in_queue, nd_malloc(instance, control_block_698_name, Max698len), Max698len);
+    fifoBuf_init(pl_tx_698.in_queue, nd_malloc(instance, control_block_698_name, pl_tx_698_len), pl_tx_698_len);
     pl_tx_698.out_queue = pl_rx_698.out_queue;
     
     communication_chlx_init(pl_tx_698.out_queue , pl_rx_698.in_queue , UART_RS4851_CHL);
-    
+
     //初始化pl_plc_rx_698初始化
     pl_plc_rx_698.ctx = nd_malloc(instance, control_block_698_name, sizeof(struct context_698_t));
     ctx_698 = pl_plc_rx_698.ctx;
     ctx_698->apdu = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
     fifoBuf_init(ctx_698->apdu, nd_malloc(instance, control_block_698_name, Max698len), Max698len);
+    ctx_698->apdu_rx = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
+    fifoBuf_init(ctx_698->apdu_rx, nd_malloc(instance, control_block_698_name, Max698len), Max698len);
     
     pl_plc_rx_698.in_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
     fifoBuf_init(pl_plc_rx_698.in_queue, nd_malloc(instance, control_block_698_name, Max698len), Max698len);
@@ -258,17 +298,18 @@ int baremetal_instance_entry_main(int argc, char** argv)
     //初始化pl_plc_tx_698初始化
     pl_plc_tx_698.ctx = ctx_698;
     pl_plc_tx_698.in_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
-    fifoBuf_init(pl_plc_tx_698.in_queue, nd_malloc(instance, control_block_698_name, Max698len), Max698len);
+    fifoBuf_init(pl_plc_tx_698.in_queue, nd_malloc(instance, control_block_698_name, pl_tx_698_len), pl_tx_698_len);
     pl_plc_tx_698.out_queue = pl_plc_rx_698.out_queue;
     
     communication_chlx_init(pl_plc_tx_698.out_queue , pl_plc_rx_698.in_queue , UART_MODULE_CHL);
-    
-    
+
     //初始化pl_ir_rx_698初始化
     pl_ir_rx_698.ctx = nd_malloc(instance, control_block_698_name, sizeof(struct context_698_t));
     ctx_698 = pl_ir_rx_698.ctx;
     ctx_698->apdu = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
     fifoBuf_init(ctx_698->apdu, nd_malloc(instance, control_block_698_name, Max698len), Max698len);
+    ctx_698->apdu_rx = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
+    fifoBuf_init(ctx_698->apdu_rx, nd_malloc(instance, control_block_698_name, Max698len), Max698len);
     
     pl_ir_rx_698.in_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
     fifoBuf_init(pl_ir_rx_698.in_queue, nd_malloc(instance, control_block_698_name, Max698len), Max698len);
@@ -278,25 +319,11 @@ int baremetal_instance_entry_main(int argc, char** argv)
     //初始化pl_ir_tx_698初始化
     pl_ir_tx_698.ctx = ctx_698;
     pl_ir_tx_698.in_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
-    fifoBuf_init(pl_ir_tx_698.in_queue, nd_malloc(instance, control_block_698_name, Max698len), Max698len);
+    fifoBuf_init(pl_ir_tx_698.in_queue, nd_malloc(instance, control_block_698_name, pl_tx_698_len), pl_tx_698_len);
     pl_ir_tx_698.out_queue = pl_ir_rx_698.out_queue;
     
     communication_chlx_init(pl_ir_tx_698.out_queue , pl_ir_rx_698.in_queue , UART_IR_CHL);
-/*    
-    pl_plc_rx_698.in_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
-    fifoBuf_init(pl_plc_rx_698.in_queue, nd_malloc(instance, control_block_698_name, Max698len), Max698len);
-    pl_plc_rx_698.out_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
-    fifoBuf_init(pl_plc_rx_698.out_queue, nd_malloc(instance, control_block_698_name, Max698len), Max698len);
-    pl_plc_tx_698.out_queue = pl_plc_rx_698.out_queue;
-    communication_chlx_init(pl_plc_tx_698.out_queue , pl_plc_rx_698.in_queue , UART_MODULE_CHL);
-    
-    pl_ir_rx_698.in_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
-    fifoBuf_init(pl_ir_rx_698.in_queue, nd_malloc(instance, control_block_698_name, Max698len), Max698len);
-    pl_ir_rx_698.out_queue = nd_malloc(instance, control_block_698_name, sizeof(struct fifo_t));
-    fifoBuf_init(pl_ir_rx_698.out_queue, nd_malloc(instance, control_block_698_name, Max698len), Max698len);
-    pl_ir_tx_698.out_queue = pl_ir_rx_698.out_queue;
-    communication_chlx_init(pl_ir_tx_698.out_queue , pl_ir_rx_698.in_queue , UART_IR_CHL);
-*/
+#endif
     ////////////////////////////申请一个mbase应用的BLOCK = 04/////////////////////////////////////////////
     if (NULL == add_block(instance, RES_DEV_RAM, mbase_control_block_name, 8 * 1024))
     {
