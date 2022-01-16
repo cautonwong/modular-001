@@ -112,9 +112,30 @@ int read_record_head(struct instance_t* instance, uint8_t* databuf, const uint32
     }
     return (p - databuf);
 }
+//记录时捕获对象转换
+uint32_t record_capture_change(uint32_t obj, uint16_t record_id)
+{
+    switch (record_id)
+    {
+    case SetTimeS:    
+        if (obj == 0x201E0200)
+        {
+            obj = 0x40002200;
+        }
+        else if (obj == 0x20200200)
+        {
+            obj = 0x40008200;
+        }
+        break;
+    default:
+        break;
+    }
+
+    return obj;
+}
 //方案号 & 属性特征 判断
 //mode 0-7 为冻结方案， 10为 事件发生 11为 结束
-uint8_t check_scheme(enum scheme_mode mode, uint32_t obj)
+uint8_t check_scheme(enum scheme_mode mode, uint32_t obj, uint16_t record_id)
 {
     uint8_t scheme, scheme_valid;
     scheme = (uint8_t)(0x07 & (uint8_t)(obj >> 13));
@@ -170,6 +191,11 @@ uint8_t check_scheme(enum scheme_mode mode, uint32_t obj)
         break;
     }
 
+    if(record_id == SetTimeS)
+    {
+        scheme_valid = true;
+    }
+    
     return scheme_valid;
 
 }
@@ -181,6 +207,7 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
     int16_t single_len = 0;
     uint32_t obj;
     uint8_t tmpbuf[200];//单个关联对象 最大长度
+    uint16_t RecordID =  (uint16_t)record_id_info->save_index;
     int ret;
 
     p = databuf;
@@ -191,14 +218,18 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
             obj = CaptureList[1 + i];
             scheme = (obj >> 13) & 0x07; 
 
+            obj = record_capture_change(obj,RecordID);
+           
             scheme_valid = true;
-            scheme_valid = check_scheme(mode,obj); //方案号 & 属性特征 判断
+            scheme_valid = check_scheme(mode,obj, RecordID); //方案号 & 属性特征 判断
+            
             
             single_len = 0;
  
             if (true == scheme_valid)
             {
                 single_len = nd_get(instance, obj, p, *remain_size, NULL);
+                // 特殊事件关联对象的特殊处理 
                 // format改变，长度改变
                 ret = record_change_format(tmpbuf, p, obj, RFC_WRITE);
                 if (ret >= 0)

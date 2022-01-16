@@ -784,6 +784,17 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
         class = 24;
     }
 
+    switch(id)
+    {
+        case 0x33000200: 
+        {
+            *p++ = TYPE_null;
+            return (p-buf);
+        }
+        default:
+            break;
+    }
+    
     switch (class)
     {
         case 7://class7
@@ -995,5 +1006,5 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
     }
 #endif
 
-    return 0x01;
+    return -1;
 }

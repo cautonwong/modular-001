@@ -158,7 +158,7 @@ typedef struct
 const struct record_item_t  record_item[] =
 {
     { OverCurrentAS ,       OverCurrentAE,              800,       10 },// 过流 预留空间待调整
-    { PowerOffS     ,       PowerOffE,                 4000,      100 },//  0x3011    电能表掉电事件             
+    { PowerOffS     ,       PowerOffE,                 2000,      100 },//  0x3011    电能表掉电事件             
     { MeterWrS      ,       0,                          600,       10 },//  0x3012    电能表编程事件             
     { MeterClrS     ,       0,                          600,       10 },//  0x3013    电能表清零事件             
     { EventClrS     ,       0,                          600,       10 },//  0x3015    电能表事件清零事件         
@@ -185,7 +185,7 @@ const struct record_item_t  record_item[] =
     { BroadcastTimeS,       0,                          600,       10 },//  0x303C    广播校时事件 
     { ZeroLineErrS  ,       ZeroLineErrE,               600,       10 },//  0x3040    零线电流异常事件 
 
-    { BillFreeze,           0,                         4000,       10 },// 结算日冻结
+    { BillFreeze,           0,                          600,       10 },// 结算日冻结
 };
 
 
@@ -1053,6 +1053,7 @@ const struct format_conversion_t format_conversion_tab[] =
     {   0x201E0200,     8,      5,      fc_fun_01   },
     {   0x20200200,     8,      5,      fc_fun_01   },
     {   0x20210200,     8,      5,      fc_fun_01   },
+    {   0x40000200,     8,      5,      fc_fun_01   },
 };
 
 //enum format_conversion_mode // record_change_format
@@ -1068,7 +1069,7 @@ int record_change_format(uint8_t *des,  uint8_t* src, uint32_t oad, enum format_
 
     for (i = 0; i < (sizeof(format_conversion_tab) / sizeof(format_conversion_tab[0])); i++)
     {
-        if (oad == format_conversion_tab[i].oad)
+        if ((oad & (0xFFFF1FFF)) == format_conversion_tab[i].oad)
         {
             break;
         }

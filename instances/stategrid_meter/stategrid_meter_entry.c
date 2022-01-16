@@ -356,7 +356,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     //注册事件的管理区
     register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter, 20 * 1024, supply_parameter_info);
     //注册事件
-    register_log(instance, RES_DEV_EEPROM, mbase_block_event, RES_DEV_EEPROM, mbase_block_parameter, 50 * 1024, supply_event_info);
+    register_log(instance, RES_DEV_EEPROM, mbase_block_event, RES_DEV_EEPROM, mbase_block_parameter, 43 * 1024, supply_event_info);
 
     //注册冻结1
     register_log(instance, RES_DEV_FLASH, mbase_block_event_flash1, RES_DEV_EEPROM, mbase_block_parameter, 830 * 4 * 1024, supply_event_flash_1_info);

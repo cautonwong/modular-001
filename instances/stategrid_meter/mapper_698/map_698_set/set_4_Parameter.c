@@ -238,6 +238,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
                 nd_set_index(instance, addr, buffer, 7);
                
+                send_event_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// Ð£Ê±¼ÇÂ¼
                 return (p-buf);
             }
             break;
