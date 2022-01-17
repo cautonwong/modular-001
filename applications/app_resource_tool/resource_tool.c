@@ -900,7 +900,7 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
         ut_ptr = info->read_ptr + info->curr_num;
     }
 
-    addr01 = ut_ptr * info->unit_size;
+    addr01 += ut_ptr * info->unit_size;
     res_conditions_true(0x00 > driver01->dev_read(device01->dev, block01->first_addr + addr01, info->unit_size, buf), -1);
     info->curr_num++;
 

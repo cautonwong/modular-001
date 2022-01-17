@@ -65,7 +65,7 @@ int instant_freeze_judge(struct instance_t* instance, struct pipeline_t* task, s
     {
         ctrl_block->trigger_insfreeze_delay_sec = 0xFFFF;
         memcpy((uint8_t*)&record_time.tm_sec, (uint8_t*)&instance->time.tm_sec, sizeof(struct tm));
-        send_recordflag_mesg(instance, task, mesg, (FlagID), NULL);
+        send_recordflag_mesg(instance, task,  (FlagID), NULL);
         return 1;
     }
 
@@ -95,7 +95,7 @@ int minute_freeze_judge(struct instance_t* instance, struct pipeline_t* task, st
     {
         if (1 == freeze_judge(instance, &period[3 * i], 1, &record_time))
         {
-            send_recordflag_mesg(instance, task, mesg, (FlagID + i), NULL);
+            send_recordflag_mesg(instance, task,  (FlagID + i), NULL);
         }
     }
     return 1;
@@ -120,7 +120,7 @@ int hour_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
 
     if (1 == freeze_judge(instance, &period[0], 60, &record_time))
     {
-        send_recordflag_mesg(instance, task, mesg, FlagID, NULL);
+        send_recordflag_mesg(instance, task,  FlagID, NULL);
     }
 
     return 1;
@@ -149,7 +149,7 @@ int day_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struc
 
     if (1 == freeze_judge(instance, &period[0], 60*24, &record_time))
     {
-        send_recordflag_mesg(instance, task, mesg, FlagID, NULL);
+        send_recordflag_mesg(instance, task,  FlagID, NULL);
     }
 
     return 1;
@@ -178,7 +178,7 @@ int month_freeze_judge(struct instance_t* instance, struct pipeline_t* task, str
 
     if (1 == freeze_judge(instance, &period[0], 60 * 24, &record_time))
     {
-        send_recordflag_mesg(instance, task, mesg, FlagID, NULL);
+        send_recordflag_mesg(instance, task,  FlagID, NULL);
     }
 
     return 1;

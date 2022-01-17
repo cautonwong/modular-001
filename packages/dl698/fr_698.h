@@ -10,8 +10,9 @@
 #define is_cmd(ctrl)  ((ctrl&0x03) != 3)
 #define is_segment_set(ctrl)  ((((ctrl)>>5)&0x01) != 0)
 #define set_segment(ctrl)  (ctrl |= (1<<5))
-#define segment_no(s)  (s & 0xfff)
+#define get_segment_no(s)  (s & 0xfff)
 #define set_segment_no(s)  (s=(s & 0xfff)+1)
+#define get_segment_type(s)  (((s)>>14)&0x03)
 #define is_confirm_segment(s)  ((((s)>>14)&0x03) == 2)
 #define is_first_segment(s)  ((((s)>>14)&0x03) == 0)
 #define is_middle_segment(s)  ((((s)>>14)&0x03) == 3)
@@ -28,6 +29,8 @@
 #define SA_LOGIC(SA)        ((SA&0x30)>>4)
 #define SA_LOGIC_TYPE(SA)   ((SA&0x20)>>5)
 #define SA_LEN(SA)          ((SA)&0x0f)
+
+#define APDU_OFFSET(SA)    (9 + SA_LEN(SA))
 
 #define get_OAD_OIA1(oad)       (uint8_t)((oad&0xF0000000)>>28)
 #define get_OAD_Class(oad)      (uint8_t)((oad&0xF0000000)>>28)

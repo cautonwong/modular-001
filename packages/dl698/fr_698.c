@@ -404,12 +404,40 @@ int fr_encode_optional(struct instance_t* instance, struct pipeline_t* pipeline,
     return 1;
 }
 
+int __put_fifo_byte(void* pctx, uint8_t* byte)
+{
+    struct fifo_t* fifo = (struct fifo_t*)pctx;
+    fifoBuf_putByte(fifo, *byte);
+    return 0;
+}
 
-int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int fr_segments_handle(uint16_t segment, struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    
+    uint16_t data_len = ctx->min_len - 8 - SA_LEN(ctx->SA) - 2 - 2;
+    if((0 == ctx->segment_no) && is_first_segment(segment))////链路层rx 开始帧
+    {
+        ringbuffer_clear(ctx->apdu_rx);
+        fifo_popData(fifo, data_len, __put_fifo_byte, ctx->apdu_rx);
+        ctx->segment_no = 1;
+        return 0;
+    }
+    else if((get_segment_no(segment) == ctx->segment_no) && (is_middle_segment(segment) || is_last_segment(segment)))//中间帧 or最后帧
+    {
+        fifo_popData(fifo, data_len, __put_fifo_byte, ctx->apdu_rx);
+        ctx->segment_no++;
+        if(is_last_segment(segment))
+          ctx->segment_no = 0;
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
 
+    
     if (is_segment_set(ctx->ctrl))//分帧标志位
     {
         if (fifoBuf_getUsed(ctx->apdu) > 0)
@@ -436,15 +464,17 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
     {
         //收到的如果不是后续帧请求
         ringbuffer_clear(ctx->apdu);
-         return 1;
+        return 1;
     }
 }
+
 extern uint8_t Security_Mode;
 uint8_t SECURITY_Request_MODE;//安全传输模式
 int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    int ret = 0;
     uint8_t len = 0;
     uint16_t rd,wr;
 
@@ -455,12 +485,33 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         return -1;
     }
     
-    if(0 == fr_segments_handle(instance, pipeline, mesg))
+    fifoBuf_removeData(fifo, APDU_OFFSET(ctx->SA));
+    if(is_segment_set(ctx->ctrl))
     {
-        return -1;
+        ctx->segment_rx = fifoBuf_getByte(fifo);
+        ctx->segment_rx += (fifoBuf_getByte(fifo) << 8);
+        ret = fr_segments_handle(ctx->segment_rx, instance, pipeline, mesg);
+        if(0 == ret)
+        {
+            if(is_last_segment(ctx->segment_rx))//最后帧
+            {
+                fifo = ctx->apdu_rx;
+            }
+            else
+            {
+                set_confirm_segment(ctx->segment_rx);
+                fifoBuf_putByte(ctx->apdu, ctx->segment_rx&0x00ff);
+                fifoBuf_putByte(ctx->apdu, (ctx->segment_rx>>8));
+                fr_rx_698_end(instance, pipeline, mesg);
+                return 0;//回应确认
+            }
+        }
+        else
+        {
+            return -1;//异常
+        }
     }
-
-    fifoBuf_removeData(fifo, 9 + SA_LEN(ctx->SA));
+    
     ctx->service = fifoBuf_getByte(fifo);
     if (SECURITY_Request == ctx->service)//数据解密
     {
@@ -571,7 +622,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         if (mesg->len > 512)
         {
             set_segment(ctx->ctrl);
-            set_first_segment_no(ctx->segment);//第一帧
+            //set_first_segment_no(ctx->segment);//第一帧
             mesg->len = 512;
         }
 
@@ -611,7 +662,7 @@ int fr_gatekeeper_client(struct instance_t* instance, struct pipeline_t* pipelin
         //收到的如果不是后续帧请求
         ringbuffer_clear(ctx->apdu);
     }
-    fifoBuf_removeData(fifo, 9 + SA_LEN(ctx->SA));
+    fifoBuf_removeData(fifo, APDU_OFFSET(ctx->SA));
 
     ctx->service = fifoBuf_getByte(fifo);
     ctx->choice = fifoBuf_getByte(fifo);
@@ -623,7 +674,7 @@ int fr_gatekeeper_client(struct instance_t* instance, struct pipeline_t* pipelin
 #if 0
     fifoBuf_removeData(fifo, ctx->min_len + 2);
     return 0;
-    fifoBuf_removeData(fifo, 9 + SA_LEN(ctx->SA));
+    fifoBuf_removeData(fifo, APDU_OFFSET(ctx->SA));
     uint8_t service = fifoBuf_getByte(fifo);
     uint8_t type = fifoBuf_getByte(fifo);
 
@@ -767,7 +818,7 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
             printf("%02x", buf[i]);
         }
         printf(",apdu:");
-        for (size_t i = 9 + SA_LEN(ctx->SA); i < len - 3; i++)
+        for (size_t i = APDU_OFFSET(ctx->SA); i < len - 3; i++)
         {
             printf("%02x", buf[i]);
         }

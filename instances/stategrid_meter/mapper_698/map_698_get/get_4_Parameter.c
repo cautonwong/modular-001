@@ -177,8 +177,11 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
     switch (oad)
     {
         case 0x4000://时间
-            if(attribute == 0x02)
+        {
+            switch (attribute)
             {
+                case 0x02:
+                {
                 *p++ = TYPE_date_time_s;
                 rtc_get_from_tm(instance,temp);
                 *p++ = temp[6];
@@ -188,16 +191,36 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
                 *p++ = temp[2];
                 *p++ = temp[1];
                 *p++ = temp[0];
-                /*
-                mem_swap_cpy(p, (uint8_t*)&instance->time.tm_year, 2);
-                p = p + 2;
-                *p++ = (uint8_t)instance->time.tm_mon;//
-                *p++ = (uint8_t)instance->time.tm_mday;//
-                *p++ = (uint8_t)instance->time.tm_hour;
-                *p++ = (uint8_t)instance->time.tm_min;
-                *p++ = (uint8_t)instance->time.tm_sec;*/
-                return (p-buf);
+                
+                return (p - buf);
+                }
+                break;
+                case 0x22:
+                case 0x42:
+                {
+                    *p++ = TYPE_date_time_s;
+                    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
+                    nd_get_index(instance, addr, p, 7);
+                    p += 7;
+                    return (p - buf);
+                }
+                break;
+                case 0x62:
+                case 0x82:
+                {
+                    *p++ = TYPE_date_time_s;
+                    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
+                    nd_get_index(instance, addr, p, 7);
+                    p += 7;
+                }
+                break;
+
+                default:
+                    return -1;
+                    break;
             }
+            return -1;
+        }
             break;
         case 0x4002://表号
             if(attribute == 0x02)

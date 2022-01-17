@@ -42,6 +42,7 @@
 #define Ia_data_fields          int32_t    Ia;
 #define Ib_data_fields          int32_t    Ib;
 #define Ic_data_fields          int32_t    Ic;//dyn:c相电流*/
+#define In_data_fields          int32_t    In;
 
 #define I_common_extension
 
@@ -52,6 +53,7 @@
                                 Ia_data_fields\
                                 Ib_data_fields\
                                 Ic_data_fields\
+                                In_data_fields\
 
 #define alert_ctrl_extension    uint8_t     alert_status[4];  \
 #define local_ctrl_extension    
@@ -565,13 +567,11 @@ enum block_parameter_item_id_t
 
 
 
-
-
-
-
-#define     EventClr_List              1500 //事件清零列表  array OMD   事件清零事件记录用
-
-                                  
+#define     EventClr_List               1500 //事件清零列表  array OMD   事件清零事件记录用
+#define     SwitchErr_State             1501 //负荷开关误动作状态040A0130160?16001600
+#define     BeforSetT_Time              1502 //校时前时间 秒 分 时 日 月 年(2字节)
+#define     AfterSetT_Time              1503 //校时后时间 秒 分 时 日 月 年(2字节)
+                           
 #define     MAX_FEE_NO                  12                                  
 
 #endif

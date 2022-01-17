@@ -5,7 +5,7 @@
 
 // 上电运行期间 每秒调用 
 // 事件 判断:  返回1:记录发生                0:不记录        -1:记录结束
-int EmuErr_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+int EmuErr_event_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
     uint8_t payload[100];
@@ -18,28 +18,17 @@ int EmuErr_judge(struct instance_t* instance, struct pipeline_t* task, struct me
 
     uint16_t RecordId           = EmuErrS;
 
-    result = event_duration_pro(duration_para, duration, state, task, RecordId);
+    result = event_duration_pro(duration_para, duration, state, instance, RecordId);
 
     if (result != 0)
     {
-        send_event_mesg_pro(instance, task, mesg, RecordId, NULL, result);
+        send_event_mesg_pro(instance, task,  RecordId, NULL, result);
     }
 
-    if (true == get_activeflag(task, RecordId))
+    if (true == get_activeflag(instance, RecordId))
     {
         (*accumulate_time)++;/* 累计时间累加 */
     }
 
     return result;
-}
-
-
-// 事件 清零       返回1:清零                  0:不清零
-int EmuErr_reset(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
-{
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
-    uint32_t *accumulate_time = &ctrl_block->EmuErrS_acc_time;
-
-	*accumulate_time = 0; /* 累计时间清零*/
-	return 1;
 }

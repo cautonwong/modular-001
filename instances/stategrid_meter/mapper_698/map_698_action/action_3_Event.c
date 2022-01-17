@@ -237,7 +237,6 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
         return -1;
     }
 
-
     //待调整  秘钥状态如何获取？
 #if 0
     if ((oi == 0x3013) && (0 == esam_key_status_get()))
@@ -266,7 +265,7 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
     oadlist = tempbuf;
     num = *oadlist++;
 
-    if ((num >= maxnum) || (num == 0))
+    if ((num > maxnum) || (num == 0))
     {
         *dar = DAR_OTHERS_ERROR;
         return -1;

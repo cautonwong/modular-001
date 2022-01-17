@@ -215,8 +215,9 @@ struct context_698_t
     uint8_t addr[16];
     uint8_t CA;
     int32_t fr_err;
-    uint16_t segment;//分帧格式域
-
+    uint16_t segment_rx; 
+    uint16_t segment;
+    uint16_t segment_no;
 
     //作为主站方时用的临时状态
     uint8_t dst_addr[6];//目的地址
@@ -227,7 +228,10 @@ struct context_698_t
     uint16_t tx_len;
 
     struct fifo_t* apdu;
-    uint8_t keybuf[1800];//秘钥缓存
+    struct fifo_t* apdu_rx;//链路层分帧数据，如秘钥缓存
+
+    uint8_t keybuf[256];//秘钥缓存  待删除saga
+    
     //接收和发送都要用的状态
     struct object_t object;//对象标识
     struct pipeline_t* pipeline;//to-be-deleted

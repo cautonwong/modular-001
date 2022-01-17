@@ -1083,7 +1083,7 @@ int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32
 int record_response_null(uint8_t *resbuf)
 {
     resbuf[0] = 0;
-    return 1;
+    return -1;
 }
 
 

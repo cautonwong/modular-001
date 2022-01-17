@@ -2,61 +2,105 @@
 #include "fr_698.h"
 #include "resource_tool.h"
 
-extern const uint8_t CODE init_AutoDisplayList[];
-extern const uint8_t CODE init_KeyDisplayList[];
+//参数初始化  
+extern const uint8_t  init_MinuteFreeze_oad[];
+extern const uint8_t  init_HourFreeze_oad[];
+extern const uint8_t  init_DayFreeze_oad[];
+extern const uint8_t  init_BillFreeze_oad[];
+extern const uint8_t  init_MonthFreeze_oad[];
+extern const uint8_t  init_SeasonTabCutFreeze_oad[];
+extern const uint8_t  init_DayTabCutFreeze_oad[];
+extern const uint8_t  init_FeePriceCutFreeze_oad[];
+extern const uint8_t  init_StepCutFreeze_oad[];
+extern const uint8_t  init_StepBillFreeze_oad[];
+extern const uint8_t  init_InstantFreeze_oad[];
+                  
+extern const uint8_t  init_OverCurrentAS_oad[];
+extern const uint8_t  init_PowerOffS_oad[];
+extern const uint8_t  init_MeterWrS_oad[];
+extern const uint8_t  init_MeterClrS_oad[];
+extern const uint8_t  init_EventClrS_oad[];
+extern const uint8_t  init_SetTimeS_oad[];
+extern const uint8_t  init_DayTabWrS_oad[];
+extern const uint8_t  init_SeasonTabWrS_oad[];
+extern const uint8_t  init_WeekTabWrS_oad[];
+extern const uint8_t  init_BillDayWrS_oad[];
+extern const uint8_t  init_CoverOpenS_oad[];
+extern const uint8_t  init_SwitchOffS_oad[];
+extern const uint8_t  init_SwitchOnS_oad[];
+extern const uint8_t  init_HolidayWrS_oad[];
+extern const uint8_t  init_ActCombWrS_oad[];
+extern const uint8_t  init_FeeTabWrS_oad[];
+extern const uint8_t  init_StepTabWrS_oad[];
+extern const uint8_t  init_SecretKeyWrS_oad[];
+extern const uint8_t  init_ErrPlugCardS_oad[];
+extern const uint8_t  init_RechargeS_oad[];
+extern const uint8_t  init_RefundS_oad[];
+extern const uint8_t  init_SwitchErrS_oad[];
+extern const uint8_t  init_PowerAbnormalS_oad[];
+extern const uint8_t  init_RTCErrS_oad[];
+extern const uint8_t  init_EmuErrS_oad[];
+extern const uint8_t  init_BroadcastTimeS_oad[];
+extern const uint8_t  init_ZeroLineErrS_oad[];
 
-extern const uint8_t CODE  init_Comm_Number[];//表地址
-extern const uint8_t CODE  init_Meter_Number[];//表号
-extern const uint8_t CODE  init_User_Number[];//客户编号
-extern const uint8_t CODE  init_Meter_Num[];//计量元件数
-extern const uint8_t CODE  init_SeasonTable_Changetime[];//两套时区切换时间
-extern const uint8_t CODE  init_SeasonTable_Changetime[];//两套时段切换时间
-extern const uint8_t CODE  init_SeasonDay_Para[];//时区时段参数（年时区数、日时段表
-extern const uint8_t CODE  init_SecretKey_Num[];//秘钥总条数
-extern const uint8_t CODE  init_HoliDay_Table[];//公共假日表，10张，每张6字节
-extern const uint8_t CODE  init_Weekend[];//周休日特征字
-extern const uint8_t CODE  init_WeekendFee[];//周休日采用费率号
-extern const uint8_t CODE  init_Season_Table0[];//当前套时区表，≤14
-extern const uint8_t CODE  init_Season_Table0[];//备用套时区表，≤14
-extern const uint8_t CODE  init_Day_Table00[];//当前套日时段表数据
-extern const uint8_t CODE  init_Day_Table00[];//备用套日时段表数据
-extern const uint8_t CODE  init_Meter_CT[];//CT
-extern const uint8_t CODE  init_Meter_PT[];//PT
-extern const uint8_t CODE  init_Pulse_Width[];//脉冲宽度
-extern const uint8_t CODE  init_ASCII_AssetsMan[];//资产管理编码
-extern const uint8_t CODE  init_ASCII_Un[];//额定电压
-extern const uint8_t CODE init_ASCII_Ib[];//额定电流
-extern const uint8_t CODE init_ASCII_Imax[];//最大电流
-extern const uint8_t CODE init_ASCII_AccuracyClass1[];//有功准确度等级
-extern const uint8_t CODE init_Meter_Const1[];//有功脉冲常数
-extern const uint8_t CODE init_ASCII_MeterType[];//电能表型号
-extern const uint8_t CODE init_MeterRunWord[];//电能表运行特征字
-extern const uint8_t CODE init_SoftWareNo[];//软件备案号
-extern const uint8_t CODE init_Measure_Mode[];//有功组合特征字
-extern const uint8_t CODE init_Balance_Time[];//结算日
-extern const uint8_t CODE init_Meter_Password[];//应用连接密码
-extern const uint8_t CODE init_Meter_Location1[];//设备地理位置经度
-extern const uint8_t CODE init_Meter_Location2[];//设备地理位置纬度
-extern const uint8_t CODE init_Meter_Location3[];//设备地理位置高度
 
-extern const uint8_t CODE init_Device_descriptor[];//设备描述符
 
-extern const uint8_t CODE init_Factory_No[]; //厂家代码
-extern const uint8_t CODE init_Version_SoftWare[]; //软件版本
-extern const uint8_t CODE init_Date_SoftWare[]; //软件版本日期
-extern const uint8_t CODE init_Version_HardWare[]; //硬件版本
-extern const uint8_t CODE init_Date_HardWare[]; //硬件版本日期
-extern const uint8_t CODE init_Extend_Info[]; //扩展信息
 
-extern const uint8_t CODE init_Produced_Date[]; //生产日期
-extern const uint8_t CODE init_Subset_List[]; //子设备列表(num+2*oi)
-extern const uint8_t CODE init_Protocol_List[]; //协议列表
-extern const uint8_t CODE init_FollowReport_en[]; //允许跟随上报
-extern const uint8_t CODE init_ActiveReport_en[]; //允许主动上报
-extern const uint8_t CODE init_Comm_Master_en[]; //允许与主站通讯
+extern const uint8_t  init_AutoDisplayList[];
+extern const uint8_t  init_KeyDisplayList[];
 
-extern const uint8_t CODE init_ImaxProtectValue[]; //继电器拉闸电流门限值
-extern const uint8_t CODE init_ImaxProtectTime[]; //超电流门限保护延时时间
+extern const uint8_t   init_Comm_Number[];//表地址
+extern const uint8_t   init_Meter_Number[];//表号
+extern const uint8_t   init_User_Number[];//客户编号
+extern const uint8_t   init_Meter_Num[];//计量元件数
+extern const uint8_t   init_SeasonTable_Changetime[];//两套时区切换时间
+extern const uint8_t   init_SeasonTable_Changetime[];//两套时段切换时间
+extern const uint8_t   init_SeasonDay_Para[];//时区时段参数（年时区数、日时段表
+extern const uint8_t   init_SecretKey_Num[];//秘钥总条数
+extern const uint8_t   init_HoliDay_Table[];//公共假日表，10张，每张6字节
+extern const uint8_t   init_Weekend[];//周休日特征字
+extern const uint8_t   init_WeekendFee[];//周休日采用费率号
+extern const uint8_t   init_Season_Table0[];//当前套时区表，≤14
+extern const uint8_t   init_Season_Table0[];//备用套时区表，≤14
+extern const uint8_t   init_Day_Table00[];//当前套日时段表数据
+extern const uint8_t   init_Day_Table00[];//备用套日时段表数据
+extern const uint8_t   init_Meter_CT[];//CT
+extern const uint8_t   init_Meter_PT[];//PT
+extern const uint8_t   init_Pulse_Width[];//脉冲宽度
+extern const uint8_t   init_ASCII_AssetsMan[];//资产管理编码
+extern const uint8_t   init_ASCII_Un[];//额定电压
+extern const uint8_t  init_ASCII_Ib[];//额定电流
+extern const uint8_t  init_ASCII_Imax[];//最大电流
+extern const uint8_t  init_ASCII_AccuracyClass1[];//有功准确度等级
+extern const uint8_t  init_Meter_Const1[];//有功脉冲常数
+extern const uint8_t  init_ASCII_MeterType[];//电能表型号
+extern const uint8_t  init_MeterRunWord[];//电能表运行特征字
+extern const uint8_t  init_SoftWareNo[];//软件备案号
+extern const uint8_t  init_Measure_Mode[];//有功组合特征字
+extern const uint8_t  init_Balance_Time[];//结算日
+extern const uint8_t  init_Meter_Password[];//应用连接密码
+extern const uint8_t  init_Meter_Location1[];//设备地理位置经度
+extern const uint8_t  init_Meter_Location2[];//设备地理位置纬度
+extern const uint8_t  init_Meter_Location3[];//设备地理位置高度
+
+extern const uint8_t  init_Device_descriptor[];//设备描述符
+
+extern const uint8_t  init_Factory_No[]; //厂家代码
+extern const uint8_t  init_Version_SoftWare[]; //软件版本
+extern const uint8_t  init_Date_SoftWare[]; //软件版本日期
+extern const uint8_t  init_Version_HardWare[]; //硬件版本
+extern const uint8_t  init_Date_HardWare[]; //硬件版本日期
+extern const uint8_t  init_Extend_Info[]; //扩展信息
+
+extern const uint8_t  init_Produced_Date[]; //生产日期
+extern const uint8_t  init_Subset_List[]; //子设备列表(num+2*oi)
+extern const uint8_t  init_Protocol_List[]; //协议列表
+extern const uint8_t  init_FollowReport_en[]; //允许跟随上报
+extern const uint8_t  init_ActiveReport_en[]; //允许主动上报
+extern const uint8_t  init_Comm_Master_en[]; //允许与主站通讯
+
+extern const uint8_t  init_ImaxProtectValue[]; //继电器拉闸电流门限值
+extern const uint8_t  init_ImaxProtectTime[]; //超电流门限保护延时时间
 
 extern const uint8_t CODE init_IrAuthenTime[];//红外认证时效
 
@@ -107,14 +151,14 @@ typedef struct
     uint16_t paramerer_index;
     uint16_t same;
     uint16_t len;
-    const uint8_t CODE *data;  //默认参数常亮数组地址
+    const uint8_t  *data;  //默认参数常亮数组地址
 }parameter_item_t;
 
 //一个表格只能放在一个存储器上，注册的时候绑定设备
 const struct record_item_t  record_item[] =
 {
     { OverCurrentAS ,       OverCurrentAE,              800,       10 },// 过流 预留空间待调整
-    { PowerOffS     ,       PowerOffE,                 4000,      100 },//  0x3011    电能表掉电事件             
+    { PowerOffS     ,       PowerOffE,                 2000,      100 },//  0x3011    电能表掉电事件             
     { MeterWrS      ,       0,                          600,       10 },//  0x3012    电能表编程事件             
     { MeterClrS     ,       0,                          600,       10 },//  0x3013    电能表清零事件             
     { EventClrS     ,       0,                          600,       10 },//  0x3015    电能表事件清零事件         
@@ -141,7 +185,7 @@ const struct record_item_t  record_item[] =
     { BroadcastTimeS,       0,                          600,       10 },//  0x303C    广播校时事件 
     { ZeroLineErrS  ,       ZeroLineErrE,               600,       10 },//  0x3040    零线电流异常事件 
 
-    { BillFreeze,           0,                         4000,       10 },// 结算日冻结
+    { BillFreeze,           0,                          600,       10 },// 结算日冻结
 };
 
 
@@ -166,7 +210,6 @@ const struct record_item_t  record_item_2[] =
     { DayFreeze  , 0,    27 * 4096,    365 },//日冻结
     { MonthFreeze, 0,     5 * 4096,     24 },//日冻结
 };
-
 
 const  parameter_item_t  parameter_item[] =
 {
@@ -224,33 +267,33 @@ const  parameter_item_t  parameter_item[] =
 
 
     //事件关联对象
-    { OverCurrentAS_oad             , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表A相过流事件
-    { PowerOffS_oad                 , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表掉电事件            
-    { MeterWrS_oad                  , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表编程事件            
-    { MeterClrS_oad                 , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表清零事件            
-    { EventClrS_oad                 , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表事件清零事件        
-    { SetTimeS_oad                  , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表校时事件            
-    { DayTabWrS_oad                 , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表时段表编程事件      
-    { SeasonTabWrS_oad              , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表时区表编程事件      
-    { WeekTabWrS_oad                , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表周休日编程事件      
-    { BillDayWrS_oad                , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表结算日编程事件  
-    { CoverOpenS_oad                , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表开盖事件            
-    { SwitchOffS_oad                , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表跳闸事件            
-    { SwitchOnS_oad                 , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表合闸事件            
-    { HolidayWrS_oad                , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表节假日编程事件      
-    { ActCombWrS_oad                , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表有功组合方式编程事件
-    { FeeTabWrS_oad                 , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表费率参数表编程事件  
-    { StepTabWrS_oad                , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表阶梯表编程事件      
-    { SecretKeyWrS_oad              , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表密钥更新事件 
-    { ErrPlugCardS_oad              , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表异常插卡事件        
-    { RechargeS_oad                 , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表购电记录            
-    { RefundS_oad                   , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表退费记录  
-    { SwitchErrS_oad                , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表负荷开关误动作事件  
-    { PowerAbnormalS_oad            , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表电源异常事件 
-    { RTCErrS_oad                   , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表时钟故障事件 
-    { EmuErrS_oad                   , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   电能表计量芯片故障事件
-    { BroadcastTimeS_oad            , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   广播校时事件 
-    { ZeroLineErrS_oad              , 0x01,  61,0 }, //oad列表 1+ 4*15     默认8个   零线电流异常事件 
+    { OverCurrentAS_oad             , 0x01,  61, init_OverCurrentAS_oad   }, //oad列表 1+ 4*15     默认8个   电能表A相过流事件
+    { PowerOffS_oad                 , 0x01,  61, init_PowerOffS_oad       }, //oad列表 1+ 4*15     默认8个   电能表掉电事件            
+    { MeterWrS_oad                  , 0x01,  61, init_MeterWrS_oad        }, //oad列表 1+ 4*15     默认8个   电能表编程事件            
+    { MeterClrS_oad                 , 0x01,  61, init_MeterClrS_oad       }, //oad列表 1+ 4*15     默认8个   电能表清零事件            
+    { EventClrS_oad                 , 0x01,  61, init_EventClrS_oad       }, //oad列表 1+ 4*15     默认8个   电能表事件清零事件        
+    { SetTimeS_oad                  , 0x01,  61, init_SetTimeS_oad        }, //oad列表 1+ 4*15     默认8个   电能表校时事件            
+    { DayTabWrS_oad                 , 0x01,  61, init_DayTabWrS_oad       }, //oad列表 1+ 4*15     默认8个   电能表时段表编程事件      
+    { SeasonTabWrS_oad              , 0x01,  61, init_SeasonTabWrS_oad    }, //oad列表 1+ 4*15     默认8个   电能表时区表编程事件      
+    { WeekTabWrS_oad                , 0x01,  61, init_WeekTabWrS_oad      }, //oad列表 1+ 4*15     默认8个   电能表周休日编程事件      
+    { BillDayWrS_oad                , 0x01,  61, init_BillDayWrS_oad      }, //oad列表 1+ 4*15     默认8个   电能表结算日编程事件  
+    { CoverOpenS_oad                , 0x01,  61, init_CoverOpenS_oad      }, //oad列表 1+ 4*15     默认8个   电能表开盖事件            
+    { SwitchOffS_oad                , 0x01,  61, init_SwitchOffS_oad      }, //oad列表 1+ 4*15     默认8个   电能表跳闸事件            
+    { SwitchOnS_oad                 , 0x01,  61, init_SwitchOnS_oad       }, //oad列表 1+ 4*15     默认8个   电能表合闸事件            
+    { HolidayWrS_oad                , 0x01,  61, init_HolidayWrS_oad      }, //oad列表 1+ 4*15     默认8个   电能表节假日编程事件      
+    { ActCombWrS_oad                , 0x01,  61, init_ActCombWrS_oad      }, //oad列表 1+ 4*15     默认8个   电能表有功组合方式编程事件
+    { FeeTabWrS_oad                 , 0x01,  61, init_FeeTabWrS_oad       }, //oad列表 1+ 4*15     默认8个   电能表费率参数表编程事件  
+    { StepTabWrS_oad                , 0x01,  61, init_StepTabWrS_oad      }, //oad列表 1+ 4*15     默认8个   电能表阶梯表编程事件      
+    { SecretKeyWrS_oad              , 0x01,  61, init_SecretKeyWrS_oad    }, //oad列表 1+ 4*15     默认8个   电能表密钥更新事件 
+    { ErrPlugCardS_oad              , 0x01,  61, init_ErrPlugCardS_oad    }, //oad列表 1+ 4*15     默认8个   电能表异常插卡事件        
+    { RechargeS_oad                 , 0x01,  61, init_RechargeS_oad       }, //oad列表 1+ 4*15     默认8个   电能表购电记录            
+    { RefundS_oad                   , 0x01,  61, init_RefundS_oad         }, //oad列表 1+ 4*15     默认8个   电能表退费记录  
+    { SwitchErrS_oad                , 0x01,  61, init_SwitchErrS_oad      }, //oad列表 1+ 4*15     默认8个   电能表负荷开关误动作事件  
+    { PowerAbnormalS_oad            , 0x01,  61, init_PowerAbnormalS_oad  }, //oad列表 1+ 4*15     默认8个   电能表电源异常事件 
+    { RTCErrS_oad                   , 0x01,  61, init_RTCErrS_oad         }, //oad列表 1+ 4*15     默认8个   电能表时钟故障事件 
+    { EmuErrS_oad                   , 0x01,  61, init_EmuErrS_oad         }, //oad列表 1+ 4*15     默认8个   电能表计量芯片故障事件
+    { BroadcastTimeS_oad            , 0x01,  61, init_BroadcastTimeS_oad  }, //oad列表 1+ 4*15     默认8个   广播校时事件 
+    { ZeroLineErrS_oad              , 0x01,  61, init_ZeroLineErrS_oad    }, //oad列表 1+ 4*15     默认8个   零线电流异常事件 
      
 
     //冻结关联对象
@@ -268,34 +311,34 @@ const  parameter_item_t  parameter_item[] =
 
 
     //事件记录序号
-    { OverCurrentAS_seq             , 0x01,  4,0   },//记录序号  电能表A相过流
-    { PowerOffS_seq                 , 0x01,  4,0   },//记录序号  电能表掉电事件            
-    { MeterWrS_seq                  , 0x01,  4,0   },//记录序号  电能表编程事件            
-    { MeterClrS_seq                 , 0x01,  4,0   },//记录序号  电能表清零事件            
-    { EventClrS_seq                 , 0x01,  4,0   },//记录序号  电能表事件清零事件        
-    { SetTimeS_seq                  , 0x01,  4,0   },//记录序号  电能表校时事件            
-    { DayTabWrS_seq                 , 0x01,  4,0   },//记录序号  电能表时段表编程事件      
-    { SeasonTabWrS_seq              , 0x01,  4,0   },//记录序号  电能表时区表编程事件      
-    { WeekTabWrS_seq                , 0x01,  4,0   },//记录序号  电能表周休日编程事件      
-    { BillDayWrS_seq                , 0x01,  4,0   },//记录序号  电能表结算日编程事件  
-    { CoverOpenS_seq                , 0x01,  4,0   },//记录序号  电能表开盖事件            
-    { SwitchOffS_seq                , 0x01,  4,0   },//记录序号  电能表跳闸事件            
-    { SwitchOnS_seq                 , 0x01,  4,0   },//记录序号  电能表合闸事件            
-    { HolidayWrS_seq                , 0x01,  4,0   },//记录序号  电能表节假日编程事件      
-    { ActCombWrS_seq                , 0x01,  4,0   },//记录序号  电能表有功组合方式编程事件
-    { FeeTabWrS_seq                 , 0x01,  4,0   },//记录序号  电能表费率参数表编程事件  
-    { StepTabWrS_seq                , 0x01,  4,0   },//记录序号  电能表阶梯表编程事件      
-    { SecretKeyWrS_seq              , 0x01,  4,0   },//记录序号  电能表密钥更新事件 
-    { ErrPlugCardS_seq              , 0x01,  4,0   },//记录序号  电能表异常插卡事件        
-    { RechargeS_seq                 , 0x01,  4,0   },//记录序号  电能表购电记录            
-    { RefundS_seq                   , 0x01,  4,0   },//记录序号  电能表退费记录  
-    { SwitchErrS_seq                , 0x01,  4,0   },//记录序号  电能表负荷开关误动作事件  
-    { PowerAbnormalS_seq            , 0x01,  4,0   },//记录序号  电能表电源异常事件 
-    { RTCErrS_seq                   , 0x01,  4,0   },//记录序号  电能表时钟故障事件 
-    { EmuErrS_seq                   , 0x01,  4,0   },//记录序号  电能表计量芯片故障事件
-    { BroadcastTimeS_seq            , 0x01,  4,0   },//记录序号  广播校时事件 
-    { ZeroLineErrS_seq              , 0x01,  4,0   },//记录序号  零线电流异常事件 
-                                             
+    { OverCurrentAS_seq             , 0x01,  4,     0  },//记录序号  电能表A相过流
+    { PowerOffS_seq                 , 0x01,  4,     0  },//记录序号  电能表掉电事件            
+    { MeterWrS_seq                  , 0x01,  4,     0  },//记录序号  电能表编程事件            
+    { MeterClrS_seq                 , 0x01,  4,     0  },//记录序号  电能表清零事件            
+    { EventClrS_seq                 , 0x01,  4,     0  },//记录序号  电能表事件清零事件        
+    { SetTimeS_seq                  , 0x01,  4,     0  },//记录序号  电能表校时事件            
+    { DayTabWrS_seq                 , 0x01,  4,     0  },//记录序号  电能表时段表编程事件      
+    { SeasonTabWrS_seq              , 0x01,  4,     0  },//记录序号  电能表时区表编程事件      
+    { WeekTabWrS_seq                , 0x01,  4,     0  },//记录序号  电能表周休日编程事件      
+    { BillDayWrS_seq                , 0x01,  4,     0  },//记录序号  电能表结算日编程事件  
+    { CoverOpenS_seq                , 0x01,  4,     0  },//记录序号  电能表开盖事件            
+    { SwitchOffS_seq                , 0x01,  4,     0  },//记录序号  电能表跳闸事件            
+    { SwitchOnS_seq                 , 0x01,  4,     0  },//记录序号  电能表合闸事件            
+    { HolidayWrS_seq                , 0x01,  4,     0  },//记录序号  电能表节假日编程事件      
+    { ActCombWrS_seq                , 0x01,  4,     0  },//记录序号  电能表有功组合方式编程事件
+    { FeeTabWrS_seq                 , 0x01,  4,     0  },//记录序号  电能表费率参数表编程事件  
+    { StepTabWrS_seq                , 0x01,  4,     0  },//记录序号  电能表阶梯表编程事件      
+    { SecretKeyWrS_seq              , 0x01,  4,     0  },//记录序号  电能表密钥更新事件 
+    { ErrPlugCardS_seq              , 0x01,  4,     0  },//记录序号  电能表异常插卡事件        
+    { RechargeS_seq                 , 0x01,  4,     0  },//记录序号  电能表购电记录            
+    { RefundS_seq                   , 0x01,  4,     0  },//记录序号  电能表退费记录  
+    { SwitchErrS_seq                , 0x01,  4,     0  },//记录序号  电能表负荷开关误动作事件  
+    { PowerAbnormalS_seq            , 0x01,  4,     0  },//记录序号  电能表电源异常事件 
+    { RTCErrS_seq                   , 0x01,  4,     0  },//记录序号  电能表时钟故障事件 
+    { EmuErrS_seq                   , 0x01,  4,     0  },//记录序号  电能表计量芯片故障事件
+    { BroadcastTimeS_seq            , 0x01,  4,     0  },//记录序号  广播校时事件 
+    { ZeroLineErrS_seq              , 0x01,  4,     0  },//记录序号  零线电流异常事件 
+       
      //冻结记录序号                                                                 
     { MinuteFreeze1_seq             , 0x01,  4,0   },//分钟冻结记录方案1 记录序号
     { MinuteFreeze2_seq             , 0x01,  4,0   },//分钟冻结记录方案2 记录序号
@@ -343,6 +386,12 @@ const  parameter_item_t  parameter_item[] =
     { InstantFreeze_depth           , 0x01,  2,0 }, //分钟冻结 深度     2   
 
 
+    //记录数据中间缓存
+    { EventClr_List                 , 0x01,  7, 0 }, //事件清零列表  array OMD   事件清零事件记录用 
+    { SwitchErr_State               , 0x01, 10, 0 }, //负荷开关误动作状态040A0130160?16001600 
+    { BeforSetT_Time                , 0x01,  7, 0 }, //校时前时间 秒 分 时 日 月 年(2字节)
+    { AfterSetT_Time                , 0x01,  7, 0 }, //校时后时间 秒 分 时 日 月 年(2字节)
+    
     { AutoDisplayList,     0x64,   2,       init_AutoDisplayList },//100屏*2字节
     { KeyDisplayList,      0x64,   2,       init_KeyDisplayList },//100屏*2字节
     
@@ -1004,6 +1053,7 @@ const struct format_conversion_t format_conversion_tab[] =
     {   0x201E0200,     8,      5,      fc_fun_01   },
     {   0x20200200,     8,      5,      fc_fun_01   },
     {   0x20210200,     8,      5,      fc_fun_01   },
+    {   0x40000200,     8,      5,      fc_fun_01   },
 };
 
 //enum format_conversion_mode // record_change_format
@@ -1019,7 +1069,7 @@ int record_change_format(uint8_t *des,  uint8_t* src, uint32_t oad, enum format_
 
     for (i = 0; i < (sizeof(format_conversion_tab) / sizeof(format_conversion_tab[0])); i++)
     {
-        if (oad == format_conversion_tab[i].oad)
+        if ((oad & (0xFFFF1FFF)) == format_conversion_tab[i].oad)
         {
             break;
         }
@@ -1303,7 +1353,7 @@ int record_data_add_tag(uint8_t* des, uint8_t* src, uint32_t* obj_list, uint8_t 
 {
     uint8_t i, *p, *tmp;
     uint16_t taglen;
-    uint32 oad;
+    uint32_t oad;
     uint8_t* attr_tags;
     
     p = des;

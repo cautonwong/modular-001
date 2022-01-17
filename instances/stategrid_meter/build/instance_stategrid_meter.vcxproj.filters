@@ -138,6 +138,21 @@
     <ClCompile Include="..\mapper_698\map_698_action\action_3_Event.c">
       <Filter>mapper_698\action</Filter>
     </ClCompile>
+    <ClCompile Include="..\mapper_698\map_698_action\action_5_Frozen.c">
+      <Filter>mapper_698\action</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\meterbase\gs_neutral_current _err_event.c">
+      <Filter>app_meter_base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\meterbase\gs_relay_err_event.c">
+      <Filter>app_meter_base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\meterbase\gs_power_abnormal_event .c">
+      <Filter>app_meter_base</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\packages\meterbase\gs_rtc_err_event.c">
+      <Filter>app_meter_base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="app_698_server">

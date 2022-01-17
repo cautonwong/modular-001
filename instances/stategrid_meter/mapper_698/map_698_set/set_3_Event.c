@@ -3,12 +3,6 @@
 #include "resource_tool.h"
 
 
-#define U32toBuf(x)  ((uint8_t)(x)), ((uint8_t)(x>>8)), ((uint8_t)(x>>16)), ((uint8_t)(x>>24))
-// 初始化默认数据
-// 过流事件关联对象
-const uint8_t init_30050200[] = {0x01,0x08, U32toBuf(0x00102201), U32toBuf(0x00202201), U32toBuf(0x20002200), U32toBuf(0x20012200), U32toBuf(0x20042200), U32toBuf(0x200A2200), U32toBuf(0x00108201), U32toBuf(0x00208201)};
-
-const uint8_t init_50020300[] = { 0x01,0x07, U32toBuf(0x00100401), U32toBuf(0x00200401), U32toBuf(0x20000200), U32toBuf(0x20010200), U32toBuf(0x20010400), U32toBuf(0x20040200), U32toBuf(0x200A0200) };
 
 
 //  关联对象检查  待添加
@@ -231,14 +225,7 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
     }
 
 
-
-
-
-
-
-
-
-
+#if 0
     switch (id)
     {
     case 0x30050200://关联对象属性表
@@ -318,5 +305,7 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
     default:
         break;
     }
+    
+#endif
     return 0x01;
 }

@@ -9,7 +9,7 @@ int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, st
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
     uint8_t payload[100];
     uint8_t state = false;
-    int8_t result = 0;
+    int result = 0;
 
     uint8_t duration_para       = ctrl_block->OverCurrent_duration_para;  
     uint8_t *duration           = &ctrl_block->OverCurrentAS_duration;
@@ -31,14 +31,14 @@ int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, st
         state = true;
     }
 
-    result = event_duration_pro(duration_para, duration, state, task, RecordId);
+    result = event_duration_pro(duration_para, duration, state, instance, RecordId);
 
     if (result != 0)
     {
-        send_event_mesg_pro(instance, task, mesg, RecordId, NULL, result);
+        send_event_mesg_pro(instance, task, RecordId, NULL, result);
     }
 
-    if (true == get_activeflag(task, RecordId))
+    if (true == get_activeflag(instance, RecordId))
     {
         (*accumulate_time)++;/* 累计时间累加 */
     }
