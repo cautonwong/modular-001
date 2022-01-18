@@ -65,7 +65,7 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
     uint16_t then_get_delay = 0; //读取延时
     uint32_t get_oad = 0;
     uint16_t len = 0;
-    uint16_t data_len = 0;
+    int16_t data_len = 0;
     uint16_t dar_offset = 0;
     uint8_t dar = DAR_SUCCESS;
 

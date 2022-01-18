@@ -79,8 +79,8 @@ int get_frozen_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, stru
         {
             scheme = 0;
         }
-        *p++ = *(tmp0 + scheme * 3 + 2);
         *p++ = *(tmp0 + scheme * 3 + 1);
+        *p++ = *(tmp0 + scheme * 3 + 2);
 
         *p++ = TYPE_OAD;
         mem_swap_cpy(p, oadlist, 4);
@@ -90,13 +90,13 @@ int get_frozen_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, stru
         *p++ = TYPE_long_unsigned;
         if (OI == 0x5002)
         {
-            *p++ = *(tmp1 + scheme * 2 + 1);
             *p++ = *(tmp1 + scheme * 2);
+            *p++ = *(tmp1 + scheme * 2 + 1);
         }
         else
         {
-            *p++ = *(tmp1 + 1); // *(tmp1 + i * 2 + 1)
-            *p++ = *(tmp1);// *(tmp1 + i * 2)
+            *p++ = *(tmp1); // *(tmp1 + i * 2 + 1)
+            *p++ = *(tmp1 + 1);// *(tmp1 + i * 2)
         }
     }
 

@@ -91,14 +91,17 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     oi = (uint16_t)((oad & 0xFFFF0000) >> 16);
     attr = (uint8_t)((oad & 0x00001F00) >> 8);
     index = (uint8_t)(oad & 0x000000FF);
-    Schem = get_OAD_Schem(oad);
+    
 
     if ((*p++ != TYPE_OAD) || ( oad & 0xF0000000 != 0x30000000))
     {
         *dar =  DAR_OTHERS_ERROR;
         return -1;
     }
-
+    
+    capture_oad = buf_to_uint32_msb(p);
+    Schem = get_OAD_Schem(capture_oad);
+    
     //待调整  秘钥状态如何获取？
 #if 0
     if ((oi == 0x3013) && (0 == esam_key_status_get()))
@@ -111,14 +114,14 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
 
     //待调整 判断表型无关的oad
 #if 0
-    if (true == oad_valid_check(oad))
+    if (true == oad_valid_check(capture_oad))
     {
         *dar = DAR_OTHERS_ERROR;
         return -1;
     }
 #endif
 
-#if 1 // vs 要求
+#if 0 // vs 要求
     if ((Schem < 1) || (Schem > 4))
     {
         *dar = DAR_OTHERS_ERROR;
@@ -129,8 +132,8 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     ret = nd_get_index(instance, CaptureId, &tempbuf[0], sizeof(tempbuf));
     if (ret < 0)
     {
-        *dar = DAR_OTHERS_ERROR;
-        return -1;
+        tempbuf[0]=0;//*dar = DAR_OTHERS_ERROR;
+        //return -1;
     }
     oadlist = tempbuf;
     num = *oadlist++;
@@ -141,8 +144,6 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
         return -1;
     }
     
-    capture_oad = buf_to_uint32_msb(p);
-   
     for (i = 0; i < num; i++)
     {
         temp_oad = buf_to_uint16_lsb(oadlist);
@@ -229,14 +230,15 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
     oi = (uint16_t)((oad & 0xFFFF0000) >> 16);
     attr = (uint8_t)((oad & 0x00001F00) >> 8);
     index = (uint8_t)(oad & 0x000000FF);
-    Schem = get_OAD_Schem(oad);
+
 
     if ((*p++ != TYPE_OAD) || (oad & 0xF0000000 != 0x30000000))
     {
         *dar = DAR_OTHERS_ERROR;
         return -1;
     }
-
+    capture_oad = buf_to_uint32_msb(p);
+    Schem = get_OAD_Schem(capture_oad);
     //待调整  秘钥状态如何获取？
 #if 0
     if ((oi == 0x3013) && (0 == esam_key_status_get()))
@@ -247,7 +249,7 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
 #endif
 
 
-#if 1 // vs 要求
+#if 0 // vs 要求 其他
     if ((Schem < 1) || (Schem > 4))
     {
         *dar = DAR_OTHERS_ERROR;
@@ -271,11 +273,9 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
         return -1;
     }
 
-    capture_oad = buf_to_uint32_msb(p);
-
     for (i = 0; i < num; i++)
     {
-        temp_oad = buf_to_uint16_lsb(oadlist);
+        temp_oad = buf_to_uint32_lsb(oadlist);
         if (capture_oad == temp_oad)
         {
             break;

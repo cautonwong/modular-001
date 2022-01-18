@@ -312,7 +312,7 @@ enum record_flag_id_t
 };
 
 //冻结     需连续
-#define    MinuteFreeze1                170     //分钟冻结记录方案1
+#define    MinuteFreeze1                170     //分钟冻结记录方案1 
 #define    MinuteFreeze2                171     //分钟冻结记录方案2
 #define    MinuteFreeze3                172     //分钟冻结记录方案3
 #define    MinuteFreeze4                173     //分钟冻结记录方案4

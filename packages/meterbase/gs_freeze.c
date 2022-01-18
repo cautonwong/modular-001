@@ -24,7 +24,7 @@ int freeze_judge(struct instance_t* instance, uint8_t* pperiod, uint16_t unit, s
     min = rtc_mktime(&instance->time);
     min = min / 60;
     valid = pperiod[0];
-    memcpy((uint8_t*)&timeinv, (pperiod+1), 0x02);
+    mem_swap_cpy((uint8_t*)&timeinv, (pperiod+1), 0x02);
 
     value = (uint32_t)timeinv * unit;
 

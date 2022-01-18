@@ -41,6 +41,9 @@ int SwitchErr_event_judge(struct instance_t* instance, struct pipeline_t* task, 
 
 
 
+int event_clr(struct instance_t* instance);
+int freeze_clr(struct instance_t* instance);
+int meter_clr(struct instance_t* instance);
 
 
 
