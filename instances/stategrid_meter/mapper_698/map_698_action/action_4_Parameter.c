@@ -20,7 +20,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
     }
     switch (oad)
     {
-        case 0x4300://电压
+        case 0x4300:
             switch(method)
             {
                 case 0x04://出厂参数初始化
@@ -28,11 +28,17 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     //后面替换为meter_clr
                     freeze_clr(instance); //冻结清零
                     event_clr(instance);  // 事件清零
+					p = p + 7;
+                    return (p-buf);
                     break;
                 case 0x03://数据初始化（电表清零）
+                    p++;
+                    return (p-buf);
                     break;
                 case 0x05://事件初始化
                     event_clr(instance);// 事件清零
+					p++;
+                    return (p-buf);
                     break;
                 default:
                     dar = DAR_OBJECT_NOT_EXIST;

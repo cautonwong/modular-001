@@ -35,7 +35,7 @@ const general_set4  set4300_table[] =
 
 const general_set4  general_set4_talble[] =
 {
-     Comm_Number,               0x4001,     0x02,   6,//表地址
+//     Comm_Number,               0x4001,     0x02,   6,//表地址
 //     Meter_Number,              0x4002,     0x02,   6,//表号
      User_Number,               0x4003,     0x02,   6,//客户编号
 //     Meter_Location,            0x4004,     0x01,   27,//设备地理位置
@@ -161,7 +161,7 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
             p = p + set4300_table[i].offset;
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + set4300_table[i].s_index);
             nd_set_index(instance, addr, p, set4300_table[i].len); 
-            p = p + set4300_table[i].len;
+            p = p + set4300_table[i].len - 1;
             return (p-buf);
         }
     }
@@ -239,6 +239,18 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 nd_set_index(instance, addr, buffer, 7);
                
                 send_event_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
+                return (p-buf);
+            }
+            break;
+        case 0x4001://表地址
+            if(attribute == 0x02)
+            {
+                p = p + 2;
+                memcpy(mbase_cb->tsa, p, 6);
+                p = p + 6;
+                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                offsetof(struct mbase_control_block_t, tsa));
+                nd_set_offset(instance, s_index, &mbase_cb->tsa, 6);
                 return (p-buf);
             }
             break;

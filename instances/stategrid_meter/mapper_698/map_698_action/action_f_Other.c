@@ -12,8 +12,8 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
     struct fifo_t* cache = p_ctx->apdu;
     
     
-    uint8_t  method,dar=0,buffer[15],keybuf[30],len1=0,len2=0;
-    uint16_t oad,pageid=0,txlen=0;
+    uint8_t  method,dar=0,buffer[16],keybuf[128],len1=0,len2=0;
+    uint16_t oad,pageid=0,txlen=0,rxlen=0;
     uint8_t *p = buf;
     uint32_t temp = 0,s_index=0,addr=0;
     
@@ -37,7 +37,23 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 txlen = *p++;
                 memcpy(keybuf, p, txlen);
                 p = p + txlen;
-                read_esam_data(addr , keybuf , txlen);
+                rxlen = read_esam_data(addr , keybuf , txlen);
+                
+                //cache->buf_ptr[cache->wr++] = 0;  //成功
+                //cache->buf_ptr[cache->wr++] = 1;  //有数据
+                cache->wr = cache->wr+2;
+                cache->buf_ptr[cache->wr++] = TYPE_octet_string;  
+                if( rxlen <= 127 )
+                {
+                    cache->buf_ptr[cache->wr++] = rxlen;  //长度
+                }
+                else if(rxlen <= 0xFF)
+                {
+                    cache->buf_ptr[cache->wr++] = 0x81;  //长度
+                    cache->buf_ptr[cache->wr++] = rxlen;  //长度
+                }
+                memcpy((uint8_t*)&cache->buf_ptr[cache->wr], keybuf, rxlen);
+                cache->wr = cache->wr + rxlen;
                 
                 return (p-buf);
             }
@@ -63,6 +79,82 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Number);
                 nd_set_index(instance, addr, (p - 23), 6); 
                 return (p-buf);
+            }
+            else if(method == 0x05) //协商失效
+            {
+                p = p + 1;
+                mbase_cb->authen_tmr = 0;
+                mbase_cb->irauthen_tmr = 0;
+                return (p-buf);
+            }
+            else if(method == 0x0B) //红外请求
+            {
+                read_esam_no(buffer);
+                memcpy(keybuf, (uint8_t*)&buffer[5], 8);//表号, 8bytes
+
+                addr = 0x02003680;
+                txlen = 0;
+                write_esam(addr , buffer , txlen);
+                memcpy((uint8_t*)&keybuf[16], buffer, 8);   //ESAM序列号, 8bytes
+                
+                p = p + 2;
+                memcpy((uint8_t*)&keybuf[8], p, 8); //随机数
+                p = p + 8;
+                memcpy(buffer, keybuf, 16); // 表号，随机数
+                addr = 0x03080880;
+                txlen = 0x0010;
+                rxlen = write_esam(addr , buffer , txlen);  //80 08 08 03 00 10 + 表号，随机数，返回密文
+                
+                addr = 0x08000480;
+                txlen = 0;
+                rxlen = write_esam(addr , (uint8_t*)&keybuf[24] , txlen);  //返回随机数2
+                
+                cache->buf_ptr[cache->wr++] = 0;  //成功
+                cache->buf_ptr[cache->wr++] = 1;  //有数据
+                cache->buf_ptr[cache->wr++] = TYPE_structure;
+                cache->buf_ptr[cache->wr++] = 4;
+                cache->buf_ptr[cache->wr++] = TYPE_octet_string;
+                cache->buf_ptr[cache->wr++] = 6;
+                memcpy((uint8_t*)&cache->buf_ptr[cache->wr], (uint8_t*)&keybuf[2], 6);//表号
+                cache->wr = cache->wr + 6;
+                
+                cache->buf_ptr[cache->wr++] = TYPE_octet_string;
+                cache->buf_ptr[cache->wr++] = 8;
+                memcpy((uint8_t*)&cache->buf_ptr[cache->wr], (uint8_t*)&keybuf[16], 8);//ESAM序列号
+                cache->wr = cache->wr + 8;
+                
+                cache->buf_ptr[cache->wr++] = TYPE_octet_string;
+                cache->buf_ptr[cache->wr++] = 8;
+                memcpy((uint8_t*)&cache->buf_ptr[cache->wr], (uint8_t*)&buffer[0], 8);//随机数1密文
+                cache->wr = cache->wr + 8;
+                
+                cache->buf_ptr[cache->wr++] = TYPE_RN;
+                cache->buf_ptr[cache->wr++] = 8;
+                memcpy((uint8_t*)&cache->buf_ptr[cache->wr], (uint8_t*)&keybuf[24], 8);//随机数2
+                cache->wr = cache->wr + 8;
+                return (p-buf);
+            }
+            else if(method == 0x0C) //红外认证
+            {
+                //80 06 00 01 00 08 + 密文
+                p = p + 2;
+                memcpy(buffer, p, 8); 
+                p = p + 8;
+                addr = 0x01000680;
+                txlen = 8;
+                rxlen = write_esam(addr , buffer , txlen);
+                if(rxlen == 0xff)
+                {
+                    return -1;
+                }
+                else
+                {
+                    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + IrAuthenTime);
+                    nd_get_index(instance, addr, buffer, 4); 
+                    mem_swap_cpy((uint8_t*)&mbase_cb->irauthen_tmr, buffer, 4);
+                    mbase_cb->irauthen_tmr = mbase_cb->irauthen_tmr * 60;
+                    return (p-buf);
+                }
             }
             break;
         case 0xF201://RS485
@@ -91,6 +183,15 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             }
             return (p-buf);
             break;
+        case 0xF202://红外
+            if(method == 127)
+            {
+                p = p + 13;
+                return -DAR_COMM_SPEED_CANNOT_CHANGE;
+            }
+            else
+                return -DAR_OBJECT_NOT_EXIST;
+            break;
         case 0xF205://继电器输出
             if(method == 127)
             {
@@ -108,7 +209,6 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     return -1;
                 }
                 mbase_cb->relay_ctl_mode = *p++;
-                p = p + 2;
             }
             else
             {
@@ -132,8 +232,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     dar = DAR_BUFFER_OVERFLOW;
                     return -1;
                 }
-                mbase_cb->MulPortMode = *p;
-                p = p + 2;
+                mbase_cb->MulPortMode = *p++;
             }
             else
             {

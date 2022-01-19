@@ -421,7 +421,7 @@ const  parameter_item_t  parameter_item[] =
     { KeyDisplayList,      0x64,   2,       init_KeyDisplayList },//100屏*2字节
     
     //4XXX
-    { Comm_Number,         0x01,   6,       init_Comm_Number },//表地址
+//    { Comm_Number,         0x01,   6,       init_Comm_Number },//表地址
     { Meter_Number,        0x01,   6,       init_Meter_Number },//表号
     { User_Number,         0x01,   6,       init_User_Number },//客户编号
     { Meter_Num,           0x01,   1,       init_Meter_Num },//计量元件数
@@ -1433,6 +1433,11 @@ uint8_t para_init(struct instance_t* instance )
     offsetof(struct mbase_control_block_t, backlight_key_time));
     s_len = offsetof(struct mbase_control_block_t, Baut_plc) - offsetof(struct mbase_control_block_t, backlight_key_time);
     nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->backlight_key_time, s_len);
+    
+    memset(mbase_cb->tsa, 0x11, 6);//表地址
+    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+    offsetof(struct mbase_control_block_t, tsa));
+    nd_set_offset(instance, s_index, mbase_cb->tsa, 6);
     
     //EE部分更新
     for(i=0; i<num; i++)

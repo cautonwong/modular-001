@@ -331,6 +331,7 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct mbase_control_block_t* mbase_cb;
+    uint8_t aa_addrbuf[6] = {0xAA,0xAA,0xAA,0xAA,0xAA,0xAA};
 
     //合法性和一致性判断
     if ((ctx->ctrl & (1 << 7)) == 1)
@@ -354,12 +355,15 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(NULL == mbase_cb)
         return 0;
-#if WIN32_U_TEST
+
     if (0 != mem_compare(ctx->addr, mbase_cb->tsa, SA_LEN(ctx->SA) + 1))
     {
-        //return 0;
+        if(0 != mem_compare(ctx->addr, aa_addrbuf, 6))
+        {
+            return 0;
+        }
     }
-#endif
+
     //时标判断
     //fr_timeTag()；
 
@@ -587,9 +591,11 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     switch (ctx->service)
     {
         case CONNECT_Request:
-        case RELEASE_Request:
             fr_handle_connect(instance, pipeline, mesg);
             break;   
+        case RELEASE_Request:
+            fr_handle_disconnect(instance, pipeline, mesg);
+            break;
         case GET_Request:  
             fr_handle_get_request(instance, pipeline, mesg);
             break;

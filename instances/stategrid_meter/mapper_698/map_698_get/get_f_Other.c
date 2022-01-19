@@ -338,6 +338,33 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                     p = p + 4;
                     return (p - buf);
                     break;
+                case 0x11://身份权限
+                    *p++ = TYPE_unsigned;
+                    *p++ = mbase_cb->AuthOn;
+                    return (p-buf);
+                    break;
+                case 0x12://终端地址
+                    *p++ = TYPE_octet_string;
+                    *p++ = 8;
+                    read_esam_info(esam_inf,0X11);
+                    memcpy(p, esam_inf, 8);
+                    p = p + 8;
+                    return (p-buf);
+                    break;
+                case 0x13://广播计数器
+                    *p++ = TYPE_double_long_unsigned;
+                    read_esam_info(esam_inf,0X12);
+                    memcpy(p, esam_inf, 4);
+                    p = p + 4;
+                    return (p-buf);
+                    break;
+                case 0x15://终端会话时间
+                    *p++ = TYPE_double_long_unsigned;
+                    read_esam_info(esam_inf,0X14);
+                    memcpy(p, esam_inf, 4);
+                    p = p + 4;
+                    return (p-buf);
+                    break;
             }
             break;
     }

@@ -443,7 +443,7 @@ const uint8_t CODE init_2522[] = { 32, 0, 0, 0, 0 };    /**< 跟随上报状态字2 rs4
 
 
 const uint8_t CODE init_2523[] = { 32, 0x00, 0x00, 0x00, 0x00 }; /**< 跟随上报模式字 */
-const uint8_t CODE init_IrAuthenTime[] = { 0x1e, 0x00, 0x00, 0x00 }; /**< 红外认证时效门限 */
+const uint8_t CODE init_IrAuthenTime[] = { 4, 0x00, 0x00, 0x00, 0x1e }; /**< 红外认证时效门限 */
 
 const uint8_t CODE init_ImaxProtectValue[] = { 4, 0x00, 0x04, 0x93, 0xe0 }; /**< 继电器拉闸控制电流门限值  - 继电器拉闸电流门限值 */
 const uint8_t CODE init_ImaxProtectTime[] = { 2, 0x05, 0xa0 }; /**< 超拉闸控制电流门限保护延时时间  - 超电流门限保护延时时间 */

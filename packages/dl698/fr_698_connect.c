@@ -162,6 +162,7 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
     {
 	    //memcpy((uint8_t*)&buf[offset],(uint8_t*)&esam_symauth_term[0],6);
 		//dectypt->rn[0] = 64;
+        len_len = esam_consult_key( 0x82 , buf+1 );
     }
     else //from 主站
     {
@@ -275,6 +276,20 @@ static int __consistency_block(uint8_t *data, uint8_t* cfg_data, uint8_t len)
         //session->protocal_conformance[i] = temp & para->protocal_conformance[i];
         data[i] = data[i] & cfg_data[i];
     }
+    return 1;
+}
+
+int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    //uint8_t result = DAR_SUCCESS;
+    struct mbase_control_block_t* mbase_cb;
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
+    mbase_cb->authen_tmr = 0;
+    mbase_cb->irauthen_tmr = 0;
+    
+    //复位ESAM
+    
     return 1;
 }
 

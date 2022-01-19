@@ -35,7 +35,7 @@ const general_get4  get4300_table[] =
 
 const general_get4  general_get4_talble[] =
 {
-     Comm_Number,               0x4001,     TYPE_octet_string,      6,//表地址
+//     Comm_Number,               0x4001,     TYPE_octet_string,      6,//表地址
      User_Number,               0x4003,     TYPE_octet_string,      6,//客户编号
      SeasonTable_Changetime,    0x4008,     TYPE_date_time_s,       7,//两套时区切换时间
      DayTable_Changetime,       0x4009,     TYPE_date_time_s,       7,//两套时段切换时间
@@ -222,6 +222,19 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
             return -1;
         }
             break;
+        case 0x4001://地址
+            if(attribute == 0x02)
+            {
+                *p++ = TYPE_octet_string;
+                *p++ = 6;
+                memcpy(p, mbase_cb->tsa, 6);
+                p = p + 6;
+                return (p - buf);
+            }
+            else
+            {
+                return -1;
+            }
         case 0x4002://表号
             if(attribute == 0x02)
             {

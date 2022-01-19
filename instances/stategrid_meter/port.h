@@ -475,7 +475,7 @@ enum block_parameter_item_id_t
 
 //mbase_block_parameter E2P存储ID------结束                           
                                   
-#define     Comm_Number                 900 //表地址
+//#define     Comm_Number                 900 //表地址
 #define     Meter_Number                901 //表号
 #define     User_Number                 902 //客户编号
 #define     Meter_Num                   903 //计量元件数

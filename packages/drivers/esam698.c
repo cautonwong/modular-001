@@ -194,7 +194,7 @@ uint8 read_esam(uint32 addr, uint8 *buf, uint16 len)
 
 uint16 write_esam(uint32 addr, uint8 *buf, uint16 len)
 {   
-    uint16 rx_len=1, sw = 0;
+    uint16 rx_len, sw = 0;
     
     memset(&esam_error_apdu.apdu[0] , 0xFF , 6);
     
@@ -212,7 +212,7 @@ uint16 write_esam(uint32 addr, uint8 *buf, uint16 len)
         memcpy(&esam_error_apdu.apdu[4] , (uint8*)&len , 2);
     }
     
-    return false;
+    return 0xff;
 }
 
 uint8_t read_esam_no(uint8_t *esam_info)

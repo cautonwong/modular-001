@@ -46,8 +46,17 @@ int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipelin
         }
         else
         {
-            p[cache->wr++] = 0;
-            p[cache->wr++] = 0;
+            if(cache->wr > offset)
+            {
+                p[offset++] = 0;
+                p[offset++] = 1;
+            }
+            else
+            {
+                p[cache->wr++] = 0;
+                p[cache->wr++] = 0;
+                //cache->wr = cache->wr + 2;
+            }
             //cache->wr += r;
         }
     }
