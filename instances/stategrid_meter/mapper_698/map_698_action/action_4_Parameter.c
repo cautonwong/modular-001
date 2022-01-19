@@ -1,5 +1,6 @@
 #include "nidavellir.h"
 #include "fr_698.h"
+#include "gs_record.h"
 
 
 int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
@@ -23,11 +24,15 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
             switch(method)
             {
                 case 0x04://出厂参数初始化
-                      para_init( instance );
-                      break;
+                    para_init( instance );
+                    //后面替换为meter_clr
+                    freeze_clr(instance); //冻结清零
+                    event_clr(instance);  // 事件清零
+                    break;
                 case 0x03://数据初始化（电表清零）
                     break;
                 case 0x05://事件初始化
+                    event_clr(instance);// 事件清零
                     break;
                 default:
                     dar = DAR_OBJECT_NOT_EXIST;

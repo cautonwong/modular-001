@@ -14,7 +14,32 @@ extern const uint8_t  init_FeePriceCutFreeze_oad[];
 extern const uint8_t  init_StepCutFreeze_oad[];
 extern const uint8_t  init_StepBillFreeze_oad[];
 extern const uint8_t  init_InstantFreeze_oad[];
-                  
+ 
+
+extern const uint8_t  init_MinuteFreeze_period[];        
+extern const uint8_t  init_HourFreeze_period[];          
+extern const uint8_t  init_DayFreeze_period[];           
+extern const uint8_t  init_BillFreeze_period[];          
+extern const uint8_t  init_MonthFreeze_period[];         
+extern const uint8_t  init_SeasonTabCutFreeze_period[];  
+extern const uint8_t  init_DayTabCutFreeze_period[];   
+extern const uint8_t  init_FeePriceCutFreeze_period[]; 
+extern const uint8_t  init_StepCutFreeze_period[];     
+extern const uint8_t  init_StepBillFreeze_period[];    
+extern const uint8_t  init_InstantFreeze_period[];     
+
+extern const uint8_t  init_MinuteFreeze_depth[];             
+extern const uint8_t  init_HourFreeze_depth[];               
+extern const uint8_t  init_DayFreeze_depth[];                
+extern const uint8_t  init_BillFreeze_depth[];               
+extern const uint8_t  init_MonthFreeze_depth[];        
+extern const uint8_t  init_SeasonTabCutFreeze_depth[]; 
+extern const uint8_t  init_DayTabCutFreeze_depth[];    
+extern const uint8_t  init_FeePriceCutFreeze_depth[];  
+extern const uint8_t  init_StepCutFreeze_depth[];     
+extern const uint8_t  init_StepBillFreeze_depth[];    
+extern const uint8_t  init_InstantFreeze_depth[];     
+
 extern const uint8_t  init_OverCurrentAS_oad[];
 extern const uint8_t  init_PowerOffS_oad[];
 extern const uint8_t  init_MeterWrS_oad[];
@@ -297,17 +322,17 @@ const  parameter_item_t  parameter_item[] =
      
 
     //冻结关联对象
-    { MinuteFreeze_oad              , 0x01,  61,0 }, //oad列表 1+ 4*15     默认7个
-    { HourFreeze_oad                , 0x01,  61,0 }, //oad列表 1+ 4*15     
-    { DayFreeze_oad                 , 0x01,  61,0 }, //oad列表 1+ 4*15     
-    { BillFreeze_oad                , 0x01,  61,0 }, //oad列表 1+ 4*15   
-    { MonthFreeze_oad               , 0x01,  61,0 }, //oad列表 1+ 4*15     
-    { SeasonTabCutFreeze_oad        , 0x01,  61,0 }, //oad列表 1+ 4*15   
-    { DayTabCutFreeze_oad           , 0x01,  61,0 }, //oad列表 1+ 4*15   
-    { FeePriceCutFreeze_oad         , 0x01,  61,0 }, //oad列表 1+ 4*15   
-    { StepCutFreeze_oad             , 0x01,  61,0 }, //oad列表 1+ 4*15   
-    { StepBillFreeze_oad            , 0x01,  61,0 }, //oad列表 1+ 4*15   
-    { InstantFreeze_oad             , 0x01,  61,0 }, //oad列表 1+ 4*15   
+    { MinuteFreeze_oad              , 0x01,  61, init_MinuteFreeze_oad       }, //oad列表 1+ 4*15     默认7个
+    { HourFreeze_oad                , 0x01,  61, init_HourFreeze_oad         }, //oad列表 1+ 4*15     
+    { DayFreeze_oad                 , 0x01,  61, init_DayFreeze_oad          }, //oad列表 1+ 4*15     
+    { BillFreeze_oad                , 0x01,  61, init_BillFreeze_oad         }, //oad列表 1+ 4*15   
+    { MonthFreeze_oad               , 0x01,  61, init_MonthFreeze_oad        }, //oad列表 1+ 4*15     
+    { SeasonTabCutFreeze_oad        , 0x01,  61, init_SeasonTabCutFreeze_oad }, //oad列表 1+ 4*15   
+    { DayTabCutFreeze_oad           , 0x01,  61, init_DayTabCutFreeze_oad    }, //oad列表 1+ 4*15   
+    { FeePriceCutFreeze_oad         , 0x01,  61, init_FeePriceCutFreeze_oad  }, //oad列表 1+ 4*15   
+    { StepCutFreeze_oad             , 0x01,  61, init_StepCutFreeze_oad      }, //oad列表 1+ 4*15   
+    { StepBillFreeze_oad            , 0x01,  61, init_StepBillFreeze_oad     }, //oad列表 1+ 4*15   
+    { InstantFreeze_oad             , 0x01,  61, init_InstantFreeze_oad      }, //oad列表 1+ 4*15   
 
 
     //事件记录序号
@@ -360,30 +385,30 @@ const  parameter_item_t  parameter_item[] =
     { InstantFreeze_seq             , 0x01,  4,0   },//瞬时冻结冻结    记录序号
                                              
     //冻结周期                       
-    { MinuteFreeze_period           , 0x01, 24,0 }, //分钟冻结 周期   3*8  
-    { HourFreeze_period             , 0x01,  3,0 }, //小时冻结冻结 周期   3 
-    { DayFreeze_period              , 0x01,  3,0 }, //日冻结冻结 周期   3 
-    { BillFreeze_period             , 0x01,  3,0 }, //结算日冻结冻结 周期   3 
-    { MonthFreeze_period            , 0x01,  3,0 }, //月冻结冻结 周期   3 
-    { SeasonTabCutFreeze_period     , 0x01,  3,0 }, //时区表切换冻结冻结 周期   3 
-    { DayTabCutFreeze_period        , 0x01,  3,0 }, //日时段表切换冻结冻结 周期   3 
-    { FeePriceCutFreeze_period      , 0x01,  3,0 }, //费率电价切换冻结冻结 周期   3 
-    { StepCutFreeze_period          , 0x01,  3,0 }, //阶梯切换冻结冻结 周期   3 
-    { StepBillFreeze_period         , 0x01,  3,0 }, //阶梯结算冻结冻结 周期   3 
-    { InstantFreeze_period          , 0x01,  3,0 }, //瞬时冻结冻结 周期   3 
+    { MinuteFreeze_period           , 0x01, 24, init_MinuteFreeze_period       }, //分钟冻结 周期   3*8  
+    { HourFreeze_period             , 0x01,  3, init_HourFreeze_period         }, //小时冻结冻结 周期   3 
+    { DayFreeze_period              , 0x01,  3, init_DayFreeze_period          }, //日冻结冻结 周期   3 
+    { BillFreeze_period             , 0x01,  3, init_BillFreeze_period         }, //结算日冻结冻结 周期   3 
+    { MonthFreeze_period            , 0x01,  3, init_MonthFreeze_period        }, //月冻结冻结 周期   3 
+    { SeasonTabCutFreeze_period     , 0x01,  3, init_SeasonTabCutFreeze_period }, //时区表切换冻结冻结 周期   3 
+    { DayTabCutFreeze_period        , 0x01,  3, init_DayTabCutFreeze_period    }, //日时段表切换冻结冻结 周期   3 
+    { FeePriceCutFreeze_period      , 0x01,  3, init_FeePriceCutFreeze_period  }, //费率电价切换冻结冻结 周期   3 
+    { StepCutFreeze_period          , 0x01,  3, init_StepCutFreeze_period      }, //阶梯切换冻结冻结 周期   3 
+    { StepBillFreeze_period         , 0x01,  3, init_StepBillFreeze_period     }, //阶梯结算冻结冻结 周期   3 
+    { InstantFreeze_period          , 0x01,  3, init_InstantFreeze_period      }, //瞬时冻结冻结 周期   3 
                                      
     //冻结深度                    
-    { MinuteFreeze_depth            , 0x01, 31,0 }, //分钟冻结 深度     2*15  
-    { HourFreeze_depth              , 0x01,  2,0 }, //分钟冻结 深度     2   
-    { DayFreeze_depth               , 0x01,  2,0 }, //分钟冻结 深度     2   
-    { BillFreeze_depth              , 0x01,  2,0 }, //分钟冻结 深度     2   
-    { MonthFreeze_depth             , 0x01,  2,0 }, //分钟冻结 深度     2   
-    { SeasonTabCutFreeze_depth      , 0x01,  2,0 }, //分钟冻结 深度     2   
-    { DayTabCutFreeze_depth         , 0x01,  2,0 }, //分钟冻结 深度     2   
-    { FeePriceCutFreeze_depth       , 0x01,  2,0 }, //分钟冻结 深度     2   
-    { StepCutFreeze_depth           , 0x01,  2,0 }, //分钟冻结 深度     2   
-    { StepBillFreeze_depth          , 0x01,  2,0 }, //分钟冻结 深度     2   
-    { InstantFreeze_depth           , 0x01,  2,0 }, //分钟冻结 深度     2   
+    { MinuteFreeze_depth            , 0x01, 30, init_MinuteFreeze_depth       }, //分钟冻结 深度     2*15  
+    { HourFreeze_depth              , 0x01,  2, init_HourFreeze_depth         }, //分钟冻结 深度     2   
+    { DayFreeze_depth               , 0x01,  2, init_DayFreeze_depth          }, //分钟冻结 深度     2   
+    { BillFreeze_depth              , 0x01,  2, init_BillFreeze_depth         }, //分钟冻结 深度     2   
+    { MonthFreeze_depth             , 0x01,  2, init_MonthFreeze_depth        }, //分钟冻结 深度     2   
+    { SeasonTabCutFreeze_depth      , 0x01,  2, init_SeasonTabCutFreeze_depth }, //分钟冻结 深度     2   
+    { DayTabCutFreeze_depth         , 0x01,  2, init_DayTabCutFreeze_depth    }, //分钟冻结 深度     2   
+    { FeePriceCutFreeze_depth       , 0x01,  2, init_FeePriceCutFreeze_depth  }, //分钟冻结 深度     2   
+    { StepCutFreeze_depth           , 0x01,  2, init_StepCutFreeze_depth      }, //分钟冻结 深度     2   
+    { StepBillFreeze_depth          , 0x01,  2, init_StepBillFreeze_depth     }, //分钟冻结 深度     2   
+    { InstantFreeze_depth           , 0x01,  2, init_InstantFreeze_depth      }, //分钟冻结 深度     2   
 
 
     //记录数据中间缓存
@@ -889,7 +914,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     PeriodId = MinuteFreeze_period;         // 周期存储地址信息
                     DepthId = MinuteFreeze_depth;           // 深度存储地址信息
                     info->period_len = 24;
-                    info->depth_len = 31;
+                    info->depth_len = 30;
                 }
                 break;
 
@@ -1415,7 +1440,7 @@ uint8_t para_init(struct instance_t* instance )
         if( parameter_item[i].data != 0 )
         {
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + parameter_item[i].paramerer_index);
-            nd_set_index(instance, s_index, (uint8_t*)(parameter_item[i].data+1), *(parameter_item[i].data)); 
+            nd_set_index(instance, s_index, (uint8_t*)(parameter_item[i].data), (parameter_item[i].len)); 
         }
     }
     return 0;
