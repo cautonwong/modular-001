@@ -308,15 +308,20 @@ int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, stru
 {
     //struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
+    uint8_t tail = 0;
     //struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
     //struct message_t* n = (struct message_t*)instance->cache;
 
     fifoBuf_getByte(ififo);//fcs-0
     fifoBuf_getByte(ififo);//fcs-1
-    assert(fifoBuf_getByte(ififo) == 0x16);//0x16
+    tail = fifoBuf_getByte(ififo);
+    //请排查消耗数据map长度是否正确
+    assert(tail == 0x16);
     fr_pack_698_head(instance, pipeline, mesg);
     
-    fr_pack_698_apdu(instance, pipeline, mesg);
+    if(mesg->len)
+        fr_pack_698_apdu(instance, pipeline, mesg);
+    
     fr_pack_698_tail(instance, pipeline, mesg);
     //使能发送
     return 0;
@@ -355,7 +360,7 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(NULL == mbase_cb)
         return 0;
-
+#if 1
     if (0 != mem_compare(ctx->addr, mbase_cb->tsa, SA_LEN(ctx->SA) + 1))
     {
         if(0 != mem_compare(ctx->addr, aa_addrbuf, 6))
@@ -363,7 +368,7 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
             return 0;
         }
     }
-
+#endif
     //时标判断
     //fr_timeTag()；
 
@@ -421,7 +426,7 @@ int fr_segments_handle(uint16_t segment, struct instance_t* instance, struct pip
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     
     uint16_t data_len = ctx->min_len - 8 - SA_LEN(ctx->SA) - 2 - 2;
-    if((0 == ctx->segment_no) && is_first_segment(segment))////链路层rx 开始帧
+    if(is_first_segment(segment))////链路层rx 开始帧
     {
         ringbuffer_clear(ctx->apdu_rx);
         fifo_popData(fifo, data_len, __put_fifo_byte, ctx->apdu_rx);
@@ -506,6 +511,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
                 set_confirm_segment(ctx->segment_rx);
                 fifoBuf_putByte(ctx->apdu, ctx->segment_rx&0x00ff);
                 fifoBuf_putByte(ctx->apdu, (ctx->segment_rx>>8));
+                mesg->len = fifoBuf_getUsed(ctx->apdu);
                 fr_rx_698_end(instance, pipeline, mesg);
                 return 0;//回应确认
             }
