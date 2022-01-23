@@ -68,6 +68,7 @@ uint32_t* register_parameter(struct instance_t* instance, uint8_t device_name, u
 
 int nd_log_clean(struct instance_t* instance, uint32_t index);
 int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t unit_size);
+int16_t nd_log_append_revise(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t offset, uint16_t unit_size);
 int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t buf_size, struct circular_info_t* info);
 
 int16_t nd_get_index(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t size);
