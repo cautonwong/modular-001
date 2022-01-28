@@ -367,6 +367,16 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                     break;
             }
             break;
+        case 0xF101://
+            switch (attribute)
+            {
+                case 0x02://安全模式参数
+                    *p++ = TYPE_enum;
+                    *p++ = mbase_cb->SafeEn;
+                    return (p-buf);
+                    break;
+            }
+            break;
     }
     return 0x01;
 }

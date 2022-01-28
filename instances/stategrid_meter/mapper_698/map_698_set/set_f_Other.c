@@ -33,6 +33,17 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                 return (p-buf);
             }
             break;
+        case 0xF101://
+            if(attribute == 0x02)   //安全模式参数
+            {
+                p++;
+                mbase_cb->SafeEn = *p++;
+                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                offsetof(struct mbase_control_block_t, SafeEn) + 1);
+                nd_set_offset(instance, s_index, p, 1);
+                return (p-buf);
+            }
+            break;
         case 0xF201://rs485
         case 0xF202://红外
         case 0xF205://继电器输出

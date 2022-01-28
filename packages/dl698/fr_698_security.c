@@ -3,37 +3,58 @@
 
 uint8_t Security_Mode;
 
-int fr_security_decode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t len)
+int fr_security_decode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint16_t len)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* cache = ctx->apdu;
     uint8_t *p_apdu = cache->buf_ptr;
     uint32_t addr;
-    uint8_t rxlen;
+    uint16_t rxlen;
     uint16_t txlen=0,temp=0,offset=0;
-      
-    fifoBuf_getData(fifo, ctx->keybuf, len+1);   //明文/密文数据
-    Security_Mode = (0x80 | ctx->keybuf[len]);  //80/83
+    
+    if(len == 0x6B0)
+    {
+        Security_Mode = (0x80 | ctx->apdu_rx->buf_ptr[len+5]);  //80/83
+        
+        memcpy((uint8_t*)&addr, (uint8_t*)&ctx->apdu_rx->buf_ptr[len+6], 4);//SID
+        
+        mem_swap_cpy((uint8_t*)&txlen, (uint8_t*)&ctx->apdu_rx->buf_ptr[len+6+5], 2);//LEN
+        
+        memcpy((uint8_t*)&ctx->apdu_rx->buf_ptr[len+5], (uint8_t*)&ctx->apdu_rx->buf_ptr[len+6+5+3], 4);//MAC
+        
+        rxlen = write_esam(addr , (uint8_t*)&ctx->apdu_rx->buf_ptr[5] , txlen);
+        ctx->apdu_rx->buf_ptr[5 + rxlen] = 0x55;
+        ctx->apdu_rx->buf_ptr[5 + rxlen+1] = 0x55;
+        ctx->apdu_rx->buf_ptr[5 + rxlen+2] = 0x16;//补FF
+        
+        fifo->wr = fifo->rd;
+        fifoBuf_putData(fifo, (uint8_t*)&ctx->apdu_rx->buf_ptr[5+3], rxlen);//+3的含义是让外层的fifo不用调整5字节
+    }
+    else
+    {
+        fifoBuf_getData(fifo, ctx->keybuf, len+1);   //明文/密文数据
+        Security_Mode = (0x80 | ctx->keybuf[len]);  //80/83
 
-    //SID(3)、SID_MAC(0)
-    fifoBuf_getData(fifo, &addr, 4);//SID(4)
-    fifoBuf_getData(fifo, &temp, 1);//跳过tag
-    fifoBuf_getData(fifo, &temp, 2);//附加信息长度（2）
+        //SID(3)、SID_MAC(0)
+        fifoBuf_getData(fifo, &addr, 4);//SID(4)
+        fifoBuf_getData(fifo, &temp, 1);//跳过tag
+        fifoBuf_getData(fifo, &temp, 2);//附加信息长度（2）
 
-	//MAC
-	if( (Security_Mode != 0x83) )  //SID_MAC、RN_MAC
-	{
-        fifoBuf_getData(fifo, &ctx->keybuf[len], 1);//跳过tag
-		fifoBuf_getData(fifo, &ctx->keybuf[len], 4);
-	}
-    
-    mem_swap_cpy((uint8_t*)&txlen, (uint8_t*)&temp, 2);
-    
-    rxlen = write_esam(addr , ctx->keybuf , txlen);
-    
-    fifo->wr = fifo->rd;
-    fifoBuf_putData(fifo, ctx->keybuf, rxlen);
+        //MAC
+        if( (Security_Mode != 0x83) )  //SID_MAC、RN_MAC
+        {
+            fifoBuf_getData(fifo, &ctx->keybuf[len], 1);//跳过tag
+            fifoBuf_getData(fifo, &ctx->keybuf[len], 4);
+        }
+        
+        mem_swap_cpy((uint8_t*)&txlen, (uint8_t*)&temp, 2);
+        
+        rxlen = write_esam(addr , ctx->keybuf , txlen);
+        
+        fifo->wr = fifo->rd;
+        fifoBuf_putData(fifo, ctx->keybuf, rxlen);
+    }
     
 	return 1;
 }

@@ -68,6 +68,8 @@ struct mbase_control_block_t
     uint8_t Baut_rs485; //485波特率
     uint8_t Baut_plc;   //载波波特率
     
+    uint8_t SafeEn; //安全模式  1：启用，0：不启用
+    
     uint8_t relay_ctl_mode; //继电器控制方式（0：脉冲式，1：保持式）
     uint8_t AuthOn; //身份认证启用标志，1启用
     
