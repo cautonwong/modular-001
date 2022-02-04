@@ -117,7 +117,7 @@ void IO_Interrupt(void)
 {
    uint16 cnt;
     
-    if( PMU_GetIOAINTStatus(GPIO_Pin_8))   //ÓĞ¹¦Âö³å
+    if( PMU_GetIOAINTStatus(GPIO_Pin_8))   //æœ‰åŠŸè„‰å†²
     {
         PMU_ClearIOAINTStatus(GPIO_Pin_8);
         GPIOF->OEN &=~BIT1;
@@ -128,17 +128,17 @@ void IO_Interrupt(void)
         wpulse_light_flag = 0;
     }
 
-    if(GPIOA->INT & BIT2)  // °´¼ü
+    if(GPIOA->INT & BIT2)  // æŒ‰é”®
     {
         
         key_keep_flag = 0x5a;
         key_keep_width = 0;
         
-        //// Í£µçÏÂ°´¼üÏû¶¶
+        //// åœç”µä¸‹æŒ‰é”®æ¶ˆæŠ–
         if(ANA->COMPOUT & ANA_STATUS_VDCINDROP)
         {
-             key_keep_flag = 0; // ±ÜÃâÍ£µçÏÂ tick±»´ò¿ª ·¢Á½´Î °´¼üÏûÏ¢
-             if(ANA->COMPOUT & BIT2)//ÓĞµç³Ø
+             key_keep_flag = 0; // é¿å…åœç”µä¸‹ tickè¢«æ‰“å¼€ å‘ä¸¤æ¬¡ æŒ‰é”®æ¶ˆæ¯
+             if(ANA->COMPOUT & BIT2)//æœ‰ç”µæ± 
              {
                  for(cnt = 0; cnt< 10; cnt++)  
                  {
@@ -175,10 +175,10 @@ void timing_ftr(void)
               dly1 = 10;
               dly2 = 30;
       }
-      /******************** Ïû¶¶ ********************/ 
+      /******************** æ¶ˆæŠ– ********************/ 
       if(wpulse_light_open == 0x5a)
       {
-              if((GPIOA->STS & BIT8) == BIT8)//Ïû¶¶    
+              if((GPIOA->STS & BIT8) == BIT8)//æ¶ˆæŠ–    
               {
                       wpulse_light_open_flag++;
               }
@@ -197,7 +197,7 @@ void timing_ftr(void)
               }
       }
       
-      /******************** Âö¿í80ms ********************/ 
+      /******************** è„‰å®½80ms ********************/ 
       if(wpulse_light_flag == 0x5a)
       {
           wplse_light_width++;
@@ -289,13 +289,15 @@ void irq_transform_to_instance(struct instance_t* instance)
     }
 }
 
-
+void IOStateCheckInit(void);
 
 void dev_init(void)
 {
     mcu_main_power_on_config();
     
     ndv_timer_init();
+	
+    IOStateCheckInit();
     
     eeprom_dev.dev_driver_ops->dev_initialize(&eeprom_dev);
     
@@ -311,7 +313,7 @@ void dev_init(void)
 
 }
 
-//¹Ø±ÕÓÃµç´ó»§ÍâÉèµÄµçÔ´£¬±ÈÈç±³¹â£¬LED£¬´®¿Ú£¬¸ßËÙ¶¨Ê±Æ÷£¬tick
+//å…³é—­ç”¨ç”µå¤§æˆ·å¤–è®¾çš„ç”µæºï¼Œæ¯”å¦‚èƒŒå…‰ï¼ŒLEDï¼Œä¸²å£ï¼Œé«˜é€Ÿå®šæ—¶å™¨ï¼Œtick
  void device_power_close(struct instance_t* instance)
  {
  
@@ -321,7 +323,7 @@ void dev_init(void)
  }
 
 
-//´ò¿ª´®¿Ú£¬¸ßËÙ¶¨Ê±Æ÷£¬tick£¬³õÊ¼»¯IOÉÏµçÅäÖÃ
+//æ‰“å¼€ä¸²å£ï¼Œé«˜é€Ÿå®šæ—¶å™¨ï¼Œtickï¼Œåˆå§‹åŒ–IOä¸Šç”µé…ç½®
  void device_power_open(struct instance_t* instance)
  {
  
@@ -330,7 +332,7 @@ void dev_init(void)
  
  }
 
-//³õÊ¼»¯IOµÍ¹¦ºÄÅäÖÃ£¬³õÊ¼»¯ÏµÍ³µÍ¹¦ºÄÅäÖÃ£¬×¼±¸½øÈësleepÄ£Ê½¡£
+//åˆå§‹åŒ–IOä½åŠŸè€—é…ç½®ï¼Œåˆå§‹åŒ–ç³»ç»Ÿä½åŠŸè€—é…ç½®ï¼Œå‡†å¤‡è¿›å…¥sleepæ¨¡å¼ã€‚
 void cpu_io_lowpower_cfg_chk(struct instance_t* instance)
 {
 
@@ -342,7 +344,7 @@ void cpu_io_lowpower_cfg_chk(struct instance_t* instance)
 
 }
 
-//´Ë´¦·Åsleepº¯Êı£¬ÒÔ¼°»½ĞÑºóµÄÏµÍ³»ù±¾´¦Àí
+//æ­¤å¤„æ”¾sleepå‡½æ•°ï¼Œä»¥åŠå”¤é†’åçš„ç³»ç»ŸåŸºæœ¬å¤„ç†
 void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     LCD_InitType lcd_init_para;
@@ -390,11 +392,11 @@ void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
     GPIOA->OEN |=BIT14; 
     GPIOA->IE |=BIT14;
     GPIOA->DAT |= BIT2;
-    PMU_WakeUpPinConfig(GPIO_Pin_2, IOA_EDGEBOTH);   //Ê¹ÄÜÍâ²¿IO¿Ú»½ĞÑ
+    PMU_WakeUpPinConfig(GPIO_Pin_2, IOA_EDGEBOTH);   //ä½¿èƒ½å¤–éƒ¨IOå£å”¤é†’
     PMU_ClearIOAINTStatus(GPIO_Pin_2);
     PMU_INTConfig(PMU_INT_IOAEN, ENABLE);
     PMU_WakeUpPinConfig(GPIO_Pin_8, IOA_DISABLE);
-    CORTEX_SetPriority_ClearPending_EnableIRQ(PMU_IRQn, 0); //ÓÅÏÈ¼¶¸ß
+    CORTEX_SetPriority_ClearPending_EnableIRQ(PMU_IRQn, 0); //ä¼˜å…ˆçº§é«˜
 
     LowPower_InitStruct.AHBPeriphralDisable = PMU_AHB_ALL;
     LowPower_InitStruct.LCDPower            = PMU_LCDPWER_OFF;
@@ -407,7 +409,7 @@ void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
     LowPower_InitStruct.VDCINDetector       = PMU_VDCINDET_ENABLE;
     LowPower_InitStruct.VDDDetector         = PMU_VDDDET_DISABLE;
     RTC_PLLDIVOutputCmd(DISABLE);
-    //MComp1Init();//µç³Ø×´Ì¬¼à²â³õÊ¼»¯
+    //MComp1Init();//ç”µæ± çŠ¶æ€ç›‘æµ‹åˆå§‹åŒ–
     WDT_Disable();
     PMU_EnterSleep_LowPower(&LowPower_InitStruct);
 
@@ -447,7 +449,7 @@ void IOStateCheckInit(void)
    tm.tickpara = 0;
    tm.tickfunc = IOState;
    tm.tm_id = METER_COVER_TM;
-   tm.stoped = true;
+   tm.stoped = false;
    
    ndv_timer_create(&tm);
 
