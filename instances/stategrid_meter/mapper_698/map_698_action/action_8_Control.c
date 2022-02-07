@@ -1,67 +1,6 @@
 #include "nidavellir.h"
 #include "fr_698.h"
 
-#define     F_RemoteNull            0x00    //合闸
-#define		F_RemoteRelayOn  	    0x01	//保电
-#define		F_RemoteRelayOff 	    0x02    //拉闸
-#define		F_RemoteAlarm	  	    0x04    //告警
-#define		F_RemoteGaoJing0	    0x08    //预跳闸
-#define		F_RemoteGaoJing1	    0x10    //预跳闸
-#define     F_RemoteRelayOnAllow    0x20    //合闸允许
-#define     F_RemoteRelayOnDirect   0x40    //直接允许
-
-#if 0
-//协议中调用，返回：0（成功），1（失败）
-unsigned char do_remotecontrol(struct instance_t* instance,  struct pipeline_t* pipeline)
-{
-    unsigned char result = 0;
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
-    
-    switch(mbase_control_block->cmd)
-    {
-        case 0x1A:  //跳闸
-        case 0x1D:	//代表预跳闸(延时到直接合闸允许)，
-        case 0x1E:	//代表预跳闸(延时到合闸允许)，	
-            if(mbase_control_block->sta & F_RemoteRelayOn) {result = 1; break;}//保电    
-            if(mbase_control_block->cmd == 0x1A)
-            {
-                mbase_control_block->sta = F_RemoteRelayOff;
-                mbase_control_block->limitmin = 0;
-            }
-            else
-            {
-                if(mbase_control_block->sta & F_RemoteRelayOff)    {result = 1; break;}    //跳闸后，下发预跳闸失败
-                if(mbase_control_block->cmd == 0x1D)   mbase_control_block->sta |= F_RemoteGaoJing0;
-                else if(mbase_control_block->cmd == 0x1E)   mbase_control_block->sta |= F_RemoteGaoJing1;
-            }
-            if()    mbase_control_block->imaxmin = ;   //大电流延时时间赋值
-            break;
-        case 0x1B:  //合闸允许
-            mbase_control_block->sta |= F_RemoteRelayOnAllow;
-            break;
-        case 0x1C:	//直接合闸
-            mbase_control_block->sta &= ~F_RemoteRelayOff;
-            break;
-        case 0x2A:	//报警
-            mbase_control_block->sta |= F_RemoteAlarm;
-            break;
-        case 0x2B:	//报警解除
-            mbase_control_block->sta &= ~F_RemoteAlarm;
-            break;
-        case 0x3A:	//保电
-            mbase_control_block->sta |= F_RemoteRelayOn;
-            break;
-        case 0x3B:	//保电解除
-            mbase_control_block->sta &= ~F_RemoteRelayOn;
-            break;
-        default:
-            result = 1;
-            break; 
-    }
-    return result;
-}
-#endif
-
 int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {    
     struct mbase_control_block_t* mbase_cb;

@@ -79,7 +79,14 @@ int fr_sw_rtc(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 #endif // WIN32
         {
             mesg->from = kernel;
-            mesg->to = pid_meter_base;
+            if(instance->ac_power_statue == AC_POWER_ON)
+            {
+                mesg->to = pid_meter_base;
+            }
+            else
+            {
+                mesg->to = pid_lowpower_wakeup;
+            }
             mesg->ctrl = MSG_SECOND;
             mesg->id = 0x0000001;
             mesg->len = 0;
@@ -103,7 +110,14 @@ int fr_sw_key(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 #endif // WIN32
         {
             mesg->from = kernel;
-            mesg->to = pid_meter_base;
+            if(instance->ac_power_statue == AC_POWER_ON)
+            {
+                mesg->to = pid_meter_base;
+            }
+            else
+            {
+                mesg->to = pid_lowpower_wakeup;
+            }
             mesg->ctrl = MSG_PAGE_KEY_UP;
             mesg->id = 0x0000001;
             mesg->len = 0;
@@ -309,7 +323,7 @@ int nidavellir_run_baremetal(struct instance_t* instance)
 
     //处理持久化事务  如掉电保存和记录保存等  每圈保存一次
     //sync_data()
-    if(instance->ac_power_statue == AC_POWER_OFF)
+    if(instance->ac_power_statue != AC_POWER_ON)
     {
         cpu_io_lowpower_cfg_chk(instance);
         cpu_sleep_manage(instance, pipeline);

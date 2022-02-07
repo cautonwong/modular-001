@@ -223,27 +223,6 @@
 #define     KeyPortIn           {GPIOA->OEN |=BIT2; GPIOA->IE |=BIT2;}
 #define     KeyPortCheck        (GPIOA->STS & BIT2)
 
-//Flag.Power
-//Flag.Key
-//#define		F_KeyDisp0			0x01
-//#define		F_KeyDisp1			0x02
-#define		F_KeyDispay			0x04
-#define		F_KeyAwake			0x08
-//Flag.Disp
-#define		F_DispStop			0x01
-#define		F_DispOff			0x02
-#define		F_DispUpdate		0x04
-#define		F_DispFlash			0x08
-#define		F_DispPause			0x10
-#define		F_DispRst			0x20
-#define		F_DispIr_BG			0x40
-//Flag.CommDisp
-#define		F_CommDisp485		0x10
-#define		F_CommDispIr		0x20
-#define		F_CommDispPlc		0x40
-//Flag.Run
-#define		F_Disp              0x01
-
 
 //Info16bit定义
 // 6 bits	数据长度
@@ -266,14 +245,7 @@
 #define	    Mem_E2PROM               3
 #define     MEMVALUE                 0x03
 
-#define     F_RemoteNull            0x00    //合闸
-#define		F_RemoteRelayOn  	    0x01	//保电
-#define		F_RemoteRelayOff 	    0x02    //拉闸
-#define		F_RemoteAlarm	  	    0x04    //告警
-#define		F_RemoteGaoJing0	    0x08    //预跳闸
-#define		F_RemoteGaoJing1	    0x10    //预跳闸
-#define     F_RemoteRelayOnAllow    0x20    //合闸允许
-#define     F_RemoteRelayOnDirect   0x40    //直接允许
+
 
 typedef struct
 {
@@ -706,14 +678,14 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline)
     else
     {
         Flag.Disp &= ~F_DispStop;
-        if( ((mbase_control_block->Key & F_KeyAwake) == 0) && (Flag.Disp & F_DispOff) )
+        if( ((mbase_control_block->Key & F_KeyAwake) == 0))// && (Flag.Disp & F_DispOff) )
         {
             Flag.Disp &= ~F_DispPause;
             mbase_control_block->Key |= F_KeyAwake;
             Flag.Disp &= ~F_DispOff;
             mbase_control_block->AutoPtr = 0xFF;
             mbase_control_block->AutoInv = 0;
-            Init_LCD();
+            lcd_init(AC_POWER_ON);
             return;
         }
     }

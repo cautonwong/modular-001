@@ -1445,8 +1445,11 @@ uint8_t para_init(struct instance_t* instance )
         if( parameter_item[i].data != 0 )
         {
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + parameter_item[i].paramerer_index);
-            nd_set_index(instance, s_index, (uint8_t*)(parameter_item[i].data), (parameter_item[i].len)); 
+            nd_set_index(instance, s_index, (uint8_t*)(parameter_item[i].data+1), (*parameter_item[i].data)); 
         }
     }
+    
+    
+    
     return 0;
 }

@@ -287,7 +287,7 @@ void Energy_Pluse_Count(struct instance_t* instance, struct pipeline_t* pipeline
 void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline);
 void Energy_Meter_PowerON(struct instance_t* instance, struct pipeline_t* pipeline);
 void Energy_Meter_PowerOFF(struct instance_t* instance, struct pipeline_t* pipeline);
-int32_t Get_Cal_Active_Energy(struct mbase_control_block_t* , uint8_t index);
+int32_t Get_Cal_Active_Energy(struct mbase_control_block_t* , uint8_t index , uint8_t type);
 
 int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size,uint16_t *offset);
 int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth);
@@ -298,6 +298,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
 int app_rx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 int app_tx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+int app_meter_lowpower_wakeup_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
 void dev_init(void);

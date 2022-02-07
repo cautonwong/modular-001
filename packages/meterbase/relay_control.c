@@ -9,15 +9,6 @@
 #include "nidavellir.h"
 #include "applications.h"
 
-#define     F_RemoteNull            0x00    //合闸
-#define		F_RemoteRelayOn  	    0x01	//保电
-#define		F_RemoteRelayOff 	    0x02    //拉闸
-#define		F_RemoteAlarm	  	    0x04    //告警
-#define		F_RemoteGaoJing0	    0x08    //预跳闸
-#define		F_RemoteGaoJing1	    0x10    //预跳闸
-#define     F_RemoteRelayOnAllow    0x20    //合闸允许
-#define     F_RemoteRelayOnDirect   0x40    //直接允许
-
 #define     KeyPortIn           {GPIOA->OEN |=BIT2; GPIOA->IE |=BIT2;}
 #define     KeyPortCheck        (GPIOA->STS & BIT2)
 

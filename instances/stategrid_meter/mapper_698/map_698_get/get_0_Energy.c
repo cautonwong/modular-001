@@ -45,21 +45,50 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct 
                 buf[1] = 13;//数据块
                 len = 2;
                 ptr = &buf[2];
-                for(i=0;i<13;i++)
+                if(attribute == 2)
                 {
-                    *ptr++ = TYPE_double_long;
-                    tmp = Get_Cal_Active_Energy(mbase_cb , i);
-                    memcpy(ptr, (uint8_t*)&tmp, 4);
-                    ptr += 4;
-                    len += 5;
+                    for(i=0;i<13;i++)
+                    {
+                        *ptr++ = TYPE_double_long;
+                        tmp = Get_Cal_Active_Energy(mbase_cb , i , 0);
+                        memcpy(ptr, (uint8_t*)&tmp, 4);
+                        ptr += 4;
+                        len += 5;
+                    }
+                }
+                else if(attribute == 4)
+                {
+                    for(i=0;i<13;i++)
+                    {
+                        *ptr++ = TYPE_long64;
+                        tmp = Get_Cal_Active_Energy(mbase_cb , i , 0);
+                        memcpy(ptr, (uint8_t*)&tmp, 4);
+                        ptr += 4;
+                        tmp = Get_Cal_Active_Energy(mbase_cb , i , 1);
+                        memcpy(ptr, (uint8_t*)&tmp, 4);
+                        ptr += 4;
+                        len += 9;
+                    }
                 }
             }
             else if(attr_index<13)
             {
-                buf[0] = TYPE_double_long;
-                tmp = Get_Cal_Active_Energy(mbase_cb , attr_index);
-                memcpy(&buf[1], (uint8_t*)&tmp, 4);
-                len = 5;
+                if(attribute == 2)
+                {
+                      buf[0] = TYPE_double_long;
+                      tmp = Get_Cal_Active_Energy(mbase_cb , attr_index , 0);
+                      memcpy(&buf[1], (uint8_t*)&tmp, 4);
+                      len = 5;
+                }
+                else if(attribute == 4)
+                {
+                      buf[0] = TYPE_long64;
+                      tmp = Get_Cal_Active_Energy(mbase_cb , attr_index , 0);
+                      memcpy(&buf[1], (uint8_t*)&tmp, 4);
+                      tmp = Get_Cal_Active_Energy(mbase_cb , attr_index , 1);
+                      memcpy(&buf[5], (uint8_t*)&tmp, 4);
+                      len = 9;
+                }
             }
             else
             {

@@ -79,7 +79,7 @@ void Energy_Meter_PowerOFF(struct instance_t* instance, struct pipeline_t* pipel
 
 }
 
-int32_t Get_Cal_Active_Energy(struct mbase_control_block_t* mbase_control_block, uint8_t index)
+int32_t Get_Cal_Active_Energy(struct mbase_control_block_t* mbase_control_block, uint8_t index , uint8_t type)
 {
     int32_t energy_kwh = 0;
     int32_t energy_pulse = 0;
@@ -111,7 +111,15 @@ int32_t Get_Cal_Active_Energy(struct mbase_control_block_t* mbase_control_block,
         energy_pulse -= mbase_control_block->active_n_dec[index];
     }
     
-    energy_kwh = energy_kwh + energy_pulse / mbase_control_block->meter_const;
+    
+    if(type == 1)
+    {
+        energy_kwh = energy_pulse*100 / mbase_control_block->meter_const;
+    }
+    else
+    {
+        energy_kwh = energy_kwh + energy_pulse / mbase_control_block->meter_const;
+    }
     
     return energy_kwh;
 }

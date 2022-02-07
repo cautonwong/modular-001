@@ -135,6 +135,7 @@ extern struct pipeline_t pl_tx_dlms;
 #define pid_plc_tx_698   25
 #define pid_ir_rx_698    26
 #define pid_ir_tx_698    27
+#define pid_lowpower_wakeup 28
 
 enum work_type_t 
 {
@@ -579,5 +580,36 @@ uint16_t nd_get_crc16(uint8_t* buf, size_t len);
 void irq_transform_to_instance(struct instance_t* instance);
 
 int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx);
+
+//Flag.Power
+//Flag.Key
+//#define		F_KeyDisp0			0x01
+//#define		F_KeyDisp1			0x02
+#define		F_KeyDispay			0x04
+#define		F_KeyAwake			0x08
+//Flag.Disp
+#define		F_DispStop			0x01
+#define		F_DispOff			0x02
+#define		F_DispUpdate		0x04
+#define		F_DispFlash			0x08
+#define		F_DispPause			0x10
+#define		F_DispRst			0x20
+#define		F_DispIr_BG			0x40
+//Flag.CommDisp
+#define		F_CommDisp485		0x10
+#define		F_CommDispIr		0x20
+#define		F_CommDispPlc		0x40
+//Flag.Run
+#define		F_Disp              0x01
+
+
+#define     F_RemoteNull            0x00    //合闸
+#define		F_RemoteRelayOn  	    0x01	//保电
+#define		F_RemoteRelayOff 	    0x02    //拉闸
+#define		F_RemoteAlarm	  	    0x04    //告警
+#define		F_RemoteGaoJing0	    0x08    //预跳闸
+#define		F_RemoteGaoJing1	    0x10    //预跳闸
+#define     F_RemoteRelayOnAllow    0x20    //合闸允许
+#define     F_RemoteRelayOnDirect   0x40    //直接允许
 
 #endif

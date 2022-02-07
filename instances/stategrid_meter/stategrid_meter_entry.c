@@ -136,7 +136,22 @@ struct pipeline_t pl_ir_tx_698 =
     fr_tx_698,
 };
 
+const struct filter_t fr_lowpower[1] =
+{
+    {0x01,app_meter_lowpower_wakeup_entry,0,13},
+};
 
+struct pipeline_t pl_lowpower_wakeup =
+{
+    pid_lowpower_wakeup,
+    "pl_lowpower_wakeup",
+    NULL,
+    NULL,
+    NULL,
+    app_meter_lowpower_wakeup_entry,
+    sizeof(fr_lowpower) / sizeof(fr_lowpower[0]),
+    fr_lowpower,
+};
 
 struct pipeline_t* pipelines[] =
 {
@@ -148,6 +163,7 @@ struct pipeline_t* pipelines[] =
     &pl_ir_tx_698,
     &pl_meter_base,
     &pl_resource_manager,
+    &pl_lowpower_wakeup,
 };
 
 //cautonwong  以上的内容  应该放在instance的入口函数里面去分配和初始化
@@ -334,6 +350,10 @@ int baremetal_instance_entry_main(int argc, char** argv)
     pl_meter_base.in_queue = nd_malloc(instance, mbase_control_block_name, sizeof(struct fifo_t));
     fifoBuf_init(pl_meter_base.in_queue, nd_malloc(instance, mbase_control_block_name, 256), 256);
     pl_meter_base.out_queue = NULL;
+    pl_lowpower_wakeup.ctx = nd_malloc(instance, mbase_control_block_name, sizeof(struct mbase_control_block_t));
+    pl_lowpower_wakeup.in_queue = nd_malloc(instance, mbase_control_block_name, sizeof(struct fifo_t));
+    fifoBuf_init(pl_lowpower_wakeup.in_queue, nd_malloc(instance, mbase_control_block_name, 256), 256);
+    pl_lowpower_wakeup.out_queue = NULL;
     //mbase分三个区
     //mbase_block_static
     size_t mbase_block_static_size = offsetof(struct mbase_control_block_t, static_section_end) - offsetof(struct mbase_control_block_t, static_section_start);

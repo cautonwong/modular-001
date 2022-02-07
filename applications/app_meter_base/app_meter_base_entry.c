@@ -2,6 +2,7 @@
 #include "applications.h"
 #include "resource_tool.h"
 #include "target.h"
+#include "lib_clk.h"
 
 #define     P_BACKLIGHT_ON      GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT |= 0x10; //推挽输出高
 #define     P_BACKLIGHT_OFF     GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT &=~0x10; //推挽输出低
@@ -481,6 +482,18 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     
     backlight_pro(instance, pipeline);
     Meter_Run_State(instance, pipeline);//运行状态字刷新
+    
+    if( instance->ac_power_statue != AC_POWER_ON )
+    {
+        if( (mbase_control_block->Key & F_KeyDispay) && (mbase_control_block->KeyInv == 0) )//退出键显,息屏
+        {
+            mbase_control_block->Key &= ~F_KeyDispay;
+            mbase_control_block->AutoPtr = 0xFF;
+            mbase_control_block->lcd_keydis_keep_sec = 0;
+            //Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
+            mbase_control_block->Key &= ~F_KeyAwake;
+        }
+    }
 }
 
 // !!!在此app中不做IO操作!!!
@@ -571,5 +584,47 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
     return 0;
 }
 
+int app_meter_lowpower_wakeup_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    int r = recv_mesg_header(instance,pipeline,mesg);
+    uint8_t buf[20];
+    if(r > 0 )
+    {
+        if((mesg->len > 0) && (mesg->len <20))
+        {
+            fifoBuf_getData(pipeline->in_queue,buf,mesg->len);
+        }
 
+        //开启EE电源和IO口时钟
+        CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);
+        GPIOC->OEN &= ~(BIT4|BIT5|BIT6); 
+        GPIOC->IE &= ~(BIT4|BIT5|BIT6);
+        GPIOC->DAT |= (BIT6);
+
+        switch (mesg->ctrl)
+        {
+            case MSG_SECOND:
+                SecTick_Task(instance, pipeline);
+
+                Rtc_Prossecc(instance, pipeline);
+
+                if(mbase_control_block->Key & F_KeyAwake)
+                {
+                    Display(instance, pipeline);
+                }
+
+                IOStateCheck(instance, pipeline);
+
+                break;
+            case MSG_PAGE_KEY_UP:
+                Key_Display(instance, pipeline);
+                Display(instance, pipeline);
+                break;
+            default:
+                break;
+        }
+    }
+    return 0;
+}
 
