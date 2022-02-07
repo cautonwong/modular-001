@@ -153,6 +153,9 @@
     <ClCompile Include="..\..\..\packages\meterbase\gs_rtc_err_event.c">
       <Filter>app_meter_base</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\packages\meterbase\gs_meter_program_event.c">
+      <Filter>app_meter_base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="app_698_server">

@@ -765,10 +765,12 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
     uint8_t* p = buf;
     uint8_t tempbuf[200];
     uint8_t* src = tempbuf;
-    uint16_t i;
+    uint16_t i, len = 0;
     uint16_t OI;
     uint8_t attr, class = 7;
     uint8_t dar = DAR_SUCCESS;
+    uint32_t index;
+    int ret;
 
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
@@ -791,6 +793,74 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
             *p++ = TYPE_null;
             return (p-buf);
         }
+        break;
+        case 0x33020206: //事件编程   
+        {
+            index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr_List);
+            len = 52;
+            nd_get_index(instance, index, p, len);
+            p += len;
+            return (p-buf);
+        }
+        break;
+        case 0x330C0206: //事件清零 
+        {
+
+            index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + EventClr_List);
+            len = 7;
+            nd_get_index(instance, index, p, len);
+            p += len;
+            return (p-buf);
+        }
+
+        case 0x33140206: //编程时段表对象  事件记录用
+        {
+
+            index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Set_DayTab_Oad);
+            len = 5;
+            nd_get_index(instance, index, p, len);
+            p += len;
+            return (p - buf);
+        }
+        break;
+
+        case 0x33140207: //编程前时段表 事件记录用
+        {
+            index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_DayTab);
+            ret = nd_get_index(instance, index, p, 114);
+            if ((ret < 0) || (p[1] > 14) || (p[0] != TYPE_array))// 错误
+            {
+                *p++ = 0;
+            }
+            else
+            {
+                p += (p[1] * 8 + 2);
+            }
+            return (p - buf);
+        }
+        break;
+        case 0x33150206: //编程节假日对象  事件记录用
+        {
+            index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Set_Holiday_Oad);
+            len = 5;
+            nd_get_index(instance, index, p, len);
+            p += len;
+            return (p - buf);
+        }
+        break;
+        case 0x33150207: //编程前节假日内容 事件记录用  
+            index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Holiday);
+            ret = nd_get_index(instance, index, p, 10);
+            if ((ret < 0) || (p[0] != TYPE_structure))// 错误
+            {
+                *p++ = 0;
+            }
+            else
+            {
+                p += 10;
+            }
+            return (p - buf);
+
         default:
             break;
     }
@@ -918,7 +988,6 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
         default:
             break;
     }
-
 
 
 #if 0

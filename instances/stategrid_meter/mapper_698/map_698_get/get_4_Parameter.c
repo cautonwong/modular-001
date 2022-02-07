@@ -35,7 +35,7 @@ const general_get4  get4300_table[] =
 
 const general_get4  general_get4_talble[] =
 {
-//     Comm_Number,               0x4001,     TYPE_octet_string,      6,//表地址
+     //Comm_Number,               0x4001,     TYPE_octet_string,      6,//表地址
      User_Number,               0x4003,     TYPE_octet_string,      6,//客户编号
      SeasonTable_Changetime,    0x4008,     TYPE_date_time_s,       7,//两套时区切换时间
      DayTable_Changetime,       0x4009,     TYPE_date_time_s,       7,//两套时段切换时间
@@ -157,6 +157,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
     uint8_t index,attribute,i,j,temp[42]={0},num=0,num_hourtab = 0;
     uint8_t* p = buf;
     int len = 0;
+    int ret;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
@@ -170,6 +171,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
         return len;
     }
     
+
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
     index = (unsigned char)(id & 0x000000FF);
     attribute = (unsigned char)((id & 0x0000FF00) >> 8);
@@ -235,6 +237,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
             {
                 return -1;
             }
+            break;
         case 0x4002://表号
             if(attribute == 0x02)
             {
@@ -398,6 +401,21 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
             break;
         case 0x4014://当前套时区表
         case 0x4015://备用套时区表
+            if (id == 0x40152200) // 编程事件用
+            {
+                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_SeasonT);
+                ret = nd_get_index(instance, s_index, p, 114);
+                if ((ret < 0) || (p[1] > 14) || (p[0] != TYPE_array))// 错误
+                {
+                    *p++ = 0;
+                }
+                else
+                {
+                    p += (p[1] * 8 + 2);
+                }
+                return (p - buf);
+            }
+
             if(index > 14)    return -1;
             if(oad == 0x4014)   
                 addr = Season_Table0;

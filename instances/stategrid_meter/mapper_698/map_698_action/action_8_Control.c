@@ -52,6 +52,8 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         if(relayon_type == 0)   mbase_cb->sta |= F_RemoteGaoJing0;
                         else if(relayon_type == 1)   mbase_cb->sta |= F_RemoteGaoJing1;
                     }
+                    
+                    send_event_mesg_pro(instance, NULL, SwitchOffS, NULL, 1); // 触发位置 待调整
                     return (p-buf);
                     //if()    mbase_control_block->imaxmin = ;   //大电流延时时间赋值
                     break;
@@ -72,6 +74,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         mbase_cb->sta |= F_RemoteRelayOnDirect; //直接合闸
                     p++;
                     mbase_cb->sta &= ~F_RemoteRelayOff;
+                    send_event_mesg_pro(instance, NULL, SwitchOnS, NULL, 1);// 触发位置 待调整
                     return (p-buf);
                     break;
                 default:

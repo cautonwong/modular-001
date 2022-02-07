@@ -278,7 +278,8 @@ enum record_flag_id_t
 
     PowerOffS                    ,  //  0x3011    电能表掉电事件                                               
     PowerOffE                    ,  //  0x3011    电能表掉电事件                                               
-    MeterWrS                     ,  //  0x3012    电能表编程事件                                                
+    MeterWrS                     ,  //  0x3012    电能表编程事件       
+    MeterWrR                     ,  //  0x3012    电能表编程事件 特殊 用于更新编程列表   
     MeterClrS                    ,  //  0x3013    电能表清零事件                                                        
     EventClrS                    ,  //  0x3015    电能表事件清零事件                                
     SetTimeS                     ,  //  0x3016    电能表校时事件                                    
@@ -571,7 +572,14 @@ enum block_parameter_item_id_t
 #define     SwitchErr_State             1501 //负荷开关误动作状态040A0130160?16001600
 #define     BeforSetT_Time              1502 //校时前时间 秒 分 时 日 月 年(2字节)
 #define     AfterSetT_Time              1503 //校时后时间 秒 分 时 日 月 年(2字节)
-                           
+#define     MeterWr_List                1504 //编程对象列表        
+#define     BeforSet_SeasonT            1505 //编程前备用套时区表 
+#define     Set_DayTab_Oad              1506 //编程时段表对象
+#define     BeforSet_DayTab             1507 //编程前备用套时段表
+#define     Set_Holiday_Oad             1508 //编程时节假日对象
+#define     BeforSet_Holiday            1509 //编程前节假日
+
+
 #define     MAX_FEE_NO                  12                                  
 
 #endif

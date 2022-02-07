@@ -232,7 +232,7 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
     index = (uint8_t)(oad & 0x000000FF);
 
 
-    if ((*p++ != TYPE_OAD) || (oad & 0xF0000000 != 0x30000000))
+    if ((*p++ != TYPE_OAD) || ((oad & 0xF0000000) != 0x30000000))
     {
         *dar = DAR_OTHERS_ERROR;
         return -1;
@@ -370,7 +370,6 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
         //    return DAR_TIME_TAG_INVALID;
         //}
 
-        event_clear_omd_add(instance, id, 0 /*req->channel */); //待调整    如何在map  case中  取到通道号
 
         ret = single_event_clear_judge(oi);
     
@@ -384,6 +383,7 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
         {
             //无功组合特征字特殊处理
         }
+        event_clear_omd_add(instance, id, 0 /*req->channel */); //待调整    如何在map  case中  取到通道号
         //清零
         ret = clr_record(instance, id);
         if (ret < 0)
@@ -391,6 +391,10 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
             dar = DAR_OTHERS_ERROR;
             return ret;
         }
+
+        send_event_mesg_pro(instance, NULL, EventClrS, NULL, 1);
+
+
         //待调整 上报确认
         //dl698_api_event_report_object_all_channel_confirmed(req);
         return (p - buf);

@@ -290,7 +290,7 @@ uint32_t dt_buf_to_second(uint8_t* dt)
     year = buf_to_uint16_msb(dt);
     dt += 2;
 
-    time.tm_year = (uint8_t)(year - 1900);
+    time.tm_year = (uint8_t)(year  - 1900);
     time.tm_mon = *dt++;
     time.tm_mday = *dt++;
     time.tm_hour = *dt++;

@@ -32,7 +32,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf)
     uint8_t* p = buf;
     uint8_t i,j,maxnum=0;
     uint16_t oad;
-    uint8_t index,attribute;
+    uint8_t index,attribute, temp[10] = {0};
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
@@ -173,14 +173,15 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf)
         case 0x201E0200://事件发生时间
         case 0x20200200://事件结束时间  
         case 0x20210200://数据冻结时间 
-            uint16_t year_temp = instance->time.tm_year;// +2000;
             *p++ = TYPE_date_time_s;
-            p += uint16_to_buf_msb(year_temp, p);
-            *p++ = (uint8_t)instance->time.tm_mon;
-            *p++ = (uint8_t)instance->time.tm_mday;
-            *p++ = (uint8_t)instance->time.tm_hour;
-            *p++ = (uint8_t)instance->time.tm_min;
-            *p++ = (uint8_t)instance->time.tm_sec;
+            rtc_get_from_tm(instance,temp);
+            *p++ = temp[6];
+            *p++ = temp[5];
+            *p++ = temp[4];
+            *p++ = temp[3];
+            *p++ = temp[2];
+            *p++ = temp[1];
+            *p++ = temp[0];
             return (p-buf);
             break;
         case 0x20240200:// 时间发生源  

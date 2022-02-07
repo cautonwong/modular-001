@@ -2,6 +2,7 @@
 #include "applications.h"
 #include "gs_record.h"
 #include "fr_698.h"
+#include "resource_tool.h"
 
 
 #define U32toBufLSB(x)  ((uint8_t)(x)), ((uint8_t)(x>>8)), ((uint8_t)(x>>16)), ((uint8_t)(x>>24))
@@ -279,7 +280,7 @@ int clr_record(struct instance_t* instance, uint32_t oad)
     //清记录
     nd_log_clean(instance, info.save_index);
     //清序号
-    nd_set_index(instance, info.sequence_index, &temp, 4);
+    nd_set_index(instance, info.sequence_index, (uint8_t*)&temp, 4);
 
     //累计时间清零
     if (info.acc_time)
@@ -336,8 +337,8 @@ const uint32_t event_oad[] =
     0x30050700,   //A过流 
     0x30110200,   //电能表掉电事件                      
     0x30120200,   //电能表编程事件            
-    0x30130200,   //电能表清零事件            
-    0x30150200,   //电能表事件清零事件        
+    //0x30130200,   //电能表清零事件       // 单独处理      
+    //0x30150200,   //电能表事件清零事件   // 单独处理      
     0x30160200,   //电能表校时事件            
     0x30170200,   //电能表时段表编程事件      
     0x30180200,   //电能表时区表编程事件      
@@ -364,12 +365,13 @@ const uint32_t event_oad[] =
 
 
 
-//事件清零
+//事件清零 // 不包含事件清零事件
 int event_clr(struct instance_t* instance)
 {
     int ret;
 
     ret = list_record_clr(instance, event_oad, (sizeof(event_oad) / sizeof(event_oad[0])));
+    
     return ret;
 }
 //冻结清零
@@ -383,6 +385,20 @@ int freeze_clr(struct instance_t* instance)
 
 int meter_clr(struct instance_t* instance)
 {
+    struct mbase_control_block_t* mbase_cb;
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    //电量清零 待添加
+
+    freeze_clr(instance); //冻结清零
+    event_clr(instance);  // 事件清零
+    clr_record(instance, 0x30150200); //事件清零事件 清零
+    if ((mbase_cb->factor_mode == true)) //电表清零事件 清零
+    {
+        clr_record(instance, 0x30130200);
+    }
+
+    //其他清零  待添加
 
 }
 
@@ -397,36 +413,44 @@ int event_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct m
       RTCErr_event_judge(instance, pipeline, mesg);     // 电能表时钟故障事件 
       EmuErr_event_judge(instance, pipeline, mesg);     // 电能表计量芯片故障事件
 
-
+      return 1;
 #if 0
-      //OverCurrentAS_oad,   //关联对象    电能表A相过流事件
-          //PowerOffS_oad,   //关联对象    电能表掉电事件           停电下未处理
-          MeterWrS_oad,   //关联对象    电能表编程事件            
-          MeterClrS_oad,   //关联对象    电能表清零事件            
-          EventClrS_oad,   //关联对象    电能表事件清零事件        
-          SetTimeS_oad,   //关联对象    电能表校时事件   
+           ///////OverCurrentAS = 11,             //  0x3005    A过流发生 
 
-          DayTabWrS_oad,   //关联对象    电能表时段表编程事件      
-          SeasonTabWrS_oad,   //关联对象    电能表时区表编程事件      
-          WeekTabWrS_oad,   //关联对象    电能表周休日编程事件      
-          BillDayWrS_oad,   //关联对象    电能表结算日编程事件  
-          CoverOpenS_oad,   //关联对象    电能表开盖事件            
-          SwitchOffS_oad,   //关联对象    电能表跳闸事件            
-          SwitchOnS_oad,   //关联对象    电能表合闸事件            
-          HolidayWrS_oad,   //关联对象    电能表节假日编程事件      
-          ActCombWrS_oad,   //关联对象    电能表有功组合方式编程事件
-          FeeTabWrS_oad,   //关联对象    电能表费率参数表编程事件  
-          StepTabWrS_oad,   //关联对象    电能表阶梯表编程事件      
-          SecretKeyWrS_oad,   //关联对象    电能表密钥更新事件 
-          ErrPlugCardS_oad,   //关联对象    电能表异常插卡事件        
-          RechargeS_oad,   //关联对象    电能表购电记录            
-          RefundS_oad,   //关联对象    电能表退费记录  
-          SwitchErrS_oad,   //关联对象    电能表负荷开关误动作事件  
-          PowerAbnormalS_oad,   //关联对象    电能表电源异常事件 
-          RTCErrS_oad,   //关联对象    电能表时钟故障事件 
-          EmuErrS_oad,   //关联对象    电能表计量芯片故障事件
-          BroadcastTimeS_oad,   //关联对象    广播校时事件 
-          ZeroLineErrS_oad,   //关联对象    零线电流异常事件 
+
+          //PowerOffS,  //  0x3011    电能表掉电事件                                               
+                                              
+          MeterWrS,  //  0x3012    电能表编程事件                                                
+          /////MeterClrS,  //  0x3013    电能表清零事件                                                        
+          /////EventClrS,  //  0x3015    电能表事件清零事件                                
+          //SetTimeS,  //  0x3016    电能表校时事件                                    
+          //DayTabWrS,  //  0x3017    电能表时段表编程事件                                        
+          //SeasonTabWrS,  //  0x3018    电能表时区表编程事件                                
+          WeekTabWrS,  //  0x3019    电能表周休日编程事件                                              
+          BillDayWrS,  //  0x301A    电能表结算日编程事件  
+          //////CoverOpenS,  //  0x301B    电能表开盖事件                                      
+
+          //SwitchOffS,  //  0x301F    电能表跳闸事件                                                                           
+          //SwitchOnS,  //  0x3020    电能表合闸事件                                          
+          HolidayWrS,  //  0x3021    电能表节假日编程事件                                                
+          ActCombWrS,  //  0x3022    电能表有功组合方式编程事件                                            
+          FeeTabWrS,  //  0x3024    电能表费率参数表编程事件                                    
+          StepTabWrS,  //  0x3025    电能表阶梯表编程事件                                           
+          //////SecretKeyWrS,  //  0x3026    电能表密钥更新事件 
+          //////ErrPlugCardS,  //  0x3027    电能表异常插卡事件                                           
+          /////RechargeS,  //  0x3028    电能表购电记录                                       
+          //RefundS,  //  0x3029    电能表退费记录  
+          SwitchErrS,  //  0x302B    电能表负荷开关误动作事件                                               
+                                      
+          PowerAbnormalS,  //  0x302C    电能表电源异常事件 
+
+          RTCErrS,  //  0x302E    电能表时钟故障事件 
+
+          EmuErrS,  //  0x302F    电能表计量芯片故障事件
+
+          BroadcastTimeS,  //  0x303C    广播校时事件 
+          ZeroLineErrS,  //  0x3040    零线电流异常事件  
+ 
 #endif
 
 
@@ -562,6 +586,12 @@ uint32_t record_capture_change(uint32_t obj, uint16_t record_id)
             obj = 0x40008200;
         }
         break;
+    case MeterWrS: //若第一个编程为校时,则编程开始时间取校时前时间
+        if (obj == 0x201E0200)
+        {
+            obj = 0x40002200;
+        }
+        break;
     default:
         break;
     }
@@ -581,12 +611,23 @@ uint8_t check_scheme(enum scheme_mode mode, uint32_t obj, uint16_t record_id)
     case 0x20210200: //冻结时间
     case 0x20230200: //冻结记录
         break;
+        
+    case 0x33020206: //事件编程    //特殊处理 结束时更新
+        break;
+
+    case 0x33150206: //编程节假日对象  事件记录用
+    case 0x33150207: //编程前节假日内容 事件记录用
+    case 0x33140206: //编程时段表对象  事件记录用
+    case 0x33140207: //编程前时段表 事件记录用
+    case 0x330C0206: //事件清零
     case 0x20220200: //事件记录序号
         if (mode == END_MODE)
         {
             scheme_valid = false;
         }
         break;
+    case 0x33000200: //通道上报状态
+    case 0x20240200: //事件发生源
     case 0x201E0200: //事件发生时间
         if (mode == END_MODE)
         {
@@ -605,13 +646,13 @@ uint8_t check_scheme(enum scheme_mode mode, uint32_t obj, uint16_t record_id)
         switch (mode)
         {
         case START_MODE:    //发生
-            if ((scheme == 3) || (scheme == 4))
+            if ((scheme == 0) || (scheme == 3) || (scheme == 4))
             {
                 scheme_valid = false;
             }
             break;
         case END_MODE:      //结束
-            if ((scheme == 1) || (scheme == 2))
+            if ((scheme == 0) || (scheme == 1) || (scheme == 2))
             {
                 scheme_valid = false;
             }
@@ -626,7 +667,7 @@ uint8_t check_scheme(enum scheme_mode mode, uint32_t obj, uint16_t record_id)
         break;
     }
 
-    if(record_id == SetTimeS)
+    if(record_id == SetTimeS) //待调整
     {
         scheme_valid = true;
     }
@@ -643,11 +684,36 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
     uint32_t obj;
     uint8_t tmpbuf[200];//单个关联对象 最大长度
     uint16_t RecordID =  (uint16_t)record_id_info->save_index;
+    struct circular_info_t circular_info = {0};
+    uint8_t scheme_invalid_wr_flag = true;
     int ret;
 
     p = databuf;
     if (CaptureList)
     {
+        //read last1
+        if(mode == END_MODE)  // 结束需要先获取上一次存储数据
+        {
+            ret = nd_log_output(instance, record_id_info->save_index,  p, 1, &circular_info);
+            if(ret < 0)
+            {
+                return -1;
+            }
+            
+            if(circular_info.valid_num == 0)
+            {
+                return -1;
+            }
+            
+            circular_info.curr_num = circular_info.valid_num - 1;//上1次
+
+            ret = nd_log_output(instance, record_id_info->save_index,  p, circular_info.unit_size, &circular_info);
+            if(ret < 0)
+            {
+                return -1;
+            }
+        }
+        
         for (i = 0; i < (CaptureList[0]); i++)
         {
             obj = CaptureList[1 + i];
@@ -658,18 +724,26 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
             scheme_valid = true;
             scheme_valid = check_scheme(mode,obj, RecordID); //方案号 & 属性特征 判断
             
+            scheme_invalid_wr_flag = true; //结束记录时 不更新不相关数据。
+            if (( mode == END_MODE ) && ( scheme_valid == false ))
+            {
+                scheme_invalid_wr_flag = false;
+            }
             
             single_len = 0;
  
             if (true == scheme_valid)
             {
-                single_len = nd_get(instance, obj, p, *remain_size, NULL);
+                single_len = nd_get(instance, obj, tmpbuf, *remain_size, NULL);
                 // 特殊事件关联对象的特殊处理 
                 // format改变，长度改变
-                ret = record_change_format(tmpbuf, p, obj, RFC_WRITE);
+                ret = record_change_format(p, tmpbuf, obj, RFC_WRITE);
                 if (ret >= 0)
                 {
                     single_len = ret;
+                }
+                else
+                {
                     memcpy(p, tmpbuf, single_len);
                 }
                 if (single_len > 0)
@@ -694,13 +768,19 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
                 }
                 if (single_len > 0)
                 {
-                    memset(p, 0xFF, single_len);
+                    if (scheme_invalid_wr_flag == true)
+                    {
+                        memset(p, 0xFF, single_len);
+                    }
                     p += single_len;
                     *remain_size -= single_len;
                 }
                 else
                 {
-                    memset(p, 0, 1); //找不到填 NULL 
+                    if (scheme_invalid_wr_flag == true)
+                    {
+                        memset(p, 0, 1); //找不到填 NULL 
+                    }
                     p += 1;
                     *remain_size -= single_len;
                 }
@@ -719,7 +799,8 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
     uint32_t sequence,Oad;
     uint32_t CaptureList[50 + 1] = { 0 };
     struct record_storage_id_info_t record_id_info; 
-
+    uint8_t pairs_event = 0;
+    
     int ret;
       
     remain_size = sizeof(data_buff);
@@ -737,15 +818,18 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
             case OverCurrentAS:         //过流事件发生
                 Oad = 0x30050700;
                 mode = START_MODE + (mesg->id - OverCurrentAS);
+                pairs_event = 1;
                 break;
             case PowerOffE:             //电能表掉电事件结束
             case PowerOffS:             //电能表掉电事件发生
                 Oad = 0x30110200;
                 mode = START_MODE + (mesg->id - PowerOffS);
+                pairs_event = 1;
                 break;
             case MeterWrS:             //电能表编程事件  
+            case MeterWrR:
                 Oad = 0x30120200;
-                mode = START_MODE;
+                mode = START_MODE + (mesg->id - MeterWrS);
                 break;
             case MeterClrS:      
                 Oad = 0x30130200;
@@ -772,6 +856,7 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
             case CoverOpenS:            //开盖事件发生
                 Oad = 0x301B0200;
                 mode = START_MODE + (mesg->id - CoverOpenS);
+                pairs_event = 1;
                 break;
 
             case SwitchOffS:
@@ -796,21 +881,25 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
             case SwitchErrS:            
                 Oad = 0x302B0200;
                 mode = START_MODE + (mesg->id - SwitchErrS);
+                pairs_event = 1;
                 break;
             case PowerAbnormalE:
             case PowerAbnormalS:
                 Oad = 0x302C0200;
                 mode = START_MODE + (mesg->id - PowerAbnormalS);
+                pairs_event = 1;
                 break;
             case RTCErrE:
             case RTCErrS:
                 Oad = 0x302E0200;
                 mode = START_MODE + (mesg->id - RTCErrS);
+                pairs_event = 1;
                 break;
             case EmuErrE:
             case EmuErrS:
                 Oad = 0x302F0200;
                 mode = START_MODE + (mesg->id - EmuErrS);
+                pairs_event = 1;
                 break;
 
             case BroadcastTimeS:
@@ -821,6 +910,7 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
             case ZeroLineErrS:
                 Oad = 0x30400200;
                 mode = START_MODE + (mesg->id - ZeroLineErrS);
+                pairs_event = 1;
                 break;
 
             case InstantFreeze:         //瞬时冻结
@@ -881,13 +971,24 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
         pdata += read_record_capture(instance, pdata, CaptureList, mode, &remain_size, &record_id_info);
 
         // 读取序号 ++
-        nd_get_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
-        mem_swap_cpy(data_buff + 1, (uint8_t*)&sequence, 4);
-        sequence++;
-        nd_set_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+        if ((pairs_event != 1) || (mode != END_MODE)) 
+        {
+            nd_get_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+            mem_swap_cpy(data_buff + 1, (uint8_t*)&sequence, 4);
+            sequence++;
+            nd_set_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+        }
 
         //调用ND_SET保存数据
-        nd_log_append(instance, record_id_info.save_index, data_buff, (pdata - data_buff));
+        if (mode == END_MODE)
+        {
+            nd_log_append_revise(instance, record_id_info.save_index, data_buff, 0, (pdata - data_buff));
+        }
+        else
+        {
+            nd_log_append(instance, record_id_info.save_index, data_buff, (pdata - data_buff));
+        }
+
 
     }
     return 0;//返回0代表结束

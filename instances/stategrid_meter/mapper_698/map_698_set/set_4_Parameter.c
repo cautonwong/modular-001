@@ -172,7 +172,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad;
-    uint8_t index,attribute,i,num,buffer[42]={0},temp[10]={0},num_hourtab=0,j,year;
+    uint8_t index,attribute,i,num,buffer[42]={0},temp[114]={0},num_hourtab=0,j,year;
     uint8_t* p = buf;
     uint32_t s_index = 0x00,addr=0;
     int len=0;
@@ -371,12 +371,25 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
             break;
         case 0x4011://公共假日表
             if((index == 0) || (index > 10))    return -1;
+
+            // 编程事件-保存编程前
+            nd_get(instance, id, temp, 10, NULL);
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Holiday);
+            nd_set_index(instance, s_index, temp, 10);                                          
+
+            temp[0] = TYPE_OAD;
+            uint32_to_buf_msb(id, &temp[1]);
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Set_Holiday_Oad);
+            nd_set_index(instance, s_index, temp, 5);
+       
             p = p + 3;
             memcpy(buffer, p, 5);
             p = p + 6;
             buffer[5] = *p++;
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + HoliDay_Table + (index-1));
             nd_set_index(instance, s_index, buffer, 6); 
+
+            send_event_mesg_pro(instance, NULL, HolidayWrS, NULL, 1);// 公共假日编程事件
             return (p-buf);
             break;
         case 0x4014://当前套时区表
@@ -386,6 +399,15 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 addr = Season_Table0;
             else 
                 addr = Season_Table1;
+
+            // 编程事件-保存编程前
+            if (oad == 0x4015)
+            {
+                nd_get(instance, 0x40150200, temp, 114, NULL);
+                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_SeasonT);
+                nd_set_index(instance, s_index, temp, 114);
+            }
+
             if(index == 0)
             {
                 num = *p;
@@ -402,7 +424,6 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
                     nd_set_index(instance, s_index, buffer, 3);
                 }
-                return (p-buf);
             }
             else
             {
@@ -414,8 +435,9 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 buffer[2] = *p++;
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
                 nd_set_index(instance, s_index, buffer, 3);
-                return (p-buf);
             }
+            send_event_mesg_pro(instance, NULL, SeasonTabWrS, NULL, 1);// 
+            return (p - buf);
             break;
         case 0x4016://当前套日时段表
         case 0x4017://备用套日时段表
@@ -424,6 +446,20 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 addr = Day_Table00;
             else
                 addr = Day_Table10;
+
+            // 编程事件-保存编程前
+            if (oad == 0x4017)
+            {
+                nd_get(instance, id, temp, 114, NULL);
+                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_DayTab);
+                nd_set_index(instance, s_index, temp, 114);
+
+                temp[0] = TYPE_OAD;
+                uint32_to_buf_msb(id, &temp[1]);
+                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Set_DayTab_Oad);
+                nd_set_index(instance, s_index, temp, 5);
+            }
+
             if(index == 0)
             {
                 p++;
@@ -445,7 +481,6 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + j);
                     nd_set_index(instance, s_index, buffer, 3*num_hourtab);
                 }
-                return (p-buf);
             }
             else
             {
@@ -462,8 +497,11 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 }
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index - 1));
                 nd_set_index(instance, s_index, buffer, 3*num_hourtab);
-                return (p-buf);
+                
             }
+
+            send_event_mesg_pro(instance, NULL, DayTabWrS, NULL, 1);// 时段表编程事件
+            return (p - buf);
             break;
         
         case 0x4116://结算日

@@ -102,7 +102,11 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 
                 rxlen = write_esam(addr , (uint8_t*)&p_ctx->apdu_rx->buf_ptr[9], txlen);
                 p = p + 1692;
-                
+                //成功后 再触发 密钥更新事件
+                if(rxlen != 0xff)
+                {
+                    send_event_mesg_pro(instance, NULL, SecretKeyWrS, NULL, 1);
+                }
                 return (p-buf);
             }
             else if(method == 0x0B) //红外请求

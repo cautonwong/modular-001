@@ -6,6 +6,7 @@
 int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {    
     struct mbase_control_block_t* mbase_cb;
+    struct pipeline_t* pipeline;
     uint8_t  method,dar=0;
     uint16_t oad;
     uint8_t *p = buf;
@@ -18,6 +19,13 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
     {
         return -1;
     }
+    
+    pipeline = get_pipeline(instance, pid_meter_base);
+    if(pipeline == NULL)
+    {
+        return -1;
+    }  
+    
     switch (oad)
     {
         case 0x4300:
@@ -32,12 +40,35 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     return (p-buf);
                     break;
                 case 0x03://数据初始化（电表清零）
+
+                    // 时间标签 标志  待调整
+#if 0
+                    if ((mbase_cb->time_tag == false) && (mbase_cb->factor_mode == false))
+                    {
+                        return (1-DAR_TIME_TAG_INVALID);
+                    }
+#endif
+#if 0
+                    if ((mbase_cb->SecretKey_state == 0) && (mbase_cb->factor_mode == false))//0私钥，1公钥，私钥不允许清零
+                    {
+                        return (1 - DAR_UNAUTHORIZED);
+                    }
+#endif
                     p++;
+                    send_event_mesg_pro(instance, NULL, MeterClrS, NULL, 1);
                     return (p-buf);
                     break;
                 case 0x05://事件初始化
+#if 0
+                    if ((mbase_cb->time_tag == false) && (mbase_cb->factor_mode == false))
+                    {
+                        return (1 - DAR_TIME_TAG_INVALID);
+                    }
+#endif
+                    event_clear_omd_add(instance, id, 0 /*req->channel */); //待调整    如何在map  case中  取到通道号
                     event_clr(instance);// 事件清零
 					p++;
+                    send_event_mesg_pro(instance, NULL, EventClrS, NULL, 1);
                     return (p-buf);
                     break;
                 default:

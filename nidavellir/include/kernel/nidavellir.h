@@ -105,7 +105,7 @@ extern struct pipeline_t pl_tx_dlms;
 #define MSG_MAGIC  0xe8f9ab39
 
 //to-be-deleted
-#define NIDAVELLIR_EPOCH 2020
+#define NIDAVELLIR_EPOCH 2000
 
 #define msta_rx_from_meter   0
 #define msta_tx_to_meter   1

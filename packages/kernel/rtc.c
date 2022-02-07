@@ -170,6 +170,8 @@ uint32_t rtc_mktime(struct tm *t)
     return time;
 }
 
+
+
 void rtc_localtime(uint32_t time, struct tm *t)
 {
     uint32_t y_secs = _is_leap_year(NIDAVELLIR_EPOCH) ? (366 * DAY) : (365 * DAY);
@@ -187,6 +189,7 @@ void rtc_localtime(uint32_t time, struct tm *t)
 
     rtc_tm_normalize(t);
 }
+
 
 #define RETURN_IF_DIFFERENT(a, b, member)   \
     if (a->member != b->member) {           \

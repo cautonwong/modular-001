@@ -223,6 +223,7 @@ struct mbase_control_block_t
     uint8_t EmuErrS_status;             //当前状态标志 计量芯片故障事件
     uint8_t RTCErrS_status;             //当前状态标志 时钟故障事件
     uint16_t Un_60;                     //当前状态标志 60%Un值  // 待调整
+    uint8_t MeterWr_SetTime_flag;       //当前状态标志 5A: 编程事件由校时产生
 
     uint8_t OverCurrentAS_duration;     //当前状态持续时间 电能表过流事件
     uint8_t PowerOffS_duration;         //当前状态持续时间 电能表掉电事件

@@ -818,7 +818,9 @@ int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf,
     addr01 += manager.w_ptr * manager.unit_size;    
     res_conditions_true(0x00 > driver01->dev_write(device01->dev, block01->first_addr + addr01, 
         unit_size, buf), -1);
+    
     //保存管理区
+
     if (manager.num >= manager.max_num)
     {
         manager.num = manager.max_num;
@@ -828,19 +830,22 @@ int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf,
     {
         manager.num++;
     }
-
+        
+    if (manager.r_ptr >= over_num)
+    {
+        manager.r_ptr = 0x00;
+    }
+   
     manager.w_ptr++;           
     if (manager.w_ptr >= over_num)
     {
         manager.w_ptr = 0x00;
     }
-
-    if (manager.r_ptr >= over_num)
-    {
-        manager.r_ptr = 0x00;
-    }
+        
     res_conditions_true(0x00 > update_verify(block02->first_addr + addr02, 0x00, (uint8_t*)&manager, 
         sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02, device02->dev), -1);
+
+
     return unit_size;
 }
 
