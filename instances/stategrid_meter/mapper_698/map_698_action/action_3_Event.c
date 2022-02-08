@@ -5,7 +5,6 @@
 // 单个事件是否支持复位判断
 int single_event_clear_judge(uint16_t oi)
 {
-    int ret;
 
     if ((0x400B == oi) || (0x4009 == oi) || (0x400a == oi))
     {
@@ -20,7 +19,7 @@ int single_event_clear_judge(uint16_t oi)
 int event_clear_omd_add(struct instance_t* instance, uint32_t omd, uint16_t chn)
 {
     uint8_t tempbuf[7];
-    uint16_t id;
+//    uint16_t id;
     uint32_t index;
     int ret;
 
@@ -335,9 +334,9 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
-    uint16_t i;
+//    uint16_t i;
     uint8_t tempbuf[200];
-    uint8_t* des = tempbuf;
+//    uint8_t* des = tempbuf;
     uint8_t  dar = 0;
     int ret;
 

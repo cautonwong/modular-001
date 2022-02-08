@@ -644,7 +644,6 @@ void Send_DisplayData(struct instance_t* instance, struct pipeline_t* pipeline)
 /***********************************************************************/
 void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-	unsigned char i;
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
 	
 	P_BACKLIGHT_ON;	//背光
@@ -652,12 +651,7 @@ void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
 		mbase_control_block->AutoInv = 5;
     else
         mbase_control_block->AutoInv = mbase_control_block->lcd_poweron_all_dis_time;
-    /*
-	for( i=0;i<MaxLcd;i++ )
-	{
-		Lcdcon[i] = 0xFF;
-	}*/
-	//Send_DisplayData();	//送显示数据
+
 	mbase_control_block->AutoPtr = 0xFF;
 	mbase_control_block->Page_ID = 0xFFFF;
 }
@@ -707,7 +701,7 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline)
         mbase_control_block->KeyPtr++;
     
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + mbase_control_block->KeyPtr);
-    nd_get_index(instance, s_index, &pageid, 2); 
+    nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
     mbase_control_block->Page_ID = pageid;
     
     if( instance->ac_power_statue == AC_POWER_ON )
@@ -764,7 +758,7 @@ void Get_DisplayPage(struct instance_t* instance, struct pipeline_t* pipeline)
 				mbase_control_block->AutoPtr++;
             
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AutoDisplayList + mbase_control_block->AutoPtr);
-            nd_get_index(instance, s_index, &pageid, 2);
+            nd_get_index(instance, s_index, (uint8_t*)&pageid, 2);
             
             mbase_control_block->Page_ID = pageid;
 		}
@@ -1296,7 +1290,7 @@ void Disp_Char( struct instance_t* instance, struct pipeline_t* pipeline, unsign
 void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
-    unsigned char i,buf[10]={0,},Len=0,j,temp[7];
+    unsigned char i,buf[10]={0,},Len=0,temp[7];
 	unsigned long oad,Info=0,Info1;
 	unsigned char SignBuf[9]={0,};
     uint16_t year;

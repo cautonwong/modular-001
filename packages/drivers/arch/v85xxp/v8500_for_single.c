@@ -489,6 +489,7 @@ void mcu_uart_recive_enable(uint8 ops_enable, size_t uart_index)
         UARTx->STATE = BIT1 | BIT3 | BIT4;
         
         tmp = UARTx->DATA;  //初始化后取一次数据.
+        tmp = tmp - 0;
     }
 }
 

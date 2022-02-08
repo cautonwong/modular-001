@@ -201,6 +201,7 @@ int communication_channel_init(struct instance_t* p_instance, struct pipeline_t 
     pl_tx->out_queue = pl_rx->out_queue;
     
     communication_chlx_init((struct fifo_t*)pl_tx->out_queue, (struct fifo_t*)pl_rx->in_queue, chl_type);
+    return true;
 }
 
 

@@ -68,7 +68,7 @@ void heat_compensate(struct instance_t* instance, struct pipeline_t* pipeline)
 			{
                 rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , GPQA , 2 , &value);   //读取计量芯片寄存器增益值
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Heat_Value_10L);
-                nd_get_index(instance, s_index, tmp, 30); //读取EE中的补偿值
+                nd_get_index(instance, s_index, (uint8_t*)&tmp, 30); //读取EE中的补偿值
 
                 if(tmp[14-i] != value)
                 {
@@ -91,7 +91,7 @@ void heat_compensate(struct instance_t* instance, struct pipeline_t* pipeline)
 			if(adj_std_source.countend>30)
 			{
 				s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Pgain0);
-                nd_get_index(instance, s_index, value, 2); //读取EE中的增益值
+                nd_get_index(instance, s_index, (uint8_t*)&value, 2); //读取EE中的增益值
                 
                 rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, GPQA, 2, &value);
                 adj_std_source.lock &= ~lock_heat_compensate;
@@ -156,7 +156,7 @@ void meterchip_adj_self(struct instance_t* instance, struct pipeline_t* pipeline
     unsigned char i=0, Tofst , j=0;
     signed short Pgain;
     unsigned long TempUrms=0, TempIrms=0, TempPw=0, CalcPw=0, Corretion_Pw=0, U_value=0, I1_value=0, I2_value=0, P_value=0;
-    unsigned long BaseErr,hfconst,RN8209Kpq,addr=0;
+    unsigned long BaseErr,hfconst,addr=0;
     float err=0;
     
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)&ctx;
@@ -375,7 +375,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     /****************** 温度采样 ******************/
     if(true == mcu_adc_start_once(ADC_CHL_TEMP))
     {
-        if(true == read_mcu_adc_measure_value(ADC_CHL_TEMP , &temp))
+        if(true == read_mcu_adc_measure_value(ADC_CHL_TEMP , (int32 *)&temp))
         {
             mbase_control_block->temperature = temp/100;
         }
@@ -384,7 +384,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     /****************** 电池采样 ******************/
     if(true == mcu_adc_start_once(ADC_CHL_BATTER))
     {
-        if(true == read_mcu_adc_measure_value(ADC_CHL_BATTER , &temp))
+        if(true == read_mcu_adc_measure_value(ADC_CHL_BATTER , (int32 *)&temp))
         {
             mbase_control_block->voltage_battery = temp/100;
             if(temp < 26000)
@@ -401,7 +401,7 @@ void Electrical_measurement_poweron(struct instance_t* instance, struct pipeline
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
   
-    int32_t temp = 0;
+//    int32_t temp = 0;
     
     mbase_control_block->voltage_ac = 0;
     mbase_control_block->current_l = 0;

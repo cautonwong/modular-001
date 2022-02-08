@@ -145,7 +145,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                     if(index != 0)
                     {
                         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
-                        nd_get_index(instance, s_index, &displayid, 2);
+                        nd_get_index(instance, s_index, (uint8_t*)&displayid, 2);
                         len = display_id_to_oad( displayid, esam_inf );
                         if(len == 5)
                         {
@@ -182,7 +182,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                         for(i=0;i<maxnum;i++)
                         {
                             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
-                            nd_get_index(instance, s_index, &displayid, 2);
+                            nd_get_index(instance, s_index, (uint8_t*)&displayid, 2);
                             len = display_id_to_oad( displayid, esam_inf );
                             if(len == 5)
                             {

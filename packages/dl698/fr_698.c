@@ -360,7 +360,7 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(NULL == mbase_cb)
         return 0;
-#if 1
+#if 0
     if (0 != mem_compare(ctx->addr, mbase_cb->tsa, SA_LEN(ctx->SA) + 1))
     {
         if(0 != mem_compare(ctx->addr, aa_addrbuf, 6))

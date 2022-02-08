@@ -69,7 +69,7 @@ int event_alarm_control(struct instance_t* instance, struct pipeline_t* task, st
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
     uint32_t control_word = ctrl_block->backlight_control_word;
-    uint8_t i, status;
+    uint8_t i;//, status;
 
     for (i = 0; i < sizeof(alarm_control) / sizeof(struct alarm_t); i++)
     {

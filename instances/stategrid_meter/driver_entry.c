@@ -353,8 +353,8 @@ void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
     
     if((mbase_control_block->Key & F_KeyAwake) == 0)
     {
-        LCD_InitType lcd_init_para;
-        LCD_IOInitType lcd_io_para;
+        //LCD_InitType lcd_init_para;
+        //LCD_IOInitType lcd_io_para;
         uint32 lcd_tmp[20] = {0,};
 
         cm0_systick_init(0);

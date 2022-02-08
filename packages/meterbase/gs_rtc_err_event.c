@@ -8,7 +8,7 @@
 int RTCErr_event_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
-    uint8_t payload[100];
+//    uint8_t payload[100];
     int8_t result = 0;
 
     uint8_t duration_para       = 0; //ctrl_block->RTCErrS_duration_para;

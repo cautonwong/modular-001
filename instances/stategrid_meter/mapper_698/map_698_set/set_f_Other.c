@@ -7,7 +7,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
 {    
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad,displayid;
-    uint8_t index,attribute,i,len,dispalyseque,num=0,dar=0;
+    uint8_t index=0,attribute,i,len,num=0,dar=0;
     uint8_t* p = buf;
     uint32_t displayoad1,displayoad2,s_index=0;
     
@@ -79,7 +79,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                                 mem_swap_cpy((uint8_t*)&displayoad2, p+5, 4);
                                 p = p + 5;
                             }
-                            displayid = display_oad_to_id(displayoad1, len);
+                            displayid = display_oad_to_id((uint8_t*)&displayoad1, len);
                             if(oad == 0xF300)
                             {
                                 if(index > 0)
@@ -95,9 +95,9 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList);
                             }
                             if(index > 0)
-                                nd_set_index(instance, s_index, &displayid, 2); 
+                                nd_set_index(instance, s_index, (uint8_t*)&displayid, 2); 
                             else
-                                nd_set_index(instance, s_index, &displayid, 2); 
+                                nd_set_index(instance, s_index, (uint8_t*)&displayid, 2); 
                             p = p + 2;
                         }
                         break;
@@ -122,7 +122,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                                 offsetof(struct mbase_control_block_t, backlight_key_time));
                                 uint16_t len = offsetof(struct mbase_control_block_t, Baut_plc) - offsetof(struct mbase_control_block_t, backlight_key_time);
-                                nd_set_offset(instance, s_index, &mbase_cb->backlight_key_time, len);
+                                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->backlight_key_time, len);
                                 break;
                             case 0x01://当前总对象数
                                 p = p + 1;
@@ -139,7 +139,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                                 offsetof(struct mbase_control_block_t, backlight_key_time));
                                 len = offsetof(struct mbase_control_block_t, Baut_plc) - offsetof(struct mbase_control_block_t, backlight_key_time);
-                                nd_set_offset(instance, s_index, &mbase_cb->backlight_key_time, len);
+                                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->backlight_key_time, len);
                                 break;
                             case 0x02://允许最大对象数
                                 p = p + 1;
@@ -154,7 +154,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                                 offsetof(struct mbase_control_block_t, backlight_key_time));
                                 len = offsetof(struct mbase_control_block_t, Baut_plc) - offsetof(struct mbase_control_block_t, backlight_key_time);
-                                nd_set_offset(instance, s_index, &mbase_cb->backlight_key_time, len);
+                                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->backlight_key_time, len);
                                 break;
                             default:
                                 return -1;
@@ -176,7 +176,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                             offsetof(struct mbase_control_block_t, backlight_key_time));
                             len = offsetof(struct mbase_control_block_t, Baut_plc) - offsetof(struct mbase_control_block_t, backlight_key_time);
-                            nd_set_offset(instance, s_index, &mbase_cb->backlight_key_time, len);
+                            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->backlight_key_time, len);
                         }
                         else
                         {

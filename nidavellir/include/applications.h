@@ -135,7 +135,7 @@ struct mbase_control_block_t
     uint8_t lcd_poweron_all_dis_time_tick;//全显倒计时
     
     //运行状态字
-    uint16_t run_state[7];
+    uint16_t run_state[8];
    
     uint8_t relay_true_sta;//继电器实际状态
     
@@ -362,6 +362,49 @@ extern uint8_t para_init(struct instance_t* instance );
 extern int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 //GS----end
 
+extern int16_t nd_set_index(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t size);
+extern int16_t nd_get_index(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t size);
+extern int16_t nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf, uint16_t len);
 
+
+extern unsigned char BYTE_BCD( unsigned char HEX );
+extern unsigned char BCD_BYTE( unsigned char BCD );
+extern void HEX_BCD( unsigned char* BCD, unsigned long HEX );
+extern unsigned int GetTotalDay( unsigned char* Addr );
+
+extern int period_check1(uint16_t oi, uint16_t* capture_period);
+extern int period_check2(uint8_t scheme, uint16_t period, uint8_t* period_buf);
+extern uint8_t capture_check(uint32_t oad, uint8_t* oad_buf);
+
+extern uint8_t read_esam_data(uint32 addr, uint8 *buf, uint16 len);
+extern uint16 write_esam(uint32 addr, uint8 *buf, uint16 len);
+extern uint8_t read_esam_no(uint8_t *esam_info);
+extern uint8_t read_esam_info(uint8_t *esam_info, uint8_t index);
+
+extern int backlight_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
+
+extern void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline);
+
+extern int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
+
+extern int event_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+
+extern void Display(struct instance_t* instance, struct pipeline_t* pipeline);
+
+extern void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline);
+
+extern void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline);
+
+extern void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline);
+
+extern uint8_t Magnetic_hold_relay_Init(void);
+
+extern uint8 lcd_init(uint8 power_mode);
+
+extern void rtc_get_from_tm(struct instance_t* instance, uint8_t* p);
+
+extern unsigned short display_oad_to_id(unsigned char *oad, unsigned char len);
+extern int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf);
+extern void send_event_mesg_pro(struct instance_t* instance, struct pipeline_t* task, uint16_t RecordId, uint8_t* payload, int mode);
 
 #endif

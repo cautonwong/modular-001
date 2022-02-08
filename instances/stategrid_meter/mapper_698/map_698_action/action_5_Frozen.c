@@ -7,7 +7,7 @@ int freeze_add_one_capture(struct instance_t* instance, uint32_t oad, uint8_t* b
 {
     uint8_t num, maxnum, scheme, offset;
     uint8_t tempbuf[200], period_buf[3 * 8], depth_buf[1 + 2 * 15];
-    uint8_t* tmp0, * tmp1;
+//    uint8_t* tmp0, * tmp1;
     uint8_t* p = buf;
     uint8_t* oadlist = tempbuf;
     uint16_t period, depth, OI, CaptureLen, PeriodLen, DepthLen;
@@ -171,10 +171,10 @@ int freeze_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t
 {
     uint8_t i, num, maxnum, scheme, offset;
     uint8_t tempbuf[200], period_buf[3 * 8],depth_buf[1 + 2 * 15];
-    uint8_t* tmp0, * tmp1;
+//    uint8_t* tmp0, * tmp1;
     uint8_t* p = buf;
     uint8_t* oadlist = tempbuf;
-    uint16_t period, depth, OI, CaptureLen, PeriodLen, DepthLen;
+    uint16_t  OI, CaptureLen, PeriodLen,DepthLen;//period, depth,
     uint32_t CaptureId, PeriodId, DepthId;
     uint32_t capture_oad, temp_oad;
 
@@ -304,7 +304,7 @@ int freeze_add_multi_capture(struct instance_t* instance, uint32_t oad, uint8_t*
 {
     uint8_t add_num, num, maxnum, scheme, offset;
     uint8_t tempbuf[200], period_buf[3 * 8], depth_buf[1 + 2 * 15];
-    uint8_t* tmp0, * tmp1;
+//    uint8_t* tmp0, * tmp1;
     uint8_t* p = buf;
     uint8_t* oadlist = tempbuf;
     uint16_t period, depth, OI, CaptureLen, PeriodLen, DepthLen;
@@ -477,13 +477,13 @@ int freeze_add_multi_capture(struct instance_t* instance, uint32_t oad, uint8_t*
 
 int freeze_delete_all_capture(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
-    uint8_t add_num, num, maxnum, scheme, offset;
+    uint8_t maxnum;//, scheme;//, offset;num, 
     uint8_t tempbuf[200], period_buf[3 * 8], depth_buf[1 + 2 * 15];
     uint8_t* p = buf;
-    uint8_t* oadlist = tempbuf;
-    uint16_t period, depth, OI, CaptureLen, PeriodLen, DepthLen;
+//    uint8_t* oadlist = tempbuf;
+    uint16_t OI, CaptureLen, PeriodLen, DepthLen;//period, depth,
     uint32_t CaptureId, PeriodId, DepthId;
-    uint32_t capture_oad;
+//    uint32_t capture_oad;
 
     struct record_storage_id_info_t  record_id_info;
     int ret;
@@ -549,11 +549,11 @@ int ACTION_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf)
 
     struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
-    uint16_t i;
-    uint8_t tempbuf[200];
-    uint8_t* des = tempbuf;
+//    uint16_t i;
+//    uint8_t tempbuf[200];
+//    uint8_t* des = tempbuf;
     uint8_t  dar = 0;
-    int ret;
+//    int ret;
 
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if (mbase_cb == NULL)

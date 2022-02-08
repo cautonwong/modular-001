@@ -2,8 +2,7 @@
 #include "fr_698.h"
 #include "port.h"
 
-extern unsigned char BYTE_BCD( unsigned char HEX );
-extern void HEX_BCD( unsigned char* BCD, unsigned long HEX );
+
 
 typedef struct 
 {
@@ -250,7 +249,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 p = p + 6;
                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                 offsetof(struct mbase_control_block_t, tsa));
-                nd_set_offset(instance, s_index, &mbase_cb->tsa, 6);
+                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->tsa, 6);
                 return (p-buf);
             }
             break;
@@ -320,7 +319,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                     offsetof(struct mbase_control_block_t, backlight_key_time));
                     uint16_t s_len = offsetof(struct mbase_control_block_t, Baut_plc) - offsetof(struct mbase_control_block_t, backlight_key_time);
-                    nd_set_offset(instance, s_index, &mbase_cb->backlight_key_time, s_len);
+                    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->backlight_key_time, s_len);
                     
                     return (p-buf);
                 }

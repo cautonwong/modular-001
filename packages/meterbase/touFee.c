@@ -199,7 +199,7 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
 
 	//公假日表
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 4);
-    nd_get_index(instance, s_index, Num, 1); 
+    nd_get_index(instance, s_index, (uint8_t*)&Num, 1); 
 	if( Num > MaxHolidayNum ) Num = MaxHolidayNum;
 	while( Num > 0 )
 	{
@@ -211,7 +211,7 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
         for(i=0; i<Num0; i++)
         {
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + HoliDay_Table + i);
-            nd_get_index(instance, s_index, Buf[i*6], 6); 
+            nd_get_index(instance, s_index, (uint8_t*)&Buf[i*6], 6); 
         }
         
 		for( i=0;i<Num0;i++ )
@@ -243,7 +243,7 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
 	if( mbase_cb->SeasonTable > 1 ) mbase_cb->SeasonTable = 0;
     
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para);//读取时区表个数
-    nd_get_index(instance, s_index, Num, 1);
+    nd_get_index(instance, s_index, (uint8_t*)&Num, 1);
     
     if(Num>14) Num = 14;
 	if( Num == 0 )
@@ -282,7 +282,7 @@ void GetTOUFee(struct instance_t* instance, struct pipeline_t* pipeline)
 	if( mbase_cb->DayTableNo > MaxTouTabNum ) mbase_cb->DayTableNo = MaxTouTabNum;
     
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 2);    //读取日时段个数
-    nd_get_index(instance, s_index, Num, 1);
+    nd_get_index(instance, s_index, (uint8_t*)&Num, 1);
     
 	if( Num == 0 )
 		mbase_cb->TOUNo = 1;
@@ -343,7 +343,7 @@ void rtc_get_from_tm(struct instance_t* instance, uint8_t* p)
     
 void Rtc_Prossecc(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-    uint8_t buf[7];
+//    uint8_t buf[7];
     if(instance->time.tm_sec != 20)//每分鐘的20秒對時
     {
         instance->time.tm_sec++;

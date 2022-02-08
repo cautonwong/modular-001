@@ -296,7 +296,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     else
                         mbase_cb->KeyPtr--;
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + mbase_cb->KeyPtr);
-                    nd_get_index(instance, s_index, &pageid, 2); 
+                    nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
                     mbase_cb->Page_ID = pageid;
                     mbase_cb->KeyInv = mbase_cb->lcd_keydis_keep_sec;
                     return (p-buf);
@@ -306,7 +306,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     else
                         mbase_cb->KeyPtr++;
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + mbase_cb->KeyPtr);
-                    nd_get_index(instance, s_index, &pageid, 2); 
+                    nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
                     mbase_cb->Page_ID = pageid;
                     mbase_cb->KeyInv = mbase_cb->lcd_keydis_keep_sec;
                     return (p-buf);

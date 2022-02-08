@@ -536,7 +536,7 @@ int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size,uint16
 
 int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
 {
-    uint16_t i, k;
+    uint16_t i;
 
     POINTER_EMPTY(addr);
     *addr = 0x00;
@@ -561,7 +561,7 @@ int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, u
 
 int16_t supply_event_flash_1_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
 {
-    uint16_t i, k;
+    uint16_t i;
 
     POINTER_EMPTY(addr);
     *addr = 0x00;
@@ -587,7 +587,7 @@ int16_t supply_event_flash_1_info(uint16_t event_flag, uint32_t* addr, uint32_t*
 
 int16_t supply_event_flash_2_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
 {
-    uint16_t i, k;
+    uint16_t i;
 
     POINTER_EMPTY(addr);
     *addr = 0x00;
@@ -645,7 +645,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
     
     uint16_t SaveId = 0, SeqId = 0, CaptureId = 0, PeriodId = 0, DepthId = 0;
     uint8_t SaveDevice, SaveBlock;
-    uint8_t schem = get_OAD_Schem(oad);
+//    uint8_t schem = get_OAD_Schem(oad);
     uint8_t temp = 0;
     uint16_t OI;
     uint8_t attr, class = 7;

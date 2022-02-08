@@ -35,7 +35,7 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     
     if(mbase_control_block->authen_tmr > 0)   mbase_control_block->authen_tmr--;
     
-    backlight_pro(instance, pipeline);
+//    backlight_pro(instance, pipeline);
     Meter_Run_State(instance, pipeline);//运行状态字刷新
     
     if( instance->ac_power_statue != AC_POWER_ON )

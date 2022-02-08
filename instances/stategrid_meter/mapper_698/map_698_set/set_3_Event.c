@@ -16,9 +16,9 @@ uint8_t oad_valid_check(uint32_t oad)
 int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
 
-    uint8_t i, num, maxnum, scheme;
+    uint8_t i, num, maxnum;//, scheme;
     uint8_t tempbuf[200];
-    uint8_t* tmp0, * tmp1;
+//    uint8_t* tmp0, * tmp1;
     uint8_t* p = buf;
     uint8_t* oadlist = tempbuf;
     uint16_t CaptureLen;
@@ -73,7 +73,7 @@ int set_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
 {
     struct event_para_pack_t para_pack;
     uint8_t* p;
-    uint16_t ret;
+    int16_t ret;
     uint8_t i, count = 0, index = (uint8_t)oad;
     p = buf;
 
@@ -217,6 +217,7 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
         case 11: // 上报标识 
         case 15:// 上报方式 
             //return dl698_normal_data_get(element, req, res);
+          break;
         }
     }
     break;

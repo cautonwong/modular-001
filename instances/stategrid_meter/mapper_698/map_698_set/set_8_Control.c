@@ -7,9 +7,9 @@ int SET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad;
-    uint8_t index,attribute,i,len=0,num,buffer[42]={0},num_hourtab=0,j;
+    uint8_t index,attribute;
     uint8_t* p = buf;
-    uint32_t s_index = 0x00,addr=0;
+    uint32_t addr=0;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)

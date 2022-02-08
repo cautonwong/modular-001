@@ -31,14 +31,14 @@ int add_tasklet(struct instance_t* instance, uint8_t interval, uint8_t dcount,
 
 int stop_tasklet(struct instance_t* instance, int tid)
 {
-    struct tasklet_t* tasklet = &instance->tasklet_pool.tasklets[tid];
+//    struct tasklet_t* tasklet = &instance->tasklet_pool.tasklets[tid];
     bit_clr(tid, instance->tasklet_pool.bits);
     return 0;
 }
 
 int stop_all_tasklets(struct instance_t* instance, int tid)
 {
-    struct tasklet_t* tasklet = &instance->tasklet_pool.tasklets[tid];
+//    struct tasklet_t* tasklet = &instance->tasklet_pool.tasklets[tid];
     bit_clr(tid, instance->tasklet_pool.bits);
     memset(instance->tasklet_pool.bits, 0x00,tasklet_setsize);
     return 0;
