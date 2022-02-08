@@ -461,8 +461,8 @@ int event_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 //停电下每秒调用  主要处理事件累计时间
 int event_LowPower_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    PowerOffS_LowPower_pro(instance, pipeline, mesg);
-    PowerAbnormalS_LowPower_pro(instance, pipeline, mesg);
+    PowerOff_LowPower_pro(instance, pipeline, mesg);
+    PowerAbnormal_LowPower_pro(instance, pipeline, mesg);
 }
 
 
@@ -735,16 +735,19 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
             if (true == scheme_valid)
             {
                 single_len = nd_get(instance, obj, tmpbuf, *remain_size, NULL);
-                // 特殊事件关联对象的特殊处理 
-                // format改变，长度改变
-                ret = record_change_format(p, tmpbuf, obj, RFC_WRITE);
-                if (ret >= 0)
+                if ((single_len > 0) && (single_len < (sizeof(tmpbuf))))
                 {
-                    single_len = ret;
-                }
-                else
-                {
-                    memcpy(p, tmpbuf, single_len);
+                    // 特殊事件关联对象的特殊处理 
+                    // format改变，长度改变
+                    ret = record_change_format(p, tmpbuf, obj, RFC_WRITE);
+                    if (ret >= 0)
+                    {
+                        single_len = ret;
+                    }
+                    else
+                    {
+                        memcpy(p, tmpbuf, single_len);
+                    }
                 }
                 if (single_len > 0)
                 {
@@ -755,17 +758,21 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
                 {
                     memset(p, 0, 1); //找不到填 NULL 
                     p += 1;
-                    *remain_size -= single_len;
+                    *remain_size -= 1;
                 }
             }
             else
             {
                 single_len = nd_size(instance, obj);
-                ret = record_change_format(tmpbuf, p, obj, RFC_GET_STORE_LEN);
-                if (ret >= 0)
+                if (single_len > 0)
                 {
-                    single_len = ret;
+                    ret = record_change_format(tmpbuf, p, obj, RFC_GET_STORE_LEN);
+                    if (ret >= 0)
+                    {
+                        single_len = ret;
+                    }
                 }
+
                 if (single_len > 0)
                 {
                     if (scheme_invalid_wr_flag == true)
@@ -782,7 +789,7 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
                         memset(p, 0, 1); //找不到填 NULL 
                     }
                     p += 1;
-                    *remain_size -= single_len;
+                    *remain_size -= 1;
                 }
             }
         }

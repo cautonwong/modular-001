@@ -19,7 +19,7 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
-    
+    struct message_t mesg;
     
     if(mbase_control_block->AutoInv > 0)   mbase_control_block->AutoInv--;
     
@@ -38,8 +38,12 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
 //    backlight_pro(instance, pipeline);
     Meter_Run_State(instance, pipeline);//运行状态字刷新
     
+    
+    
     if( instance->ac_power_statue != AC_POWER_ON )
     {
+        event_LowPower_pro(instance, pipeline, &mesg); // 事件 低功耗下处理
+        
         if( (mbase_control_block->Key & F_KeyDispay) && (mbase_control_block->KeyInv == 0) )//退出键显,息屏
         {
             mbase_control_block->Key &= ~F_KeyDispay;
@@ -48,6 +52,8 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
             //Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
             mbase_control_block->Key &= ~F_KeyAwake;
         }
+        
+        
     }
 }
 
