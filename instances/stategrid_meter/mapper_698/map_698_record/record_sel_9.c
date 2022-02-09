@@ -1,6 +1,6 @@
 #include "nidavellir.h"
 #include "fr_698.h"
-#include "resource_tool.h"
+
 
 #if 0
 int _record_sel_9(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, void *rcsd_info)

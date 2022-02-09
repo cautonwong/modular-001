@@ -7,9 +7,10 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
 {    
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad,displayid;
-    uint8_t index=0,attribute,i,len,num=0,dar=0;
+    uint8_t index=0,attribute,i,num=0,dar=0;
     uint8_t* p = buf;
     uint32_t displayoad1,displayoad2,s_index=0;
+    uint16_t len = 0;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
@@ -121,7 +122,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                                 
                                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                                 offsetof(struct mbase_control_block_t, backlight_key_time));
-                                uint16_t len = offsetof(struct mbase_control_block_t, Baut_plc) - offsetof(struct mbase_control_block_t, backlight_key_time);
+                                len = offsetof(struct mbase_control_block_t, Baut_plc) - offsetof(struct mbase_control_block_t, backlight_key_time);
                                 nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->backlight_key_time, len);
                                 break;
                             case 0x01://当前总对象数

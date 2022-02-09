@@ -1,6 +1,6 @@
 #include "nidavellir.h"
 #include "fr_698.h"
-#include "resource_tool.h"
+
 
 //参数初始化  
 extern const uint8_t  init_MinuteFreeze_oad[];
@@ -127,7 +127,7 @@ extern const uint8_t  init_Comm_Master_en[]; //允许与主站通讯
 extern const uint8_t  init_ImaxProtectValue[]; //继电器拉闸电流门限值
 extern const uint8_t  init_ImaxProtectTime[]; //超电流门限保护延时时间
 
-extern const uint8_t CODE init_IrAuthenTime[];//红外认证时效
+extern const uint8_t  init_IrAuthenTime[];//红外认证时效
 
 
 extern const uint32_t record_head_t1[];
@@ -239,7 +239,7 @@ const struct record_item_t  record_item_2[] =
 const  parameter_item_t  parameter_item[] =
 {
     // 管理区
-
+#ifndef WIN32
     //冻结管理区
     { MinuteFreeze1                 , 0x01,   sizeof(struct log_manager_t),0},// 分冻结8个方案，管理区申请8个？
     { MinuteFreeze2                 , 0x01,   sizeof(struct log_manager_t),0},
@@ -502,7 +502,9 @@ const  parameter_item_t  parameter_item[] =
     { ADJ_Ku,              0x01,    4,      0 },    //Ku
     { ADJ_Ki,              0x01,    4,      0 },    //Ki
     { ADJ_Kin,             0x01,    4,      0 },    //零线K系数
-
+#else
+    {0}
+#endif
 };
 
 

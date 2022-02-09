@@ -1,6 +1,6 @@
 #include "nidavellir.h"
 #include "fr_698.h"
-#include "resource_tool.h"
+
 
 
 
@@ -56,7 +56,7 @@ int get_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
 // 获取事件当前记录数
 int get_current_record_number(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
-
+#ifndef WIN32
     struct circular_info_t circular_info = { 0 };
     uint8_t temp[200]; 
     uint8_t* p = buf;
@@ -82,11 +82,13 @@ int get_current_record_number(struct instance_t* instance, uint32_t oad, uint8_t
 
     *dar = DAR_SUCCESS;
     return (p - buf);
+#endif // !WIN32
 }
 
 
 int get_current_record_number_ic_24(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
+#ifndef WIN32
     uint8_t  i, num;
     uint16_t tims;
 
@@ -146,6 +148,7 @@ int get_current_record_number_ic_24(struct instance_t* instance, uint32_t oad, u
    
     *dar = DAR_SUCCESS;
     return (p - buf);
+#endif // !WIN32
 }
 
 // 获取事件最大记录数
@@ -284,6 +287,7 @@ uint8_t get_current_value(struct instance_t* instance, uint32_t oad, uint8_t* bu
 }
 int get_current_value_one_element_ic_24(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar, void* current_value)
 {
+#ifndef WIN32
     uint32_t sequence;
     struct circular_info_t circular_info = { 0 };
     uint8_t temp[200];
@@ -327,6 +331,7 @@ int get_current_value_one_element_ic_24(struct instance_t* instance, uint32_t oa
 
     *dar = DAR_SUCCESS;
     return (p - buf);
+#endif
 }
 int get_current_value_ic_24(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
@@ -440,6 +445,7 @@ int get_current_value_ic_24(struct instance_t* instance, uint32_t oad, uint8_t* 
 
 uint8_t get_time_status_record(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
+#ifndef WIN32
     uint32_t sequence, time;
     struct circular_info_t circular_info = { 0 };
     uint8_t tempbuf[200];
@@ -558,11 +564,12 @@ uint8_t get_time_status_record(struct instance_t* instance, uint32_t oad, uint8_
 
     *dar = DAR_SUCCESS;
     return (p - buf);
-
+#endif
 }
 
 int get_time_status_record_one_element_ic_24(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
+#ifndef WIN32
     uint32_t sequence, time;
     struct circular_info_t circular_info = { 0 };
     uint8_t tempbuf[200];
@@ -656,6 +663,7 @@ int get_time_status_record_one_element_ic_24(struct instance_t* instance, uint32
 
     *dar = DAR_SUCCESS;
     return (p - buf);
+#endif
 }
 
 int get_time_status_record_ic_24(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)

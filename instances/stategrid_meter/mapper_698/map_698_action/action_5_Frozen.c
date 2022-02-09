@@ -1,6 +1,6 @@
 #include "nidavellir.h"
 #include "fr_698.h"
-#include "resource_tool.h"
+
 
 
 int freeze_add_one_capture(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)

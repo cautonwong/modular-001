@@ -205,6 +205,24 @@
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_11.c">
       <Filter>mapper_698\record</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_3_Event.c">
+      <Filter>mapper_698\action</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_5_Frozen.c">
+      <Filter>mapper_698\action</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_8_Control.c">
+      <Filter>mapper_698\action</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_f_Other.c">
+      <Filter>mapper_698\action</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_8_Control.c">
+      <Filter>mapper_698\set</Filter>
+    </ClCompile>
+    <ClCompile Include="..\stub.c">
+      <Filter>mapper_698</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="dl698">

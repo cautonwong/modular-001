@@ -123,7 +123,7 @@ int GET_5_Frozen(struct instance_t* instance, uint32_t oad, uint8_t* buf)
     case 0x00000300://关联对象属性表
     {
 
-        struct frozen_obj_t frozen_obj;
+        struct frozen_obj_t frozen_obj = {0};
 #if 0
         frozen_obj.CaptureId = MinuteFreeze_oad;
         frozen_obj.PeriodId = MinuteFreeze_period;

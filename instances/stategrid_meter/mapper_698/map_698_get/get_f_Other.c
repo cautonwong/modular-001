@@ -10,6 +10,7 @@ const uint8_t name_relay[5] = {'R', 'E', 'L', 'A', 'Y'};
 
 int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
 {    
+#ifndef WIN32
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad,displayid;
     uint8_t index,attribute,i,len,dispalyseque,maxnum;
@@ -378,5 +379,6 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
             }
             break;
     }
+#endif
     return 0x01;
 }

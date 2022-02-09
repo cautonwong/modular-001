@@ -807,7 +807,7 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
     uint32_t CaptureList[50 + 1] = { 0 };
     struct record_storage_id_info_t record_id_info; 
     uint8_t pairs_event = 0;
-    
+    uint8_t freez_scheme = 0;
     int ret;
       
     remain_size = sizeof(data_buff);
@@ -933,7 +933,7 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
             case MinuteFreeze6: //分钟冻结记录方案6
             case MinuteFreeze7: //分钟冻结记录方案7
             case MinuteFreeze8: //分钟冻结记录方案8 
-                uint8_t freez_scheme = (mesg->id - MinuteFreeze1);//(uint8_t)(0x07 & (uint8_t)(oad >> 13))
+                freez_scheme = (mesg->id - MinuteFreeze1);//(uint8_t)(0x07 & (uint8_t)(oad >> 13))
                 Oad = 0x50020200 + (freez_scheme<<13);
                 mode = FRZ_1 + freez_scheme;                
                 break;     

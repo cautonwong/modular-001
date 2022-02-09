@@ -521,13 +521,7 @@ unsigned short display_oad_to_id(unsigned char *oad, unsigned char len)
     return id;
 }
 
-unsigned char BYTE_BCD( unsigned char HEX )
-{
-	if( HEX > 99 )
-		return 0x00;
 
-	return( (HEX/10)*0x10 + HEX%10 );
-}
 //0-F显示表格
 const unsigned char  NumSeg[16] = 
 {

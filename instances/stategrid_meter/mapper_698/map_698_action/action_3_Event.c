@@ -1,6 +1,5 @@
 #include "nidavellir.h"
 #include "fr_698.h"
-#include "resource_tool.h"
 
 // 单个事件是否支持复位判断
 int single_event_clear_judge(uint16_t oi)

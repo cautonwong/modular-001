@@ -1,6 +1,6 @@
 #include "nidavellir.h"
 #include "fr_698.h"
-#include "resource_tool.h"
+
 
 uint8_t axdr_decode(uint8_t type, const uint8_t *buf, uint16_t *len)
 {
@@ -1090,6 +1090,7 @@ int record_response_null(uint8_t *resbuf)
 //读记录型数据打包
 int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info)
 {
+#ifndef WIN32
     struct record_storage_id_info_t record_id_info; 
     struct circular_info_t circular_info = {0};
     uint32_t *rcsd_req = (uint32_t *)rcsd_info; // 待定
@@ -1183,6 +1184,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     len += count;
              
     return len;
+#endif
 }
 //GS   暂存
 /////////////////////////////////////////////////

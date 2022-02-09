@@ -192,13 +192,13 @@ uint8 read_esam(uint32 addr, uint8 *buf, uint16 len)
 }
 
 
-uint16 write_esam(uint32 addr, uint8 *buf, uint16 len)
+uint16_t write_esam(uint32_t addr, uint8_t *buf, uint16_t len)
 {   
-    uint16 rx_len, sw = 0;
+    uint16_t rx_len, sw = 0;
     
     memset(&esam_error_apdu.apdu[0] , 0xFF , 6);
     
-    tx_esam((uint8*)&addr , buf , len);
+    tx_esam((uint8_t*)&addr , buf , len);
     
     sw = rx_esam(buf , &rx_len);
     if(0x9000 == sw)
@@ -296,9 +296,9 @@ uint8 tx_esam_nolen(uint8 *tx_apdu , uint8 *tx_data , uint16 len)
 }
 
 
-uint8_t read_esam_data(uint32 addr, uint8 *buf, uint16 len)
+uint8_t read_esam_data(uint32_t addr, uint8_t *buf, uint16_t len)
 {
-    uint16 lenth=false;
+    uint16_t lenth=false;
     if(true == tx_esam_nolen((uint8_t*)&addr , buf , len))
     {
         rx_esam(buf , &len );

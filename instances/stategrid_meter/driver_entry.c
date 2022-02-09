@@ -5,10 +5,10 @@
 #include "uart_driver.h"
 #include "pin_function_def.h"
 
-extern const struct driver_ops_t  CODE eeprom_driver;
+extern const struct driver_ops_t  eeprom_driver;
 extern const struct bus_ops_t iic_bus;
 extern const struct bus_ops_t spi_mode3;
-extern const struct driver_ops_t  CODE uart_driver;
+extern const struct driver_ops_t  uart_driver;
 extern const struct driver_ops_t rn8209_drv;
 extern const struct driver_ops_t nor_flash_driver;
 extern const struct bus_ops_t mcu_uart_bus_ops;
@@ -106,13 +106,13 @@ void RTC_Second(void)
     fifoBuf_putByte(&irq_fifo, IRQ_RTC);
 }
 
-static uint8 wpulse_light_flag = 0;
-static uint8 wpulse_light_open = 0;
-static uint8 wpulse_light_open_flag = 0;
-static uint8 wplse_light_width = 0;
+static uint8_t wpulse_light_flag = 0;
+static uint8_t wpulse_light_open = 0;
+static uint8_t wpulse_light_open_flag = 0;
+static uint8_t wplse_light_width = 0;
 
-static uint8 key_keep_flag = 0;
-static uint8 key_keep_width = 0;
+static uint8_t key_keep_flag = 0;
+static uint8_t key_keep_width = 0;
 void IO_Interrupt(void)
 {
    uint16 cnt;
@@ -158,12 +158,12 @@ void IO_Interrupt(void)
     }
 }
 
-extern  uint32 over_Imax;
+extern  uint32_t over_Imax;
 extern void Energy_Pluse_Add(void);
 
 void timing_ftr(void)
 {
-      uint8 dly1,dly2=0;
+      uint8_t dly1,dly2=0;
       
       if(over_Imax == 0x55)
       {
@@ -355,7 +355,7 @@ void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
     {
         //LCD_InitType lcd_init_para;
         //LCD_IOInitType lcd_io_para;
-        uint32 lcd_tmp[20] = {0,};
+        uint32_t lcd_tmp[20] = {0,};
 
         cm0_systick_init(0);
         MISC_IRCmd(MISC_IREN_TX5, DISABLE);
@@ -369,8 +369,8 @@ void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
         UART_INTConfig(UART5, UART_INT_RX | UART_INT_TXDONE, DISABLE);
         
         LCD->CTRL |= LCD_CTRL_EN;
-        MISC2->HCLKEN |= (uint32)BIT6;
-        memcpy((uint8*)(&LCD->FB[0]), (uint8 *)&lcd_tmp[0], sizeof(lcd_tmp));
+        MISC2->HCLKEN |= (uint32_t)BIT6;
+        memcpy((uint8_t*)(&LCD->FB[0]), (uint8_t *)&lcd_tmp[0], sizeof(lcd_tmp));
     //    lcd_init(__NULL , POWER_OFF_MODE);
 
         /*------------------ Forbidden all GPIOs ------------------*/
@@ -437,7 +437,7 @@ void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
 
 
 
-static uint8 IOState(void *ptr)
+static uint8_t IOState(void *ptr)
 {
     if(METER_COVER_GET_DIN() == METER_COVER_OPEN_LEVE)
     {

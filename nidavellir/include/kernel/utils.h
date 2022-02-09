@@ -10,6 +10,13 @@ typedef struct {
 	uint8_t wday; // days since Sunday - [0, 6]
 	uint8_t year; // years since 1900
 } DateTimeT;
+
+unsigned char BCD_BYTE( unsigned char BCD );
+unsigned int GetTotalDay( unsigned char* Addr );
+unsigned char GetWeek( unsigned char* Addr );
+
+unsigned char BYTE_BCD( unsigned char HEX );
+
 uint16_t randomize_int(uint16_t interval);
 float bound_min_max(float val, float min, float max);
 void date_from_timestamp(uint32_t timestamp, DateTimeT *date_time);

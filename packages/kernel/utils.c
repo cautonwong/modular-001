@@ -1,6 +1,60 @@
 #include "nidavellir.h"
 
 
+const unsigned int  DayTab[13] = { 0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
+
+/***********************************************************************/
+/*  函数名称：BCD_BYTE                                                 */
+/*  函数功能：将单字节BCD码转换为单字节HEX码                           */
+/*  输入参数：BCD：单字节BCD码数据                                     */
+/*  输出参数：单字节HEX码数据                                          */
+/***********************************************************************/
+unsigned char BCD_BYTE( unsigned char BCD )
+{
+     return( ((BCD>>4) & 0x0F)*10 + (BCD & 0x0F) );
+}
+
+/***********************************************************************/
+/*  函数名称：GetTotalDay                                              */
+/*  函数功能：根据年月日计算总天数                                     */
+/*  输入参数：Addr：年月日数据地址                                     */
+/*  输出参数：总天数                                                   */
+/***********************************************************************/
+unsigned int GetTotalDay( unsigned char* Addr )
+{
+  	unsigned int Day,Mon,Year;
+
+	Year= BCD_BYTE( *(Addr+2) );
+	Mon = BCD_BYTE( *(Addr+1) );
+	Day = BCD_BYTE( *Addr );
+	Day = Day + DayTab[Mon] + Year*365 + (Year>>2) + 1;
+	if( ((Year&0x03) == 0) && (Mon <= 2) )
+		Day--;
+   	return Day;
+}
+
+/***********************************************************************/
+/*  函数名称：GetWeek                                                  */
+/*  函数功能：根据年月日计算周                                         */
+/*  输入参数：Addr：年月日数据地址                                     */
+/*  输出参数：周                                                       */
+/***********************************************************************/
+unsigned char GetWeek( unsigned char* Addr )
+{
+	unsigned char Week;
+
+	Week = (unsigned char)(( GetTotalDay( Addr ) + 5 ) % 7);
+	return Week;
+}
+
+unsigned char BYTE_BCD( unsigned char HEX )
+{
+	if( HEX > 99 )
+		return 0x00;
+
+	return( (HEX/10)*0x10 + HEX%10 );
+}
+
 uint16_t randomize_int(uint16_t interval)
 {
 	static uint32_t seed = 1;

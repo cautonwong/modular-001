@@ -20,7 +20,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\mapper_698.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_3_Event.c" />
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_4_Parameter.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_5_Frozen.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_8_Control.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_f_Other.c" />
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_0_Energy.c" />
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_1_Demand.c" />
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_2_Variable.c" />
@@ -40,6 +44,7 @@
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_3_Event.c" />
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_4_Parameter.c" />
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_5_Frozen.c" />
+    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_8_Control.c" />
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_f_Other.c" />
     <ClCompile Include="..\..\..\packages\dl698\fr_698.c" />
     <ClCompile Include="..\..\..\packages\dl698\fr_698_action.c" />
@@ -60,6 +65,7 @@
     <ClCompile Include="..\..\..\packages\test\u_test\u_test.c" />
     <ClCompile Include="..\app_698_server_entry.c" />
     <ClCompile Include="..\pl_serial.c" />
+    <ClCompile Include="..\stub.c" />
     <ClCompile Include="..\test_case\test_app_698_server_bug\test_app_698_server_bug1.c" />
     <ClCompile Include="..\test_case\test_app_698_server_class_id\test_app_698_server_class_id_1_eng.c" />
     <ClCompile Include="..\test_case\test_app_698_server_entry.c" />
@@ -191,7 +197,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;NIDAVELLIR_SYSTEM_TEST;_CRT_SECURE_NO_WARNINGS;WIN32_U_TEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>

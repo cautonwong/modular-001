@@ -30,6 +30,7 @@
 #include "applications.h"
 #ifndef WIN32
 #include "uart_driver.h"
+#include "resource_tool.h"
 #endif
 
 //to-be-deleted

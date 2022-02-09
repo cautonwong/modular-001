@@ -1,6 +1,6 @@
 #include "nidavellir.h"
 #include "fr_698.h"
-#include "resource_tool.h"
+
 
 int _record_sel_1(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t last_no, void *info)
 {

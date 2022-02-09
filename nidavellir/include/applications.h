@@ -367,17 +367,14 @@ extern int16_t nd_get_index(struct instance_t* instance, uint32_t index, uint8_t
 extern int16_t nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf, uint16_t len);
 
 
-extern unsigned char BYTE_BCD( unsigned char HEX );
-extern unsigned char BCD_BYTE( unsigned char BCD );
-extern void HEX_BCD( unsigned char* BCD, unsigned long HEX );
-extern unsigned int GetTotalDay( unsigned char* Addr );
+
 
 extern int period_check1(uint16_t oi, uint16_t* capture_period);
 extern int period_check2(uint8_t scheme, uint16_t period, uint8_t* period_buf);
 extern uint8_t capture_check(uint32_t oad, uint8_t* oad_buf);
 
-extern uint8_t read_esam_data(uint32 addr, uint8 *buf, uint16 len);
-extern uint16 write_esam(uint32 addr, uint8 *buf, uint16 len);
+extern uint8_t read_esam_data(uint32_t addr, uint8_t *buf, uint16_t len);
+extern uint16_t write_esam(uint32_t addr, uint8_t*buf, uint16_t len);
 extern uint8_t read_esam_no(uint8_t *esam_info);
 extern uint8_t read_esam_info(uint8_t *esam_info, uint8_t index);
 
@@ -399,7 +396,7 @@ extern void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeli
 
 extern uint8_t Magnetic_hold_relay_Init(void);
 
-extern uint8 lcd_init(uint8 power_mode);
+extern uint8_t lcd_init(uint8_t power_mode);
 
 extern void rtc_get_from_tm(struct instance_t* instance, uint8_t* p);
 

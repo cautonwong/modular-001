@@ -3,6 +3,11 @@
 #include "cpu_surport.h"
 #endif // !WIN32
 
+#ifdef WIN32
+#define AC_POWER_ON 0xAA
+#define AC_POWER_OFF 0x55
+#endif 
+
 char* get_pipeline_name(struct instance_t* instance, pid_t pipeline_id)
 {
     struct recipe_t* recipe = instance->recipe;
@@ -261,7 +266,7 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     size_t n = 0;
     int ret = 0;
     uint8_t pipeline_n = recipe->pipeline_n;
-    struct pipeline_t* pipeline;
+    struct pipeline_t* pipeline = NULL;
     struct cache_t* cache = instance->cache2;
 #ifndef WIN32
     mcu_clear_watchdog();

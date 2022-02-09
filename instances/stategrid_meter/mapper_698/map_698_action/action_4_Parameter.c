@@ -1,6 +1,9 @@
 #include "nidavellir.h"
 #include "fr_698.h"
+#ifndef WIN32
 #include "gs_record.h"
+#endif // !WIN32
+
 
 
 int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
