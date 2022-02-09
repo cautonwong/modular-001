@@ -1,6 +1,7 @@
 #include "nidavellir.h"
 #include "resource_tool.h"
 
+
 #define res_conditions_true(a,b) if(a) { return b; } //a的调整满足返回b
 
 struct search_tempinfo_t
@@ -769,6 +770,20 @@ int16_t search_circular(struct instance_t* instance, const struct dev_info_t* de
     }
     return -1;
 }
+#ifndef WIN32
+int application_norflash_erase(uint32_t addr, uint32_t len, const struct driver_ops_t* driver, const struct dev_info_t* dev)
+{
+    uint32_t temp;
+    int ret = -1;
+
+    temp = ((addr + len) / 4096) * 4096;
+    if ((addr >= temp) && (addr + len < temp) && (driver->dev_control != NULL))
+    {
+        ret = driver->dev_control(dev, 0x01, &temp);
+    }
+    return ret;
+}
+#endif // WIN32
 
 int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t unit_size)
 {
@@ -816,6 +831,14 @@ int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf,
     }
     //存储数据
     addr01 += manager.w_ptr * manager.unit_size;    
+#ifndef WIN32
+    //判断是否需要察扇区
+    if (device01->dev->dev_type == DEV_FLASH)//FLASH才会擦除
+    {
+        res_conditions_true(0x00 > application_norflash_erase(block01->first_addr + addr01, 
+            unit_size, driver01, device01->dev), -1);
+    }
+#endif // WIN32
     res_conditions_true(0x00 > driver01->dev_write(device01->dev, block01->first_addr + addr01, 
         unit_size, buf), -1);
     
