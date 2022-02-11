@@ -278,7 +278,7 @@ void test_case_running_with_kernel(void** state)
 
 
 
-#if 1
+#if 0
 int main(void)
 {
     //这是所有的测试用例列表

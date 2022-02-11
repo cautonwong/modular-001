@@ -11,6 +11,8 @@ typedef struct {
 	uint8_t year; // years since 1900
 } DateTimeT;
 
+uint8_t check_date(int year, int month, int day, int hour, int min, int sec);
+
 unsigned char BCD_BYTE( unsigned char BCD );
 unsigned int GetTotalDay( unsigned char* Addr );
 unsigned char GetWeek( unsigned char* Addr );

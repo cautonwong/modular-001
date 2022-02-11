@@ -96,6 +96,7 @@ enum dl698_fr_err_t
     FRM_LEN_ERR1 = -2,//长度太小
     FRM_LEN_ERR2 = -3,//长度超出
     FRM_CTRL_ERR = -4,//控制码错误
+    FRM_TIME_TAG_ERR = -5,//时间标签超时
 
 };
 
@@ -141,7 +142,7 @@ enum dlt698_command_e
 
 enum sec
 {
-    SECURITY_CHOICE_0_Plaintext = 0,     //明文数据单元
+    SECURITY_CHOICE_0_Plaintext  = 0,    //明文数据单元
     SECURITY_CHOICE_1_Ciphertext = 1,    //密文数据单元
 };
 

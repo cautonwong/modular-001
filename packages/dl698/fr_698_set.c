@@ -5,6 +5,39 @@
 #define SetRequestNormalList        2
 #define SetThenGetRequestNormalList 3
 
+int get_SET_and_ACTION_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+#if 0
+    if (session->req.sub_cmd > 3)
+    {
+        if (session->req.cmd == DL698_CMD_SetRequest)
+        {
+            return ERROR_SET_SUB_CMD;
+        }
+        else
+        {
+            return ERROR_ACTION_SUB_CMD;
+        }
+    }
+
+    list = 1;
+    if ((session->req.sub_cmd == 0x02) || (session->req.sub_cmd == 0x03))
+    {
+        list = *p++;
+    }
+    for (i = 0; i < list; i++)
+    {
+        p += 4;
+        len = dl698_normal_para_len_get(p);
+        p += len;
+        if (session->req.sub_cmd == 0x03)
+        {
+            p += 5;
+        }
+    }
+#endif
+}
+
 int fr_set_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;

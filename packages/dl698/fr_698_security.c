@@ -3,7 +3,9 @@
 
 uint8_t Security_Mode;
 
-int fr_security_decode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint16_t len)
+int _fr_mw_sid_mac(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t len);
+
+int _fr_security_decode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint16_t len)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
@@ -59,7 +61,46 @@ int fr_security_decode(struct instance_t* instance, struct pipeline_t* pipeline,
 	return 1;
 }
 
-int fr_mw_sid_mac(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t len)
+int fr_security_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint16_t rd = 0, wr = 0;
+    uint8_t len = 0;
+
+    ctx->choice = fifoBuf_getByte(fifo);
+    len = fifoBuf_getByte(fifo);
+    if (SECURITY_CHOICE_1_Ciphertext == ctx->choice)//密文
+    {
+        _fr_security_decode(instance, pipeline, mesg, len);
+        ctx->service = fifoBuf_getByte(fifo);
+    }
+    else if (SECURITY_CHOICE_0_Plaintext == ctx->choice)//明文
+    {
+        rd = fifo->rd;
+        wr = fifo->wr;
+        fifo->rd = fifo->rd + len;
+        if (fifoBuf_getByte(fifo) == 0)
+        {
+            fifo->rd = rd;
+            fifo->wr = wr;
+            if (_fr_mw_sid_mac(instance, pipeline, mesg, len) == 0)//MAC效验错误
+            {
+                return -1;
+            }
+        }
+        fifo->rd = rd;
+        fifo->wr = wr;
+        ctx->service = fifoBuf_getByte(fifo);
+    }
+    else
+    {
+        return -1;
+    }
+    return 1;
+}
+
+int _fr_mw_sid_mac(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t len)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;

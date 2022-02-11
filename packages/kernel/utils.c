@@ -1,6 +1,38 @@
 #include "nidavellir.h"
 
 
+/*
+ * 日期合法性判定
+ * */
+uint8_t check_date(int year, int month, int day, int hour, int min, int sec)
+{
+	struct tm tm_new;
+
+	//0xFF:表示时间无效，控制下发参数（0x8105）的起始、结束时间会有FF数据下发
+	if (year == 0xFFFF || month == 0xFF || day == 0xFF || hour == 0xFF || min == 0xFF || sec == 0xFF) {
+		return 0;
+	}
+	if (year < 1900 || month <= 0 || month > 12 || day <= 0 || day > 31
+		|| hour < 0 || hour > 23 || min < 0 || min>59 || sec < 0 || sec > 59) {
+		return -1;
+	}
+	tm_new.tm_year = year - 1900;
+	tm_new.tm_mon = month - 1;
+	tm_new.tm_mday = day;
+	tm_new.tm_hour = hour;
+	tm_new.tm_min = min;
+	tm_new.tm_sec = sec;
+	time_t time_new = mktime(&tm_new);
+	//localtime_r(&time_new, &tm_new);
+	if (tm_new.tm_year != (year - 1900) || tm_new.tm_mon != (month - 1) || tm_new.tm_mday != day) {
+		return -1;
+	}
+	else {
+		return 0;
+	}
+}
+
+
 const unsigned int  DayTab[13] = { 0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
 
 /***********************************************************************/

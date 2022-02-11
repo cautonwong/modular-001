@@ -1,14 +1,18 @@
 ﻿#include "nidavellir.h"
 #include "fr_698.h"
 
-extern int fr_security_decode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t len);
+extern int fr_security_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int fr_handle_set_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-extern int fr_mw_sid_mac(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t len);
 
+extern int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+
+extern int get_CONNECT_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int get_SET_and_ACTION_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
 
 uint16_t get_crc16(uint16_t cs)
@@ -327,8 +331,177 @@ int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, stru
     return 0;
 }
 
-////////////////////////////////////////////////////////////
 
+
+
+int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t* p = cache->buf_ptr;
+    int len = 0;
+    int r = 0;
+
+    ctx->fr_timeTag = 1;	//默认时间标签合法
+
+    if ((ctx->service == LINK_Request) || (ctx->service == SECURITY_Request)){
+        return -1;
+    }
+
+    switch (ctx->service)
+    {
+    case CONNECT_Request:
+        len = get_CONNECT_Request_len(instance, pipeline, mesg);
+        break;
+    case RELEASE_Request:
+        break;
+    case GET_Request:
+        len = get_GET_Request_len(instance, pipeline, mesg);
+        break;
+    case SET_Request:
+    case ACTION_Request:
+        len = get_SET_and_ACTION_Request_len(instance, pipeline, mesg);
+        break;
+
+    case REPORT_Response:
+#if 0
+        list = *p;
+        len = list * 4 + 1;
+        p += len;
+#endif
+        break;
+    case PROXY_Request:
+    case COMPACT_GET_Request:
+    case COMPACT_SET_Request:
+    case COMPACT_PROXY_Request:
+    case ERROR_C_Response:
+        break;
+    default:
+        return 01;
+    }
+
+    if (len < 0) {
+        return len;
+    }
+#if 0
+    data_len = p - session->req.data;
+
+    int16_t fifoBuf_peekByteBuf(struct fifo_t* p_fifo, uint16_t offset, uint8_t * data, uint16_t len)
+
+    if (((data_len + 1) == session->req.data_len) &&
+        (session->req.data[session->req.data_len - 1] == 0))
+    {
+        session->req.data_len--;
+#if 0
+        session->time_tag[0] = 1;
+#endif
+        sprint("time tag is not includ, check successful\r\n");
+        return ERROR_SUCCESS;
+    }
+
+    if (((data_len + 11) != session->req.data_len) || (*p == 0))
+    {
+        sprint("time tag check failed\r\n");
+        return ERROR_TIME_TAG;
+    }
+
+    p++;
+
+
+    if (!dl698_data_time_invalid_check(p, WILDCARD_SECOND))
+    {
+        session->req.time_tag_flag = false;
+    }
+
+    dateTime.year = dl698_msb_to_uint16(p);
+    p += 2;
+    dateTime.month = *p++;
+    dateTime.day = *p++;
+    dateTime.hour = *p++;
+    dateTime.minute = *p++;
+    dateTime.second = *p++;
+    unit = *p++;
+    interval = dl698_msb_to_uint16(p);
+
+    if ((dateTime.year == 0xFFFF) ||
+        (dateTime.month == 0xFF) ||
+        (dateTime.day == 0xFF) ||
+        (dateTime.hour == 0xFF) ||
+        (dateTime.minute == 0xFF) ||
+        (dateTime.second == 0xFF))
+    {
+        session->req.time_tag_flag = false;
+    }
+    else
+    {
+        if (unit == 0)
+        {
+            //interval *= unit;
+        }
+        else if (unit == 1)
+        {
+            interval *= 60;
+        }
+        else if (unit == 2)
+        {
+            interval *= 3600;
+        }
+        else if (unit == 3)
+        {
+            interval *= 86400;
+        }
+        else if (unit == 4)
+        {
+            interval *= 86400ul * 30;/**< MonthsToDays(dateTime.year, dateTime.month, interval) * 86400ul; */
+        }
+        else if (unit == 5)
+        {
+            interval *= 86400ul * 365;/**< YearsToDays(dateTime.year, interval) * 86400ul; */
+        }
+        else
+        {
+            session->req.time_tag_flag = false;
+        }
+
+        if (true == session->req.time_tag_flag)
+        {
+            dt = dl698_api_clock_get();
+            time1 = dl698_api_datetime_to_second(&dateTime); /*下发时间值*/
+            time2 = dl698_api_datetime_to_second(&dt); /*当前时间值*/
+
+            if ((time1 + interval) < time2)
+            {
+                session->req.time_tag_flag = false;
+            }
+
+#if 0
+            if (time1 > time2)
+            {
+                if ((time1 - time2) > interval)
+                {
+                    session->req.time_tag_flag = false;  /* 测试用!!!*/
+                }
+            }
+            else
+            {
+                if ((time2 - time1) > interval)
+                {
+                    session->req.time_tag_flag = false;
+                }
+            }
+#endif
+        }
+    }
+
+
+    session->time_tag[0] = 11;
+    hfp_memcopy(&session->time_tag[1], &session->req.data[session->req.data_len - 11], session->time_tag[0]);
+    session->req.data_len -= 11;
+
+    return ERROR_SUCCESS;
+#endif
+}
 
 
 int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -369,8 +542,6 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
         }
     }
 #endif
-    //时标判断
-    //fr_timeTag()；
 
     if((pipeline->id == pid_rx_698) || (pipeline->id == pid_ir_rx_698))
     {
@@ -383,6 +554,42 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     
     return 1;
 }
+
+
+#if 0
+int __fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+
+    if (timetag.flag == 1) {	//时间标签有效
+        ret = check_date(timetag.sendTimeTag.year.data, timetag.sendTimeTag.month.data, timetag.sendTimeTag.day.data,
+            timetag.sendTimeTag.hour.data, timetag.sendTimeTag.min.data, timetag.sendTimeTag.sec.data);
+        if (ret == success) {
+            if (timetag.ti.units >= 0 && timetag.ti.units <= 5) {		//TI 间隔时间单位满足条件
+                interval_s = TItoSec(timetag.ti);
+
+                nowtime_t = time(NULL);
+                tagtime_t = TimeBCDTotime_t(timetag.sendTimeTag);
+                fprintf(stderr, "nowtime=%ld, rece_tag=%ld, sub=%d interval_s=%d\n", nowtime_t, tagtime_t, (int)(nowtime_t - tagtime_t), interval_s);
+                //台体测试，下发时间后，再设置参数的timetag比集中器时间慢1秒.此处用绝对值进行比较,防止判断时间标签无效
+                //一致性测试：延时时间=0，应正确响应
+                if ((abs(nowtime_t - tagtime_t) <= interval_s) || (interval_s == 0)) {
+                    ctx->fr_timeTag = 1;
+                }
+                else {
+                    ctx->fr_timeTag = 0;
+                }
+                rec_timetag->flag = 1;
+                memcpy(&rec_timetag->ti, &timetag.ti, sizeof(timetag.ti));
+                //时间标签不进行更新，响应帧上送客户端的时间标签
+                //rec_timetag->sendTimeTag = timet_bcd(nowtime_t);
+                memcpy(&rec_timetag->sendTimeTag, &timetag.sendTimeTag, sizeof(DateTimeBCD));
+            }
+        }
+        else rec_timetag->flag = 0;
+    }
+    return 1;
+}
+#endif
 
 int fr_apdu_effective_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {//协议一致性检查正常，检查APDU是否为有效数据
@@ -420,11 +627,12 @@ int __put_fifo_byte(void* pctx, uint8_t* byte)
     return 0;
 }
 
-int fr_segments_handle(uint16_t segment, struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int _fr_segments_rcv_handle(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
-    
+    uint16_t segment = ctx->segment_rx;
+
     uint16_t data_len = ctx->min_len - 8 - SA_LEN(ctx->SA) - 2 - 2;
     if(is_first_segment(segment))////链路层rx 开始帧
     {
@@ -477,16 +685,49 @@ int fr_segments_handle(uint16_t segment, struct instance_t* instance, struct pip
     }
 }
 
-extern uint8_t Security_Mode;
-uint8_t SECURITY_Request_MODE;//安全传输模式
-int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     int ret = 0;
     uint8_t len = 0;
-    uint16_t rd,wr;
 
+    ctx->segment_rx = fifoBuf_getByte(fifo);
+    ctx->segment_rx += (fifoBuf_getByte(fifo) << 8);
+    ret = _fr_segments_rcv_handle(instance, pipeline, mesg);
+    if (0 == ret)
+    {
+        if (is_last_segment(ctx->segment_rx))//最后帧
+        {
+            fifo = ctx->apdu_rx;
+            return 1;
+        }
+        else
+        {
+            set_confirm_segment(ctx->segment_rx);
+            fifoBuf_putByte(ctx->apdu, ctx->segment_rx & 0x00ff);
+            fifoBuf_putByte(ctx->apdu, (ctx->segment_rx >> 8));
+            mesg->len = fifoBuf_getUsed(ctx->apdu);
+            fr_rx_698_end(instance, pipeline, mesg);
+            return 0;//回应确认
+        }
+    }
+    else
+    {
+        return -1;//异常
+    }
+}
+
+
+extern uint8_t Security_Mode;
+
+int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    int err_no = 0;
+    uint8_t service = 0;
+    
     //协议一致性判断和apdu合法判断
     if(0 == fr_pack_698_check(instance, pipeline, mesg))
     {
@@ -497,65 +738,20 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     fifoBuf_removeData(fifo, APDU_OFFSET(ctx->SA));
     if(is_segment_set(ctx->ctrl))
     {
-        ctx->segment_rx = fifoBuf_getByte(fifo);
-        ctx->segment_rx += (fifoBuf_getByte(fifo) << 8);
-        ret = fr_segments_handle(ctx->segment_rx, instance, pipeline, mesg);
-        if(0 == ret)
-        {
-            if(is_last_segment(ctx->segment_rx))//最后帧
-            {
-                fifo = ctx->apdu_rx;
-            }
-            else
-            {
-                set_confirm_segment(ctx->segment_rx);
-                fifoBuf_putByte(ctx->apdu, ctx->segment_rx&0x00ff);
-                fifoBuf_putByte(ctx->apdu, (ctx->segment_rx>>8));
-                mesg->len = fifoBuf_getUsed(ctx->apdu);
-                fr_rx_698_end(instance, pipeline, mesg);
-                return 0;//回应确认
-            }
-        }
-        else
-        {
-            return -1;//异常
-        }
+        err_no = fr_segments_handle(instance, pipeline,  mesg);
+        if (err_no != 1)
+            return err_no;
     }
     
     ctx->service = fifoBuf_getByte(fifo);
-    if (SECURITY_Request == ctx->service)//数据解密
+    if (SECURITY_Request == ctx->service)//安全请求
     {
-        SECURITY_Request_MODE = SECURITY_Request;
-        ctx->choice = fifoBuf_getByte(fifo);
-        len = fifoBuf_getByte(fifo);
-        if (SECURITY_CHOICE_1_Ciphertext == ctx->choice)//密文
-        {
-            fr_security_decode(instance, pipeline, mesg, len);
-            ctx->service = fifoBuf_getByte(fifo);
-        }
-        else if (SECURITY_CHOICE_0_Plaintext == ctx->choice)//明文
-        {
-            rd = fifo->rd;
-            wr = fifo->wr;
-            fifo->rd = fifo->rd + len;
-            if(fifoBuf_getByte(fifo) == 0)
-            {
-                fifo->rd = rd;
-                fifo->wr = wr;
-                if(fr_mw_sid_mac(instance, pipeline, mesg, len) == 0)//MAC效验错误
-                {
-                    return -1;
-                }
-            }
-            fifo->rd = rd;
-            fifo->wr = wr;
-            ctx->service = fifoBuf_getByte(fifo);
-        }
-        else
-        {
-            return -1;
-        }
+        service = SECURITY_Request;
+        err_no = fr_security_request(instance, pipeline, mesg);
+        if(err_no < 0)
+            return err_no;
     }
+
     if (!((CONNECT_Request == ctx->service) || (RELEASE_Request == ctx->service)))
     {
         ctx->choice = fifoBuf_getByte(fifo);
@@ -567,14 +763,21 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         return -1;
     }
 
+    if(0 == fr_timetag_check(instance, pipeline, mesg))
+    {
+        ctx->fr_err = FRM_TIME_TAG_ERR;
+        fifoBuf_removeData(fifo, ctx->min_len + 2);
+        return -1;
+    }
+
     ctx->PIID = fifoBuf_getByte(fifo);
     ctx->PIID |= (1 << 6);//PIID-ACD
 
-    mesg->from = pipeline->id;//从哪里来
-    mesg->to = pid_tx_698;//要到哪里去
-    mesg->ctrl = ctx->service |(1<<7);
-    mesg->qos = ctx->choice;
-    mesg->id = 0x00;//暂时没用
+    mesg->from  = pipeline->id;//从哪里来
+    mesg->to    = pid_tx_698;//要到哪里去
+    mesg->ctrl  = ctx->service |(1<<7);
+    mesg->qos   = ctx->choice;
+    mesg->id    = 0x00;//暂时没用
 
     struct fifo_t* cache = ctx->apdu;
     fifoBuf_putByte(cache, mesg->ctrl);
@@ -621,10 +824,9 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     //数据加密
     fr_encode_optional(instance, pipeline, mesg);
     
-    if (SECURITY_Request_MODE == SECURITY_Request)
+    if (service == SECURITY_Request) //安全请求
     {
         fr_security_encode(instance, pipeline, mesg);
-        SECURITY_Request_MODE = 0;
     }
     Security_Mode = 0;
     

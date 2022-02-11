@@ -389,3 +389,28 @@ err:
     return 1;
 }
 
+
+int get_CONNECT_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+#if 0
+    p += 37;
+    switch (*p++)
+    {
+    case 0:
+        //p++;
+        break;
+
+    case 1:
+        p += dl698_asn_data_len_decode(p, &len);
+        p += len;
+        break;
+
+    case 2:
+    case 3:
+        p += dl698_asn_data_len_decode(p, &len);
+        p += len;
+        p += dl698_asn_data_len_decode(p, &len);
+        p += len;
+        break;
+#endif
+}

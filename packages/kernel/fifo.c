@@ -284,6 +284,20 @@ int16_t fifoBuf_peekByteB(struct fifo_t *buf, uint16_t offset)
     return buf->buf_ptr[rd];            // return the byte
 }
 
+int16_t fifoBuf_peekByteBuf(struct fifo_t* p_fifo, uint16_t offset, uint8_t* data, uint16_t len)
+{
+    uint16_t i = 0;
+    uint8_t val = 0;
+    for (i = 0; i < len; i++) {
+        val = fifoBuf_peekByteB(p_fifo, offset);
+        if (val < 0) {
+            return -1;
+        }
+        data[i] = val;
+    }
+    return i;
+}
+
 int16_t fifoBuf_getBytePeek(struct fifo_t *buf)
 {	// get a data byte from the buffer without removing it
 

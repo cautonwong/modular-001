@@ -10,6 +10,42 @@
 #define GetRequestSimplifyRecord    23
 
 
+int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+#if 0
+    if (session->req.sub_cmd > 5)
+    {
+        return ERROR_GET_SUB_CMD;
+    }
+    if (session->req.sub_cmd == 0x05)
+    {
+        p += 2;
+    }
+    else
+    {
+        list = 1;
+        if ((session->req.sub_cmd == 0x02) || (session->req.sub_cmd == 0x04))
+        {
+            list = *p++;
+        }
+        for (i = 0; i < list; i++)
+        {
+            p += 4;
+            if ((session->req.sub_cmd == 0x03) || (session->req.sub_cmd == 0x04))
+            {
+                rsd_len = 0;
+                rcsd_len = 0;
+                len = dl698_record_para_len_get(p, &rsd_len, &rcsd_len);
+                if (rsd_len == 0 || rcsd_len == 0)
+                {
+                    return ERROR_GET_RECORD_APDU;
+                }
+                p += len;
+            }
+        }
+    }
+#endif
+}
 
 
 int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
