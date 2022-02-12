@@ -135,7 +135,5 @@ int fr_handle_set_request(struct instance_t* instance, struct pipeline_t* pipeli
             }
         }
     }
-
-    //fr_encode_optional(instance, pipeline, mesg);//follow-report and time-tag
     return 1;
 }

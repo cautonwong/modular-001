@@ -472,6 +472,7 @@ struct instance_t
     //////////////////////////
     uint8_t meter_type;
     uint32_t  ms;
+    uint8_t *apdu_cache; 
     struct recipe_t *recipe;
     struct tm time;//
     struct tasklet_pool_t tasklet_pool;

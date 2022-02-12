@@ -453,6 +453,7 @@ int main(void)
     fifoBuf_init(&stdin_698, malloc(512), 512);
     fifoBuf_init(&pipe_tx_698_req, malloc(512), 512);
 
+    instance->apdu_cache = malloc(1800);
     instance->cache = malloc(256);
     instance->cache2 = malloc(sizeof(struct cache_t));
     init_cache(instance->cache2, instance->cache, 256);

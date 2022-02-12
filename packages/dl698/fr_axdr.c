@@ -262,6 +262,51 @@ uint16_t axdr_get_len(const uint8_t *data)
     return 0;
 }
 
+
+uint16_t dl698_record_para_len_get(uint8_t* data, uint16_t* rsdLen, uint16_t* rcsdLen)
+{
+    uint8_t  tmpData, * p = data;
+    uint16_t len;
+
+    /* rsd */
+    tmpData = *(p - 1);
+    *(p - 1) = TYPE_RSD;
+    len = dl698_normal_para_len_get(p - 1);
+    if (len == 0)
+    {
+        return 0;
+    }
+    len -= 1;
+    *(p - 1) = tmpData;
+    p += len;
+
+    if (rsdLen != NULL)
+    {
+        *rsdLen = len;
+    }
+
+    /* rcsd */
+    tmpData = *(p - 1);
+    *(p - 1) = TYPE_RCSD;
+    len = dl698_normal_para_len_get(p - 1);
+    if (len == 0)
+    {
+        return 0;
+    }
+    len -= 1;
+    *(p - 1) = tmpData;
+    p += len;
+
+    if (rcsdLen != NULL)
+    {
+        *rcsdLen = len;
+    }
+
+    return p - data;
+}
+
+
+
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
 //GS   ÔÝ´æ

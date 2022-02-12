@@ -19,8 +19,9 @@ int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline
     int i = 0;
     uint8_t list = 0;
     int offset = 0;
-    return 5;
+    uint8_t *apdu = instance->apdu_cache;
 
+    apdu += 2;
     if (ctx->choice > GetRequestNext){
         return -1;
     }
@@ -37,12 +38,12 @@ int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline
             if ((ctx->choice == 0x03) || (ctx->choice == 0x04)){
                 rsd_len = 0;
                 rcsd_len = 0;
-                len = dl698_record_para_len_get(p, &rsd_len, &rcsd_len);
+                //len = dl698_record_para_len_get(apdu, &rsd_len, &rcsd_len);
                 if (rsd_len == 0 || rcsd_len == 0)
                 {
                     return -1;
                 }
-                p += len;
+                //p += len;
             }
         }
     }
@@ -74,10 +75,6 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
     }
     else
     {
-        //if (oad->coder->size() > fifoBuf_getFree(cache))
-        {
-            //return -1;
-        }
         offset = cache->wr;
         p[cache->wr++] = 0x01;
 
@@ -288,6 +285,5 @@ int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeli
         }
     }
 #endif
-    //fr_encode_optional(instance, pipeline, mesg);//follow-report and time-tag
     return 1;
 }

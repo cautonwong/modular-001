@@ -284,6 +284,9 @@
     <ClInclude Include="..\..\..\packages\test\u_test\u_test.h">
       <Filter>utest</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\nidavellir\include\kernel\nidavellir.h">
+      <Filter>kernel</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_CONNECT_Request.json">
