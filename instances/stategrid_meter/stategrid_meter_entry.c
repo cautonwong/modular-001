@@ -390,7 +390,8 @@ int baremetal_instance_entry_main(int argc, char** argv)
 #ifdef WIN32
     init_timer(instance);
 #endif
-
+    get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_static, &addr);//RAM对应的地址
+    nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, (uint8_t*)addr, mbase_block_static_size); //将EPROM中的数据恢复到RAM;  
     return baremetal_instance_entry(instance);
 }
 
