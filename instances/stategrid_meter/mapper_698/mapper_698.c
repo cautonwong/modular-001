@@ -536,7 +536,7 @@ int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size,uint16
 }
 
 
-int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
+int16_t supply_event_info(struct instance_t* instance, uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
 {
     uint16_t i;
 
@@ -561,7 +561,7 @@ int16_t supply_event_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, u
     return -1;
 }
 
-int16_t supply_event_flash_1_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
+int16_t supply_event_flash_1_info(struct instance_t* instance, uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
 {
     uint16_t i;
 
@@ -587,7 +587,7 @@ int16_t supply_event_flash_1_info(uint16_t event_flag, uint32_t* addr, uint32_t*
     return -1;
 }
 
-int16_t supply_event_flash_2_info(uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
+int16_t supply_event_flash_2_info(struct instance_t* instance, uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
 {
     uint16_t i;
 
