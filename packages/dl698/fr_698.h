@@ -38,6 +38,9 @@
 #define get_OAD_Schem(oad)      (uint8_t)(0x07 & (uint8_t)(oad >> 13))
 #define get_OAD_OI(oad)         ((uint16_t)((oad&0xFFFF0000) >> 16))
 
+#define TIME_WILDCARD   1
+
+
 /** data-assess-result */
 enum dl698_dar_t
 {
@@ -260,6 +263,61 @@ struct para_698_tag_t
     uint8_t datalen;  //数据长度 不包含tag
 };
 
+///////////////////////////////////
+
+enum dl698_unit_e
+{
+    second_e= 0,   //秒 （0），
+    minute_e= 1,   //分 （1），
+    hour_e  = 2,   //时 （2），
+    day_e   = 3,   //日 （3），
+    month_e = 4,   //月 （4），
+    year_e  = 5,   //年 （5）
+};
+
+
+struct dl698_ti_t
+{
+    uint8_t  unit;      // 单位 dl698_unit_e
+    uint16_t ti_val;    // 间隔值 long - unsigned
+};
+
+struct dl698_date_time_t
+{
+    uint16_t year;
+    uint8_t month;
+    uint8_t day_of_month;
+    uint8_t day_of_week;
+    uint8_t hour;
+    uint8_t minute;
+    uint8_t second;
+    uint16_t milliseconds;
+};
+
+struct dl698_date_time_s_t
+{
+    uint16_t year;
+    uint8_t month;
+    uint8_t day;
+    uint8_t hour;
+    uint8_t minute;
+    uint8_t second;
+};
+
+struct dl698_date_t
+{
+    uint16_t year;
+    uint8_t month;
+    uint8_t day_of_month;
+    uint8_t day_of_week;
+};
+
+struct dl698_time_t
+{
+    uint8_t hour;
+    uint8_t minute;
+    uint8_t second;
+};
 
 struct event_para_pack_t
 {

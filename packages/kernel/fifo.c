@@ -289,7 +289,7 @@ int16_t fifoBuf_peekByteBuf(struct fifo_t* p_fifo, uint16_t offset, uint8_t* dat
     uint16_t i = 0;
     uint8_t val = 0;
     for (i = 0; i < len; i++) {
-        val = fifoBuf_peekByteB(p_fifo, offset);
+        val = fifoBuf_peekByteB(p_fifo, offset+i);
         if (val < 0) {
             return -1;
         }

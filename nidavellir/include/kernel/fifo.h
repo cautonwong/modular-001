@@ -36,6 +36,7 @@ void fifoBuf_removeData(struct fifo_t *buf, uint16_t len);
 int16_t fifoBuf_getBytePeek(struct fifo_t *buf);
 uint8_t fifoBuf_getByte(struct fifo_t *buf);
 int16_t fifoBuf_peekByteB(struct fifo_t *buf, uint16_t offset);
+int16_t fifoBuf_peekByteBuf(struct fifo_t* p_fifo, uint16_t offset, uint8_t* data, uint16_t len);
 int16_t fifoBuf_patchByteB(struct fifo_t *buf,uint8_t b, uint16_t offset);
 
 uint16_t fifoBuf_getDataPeek(struct fifo_t *buf, void *data, uint16_t len);
@@ -43,7 +44,6 @@ uint16_t fifoBuf_getData(struct fifo_t *buf, void *data, uint16_t len);
 int16_t fifoBuf_getByteCount(struct fifo_t* buf, uint16_t* count);
 
 uint16_t fifoBuf_putByte(struct fifo_t *buf, const uint8_t b);
-
 uint16_t fifoBuf_putData(struct fifo_t *buf, const void *data, uint16_t len);
 
 void fifoBuf_init(struct fifo_t *buf, const void *buffer, const uint16_t buffer_size);

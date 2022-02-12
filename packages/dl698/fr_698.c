@@ -340,10 +340,15 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
+    uint32_t interval_sec = 0;
+    uint32_t time_sec = 0;
+    uint32_t time_tag_sec = 0;
+    int offset = 0;
     int len = 0;
     int r = 0;
 
-    ctx->fr_timeTag = 1;	//默认时间标签合法
+    ctx->timeTag_valid = 1;	//默认时间标签合法
+    return 1;
 
     if ((ctx->service == LINK_Request) || (ctx->service == SECURITY_Request)){
         return -1;
@@ -352,16 +357,16 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
     switch (ctx->service)
     {
     case CONNECT_Request:
-        len = get_CONNECT_Request_len(instance, pipeline, mesg);
+        offset = get_CONNECT_Request_len(instance, pipeline, mesg);
         break;
     case RELEASE_Request:
         break;
     case GET_Request:
-        len = get_GET_Request_len(instance, pipeline, mesg);
+        offset = get_GET_Request_len(instance, pipeline, mesg);
         break;
     case SET_Request:
     case ACTION_Request:
-        len = get_SET_and_ACTION_Request_len(instance, pipeline, mesg);
+        offset = get_SET_and_ACTION_Request_len(instance, pipeline, mesg);
         break;
 
     case REPORT_Response:
@@ -378,129 +383,30 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
     case ERROR_C_Response:
         break;
     default:
-        return 01;
+        return 1;
     }
 
-    if (len < 0) {
-        return len;
-    }
-#if 0
-    data_len = p - session->req.data;
-
-    int16_t fifoBuf_peekByteBuf(struct fifo_t* p_fifo, uint16_t offset, uint8_t * data, uint16_t len)
-
-    if (((data_len + 1) == session->req.data_len) &&
-        (session->req.data[session->req.data_len - 1] == 0))
-    {
-        session->req.data_len--;
-#if 0
-        session->time_tag[0] = 1;
-#endif
-        sprint("time tag is not includ, check successful\r\n");
-        return ERROR_SUCCESS;
+    if (offset < 0) {
+        return offset;
     }
 
-    if (((data_len + 11) != session->req.data_len) || (*p == 0))
-    {
-        sprint("time tag check failed\r\n");
-        return ERROR_TIME_TAG;
+    fifoBuf_peekByteBuf(fifo, offset, &ctx->timeTag_valid, 1);
+    if (1 == ctx->timeTag_valid) {
+        fifoBuf_peekByteBuf(fifo, offset+1, &ctx->timeTag, 10);
+
+        if (false == dl_data_time_check(&ctx->timeTag, TIME_WILDCARD)){
+            ctx->timeTag_valid = 0;
+        }
+        interval_sec = dl_timeTag_interval(&ctx->timeTag[7], 0);
+        time_tag_sec = dl_datetime_to_second(&ctx->timeTag);
+        time_sec     = rtc_mktime(&instance->time);
+        if ((time_tag_sec + interval_sec) < time_sec){
+            ctx->timeTag_valid = 1;//时间标签,有效
+        }
+    }else {
+        ctx->timeTag_valid = 0;//无时间标签
     }
-
-    p++;
-
-
-    if (!dl698_data_time_invalid_check(p, WILDCARD_SECOND))
-    {
-        session->req.time_tag_flag = false;
-    }
-
-    dateTime.year = dl698_msb_to_uint16(p);
-    p += 2;
-    dateTime.month = *p++;
-    dateTime.day = *p++;
-    dateTime.hour = *p++;
-    dateTime.minute = *p++;
-    dateTime.second = *p++;
-    unit = *p++;
-    interval = dl698_msb_to_uint16(p);
-
-    if ((dateTime.year == 0xFFFF) ||
-        (dateTime.month == 0xFF) ||
-        (dateTime.day == 0xFF) ||
-        (dateTime.hour == 0xFF) ||
-        (dateTime.minute == 0xFF) ||
-        (dateTime.second == 0xFF))
-    {
-        session->req.time_tag_flag = false;
-    }
-    else
-    {
-        if (unit == 0)
-        {
-            //interval *= unit;
-        }
-        else if (unit == 1)
-        {
-            interval *= 60;
-        }
-        else if (unit == 2)
-        {
-            interval *= 3600;
-        }
-        else if (unit == 3)
-        {
-            interval *= 86400;
-        }
-        else if (unit == 4)
-        {
-            interval *= 86400ul * 30;/**< MonthsToDays(dateTime.year, dateTime.month, interval) * 86400ul; */
-        }
-        else if (unit == 5)
-        {
-            interval *= 86400ul * 365;/**< YearsToDays(dateTime.year, interval) * 86400ul; */
-        }
-        else
-        {
-            session->req.time_tag_flag = false;
-        }
-
-        if (true == session->req.time_tag_flag)
-        {
-            dt = dl698_api_clock_get();
-            time1 = dl698_api_datetime_to_second(&dateTime); /*下发时间值*/
-            time2 = dl698_api_datetime_to_second(&dt); /*当前时间值*/
-
-            if ((time1 + interval) < time2)
-            {
-                session->req.time_tag_flag = false;
-            }
-
-#if 0
-            if (time1 > time2)
-            {
-                if ((time1 - time2) > interval)
-                {
-                    session->req.time_tag_flag = false;  /* 测试用!!!*/
-                }
-            }
-            else
-            {
-                if ((time2 - time1) > interval)
-                {
-                    session->req.time_tag_flag = false;
-                }
-            }
-#endif
-        }
-    }
-
-
-    session->time_tag[0] = 11;
-    hfp_memcopy(&session->time_tag[1], &session->req.data[session->req.data_len - 11], session->time_tag[0]);
-    session->req.data_len -= 11;
-
-    return ERROR_SUCCESS;
-#endif
+    return 1;
 }
 
 
@@ -573,10 +479,10 @@ int __fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline,
                 //台体测试，下发时间后，再设置参数的timetag比集中器时间慢1秒.此处用绝对值进行比较,防止判断时间标签无效
                 //一致性测试：延时时间=0，应正确响应
                 if ((abs(nowtime_t - tagtime_t) <= interval_s) || (interval_s == 0)) {
-                    ctx->fr_timeTag = 1;
+                    ctx->timeTag_valid = 1;
                 }
                 else {
-                    ctx->fr_timeTag = 0;
+                    ctx->timeTag_valid = 0;
                 }
                 rec_timetag->flag = 1;
                 memcpy(&rec_timetag->ti, &timetag.ti, sizeof(timetag.ti));

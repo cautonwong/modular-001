@@ -220,7 +220,8 @@ struct context_698_t
     uint16_t segment_rx; 
     uint16_t segment;
     uint16_t segment_no;
-    uint8_t fr_timeTag;
+    uint8_t timeTag_valid;
+    uint8_t timeTag[10]; //date_time_s + TI
 
     //作为主站方时用的临时状态
     uint8_t dst_addr[6];//目的地址

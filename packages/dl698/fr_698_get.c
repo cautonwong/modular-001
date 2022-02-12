@@ -12,39 +12,41 @@
 
 int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-#if 0
-    if (session->req.sub_cmd > 5)
-    {
-        return ERROR_GET_SUB_CMD;
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint16_t rsd_len = 0, rcsd_len = 0;
+    int len = 0;
+    int i = 0;
+    uint8_t list = 0;
+    int offset = 0;
+    return 5;
+
+    if (ctx->choice > GetRequestNext){
+        return -1;
     }
-    if (session->req.sub_cmd == 0x05)
-    {
-        p += 2;
-    }
-    else
-    {
+    if (ctx->choice == GetRequestNext){
+        len = 2;
+    }else{
         list = 1;
-        if ((session->req.sub_cmd == 0x02) || (session->req.sub_cmd == 0x04))
-        {
-            list = *p++;
+        if ((ctx->choice == 0x02) || (ctx->choice == 0x04)){
+            fifoBuf_peekByteBuf(fifo, offset, &list, 1);
         }
-        for (i = 0; i < list; i++)
-        {
-            p += 4;
-            if ((session->req.sub_cmd == 0x03) || (session->req.sub_cmd == 0x04))
-            {
+
+        for (i = 0; i < list; i++){
+            len += 4;
+            if ((ctx->choice == 0x03) || (ctx->choice == 0x04)){
                 rsd_len = 0;
                 rcsd_len = 0;
                 len = dl698_record_para_len_get(p, &rsd_len, &rcsd_len);
                 if (rsd_len == 0 || rcsd_len == 0)
                 {
-                    return ERROR_GET_RECORD_APDU;
+                    return -1;
                 }
                 p += len;
             }
         }
     }
-#endif
+    return len;
 }
 
 
