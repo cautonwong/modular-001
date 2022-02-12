@@ -97,6 +97,7 @@
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_SET_Response_8603.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\nidavellir\include\kernel\nidavellir.h" />
     <ClInclude Include="..\..\..\packages\dl698\fr_698.h" />
     <ClInclude Include="..\..\..\packages\dl698\fr_698_comm.h" />
     <ClInclude Include="..\..\..\packages\dl698\fr_axdr.h" />

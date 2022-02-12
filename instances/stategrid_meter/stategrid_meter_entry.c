@@ -252,6 +252,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     {
         return -1;
     }
+    instance->apdu_cache = nd_malloc(instance, control_block_cache, 1800);
     //指向cache space
     instance->cache = nd_malloc(instance, control_block_cache, 256);
     instance->cache2 = nd_malloc(instance, control_block_cache, sizeof(struct cache_t));

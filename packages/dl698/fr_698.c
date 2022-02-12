@@ -43,50 +43,22 @@ int __pack_apdu_byte(void* pctx, uint8_t* byte)
     struct pipeline_t* pipeline = pctx;
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
-    if (is_scrambler_set(ctx->ctrl))
-    {
+    if (is_scrambler_set(ctx->ctrl)){
         *byte += 0x33;
     }
     append_byte(fifo, *byte, update_fcs, ctx);
     return 0;
 }
-/*
-698.45协议判断过程
-1 长度域L需要处理
-	a 长度为3FFF位长度
-	b 数据帧长度为bit0--bit13
-	c bit14 0表示字节，1表示千字节
-	d bit15为保留
-	e 最小长度11  
-	f 长度字节+2 > 接收字节
-2 控制域C
-	a bit7 传输方向DIR    注意启动方向位，识别判断
-	b bit6 启动标志位PRM  判断DIR和PRM的组合形式
-	c bit5 分帧标志
-	d bit4 保留
-	e bit3 干扰码标志sc
-	f bit2--bit0 功能码  范围判断 1链路管理，3用户数据
-3 地址域 A
-    a sa 地址类型,逻辑地址,地址长度
-    b 扩展逻辑地址/分路地址
-    c 地址  广播地址的长度固定为1字节，广播地址=AAH
-*/
+
 int matcher_698(void* pctx, uint8_t* b)
 {
     uint8_t byte = *b;
     struct context_698_t* ctx = pctx;
 
-    if((ctx->step > 0) && (ctx->step <= 5))
-    {
-        //ctx->hcs = update_crc16(0xffff, byte);
-        //ctx->fcs = update_crc16(0xffff, byte); 
-    }
-
     switch (ctx->step)
     {
     case 0://帧头68判断
-        if (byte != 0x68)
-        {
+        if (byte != 0x68){
             ctx->err_n++;
             return FRM_HEADER_ERR;
         }
@@ -105,8 +77,7 @@ int matcher_698(void* pctx, uint8_t* b)
         ctx->min_len &= 0x3fff;
         //bit14：帧数据长度单位，0 表示帧数据长度单位为字节，1 表示帧数据长度单位为千字节；
         ctx->len_unit = (byte & 0x40) >> 6;
-        if (ctx->min_len < 11)
-        {
+        if (ctx->min_len < 11){
             ctx->step = 0;
             ctx->err_n++;
             return FRM_LEN_ERR1;
@@ -117,8 +88,7 @@ int matcher_698(void* pctx, uint8_t* b)
     case 3:
         ctx->hcs = update_crc16(ctx->hcs, byte);
         ctx->fcs = update_crc16(ctx->fcs, byte);
-        if ( (FC_CODE(byte) != 1) && (FC_CODE(byte) != 3))
-        {
+        if ( (FC_CODE(byte) != 1) && (FC_CODE(byte) != 3)){
             ctx->step = 0;
             return -1;
         }
@@ -131,8 +101,7 @@ int matcher_698(void* pctx, uint8_t* b)
         ctx->SA = byte;//SA
         ctx->index = 0;
         ctx->step = 6;
-        if(SA_LOGIC_TYPE(ctx->SA))
-        {
+        if(SA_LOGIC_TYPE(ctx->SA)){
             ctx->step = 5; 
         }
         return FRM_OK;
@@ -148,21 +117,17 @@ int matcher_698(void* pctx, uint8_t* b)
     case 6:
         ctx->hcs = update_crc16(ctx->hcs, byte);
         ctx->fcs = update_crc16(ctx->fcs, byte);
-        if (ctx->index == SA_LEN(ctx->SA) + 1)
-        {
+        if (ctx->index == SA_LEN(ctx->SA) + 1){
             ctx->CA = byte;
             ctx->step = 7;
-        }
-        else
-        {
+        }else{
             ctx->addr[ctx->index++] = byte;
         }
         return FRM_OK;
     case 7:
         ctx->hcs = get_crc16(ctx->hcs);
         ctx->fcs = update_crc16(ctx->fcs, byte);
-        if (byte != (ctx->hcs & 0xff))
-        {
+        if (byte != (ctx->hcs & 0xff)){
             ctx->step = 0;
             ctx->err_n++;
             return -1;
@@ -171,8 +136,7 @@ int matcher_698(void* pctx, uint8_t* b)
         return FRM_OK;
     case 8:
         ctx->fcs = update_crc16(ctx->fcs, byte);
-        if (byte != ((ctx->hcs >> 8) & 0xff))
-        {
+        if (byte != ((ctx->hcs >> 8) & 0xff)){
             ctx->step = 0;
             ctx->err_n++;
             return -1;
@@ -181,8 +145,7 @@ int matcher_698(void* pctx, uint8_t* b)
         ctx->step = 9;
         return FRM_OK;
     case 9://用户链路数据
-        if (is_scrambler_set(ctx->ctrl))
-        {
+        if (is_scrambler_set(ctx->ctrl)){
             *b = byte - 0x33;
         }
         ctx->fcs = update_crc16(ctx->fcs, byte);
@@ -195,8 +158,7 @@ int matcher_698(void* pctx, uint8_t* b)
         return FRM_OK;
     case 10:
         ctx->fcs = get_crc16(ctx->fcs);
-        if (byte != (ctx->fcs & 0xff))
-        {
+        if (byte != (ctx->fcs & 0xff)){
             ctx->step = 0;
             ctx->err_n++;
             return 2;
@@ -204,8 +166,7 @@ int matcher_698(void* pctx, uint8_t* b)
         ctx->step = 11;
         return FRM_OK;
     case 11:
-        if (byte != ((ctx->fcs >> 8) & 0xff))
-        {
+        if (byte != ((ctx->fcs >> 8) & 0xff)){
             ctx->step = 0;
             ctx->err_n++;
             return 2;
@@ -213,8 +174,7 @@ int matcher_698(void* pctx, uint8_t* b)
         ctx->step = 12;
         return FRM_OK;
     case 12:
-        if (byte != 0x16)
-        {
+        if (byte != 0x16){
             ctx->step = 0;
             return 2;
         }
@@ -241,8 +201,7 @@ int fr_pack_698_head(struct instance_t* instance, struct pipeline_t* pipeline, s
     append_byte(fifo, (len & 0xff), update_hcs_fcs, ctx);
     append_byte(fifo, ((len >> 8) & 0xff), update_hcs_fcs, ctx);
     ctx->ctrl |= (1 << 7);//DIR=0表示由服务器发出
-    if (mesg->from != pid_rx_698)
-    {
+    if (mesg->from != pid_rx_698){
         ctx->ctrl &= ~(1 << 6);//PRM=0表示由服务器发起
     }
     append_byte(fifo, ctx->ctrl, update_hcs_fcs, ctx);
@@ -269,8 +228,7 @@ int fr_pack_698_tx_head(struct instance_t* instance, struct pipeline_t* pipeline
     append_byte(fifo, (len & 0xff), update_hcs_fcs, ctx);
     append_byte(fifo, ((len >> 8) & 0xff), update_hcs_fcs, ctx);
     ctx->ctrl |= (1 << 7);//DIR=0表示由服务器发出
-    if (mesg->from != pid_rx_698)
-    {
+    if (mesg->from != pid_rx_698){
         ctx->ctrl &= ~(1 << 6);//PRM=0表示由服务器发起
     }
     append_byte(fifo, ctx->ctrl, update_hcs_fcs, ctx);
@@ -287,9 +245,6 @@ int fr_pack_698_tx_head(struct instance_t* instance, struct pipeline_t* pipeline
 int fr_pack_698_apdu(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    //struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
-    //struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
-
     fifo_popData(ctx->apdu, mesg->len, __pack_apdu_byte, pipeline);
     return 1;
 }
@@ -310,11 +265,8 @@ int fr_pack_698_tail(struct instance_t* instance, struct pipeline_t* pipeline, s
 
 int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    //struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
     uint8_t tail = 0;
-    //struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
-    //struct message_t* n = (struct message_t*)instance->cache;
 
     fifoBuf_getByte(ififo);//fcs-0
     fifoBuf_getByte(ififo);//fcs-1
@@ -322,33 +274,25 @@ int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, stru
     //请排查消耗数据map长度是否正确
     assert(tail == 0x16);
     fr_pack_698_head(instance, pipeline, mesg);
-    
     if(mesg->len)
         fr_pack_698_apdu(instance, pipeline, mesg);
     
     fr_pack_698_tail(instance, pipeline, mesg);
-    //使能发送
     return 0;
 }
-
-
 
 
 int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
-    struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = cache->buf_ptr;
     uint32_t interval_sec = 0;
     uint32_t time_sec = 0;
     uint32_t time_tag_sec = 0;
     int offset = 0;
-    int len = 0;
-    int r = 0;
 
     ctx->timeTag_valid = 1;	//默认时间标签合法
-    return 1;
+    //return 1;
 
     if ((ctx->service == LINK_Request) || (ctx->service == SECURITY_Request)){
         return -1;
@@ -392,14 +336,14 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
 
     fifoBuf_peekByteBuf(fifo, offset, &ctx->timeTag_valid, 1);
     if (1 == ctx->timeTag_valid) {
-        fifoBuf_peekByteBuf(fifo, offset+1, &ctx->timeTag, 10);
-
-        if (false == dl_data_time_check(&ctx->timeTag, TIME_WILDCARD)){
+        fifoBuf_peekByteBuf(fifo, offset+1, ctx->timeTag, 10);
+        if (false == dl_data_time_check(ctx->timeTag, TIME_WILDCARD)){
             ctx->timeTag_valid = 0;
         }
         interval_sec = dl_timeTag_interval(&ctx->timeTag[7], 0);
-        time_tag_sec = dl_datetime_to_second(&ctx->timeTag);
+        time_tag_sec = dl_datetime_to_second(ctx->timeTag, 0);
         time_sec     = rtc_mktime(&instance->time);
+
         if ((time_tag_sec + interval_sec) < time_sec){
             ctx->timeTag_valid = 1;//时间标签,有效
         }
@@ -417,29 +361,29 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     struct mbase_control_block_t* mbase_cb;
     uint8_t aa_addrbuf[6] = {0xAA,0xAA,0xAA,0xAA,0xAA,0xAA};
 
-    //合法性和一致性判断
-    if ((ctx->ctrl & (1 << 7)) == 1)
-    {
-        //自己是服务器  收到来自服务器的报文  丢掉
+    if ((ctx->ctrl & (1 << 7)) == 1){   //合法性和一致性判断
         fifoBuf_removeData(fifo, ctx->min_len + 2);
         return 0;
     }
     //控制域判断
-    if (!((0 == DIR(ctx->ctrl)) && (1 == PRM(ctx->ctrl))))
+    if (!((0 == DIR(ctx->ctrl)) && (1 == PRM(ctx->ctrl)))) {
         return 0;
+    }
 
-    if(is_cmd(ctx->ctrl))
+    if (is_cmd(ctx->ctrl)) {
         return 0;
+    }
 
     //地址判断
-    if (0 != SA_LOGIC(ctx->SA))
+    if (0 != SA_LOGIC(ctx->SA)) {
         return 0;
-
+    }
 
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(NULL == mbase_cb)
         return 0;
-#if 0
+
+#ifndef WIN32
     if (0 != mem_compare(ctx->addr, mbase_cb->tsa, SA_LEN(ctx->SA) + 1))
     {
         if(0 != mem_compare(ctx->addr, aa_addrbuf, 6))
@@ -462,54 +406,16 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
 }
 
 
-#if 0
-int __fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{
-
-    if (timetag.flag == 1) {	//时间标签有效
-        ret = check_date(timetag.sendTimeTag.year.data, timetag.sendTimeTag.month.data, timetag.sendTimeTag.day.data,
-            timetag.sendTimeTag.hour.data, timetag.sendTimeTag.min.data, timetag.sendTimeTag.sec.data);
-        if (ret == success) {
-            if (timetag.ti.units >= 0 && timetag.ti.units <= 5) {		//TI 间隔时间单位满足条件
-                interval_s = TItoSec(timetag.ti);
-
-                nowtime_t = time(NULL);
-                tagtime_t = TimeBCDTotime_t(timetag.sendTimeTag);
-                fprintf(stderr, "nowtime=%ld, rece_tag=%ld, sub=%d interval_s=%d\n", nowtime_t, tagtime_t, (int)(nowtime_t - tagtime_t), interval_s);
-                //台体测试，下发时间后，再设置参数的timetag比集中器时间慢1秒.此处用绝对值进行比较,防止判断时间标签无效
-                //一致性测试：延时时间=0，应正确响应
-                if ((abs(nowtime_t - tagtime_t) <= interval_s) || (interval_s == 0)) {
-                    ctx->timeTag_valid = 1;
-                }
-                else {
-                    ctx->timeTag_valid = 0;
-                }
-                rec_timetag->flag = 1;
-                memcpy(&rec_timetag->ti, &timetag.ti, sizeof(timetag.ti));
-                //时间标签不进行更新，响应帧上送客户端的时间标签
-                //rec_timetag->sendTimeTag = timet_bcd(nowtime_t);
-                memcpy(&rec_timetag->sendTimeTag, &timetag.sendTimeTag, sizeof(DateTimeBCD));
-            }
-        }
-        else rec_timetag->flag = 0;
-    }
-    return 1;
-}
-#endif
-
 int fr_apdu_effective_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {//协议一致性检查正常，检查APDU是否为有效数据
 
     return 1;
 }
 
-
-
 int fr_encode_optional(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
-    //struct fifo_t* ofifo = (struct fifo_t*)pipeline->out_queue;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
     int r = 0;
@@ -517,8 +423,7 @@ int fr_encode_optional(struct instance_t* instance, struct pipeline_t* pipeline,
     p[cache->wr++] = 0x00;//follow_report
     uint8_t time_tag = fifoBuf_getByte(fifo);
     p[cache->wr++] = time_tag;
-    if (time_tag != 0)
-    {
+    if (time_tag != 0){
         r = fifoBuf_getData(fifo, p + cache->wr, 10);
         cache->wr += r;
     }
@@ -540,28 +445,25 @@ int _fr_segments_rcv_handle(struct instance_t* instance, struct pipeline_t* pipe
     uint16_t segment = ctx->segment_rx;
 
     uint16_t data_len = ctx->min_len - 8 - SA_LEN(ctx->SA) - 2 - 2;
-    if(is_first_segment(segment))////链路层rx 开始帧
-    {
+    if(is_first_segment(segment)){  //链路层rx 开始帧
         ringbuffer_clear(ctx->apdu_rx);
         fifo_popData(fifo, data_len, __put_fifo_byte, ctx->apdu_rx);
         ctx->segment_no = 1;
         return 0;
     }
-    else if((get_segment_no(segment) == ctx->segment_no) && (is_middle_segment(segment) || is_last_segment(segment)))//中间帧 or最后帧
-    {
+    else if((get_segment_no(segment) == ctx->segment_no) 
+         && (is_middle_segment(segment) || is_last_segment(segment))){
         fifo_popData(fifo, data_len, __put_fifo_byte, ctx->apdu_rx);
         ctx->segment_no++;
         if(is_last_segment(segment))
           ctx->segment_no = 0;
         return 0;
     }
-    else
-    {
+    else{
         return 1;
     }
 
-    
-    if (is_segment_set(ctx->ctrl))//分帧标志位
+    if (is_segment_set(ctx->ctrl))
     {
         if (fifoBuf_getUsed(ctx->apdu) > 0)
         {
@@ -577,7 +479,6 @@ int _fr_segments_rcv_handle(struct instance_t* instance, struct pipeline_t* pipe
                 set_segment(ctx->ctrl);
                 set_last_segment_no(ctx->segment);//最后帧
             }
-
             fr_rx_698_end(instance, pipeline, mesg);
         }
         fifoBuf_removeData(fifo, ctx->min_len + 2);//删掉收到的确认帧
@@ -601,15 +502,11 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
     ctx->segment_rx = fifoBuf_getByte(fifo);
     ctx->segment_rx += (fifoBuf_getByte(fifo) << 8);
     ret = _fr_segments_rcv_handle(instance, pipeline, mesg);
-    if (0 == ret)
-    {
-        if (is_last_segment(ctx->segment_rx))//最后帧
-        {
+    if (0 == ret){
+        if (is_last_segment(ctx->segment_rx)) { //最后帧
             fifo = ctx->apdu_rx;
             return 1;
-        }
-        else
-        {
+        }else{
             set_confirm_segment(ctx->segment_rx);
             fifoBuf_putByte(ctx->apdu, ctx->segment_rx & 0x00ff);
             fifoBuf_putByte(ctx->apdu, (ctx->segment_rx >> 8));
@@ -617,9 +514,7 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
             fr_rx_698_end(instance, pipeline, mesg);
             return 0;//回应确认
         }
-    }
-    else
-    {
+    }else{
         return -1;//异常
     }
 }
@@ -635,42 +530,41 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     uint8_t service = 0;
     
     //协议一致性判断和apdu合法判断
-    if(0 == fr_pack_698_check(instance, pipeline, mesg))
-    {
+    if(0 == fr_pack_698_check(instance, pipeline, mesg)){
         fifoBuf_removeData(fifo, ctx->min_len + 2);
         return -1;
     }
     
     fifoBuf_removeData(fifo, APDU_OFFSET(ctx->SA));
-    if(is_segment_set(ctx->ctrl))
-    {
+    if(is_segment_set(ctx->ctrl)){
         err_no = fr_segments_handle(instance, pipeline,  mesg);
-        if (err_no != 1)
+        if (err_no != 1) {
             return err_no;
+        }
     }
-    
+
+    //拷贝到线性缓冲区
+    fifoBuf_peekByteBuf(fifo, 0, instance->apdu_cache, ctx->min_len - 3);
+
     ctx->service = fifoBuf_getByte(fifo);
-    if (SECURITY_Request == ctx->service)//安全请求
-    {
+    if (SECURITY_Request == ctx->service){
         service = SECURITY_Request;
         err_no = fr_security_request(instance, pipeline, mesg);
         if(err_no < 0)
             return err_no;
     }
 
-    if (!((CONNECT_Request == ctx->service) || (RELEASE_Request == ctx->service)))
-    {
+    if (!((CONNECT_Request == ctx->service) || (RELEASE_Request == ctx->service))){
         ctx->choice = fifoBuf_getByte(fifo);
     }
-    if ((ctx->service > ERROR_S_Response) || (ctx->choice > 9))
-    {
+
+    if ((ctx->service > ERROR_S_Response) || (ctx->choice > 9)){
         ctx->fr_err = FRM_CTRL_ERR;
         fifoBuf_removeData(fifo, ctx->min_len + 2);
         return -1;
     }
 
-    if(0 == fr_timetag_check(instance, pipeline, mesg))
-    {
+    if(0 == fr_timetag_check(instance, pipeline, mesg)){
         ctx->fr_err = FRM_TIME_TAG_ERR;
         fifoBuf_removeData(fifo, ctx->min_len + 2);
         return -1;
@@ -698,11 +592,11 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         mesg->oad_n = fifoBuf_getByte(fifo);
         fifoBuf_putByte(cache, mesg->oad_n);
     }
-    if(0 == fr_apdu_effective_check(instance, pipeline, mesg))
-    {
+    if(0 == fr_apdu_effective_check(instance, pipeline, mesg)){
         fifoBuf_removeData(fifo, ctx->min_len + 2);
         return -1;
     }
+
     switch (ctx->service)
     {
         case CONNECT_Request:
@@ -730,17 +624,14 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     //数据加密
     fr_encode_optional(instance, pipeline, mesg);
     
-    if (service == SECURITY_Request) //安全请求
-    {
+    if (service == SECURITY_Request){
         fr_security_encode(instance, pipeline, mesg);
     }
     Security_Mode = 0;
     
-    if (fifoBuf_getUsed(ctx->apdu)  > 0)
-    {
+    if (fifoBuf_getUsed(ctx->apdu)  > 0){
         mesg->len = fifoBuf_getUsed(ctx->apdu);
-        if (mesg->len > 512)
-        {
+        if (mesg->len > 512){
             set_segment(ctx->ctrl);
             //set_first_segment_no(ctx->segment);//第一帧
             mesg->len = 512;
@@ -757,28 +648,21 @@ int fr_gatekeeper_client(struct instance_t* instance, struct pipeline_t* pipelin
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
 
     //todo 合法性和一致性判断
-    if ((ctx->ctrl & (1 << 7)) == 0)
-    {
+    if ((ctx->ctrl & (1 << 7)) == 0){
         fifoBuf_removeData(fifo, ctx->min_len + 2);
         return 0;
     }
 
-    if (is_segment_set(ctx->ctrl))//分帧标志位
-    {
+    if (is_segment_set(ctx->ctrl)) { //分帧标志位
         fifoBuf_removeData(fifo, ctx->min_len + 2);
-        if (is_last_segment(ctx->segment) > 0)//收到的是最后帧
-        {
+        if (is_last_segment(ctx->segment) > 0) { //收到的是最后帧
             //收齐了  解析 todo
             //get-next
-        }
-        else
-        {
+        }else{
             //发送分帧传输的确认帧
         }
         return 0;
-    }
-    else
-    {
+    }else{
         //收到的如果不是后续帧请求
         ringbuffer_clear(ctx->apdu);
     }
@@ -809,12 +693,9 @@ int fr_gatekeeper_client(struct instance_t* instance, struct pipeline_t* pipelin
     fifoBuf_putByte(cache, mesg->ctrl);
     fifoBuf_putByte(cache, mesg->qos);
     fifoBuf_putByte(cache, ctx->PIID);
-    if (type == 1)
-    {
+    if (type == 1){
         mesg->oad_n = 0;
-    }
-    else
-    {
+    }else{
         mesg->oad_n = fifoBuf_getByte(fifo);
         fifoBuf_putByte(cache, mesg->oad_n);
     }
@@ -846,11 +727,9 @@ int fr_gatekeeper_client(struct instance_t* instance, struct pipeline_t* pipelin
             break;
     }
 
-    if (fifoBuf_getUsed(ctx->apdu) > 0)
-    {
+    if (fifoBuf_getUsed(ctx->apdu) > 0){
         mesg->len = fifoBuf_getUsed(ctx->apdu);
-        if (mesg->len > 512)
-        {
+        if (mesg->len > 512){
             set_segment(ctx->ctrl);
             set_first_segment_no(ctx->segment);//第一帧
             mesg->len = 512;
@@ -869,8 +748,7 @@ int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     ctx->step = 0;
     int r = ringbuffer_filter(fifo, matcher_698, ctx);
-    if (r > 0)
-    {
+    if (r > 0){
         assert(r == ctx->min_len + 2);
 #ifdef WIN32
         log_hex(fifo->buf_ptr + fifo->rd, fifo->wr - fifo->rd);
@@ -891,15 +769,12 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
 
 
     //client  或者 主动上报 或者 延时读取发送
-    if (recv_mesg_header(instance, pipeline, mesg))
-    {
+    if (recv_mesg_header(instance, pipeline, mesg)){
 #if WIN32
-        if ((TEST_CASE_Request == mesg->ctrl) && (TEST_CASE_ID == mesg->id))
-        {
+        if ((TEST_CASE_Request == mesg->ctrl) && (TEST_CASE_ID == mesg->id)){
             cache->wr = 0;//临时清0
             cache->rd = 0;
             fifoBuf_getData(fifo_in, cache->buf_ptr + cache->wr, mesg->len);
-
             fifoBuf_putData(fifo_out, cache->buf_ptr + cache->wr, mesg->len);
             return 0;
         }
@@ -954,4 +829,3 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
 //串口发送FIFO 544 
 //接收别的pl的主动发送FIFO  200
 //用来装apdu的cache fifo  2048
-//ctx
