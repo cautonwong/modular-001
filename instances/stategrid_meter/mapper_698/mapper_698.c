@@ -136,7 +136,7 @@ extern const uint32_t record_head_t0[];
 
 extern void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id);
 
-extern int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf);
+extern int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode);
 extern int GET_1_Demand(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf);
 
@@ -1128,16 +1128,19 @@ int record_change_format(uint8_t *des,  uint8_t* src, uint32_t oad, enum format_
 }
 
 
-int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx, uint8_t mode)
+int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx, uint16_t mode)
 {
     uint8_t OIA1 = get_OAD_OIA1(id);
-    switch (mode)
+    uint8_t h_mode = (uint8_t) (mode >> 8);
+    uint8_t l_mode = (uint8_t) mode;
+    
+    switch (l_mode)
 	{
     case RESOURCE_MAP_GET:
         switch (OIA1)
         {
         case 0x0://电量
-            return GET_0_Energy(instance, id, buf);
+            return GET_0_Energy(instance, id, buf, h_mode);
             break;
         case 0x1://需量
             return GET_1_Demand(instance, id, buf);
@@ -1296,8 +1299,6 @@ const struct tag_len_t tag_data_len[] =
      {  TYPE_USER_ERROR                  ,  0    },
 };
 
-
-
 const uint8_t _0000_02_tag[] = { TYPE_array, 13, TYPE_double_long, DT_END };
 const uint8_t _0000_04_tag[] = { TYPE_array, 13, TYPE_long64, DT_END };
 const uint8_t _0000_06_tag[] = { TYPE_array, 13, TYPE_integer, DT_END };
@@ -1398,12 +1399,7 @@ int record_data_add_tag(uint8_t* des, uint8_t* src, uint32_t* obj_list, uint8_t 
         
         attr_tags = get tag(oad);    
         add_tag(p, tmp, oad, attr_tags);
-
-        
     }
-
-
-
 }
 // 00000200  00000400 
 // 01 13 06 

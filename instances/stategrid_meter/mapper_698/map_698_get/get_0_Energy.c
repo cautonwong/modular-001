@@ -2,7 +2,7 @@
 #include "fr_698.h"
 
 
-int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
+int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj, uint8_t mode)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint8_t i;
@@ -22,17 +22,33 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct 
     
     if(attribute == 0x03)
     {
+      switch(mode)
+      {
+      case 0x00:
         *p++ = TYPE_Scaler_Unit;
         *p++ = -2;
         *p++ = unit_kWh;
         return (p-buf);
+      case 0x01:  // T L 的信息
+        *p++ = TYPE_Scaler_Unit;
+        *p++ = 0x02;
+        return (p-buf);
+      }
     }
     else if(attribute == 0x05)
     {
+      switch(mode)
+      {
+      case 0x00:
         *p++ = TYPE_Scaler_Unit;
         *p++ = -4;
         *p++ = unit_kWh;
+        return (p-buf);   
+      case 0x01:
+        *p++ = TYPE_Scaler_Unit;
+        *p++ = 0x02;
         return (p-buf);
+      }
     }
     
     switch(OI)
@@ -47,27 +63,53 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct 
                 ptr = &buf[2];
                 if(attribute == 2)
                 {
-                    for(i=0;i<13;i++)
+                    switch(mode)
                     {
-                        *ptr++ = TYPE_double_long;
-                        tmp = Get_Cal_Active_Energy(mbase_cb , i , 0);
-                        memcpy(ptr, (uint8_t*)&tmp, 4);
-                        ptr += 4;
-                        len += 5;
+                    case 0x00:
+                      for(i=0;i<13;i++)
+                      {
+                          *ptr++ = TYPE_double_long;
+                          tmp = Get_Cal_Active_Energy(mbase_cb , i , 0);
+                          memcpy(ptr, (uint8_t*)&tmp, 4);
+                          ptr += 4;
+                          len += 5;
+                      }                      
+                      break;
+                    case 0x01:
+                      for(i=0;i<13;i++)
+                      {
+                          *ptr++ = TYPE_double_long;
+                          *ptr++ = 0x04;
+                          len += 2;
+                      }                         
+                      break;
                     }
                 }
                 else if(attribute == 4)
                 {
-                    for(i=0;i<13;i++)
+                    switch(mode)
                     {
-                        *ptr++ = TYPE_long64;
-                        tmp = Get_Cal_Active_Energy(mbase_cb , i , 0);
-                        memcpy(ptr, (uint8_t*)&tmp, 4);
-                        ptr += 4;
-                        tmp = Get_Cal_Active_Energy(mbase_cb , i , 1);
-                        memcpy(ptr, (uint8_t*)&tmp, 4);
-                        ptr += 4;
-                        len += 9;
+                    case 0x00:
+                      for(i=0;i<13;i++)
+                      {
+                          *ptr++ = TYPE_long64;
+                          tmp = Get_Cal_Active_Energy(mbase_cb , i , 0);
+                          memcpy(ptr, (uint8_t*)&tmp, 4);
+                          ptr += 4;
+                          tmp = Get_Cal_Active_Energy(mbase_cb , i , 1);
+                          memcpy(ptr, (uint8_t*)&tmp, 4);
+                          ptr += 4;
+                          len += 9;
+                      }
+                      break;
+                    case 0x01:
+                      for(i=0;i<13;i++)
+                      {
+                          *ptr++ = TYPE_long64;
+                          *ptr++ = 0x08;
+                          len += 2;
+                      }                      
+                      break;                   
                     }
                 }
             }
@@ -75,19 +117,39 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct 
             {
                 if(attribute == 2)
                 {
+                    switch(mode)
+                    {
+                    case 0x00:
                       buf[0] = TYPE_double_long;
                       tmp = Get_Cal_Active_Energy(mbase_cb , attr_index , 0);
                       memcpy(&buf[1], (uint8_t*)&tmp, 4);
-                      len = 5;
+                      len = 5;                        
+                      break;
+                    case 0x01:
+                      buf[0] = TYPE_double_long;
+                      buf[1] = 0x04;
+                      len = 0x02;
+                      break;
+                    }
                 }
                 else if(attribute == 4)
                 {
+                    switch(mode)
+                    {
+                    case 0x00:
                       buf[0] = TYPE_long64;
                       tmp = Get_Cal_Active_Energy(mbase_cb , attr_index , 0);
                       memcpy(&buf[1], (uint8_t*)&tmp, 4);
                       tmp = Get_Cal_Active_Energy(mbase_cb , attr_index , 1);
                       memcpy(&buf[5], (uint8_t*)&tmp, 4);
-                      len = 9;
+                      len = 9;                        
+                      break;
+                    case 0x01:
+                      buf[0] = TYPE_long64;
+                      buf[1] = 0x08;
+                      len = 2;                        
+                      break;
+                    }
                 }
             }
             else
@@ -105,19 +167,42 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct 
                 buf[1] = 13;//数据块
                 len = 2;
                 ptr = &buf[2];
-                for(i=0;i<13;i++)
+                switch(mode)
                 {
-                    *ptr++ = TYPE_double_long_unsigned;
-                    memcpy(ptr, (uint8_t*)&mbase_cb->active_p[i], 4);
-                    ptr += 4;
-                    len += 5;
+                case 0x00:
+                  for(i=0;i<13;i++)
+                  {
+                      *ptr++ = TYPE_double_long_unsigned;
+                      memcpy(ptr, (uint8_t*)&mbase_cb->active_p[i], 4);
+                      ptr += 4;
+                      len += 5;
+                  }                  
+                  break;
+                case 0x01:
+                  for(i=0;i<13;i++)
+                  {
+                      *ptr++ = TYPE_double_long_unsigned;
+                      *ptr++= 4;
+                      len += 2;
+                  }                  
+                  break;
                 }
             }
             else if(attr_index<13)
             {
-                buf[0] = TYPE_double_long_unsigned;
-                memcpy(&buf[1], (uint8_t*)&mbase_cb->active_p[attr_index], 4);
-                len = 5;
+                switch(mode)
+                {
+                case 0x00:
+                  buf[0] = TYPE_double_long_unsigned;
+                  memcpy(&buf[1], (uint8_t*)&mbase_cb->active_p[attr_index], 4);
+                  len = 5;                  
+                  break;
+                case 0x01:
+                  buf[0] = TYPE_double_long_unsigned;
+                  buf[1] = 0x04;
+                  len = 2;                            
+                  break;
+                }
             }
             else
             {
@@ -134,19 +219,43 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct 
                 buf[1] = 13;//数据块
                 len = 2;
                 ptr = &buf[2];
-                for(i=0;i<13;i++)
+                switch(mode)
                 {
-                    *ptr++ = TYPE_double_long_unsigned;
-                    memcpy(ptr, (uint8_t*)&mbase_cb->active_n[i], 4);
-                    ptr += 4;
-                    len += 5;
+                case 0x00:
+                  for(i=0;i<13;i++)
+                  {
+                      *ptr++ = TYPE_double_long_unsigned;
+                      memcpy(ptr, (uint8_t*)&mbase_cb->active_n[i], 4);
+                      ptr += 4;
+                      len += 5;
+                  }                  
+                  break;
+                case 0x01:
+                  for(i=0;i<13;i++)
+                  {
+                      *ptr++ = TYPE_double_long_unsigned;
+                      *ptr++ = 4;
+                      len += 2;
+                  }                  
+                  break;                                 
                 }
+
             }
             else if(attr_index<13)
             {
-                buf[0] = TYPE_double_long_unsigned;
-                memcpy(&buf[1], (uint8_t*)&mbase_cb->active_n[attr_index], 4);
-                len = 5;
+                switch(mode)
+                {
+                case 0x00:
+                  buf[0] = TYPE_double_long_unsigned;
+                  memcpy(&buf[1], (uint8_t*)&mbase_cb->active_n[attr_index], 4);
+                  len = 5;                  
+                  break;
+                case 0x01:
+                  buf[0] = TYPE_double_long_unsigned;
+                  buf[1] = 0x04;
+                  len = 2;                  
+                  break;
+                }
             }
             else
             {
