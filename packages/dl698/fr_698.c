@@ -291,9 +291,8 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
     uint32_t time_tag_sec = 0;
     int offset = 0;
 
-    ctx->timeTag_valid = 1;	//默认时间标签合法
+    ctx->timeTag_valid = 0;	//默认时间标签合法
     //return 1;
-
     if ((ctx->service == LINK_Request) || (ctx->service == SECURITY_Request)){
         return -1;
     }
@@ -543,9 +542,6 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         }
     }
 
-    //拷贝到线性缓冲区
-    fifoBuf_peekByteBuf(fifo, 0, instance->apdu_cache, ctx->min_len - 3);
-
     ctx->service = fifoBuf_getByte(fifo);
     if (SECURITY_Request == ctx->service){
         service = SECURITY_Request;
@@ -564,14 +560,17 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         return -1;
     }
 
+    ctx->PIID = fifoBuf_getByte(fifo);
+    ctx->PIID |= (1 << 6);//PIID-ACD
+
+    //拷贝到线性缓冲区
+    fifoBuf_peekByteBuf(fifo, 0, instance->apdu_cache, ctx->min_len - 3);
+
     if(0 == fr_timetag_check(instance, pipeline, mesg)){
         ctx->fr_err = FRM_TIME_TAG_ERR;
         fifoBuf_removeData(fifo, ctx->min_len + 2);
         return -1;
     }
-
-    ctx->PIID = fifoBuf_getByte(fifo);
-    ctx->PIID |= (1 << 6);//PIID-ACD
 
     mesg->from  = pipeline->id;//从哪里来
     mesg->to    = pid_tx_698;//要到哪里去

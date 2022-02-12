@@ -7,35 +7,38 @@
 
 int get_SET_and_ACTION_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-#if 0
-    if (session->req.sub_cmd > 3)
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint16_t rsd_len = 0, rcsd_len = 0;
+    int len = 0;
+    int i = 0;
+    uint16_t axdr_len = 0;
+    uint8_t list = 0;
+    int offset = 0;
+    uint8_t* apdu = instance->apdu_cache;
+
+    if (ctx->choice > 3)
     {
-        if (session->req.cmd == DL698_CMD_SetRequest)
-        {
-            return ERROR_SET_SUB_CMD;
-        }
-        else
-        {
-            return ERROR_ACTION_SUB_CMD;
-        }
+        return -1;
     }
 
     list = 1;
-    if ((session->req.sub_cmd == 0x02) || (session->req.sub_cmd == 0x03))
+    if ((ctx->choice == 0x02) || (ctx->choice == 0x03))
     {
-        list = *p++;
+        list = apdu[0];
+        len = 1;
     }
     for (i = 0; i < list; i++)
     {
-        p += 4;
-        len = dl698_normal_para_len_get(p);
-        p += len;
-        if (session->req.sub_cmd == 0x03)
+        len += 4;
+        axdr_len = axdr_get_len(apdu+len);
+        len += axdr_len;
+        if (ctx->choice == 0x03)
         {
-            p += 5;
+            len += 5;
         }
     }
-#endif
+    return len;
 }
 
 int fr_set_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -68,9 +71,9 @@ int fr_set_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
             //return -1;
         }
         offset = cache->wr;
-//        p[cache->wr++] = 0x01;
 
-        r = fr_698_set(instance, oad, fifo->buf_ptr + fifo->rd, len, (void*)ctx);
+        r = fr_698_set(instance, oad, instance->apdu_cache + 4, len, (void*)ctx);
+        //r = fr_698_set(instance, oad, fifo->buf_ptr + fifo->rd, len, (void*)ctx);
         
         cache->wr = offset;
         if (r < 0)
