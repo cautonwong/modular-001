@@ -476,8 +476,14 @@ int main(void)
 
     open_serial_port(instance, &pl_rx_from_serial, NULL);
 
+    struct tm* p_tm;
+
     while (1)
     {
+        time_t t = time(NULL);
+        p_tm = localtime(&t);
+        memcpy(&instance->time, p_tm, sizeof(struct tm));
+
         nidavellir_run_baremetal(instance);
     }
 }
