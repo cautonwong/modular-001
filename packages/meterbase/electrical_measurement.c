@@ -14,8 +14,6 @@
 
 extern const struct dev_info_t rn8209_dev;
     
-//void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipeline)
-struct mbase_control_block_t ctx;
 
 extern void  mcu_clear_watchdog(void);
 extern uint8 mcu_delay_us(volatile uint16 count);
@@ -159,7 +157,8 @@ void meterchip_adj_self(struct instance_t* instance, struct pipeline_t* pipeline
     unsigned long BaseErr,hfconst,addr=0;
     float err=0;
     
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)&ctx;
+    //struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)&ctx;
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     memset((unsigned char*)Buffer,0x00,16);
 
     //E2P_Read((unsigned char*)&hfconst, Meter_VHFconst, 4 );	//获取脉冲速率
