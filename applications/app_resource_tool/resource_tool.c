@@ -523,7 +523,7 @@ uint32_t* register_log(struct instance_t* instance, uint8_t device_name, uint8_t
 }
 
 uint32_t* register_parameter(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size,
-    int16_t(*fun)(uint16_t id, uint32_t *addr, uint16_t* len, uint16_t *offset))
+    int16_t(*fun)(struct instance_t* instance, uint16_t id, uint32_t *addr, uint16_t* len, uint16_t *offset))
 {
     return __register(instance, device_name, block_name, 0x00, 0x00, block_size, (int16_t(*)(struct instance_t* instance, uint16_t id, uint32_t * addr, uint32_t * len, uint32_t * depth))fun);
 }
@@ -1001,6 +1001,75 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
     info->curr_num++;
 
     return info->unit_size;
+}
+
+int16_t nd_log_append_rollback(struct instance_t* instance, uint32_t index, uint32_t last_time,uint32_t curr_time)
+{
+    struct circular_info_t info;
+    struct block_device_t* device01 = NULL, * device02 = NULL;
+    const struct driver_ops_t* driver01 = NULL, * driver02 = NULL;
+    struct resource_block_t* block01 = NULL, * block02 = NULL;
+    struct log_manager_t manager;
+    uint32_t addr01 = 0x00, addr02 = 0x00;
+    uint32_t len01 = 0x00, len02 = 0x00;
+    uint32_t depth = 0x00, over_num = 0x00;
+    uint16_t ut_ptr = 0x00;
+    uint32_t last_num, curr_num;
+    
+    memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
+    memset((uint8_t*)&manager, 0x00, sizeof(struct log_manager_t));
+    device01 = look_up_device(instance, (uint8_t)(index >> 24));//查找设备   
+    res_conditions_true(device01 == NULL, -1);
+    //查找块
+    block01 = look_up_block(instance, device01, (uint8_t)(index >> 16));
+    res_conditions_true((block01 == NULL) || (block01->hook == NULL), -1);
+    block01->hook(instance, (uint16_t)index, &addr01, &len01, &depth);
+
+    driver01 = device01->dev->dev_driver_ops;
+    res_conditions_true((driver01 == NULL) || (driver01->dev_read == NULL), -1);
+    //先获取管理区
+    device02 = look_up_device(instance, block01->relation_device);
+    res_conditions_true(device02 == NULL, -1);
+    block02 = look_up_block(instance, device02, block01->relation_name);
+    res_conditions_true((block02 == NULL) || (block02->hook == NULL), -1);
+    block02->hook(instance, (uint16_t)index, &addr02, &len02, NULL);
+
+    driver02 = device02->dev->dev_driver_ops;
+    res_conditions_true((driver02 == NULL) || (driver02->dev_read == NULL), -1);
+    res_conditions_true(0x00 > verify_data(block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
+        sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02, device02->dev), -1);
+    res_conditions_true((manager.num == 0x00) || (manager.unit_size == 0x00), 0x00);
+    over_num = len01 / manager.unit_size;
+    
+    info.mode = 0x02; //时间的二分查找；
+    info.unit_size = manager.unit_size;
+    info.valid_num = manager.num;
+    info.read_ptr = manager.r_ptr;
+    info.start_mark = 0;
+    //计算上一次的
+    info.end_mark = last_time;
+    search_circular(instance, device01->dev, block01->first_addr + addr01, &info, &manager, len01 / manager.unit_size);
+    last_num = info.valid_num;
+    //当前一次的
+    info.end_mark = curr_time;
+    search_circular(instance, device01->dev, block01->first_addr + addr01, &info, &manager, len01 / manager.unit_size);
+    curr_num = info.valid_num;
+    res_conditions_true(last_num < curr_num, -1);
+    info.valid_num = last_num - curr_num;
+    //计算write_ptr;
+    if(info.read_ptr + info.valid_num >= over_num)
+    {
+        manager.w_ptr = info.read_ptr + info.valid_num - over_num;
+    }
+    else 
+    {
+        manager.w_ptr = info.read_ptr + info.valid_num;
+    }
+    manager.num = info.valid_num;   
+    //更新管理区
+    res_conditions_true(0x00 > update_verify(block02->first_addr + addr02, 0x00, (uint8_t*)&manager, 
+        sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02, device02->dev), -1); 
+    //搬运数据
 }
 
 int nd_log_clean(struct instance_t* instance, uint32_t index)
