@@ -454,7 +454,7 @@ struct upgrade_info_t
 struct resource_map_t
 {
     uint8_t map_name;
-    int(*fun)(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx, uint8_t mode);
+    int(*fun)(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx, uint16_t mode);
     struct list_head sibling;
 };
 
