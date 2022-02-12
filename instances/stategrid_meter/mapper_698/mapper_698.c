@@ -509,7 +509,7 @@ const  parameter_item_t  parameter_item[] =
 
 
 
-int16_t supply_parameter_info(uint16_t id, uint32_t* addr, uint16_t* size,uint16_t *offset)
+int16_t supply_parameter_info(struct instance_t* instance, uint16_t id, uint32_t* addr, uint16_t* size,uint16_t *offset)
 {
     uint16_t i;
 

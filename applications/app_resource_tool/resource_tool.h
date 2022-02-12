@@ -64,7 +64,7 @@ struct resource_map_t* register_map(struct instance_t* instance, uint8_t map_nam
 uint32_t* register_log(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t relation_device, uint8_t relation_name, uint32_t block_size,
     int16_t(*fun)(struct instance_t* instance, uint16_t id, uint32_t* addr, uint32_t* len, uint32_t* depth));
 uint32_t* register_parameter(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size,
-    int16_t(*fun)(uint16_t id, uint32_t *addr, uint16_t* len, uint16_t *offset));
+    int16_t(*fun)(struct instance_t* instance, uint16_t id, uint32_t *addr, uint16_t* len, uint16_t *offset));
 
 int nd_log_clean(struct instance_t* instance, uint32_t index);
 int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t unit_size);
