@@ -129,6 +129,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
         nd_get_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)addr,mbase_block_persistent_size); //将EPROM中的数据恢复到RAM;        
         Electrical_measurement_poweron(instance, pipeline);
         AllDisplayLCD(instance, pipeline);
+        GetKeyStatus(instance, pipeline);//获取秘钥状态
         Magnetic_hold_relay_Init();
         break;
       case MSG_POWEROFF:
@@ -147,7 +148,14 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
 
 int app_meter_lowpower_wakeup_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+//    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_control_block;
+    mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
+    if (mbase_control_block == NULL)
+    {
+        return -1;
+    }
     int r = recv_mesg_header(instance,pipeline,mesg);
     uint8_t buf[20];
     if(r > 0 )
