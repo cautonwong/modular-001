@@ -239,7 +239,9 @@ void* nd_malloc(struct instance_t *instance, uint8_t block_name, uint32_t size)
     block = look_up_block(instance, device, block_name);
     res_conditions_true(block == NULL, NULL)
 
-    return __nd_malloc(block->first_addr, &block->used, size, block->size);
+    void* p =  __nd_malloc(block->first_addr, &block->used, size, block->size);
+    assert(p != NULL);
+    return p;
 }
 
 //注册API

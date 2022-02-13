@@ -8,7 +8,6 @@
 int get_SET_and_ACTION_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     uint16_t rsd_len = 0, rcsd_len = 0;
     int len = 0;
     int i = 0;

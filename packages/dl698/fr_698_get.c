@@ -14,7 +14,6 @@ extern uint16_t axdr_record_len_get(uint8_t* data, uint16_t* rsdLen, uint16_t* r
 int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     uint16_t rsd_len = 0, rcsd_len = 0;
     int len = 0;
     int i = 0;
@@ -32,7 +31,8 @@ int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline
     }else{
         list = 1;
         if ((ctx->choice == 0x02) || (ctx->choice == 0x04)){
-            fifoBuf_peekByteBuf(fifo, offset, &list, 1);
+            list = apdu[0];
+            len++;
         }
 
         for (i = 0; i < list; i++){

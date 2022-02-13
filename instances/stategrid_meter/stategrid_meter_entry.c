@@ -3,6 +3,9 @@
 #include "resource_tool.h"
 
 #define Max698len       2048
+#define Max698_apdu     2048
+#define Max698_apdu_rx  1800
+
 #define pl_tx_698_len   128
 
 extern int baremetal_instance_entry(struct instance_t* instance);
@@ -185,9 +188,9 @@ int communication_channel_init(struct instance_t* p_instance, struct pipeline_t 
     pl_rx->ctx = nd_malloc(p_instance, control_block_698_name, sizeof(struct context_698_t));
     ctx_698 = pl_rx->ctx;
     ctx_698->apdu = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
-    fifoBuf_init(ctx_698->apdu, nd_malloc(p_instance, control_block_698_name, Max698len), Max698len);
+    fifoBuf_init(ctx_698->apdu, nd_malloc(p_instance, control_block_698_name, Max698_apdu), Max698_apdu);
     ctx_698->apdu_rx = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
-    fifoBuf_init(ctx_698->apdu_rx, nd_malloc(p_instance, control_block_698_name, Max698len), Max698len);
+    fifoBuf_init(ctx_698->apdu_rx, nd_malloc(p_instance, control_block_698_name, Max698_apdu_rx), Max698_apdu_rx);
     
     pl_rx->in_queue = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
     fifoBuf_init(pl_rx->in_queue, nd_malloc(p_instance, control_block_698_name, Max698len), Max698len);
@@ -206,7 +209,7 @@ int communication_channel_init(struct instance_t* p_instance, struct pipeline_t 
 
 
 
-uint8_t nd_memory[25 * 1024];
+uint8_t nd_memory[26 * 1024 + 800];
 
 int baremetal_instance_entry_main(int argc, char** argv)
 {
@@ -214,7 +217,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     struct recipe_t *recipe = NULL;
     struct context_698_t* ctx_698 = NULL;
 
-    instance = create_instance(RES_DEV_RAM, (uint32_t)&nd_memory, 25 * 1024, 2 * 1024, resource_block_name);//用资源描述创建instance
+    instance = create_instance(RES_DEV_RAM, (uint32_t)&nd_memory, 26 * 1024, 2 * 1024, resource_block_name);//用资源描述创建instance
     if (instance == NULL)
     {
         return -1;
@@ -248,11 +251,11 @@ int baremetal_instance_entry_main(int argc, char** argv)
     memcpy(&instance->time, &time, sizeof(struct tm));
 
     ///////////////////////////////申请一个cache的BLOCK = 02/////////////////////////////////////////////
-    if (NULL == add_block(instance, RES_DEV_RAM, control_block_cache, 500))
+    if (NULL == add_block(instance, RES_DEV_RAM, control_block_cache, (500+1500)))
     {
         return -1;
     }
-    instance->apdu_cache = nd_malloc(instance, control_block_cache, 1800);
+
     //指向cache space
     instance->cache = nd_malloc(instance, control_block_cache, 256);
     instance->cache2 = nd_malloc(instance, control_block_cache, sizeof(struct cache_t));
@@ -267,6 +270,8 @@ int baremetal_instance_entry_main(int argc, char** argv)
 
     buf = nd_malloc(instance, control_block_cache, 8);
     fifoBuf_init(&instance->pipe_key, buf, 8);
+    instance->apdu_cache = nd_malloc(instance, control_block_cache, 1700);
+        
     /////////////////////////////////////申请一个698应用的BLOCK = 03/////////////////////////////////////////////////
     if (NULL == add_block(instance, RES_DEV_RAM, control_block_698_name, 14 * 1024))
     {
@@ -274,8 +279,8 @@ int baremetal_instance_entry_main(int argc, char** argv)
     }
     
     communication_channel_init(instance, &pl_rx_698, &pl_tx_698, UART_RS4851_CHL);
-    communication_channel_init(instance, &pl_plc_rx_698, &pl_plc_tx_698 , UART_MODULE_CHL);
-    communication_channel_init(instance, &pl_ir_rx_698, &pl_ir_tx_698, UART_IR_CHL);
+    //communication_channel_init(instance, &pl_plc_rx_698, &pl_plc_tx_698 , UART_MODULE_CHL);
+    //communication_channel_init(instance, &pl_ir_rx_698, &pl_ir_tx_698, UART_IR_CHL);
 
     ////////////////////////////申请一个mbase应用的BLOCK = 04/////////////////////////////////////////////
     if (NULL == add_block(instance, RES_DEV_RAM, mbase_control_block_name, 8 * 1024))

@@ -83,7 +83,7 @@ uint16_t axdr_get_len(const uint8_t *data)
     switch (type)
     {
     case TYPE_null:
-        return 0;
+        return 1;
         break;
     case TYPE_array: 
     case TYPE_structure:

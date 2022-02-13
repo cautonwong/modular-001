@@ -333,14 +333,14 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
         return offset;
     }
 
-    fifoBuf_peekByteBuf(fifo, offset, &ctx->timeTag_valid, 1);
+    fifoBuf_peekByteBuf(fifo, offset, ctx->timeTag, 11);
+    ctx->timeTag_valid = ctx->timeTag[0];
     if (1 == ctx->timeTag_valid) {
-        fifoBuf_peekByteBuf(fifo, offset+1, ctx->timeTag, 10);
-        if (false == dl_data_time_check(ctx->timeTag, TIME_WILDCARD)){
+        if (false == dl_data_time_check(&ctx->timeTag[1], TIME_WILDCARD)){
             ctx->timeTag_valid = 0;
         }
-        interval_sec = dl_timeTag_interval(&ctx->timeTag[7], 0);
-        time_tag_sec = dl_datetime_to_second(ctx->timeTag, 0);
+        interval_sec = dl_timeTag_interval(&ctx->timeTag[8], 0);
+        time_tag_sec = dl_datetime_to_second(&ctx->timeTag[1], 0);
         time_sec     = rtc_mktime(&instance->time);
 
         if ((time_tag_sec + interval_sec) < time_sec){
@@ -382,7 +382,7 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     if(NULL == mbase_cb)
         return 0;
 
-#ifndef WIN32
+#ifdef WIN32
     if (0 != mem_compare(ctx->addr, mbase_cb->tsa, SA_LEN(ctx->SA) + 1))
     {
         if(0 != mem_compare(ctx->addr, aa_addrbuf, 6))
@@ -503,7 +503,6 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
     ret = _fr_segments_rcv_handle(instance, pipeline, mesg);
     if (0 == ret){
         if (is_last_segment(ctx->segment_rx)) { //最后帧
-            fifo = ctx->apdu_rx;
             return 1;
         }else{
             set_confirm_segment(ctx->segment_rx);
@@ -525,6 +524,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* fifo_apdu_rx = ctx->apdu_rx;
     int err_no = 0;
     uint8_t service = 0;
     
@@ -535,10 +535,13 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     }
     
     fifoBuf_removeData(fifo, APDU_OFFSET(ctx->SA));
+    ctx->segment_rx = 0;
     if(is_segment_set(ctx->ctrl)){
         err_no = fr_segments_handle(instance, pipeline,  mesg);
         if (err_no != 1) {
             return err_no;
+        }else{
+          fifo = ctx->apdu_rx;
         }
     }
 
@@ -550,6 +553,12 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
             return err_no;
     }
 
+    if(ctx->segment_rx)
+    {
+        fifo = fifo_apdu_rx;
+        ctx->service = fifoBuf_getByte(fifo);
+    }
+    
     if (!((CONNECT_Request == ctx->service) || (RELEASE_Request == ctx->service))){
         ctx->choice = fifoBuf_getByte(fifo);
     }

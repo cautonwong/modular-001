@@ -65,15 +65,26 @@ int fr_security_request(struct instance_t* instance, struct pipeline_t* pipeline
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* fifo_apdu_rx = ctx->apdu_rx;
     uint16_t rd = 0, wr = 0;
-    uint8_t len = 0;
+    uint8_t data[4] = 0;
+    uint16_t len = 0;
 
-    ctx->choice = fifoBuf_getByte(fifo);
-    len = fifoBuf_getByte(fifo);
+    if(ctx->segment_rx)
+    {
+        fifo = fifo_apdu_rx;
+    }
+    ctx->choice = fifoBuf_getByte(fifo);    
+    fifoBuf_peekByteBuf(fifo, 0, data, 4);
+    uint8_t ret = axdr_decode(TYPE_octet_string, data, &len);
+    for(uint8_t i =0 ; i < ret ; i++)
+    {
+        fifoBuf_getByte(fifo);
+    }
+    
     if (SECURITY_CHOICE_1_Ciphertext == ctx->choice)//ÃÜÎÄ
     {
         _fr_security_decode(instance, pipeline, mesg, len);
-        ctx->service = fifoBuf_getByte(fifo);
     }
     else if (SECURITY_CHOICE_0_Plaintext == ctx->choice)//Ã÷ÎÄ
     {
@@ -91,7 +102,6 @@ int fr_security_request(struct instance_t* instance, struct pipeline_t* pipeline
         }
         fifo->rd = rd;
         fifo->wr = wr;
-        ctx->service = fifoBuf_getByte(fifo);
     }
     else
     {
