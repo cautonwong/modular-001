@@ -268,6 +268,7 @@ enum resourenc_block_name
     mbase_block_parameter,
     mbase_block_event_flash1,
     mbase_block_event_flash2,
+    public_block_flash,
 };
 
 enum resourenc_map_name

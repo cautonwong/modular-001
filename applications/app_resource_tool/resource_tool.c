@@ -1003,17 +1003,80 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
     return info->unit_size;
 }
 
-int16_t nd_log_append_rollback(struct instance_t* instance, uint32_t index, uint32_t last_time,uint32_t curr_time)
+int16_t _Data_handling(uint32_t addr_a, uint32_t addr_b, int32_t len, struct block_device_t* device)
+{
+    const struct driver_ops_t* driver = NULL;
+    uint8_t buf[256];
+    uint16_t size = 0;
+    int32_t s_len = len;
+    uint64_t step;
+
+    driver = device->dev->dev_driver_ops;
+    res_conditions_true(0x00 > driver->dev_read(device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);    
+    if((step != 0xFCFCFCFCFCFCFCFC) && (step != 0xF8F8F8F8F8F8F8F8) && (step != 0xFFFFFFFFFFFFFFFF) &&
+       (step != 0xF0F0F0F0F0F0F0F0) && (step != 0xE0E0E0E0E0E0E0E0))
+    {
+        uint32_t t_addr = addr_b + 4096;
+        res_conditions_true(0x00 > driver->dev_control(device->dev, 0x01, &t_addr), -1);  
+        step = 0xFCFCFCFCFCFCFCFC;
+        res_conditions_true(0x00 > driver->dev_write(device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);
+    }
+
+    switch(step)
+    {
+    case 0xFFFFFFFFFFFFFFFF:
+      step = 0xFCFCFCFCFCFCFCFC;
+      res_conditions_true(0x00 > driver->dev_write(device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);
+    case 0xFCFCFCFCFCFCFCFC:  //公共擦除  FC
+      res_conditions_true(0x00 > driver->dev_control(device->dev, 0x01, &addr_b), -1);
+      step = 0xF8F8F8F8F8F8F8F8;
+      res_conditions_true(0x00 > driver->dev_write(device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);
+    case 0xF8F8F8F8F8F8F8F8:  //数据拷贝 F8
+      while(s_len > 0)
+      {
+          if(s_len > 256) { size = 256; }
+          else{ size = s_len; }
+          
+          res_conditions_true(0x00 > driver->dev_read(device->dev, addr_a, size, buf), -1);
+          res_conditions_true(0x00 > driver->dev_write(device->dev, addr_b, size, buf), -1);
+          
+          s_len -= size;
+      }
+      step = 0xF0F0F0F0F0F0F0F0;
+      res_conditions_true(0x00 > driver->dev_write(device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);      
+    case 0xF0F0F0F0F0F0F0F0:  //目标区擦除 F0
+      res_conditions_true(0x00 > driver->dev_control(device->dev, 0x01, &addr_a), -1);
+      step = 0xE0E0E0E0E0E0E0E0;
+      res_conditions_true(0x00 > driver->dev_write(device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);      
+    case 0xE0E0E0E0E0E0E0E0:  //目标区数据拷贝 E0
+      s_len = len;
+      while(s_len > 0)
+      {
+          if(s_len > 256) { size = 256; }
+          else{ size = s_len; }
+          
+          res_conditions_true(0x00 > driver->dev_read(device->dev, addr_b, size, buf), -1);
+          res_conditions_true(0x00 > driver->dev_write(device->dev, addr_a, size, buf), -1);
+          
+          s_len -= size;
+      }
+      step = 0x0000000000000000;
+      res_conditions_true(0x00 > driver->dev_write(device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1); 
+    }
+    return 1;
+}
+
+int16_t nd_log_append_rollback(struct instance_t* instance, uint32_t index, uint8_t public_flash_name, uint32_t last_time,uint32_t curr_time)
 {
     struct circular_info_t info;
     struct block_device_t* device01 = NULL, * device02 = NULL;
     const struct driver_ops_t* driver01 = NULL, * driver02 = NULL;
-    struct resource_block_t* block01 = NULL, * block02 = NULL;
+    struct resource_block_t* block01 = NULL, * block02 = NULL, *block03 = NULL;
     struct log_manager_t manager;
     uint32_t addr01 = 0x00, addr02 = 0x00;
     uint32_t len01 = 0x00, len02 = 0x00;
     uint32_t depth = 0x00, over_num = 0x00;
-    uint16_t ut_ptr = 0x00;
+    int32_t s_len = 0x00;
     uint32_t last_num, curr_num;
     
     memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
@@ -1055,21 +1118,35 @@ int16_t nd_log_append_rollback(struct instance_t* instance, uint32_t index, uint
     search_circular(instance, device01->dev, block01->first_addr + addr01, &info, &manager, len01 / manager.unit_size);
     curr_num = info.valid_num;
     res_conditions_true(last_num < curr_num, -1);
-    info.valid_num = last_num - curr_num;
-    //计算write_ptr;
-    if(info.read_ptr + info.valid_num >= over_num)
+    if(last_num >= curr_num)
     {
-        manager.w_ptr = info.read_ptr + info.valid_num - over_num;
+        if(last_num != curr_num )
+        {   //计算write_ptr;
+            if(info.read_ptr + curr_num >= over_num)
+            {
+                manager.w_ptr = info.read_ptr + curr_num - over_num;
+            }
+            else 
+            {
+                manager.w_ptr = info.read_ptr + curr_num;
+            }
+            manager.num = curr_num;   
+            //更新管理区
+            res_conditions_true(0x00 > update_verify(block02->first_addr + addr02, 0x00, (uint8_t*)&manager, 
+                sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02, device02->dev), -1);        
+        }
+        //搬运数据
+        block03 = look_up_block(instance, device01, public_flash_name);
+        res_conditions_true(block03 == NULL, -1);
+        addr01 += manager.w_ptr * manager.unit_size;
+        s_len = addr01 % 4096;
+        
+        if(s_len > 0)
+        {
+            res_conditions_true(0x00 > _Data_handling(block01->first_addr + addr01, block03->first_addr, s_len, device01), -1);
+        }    
     }
-    else 
-    {
-        manager.w_ptr = info.read_ptr + info.valid_num;
-    }
-    manager.num = info.valid_num;   
-    //更新管理区
-    res_conditions_true(0x00 > update_verify(block02->first_addr + addr02, 0x00, (uint8_t*)&manager, 
-        sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02, device02->dev), -1); 
-    //搬运数据
+    return 1;
 }
 
 int nd_log_clean(struct instance_t* instance, uint32_t index)
