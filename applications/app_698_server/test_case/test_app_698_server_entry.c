@@ -462,6 +462,9 @@ int main(void)
     ctx_rx_server_698.apdu = malloc(sizeof(struct fifo_t));
     fifoBuf_init(ctx_rx_server_698.apdu, malloc(2048), 2048);
 
+    ctx_rx_server_698.apdu_rx = malloc(sizeof(struct fifo_t));
+    fifoBuf_init(ctx_rx_server_698.apdu_rx, malloc(2048), 2048);
+
 
     ctx_tx_server_698.apdu = malloc(sizeof(struct fifo_t));
     fifoBuf_init(ctx_tx_server_698.apdu, malloc(2048), 2048);

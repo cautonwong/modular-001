@@ -9,6 +9,7 @@
 #define GetRequestMD5               6
 #define GetRequestSimplifyRecord    23
 
+extern uint16_t axdr_record_len_get(uint8_t* data, uint16_t* rsdLen, uint16_t* rcsdLen);
 
 int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -21,7 +22,8 @@ int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline
     int offset = 0;
     uint8_t *apdu = instance->apdu_cache;
 
-    apdu += 2;
+    //apdu += 3;
+    //len = 3;
     if (ctx->choice > GetRequestNext){
         return -1;
     }
@@ -38,12 +40,10 @@ int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline
             if ((ctx->choice == 0x03) || (ctx->choice == 0x04)){
                 rsd_len = 0;
                 rcsd_len = 0;
-                //len = dl698_record_para_len_get(apdu, &rsd_len, &rcsd_len);
-                if (rsd_len == 0 || rcsd_len == 0)
-                {
+                len = axdr_record_len_get(apdu, &rsd_len, &rcsd_len);
+                if (rsd_len == 0 || rcsd_len == 0){
                     return -1;
                 }
-                //p += len;
             }
         }
     }

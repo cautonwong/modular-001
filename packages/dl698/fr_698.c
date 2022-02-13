@@ -149,6 +149,14 @@ int matcher_698(void* pctx, uint8_t* b)
             *b = byte - 0x33;
         }
         ctx->fcs = update_crc16(ctx->fcs, byte);
+        
+        if (ctx->min_len > 2048)// 长度大于2048 暂时删除一个字节  为了台体能跑下去。  注意： 还需要超时删除报文！
+        {
+            ctx->step = 0;
+            ctx->err_n++;
+            return -1;
+        }
+        
         if (ctx->index == ctx->min_len - 11 - SA_LEN(ctx->SA))//超过最大长度未测试？？
         {
             ctx->step = 10;
@@ -161,22 +169,23 @@ int matcher_698(void* pctx, uint8_t* b)
         if (byte != (ctx->fcs & 0xff)){
             ctx->step = 0;
             ctx->err_n++;
-            return 2;
+            return -1;
         }
         ctx->step = 11;
         return FRM_OK;
+     
     case 11:
         if (byte != ((ctx->fcs >> 8) & 0xff)){
             ctx->step = 0;
             ctx->err_n++;
-            return 2;
+            return -1;
         }
         ctx->step = 12;
         return FRM_OK;
     case 12:
         if (byte != 0x16){
             ctx->step = 0;
-            return 2;
+            return -1;
         }
         return 1;//接收到完整的一帧
     }
@@ -291,9 +300,8 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
     uint32_t time_tag_sec = 0;
     int offset = 0;
 
-    ctx->timeTag_valid = 1;	//默认时间标签合法
+    ctx->timeTag_valid = 0;	//默认时间标签合法
     //return 1;
-
     if ((ctx->service == LINK_Request) || (ctx->service == SECURITY_Request)){
         return -1;
     }
@@ -543,9 +551,6 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         }
     }
 
-    //拷贝到线性缓冲区
-    fifoBuf_peekByteBuf(fifo, 0, instance->apdu_cache, ctx->min_len - 3);
-
     ctx->service = fifoBuf_getByte(fifo);
     if (SECURITY_Request == ctx->service){
         service = SECURITY_Request;
@@ -564,14 +569,17 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         return -1;
     }
 
+    ctx->PIID = fifoBuf_getByte(fifo);
+    ctx->PIID |= (1 << 6);//PIID-ACD
+
+    //拷贝到线性缓冲区
+    fifoBuf_peekByteBuf(fifo, 0, instance->apdu_cache, ctx->min_len - 3);
+
     if(0 == fr_timetag_check(instance, pipeline, mesg)){
         ctx->fr_err = FRM_TIME_TAG_ERR;
         fifoBuf_removeData(fifo, ctx->min_len + 2);
         return -1;
     }
-
-    ctx->PIID = fifoBuf_getByte(fifo);
-    ctx->PIID |= (1 << 6);//PIID-ACD
 
     mesg->from  = pipeline->id;//从哪里来
     mesg->to    = pid_tx_698;//要到哪里去
