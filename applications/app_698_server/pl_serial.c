@@ -110,8 +110,8 @@ int fr_tx_data_to_serial(struct instance_t* instance, struct pipeline_t* pipelin
 {
     struct context_serial_t* ctx = (struct context_serial_t*)pipeline->ctx;
 
-    uint8_t buf[128];
-    DWORD tx_len = 128;
+    uint8_t buf[512];
+    DWORD tx_len = 512;
     DWORD len = 0;
     if (ctx->handle == (HANDLE)-1)
     {
@@ -119,7 +119,7 @@ int fr_tx_data_to_serial(struct instance_t* instance, struct pipeline_t* pipelin
         return GetLastError();
     }
 
-    tx_len = fifoBuf_getData(pipeline->in_queue, buf, 128);
+    tx_len = fifoBuf_getData(pipeline->out_queue, buf, 512);
     if (tx_len > 0)
     {
         WriteFile(ctx->handle, buf, tx_len, (_Out_opt_ LPDWORD) & len, NULL);

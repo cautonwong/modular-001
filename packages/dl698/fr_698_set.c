@@ -104,7 +104,10 @@ int fr_handle_set_request(struct instance_t* instance, struct pipeline_t* pipeli
     uint8_t password[16];
 
     uint8_t oad_n = mesg->oad_n;
-
+    if (ctx->segment_rx)
+    {
+        fifo = ctx->apdu_rx;;
+    }
     while (oad_n-- > 0)
     {
         //todo  apdu分帧

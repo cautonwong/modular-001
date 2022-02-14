@@ -67,7 +67,7 @@ int fr_security_request(struct instance_t* instance, struct pipeline_t* pipeline
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* fifo_apdu_rx = ctx->apdu_rx;
     uint16_t rd = 0, wr = 0;
-    uint8_t data[4] = 0;
+    uint8_t data[4] = { 0 };
     uint16_t len = 0;
 
     if(ctx->segment_rx)

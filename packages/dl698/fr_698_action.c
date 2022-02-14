@@ -78,6 +78,10 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
     uint16_t dar_offset = 0;
     uint8_t dar = DAR_SUCCESS;
 
+    if (ctx->segment_rx)
+    {
+        fifo = ctx->apdu_rx;;
+    }
 //    p[cache->wr++] = 0x01;
 //    p[cache->wr++] = 0x05;//type encoder
 

@@ -232,7 +232,13 @@ struct context_698_t
     uint16_t tx_len;
 
     struct fifo_t* apdu;
-    struct fifo_t* apdu_rx;//链路层分帧数据，如秘钥缓存
+    struct fifo_t* apdu_rx;
+#if 0
+    uint8_t apdu[Max698_apdu];
+    uint8_t apdu_rx[Max698_apdu_rx];
+    uint16  apdu_offset;
+    uint16  apdu_rx_offset;
+#endif
 
     uint8_t keybuf[256];//秘钥缓存  待删除saga
     

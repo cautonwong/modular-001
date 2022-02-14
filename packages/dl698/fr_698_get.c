@@ -247,6 +247,10 @@ int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeli
     if(GET_Request != ctx->service)
         return 0;
 
+    if (ctx->segment_rx){
+        fifo = ctx->apdu_rx;;
+    }
+
     switch (ctx->choice)
     {
         case GetRequestNormal:

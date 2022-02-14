@@ -2,8 +2,8 @@
 #include "applications.h"
 #include "resource_tool.h"
 
-#define Max698len       2048
-#define Max698_apdu     2048
+#define Max698len       544
+#define Max698_apdu     1800
 #define Max698_apdu_rx  1800
 
 #define pl_tx_698_len   128
@@ -187,10 +187,12 @@ int communication_channel_init(struct instance_t* p_instance, struct pipeline_t 
     //初始化pl_rx_698初始化
     pl_rx->ctx = nd_malloc(p_instance, control_block_698_name, sizeof(struct context_698_t));
     ctx_698 = pl_rx->ctx;
+#if 1
     ctx_698->apdu = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
     fifoBuf_init(ctx_698->apdu, nd_malloc(p_instance, control_block_698_name, Max698_apdu), Max698_apdu);
     ctx_698->apdu_rx = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
     fifoBuf_init(ctx_698->apdu_rx, nd_malloc(p_instance, control_block_698_name, Max698_apdu_rx), Max698_apdu_rx);
+#endif
     
     pl_rx->in_queue = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
     fifoBuf_init(pl_rx->in_queue, nd_malloc(p_instance, control_block_698_name, Max698len), Max698len);
@@ -273,17 +275,17 @@ int baremetal_instance_entry_main(int argc, char** argv)
     instance->apdu_cache = nd_malloc(instance, control_block_cache, 1700);
         
     /////////////////////////////////////申请一个698应用的BLOCK = 03/////////////////////////////////////////////////
-    if (NULL == add_block(instance, RES_DEV_RAM, control_block_698_name, 14 * 1024))
+    if (NULL == add_block(instance, RES_DEV_RAM, control_block_698_name, 16 * 1024))
     {
         return -1;
     }
     
     communication_channel_init(instance, &pl_rx_698, &pl_tx_698, UART_RS4851_CHL);
-    //communication_channel_init(instance, &pl_plc_rx_698, &pl_plc_tx_698 , UART_MODULE_CHL);
-    //communication_channel_init(instance, &pl_ir_rx_698, &pl_ir_tx_698, UART_IR_CHL);
+    communication_channel_init(instance, &pl_plc_rx_698, &pl_plc_tx_698 , UART_MODULE_CHL);
+    communication_channel_init(instance, &pl_ir_rx_698, &pl_ir_tx_698, UART_IR_CHL);
 
     ////////////////////////////申请一个mbase应用的BLOCK = 04/////////////////////////////////////////////
-    if (NULL == add_block(instance, RES_DEV_RAM, mbase_control_block_name, 8 * 1024))
+    if (NULL == add_block(instance, RES_DEV_RAM, mbase_control_block_name, 6 * 1024)) //剩余4k
     {
         return -1;
     }

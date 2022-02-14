@@ -50,6 +50,9 @@ int app_tx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipe
 int app_rx_client_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    if (ctx == NULL) {
+        return 0;
+    }
     ctx->fr_err = 0;
     //1.接入校验  接收缓冲中有数据 
     ctx->fr_err = fr_rx_698_entry(instance, pipeline, mesg);
@@ -65,6 +68,10 @@ int app_rx_client_698_entry(struct instance_t* instance, struct pipeline_t* pipe
 
 int app_tx_client_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    if (ctx == NULL) {
+        return 0;
+    }
     //1.接收别的app或者系统发来的上报请求
     if (fr_tx_698_entry(instance, pipeline, mesg))
     {

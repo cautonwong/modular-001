@@ -278,14 +278,14 @@ void test_case_running_with_kernel(void** state)
 
 
 
-#if 0
+#if 1
 int main(void)
 {
     //这是所有的测试用例列表
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_case_1),
 
-#if 0
+#if 1
         //1 test_app_698_server_uniformity
         //1.1数据链路层合法性
         //1.1.1 test_app_698_server_LINK_get
