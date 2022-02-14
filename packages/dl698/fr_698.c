@@ -149,6 +149,14 @@ int matcher_698(void* pctx, uint8_t* b)
             *b = byte - 0x33;
         }
         ctx->fcs = update_crc16(ctx->fcs, byte);
+        
+        if (ctx->min_len > 2048)// 长度大于2048 暂时删除一个字节  为了台体能跑下去。  注意： 还需要超时删除报文！
+        {
+            ctx->step = 0;
+            ctx->err_n++;
+            return -1;
+        }
+        
         if (ctx->index == ctx->min_len - 11 - SA_LEN(ctx->SA))//超过最大长度未测试？？
         {
             ctx->step = 10;
@@ -161,22 +169,23 @@ int matcher_698(void* pctx, uint8_t* b)
         if (byte != (ctx->fcs & 0xff)){
             ctx->step = 0;
             ctx->err_n++;
-            return 2;
+            return -1;
         }
         ctx->step = 11;
         return FRM_OK;
+     
     case 11:
         if (byte != ((ctx->fcs >> 8) & 0xff)){
             ctx->step = 0;
             ctx->err_n++;
-            return 2;
+            return -1;
         }
         ctx->step = 12;
         return FRM_OK;
     case 12:
         if (byte != 0x16){
             ctx->step = 0;
-            return 2;
+            return -1;
         }
         return 1;//接收到完整的一帧
     }

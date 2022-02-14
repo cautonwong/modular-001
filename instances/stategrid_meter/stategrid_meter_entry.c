@@ -325,7 +325,8 @@ int baremetal_instance_entry_main(int argc, char** argv)
 
     //注册冻结2
     register_log(instance, RES_DEV_FLASH, mbase_block_event_flash2, RES_DEV_EEPROM, mbase_block_parameter, 37 * 4 * 1024, supply_event_flash_2_info);
-
+    //申请一块参数保存区的EPROM区域
+    add_block(instance, RES_DEV_FLASH, public_block_flash, 4096*2);
     //注册一个698的MAP
     register_map(instance, res_map_698, resource_map_698);
 #ifdef WIN32

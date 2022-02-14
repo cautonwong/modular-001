@@ -268,6 +268,7 @@ enum resourenc_block_name
     mbase_block_parameter,
     mbase_block_event_flash1,
     mbase_block_event_flash2,
+    public_block_flash,
 };
 
 enum resourenc_map_name
@@ -399,6 +400,8 @@ extern uint8_t Magnetic_hold_relay_Init(void);
 extern uint8_t lcd_init(uint8_t power_mode);
 
 extern void rtc_get_from_tm(struct instance_t* instance, uint8_t* p);
+
+extern void GetKeyStatus(struct instance_t* instance, struct pipeline_t* pipeline);
 
 extern unsigned short display_oad_to_id(unsigned char *oad, unsigned char len);
 extern int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf);

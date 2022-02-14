@@ -215,15 +215,19 @@ int ringbuffer_filter(struct fifo_t *buf, int (*callback)(void* ctx, uint8_t *b)
     if (num_bytes < 1)
         return -1;                        
     
-    while(i <= num_bytes)
+    while(i < num_bytes)
     {
         r = rd + i;
         if (r >= buf_size)
             r -= buf_size;
-        ret = callback(ctx, buf->buf_ptr+r);
+        ret =   callback(ctx, buf->buf_ptr+r);
         if(ret < 0)
         {
             //返回-1  
+
+            if (++rd >= buf_size)//删掉一字节
+                rd = 0;
+            
             num_bytes = wr - rd;
             if (wr < rd)
             {
@@ -233,9 +237,8 @@ int ringbuffer_filter(struct fifo_t *buf, int (*callback)(void* ctx, uint8_t *b)
             {
                 return ret;//-1迭代结束  没找到
             }
-
-            if (++rd >= buf_size)//删掉一字节
-                rd = 0;
+            
+           
             buf->rd = rd;
             i = 0;
             continue;

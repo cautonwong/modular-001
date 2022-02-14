@@ -356,3 +356,19 @@ uint8_t esam_consult_key(uint8_t cmd, uint8_t *p)
     return rxlen;
 }
 
+
+void GetKeyStatus(struct instance_t* instance, struct pipeline_t* pipeline)
+{	
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+	uint8_t Buf[16];
+    uint32_t keystate=0;
+	
+	read_esam_info(Buf,0X04);//¶ÁÃÜÔ¿×´Ì¬
+    memcpy((uint8_t*)&keystate, (uint8_t*)&Buf[0], 4);
+
+	if( (keystate >= 0x7FFFFFFF) && (Buf[4] >= 0xF0) ) 
+        mbase_control_block->key_state = false; //ĞŞ¸Ä35ÌõÃÜÔ¿ÒÔÉÏ£¬ÎªË½Ô¿×´Ì¬
+	else 
+        mbase_control_block->key_state = true;
+		
+}
