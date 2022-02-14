@@ -88,7 +88,7 @@ int period_check2(uint8_t scheme, uint16_t period, uint8_t* period_buf)
 
     for (i = 0; i < 8; i++)
     {
-        value = buf_to_uint16_lsb(tmp + 1);
+        value = buf_to_uint16_msb(tmp + 1);
 
         if (tmp[0] != 0)
         {
@@ -124,7 +124,7 @@ uint8_t capture_check(uint32_t oad, uint8_t* oad_buf)
 
     for (i = 0; i < count; i++)
     {
-        oad_temp = buf_to_uint32_msb(tmp);
+        oad_temp = buf_to_uint32_msb(tmp); 
 
         if (oad_temp == oad)
         {
@@ -235,7 +235,7 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
         }
 
         offset = scheme * 3;
-        uint16_to_buf_lsb(period, period_buf + offset + 1);
+        uint16_to_buf_msb(period, period_buf + offset + 1);
         period_buf[offset]++;
 
         if (false == capture_check(oad, tempbuf))
@@ -246,13 +246,13 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
 
         tempbuf[0]++;
         offset = i * 4;
-        uint32_to_buf_lsb(oad, tempbuf + offset + 1);
+        uint32_to_buf_msb(oad, tempbuf + offset + 1);
 
         // check depth
         if (0x5002 == OI)
         {
             offset = scheme * 2 ;
-            if ((i != 0) && ((period_buf[scheme * 3] > 1) && (depth != buf_to_uint16_lsb(depth_buf + offset))))
+            if ((i != 0) && ((period_buf[scheme * 3] > 1) && (depth != buf_to_uint16_msb(depth_buf + offset))))
             {
                 *dar = DAR_OTHERS_ERROR;
                 return -1;
@@ -260,23 +260,23 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
         }
         else
         {
-            if ((0 != scheme) || ((i != 0) && (period_buf[0] > 1) && (depth != buf_to_uint16_lsb(depth_buf ))))   /*其他冻结 属性特征固定0,每个关联对象周期、深度必须一致*/
+            if ((0 != scheme) || ((i != 0) && (period_buf[0] > 1) && (depth != buf_to_uint16_msb(depth_buf ))))   /*其他冻结 属性特征固定0,每个关联对象周期、深度必须一致*/
             {
                 *dar = DAR_OTHERS_ERROR;
                 return -1;
             }
             offset = 0;
         }
-        uint16_to_buf_lsb(depth, depth_buf + offset);
+        uint16_to_buf_msb(depth, depth_buf + offset);
     }
 
-    // 待添加
-#if 0
-    if (false == whether_storage_depth_overruns(pobject, pdepth, oi))
+#if 1
+    ret = cal_freeze_size_sectors(instance,tempbuf, depth_buf, oad);
+    if (ret <= 0)
     {
-        return  /*DAR_EX_STORAGE_DEPTH_ERROR;*/ DAR_OTHERS_ERROR;
+        return -1;
     }
-#endif   
+#endif     
     // write  period
     //index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodId);
     nd_set_index(instance, PeriodId, &period_buf[0], PeriodLen);
@@ -302,7 +302,7 @@ int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf)
     {
         return -1;
     }
-    switch (id&0x0000FF00) //属性
+    switch (id&0x00001F00) //属性
     {
     //case 0x50020300://关联对象属性表
     //case 0x50030300://关联对象属性表

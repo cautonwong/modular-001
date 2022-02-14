@@ -92,19 +92,19 @@ int freeze_add_one_capture(struct instance_t* instance, uint32_t oad, uint8_t* b
 
     //周期
     offset = scheme * 3;
-    uint16_to_buf_lsb(period, period_buf + offset + 1);
+    uint16_to_buf_msb(period, period_buf + offset + 1);
     period_buf[offset]++;
 
     //obj
     offset = num * 4;
-    uint32_to_buf_lsb(capture_oad, tempbuf + offset + 1);
+    uint32_to_buf_msb(capture_oad, tempbuf + offset + 1);
     tempbuf[0]++;
 
     // check depth
     if (0x5002 == OI)
     {
         offset = scheme * 2;
-        if (((period_buf[scheme * 3] > 1) && (depth != buf_to_uint16_lsb(depth_buf + offset))))
+        if (((period_buf[scheme * 3] > 1) && (depth != buf_to_uint16_msb(depth_buf + offset))))
         {
             *dar = DAR_OTHERS_ERROR;
             return -1;
@@ -112,21 +112,20 @@ int freeze_add_one_capture(struct instance_t* instance, uint32_t oad, uint8_t* b
     }
     else
     {
-        if ((0 != scheme) || ((period_buf[0] > 1) && (depth != buf_to_uint16_lsb(depth_buf))))   /*其他冻结 属性特征固定0,每个关联对象周期、深度必须一致*/
+        if ((0 != scheme) || ((period_buf[0] > 1) && (depth != buf_to_uint16_msb(depth_buf))))   /*其他冻结 属性特征固定0,每个关联对象周期、深度必须一致*/
         {
             *dar = DAR_OTHERS_ERROR;
             return -1;
         }
         offset = 0;
     }
-    uint16_to_buf_lsb(depth, depth_buf + offset);
+    uint16_to_buf_msb(depth, depth_buf + offset);
 
-
-    // 待添加
-#if 0
-    if (false == whether_storage_depth_overruns(pobject, pdepth, oi))
+#if 1
+    ret = cal_freeze_size_sectors(instance,tempbuf, depth_buf, oad);
+    if (ret <= 0)
     {
-        return  /*DAR_EX_STORAGE_DEPTH_ERROR;*/ DAR_OTHERS_ERROR;
+        return -1;
     }
 #endif   
     // write  period
@@ -238,7 +237,7 @@ int freeze_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t
 
     for (i = 0; i < num; i++)
     {
-        temp_oad = buf_to_uint16_lsb(oadlist);
+        temp_oad = buf_to_uint32_msb(oadlist);
         if (capture_oad == temp_oad)
         {
             break;
@@ -259,14 +258,13 @@ int freeze_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t
     memcpy(oadlist, oadlist + 4, CaptureLen + tempbuf - oadlist);//关联对象
     tempbuf[0] -= 1;
 
-
-    // 待添加
-#if 0
-    if (false == whether_storage_depth_overruns(pobject, pdepth, oi))
+#if 1
+    ret = cal_freeze_size_sectors(instance,tempbuf, depth_buf, oad);
+    if (ret <= 0)
     {
-        return  /*DAR_EX_STORAGE_DEPTH_ERROR;*/ DAR_OTHERS_ERROR;
+        return -1;
     }
-#endif   
+#endif     
     // write  period
     nd_set_index(instance, PeriodId, &period_buf[0], PeriodLen);
 
@@ -401,19 +399,19 @@ int freeze_add_multi_capture(struct instance_t* instance, uint32_t oad, uint8_t*
 
         //周期
         offset = scheme * 3;
-        uint16_to_buf_lsb(period, period_buf + offset + 1);
+        uint16_to_buf_msb(period, period_buf + offset + 1);
         period_buf[offset]++;
 
         //obj
         offset = tempbuf[0] * 4;
-        uint32_to_buf_lsb(capture_oad, tempbuf + offset + 1);
+        uint32_to_buf_msb(capture_oad, tempbuf + offset + 1);
         tempbuf[0]++;
 
         // check depth
         if (0x5002 == OI)
         {
             offset = scheme * 2;
-            if (((period_buf[scheme * 3] > 1) && (depth != buf_to_uint16_lsb(depth_buf + offset))))
+            if (((period_buf[scheme * 3] > 1) && (depth != buf_to_uint16_msb(depth_buf + offset))))
             {
                 *dar = DAR_OTHERS_ERROR;
                 return -1;
@@ -421,23 +419,23 @@ int freeze_add_multi_capture(struct instance_t* instance, uint32_t oad, uint8_t*
         }
         else
         {
-            if ((0 != scheme) || ((period_buf[0] > 1) && (depth != buf_to_uint16_lsb(depth_buf))))   /*其他冻结 属性特征固定0,每个关联对象周期、深度必须一致*/
+            if ((0 != scheme) || ((period_buf[0] > 1) && (depth != buf_to_uint16_msb(depth_buf))))   /*其他冻结 属性特征固定0,每个关联对象周期、深度必须一致*/
             {
                 *dar = DAR_OTHERS_ERROR;
                 return -1;
             }
             offset = 0;
         }
-        uint16_to_buf_lsb(depth, depth_buf + offset);
+        uint16_to_buf_msb(depth, depth_buf + offset);
     }
 
-    // 待添加
-#if 0
-    if (false == whether_storage_depth_overruns(pobject, pdepth, oi))
+#if 1
+    ret = cal_freeze_size_sectors(instance,tempbuf, depth_buf, oad);
+    if (ret <= 0)
     {
-        return  /*DAR_EX_STORAGE_DEPTH_ERROR;*/ DAR_OTHERS_ERROR;
+        return -1;
     }
-#endif   
+#endif    
     // write  period
     nd_set_index(instance, PeriodId, &period_buf[0], PeriodLen);
 
@@ -565,7 +563,7 @@ int ACTION_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf)
     uint8_t methond, index;
 
     oi = (uint16_t)((id & 0xFFFF0000) >> 16);
-    methond = (uint8_t)((id & 0x00001F00) >> 8);
+    methond = (uint8_t)((id & 0x0000FF00) >> 8);
     index = (uint8_t)(id & 0x000000FF);
 
     switch (methond)

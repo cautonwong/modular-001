@@ -36,14 +36,14 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
             {
                 case 0x04://出厂参数初始化
                     para_init( instance );
-                    //后面替换为meter_clr
-                    freeze_clr(instance); //冻结清零
-                    event_clr(instance);  // 事件清零
+                    meter_clr(instance);
+                    //freeze_clr(instance); //冻结清零
+                    //event_clr(instance);  // 事件清零
 					p = p + 7;
                     return (p-buf);
                     break;
                 case 0x03://数据初始化（电表清零）
-
+        
                     // 时间标签 标志  待调整
 #if 0
                     if ((mbase_cb->time_tag == false) && (mbase_cb->factor_mode == false))
@@ -57,6 +57,8 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         return (1 - DAR_UNAUTHORIZED);
                     }
 #endif
+                    
+                    meter_clr(instance);
                     p++;
                     send_event_mesg_pro(instance, NULL, MeterClrS, NULL, 1);
                     return (p-buf);

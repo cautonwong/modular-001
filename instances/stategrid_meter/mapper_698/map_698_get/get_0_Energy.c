@@ -2,7 +2,7 @@
 #include "fr_698.h"
 
 
-int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj, uint8_t mode)
+int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint8_t i;
@@ -18,7 +18,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, struct 
     }
     OI = (uint16_t)(id>>16);
     attr_index = (uint8_t)(id&0x000000FF);
-    attribute = (unsigned char)((id & 0x0000FF00) >> 8);
+    attribute = (unsigned char)((id & 0x00001F00) >> 8);
     
     if(attribute == 0x03)
     {

@@ -144,7 +144,7 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     
     for (i = 0; i < num; i++)
     {
-        temp_oad = buf_to_uint16_lsb(oadlist);
+        temp_oad = buf_to_uint32_msb(oadlist);
         oadlist += 4;
 
         if (capture_oad == temp_oad)
@@ -155,7 +155,7 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
             //重复关联对象 返回拒绝
         }
     }
-    mem_swap_cpy(oadlist, p, 4);
+    memcpy(oadlist, p, 4);
     p += 4;
 
     tempbuf[0] = num + 1;
@@ -236,6 +236,7 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
         return -1;
     }
     capture_oad = buf_to_uint32_msb(p);
+    p += 4;
     Schem = get_OAD_Schem(capture_oad);
     //待调整  秘钥状态如何获取？
 #if 0
@@ -273,7 +274,7 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
 
     for (i = 0; i < num; i++)
     {
-        temp_oad = buf_to_uint32_lsb(oadlist);
+        temp_oad = buf_to_uint32_msb(oadlist);
         if (capture_oad == temp_oad)
         {
             break;
@@ -349,7 +350,7 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
     uint8_t methond, index;
 
     oi = (uint16_t)((id & 0xFFFF0000) >> 16);
-    methond = (uint8_t)((id & 0x00001F00) >> 8);
+    methond = (uint8_t)((id & 0x0000FF00) >> 8);
     index = (uint8_t)(id & 0x000000FF);
 
     switch (methond)

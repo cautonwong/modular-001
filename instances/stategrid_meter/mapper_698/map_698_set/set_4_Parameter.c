@@ -72,7 +72,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
     uint32_t addr=0;
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
-    attribute = (unsigned char)((id & 0x0000FF00) >> 8);
+    attribute = (unsigned char)((id & 0x00001F00) >> 8);
     
     for(i=0; i<set4num; i++)
     {
@@ -145,7 +145,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
     index = (unsigned char)(id & 0x000000FF);
-    attribute = (unsigned char)((id & 0x0000FF00) >> 8);
+    attribute = (unsigned char)((id & 0x00001F00) >> 8);
     
     switch (oad)
     {

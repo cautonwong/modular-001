@@ -578,7 +578,7 @@ enum block_parameter_item_id_t
 #define     BeforSet_DayTab             1507 //编程前备用套时段表
 #define     Set_Holiday_Oad             1508 //编程时节假日对象
 #define     BeforSet_Holiday            1509 //编程前节假日
-
+#define     MinFrez_Sectors             1510 //分钟冻结各方案的扇区偏移 9*2 
 
 #define     MAX_FEE_NO                  12                                  
 
