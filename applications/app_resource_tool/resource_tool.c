@@ -286,7 +286,7 @@ uint32_t *add_inside_block(struct instance_t* instance, uint8_t device_name,uint
     device = look_up_device(instance, device_name);//先获取device
     res_conditions_true(device == NULL, NULL);
     //判断申请的字节有没有超限
-    res_conditions_true((device->used + block_size) > device->size, NULL);
+//    res_conditions_true((device->used + block_size) > device->size, NULL);
     block = look_up_block(instance, device, block_name);//在找block
     res_conditions_true(block == NULL, NULL);
     ram_device = look_up_device(instance, instance->ram_device); //获取ram_device
