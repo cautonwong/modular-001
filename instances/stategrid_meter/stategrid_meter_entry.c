@@ -294,7 +294,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     pl_meter_base.in_queue = nd_malloc(instance, mbase_control_block_name, sizeof(struct fifo_t));
     fifoBuf_init(pl_meter_base.in_queue, nd_malloc(instance, mbase_control_block_name, 256), 256);
     pl_meter_base.out_queue = NULL;
-    pl_lowpower_wakeup.ctx = nd_malloc(instance, mbase_control_block_name, sizeof(struct mbase_control_block_t));
+    pl_lowpower_wakeup.ctx = pl_meter_base.ctx;
     pl_lowpower_wakeup.in_queue = nd_malloc(instance, mbase_control_block_name, sizeof(struct fifo_t));
     fifoBuf_init(pl_lowpower_wakeup.in_queue, nd_malloc(instance, mbase_control_block_name, 256), 256);
     pl_lowpower_wakeup.out_queue = NULL;
