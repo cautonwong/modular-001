@@ -514,6 +514,7 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
         if (is_last_segment(ctx->segment_rx)) { //最后帧
             return 1;
         }else{
+            ctx->segment_rx = ctx->segment_rx & 0x3fff;
             set_confirm_segment(ctx->segment_rx);
             fifoBuf_putByte(ctx->apdu, ctx->segment_rx & 0x00ff);
             fifoBuf_putByte(ctx->apdu, (ctx->segment_rx >> 8));

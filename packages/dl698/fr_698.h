@@ -20,7 +20,7 @@
 #define set_first_segment_no(s)  do{set_segment_no(s);(s |= (0<<14));}while(0)
 #define set_middle_segment_no(s)  do{set_segment_no(s);(s |= (3<<14));}while(0)
 #define set_last_segment_no(s)  do{set_segment_no(s);(s |= (1<<14));}while(0)
-#define set_confirm_segment(s)  do{(s |= (2<<14));}while(0)
+#define set_confirm_segment(s)  (s |= (0x8000))
 #define FC_CODE(ctrl)  ((ctrl)&0x07)
 
 #define CA_TYPE_TER(ca)     ((ca&0xF0) == 0)
