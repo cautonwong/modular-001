@@ -44,7 +44,7 @@ int get_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
     for (i = 0; i < num; i++)
     {
         *p++ = TYPE_OAD;
-        mem_swap_cpy(p, oadlist, 4);
+        memcpy(p, oadlist, 4);
         oadlist += 4;
         p += 4;
     }

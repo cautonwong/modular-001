@@ -20,7 +20,7 @@ int app_rx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipe
     ctx->fr_err = fr_rx_698_entry(instance, pipeline, mesg);
     if (ctx->fr_err > 0)
     {
-        fr_rx_num++;
+        fr_rx_num++; 
         //2.switch case 处理各通信命令
         ctx->fr_err = fr_gatekeeper_server(instance, pipeline, mesg);
         return ctx->fr_err;

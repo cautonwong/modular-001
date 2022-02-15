@@ -14,7 +14,7 @@ int CoverOpen_event_judge(struct instance_t* instance, struct pipeline_t* task, 
     uint8_t payload[100];
     int result = 0;
 
-    uint8_t duration_para       =  5;//ctrl_block->CoverOpenS_duration_para;
+    uint8_t duration_para       =  3;//ctrl_block->CoverOpenS_duration_para;
     uint8_t *duration           = &ctrl_block->CoverOpenS_duration;
     uint32_t* accumulate_time   = &ctrl_block->CoverOpenS_acc_time;
     uint8_t state               /*=  ctrl_block->CoverOpenS_status*/;

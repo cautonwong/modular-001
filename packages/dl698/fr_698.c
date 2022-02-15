@@ -145,10 +145,11 @@ int matcher_698(void* pctx, uint8_t* b)
         ctx->step = 9;
         return FRM_OK;
     case 9://用户链路数据
+        ctx->fcs = update_crc16(ctx->fcs, byte);
+        
         if (is_scrambler_set(ctx->ctrl)){
             *b = byte - 0x33;
         }
-        ctx->fcs = update_crc16(ctx->fcs, byte);
         
         if (ctx->min_len > 2048)// 长度大于2048 暂时删除一个字节  为了台体能跑下去。  注意： 还需要超时删除报文！
         {
@@ -391,7 +392,7 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     if(NULL == mbase_cb)
         return 0;
 
-#ifdef WIN32
+//#ifdef WIN32
     if (0 != mem_compare(ctx->addr, mbase_cb->tsa, SA_LEN(ctx->SA) + 1))
     {
         if(0 != mem_compare(ctx->addr, aa_addrbuf, 6))
@@ -399,7 +400,7 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
             return 0;
         }
     }
-#endif
+//#endif
 
     if((pipeline->id == pid_rx_698) || (pipeline->id == pid_ir_rx_698))
     {

@@ -215,6 +215,7 @@ const struct record_item_t  record_item[] =
 
 
 //一个表格只能放在一个存储器上，注册的时候绑定设备   FLASH  分钟冻结
+// 计算冻结空间大小处同步修改
 const struct record_item_t  record_item_1[] =
 {
     { MinuteFreeze1, 0,    830 * 4096,    35040 },// 待调整
@@ -229,6 +230,7 @@ const struct record_item_t  record_item_1[] =
 
 
 //一个表格只能放在一个存储器上，注册的时候绑定设备   FLASH  其他
+// 计算冻结空间大小处同步修改
 const struct record_item_t  record_item_2[] =
 {
     { HourFreeze , 0,     5 * 4096,    254 },//小时冻结
@@ -422,7 +424,9 @@ const  parameter_item_t  parameter_item[] =
     { BeforSet_DayTab               , 0x01,114, 0 }, //编程前备用套时段表  array num 14*8  
     { Set_Holiday_Oad               , 0x01,  5, 0 }, //编程时节假日对象         
     { BeforSet_Holiday              , 0x01, 10, 0 }, //编程前节假日
-    
+ 
+    { MinFrez_Sectors               , 0x01, 18, 0 }, //分钟冻结各方案的扇区偏移 9*2 
+
     { AutoDisplayList,     0x64,   2,       init_AutoDisplayList },//100屏*2字节
     { KeyDisplayList,      0x64,   2,       init_KeyDisplayList },//100屏*2字节
     
@@ -564,21 +568,47 @@ int16_t supply_event_info(struct instance_t* instance, uint16_t event_flag, uint
 int16_t supply_event_flash_1_info(struct instance_t* instance, uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
 {
     uint16_t i;
+    uint32_t addr_index;
+    uint16_t sector_size[9] = { 0 };
+    uint8_t tempbuf[2*8] = { 0 };
+    int ret;
+    addr_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MinFrez_Sectors);
+    ret = nd_get_index(instance, addr_index, (uint8_t*)&sector_size[0], 18);
+    if (ret < 0)
+    {
+        memset(&sector_size[0], 0, sizeof(sector_size));
+    }
+
+    addr_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MinuteFreeze_depth);
+    ret = nd_get_index(instance, addr_index, (uint8_t*)&tempbuf[0], 16);
+    if (ret < 0)
+    {
+        memset(&tempbuf[0], 0, sizeof(tempbuf));
+    }
 
     POINTER_EMPTY(addr);
     *addr = 0x00;
     for (i = 0; i < sizeof(record_item_1) / sizeof(record_item_1[0]); i++)
     {
-
-        *addr += record_item_1[i].len;
+        *addr = sector_size[i] * 4096;//record_item_1[i].len;
         if ((event_flag == record_item_1[i].event_flag_id_start) ||
             (event_flag == record_item_1[i].event_flag_id_end))
         {
             POINTER_EMPTY(addr);
-            *size = record_item_1[i].len;
 
+            //*size = record_item_1[i].len;
+            if (sector_size[i + 1] > sector_size[i])
+            {
+                *size = (sector_size[i + 1] - sector_size[i]) * 4096;
+            }
+            else
+            {
+                *size = 0x00;
+            }
+            
             POINTER_EMPTY(depth);
-            *depth = record_item_1[i].max_depth;
+            //*depth = record_item_1[i].max_depth;
+            *depth = buf_to_uint16_msb(&tempbuf[2 * i]);
 
             return 1;
         }
@@ -650,7 +680,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
 //    uint8_t schem = get_OAD_Schem(oad);
     uint8_t temp = 0;
     uint16_t OI;
-    uint8_t attr, class = 7;
+    uint8_t attr = 0, class = 7, scheme = 0;
 
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -663,7 +693,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
     
     OI = get_OAD_OI(oad);
     attr = get_OAD_Attribute(oad);
-
+    scheme = get_OAD_Schem(oad);
     if (((OI >= 0x3000) && (OI <= 0x3008)) || (OI == 0x300B))
     {
         class = 24;
@@ -914,11 +944,11 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 break;
                 case 0x50020000://8方案 待调整
                 {
-                    SaveId = MinuteFreeze1;                 // + schem 记录存储地址信息
+                    SaveId = MinuteFreeze1 + scheme;                 // + schem 记录存储地址信息
                     SaveDevice = RES_DEV_FLASH;
                     SaveBlock = mbase_block_event_flash1;
                     CaptureId = MinuteFreeze_oad;           // 关联对象存储地址信息
-                    SeqId = MinuteFreeze1_seq;              // 序号存储地址信息
+                    SeqId = MinuteFreeze1_seq + scheme;              // 序号存储地址信息
                     PeriodId = MinuteFreeze_period;         // 周期存储地址信息
                     DepthId = MinuteFreeze_depth;           // 深度存储地址信息
                     info->period_len = 24;
@@ -1048,7 +1078,7 @@ int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_l
 
         for(i = 0; i < num; i++)
         {
-            memcpy(p, (tempbuf+1+4*i), 4);
+            mem_swap_cpy(p, (tempbuf+1+4*i), 4);
             p++;
             rcsd_num += 1;
         }
@@ -1448,8 +1478,17 @@ uint8_t para_init(struct instance_t* instance )
     {
         if( parameter_item[i].data != 0 )
         {
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + parameter_item[i].paramerer_index);
-            nd_set_index(instance, s_index, (uint8_t*)(parameter_item[i].data+1), (*parameter_item[i].data)); 
+            if (((parameter_item[i].paramerer_index >= MinuteFreeze_oad) && (parameter_item[i].paramerer_index <= ZeroLineErrS_seq))
+                || ((parameter_item[i].paramerer_index >= EventClr_List) && (parameter_item[i].paramerer_index <= MinFrez_Sectors)))
+            {
+                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + parameter_item[i].paramerer_index);
+                nd_set_index(instance, s_index, (uint8_t*)(parameter_item[i].data), parameter_item[i].len); 
+            }
+            else
+            {
+                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + parameter_item[i].paramerer_index);
+                nd_set_index(instance, s_index, (uint8_t*)(parameter_item[i].data+1), (*parameter_item[i].data)); 
+            }
         }
     }
     

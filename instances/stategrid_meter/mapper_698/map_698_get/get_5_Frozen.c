@@ -83,7 +83,7 @@ int get_frozen_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, stru
         *p++ = *(tmp0 + scheme * 3 + 2);
 
         *p++ = TYPE_OAD;
-        mem_swap_cpy(p, oadlist, 4);
+        memcpy(p, oadlist, 4);
         oadlist += 4;
         p += 4;
 
@@ -114,7 +114,7 @@ int GET_5_Frozen(struct instance_t* instance, uint32_t oad, uint8_t* buf)
         return -1;
     }
 
-    switch (oad & 0x0000FF00)
+    switch (oad & 0x00001F00)
     {
     //case 0x50020300://关联对象属性表
     //case 0x50030300://关联对象属性表

@@ -26,7 +26,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
     index = (unsigned char)(id & 0x000000FF);
-    attribute = (unsigned char)((id & 0x0000FF00) >> 8);    //属性
+    attribute = (unsigned char)((id & 0x00001F00) >> 8);    //属性
    
     if((oad == 0xF201) || (oad == 0xF202) || (oad == 0xF209) || (oad == 0xF205) || (oad == 0xF207))
     {

@@ -118,7 +118,7 @@ int general_get_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
     uint32_t addr=0;
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
-    attribute = (unsigned char)((id & 0x0000FF00) >> 8);
+    attribute = (unsigned char)((id & 0x00001F00) >> 8);
     
     for(i=0; i<get4num; i++)
     {
@@ -174,7 +174,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
 
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
     index = (unsigned char)(id & 0x000000FF);
-    attribute = (unsigned char)((id & 0x0000FF00) >> 8);
+    attribute = (unsigned char)((id & 0x0000FF00) >> 8); // 待调整 1F
     
     switch (oad)
     {
@@ -214,6 +214,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
                     addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
                     nd_get_index(instance, addr, p, 7);
                     p += 7;
+                    return (p - buf);
                 }
                 break;
 

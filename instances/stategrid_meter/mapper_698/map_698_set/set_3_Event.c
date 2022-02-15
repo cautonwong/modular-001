@@ -52,13 +52,13 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
     for (i = 0; i < num; i++)
     {
         p++; // DTC_OAD
-        oad_tmp = buf_to_uint32_lsb(p);
+        oad_tmp = buf_to_uint32_msb(p);
         if (false == oad_valid_check(oad_tmp))  //无效关联对象
         {
             *dar = DAR_OTHERS_ERROR;
             return -1;
         }
-        mem_swap_cpy(oadlist, p, 4);
+        memcpy(oadlist, p, 4);
         oadlist += 4;
         p += 4;
     }
@@ -255,12 +255,12 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
         for (i = 0; i < num; i++)
         {
             p++; // DTC_OAD
-            oad_tmp = buf_to_uint32_lsb(p);
+            oad_tmp = buf_to_uint32_msb(p);
             if (false == oad_valid_check(oad_tmp))  //无效关联对象
             {
                 return DAR_OTHERS_ERROR;
             }
-            mem_swap_cpy(des, p, 4);
+            memcpy(des, p, 4);
             des += 4;
             p += 4;            
         }
