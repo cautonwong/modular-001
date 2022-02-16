@@ -271,7 +271,7 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
     }
 
 #if 1
-    ret = cal_freeze_size_sectors(instance,tempbuf, depth_buf, oad);
+    ret = cal_freeze_size_sectors(instance,tempbuf, depth_buf, id);
     if (ret <= 0)
     {
         return -1;

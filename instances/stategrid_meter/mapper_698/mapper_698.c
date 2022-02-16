@@ -1437,11 +1437,12 @@ int record_data_add_tag(uint8_t* des, uint8_t* src, uint32_t* obj_list, uint8_t 
 // 01 13 06  XXXX 06 XXXX
 
 #endif
-uint8_t para_init(struct instance_t* instance )
+int para_init(struct instance_t* instance )
 {
     uint16_t i,num=0,s_len;
     uint32_t s_index=0;
     struct mbase_control_block_t* mbase_cb;
+    int ret;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     num = sizeof(parameter_item)/sizeof(parameter_item_t);
@@ -1492,7 +1493,11 @@ uint8_t para_init(struct instance_t* instance )
         }
     }
     
-    
+    ret = freez_size_sectors_init(instance, 0x50020200);//分钟冻结 空间分配
+    if(ret < 0)
+    {
+        return -1;
+    }
     
     return 0;
 }

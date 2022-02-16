@@ -359,7 +359,7 @@ struct format_conversion_t
 extern int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_storage_id_info_t* info);
 extern int record_change_format(uint8_t *des,  uint8_t* src, uint32_t oad, enum format_conversion_mode mode);
 extern int clr_record(struct instance_t* instance, uint32_t oad);
-extern uint8_t para_init(struct instance_t* instance );
+extern int para_init(struct instance_t* instance );
 extern int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 //GS----end
 

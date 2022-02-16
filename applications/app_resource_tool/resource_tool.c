@@ -781,10 +781,10 @@ int16_t search_circular(struct instance_t* instance, const struct dev_info_t* de
 int application_norflash_erase(uint32_t addr, uint32_t len, const struct driver_ops_t* driver, const struct dev_info_t* dev)
 {
     uint32_t temp;
-    int ret = -1;
+    int ret = 1;
 
     temp = ((addr + len) / 4096) * 4096;
-    if ((addr >= temp) && (addr + len < temp) && (driver->dev_control != NULL))
+    if ((addr <= temp) && (addr + len > temp) && (driver->dev_control != NULL))
     {
         ret = driver->dev_control(dev, 0x01, &temp);
     }

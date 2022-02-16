@@ -319,7 +319,7 @@ uint32_t datetimes_to_second(struct data_time_s_t* dt)
     time.tm_min = dt->minute;
     time.tm_hour = dt->hour;
     time.tm_mday = dt->day;
-    time.tm_mon = dt->month;
+    time.tm_mon = dt->month - 1;
     time.tm_year = (uint8_t)(dt->year - 1900);
 
     return rtc_mktime(&time);
@@ -336,7 +336,7 @@ uint32_t dt_buf_to_second(uint8_t* dt)
     dt += 2;
 
     time.tm_year = (uint8_t)(year  - 1900);
-    time.tm_mon = *dt++;
+    time.tm_mon = (*dt++)-1;
     time.tm_mday = *dt++;
     time.tm_hour = *dt++;
     time.tm_min = *dt++;
@@ -357,7 +357,7 @@ int second_to_dt_buf(uint32_t timesec, uint8_t* dt)
     year_temp = (time.tm_year + 1900);
 
     p += uint16_to_buf_msb(year_temp, p);
-    *p++ = (uint8_t)time.tm_mon;
+    *p++ = (uint8_t)time.tm_mon + 1;
     *p++ = (uint8_t)time.tm_mday;
     *p++ = (uint8_t)time.tm_hour;
     *p++ = (uint8_t)time.tm_min;
@@ -1139,7 +1139,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     struct record_storage_id_info_t record_id_info; 
     struct circular_info_t circular_info = {0};
     uint32_t *rcsd_req = (uint32_t *)rcsd_info; // 待定
-    uint8_t temp[2000]; //待调整 需要替换协议共用缓存 2k 
+    uint8_t temp[1000]; //待调整 需要替换协议共用缓存 2k 
     uint32_t rcsd_src[50];//待调整   设置的关联对象，用于与请求的关联对象作比对筛选
     uint16_t i, read_num, number = 0;
     uint16_t one_len = 0,len = 0;

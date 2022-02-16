@@ -8,7 +8,7 @@
 //并且计算保存分钟冻结0-7  8个方案中每个方案的空间大小偏移(扇区)
 int cal_freeze_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, uint8_t *depth_ptr, uint32_t oad)
 {
-    uint8_t maxnum,scheme = 0,obj_num, scheme_num;
+    uint8_t scheme = 0,obj_num, scheme_num;
     uint16_t i, k, depth, sector = 0, sectorMax = 0, t_num = 0;
     uint16_t sector_size[9];
     int16_t single_len = 0;
@@ -16,10 +16,7 @@ int cal_freeze_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, u
     int ret;
     
     obj_num = capture_ptr[0];
-    if (obj_num > maxnum)
-    {
-        return -1;
-    }
+
 
     scheme_num = 1;
     sectorMax = 0;
@@ -50,7 +47,7 @@ int cal_freeze_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, u
 
             scheme = (uint8_t)((obj >> 13) & 0x07); //方案号
 
-            if (scheme == k)
+            if (scheme == i)
             {
                 single_len = nd_size(instance, obj);
                 if (single_len > 0)
@@ -63,7 +60,7 @@ int cal_freeze_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, u
                 }
                 else
                 {
-                    return -1;
+                    single_len = 1;
                 }
                 offset += single_len;
             }
@@ -71,7 +68,7 @@ int cal_freeze_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, u
         
         sector_size[i] = sector;
 
-        depth = buf_to_uint16_msb(&depth_ptr[2 * k]);
+        depth = buf_to_uint16_msb(&depth_ptr[2 * i]);
         if (depth != 0)
         {
             t_num = 0x1000 / offset; //一个扇区多少条
@@ -95,6 +92,52 @@ int cal_freeze_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, u
     }
 
     return -1;
+}
+
+
+//分冻结 各方案空间分配  恢复出厂参数时，分钟冻结必须调用 
+int freez_size_sectors_init(struct instance_t* instance, uint32_t oad)
+{
+    uint8_t tempbuf[200], depth[1 + 2 * 15];
+    uint8_t i, num, maxnum, scheme;
+    uint16_t OI, CaptureLen, PeriodLen, DepthLen;
+    uint32_t CaptureId, PeriodId, DepthId /*, oad = 0x50020200*/;
+    struct record_storage_id_info_t  record_id_info;
+    int ret = -1;
+
+    ret = get_record_id_info(instance, oad, &record_id_info);
+    if (ret <= 0)
+    {
+        return -1;
+    }
+
+    CaptureId = record_id_info.capture_index;
+    PeriodId = record_id_info.period_index;
+    DepthId = record_id_info.depth_index;
+    CaptureLen = record_id_info.capture_len;// 
+    PeriodLen = record_id_info.period_len;
+    DepthLen = record_id_info.depth_len;
+    maxnum = (CaptureLen - 1) / 4;
+
+    //获取捕获对象
+    ret = nd_get_index(instance, CaptureId, &tempbuf[0], sizeof(tempbuf));
+    if (ret < 0)
+    {
+        return -1;
+    }
+    // 深度
+    ret = nd_get_index(instance, DepthId, &depth[0], sizeof(depth));
+    if (ret < 0)
+    {
+        return -1;
+    }
+
+    ret = cal_freeze_size_sectors(instance, tempbuf, depth, oad);
+    if (ret < 0)
+    {
+        return -1;
+    }
+    return 1;
 }
 
 
@@ -161,7 +204,93 @@ int instant_freeze_judge(struct instance_t* instance, struct pipeline_t* task, s
     return -1;
 }
 
+void rtc_normal_to_tm(struct tm* time, uint8_t* p)
+{
+    uint16_t temp=0;
 
+    time->tm_sec = p[6];
+    time->tm_min = p[5];
+    time->tm_hour = p[4];
+    time->tm_mday = p[3];
+    time->tm_mon = p[2] - 1;    // 待调整  后续增加时间合法性判断
+    mem_swap_cpy((uint8_t*)&temp, (uint8_t*)(p), 2);
+    time->tm_year = temp - 1900;
+}
+
+
+//设置或修改时间后调用  冻结回退处理
+int record_rollback_after_set_time(struct instance_t* instance)
+{
+    struct record_storage_id_info_t record_id_info; 
+    uint8_t i, num = 0, buffer[10] = { 0xFF };
+    struct tm t_before, t_after;
+    uint32_t addr,last_timesec, curr_timesec;
+    int ret = 0;
+    //uint16_t FlagID[] = { MinuteFreeze1, MinuteFreeze2, MinuteFreeze3, MinuteFreeze4, MinuteFreeze5, MinuteFreeze6, MinuteFreeze7, MinuteFreeze8, HourFreeze, DayFreeze, MonthFreeze, };
+    uint32_t TabOAD[] = { 0x50020200, 0x50022200, 0x50024200, 0x50026200, 0x50028200, 0x5002A200, 0x5002C200, 0x5002E200, 0x50030200, 0x50040200, 0x50060200, };
+
+
+    //时间合法性判断 待调整
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
+    nd_get_index(instance, addr, buffer, 7);
+    //rtc_normal_to_tm(&t_before, buffer);
+    //last_timesec = rtc_mktime(&t_before);
+    last_timesec = dt_buf_to_second(buffer);
+
+    //时间合法性判断 待调整
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
+    nd_get_index(instance, addr, buffer, 7);
+    //rtc_normal_to_tm(&t_after, buffer);
+    //curr_timesec = rtc_mktime(&t_after);
+    curr_timesec = dt_buf_to_second(buffer);
+
+    if (curr_timesec < last_timesec)
+    {
+        // 保存回退相关数据和标识  待调整
+
+        num = 0;
+        for (i = 0; i < (sizeof(TabOAD) / sizeof(TabOAD[0])); i++)
+        {
+            //掉电退出 待调整
+            //喂狗 待调整
+            ret = get_record_id_info(instance, TabOAD[i], &record_id_info);
+            if (ret <= 0)
+            {
+                continue;
+            }
+            
+            ret = nd_log_append_rollback(instance, record_id_info.save_index  , public_block_flash, last_timesec, curr_timesec);
+            if (ret > 0)
+            {
+                num++;
+                //需要分每个id单独记录
+            }
+        }
+
+        if (num == (sizeof(TabOAD) / sizeof(TabOAD[0])))
+        {
+            //清除回退相关数据和标识  待调整
+        }
+    }
+
+    return 1;
+}
+//设置或修改时间后 因停电或其他情况导致 回退未完成，需要补处理    待调整 未调用
+int record_rollback_finish_check(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+{
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
+    uint8_t i, num = 0, buffer[10] = { 0xFF };
+    struct tm t_before, t_after;
+    uint32_t addr, last_timesec, curr_timesec;
+    int ret = 0;
+    //uint16_t FlagID[] = { MinuteFreeze1, MinuteFreeze2, MinuteFreeze3, MinuteFreeze4, MinuteFreeze5, MinuteFreeze6, MinuteFreeze7, MinuteFreeze8, HourFreeze, DayFreeze, MonthFreeze, };
+    uint32_t TabOAD[] = { 0x50020200, 0x50022200, 0x50024200, 0x50026200, 0x50028200, 0x5002A200, 0x5002C200, 0x5002E200, 0x50030200, 0x50040200, 0x50060200, };
+
+    //读取回退是否完成标志
+  
+
+    return 1;
+}
 
 int minute_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
@@ -276,11 +405,14 @@ int month_freeze_judge(struct instance_t* instance, struct pipeline_t* task, str
 // 每秒调用
 int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
+    //freeze_rollback(instance, task, mesg);
+
     minute_freeze_judge(instance, task, mesg);
     hour_freeze_judge(instance, task, mesg);
     day_freeze_judge(instance, task, mesg);
     month_freeze_judge(instance, task, mesg);  
     instant_freeze_judge(instance, task, mesg); //瞬时冻结
+    return 1;
 }
 
 

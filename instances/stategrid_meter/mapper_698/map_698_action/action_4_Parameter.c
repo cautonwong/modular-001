@@ -13,6 +13,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
     uint8_t  method,dar=0;
     uint16_t oad;
     uint8_t *p = buf;
+    int ret;
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
     method = (unsigned char)((id & 0x0000FF00) >> 8);    //方法
@@ -35,10 +36,12 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
             switch(method)
             {
                 case 0x04://出厂参数初始化
-                    para_init( instance );
+                    ret = para_init( instance );
                     meter_clr(instance);
-                    //freeze_clr(instance); //冻结清零
-                    //event_clr(instance);  // 事件清零
+                    if(ret < 0)
+                    {
+                        return -1;
+                    }
 					p = p + 7;
                     return (p-buf);
                     break;
