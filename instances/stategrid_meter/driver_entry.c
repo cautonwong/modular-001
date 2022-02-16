@@ -153,7 +153,10 @@ void IO_Interrupt(void)
                  }
              }
         }
-        fifoBuf_putByte(&irq_fifo, IRQ_PMU);
+        else
+        {
+            fifoBuf_putByte(&irq_fifo, IRQ_PMU);
+        }
         PMU->IOAINTSTS = BIT2;
     }
 }
