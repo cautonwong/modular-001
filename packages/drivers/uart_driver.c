@@ -252,7 +252,10 @@ uint8 uart_time_process(void *tickpara)
     {
         chl->rx_time_out--;
     }
-    
+    else
+    {
+        chl->CallBackReceiveTimeOut();
+    }   
     if(chl->tx_time_out > 0)
     {
         chl->tx_time_out--;
@@ -298,6 +301,7 @@ int uart_chl_initialize(struct uart_chl_init_t *uart_chl)
         uart_dev[index].chl_type = uart_chl->chl_type;
         uart_dev[index].rx_time_out = 0;
         uart_dev[index].tx_time_out = 0;
+        uart_dev[index].CallBackReceiveTimeOut = uart_chl->CallBackReceiveTimeOut;
         switch(uart_chl->chl_type)
         {
             case UART_RS4851_CHL:

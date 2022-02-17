@@ -224,7 +224,20 @@ void timing_ftr(void)
       }
 }
 
-   
+void rs485_receive_timeout(void)
+{
+    fifoBuf_putByte(&irq_fifo, IRQ_RS485_RX_TM_OUT);
+}
+
+void plc_receive_timeout(void)
+{
+    fifoBuf_putByte(&irq_fifo, IRQ_PLC_RX_TM_OUT);
+}
+
+void ir_receive_timeout(void)
+{
+    fifoBuf_putByte(&irq_fifo, IRQ_IR_RX_TM_OUT);
+}   
 
 void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uint8_t chl_type)
 {
@@ -235,14 +248,17 @@ void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uin
         case UART_RS4851_CHL:
              chl_init.uart_cfg = (const void*)&Uart_InitType_485;
              chl_init.mcu_uart_index = UART_RS4851_AT_MCU_UART_INDEX;
+             chl_init.CallBackReceiveTimeOut = rs485_receive_timeout;
              break;
         case UART_IR_CHL:
              chl_init.uart_cfg = (const void*)&Uart_InitType_ir;
              chl_init.mcu_uart_index = UART_IR_AT_MCU_UART_INDEX;
+             chl_init.CallBackReceiveTimeOut = ir_receive_timeout;
             break;
         case UART_MODULE_CHL:
              chl_init.uart_cfg = (const void*)&Uart_InitType_module;
              chl_init.mcu_uart_index = UART_MODULE_AT_MCU_UART_INDEX;
+             chl_init.CallBackReceiveTimeOut = plc_receive_timeout;
             break;
         default:
             break;
@@ -285,7 +301,16 @@ void irq_transform_to_instance(struct instance_t* instance)
              
            case IRQ_PMU:
                 fifoBuf_putByte(&instance->pipe_key, IRQ_PMU);
-                break;                 
+                break;
+           case IRQ_RS485_RX_TM_OUT:
+                fifoBuf_putByte(&instance->pipe_uart, IRQ_RS485_RX_TM_OUT);
+                break;
+           case IRQ_PLC_RX_TM_OUT:
+                fifoBuf_putByte(&instance->pipe_uart, IRQ_PLC_RX_TM_OUT);
+                break;
+           case IRQ_IR_RX_TM_OUT:
+                fifoBuf_putByte(&instance->pipe_uart, IRQ_IR_RX_TM_OUT);
+                break;
            default:
                 break;
        }

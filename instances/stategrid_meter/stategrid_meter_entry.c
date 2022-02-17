@@ -272,6 +272,9 @@ int baremetal_instance_entry_main(int argc, char** argv)
 
     buf = nd_malloc(instance, control_block_cache, 8);
     fifoBuf_init(&instance->pipe_key, buf, 8);
+    
+    buf = nd_malloc(instance, control_block_cache, 8);
+    fifoBuf_init(&instance->pipe_uart, buf, 8);
     instance->apdu_cache = nd_malloc(instance, control_block_cache, 1700);
         
     /////////////////////////////////////申请一个698应用的BLOCK = 03/////////////////////////////////////////////////

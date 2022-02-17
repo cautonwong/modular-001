@@ -487,6 +487,7 @@ struct instance_t
     struct cache_t* cache2;
     struct fifo_t pipe_rtc;//只能在定时器函数或时钟秒中断函数里写
     struct fifo_t pipe_key;//用于按键类中断缓存
+    struct fifo_t pipe_uart;//用于串口回调消息缓存
     int event_group_size;
     uint8_t *event_flags;
     uint8_t ac_power_statue;
@@ -577,6 +578,9 @@ enum resource_map_698_e
 #define  MSG_PAGE_KEY_UP    0x0002
 #define  MSG_POWERON        0x0003
 #define  MSG_POWEROFF       0x0004
+#define  MSG_RS485_BYTE_TIMEOUT   0x0005
+#define  MSG_PLC_BYTE_TIMEOUT     0x0006
+#define  MSG_IR_BYTE_TIMEOUT      0x0007
 
 int nidavellir_loop(struct instance_t *instance);
 int nidavellir_n_loop(struct instance_t **instances,size_t n);

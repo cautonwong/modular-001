@@ -133,6 +133,39 @@ int fr_sw_key(struct instance_t* instance, struct pipeline_t* pipeline, struct m
     return 0;
 }
 
+
+
+int fr_sw_uart(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    if (fifoBuf_getUsed(&instance->pipe_uart) > 0)
+    {
+        uint8_t byte = fifoBuf_getByte(&instance->pipe_uart);
+        mesg->from = kernel;
+        mesg->id = 0x0000001;
+        mesg->len = 0;
+        switch(byte)
+        {
+            case IRQ_RS485_RX_TM_OUT:
+                mesg->to = pid_rx_698;
+                mesg->ctrl = MSG_RS485_BYTE_TIMEOUT;
+                break;
+            case IRQ_IR_RX_TM_OUT:
+                mesg->to = pid_ir_rx_698;
+                mesg->ctrl = MSG_IR_BYTE_TIMEOUT;
+                break;
+            case IRQ_PLC_RX_TM_OUT:
+                mesg->to = pid_plc_rx_698;
+                mesg->ctrl = MSG_PLC_BYTE_TIMEOUT;
+                break;
+            default:
+                break;
+        }
+        send_mesg(instance, NULL, mesg, NULL);
+    }
+
+    return 0;
+}
+
 int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
 #ifndef WIN32
@@ -286,6 +319,8 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     fr_sw_key(instance,NULL,&mesg);
     
     fr_sw_ac_power(instance,NULL,&mesg);
+    
+    fr_sw_uart(instance,NULL,&mesg);
 
     //处理事件标志组  事件驱动
     //handle_event_flags()
