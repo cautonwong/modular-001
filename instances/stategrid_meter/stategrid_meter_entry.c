@@ -2,11 +2,7 @@
 #include "applications.h"
 #include "resource_tool.h"
 
-#define Max698len       544
-#define Max698_apdu     1800
-#define Max698_apdu_rx  1800
 
-#define pl_tx_698_len   128
 
 extern int baremetal_instance_entry(struct instance_t* instance);
 #ifdef WIN32
@@ -284,8 +280,8 @@ int baremetal_instance_entry_main(int argc, char** argv)
     }
     
     communication_channel_init(instance, &pl_rx_698, &pl_tx_698, UART_RS4851_CHL);
-    communication_channel_init(instance, &pl_plc_rx_698, &pl_plc_tx_698 , UART_MODULE_CHL);
-    communication_channel_init(instance, &pl_ir_rx_698, &pl_ir_tx_698, UART_IR_CHL);
+    //communication_channel_init(instance, &pl_plc_rx_698, &pl_plc_tx_698 , UART_MODULE_CHL);
+    //communication_channel_init(instance, &pl_ir_rx_698, &pl_ir_tx_698, UART_IR_CHL);
 
     ////////////////////////////申请一个mbase应用的BLOCK = 04/////////////////////////////////////////////
     if (NULL == add_block(instance, RES_DEV_RAM, mbase_control_block_name, 6 * 1024)) //剩余4k

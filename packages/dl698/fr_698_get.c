@@ -21,8 +21,6 @@ int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline
     int offset = 0;
     uint8_t *apdu = instance->apdu_cache;
 
-    //apdu += 3;
-    //len = 3;
     if (ctx->choice > GetRequestNext){
         return -1;
     }
@@ -56,6 +54,9 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* cache = ctx->apdu;
+    
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
+    
     uint8_t* p = cache->buf_ptr;
     uint32_t oad = mesg->id;
     uint16_t len= 0;
@@ -77,9 +78,7 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
     {
         offset = cache->wr;
         p[cache->wr++] = 0x01;
-
-        int r = fr_698_get(instance, oad, p + cache->wr, len, (void*)ctx);
-        //fifo->rd += r;
+        int r = fr_698_get(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
         if (r < 0)
         {
             p[cache->wr++] = 0x00;//DAR
@@ -98,10 +97,10 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
-   // else
-   // struct fifo_t* fifo = (struct fifo_t*)ctx->keybuf;
-    
+
     struct fifo_t* cache = ctx->apdu;
+    
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t* p = cache->buf_ptr;
     uint16_t n = 0;
 
@@ -109,21 +108,16 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
 
     while (oad_n-- > 0)
     {
-        //if (fifoBuf_getFree(cache) < 2)
-        {
-            fifoBuf_getData(fifo, p + cache->wr, 4);
-            mesg->id = buf_to_uint32_msb(p + cache->wr);
-            cache->wr += 4;
+        mesg->id = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
+        ctx->apdu_rx_offset += 4;
 
-            if (fr_get_one_object(instance, pipeline, mesg) < 0)
-            {
-                return DAR_OTHERS_ERROR;
-            }
-            cache->wr += n;
+        if (fr_get_one_object(instance, pipeline, mesg) < 0)
+        {
+            return DAR_OTHERS_ERROR;
         }
+        cache->wr += n;
     }
 
-    //fr_encode_optional(instance, pipeline, mesg);//follow-report and time-tag
     return 1;
 }
 
@@ -274,20 +268,5 @@ int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeli
             break;
     }
 
-
-#if 0
-    uint8_t oad_n = mesg->oad_n;
-    while (oad_n-- > 0)
-    {
-        //todo  apdu分帧
-        //if (fifoBuf_getFree(cache) < size(oad))
-        {
-            fifoBuf_getData(fifo, p + cache->wr, 4);
-            mesg->id = buf_to_uint32_msb(p + cache->wr);
-            cache->wr += 4;
-            fr_serve_one_object(instance, pipeline, mesg);
-        }
-    }
-#endif
     return 1;
 }

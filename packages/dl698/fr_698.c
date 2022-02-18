@@ -301,8 +301,8 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
     uint32_t time_tag_sec = 0;
     int offset = 0;
 
-    ctx->timeTag_valid = 0;	//默认时间标签合法
-    //return 1;
+    ctx->timeTag_valid = 0;	
+    return 1;
     if ((ctx->service == LINK_Request) || (ctx->service == SECURITY_Request)){
         return -1;
     }
@@ -424,17 +424,14 @@ int fr_apdu_effective_check(struct instance_t* instance, struct pipeline_t* pipe
 int fr_encode_optional(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
     int r = 0;
 
     p[cache->wr++] = 0x00;//follow_report
-    uint8_t time_tag = fifoBuf_getByte(fifo);
-    p[cache->wr++] = time_tag;
-    if (time_tag != 0){
-        r = fifoBuf_getData(fifo, p + cache->wr, 10);
-        cache->wr += r;
+    if (ctx->timeTag_valid == 1){
+        memcpy(p+cache->wr, ctx->timeTag, 11);
+        cache->wr += 11;
     }
     
     return 1;
@@ -447,6 +444,8 @@ int __put_fifo_byte(void* pctx, uint8_t* byte)
     return 0;
 }
 
+
+#if 0
 int _fr_segments_rcv_handle(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
@@ -500,19 +499,47 @@ int _fr_segments_rcv_handle(struct instance_t* instance, struct pipeline_t* pipe
         return 1;
     }
 }
+#endif
+
+int __get_apdu_data_len(struct context_698_t* ctx){
+    return ctx->min_len - 4 - (SA_LEN(ctx->SA) + 1) - 5;
+}
 
 int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
     int ret = 0;
     uint8_t len = 0;
-
+    uint16_t data_len = 0;
+    uint16_t s = 0;
+   
     ctx->segment_rx = fifoBuf_getByte(fifo);
     ctx->segment_rx += (fifoBuf_getByte(fifo) << 8);
-    ret = _fr_segments_rcv_handle(instance, pipeline, mesg);
-    if (0 == ret){
-        if (is_last_segment(ctx->segment_rx)) { //最后帧
+    s = ctx->segment_rx;
+    if(is_first_segment(s)|| is_middle_segment(s) || is_last_segment(s)){
+        data_len = __get_apdu_data_len(ctx);;
+        if(is_first_segment(s)){
+            ctx->apdu_rx_len = 0;
+            ctx->segment_no = 1;
+            fifoBuf_getData(fifo, apdu_rx + ctx->apdu_rx_len,  data_len);
+            ctx->apdu_rx_len = data_len;   
+        }else if((get_segment_no(s) == ctx->segment_no)){
+            if((is_middle_segment(s) || is_last_segment(s))){
+                ctx->segment_no++;
+                if(is_last_segment(s)){
+                    ctx->segment_no = 0;
+                }
+                fifoBuf_getData(fifo, apdu_rx + ctx->apdu_rx_len,  data_len);
+                ctx->apdu_rx_len += data_len;
+                if(ctx->apdu_rx_len > Max698_apdu_rx){
+                     return -1;
+                }
+            }
+        }
+        
+        if (is_last_segment(ctx->segment_rx)) {
             return 1;
         }else{
             ctx->segment_rx = ctx->segment_rx & 0x3fff;
@@ -521,11 +548,10 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
             fifoBuf_putByte(ctx->apdu, (ctx->segment_rx >> 8));
             mesg->len = fifoBuf_getUsed(ctx->apdu);
             fr_rx_698_end(instance, pipeline, mesg);
-            return 0;//回应确认
+            return 0;
         }
-    }else{
-        return -1;//异常
     }
+    return -1;//异常
 }
 
 
@@ -536,6 +562,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* fifo_apdu_rx = ctx->apdu_rx;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
     int err_no = 0;
     uint8_t service = 0;
     
@@ -546,33 +573,35 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     }
     
     fifoBuf_removeData(fifo, APDU_OFFSET(ctx->SA));
-    ctx->segment_rx = 0;
+
+    ctx->apdu_rx_offset = 0;
     if(is_segment_set(ctx->ctrl)){
+        ctx->segment_rx = 0;
         err_no = fr_segments_handle(instance, pipeline,  mesg);
-        if (err_no != 1) {
+        if (err_no <= 0) {
             return err_no;
-        }else{
-          fifo = ctx->apdu_rx;
         }
+    }else{
+        ctx->apdu_rx_len = __get_apdu_data_len(ctx);
+        if(ctx->apdu_rx_len > Max698_apdu_rx){
+            return -1;
+        }
+        fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len);
     }
-
-    ctx->service = fifoBuf_getByte(fifo);
+    
+    ctx->service = apdu_rx[ctx->apdu_rx_offset++];
+    ctx->security_choice = 0;
+    ctx->verification_choice = 0;
     if (SECURITY_Request == ctx->service){
-        service = SECURITY_Request;
         err_no = fr_security_request(instance, pipeline, mesg);
-        if(err_no < 0)
+        if(err_no < 0){
             return err_no;
-        ctx->service = fifoBuf_getByte(fifo);//重新取service
-    }
-
-    if(ctx->segment_rx)
-    {
-        fifo = fifo_apdu_rx;
-        ctx->service = fifoBuf_getByte(fifo);
+        }
+        ctx->service = apdu_rx[ctx->apdu_rx_offset++];
     }
     
     if (!((CONNECT_Request == ctx->service) || (RELEASE_Request == ctx->service))){
-        ctx->choice = fifoBuf_getByte(fifo);
+        ctx->choice = apdu_rx[ctx->apdu_rx_offset++];
     }
 
     if ((ctx->service > ERROR_S_Response) || (ctx->choice > 9)){
@@ -581,11 +610,8 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         return -1;
     }
 
-    ctx->PIID = fifoBuf_getByte(fifo);
+    ctx->PIID = apdu_rx[ctx->apdu_rx_offset++];
     ctx->PIID |= (1 << 6);//PIID-ACD
-
-    //拷贝到线性缓冲区
-    fifoBuf_peekByteBuf(fifo, 0, instance->apdu_cache, ctx->min_len - 3);
 
     if(0 == fr_timetag_check(instance, pipeline, mesg)){
         ctx->fr_err = FRM_TIME_TAG_ERR;

@@ -1,19 +1,149 @@
-#include "nidavellir.h"
+ï»¿#include "nidavellir.h"
 #include "fr_698.h"
 
 uint8_t Security_Mode;
 
-int _fr_mw_sid_mac(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t len);
 
-int _fr_security_decode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint16_t len)
+static int __verification_choice_SID_MAC(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+static int __verification_choice_RN(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+static int __verification_choice_RN_MAC(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+static int __verification_choice_SID(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+  
+
+#define choice_FUNC                                        \
+            DEF_X(verification_choice_SID_MAC,  __verification_choice_SID_MAC)  \
+            DEF_X(verification_choice_RN,       __verification_choice_RN)       \
+            DEF_X(verification_choice_RN_MAC,   __verification_choice_RN_MAC)   \
+            DEF_X(verification_choice_SID,      __verification_choice_SID)      \
+              
+
+enum verification_choice_e
+{
+    #define DEF_X(a,b)  a,
+    choice_FUNC
+    #undef DEF_X
+    verification_choice_MAX
+};
+
+typedef int(*pFunc_verification_choice)(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+     
+const pFunc_verification_choice Func_verification[] = 
+{
+    #define DEF_X(a,b)  b,
+    choice_FUNC
+    #undef DEF_X
+};
+             
+
+static int __verification_choice_SID_MAC(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    uint16_t len = 0;
+    uint8_t *ver_data = ctx->apdu_d_rx;
+    //ctx->security_data     æ•°æ®æŒ‡é’ˆ
+    //ctx->security_data_len æ•°æ®é•¿åº¦
+    //ç»„ç»‡esamæ•°æ®
+    return 1;
+}
+
+static int __verification_choice_RN(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    uint16_t len = 0;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
+    uint8_t *ver_data;
+    
+    ctx->apdu_rx_offset += axdr_decode(TYPE_octet_string, apdu_rx+ctx->apdu_rx_offset, &len);
+    
+    //ctx->security_data     æ•°æ®æŒ‡é’ˆ
+    //ctx->security_data_len æ•°æ®é•¿åº¦    
+    //len éšæœºæ•°é•¿åº¦
+    //éšæœºæ•°æŒ‡é’ˆ
+    ver_data = apdu_rx +  ctx->apdu_rx_offset;
+
+    //ç»„ç»‡esamæ•°æ®
+    
+    return 1;
+}
+
+static int __verification_choice_RN_MAC(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    uint16_t len = 0;
+    uint8_t *ver_data = ctx->apdu_d_rx;
+    //ctx->security_data     æ•°æ®æŒ‡é’ˆ
+    //ctx->security_data_len æ•°æ®é•¿åº¦
+    //ç»„ç»‡esamæ•°æ®
+    return 1;
+}
+
+static int __verification_choice_SID(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    uint16_t len = 0;
+    uint8_t *ver_data = ctx->apdu_d_rx;
+    //ctx->security_data     æ•°æ®æŒ‡é’ˆ
+    //ctx->security_data_len æ•°æ®é•¿åº¦
+    //ç»„ç»‡esamæ•°æ®
+}
+
+
+
+
+//å¾…åˆ é™¤å‡½æ•°saga
+int _security_verification(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+#if 0
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t *p_apdu = cache->buf_ptr;
+    uint32_t addr;
+    uint8_t rxlen;
+    uint16_t txlen=0,temp=0,offset=0;
+        
+    fifoBuf_getData(fifo, ctx->keybuf, len+1);   //ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+    //SID(3)ï¿½ï¿½SID_MAC(0)
+    fifoBuf_getData(fifo, &addr, 4);//SID(4)
+    fifoBuf_getData(fifo, &temp, 1);//ï¿½ï¿½ï¿½ï¿½tag
+    fifoBuf_getData(fifo, &temp, 2);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½È£ï¿½2ï¿½ï¿½
+
+	//MAC
+    fifoBuf_getData(fifo, &ctx->keybuf[len], 1);//ï¿½ï¿½ï¿½ï¿½tag
+    fifoBuf_getData(fifo, &ctx->keybuf[len], 4);
+    
+    mem_swap_cpy((uint8_t*)&txlen, (uint8_t*)&temp, 2);
+    
+    rxlen = write_esam(addr , ctx->keybuf , txlen);
+    
+//    fifo->wr = fifo->rd;
+//    fifoBuf_putData(fifo, ctx->keybuf, rxlen);
+    
+	return rxlen;
+#endif
+}
+
+
+
+int _security_decode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    uint16_t len = 0;
+    uint8_t *ver_data = ctx->apdu_d_rx;
+    //ctx->security_data     æ•°æ®æŒ‡é’ˆ
+    //ctx->security_data_len æ•°æ®é•¿åº¦
+    //ç»„ç»‡esamæ•°æ®
+    
+    
+#if 0
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* cache = ctx->apdu;
     uint8_t *p_apdu = cache->buf_ptr;
     uint32_t addr;
     uint16_t rxlen;
     uint16_t txlen=0,temp=0,offset=0;
+    
+
     
     if(len == 0x6B0)
     {
@@ -28,25 +158,25 @@ int _fr_security_decode(struct instance_t* instance, struct pipeline_t* pipeline
         rxlen = write_esam(addr , (uint8_t*)&ctx->apdu_rx->buf_ptr[5] , txlen);
         ctx->apdu_rx->buf_ptr[5 + rxlen] = 0x55;
         ctx->apdu_rx->buf_ptr[5 + rxlen+1] = 0x55;
-        ctx->apdu_rx->buf_ptr[5 + rxlen+2] = 0x16;//²¹FF
+        ctx->apdu_rx->buf_ptr[5 + rxlen+2] = 0x16;//ï¿½ï¿½FF
         
         fifo->wr = fifo->rd;
-        fifoBuf_putData(fifo, (uint8_t*)&ctx->apdu_rx->buf_ptr[5+3], rxlen);//+3µÄº¬ÒåÊÇÈÃÍâ²ãµÄfifo²»ÓÃµ÷Õû5×Ö½Ú
+        fifoBuf_putData(fifo, (uint8_t*)&ctx->apdu_rx->buf_ptr[5+3], rxlen);//+3ï¿½Äºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½fifoï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½5ï¿½Ö½ï¿½
     }
     else
     {
-        fifoBuf_getData(fifo, ctx->keybuf, len+1);   //Ã÷ÎÄ/ÃÜÎÄÊý¾Ý
+        fifoBuf_getData(fifo, ctx->keybuf, len+1);   //ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         Security_Mode = (0x80 | ctx->keybuf[len]);  //80/83
 
-        //SID(3)¡¢SID_MAC(0)
+        //SID(3)ï¿½ï¿½SID_MAC(0)
         fifoBuf_getData(fifo, &addr, 4);//SID(4)
-        fifoBuf_getData(fifo, &temp, 1);//Ìø¹ýtag
-        fifoBuf_getData(fifo, &temp, 2);//¸½¼ÓÐÅÏ¢³¤¶È£¨2£©
+        fifoBuf_getData(fifo, &temp, 1);//ï¿½ï¿½ï¿½ï¿½tag
+        fifoBuf_getData(fifo, &temp, 2);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½È£ï¿½2ï¿½ï¿½
 
         //MAC
-        if( (Security_Mode != 0x83) )  //SID_MAC¡¢RN_MAC
+        if( (Security_Mode != 0x83) )  //SID_MACï¿½ï¿½RN_MAC
         {
-            fifoBuf_getData(fifo, &ctx->keybuf[len], 1);//Ìø¹ýtag
+            fifoBuf_getData(fifo, &ctx->keybuf[len], 1);//ï¿½ï¿½ï¿½ï¿½tag
             fifoBuf_getData(fifo, &ctx->keybuf[len], 4);
         }
         
@@ -59,88 +189,41 @@ int _fr_security_decode(struct instance_t* instance, struct pipeline_t* pipeline
     }
     
 	return 1;
+#endif
 }
 
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int fr_security_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
-    struct fifo_t* fifo_apdu_rx = ctx->apdu_rx;
-    uint16_t rd = 0, wr = 0;
-    uint8_t data[4] = { 0 };
-    uint16_t len = 0;
-
-    if(ctx->segment_rx)
-    {
-        fifo = fifo_apdu_rx;
-    }
-    ctx->choice = fifoBuf_getByte(fifo);    
-    fifoBuf_peekByteBuf(fifo, 0, data, 4);
-    uint8_t ret = axdr_decode(TYPE_octet_string, data, &len);
-    for(uint8_t i =0 ; i < ret ; i++)
-    {
-        fifoBuf_getByte(fifo);
-    }
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
+    uint16_t len  = 0;
     
-    if (SECURITY_CHOICE_1_Ciphertext == ctx->choice)//ÃÜÎÄ
-    {
-        _fr_security_decode(instance, pipeline, mesg, len);
-    }
-    else if (SECURITY_CHOICE_0_Plaintext == ctx->choice)//Ã÷ÎÄ
-    {
-        rd = fifo->rd;
-        wr = fifo->wr;
-        fifo->rd = fifo->rd + len;
-        if (fifoBuf_getByte(fifo) == 0)
-        {
-            fifo->rd = rd;
-            fifo->wr = wr;
-            if (_fr_mw_sid_mac(instance, pipeline, mesg, len) == 0)//MACÐ§Ñé´íÎó
-            {
-                return -1;
-            }
-        }
-        fifo->rd = rd;
-        fifo->wr = wr;
-    }
-    else
-    {
+    ctx->security_choice = apdu_rx[ctx->apdu_rx_offset++];
+    ctx->apdu_rx_offset += axdr_decode(TYPE_octet_string, apdu_rx+ctx->apdu_rx_offset, &len);
+    ctx->security_data = apdu_rx + ctx->apdu_rx_offset;
+    ctx->security_data_len = len;
+    ctx->apdu_rx_offset += len;
+    ctx->verification_choice = apdu_rx[ctx->apdu_rx_offset++];
+    
+    if(ctx->verification_choice > verification_choice_SID){
         return -1;
     }
-    return 1;
+    
+    if (SECURITY_CHOICE_1_Ciphertext == ctx->choice){
+        return _security_decode(instance, pipeline, mesg);
+    }
+    else if (SECURITY_CHOICE_0_Plaintext == ctx->choice){
+        if(ctx->verification_choice < verification_choice_MAX){
+            return Func_verification[ctx->verification_choice](instance, pipeline, mesg);
+        }
+    }else{
+        return -1;
+    }
 }
 
-int _fr_mw_sid_mac(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t len)
-{
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
-    struct fifo_t* cache = ctx->apdu;
-    uint8_t *p_apdu = cache->buf_ptr;
-    uint32_t addr;
-    uint8_t rxlen;
-    uint16_t txlen=0,temp=0,offset=0;
-    
-    fifoBuf_getData(fifo, ctx->keybuf, len+1);   //Ã÷ÎÄ/ÃÜÎÄÊý¾Ý
-
-    //SID(3)¡¢SID_MAC(0)
-    fifoBuf_getData(fifo, &addr, 4);//SID(4)
-    fifoBuf_getData(fifo, &temp, 1);//Ìø¹ýtag
-    fifoBuf_getData(fifo, &temp, 2);//¸½¼ÓÐÅÏ¢³¤¶È£¨2£©
-
-	//MAC
-    fifoBuf_getData(fifo, &ctx->keybuf[len], 1);//Ìø¹ýtag
-    fifoBuf_getData(fifo, &ctx->keybuf[len], 4);
-    
-    mem_swap_cpy((uint8_t*)&txlen, (uint8_t*)&temp, 2);
-    
-    rxlen = write_esam(addr , ctx->keybuf , txlen);
-    
-//    fifo->wr = fifo->rd;
-//    fifoBuf_putData(fifo, ctx->keybuf, rxlen);
-    
-	return rxlen;
-    
-}
 
 int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -152,7 +235,7 @@ int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline,
     uint8_t rxlen;
     uint16_t txlen=0,temp=0,offset=0;
     
-    if((Security_Mode & 0x80) == 0x00)  //Ã÷ÎÄ+RN
+    if((Security_Mode & 0x80) == 0x00)  //ï¿½ï¿½ï¿½ï¿½+RN
     {
         Security_Mode = fifoBuf_getByte(fifo);
     }
@@ -162,12 +245,12 @@ int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline,
         txlen = fifoBuf_getByte(fifo);//RN
         fifoBuf_getData(fifo, ctx->keybuf, txlen);
         
-        memcpy((uint8_t*)&ctx->keybuf[txlen], p_apdu, cache->wr);//Êµ¼ÊÊý¾Ý
-        *p_apdu++ = SECURITY_Response;//»ØÓ¦×Ö½Ú
-        *p_apdu++ = 0x00;//Ã÷ÎÄ
-        *p_apdu++ = cache->wr;//³¤¶È
+        memcpy((uint8_t*)&ctx->keybuf[txlen], p_apdu, cache->wr);//Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        *p_apdu++ = SECURITY_Response;//ï¿½ï¿½Ó¦ï¿½Ö½ï¿½
+        *p_apdu++ = 0x00;//ï¿½ï¿½ï¿½ï¿½
+        *p_apdu++ = cache->wr;//ï¿½ï¿½ï¿½ï¿½
         memcpy(p_apdu, (uint8_t*)&ctx->keybuf[txlen], cache->wr);
-        txlen = txlen + cache->wr;//³¤¶È
+        txlen = txlen + cache->wr;//ï¿½ï¿½ï¿½ï¿½
         addr = 0x02400E80;
         rxlen = write_esam(addr , ctx->keybuf , txlen);
         p_apdu = p_apdu + cache->wr;
@@ -182,7 +265,7 @@ int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline,
     {
         txlen = cache->wr;
         memcpy(ctx->keybuf, p_apdu, txlen);
-        if((Security_Mode == 0x00) || (Security_Mode == 0x80) || (Security_Mode == 0x83))//00:Ã÷ÎÄSID+MAC 80:SID+MAC  83:SID
+        if((Security_Mode == 0x00) || (Security_Mode == 0x80) || (Security_Mode == 0x83))//00:ï¿½ï¿½ï¿½ï¿½SID+MAC 80:SID+MAC  83:SID
         {
             switch(Security_Mode)
             {

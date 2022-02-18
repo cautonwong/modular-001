@@ -193,6 +193,12 @@ struct context_645_t
 };
 
 
+#define Max698len       544
+#define Max698_apdu     1800
+#define Max698_apdu_rx  1800
+
+#define pl_tx_698_len   128
+
 
 struct context_698_t
 {
@@ -220,9 +226,15 @@ struct context_698_t
     uint16_t segment_rx; 
     uint16_t segment;
     uint16_t segment_no;
+    
     uint8_t timeTag_valid;
     uint8_t timeTag[11]; //date_time_s + TI
 
+    uint8_t security_choice;
+    uint8_t verification_choice;
+    uint8_t *security_data;
+    uint16_t security_data_len;
+    
     //作为主站方时用的临时状态
     uint8_t dst_addr[6];//目的地址
     uint8_t seq;//当前发送的帧序号 每次作为主站方加一
@@ -233,11 +245,16 @@ struct context_698_t
 
     struct fifo_t* apdu;
     struct fifo_t* apdu_rx;
-#if 0
-    uint8_t apdu[Max698_apdu];
-    uint8_t apdu_rx[Max698_apdu_rx];
-    uint16  apdu_offset;
-    uint16  apdu_rx_offset;
+#if 1
+    //uint8_t apdu[128]; //Max698_apdu
+    uint16_t apdu_len;
+    uint16_t apdu_offset;
+    
+    uint8_t apdu_d_rx[1800]; //Max698_apdu_rx
+    uint16_t apdu_rx_len;
+    uint16_t apdu_rx_offset;
+    
+
 #endif
 
     uint8_t keybuf[256];//秘钥缓存  待删除saga
