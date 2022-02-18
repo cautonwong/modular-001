@@ -8,18 +8,25 @@ static int __verification_choice_SID_MAC(struct instance_t* instance, struct pip
 static int __verification_choice_RN(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 static int __verification_choice_RN_MAC(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 static int __verification_choice_SID(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-  
+
+static int __Plain_verification_choice_SID_MAC(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+static int __Plain_verification_choice_RN(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+
+static int __Cipher_verification_choice_SID_MAC(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+static int __Cipher_verification_choice_SID(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+
+
 
 #define choice_FUNC                                        \
-            DEF_X(verification_choice_SID_MAC,  __verification_choice_SID_MAC)  \
-            DEF_X(verification_choice_RN,       __verification_choice_RN)       \
-            DEF_X(verification_choice_RN_MAC,   __verification_choice_RN_MAC)   \
-            DEF_X(verification_choice_SID,      __verification_choice_SID)      \
+    DEF_X(verification_choice_SID_MAC,  __verification_choice_SID_MAC,  __Plain_verification_choice_SID_MAC, __Cipher_verification_choice_SID_MAC)\
+    DEF_X(verification_choice_RN,       __verification_choice_RN,       __Plain_verification_choice_RN,      NULL)\
+    DEF_X(verification_choice_RN_MAC,   __verification_choice_RN_MAC,   NULL,                                NULL)\
+    DEF_X(verification_choice_SID,      __verification_choice_SID,      NULL,                                __Cipher_verification_choice_SID)\
               
 
 enum verification_choice_e
 {
-    #define DEF_X(a,b)  a,
+    #define DEF_X(a,b,c,d)  a,
     choice_FUNC
     #undef DEF_X
     verification_choice_MAX
@@ -29,11 +36,25 @@ typedef int(*pFunc_verification_choice)(struct instance_t* instance, struct pipe
      
 const pFunc_verification_choice Func_verification[] = 
 {
-    #define DEF_X(a,b)  b,
+    #define DEF_X(a,b,c,d)  b,
     choice_FUNC
     #undef DEF_X
 };
-             
+
+const pFunc_verification_choice Func_0_Plaintext_verification[] = 
+{
+    #define DEF_X(a,b,c,d)  c,
+    choice_FUNC
+    #undef DEF_X
+};
+
+const pFunc_verification_choice Func_1_Ciphertext_verification[] = 
+{
+    #define DEF_X(a,b,c,d)  d,
+    choice_FUNC
+    #undef DEF_X
+};
+
 
 static int __verification_choice_SID_MAC(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -62,7 +83,7 @@ static int __verification_choice_RN(struct instance_t* instance, struct pipeline
     ver_data = apdu_rx +  ctx->apdu_rx_offset;
 
     //组织esam数据
-    
+
     return 1;
 }
 
@@ -200,6 +221,8 @@ int fr_security_request(struct instance_t* instance, struct pipeline_t* pipeline
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint16_t len  = 0;
+    uint16_t offset  = 0;
+    int ret = 0;
     
     ctx->security_choice = apdu_rx[ctx->apdu_rx_offset++];
     ctx->apdu_rx_offset += axdr_decode(TYPE_octet_string, apdu_rx+ctx->apdu_rx_offset, &len);
@@ -212,16 +235,62 @@ int fr_security_request(struct instance_t* instance, struct pipeline_t* pipeline
         return -1;
     }
     
-    if (SECURITY_CHOICE_1_Ciphertext == ctx->choice){
+    if (SECURITY_CHOICE_1_Ciphertext == ctx->security_choice){
         return _security_decode(instance, pipeline, mesg);
     }
-    else if (SECURITY_CHOICE_0_Plaintext == ctx->choice){
-        if(ctx->verification_choice < verification_choice_MAX){
-            return Func_verification[ctx->verification_choice](instance, pipeline, mesg);
+    else if (SECURITY_CHOICE_0_Plaintext == ctx->security_choice){
+        if(Func_verification[ctx->verification_choice]){
+            ret = Func_verification[ctx->verification_choice](instance, pipeline, mesg);
+            ctx->apdu_rx_offset = ctx->security_data - apdu_rx;
+            return ret;
         }
     }else{
         return -1;
     }
+}
+
+
+int __Plain_verification_choice_SID_MAC(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+}
+
+int __Plain_verification_choice_RN(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t *esam_data = ctx->apdu_d_rx;// 临时缓冲区
+    uint16_t len  = 0;
+    uint16_t offset  = 0;
+        uint8_t rxlen;
+        uint16_t txlen=0;
+    int ret = 0;
+    uint32_t addr = 0; 
+    //明文指针头 85 86 87
+    uint8_t *data = cache->buf_ptr;
+    //明文长度
+    uint8_t data_len = ctx->security_data_len;
+    
+    uint8_t *mac = data + data_len;
+    
+    //操作esam，防护mac
+    //ctx->apdu_d_rx 临时缓冲区
+    memcpy(esam_data, data, data_len);
+    rxlen = write_esam(addr, esam_data, txlen);
+    
+    *mac++ = 0x01;
+    *mac++ = 0x00;
+    *mac++ = 0x04;
+    memcpy(mac, ctx->apdu_d_rx, 4);//MAC
+    cache->wr += 3+4;
+    return 1;
+}
+
+int __Cipher_verification_choice_SID_MAC(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+}
+
+int __Cipher_verification_choice_SID(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
 }
 
 
@@ -234,6 +303,26 @@ int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline,
     uint32_t addr;
     uint8_t rxlen;
     uint16_t txlen=0,temp=0,offset=0;
+        
+    if(ctx->verification_choice > verification_choice_SID){
+        return -1;
+    }
+    ctx->security_data_len = cache->wr;
+    if (SECURITY_CHOICE_1_Ciphertext == ctx->security_choice){
+        if(Func_0_Plaintext_verification[ctx->verification_choice]){
+            return Func_1_Ciphertext_verification[ctx->verification_choice](instance, pipeline, mesg);
+        }
+    }
+    else if (SECURITY_CHOICE_0_Plaintext == ctx->security_choice){
+        if(Func_0_Plaintext_verification[ctx->verification_choice]){
+            return Func_0_Plaintext_verification[ctx->verification_choice](instance, pipeline, mesg);
+        }
+    }else{
+        return -1;
+    }
+    
+//待删除saga
+#if 0
     
     if((Security_Mode & 0x80) == 0x00)  //����+RN
     {
@@ -298,4 +387,5 @@ int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline,
     }
     
 	return 1;
+#endif
 }

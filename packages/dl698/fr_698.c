@@ -421,7 +421,7 @@ int fr_apdu_effective_check(struct instance_t* instance, struct pipeline_t* pipe
     return 1;
 }
 
-int fr_encode_optional(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int fr_timeTag_optional(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
@@ -555,14 +555,14 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
 }
 
 
-extern uint8_t Security_Mode;
-
 int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* fifo_apdu_rx = ctx->apdu_rx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
+    struct fifo_t* cache = ctx->apdu;
+    
     int err_no = 0;
     uint8_t service = 0;
     
@@ -573,7 +573,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     }
     
     fifoBuf_removeData(fifo, APDU_OFFSET(ctx->SA));
-
+    ringbuffer_clear(ctx->apdu);
     ctx->apdu_rx_offset = 0;
     if(is_segment_set(ctx->ctrl)){
         ctx->segment_rx = 0;
@@ -590,9 +590,10 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     }
     
     ctx->service = apdu_rx[ctx->apdu_rx_offset++];
-    ctx->security_choice = 0;
-    ctx->verification_choice = 0;
+    ctx->security_choice = 0xff;
+    ctx->verification_choice = 0xff;
     if (SECURITY_Request == ctx->service){
+        service = SECURITY_Request;
         err_no = fr_security_request(instance, pipeline, mesg);
         if(err_no < 0){
             return err_no;
@@ -625,7 +626,6 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     mesg->qos   = ctx->choice;
     mesg->id    = 0x00;//暂时没用
 
-    struct fifo_t* cache = ctx->apdu;
     fifoBuf_putByte(cache, mesg->ctrl);
     fifoBuf_putByte(cache, mesg->qos);
     fifoBuf_putByte(cache, ctx->PIID);
@@ -635,7 +635,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         ((SET_Request == ctx->service) && ((ctx->choice == 2) || (ctx->choice == 3)))||
         ((ACTION_Request == ctx->service) && ((ctx->choice == 2) || (ctx->choice == 3))))
     {
-        mesg->oad_n = fifoBuf_getByte(fifo);
+        mesg->oad_n = apdu_rx[ctx->apdu_rx_offset++];
         fifoBuf_putByte(cache, mesg->oad_n);
     }
     if(0 == fr_apdu_effective_check(instance, pipeline, mesg)){
@@ -667,19 +667,30 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
             break;
     }
 
-    //数据加密
-    fr_encode_optional(instance, pipeline, mesg);
+    err_no = fr_timeTag_optional(instance, pipeline, mesg);
+    if(err_no < 0){
+        return err_no;
+    }
     
     if (service == SECURITY_Request){
-        fr_security_encode(instance, pipeline, mesg);
+        err_no = fr_security_encode(instance, pipeline, mesg);
+        if(err_no < 0){
+            return err_no;
+        }else{
+            //临时方案
+            memcpy(ctx->apdu_d_rx, cache->buf_ptr, cache->wr);
+            cache->buf_ptr[0] = SECURITY_Response;
+            cache->buf_ptr[1] = ctx->security_choice;
+            uint8_t len = axdr_len_encode(cache->buf_ptr+2, ctx->security_data_len);
+            memcpy(cache->buf_ptr + 2 +len, ctx->apdu_d_rx, cache->wr);
+            cache->wr += 2 +len;
+        }
     }
-    Security_Mode = 0;
     
     if (fifoBuf_getUsed(ctx->apdu)  > 0){
         mesg->len = fifoBuf_getUsed(ctx->apdu);
         if (mesg->len > 512){
             set_segment(ctx->ctrl);
-            //set_first_segment_no(ctx->segment);//第一帧
             mesg->len = 512;
         }
 
