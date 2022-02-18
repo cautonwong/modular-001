@@ -249,7 +249,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     memcpy(&instance->time, &time, sizeof(struct tm));
 
     ///////////////////////////////申请一个cache的BLOCK = 02/////////////////////////////////////////////
-    if (NULL == add_block(instance, RES_DEV_RAM, control_block_cache, (500+1500)))
+    if (NULL == add_block(instance, RES_DEV_RAM, control_block_cache, (2048)))
     {
         return -1;
     }
