@@ -140,14 +140,14 @@ void IO_Interrupt(void)
              key_keep_flag = 0; // 避免停电下 tick被打开 发两次 按键消息
              if(ANA->COMPOUT & BIT2)//有电池
              {
-                 for(cnt = 0; cnt< 10; cnt++)  
+                 for(cnt = 0; cnt< 3; cnt++)  
                  {
                     if(((GPIOA->STS & BIT2) != 0))
                     {
                         break;
                     }
                  }
-                 if (cnt >= 10)
+                 if (cnt >= 3)
                  {
                     fifoBuf_putByte(&irq_fifo, IRQ_PMU);
                  }

@@ -44,14 +44,14 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     {
         event_LowPower_pro(instance, pipeline, &mesg); // 事件 低功耗下处理
         
-        if( (mbase_control_block->Key & F_KeyDispay) && (mbase_control_block->KeyInv == 0) )//退出键显,息屏
+/*        if( (mbase_control_block->Key & F_KeyDispay) && (mbase_control_block->KeyInv == 0) )//退出键显,息屏
         {
             mbase_control_block->Key &= ~F_KeyDispay;
             mbase_control_block->AutoPtr = 0xFF;
             mbase_control_block->lcd_keydis_keep_sec = 0;
             //Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
             mbase_control_block->Key &= ~F_KeyAwake;
-        }
+        }*/
         
         
     }
@@ -117,7 +117,8 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
 
           break;
       case MSG_PAGE_KEY_UP:
-           Key_Display(instance, pipeline);
+           Key_Display(instance, pipeline, MSG_PAGE_KEY_UP);
+           Display(instance, pipeline);
           break;
       case MSG_POWERON:
         //上电恢复参数
@@ -177,6 +178,8 @@ int app_meter_lowpower_wakeup_entry(struct instance_t* instance, struct pipeline
                 SecTick_Task(instance, pipeline);
 
                 Rtc_Prossecc(instance, pipeline);
+                
+                Key_Display(instance, pipeline, MSG_SECOND);
 
                 if(mbase_control_block->Key & F_KeyAwake)
                 {
@@ -187,7 +190,7 @@ int app_meter_lowpower_wakeup_entry(struct instance_t* instance, struct pipeline
 
                 break;
             case MSG_PAGE_KEY_UP:
-                Key_Display(instance, pipeline);
+                Key_Display(instance, pipeline, MSG_PAGE_KEY_UP);
                 Display(instance, pipeline);
                 break;
             default:

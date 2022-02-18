@@ -562,6 +562,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         err_no = fr_security_request(instance, pipeline, mesg);
         if(err_no < 0)
             return err_no;
+        ctx->service = fifoBuf_getByte(fifo);//重新取service
     }
 
     if(ctx->segment_rx)

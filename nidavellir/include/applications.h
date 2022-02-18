@@ -391,7 +391,7 @@ extern void Display(struct instance_t* instance, struct pipeline_t* pipeline);
 
 extern void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline);
 
-extern void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline);
+extern void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t ctr);
 
 extern void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline);
 

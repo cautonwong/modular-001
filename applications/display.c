@@ -654,68 +654,73 @@ void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
 /*  函数名称：Key_Display                                              */
 /*  函数功能：获取按键显的显示项ID                                     */
 /***********************************************************************/
-void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline)
+void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t ctr)
 {
     uint16 pageid=0;
     uint32_t    s_index = 0;
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     
-    Flag.Run |= F_Disp;
-    if( instance->ac_power_statue == AC_POWER_ON )
-        mbase_control_block->BackLightTmr = mbase_control_block->backlight_key_time;//按键时,背光点亮
-    else
+    if(ctr == MSG_PAGE_KEY_UP)    //按键
     {
-        Flag.Disp &= ~F_DispStop;
-        if( ((mbase_control_block->Key & F_KeyAwake) == 0))// && (Flag.Disp & F_DispOff) )
+        Flag.Run |= F_Disp;
+        if( instance->ac_power_statue == AC_POWER_ON )
+            mbase_control_block->BackLightTmr = mbase_control_block->backlight_key_time;//按键时,背光点亮
+        else
         {
-            Flag.Disp &= ~F_DispPause;
-            mbase_control_block->Key |= F_KeyAwake;
-            Flag.Disp &= ~F_DispOff;
-            mbase_control_block->AutoPtr = 0xFF;
-            mbase_control_block->AutoInv = 0;
-            lcd_init(AC_POWER_ON);
-            return;
+            Flag.Disp &= ~F_DispStop;
+            if( ((mbase_control_block->Key & F_KeyAwake) == 0))// && (Flag.Disp & F_DispOff) )
+            {
+                Flag.Disp &= ~F_DispPause;
+                mbase_control_block->Key |= F_KeyAwake;
+                Flag.Disp &= ~F_DispOff;
+                mbase_control_block->AutoPtr = 0xFF;
+                mbase_control_block->AutoInv = 0;
+                lcd_init(AC_POWER_ON);
+                return;
+            }
         }
-    }
 
-    if( (mbase_control_block->Key & F_KeyDispay) == 0 )
-    {
-        mbase_control_block->Key |= F_KeyDispay;
-        mbase_control_block->KeyPtr = 0xFF;
-    }
-    else
-    {
-        if(mbase_control_block->lcd_keydis_list_num == 0)
-            mbase_control_block->lcd_keydis_list_num = 1;
-    }
+        if( (mbase_control_block->Key & F_KeyDispay) == 0 )
+        {
+            mbase_control_block->Key |= F_KeyDispay;
+            mbase_control_block->KeyPtr = 0xFF;
+        }
+        else
+        {
+            if(mbase_control_block->lcd_keydis_list_num == 0)
+                mbase_control_block->lcd_keydis_list_num = 1;
+        }
 
-    if( mbase_control_block->KeyPtr >= (mbase_control_block->lcd_keydis_list_num-1) )
-        mbase_control_block->KeyPtr = 0;
-    else
-        mbase_control_block->KeyPtr++;
-    
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + mbase_control_block->KeyPtr);
-    nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
-    mbase_control_block->Page_ID = pageid;
-    
-    if( instance->ac_power_statue == AC_POWER_ON )
-    {
-        if( mbase_control_block->lcd_keydis_keep_sec == 0 )
-            mbase_control_block->lcd_keydis_keep_sec = 5;
+        if( mbase_control_block->KeyPtr >= (mbase_control_block->lcd_keydis_list_num-1) )
+            mbase_control_block->KeyPtr = 0;
+        else
+            mbase_control_block->KeyPtr++;
+        
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + mbase_control_block->KeyPtr);
+        nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
+        mbase_control_block->Page_ID = pageid;
+        
+        if( instance->ac_power_statue == AC_POWER_ON )
+        {
+            if( mbase_control_block->lcd_keydis_keep_sec == 0 )
+                mbase_control_block->lcd_keydis_keep_sec = 5;
+        }
+        else
+            mbase_control_block->lcd_keydis_keep_sec = 30;
+        
+        mbase_control_block->KeyInv = mbase_control_block->lcd_keydis_keep_sec;
     }
-    else
-        mbase_control_block->lcd_keydis_keep_sec = 30;
     
-    mbase_control_block->KeyInv = mbase_control_block->lcd_keydis_keep_sec;
-
     if( (mbase_control_block->Key & F_KeyDispay) && (mbase_control_block->KeyInv == 0) )//退出键显
 	{
 		mbase_control_block->Key &= ~F_KeyDispay;
 		mbase_control_block->AutoPtr = 0xFF;
 		mbase_control_block->lcd_keydis_keep_sec = 0;
-		if( instance->ac_power_statue == AC_POWER_OFF )//按键显示结束后,进入掉电暂显
+		if( instance->ac_power_statue != AC_POWER_ON )//按键显示结束后,进入掉电暂显
 		{
+            lcd_init(AC_POWER_OFF);
 			Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
+            mbase_control_block->Key &= ~F_KeyAwake;
 		}
 	}
 }
@@ -729,20 +734,24 @@ void Get_DisplayPage(struct instance_t* instance, struct pipeline_t* pipeline)
     uint16_t pageid;
     uint32_t s_index = 0;
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
-    
-    //mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    
+      
 	if( (mbase_control_block->Key & F_KeyDispay) == 0 )//轮显
 	{
 		if( mbase_control_block->AutoInv == 0 )
 		{
+            if( (instance->ac_power_statue != AC_POWER_ON) && ((mbase_control_block->AutoPtr == (mbase_control_block->lcd_autodis_list_num-1))) )//自动循环显示一遍后，进入掉电暂显
+			{
+                lcd_init(AC_POWER_OFF);
+                mbase_control_block->Key &= ~F_KeyAwake;
+				Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
+				return;
+			}
 			//获取轮显显示时间
             mbase_control_block->AutoInv = mbase_control_block->lcd_autodis_keep_sec;
 			if( (mbase_control_block->AutoInv < 0x05) || (mbase_control_block->AutoInv > 0x20) )
 				mbase_control_block->AutoInv = 5;
             
 			//获取轮显显示屏数
-            //nd_get(instance, 0xF3000401, &mbase_control_block->lcd_autodis_list_num, 1);
 			if( mbase_control_block->lcd_autodis_list_num == 0 )
 				mbase_control_block->lcd_autodis_list_num = 1;
             
@@ -1363,7 +1372,7 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
 void Display(struct instance_t* instance, struct pipeline_t* pipeline)
 {
 	//获取显示项ID
-    if(instance->ac_power_statue == AC_POWER_ON)
+    //if(instance->ac_power_statue == AC_POWER_ON)
     {
         Get_DisplayPage(instance,  pipeline);
     }
