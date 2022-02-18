@@ -74,7 +74,7 @@ int get_frozen_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, stru
         *p++ = 3;
         *p++ = TYPE_long_unsigned;
 
-        scheme = ((*(oadlist + 1)) >> 13) & 0x07; //方案号
+        scheme = ((*(oadlist + 2)) >> 5) & 0x07; //方案号
         if (OI != 0x5002)
         {
             scheme = 0;

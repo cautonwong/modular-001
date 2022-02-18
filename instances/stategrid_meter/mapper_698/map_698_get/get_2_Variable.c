@@ -161,7 +161,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf)
             break;
     }
     
-     switch (id)
+     switch (id & 0xFFFF1FFF)
     {
         case 0x20220200://事件记录序号
         case 0x20230200://冻结记录序号

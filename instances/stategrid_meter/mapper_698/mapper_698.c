@@ -1039,7 +1039,7 @@ int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_l
     uint32_t rcsd_num = 0;
     uint8_t tempbuf[200];//待调整  读取e2p关联对象缓存
     struct record_storage_id_info_t info;
-    int ret = get_record_id_info(instance, oad, &info);
+    int ret = get_record_id_info(instance, (oad&0xFFFF1FFF), &info);
     
     if (ret < 0)
     {
@@ -1060,6 +1060,10 @@ int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_l
             for(i = 0; i < num; i++)
             {
                 memcpy(p, (info.record_head+1+i), 4);
+                if((oad&0xFFFF0000) == 0x50020000) 
+                {
+                    *p = ((*p)|(oad&0x0000E000)); // 分钟冻结 记录头 先加方案号
+                }
                 p++;
                 rcsd_num += 1;
             }

@@ -121,7 +121,7 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
     return 1;
 }
 
-#define REQ_RCSD_MAXNUM 50 
+
 
 static int __fr_handle_get_record_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -134,7 +134,7 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
     uint8_t Selector = 0;
     uint8_t last_no = 0;
     uint8_t oad_n = mesg->oad_n;
-    uint32_t rcsd_list[4*(REQ_RCSD_MAXNUM+1)]; //个数 + n个OAD  //[0][]协议筛选  [1][]事件全关联对象
+    uint32_t rcsd_list[(REQ_RCSD_MAXNUM+1)]; //个数 + n个OAD  //[0][]协议筛选  [1][]事件全关联对象
     struct rsd_info_t rsd_info;
     
     int ret;

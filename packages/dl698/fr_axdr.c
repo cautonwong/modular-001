@@ -943,6 +943,7 @@ int _record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t 
                     }
                     else
                     {
+                        orig_len = single_len;
                         if (mode)
                         {
                             orig_len = record_change_format(tmpbuf, p_src, rcsd_req[i], RFC_READ);
@@ -1139,15 +1140,19 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     struct record_storage_id_info_t record_id_info; 
     struct circular_info_t circular_info = {0};
     uint32_t *rcsd_req = (uint32_t *)rcsd_info; // 待定
-    uint8_t temp[1000]; //待调整 需要替换协议共用缓存 2k 
-    uint32_t rcsd_src[50];//待调整   设置的关联对象，用于与请求的关联对象作比对筛选
+    uint8_t *ptr_tmp = instance->apdu_cache; //需要替换协议共用缓存 2k  待调整   apdu_cache是否支持2k
+    uint32_t rcsd_src[REQ_RCSD_MAXNUM];//待调整   设置的关联对象，用于与请求的关联对象作比对筛选
     uint16_t i, read_num, number = 0;
     uint16_t one_len = 0,len = 0;
-    uint8_t count = 0;
+    uint8_t count = 0, rcsd_schem = 0;
+    uint32_t oad_schem = 0;
     uint8_t *p = (buf + 3); // 预留3个字节条数
     int ret = 0;
     
-    ret = get_record_id_info(instance, oad, &record_id_info);
+    //方案号暂取第一个rscd //待调整
+    rcsd_schem = get_OAD_Schem((*(rcsd_req + 1)));
+    oad_schem = oad | (rcsd_schem<<13);
+    ret = get_record_id_info(instance, oad_schem, &record_id_info);
     if(ret < 0)
     {
         return -1;
@@ -1157,7 +1162,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     circular_info.end_mark = rsd_info->end_mark;
     circular_info.mode =   rsd_info->mode;
 
-    ret = nd_log_output(instance, record_id_info.save_index,  temp, 1, &circular_info);
+    ret = nd_log_output(instance, record_id_info.save_index,  ptr_tmp, 1, &circular_info);
 
     if (circular_info.valid_num == 0)
     {
@@ -1191,12 +1196,12 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
             break;
     }
 
-    get_capture_list(instance, oad, rcsd_src, 3);
+    get_capture_list(instance, oad_schem, rcsd_src, 3);
     
     read_num = circular_info.valid_num;
     for (i = circular_info.curr_num; i < read_num; i++)
     {
-        ret = nd_log_output(instance, record_id_info.save_index,  temp, circular_info.unit_size, &circular_info);
+        ret = nd_log_output(instance, record_id_info.save_index,  ptr_tmp, circular_info.unit_size, &circular_info);
         if(ret < 0)
         {
             return -1;
@@ -1206,7 +1211,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
         if (one_len == 0)
         {   
             //预算打包长度
-            one_len = get_package_01_len(instance, p+len, temp, rcsd_req, rcsd_src);
+            one_len = get_package_01_len(instance, p+len, ptr_tmp, rcsd_req, rcsd_src);
         }
 
         if((p - buf + len + one_len) > 2000) //待调整
@@ -1215,7 +1220,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
             return -1;
         }
         //开始打包
-        one_len = record_package_01(instance, p+len, temp, rcsd_req, rcsd_src);
+        one_len = record_package_01(instance, p+len, ptr_tmp, rcsd_req, rcsd_src);
         len += one_len;
         number++;
     }      

@@ -329,7 +329,7 @@ extern int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct
 
 
 
-#define REQ_RCSD_MAXNUM 50 
+#define REQ_RCSD_MAXNUM 30 //待调整
 
 
 extern int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
