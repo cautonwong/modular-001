@@ -1142,6 +1142,7 @@ int16_t nd_log_append_rollback(struct instance_t* instance, uint32_t index, uint
         res_conditions_true(block03 == NULL, -1);
         addr01 += manager.w_ptr * manager.unit_size;
         s_len = addr01 % 4096;
+        addr01 -= s_len;
         
         if(s_len > 0)
         {
