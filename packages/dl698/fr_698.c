@@ -275,11 +275,12 @@ int fr_pack_698_tail(struct instance_t* instance, struct pipeline_t* pipeline, s
 
 int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
     uint8_t tail = 0;
 
-    fifoBuf_getByte(ififo);//fcs-0
-    fifoBuf_getByte(ififo);//fcs-1
+    uint16_t crc = fifoBuf_getByte(ififo) + (fifoBuf_getByte(ififo) << 8);//fcs-0
+    assert(ctx->fcs == crc);
     tail = fifoBuf_getByte(ififo);
     //请排查消耗数据map长度是否正确
     assert(tail == 0x16);
@@ -521,7 +522,7 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
     ctx->segment_rx += (fifoBuf_getByte(fifo) << 8);
     s = ctx->segment_rx;
     if(is_first_segment(s)|| is_middle_segment(s) || is_last_segment(s)){
-        data_len = __get_apdu_data_len(ctx);;
+        data_len = __get_apdu_data_len(ctx) - 2;
         if(is_first_segment(s)){
             ctx->apdu_rx_len = 0;
             ctx->segment_no = 1;
