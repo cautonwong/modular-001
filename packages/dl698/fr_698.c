@@ -561,6 +561,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* fifo_apdu_rx = ctx->apdu_rx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
+    uint8_t data[8]={0};
     struct fifo_t* cache = ctx->apdu;
     
     int err_no = 0;
@@ -677,13 +678,12 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         if(err_no < 0){
             return err_no;
         }else{
-            //临时方案
-            memcpy(ctx->apdu_d_rx, cache->buf_ptr, cache->wr);
-            cache->buf_ptr[0] = SECURITY_Response;
-            cache->buf_ptr[1] = ctx->security_choice;
-            uint8_t len = axdr_len_encode(cache->buf_ptr+2, ctx->security_data_len);
-            memcpy(cache->buf_ptr + 2 +len, ctx->apdu_d_rx, cache->wr);
-            cache->wr += 2 +len;
+            uint8_t len = 2;
+            data[0] = SECURITY_Response;
+            data[1] = ctx->security_choice;
+            len += axdr_len_encode(data+len, ctx->security_data_len);
+            cache->rd = Max698_apdu - len;
+            memcpy(cache->buf_ptr + cache->rd, data, len);
         }
     }
     
