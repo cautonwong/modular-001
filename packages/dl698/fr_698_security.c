@@ -1,7 +1,34 @@
 ﻿#include "nidavellir.h"
 #include "fr_698.h"
 
-uint8_t Security_Mode;
+
+
+struct esam_698_input_t
+{
+    uint8_t security_choice;
+    uint8_t verification_choice;
+    uint8_t *security_data;
+    uint16_t security_data_len;
+    uint32_t sid_id;
+    uint8_t *AttachData;
+    uint16_t AttachData_len;
+    uint8_t *MAC_data;
+    uint8_t MAC_len;
+    uint8_t *RN_data;
+    uint16_t RN_Data_len;
+   
+};
+struct esam_698_output_t
+{
+    int     esam_err_no;
+    uint8_t security_choice;
+    uint8_t verification_choice;
+    uint8_t *security_data;
+    uint16_t security_data_len;
+    uint8_t *MAC_data;
+    uint8_t MAC_len;
+};
+
 
 
 static int __verification_choice_SID_MAC(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
@@ -54,6 +81,7 @@ const pFunc_verification_choice Func_1_Ciphertext_verification[] =
     choice_FUNC
     #undef DEF_X
 };
+
 
 
 static int __verification_choice_SID_MAC(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)

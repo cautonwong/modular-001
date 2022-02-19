@@ -432,6 +432,8 @@ int fr_timeTag_optional(struct instance_t* instance, struct pipeline_t* pipeline
     if (ctx->timeTag_valid == 1){
         memcpy(p+cache->wr, ctx->timeTag, 11);
         cache->wr += 11;
+    }else{
+        p[cache->wr++] = 0x00;
     }
     
     return 1;

@@ -78,7 +78,7 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
     {
         offset = cache->wr;
         p[cache->wr++] = 0x01;
-        int r = fr_698_get(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
+        int r = fr_698_get(instance, oad, p + cache->wr, len, (void*)ctx);
         if (r < 0)
         {
             p[cache->wr++] = 0x00;//DAR
@@ -109,6 +109,8 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
     while (oad_n-- > 0)
     {
         mesg->id = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
+        memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, 4);
+        cache->wr += 4;
         ctx->apdu_rx_offset += 4;
 
         if (fr_get_one_object(instance, pipeline, mesg) < 0)
@@ -240,11 +242,7 @@ int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeli
 
     if(GET_Request != ctx->service)
         return 0;
-
-    if (ctx->segment_rx){
-        fifo = ctx->apdu_rx;;
-    }
-
+    
     switch (ctx->choice)
     {
         case GetRequestNormal:
