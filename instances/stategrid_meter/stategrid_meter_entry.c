@@ -207,7 +207,7 @@ int communication_channel_init(struct instance_t* p_instance, struct pipeline_t 
 
 
 
-uint8_t nd_memory[26 * 1024 + 800];
+uint8_t nd_memory[23 * 1024 + 800]; //26
 
 int baremetal_instance_entry_main(int argc, char** argv)
 {
@@ -274,7 +274,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     instance->apdu_cache = nd_malloc(instance, control_block_cache, 1700);
         
     /////////////////////////////////////申请一个698应用的BLOCK = 03/////////////////////////////////////////////////
-    if (NULL == add_block(instance, RES_DEV_RAM, control_block_698_name, 16 * 1024))
+    if (NULL == add_block(instance, RES_DEV_RAM, control_block_698_name, 13 * 1024))//16
     {
         return -1;
     }

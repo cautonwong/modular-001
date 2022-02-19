@@ -2451,6 +2451,12 @@
                 <name>$PROJ_DIR$\..\..\..\packages\dl698\fr_698_connect.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\..\packages\dl698\fr_698_esam.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\dl698\fr_698_esam.h</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\packages\dl698\fr_698_get.c</name>
             </file>
             <file>

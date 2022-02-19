@@ -130,6 +130,7 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* cache = ctx->apdu;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t* p = cache->buf_ptr;
     uint16_t n = 0;
     uint16_t offset = 0;
@@ -147,10 +148,11 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
         //if (fifoBuf_getFree(cache) < 2)
         {
             //OAD
-            fifoBuf_getData(fifo, p + cache->wr, 4);
-            mesg->id = buf_to_uint32_msb(p + cache->wr);
+            mesg->id = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
+            memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, 4);
             cache->wr += 4;
-
+            ctx->apdu_rx_offset += 4;
+            
             //RSD
             ret = rsd_decode(instance, pipeline, mesg->id, &rsd_info);
             if (ret < 0)
