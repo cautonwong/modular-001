@@ -1,0 +1,201 @@
+﻿#include "nidavellir.h"
+#include "fr_698.h"
+#include "fr_698_esam.h"
+
+
+#if 0
+int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_t *p_output)
+{
+    int fd = 0;
+    int request = 0;
+    struct esam_698_data_t param;
+    param.input = p_input;
+    param.output = p_output;
+
+    return openM_ioctl(fd, request, (void *)&param);
+}
+#endif
+
+
+
+//待删除函数saga
+int _security_verification(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+#if 0
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t *p_apdu = cache->buf_ptr;
+    uint32_t addr;
+    uint8_t rxlen;
+    uint16_t txlen=0,temp=0,offset=0;
+        
+    fifoBuf_getData(fifo, ctx->keybuf, len+1);   //����/��������
+
+    //SID(3)��SID_MAC(0)
+    fifoBuf_getData(fifo, &addr, 4);//SID(4)
+    fifoBuf_getData(fifo, &temp, 1);//����tag
+    fifoBuf_getData(fifo, &temp, 2);//������Ϣ���ȣ�2��
+
+	//MAC
+    fifoBuf_getData(fifo, &ctx->keybuf[len], 1);//����tag
+    fifoBuf_getData(fifo, &ctx->keybuf[len], 4);
+    
+    mem_swap_cpy((uint8_t*)&txlen, (uint8_t*)&temp, 2);
+    
+    rxlen = write_esam(addr , ctx->keybuf , txlen);
+    
+//    fifo->wr = fifo->rd;
+//    fifoBuf_putData(fifo, ctx->keybuf, rxlen);
+    
+	return rxlen;
+#endif
+}
+
+static int _security_decode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    uint16_t len = 0;
+    uint8_t *ver_data = ctx->apdu_d_rx;
+    //ctx->security_data     数据指针
+    //ctx->security_data_len 数据长度
+    //组织esam数据
+    
+    
+#if 0
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t *p_apdu = cache->buf_ptr;
+    uint32_t addr;
+    uint16_t rxlen;
+    uint16_t txlen=0,temp=0,offset=0;
+    
+
+    
+    if(len == 0x6B0)
+    {
+        Security_Mode = (0x80 | ctx->apdu_rx->buf_ptr[len+5]);  //80/83
+        
+        memcpy((uint8_t*)&addr, (uint8_t*)&ctx->apdu_rx->buf_ptr[len+6], 4);//SID
+        
+        mem_swap_cpy((uint8_t*)&txlen, (uint8_t*)&ctx->apdu_rx->buf_ptr[len+6+5], 2);//LEN
+        
+        memcpy((uint8_t*)&ctx->apdu_rx->buf_ptr[len+5], (uint8_t*)&ctx->apdu_rx->buf_ptr[len+6+5+3], 4);//MAC
+        
+        rxlen = write_esam(addr , (uint8_t*)&ctx->apdu_rx->buf_ptr[5] , txlen);
+        ctx->apdu_rx->buf_ptr[5 + rxlen] = 0x55;
+        ctx->apdu_rx->buf_ptr[5 + rxlen+1] = 0x55;
+        ctx->apdu_rx->buf_ptr[5 + rxlen+2] = 0x16;//��FF
+        
+        fifo->wr = fifo->rd;
+        fifoBuf_putData(fifo, (uint8_t*)&ctx->apdu_rx->buf_ptr[5+3], rxlen);//+3�ĺ�����������fifo���õ���5�ֽ�
+    }
+    else
+    {
+        fifoBuf_getData(fifo, ctx->keybuf, len+1);   //����/��������
+        Security_Mode = (0x80 | ctx->keybuf[len]);  //80/83
+
+        //SID(3)��SID_MAC(0)
+        fifoBuf_getData(fifo, &addr, 4);//SID(4)
+        fifoBuf_getData(fifo, &temp, 1);//����tag
+        fifoBuf_getData(fifo, &temp, 2);//������Ϣ���ȣ�2��
+
+        //MAC
+        if( (Security_Mode != 0x83) )  //SID_MAC��RN_MAC
+        {
+            fifoBuf_getData(fifo, &ctx->keybuf[len], 1);//����tag
+            fifoBuf_getData(fifo, &ctx->keybuf[len], 4);
+        }
+        
+        mem_swap_cpy((uint8_t*)&txlen, (uint8_t*)&temp, 2);
+        
+        rxlen = write_esam(addr , ctx->keybuf , txlen);
+        
+        fifo->wr = fifo->rd;
+        fifoBuf_putData(fifo, ctx->keybuf, rxlen);
+    }
+    
+	return 1;
+#endif
+}
+
+
+    
+//待删除saga
+#if 0
+    
+    if((Security_Mode & 0x80) == 0x00)  //����+RN
+    {
+        Security_Mode = fifoBuf_getByte(fifo);
+    }
+    
+    if(Security_Mode == 0x01)
+    {
+        txlen = fifoBuf_getByte(fifo);//RN
+        fifoBuf_getData(fifo, ctx->keybuf, txlen);
+        
+        memcpy((uint8_t*)&ctx->keybuf[txlen], p_apdu, cache->wr);//ʵ������
+        *p_apdu++ = SECURITY_Response;//��Ӧ�ֽ�
+        *p_apdu++ = 0x00;//����
+        *p_apdu++ = cache->wr;//����
+        memcpy(p_apdu, (uint8_t*)&ctx->keybuf[txlen], cache->wr);
+        txlen = txlen + cache->wr;//����
+        addr = 0x02400E80;
+        rxlen = write_esam(addr , ctx->keybuf , txlen);
+        p_apdu = p_apdu + cache->wr;
+        *p_apdu++ = 0x01;
+        *p_apdu++ = 0x00;
+        *p_apdu++ = 0x04;
+        memcpy(p_apdu, ctx->keybuf, 4);//MAC
+        p_apdu = p_apdu + 4;
+        cache->wr = p_apdu - cache->buf_ptr;
+    }
+    else
+    {
+        txlen = cache->wr;
+        memcpy(ctx->keybuf, p_apdu, txlen);
+        if((Security_Mode == 0x00) || (Security_Mode == 0x80) || (Security_Mode == 0x83))//00:����SID+MAC 80:SID+MAC  83:SID
+        {
+            switch(Security_Mode)
+            {
+                case 0x00:
+                  addr = 0x11001C81;
+                  break;
+                case 0x80:
+                  addr = 0xA7001C81;
+                  break;
+                case 0x83:
+                  addr = 0xA6001C81;
+                  break;
+            }
+            rxlen = write_esam(addr , ctx->keybuf , txlen);
+            *p_apdu++ = SECURITY_Response;
+            if(Security_Mode == 0)
+                *p_apdu++ = 0x00;
+            else
+                *p_apdu++ = 0x01;
+            *p_apdu++ = rxlen - 4;
+            memcpy(p_apdu, ctx->keybuf, rxlen-4);
+            p_apdu = p_apdu +  rxlen - 4;
+            *p_apdu++ = 0x01;
+            *p_apdu++ = 0x00;
+            *p_apdu++ = 0x04;
+            memcpy(p_apdu, (uint8_t*)&ctx->keybuf[rxlen-4], 4);
+            p_apdu = p_apdu + 4;
+            cache->wr = p_apdu - cache->buf_ptr;
+        }
+    }
+    
+	return 1;
+#endif
+
+
+int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_t *p_output)
+{
+    int fd = 0;
+    int request = 0;
+
+    //memcpy(esam_data, data, data_len);
+    //rxlen = write_esam(addr, esam_data, txlen);
+    return 1;
+}
+
