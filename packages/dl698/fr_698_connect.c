@@ -135,13 +135,9 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
-    //uint8_t *p_apdu = cache + sizeof(struct connect_request_t);
 
-    //p_data 使用后偏移，需要调用 fifoBuf_update_rd(fifo, 已经使用长度)
-    uint8_t *p_data = fifo->buf_ptr;
-    
     uint8_t *p_apdu = cache->buf_ptr;
     uint8_t *p_password = cache->buf_ptr;
 	uint8_t  buf[70];
@@ -157,7 +153,9 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
     0xd007,
     0x201c0000};
 
-    fifoBuf_getData(fifo, buf, 38);
+    memcpy(buf, apdu_rx + ctx->apdu_rx_offset, 38);
+    ctx->apdu_rx_offset += 38;
+    
     if(CA_TYPE_TER(ctx->CA))//from 终端
     {
 	    //memcpy((uint8_t*)&buf[offset],(uint8_t*)&esam_symauth_term[0],6);
@@ -298,6 +296,8 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* cache = ctx->apdu;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
+    
     uint8_t* p = cache->buf_ptr;
     struct connect_request_t connect = {0};
     struct connect_cfg_info_t *p_connect = ctx->connect_info;
@@ -313,9 +313,8 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
         goto err;
     }
     
-    fifoBuf_getData(fifo, p, sizeof(struct connect_request_t));
-
-    memcpy(&connect, p, sizeof(struct connect_request_t));
+    memcpy(&connect, apdu_rx+ctx->apdu_rx_offset, sizeof(struct connect_request_t));
+    ctx->apdu_rx_offset += sizeof(struct connect_request_t);
 
     if (connect.connect_mode > 4)
     {
