@@ -18,7 +18,7 @@ int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline
     int len = 0;
     int i = 0;
     uint8_t list = 0;
-    int offset = 0;
+
     uint8_t *apdu = instance->apdu_cache;
 
     if (ctx->choice > GetRequestNext){
@@ -52,11 +52,8 @@ int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline
 int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* cache = ctx->apdu;
-    
     uint8_t *apdu_rx = ctx->apdu_d_rx;
-    
     uint8_t* p = cache->buf_ptr;
     uint32_t oad = mesg->id;
     uint16_t len= 0;
@@ -65,11 +62,12 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
     if (((mesg->ctrl & 0x7f) == 0x06) ||
         ((mesg->ctrl & 0x7f) == 0x07))
     {
-        uint8_t type = fifoBuf_getByte(fifo);
+        uint8_t type = apdu_rx[ctx->apdu_rx_offset++];
         if (type == 0x09)//octet-string
         {
-            uint8_t len = fifoBuf_getByte(fifo);
-            fifoBuf_getData(fifo, p + cache->wr, len);
+            uint8_t len = apdu_rx[ctx->apdu_rx_offset++];
+            memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, len);
+            ctx->apdu_rx_offset += len;
             //todo write data
             p[cache->wr++] = 0x00;
         }
@@ -96,10 +94,7 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
 static int __fr_handle_get_normal_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
-
     struct fifo_t* cache = ctx->apdu;
-    
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t* p = cache->buf_ptr;
     uint16_t n = 0;
@@ -128,7 +123,7 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
 static int __fr_handle_get_record_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+
     struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t* p = cache->buf_ptr;
@@ -238,12 +233,10 @@ static int __fr_handle_get_simplify_record_request(struct instance_t* instance, 
 int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
-    struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = cache->buf_ptr;
 
-    if(GET_Request != ctx->service)
+    if(GET_Request != ctx->service){
         return 0;
+    }
     
     switch (ctx->choice)
     {

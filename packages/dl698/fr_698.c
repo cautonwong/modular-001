@@ -427,7 +427,6 @@ int fr_timeTag_optional(struct instance_t* instance, struct pipeline_t* pipeline
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
-    int r = 0;
 
     p[cache->wr++] = 0x00;//follow_report
     if (ctx->timeTag_valid == 1){
