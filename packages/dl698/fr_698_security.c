@@ -280,7 +280,6 @@ static int ___get_encode_and_mac(struct instance_t* instance, struct pipeline_t*
 int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* cache = ctx->apdu;
     uint8_t *p_apdu = cache->buf_ptr;
     uint32_t addr;
