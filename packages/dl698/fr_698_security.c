@@ -166,8 +166,6 @@ static int __verification_SID(struct instance_t* instance, struct pipeline_t* pi
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t *apdu_rx = ctx->apdu_d_rx;
-    uint16_t len = 0;
     int ret = 0;
     uint8_t *mac = cache->buf_ptr + ctx->security_data_len;
     struct esam_698_input_t input = {0};
@@ -201,7 +199,7 @@ int fr_security_request(struct instance_t* instance, struct pipeline_t* pipeline
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint16_t len  = 0;
-    uint16_t offset  = 0;
+
     int ret = 0;
     
     ctx->security_choice = apdu_rx[ctx->apdu_rx_offset++];
@@ -222,26 +220,9 @@ int fr_security_request(struct instance_t* instance, struct pipeline_t* pipeline
             ctx->apdu_rx_offset = ctx->security_data - apdu_rx;
             return ret;
         }
-    }else{
-        return -1;
     }
-    
-#if 0
-    if (SECURITY_CHOICE_1_Ciphertext == ctx->security_choice){
-        return _security_decode(instance, pipeline, mesg);
-    }
-    else if (SECURITY_CHOICE_0_Plaintext == ctx->security_choice){
-        if(Func_verification[ctx->verification_choice]){
-            ret = Func_verification[ctx->verification_choice](instance, pipeline, mesg);
-            ctx->apdu_rx_offset = ctx->security_data - apdu_rx;
-            return ret;
-        }
-    }else{
-        return -1;
-    }
-#endif
+    return -1;
 }
-
 
 
 static int ___get_encode_and_mac(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -281,10 +262,6 @@ int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline,
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t *p_apdu = cache->buf_ptr;
-    uint32_t addr;
-    uint8_t rxlen;
-    uint16_t txlen=0,temp=0,offset=0;
         
     if(ctx->verification_choice > verification_choice_SID){
         return -1;

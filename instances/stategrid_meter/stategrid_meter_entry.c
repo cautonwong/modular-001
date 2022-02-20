@@ -213,7 +213,6 @@ int baremetal_instance_entry_main(int argc, char** argv)
 {
     struct instance_t* instance = NULL;
     struct recipe_t *recipe = NULL;
-    struct context_698_t* ctx_698 = NULL;
 
     instance = create_instance(RES_DEV_RAM, (uint32_t)&nd_memory, 26 * 1024, 2 * 1024, resource_block_name);//用资源描述创建instance
     if (instance == NULL)
