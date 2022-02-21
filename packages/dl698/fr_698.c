@@ -561,7 +561,6 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
-    struct fifo_t* fifo_apdu_rx = ctx->apdu_rx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t data[8]={0};
     struct fifo_t* cache = ctx->apdu;

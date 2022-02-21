@@ -196,6 +196,10 @@ int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_
 
     //memcpy(esam_data, data, data_len);
     //rxlen = write_esam(addr, esam_data, txlen);
+    if(4 == p_input->cmd_type)//获取mac
+    {
+        p_output->MAC_len = 4;
+    }
     return 1;
 }
 

@@ -8,12 +8,10 @@
 int get_SET_and_ACTION_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    uint16_t rsd_len = 0, rcsd_len = 0;
     int len = 0;
     int i = 0;
     uint16_t axdr_len = 0;
     uint8_t list = 0;
-    int offset = 0;
     uint8_t* apdu = instance->apdu_cache;
 
     if (ctx->choice > 3)
@@ -98,7 +96,6 @@ int fr_handle_set_request(struct instance_t* instance, struct pipeline_t* pipeli
     uint8_t* p = cache->buf_ptr;
     uint16_t then_get_delay = 0; //读取延时
     uint32_t get_oad = 0;
-    uint16_t n = 0;
     uint16_t r = 0;
 
     uint8_t password[16];

@@ -66,7 +66,8 @@ static int __verification_SID_MAC(struct instance_t* instance, struct pipeline_t
     uint8_t *mac = cache->buf_ptr + ctx->security_data_len;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
-          
+    
+    input.cmd_type              = 0;
     input.security_choice       = ctx->security_choice;
     input.verification_choice   = ctx->verification_choice;
     input.data                  = ctx->security_data;
@@ -101,7 +102,7 @@ static int __verification_RN(struct instance_t* instance, struct pipeline_t* pip
     uint8_t *mac = cache->buf_ptr + ctx->security_data_len;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
-          
+    input.cmd_type              = 1;
     input.security_choice       = ctx->security_choice;
     input.verification_choice   = ctx->verification_choice;
     input.data                  = ctx->security_data;
@@ -135,7 +136,7 @@ static int __verification_RN_MAC(struct instance_t* instance, struct pipeline_t*
     uint8_t *mac = cache->buf_ptr + ctx->security_data_len;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
-          
+    input.cmd_type              = 2;
     input.security_choice       = ctx->security_choice;
     input.verification_choice   = ctx->verification_choice;
     input.data                  = ctx->security_data;
@@ -170,7 +171,7 @@ static int __verification_SID(struct instance_t* instance, struct pipeline_t* pi
     uint8_t *mac = cache->buf_ptr + ctx->security_data_len;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
-          
+    input.cmd_type              = 3;
     input.security_choice       = ctx->security_choice;
     input.verification_choice   = ctx->verification_choice;
     input.data                  = ctx->security_data;
@@ -233,7 +234,8 @@ static int ___get_encode_and_mac(struct instance_t* instance, struct pipeline_t*
     uint8_t *mac = cache->buf_ptr + ctx->security_data_len;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
-          
+    
+    input.cmd_type              = 4;
     input.security_choice       = ctx->security_choice;
     input.verification_choice   = ctx->verification_choice;
     input.data                  = cache->buf_ptr;
