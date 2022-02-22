@@ -9,7 +9,7 @@
 int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
     uint32_t oad = mesg->id;
@@ -20,12 +20,12 @@ int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipelin
     if (((mesg->ctrl & 0x7f) == 0x09) ||
         (mesg->ctrl & 0x7f) == 0x09)
     {
-        uint8_t type = fifoBuf_getByte(fifo);
+        uint8_t type = apdu_rx[ctx->apdu_rx_offset++];
         if (type == 0x09)//octet-string
         {
-            uint8_t len = fifoBuf_getByte(fifo);
-            fifoBuf_getData(fifo, p + cache->wr, len);
-            //todo write data
+            uint8_t len = apdu_rx[ctx->apdu_rx_offset++];
+            memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, len);
+            ctx->apdu_rx_offset += len;
             p[cache->wr++] = 0x00;
         }
     }
@@ -38,8 +38,7 @@ int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipelin
         offset = cache->wr;
         //p[cache->wr++] = 0x01;
 
-        r = fr_698_action(instance, oad, fifo->buf_ptr + fifo->rd, len, (void*)ctx);
-        //cache->wr = offset;
+        r = fr_698_action(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
         if (r < 0)
         {
             p[cache->wr++] = -r;//DAR
@@ -67,10 +66,10 @@ int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipelin
 int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
-    //uint8_t* p_apdu = NULL;
+
     uint16_t then_get_delay = 0; //读取延时
     uint32_t get_oad = 0;
     uint16_t len = 0;
@@ -78,15 +77,7 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
     uint16_t dar_offset = 0;
     uint8_t dar = DAR_SUCCESS;
 
-    if (ctx->segment_rx)
-    {
-        fifo = ctx->apdu_rx;;
-    }
-//    p[cache->wr++] = 0x01;
-//    p[cache->wr++] = 0x05;//type encoder
-
     uint8_t password[16];
-
     uint8_t oad_n = mesg->oad_n;
 
     while (oad_n-- > 0)
@@ -95,13 +86,11 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
        // if (fifoBuf_getFree(cache) < size(oad))
         {
             //omd
-            fifoBuf_getData(fifo, p + cache->wr, 4);
-            mesg->id = buf_to_uint32_msb(p + cache->wr);
+            mesg->id = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
+            memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, 4);
             cache->wr += 4;
-            //fr_serve_one_object(instance, pipeline, mesg);
-            //data
-            //len = axdr_get_len(fifo->buf_ptr + fifo->rd);
-            //cache->wr++;
+            ctx->apdu_rx_offset += 4;
+            
             //dar_offset = cache->wr;
             //p[dar_offset] = dar;
             data_len = fr_action_one_object(instance, pipeline, mesg);
@@ -111,18 +100,19 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
                 return DAR_OTHERS_ERROR;
             }
             //p[dar_offset] = dar;
-            //cache->wr += data_len;
-            fifoBuf_update_rd(fifo, data_len);
+            ctx->apdu_rx_offset += data_len;
             
             if(ActionThenGetRequestNormalList == ctx->choice)
             {
                 //len 数据需要消耗掉
                 //oad
-                fifoBuf_getData(fifo, p + cache->wr, 4);
-                get_oad = buf_to_uint32_msb(p + cache->wr);
-
-                fifoBuf_getData(fifo, &then_get_delay, 2);
-                then_get_delay = buf_to_uint16_msb((uint8_t *)&then_get_delay);
+                get_oad = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
+                memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, 4);
+                cache->wr += 4;
+                ctx->apdu_rx_offset += 4;
+            
+                then_get_delay = buf_to_uint16_msb(apdu_rx+ctx->apdu_rx_offset);
+                ctx->apdu_rx_offset += 2;
                 //延时                
                 
                 if (fr_698_get(instance, get_oad, p+cache->wr, sizeof(password), NULL) < 0)

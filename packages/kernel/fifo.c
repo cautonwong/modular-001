@@ -290,7 +290,7 @@ int16_t fifoBuf_peekByteB(struct fifo_t *buf, uint16_t offset)
 int16_t fifoBuf_peekByteBuf(struct fifo_t* p_fifo, uint16_t offset, uint8_t* data, uint16_t len)
 {
     uint16_t i = 0;
-    uint8_t val = 0;
+    int16_t val = 0;
     for (i = 0; i < len; i++) {
         val = fifoBuf_peekByteB(p_fifo, offset+i);
         if (val < 0) {
