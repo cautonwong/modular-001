@@ -314,6 +314,7 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
         offset = get_CONNECT_Request_len(instance, pipeline, mesg);
         break;
     case RELEASE_Request:
+        offset = get_RELEASE_Request_len(instance, pipeline, mesg);
         break;
     case GET_Request:
         offset = get_GET_Request_len(instance, pipeline, mesg);

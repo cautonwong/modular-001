@@ -413,3 +413,9 @@ int get_CONNECT_Request_len(struct instance_t* instance, struct pipeline_t* pipe
         break;
 #endif
 }
+
+
+int get_RELEASE_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    return 1;
+}

@@ -421,25 +421,26 @@ uint32_t dt_buf_to_month(uint8_t* dt)
 int decode_rsd_event_selector_1(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
     uint32_t rsd_oad;
-
-    fifoBuf_getData(fifo, p, 4);
+    
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
+    memcpy(p, apdu_rx + ctx->apdu_rx_offset, 4);
+    ctx->apdu_rx_offset += 4;
     rsd_oad = buf_to_uint32_msb(p);
 
     switch (rsd_oad)
     {
     case 0x201e0200: // 事件发生时间
     case 0x20200200: // 事件结束时间 
-        fifoBuf_getData(fifo, p, 1);
+        *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
             return -1;
         }
-        fifoBuf_getData(fifo, p, 7);
-        rsd_info->start_mark = dt_buf_to_second(p);
+        rsd_info->start_mark = dt_buf_to_second(apdu_rx + ctx->apdu_rx_offset);
+        ctx->apdu_rx_offset += 7;
         rsd_info->end_mark = rsd_info->start_mark;
 
         if (rsd_oad == 0x201e0200)
@@ -453,13 +454,14 @@ int decode_rsd_event_selector_1(struct instance_t* instance, struct pipeline_t* 
         break;
 
     case 0x20220200: //事件记录序号
-        fifoBuf_getData(fifo, p, 1);
+        *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
             return -1;
         }
-        fifoBuf_getData(fifo, p, 4);
-        rsd_info->start_mark = buf_to_uint32_msb(p);
+
+        rsd_info->start_mark = buf_to_uint32_msb(apdu_rx + ctx->apdu_rx_offset);
+        ctx->apdu_rx_offset += 4;
         rsd_info->end_mark = rsd_info->start_mark;
         rsd_info->mode = 1;
         break;
@@ -499,7 +501,7 @@ const struct frz_period_t frz_period_tab[] =
 int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
 
@@ -535,7 +537,9 @@ int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pi
     index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodId);
     nd_get_index(instance, index, &period_buf[0], sizeof(period_buf));
 
-    fifoBuf_getDataPeek(fifo, p, 15);
+    memcpy(p, apdu_rx + ctx->apdu_rx_offset, 15);
+    ctx->apdu_rx_offset += 15;
+      
     rcsd_num = *(p+0); //待调整
     if (rcsd_num)
     {
@@ -562,39 +566,38 @@ int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pi
 int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad,  struct rsd_info_t* rsd_info)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
-
-
     uint32_t rsd_oad;
 
-    fifoBuf_getData(fifo, p, 4);
+    memcpy(p, apdu_rx + ctx->apdu_rx_offset, 4);
+    ctx->apdu_rx_offset += 4;
     rsd_oad = buf_to_uint32_msb(p);
 
     switch (rsd_oad)
     {
     case 0x20210200: // 冻结时间    
-        fifoBuf_getData(fifo, p, 1);
+        *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
             return -1;
         }
-        fifoBuf_getData(fifo, p, 7);
-        rsd_info->start_mark = dt_buf_to_second(p);
+        rsd_info->start_mark = dt_buf_to_second(apdu_rx + ctx->apdu_rx_offset);
+        ctx->apdu_rx_offset += 7;
         rsd_info->end_mark = rsd_info->start_mark;
         rsd_info->mode = 2;
         frz_selector_1_add_period(instance,pipeline,oad, rsd_info);
         break;
 
     case 0x20230200: // 冻结记录序号
-        fifoBuf_getData(fifo, p, 1);
+        *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
             return -1;
         }
-        fifoBuf_getData(fifo, p, 4);
-        rsd_info->start_mark = buf_to_uint32_msb(p);
+        rsd_info->start_mark = buf_to_uint32_msb(apdu_rx + ctx->apdu_rx_offset);
+        ctx->apdu_rx_offset += 4;
         rsd_info->end_mark = rsd_info->start_mark;
         rsd_info->mode = 1;
         break;
@@ -612,7 +615,7 @@ int selector_2_seq(struct instance_t* instance, uint32_t oad, uint8_t* buf, stru
 int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
 
@@ -626,22 +629,23 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
     switch (rsd_oad)
     {
     case 0x20210200: // 冻结时间   
-        fifoBuf_getData(fifo, p, 1);
+        *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
             return -1;
         }
-        fifoBuf_getData(fifo, p, 7);
-        rsd_info->start_mark = dt_buf_to_second(p);
+        rsd_info->start_mark = dt_buf_to_second(apdu_rx + ctx->apdu_rx_offset);
+        ctx->apdu_rx_offset += 7;
 
-        fifoBuf_getData(fifo, p, 1);
+        *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
             return -1;
         }
-        fifoBuf_getData(fifo, p, 7);
-        rsd_info->end_mark = dt_buf_to_second(p);
-
+        
+        rsd_info->end_mark = dt_buf_to_second(apdu_rx + ctx->apdu_rx_offset);
+        ctx->apdu_rx_offset += 7;
+        
         // 协议搜索范围前闭后开 ，表内部读取驱动为前闭后闭 
         if ((rsd_info->start_mark == 0) && (rsd_info->end_mark == 0))
         {
@@ -652,7 +656,10 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
             rsd_info->end_mark--;
         }
 
-        fifoBuf_getDataPeek(fifo, p, 4);
+        //fifoBuf_getDataPeek(fifo, p, 4);
+        memcpy(p, apdu_rx + ctx->apdu_rx_offset, 4);
+        ctx->apdu_rx_offset += 4;
+        
         if (*p != TYPE_null)
         {
             //周期性冻结  间隔必须与冻结周期单位一致,否则返回 DAR=3
@@ -692,34 +699,37 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
                 rsd_info->interval_special = 0;
             }
 
-            fifoBuf_getData(fifo, p, 3); // 剪切3个字节
+            //fifoBuf_getData(fifo, p, 3); // 剪切3个字节
+            memcpy(p, apdu_rx + ctx->apdu_rx_offset, 3);
+            ctx->apdu_rx_offset += 3;
         }
 
-        fifoBuf_getData(fifo, p, 1);// 剪切1个字节
+        //fifoBuf_getData(fifo, p, 1);// 剪切1个字节
+        *p = apdu_rx[ctx->apdu_rx_offset++];
  
 
         rsd_info->mode = 2;
         break;
 
     case 0x20230200: // 冻结记录序号     selector_2_seq()
-        fifoBuf_getData(fifo, p, 1);
+        *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
             return -1;
         }
         
-        fifoBuf_getData(fifo, p, 4);
-        rsd_info->start_mark = buf_to_uint32_msb(p);
+        rsd_info->start_mark = buf_to_uint32_msb(apdu_rx + ctx->apdu_rx_offset);
+        ctx->apdu_rx_offset += 4;
         
-        fifoBuf_getData(fifo, p, 1);
+        *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
             return -1;
         }
 
-        fifoBuf_getData(fifo, p, 4);
-        rsd_info->end_mark = buf_to_uint32_msb(p);
-
+        rsd_info->end_mark = buf_to_uint32_msb(apdu_rx + ctx->apdu_rx_offset);
+        ctx->apdu_rx_offset += 4;
+        
         if ((rsd_info->start_mark == 0) && (rsd_info->end_mark == 0))
         {
             rsd_info->start_mark = 1;
@@ -729,16 +739,15 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
             rsd_info->end_mark--;
         }
 
-        fifoBuf_getData(fifo, p, 1);
+        *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_null)
         {
             if (*p != TYPE_double_long_unsigned)
             {
                 return -1;
             }
-
-            fifoBuf_getData(fifo, p, 4);
-            rsd_info->interval = buf_to_uint32_msb(p);
+            rsd_info->interval = buf_to_uint32_msb(apdu_rx + ctx->apdu_rx_offset);
+            ctx->apdu_rx_offset += 4;
         }
 
         rsd_info->mode = 1;
@@ -755,7 +764,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
 int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
 
@@ -763,30 +772,30 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
     uint32_t rsd_oad;
     uint16_t oi = get_OAD_OI(oad);
 
-    fifoBuf_getData(fifo, p, 4);
+    memcpy(p, apdu_rx + ctx->apdu_rx_offset, 4);
+    ctx->apdu_rx_offset += 4;    
     rsd_oad = buf_to_uint32_msb(p);
 
     switch (rsd_oad)
     {
     case 0x201e0200: // 事件发生时间
     case 0x20200200: // 事件结束时间 
-        fifoBuf_getData(fifo, p, 1);
+        *p = apdu_rx[ctx->apdu_rx_offset++];
+        if (*p != TYPE_date_time_s)
+        {
+            return -1;
+        }
+        rsd_info->start_mark = dt_buf_to_second(apdu_rx+ctx->apdu_rx_offset);
+        ctx->apdu_rx_offset += 7;  
+    
+        *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
             return -1;
         }
 
-        fifoBuf_getData(fifo, p, 7);
-        rsd_info->start_mark = dt_buf_to_second(p);
-
-        fifoBuf_getData(fifo, p, 1);
-        if (*p != TYPE_date_time_s)
-        {
-            return -1;
-        }
-
-        fifoBuf_getData(fifo, p, 7);
-        rsd_info->end_mark = dt_buf_to_second(p);
+        rsd_info->end_mark = dt_buf_to_second(apdu_rx+ctx->apdu_rx_offset);
+        ctx->apdu_rx_offset += 7;  
 
         // 协议搜索范围前闭后开 ，表内部读取驱动为前闭后闭 
         if ((rsd_info->start_mark == 0) && (rsd_info->end_mark == 0))
@@ -798,7 +807,8 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
             rsd_info->end_mark--;
         }
         
-        fifoBuf_getDataPeek(fifo, p, 4);
+        memcpy(p, apdu_rx + ctx->apdu_rx_offset, 4);
+        ctx->apdu_rx_offset += 4;
         if (*p != TYPE_null)
         {
             //只支持秒，分，时，日间隔
@@ -816,9 +826,11 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
             }
 
             rsd_info->interval = ti_to_second(*p, value);
-            fifoBuf_getData(fifo, p, 3);
+            memcpy(p, apdu_rx + ctx->apdu_rx_offset, 3);
+            ctx->apdu_rx_offset += 3;
         }
-        fifoBuf_getData(fifo, p, 1);
+
+        *p = apdu_rx[ctx->apdu_rx_offset++];
 
         rsd_info->mode = 2;
 
@@ -830,23 +842,23 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
         break;
 
     case 0x20220200: // 事件记录序号 
-        fifoBuf_getData(fifo, p, 1);
+        *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
             return -1;
         }
 
-        fifoBuf_getData(fifo, p, 4);
-        rsd_info->start_mark = buf_to_uint32_msb(p);
+        rsd_info->start_mark = buf_to_uint32_msb(apdu_rx + ctx->apdu_rx_offset);
+        ctx->apdu_rx_offset += 4;
 
-        fifoBuf_getData(fifo, p, 1);
+        *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
             return -1;
         }
 
-        fifoBuf_getData(fifo, p, 4);
-        rsd_info->end_mark = buf_to_uint32_msb(p);
+        rsd_info->end_mark = buf_to_uint32_msb(apdu_rx + ctx->apdu_rx_offset);
+        ctx->apdu_rx_offset += 4;
 
         if ((rsd_info->start_mark == 0) && (rsd_info->end_mark == 0))
         {
@@ -857,7 +869,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
             rsd_info->end_mark--;
         }
 
-        fifoBuf_getData(fifo, p, 1);
+        *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_null)
         {
             if (*p != TYPE_double_long_unsigned)
@@ -865,8 +877,8 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
                 return -1;
             }
 
-            fifoBuf_getData(fifo, p, 4);
-            rsd_info->interval = buf_to_uint32_msb(p);
+            rsd_info->interval = buf_to_uint32_msb(apdu_rx + ctx->apdu_rx_offset);
+            ctx->apdu_rx_offset += 4;
         }
 
         rsd_info->mode = 1;
@@ -884,11 +896,11 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
 int decode_rsd_selector_9(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
 
-    fifoBuf_getData(fifo, p, 1);
+    *p = apdu_rx[ctx->apdu_rx_offset++];
     rsd_info->last_no = *p;
 
     rsd_info->start_mark = 0;
@@ -1023,17 +1035,15 @@ int record_package_01(struct instance_t* instance,  uint8_t *des, uint8_t *src, 
 int rsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
-
     int ret;
     uint8_t dar;
     uint8_t oad_type = (uint8_t)(oad>>28);
 
-
     memset((uint8_t *)rsd_info, 0, sizeof(struct rsd_info_t));
-    fifoBuf_getData(fifo, p, 1);
+    *p = apdu_rx[ctx->apdu_rx_offset++];
     rsd_info->select = *p;
 
     switch (rsd_info->select)
@@ -1082,14 +1092,14 @@ int rsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_
 int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad,  uint32_t *rcsd_list)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
     uint8_t i;
     //int ret;
 
     //RCSD 个数
-    rcsd_list[0] = fifoBuf_getByte(fifo);
+    rcsd_list[0] = apdu_rx[ctx->apdu_rx_offset++];
 
     if (rcsd_list[0] > REQ_RCSD_MAXNUM) // 请求的rcsd个数超出，返回错误 
     {
@@ -1115,8 +1125,9 @@ int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32
             p[cache->wr++] = rcsd_list[0];
             for (i = 0; i < rcsd_list[0]; i++)
             {
-                p[cache->wr++] = fifoBuf_getByte(fifo); // csd
-                fifoBuf_getData(fifo, &p[cache->wr], 4);
+                p[cache->wr++] = apdu_rx[ctx->apdu_rx_offset++]; // csd
+                memcpy(p + cache->wr, apdu_rx + ctx->apdu_rx_offset, 4);
+                ctx->apdu_rx_offset += 4;    
                 rcsd_list[1 + i] = buf_to_uint32_msb(&p[cache->wr]);
                 cache->wr += 4;
             }
