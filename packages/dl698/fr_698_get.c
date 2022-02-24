@@ -211,7 +211,6 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
         }
     }
 
-    //fr_encode_optional(instance, pipeline, mesg);//follow-report and time-tag
     return 1;
 }
 

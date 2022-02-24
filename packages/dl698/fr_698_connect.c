@@ -1,7 +1,7 @@
 ﻿#include "nidavellir.h"
 #include "fr_698.h"
 
-extern uint8_t esam_consult_key(uint8_t cmd, uint8_t *p);
+
 
 enum connect_result_e
 {
@@ -43,21 +43,7 @@ struct connect_request_t
     uint8_t  connect_mode;              //认证模式enum connect_mode_e
 };
 
-enum connect_mode_e
-{
-    NullSecurity        = 0,    //公共连接NullSecurity∷=NULL
-    PasswordSecurity    = 1,    //一般密码PasswordSecurity∷=visible-string
-    SymmetrySecurity    = 2,    //对称加密SymmetrySecurity∷=SEQUENCE                              
-                                //{
-                                //  密文 1 octet-string，
-                                //  客户机签名 1 octet-string
-                                //};
-    SignatureSecurity   = 3,    //数字签名    SignatureSecurity∷=SEQUENCE
-                                //{ 
-                                //      密文 2 octet-string，
-                                //      客户机签名 2 octet-string
-                                //}
-};
+
 
 struct factory_version_t
 {
@@ -68,51 +54,52 @@ struct factory_version_t
     char hardware_date[6];      //硬件版本日期 visible-string(SIZE(6))，
     char vendor_infomation[8];  //厂商扩展信息 visible-string(SIZE(8))
 };
-#if 0
-const uint8_t  esam_series[6]         = {0x80, 0x36, 0x00, 0x02, 0x00, 0x00};	//序列号
-const uint8_t  esam_version[6]        = {0x80, 0x36, 0x00, 0x01, 0x00, 0x00};	//版本号
-const uint8_t  esam_key_ver[6]        = {0x80, 0x36, 0x00, 0x04, 0x00, 0x00};	//对称密钥版本
-const uint8_t  esam_time[6]           = {0x80, 0x36, 0x00, 0x05, 0x00, 0x00};	//会话时效门限,会话时效剩余时间
-const uint8_t  esam_count[6]          = {0x80, 0x36, 0x00, 0x06, 0x00, 0x00};	//计数器
-const uint8_t  esam_symauth[6]        = {0x81, 0x02, 0x00, 0x00, 0x00, 0x24};	//会话协商
-const uint8_t  esam_symauth_term[6]   = {0x82, 0x02, 0x00, 0x00, 0x00, 0x24};	//会话协商-终端
-
-const uint8_t  esam_random8[6]        = {0x80, 0x04, 0x00, 0x08, 0x00, 0x00};	//取ESAM 8 字节随机数
-const uint8_t  encrypt_random8[6]     = {0x80, 0x08, 0x08, 0x01, 0x00, 0x10};	//ESAM加密 8 字节随机数
-const uint8_t  software_encrypt[6]    = {0x80, 0x0A, 0x48, 0x00, 0x00, 0x58};	//ESAM软件比对加密数据
-const uint8_t  esam_dataget[6]        = {0x80, 0x2c, 0x00, 0x00, 0x00, 0x05};
-const uint8_t  esam_wallet_sub[6]     = {0x80, 0x46, 0x00, 0x00, 0x00, 0x04};//ESAM 钱包扣减
-const uint8_t  esam_wallet_set[6]     = {0x83, 0x3e, 0x00, 0x00, 0x00, 0x08};//ESAM 钱包文件预制
-const uint8_t  esam_ir_auth[6]        = {0x80, 0x06, 0x00, 0x01, 0x00, 0x08};//ESAM 红外认证 
-const uint8_t  esam_term_auth_request[6]    = {0x80, 0x08, 0x00, 0x04, 0x00, 0x08};//ESAM 红外认证请求
-
-const uint8_t  esam_wallet_credit[5]  = {0x80, 0x42, 0x00, 0x00, 0x0C };//ESAM 钱包文件充值
-const uint8_t  esam_wallet_red[7]     = {0x80, 0x48, 0x00, 0x00, 0x00, 0x01,0x00};//ESAM 钱包文件读
-const uint8_t  esam_file_write[4]     = {0x80, 0x2a, 0x00, 0x07};  //ESAM明文写返写信息文件
-const uint8_t  encrypt_1[4]           = {0x81, 0x1c, 0x00, 0x11};
-const uint8_t  encrypt_2[4]           = {0x81, 0x1c, 0x00, 0xa6};
-const uint8_t  encrypt_3[4]           = {0x81, 0x1c, 0x00, 0xa7};
-const uint8_t  encrypt_4[4]           = {0x80, 0x0e, 0x40, 0x02};
-const uint8_t  encrypt_5[4]           = {0x80, 0x0a, 0x40, 0x02};
-const uint8_t  encrypt_6[4]           = {0x80, 0x10, 0x40, 0x02};
-const uint8_t  encrypt_term_1[8]           = {0x82, 0x24, 0x00, 0x11,0x80, 0x24, 0x11, 0x00};
-const uint8_t  encrypt_term_2[8]           = {0x82, 0x24, 0x00, 0x12};
-const uint8_t  encrypt_term_3[8]           = {0x82, 0x24, 0x00, 0x13,0x80, 0x24, 0x13, 0x00};
-
-const uint8_t  esam_report_request[4]         = {0x80, 0x14, 0x01, 0x03};//上报
-const uint8_t  esam_report_response[4]        = {0x80, 0x0e, 0x40, 0x81};//上报确认
-
-#endif
-//int fr_698_get(struct instance_t* instance, uint32_t view_id, uint8_t* buf, uint16_t buf_size)
-//int fr_698_set(struct instance_t* instance, uint32_t view_id, uint8_t* buf, uint16_t buf_size)
 
 
-uint8_t __password_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+
+
+
+static int __common_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+static int __password_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+static int __signature_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+
+
+#define Security_FUNC   \
+    DEF_X(NullSecurity,         __common_process)\
+    DEF_X(PasswordSecurity,     __password_process)\
+    DEF_X(SymmetrySecurity,     __symmetry_process)\
+    DEF_X(SignatureSecurity,    __signature_process)\
+              
+
+enum connect_mode_e
+{
+    #define DEF_X(a,b)  a,
+    Security_FUNC
+    #undef DEF_X
+    Security_MAX
+};
+
+typedef int(*pFunc_security_process)(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+     
+const pFunc_security_process Func_security[] = 
+{
+    #define DEF_X(a,b)  b,
+    Security_FUNC
+    #undef DEF_X
+};
+
+
+static int __common_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    return 1;
+}
+
+static int __password_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t *p_password = cache->buf_ptr;
-    //uint8_t *p_password = cache + sizeof(struct connect_request_t);
 
     uint8_t password[33] = {0};
     uint32_t oad = 0;
@@ -129,7 +116,7 @@ uint8_t __password_process(struct instance_t* instance, struct pipeline_t* pipel
     return DAR_OTHERS_ERROR;
 }
 
-uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct mbase_control_block_t* mbase_cb;
     
@@ -140,7 +127,7 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
 
     uint8_t *p_apdu = cache->buf_ptr;
     uint8_t *p_password = cache->buf_ptr;
-	uint8_t  buf[70];
+	uint8_t buf[70];
     uint8_t len_len = 0;
     uint16_t data_len = 0;
     uint16_t offset = 0;
@@ -256,8 +243,15 @@ uint8_t __symmetry_security_process(struct instance_t* instance, struct pipeline
 #endif
 }
 
+static int __signature_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    return 1;
+}
 
-uint32_t __get_connect_info(uint32_t val, uint32_t cfg_val)
+
+
+
+static uint32_t __get_connect_info(uint32_t val, uint32_t cfg_val)
 {
     //if ((connect.client_win_size < session->send_buffer_size) || (connect.client_win_size > para->client_process_apdu_size))
     {
@@ -266,7 +260,7 @@ uint32_t __get_connect_info(uint32_t val, uint32_t cfg_val)
     return 1;
 }
 
-static int __consistency_block(uint8_t *data, uint8_t* cfg_data, uint8_t len)
+static void __consistency_block(uint8_t *data, const uint8_t* cfg_data, uint8_t len)
 {
     for (uint8_t i = 0; i < len; i++)//商定的协议一致性块
     {
@@ -274,8 +268,28 @@ static int __consistency_block(uint8_t *data, uint8_t* cfg_data, uint8_t len)
         //session->protocal_conformance[i] = temp & para->protocal_conformance[i];
         data[i] = data[i] & cfg_data[i];
     }
-    return 1;
 }
+
+
+static void ___get_consult_info(struct connect_request_t *connect, const struct connect_request_t *p_connect)
+{
+    //商定的协议一致性块
+    __consistency_block(connect->protocal_conformance, p_connect->protocal_conformance, 8);
+    //商定的功能一致性块
+    __consistency_block(connect->function_conformance, p_connect->function_conformance, 16);
+
+    //客户机发送帧最大尺寸
+    connect->send_frm_size = __get_connect_info(connect->send_frm_size, p_connect->recv_frm_size);
+    // 客户机接收帧最大尺寸
+    connect->recv_frm_size = __get_connect_info(connect->recv_frm_size, p_connect->send_frm_size);
+    // 客户机接收帧最大窗口尺寸
+    connect->client_win_size = __get_connect_info(connect->client_win_size, p_connect->client_apdu_size);
+    // 客户机最大可处理帧尺寸
+    connect->client_apdu_size = __get_connect_info(connect->client_apdu_size, p_connect->client_apdu_size);
+    /* 期望的应用连接超时时间 */
+    connect->connect_time = __get_connect_info(connect->connect_time, p_connect->connect_time);
+}
+
 
 int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -290,6 +304,19 @@ int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipelin
     
     return 1;
 }
+
+
+const struct connect_request_t cfg_connect = {
+    0x1500, 
+    0xFF,0xFF,0xFF,0xff,0xc0,0x00,0x00,0x00,
+    0xFF,0xFE,0xC4,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x0002,
+    0x0002,
+    0x01,
+    0xd007,
+    0x201c0000
+};
+
 
 int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -339,7 +366,14 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
     connect.client_apdu_size = __get_connect_info(connect.client_apdu_size, pcfg_connect->client_process_apdu_size);
     /* 期望的应用连接超时时间 */
     connect.connect_time = __get_connect_info(connect.connect_time, pcfg_connect->connect_timeout);
-
+	
+	if (Security_MAX > connect.connect_mode){
+        if(Func_security[connect.connect_mode]){
+            result = Func_security[connect.connect_mode](instance, pipeline, mesg);
+        }
+    }
+	
+#if 0
     if(0 == connect.connect_mode) //公共连接[0] NullSecurity
     {
     }
@@ -365,7 +399,7 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
         result = DAR_OTHERS_ERROR;
         goto err;
     } 
-    
+#endif
     return 1;
 
 err:
@@ -414,8 +448,3 @@ int get_CONNECT_Request_len(struct instance_t* instance, struct pipeline_t* pipe
 #endif
 }
 
-
-int get_RELEASE_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{
-    return 1;
-}

@@ -40,7 +40,7 @@ struct esam_error_apdu_t esam_error_apdu;
 
 /*调试阶段暂不进行代码的精简和合并*/
 
-uint8 tx_esam(uint8 *tx_apdu , uint8 *tx_data , uint16 len)
+static uint8 tx_esam(uint8 *tx_apdu , uint8 *tx_data , uint16 len)
 {
     uint8 value = 0;
     uint8 len1 , len2;
@@ -93,7 +93,7 @@ uint8 tx_esam(uint8 *tx_apdu , uint8 *tx_data , uint16 len)
 
 
 
-uint16 rx_esam(uint8 *rx_data , uint16 *len )
+static uint16 rx_esam(uint8 *rx_data , uint16 *len )
 {
     uint8  busy = 0,lrc1 = 0;
     uint8  err,ret[4] = {0},cnt = 0;
@@ -167,7 +167,7 @@ uint16 rx_esam(uint8 *rx_data , uint16 *len )
 }
 
 
-uint8 read_esam(uint32 addr, uint8 *buf, uint16 len)
+static uint8 read_esam(uint32 addr, uint8 *buf, uint16 len)
 {      
     uint16 rx_len, sw = 0;
     
@@ -244,7 +244,7 @@ uint8_t read_esam_info(uint8_t *esam_info, uint8_t index)
 }
 
 
-uint8 tx_esam_nolen(uint8 *tx_apdu , uint8 *tx_data , uint16 len)
+static uint8 tx_esam_nolen(uint8 *tx_apdu , uint8 *tx_data , uint16 len)
 {
     uint8 value = 0;
     uint8 len1 , len2;
@@ -307,7 +307,7 @@ uint8_t read_esam_data(uint32_t addr, uint8_t *buf, uint16_t len)
     return lenth;
 }
 
-void esam_698_power_ctrl(uint8_t power)
+static void esam_698_power_ctrl(uint8_t power)
 {
     if(power)
     {

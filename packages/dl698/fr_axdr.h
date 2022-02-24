@@ -65,6 +65,7 @@ enum data_type_choice_e
 uint8_t axdr_decode(uint8_t type, const uint8_t *buf, uint16_t *len);
 uint8_t axdr_data_len_decode(uint8_t type, uint8_t* buf, uint16_t* len);
 
+uint8_t axdr_len_encode(uint8_t* buf, uint16_t len);
 uint16_t axdr_get_len(const uint8_t *data);
 
 
