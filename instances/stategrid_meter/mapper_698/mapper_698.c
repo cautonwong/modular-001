@@ -138,7 +138,7 @@ extern void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id);
 
 extern int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode);
 extern int GET_1_Demand(struct instance_t* instance, uint32_t id, uint8_t* buf);
-extern int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf);
+extern int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode);
 
 extern int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf);
