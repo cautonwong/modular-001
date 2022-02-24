@@ -26,7 +26,7 @@ const ATBE3 Atbe3_table[] =
     0x2041,     0,      0,
 };
 
-int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf)
+int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
@@ -98,27 +98,48 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf)
     {
         if(id == idbuf[i].id)
         {
-            if(idbuf[i].num != 0)   //数组
+            switch(mode)
             {
-                *p++ = TYPE_array;//数组
-                *p++ = idbuf[i].num;//单相一个元素
-            }
-            else
-            {
-                idbuf[i].num = 1;
-            }
+                case 0x00:
+                    if(idbuf[i].num != 0)   //数组
+                    {
+                        *p++ = TYPE_array;//数组
+                        *p++ = idbuf[i].num;//单相一个元素
+                    }
+                    else
+                    {
+                        idbuf[i].num = 1;
+                    }
+                      
+                    for(j=0; j<idbuf[i].num; j++)
+                    {
+                        *p++ = idbuf[i].tag;
+                        if(idbuf[i].tag == TYPE_bit_string)
+                        {
+                            *p++ = idbuf[i].len*8;
+                        }
+                        mem_swap_cpy(p, (unsigned char*)idbuf[i].addr, idbuf[i].len);
+                        p = p + idbuf[i].len;
+                    }
+                    return (p-buf);
+                    break;
+                case 0x01:  //T L形式
+                    if(idbuf[i].num != 0)   //数组
+                    {
+                        *p++ = TYPE_array;//数组
+                        *p++ = idbuf[i].num;//单相一个元素
+                    }
+                    for(j=0; j<idbuf[i].num; j++)
+                    {
+                        *p++ = idbuf[i].tag;
+                        if(idbuf[i].tag != TYPE_bit_string)
+                        {
+                            *p++ = idbuf[i].len;
+                        }
+                    }
+                    return (p-buf);
               
-            for(j=0; j<idbuf[i].num; j++)
-            {
-                *p++ = idbuf[i].tag;
-                if(idbuf[i].tag == TYPE_bit_string)
-                {
-                    *p++ = idbuf[i].len*8;
-                }
-                mem_swap_cpy(p, (unsigned char*)idbuf[i].addr, idbuf[i].len);
-                p = p + idbuf[i].len;
             }
-            return (p-buf);
         }
     }
     
