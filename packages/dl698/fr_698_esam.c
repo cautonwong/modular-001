@@ -1,5 +1,4 @@
-﻿
-#include "nidavellir.h"
+﻿#include "nidavellir.h"
 #include "fr_698.h"
 #include "fr_698_esam.h"
 
@@ -34,7 +33,7 @@ int openM_ioctl(int fd, int request, void *param)
 }
 
 
-#if 0
+
 uint16_t write_esam(uint32_t addr, uint8_t *buf, uint16_t len)
 {
   
@@ -133,7 +132,7 @@ uint8_t get_key_status(void)
 	else 
         return true;
 }
-#endif
+
 
 
 int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_t *p_output)

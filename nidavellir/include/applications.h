@@ -401,7 +401,7 @@ extern uint8_t lcd_init(uint8_t power_mode);
 
 extern void rtc_get_from_tm(struct instance_t* instance, uint8_t* p);
 
-extern void GetKeyStatus(struct instance_t* instance, struct pipeline_t* pipeline);
+extern uint8_t get_key_status(void);
 
 extern unsigned short display_oad_to_id(unsigned char *oad, unsigned char len);
 extern int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf);

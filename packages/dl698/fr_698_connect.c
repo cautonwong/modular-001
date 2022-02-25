@@ -100,6 +100,7 @@ static int __password_process(struct instance_t* instance, struct pipeline_t* pi
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t *p_password = cache->buf_ptr;
+    //uint8_t *p_password = cache + sizeof(struct connect_request_t);
 
     uint8_t password[33] = {0};
     uint32_t oad = 0;
@@ -334,92 +335,28 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
     struct connect_cfg_info_t* pcfg_connect = &cfg;
     uint8_t result = DAR_SUCCESS;
 
-    if(SA_TYPE_GENERAL == SA_TYPE(ctx->SA)) // 通配地址 拒绝服务
-    {
+    // 通配地址 拒绝服务
+    if(SA_TYPE_GENERAL == SA_TYPE(ctx->SA)) {
         result = DAR_OTHERS_ERROR;
-        goto err;
     }
     
     memcpy(&connect, apdu_rx+ctx->apdu_rx_offset, sizeof(struct connect_request_t));
     ctx->apdu_rx_offset += sizeof(struct connect_request_t);
-
-    if (connect.connect_mode > 4)
-    {
+    
+    if (connect.connect_mode > 4){
         result = DAR_OTHERS_ERROR;
-        goto err;
     }
 
-    //if(connect.pro_ver != p_connect->version)//期望的应用层协议版本号 不做判断
-
-    //商定的协议一致性块
-    __consistency_block(connect.protocal_conformance, pcfg_connect->protocal_conformance, 8);
-    //商定的功能一致性块
-    __consistency_block(connect.function_conformance, pcfg_connect->function_conformance, 16);
-
-    //客户机发送帧最大尺寸
-    connect.send_frm_size = __get_connect_info(connect.send_frm_size, pcfg_connect->link_recv_buf_size);
-    // 客户机接收帧最大尺寸
-    connect.recv_frm_size = __get_connect_info(connect.recv_frm_size, pcfg_connect->link_send_buf_size);
-    // 客户机接收帧最大窗口尺寸
-    connect.client_win_size = __get_connect_info(connect.client_win_size, pcfg_connect->client_process_apdu_size);
-    // 客户机最大可处理帧尺寸
-    connect.client_apdu_size = __get_connect_info(connect.client_apdu_size, pcfg_connect->client_process_apdu_size);
-    /* 期望的应用连接超时时间 */
-    connect.connect_time = __get_connect_info(connect.connect_time, pcfg_connect->connect_timeout);
-	
-	if (Security_MAX > connect.connect_mode){
+    ___get_consult_info(&connect, &cfg_connect);
+    //memcpy((p_apdu+cache->wr), (uint8_t*)&connect, sizeof(struct connect_request_t));  
+    
+    if (Security_MAX > connect.connect_mode){
         if(Func_security[connect.connect_mode]){
             result = Func_security[connect.connect_mode](instance, pipeline, mesg);
         }
     }
-	
-#if 0
-    if(0 == connect.connect_mode) //公共连接[0] NullSecurity
-    {
-    }
+	return 1;
 
-    if(1 == connect.connect_mode) //一般密码[1] PasswordSecurity
-    {
-        if (DAR_SUCCESS != __password_process(instance, pipeline, mesg))
-        {
-            result = CONNECT_RESULT_PASSWORD_ERR;
-        }
-    }
-
-    if(2 == connect.connect_mode) //对称加密[2] SymmetrySecurity
-    {
-        if (DAR_SUCCESS != __symmetry_security_process(instance, pipeline, mesg))
-        {
-            result = CONNECT_RESULT_PASSWORD_ERR;
-        }
-    }  
-
-    if(3 == connect.connect_mode) //数字签名[3] SignatureSecurity ESAM不支持
-    {
-        result = DAR_OTHERS_ERROR;
-        goto err;
-    } 
-#endif
-    return 1;
-
-err:
-
-    //uint8_t oad_n = mesg->oad_n;
-    //if (oad_n == 0) oad_n = 1;
-    //while (oad_n-- > 0)
-    {
-        //todo  apdu分帧
-        //if (fifoBuf_getFree(cache) < size(oad))
-        {
-            fifoBuf_getData(fifo, p + cache->wr, 4);
-            mesg->id = buf_to_uint32_msb(p + cache->wr);
-            cache->wr += 4;
-            //fr_serve_one_object(instance, pipeline, mesg);
-        }
-    }
-
-    //fr_encode_optional(instance, pipeline, mesg);//follow-report and time-tag
-    return 1;
 }
 
 

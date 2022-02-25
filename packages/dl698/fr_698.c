@@ -314,7 +314,7 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
         offset = get_CONNECT_Request_len(instance, pipeline, mesg);
         break;
     case RELEASE_Request:
-        offset = get_RELEASE_Request_len(instance, pipeline, mesg);
+        offset = 1;
         break;
     case GET_Request:
         offset = get_GET_Request_len(instance, pipeline, mesg);
@@ -448,62 +448,6 @@ int __put_fifo_byte(void* pctx, uint8_t* byte)
 }
 
 
-#if 0
-int _fr_segments_rcv_handle(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
-    uint16_t segment = ctx->segment_rx;
-
-    uint16_t data_len = ctx->min_len - 8 - SA_LEN(ctx->SA) - 2 - 2;
-    if(is_first_segment(segment)){  //链路层rx 开始帧
-        ringbuffer_clear(ctx->apdu_rx);
-        fifo_popData(fifo, data_len, __put_fifo_byte, ctx->apdu_rx);
-        ctx->segment_no = 1;
-        return 0;
-    }
-    else if((get_segment_no(segment) == ctx->segment_no) 
-         && (is_middle_segment(segment) || is_last_segment(segment))){
-        fifo_popData(fifo, data_len, __put_fifo_byte, ctx->apdu_rx);
-        ctx->segment_no++;
-        if(is_last_segment(segment))
-          ctx->segment_no = 0;
-        return 0;
-    }
-    else{
-        return 1;
-    }
-
-    if (is_segment_set(ctx->ctrl))
-    {
-        if (fifoBuf_getUsed(ctx->apdu) > 0)
-        {
-            mesg->len = fifoBuf_getUsed(ctx->apdu);
-            if (mesg->len > 512)
-            {
-                set_segment(ctx->ctrl);
-                set_middle_segment_no(ctx->segment);//中间帧
-                mesg->len = 512;
-            }
-            else
-            {
-                set_segment(ctx->ctrl);
-                set_last_segment_no(ctx->segment);//最后帧
-            }
-            fr_rx_698_end(instance, pipeline, mesg);
-        }
-        fifoBuf_removeData(fifo, ctx->min_len + 2);//删掉收到的确认帧
-        return 0;
-    }
-    else
-    {
-        //收到的如果不是后续帧请求
-        ringbuffer_clear(ctx->apdu);
-        return 1;
-    }
-}
-#endif
-
 int __get_apdu_data_len(struct context_698_t* ctx){
     return ctx->min_len - 4 - (SA_LEN(ctx->SA) + 1) - 5;
 }
@@ -513,8 +457,6 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
-    int ret = 0;
-    uint8_t len = 0;
     uint16_t data_len = 0;
     uint16_t s = 0;
    
@@ -649,19 +591,19 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     switch (ctx->service)
     {
         case CONNECT_Request:
-            fr_handle_connect(instance, pipeline, mesg);
+            err_no = fr_handle_connect(instance, pipeline, mesg);
             break;   
         case RELEASE_Request:
-            fr_handle_disconnect(instance, pipeline, mesg);
+            err_no = fr_handle_disconnect(instance, pipeline, mesg);
             break;
         case GET_Request:  
-            fr_handle_get_request(instance, pipeline, mesg);
+            err_no = fr_handle_get_request(instance, pipeline, mesg);
             break;
         case SET_Request:
-            fr_handle_set_request(instance, pipeline, mesg);
+            err_no = fr_handle_set_request(instance, pipeline, mesg);
             break;
         case ACTION_Request:
-            fr_handle_action_request(instance, pipeline, mesg);
+            err_no = fr_handle_action_request(instance, pipeline, mesg);
             break;
         case REPORT_Response://8上报应答 client
             break;
