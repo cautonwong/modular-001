@@ -276,3 +276,253 @@ int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline,
         return -1;
     }
 }
+
+
+
+
+
+
+
+
+
+#if 1   //----698安全模式字-----------------------------开始
+
+#define TEST_RIGHT                      0x0000      // 测试用的权限 
+#define GET_PLAIN						0x8000      // 读明文 
+#define GET_PLAIN_MAC					0x4000      // 读明文+mac 
+#define GET_CIPHER						0x2000      // 读密文 
+#define GET_CIPHER_MAC					0x1000      // 读密文+mac 
+#define SET_PLAIN						0x0800      // 设置明文 
+#define SET_PLAIN_MAC					0x0400      // 设置明文+mac 
+#define SET_CIPHER						0x0200      // 设置密文 
+#define SET_CIPHER_MAC					0x0100      // 设置密文+mac 
+#define ACTION_PLAIN					0x0080      // 执行明文 
+#define ACTION_PLAIN_MAC				0x0040      // 执行明文+mac 
+#define ACTION_CIPHER					0x0020      // 执行密文 
+#define ACTION_CIPHER_MAC				0x0010      // 执行密文+mac 
+#define PROXY_GET						0x0004      // 代理读 
+#define PROXY_SET						0x0002      // 代理写 
+#define PROXY_ACTION					0x0001      // 代理执行 
+
+
+
+const struct security_mode_t security_mode_match_all_tab[] =
+{
+    { 0x2015, (TEST_RIGHT | GET_PLAIN_MAC | SET_CIPHER_MAC | ACTION_PLAIN) },
+	{ 0x202C, (TEST_RIGHT | GET_PLAIN | PROXY_GET) },
+	{ 0x202F, (TEST_RIGHT | GET_PLAIN_MAC | SET_CIPHER_MAC | ACTION_PLAIN) },
+	{ 0x4000, (TEST_RIGHT | GET_PLAIN | SET_CIPHER_MAC | ACTION_PLAIN | PROXY_GET) },
+	{ 0x4001, (TEST_RIGHT | GET_PLAIN | SET_CIPHER_MAC | PROXY_GET) },
+	{ 0x4002, (TEST_RIGHT | GET_PLAIN | SET_PLAIN_MAC | PROXY_GET) },
+	{ 0x4003, (TEST_RIGHT | GET_PLAIN_MAC | SET_PLAIN_MAC) },
+	{ 0x400A, (TEST_RIGHT | GET_PLAIN_MAC | SET_PLAIN_MAC) },
+	{ 0x400B, (TEST_RIGHT | GET_PLAIN_MAC | SET_PLAIN_MAC) },
+	{ 0x400C, (TEST_RIGHT | GET_PLAIN_MAC | SET_PLAIN_MAC) },
+	{ 0x400D, (TEST_RIGHT | GET_PLAIN_MAC | SET_PLAIN_MAC) },
+	{ 0x400E, (TEST_RIGHT | GET_PLAIN_MAC | SET_PLAIN_MAC) },
+	{ 0x4018, (TEST_RIGHT | GET_PLAIN_MAC) },
+	{ 0x4019, (TEST_RIGHT | GET_PLAIN_MAC | SET_PLAIN_MAC) },
+	{ 0x401A, (TEST_RIGHT | GET_PLAIN_MAC) },
+	{ 0x401B, (TEST_RIGHT | GET_PLAIN_MAC | SET_PLAIN_MAC) },
+	{ 0x4111, (TEST_RIGHT | GET_PLAIN | SET_CIPHER_MAC | PROXY_GET) },
+    { 0x5000, (TEST_RIGHT | GET_PLAIN_MAC | SET_CIPHER_MAC | ACTION_PLAIN_MAC) },
+	{ 0xF000, (TEST_RIGHT | GET_PLAIN | SET_CIPHER_MAC | ACTION_CIPHER_MAC) },
+	{ 0xF001, (TEST_RIGHT | GET_PLAIN | SET_CIPHER | ACTION_CIPHER) },
+	{ 0xF002, (TEST_RIGHT | GET_PLAIN | SET_PLAIN | ACTION_PLAIN) },
+	{ 0xF100, (TEST_RIGHT | GET_PLAIN | SET_PLAIN_MAC | /*ACTION_CIPHER |*/ACTION_CIPHER_MAC| PROXY_GET) },
+	{ 0xF101, (TEST_RIGHT | GET_PLAIN | SET_CIPHER_MAC | ACTION_CIPHER | PROXY_GET) },
+    { 0xFFFE, (TEST_RIGHT | GET_CIPHER_MAC | SET_CIPHER_MAC | ACTION_CIPHER_MAC) },
+    { 0xFFFF, (TEST_RIGHT | GET_PLAIN | SET_PLAIN | ACTION_PLAIN) },
+    { 0x4500, (TEST_RIGHT | GET_PLAIN | SET_PLAIN | ACTION_PLAIN) },
+};
+
+const struct security_mode_t security_mode_match_high_byte_tab[] =
+{
+	{ 0x50FF, (TEST_RIGHT | GET_PLAIN_MAC | SET_CIPHER_MAC | ACTION_CIPHER_MAC) },
+	{ 0x60FF, (TEST_RIGHT | GET_PLAIN | SET_PLAIN | ACTION_PLAIN | PROXY_GET | PROXY_SET | PROXY_ACTION) },
+	{ 0x70FF, (TEST_RIGHT | GET_PLAIN | ACTION_PLAIN | PROXY_GET | PROXY_ACTION) },
+	{ 0x80FF, (TEST_RIGHT | GET_PLAIN_MAC | SET_CIPHER_MAC | ACTION_CIPHER_MAC) },
+	{ 0xF2FF, (TEST_RIGHT | GET_PLAIN | SET_PLAIN | ACTION_PLAIN | PROXY_GET | PROXY_SET | PROXY_ACTION) },
+};
+
+const struct security_mode_t security_mode_match_high_half_byte_tab[] =
+{
+	{ 0x0FFF, (TEST_RIGHT | GET_PLAIN | PROXY_GET) },
+	{ 0x1FFF, (TEST_RIGHT | GET_PLAIN_MAC) },
+	{ 0x2FFF, (TEST_RIGHT | GET_PLAIN_MAC | ACTION_PLAIN_MAC) },
+	{ 0x3FFF, (TEST_RIGHT | GET_PLAIN_MAC | SET_CIPHER_MAC | ACTION_CIPHER_MAC) },
+	{ 0x4FFF, (TEST_RIGHT | GET_PLAIN_MAC | SET_CIPHER_MAC | ACTION_CIPHER_MAC) },
+};
+
+const uint16_t security_default_mode = (TEST_RIGHT | GET_PLAIN_MAC | SET_CIPHER_MAC | ACTION_CIPHER_MAC);
+
+
+
+#if 0
+//判断安全模式是否符合要求   明文	明文+数据验证码	  密文	  密文+数据验证码
+static int dl698_al_security_mode_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t mode, uint32_t oad, uint8_t* tmp_buf, uint8_t cilent_index)
+{
+    uint16_t security_mode = 0;
+    //uint8 broadcast_mode = 0;
+
+    if (true == dl698_factory_mode_get())
+    {
+        return DAR_SUCCESS;
+    }
+
+    if (session->channel == 0x1060)//主站-红外
+    {
+        if (cilent_index == 1)//补充08月09号，终端不能通过红外访问
+        {
+            return DAR_RW_REJECT;
+        }
+        if (infrared_auth_timeout == 0)
+        {
+            return DAR_SUCCESS;
+        }
+
+        if (oad == 0xf1000B00 || oad == 0xf1000C00)
+        {
+            return DAR_SUCCESS;
+        }
+    }
+    /*明文合闸特殊处理*/
+    if (oad == 0x80008300)
+    {
+        return DAR_SUCCESS;
+    }
+
+    /*明文确认跟随上报状态字*/
+    if (oad == 0x20157f00)
+    {
+        return DAR_SUCCESS;
+    }
+
+    /*ESAM相关参数不判断权限*/
+    if ((mode == 0) && (oad_to_oi(oad) == 0xf100))
+    {
+        return DAR_SUCCESS;
+    }
+
+    security_mode = dl698_security_mode_get(oad, tmp_buf);
+
+    if (security_mode == 0xffff)
+    {
+        return DAR_SUCCESS;
+    }
+
+    if (mode == 1)
+    {
+        security_mode <<= 4;
+    }
+
+    if (mode == 2)
+    {
+        security_mode <<= 8;
+    }
+
+    if (0 != session->req.sec_flag.bits.security)
+    {
+        if (session->req.sec_flag.bits.cipher)
+        {
+            if (session->req.sec_flag.bits.auth_type == AUTH_SID_MAC)
+            {
+                return DAR_SUCCESS;
+            }
+            else if (session->req.sec_flag.bits.auth_type == AUTH_SID)
+            {
+                if (security_mode & 0x1000U)
+                {
+                    aprint("security auth not match2 %04x\r\n", security_mode);
+                    return DAR_SECURITY_AUTH_NOT_MATCH;
+                }
+
+                return DAR_SUCCESS;
+            }
+        }
+        else
+        {
+            if ((session->req.sec_flag.bits.auth_type == AUTH_RN_MAC) || (session->req.sec_flag.bits.auth_type == AUTH_SID_MAC))
+            {
+                if (security_mode & 0x3000U)
+                {
+                    aprint("security auth not match3 %04x\r\n", security_mode);
+                    return DAR_SECURITY_AUTH_NOT_MATCH;
+                }
+
+                return DAR_SUCCESS;
+            }
+
+            if (session->req.sec_flag.bits.auth_type == AUTH_RN)
+            {
+                if (mode == 0)//get
+                {
+
+                    if (security_mode & 0xc000U)
+                    {
+                        return DAR_SUCCESS;
+                    }
+                    else
+                    {
+                        aprint("security auth not match4 %04x\r\n", security_mode);
+                        return DAR_SECURITY_AUTH_NOT_MATCH;
+                    }
+                }
+
+                if (security_mode & 0x7000U)
+                {
+                    aprint("security auth not match5 %04x\r\n", security_mode);
+                    return DAR_SECURITY_AUTH_NOT_MATCH;
+                }
+
+                return DAR_SUCCESS;
+            }
+        }
+    }
+    else
+    {
+#if 0
+        /* 广播校时特殊处理，密文模式下，不支持明文校时 */
+        if (oad == 0x40007F00)
+        {
+            if ((false == hfp_read(0x5FD0, (uint8*)&broadcast_mode, 0x01, __NULL)) || (broadcast_mode == 0x00))
+            {
+                aprint("security auth not match1 %04x\r\n", security_mode);
+                return DAR_SECURITY_AUTH_NOT_MATCH;
+            }
+        }
+#endif
+
+        if (mode == 0)
+        {
+            if ((security_mode & 0x8000) != 0x8000)
+            {
+                aprint("security auth not match1 %04x\r\n", security_mode);
+                return DAR_SECURITY_AUTH_NOT_MATCH;
+            }
+            else
+            {
+                if (dl698_esam_plain_read_check(cilent_index, oad))
+                    return DAR_SUCCESS;
+                else
+                    return DAR_SECURITY_AUTH_NOT_MATCH;
+            }
+        }
+        if ((oad == 0xF1000B00) || (oad == 0xF1000C00))//执行终端身份认证时，可以明文执行
+        {
+            return DAR_SUCCESS;
+        }
+        if (security_mode & 0x7000U)
+        {
+            aprint("security auth not match6 %04x\r\n", security_mode);
+            return DAR_SECURITY_AUTH_NOT_MATCH;
+        }
+
+        return DAR_SUCCESS;
+    }
+
+    aprint("security auth not match7 %04x\r\n", security_mode);
+    return DAR_SECURITY_AUTH_NOT_MATCH;
+}
+#endif
+#endif    //----698安全模式字-----------------------------结束

@@ -1180,7 +1180,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
             return GET_1_Demand(instance, id, buf);
             break;
         case 0x2://变量
-            return GET_2_Variable(instance, id, buf);
+            return GET_2_Variable(instance, id, buf, h_mode);
             break;
         case 0x3://事件
             return GET_3_Event(instance, id, buf);

@@ -325,6 +325,15 @@ struct event_para_pack_t
     uint8_t para_num;
 };
 
+struct security_mode_t
+{
+    uint16_t oi;
+    uint16_t mode;
+};
+
+
+
+
 extern int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_para_pack_t *para_pack);
 
 
