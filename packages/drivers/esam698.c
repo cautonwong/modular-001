@@ -3,6 +3,7 @@
 #include "cpu_surport.h"
 #include "time_link.h"
 #include "pin_function_def.h"
+#include "fr_698_esam.h"
 
 #define   ESAM698_MAX_BUF_SIZE    2000
 
@@ -10,6 +11,20 @@ extern const struct bus_ops_t mcu_spi_ops;
 
 extern void power_off_special_hook(void *ptr);
 
+struct io_hal_t
+{
+     void *gpio; 
+     uint32_t pin;
+     uint8_t  dir_mode;
+     uint8_t open_state;
+};
+
+struct esam_hal_t
+{
+    const struct io_hal_t *power;
+    const struct io_hal_t *cs;
+    uint8_t      spi_NO;
+};
 
 //获取4字节的随机数,用于MAC计算。
 const unsigned char  Cmd_Get_ESMA_Rand4[5] = { 0x00, 0x84, 0x00, 0x00, 0x04 };
@@ -19,8 +34,6 @@ const unsigned char  Cmd_ESAM_Key_Scatter[5] = { 0x80, 0xFA, 0x00, 0x03, 0x08 };
 const unsigned char  Cmd_Get_ESAM_SEQ[5] = { 0x00, 0xB0, 0x99, 0x01, 0x08 };
 //ESAM模块加密
 const unsigned char  Cmd_Card_ESAM_Encrypt[5] = { 0x80, 0xFA, 0x00, 0x00, 0x08 };
-
-uint8_t esam_test[256];
 
 
 
@@ -40,7 +53,7 @@ struct esam_error_apdu_t esam_error_apdu;
 
 /*调试阶段暂不进行代码的精简和合并*/
 
-static uint8 tx_esam(uint8 *tx_apdu , uint8 *tx_data , uint16 len)
+static uint8 tx_esam(uint8 *tx_apdu , uint8 *tx_data , uint16 len , const struct esam_hal_t *esam_hal)
 {
     uint8 value = 0;
     uint8 len1 , len2;
@@ -93,7 +106,7 @@ static uint8 tx_esam(uint8 *tx_apdu , uint8 *tx_data , uint16 len)
 
 
 
-static uint16 rx_esam(uint8 *rx_data , uint16 *len )
+static uint16 rx_esam(uint8 *rx_data , uint16 *len , const struct esam_hal_t *esam_hal , uint16_t *sw)
 {
     uint8  busy = 0,lrc1 = 0;
     uint8  err,ret[4] = {0},cnt = 0;
@@ -167,145 +180,207 @@ static uint16 rx_esam(uint8 *rx_data , uint16 *len )
 }
 
 
-static uint8 read_esam(uint32 addr, uint8 *buf, uint16 len)
-{      
-    uint16 rx_len, sw = 0;
-    
-    memset(&esam_error_apdu.apdu[0] , 0xFF , 6);
-    
-    tx_esam((uint8*)&addr , __NULL , 0);
-    
-    sw = rx_esam(buf , &rx_len);
-
-    if((0x9000 == sw)&&(rx_len == len))
-    {
-        return true;
-    }
-    esam_error_apdu.sw = sw;
-    if(sw > 0)
-    {
-        memcpy(&esam_error_apdu.apdu[0] , (uint8*)&addr , 4);
-        memcpy(&esam_error_apdu.apdu[4] , (uint8*)&len , 2);
-    }
-    
-    return false;
-}
 
 
-uint16_t write_esam(uint32_t addr, uint8_t *buf, uint16_t len)
-{   
-    uint16_t rx_len, sw = 0;
-    
-    memset(&esam_error_apdu.apdu[0] , 0xFF , 6);
-    
-    tx_esam((uint8_t*)&addr , buf , len);
-    
-    sw = rx_esam(buf , &rx_len);
-    if(0x9000 == sw)
-    {
-        return rx_len;
-    }
-    esam_error_apdu.sw = sw;
-    if(sw > 0)
-    {
-        memcpy(&esam_error_apdu.apdu[0] , (uint8*)&addr , 4);
-        memcpy(&esam_error_apdu.apdu[4] , (uint8*)&len , 2);
-    }
-    
-    return 0xff;
-}
-
-uint8_t read_esam_no(uint8_t *esam_info)
+uint8_t f_esam_type_get_esam_all_info1(struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
 {
-    uint8_t apdu[] = { 0x80, 0x2C, 0x00, 0x01, 0, 5, 0, 0, 0, 0, 0x0D };
+    uint8_t head[4] = {0x80, 0x36, 0x00, 0xff};
+    uint8_t tx_data;
+    uint16_t len , sw;
+    uint8_t ret;
     
-    uint16_t len;
-    
-    if(true == tx_esam(apdu , &apdu[4] , 7))
-    {
-        rx_esam(esam_info , &len );
-    }
-    return true;
+    tx_esam(head , &tx_data , 0 , esam_hal);
+
+    ret = rx_esam(esam_out->data , &len , esam_hal , &sw);
+		
+    return ret;
 }
 
-
-uint8_t read_esam_info(uint8_t *esam_info, uint8_t index)
+uint8_t f_esam_type_get_esam_all_info2(struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
 {
-    uint8_t apdu[4] = {0x80 , 0x36 , 0x00 , 0xFF };
+    uint8_t head[4] = {0x80, 0x36, 0x00, 0xfe};
+    uint8_t tx_data;
+    uint16_t len , sw;
+    uint8_t ret;
     
-    uint16_t len;
-    
-    apdu[3] = index;
-    if(true == tx_esam(apdu , __NULL , 0))
-    {
-        rx_esam(esam_info , &len );
-    }
-    return true;
+    tx_esam(head , &tx_data , 0 , esam_hal);
+
+    ret = rx_esam(esam_out->data , &len , esam_hal , &sw);
+		
+    return ret;
 }
 
-
-static uint8 tx_esam_nolen(uint8 *tx_apdu , uint8 *tx_data , uint16 len)
+uint8_t f_esam_type_meet_consult(uint8_t type , struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
 {
-    uint8 value = 0;
-    uint8 len1 , len2;
-    uint8 lrc1 = 0;
-    uint16 i;
-
+    uint8_t head[4] = {0x81, 0x02, 0x00, 0x00};
+    uint8_t com_data[68];
+    uint16_t len , sw;
+    uint8_t ret;
     
-    ESAM_CS_LOW();
-    
-    len1 = (uint8)(len>>8);
-    len2 = (uint8)len;
-    mcu_delay_us(120);
-    mcu_clear_watchdog();
-
-    DISABLE_ALL_INT();
-    
-    mcu_spi_ops.tx(0x55 , 0);
-
-    lrc1 = tx_apdu[0] ^ tx_apdu[1] ^ tx_apdu[2] ^ tx_apdu[3];
-    for(i=0;i<4;i++)
+    if(type == 1)
     {
-        value += *tx_apdu;
-        mcu_spi_ops.tx(*tx_apdu , 0);
-        tx_apdu++;
+	head[0] = 0x82;
     }
-    //lrc1 ^= len1;
-    //lrc1 ^= len2;
+		
+    memcpy(com_data , esam_in->data , 32);
+    memcpy(&com_data[32] , esam_in->MAC_data , 4);
+		
+    tx_esam(head , com_data , 36 , esam_hal);
 
-    //value += len1;
-    //value += len2;
-    //mcu_spi_ops.tx(len1 , 0);
-    //mcu_spi_ops.tx(len2 , 0);
-    
-    for(i=0;i<len;i++)
+    ret = rx_esam(com_data , &len , esam_hal , &sw);
+		
+    if(type == 1)
     {
-        value += *tx_data;
-        lrc1 ^= *tx_data;
-        mcu_spi_ops.tx(*tx_data , 0);
-        tx_data++;
+	memcpy(esam_out->data, com_data , 64);
+				
+	memcpy(esam_out->MAC_data, &com_data[64]  , 4);
     }
-    mcu_spi_ops.tx(~lrc1 , 0);
-    ENABLE_ALL_INT();
-
-    mcu_delay_us(15);
-    ESAM_CS_HIGH();
-    mcu_delay_us(55);
-
-    return true;
+    else
+    {
+	memcpy(esam_out->data, com_data , 48);
+				
+	memcpy(esam_out->MAC_data, &com_data[48]  , 4);
+    }
+    
+    return ret;
 }
 
 
-uint8_t read_esam_data(uint32_t addr, uint8_t *buf, uint16_t len)
+
+uint8_t f_esam_type_read_meter(uint8_t type , struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
 {
-    uint16_t lenth=false;
-    if(true == tx_esam_nolen((uint8_t*)&addr , buf , len))
+    uint8_t head[4] = {0x80, 0x0E, 0x40, 0x02};
+    uint16_t len , sw;
+    uint8_t ret;
+    
+    if(type == 0)
     {
-        rx_esam(buf , &len );
-        lenth = len;
+	head[1] = 0x0E;  //电表计算明文+MAC
     }
-    return lenth;
+    else if(type == 1)
+    {
+	head[1] = 0x0A;  //电表计算密文
+    }
+    else
+    {
+	head[1] = 0x10;  //电表计算密文+MAC
+    }
+
+    tx_esam(head , esam_in->data , esam_in->data_len , esam_hal);
+
+    ret = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
+		
+    if(type == 0)
+    {
+	memcpy(esam_out->MAC_data, esam_in->data_buf , 4); //电表计算明文+MAC
+    }
+    else if(type == 1)
+    {
+	memcpy(esam_out->data, esam_in->data_buf , len); //电表计算密文
+    }
+    else
+    {
+	memcpy(esam_out->data, esam_in->data_buf , len-4); //电表计算密文
+	memcpy(esam_out->MAC_data, &esam_in->data_buf[len-4] , 4); //电表计算密文+MAC
+    }
+
+    return ret;
 }
+
+uint8_t f_esam_type_broadcast(struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
+{
+    uint8_t head[4];
+    uint16_t len = 0 , sw = 0;
+    uint8_t ret = 0;
+	
+    memcpy(head , (uint8_t *)&esam_in->sid_id , 4);
+    memcpy(esam_in->data_buf , (uint8_t *)&esam_in->AttachData , esam_in->AttachData_len);
+    len = esam_in->AttachData_len;
+    memcpy(&esam_in->data_buf[len] , (uint8_t *)&esam_in->data , esam_in->data_len);
+    len += esam_in->data_len;
+    memcpy(&esam_in->data_buf[len] , (uint8_t *)&esam_in->MAC_data , esam_in->MAC_len);
+    len += esam_in->MAC_len;
+    tx_esam(head , esam_in->data_buf , len , esam_hal);
+    ret = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
+    if(sw == 0x9000)
+    {
+	memcpy(esam_out->data , esam_in->data_buf , len);
+	esam_out->data_len = len;
+    }
+    return ret;
+}
+
+
+uint8_t f_esam_type_point_get_data2(uint8_t type , struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
+{
+    uint8_t head[4];
+    uint16_t len = 0 , sw = 0;
+    uint8_t ret = 0;
+	
+    memcpy(head , (uint8_t *)&esam_in->sid_id , 4);
+    memcpy(esam_in->data_buf , (uint8_t *)&esam_in->AttachData , esam_in->AttachData_len);
+    len = esam_in->AttachData_len;
+    memcpy(&esam_in->data_buf[len] , (uint8_t *)&esam_in->data , esam_in->data_len);
+    len += esam_in->data_len;
+    if(type == 1)//数据验证信息为SID_MAC
+    {
+        memcpy(&esam_in->data_buf[len] , (uint8_t *)&esam_in->MAC_data , esam_in->MAC_len);
+        len += esam_in->MAC_len;
+    }
+    tx_esam(head , esam_in->data_buf , len , esam_hal);
+    ret = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
+    if(sw == 0x9000)
+    {
+         memcpy(esam_out->data , esam_in->data_buf , len);
+         esam_out->data_len = len;
+    }
+    return ret;
+}
+
+#define HES_PLAINTEXT_MAC     0x11
+#define HES_CIPHERTEXT        0xA6
+#define HES_CIPHERTEXT_MAC    0xA7
+
+uint8_t f_esam_hes_point_get_data4(uint8_t p2 , struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
+{
+    uint8_t head[4] = {0x81,0x1c,0x00,0x00};
+    uint16_t len = 0 , sw = 0;
+    uint8_t ret = 0;
+	
+    head[3] = p2;
+    memcpy(esam_in->data_buf , (uint8_t *)&esam_in->data , esam_in->data_len);
+    len = esam_in->data_len;
+    tx_esam(head , esam_in->data_buf , len , esam_hal);
+    ret = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
+    if(sw == 0x9000)
+    {
+         memcpy(esam_out->data , esam_in->data_buf , len);
+         esam_out->data_len = len;
+    }
+    return ret;
+}
+
+
+uint8_t f_esam_type_read_esam_data(struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
+{
+    uint8_t head[4];
+    uint16_t len = 0 , sw = 0;
+    uint8_t ret = 0;
+    
+    memcpy(head , (uint8_t *)&esam_in->sid_id , 4);
+    memcpy(esam_in->data_buf , (uint8_t *)&esam_in->AttachData , esam_in->AttachData_len);
+    len = esam_in->AttachData_len;
+    tx_esam(head , esam_in->data_buf , len , esam_hal);
+    ret = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
+    if(sw == 0x9000)
+    {
+        memcpy(esam_out->data , esam_in->data_buf , len);
+	esam_out->data_len = len;
+    }
+    return ret;
+}
+
+
 
 static void esam_698_power_ctrl(uint8_t power)
 {
@@ -326,35 +401,8 @@ static void esam_698_power_ctrl(uint8_t power)
 }
 
 
-void esam_698_init(void)
-{
-
-    esam_698_power_ctrl(1);
-    
-    //read_esam_info(esam_test, 0xff);
-    
-}
 
 
-uint8_t esam_consult_key(uint8_t cmd, uint8_t *p)
-{
-    uint8_t head[6] = {0x00, 0x02, 0x00, 0x00, 0x00, 0x24};
-    uint8_t buf[52] = {0,};
-    uint16_t len=0,rxlen = 0;
-    uint32_t addr = 0;
-    head[0] = cmd;
-      
-    memcpy((unsigned char*)&addr, (unsigned char*)&head[0], 4);
-    mem_swap_cpy((unsigned char*)&len, (unsigned char*)&head[4], 2);
-    memcpy((unsigned char*)&buf[0], p, 32);
-    memcpy((unsigned char*)&buf[32], p+33, 4);
-    
-    rxlen = write_esam(addr , buf , len);
-    
-    memcpy(p, buf, 52);//48+4
-    
-    return rxlen;
-}
 
 
 void GetKeyStatus(struct instance_t* instance, struct pipeline_t* pipeline)
