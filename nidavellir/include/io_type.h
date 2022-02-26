@@ -34,30 +34,31 @@
 #define io_type_end      (io_type_base+010)        //IO请求类型结束
 
 #define esam_type_base                  (io_type_end)
-#define esam_type_poweron               (esam_type_base+1)
-#define esam_type_poweroff              (esam_type_poweron+1)
-#define esam_type_get_esam_all_info1    (esam_type_poweroff+1)
-#define esam_type_get_esam_all_info2    (esam_type_get_esam_all_info1+1)
-#define esam_type_get_esam_p2_info      (esam_type_get_esam_all_info2+1)
-#define esam_type_hes_meet_consult      (esam_type_get_esam_p2_info+1)
-#define esam_type_terminal_meet_consult (esam_type_hes_meet_consult+1)
-#define esam_type_plaintext_mac         (esam_type_terminal_meet_consult+1)
-#define esam_type_ciphertext            (esam_type_plaintext_mac+1)
-#define esam_type_ciphertext_mac        (esam_type_ciphertext+1)
-#define esam_type_hes_broadcast         (esam_type_ciphertext_mac+1)
-#define esam_type_terminal_broadcast    (esam_type_hes_broadcast+1)
-#define esam_type_hes_point_get_data2   (esam_type_terminal_broadcast+1)
-#define esam_type_read_esam_data        (esam_type_hes_point_get_data2+1)
-#define esam_type_set_sid_mac           (esam_type_read_esam_data+1)
-#define esam_type_set_sid               (esam_type_set_sid_mac+1)
-#define esam_type_file_updata           (esam_type_set_sid+1)
-#define esam_type_key_updata            (esam_type_file_updata+1)
-#define esam_type_set_other             (esam_type_key_updata+1)
-#define esam_type_ir_authen_request     (esam_type_set_other+1)
-#define esam_type_ir_authen             (esam_type_ir_authen_request+1)
-#define esam_type_upreport              (esam_type_ir_authen+1)
-#define esam_type_terminal_id_authen    (esam_type_upreport+1)
-#define esam_type_software_check        (esam_type_terminal_id_authen+1)
+#define esam_type_poweron               (esam_type_base+1)     //ESAM 上电初始化
+#define esam_type_poweroff              (esam_type_poweron+1)  //ESAM 掉电初始化
+#define esam_type_get_esam_all_info1    (esam_type_poweroff+1) //5.1.1明文直接读取批量data1（获取ESAM信息、读取钱包）
+#define esam_type_get_esam_all_info2    (esam_type_get_esam_all_info1+1) //5.1.1明文直接读取批量data2（获取ESAM信息、读取钱包）
+#define esam_type_get_esam_p2_info      (esam_type_get_esam_all_info2+1) //5.1.1单项获取电表安全芯片信息
+#define esam_type_hes_meet_consult      (esam_type_get_esam_p2_info+1)   //5.1.2主站/掌机会话密钥协商
+#define esam_type_terminal_meet_consult (esam_type_hes_meet_consult+1)   //5.1.3终端会话密钥协商
+#define esam_type_plaintext_mac         (esam_type_terminal_meet_consult+1) //5.1.4.1主站/掌机/终端对电能表读取，电表计算明文+MAC
+#define esam_type_ciphertext            (esam_type_plaintext_mac+1)         //5.1.4.1主站/掌机/终端对电能表读取，电表计算密文
+#define esam_type_ciphertext_mac        (esam_type_ciphertext+1)            //5.1.4.1主站/掌机/终端对电能表读取，电表计算密文+MAC
+#define esam_type_hes_broadcast         (esam_type_ciphertext_mac+1)        //5.1.4.2主站对电能表广播
+#define esam_type_terminal_broadcast    (esam_type_hes_broadcast+1)         //5.1.4.3终端对电能表广播
+#define esam_type_hes_point_get_data2   (esam_type_terminal_broadcast+1)    //5.1.4.4主站/掌机对电能表点对点交互获取DATA2
+#define esam_type_hes_point_get_data4   (esam_type_hes_point_get_data2+1)   //5.1.4.4主站/掌机对电能表点对点交互获取DATA4
+#define esam_type_terminal_point_get_data2   (esam_type_hes_point_get_data4+1)    //5.1.4.5终端对电能表点对点交互获取DATA2
+#define esam_type_terminal_point_get_data4   (esam_type_terminal_point_get_data2+1)   //5.1.4.5终端对电能表点对点交互获取DATA4
+#define esam_type_read_esam_data        (esam_type_terminal_point_get_data4+1)   //5.1.4.6(1)ESAM数据读取
+#define esam_type_file_updata           (esam_type_read_esam_data+1)               //5.1.4.6(2)ESAM数据更新
+#define esam_type_key_updata            (esam_type_file_updata+1)           //5.1.4.6(3)ESAM密钥更新
+#define esam_type_set_other             (esam_type_key_updata+1)            //5.1.4.6(5)参数设置
+#define esam_type_ir_authen_request     (esam_type_set_other+1)             //5.1.4.6(6)红外认证请求
+#define esam_type_ir_authen             (esam_type_ir_authen_request+1)     //5.1.4.6(7)红外认证
+#define esam_type_upreport              (esam_type_ir_authen+1)             //5.1.4.7电能表主动上报到主站/终端
+#define esam_type_terminal_id_authen    (esam_type_upreport+1)              //5.1.4.8终端与电表身份认证    
+#define esam_type_software_check        (esam_type_terminal_id_authen+1)    //5.1.5 软件比对
 
 
 
