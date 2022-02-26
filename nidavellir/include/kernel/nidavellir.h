@@ -537,6 +537,19 @@ struct nd_app_t
     struct pipeline_t **pipelines;
     //todo  MF info
 };
+typedef uint32_t type_t;
+typedef uint32_t offset_t;
+//I/O request packet
+struct irp_t
+{
+    type_t type; //请求类型
+    //struct device_t *device; //请求的哪个设备
+    offset_t offset;         //请求偏移(针对块设备)
+    uint8_t *buf;            //responce data
+    size_t size;             //request size;responce size通过返回值返回
+    void *param;             //request ctrl block 指向全局数据结构  例如串口参数控制结构
+};
+
 
 struct nidavellir_t
 {
