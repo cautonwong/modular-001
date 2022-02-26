@@ -4,6 +4,7 @@
 #include "time_link.h"
 #include "pin_function_def.h"
 #include "fr_698_esam.h"
+#include "io_type.h"
 
 #define   ESAM698_MAX_BUF_SIZE    2000
 
@@ -25,16 +26,6 @@ struct esam_hal_t
     const struct io_hal_t *cs;
     uint8_t      spi_NO;
 };
-
-//获取4字节的随机数,用于MAC计算。
-const unsigned char  Cmd_Get_ESMA_Rand4[5] = { 0x00, 0x84, 0x00, 0x00, 0x04 };
-//表号分散得到临时密钥
-const unsigned char  Cmd_ESAM_Key_Scatter[5] = { 0x80, 0xFA, 0x00, 0x03, 0x08 };
-//读ESAM 序列号
-const unsigned char  Cmd_Get_ESAM_SEQ[5] = { 0x00, 0xB0, 0x99, 0x01, 0x08 };
-//ESAM模块加密
-const unsigned char  Cmd_Card_ESAM_Encrypt[5] = { 0x80, 0xFA, 0x00, 0x00, 0x08 };
-
 
 
 
@@ -210,6 +201,21 @@ uint8_t f_esam_type_get_esam_all_info2(struct esam_698_output_t *esam_out , cons
     return ret;
 }
 
+uint8_t f_esam_type_get_esam_p2_info2(struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
+{
+    uint8_t head[4] = {0x80, 0x36, 0x00, 0x00};
+    uint8_t tx_data;
+    uint16_t len , sw;
+    uint8_t ret;
+    
+    head[3] = esam_in->cmd_type;
+    tx_esam(head , &tx_data , 0 , esam_hal);
+
+    ret = rx_esam(esam_out->data , &len , esam_hal , &sw);
+		
+    return ret;
+}
+
 uint8_t f_esam_type_meet_consult(uint8_t type , struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
 {
     uint8_t head[4] = {0x81, 0x02, 0x00, 0x00};
@@ -217,7 +223,7 @@ uint8_t f_esam_type_meet_consult(uint8_t type , struct esam_698_input_t *esam_in
     uint16_t len , sw;
     uint8_t ret;
     
-    if(type == 1)
+    if(type == 1)//终端会话
     {
 	head[0] = 0x82;
     }
@@ -341,13 +347,14 @@ uint8_t f_esam_type_point_get_data2(uint8_t type , struct esam_698_input_t *esam
 #define HES_CIPHERTEXT        0xA6
 #define HES_CIPHERTEXT_MAC    0xA7
 
-uint8_t f_esam_hes_point_get_data4(uint8_t p2 , struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
+uint8_t f_esam_hes_point_get_data4(struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
 {
     uint8_t head[4] = {0x81,0x1c,0x00,0x00};
     uint16_t len = 0 , sw = 0;
     uint8_t ret = 0;
+
 	
-    head[3] = p2;
+    head[3] = esam_in->cmd_type;
     memcpy(esam_in->data_buf , (uint8_t *)&esam_in->data , esam_in->data_len);
     len = esam_in->data_len;
     tx_esam(head , esam_in->data_buf , len , esam_hal);
@@ -402,21 +409,72 @@ static void esam_698_power_ctrl(uint8_t power)
 
 
 
+enum verification_choice_e
+{
+   verification_choice_SID_MAC,
+   verification_choice_RN,
+   verification_choice_RN_MAC,
+   verification_choice_SID,
+};
+
+enum sec
+{
+    SECURITY_CHOICE_0_Plaintext  = 0,    //明文数据单元
+    SECURITY_CHOICE_1_Ciphertext = 1,    //密文数据单元
+};
 
 
+int esam698_driver_entry(struct irp_t *irp , uint32_t __para)
+{
 
-void GetKeyStatus(struct instance_t* instance, struct pipeline_t* pipeline)
-{	
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
-	uint8_t Buf[16];
-    uint32_t keystate=0;
-	
-	read_esam_info(Buf,0X04);//读密钥状态
-    memcpy((uint8_t*)&keystate, (uint8_t*)&Buf[0], 4);
-
-	if( (keystate >= 0x7FFFFFFF) && (Buf[4] >= 0xF0) ) 
-        mbase_control_block->key_state = false; //修改35条密钥以上，为私钥状态
-	else 
-        mbase_control_block->key_state = true;
-		
+    struct esam_698_data_t *esam_698_data = irp->param;
+    
+      
+    switch(irp->type)
+    {
+         case esam_type_poweron:
+              esam_698_power_ctrl(1);
+              break;
+         case esam_type_poweroff:
+              esam_698_power_ctrl(0);
+              break;
+         case esam_type_get_esam_all_info1:
+              f_esam_type_get_esam_all_info1(esam_698_data->output , 0);
+              break;
+         case esam_type_get_esam_all_info2:
+              f_esam_type_get_esam_all_info2(esam_698_data->output , 0);
+              break;
+         case esam_type_get_esam_p2_info:
+              f_esam_type_get_esam_p2_info2(esam_698_data->input , esam_698_data->output , 0);
+              break;
+         case esam_type_hes_meet_consult:
+              f_esam_type_meet_consult(0 , esam_698_data->input , esam_698_data->output , 0);
+              break;
+         case esam_type_terminal_meet_consult:
+              f_esam_type_meet_consult(1 , esam_698_data->input , esam_698_data->output , 0);
+              break;
+         case esam_type_plaintext_mac:
+              f_esam_type_read_meter(0 , esam_698_data->input , esam_698_data->output , 0);
+              break;
+         case esam_type_ciphertext:
+              f_esam_type_read_meter(1 , esam_698_data->input , esam_698_data->output , 0);
+              break;
+         case esam_type_ciphertext_mac:
+              f_esam_type_read_meter(2 , esam_698_data->input , esam_698_data->output , 0);
+              break;
+         case esam_type_hes_broadcast:
+         case esam_type_terminal_broadcast:
+              f_esam_type_broadcast(esam_698_data->input , esam_698_data->output , 0);
+              break;
+         case esam_type_hes_point_get_data2:
+              f_esam_type_point_get_data2(0 , esam_698_data->input , esam_698_data->output , 0);
+              break;
+         case esam_type_hes_point_get_data4:
+              f_esam_hes_point_get_data4(esam_698_data->input , esam_698_data->output , 0);
+              break;
+         case esam_type_read_esam_data:
+              f_esam_type_read_esam_data(esam_698_data->input , esam_698_data->output , 0);
+              break;
+    }
+    return 1;
 }
