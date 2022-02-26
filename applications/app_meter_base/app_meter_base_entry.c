@@ -60,6 +60,7 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
 // !!!在此app中不做IO操作!!!
 int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     size_t mbase_block_persistent_size = offsetof(struct mbase_control_block_t, persistent_section_start) - offsetof(struct mbase_control_block_t, persistent_section_end);
     size_t mbase_block_static_size = offsetof(struct mbase_control_block_t, static_section_end) - offsetof(struct mbase_control_block_t, static_section_start);
     uint32_t addr = 0;
@@ -130,7 +131,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
         nd_get_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)addr,mbase_block_persistent_size); //将EPROM中的数据恢复到RAM;        
         Electrical_measurement_poweron(instance, pipeline);
         AllDisplayLCD(instance, pipeline);
-        GetKeyStatus(instance, pipeline);//获取秘钥状态
+        mbase_control_block->key_state = get_key_status(instance);//获取秘钥状态
         Magnetic_hold_relay_Init();
         break;
       case MSG_POWEROFF:

@@ -6,15 +6,6 @@
 
 
 
-
-
-int openM_ioctl(int fd, int request, void *param)
-{
-    return 1;
-}
-
-
-
 uint16_t write_esam(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_t len)
 {
     return 1;  
