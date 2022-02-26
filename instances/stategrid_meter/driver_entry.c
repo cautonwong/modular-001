@@ -319,6 +319,7 @@ void irq_transform_to_instance(struct instance_t* instance)
 
 void IOStateCheckInit(void);
 
+
 void dev_init(void)
 {
     mcu_main_power_on_config();

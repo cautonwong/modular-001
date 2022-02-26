@@ -1,6 +1,7 @@
 ﻿#include "nidavellir.h"
 #include "fr_698.h"
 #include "fr_698_esam.h"
+#include "io_type.h"
 
 #define io_type_end      (0x10)        //IO请求类型结束
 
@@ -24,7 +25,7 @@
 #define esam_type_terminal_id_authen    (esam_type_upreport+1)
 #define esam_type_software_check        (esam_type_terminal_id_authen+1)
 
-
+extern int openM_ioctl(int fd, int request, void *param);
 
 
 
@@ -70,6 +71,8 @@ void esam_698_init(void)
     //param.input = p_input;
     //param.output = p_output;
     //return openM_ioctl(fd, request, (void *)&param);
+    request = esam_type_poweron;
+    openM_ioctl(fd, request, (void *)&param);
 }
 
 uint8_t esam_consult_key(uint8_t cmd, uint8_t *p)

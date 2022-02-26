@@ -475,7 +475,7 @@ int openM_ioctl(int fd, int request, void *param)
               break;
          default:
               break;
-    }  
+    }
   return 1;
 }
 
