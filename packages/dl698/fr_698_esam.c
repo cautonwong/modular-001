@@ -27,12 +27,6 @@
 
 
 
-int openM_ioctl(int fd, int request, void *param)
-{
-    return 1;
-}
-
-
 
 uint16_t write_esam(uint32_t addr, uint8_t *buf, uint16_t len)
 {

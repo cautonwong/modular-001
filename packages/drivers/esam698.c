@@ -424,13 +424,11 @@ enum sec
 };
 
 
-int esam698_driver_entry(struct irp_t *irp , uint32_t __para)
-{
 
-    struct esam_698_data_t *esam_698_data = irp->param;
-    
-      
-    switch(irp->type)
+int openM_ioctl(int fd, int request, void *param)
+{
+    struct esam_698_data_t *esam_698_data = (struct esam_698_data_t *)param;
+    switch(request)
     {
          case esam_type_poweron:
               esam_698_power_ctrl(1);
@@ -475,6 +473,11 @@ int esam698_driver_entry(struct irp_t *irp , uint32_t __para)
          case esam_type_read_esam_data:
               f_esam_type_read_esam_data(esam_698_data->input , esam_698_data->output , 0);
               break;
-    }
-    return 1;
+         default:
+              break;
+    }  
+  return 1;
 }
+
+
+
