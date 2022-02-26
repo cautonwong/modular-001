@@ -37,7 +37,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 txlen = *p++;
                 memcpy(keybuf, p, txlen);
                 p = p + txlen;
-                rxlen = read_esam_data(addr , keybuf , txlen);
+                rxlen = read_esam_data(instance, addr , keybuf , txlen);
                 
                 //cache->buf_ptr[cache->wr++] = 0;  //成功
                 //cache->buf_ptr[cache->wr++] = 1;  //有数据
@@ -75,7 +75,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 memcpy((uint8_t*)&keybuf[len2-2], buffer, len1);
                 memcpy((uint8_t*)&keybuf[len2-2+len1], p, 4);//MAC
                 p = p + 4;
-                write_esam(addr , keybuf , txlen);
+                write_esam(instance, addr , keybuf , txlen);
                 addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Number);
                 nd_set_index(instance, addr, (p - 23), 6); 
                 return (p-buf);
@@ -100,7 +100,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
 
                 memcpy((uint8_t*)&p_ctx->apdu_rx->buf_ptr[1682], (uint8_t*)&p_ctx->apdu_rx->buf_ptr[1700], 4);//MAC
                 
-                rxlen = write_esam(addr , (uint8_t*)&p_ctx->apdu_rx->buf_ptr[9], txlen);
+                rxlen = write_esam(instance, addr , (uint8_t*)&p_ctx->apdu_rx->buf_ptr[9], txlen);
                 p = p + 1692;
                 //成功后 再触发 密钥更新事件
                 if(rxlen != 0xff)
@@ -111,12 +111,12 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             }
             else if(method == 0x0B) //红外请求
             {
-                read_esam_no(buffer);
+                read_esam_no(instance, buffer);
                 memcpy(keybuf, (uint8_t*)&buffer[5], 8);//表号, 8bytes
 
                 addr = 0x02003680;
                 txlen = 0;
-                write_esam(addr , buffer , txlen);
+                write_esam(instance, addr , buffer , txlen);
                 memcpy((uint8_t*)&keybuf[16], buffer, 8);   //ESAM序列号, 8bytes
                 
                 p = p + 2;
@@ -125,11 +125,11 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 memcpy(buffer, keybuf, 16); // 表号，随机数
                 addr = 0x03080880;
                 txlen = 0x0010;
-                rxlen = write_esam(addr , buffer , txlen);  //80 08 08 03 00 10 + 表号，随机数，返回密文
+                rxlen = write_esam(instance, addr , buffer , txlen);  //80 08 08 03 00 10 + 表号，随机数，返回密文
                 
                 addr = 0x08000480;
                 txlen = 0;
-                rxlen = write_esam(addr , (uint8_t*)&keybuf[24] , txlen);  //返回随机数2
+                rxlen = write_esam(instance, addr , (uint8_t*)&keybuf[24] , txlen);  //返回随机数2
                 
                 cache->buf_ptr[cache->wr++] = 0;  //成功
                 cache->buf_ptr[cache->wr++] = 1;  //有数据
@@ -164,7 +164,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 p = p + 8;
                 addr = 0x01000680;
                 txlen = 8;
-                rxlen = write_esam(addr , buffer , txlen);
+                rxlen = write_esam(instance, addr , buffer , txlen);
                 if(rxlen == 0xff)
                 {
                     return -1;

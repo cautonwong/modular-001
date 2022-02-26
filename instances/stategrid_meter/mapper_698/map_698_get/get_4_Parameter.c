@@ -1,7 +1,7 @@
 #include "nidavellir.h"
 #include "fr_698.h"
 
-extern uint8_t read_esam_no(uint8_t *esam_info);
+
 
 typedef struct 
 {
@@ -244,7 +244,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
             {
                 *p++ = TYPE_octet_string;
                 *p++ = 6;
-                read_esam_no(temp);
+                read_esam_no(instance, temp);
                 memcpy(p, temp+7, 6);
                 p = p + 6;
                 return (p - buf);

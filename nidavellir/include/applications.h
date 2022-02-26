@@ -374,10 +374,10 @@ extern int period_check1(uint16_t oi, uint16_t* capture_period);
 extern int period_check2(uint8_t scheme, uint16_t period, uint8_t* period_buf);
 extern uint8_t capture_check(uint32_t oad, uint8_t* oad_buf);
 
-extern uint8_t read_esam_data(uint32_t addr, uint8_t *buf, uint16_t len);
-extern uint16_t write_esam(uint32_t addr, uint8_t*buf, uint16_t len);
-extern uint8_t read_esam_no(uint8_t *esam_info);
-extern uint8_t read_esam_info(uint8_t *esam_info, uint8_t index);
+extern uint8_t read_esam_data(struct instance_t* instance,uint32_t addr, uint8_t *buf, uint16_t len);
+extern uint16_t write_esam(struct instance_t* instance, uint32_t addr, uint8_t*buf, uint16_t len);
+extern uint8_t read_esam_no(struct instance_t* instance, uint8_t *esam_info);
+extern uint8_t read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t index);
 
 extern int backlight_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
 
@@ -401,7 +401,7 @@ extern uint8_t lcd_init(uint8_t power_mode);
 
 extern void rtc_get_from_tm(struct instance_t* instance, uint8_t* p);
 
-extern uint8_t get_key_status(void);
+extern uint8_t get_key_status(struct instance_t* instance);
 
 extern unsigned short display_oad_to_id(unsigned char *oad, unsigned char len);
 extern int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf);

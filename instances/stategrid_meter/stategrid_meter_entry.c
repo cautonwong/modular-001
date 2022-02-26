@@ -270,7 +270,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     
     buf = nd_malloc(instance, control_block_cache, 8);
     fifoBuf_init(&instance->pipe_uart, buf, 8);
-    instance->apdu_cache = nd_malloc(instance, control_block_cache, 1700);
+    instance->apdu_cache = nd_malloc(instance, control_block_cache, cache_max);
         
     /////////////////////////////////////申请一个698应用的BLOCK = 03/////////////////////////////////////////////////
     if (NULL == add_block(instance, RES_DEV_RAM, control_block_698_name, 13 * 1024))//16

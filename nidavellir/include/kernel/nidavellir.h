@@ -195,9 +195,13 @@ struct context_645_t
 
 #define Max698len       544
 #define Max698_apdu     1800
-#define Max698_apdu_rx  1800
+#define Max698_apdu_rx  2048
+
 
 #define pl_tx_698_len   128
+
+#define cache_max   2048
+
 
 
 struct context_698_t
@@ -207,6 +211,8 @@ struct context_698_t
     struct connect_cfg_info_t *connect_info;
     struct factory_version_t *factory_version;
     //作为从站方用的临时状态
+    
+    uint8_t channel;
     uint16_t index;//临时计数器
     uint8_t SA;
     uint8_t LA;
@@ -232,6 +238,8 @@ struct context_698_t
 
     uint8_t security_choice;
     uint8_t verification_choice;
+    uint8_t RN_len;
+    uint8_t RN_data[64];
     uint8_t *security_data;
     uint16_t security_data_len;
     

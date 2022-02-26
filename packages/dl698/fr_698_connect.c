@@ -144,18 +144,8 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     memcpy(buf, apdu_rx + ctx->apdu_rx_offset, 38);
     ctx->apdu_rx_offset += 38;
     
-    if(CA_TYPE_TER(ctx->CA))//from 终端
-    {
-	    //memcpy((uint8_t*)&buf[offset],(uint8_t*)&esam_symauth_term[0],6);
-		//dectypt->rn[0] = 64;
-        len_len = esam_consult_key( 0x82 , buf+1 );
-    }
-    else //from 主站
-    {
-        len_len = esam_consult_key( 0x81 , buf+1 );
-	   // memcpy((uint8_t*)&buf[offset],(uint8_t*)&esam_symauth[0],6);
-		//dectypt->rn[0] = 48;
-    }
+    len_len = esam_consult_key(instance, CA_TYPE_TER(ctx->CA) , buf+1 );
+
     cache->wr = cache->wr - 3;
     *(p_apdu+cache->wr) |= 0x82;  //应答
     cache->wr++;
@@ -196,7 +186,7 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
         memcpy((p_apdu+cache->wr), buf+49,4);//MAC
         cache->wr = cache->wr + 4;
         
-        read_esam_info(buf,0X05);
+        read_esam_info(instance, buf,0X05);
         mem_swap_cpy((uint8_t*)&mbase_cb->authen_tmr, (uint8_t*)&buf[0], 4);
         mbase_cb->authen_tmr = mbase_cb->authen_tmr * 60;
         return DAR_SUCCESS;

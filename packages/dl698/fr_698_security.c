@@ -67,7 +67,7 @@ static int __verification_SID_MAC(struct instance_t* instance, struct pipeline_t
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
     
-    input.cmd_type              = 0;
+    input.cmd_type              = 1;
     input.security_choice       = ctx->security_choice;
     input.verification_choice   = ctx->verification_choice;
     input.data                  = ctx->security_data;
@@ -77,11 +77,11 @@ static int __verification_SID_MAC(struct instance_t* instance, struct pipeline_t
     input.MAC_len  = ___get_octet_string(ctx, &input, &offset);
     input.MAC_data = apdu_rx + offset;
 
-    input.data_buf              = cache->buf_ptr;
-    input.data_buf_len          = Max698_apdu;
+    input.data_buf      = instance->apdu_cache; //临时缓冲区
+    input.data_buf_len  = cache_max;            //临时缓冲长度
     
-    output.data        = ctx->security_data;
-    output.data_len    = Max698_apdu_rx - 5;
+    output.data         = ctx->security_data;
+    output.data_len     = Max698_apdu_rx - 5;
           
     ret = fr_698_handle_esam(&input, &output);
     if(ret > 0){
@@ -102,7 +102,7 @@ static int __verification_RN(struct instance_t* instance, struct pipeline_t* pip
     uint8_t *mac = cache->buf_ptr + ctx->security_data_len;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
-    input.cmd_type              = 1;
+    input.cmd_type              = 2;
     input.security_choice       = ctx->security_choice;
     input.verification_choice   = ctx->verification_choice;
     input.data                  = ctx->security_data;
@@ -110,19 +110,11 @@ static int __verification_RN(struct instance_t* instance, struct pipeline_t* pip
 
     input.RN_Data_len   = ___get_octet_string(ctx, &input, &offset);
     input.RN_Data       = apdu_rx + offset;
-    
-    input.data_buf              = ctx->apdu_d_rx;
-    input.data_buf_len          = Max698_apdu_rx;
-            
-    output.MAC_data = cache->buf_ptr + ctx->security_data_len + 3;
-    output.MAC_len = 0;
-    
-    ret = fr_698_handle_esam(&input, &output);
-    if(ret > 0){
-      if(output.MAC_len == 4){
 
-        }
-    }
+    ctx->RN_len = input.RN_Data_len;
+    if(ctx->RN_len > 64)
+        ctx->RN_len = 64;
+    memcpy(ctx->RN_data, input.RN_Data, ctx->RN_len);
     return 1;
 }
 
@@ -136,7 +128,7 @@ static int __verification_RN_MAC(struct instance_t* instance, struct pipeline_t*
     uint8_t *mac = cache->buf_ptr + ctx->security_data_len;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
-    input.cmd_type              = 2;
+    input.cmd_type              = 3;
     input.security_choice       = ctx->security_choice;
     input.verification_choice   = ctx->verification_choice;
     input.data                  = ctx->security_data;
@@ -147,8 +139,13 @@ static int __verification_RN_MAC(struct instance_t* instance, struct pipeline_t*
     input.MAC_len     = ___get_octet_string(ctx, &input, &offset);
     input.MAC_data    = apdu_rx + offset;
     
-    input.data_buf              = ctx->apdu_d_rx;
-    input.data_buf_len          = Max698_apdu_rx;
+    ctx->RN_len = input.RN_Data_len;
+    if(ctx->RN_len > 64)
+        ctx->RN_len = 64;
+    memcpy(ctx->RN_data, input.RN_Data, ctx->RN_len);
+    
+    input.data_buf      = instance->apdu_cache; //临时缓冲区
+    input.data_buf_len  = cache_max;            //临时缓冲长度
     
     output.MAC_data = cache->buf_ptr + ctx->security_data_len + 3;
     output.MAC_len = 0;
@@ -171,19 +168,22 @@ static int __verification_SID(struct instance_t* instance, struct pipeline_t* pi
     uint8_t *mac = cache->buf_ptr + ctx->security_data_len;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
-    input.cmd_type              = 3;
+    input.cmd_type              = 4;
     input.security_choice       = ctx->security_choice;
     input.verification_choice   = ctx->verification_choice;
     input.data                  = ctx->security_data;
     input.data_len              = ctx->security_data_len;
     
     ___get_sid(ctx, &input);
+    input.data_buf      = instance->apdu_cache; //临时缓冲区
+    input.data_buf_len  = cache_max;            //临时缓冲长度
     
-    output.data        = ctx->security_data;
-    output.data_len    = Max698_apdu_rx - 5;
-            
+    
+    output.data     = ctx->security_data;
+    output.data_len = Max698_apdu_rx - 5;
+
     output.MAC_data = cache->buf_ptr + ctx->security_data_len + 3;
-    output.MAC_len = 0;
+    output.MAC_len  = 0;
     
     ret = fr_698_handle_esam(&input, &output);
     if(ret > 0){
@@ -235,14 +235,19 @@ static int ___get_encode_and_mac(struct instance_t* instance, struct pipeline_t*
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
     
-    input.cmd_type              = 4;
+    input.cmd_type              = 0;
     input.security_choice       = ctx->security_choice;
     input.verification_choice   = ctx->verification_choice;
     input.data                  = cache->buf_ptr;
     input.data_len              = ctx->security_data_len;
     input.data_buf              = ctx->apdu_d_rx;
     input.data_buf_len          = Max698_apdu_rx;
-            
+
+    input.RN_Data_len           = ctx->RN_len;
+    input.RN_Data               = ctx->RN_data;
+    input.data_buf      = instance->apdu_cache; //临时缓冲区
+    input.data_buf_len  = cache_max;            //临时缓冲长度
+    
     output.MAC_data = cache->buf_ptr + ctx->security_data_len + 3;
     output.MAC_len = 0;
     

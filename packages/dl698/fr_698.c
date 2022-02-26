@@ -404,6 +404,8 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     }
 //#endif
 
+    ctx->channel = pipeline->id;
+#if 0
     if((pipeline->id == pid_rx_698) || (pipeline->id == pid_ir_rx_698))
     {
         mbase_cb->commdisp_ir485 = 2;
@@ -412,7 +414,7 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     {
         mbase_cb->commdisp_plc = 2;
     }
-    
+#endif 
     return 1;
 }
 
@@ -824,9 +826,3 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
 
     return 0;
 }
-
-//内存消耗分析:  <3.5K
-//串口接收FIFO 544  
-//串口发送FIFO 544 
-//接收别的pl的主动发送FIFO  200
-//用来装apdu的cache fifo  2048

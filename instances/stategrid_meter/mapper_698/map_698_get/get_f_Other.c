@@ -1,7 +1,7 @@
 #include "nidavellir.h"
 #include "fr_698.h"
 
-extern uint8_t read_esam_info(uint8_t *esam_info, uint8_t index);
+extern uint8_t read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t index);
 
 const uint8_t name_rs485[5] = {'R', 'S', '4', '8', '5'};
 const uint8_t name_ir[5] = {'I', 'N', 'F', 'R', 'A'};
@@ -278,7 +278,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                 case 0x02://ESAM序列号
                     *p++ = TYPE_octet_string;
                     *p++ = 8;
-                    read_esam_info(esam_inf, 0x02);
+                    read_esam_info(instance, esam_inf, 0x02);
                     memcpy(p, (uint8_t*)&esam_inf[0], 8);
                     p = p + 8;
                     return (p - buf);
@@ -286,7 +286,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                 case 0x03://版本号
                     *p++ = TYPE_octet_string;
                     *p++ = 5;
-                    read_esam_info(esam_inf,0x01);
+                    read_esam_info(instance, esam_inf,0x01);
                     memcpy(p, (uint8_t*)&esam_inf[0], 5);
                     p = p + 5;
                     return (p - buf);
@@ -294,14 +294,14 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                 case 0x04://对称秘钥版本
                     *p++ = TYPE_octet_string;
                     *p++ = 16;
-                    read_esam_info(esam_inf,0X04);
+                    read_esam_info(instance, esam_inf,0X04);
                     memcpy(p, (uint8_t*)&esam_inf[0], 16);
                     p = p + 16;
                     return (p - buf);
                     break;
                 case 0x05://会话时效门限
                     *p++ = TYPE_double_long_unsigned;
-                    read_esam_info(esam_inf,0X05);
+                    read_esam_info(instance, esam_inf,0X05);
                     memcpy(p, (uint8_t*)&esam_inf[0], 4);
                     p = p + 4;
                     return (p - buf);
@@ -316,7 +316,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                 case 0x07://当前计数器
                     *p++ = TYPE_structure;
                     *p++ = 3;
-                    read_esam_info(esam_inf,0X06);
+                    read_esam_info(instance, esam_inf,0X06);
                     for(i=0;i<3;i++)
                     {
                         *p++ = TYPE_double_long_unsigned;
@@ -347,21 +347,21 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                 case 0x12://终端地址
                     *p++ = TYPE_octet_string;
                     *p++ = 8;
-                    read_esam_info(esam_inf,0X11);
+                    read_esam_info(instance, esam_inf,0X11);
                     memcpy(p, esam_inf, 8);
                     p = p + 8;
                     return (p-buf);
                     break;
                 case 0x13://广播计数器
                     *p++ = TYPE_double_long_unsigned;
-                    read_esam_info(esam_inf,0X12);
+                    read_esam_info(instance, esam_inf,0X12);
                     memcpy(p, esam_inf, 4);
                     p = p + 4;
                     return (p-buf);
                     break;
                 case 0x15://终端会话时间
                     *p++ = TYPE_double_long_unsigned;
-                    read_esam_info(esam_inf,0X14);
+                    read_esam_info(instance, esam_inf,0X14);
                     memcpy(p, esam_inf, 4);
                     p = p + 4;
                     return (p-buf);
