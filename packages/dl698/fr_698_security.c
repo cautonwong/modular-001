@@ -283,11 +283,48 @@ int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline,
 }
 
 
+const uint32_t fr_698_infrared_read_infinitize_oad[] =
+{
+    0x202c0200,
+    0x40000200,
+    0x40010200,
+    0x40020200,
+    0x41110200,
+};
 
 
+int fr_698_esam_plain_read_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index, uint32_t oad)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t i;
+    uint16_t oi;
 
+#if 0 // 待调整 需开启
+    if ((0 == ctrl_block->esam_auth_enable) || (dl698_current_connect_status_get(client_index))) // 待调整 身份认证未启用或当前客户机应用链接状态
+    {
+        return 1;
+    }
+#endif
+    if ((1 == client_index) && ctrl_block->term_auth_timeout)//终端
+    {
+        return 1;
+    }
 
-
+    oi = get_OAD_OI(oad);
+    if ((0x0000 == (oi & 0xFF00)) || (0xF100 == oi))
+    {
+        return 1;
+    }
+    for (i = 0; i < (sizeof(fr_698_infrared_read_infinitize_oad) / sizeof(fr_698_infrared_read_infinitize_oad[0])); i++)
+    {
+        if ((oad & 0xffffff00) == fr_698_infrared_read_infinitize_oad[i])
+        {
+            return 1;
+        }
+    }
+    return -1;
+}
 
 
 #if 1   //----698安全模式字-----------------------------开始
@@ -362,26 +399,139 @@ const struct security_mode_t security_mode_match_high_half_byte_tab[] =
 const uint16_t security_default_mode = (TEST_RIGHT | GET_PLAIN_MAC | SET_CIPHER_MAC | ACTION_CIPHER_MAC);
 
 
-
-#if 0
-//判断安全模式是否符合要求   明文	明文+数据验证码	  密文	  密文+数据验证码
-static int dl698_al_security_mode_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t mode, uint32_t oad, uint8_t* tmp_buf, uint8_t cilent_index)
+#if 1
+#define SecurityMode_EXData_LEN 101 
+int __explicit_security_mode(struct instance_t* instance, struct pipeline_t* pipeline, uint16_t oi, uint16_t* mode, uint8_t* tmp_buf)
 {
-    uint16_t security_mode = 0;
-    //uint8 broadcast_mode = 0;
+    uint8_t* tmp, i, count, maxnum;
+    uint16_t oi2;
+    uint32_t addr;
 
-    if (true == dl698_factory_mode_get())
+    *mode = 0xffff;
+    tmp = tmp_buf;
+
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+    nd_get_index(instance, addr, tmp, SecurityMode_EXData_LEN);
+
+    count = *tmp++;
+    maxnum = (SecurityMode_EXData_LEN - 1) / 4;
+
+    if ((count == 0) || (count > maxnum))
+    {
+        return -1;
+    }
+
+
+    for (i = 0; i < count; i++)
+    {
+        oi2 = buf_to_uint16_lsb(tmp);
+
+        if (oi2 == oi)
+        {
+            *mode = buf_to_uint16_lsb(tmp + 2);
+            return 1;
+        }
+
+        tmp += 4;
+    }
+
+    return -1;
+}
+
+
+
+uint16_t __security_mode_word_get(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, uint8_t* tmp_buf)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t flag;
+    uint16_t i, oi, mode = 0;
+    uint32_t num, addr;
+
+    flag = 0;
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_En);
+    nd_get_index(instance, addr, &flag, 1);
+
+    if (flag != 1)
+    {
+        return 0xffff;
+    }
+
+    oi = get_OAD_OI(oad);
+
+    if (true == __explicit_security_mode(instance, pipeline, oi, &mode, tmp_buf))
+    {
+        return mode;
+    }
+
+    num = sizeof(security_mode_match_all_tab) / sizeof(security_mode_match_all_tab[0]);
+
+    for (i = 0; i < num; i++)
+    {
+        if (security_mode_match_all_tab[i].oi == oi)
+        {
+            return security_mode_match_all_tab[i].mode;
+        }
+    }
+
+    num = sizeof(security_mode_match_high_byte_tab) / sizeof(security_mode_match_high_byte_tab[0]);
+
+    for (i = 0; i < num; i++)
+    {
+        if (security_mode_match_high_byte_tab[i].oi == (oi | 0x00ff))
+        {
+            return security_mode_match_high_byte_tab[i].mode;
+        }
+    }
+
+    num = sizeof(security_mode_match_high_half_byte_tab) / sizeof(security_mode_match_high_half_byte_tab[0]);
+
+    for (i = 0; i < num; i++)
+    {
+        if (security_mode_match_high_half_byte_tab[i].oi == (oi | 0x0fff))
+        {
+            return security_mode_match_high_half_byte_tab[i].mode;
+        }
+    }
+
+    return security_default_mode;
+}
+
+
+//判断安全模式字是否符合要求   明文	明文+数据验证码	  密文	  密文+数据验证码
+// cmd : 0 get, 1 set, 2 action
+int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cmd, uint32_t oad)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    uint8_t *tmp_buf = instance->apdu_cache;
+    uint8_t cilent_index = 0; 
+    uint16_t security_mode = 0;
+    int16 ret;
+
+    if (CA_TYPE_TER(ctx->CA))//from 终端
+    {
+        cilent_index = 1;
+    }
+    else
+    {
+        cilent_index = 0;
+    }
+
+    if (ctrl_block->factor_mode == true)
     {
         return DAR_SUCCESS;
     }
 
-    if (session->channel == 0x1060)//主站-红外
+#if 0// 待调整
+    if (ctrl_block->channel == pid_ir_rx_698)//红外    待调整
     {
-        if (cilent_index == 1)//补充08月09号，终端不能通过红外访问
+        if (cilent_index == 1)//拒绝终端通过红外访问
         {
             return DAR_RW_REJECT;
         }
-        if (infrared_auth_timeout == 0)
+        if (ctrl_block->infrared_auth_timeout == 0) // 待调整
         {
             return DAR_SUCCESS;
         }
@@ -391,54 +541,54 @@ static int dl698_al_security_mode_check(struct instance_t* instance, struct pipe
             return DAR_SUCCESS;
         }
     }
-    /*明文合闸特殊处理*/
+#endif     
+    // 明文合闸特殊处理 
     if (oad == 0x80008300)
     {
         return DAR_SUCCESS;
     }
 
-    /*明文确认跟随上报状态字*/
+    // 明文确认跟随上报状态字
     if (oad == 0x20157f00)
     {
         return DAR_SUCCESS;
     }
 
-    /*ESAM相关参数不判断权限*/
-    if ((mode == 0) && (oad_to_oi(oad) == 0xf100))
+    // ESAM相关参数不判断权限
+    if ((cmd == 0) && (get_OAD_OI(oad) == 0xf100))
     {
         return DAR_SUCCESS;
     }
 
-    security_mode = dl698_security_mode_get(oad, tmp_buf);
+    security_mode = __security_mode_word_get(instance, pipeline, oad, tmp_buf);
 
     if (security_mode == 0xffff)
     {
         return DAR_SUCCESS;
     }
 
-    if (mode == 1)
+    if (cmd == 1)
     {
         security_mode <<= 4;
     }
 
-    if (mode == 2)
+    if (cmd == 2)
     {
         security_mode <<= 8;
     }
 
-    if (0 != session->req.sec_flag.bits.security)
+    if (0xFF != ctx->security_choice)// 安全传输
     {
-        if (session->req.sec_flag.bits.cipher)
+        if (ctx->security_choice  == 1)
         {
-            if (session->req.sec_flag.bits.auth_type == AUTH_SID_MAC)
+            if (ctx->verification_choice == AUTH_SID_MAC)
             {
                 return DAR_SUCCESS;
             }
-            else if (session->req.sec_flag.bits.auth_type == AUTH_SID)
+            else if (ctx->verification_choice == AUTH_SID)
             {
                 if (security_mode & 0x1000U)
                 {
-                    aprint("security auth not match2 %04x\r\n", security_mode);
                     return DAR_SECURITY_AUTH_NOT_MATCH;
                 }
 
@@ -447,20 +597,19 @@ static int dl698_al_security_mode_check(struct instance_t* instance, struct pipe
         }
         else
         {
-            if ((session->req.sec_flag.bits.auth_type == AUTH_RN_MAC) || (session->req.sec_flag.bits.auth_type == AUTH_SID_MAC))
+            if ((ctx->verification_choice == AUTH_RN_MAC) || (ctx->verification_choice == AUTH_SID_MAC))
             {
                 if (security_mode & 0x3000U)
                 {
-                    aprint("security auth not match3 %04x\r\n", security_mode);
                     return DAR_SECURITY_AUTH_NOT_MATCH;
                 }
 
                 return DAR_SUCCESS;
             }
 
-            if (session->req.sec_flag.bits.auth_type == AUTH_RN)
+            if (ctx->verification_choice == AUTH_RN)
             {
-                if (mode == 0)//get
+                if (cmd == 0)//get
                 {
 
                     if (security_mode & 0xc000U)
@@ -469,14 +618,12 @@ static int dl698_al_security_mode_check(struct instance_t* instance, struct pipe
                     }
                     else
                     {
-                        aprint("security auth not match4 %04x\r\n", security_mode);
                         return DAR_SECURITY_AUTH_NOT_MATCH;
                     }
                 }
 
                 if (security_mode & 0x7000U)
                 {
-                    aprint("security auth not match5 %04x\r\n", security_mode);
                     return DAR_SECURITY_AUTH_NOT_MATCH;
                 }
 
@@ -486,28 +633,17 @@ static int dl698_al_security_mode_check(struct instance_t* instance, struct pipe
     }
     else
     {
-#if 0
-        /* 广播校时特殊处理，密文模式下，不支持明文校时 */
-        if (oad == 0x40007F00)
-        {
-            if ((false == hfp_read(0x5FD0, (uint8*)&broadcast_mode, 0x01, __NULL)) || (broadcast_mode == 0x00))
-            {
-                aprint("security auth not match1 %04x\r\n", security_mode);
-                return DAR_SECURITY_AUTH_NOT_MATCH;
-            }
-        }
-#endif
 
-        if (mode == 0)
+        if (cmd == 0)
         {
             if ((security_mode & 0x8000) != 0x8000)
             {
-                aprint("security auth not match1 %04x\r\n", security_mode);
                 return DAR_SECURITY_AUTH_NOT_MATCH;
             }
             else
             {
-                if (dl698_esam_plain_read_check(cilent_index, oad))
+                ret = fr_698_esam_plain_read_check(instance, pipeline, cilent_index, oad);
+                if (ret >= 0)
                     return DAR_SUCCESS;
                 else
                     return DAR_SECURITY_AUTH_NOT_MATCH;
@@ -519,14 +655,12 @@ static int dl698_al_security_mode_check(struct instance_t* instance, struct pipe
         }
         if (security_mode & 0x7000U)
         {
-            aprint("security auth not match6 %04x\r\n", security_mode);
             return DAR_SECURITY_AUTH_NOT_MATCH;
         }
 
         return DAR_SUCCESS;
     }
 
-    aprint("security auth not match7 %04x\r\n", security_mode);
     return DAR_SECURITY_AUTH_NOT_MATCH;
 }
 #endif

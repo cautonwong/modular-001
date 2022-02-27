@@ -13,7 +13,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
 #ifndef WIN32
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad,displayid;
-    uint8_t index,attribute,i,len,dispalyseque,maxnum;
+    uint8_t index,attribute,i,len,dispalyseque,maxnum, tempbuf[10] = {0};
     uint8_t* p = buf;
     uint32_t displayoad1,displayoad2,addr=0,s_index=0,atrtime=0;
     uint8_t esam_inf[45]; 
@@ -372,8 +372,10 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
             switch (attribute)
             {
                 case 0x02://安全模式参数
+                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_En);
+                    nd_get_index(instance, s_index, &tempbuf[0], 1);    
                     *p++ = TYPE_enum;
-                    *p++ = mbase_cb->SafeEn;
+                    *p++ = tempbuf[0];                    
                     return (p-buf);
                     break;
             }

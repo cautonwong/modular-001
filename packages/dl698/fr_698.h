@@ -330,7 +330,13 @@ struct security_mode_t
     uint16_t oi;
     uint16_t mode;
 };
-
+enum auth_type_t
+{
+    AUTH_SID_MAC = 0,
+    AUTH_RN      = 1,
+    AUTH_RN_MAC  = 2,
+    AUTH_SID     = 3,
+};
 
 
 

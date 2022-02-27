@@ -40,6 +40,9 @@ extern const uint8_t  init_StepCutFreeze_depth[];
 extern const uint8_t  init_StepBillFreeze_depth[];    
 extern const uint8_t  init_InstantFreeze_depth[];     
 
+extern const uint8_t  init_SecurityMode_En[];
+extern const uint8_t  init_SecurityMode_EXData[];
+
 extern const uint8_t  init_OverCurrentAS_oad[];
 extern const uint8_t  init_PowerOffS_oad[];
 extern const uint8_t  init_MeterWrS_oad[];
@@ -427,6 +430,9 @@ const  parameter_item_t  parameter_item[] =
  
     { MinFrez_Sectors               , 0x01, 18, 0 }, //分钟冻结各方案的扇区偏移 9*2 
 
+    { SecurityMode_En               , 0x01,  1, init_SecurityMode_En }, //安全模式参数使能0-dis   1-en
+    { SecurityMode_EXData           , 0x01,101, init_SecurityMode_EXData }, //显式安全模式参数缓存
+    
     { AutoDisplayList,     0x64,   2,       init_AutoDisplayList },//100屏*2字节
     { KeyDisplayList,      0x64,   2,       init_KeyDisplayList },//100屏*2字节
     

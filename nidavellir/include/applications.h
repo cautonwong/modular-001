@@ -128,7 +128,11 @@ struct mbase_control_block_t
     //认证相关
     uint32_t irauthen_tmr;  //红外认证有效时间
     uint32_t authen_tmr;    //应用连接有效时间
-    
+
+    uint32_t term_auth_timeout;//终端身份认证剩余时间   待调整
+    uint32_t infrared_auth_timeout;//红外身份认证剩余时间  待调整
+    uint8_t esam_auth_enable;  //身份认证启用标志
+
     //显示相关
     uint8_t commdisp_plc;    //通讯符号显示
     uint8_t commdisp_ir485;    //通讯符号显示

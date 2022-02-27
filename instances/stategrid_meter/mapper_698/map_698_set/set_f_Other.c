@@ -7,7 +7,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
 {    
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad,displayid;
-    uint8_t index=0,attribute,i,num=0,dar=0;
+    uint8_t index=0,attribute,i,num=0,dar=0, tempbuf[10] = {0};
     uint8_t* p = buf;
     uint32_t displayoad1,displayoad2,s_index=0;
     uint16_t len = 0;
@@ -38,10 +38,15 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
             if(attribute == 0x02)   //安全模式参数
             {
                 p++;
+                tempbuf[0] = *p++;
+                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_En);
+                nd_set_index(instance, s_index, &tempbuf[0], 1);
+#if 0
                 mbase_cb->SafeEn = *p++;
                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                 offsetof(struct mbase_control_block_t, SafeEn) + 1);
                 nd_set_offset(instance, s_index, p, 1);
+#endif                
                 return (p-buf);
             }
             break;

@@ -579,7 +579,8 @@ enum block_parameter_item_id_t
 #define     Set_Holiday_Oad             1508 //编程时节假日对象
 #define     BeforSet_Holiday            1509 //编程前节假日
 #define     MinFrez_Sectors             1510 //分钟冻结各方案的扇区偏移 9*2 
-
+#define     SecurityMode_En             1511 //安全模式参数使能0-dis   1-en
+#define     SecurityMode_EXData         1511 //显式安全模式参数缓存
 #define     MAX_FEE_NO                  12                                  
 
 #endif

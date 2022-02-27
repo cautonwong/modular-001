@@ -76,6 +76,7 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
     {
         offset = cache->wr;
         p[cache->wr++] = 0x01;
+        
         int r = fr_698_get(instance, oad, p + cache->wr, len, (void*)ctx);
         if (r < 0)
         {

@@ -51,6 +51,10 @@ const uint8_t  init_StepCutFreeze_depth[] = { 0x00,0x02 };//待调整
 const uint8_t  init_StepBillFreeze_depth[] = { 0x00,0x02 };//待调整                                                         
 const uint8_t  init_InstantFreeze_depth[] = { 0x00,0x03 };
 
+const uint8_t  init_SecurityMode_En[] = { 0x01 };
+const uint8_t  init_SecurityMode_EXData[] = { 0x00 };
+
+
 const uint8_t  init_OverCurrentAS_oad[] = { 0x08, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201), U32toBufMSB(0x20002200), U32toBufMSB(0x20012200), U32toBufMSB(0x20042200), U32toBufMSB(0x200A2200), U32toBufMSB(0x00108201), U32toBufMSB(0x00208201) };
 const uint8_t  init_PowerOffS_oad[]     = { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201)};
 const uint8_t  init_MeterWrS_oad[]      = { 0x00 };
