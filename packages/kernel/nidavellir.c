@@ -227,7 +227,6 @@ int nidavellir_run(struct instance_t *instance)
     size_t n = 0;
     uint8_t pipeline_n = recipe->pipeline_n;
     struct pipeline_t* pipeline;
-    struct cache_t* cache = instance->cache2;
 
 //    extern int fr_rx_data_from_serial(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
   //  fr_rx_data_from_serial(instance, &pl_rx_from_serial, &mesg);
@@ -241,7 +240,7 @@ int nidavellir_run(struct instance_t *instance)
     for (size_t i = 0; i < pipeline_n; i++)
     {
         pipeline = recipe->pipelines[i];
-        cache->used = 0;
+        //cache->used = 0;
         while(fifoBuf_getUsed(pipeline->in_queue) >= sizeof(struct message_t ))//waitmesg
         {
             filter = pipeline->filters;
@@ -300,7 +299,7 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     int ret = 0;
     uint8_t pipeline_n = recipe->pipeline_n;
     struct pipeline_t* pipeline = NULL;
-    struct cache_t* cache = instance->cache2;
+
 #ifndef WIN32
     mcu_clear_watchdog();
 #endif
@@ -329,7 +328,7 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     for (size_t i = 0; i < pipeline_n; i++)
     {
         pipeline = recipe->pipelines[i];
-        cache->used = 0;
+        //cache->used = 0;
         if (fifoBuf_getUsed(pipeline->in_queue) >= sizeof(struct message_t))
         {
             filter = pipeline->filters;

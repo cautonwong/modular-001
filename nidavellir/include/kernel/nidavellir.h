@@ -505,8 +505,7 @@ struct instance_t
     struct tm time;//
     struct tasklet_pool_t tasklet_pool;
     struct upgrade_info_t upgrade_info;
-    uint8_t* cache;
-    struct cache_t* cache2;
+
     struct fifo_t pipe_rtc;//只能在定时器函数或时钟秒中断函数里写
     struct fifo_t pipe_key;//用于按键类中断缓存
     struct fifo_t pipe_uart;//用于串口回调消息缓存
