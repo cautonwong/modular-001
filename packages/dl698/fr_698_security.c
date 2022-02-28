@@ -400,7 +400,7 @@ const uint16_t security_default_mode = (TEST_RIGHT | GET_PLAIN_MAC | SET_CIPHER_
 
 
 #if 1
-#define SecurityMode_EXData_LEN 101 
+
 int __explicit_security_mode(struct instance_t* instance, struct pipeline_t* pipeline, uint16_t oi, uint16_t* mode, uint8_t* tmp_buf)
 {
     uint8_t* tmp, i, count, maxnum;
@@ -521,7 +521,7 @@ int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pip
 
     if (ctrl_block->factor_mode == true)
     {
-        return DAR_SUCCESS;
+        return 1;
     }
 
 #if 0// 待调整
@@ -529,42 +529,42 @@ int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pip
     {
         if (cilent_index == 1)//拒绝终端通过红外访问
         {
-            return DAR_RW_REJECT;
+            return -DAR_RW_REJECT;
         }
         if (ctrl_block->infrared_auth_timeout == 0) // 待调整
         {
-            return DAR_SUCCESS;
+            return 1;
         }
 
         if (oad == 0xf1000B00 || oad == 0xf1000C00)
         {
-            return DAR_SUCCESS;
+            return 1;
         }
     }
 #endif     
     // 明文合闸特殊处理 
     if (oad == 0x80008300)
     {
-        return DAR_SUCCESS;
+        return 1;
     }
 
     // 明文确认跟随上报状态字
     if (oad == 0x20157f00)
     {
-        return DAR_SUCCESS;
+        return 1;
     }
 
     // ESAM相关参数不判断权限
     if ((cmd == 0) && (get_OAD_OI(oad) == 0xf100))
     {
-        return DAR_SUCCESS;
+        return 1;
     }
 
     security_mode = __security_mode_word_get(instance, pipeline, oad, tmp_buf);
 
     if (security_mode == 0xffff)
     {
-        return DAR_SUCCESS;
+        return 1;
     }
 
     if (cmd == 1)
@@ -583,16 +583,16 @@ int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pip
         {
             if (ctx->verification_choice == AUTH_SID_MAC)
             {
-                return DAR_SUCCESS;
+                return 1;
             }
             else if (ctx->verification_choice == AUTH_SID)
             {
                 if (security_mode & 0x1000U)
                 {
-                    return DAR_SECURITY_AUTH_NOT_MATCH;
+                    return -DAR_SECURITY_AUTH_NOT_MATCH;
                 }
 
-                return DAR_SUCCESS;
+                return 1;
             }
         }
         else
@@ -601,10 +601,10 @@ int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pip
             {
                 if (security_mode & 0x3000U)
                 {
-                    return DAR_SECURITY_AUTH_NOT_MATCH;
+                    return -DAR_SECURITY_AUTH_NOT_MATCH;
                 }
 
-                return DAR_SUCCESS;
+                return 1;
             }
 
             if (ctx->verification_choice == AUTH_RN)
@@ -614,20 +614,20 @@ int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pip
 
                     if (security_mode & 0xc000U)
                     {
-                        return DAR_SUCCESS;
+                        return 1;
                     }
                     else
                     {
-                        return DAR_SECURITY_AUTH_NOT_MATCH;
+                        return -DAR_SECURITY_AUTH_NOT_MATCH;
                     }
                 }
 
                 if (security_mode & 0x7000U)
                 {
-                    return DAR_SECURITY_AUTH_NOT_MATCH;
+                    return -DAR_SECURITY_AUTH_NOT_MATCH;
                 }
 
-                return DAR_SUCCESS;
+                return 1;
             }
         }
     }
@@ -638,30 +638,30 @@ int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pip
         {
             if ((security_mode & 0x8000) != 0x8000)
             {
-                return DAR_SECURITY_AUTH_NOT_MATCH;
+                return -DAR_SECURITY_AUTH_NOT_MATCH;
             }
             else
             {
                 ret = fr_698_esam_plain_read_check(instance, pipeline, cilent_index, oad);
                 if (ret >= 0)
-                    return DAR_SUCCESS;
+                    return 1;
                 else
-                    return DAR_SECURITY_AUTH_NOT_MATCH;
+                    return -DAR_SECURITY_AUTH_NOT_MATCH;
             }
         }
         if ((oad == 0xF1000B00) || (oad == 0xF1000C00))//执行终端身份认证时，可以明文执行
         {
-            return DAR_SUCCESS;
+            return 1;
         }
         if (security_mode & 0x7000U)
         {
-            return DAR_SECURITY_AUTH_NOT_MATCH;
+            return -DAR_SECURITY_AUTH_NOT_MATCH;
         }
 
-        return DAR_SUCCESS;
+        return 1;
     }
 
-    return DAR_SECURITY_AUTH_NOT_MATCH;
+    return -DAR_SECURITY_AUTH_NOT_MATCH;
 }
 #endif
 #endif    //----698安全模式字-----------------------------结束

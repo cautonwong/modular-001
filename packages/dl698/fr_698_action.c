@@ -37,7 +37,10 @@ int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipelin
         }
         offset = cache->wr;
         //p[cache->wr++] = 0x01;
-
+        
+        r = security_mode_word_check(instance, pipeline, 2, oad);
+        //安全模式不匹配 待调整
+        
         r = fr_698_action(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
         if (r < 0)
         {
@@ -79,6 +82,7 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
 
     uint8_t password[16];
     uint8_t oad_n = mesg->oad_n;
+    int r = 0;
 
     while (oad_n-- > 0)
     {
@@ -114,6 +118,9 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
                 then_get_delay = buf_to_uint16_msb(apdu_rx+ctx->apdu_rx_offset);
                 ctx->apdu_rx_offset += 2;
                 //延时                
+                
+                r = security_mode_word_check(instance, pipeline, 0, get_oad);
+                //安全模式不匹配 待调整
                 
                 if (fr_698_get(instance, get_oad, p+cache->wr, sizeof(password), NULL) < 0)
                 {

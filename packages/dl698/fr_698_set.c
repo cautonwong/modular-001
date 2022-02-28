@@ -68,7 +68,10 @@ int fr_set_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
             //return -1;
         }
         offset = cache->wr;
-
+        
+        r = security_mode_word_check(instance, pipeline, 1, oad);
+        //安全模式不匹配 待调整
+        
         r = fr_698_set(instance, oad, instance->apdu_cache + 4, len, (void*)ctx);
         //r = fr_698_set(instance, oad, fifo->buf_ptr + fifo->rd, len, (void*)ctx);
         

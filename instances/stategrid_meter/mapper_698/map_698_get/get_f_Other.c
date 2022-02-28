@@ -13,8 +13,9 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
 #ifndef WIN32
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad,displayid;
-    uint8_t index,attribute,i,len,dispalyseque,maxnum, tempbuf[10] = {0};
+    uint8_t index,attribute,i,len,dispalyseque,maxnum, count = 0;;
     uint8_t* p = buf;
+    uint8_t *ptr_tmp = instance->apdu_cache;
     uint32_t displayoad1,displayoad2,addr=0,s_index=0,atrtime=0;
     uint8_t esam_inf[45]; 
     
@@ -373,11 +374,53 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
             {
                 case 0x02://安全模式参数
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_En);
-                    nd_get_index(instance, s_index, &tempbuf[0], 1);    
+                    nd_get_index(instance, s_index, ptr_tmp, 1);
                     *p++ = TYPE_enum;
-                    *p++ = tempbuf[0];                    
+                    *p++ = ptr_tmp[0];
                     return (p-buf);
                     break;
+                case 0x03://安全模式参数
+                    if (index != 0)
+                    {
+                        return -1;
+                    }
+
+                    ptr_tmp[0] = 0;
+                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+                    nd_get_index(instance, s_index, ptr_tmp, SecurityMode_EXData_LEN);
+                    count = ptr_tmp[0];
+
+                    if (count == 0)
+                    {
+                        *p++ = TYPE_array;
+                        *p++ = 0;
+                        return (p - buf);
+                    }
+
+                    if ((count * 4) > SecurityMode_EXData_LEN)
+                    {
+                        count = SecurityMode_EXData_LEN / 4;
+                    }
+
+                    *p++ = TYPE_array;
+                    *p++ = count;
+                    ptr_tmp++;
+
+                    for (i = 0; i < count; i++)
+                    {
+                        *p++ = TYPE_structure;
+                        *p++ = 2;
+
+                        *p++ = TYPE_OI;
+                        *p++ = ptr_tmp[1];
+                        *p++ = ptr_tmp[0];
+                        *p++ = TYPE_long_unsigned;
+                        *p++ = ptr_tmp[3];
+                        *p++ = ptr_tmp[2];
+                        ptr_tmp += 4;
+                    }
+                    return (p-buf);
+                    break;    
             }
             break;
     }

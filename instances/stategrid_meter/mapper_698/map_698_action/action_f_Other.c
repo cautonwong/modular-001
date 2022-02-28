@@ -1,8 +1,262 @@
 #include "nidavellir.h"
 #include "fr_698.h"
 
+int _f101_m127_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx)
+{
+    struct mbase_control_block_t* mbase_cb;
+
+    uint8_t  i, method, dar = 0, count, maxnum;
+    uint16_t oad;
+    uint8_t* p = buf;
+    uint32_t temp = 0, s_index = 0, addr = 0;
+    uint8_t* ptr_tmp = instance->apdu_cache;
+
+    oad = (unsigned short)((id & 0xFFFF0000) >> 16);
+    method = (unsigned char)((id & 0x0000FF00) >> 8);    //方法
+
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    if (mbase_cb == NULL)
+    {
+        return -1;
+    }
+
+    uint16_t oi, right;
+    struct obj_right_t
+    {
+        uint16_t oi;
+        uint16_t right;
+    }obj;
+
+    if ( (p[0] != TYPE_structure) || (p[1] != 2))
+    {
+        return -1;
+    }
+
+    p += 2;
+
+    if ((p[0] != TYPE_OI) || (p[3] != TYPE_long_unsigned))
+    {
+        return -1;
+    }
+    p += 2;
+
+    obj.oi = buf_to_uint16_msb(p + 1);
+    obj.right = buf_to_uint16_msb(p + 4);
+    p += 4;
+
+    instance->apdu_cache[0] = 0;
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+    nd_get_index(instance, s_index, ptr_tmp, SecurityMode_EXData_LEN);
+
+    maxnum = (SecurityMode_EXData_LEN - 1) / 4;
+    count = *ptr_tmp++;
+
+    if (count >= maxnum)
+    {
+        return -1;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        oi = buf_to_uint16_lsb(ptr_tmp);
+        right = buf_to_uint16_lsb(ptr_tmp + 2);
+
+        if (oi == obj.oi)
+        {
+            if (right == obj.right)
+            {
+                return (p - buf);
+            }
+            else
+            {
+                memcpy(ptr_tmp + 2, (uint8_t*)&obj.right, 2);
+
+                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+                nd_set_index(instance, s_index, instance->apdu_cache, SecurityMode_EXData_LEN);
+
+                return (p - buf);
+            }
+        }
+
+        ptr_tmp += 4;
+    }
+
+    memcpy(ptr_tmp, (uint8_t*)&obj, 4);
+    instance->apdu_cache[0]++;
+
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+    nd_set_index(instance, s_index, instance->apdu_cache, SecurityMode_EXData_LEN);
+
+    return (p - buf);
+}
+int _f101_m128_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx) 
+{
+    struct mbase_control_block_t* mbase_cb;
+    uint8_t  i, dar = 0, count, maxnum;
+    uint8_t* p = buf;
+    uint32_t temp = 0, s_index = 0, addr = 0;
+    uint8_t* ptr_tmp = instance->apdu_cache;
+    uint16_t oi, tmp_oi;
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    if (mbase_cb == NULL)
+    {
+        return -1;
+    }
+
+    if ( (p[0] != TYPE_OI))
+    {
+        return -1;
+    }
+    p++;
+
+    oi = buf_to_uint16_msb(p);
+    p += 2;
+    instance->apdu_cache[0] = 0;
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+    nd_get_index(instance, s_index, ptr_tmp, SecurityMode_EXData_LEN);
+
+    maxnum = (SecurityMode_EXData_LEN - 1) / 4;
+    count = *ptr_tmp++;
+
+    if ((count == 0) || (count > maxnum))
+    {
+        return -1;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        tmp_oi = buf_to_uint16_lsb(ptr_tmp);
+
+        if (tmp_oi == oi)
+        {
+            break;
+        }
+
+        ptr_tmp += 4;
+    }
+
+    if (i == count)
+    {
+        return -1;
+    }
+
+    instance->apdu_cache[0]--;
+    memcpy(ptr_tmp, ptr_tmp + 4, instance->apdu_cache + SecurityMode_EXData_LEN - ptr_tmp);
+
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+    nd_set_index(instance, s_index, instance->apdu_cache, SecurityMode_EXData_LEN);
+
+    return (p - buf);
+
+}
+int _f101_m129_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx)
+{
+    struct mbase_control_block_t* mbase_cb;
+    uint8_t  i, dar = 0, count, maxnum;
+    uint8_t* p = buf;
+    uint32_t temp = 0, s_index = 0, addr = 0;
+    uint8_t* ptr_tmp = instance->apdu_cache;
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    if (mbase_cb == NULL)
+    {
+        return -1;
+    }
+
+    uint8_t  num, write_flag, noadd_flag;
+    uint16_t len, oi, right;
+
+    struct obj_right_t
+    {
+        uint16_t oi;
+        uint16_t right;
+    }obj;
 
 
+    if (p[0] != TYPE_array)
+    {
+        return -1;
+    }
+    p++;
+
+    instance->apdu_cache[0] = 0;
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+    nd_get_index(instance, s_index, ptr_tmp, SecurityMode_EXData_LEN);
+
+    num = *p++;
+
+    count = *ptr_tmp++;
+    len = count * 4 + 1;
+    write_flag = 0;
+
+    if (len > SecurityMode_EXData_LEN)
+    {
+        return -1;
+    }
+
+    while (num--)
+    {
+        noadd_flag = 0;
+        ptr_tmp = instance->apdu_cache + 1;
+        p += 2;
+
+        if ((p[0] != TYPE_OI) || (p[3] != TYPE_long_unsigned))
+        {
+            return -1;
+        }
+
+        obj.oi = buf_to_uint16_msb(p + 1);
+        p += 4;
+        obj.right = buf_to_uint16_msb(p);
+        p += 2;
+
+        for (i = 0; i < count; i++)
+        {
+            oi = buf_to_uint16_lsb(ptr_tmp);
+            right = buf_to_uint16_lsb(ptr_tmp + 2);
+
+            if (oi == obj.oi)
+            {
+                if (right != obj.right)
+                {
+                    memcpy(ptr_tmp + 2, (uint8_t *)&obj.right, 2);
+                    write_flag = 1;
+                }
+
+                noadd_flag = 1;
+                break;
+            }
+
+            ptr_tmp += 4;
+        }
+
+        if (noadd_flag == 0)
+        {
+            count++;
+            len = count * 4 + 1;
+
+            if (len > SecurityMode_EXData_LEN)
+            {
+                return -1;
+            }
+
+            memcpy(ptr_tmp, (uint8_t*)&obj.oi, 2);
+            memcpy(ptr_tmp + 2, (uint8_t*)&obj.right, 2);
+            write_flag = 1;
+        }
+    }
+
+    if (write_flag == 1)
+    {
+        instance->apdu_cache[0] = count;
+
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+        nd_set_index(instance, s_index, instance->apdu_cache, SecurityMode_EXData_LEN);
+
+        return (p - buf);
+    }
+
+    return (p - buf);
+}
 int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx)
 {    
     struct mbase_control_block_t* mbase_cb;
@@ -16,7 +270,8 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
     uint16_t oad,pageid=0,txlen=0,rxlen=0;
     uint8_t *p = buf;
     uint32_t temp = 0,s_index=0,addr=0;
-    
+    uint8_t* ptr_tmp = instance->apdu_cache;
+
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
     method = (unsigned char)((id & 0x0000FF00) >> 8);    //方法
     
@@ -179,6 +434,35 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 }
             }
             break;
+        case 0xF101://安全模式字
+        {
+            if (method == 1) //复位
+            {
+                if ((*p) != TYPE_integer)
+                {
+                    return -1;
+                }
+                memset(ptr_tmp, 0, SecurityMode_EXData_LEN);
+                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+                nd_set_index(instance, s_index, ptr_tmp, SecurityMode_EXData_LEN);
+                p += 2;
+                return (p - buf);
+            }
+            else if (method == 127)
+            {
+                return _f101_m127_action(instance, id, buf, buf_size, ctx);
+            }
+            else if (method == 128)
+            {
+                return _f101_m128_action(instance, id, buf, buf_size, ctx);
+            }
+            else if (method == 129)
+            {
+                return _f101_m129_action(instance, id, buf, buf_size, ctx);
+            }
+            else
+                return -DAR_OBJECT_NOT_EXIST;
+        }
         case 0xF201://RS485
             if(method == 127)
             {
