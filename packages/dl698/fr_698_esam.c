@@ -135,7 +135,8 @@ void esam_698_init(void)
     struct esam_698_data_t param;
     //param.input = p_input;
     //param.output = p_output;
-    //return openM_ioctl(fd, request, (void *)&param);
+    request = esam_type_poweron;
+    openM_ioctl(fd, request, (void *)&param);
 }
 
 
