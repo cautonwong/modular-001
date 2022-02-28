@@ -207,14 +207,14 @@ int communication_channel_init(struct instance_t* p_instance, struct pipeline_t 
 
 
 
-uint8_t nd_memory[23 * 1024 + 800]; //26
+uint8_t nd_memory[24 * 1024]; //26
 
 int baremetal_instance_entry_main(int argc, char** argv)
 {
     struct instance_t* instance = NULL;
     struct recipe_t *recipe = NULL;
 
-    instance = create_instance(RES_DEV_RAM, (uint32_t)&nd_memory, 26 * 1024, 2 * 1024, resource_block_name);//用资源描述创建instance
+    instance = create_instance(RES_DEV_RAM, (uint32_t)&nd_memory, 24 * 1024, 2 * 1024, resource_block_name);//用资源描述创建instance
     if (instance == NULL)
     {
         return -1;

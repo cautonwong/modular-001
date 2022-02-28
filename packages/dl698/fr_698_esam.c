@@ -5,9 +5,27 @@
 
 
 
-
+//ok
 uint16_t write_esam(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_t len)
 {
+    int fd = 0;
+    int request = esam_type_read_esam_data;//正确读取请求序号多少？ saga
+    struct esam_698_data_t param;
+    struct esam_698_input_t  input = {0};
+    struct esam_698_output_t output= {0};
+
+    input.data      = buf;
+    input.data_len  = len;
+    input.sid_id    = addr;
+    input.data_buf      = instance->apdu_cache; //临时缓冲区
+    input.data_buf_len  = cache_max;            //临时缓冲长度
+    
+    output.data = buf;
+    
+    param.input  = (struct esam_698_input_t *)&input;
+    param.output = (struct esam_698_output_t *)&output;
+    openM_ioctl(fd, request, (void *)&param);
+
     return 1;  
 }
 
@@ -16,7 +34,7 @@ uint8_t read_esam_no(struct instance_t* instance, uint8_t *esam_info)
 {
     int fd = 0;
     int request = esam_type_read_esam_data;
-    struct esam_698_data_t param = {0};
+    struct esam_698_data_t param;
     struct esam_698_input_t  input = {0};
     struct esam_698_output_t output= {0};
     
@@ -25,8 +43,8 @@ uint8_t read_esam_no(struct instance_t* instance, uint8_t *esam_info)
     
     output.data  = esam_info;
     
-    param.input  = &input;
-    param.output = &output;
+    param.input  = (struct esam_698_input_t *)&input;
+    param.output = (struct esam_698_output_t *)&output;
     openM_ioctl(fd, request, (void *)&param);
     return 1;
 }
@@ -49,10 +67,10 @@ uint8_t read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf,
     
     output.data = buf;
     
-    param.input  = &input;
-    param.output = &output;
+    param.input  = (struct esam_698_input_t *)&input;
+    param.output = (struct esam_698_output_t *)&output;
     openM_ioctl(fd, request, (void *)&param);
-    
+
     return 1;
 }
 
@@ -65,7 +83,7 @@ uint8_t esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
     struct esam_698_data_t param;
     struct esam_698_input_t  input = {0};
     struct esam_698_output_t output= {0};
-    
+
     if(cmd)//from 终端
         request = esam_type_terminal_meet_consult;
     else   //from 主站
@@ -81,8 +99,8 @@ uint8_t esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
     
     output.data     = p;
     
-    param.input  = &input;
-    param.output = &output;
+    param.input  = (struct esam_698_input_t *)&input;
+    param.output = (struct esam_698_output_t *)&output;
     openM_ioctl(fd, request, (void *)&param);
     return 1;
 }
@@ -99,11 +117,11 @@ uint8_t read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t 
     
     input.cmd_type = index;
     output.data    = esam_info;
-    param.input    = &input;
-    param.output   = &output;
     input.data_buf      = instance->apdu_cache; //临时缓冲区
     input.data_buf_len  = cache_max;            //临时缓冲长度
-    
+
+    param.input  = (struct esam_698_input_t *)&input;
+    param.output = (struct esam_698_output_t *)&output;    
     openM_ioctl(fd, request, (void *)&param);
     if(output.data_len > 0)
         return 1;
@@ -160,6 +178,6 @@ int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_
     //验证
       
     }
-
+    
     return openM_ioctl(fd, request, (void *)&param);
 }
