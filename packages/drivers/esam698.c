@@ -164,10 +164,17 @@ static uint16 rx_esam(uint8 *rx_data , uint16 *len , const struct esam_hal_t *es
         }
         
         ESAM_CS_HIGH();
-        mcu_delay_us(20);
+        mcu_delay_us(50);
     }while((cnt <= 3)&&(err));
-
-    return ((uint16)ret[0]<<8) + ret[1];
+    *sw = ((uint16)ret[0]<<8) + ret[1];
+    if(cnt < 3)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 
