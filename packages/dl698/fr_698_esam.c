@@ -3,6 +3,9 @@
 #include "fr_698_esam.h"
 #include "io_type.h"
 
+int openM_ioctl(int fd, int request, void *param);
+
+
 
 
 //ok
@@ -26,7 +29,7 @@ uint16_t write_esam(struct instance_t* instance, uint32_t addr, uint8_t *buf, ui
     param.output = (struct esam_698_output_t *)&output;
     openM_ioctl(fd, request, (void *)&param);
 
-    return 1;  
+    return output.data_len;  
 }
 
 //ok
@@ -46,7 +49,7 @@ uint8_t read_esam_no(struct instance_t* instance, uint8_t *esam_info)
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;
     openM_ioctl(fd, request, (void *)&param);
-    return 1;
+    return output.data_len;
 }
 
 
@@ -71,7 +74,7 @@ uint8_t read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf,
     param.output = (struct esam_698_output_t *)&output;
     openM_ioctl(fd, request, (void *)&param);
 
-    return 1;
+    return output.data_len;
 }
 
 
@@ -102,7 +105,7 @@ uint8_t esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;
     openM_ioctl(fd, request, (void *)&param);
-    return 1;
+    return output.data_len ;
 }
 
 
@@ -124,7 +127,7 @@ uint8_t read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t 
     param.output = (struct esam_698_output_t *)&output;    
     openM_ioctl(fd, request, (void *)&param);
     if(output.data_len > 0)
-        return 1;
+        return output.data_len;
     
     return 0;
 }
