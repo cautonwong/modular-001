@@ -166,8 +166,6 @@ int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_
     int fd = 0;
     int request = 0;
     struct esam_698_data_t param;
-    param.input = p_input;
-    param.output = p_output;
 
     if(0 == p_input->cmd_type){//获取mac
         if(SECURITY_CHOICE_0_Plaintext == p_input->security_choice) {
@@ -182,6 +180,7 @@ int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_
     //验证
       
     }
-    
+    param.input = p_input;
+    param.output = p_output;
     return openM_ioctl(fd, request, (void *)&param);
 }

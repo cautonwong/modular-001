@@ -12,7 +12,7 @@ int get_SET_and_ACTION_Request_len(struct instance_t* instance, struct pipeline_
     int i = 0;
     uint16_t axdr_len = 0;
     uint8_t list = 0;
-    uint8_t* apdu = instance->apdu_cache;
+    uint8_t *apdu = ctx->apdu_d_rx + ctx->apdu_rx_offset;
 
     if (ctx->choice > 3)
     {

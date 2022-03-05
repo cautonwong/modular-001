@@ -352,26 +352,40 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
 
 int get_CONNECT_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-#if 0
-    p += 37;
-    switch (*p++)
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    uint16_t len = 0;
+    int offset = 0;
+    uint8_t *apdu = ctx->apdu_d_rx + ctx->apdu_rx_offset;
+
+    offset = 37;
+    apdu += offset;
+    switch (apdu[0])
     {
-    case 0:
-        //p++;
+    case NullSecurity:
+        offset += 2;
         break;
 
-    case 1:
-        p += dl698_asn_data_len_decode(p, &len);
-        p += len;
+    case PasswordSecurity:
+        offset += 1;
+        apdu++;
+        len += axdr_decode(TYPE_octet_string, apdu, &len);
+        offset += len;
         break;
 
-    case 2:
-    case 3:
-        p += dl698_asn_data_len_decode(p, &len);
-        p += len;
-        p += dl698_asn_data_len_decode(p, &len);
-        p += len;
+    case SymmetrySecurity:
+    case SignatureSecurity:
+        offset += 1;
+        apdu++;
+        len += axdr_decode(TYPE_octet_string, apdu, &len);
+        offset += len;
+        apdu += len;
+        len += axdr_decode(TYPE_octet_string, apdu, &len);
+        offset += len;
         break;
-#endif
+    default:
+        return -1;
+        break;
+    }
+    return offset;
 }
 

@@ -296,14 +296,13 @@ int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, stru
 int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint32_t interval_sec = 0;
     uint32_t time_sec = 0;
     uint32_t time_tag_sec = 0;
     int offset = 0;
 
     ctx->timeTag_valid = 0;	
-    return 1;
     if ((ctx->service == LINK_Request) || (ctx->service == SECURITY_Request)){
         return -1;
     }
@@ -331,12 +330,14 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
         p += len;
 #endif
         break;
+#if 0
     case PROXY_Request:
     case COMPACT_GET_Request:
     case COMPACT_SET_Request:
     case COMPACT_PROXY_Request:
     case ERROR_C_Response:
         break;
+#endif
     default:
         return 1;
     }
@@ -344,8 +345,8 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
     if (offset < 0) {
         return offset;
     }
-
-    fifoBuf_peekByteBuf(fifo, offset, ctx->timeTag, 11);
+    
+    memcpy(ctx->timeTag, apdu_rx + ctx->apdu_rx_offset + offset, 11);
     ctx->timeTag_valid = ctx->timeTag[0];
     if (1 == ctx->timeTag_valid) {
         if (false == dl_data_time_check(&ctx->timeTag[1], TIME_WILDCARD)){

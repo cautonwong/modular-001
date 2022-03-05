@@ -19,7 +19,7 @@ int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline
     int i = 0;
     uint8_t list = 0;
 
-    uint8_t *apdu = instance->apdu_cache;
+    uint8_t *apdu = ctx->apdu_d_rx + ctx->apdu_rx_offset;
 
     if (ctx->choice > GetRequestNext){
         return -1;
