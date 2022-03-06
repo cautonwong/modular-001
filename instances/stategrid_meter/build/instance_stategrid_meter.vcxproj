@@ -59,6 +59,7 @@
     <ClCompile Include="..\mapper_698\map_698_action\action_3_Event.c" />
     <ClCompile Include="..\mapper_698\map_698_action\action_4_Parameter.c" />
     <ClCompile Include="..\mapper_698\map_698_action\action_5_Frozen.c" />
+    <ClCompile Include="..\mapper_698\map_698_action\action_f_Other.c" />
     <ClCompile Include="..\mapper_698\map_698_get\get_0_Energy.c" />
     <ClCompile Include="..\mapper_698\map_698_get\get_1_Demand.c" />
     <ClCompile Include="..\mapper_698\map_698_get\get_2_Variable.c" />

@@ -58,7 +58,7 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
     uint32_t oad = mesg->id;
     uint16_t len= 0;
     uint16_t offset = 0;
-    int ret = 0;
+    int r = 0;
     
     if (((mesg->ctrl & 0x7f) == 0x06) ||
         ((mesg->ctrl & 0x7f) == 0x07))
@@ -77,9 +77,17 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
     {
         offset = cache->wr;
         p[cache->wr++] = 0x01;
-        ret = security_mode_word_check(instance, pipeline, 0, oad);
+        r = security_mode_word_check(instance, pipeline, 0, oad);
         //安全模式不匹配 待调整
-        int r = fr_698_get(instance, oad, p + cache->wr, len, (void*)ctx);
+#if 0        
+        if (r < 0)
+        {
+            ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+            p[cache->wr++] = r;//DAR
+            return r;
+        }
+#endif 
+        r = fr_698_get(instance, oad, p + cache->wr, len, (void*)ctx);
         if (r < 0)
         {
             p[cache->wr++] = 0x00;//DAR

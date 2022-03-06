@@ -38,8 +38,17 @@ int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipelin
         offset = cache->wr;
         //p[cache->wr++] = 0x01;
         
+        
         r = security_mode_word_check(instance, pipeline, 2, oad);
-        //安全模式不匹配 待调整
+        //安全模式不匹配 待测试  
+#if 1       
+        if (r < 0)
+        {
+            ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+            p[cache->wr++] = r;//DAR
+            return r;
+        }
+#endif   
         
         r = fr_698_action(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
         if (r < 0)
@@ -121,7 +130,14 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
                 
                 r = security_mode_word_check(instance, pipeline, 0, get_oad);
                 //安全模式不匹配 待调整
-                
+ #if 0        
+                if (r < 0)
+                {
+                    ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+                    p[cache->wr++] = r;//DAR
+                    return r;
+                }
+#endif                
                 if (fr_698_get(instance, get_oad, p+cache->wr, sizeof(password), NULL) < 0)
                 {
                     return DAR_OTHERS_ERROR;

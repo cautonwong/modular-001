@@ -528,7 +528,7 @@ int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pip
     }
 
 #if 0// 待调整
-    if (ctrl_block->channel == pid_ir_rx_698)//红外    待调整
+    if (ctx->channel == pid_ir_rx_698)//红外    待调整
     {
         if (cilent_index == 1)//拒绝终端通过红外访问
         {
