@@ -3,6 +3,14 @@
 #include "fr_698_esam.h"
 #include "io_type.h"
 
+enum verification_choice_e
+{
+   verification_choice_SID_MAC,
+   verification_choice_RN,
+   verification_choice_RN_MAC,
+   verification_choice_SID,
+};
+
 int openM_ioctl(int fd, int request, void *param);
 
 
@@ -181,6 +189,10 @@ int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_
     //验证
         if(SECURITY_CHOICE_0_Plaintext == p_input->security_choice) {
             request = esam_type_plaintext_mac;
+        }
+        if(SECURITY_CHOICE_1_Ciphertext == p_input->security_choice) {
+            if(verification_choice_SID_MAC == p_input->verification_choice)
+                request = esam_type_hes_point_get_data2;
         }
     }
     param.input = p_input;
