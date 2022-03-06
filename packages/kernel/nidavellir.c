@@ -160,7 +160,7 @@ int fr_sw_uart(struct instance_t* instance, struct pipeline_t* pipeline, struct 
             default:
                 break;
         }
-        send_mesg(instance, NULL, mesg, NULL);
+        //send_mesg(instance, NULL, mesg, NULL);
     }
 
     return 0;
