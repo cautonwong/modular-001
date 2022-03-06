@@ -242,19 +242,19 @@ uint8_t f_esam_type_meet_consult(uint8_t type , struct esam_698_input_t *esam_in
 
     ret = rx_esam(com_data , &len , esam_hal , &sw);
 		
-    if(type == 1)
+    if(type == 1)//终端会话
     {
-	memcpy(esam_out->data, com_data , 64);
-				
-	memcpy(esam_out->MAC_data, &com_data[64]  , 4);
+        memcpy(esam_out->data, com_data , 64);
+        esam_out->data_len = 64;
+        memcpy(esam_out->MAC_data, &com_data[64]  , 4);
     }
     else
     {
-	memcpy(esam_out->data, com_data , 48);
-				
-	memcpy(esam_out->MAC_data, &com_data[48]  , 4);
+        memcpy(esam_out->data, com_data , 48);
+        esam_out->data_len = 48;
+        memcpy(esam_out->MAC_data, &com_data[48]  , 4);
     }
-    esam_out->data_len = len;
+    esam_out->MAC_len = 4;
     return ret;
 }
 
@@ -265,10 +265,19 @@ uint8_t f_esam_type_read_meter(uint8_t type , struct esam_698_input_t *esam_in ,
     uint8_t head[4] = {0x80, 0x0E, 0x40, 0x02};
     uint16_t len , sw;
     uint8_t ret;
-    
+    uint16_t offset = 0;
     if(type == 0)
     {
-	head[1] = 0x0E;  //电表计算明文+MAC
+        head[1] = 0x0E;  //电表计算明文+MAC
+        if(esam_in->RN_Data_len){
+            memcpy(esam_in->data_buf , esam_in->RN_Data , esam_in->RN_Data_len);
+            offset += esam_in->RN_Data_len;
+        }
+        
+        if(esam_in->data_len){
+            memcpy(esam_in->data_buf+offset , esam_in->data , esam_in->data_len);
+            offset += esam_in->data_len;
+        }
     }
     else if(type == 1)
     {
@@ -279,24 +288,27 @@ uint8_t f_esam_type_read_meter(uint8_t type , struct esam_698_input_t *esam_in ,
 	head[1] = 0x10;  //电表计算密文+MAC
     }
 
-    tx_esam(head , esam_in->data , esam_in->data_len , esam_hal);
+    tx_esam(head , esam_in->data_buf , offset , esam_hal);
 
     ret = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
 		
     if(type == 0)
     {
 	memcpy(esam_out->MAC_data, esam_in->data_buf , 4); //电表计算明文+MAC
+    esam_out->MAC_len = 4;
     }
     else if(type == 1)
     {
 	memcpy(esam_out->data, esam_in->data_buf , len); //电表计算密文
+    esam_out->data_len = len;
     }
     else
     {
 	memcpy(esam_out->data, esam_in->data_buf , len-4); //电表计算密文
+    esam_out->data_len = len - 4;
 	memcpy(esam_out->MAC_data, &esam_in->data_buf[len-4] , 4); //电表计算密文+MAC
+    esam_out->MAC_len = 4;
     }
-    esam_out->data_len = len;
     return ret;
 }
 
@@ -394,6 +406,21 @@ uint8_t f_esam_type_read_esam_data(struct esam_698_input_t *esam_in , struct esa
     return ret;
 }
 
+uint8_t f_esam_type_read_esam_no(struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
+{
+    uint8_t head[4] = {0x80, 0x2C, 0x00, 0x01};
+    uint8_t tx_data[7] = { 0, 5, 0, 0, 0, 0, 0x0D };
+    
+    uint16_t len , sw;
+    uint8_t ret;
+    
+    tx_esam(head , tx_data , 7 , esam_hal);
+
+    ret = rx_esam(esam_out->data , &len , esam_hal , &sw);
+
+	esam_out->data_len = len;	
+    return ret;
+}
 
 
 static void esam_698_power_ctrl(uint8_t power)
@@ -479,6 +506,10 @@ int openM_ioctl(int fd, int request, void *param)
               break;
          case esam_type_read_esam_data:
               f_esam_type_read_esam_data(esam_698_data->input , esam_698_data->output , 0);
+              break;
+              
+         case esam_type_read_esam_no:
+              f_esam_type_read_esam_no(esam_698_data->input , esam_698_data->output , 0);
               break;
          default:
               break;

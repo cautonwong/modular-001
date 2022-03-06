@@ -36,7 +36,7 @@ uint16_t write_esam(struct instance_t* instance, uint32_t addr, uint8_t *buf, ui
 uint8_t read_esam_no(struct instance_t* instance, uint8_t *esam_info)
 {
     int fd = 0;
-    int request = esam_type_read_esam_data;
+    int request = esam_type_read_esam_no;
     struct esam_698_data_t param;
     struct esam_698_input_t  input = {0};
     struct esam_698_output_t output= {0};
@@ -101,11 +101,12 @@ uint8_t esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
     input.data_buf_len  = cache_max;            //临时缓冲长度
     
     output.data     = p;
+    output.MAC_data = p+48;
     
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;
     openM_ioctl(fd, request, (void *)&param);
-    return output.data_len ;
+    return output.data_len + output.MAC_len ;
 }
 
 
@@ -178,7 +179,9 @@ int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_
         //request = 
     }else{
     //验证
-      
+        if(SECURITY_CHOICE_0_Plaintext == p_input->security_choice) {
+            request = esam_type_plaintext_mac;
+        }
     }
     param.input = p_input;
     param.output = p_output;

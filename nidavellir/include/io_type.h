@@ -60,6 +60,7 @@
 #define esam_type_terminal_id_authen    (esam_type_upreport+1)              //5.1.4.8终端与电表身份认证    
 #define esam_type_software_check        (esam_type_terminal_id_authen+1)    //5.1.5 软件比对
 
+#define esam_type_read_esam_no (esam_type_software_check+1)
 
 
 

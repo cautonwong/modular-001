@@ -406,16 +406,7 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
 //#endif
 
     ctx->channel = pipeline->id;
-#if 0
-    if((pipeline->id == pid_rx_698) || (pipeline->id == pid_ir_rx_698))
-    {
-        mbase_cb->commdisp_ir485 = 2;
-    }
-    else if(pipeline->id == pid_plc_rx_698)
-    {
-        mbase_cb->commdisp_plc = 2;
-    }
-#endif 
+
     return 1;
 }
 

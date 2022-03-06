@@ -312,19 +312,11 @@ const struct connect_request_t cfg_connect = {
 int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
-    
-    uint8_t* p = cache->buf_ptr;
     struct connect_request_t connect = {0};
-    struct connect_cfg_info_t *p_connect = ctx->connect_info;
-    struct connect_cfg_info_t cfg = {
-        0
-    };
-    struct connect_cfg_info_t* pcfg_connect = &cfg;
-    uint8_t result = DAR_SUCCESS;
-
+    int result = DAR_OTHERS_ERROR;
+    
     // 通配地址 拒绝服务
     if(SA_TYPE_GENERAL == SA_TYPE(ctx->SA)) {
         result = DAR_OTHERS_ERROR;
