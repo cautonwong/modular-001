@@ -531,8 +531,8 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     ctx->service = apdu_rx[ctx->apdu_rx_offset++];
     ctx->security_choice = 0xff;
     ctx->verification_choice = 0xff;
-    if (SECURITY_Request == ctx->service){
-        service = SECURITY_Request;
+    if ((SECURITY_Request == ctx->service) || (SECURITY_Response == ctx->service)){
+        service = ctx->service;
         err_no = fr_security_request(instance, pipeline, mesg);
         if(err_no < 0){
             return err_no;

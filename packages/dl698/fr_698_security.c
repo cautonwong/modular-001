@@ -669,14 +669,17 @@ int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pip
 #endif
 #endif    //----698安全模式字-----------------------------结束
 
-#if 0 //--698 安全传输权限判断
-static uint8_t *fr_698_security_request_check(uint8_t *buf, uint16_t *length, uint8_t cilent_index)
+#if 1 //--698 安全传输权限判断
+static uint8_t *fr_698_security_request_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t *buf, uint16_t *length, uint8_t cilent_index)
 {
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    uint8_t* apdu_rx = ctx->apdu_d_rx;  // apdu_rx[ctx->apdu_rx_offset++];
+
     uint8_t   mode, auth, dar, judge = 1;
     uint8_t  *p = buf;
-    uint8_t  *apdu = session->res.send_ptr;
+    //uint8_t  *tx_apdu = session->res.send_ptr;
     uint16_t len;
-    struct esam_security_t security;
+    //struct esam_security_t security;
     uint32_t broadcast_sid  = 0;
 
     uint32_t oad = 0;
@@ -685,7 +688,7 @@ static uint8_t *fr_698_security_request_check(uint8_t *buf, uint16_t *length, ui
 
 
     
-    session->req.sec_flag.data = 0;
+    //session->req.sec_flag.data = 0;
     mode = *p++;
 
     if (mode > 1)
@@ -741,7 +744,7 @@ static uint8_t *fr_698_security_request_check(uint8_t *buf, uint16_t *length, ui
         && (dl698_current_connect_status_get(cilent_index)== false))
         {
             aprint("chiper security is disconnect\r\n");
-            *length = dl698_al_security_error(apdu, DAR_UNAUTHORIZED);
+            *length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);
             return NULL;
         }
 
@@ -756,14 +759,14 @@ static uint8_t *fr_698_security_request_check(uint8_t *buf, uint16_t *length, ui
                         if(infrared_auth_timeout == 0)//红外认证失效，明文失败
                         {
                             aprint("RN security is disconnect\r\n");
-                            *length = dl698_al_security_error(apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明
+                            *length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明
                             return NULL;
                         }
                     }
                     else//其他通道，开启了身份认证，无链接情况下，明文失败
                     {
                         aprint("RN security is disconnect\r\n");
-                        *length = dl698_al_security_error(apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明
+                        *length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明
                         return NULL;
                     }
                 }
@@ -773,7 +776,7 @@ static uint8_t *fr_698_security_request_check(uint8_t *buf, uint16_t *length, ui
                 if(esam_auth_enable && (dl698_current_connect_status_get(cilent_index)== false) && (term_auth_timeout == 0))
                 {
                     aprint("RN security is disconnect\r\n");
-                    *length = dl698_al_security_error(apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明
+                    *length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明
                     return NULL;
                 }
             }    
@@ -946,7 +949,7 @@ static uint8_t *fr_698_security_request_check(uint8_t *buf, uint16_t *length, ui
     
     if (dar != DAR_SUCCESS)
     {
-        *length = dl698_al_security_error(apdu, dar);
+        *length = dl698_al_security_error(tx_apdu, dar);
         return NULL;
     }
     else
@@ -965,7 +968,7 @@ static uint8_t *fr_698_security_request_check(uint8_t *buf, uint16_t *length, ui
                if (dl698_current_connect_status_get(cilent_index)== false)
                {
                     aprint("chiper security is disconnect\r\n");
-                    *length = dl698_al_security_error(apdu, DAR_ESAM_CHECK_FAILED);
+                    *length = dl698_al_security_error(tx_apdu, DAR_ESAM_CHECK_FAILED);
                     return NULL;
                } 
             }
@@ -986,7 +989,7 @@ static uint8_t *fr_698_security_request_check(uint8_t *buf, uint16_t *length, ui
                 if ((dl698_current_connect_status_get(cilent_index)== false) || (cipher_sidmac == 0 ))
                 {
                     aprint("chiper security is disconnect\r\n");
-                    *length = dl698_al_security_error(apdu, DAR_RW_REJECT);
+                    *length = dl698_al_security_error(tx_apdu, DAR_RW_REJECT);
                     return NULL;
                 }
             }
@@ -1003,7 +1006,7 @@ static uint8_t *fr_698_security_request_check(uint8_t *buf, uint16_t *length, ui
             {
                 // 不支持 返回否定应答
                 aprint("chiper security is disconnect\r\n");
-                *length = dl698_al_security_error(apdu, DAR_RW_REJECT);
+                *length = dl698_al_security_error(tx_apdu, DAR_RW_REJECT);
                 return NULL;
             }
             else // 组地址
