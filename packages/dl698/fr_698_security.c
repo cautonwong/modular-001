@@ -669,8 +669,8 @@ int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pip
 #endif
 #endif    //----698安全模式字-----------------------------结束
 
-#if 1 //--698 安全传输权限判断
-static uint8_t *fr_698_security_request_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t *buf, uint16_t *length, uint8_t cilent_index)
+#if 0 //--698 安全传输权限判断
+static uint8_t *fr_698_security_request_check(struct instance_t* instance, struct pipeline_t* pipeline, uint16_t *length, uint8_t cilent_index)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t* apdu_rx = ctx->apdu_d_rx;  // apdu_rx[ctx->apdu_rx_offset++];
@@ -689,26 +689,19 @@ static uint8_t *fr_698_security_request_check(struct instance_t* instance, struc
 
     
     //session->req.sec_flag.data = 0;
-    mode = *p++;
 
-    if (mode > 1)
-    {
-        *length = 0;
-        return NULL;
-    }
-       
-    hfp_memset(&security, 0, sizeof(security));
-    p += dl698_asn_data_len_decode(p, &security.apdu_len);
-    security.apdu = p;
-    p += security.apdu_len;
-    auth = *p++;
-    len = p - buf;
 
-    if (*length < len)
-    {
-        *length = 0;
-        return NULL;
-    }
+    //p += dl698_asn_data_len_decode(p, &security.apdu_len);
+    //security.apdu = p;
+    //p += security.apdu_len;
+    //auth = *p++;
+    //len = p - buf;
+
+    //if (*length < len)
+    //{
+        //*length = 0;
+        //return NULL;
+    //}
 
     session->req.sec_flag.bits.security  = 1;
     session->req.sec_flag.bits.cipher    = mode;
