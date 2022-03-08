@@ -79,7 +79,7 @@ int fr_set_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
             return r;
         }
 #endif         
-        r = fr_698_set(instance, oad, instance->apdu_cache + 4, len, (void*)ctx);
+        r = fr_698_set(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
         //r = fr_698_set(instance, oad, fifo->buf_ptr + fifo->rd, len, (void*)ctx);
         
         cache->wr = offset;
