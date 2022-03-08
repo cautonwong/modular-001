@@ -191,8 +191,13 @@ int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_
             request = esam_type_plaintext_mac;
         }
         if(SECURITY_CHOICE_1_Ciphertext == p_input->security_choice) {
-            if(verification_choice_SID_MAC == p_input->verification_choice)
+            if(verification_choice_SID_MAC == p_input->verification_choice){
                 request = esam_type_hes_point_get_data2;
+                p_input->cmd_type = 1;
+            }
+            if(verification_choice_SID == p_input->verification_choice){
+                request = esam_type_hes_point_get_data2;
+            }
         }
     }
     param.input = p_input;

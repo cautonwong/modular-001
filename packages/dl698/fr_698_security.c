@@ -255,16 +255,17 @@ static int ___get_encode_and_mac(struct instance_t* instance, struct pipeline_t*
     output.MAC_len = 0;
     
     ret = fr_698_handle_esam(&input, &output);
-    if(ret > 0){
+    if(output.esam_err_no == 0x9000){
       if(output.MAC_len == 4){
             *mac++ = 0x01;
             *mac++ = 0x00;
             *mac++ = 0x04;
             //memcpy(mac, ctx->apdu_d_rx, 4);//MAC
             cache->wr += 3+4;
+            return 1;
         }
     }
-    return 1;
+    return -1;
 }
 
 
