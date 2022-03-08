@@ -40,8 +40,8 @@ int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipelin
         
         
         r = security_mode_word_check(instance, pipeline, 2, oad);
-        //安全模式不匹配 待测试  
-#if 1       
+        //安全模式不匹配 返回拒绝
+#if 0       
         if (r < 0)
         {
             ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
