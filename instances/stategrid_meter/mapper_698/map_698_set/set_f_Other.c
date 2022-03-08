@@ -194,6 +194,33 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                         break;
             }
             break;
+        case 0xFFFF: // 内扩命令
+        {
+            switch (attribute)
+            {
+                case 0x02:// 进厂内
+                {
+                    tempbuf[0] = *p++;
+                    
+                    if( ((tempbuf[0] == 0xAA) && (mbase_cb->meter_cover_sta == EVENT_SET)) || (tempbuf[0] == 0xFB) )
+                    {
+                        mbase_cb->factor_mode = true;
+                    }
+                    esle if(tempbuf[0] == 0x00) // 退厂内
+                    {
+                        mbase_cb->factor_mode = false;
+                    }
+                    esle 
+                    {
+                        return -1;
+                    }
+                    // 写 e2p 待调整
+                }
+                return (p-buf);
+                break;
+            }  
+        }
+            break;
         default:
             break;
     }
