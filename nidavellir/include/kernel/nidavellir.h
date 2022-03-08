@@ -136,7 +136,9 @@ extern struct pipeline_t pl_tx_dlms;
 #define pid_plc_tx_698   25
 #define pid_ir_rx_698    26
 #define pid_ir_tx_698    27
-#define pid_lowpower_wakeup 28
+#define pid_4852_rx_698    28
+#define pid_4852_tx_698    29
+#define pid_lowpower_wakeup 30
 
 enum work_type_t 
 {

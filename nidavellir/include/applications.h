@@ -126,6 +126,8 @@ struct mbase_control_block_t
     uint8_t auxiliary_power;//辅助电源供电标志
     
     //认证相关
+    uint8_t recently_connect_channel[2]; //最近一次应用连接通道 0 主站， 1终端
+    uint8_t connect_status[4][2];        //应用连接状态 [通道][主站或终端]，   通道顺序 :红外、485-1，载波，485-2；
     uint32_t irauthen_tmr;  //红外认证有效时间
     uint32_t authen_tmr;    //应用连接有效时间
 

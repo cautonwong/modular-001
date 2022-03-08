@@ -206,11 +206,11 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                     {
                         mbase_cb->factor_mode = true;
                     }
-                    esle if(tempbuf[0] == 0x00) // 退厂内
+                    else if(tempbuf[0] == 0x00) // 退厂内
                     {
                         mbase_cb->factor_mode = false;
                     }
-                    esle 
+                    else 
                     {
                         return -1;
                     }
