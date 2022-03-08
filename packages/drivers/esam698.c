@@ -309,6 +309,7 @@ uint8_t f_esam_type_read_meter(uint8_t type , struct esam_698_input_t *esam_in ,
         memcpy(esam_out->MAC_data, &esam_in->data_buf[len-4] , 4); //电表计算密文+MAC
         esam_out->MAC_len = 4;
     }
+    esam_out->esam_err_no = sw;
     return ret;
 }
 
@@ -347,7 +348,7 @@ uint8_t f_esam_type_point_get_data2(uint8_t type , struct esam_698_input_t *esam
     len = esam_in->AttachData_len;
     memcpy(&esam_in->data_buf[len] , esam_in->data , esam_in->data_len);
     len += esam_in->data_len;
-    if(type == 1)//数据验证信息为SID_MAC
+    if(esam_in->cmd_type == 1)//数据验证信息为SID_MAC
     {
         memcpy(&esam_in->data_buf[len] , esam_in->MAC_data , esam_in->MAC_len);
         len += esam_in->MAC_len;
