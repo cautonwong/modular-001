@@ -294,20 +294,20 @@ uint8_t f_esam_type_read_meter(uint8_t type , struct esam_698_input_t *esam_in ,
 		
     if(type == 0)
     {
-	memcpy(esam_out->MAC_data, esam_in->data_buf , 4); //电表计算明文+MAC
-    esam_out->MAC_len = 4;
+        memcpy(esam_out->MAC_data, esam_in->data_buf , 4); //电表计算明文+MAC
+        esam_out->MAC_len = 4;
     }
     else if(type == 1)
     {
-	memcpy(esam_out->data, esam_in->data_buf , len); //电表计算密文
-    esam_out->data_len = len;
+        memcpy(esam_out->data, esam_in->data_buf , len); //电表计算密文
+        esam_out->data_len = len;
     }
     else
     {
-	memcpy(esam_out->data, esam_in->data_buf , len-4); //电表计算密文
-    esam_out->data_len = len - 4;
-	memcpy(esam_out->MAC_data, &esam_in->data_buf[len-4] , 4); //电表计算密文+MAC
-    esam_out->MAC_len = 4;
+        memcpy(esam_out->data, esam_in->data_buf , len-4); //电表计算密文
+        esam_out->data_len = len - 4;
+        memcpy(esam_out->MAC_data, &esam_in->data_buf[len-4] , 4); //电表计算密文+MAC
+        esam_out->MAC_len = 4;
     }
     return ret;
 }
@@ -342,21 +342,21 @@ uint8_t f_esam_type_point_get_data2(uint8_t type , struct esam_698_input_t *esam
     uint16_t len = 0 , sw = 0;
     uint8_t ret = 0;
 	
-    memcpy(head , (uint8_t *)&esam_in->sid_id , 4);
-    memcpy(esam_in->data_buf , (uint8_t *)&esam_in->AttachData , esam_in->AttachData_len);
+    memcpy(head, (uint8_t *)&esam_in->sid_id , 4);
+    memcpy(esam_in->data_buf , esam_in->AttachData , esam_in->AttachData_len);
     len = esam_in->AttachData_len;
-    memcpy(&esam_in->data_buf[len] , (uint8_t *)&esam_in->data , esam_in->data_len);
+    memcpy(&esam_in->data_buf[len] , esam_in->data , esam_in->data_len);
     len += esam_in->data_len;
     if(type == 1)//数据验证信息为SID_MAC
     {
-        memcpy(&esam_in->data_buf[len] , (uint8_t *)&esam_in->MAC_data , esam_in->MAC_len);
+        memcpy(&esam_in->data_buf[len] , esam_in->MAC_data , esam_in->MAC_len);
         len += esam_in->MAC_len;
     }
     tx_esam(head , esam_in->data_buf , len , esam_hal);
     ret = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
     if(sw == 0x9000)
     {
-         memcpy(esam_out->data , esam_in->data_buf , len);
+        memcpy(esam_out->data , esam_in->data_buf , len);
     }
     esam_out->data_len = len;
     return ret;
