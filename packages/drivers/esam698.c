@@ -320,11 +320,11 @@ uint8_t f_esam_type_broadcast(struct esam_698_input_t *esam_in , struct esam_698
     uint8_t ret = 0;
 	
     memcpy(head , (uint8_t *)&esam_in->sid_id , 4);
-    memcpy(esam_in->data_buf , (uint8_t *)&esam_in->AttachData , esam_in->AttachData_len);
+    memcpy(esam_in->data_buf , (uint8_t *)esam_in->AttachData , esam_in->AttachData_len);
     len = esam_in->AttachData_len;
-    memcpy(&esam_in->data_buf[len] , (uint8_t *)&esam_in->data , esam_in->data_len);
+    memcpy(&esam_in->data_buf[len] , (uint8_t *)esam_in->data , esam_in->data_len);
     len += esam_in->data_len;
-    memcpy(&esam_in->data_buf[len] , (uint8_t *)&esam_in->MAC_data , esam_in->MAC_len);
+    memcpy(&esam_in->data_buf[len] , (uint8_t *)esam_in->MAC_data , esam_in->MAC_len);
     len += esam_in->MAC_len;
     tx_esam(head , esam_in->data_buf , len , esam_hal);
     ret = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
@@ -375,7 +375,7 @@ uint8_t f_esam_hes_point_get_data4(struct esam_698_input_t *esam_in , struct esa
 
 	
     head[3] = esam_in->cmd_type;
-    memcpy(esam_in->data_buf , (uint8_t *)&esam_in->data , esam_in->data_len);
+    memcpy(esam_in->data_buf , (uint8_t *)esam_in->data , esam_in->data_len);
     len = esam_in->data_len;
     tx_esam(head , esam_in->data_buf , len , esam_hal);
     ret = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
@@ -395,7 +395,7 @@ uint8_t f_esam_type_read_esam_data(struct esam_698_input_t *esam_in , struct esa
     uint8_t ret = 0;
     
     memcpy(head , (uint8_t *)&esam_in->sid_id , 4);
-    memcpy(esam_in->data_buf , (uint8_t *)&esam_in->AttachData , esam_in->AttachData_len);
+    memcpy(esam_in->data_buf , (uint8_t *)esam_in->AttachData , esam_in->AttachData_len);
     len = esam_in->AttachData_len;
     tx_esam(head , esam_in->data_buf , len , esam_hal);
     ret = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
@@ -423,6 +423,32 @@ uint8_t f_esam_type_read_esam_no(struct esam_698_input_t *esam_in , struct esam_
     return ret;
 }
 
+
+uint8_t f_esam_type_key_updata(struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
+{
+    uint8_t *ptr;
+    uint8_t head[4];
+    uint16_t len = 0 , sw = 0;
+    uint8_t ret = 0;
+    /*
+    ptr = esam_in->data_buf;
+    memcpy(ptr , (uint8_t *)&esam_in->sid_id , 4);
+    ptr += 4;
+    memcpy(ptr , (uint8_t *)esam_in->AttachData , esam_in->AttachData_len);
+    ptr += esam_in->AttachData_len;
+    memcpy(ptr , (uint8_t *)esam_in->Endata1 , esam_in->Endata1_len);
+    ptr += esam_in->Endata1_len;
+    memcpy(ptr , (uint8_t *)esam_in->MAC_data , esam_in->MAC_len);
+    tx_esam(head , esam_in->data_buf , len , esam_hal);
+    ret = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
+    if(sw == 0x9000)
+    {
+        memcpy(esam_out->data , esam_in->data_buf , len);
+    }
+    esam_out->data_len = len;
+    */
+    return ret;
+}
 
 static void esam_698_power_ctrl(uint8_t power)
 {
@@ -512,6 +538,9 @@ int openM_ioctl(int fd, int request, void *param)
          case esam_type_read_esam_no:
               f_esam_type_read_esam_no(esam_698_data->input , esam_698_data->output , 0);
               break;
+         case esam_type_key_updata:
+              f_esam_type_key_updata(esam_698_data->input , esam_698_data->output , 0);
+              break;              
          default:
               break;
     }
