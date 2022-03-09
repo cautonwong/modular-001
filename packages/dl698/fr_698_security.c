@@ -55,14 +55,32 @@ static int ___get_sid(struct context_698_t* ctx, struct esam_698_input_t *input)
     input->AttachData = apdu_rx + offset;
     return 1;
 }
-    
+
+static int ___verification_handle(struct esam_698_input_t *p_input, struct esam_698_output_t *p_output, uint8_t type)
+{
+    int ret = fr_698_handle_esam(p_input, p_output);
+
+    if((0 == type)&&(0x9000 == p_output->esam_err_no)){
+        return 1;
+    }
+
+    if((1 == type)&&(0x9000 == p_output->esam_err_no)){
+        if(0 == memcmp(p_output->MAC_data, p_input->MAC_data, 4)){
+            return 1;
+        }else{
+            return 1; //return -1; //临时屏蔽mac 验证不过
+        }
+    }
+    return -1; 
+}
+
+
 static int __verification_SID_MAC(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint16_t offset = 0; 
-    int ret = 0;
     uint8_t *mac = cache->buf_ptr + ctx->security_data_len;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
@@ -83,13 +101,7 @@ static int __verification_SID_MAC(struct instance_t* instance, struct pipeline_t
     output.data         = ctx->security_data;
     output.data_len     = Max698_apdu_rx - 5;
           
-    ret = fr_698_handle_esam(&input, &output);
-    if(ret > 0){
-      if(output.MAC_len == 4){
-
-        }
-    }
-    return 1;
+    return ___verification_handle(&input, &output, 0);
 }
 
 static int __verification_RN(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -97,8 +109,7 @@ static int __verification_RN(struct instance_t* instance, struct pipeline_t* pip
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
-    uint16_t offset = 0;    
-    int ret = 0;
+    uint16_t offset = 0;
     uint8_t *mac = cache->buf_ptr + ctx->security_data_len;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
@@ -115,6 +126,9 @@ static int __verification_RN(struct instance_t* instance, struct pipeline_t* pip
     if(ctx->RN_len > 64)
         ctx->RN_len = 64;
     memcpy(ctx->RN_data, input.RN_Data, ctx->RN_len);
+    if(ctx->service == SECURITY_Response){
+        ___verification_handle(&input, &output, 1);
+    }
     return 1;
 }
 
@@ -124,7 +138,6 @@ static int __verification_RN_MAC(struct instance_t* instance, struct pipeline_t*
     struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint16_t offset = 0; 
-    int ret = 0;
     uint8_t *mac = cache->buf_ptr + ctx->security_data_len;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
@@ -150,24 +163,13 @@ static int __verification_RN_MAC(struct instance_t* instance, struct pipeline_t*
     output.MAC_data = cache->buf_ptr + ctx->security_data_len + 3;
     output.MAC_len = 0;
     
-    ret = fr_698_handle_esam(&input, &output);
-    if(ret > 0){
-        if(output.MAC_len == 4){
-            if(0 == memcmp(output.MAC_data, input.MAC_data, 4))
-                return 1;
-            else
-               return 1; //return -1; //临时屏蔽mac 验证不过
-        }
-    }
-    return 1;
+    return ___verification_handle(&input, &output, 1);
 }
 
-//待修改saga 需要 密文+sid报文调试
 static int __verification_SID(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
-    int ret = 0;
     uint8_t *mac = cache->buf_ptr + ctx->security_data_len;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
@@ -181,20 +183,13 @@ static int __verification_SID(struct instance_t* instance, struct pipeline_t* pi
     input.data_buf      = instance->apdu_cache; //临时缓冲区
     input.data_buf_len  = cache_max;            //临时缓冲长度
     
-    
     output.data     = ctx->security_data;
     output.data_len = Max698_apdu_rx - 5;
 
     output.MAC_data = cache->buf_ptr + ctx->security_data_len + 3;
     output.MAC_len  = 0;
     
-    ret = fr_698_handle_esam(&input, &output);
-    if(ret > 0){
-      if(output.MAC_len == 4){
-
-        }
-    }
-    return 1;
+    return ___verification_handle(&input, &output, 0);
 }
 
 
@@ -203,7 +198,6 @@ int fr_security_request(struct instance_t* instance, struct pipeline_t* pipeline
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint16_t len  = 0;
-
     int ret = 0;
     
     ctx->security_choice = apdu_rx[ctx->apdu_rx_offset++];
@@ -256,11 +250,10 @@ static int ___get_encode_and_mac(struct instance_t* instance, struct pipeline_t*
     
     ret = fr_698_handle_esam(&input, &output);
     if(output.esam_err_no == 0x9000){
-      if(output.MAC_len == 4){
+        if(output.MAC_len == 4){
             *mac++ = 0x01;
             *mac++ = 0x00;
             *mac++ = 0x04;
-            //memcpy(mac, ctx->apdu_d_rx, 4);//MAC
             cache->wr += 3+4;
             return 1;
         }
