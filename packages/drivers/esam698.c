@@ -191,6 +191,7 @@ uint8_t f_esam_type_get_esam_all_info1(struct esam_698_output_t *esam_out , cons
 
     ret = rx_esam(esam_out->data , &len , esam_hal , &sw);
 	esam_out->data_len = len;	
+    esam_out->esam_err_no = sw;
     return ret;
 }
 
@@ -205,6 +206,7 @@ uint8_t f_esam_type_get_esam_all_info2(struct esam_698_output_t *esam_out , cons
 
     ret = rx_esam(esam_out->data , &len , esam_hal , &sw);
 	esam_out->data_len = len;	
+    esam_out->esam_err_no = sw;
     return ret;
 }
 
@@ -220,6 +222,7 @@ uint8_t f_esam_type_get_esam_p2_info2(struct esam_698_input_t *esam_in , struct 
 
     ret = rx_esam(esam_out->data , &len , esam_hal , &sw);
 	esam_out->data_len = len;	
+    esam_out->esam_err_no = sw;
     return ret;
 }
 
@@ -241,20 +244,22 @@ uint8_t f_esam_type_meet_consult(uint8_t type , struct esam_698_input_t *esam_in
     tx_esam(head , com_data , 36 , esam_hal);
 
     ret = rx_esam(com_data , &len , esam_hal , &sw);
-		
-    if(type == 1)//终端会话
-    {
-        memcpy(esam_out->data, com_data , 64);
-        esam_out->data_len = 64;
-        memcpy(esam_out->MAC_data, &com_data[64]  , 4);
+    if(sw == 0x9000){
+        if(type == 1)//终端会话
+        {
+            memcpy(esam_out->data, com_data , 64);
+            esam_out->data_len = 64;
+            memcpy(esam_out->MAC_data, &com_data[64]  , 4);
+        }
+        else
+        {
+            memcpy(esam_out->data, com_data , 48);
+            esam_out->data_len = 48;
+            memcpy(esam_out->MAC_data, &com_data[48]  , 4);
+        }
+        esam_out->MAC_len = 4;
     }
-    else
-    {
-        memcpy(esam_out->data, com_data , 48);
-        esam_out->data_len = 48;
-        memcpy(esam_out->MAC_data, &com_data[48]  , 4);
-    }
-    esam_out->MAC_len = 4;
+    esam_out->esam_err_no = sw;
     return ret;
 }
 
@@ -291,23 +296,24 @@ uint8_t f_esam_type_read_meter(uint8_t type , struct esam_698_input_t *esam_in ,
     tx_esam(head , esam_in->data_buf , offset , esam_hal);
 
     ret = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
-		
-    if(type == 0)
-    {
-        memcpy(esam_out->MAC_data, esam_in->data_buf , 4); //电表计算明文+MAC
-        esam_out->MAC_len = 4;
-    }
-    else if(type == 1)
-    {
-        memcpy(esam_out->data, esam_in->data_buf , len); //电表计算密文
-        esam_out->data_len = len;
-    }
-    else
-    {
-        memcpy(esam_out->data, esam_in->data_buf , len-4); //电表计算密文
-        esam_out->data_len = len - 4;
-        memcpy(esam_out->MAC_data, &esam_in->data_buf[len-4] , 4); //电表计算密文+MAC
-        esam_out->MAC_len = 4;
+    if(sw == 0x9000){
+        if(type == 0)
+        {
+            memcpy(esam_out->MAC_data, esam_in->data_buf , 4); //电表计算明文+MAC
+            esam_out->MAC_len = 4;
+        }
+        else if(type == 1)
+        {
+            memcpy(esam_out->data, esam_in->data_buf , len); //电表计算密文
+            esam_out->data_len = len;
+        }
+        else
+        {
+            memcpy(esam_out->data, esam_in->data_buf , len-4); //电表计算密文
+            esam_out->data_len = len - 4;
+            memcpy(esam_out->MAC_data, &esam_in->data_buf[len-4] , 4); //电表计算密文+MAC
+            esam_out->MAC_len = 4;
+        }
     }
     esam_out->esam_err_no = sw;
     return ret;
@@ -330,9 +336,10 @@ uint8_t f_esam_type_broadcast(struct esam_698_input_t *esam_in , struct esam_698
     ret = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
     if(sw == 0x9000)
     {
-	memcpy(esam_out->data , esam_in->data_buf , len);
+        memcpy(esam_out->data , esam_in->data_buf , len);    
     }
     esam_out->data_len = len;
+    esam_out->esam_err_no = sw;
     return ret;
 }
 
@@ -343,7 +350,7 @@ uint8_t f_esam_type_point_get_data2(uint8_t type , struct esam_698_input_t *esam
     uint16_t len = 0 , sw = 0;
     uint8_t ret = 0;
 	
-    memcpy(head, (uint8_t *)&esam_in->sid_id , 4);
+    mem_swap_cpy(head, (uint8_t *)&esam_in->sid_id , 4);
     memcpy(esam_in->data_buf , esam_in->AttachData , esam_in->AttachData_len);
     len = esam_in->AttachData_len;
     memcpy(&esam_in->data_buf[len] , esam_in->data , esam_in->data_len);
@@ -360,6 +367,7 @@ uint8_t f_esam_type_point_get_data2(uint8_t type , struct esam_698_input_t *esam
         memcpy(esam_out->data , esam_in->data_buf , len);
     }
     esam_out->data_len = len;
+    esam_out->esam_err_no = sw;
     return ret;
 }
 
@@ -381,9 +389,10 @@ uint8_t f_esam_hes_point_get_data4(struct esam_698_input_t *esam_in , struct esa
     ret = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
     if(sw == 0x9000)
     {
-         memcpy(esam_out->data , esam_in->data_buf , len);
+        memcpy(esam_out->data , esam_in->data_buf , len);
     }
     esam_out->data_len = len;
+    esam_out->esam_err_no = sw;
     return ret;
 }
 
@@ -404,6 +413,7 @@ uint8_t f_esam_type_read_esam_data(struct esam_698_input_t *esam_in , struct esa
         memcpy(esam_out->data , esam_in->data_buf , len);
     }
     esam_out->data_len = len;
+    esam_out->esam_err_no = sw;
     return ret;
 }
 
