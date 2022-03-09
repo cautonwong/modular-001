@@ -670,10 +670,41 @@ int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pip
 #endif
 #endif    //----698安全模式字-----------------------------结束
 
-#if 0 //--698 安全传输权限判断
-static uint8_t *fr_698_security_request_check(struct instance_t* instance, struct pipeline_t* pipeline, uint16_t *length, uint8_t cilent_index)
+
+
+uint8_t fr_698_current_connect_status_get(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cilent_index)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    uint8_t rlt = 0, i;
+    uint8_t commchannel[4] = { pid_ir_rx_698, pid_rx_698,  pid_plc_rx_698,  pid_4852_rx_698 };
+
+    for (i = 0; i < (sizeof(commchannel) / sizeof(commchannel[0])); i++)
+    {
+        if (ctrl_block->recently_connect_channel[cilent_index] == commchannel[i]) // 应用连接时 recently_connect_channel置位 待调整
+        {
+            break;
+        }
+    }
+    if (i >= 4)
+    {
+        return 0;
+    }
+
+    rlt |= ctrl_block->connect_status[i][cilent_index];
+
+    return rlt;
+}
+
+
+
+#if 0 //--698 安全传输权限判断
+static uint8_t *fr_698_security_request_check(struct instance_t* instance, struct pipeline_t* pipeline, uint16_t *length)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
     uint8_t* apdu_rx = ctx->apdu_d_rx;  // apdu_rx[ctx->apdu_rx_offset++];
 
     uint8_t   mode, auth, dar, judge = 1;
@@ -685,10 +716,20 @@ static uint8_t *fr_698_security_request_check(struct instance_t* instance, struc
 
     uint32_t oad = 0;
     uint8_t  *tmp;
-    uint8_t cipher_sidmac = 0;
-
+    uint8_t cilent_index,cipher_sidmac = 0;
+    int ret = 0;
 
     
+    if (CA_TYPE_TER(ctx->CA))//from 终端
+    {
+        cilent_index = 1;
+    }
+    else
+    {
+        cilent_index = 0;
+    }
+
+
     //session->req.sec_flag.data = 0;
 
 
@@ -704,74 +745,81 @@ static uint8_t *fr_698_security_request_check(struct instance_t* instance, struc
         //return NULL;
     //}
 
-    session->req.sec_flag.bits.security  = 1;
-    session->req.sec_flag.bits.cipher    = mode;
-    session->req.sec_flag.bits.auth_type = auth;
-    
+    //session->req.sec_flag.bits.security  = 1;
+    //session->req.sec_flag.bits.cipher    = mode;
+    //session->req.sec_flag.bits.auth_type = auth;
+    ctx->security_choice == 1
+
+    ctx->verification_choice == AUTH_SID_MAC)
    // hfp_write(0x7F0B, (uint8 *)&mode, 0x01, __NULL);
 
 #if 1 
     judge = true;
-    if(((session->req.cmd == DL698_CMD_SecurityResponse) && (*security.apdu == DL698_CMD_ReportResponse)) // 上报确认
-    ||((link->af.bits.type == 0x03) || ( link->af.bits.type == 0x02)) ) //打开广播地址，组地址可以不用应用链接
+    if(((ctx->service == SECURITY_Response) && ((*ctx->security_data) == REPORT_Response)) 
+    ||((SA_TYPE(ctx->SA) == 0x03) || (SA_TYPE(ctx->SA) == 0x02))) //广播地址，组地址  无需判断 应用链接
     {
         judge = false; // 不需要判断
     }   
 
-    if ((mode == 0) && (auth == 1) && ( *security.apdu == 5) ) // 明文 +rn 读  纯明文权限的数据 只要有一个应用连接在就返回成功
+    if ((ctx->security_choice == 0) && (ctx->verification_choice == AUTH_RN) && ((*ctx->security_data) == GET_Request) ) // 明文 +rn 读  纯明文权限的数据 只要有一个应用连接在就返回成功
     {
-        tmp = security.apdu;
+        tmp = ctx->security_data;
         oad =   (tmp[3] << 24) + (tmp[4] << 16) + (tmp[5] << 8) + tmp[6]; 
-        if(dl698_esam_plain_read_check(cilent_index, oad)) 
+
+        ret = fr_698_esam_plain_read_check(instance, pipeline, cilent_index, oad);
+        if (ret > 0)
         {
             // 避免esam电源未关闭   应该两个连接都不在的时候应该关闭esam电源  暂时先打补丁
-            if ((dl698_current_connect_status_get(0)== true) || (dl698_current_connect_status_get(1)== true) || (term_auth_timeout != 0))
+            if ((fr_698_current_connect_status_get(instance, pipeline, 0)== true) 
+                || (fr_698_current_connect_status_get(instance, pipeline, 1)== true) 
+                || (ctrl_block->term_auth_timeout != 0))
             {
                 judge = false; // 不需要判断
             }
         }
     }
   
+
     if(judge == true)
     {            
-        if (((mode == 1) || (auth == 0) || (auth == 2) || (auth == 3))   
-        && (dl698_current_connect_status_get(cilent_index)== false))
+        if (((ctx->security_choice == 1) || (ctx->verification_choice == AUTH_SID_MAC) || (ctx->verification_choice == AUTH_RN_MAC) || (ctx->verification_choice == AUTH_SID))
+        && (fr_698_current_connect_status_get(instance, pipeline, cilent_index)== false))
         {
-            aprint("chiper security is disconnect\r\n");
-            *length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);
-            return NULL;
+            //待调整 直接报错
+            //*length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);
+            //return NULL;
         }
 
-        if (mode == 0) // 明文    
+        if (ctx->security_choice == 0) // 明文    
         {
             if(cilent_index == 0)//主站
             {
-                if(esam_auth_enable && (dl698_current_connect_status_get(cilent_index)== false))
+                if( ctrl_block->esam_auth_enable && (fr_698_current_connect_status_get(instance, pipeline, cilent_index)== false))
                 {
-                    if(session->channel == 0x1060) //红外情况下，有红外认证，不判断身份认证开启和关闭
+                    if (ctx->channel == pid_ir_rx_698) //红外情况下，有红外认证，不判断身份认证开启和关闭
                     {
-                        if(infrared_auth_timeout == 0)//红外认证失效，明文失败
+                        if(ctrl_block->infrared_auth_timeout == 0)//红外认证失效，明文失败
                         {
-                            aprint("RN security is disconnect\r\n");
-                            *length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明
-                            return NULL;
+                            //待调整 直接报错
+                            //*length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明
+                            //return NULL;
                         }
                     }
                     else//其他通道，开启了身份认证，无链接情况下，明文失败
                     {
-                        aprint("RN security is disconnect\r\n");
-                        *length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明
-                        return NULL;
+                        //待调整 直接报错
+                        //*length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明
+                        //return NULL;
                     }
                 }
             }
             else//终端
             {
-                if(esam_auth_enable && (dl698_current_connect_status_get(cilent_index)== false) && (term_auth_timeout == 0))
+                if( ctrl_block->esam_auth_enable && (fr_698_current_connect_status_get(instance, pipeline, cilent_index)== false) && (ctrl_block->term_auth_timeout == 0))
                 {
-                    aprint("RN security is disconnect\r\n");
-                    *length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明
-                    return NULL;
+                    //待调整 直接报错
+                    //*length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明
+                    //return NULL;
                 }
             }    
 
