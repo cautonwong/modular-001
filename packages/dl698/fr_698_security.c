@@ -57,7 +57,7 @@ static int ___verification_handle(struct esam_698_input_t *p_input, struct esam_
     }
 
     if((1 == type)&&(0x9000 == p_output->esam_err_no)){
-        if(0 == memcmp(p_output->MAC_data, p_input->MAC_data, 4)){
+        if(0 == mem_compare(p_output->MAC_data, p_input->MAC_data, 4)){
             return 1;
         }else{
             return 1; //return -1; //临时屏蔽mac 验证不过

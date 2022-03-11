@@ -110,7 +110,7 @@ static int __password_process(struct instance_t* instance, struct pipeline_t* pi
         return DAR_OTHERS_ERROR;
     }
 
-    if(0 == memcmp(password, p_password, p_password[0]))
+    if(0 == mem_compare(password, p_password, p_password[0]))
     {
         return DAR_SUCCESS;
     }
