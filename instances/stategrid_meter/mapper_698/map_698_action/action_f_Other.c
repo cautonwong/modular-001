@@ -261,10 +261,10 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
 {    
     struct mbase_control_block_t* mbase_cb;
     
-    
     struct context_698_t* p_ctx = (struct context_698_t*)ctx;
     struct fifo_t* cache = p_ctx->apdu;
-    
+    uint8_t *apdu_rx = p_ctx->apdu_d_rx + p_ctx->apdu_rx_offset;
+    uint16_t offset = 0;
     
     uint8_t  method,dar=0,buffer[16],keybuf[128],len1=0,len2=0;
     uint16_t oad,pageid=0,txlen=0,rxlen=0;
@@ -344,18 +344,20 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             }
             else if(method == 0x07) //秘钥更新
             {
-                memcpy((uint8_t*)&cache->buf_ptr[cache->wr], (uint8_t*)&p_ctx->apdu_rx->buf_ptr[0], 11);
+#if 1 //待修改
+                memcpy((uint8_t*)&cache->buf_ptr[cache->wr], (uint8_t*)&apdu_rx[0], 11);
                 cache->wr = cache->wr + 11;
+
+                memcpy((uint8_t*)&addr, (uint8_t*)&apdu_rx[1683], 4);//sid
+
+                mem_swap_cpy((uint8_t*)&txlen, (uint8_t*)&apdu_rx[1688], 2);//len
+
+                memcpy((uint8_t*)&apdu_rx[9], (uint8_t*)&apdu_rx[1690], 0x0b-0x02);//data1
+
+                memcpy((uint8_t*)&apdu_rx[1682], (uint8_t*)&apdu_rx[1700], 4);//MAC
                 
-                memcpy((uint8_t*)&addr, (uint8_t*)&p_ctx->apdu_rx->buf_ptr[1683], 4);//sid
-
-                mem_swap_cpy((uint8_t*)&txlen, (uint8_t*)&p_ctx->apdu_rx->buf_ptr[1688], 2);//len
-
-                memcpy((uint8_t*)&p_ctx->apdu_rx->buf_ptr[9], (uint8_t*)&p_ctx->apdu_rx->buf_ptr[1690], 0x0b-0x02);//data1
-
-                memcpy((uint8_t*)&p_ctx->apdu_rx->buf_ptr[1682], (uint8_t*)&p_ctx->apdu_rx->buf_ptr[1700], 4);//MAC
-                
-                rxlen = write_esam(instance, addr , (uint8_t*)&p_ctx->apdu_rx->buf_ptr[9], txlen);
+                rxlen = esam_key_updata(instance, addr , (uint8_t*)&apdu_rx[9], txlen);
+#endif
                 p = p + 1692;
                 //成功后 再触发 密钥更新事件
                 if(rxlen != 0xff)

@@ -2478,7 +2478,7 @@
                 <name>$PROJ_DIR$\..\..\..\packages\drivers\eeprom.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\esam698.c</name>
+                <name>$PROJ_DIR$\..\..\..\packages\drivers\esam698_win.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\drivers\iic_driver.c</name>

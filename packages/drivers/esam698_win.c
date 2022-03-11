@@ -6,7 +6,7 @@
 #include "fr_698_esam.h"
 #include "io_type.h"
 
-#ifdef emulate_esam_en
+#if 1
 
 enum verification_choice_e
 {
@@ -18,8 +18,8 @@ enum verification_choice_e
 
 enum sec
 {
-    SECURITY_CHOICE_0_Plaintext  = 0,    //Ã÷ÎÄÊı¾İµ¥Ôª
-    SECURITY_CHOICE_1_Ciphertext = 1,    //ÃÜÎÄÊı¾İµ¥Ôª
+    SECURITY_CHOICE_0_Plaintext  = 0,    //æ˜æ–‡æ•°æ®å•å…ƒ
+    SECURITY_CHOICE_1_Ciphertext = 1,    //å¯†æ–‡æ•°æ®å•å…ƒ
 };
 
 
@@ -45,22 +45,8 @@ struct esam_hal_t
 };
 
 
-
-struct esam_error_apdu_t
-{
-    uint8  apdu[6];
-    uint16 sw;
-};
-
-struct esam_error_apdu_t esam_error_apdu;
-
-
-
-/*µ÷ÊÔ½×¶ÎÔİ²»½øĞĞ´úÂëµÄ¾«¼òºÍºÏ²¢*/
-
 static uint8 tx_esam(uint8 *tx_apdu , uint8 *tx_data , uint16 len , const struct esam_hal_t *esam_hal)
 {
-#if 1
     uint8 value = 0;
     uint8 len1 , len2;
     uint8 lrc1 = 0;
@@ -106,7 +92,7 @@ static uint8 tx_esam(uint8 *tx_apdu , uint8 *tx_data , uint16 len , const struct
     mcu_delay_us(15);
     ESAM_CS_HIGH();
     mcu_delay_us(55);
-#endif
+
     return true;
 }
 
@@ -114,7 +100,6 @@ static uint8 tx_esam(uint8 *tx_apdu , uint8 *tx_data , uint16 len , const struct
 
 static uint16 rx_esam(uint8 *rx_data , uint16 *len , const struct esam_hal_t *esam_hal , uint16_t *sw)
 {
-#if 1
     uint8  busy = 0,lrc1 = 0;
     uint8  err,ret[4] = {0},cnt = 0;
     uint16 i,rcv_len;
@@ -129,10 +114,10 @@ static uint16 rx_esam(uint8 *rx_data , uint16 *len , const struct esam_hal_t *es
         ESAM_CS_LOW();
         
         mcu_delay_us(120);
-        //ĞèÒªÑ­»·¼ì²éµôµç                       int (*rx)(uint8_t* byte , size_t index )
+        //éœ€è¦å¾ªç¯æ£€æŸ¥æ‰ç”µ                       int (*rx)(uint8_t* byte , size_t index )
         while((busy != 0x55)&&(timeout--))
         {
-            //ĞèÒªÑ­»·¼ì²éµôµç
+            //éœ€è¦å¾ªç¯æ£€æŸ¥æ‰ç”µ
             mcu_clear_watchdog();
             mcu_spi_ops.rx(&busy , 0);
             
@@ -180,16 +165,22 @@ static uint16 rx_esam(uint8 *rx_data , uint16 *len , const struct esam_hal_t *es
         }
         
         ESAM_CS_HIGH();
-        mcu_delay_us(20);
+        mcu_delay_us(50);
     }while((cnt <= 3)&&(err));
-
-    return ((uint16)ret[0]<<8) + ret[1];
-#endif
+    *sw = ((uint16)ret[0]<<8) + ret[1];
+    if(cnt < 3)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 
 
-static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8_t cp_type, void *esam_hal)
+static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8_t type, void *esam_hal)
 {
     struct esam_698_output_t *esam_out = para->output;
     struct esam_698_input_t *esam_in = para->input;
@@ -197,26 +188,35 @@ static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8
     uint16_t len = 0 , sw = 0;
     uint16_t err_no = 0;
 	
+    if(esam_in->RN_Data_len){
+        memcpy(esam_in->data_buf , esam_in->RN_Data , esam_in->RN_Data_len);
+        len += esam_in->RN_Data_len;
+    }
+#if 0
     if(esam_in->AttachData_len){
-        memcpy(esam_in->data_buf , (uint8_t *)&esam_in->AttachData , esam_in->AttachData_len);
+        memcpy(esam_in->data_buf , esam_in->AttachData , esam_in->AttachData_len);
         len = esam_in->AttachData_len;
     }
-    
+#endif
     if(esam_in->data_len){
-        memcpy(&esam_in->data_buf[len] , (uint8_t *)&esam_in->data , esam_in->data_len);
+        memcpy(&esam_in->data_buf[len] , esam_in->data , esam_in->data_len);
         len += esam_in->data_len;
     }
     
     if(esam_in->MAC_len){
-        memcpy(&esam_in->data_buf[len] , (uint8_t *)&esam_in->MAC_data , esam_in->MAC_len);
+        memcpy(&esam_in->data_buf[len] , esam_in->MAC_data , esam_in->MAC_len);
         len += esam_in->MAC_len;
+    }
+    
+    if(2 == esam_in->AttachData_len){
+        len = (esam_in->AttachData[0]<<8)+esam_in->AttachData[1];
     }
     
     tx_esam(head , esam_in->data_buf , len , esam_hal);
     
     err_no = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
     if(sw == 0x9000){
-        if(cp_type){
+        if(type){
             memcpy(esam_out->data , esam_in->data_buf , len);
         }
         esam_out->data_len = len;
@@ -253,99 +253,15 @@ static uint8_t f_esam_type_get_esam_all_info2(struct esam_698_data_t *para , voi
     return  __comm_esam_handle(head, para, 1, esam_hal);
 }
 
-static uint8_t f_esam_type_get_esam_p2_info2(struct esam_698_data_t *para , void *esam_hal)
-{
-    struct esam_698_input_t *esam_in = para->input;
-    
-    uint8_t head[4] = {0x80, 0x36, 0x00, 0x00};    
-    head[3] = esam_in->cmd_type;
-    
-    esam_in->AttachData_len = 0;
-    esam_in->data_len = 0;
-    esam_in->MAC_len = 0;
-      
-    return  __comm_esam_handle(head, para, 1, esam_hal);
-}
 
 
 
-static uint8_t f_esam_type_meet_consult(struct esam_698_data_t *para, void *esam_hal)
-{
-    struct esam_698_output_t *esam_out = para->output;
-    struct esam_698_input_t *esam_in = para->input;
-    uint8_t head[4] = {0x81, 0x02, 0x00, 0x00};
-    
-    if(esam_in->cmd_type == 1)//ÖÕ¶Ë»á»°
-    {
-        head[0] = 0x82;
-    }
-    
-    esam_in->AttachData_len = 0;
-    esam_in->data_len = 32;
-    esam_in->MAC_len = 4;
-      
-    if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
-        if(esam_in->cmd_type == 1){//ÖÕ¶Ë»á»°
-            esam_out->data_len = 64;
-        }else{
-            esam_out->data_len = 48;
-        }
-    
-        memcpy(esam_out->data, esam_in->data_buf , esam_out->data_len);
-        esam_out->MAC_len = 4;
-        memcpy(esam_out->MAC_data, esam_in->data_buf+esam_out->data_len , esam_out->MAC_len);
-        return 0;
-    }
-    return -1;
-}
 
 
 
-static  uint8_t f_esam_type_read_meter(struct esam_698_data_t *para, void *esam_hal)
-{
-    struct esam_698_output_t *esam_out = para->output;
-    struct esam_698_input_t *esam_in = para->input;    
-    uint8_t head[4] = {0x80, 0x0E, 0x40, 0x02};
 
-    if(esam_in->cmd_type == 1)
-    {
-	head[1] = 0x0E;  //µç±í¼ÆËãÃ÷ÎÄ+MAC
-    }
-    else if(esam_in->cmd_type == 2)
-    {
-	head[1] = 0x0A;  //µç±í¼ÆËãÃÜÎÄ
-    }
-    else if(esam_in->cmd_type == 3)
-    {
-	head[1] = 0x10;  //µç±í¼ÆËãÃÜÎÄ+MAC
-    }else{
-        return -1;
-    }
 
-    esam_in->AttachData_len = 0;
-    //esam_in->data_len = 0;
-    esam_in->MAC_len = 0;
-      
-    if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
-        if(esam_in->cmd_type == 1){
-            memcpy(esam_out->MAC_data, esam_in->data_buf , 4); //µç±í¼ÆËãÃ÷ÎÄ+MAC
-            esam_out->MAC_len = 4;
-        }
-        else if(esam_in->cmd_type == 2)
-        {
-            memcpy(esam_out->data, esam_in->data_buf , esam_out->data_len); //µç±í¼ÆËãÃÜÎÄ
-        }
-        else
-        {
-            esam_out->data_len = esam_out->data_len - 4;
-            memcpy(esam_out->data, esam_in->data_buf , esam_out->data_len); //µç±í¼ÆËãÃÜÎÄ
-            memcpy(esam_out->MAC_data, &esam_in->data_buf[esam_out->data_len] , 4); //µç±í¼ÆËãÃÜÎÄ+MAC
-            esam_out->MAC_len = 4;
-        }
-        return 0;
-    }
-    return -1;
-}
+
 
 
 static uint8_t f_esam_type_broadcast(struct esam_698_data_t *para, void *esam_hal)
@@ -372,7 +288,7 @@ static  uint8_t f_esam_type_point_get_data2(struct esam_698_data_t *para, void *
     
     //esam_in->AttachData_len = 0;
     //esam_in->data_len = 0;
-    if(esam_in->cmd_type == 1)//Êı¾İÑéÖ¤ĞÅÏ¢ÎªSID_MAC
+    if(esam_in->cmd_type == 1)//æ•°æ®éªŒè¯ä¿¡æ¯ä¸ºSID_MAC
     {
     }
     else{
@@ -383,42 +299,13 @@ static  uint8_t f_esam_type_point_get_data2(struct esam_698_data_t *para, void *
 }
 
 
-#define HES_PLAINTEXT_MAC     0x11
-#define HES_CIPHERTEXT        0xA6
-#define HES_CIPHERTEXT_MAC    0xA7
-
-static  uint8_t f_esam_hes_point_get_data4(struct esam_698_data_t *para, void *esam_hal)
-{
-    struct esam_698_input_t *esam_in = para->input; 
-    
-    uint8_t head[4] = {0x81,0x1c,0x00,0x00};
-    head[3] = esam_in->cmd_type;
-
-    esam_in->AttachData_len = 0;
-    //esam_in->data_len = 0;
-    esam_in->MAC_len = 0;
-
-    return  __comm_esam_handle(head, para, 1, esam_hal);
-}
-
-
-static uint8_t f_esam_type_read_esam_data(struct esam_698_data_t *para, void *esam_hal)
-{
-    struct esam_698_input_t *esam_in = para->input; 
-    uint8_t head[4];
-    
-    memcpy(head , (uint8_t *)&esam_in->sid_id , 4);
-
-    //esam_in->AttachData_len = 0;
-    esam_in->data_len = 0;
-    esam_in->MAC_len = 0;
-
-    return  __comm_esam_handle(head, para, 1, esam_hal);
-}
 
 
 
-static int esam_698_power_ctrl_on(struct esam_698_data_t *para, void *esam_hal)
+
+//////////////////////////////////////////////////////////////////////////////////
+
+static int f_esam_698_power_ctrl_on(struct esam_698_data_t *para, void *esam_hal)
 {
     ESAM_CS_HIGH();
     ESAM_POWER_CTRL_ON();
@@ -427,19 +314,258 @@ static int esam_698_power_ctrl_on(struct esam_698_data_t *para, void *esam_hal)
     return 1;
 }
 
-static int esam_698_power_ctrl_off(struct esam_698_data_t *para, void *esam_hal)
+static int f_esam_698_power_ctrl_off(struct esam_698_data_t *para, void *esam_hal)
 {
     ESAM_POWER_CTRL_OFF();
     mcu_spi_ops.ctrl(STOP , 0);    
     return 1;
 }
 
+static int f_esam_type_read_esam_no(struct esam_698_data_t *para, void *esam_hal)
+{
+    struct esam_698_input_t *esam_in = para->input; 
+    uint8_t head[4] = {0x80, 0x2C, 0x00, 0x01};
+    uint8_t tx_data[7] = { 0, 5, 0, 0, 0, 0, 0x0D };
+
+    esam_in->RN_Data_len = 0;
+    //esam_in->AttachData_len = 0;
+    esam_in->data_len = 0;
+    //esam_in->MAC_len = 0;
+    esam_in->data = tx_data;
+
+    return  __comm_esam_handle(head, para, 7, esam_hal);
+}
+
+static int f_esam_type_read_esam_data(struct esam_698_data_t *para, void *esam_hal)
+{
+    struct esam_698_input_t *esam_in = para->input; 
+    uint8_t head[4];
+    
+    memcpy(head , (uint8_t *)&esam_in->sid_id , 4);
+
+    esam_in->RN_Data_len = 0;
+    //esam_in->AttachData_len = 0;
+    esam_in->data_len = 0;
+    esam_in->MAC_len = 0;
+
+    return  __comm_esam_handle(head, para, 1, esam_hal);
+}
+
+static int f_esam_type_meet_consult(struct esam_698_data_t *para, void *esam_hal)
+{
+    struct esam_698_output_t *esam_out = para->output;
+    struct esam_698_input_t *esam_in = para->input;
+    uint8_t head[4] = {0x81, 0x02, 0x00, 0x00};
+    
+    if(esam_in->cmd_type == 1)//ç»ˆç«¯ä¼šè¯
+    {
+        head[0] = 0x82;
+    }
+    
+    esam_in->RN_Data_len = 0;
+    esam_in->AttachData_len = 0;
+    esam_in->data_len = 32;
+    esam_in->MAC_len = 4;
+      
+    if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
+        if(esam_in->cmd_type == 1){//ç»ˆç«¯ä¼šè¯
+            esam_out->data_len = 64;
+        }else{
+            esam_out->data_len = 48;
+        }
+    
+        memcpy(esam_out->data, esam_in->data_buf , esam_out->data_len);
+        esam_out->MAC_len = 4;
+        memcpy(esam_out->MAC_data, esam_in->data_buf+esam_out->data_len , esam_out->MAC_len);
+        return 0;
+    }
+    return -1;
+}
+
+static int f_esam_type_get_esam_p2_info2(struct esam_698_data_t *para , void *esam_hal)
+{
+    struct esam_698_input_t *esam_in = para->input;
+    
+    uint8_t head[4] = {0x80, 0x36, 0x00, 0x00};    
+    head[3] = esam_in->cmd_type;
+    
+    esam_in->RN_Data_len = 0;
+    esam_in->AttachData_len = 0;
+    esam_in->data_len = 0;
+    esam_in->MAC_len = 0;
+      
+    return  __comm_esam_handle(head, para, 1, esam_hal);
+}
+
+
+static  int f_esam_type_ver_rn_mac(struct esam_698_data_t *para, void *esam_hal)
+{
+    struct esam_698_output_t *esam_out = para->output;
+    struct esam_698_input_t *esam_in = para->input;    
+    uint8_t head[4] = {0x80, 0x0E, 0x40, 0x02};
+              
+    if(esam_in->cmd_type == 1){
+        head[1] = 0x0E;  //ç”µè¡¨è®¡ç®—æ˜æ–‡+MAC
+    }
+    else if(esam_in->cmd_type == 2){
+        head[1] = 0x0A;  //ç”µè¡¨è®¡ç®—å¯†æ–‡
+    }
+    else if(esam_in->cmd_type == 3){
+        head[1] = 0x10;  //ç”µè¡¨è®¡ç®—å¯†æ–‡+MAC
+    }else{
+        return -1;
+    }
+
+    //esam_in->RN_Data_len = 0;
+    esam_in->AttachData_len = 0;
+    //esam_in->data_len = 0;
+    esam_in->MAC_len = 0;
+      
+    if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
+        if(esam_in->cmd_type == 1){
+            memcpy(esam_out->MAC_data, esam_in->data_buf , 4); //ç”µè¡¨è®¡ç®—æ˜æ–‡+MAC
+            esam_out->MAC_len = 4;
+        }
+        else if(esam_in->cmd_type == 2)
+        {
+            memcpy(esam_out->data, esam_in->data_buf , esam_out->data_len); //ç”µè¡¨è®¡ç®—å¯†æ–‡
+        }
+        else
+        {
+            esam_out->data_len = esam_out->data_len - 4;
+            memcpy(esam_out->data, esam_in->data_buf , esam_out->data_len); //ç”µè¡¨è®¡ç®—å¯†æ–‡
+            memcpy(esam_out->MAC_data, &esam_in->data_buf[esam_out->data_len] , 4); //ç”µè¡¨è®¡ç®—å¯†æ–‡+MAC
+            esam_out->MAC_len = 4;
+        }
+        return 0;
+    }
+    return -1;
+}
+
+static  int f_esam_type_ver_sid_mac(struct esam_698_data_t *para, void *esam_hal)
+{
+    struct esam_698_output_t *esam_out = para->output;
+    struct esam_698_input_t *esam_in = para->input;    
+    uint8_t head[4] = {0};
+         
+    mem_swap_cpy(head, (uint8_t *)&esam_in->sid_id , 4);
+    esam_in->RN_Data_len = 0;
+    //esam_in->AttachData_len = 0;
+    //esam_in->data_len = 0;
+    //esam_in->MAC_len = 0;
+      
+    if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
+        memcpy(esam_out->data, esam_in->data_buf , esam_out->data_len); 
+        return 0;
+    }
+    return -1;
+}
+
+static int f_esam_type_sid_mac(struct esam_698_data_t *para, void *esam_hal)
+{
+    struct esam_698_input_t *esam_in = para->input; 
+    struct esam_698_output_t *esam_out = para->output;
+    uint8_t head[4] = {0x81,0x1c,0x00,0x00};
+    
+    if(1 == esam_in->cmd_type){
+        head[3] = 0x11;
+    }
+    else if(2 == esam_in->cmd_type){
+        head[3] = 0xA6;
+    }
+    else if(3 == esam_in->cmd_type){
+        head[3] = 0xA7;
+    }else{
+        return -1;
+    }
+    
+    esam_in->RN_Data_len = 0;
+    esam_in->AttachData_len = 0;
+    //esam_in->data_len = 0;
+    esam_in->MAC_len = 0;
+    
+    if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
+        if(2 == esam_in->cmd_type){
+            memcpy(esam_out->data, esam_in->data_buf , esam_out->data_len); 
+            esam_out->MAC_len = 0;
+            return 0;
+        }
+        if(3 == esam_in->cmd_type){
+            memcpy(esam_out->data, esam_in->data_buf , esam_out->data_len); 
+            esam_out->MAC_len = 4;
+            esam_out->data_len = esam_out->data_len - esam_out->MAC_len;
+            memcpy(esam_out->MAC_data, &esam_in->data_buf[esam_out->data_len] , esam_out->MAC_len);
+            return 0;
+        }
+    }
+    return -1;
+}
+
+
+static  int f_esam_type_write(struct esam_698_data_t *para, void *esam_hal)
+{
+    struct esam_698_output_t *esam_out = para->output;
+    struct esam_698_input_t *esam_in = para->input;    
+    uint8_t head[4] = {0};
+         
+    mem_swap_cpy(head, (uint8_t *)&esam_in->sid_id , 4);
+    esam_in->RN_Data_len = 0;
+    esam_in->AttachData_len = 0;
+    //esam_in->data_len = 0;
+    esam_in->MAC_len = 0;
+      
+    if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
+        memcpy(esam_out->data, esam_in->data_buf , esam_out->data_len); 
+        return 0;
+    }
+    return -1;
+}
+
+
+typedef int(*pFunc)(struct esam_698_data_t *para, void *esam_hal);
+
+
+struct Func_esam_698_t
+{
+    //uint8_t cmd;
+    int(*pFunc)(struct esam_698_data_t *para, void *esam_hal);
+};
+
+
+static const struct Func_esam_698_t Func_esam[] = 
+{
+    {/*esam_type_poweron_cmd,*/               f_esam_698_power_ctrl_on},
+    {/*esam_type_poweroff_cmd,*/              f_esam_698_power_ctrl_off},
+
+    {/*esam_type_read_esam_no_cmd,*/          f_esam_type_read_esam_no},
+    {/*esam_type_read_esam_data_cmd,*/        f_esam_type_read_esam_data},
+    
+    {/*esam_type_meet_consult_cmd,*/          f_esam_type_meet_consult},
+    {/*esam_type_get_esam_p2_info_cmd,*/      f_esam_type_get_esam_p2_info2},
+    
+    {/*esam_type_rn_mac_cmd,*/                f_esam_type_ver_rn_mac},
+    {/*esam_type_ver_sid_mac_cmd,*/           f_esam_type_ver_sid_mac},
+    {/*esam_type_sid_mac_cmd,*/               f_esam_type_sid_mac}, 
+    
+    {/*esam_type_write_cmd,*/                 f_esam_type_write},
+
+    
+#if 0
+    {esam_type_key_updata_cmd, f_esam_type_write},
+    {esam_type_poweron_cmd, esam_698_power_ctrl_on},
+#endif
+};
+
+
 
 
 int openM_ioctl(int fd, int request, void *param)
 {
-    struct esam_698_data_t *esam_698_data = (struct esam_698_data_t *)param;
-    int ret = -1;
+    if((request < esam_type_max_cmd) && (request >= esam_type_base)){
+        return Func_esam[request - esam_type_base].pFunc((struct esam_698_data_t *)param, 0);
+    }
+    return -1;
+#if 0
     switch(request)
     {
          case esam_type_poweron:
@@ -448,6 +574,12 @@ int openM_ioctl(int fd, int request, void *param)
          case esam_type_poweroff:
               ret = esam_698_power_ctrl_off(esam_698_data, 0);
               break;
+              
+         case esam_type_read_esam_no:
+              f_esam_type_read_esam_no(esam_698_data->input , esam_698_data->output , 0);
+              break;
+              
+         
          case esam_type_get_esam_all_info1:
               ret = f_esam_type_get_esam_all_info1(esam_698_data, 0);
               break;
@@ -483,6 +615,7 @@ int openM_ioctl(int fd, int request, void *param)
               break;
     }
     return ret;
+#endif
 }
 
 #endif

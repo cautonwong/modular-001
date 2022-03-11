@@ -16,11 +16,11 @@ int openM_ioctl(int fd, int request, void *param);
 
 
 
-//ok
+//no
 uint16_t write_esam(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_t len)
 {
     int fd = 0;
-    int request = esam_type_read_esam_data;//正确读取请求序号多少？ saga
+    int request = esam_type_write_cmd;
     struct esam_698_data_t param;
     struct esam_698_input_t  input = {0};
     struct esam_698_output_t output= {0};
@@ -37,14 +37,48 @@ uint16_t write_esam(struct instance_t* instance, uint32_t addr, uint8_t *buf, ui
     param.output = (struct esam_698_output_t *)&output;
     openM_ioctl(fd, request, (void *)&param);
 
-    return output.data_len;  
+    if(output.esam_err_no == 0x9000){
+        return output.data_len;
+    }
+    return 0xff;
+}
+
+//
+uint16_t esam_key_updata(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_t len)
+{
+    int fd = 0;
+    int request = esam_type_write_cmd;
+    struct esam_698_data_t param;
+    struct esam_698_input_t  input = {0};
+    struct esam_698_output_t output= {0};
+    uint16_t offset = 0; 
+    
+    if(812E0000 != addr){
+        return 0xff;
+    }
+    input.data      = buf;
+    input.data_len  = len;
+    input.sid_id    = addr;
+    input.data_buf      = instance->apdu_cache; //临时缓冲区
+    input.data_buf_len  = cache_max;            //临时缓冲长度
+    
+    output.data = buf;
+    
+    param.input  = (struct esam_698_input_t *)&input;
+    param.output = (struct esam_698_output_t *)&output;
+    openM_ioctl(fd, request, (void *)&param);
+
+    if(output.esam_err_no == 0x9000){
+        return 0;
+    }
+    return 0xff;
 }
 
 //ok
 uint8_t read_esam_no(struct instance_t* instance, uint8_t *esam_info)
 {
     int fd = 0;
-    int request = esam_type_read_esam_no;
+    int request = esam_type_read_esam_no_cmd;
     struct esam_698_data_t param;
     struct esam_698_input_t  input = {0};
     struct esam_698_output_t output= {0};
@@ -65,7 +99,7 @@ uint8_t read_esam_no(struct instance_t* instance, uint8_t *esam_info)
 uint8_t read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_t len)
 {
     int fd = 0;
-    int request = esam_type_read_esam_data;
+    int request = esam_type_read_esam_data_cmd;
     struct esam_698_data_t param;
     struct esam_698_input_t  input = {0};
     struct esam_698_output_t output= {0};
@@ -95,12 +129,8 @@ uint8_t esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
     struct esam_698_input_t  input = {0};
     struct esam_698_output_t output= {0};
 
-    if(cmd)//from 终端
-        request = esam_type_terminal_meet_consult;
-    else   //from 主站
-        request = esam_type_hes_meet_consult;
-    
-    input.cmd_type = cmd;
+    request = esam_type_meet_consult_cmd;
+    input.cmd_type = cmd;// 1-from 终端  0-from 主站
     input.data     = p;
     input.data_len = 32;
     input.MAC_data = p + 32 + 1;
@@ -109,12 +139,16 @@ uint8_t esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
     input.data_buf_len  = cache_max;            //临时缓冲长度
     
     output.data     = p;
-    output.MAC_data = p+48;
+    if(cmd == 1){// 1-from 终端  0-from 主站
+        output.MAC_data = p+64;
+    }else{
+        output.MAC_data = p+48;
+    }
     
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;
     openM_ioctl(fd, request, (void *)&param);
-    return output.data_len + output.MAC_len ;
+    return (output.data_len + output.MAC_len) ;
 }
 
 
@@ -122,7 +156,7 @@ uint8_t esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
 uint8_t read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t index)
 {
     int fd = 0;
-    int request = esam_type_get_esam_p2_info;
+    int request = esam_type_get_esam_p2_info_cmd;
     struct esam_698_data_t param;
     struct esam_698_input_t  input = {0};
     struct esam_698_output_t output= {0};
@@ -157,18 +191,23 @@ uint8_t get_key_status(struct instance_t* instance)
         return true;
 }
 
-
+//OK
 void esam_698_init(void)
 {
     int fd = 0;
     int request = 0;
     struct esam_698_data_t param;
-    //param.input = p_input;
-    //param.output = p_output;
-    request = esam_type_poweron;
+
+    request = esam_type_poweron_cmd;
     openM_ioctl(fd, request, (void *)&param);
 }
 
+#if 0
+struct esam_698_security_t  esam_698_security[] = {
+  {verification_choice_SID_MAC,     SECURITY_CHOICE_1_Ciphertext,  },
+  
+};
+#endif
 
 int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_t *p_output)
 {
@@ -176,27 +215,50 @@ int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_
     int request = 0;
     struct esam_698_data_t param;
 
-    if(0 == p_input->cmd_type){//获取mac
-        if(SECURITY_CHOICE_0_Plaintext == p_input->security_choice) {
-            request = esam_type_plaintext_mac;
-        }
-        if(SECURITY_CHOICE_1_Ciphertext == p_input->security_choice) {
-            request = esam_type_ciphertext_mac;
-        }        
-        p_output->MAC_len = 4;
-        //request = 
-    }else{
-    //验证
-        if(SECURITY_CHOICE_0_Plaintext == p_input->security_choice) {
-            request = esam_type_plaintext_mac;
-        }
-        if(SECURITY_CHOICE_1_Ciphertext == p_input->security_choice) {
-            if(verification_choice_SID_MAC == p_input->verification_choice){
-                request = esam_type_hes_point_get_data2;
+    if(0 == p_input->cmd_type){
+      
+        if((verification_choice_RN == p_input->verification_choice)||
+          (verification_choice_RN_MAC == p_input->verification_choice))
+        {
+            request = esam_type_rn_mac_cmd;
+            if(SECURITY_CHOICE_0_Plaintext == p_input->security_choice) {
                 p_input->cmd_type = 1;
             }
-            if(verification_choice_SID == p_input->verification_choice){
-                request = esam_type_hes_point_get_data2;
+        }
+        
+        if((verification_choice_SID_MAC == p_input->verification_choice)||
+           (verification_choice_SID == p_input->verification_choice)){
+            request = esam_type_sid_mac_cmd;
+            
+            if((SECURITY_CHOICE_1_Ciphertext == p_input->security_choice) &&
+               (verification_choice_SID == p_input->verification_choice)){
+                p_input->cmd_type = 2;
+                request = esam_type_sid_mac_cmd;
+            }
+            if((SECURITY_CHOICE_1_Ciphertext == p_input->security_choice) &&
+               (verification_choice_SID_MAC == p_input->verification_choice)){
+                p_input->cmd_type = 3;
+                request = esam_type_sid_mac_cmd;
+            }
+        }
+        p_output->MAC_len = 4;
+    }else{
+      
+        if((verification_choice_RN == p_input->verification_choice)||
+          (verification_choice_RN_MAC == p_input->verification_choice))
+        {
+            request = esam_type_rn_mac_cmd;
+            if(SECURITY_CHOICE_0_Plaintext == p_input->security_choice) {
+                p_input->cmd_type = 1;
+            }
+        }
+        
+        if((verification_choice_SID_MAC == p_input->verification_choice) ||
+           (verification_choice_SID == p_input->verification_choice)){
+            request = esam_type_ver_sid_mac_cmd;
+            
+            if(SECURITY_CHOICE_1_Ciphertext == p_input->security_choice) {
+                p_input->cmd_type = 1;
             }
         }
     }

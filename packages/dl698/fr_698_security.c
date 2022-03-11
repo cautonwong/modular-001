@@ -33,15 +33,7 @@ const pFunc_verification_choice Func_verification[] =
 };
 
 
-static uint16_t ___get_octet_string(struct context_698_t* ctx, struct esam_698_input_t *input, uint16_t *offset)
-{
-    uint8_t *apdu_rx = ctx->apdu_d_rx;
-    uint16_t len = 0;
-    ctx->apdu_rx_offset += axdr_decode(TYPE_octet_string, apdu_rx+ctx->apdu_rx_offset, &len);
-    *offset = ctx->apdu_rx_offset;
-    ctx->apdu_rx_offset += len;
-    return len;
-}
+
 
 
 static int ___get_sid(struct context_698_t* ctx, struct esam_698_input_t *input)
@@ -51,7 +43,7 @@ static int ___get_sid(struct context_698_t* ctx, struct esam_698_input_t *input)
     
     input->sid_id                = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
     ctx->apdu_rx_offset += 4;
-    input->AttachData_len = ___get_octet_string(ctx, input, &offset);
+    input->AttachData_len = get_octet_string(ctx, &offset);
     input->AttachData = apdu_rx + offset;
     return 1;
 }
@@ -92,7 +84,7 @@ static int __verification_SID_MAC(struct instance_t* instance, struct pipeline_t
     input.data_len              = ctx->security_data_len;
    
     ___get_sid(ctx, &input);
-    input.MAC_len  = ___get_octet_string(ctx, &input, &offset);
+    input.MAC_len  = get_octet_string(ctx, &offset);
     input.MAC_data = apdu_rx + offset;
 
     input.data_buf      = instance->apdu_cache; //临时缓冲区
@@ -119,7 +111,7 @@ static int __verification_RN(struct instance_t* instance, struct pipeline_t* pip
     input.data                  = ctx->security_data;
     input.data_len              = ctx->security_data_len;
 
-    input.RN_Data_len   = ___get_octet_string(ctx, &input, &offset);
+    input.RN_Data_len   = get_octet_string(ctx, &offset);
     input.RN_Data       = apdu_rx + offset;
 
     ctx->RN_len = input.RN_Data_len;
@@ -147,9 +139,9 @@ static int __verification_RN_MAC(struct instance_t* instance, struct pipeline_t*
     input.data                  = ctx->security_data;
     input.data_len              = ctx->security_data_len;
 
-    input.RN_Data_len = ___get_octet_string(ctx, &input, &offset);
+    input.RN_Data_len = get_octet_string(ctx, &offset);
     input.RN_Data     = apdu_rx + offset;
-    input.MAC_len     = ___get_octet_string(ctx, &input, &offset);
+    input.MAC_len     = get_octet_string(ctx, &offset);
     input.MAC_data    = apdu_rx + offset;
     
     ctx->RN_len = input.RN_Data_len;
@@ -245,16 +237,29 @@ static int ___get_encode_and_mac(struct instance_t* instance, struct pipeline_t*
     input.data_buf      = instance->apdu_cache; //临时缓冲区
     input.data_buf_len  = cache_max;            //临时缓冲长度
     
-    output.MAC_data = cache->buf_ptr + ctx->security_data_len + 3;
+    output.data     = cache->buf_ptr;
+    output.data_len = Max698_apdu_rx - 5;
+    output.MAC_data = cache->buf_ptr + ctx->security_data_len + 3 + 16;
     output.MAC_len = 0;
     
     ret = fr_698_handle_esam(&input, &output);
     if(output.esam_err_no == 0x9000){
         if(output.MAC_len == 4){
-            *mac++ = 0x01;
-            *mac++ = 0x00;
-            *mac++ = 0x04;
-            cache->wr += 3+4;
+            if(ctx->security_data_len < output.data_len)
+                ctx->security_data_len = output.data_len;
+            cache->wr = ctx->security_data_len;
+            cache->buf_ptr[cache->wr++] = 0x01;
+            cache->buf_ptr[cache->wr++] = 0x00;
+            cache->buf_ptr[cache->wr++] = 0x04;
+            memcpy(cache->buf_ptr + cache->wr, output.MAC_data, 4);
+            cache->wr += 3 + 4;
+            return 1;
+        }
+        if(output.MAC_len == 0){
+            ctx->security_data_len = output.data_len;
+            cache->wr = output.data_len;
+            cache->buf_ptr[cache->wr] = 0x00;
+            cache->wr += 1;
             return 1;
         }
     }

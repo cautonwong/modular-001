@@ -33,6 +33,14 @@ struct esam_698_output_t
     uint8_t MAC_len;
 };
 
+struct esam_698_security_t
+{
+    uint8_t verification_choice;    
+    uint8_t security_choice;
+    uint8_t esam_req_cmd;
+    uint8_t esam_sub_cmd;
+};
+
 struct esam_698_data_t
 {
     struct esam_698_input_t  *input;

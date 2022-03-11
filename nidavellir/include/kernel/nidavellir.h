@@ -254,10 +254,10 @@ struct context_698_t
     uint16_t tx_len;
 
     struct fifo_t* apdu;
-    struct fifo_t* apdu_rx;
+
 #if 1
-    //uint8_t apdu[128]; //Max698_apdu
-    uint16_t apdu_len;
+
+    //uint16_t apdu_len;
     uint16_t apdu_offset;
     
     uint8_t apdu_d_rx[Max698_apdu_rx]; 

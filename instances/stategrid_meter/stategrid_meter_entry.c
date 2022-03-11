@@ -183,12 +183,9 @@ int communication_channel_init(struct instance_t* p_instance, struct pipeline_t 
     //初始化pl_rx_698初始化
     pl_rx->ctx = nd_malloc(p_instance, control_block_698_name, sizeof(struct context_698_t));
     ctx_698 = pl_rx->ctx;
-#if 1
+
     ctx_698->apdu = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
     fifoBuf_init(ctx_698->apdu, nd_malloc(p_instance, control_block_698_name, Max698_apdu), Max698_apdu);
-    ctx_698->apdu_rx = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
-    fifoBuf_init(ctx_698->apdu_rx, nd_malloc(p_instance, control_block_698_name, Max698_apdu_rx), Max698_apdu_rx);
-#endif
     
     pl_rx->in_queue = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
     fifoBuf_init(pl_rx->in_queue, nd_malloc(p_instance, control_block_698_name, Max698len), Max698len);
