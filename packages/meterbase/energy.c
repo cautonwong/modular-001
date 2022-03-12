@@ -125,6 +125,39 @@ int32_t Get_Cal_Active_Energy(struct mbase_control_block_t* mbase_control_block,
 }
 
 
+int32_t Get_Active_Energy(struct mbase_control_block_t* mbase_control_block, uint8_t index , uint8_t type , uint8_t pn)
+{
+    int32_t energy_kwh = 0;
+    int32_t energy_pulse = 0;
+    
+    if((mbase_control_block->meter_const==0) || (index>Max_tou_fee))
+    {
+        return 0;
+    }
+    if(pn ==0)
+    {
+        energy_kwh += mbase_control_block->active_p[index];
+        energy_pulse += mbase_control_block->active_p_dec[index];
+    }
+    else
+    {
+        energy_kwh += mbase_control_block->active_n[index];
+        energy_pulse += mbase_control_block->active_n_dec[index];
+    }
+
+    if(type == 1)
+    {
+        energy_kwh = energy_pulse*100 / mbase_control_block->meter_const;
+    }
+    else
+    {
+        energy_kwh = energy_kwh + energy_pulse / mbase_control_block->meter_const;
+    }
+    
+    return energy_kwh;
+}
+
+
 void Energy_Pluse_Count(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
@@ -150,3 +183,23 @@ void Energy_Pluse_Add(void)
     ec_pluse_cnt++;
 }
 
+
+
+void Energy_clr(struct instance_t* instance, struct pipeline_t* pipeline)
+{
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    
+    uint8 fee_index = 0;
+    
+    for(fee_index = 0; fee_index < MAX_FEE_NO ; fee_index++)
+    {
+        mbase_control_block->active_n[fee_index] = 0x00;
+        mbase_control_block->active_n_dec[fee_index] = 0x00;
+        
+        mbase_control_block->active_p[fee_index] = 0x00;
+        mbase_control_block->active_p_dec[fee_index] = 0x00;
+          
+        mbase_control_block->month_active_p[fee_index] = 0x00;
+        mbase_control_block->month_active_n[fee_index] = 0x00;
+    }
+}

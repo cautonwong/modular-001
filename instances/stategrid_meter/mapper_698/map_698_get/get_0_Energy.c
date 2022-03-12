@@ -163,29 +163,51 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
         {
             if(attr_index==0)
             {
-                buf[0] = 0x01;//数组
-                buf[1] = 13;//数据块
-                len = 2;
-                ptr = &buf[2];
-                switch(mode)
+                if(attribute == 2)
                 {
-                case 0x00:
-                  for(i=0;i<13;i++)
-                  {
-                      *ptr++ = TYPE_double_long_unsigned;
-                      memcpy(ptr, (uint8_t*)&mbase_cb->active_p[i], 4);
-                      ptr += 4;
-                      len += 5;
-                  }                  
-                  break;
-                case 0x01:
-                  for(i=0;i<13;i++)
-                  {
-                      *ptr++ = TYPE_double_long_unsigned;
-                      *ptr++= 4;
-                      len += 2;
-                  }                  
-                  break;
+                    buf[0] = 0x01;//数组
+                    buf[1] = 13;//数据块
+                    len = 2;
+                    ptr = &buf[2];
+                    switch(mode)
+                    {
+                        case 0x00:
+                          for(i=0;i<13;i++)
+                          {
+                              *ptr++ = TYPE_double_long_unsigned;
+                              memcpy(ptr, (uint8_t*)&mbase_cb->active_p[i], 4);
+                              ptr += 4;
+                              len += 5;
+                          }                  
+                          break;
+                        case 0x01:
+                          for(i=0;i<13;i++)
+                          {
+                              *ptr++ = TYPE_double_long_unsigned;
+                              *ptr++= 4;
+                              len += 2;
+                          }                  
+                          break;
+                    }
+                }
+                else if(attribute == 4)
+                {
+                    switch(mode)
+                    {
+                        case 0x00:
+                          buf[0] = TYPE_long64;
+                          tmp = Get_Active_Energy(mbase_cb , attr_index , 0 , 0);
+                          memcpy(&buf[1], (uint8_t*)&tmp, 4);
+                          tmp = Get_Active_Energy(mbase_cb , attr_index , 1 , 0);
+                          memcpy(&buf[5], (uint8_t*)&tmp, 4);
+                          len = 9;                        
+                          break;
+                        case 0x01:
+                          buf[0] = TYPE_long64;
+                          buf[1] = 0x08;
+                          len = 2;
+                          break;
+                    }
                 }
             }
             else if(attr_index<13)
@@ -193,9 +215,21 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                 switch(mode)
                 {
                 case 0x00:
-                  buf[0] = TYPE_double_long_unsigned;
-                  memcpy(&buf[1], (uint8_t*)&mbase_cb->active_p[attr_index], 4);
-                  len = 5;                  
+                  if(attribute==2)
+                  {
+                      buf[0] = TYPE_double_long_unsigned;
+                      memcpy(&buf[1], (uint8_t*)&mbase_cb->active_p[attr_index], 4);
+                      len = 5;
+                  }
+                  else if(attribute==4)
+                  {
+                      buf[0] = TYPE_long64;
+                      tmp = Get_Active_Energy(mbase_cb , attr_index , 0 , 0);
+                      memcpy(&buf[1], (uint8_t*)&tmp, 4);
+                      tmp = Get_Active_Energy(mbase_cb , attr_index , 1 , 0);
+                      memcpy(&buf[5], (uint8_t*)&tmp, 4);
+                      len = 9;
+                  }
                   break;
                 case 0x01:
                   buf[0] = TYPE_double_long_unsigned;
@@ -215,40 +249,73 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
         {
             if(attr_index==0)
             {
-                buf[0] = 0x01;//数组
-                buf[1] = 13;//数据块
-                len = 2;
-                ptr = &buf[2];
-                switch(mode)
+                if(attribute == 2)
                 {
-                case 0x00:
-                  for(i=0;i<13;i++)
-                  {
-                      *ptr++ = TYPE_double_long_unsigned;
-                      memcpy(ptr, (uint8_t*)&mbase_cb->active_n[i], 4);
-                      ptr += 4;
-                      len += 5;
-                  }                  
-                  break;
-                case 0x01:
-                  for(i=0;i<13;i++)
-                  {
-                      *ptr++ = TYPE_double_long_unsigned;
-                      *ptr++ = 4;
-                      len += 2;
-                  }                  
-                  break;                                 
+                    buf[0] = 0x01;//数组
+                    buf[1] = 13;//数据块
+                    len = 2;
+                    ptr = &buf[2];
+                    switch(mode)
+                    {
+                    case 0x00:
+                      for(i=0;i<13;i++)
+                      {
+                          *ptr++ = TYPE_double_long_unsigned;
+                          memcpy(ptr, (uint8_t*)&mbase_cb->active_n[i], 4);
+                          ptr += 4;
+                          len += 5;
+                      }
+                      break;
+                    case 0x01:
+                      for(i=0;i<13;i++)
+                      {
+                          *ptr++ = TYPE_double_long_unsigned;
+                          *ptr++ = 4;
+                          len += 2;
+                      }
+                      break;
+                    }
                 }
-
+                else if(attribute == 4)
+                {
+                    switch(mode)
+                    {
+                        case 0x00:
+                          buf[0] = TYPE_long64;
+                          tmp = Get_Active_Energy(mbase_cb , attr_index , 0 , 1);
+                          memcpy(&buf[1], (uint8_t*)&tmp, 4);
+                          tmp = Get_Active_Energy(mbase_cb , attr_index , 1 , 1);
+                          memcpy(&buf[5], (uint8_t*)&tmp, 4);
+                          len = 9;
+                          break;
+                        case 0x01:
+                          buf[0] = TYPE_long64;
+                          buf[1] = 0x08;
+                          len = 2;
+                          break;
+                    }
+                }
             }
             else if(attr_index<13)
             {
                 switch(mode)
                 {
-                case 0x00:
-                  buf[0] = TYPE_double_long_unsigned;
-                  memcpy(&buf[1], (uint8_t*)&mbase_cb->active_n[attr_index], 4);
-                  len = 5;                  
+                  case 0x00:
+                  if(attribute==2)
+                  {
+                      buf[0] = TYPE_double_long_unsigned;
+                      memcpy(&buf[1], (uint8_t*)&mbase_cb->active_n[attr_index], 4);
+                      len = 5;
+                  }
+                  else if(attribute==4)
+                  {
+                      buf[0] = TYPE_long64;
+                      tmp = Get_Active_Energy(mbase_cb , attr_index , 0 , 0);
+                      memcpy(&buf[1], (uint8_t*)&tmp, 4);
+                      tmp = Get_Active_Energy(mbase_cb , attr_index , 1 , 0);
+                      memcpy(&buf[5], (uint8_t*)&tmp, 4);
+                      len = 9;
+                  }
                   break;
                 case 0x01:
                   buf[0] = TYPE_double_long_unsigned;
