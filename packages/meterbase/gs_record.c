@@ -393,7 +393,7 @@ int meter_clr(struct instance_t* instance)
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     //电量清零 待添加
-
+    Energy_clr(instance);
     freeze_clr(instance); //冻结清零
     event_clr(instance);  // 事件清零
     clr_record(instance, 0x30150200); //事件清零事件 清零
