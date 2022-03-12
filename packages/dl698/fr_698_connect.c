@@ -99,19 +99,18 @@ static int __password_process(struct instance_t* instance, struct pipeline_t* pi
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t *p_password = cache->buf_ptr;
     //uint8_t *p_password = cache + sizeof(struct connect_request_t);
 
     uint8_t password[33] = {0};
     uint32_t oad = 0;
 
-    if (fr_698_get(instance, oad, password, sizeof(password), NULL) < 0)
-    {
+    if (fr_698_get(instance, oad, password, sizeof(password), NULL) < 0){
         return DAR_OTHERS_ERROR;
     }
 
-    if(0 == mem_compare(password, p_password, p_password[0]))
-    {
+    if(0 == mem_compare(password, p_password, p_password[0])){
         return DAR_SUCCESS;
     }
     return DAR_OTHERS_ERROR;
@@ -211,26 +210,6 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
 	//memcpy((uint8_t*)&buf[offset], p_apdu + len_len, data_len);
     offset += data_len;
     p_apdu += len_len + data_len;
-
-
-    uint32_t oad = 0;
-    offset = 20;
-    if (fr_698_action(instance, oad, buf, offset) < 0)
-    {
-        return DAR_OTHERS_ERROR;
-    }
-
-    if ( false != fr_698_action(instance, oad, buf, offset))
-	{
-//		memcpy(&dectypt->rn[1],&buf[0],dectypt->rn[0]);
-        
-//		dectypt->mac[0] = 4;
-//		memcpy(&dectypt->mac[1],&buf[dectypt->rn[0]],4);
-        
-		return DAR_SUCCESS;
-	}
-    
-    return DAR_ESAM_CHECK_FAILED;
 #endif
 }
 
@@ -292,7 +271,6 @@ int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipelin
     mbase_cb->irauthen_tmr = 0;
     
     //复位ESAM
-    
     return 1;
 }
 

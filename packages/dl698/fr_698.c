@@ -422,8 +422,11 @@ int fr_timeTag_optional(struct instance_t* instance, struct pipeline_t* pipeline
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
-
-    p[cache->wr++] = 0x00;//follow_report
+    
+    if(0 == fr_follow_report_optional(instance, pipeline, mesg)){
+        p[cache->wr++] = 0x00;
+    }
+    
     if (ctx->timeTag_valid == 1){
         memcpy(p+cache->wr, ctx->timeTag, 11);
         cache->wr += 11;
