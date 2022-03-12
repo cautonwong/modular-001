@@ -16,8 +16,9 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     
-    uint8 fee_index = 0;
-
+    uint8_t fee_index = 0;
+    uint32_t s_index;
+    
     
     if((mbase_control_block->TOUNo == 0) || (mbase_control_block->TOUNo> Max_tou_fee))
     {
@@ -34,15 +35,19 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
         mbase_control_block->active_p_dec[fee_index] += mbase_control_block->p_pluse;
         mbase_control_block->p_pluse = 0;
     }
-    if(mbase_control_block->active_p_dec[0] > mbase_control_block->meter_const)
+    if(mbase_control_block->active_p_dec[0] >= mbase_control_block->meter_const)//³¬¹ý1¶È
     {
         mbase_control_block->active_p[0] += 1;
         mbase_control_block->active_p_dec[0] -= mbase_control_block->meter_const;
         mbase_control_block->month_active_p[0] += 1;
         
+        s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + \
+        offsetof(struct mbase_control_block_t, active_p));
+        nd_set_offset(instance, s_index, (uint8_t*)&mbase_control_block->active_p, (MAX_FEE_NO+1)<<2);
+        
         mbase_control_block->active_p[fee_index] += 1;
         mbase_control_block->active_p_dec[fee_index] -= mbase_control_block->meter_const;
-        mbase_control_block->month_active_p[fee_index] += 1;        
+        mbase_control_block->month_active_p[fee_index] += 1;
     }
     if(mbase_control_block->n_pluse > 0)
     {
@@ -50,11 +55,15 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
         mbase_control_block->active_n_dec[fee_index] += mbase_control_block->n_pluse;
         mbase_control_block->n_pluse = 0;
     }
-    if(mbase_control_block->active_n_dec[0] > mbase_control_block->meter_const)
+    if(mbase_control_block->active_n_dec[0] >= mbase_control_block->meter_const)
     {
         mbase_control_block->active_n[0] += 1;
         mbase_control_block->active_n_dec[0] -= mbase_control_block->meter_const;
         mbase_control_block->month_active_n[0] += 1;
+
+        s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + \
+        offsetof(struct mbase_control_block_t, active_n));
+        nd_set_offset(instance, s_index, (uint8_t*)&mbase_control_block->active_n, (MAX_FEE_NO+1)<<2);
         
         mbase_control_block->active_n[fee_index] += 1;
         mbase_control_block->active_n_dec[fee_index] -= mbase_control_block->meter_const;
@@ -185,11 +194,11 @@ void Energy_Pluse_Add(void)
 
 
 
-void Energy_clr(struct instance_t* instance, struct pipeline_t* pipeline)
+void Energy_clr(struct instance_t* instance)
 {
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
-    
     uint8 fee_index = 0;
+    uint32_t s_index;
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     for(fee_index = 0; fee_index < MAX_FEE_NO ; fee_index++)
     {
@@ -202,4 +211,13 @@ void Energy_clr(struct instance_t* instance, struct pipeline_t* pipeline)
         mbase_control_block->month_active_p[fee_index] = 0x00;
         mbase_control_block->month_active_n[fee_index] = 0x00;
     }
+    
+    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + \
+    offsetof(struct mbase_control_block_t, active_p));
+    nd_set_offset(instance, s_index, (uint8_t*)&mbase_control_block->active_p, (MAX_FEE_NO+1)<<2);
+    
+    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + \
+    offsetof(struct mbase_control_block_t, active_n));
+    nd_set_offset(instance, s_index, (uint8_t*)&mbase_control_block->active_n, (MAX_FEE_NO+1)<<2);
+
 }
