@@ -252,14 +252,13 @@ static int ___get_encode_and_mac(struct instance_t* instance, struct pipeline_t*
             cache->buf_ptr[cache->wr++] = 0x00;
             cache->buf_ptr[cache->wr++] = 0x04;
             memcpy(cache->buf_ptr + cache->wr, output.MAC_data, 4);
-            cache->wr += 3 + 4;
+            cache->wr += 4;
             return 1;
         }
         if(output.MAC_len == 0){
             ctx->security_data_len = output.data_len;
             cache->wr = output.data_len;
-            cache->buf_ptr[cache->wr] = 0x00;
-            cache->wr += 1;
+            cache->buf_ptr[cache->wr++] = 0x00;
             return 1;
         }
     }

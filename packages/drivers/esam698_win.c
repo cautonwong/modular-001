@@ -192,12 +192,12 @@ static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8
         memcpy(esam_in->data_buf , esam_in->RN_Data , esam_in->RN_Data_len);
         len += esam_in->RN_Data_len;
     }
-#if 0
-    if(esam_in->AttachData_len){
-        memcpy(esam_in->data_buf , esam_in->AttachData , esam_in->AttachData_len);
-        len = esam_in->AttachData_len;
+
+    if(esam_in->AttachData_len > 2){
+        memcpy(esam_in->data_buf , esam_in->AttachData + 2 , esam_in->AttachData_len - 2);
+        len = esam_in->AttachData_len - 2;
     }
-#endif
+
     if(esam_in->data_len){
         memcpy(&esam_in->data_buf[len] , esam_in->data , esam_in->data_len);
         len += esam_in->data_len;
@@ -208,7 +208,7 @@ static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8
         len += esam_in->MAC_len;
     }
     
-    if(2 == esam_in->AttachData_len){
+    if(esam_in->AttachData_len >= 2){
         len = (esam_in->AttachData[0]<<8)+esam_in->AttachData[1];
     }
     
@@ -510,9 +510,9 @@ static  int f_esam_type_write(struct esam_698_data_t *para, void *esam_hal)
          
     mem_swap_cpy(head, (uint8_t *)&esam_in->sid_id , 4);
     esam_in->RN_Data_len = 0;
-    esam_in->AttachData_len = 0;
+    //esam_in->AttachData_len = 0;
     //esam_in->data_len = 0;
-    esam_in->MAC_len = 0;
+    //esam_in->MAC_len = 0;
       
     if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
         memcpy(esam_out->data, esam_in->data_buf , esam_out->data_len); 

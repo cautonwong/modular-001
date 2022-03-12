@@ -66,9 +66,7 @@ int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipelin
             {
                 p[cache->wr++] = 0;
                 p[cache->wr++] = 0;
-                //cache->wr = cache->wr + 2;
             }
-            //cache->wr += r;
         }
     }
 

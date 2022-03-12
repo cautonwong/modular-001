@@ -344,20 +344,8 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             }
             else if(method == 0x07) //秘钥更新
             {
-#if 1 //待修改
-                memcpy((uint8_t*)&cache->buf_ptr[cache->wr], (uint8_t*)&apdu_rx[0], 11);
-                cache->wr = cache->wr + 11;
-
-                memcpy((uint8_t*)&addr, (uint8_t*)&apdu_rx[1683], 4);//sid
-
-                mem_swap_cpy((uint8_t*)&txlen, (uint8_t*)&apdu_rx[1688], 2);//len
-
-                memcpy((uint8_t*)&apdu_rx[9], (uint8_t*)&apdu_rx[1690], 0x0b-0x02);//data1
-
-                memcpy((uint8_t*)&apdu_rx[1682], (uint8_t*)&apdu_rx[1700], 4);//MAC
-                
-                rxlen = esam_key_updata(instance, addr , (uint8_t*)&apdu_rx[9], txlen);
-#endif
+                uint8_t *pdata = apdu_rx + 3;
+                rxlen = esam_key_updata(instance, pdata, txlen);
                 p = p + 1692;
                 //成功后 再触发 密钥更新事件
                 if(rxlen != 0xff)

@@ -44,7 +44,7 @@ uint16_t write_esam(struct instance_t* instance, uint32_t addr, uint8_t *buf, ui
 }
 
 //
-uint16_t esam_key_updata(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_t len)
+uint16_t esam_key_updata(struct instance_t* instance, uint8_t *buf, uint16_t len)
 {
     int fd = 0;
     int request = esam_type_write_cmd;
@@ -52,13 +52,27 @@ uint16_t esam_key_updata(struct instance_t* instance, uint32_t addr, uint8_t *bu
     struct esam_698_input_t  input = {0};
     struct esam_698_output_t output= {0};
     uint16_t offset = 0; 
+    uint16_t data_len = 0;
+    uint32_t addr = 0;
     
-    if(812E0000 != addr){
-        return 0xff;
-    }
-    input.data      = buf;
-    input.data_len  = len;
+    offset = axdr_decode(TYPE_octet_string, buf, &data_len);
+    input.data      = buf+offset;
+    input.data_len  = data_len;
+    offset = offset + data_len;
+    mem_swap_cpy((uint8_t*)&addr, buf + offset + 1, 4);//sid
+    //if(812E0000 != addr){
+    //    return 0xff;
+    //}
     input.sid_id    = addr;
+    offset += 5;
+    
+    input.AttachData_len = buf[offset];
+    input.AttachData = buf + offset + 1;
+    offset += buf[offset] + 1;
+    
+    input.MAC_data = buf + offset + 1;
+    input.MAC_len = 4;
+    offset += 4 + 1;
     input.data_buf      = instance->apdu_cache; //临时缓冲区
     input.data_buf_len  = cache_max;            //临时缓冲长度
     
@@ -69,7 +83,7 @@ uint16_t esam_key_updata(struct instance_t* instance, uint32_t addr, uint8_t *bu
     openM_ioctl(fd, request, (void *)&param);
 
     if(output.esam_err_no == 0x9000){
-        return 0;
+        return offset;
     }
     return 0xff;
 }

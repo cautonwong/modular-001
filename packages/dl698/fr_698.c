@@ -479,6 +479,7 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
         }
         
         if (is_last_segment(ctx->segment_rx)) {
+            clr_segment(ctx->ctrl);
             return 1;
         }else{
             ctx->segment_rx = ctx->segment_rx & 0x3fff;

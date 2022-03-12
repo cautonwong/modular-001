@@ -9,6 +9,7 @@
 #define PRM(ctrl)  ((((ctrl)>>6)&0x01))
 #define is_cmd(ctrl)  (((ctrl)&0x03) != 3)
 #define is_segment_set(ctrl)  ((((ctrl)>>5)&0x01) != 0)
+#define clr_segment(ctrl)  ((ctrl) &= 0xDF)
 #define set_segment(ctrl)  ((ctrl) |= (1<<5))
 #define get_segment_no(s)  ((s) & 0x0fff)
 #define set_segment_no(s)  ((s)=((s) & 0xfff)+1)

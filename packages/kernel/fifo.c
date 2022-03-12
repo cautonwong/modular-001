@@ -214,7 +214,7 @@ int ringbuffer_filter(struct fifo_t *buf, int (*callback)(void* ctx, uint8_t *b)
     uint16_t num_bytes = fifoBuf_getUsed(buf);
     if (num_bytes < 1)
         return -1;                        
-    
+
     while(i < num_bytes)
     {
         r = rd + i;
@@ -223,8 +223,6 @@ int ringbuffer_filter(struct fifo_t *buf, int (*callback)(void* ctx, uint8_t *b)
         ret =   callback(ctx, buf->buf_ptr+r);
         if(ret < 0)
         {
-            //返回-1  
-
             if (++rd >= buf_size)//删掉一字节
                 rd = 0;
             
@@ -256,12 +254,6 @@ int ringbuffer_filter(struct fifo_t *buf, int (*callback)(void* ctx, uint8_t *b)
             ++i;//已符合迭代器要求的字节数
         }
     }
-
-    //rd += num_bytes;
-    //if (rd >= buf_size)
-        //rd -= buf_size;
-    //buf->rd = rd;
-
     return -1;            
 }
 
