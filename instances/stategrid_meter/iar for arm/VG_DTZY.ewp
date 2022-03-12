@@ -2213,6 +2213,9 @@
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\dl698\fr_axdr.h</name>
             </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\dl698\fr_report.c</name>
+            </file>
         </group>
         <group>
             <name>drivers</name>

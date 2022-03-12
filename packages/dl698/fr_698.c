@@ -385,7 +385,12 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     if (is_cmd(ctx->ctrl)) {
         return 0;
     }
-
+    
+    //地址类型处理
+    if (2 == get_addr_type(ctx->SA)) {
+        return 0;
+    }
+   
     //地址判断
     if (0 != SA_LOGIC(ctx->SA)) {
         return 0;
@@ -462,6 +467,7 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
     s = ctx->segment_rx;
     if(is_first_segment(s)|| is_middle_segment(s) || is_last_segment(s)){
         data_len = __get_apdu_data_len(ctx) - 2;
+        
         if(is_first_segment(s)){
             ctx->apdu_rx_len = 0;
             ctx->segment_no = 1;
@@ -490,6 +496,11 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
             fifoBuf_putByte(ctx->apdu, ctx->segment_rx & 0x00ff);
             fifoBuf_putByte(ctx->apdu, (ctx->segment_rx >> 8));
             mesg->len = fifoBuf_getUsed(ctx->apdu);
+            mesg->from  = pipeline->id;
+            mesg->to    = pid_tx_698;
+            mesg->ctrl  = ctx->service |(1<<7);
+            mesg->qos   = ctx->choice;
+            mesg->id    = 0x00;
             fr_rx_698_end(instance, pipeline, mesg);
             return 0;
         }

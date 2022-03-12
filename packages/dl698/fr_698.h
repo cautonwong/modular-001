@@ -7,7 +7,10 @@
 #define is_scrambler_set(ctrl) ((((ctrl)>>3)&0x01) != 0)
 #define DIR(ctrl)  ((((ctrl)>>7)&0x01))
 #define PRM(ctrl)  ((((ctrl)>>6)&0x01))
+#define get_addr_type(ctrl)  (((ctrl)&0xC0) >>6)
+
 #define is_cmd(ctrl)  (((ctrl)&0x03) != 3)
+
 #define is_segment_set(ctrl)  ((((ctrl)>>5)&0x01) != 0)
 #define clr_segment(ctrl)  ((ctrl) &= 0xDF)
 #define set_segment(ctrl)  ((ctrl) |= (1<<5))
