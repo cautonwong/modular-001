@@ -146,11 +146,6 @@ int matcher_698(void* pctx, uint8_t* b)
         return FRM_OK;
     case 9://用户链路数据
         ctx->fcs = update_crc16(ctx->fcs, byte);
-        
-        if (is_scrambler_set(ctx->ctrl)){
-            *b = byte - 0x33;
-        }
-        
         if (ctx->min_len > 2048)// 长度大于2048 暂时删除一个字节  为了台体能跑下去。  注意： 还需要超时删除报文！
         {
             ctx->step = 0;
@@ -365,13 +360,62 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
     return 1;
 }
 
+int fr_addr_handle(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_cb;
+    uint8_t aa_addrbuf[6] = {0xAA,0xAA,0xAA,0xAA,0xAA,0xAA};
+    uint8_t i = 0;
+    
+    if (2 == get_addr_type(ctx->SA)) {
+        return 0;
+    }
+
+    //地址判断
+    if (0 != SA_LOGIC(ctx->SA)) {
+        return 0;
+    }
+    
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    if(NULL == mbase_cb){
+        return 0;
+    }
+#if 0 
+    if(0 == get_addr_type(ctx->SA)){
+        if (0 != mem_compare(ctx->addr, mbase_cb->tsa, SA_LEN(ctx->SA) + 1)){
+            if(0 != mem_compare(ctx->addr, aa_addrbuf, 6)){
+                return 0;
+            }
+        }
+    }else if(1 == get_addr_type(ctx->SA)){
+        for (i = 0; i < (SA_LEN(ctx->SA) + 1); i++)
+        {
+            if ((ctx->addr[i] & 0xf0) != 0xa0){
+                if ((mbase_cb->tsa[i] & 0xf0) != (ctx->addr[i]  & 0xf0)){
+                    return 0;
+                }
+            }
+            if ((ctx->addr[i] & 0x0f) != 0x0a){
+                if ((mbase_cb->tsa[i] & 0x0f) != (ctx->addr[i]  & 0x0f)){
+                    return 0;
+                }
+            }
+        }
+        memcpy(ctx->addr, mbase_cb->tsa, SA_LEN(ctx->SA) + 1);
+    }else{
+        return 0;
+    }
+#endif
+    if (1 == get_addr_type(ctx->SA)) {
+        ctx->SA &= 0x3F;
+    }
+    return 1;
+}
 
 int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
-    struct mbase_control_block_t* mbase_cb;
-    uint8_t aa_addrbuf[6] = {0xAA,0xAA,0xAA,0xAA,0xAA,0xAA};
 
     if ((ctx->ctrl & (1 << 7)) == 1){   //合法性和一致性判断
         fifoBuf_removeData(fifo, ctx->min_len + 2);
@@ -386,29 +430,9 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
         return 0;
     }
     
-    //地址类型处理
-    if (2 == get_addr_type(ctx->SA)) {
+    if(0 == fr_addr_handle(instance, pipeline, mesg)){
         return 0;
     }
-   
-    //地址判断
-    if (0 != SA_LOGIC(ctx->SA)) {
-        return 0;
-    }
-
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    if(NULL == mbase_cb)
-        return 0;
-
-//#ifdef WIN32
-    if (0 != mem_compare(ctx->addr, mbase_cb->tsa, SA_LEN(ctx->SA) + 1))
-    {
-        if(0 != mem_compare(ctx->addr, aa_addrbuf, 6))
-        {
-            return 0;
-        }
-    }
-//#endif
 
     ctx->channel = pipeline->id;
 
@@ -508,6 +532,20 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
     return -1;//异常
 }
 
+int handle_scrambler(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    int i = 0;
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
+    
+    if (is_scrambler_set(ctx->ctrl)){
+        for(i = 0; i<ctx->apdu_rx_len; i++){
+            apdu_rx[i] = apdu_rx[i] - 0x33;
+        }
+    }
+    return 1;
+}
+
 
 int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -541,6 +579,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
             return -1;
         }
         fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len);
+        handle_scrambler(instance, pipeline, mesg);
     }
     
     ctx->service = apdu_rx[ctx->apdu_rx_offset++];
