@@ -268,6 +268,7 @@ int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeli
             __fr_handle_get_simplify_record_request(instance, pipeline, mesg);
             break;
         default:
+            return -2;
             break;
     }
 

@@ -547,6 +547,33 @@ int handle_scrambler(struct instance_t* instance, struct pipeline_t* pipeline, s
 }
 
 
+int fr_check_service_and_choice(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
+    struct fifo_t* cache = ctx->apdu;
+    
+    if (((GET_Request == ctx->service) &&((ctx->choice ==2)|| (ctx->choice == 4)))||
+        ((SET_Request == ctx->service) && ((ctx->choice == 2) || (ctx->choice == 3)))||
+        ((ACTION_Request == ctx->service) && ((ctx->choice == 2) || (ctx->choice == 3))))
+    {
+        mesg->oad_n = apdu_rx[ctx->apdu_rx_offset++];
+        fifoBuf_putByte(cache, mesg->oad_n);
+    }else if (((GET_Request == ctx->service) &&(ctx->choice ==1))||
+             ((SET_Request == ctx->service) && (ctx->choice == 1))||
+             ((ACTION_Request == ctx->service) && (ctx->choice == 1)))
+    {
+        mesg->oad_n = 1;
+    }else if((CONNECT_Request == ctx->service) || (RELEASE_Request == ctx->service) ||
+             (REPORT_Response == ctx->service) || (SECURITY_Request == ctx->service)) {
+        mesg->oad_n = 0;
+    }else{
+        return 1;
+    }
+    
+    return 0;
+}
+
 int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
@@ -598,12 +625,6 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         ctx->choice = apdu_rx[ctx->apdu_rx_offset++];
     }
 
-    if ((ctx->service > ERROR_S_Response) || (ctx->choice > 9)){
-        ctx->fr_err = FRM_CTRL_ERR;
-        fifoBuf_removeData(fifo, ctx->min_len + 2);
-        return -1;
-    }
-
     ctx->PIID = apdu_rx[ctx->apdu_rx_offset++];
     ctx->PIID |= (1 << 6);//PIID-ACD
 
@@ -623,14 +644,10 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     fifoBuf_putByte(cache, mesg->qos);
     fifoBuf_putByte(cache, ctx->PIID);
 
-    mesg->oad_n = 1;
-    if (((GET_Request == ctx->service) &&((ctx->choice ==2)|| (ctx->choice == 4)))||
-        ((SET_Request == ctx->service) && ((ctx->choice == 2) || (ctx->choice == 3)))||
-        ((ACTION_Request == ctx->service) && ((ctx->choice == 2) || (ctx->choice == 3))))
-    {
-        mesg->oad_n = apdu_rx[ctx->apdu_rx_offset++];
-        fifoBuf_putByte(cache, mesg->oad_n);
+    if(fr_check_service_and_choice(instance, pipeline, mesg)){
+        ctx->service = ERROR_S_Response;
     }
+    
     if(0 == fr_apdu_effective_check(instance, pipeline, mesg)){
         fifoBuf_removeData(fifo, ctx->min_len + 2);
         return -1;
@@ -656,7 +673,8 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
         case REPORT_Response://8上报应答 client
             break;
         default:
-            return -1;
+            cache->buf_ptr[0] = ERROR_S_Response;
+            cache->buf_ptr[2] = 2;
             break;
     }
 
