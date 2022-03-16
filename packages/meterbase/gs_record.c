@@ -386,7 +386,7 @@ int freeze_clr(struct instance_t* instance)
     ret = list_record_clr(instance, freeze_oad, (sizeof(freeze_oad) / sizeof(freeze_oad[0])));
     return ret;
 }
-
+// 电表清零
 int meter_clr(struct instance_t* instance)
 {
     struct mbase_control_block_t* mbase_cb;

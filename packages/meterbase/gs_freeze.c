@@ -22,6 +22,9 @@ int cal_freeze_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, u
     sectorMax = 0;
     switch (oad & 0xFFFF0000)
     {
+        case 0x50000000: //  瞬时
+            sectorMax = 2;
+            break;
         case 0x50020000:// 分钟
             sectorMax = 830;
             scheme_num = 8;

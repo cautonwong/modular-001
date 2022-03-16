@@ -595,5 +595,5 @@ int ACTION_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf)
         break;
     }
 
-    return -1;
+    return -DAR_OBJECT_UNDEF;
 }

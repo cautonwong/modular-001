@@ -238,7 +238,7 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
         int ret = get_record_id_info(instance,0x30050700, &info);
         if (ret < 0)
         {
-            return -1;
+            return -DAR_OTHERS_ERROR;
         }
         
         maxnum = ((13*init_30050200[1]+9)/10);
@@ -248,7 +248,7 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
         num = *p++;
         if (num > maxnum)  // 关联对象按个数的1.3倍限制 or 按默认存储空间的1.3倍限制
         {
-            return DAR_OTHERS_ERROR;
+            return -DAR_OTHERS_ERROR;
         }
         
         *des++ = num;
@@ -258,7 +258,7 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
             oad_tmp = buf_to_uint32_msb(p);
             if (false == oad_valid_check(oad_tmp))  //无效关联对象
             {
-                return DAR_OTHERS_ERROR;
+                return -DAR_OTHERS_ERROR;
             }
             memcpy(des, p, 4);
             des += 4;
@@ -308,5 +308,5 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
     }
     
 #endif
-    return 0x01;
+    return -DAR_OBJECT_UNDEF;
 }

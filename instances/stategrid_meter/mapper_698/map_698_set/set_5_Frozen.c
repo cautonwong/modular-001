@@ -300,7 +300,7 @@ int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf)
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
     switch (id&0x00001F00) //属性
     {
@@ -327,5 +327,5 @@ int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf)
     default:
         break;
     }
-    return 0x01;
+    return -DAR_OBJECT_UNDEF;
 }

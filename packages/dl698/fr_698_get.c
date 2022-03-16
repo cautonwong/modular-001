@@ -83,14 +83,15 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
         if (r < 0)
         {
             ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
-            p[cache->wr++] = r;//DAR
+            p[offset] = 0x00;
+            p[cache->wr++] = -r;//DAR
             return r;
         }
 #endif 
         r = fr_698_get(instance, oad, p + cache->wr, len, (void*)ctx);
         if (r < 0)
         {
-            p[cache->wr++] = 0x00;//DAR
+            p[offset] = 0x00;//DAR
             p[cache->wr++] = -r;
         }
         else
