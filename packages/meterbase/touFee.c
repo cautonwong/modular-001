@@ -66,17 +66,18 @@ unsigned char GetMonMaxDay( unsigned char* Addr )
 {
 	unsigned char MaxDay;
 
-	MaxDay = ((*Addr == 2) && ((BCD_BYTE(*(Addr+1)) & 0x03) == 0)) ? 0x29 : BYTE_BCD( MonTab[BCD_BYTE(*Addr)] );
+	MaxDay = ((*Addr == 2) && ((*(Addr+1) & 0x03) == 0)) ? 29 :  MonTab[*Addr];
     return MaxDay;
 }
 
-unsigned char ChangeTime_Format_Check( unsigned char* Addr )
+unsigned char Time_Format_Check( unsigned char* Addr )
 {
-	if( (*Addr > 0x59) || (*(Addr+1) > 0x23) )//时、分
+	if( (*(Addr+4) > 59) || (*(Addr+3) > 59) || (*(Addr+2) > 23) )//sec/min,hour分
 	    return 1;
-	if( ((*(Addr+2) < 0x01) || (*(Addr+2) > 0x31)) || ((*(Addr+3) < 0x01) || (*(Addr+3) > 0x12)) )//日、月
+	if( ((*(Addr+1) < 1) || (*(Addr+1) > 31)) || ((*(Addr) < 1) || (*(Addr) > 12)) )//日、月
 	    return 1;
-	if( *(Addr+2) > GetMonMaxDay( Addr+3 ) )//大小月判断
+    
+	if( *(Addr+1) > GetMonMaxDay( Addr) )//大小月判断
   	    return 1;
 
 	return 0;
@@ -100,7 +101,7 @@ void FeeTable_Change(struct instance_t* instance, struct pipeline_t* pipeline)
         
 		ChangeTime = GetTotalMin( Buf );
 
-		if( ChangeTime_Format_Check( Buf ) != 0 )//切换时间合法性判断
+		if( Time_Format_Check( Buf ) != 0 )//切换时间合法性判断
 			continue;
 		if( CurrentTime >= ChangeTime )
 		{

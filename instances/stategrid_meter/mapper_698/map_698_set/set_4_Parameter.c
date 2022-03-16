@@ -80,6 +80,14 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
         {
             if(attribute == 0x02)
             {
+                switch(oad)
+                {
+                    case 0x4008://切换时间
+                    case 0x4009:
+                        if(Time_Format_Check(p+3))  return -DAR_OTHERS_ERROR;
+                        break;
+                }
+              
                 addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + general_set4_talble[i].s_index);
                 nd_set_index(instance, addr, (p + general_set4_talble[i].offset), general_set4_talble[i].len); 
                 return (general_set4_talble[i].offset + general_set4_talble[i].len);
@@ -123,11 +131,24 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
     return -1;
 }
 
+uint8_t lcd_data_chk(uint8_t *p)
+{
+    if((*(p+3) < 5) || (*(p+3) > 30))   //全显时间5~30
+        return 1;
+    if((*(p+14) > 4) || (*(p+16) > 4))   //小数显示0~4
+        return 1;
+    if(*(p+18) > 1) //液晶12字样 0~1
+        return 1;
+    return 0;
+}
+
+extern const uint8_t  MonTab[13];// = {	0,31,28,31,30,31,30,31,31,30,31,30,31};
+
 int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad;
-    uint8_t index,attribute,i,num,buffer[42]={0},temp[114]={0},num_hourtab=0,j,year;
+    uint8_t index,attribute,i,num,buffer[42]={0},temp[114]={0},num_hourtab=0,j,year,MaxDay;
     uint8_t* p = buf;
     uint32_t s_index = 0x00,addr=0;
     int len=0;
@@ -155,6 +176,8 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 uint8_t settimebuf[8]={0};
                 p++;
                 
+                if( Time_Format_Check(p+2) )    return -DAR_OTHERS_ERROR;
+    
                 //保存校时前时间 
                 rtc_get_from_tm(instance,temp);
                 buffer[0] = temp[6];
@@ -216,6 +239,8 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
             if(attribute != 0x02)   return -1;
             if(index == 0)
             {
+                if((*(p+5) > 1) || (*(p+15) > 1))   return -DAR_BUFFER_OVERFLOW;
+                
                 p = p + 2;
                 addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location1);
                 nd_set_index(instance, addr, p, 10); 
@@ -267,6 +292,8 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 uint8_t offset[] = {0, 1, 3, 5, 7, 8, 9};
                 if(index == 0)
                 {
+                    if( lcd_data_chk(p) ) return -DAR_OTHERS_ERROR;
+                    
                     p = p + 2;
                     for(i=0; i<7; i++)
                     {
@@ -284,6 +311,20 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 }
                 else if(index < 8)
                 {
+                    switch(index)
+                    {
+                        case 0x01://全屏
+                          if((*(p+1)<5)||(*(p+1)>30))  return -DAR_OTHERS_ERROR;
+                          break;
+                        case 0x05:
+                        case 0x06://小数位数
+                          if(*(p+1)>4)  return -DAR_OTHERS_ERROR;
+                          break;
+                        case 0x07://液晶12字样
+                          if(*(p+1)>1)  return -DAR_OTHERS_ERROR;
+                          break;
+                    }
+                  
                     p++;
                     mem_swap_cpy((uint8_t*)idbuf[index-1], p, lens[index-1]);
                     
