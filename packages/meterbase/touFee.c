@@ -66,20 +66,23 @@ unsigned char GetMonMaxDay( unsigned char* Addr )
 {
 	unsigned char MaxDay;
 
-	MaxDay = ((*Addr == 2) && ((*(Addr+1) & 0x03) == 0)) ? 29 :  MonTab[*Addr];
+	MaxDay = ((*Addr == 2) && (((*(Addr+1)) & 0x03) == 0)) ? 29 : ( MonTab[*Addr] );
     return MaxDay;
+}
+
+unsigned char Date_Format_Check( unsigned char* Addr )
+{
+    if( ((*(Addr) < 1) || (*(Addr) > 31)) || ((*(Addr+1) < 1) || (*(Addr+1) > 12)) )//日、月
+	    return 1;
+	if( *(Addr) > GetMonMaxDay( Addr+1 ) )//大小月判断
+  	    return 1;
+    return 0;
 }
 
 unsigned char Time_Format_Check( unsigned char* Addr )
 {
-	if( (*(Addr+4) > 59) || (*(Addr+3) > 59) || (*(Addr+2) > 23) )//sec/min,hour分
+	if( (*Addr > 23) || (*(Addr+1) > 59) || (*(Addr+2) > 59))//时、分/秒
 	    return 1;
-	if( ((*(Addr+1) < 1) || (*(Addr+1) > 31)) || ((*(Addr) < 1) || (*(Addr) > 12)) )//日、月
-	    return 1;
-    
-	if( *(Addr+1) > GetMonMaxDay( Addr) )//大小月判断
-  	    return 1;
-
 	return 0;
 }
 

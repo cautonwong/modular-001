@@ -56,9 +56,9 @@ unsigned int GetTotalDay( unsigned char* Addr )
 {
   	unsigned int Day,Mon,Year;
 
-	Year= BCD_BYTE( *(Addr+2) );
-	Mon = BCD_BYTE( *(Addr+1) );
-	Day = BCD_BYTE( *Addr );
+	Year= ( *(Addr+2) );
+	Mon = ( *(Addr+1) );
+	Day = ( *Addr );
 	Day = Day + DayTab[Mon] + Year*365 + (Year>>2) + 1;
 	if( ((Year&0x03) == 0) && (Mon <= 2) )
 		Day--;

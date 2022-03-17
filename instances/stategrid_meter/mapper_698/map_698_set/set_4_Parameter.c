@@ -82,10 +82,32 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
             {
                 switch(oad)
                 {
+				case 0x4010://元器件个数
+                        if(*(p+1) != 1)   return -DAR_TYPE_NOT_MATCH;
+                        break;
+                    case 0x4012://周休日
+                    case 0x4112://有功组合特征字
+                        if(*p != 4) return -DAR_TYPE_NOT_MATCH;
+                        break;
+                    case 0x4013://周休日日时段表号
+                        if(*p != 17) return -DAR_TYPE_NOT_MATCH;
+                        break;
+                    case 0x4102:    //脉冲宽度
+                    case 0x4104:    //额定电压
+                    case 0x4105:    //额定电流
+                    case 0x4106:    //最大电流
+                    case 0x4107:    //有功准确度等级
+                    case 0x4109:    //有功脉冲常数
+                        return -DAR_RW_REJECT;
+                    case 0x4103:    //资产管理编码
+                    case 0x4111:    //软件备案号
+                        if(*p != 0x0A)    return -DAR_TYPE_NOT_MATCH;
+						break;
                     case 0x4008://切换时间
                     case 0x4009:
                         if(Time_Format_Check(p+3))  return -DAR_OTHERS_ERROR;
                         break;
+						
                 }
               
                 addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + general_set4_talble[i].s_index);
@@ -104,10 +126,10 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
 int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {
     struct mbase_control_block_t* mbase_cb;
-    uint8_t i;
+    uint8_t i,timer[6];
     uint8_t* p = buf;
     uint32_t addr=0;
-    uint16_t idl = 0;
+    uint16_t idl = 0,year2;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
@@ -121,6 +143,32 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
     {
         if(idl == set4300_table[i].oad)
         {
+            switch(idl)
+            {
+                case 0x0200:   //设备描述符
+                    if(mbase_cb->factor_mode == false)  return -DAR_OTHERS_ERROR; //工厂模式外，禁止写入
+                    break;
+                case 0x0400://生产日期
+                    mem_swap_cpy((uint8_t*)&year2, p+1, 2);
+                    if(year2 < 2000) return -DAR_RW_REJECT;
+                    year2 = year2 - 2000;
+                    timer[0] = *(p+4); //day
+                    timer[1] = *(p+3); //month
+                    timer[2] = (uint8_t)year2;
+                    timer[3] = *(p+5);  //hour
+                    timer[4] = *(p+6);  //min
+                    timer[5] = *(p+7);  //sec
+                    
+                    if(Date_Format_Check(timer))  return -DAR_RW_REJECT;
+                    if(Time_Format_Check(&timer[3])) return -DAR_RW_REJECT;
+                    break;
+                case 0x0700://允许跟随上报
+                case 0x0800://允许主动上报
+                    if(*p != 3)   return -DAR_TYPE_NOT_MATCH;
+                    break;
+                
+               
+            }
             p = p + set4300_table[i].offset;
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + set4300_table[i].s_index);
             nd_set_index(instance, addr, p, set4300_table[i].len); 
@@ -147,8 +195,8 @@ extern const uint8_t  MonTab[13];// = {	0,31,28,31,30,31,30,31,31,30,31,30,31};
 int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {    
     struct mbase_control_block_t* mbase_cb;
-    uint16_t oad;
-    uint8_t index,attribute,i,num,buffer[42]={0},temp[114]={0},num_hourtab=0,j,year,MaxDay;
+    uint16_t oad,year2;
+    uint8_t index,attribute,i,num,buffer[42]={0},temp[114]={0},num_hourtab=0,j,year,timer[6];
     uint8_t* p = buf;
     uint32_t s_index = 0x00,addr=0;
     int len=0;
@@ -176,8 +224,19 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 uint8_t settimebuf[8]={0};
                 p++;
                 
-                if( Time_Format_Check(p+2) )    return -DAR_OTHERS_ERROR;
-    
+                mem_swap_cpy((uint8_t*)&year2, p, 2);
+                if(year2 < 2000) return -DAR_OTHERS_ERROR;
+                year2 = year2 - 2000;
+                timer[0] = *(p+3); //day
+                timer[1] = *(p+2); //month
+                timer[2] = (uint8_t)year2;
+                timer[3] = *(p+4);  //hour
+                timer[4] = *(p+5);  //min
+                timer[5] = *(p+6);  //sec
+                
+                if(Date_Format_Check(timer))  return -DAR_OTHERS_ERROR;
+                if(Time_Format_Check(&timer[3])) return -DAR_OTHERS_ERROR;
+                
                 //保存校时前时间 
                 rtc_get_from_tm(instance,temp);
                 buffer[0] = temp[6];
@@ -200,7 +259,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 settimebuf[2] = BYTE_BCD(*p++);//时
                 settimebuf[1] = BYTE_BCD(*p++);//分
                 settimebuf[0] = BYTE_BCD(*p++);//秒
-                settimebuf[6] = GetWeek(&settimebuf[3]);
+                settimebuf[6] = GetWeek(&timer[0]);
                 write_mcu_rtc(0, settimebuf, 7);
                 read_mcu_rtc(0x00, instance);
                 
@@ -370,6 +429,16 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
             break;
         case 0x4011://公共假日表
             if((index == 0) || (index > 10))    return -1;
+            
+            mem_swap_cpy((uint8_t*)&year2, p+3, 2);
+            if(year2 < 2000) return -DAR_OTHERS_ERROR;
+            year2 = year2 - 2000;
+            timer[0] = *(p+6); //day
+            timer[1] = *(p+5); //month
+            timer[2] = (uint8_t)year2;
+            
+            if(Date_Format_Check(timer))  return -DAR_OTHERS_ERROR;
+            if(*(p+7) != GetWeek(timer))    return -DAR_RW_REJECT;//周错误
 
             // 编程事件-保存编程前
             nd_get(instance, id, temp, 10, NULL);
@@ -394,6 +463,23 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
         case 0x4014://当前套时区表
         case 0x4015://备用套时区表
             if(index > 14)    return -1;
+            
+            if(index == 0)
+            {
+                num = *(p+1);
+                if(num>14) num = 14;
+                for(i=0; i<num; i++)
+                {
+                    if((*(p+2+8*i+3) > 12) || (*(p+2+8*i+3) == 0)) return -DAR_RW_REJECT;
+                    if((*(p+2+8*i+5) > 31) || (*(p+2+8*i+5) == 0)) return -DAR_RW_REJECT;
+                }
+            }
+            else
+            {
+                if((*(p+3) > 12) || (*(p+3) == 0))  return -DAR_RW_REJECT;
+                if((*(p+5) > 31) || (*(p+5) == 0))  return -DAR_RW_REJECT;
+            }
+            
             if(oad == 0x4014)   
                 addr = Season_Table0;
             else 
@@ -441,6 +527,24 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
         case 0x4016://当前套日时段表
         case 0x4017://备用套日时段表
             if(index > 0x08)    return -1;
+            
+            if(index == 0)
+            {
+                num = *(p+1);
+                if(num>8) num = 8;
+                for(i=0; i<num; i++)
+                {
+                    if(*(p+2+10*i+5) > 23)  return -DAR_RW_REJECT;
+                    if(*(p+2+10*i+7) > 59)  return -DAR_RW_REJECT;
+                }
+            }
+            else
+            {
+                if(*(p+5) > 23)  return -DAR_RW_REJECT;
+                if(*(p+7) > 59)  return -DAR_RW_REJECT;
+            }
+            
+            
             if(oad == 0x4016)
                 addr = Day_Table00;
             else
@@ -514,8 +618,10 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     p = p + 2;
                     p++;//tag
                     buffer[0] = *p++;
+                    if(buffer[0] > 23)  return -DAR_OTHERS_ERROR; 
                     p++;//tag
                     buffer[1] = *p++;
+                    if(buffer[1] > 59)  return -DAR_OTHERS_ERROR;
                     
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
                     nd_set_index(instance, s_index, buffer, 2); 
@@ -531,8 +637,10 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 p = p + 2;
                 p++;//tag
                 buffer[0] = *p++;
+                if(buffer[0] > 23)  return -DAR_OTHERS_ERROR; 
                 p++;//tag
                 buffer[1] = *p++;
+                if(buffer[1] > 59)  return -DAR_OTHERS_ERROR;
                 
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + (index - 1));
                 nd_set_index(instance, s_index, buffer, 2);
@@ -543,6 +651,23 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
             break;
         case 0x4300://设备信息
             return set4300(instance, id, buf);
+            
+        case 0x4400:
+            switch(attribute)
+            {
+                case 0x03:
+                    return -DAR_RW_REJECT;
+                    break;
+                case 0x05://认证连接机制
+                    if(*(p+1) > 3)  return -DAR_RW_REJECT;
+                    p++;
+                    buffer[0] = *p++;
+                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AuthMeth );
+                    nd_get_index(instance, s_index, buffer, 1);
+                    return (p-buf);
+                    break;
+            }
+            break;
         default:
             break;
     }

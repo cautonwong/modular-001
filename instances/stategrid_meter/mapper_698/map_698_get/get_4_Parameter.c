@@ -1,8 +1,8 @@
 #include "nidavellir.h"
 #include "fr_698.h"
 
-
-
+const uint8_t messagebuf1[8] = {0xff,0xff,0xff,0xff,0xfc, 0x00, 0x00, 0x00};
+const uint8_t messagebuf2[16] = {0xff,0xfe,0xc4,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 typedef struct 
 {
     uint32_t    s_index;    //地址
@@ -126,6 +126,7 @@ int general_get_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
         {
             if(attribute == 0x02)
             {
+                if(0x4401 == oad)   return -DAR_RW_REJECT;
                 *p++ = general_get4_talble[i].tag;
                 if((general_get4_talble[i].tag == TYPE_octet_string) || (general_get4_talble[i].tag == TYPE_visible_string))
                 {
@@ -555,6 +556,48 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
             break;
         case 0x4300:
             return get4300_para(instance,  id,  buf);
+            break;
+        case 0x4400:
+            switch(attribute)
+            {
+                case 0x03:
+                    *p++ = TYPE_structure;
+                    *p++ = 7;
+                    *p++ = TYPE_long_unsigned;
+                    *p++ = 0x00;
+                    *p++ = 0x16;
+                    *p++ = TYPE_long_unsigned;
+                    *p++ = 0x02;
+                    *p++ = 0x00;
+                    *p++ = TYPE_long_unsigned;
+                    *p++ = 0x02;
+                    *p++ = 0x00;
+                    *p++ = TYPE_long_unsigned;
+                    *p++ = 0x07;
+                    *p++ = 0xd0;
+                    *p++ = TYPE_bit_string;
+                    *p++ = 0x40;
+                    memcpy(p, messagebuf1, 8);
+                    p = p + 8;
+                    *p++ = TYPE_bit_string;
+                    *p++ = 0x81;
+                    *p++ = 0x80;
+                    memcpy(p, messagebuf2, 16);
+                    p = p + 16;
+                    *p++ = TYPE_double_long_unsigned;
+                    *p++ = 0x00;
+                    *p++ = 0x00;
+                    *p++ = 0x07;
+                    *p++ = 0x08;
+                    return (p-buf);
+                case 0x05:
+                    *p++ = TYPE_enum;
+                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AuthMeth);
+                    nd_get_index(instance, s_index, temp, 1); 
+                    *p++ = temp[0];
+                    return (p-buf);
+                    break;
+            }
             break;
         default:
             break;

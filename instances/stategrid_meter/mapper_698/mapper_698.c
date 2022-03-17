@@ -491,6 +491,7 @@ const  parameter_item_t  parameter_item[] =
     { ImaxProtectValue,    0x01,    4,      init_ImaxProtectValue }, //继电器拉闸电流门限值
     { ImaxProtectTime,     0x01,    2,      init_ImaxProtectTime }, //超电流门限保护延时时间
     { IrAuthenTime,        0x01,    4,      init_IrAuthenTime }, //红外认证时效
+    { AuthMeth,            0x01,    1,      0}, //连接认证机制
     
     
     
