@@ -559,7 +559,7 @@ int fr_check_service_and_choice(struct instance_t* instance, struct pipeline_t* 
     {
         mesg->oad_n = apdu_rx[ctx->apdu_rx_offset++];
         fifoBuf_putByte(cache, mesg->oad_n);
-    }else if (((GET_Request == ctx->service) &&(ctx->choice ==1))||
+    }else if (((GET_Request == ctx->service) &&((ctx->choice ==1) || (ctx->choice ==3)))||
              ((SET_Request == ctx->service) && (ctx->choice == 1))||
              ((ACTION_Request == ctx->service) && (ctx->choice == 1)))
     {
