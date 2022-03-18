@@ -42,21 +42,21 @@ const general_set4  general_set4_talble[] =
      DayTable_Changetime,       0x4009,     0x01,   7,//两套时段切换时间
      SecretKey_Num,             0x400F,     0x01,   1,//秘钥总条数
      Meter_Num,                 0x4010,     0x01,   1,//计量元件个数
-     Weekend,                   0x4012,     0x01,   1,//周休日特征字
+     Weekend,                   0x4012,     0x02,   1,//周休日特征字
      WeekendFee,                0x4013,     0x01,   1,//周休日采用费率号
      Meter_CT,                  0x401C,     0x01,   4,//CT
      Meter_PT,                  0x401D,     0x01,   4,//PT
      Pulse_Width,               0x4102,     0x01,   1,//脉冲宽度
-     ASCII_AssetsMan,           0x4103,     0x01,   32,//资产管理编码
+     ASCII_AssetsMan,           0x4103,     0x02,   32,//资产管理编码
      ASCII_Un,                  0x4104,     0x01,   6,//额定电压
      ASCII_Ib,                  0x4105,     0x01,   6,//额定电流
      ASCII_Imax,                0x4106,     0x01,   6,//最大电流
      ASCII_AccuracyClass1,      0x4107,     0x01,   4,//有功准确度等级
      Meter_Const1,              0x4109,     0x01,   4,//有功脉冲常数
-     ASCII_MeterType,           0x410B,     0x01,   32,//电能表型号
+     ASCII_MeterType,           0x410B,     0x02,   32,//电能表型号
      MeterRunWord,              0x4110,     0x01,   1,//电能表运行特征字
      SoftWareNo,                0x4111,     0x01,   16,//软件备案号
-     Measure_Mode,              0x4112,     0x01,   1,//有功组合特征字
+     Measure_Mode,              0x4112,     0x02,   1,//有功组合特征字
      Meter_Password,            0x4401,     0x01,   8,//应用连接密码
 };
 #define		set4num			sizeof(general_set4_talble)/sizeof(general_set4)
@@ -66,8 +66,8 @@ const general_set4  general_set4_talble[] =
 int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {
 //    struct mbase_control_block_t* mbase_cb;
-    uint16_t oad,i;
-    uint8_t attribute;
+    uint16_t oad,i,year2;
+    uint8_t attribute,timer[6];
     uint8_t* p = buf;
     uint32_t addr=0;
     
@@ -82,7 +82,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
             {
                 switch(oad)
                 {
-				case 0x4010://元器件个数
+                    case 0x4010://元器件个数
                         if(*(p+1) != 1)   return -DAR_TYPE_NOT_MATCH;
                         break;
                     case 0x4012://周休日
@@ -99,13 +99,26 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     case 0x4107:    //有功准确度等级
                     case 0x4109:    //有功脉冲常数
                         return -DAR_RW_REJECT;
+                    case 0x410B:    //电表型号
+                        if(*p != 0X0A) return -DAR_RW_REJECT;
                     case 0x4103:    //资产管理编码
                     case 0x4111:    //软件备案号
                         if(*p != 0x0A)    return -DAR_TYPE_NOT_MATCH;
 						break;
                     case 0x4008://切换时间
                     case 0x4009:
-                        if(Time_Format_Check(p+3))  return -DAR_OTHERS_ERROR;
+                        mem_swap_cpy((uint8_t*)&year2, p+1, 2);
+                        if(year2 < 2000) return -DAR_RW_REJECT;
+                        year2 = year2 - 2000;
+                        timer[0] = *(p+4); //day
+                        timer[1] = *(p+3); //month
+                        timer[2] = (uint8_t)year2;
+                        timer[3] = *(p+5);  //hour
+                        timer[4] = *(p+6);  //min
+                        timer[5] = *(p+7);  //sec
+                        
+                        if(Date_Format_Check(timer))  return -DAR_OTHERS_ERROR;
+                        if(Time_Format_Check(&timer[3])) return -DAR_OTHERS_ERROR;
                         break;
 						
                 }
@@ -189,6 +202,28 @@ uint8_t lcd_data_chk(uint8_t *p)
         return 1;
     return 0;
 }
+
+uint8_t CheckData400C(uint8_t *p,uint8_t index)
+{
+    switch(index)
+    {
+        case 0:
+        case 2:
+          if(*(p+1) > 14)   return 1;
+          break;
+        case 1:
+          if(*(p+1) > 8)   return 1;
+          break;
+        case 3:
+          if(*(p+1) > 63)   return 1;
+          break;
+        case 4:
+          if(*(p+1) > 254)   return 1;
+          break;
+    }
+    return 0;
+}
+
 
 extern const uint8_t  MonTab[13];// = {	0,31,28,31,30,31,30,31,31,30,31,30,31};
 
@@ -411,6 +446,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 p = p + 2;
                 for(i=0;i<5;i++)
                 {
+                    if( CheckData400C(p,i) ) return -DAR_OTHERS_ERROR;
                     p++;
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + i);
                     nd_set_index(instance, s_index, p, 1); 
@@ -420,6 +456,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
             }
             else
             {
+                if( CheckData400C(p,index-1) ) return -DAR_OTHERS_ERROR;
                 p++;
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + (index - 1));
                 nd_set_index(instance, s_index, p, 1); 
@@ -495,7 +532,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
 
             if(index == 0)
             {
-                num = *p;
+                num = *(p+1);
                 if(num>14) num = 14;
                 p = p + 2;
                 for(i=0; i<num; i++)
@@ -506,7 +543,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     buffer[1] = *p++;
                     p++;
                     buffer[2] = *p++;
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
+                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
                     nd_set_index(instance, s_index, buffer, 3);
                 }
             }
@@ -618,10 +655,10 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     p = p + 2;
                     p++;//tag
                     buffer[0] = *p++;
-                    if(buffer[0] > 23)  return -DAR_OTHERS_ERROR; 
+                    if(((buffer[0] > 28) && (buffer[0] != 99)) || (buffer[0] == 0))  return -DAR_OTHERS_ERROR; 
                     p++;//tag
                     buffer[1] = *p++;
-                    if(buffer[1] > 59)  return -DAR_OTHERS_ERROR;
+                    if((buffer[1] > 23) && (buffer[1] != 99))  return -DAR_OTHERS_ERROR;
                     
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
                     nd_set_index(instance, s_index, buffer, 2); 

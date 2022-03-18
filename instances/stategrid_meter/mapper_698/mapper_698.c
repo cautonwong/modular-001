@@ -1231,6 +1231,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
         case 0xf://其他
             return SET_f_Other(instance, id, buf);
         default:
+            return -DAR_OBJECT_NOT_EXIST;
             break;
         }
         break;

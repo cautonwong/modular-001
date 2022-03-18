@@ -104,6 +104,12 @@ int get4300_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
         }
         return (p-buf);
     }
+    else if(idl == 0x0500)//子设备列表
+    {
+        *p++ = TYPE_array;
+        *p++ = 0;
+        return (p-buf);
+    }
     
     return -1;
 }
@@ -590,6 +596,11 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, stru
                     *p++ = 0x07;
                     *p++ = 0x08;
                     return (p-buf);
+                case 0x04://当前连接的客户机地址
+                    *p++ = TYPE_unsigned;
+                    *p++ = mbase_cb->clientaddr;
+                    return (p-buf);
+                    break;
                 case 0x05:
                     *p++ = TYPE_enum;
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AuthMeth);

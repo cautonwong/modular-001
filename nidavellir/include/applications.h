@@ -145,6 +145,8 @@ struct mbase_control_block_t
    
     uint8_t relay_true_sta;//继电器实际状态
     
+    uint8_t clientaddr; //客户机地址
+    
     dyn_cache_end
     //运行期更改&&掉电或定时保存&&上电需要IO请求的数据分区
     dyn_persistent_start
@@ -179,6 +181,8 @@ struct mbase_control_block_t
     
 
     uint16_t  trigger_insfreeze_delay_sec; //触发瞬时冻结 延时时间 sec  FFFF无效
+    
+    uint32_t  MonthEnegery;   //当前月度用电量
         //需量数据
     dyn_persistent_end
 

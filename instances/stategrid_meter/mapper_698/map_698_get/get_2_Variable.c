@@ -16,14 +16,15 @@ const ATBE3 Atbe3_table[] =
     0x2006,     -1,     unit_VA,
     0x2007,     -1,     unit_W,
     0x200A,     -3,     unit_undefined,
-    0x200F,     -4,     unit_Hz,
+    0x200F,     -2,     unit_Hz,
     0x2010,     -1,     unit_tempture,
     0x2011,     -2,     unit_V,
     0x2013,     0,      unit_minute,
-    0x2014,     0,      0,
+    0x2014,     0,      unit_undefined,
     0x2015,     0,      0,
-    0x2040,     0,      0,
-    0x2041,     0,      0,
+    0x2031,     -2,     unit_kWh,
+    0x2040,     0,      unit_undefined,
+    0x2041,     0,      unit_undefined,
 };
 
 int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode)
@@ -58,16 +59,19 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
         0x20010400,     0x00,   TYPE_double_long,           (uint8_t*)&mbase_cb->current_n,         4,  //零线电流
         0x20040200,     0x02,   TYPE_double_long,           (uint8_t*)&mbase_cb->active_power,      4,  //有功功率
         0x20040201,     0x00,   TYPE_double_long,           (uint8_t*)&mbase_cb->active_power,      4,  //有功功率
+        0x20040202,     0x00,   TYPE_double_long,           (uint8_t*)&mbase_cb->active_power,      4,  //有功功率
         0x20060200,     0x02,   TYPE_double_long,           (uint8_t*)&mbase_cb->apparent_power,    4,  //视在功率
         0x20060201,     0x00,   TYPE_double_long,           (uint8_t*)&mbase_cb->apparent_power,    4,  //视在功率
         0x20070200,     0x02,   TYPE_double_long,           (uint8_t*)&mbase_cb->active_avg_power,  4,  //1分钟平均功率
         0x20070201,     0x00,   TYPE_double_long,           (uint8_t*)&mbase_cb->active_avg_power,  4,  //1分钟平均功率
         0x200A0200,     0x02,   TYPE_long,                  (uint8_t*)&mbase_cb->power_factor,      2,  //功率因数
         0x200A0201,     0x00,   TYPE_long,                  (uint8_t*)&mbase_cb->power_factor,      2,  //功率因数
+        0x200A0202,     0x00,   TYPE_long,                  (uint8_t*)&mbase_cb->power_factor,      2,  //功率因数
         0x200F0200,     0x00,   TYPE_long_unsigned,         (uint8_t*)&mbase_cb->frequency,         2,  //频率
         0x20100200,     0x00,   TYPE_long,                  (uint8_t*)&mbase_cb->temperature,       2,  //温度
         0x20110200,     0x00,   TYPE_long_unsigned,         (uint8_t*)&mbase_cb->voltage_battery,   2,  //电池电压
         0x20130200,     0x00,   TYPE_double_long_unsigned,  (uint8_t*)&mbase_cb->battery_used_time, 4,  //电池工作时间     
+        0x20310200,     0x00,   TYPE_double_long_unsigned,  (uint8_t*)&mbase_cb->MonthEnegery,      4,  //月度用电量
         0x20150400,     0x00,   TYPE_bit_string,            (uint8_t*)&mbase_cb->report_state,      4,  //跟随上报状态字
         0x20400200,     0x00,   TYPE_bit_string,            (uint8_t*)&mbase_cb->cmd_dostate,       2,  //控制命令执行状态字
         0x20410200,     0x00,   TYPE_bit_string,            (uint8_t*)&mbase_cb->cmd_errstate,      2,  //控制命令错误状态字
@@ -138,7 +142,8 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
                         }
                     }
                     return (p-buf);
-              
+                default:
+                    return -DAR_OBJECT_NOT_EXIST;
             }
         }
     }
@@ -217,5 +222,5 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
     }
    
     
-    return -1;
+    return -DAR_OBJECT_NOT_EXIST;;
 }
