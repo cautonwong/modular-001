@@ -4,7 +4,7 @@
 /*
  * 日期合法性判定
  * */
-uint8_t check_date(int year, int month, int day, int hour, int min, int sec)
+int check_date(int year, int month, int day, int hour, int min, int sec)
 {
 	struct tm tm_new;
 

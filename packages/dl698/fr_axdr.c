@@ -99,7 +99,7 @@ uint16_t axdr_get_len(const uint8_t *data)
     case TYPE_enum:
     case TYPE_integer:
     case TYPE_unsigned:
-        return 1;
+        return 1+1;
         break;
     case TYPE_long:
     case TYPE_long_unsigned:

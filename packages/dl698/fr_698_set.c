@@ -70,28 +70,21 @@ int fr_set_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
         offset = cache->wr;
         
         r = security_mode_word_check(instance, pipeline, 1, oad);
-        //安全模式不匹配 待调整
-#if 0        
-        if (r < 0)
-        {
-            ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
-            p[cache->wr++] = r;//DAR
-            return r;
-        }
-#endif         
-        r = fr_698_set(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
-        //r = fr_698_set(instance, oad, fifo->buf_ptr + fifo->rd, len, (void*)ctx);
+        if(r < 0){
+            return r;//返回帧？
+        }  
         
+        r = fr_698_set(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
+
         cache->wr = offset;
         if (r < 0)
         {
-            //p[cache->wr++] = 0x00;//DAR
             p[cache->wr++] = -r;
+            r = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
         }
         else
         {
             p[cache->wr++] = 0x00;//DAR
-            //cache->wr += r;
         }
     }
 
@@ -114,10 +107,6 @@ int fr_handle_set_request(struct instance_t* instance, struct pipeline_t* pipeli
 
     while (oad_n-- > 0)
     {
-        //todo  apdu分帧
-        //if (fifoBuf_getFree(cache) < size(oad))
-        {
-            //oad
             mesg->id = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
             memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, 4);
             cache->wr += 4;
@@ -142,7 +131,6 @@ int fr_handle_set_request(struct instance_t* instance, struct pipeline_t* pipeli
                     return DAR_OTHERS_ERROR;
                 }
             }
-        }
     }
     return 1;
 }

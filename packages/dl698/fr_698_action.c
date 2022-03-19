@@ -40,20 +40,15 @@ int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipelin
         
         
         r = security_mode_word_check(instance, pipeline, 2, oad);
-        //安全模式不匹配 返回拒绝
-#if 0       
-        if (r < 0)
-        {
-            ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
-            p[cache->wr++] = -r;//DAR
+        if(r < 0){
             return r;
         }
-#endif   
-        
+
         r = fr_698_action(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
         if (r < 0)
         {
             p[cache->wr++] = -r;//DAR
+            r = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
         }
         else
         {
@@ -102,15 +97,7 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
             cache->wr += 4;
             ctx->apdu_rx_offset += 4;
             
-            //dar_offset = cache->wr;
-            //p[dar_offset] = dar;
             data_len = fr_action_one_object(instance, pipeline, mesg);
-            if (data_len < 0)
-            {
-                p[dar_offset]  = DAR_OTHERS_ERROR;
-                return DAR_OTHERS_ERROR;
-            }
-            //p[dar_offset] = dar;
             ctx->apdu_rx_offset += data_len;
             
             if(ActionThenGetRequestNormalList == ctx->choice)
@@ -127,16 +114,10 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
                 //延时                
                 
                 r = security_mode_word_check(instance, pipeline, 0, get_oad);
-                //安全模式不匹配 待调整
- #if 0        
-                if (r < 0)
-                {
-                    ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
-                    p[cache->wr++] = 0x00;//DAR
-                    p[cache->wr++] = r;//DAR
+                if(r < 0){
                     return r;
-                }
-#endif                
+                }        
+                
                 if (fr_698_get(instance, get_oad, p+cache->wr, sizeof(password), NULL) < 0)
                 {
                     return DAR_OTHERS_ERROR;

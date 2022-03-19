@@ -73,7 +73,6 @@ static int __verification_SID_MAC(struct instance_t* instance, struct pipeline_t
     struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint16_t offset = 0; 
-    uint8_t *mac = cache->buf_ptr + ctx->security_data_len;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
     
@@ -102,9 +101,9 @@ static int __verification_RN(struct instance_t* instance, struct pipeline_t* pip
     struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint16_t offset = 0;
-    uint8_t *mac = cache->buf_ptr + ctx->security_data_len;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
+    
     input.cmd_type              = 2;
     input.security_choice       = ctx->security_choice;
     input.verification_choice   = ctx->verification_choice;
@@ -130,9 +129,9 @@ static int __verification_RN_MAC(struct instance_t* instance, struct pipeline_t*
     struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint16_t offset = 0; 
-    uint8_t *mac = cache->buf_ptr + ctx->security_data_len;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
+    
     input.cmd_type              = 3;
     input.security_choice       = ctx->security_choice;
     input.verification_choice   = ctx->verification_choice;
@@ -162,9 +161,9 @@ static int __verification_SID(struct instance_t* instance, struct pipeline_t* pi
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t *mac = cache->buf_ptr + ctx->security_data_len;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
+    
     input.cmd_type              = 4;
     input.security_choice       = ctx->security_choice;
     input.verification_choice   = ctx->verification_choice;
@@ -220,9 +219,9 @@ static int ___get_encode_and_mac(struct instance_t* instance, struct pipeline_t*
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
     int ret = 0;
-    uint8_t *mac = cache->buf_ptr + ctx->security_data_len;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
+    uint8_t data_mac[16] = {0};
     
     input.cmd_type              = 0;
     input.security_choice       = ctx->security_choice;
@@ -239,8 +238,8 @@ static int ___get_encode_and_mac(struct instance_t* instance, struct pipeline_t*
     
     output.data     = cache->buf_ptr;
     output.data_len = Max698_apdu_rx - 5;
-    output.MAC_data = cache->buf_ptr + ctx->security_data_len + 3 + 16;
-    output.MAC_len = 0;
+    output.MAC_data = data_mac;
+    output.MAC_len  = 16;
     
     ret = fr_698_handle_esam(&input, &output);
     if(output.esam_err_no == 0x9000){
@@ -501,7 +500,7 @@ uint16_t __security_mode_word_get(struct instance_t* instance, struct pipeline_t
 
 //判断安全模式字是否符合要求   明文	明文+数据验证码	  密文	  密文+数据验证码
 // cmd : 0 get, 1 set, 2 action
-int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cmd, uint32_t oad)
+static int __security_mode_word_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cmd, uint32_t oad)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -663,6 +662,22 @@ int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pip
     }
 
     return -DAR_SECURITY_AUTH_NOT_MATCH;
+}
+
+int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cmd, uint32_t oad)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    int    r = __security_mode_word_check(instance, pipeline, cmd, oad);
+        //安全模式不匹配 待调整
+#if 0        
+    if (r < 0)
+    {
+        ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+        p[cache->wr++] = -r;//DAR
+        return r;
+    }
+#endif  
+    return 0;
 }
 #endif
 #endif    //----698安全模式字-----------------------------结束

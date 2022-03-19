@@ -77,26 +77,22 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
     {
         offset = cache->wr;
         p[cache->wr++] = 0x01;
+        
         r = security_mode_word_check(instance, pipeline, 0, oad);
-        //安全模式不匹配 待调整
-#if 0        
-        if (r < 0)
-        {
-            ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
-            p[offset] = 0x00;
-            p[cache->wr++] = -r;//DAR
+        if(r < 0){
             return r;
-        }
-#endif 
+        }  
+        
         r = fr_698_get(instance, oad, p + cache->wr, len, (void*)ctx);
         if (r < 0)
         {
             p[offset] = 0x00;//DAR
             p[cache->wr++] = -r;
+            //r = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
         }
         else
         {
-            cache->wr += r;
+            cache->wr += r;//DAR
         }
     }
 

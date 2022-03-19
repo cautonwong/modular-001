@@ -325,14 +325,6 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
         p += len;
 #endif
         break;
-#if 0
-    case PROXY_Request:
-    case COMPACT_GET_Request:
-    case COMPACT_SET_Request:
-    case COMPACT_PROXY_Request:
-    case ERROR_C_Response:
-        break;
-#endif
     default:
         return 1;
     }
@@ -344,17 +336,19 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
     memcpy(ctx->timeTag, apdu_rx + ctx->apdu_rx_offset + offset, 11);
     ctx->timeTag_valid = ctx->timeTag[0];
     if (1 == ctx->timeTag_valid) {
+        ctx->timeTag_valid = 2;
         if (false == dl_data_time_check(&ctx->timeTag[1], TIME_WILDCARD)){
-            ctx->timeTag_valid = 0;
+          
+        }else{
+            interval_sec = dl_timeTag_interval(&ctx->timeTag[8], 0);
+            time_tag_sec = dl_datetime_to_second(&ctx->timeTag[1], 0);
+            time_sec     = rtc_mktime(&instance->time);
+            
+            if ((time_tag_sec + interval_sec) < time_sec){
+                ctx->timeTag_valid = 1;//时间标签,有效
+            }
         }
-        interval_sec = dl_timeTag_interval(&ctx->timeTag[8], 0);
-        time_tag_sec = dl_datetime_to_second(&ctx->timeTag[1], 0);
-        time_sec     = rtc_mktime(&instance->time);
-
-        if ((time_tag_sec + interval_sec) < time_sec){
-            ctx->timeTag_valid = 1;//时间标签,有效
-        }
-    }else {
+    }else{
         ctx->timeTag_valid = 0;//无时间标签
     }
     return 1;

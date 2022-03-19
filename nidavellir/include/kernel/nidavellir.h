@@ -292,9 +292,9 @@ struct tasklet_t
 
 #define upgrade_setsize    16
 #define tasklet_setsize    1
-#define bit_set(n, p)  ((p)[(n)/8] |=  (1 << ((n) & 7)))
-#define bit_clr(n, p)  ((p)[(n)/8] &= ~(1 << ((n) & 7)))
-#define bit_isset(n,p) ((p)[(n)/8] &   (1 << ((n) & 7)))
+#define bit_set(n, p)  ((p)[(n)>>3] |=  (1 << ((n) & 7)))
+#define bit_clr(n, p)  ((p)[(n)>>3] &= ~(1 << ((n) & 7)))
+#define bit_isset(n,p) ((p)[(n)>>3] &   (1 << ((n) & 7)))
 #define tasklet_zero(p)    memset((void*)(p),0,sizeof(*(p)))
 struct tasklet_pool_t
 {

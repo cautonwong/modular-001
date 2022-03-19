@@ -257,6 +257,12 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
             if(attribute == 0x02)
             {
                 uint8_t settimebuf[8]={0};
+                if(p[0] != TYPE_date_time_s){
+                    return -DAR_TYPE_NOT_MATCH;
+                }
+                if(check_date((p[1]<<8)+p[2], p[3], p[4], p[5], p[6], p[7]) < 0){
+                    return -DAR_OTHERS_ERROR;
+                }
                 p++;
                 
                 mem_swap_cpy((uint8_t*)&year2, p, 2);
