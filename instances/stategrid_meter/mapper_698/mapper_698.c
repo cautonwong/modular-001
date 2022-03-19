@@ -1214,6 +1214,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
             return GET_f_Other(instance, id, buf);
             break;
         default:
+            return -DAR_OBJECT_NOT_EXIST;
             break;
         }
         break;
@@ -1249,6 +1250,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
         case 0xf://其他
             return ACTION_F_Other(instance, id, buf, buf_size, ctx);
         default:
+            return -DAR_OBJECT_NOT_EXIST;
             break;
         }
         break;
