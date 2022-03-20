@@ -12,7 +12,7 @@ extern const struct driver_ops_t  uart_driver;
 extern const struct driver_ops_t rn8209_drv;
 extern const struct driver_ops_t nor_flash_driver;
 extern const struct bus_ops_t mcu_uart_bus_ops;
-extern void esam_698_init(void);
+
 
 static uint8_t fifo_buf[32];
 static struct fifo_t irq_fifo;
@@ -320,9 +320,9 @@ void irq_transform_to_instance(struct instance_t* instance)
 void IOStateCheckInit(void);
 
 
-void dev_init(void)
+void dev_init(uint8_t power_mode)
 {
-    mcu_main_power_on_config();
+    mcu_main_power_on_config(power_mode);
     
     ndv_timer_init();
 	
@@ -336,10 +336,9 @@ void dev_init(void)
     
     nor_flash_dev.dev_driver_ops->dev_initialize(&nor_flash_dev);
     
-    rn8209_dev.dev_driver_ops->dev_control(&rn8209_dev , AC_POWER_ON , 0);
+    rn8209_dev.dev_driver_ops->dev_control(&rn8209_dev , power_mode , 0);
     
-    esam_698_init();
-
+    esam_698_init(power_mode);
 }
 
 //关闭用电大户外设的电源，比如背光，LED，串口，高速定时器，tick
@@ -355,10 +354,7 @@ void dev_init(void)
 //打开串口，高速定时器，tick，初始化IO上电配置
  void device_power_open(struct instance_t* instance)
  {
- 
- 
- 
- 
+     dev_init(AC_POWER_ON);
  }
 
 //初始化IO低功耗配置，初始化系统低功耗配置，准备进入sleep模式。

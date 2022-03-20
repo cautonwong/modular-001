@@ -1204,15 +1204,17 @@ void mcu_exit_sleep_then_enter_normal(void)
 }
 
 
-void mcu_main_power_on_config(void)
+void mcu_main_power_on_config(uint8_t power_mode)
 {
-    cm0_systick_init(1);
     
     init_v85xxp_rtc(1);
     
-    lcd_init(AC_POWER_ON);
+    lcd_init(power_mode);
     
-    start_emu_signal_pro();
+    if(power_mode == AC_POWER_ON)
+    {
+        start_emu_signal_pro();
+    }
     
     GPIOA->OEN |=BIT2; 
     GPIOA->IE |=BIT2;

@@ -39,7 +39,7 @@ extern void mcu_main_frequency_mode(uint8 clk_mode);
 extern void mcu_enter_lowpower_then_sleep(void);
 extern void mcu_exit_sleep_then_enter_normal(void);
 
-extern void mcu_main_power_on_config(void);
+extern void mcu_main_power_on_config(uint8_t power_mode);
 extern void mcu_main_power_off_config(void);
 extern void cm0_systick_init(uint8 cmd);
 extern void ndv_isr_handle_regsit(isr_handle isr_handle_f , uint8 irq);

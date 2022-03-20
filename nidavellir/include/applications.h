@@ -314,7 +314,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
 int app_meter_lowpower_wakeup_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
-void dev_init(void);
+void dev_init(uint8_t power_mode);
 void irq_system_init(void);
 void irq_transform_to_instance(struct instance_t* instance);
 void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uint8_t chl_type);

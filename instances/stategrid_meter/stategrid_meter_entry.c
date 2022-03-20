@@ -336,10 +336,10 @@ int main(int argc, char** argv)
 {
 #ifndef WIN32
     mcu_init(NULL);
-    mcu_main_power_on_config();
+    
     ndv_timer_init();
     //初始化硬件
-    dev_init();
+    dev_init(AC_POWER_OFF);
 
     //初始化固件
     irq_system_init(); 

@@ -206,14 +206,17 @@ uint8_t get_key_status(struct instance_t* instance)
 }
 
 //OK
-void esam_698_init(void)
+void esam_698_init(uint8_t power_mode)
 {
     int fd = 0;
     int request = 0;
     struct esam_698_data_t param;
-
-    request = esam_type_poweron_cmd;
-    openM_ioctl(fd, request, (void *)&param);
+    
+    if(power_mode == AC_POWER_ON)
+    {
+        request = esam_type_poweron_cmd;
+        openM_ioctl(fd, request, (void *)&param);
+    }
 }
 
 #if 0
