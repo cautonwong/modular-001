@@ -76,11 +76,12 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
 
-    uint16_t then_get_delay = 0; //读取延时
+    uint8_t then_get_delay = 0; 
     uint32_t get_oad = 0;
     uint16_t len = 0;
     int16_t data_len = 0;
     uint16_t dar_offset = 0;
+    uint16_t offset = 0;
     uint8_t dar = DAR_SUCCESS;
 
     uint8_t password[16];
@@ -110,19 +111,29 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
                 cache->wr += 4;
                 ctx->apdu_rx_offset += 4;
             
-                then_get_delay = buf_to_uint16_msb(apdu_rx+ctx->apdu_rx_offset);
-                ctx->apdu_rx_offset += 2;
+                then_get_delay = apdu_rx[ctx->apdu_rx_offset++];
                 //延时                
                 
                 r = security_mode_word_check(instance, pipeline, 0, get_oad);
                 if(r < 0){
                     return r;
-                }        
+                }  
                 
-                if (fr_698_get(instance, get_oad, p+cache->wr, sizeof(password), NULL) < 0)
+                offset = cache->wr;
+                p[cache->wr++] = 0x01;
+                
+                r = fr_698_get(instance, get_oad, p+cache->wr, sizeof(password), NULL);
+                if (r < 0)
                 {
-                    return DAR_OTHERS_ERROR;
+                    p[offset] = 0x00;//DAR
+                    p[cache->wr++] = -r;
+                    //r = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
                 }
+                else
+                {
+                    cache->wr += r;//DAR
+                }
+        
             }
         }
     }
