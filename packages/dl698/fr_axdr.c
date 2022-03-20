@@ -105,17 +105,17 @@ uint16_t axdr_get_len(const uint8_t *data)
     case TYPE_long_unsigned:
     case TYPE_Scaler_Unit:
     case TYPE_OI:
-        return 2;
+        return 2+1;
         break;
     case TYPE_double_long:
     case TYPE_double_long_unsigned:
     case TYPE_OAD:
     case TYPE_OMD:
-        return 4;
+        return 4+1;
         break;
     case TYPE_long64:
     case TYPE_long64_unsigned:
-        return 8;
+        return 8+1;
         break;
     case TYPE_bit_string:
     case TYPE_octet_string:

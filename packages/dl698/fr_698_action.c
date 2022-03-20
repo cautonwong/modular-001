@@ -48,6 +48,7 @@ int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipelin
         if (r < 0)
         {
             p[cache->wr++] = -r;//DAR
+            p[cache->wr++] = 0;
             r = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
         }
         else

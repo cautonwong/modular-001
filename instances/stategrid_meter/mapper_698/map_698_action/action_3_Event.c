@@ -236,6 +236,11 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
         return -1;
     }
     capture_oad = buf_to_uint32_msb(p);
+    
+    ret = check_oad(capture_oad);
+    if(ret < 0){
+        return ret;
+    }
     p += 4;
     Schem = get_OAD_Schem(capture_oad);
     //待调整  秘钥状态如何获取？

@@ -565,6 +565,9 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             switch(method)
             {
                 case 0x03://下翻
+                    if(0 != p[0]){
+                        return -DAR_TYPE_NOT_MATCH;
+                    }
                     if( mbase_cb->KeyPtr == 0 )
                         mbase_cb->KeyPtr = mbase_cb->lcd_keydis_list_num-1;
                     else
@@ -573,8 +576,11 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
                     mbase_cb->Page_ID = pageid;
                     mbase_cb->KeyInv = mbase_cb->lcd_keydis_keep_sec;
-                    return (p-buf);
+                    return 1;
                 case 0x04://上翻
+                    if(0 != p[0]){
+                        return -DAR_TYPE_NOT_MATCH;
+                    }
                     if( mbase_cb->KeyPtr >= (mbase_cb->lcd_keydis_list_num-1) )
                         mbase_cb->KeyPtr = 0;
                     else
@@ -583,7 +589,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
                     mbase_cb->Page_ID = pageid;
                     mbase_cb->KeyInv = mbase_cb->lcd_keydis_keep_sec;
-                    return (p-buf);
+                    return 1;
                 case 0x05://显示查看
                     break;
                 case 0x06://全屏显示

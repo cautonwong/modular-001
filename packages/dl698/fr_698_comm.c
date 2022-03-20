@@ -136,3 +136,13 @@ uint32_t dl_datetime_to_second(uint8_t* date, uint8_t type)
     time.tm_year = year;
     return rtc_mktime(&time);
 }
+
+
+int check_oad(uint32_t oad)
+{
+    uint16_t val = 0xF000&(oad>>16);
+    if((val >= 0x8000) && (0xF000 != val)){
+        return -DAR_OTHERS_ERROR;
+    }
+    return 0;
+}
