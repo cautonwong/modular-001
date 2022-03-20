@@ -54,7 +54,7 @@ int MeterWr_obj_list_add(struct instance_t* instance, struct pipeline_t* task, s
         tempbuf[1] = 9;
     }
     
-    memcpy(&tempbuf[7], &tempbuf[2], sizeof(tempbuf) - 7);
+    ndv_memcopy(&tempbuf[7], &tempbuf[2], sizeof(tempbuf) - 7);
 
     ofset = 2;
     tempbuf[ofset] = tag;

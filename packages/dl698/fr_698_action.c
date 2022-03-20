@@ -63,6 +63,7 @@ int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipelin
                 p[cache->wr++] = 0;
                 p[cache->wr++] = 0;
             }
+            fr_698_MeterWr_program_judge(instance, pipeline, mesg); //编程记录
         }
     }
 

@@ -1121,6 +1121,35 @@ int fc_fun_01(uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
     }
     return (p - des);
 }
+
+// 编程列表  按解析取数据长度
+int fc_fun_02(uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
+{
+    uint16_t decode_len = 0;
+    uint8_t *p = des;
+    uint8_t num = 0;
+    
+    if (mode == RFC_WRITE)
+    {
+        ndv_memcopy(des, src, 52);
+        p += 52;
+    }
+    else if (mode == RFC_READ)
+    {
+        //decode_len = axdr_get_len(src); //待调整
+        num = *(src+1);
+        decode_len = 5*num + 2;
+        
+        if (decode_len > 52)
+        {
+            decode_len = 0;
+        }
+        ndv_memcopy(des, src, decode_len);
+        p += decode_len;
+    }
+    return (p - des);
+}
+
 // record存储格式特殊处理的 oad
 const struct format_conversion_t format_conversion_tab[] =
 {
@@ -1128,6 +1157,7 @@ const struct format_conversion_t format_conversion_tab[] =
     {   0x20200200,     8,      5,      fc_fun_01   },
     {   0x20210200,     8,      5,      fc_fun_01   },
     {   0x40000200,     8,      5,      fc_fun_01   },
+    {   0x33020206,   0xFFFF,  52,      fc_fun_02   },  //待调整
 };
 
 //enum format_conversion_mode // record_change_format
@@ -1156,7 +1186,15 @@ int record_change_format(uint8_t *des,  uint8_t* src, uint32_t oad, enum format_
 
     if (mode == RFC_GET_ORIGINAL_LEN)
     {
-        return format_conversion_tab[i].original_len;
+        if(format_conversion_tab[i].original_len == 0xFFFF) 
+        {
+            return axdr_get_len(src); // 待调整  目前解析长度 只有数据域 不带tag
+        }
+        else
+        {
+            return format_conversion_tab[i].original_len;
+        }
+        
     }
     else if (mode == RFC_GET_STORE_LEN)
     {
@@ -1164,7 +1202,10 @@ int record_change_format(uint8_t *des,  uint8_t* src, uint32_t oad, enum format_
     }
     else
     {
-        return format_conversion_tab[i].format_fun(des, src, mode);
+        if(format_conversion_tab[i].format_fun)
+        {
+            return format_conversion_tab[i].format_fun(des, src, mode);
+        }
     }
 }
 
@@ -1514,4 +1555,72 @@ int para_init(struct instance_t* instance )
     }
     
     return 0;
+}
+
+
+
+//编程记录 判断  协议set和 action 调用
+//set (OAD)
+//action   类7  24 的 方法 4/5(OMD)；    类9 的 方法 4/5/7/8(OMD);    类21 的方法4（OAD）/7(OMD = 0xF1000700)/9（OMD = 0xF1000900）
+void fr_698_MeterWr_program_judge(struct instance_t* instance, struct pipeline_t* pipeline,  struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t cilent_index = 0;
+    uint32_t id = mesg->id;
+    uint8_t tag = TYPE_OAD;
+    uint16_t oi;
+    uint8_t attribute, result = 0;
+   
+    if ((ctx->service == 7) && (ctx->service == 6))
+    {
+        return;
+    }
+
+    oi = (unsigned short)((id & 0xFFFF0000) >> 16);
+    attribute = (unsigned char)((id & 0x0000FF00) >> 8); // FF
+
+    if (ctx->service == 7) //action
+    {
+        tag = TYPE_OMD;
+        if ((oi & 0xF000 == 0x3000) && ((attribute == 4) || (attribute == 5)) 
+         || (oi & 0xF000 == 0x5000) && ((attribute == 4) || (attribute == 5) || (attribute == 7) || (attribute == 8))
+         || (oi == 0xF100) && ((attribute == 4) || (attribute == 7) || (attribute == 9))
+         || (oi == 0xF101) && ((attribute == 127) || (attribute == 128) || (attribute == 129)))
+        {
+            if ((oi == 0xF100))
+            {
+                if (attribute == 4)
+                {
+                    tag = TYPE_OAD;  // 填解密后具体oad
+                    //id =    ;   // 待调整
+                }
+            }
+
+            result = 1;
+        }
+    }
+    else if (ctx->service == 6) //set
+    {
+        result = 1;
+    }
+
+    
+    if (1 == result)
+    {
+        if (CA_TYPE_TER(ctx->CA))//终端
+        {
+            cilent_index = 1;
+        }
+        else
+        {
+            cilent_index = 0;
+        }
+
+        if (true == fr_698_current_connect_status_get(instance, pipeline, cilent_index))
+        {
+            MeterWr_obj_list_add(instance, pipeline, mesg, id, tag);
+        }
+    }
+    
 }

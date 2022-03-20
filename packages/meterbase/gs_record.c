@@ -291,6 +291,12 @@ int clr_record(struct instance_t* instance, uint32_t oad)
     {
         *info.acc_time = 0;
     }
+
+    if (oad == 0x30120200) // 编程记录
+    {
+        MeterWr_obj_list_clear(instance, NULL, NULL);
+    }
+
 }
 
 //多个记录 清零

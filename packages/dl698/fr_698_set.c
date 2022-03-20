@@ -70,10 +70,15 @@ int fr_set_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
         offset = cache->wr;
         
         r = security_mode_word_check(instance, pipeline, 1, oad);
-        if(r < 0){
-            return r;//返回帧？
-        }  
-        
+        //安全模式不匹配 待调整
+#if 0        
+        if (r < 0)
+        {
+            ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+            p[cache->wr++] = -r;//DAR
+            return r;
+        }
+#endif         
         r = fr_698_set(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
 
         cache->wr = offset;
@@ -85,9 +90,14 @@ int fr_set_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
         else
         {
             p[cache->wr++] = 0x00;//DAR
+            fr_698_MeterWr_program_judge(instance, pipeline, mesg); //编程记录
         }
+        
+        
     }
 
+    
+    
     return r;
 }
 

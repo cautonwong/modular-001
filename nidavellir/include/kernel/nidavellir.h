@@ -140,6 +140,14 @@ extern struct pipeline_t pl_tx_dlms;
 #define pid_4852_tx_698    29
 #define pid_lowpower_wakeup 30
 
+enum channel_id_t 
+{
+    chl_ir_698          = 0,
+    chl_RS485_1_698     = 1,
+    chl_PLC_698         = 2,
+    chl_RS485_2_698     = 3,
+};
+
 enum work_type_t 
 {
     PERIOD_SEC = 0,//秒变化

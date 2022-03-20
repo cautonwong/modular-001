@@ -428,8 +428,25 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
         return 0;
     }
 
-    ctx->channel = pipeline->id;
-
+    //ctx->channel = pipeline->id;
+    switch(pipeline->id)
+    {
+        case pid_ir_rx_698: 
+            ctx->channel = chl_ir_698;
+            break;
+        case pid_rx_698: 
+            ctx->channel = chl_RS485_1_698;
+            break;
+        case pid_plc_rx_698: 
+            ctx->channel = chl_PLC_698;
+            break;
+        case pid_4852_rx_698: 
+            ctx->channel = chl_RS485_2_698;
+            break;
+        default:
+            ctx->channel = chl_ir_698;
+    }
+    
     return 1;
 }
 

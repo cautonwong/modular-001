@@ -118,7 +118,7 @@ static int __verification_RN(struct instance_t* instance, struct pipeline_t* pip
         ctx->RN_len = 64;
     memcpy(ctx->RN_data, input.RN_Data, ctx->RN_len);
     if(ctx->service == SECURITY_Response){
-        ___verification_handle(&input, &output, 1);
+        ___verification_handle(&input, &output, 1);//ESAM错误的情况下  不验证MAC 直接返回成功   //ESAM错误的情况，不验证MAC  //MAC验证不过，不能确认，也不需要响应
     }
     return 1;
 }
@@ -200,6 +200,19 @@ int fr_security_request(struct instance_t* instance, struct pipeline_t* pipeline
     
     if(ctx->verification_choice > verification_choice_SID){
         return -1;
+    }
+    
+    ret = fr_698_security_request_check(instance, pipeline); 
+    if(ret <= 0)//待调整  错误异常应答或不应答
+    {
+        if(ret == 0)// 不应答
+        {
+            //return -1;
+        }
+        else // 错误dar
+        {
+            //return ret;//return fr_698_al_security_error(apdu, (uint8_t)(-ret));
+        }  
     }
     
     if ((SECURITY_CHOICE_1_Ciphertext == ctx->security_choice)
@@ -525,7 +538,7 @@ static int __security_mode_word_check(struct instance_t* instance, struct pipeli
     }
 
 #if 1// 待调整
-    if (ctx->channel == pid_ir_rx_698)//红外    待调整
+    if (ctx->channel == chl_ir_698)//红外    待调整
     {
         if (cilent_index == 1)//拒绝终端通过红外访问
         {
@@ -690,11 +703,11 @@ uint8_t fr_698_current_connect_status_get(struct instance_t* instance, struct pi
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     uint8_t rlt = 0, i;
-    uint8_t commchannel[4] = { pid_ir_rx_698, pid_rx_698,  pid_plc_rx_698,  pid_4852_rx_698 };
+    uint8_t commchannel[4] = { chl_ir_698, chl_RS485_1_698,  chl_PLC_698,  chl_RS485_2_698 };
 
     for (i = 0; i < (sizeof(commchannel) / sizeof(commchannel[0])); i++)
     {
-        if (ctrl_block->recently_connect_channel[cilent_index] == commchannel[i]) // 应用连接时 recently_connect_channel置位 待调整
+        if (ctrl_block->current_connect_channel[cilent_index] == commchannel[i]) // 应用连接时 current_connect_channel置位 待调整
         {
             break;
         }
@@ -710,21 +723,29 @@ uint8_t fr_698_current_connect_status_get(struct instance_t* instance, struct pi
 }
 
 
+//安全传输异常错误 组帧
+static int fr_698_al_security_error(uint8_t* apdu, uint8_t dar)
+{
+    *apdu++ = 0x90;
+    *apdu++ = 0x02; /**< 异常错误 */
+    *apdu++ = dar;
+    *apdu++ = 0x00; /**< 数据验证信息 */
 
-#if 0 //--698 安全传输权限判断
-static uint8_t *fr_698_security_request_check(struct instance_t* instance, struct pipeline_t* pipeline, uint16_t *length)
+    return 4;
+}
+
+#if 1 //--698 安全传输权限判断
+//返回 : 1 成功；     0 不需要应答；     ＜ 0 错误dar ；
+static int fr_698_security_request_check(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     uint8_t* apdu_rx = ctx->apdu_d_rx;  // apdu_rx[ctx->apdu_rx_offset++];
 
-    uint8_t   mode, auth, dar, judge = 1;
-    uint8_t  *p = buf;
-    //uint8_t  *tx_apdu = session->res.send_ptr;
-    uint16_t len;
-    //struct esam_security_t security;
-    uint32_t broadcast_sid  = 0;
+    uint8_t  judge = 1;
+    //uint16_t len;
+    //uint32_t broadcast_sid  = 0;
 
     uint32_t oad = 0;
     uint8_t  *tmp;
@@ -732,7 +753,7 @@ static uint8_t *fr_698_security_request_check(struct instance_t* instance, struc
     int ret = 0;
 
     
-    if (CA_TYPE_TER(ctx->CA))//from 终端
+    if (CA_TYPE_TER(ctx->CA))//终端
     {
         cilent_index = 1;
     }
@@ -740,30 +761,6 @@ static uint8_t *fr_698_security_request_check(struct instance_t* instance, struc
     {
         cilent_index = 0;
     }
-
-
-    //session->req.sec_flag.data = 0;
-
-
-    //p += dl698_asn_data_len_decode(p, &security.apdu_len);
-    //security.apdu = p;
-    //p += security.apdu_len;
-    //auth = *p++;
-    //len = p - buf;
-
-    //if (*length < len)
-    //{
-        //*length = 0;
-        //return NULL;
-    //}
-
-    //session->req.sec_flag.bits.security  = 1;
-    //session->req.sec_flag.bits.cipher    = mode;
-    //session->req.sec_flag.bits.auth_type = auth;
-    ctx->security_choice == 1
-
-    ctx->verification_choice == AUTH_SID_MAC)
-   // hfp_write(0x7F0B, (uint8 *)&mode, 0x01, __NULL);
 
 #if 1 
     judge = true;
@@ -786,7 +783,7 @@ static uint8_t *fr_698_security_request_check(struct instance_t* instance, struc
                 || (fr_698_current_connect_status_get(instance, pipeline, 1)== true) 
                 || (ctrl_block->term_auth_timeout != 0))
             {
-                judge = false; // 不需要判断
+                judge = false; 
             }
         }
     }
@@ -799,7 +796,7 @@ static uint8_t *fr_698_security_request_check(struct instance_t* instance, struc
         {
             //待调整 直接报错
             //*length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);
-            //return NULL;
+            return -DAR_UNAUTHORIZED;
         }
 
         if (ctx->security_choice == 0) // 明文    
@@ -808,20 +805,20 @@ static uint8_t *fr_698_security_request_check(struct instance_t* instance, struc
             {
                 if( ctrl_block->esam_auth_enable && (fr_698_current_connect_status_get(instance, pipeline, cilent_index)== false))
                 {
-                    if (ctx->channel == pid_ir_rx_698) //红外情况下，有红外认证，不判断身份认证开启和关闭
+                    if (ctx->channel == chl_ir_698) //红外情况下，有红外认证，不判断身份认证开启和关闭
                     {
                         if(ctrl_block->infrared_auth_timeout == 0)//红外认证失效，明文失败
                         {
                             //待调整 直接报错
                             //*length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明
-                            //return NULL;
+                            return -DAR_UNAUTHORIZED;
                         }
                     }
                     else//其他通道，开启了身份认证，无链接情况下，明文失败
                     {
                         //待调整 直接报错
                         //*length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明
-                        //return NULL;
+                        return -DAR_UNAUTHORIZED;
                     }
                 }
             }
@@ -831,249 +828,127 @@ static uint8_t *fr_698_security_request_check(struct instance_t* instance, struc
                 {
                     //待调整 直接报错
                     //*length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明
-                    //return NULL;
+                    return -DAR_UNAUTHORIZED;
                 }
             }    
-
-
         }
     }
 #endif
 
-    
-    switch (auth)
+    tmp = ctx->security_data;
+    oad =   (tmp[3] << 24) + (tmp[4] << 16) + (tmp[5] << 8) + tmp[6]; 
+        
+    if(oad == 0x40007f00)//  广播校时     // 注意 明文或密文+RN方式拦截再 广播校时操作函数内
     {
-    case 0: /*SID_MAC*/
-        aprint("security auth: SID_MAC\r\n");
-
-        security.sid[0] = 4;
-        hfp_memcopy(&security.sid[1], p, 4);
-        p += 4;
-        len = p[0] + 1;
-
-        if (len > sizeof(security.attach))
+        cipher_sidmac = 0;
+        if ((ctx->security_choice == 1) && (ctx->verification_choice == AUTH_SID_MAC))
         {
-            *length = 0;
-            return NULL;
+            cipher_sidmac=1; // 密文+ SID_MAC
         }
 
-        hfp_memcopy(&security.attach[0], p, len);
-        p += len;
-        len = p[0] + 1;
-
-        if(link->af.bits.type == 0x03)
+        if (SA_TYPE(ctx->SA) == 0x00)  // 单地址 
         {
-            hfp_memcopy((uint8 *)&broadcast_sid, &security.sid[1], 0x04);
-            hfp_swap_buffer((uint8 *)&broadcast_sid, 0x04);
-#if 0 // 广播不限制sid
-            if(broadcast_sid != 0x8016480A && broadcast_sid != 0x801E400A)
+            // 广播校时 安全传输时 应判断应用连接状态,且为密文+SID_MAC, 其他情况都返回拒绝。
+            if ((fr_698_current_connect_status_get(instance, pipeline, cilent_index)== false) || (cipher_sidmac == 0 ))
             {
-                *length = 0;
-                return NULL;
-            }
-#endif            
-        }
-        
-        if (len > sizeof(security.mac))
-        {
-            *length = 0;
-            return NULL;
-        }
-
-        hfp_memcopy(&security.mac[0], p, len);
-        dar = dl698_api_security_decrypt(&security);
-        break;
-
-    case 1: /*RN*/
-        if((session->req.cmd == DL698_CMD_SecurityResponse) && (*security.apdu == DL698_CMD_ReportResponse))
-        {
-            security.rn[0] = 12;
-            hfp_memcopy(&security.rn[1], report_random_numeber, 12);
-            hfp_memcopy(&security.mac[0], p+1, 5);
-            dar = esam_report_response_mac(&security);
-            if(hfp_read(0x6F55, (uint8 *)&auth, 0x01, __NULL) && auth)//ESAM错误
-            {
-                dar = DAR_SUCCESS;//ESAM错误的情况，不验证MAC
-
-            }
-            else
-            {
-                if (dar != DAR_SUCCESS)//MAC验证不过，不能确认，也不需要响应
-                {
-                    *length = 0;
-                    return NULL;
-                }
+                //待调整
+                //*length = dl698_al_security_error(tx_apdu, DAR_RW_REJECT);
+                return -DAR_RW_REJECT;
             }
         }
-        else
+        else if (SA_TYPE(ctx->SA) == 0x03) //广播地址
         {
-            aprint("security auth: RN\r\n");
-            
-            len = p[0] + 1;
-
-            if (len > sizeof(session->rn[cilent_index]))
+            //广播校时 安全传输时,应为密文+SID_MAC,其他安全方式不处理，不应答
+            if (cipher_sidmac == 0 )
             {
-                *length = 0;
-                return NULL;
+                //待调整
+                //*length = 0;
+                return 0;
             }
-
-            hfp_memcopy(&session->rn[cilent_index][0], p, len);
-        }       
-        *length = security.apdu_len;
-        return security.apdu;
-
-    case 2: /*RN_MAC*/
-        aprint("security auth: RN_MAC\r\n");
-
-        len = p[0] + 1;
-
-        if (len > sizeof(security.rn))
-        {
-            *length = 0;
-            return NULL;
         }
-
-        hfp_memcopy(&security.rn[0], p, len);
-        hfp_memcopy(&session->rn[cilent_index][0], p, len);
-        p += len;
-        len = p[0] + 1;
-
-        if (len > sizeof(security.mac))
+        else if (SA_TYPE(ctx->SA) == 0x01) //通配地址
         {
-            *length = 0;
-            return NULL;
+            // 不支持 返回否定应答
+            //*length = dl698_al_security_error(tx_apdu, DAR_RW_REJECT);
+            return -DAR_RW_REJECT;
         }
-
-        hfp_memcopy(&security.mac[0], p, len);
-        p += len;
-        //if(esam_auth_enable)//明文+rn_mac,时开启身份认证，明文+rn是在关闭身份认证时候使用
-        //{
-        //    mode = DL698_AUTH_PLAIN_MAC | 0x80;
-        //}
-        //else
-        //{
-        //    mode = DL698_AUTH_PLAIN_MAC;
-        //}
-        //dar = dl698_api_security_encrypt(cilent_index, mode, &security);
-        dar = dl698_api_security_encrypt(cilent_index, DL698_AUTH_PLAIN_MAC, &security);
-        break;
-
-    case 3: /*SID*/
-        aprint("security auth: SID\r\n");
-
-        security.sid[0] = 4;
-        hfp_memcopy(&security.sid[1], p, 4);
-
-        p += 4;
-        len = p[0] + 1;
-
-        if(link->af.bits.type == 0x03)
+        else // 组地址
         {
-            hfp_memcopy((uint8 *)&broadcast_sid, &security.sid[1], 0x04);
-            hfp_swap_buffer((uint8 *)&broadcast_sid, 0x04);
-#if 0 // 广播不限制sid            
-            if(broadcast_sid != 0x8016480A && broadcast_sid != 0x801E400A)
-            {
-                *length = 0;
-                return NULL;
-            }
-#endif            
+            // 不支持 不应答
+            //*length = 0;
+            return 0;
         }
-        
-        if (len > sizeof(security.attach))
+    }
+    return 1;
+}
+#endif
+
+
+
+#if 1 // 挪地儿  待调整
+//上电初始化
+int fr698_inital(struct instance_t* instance, struct pipeline_t* pipeline)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    ctrl_block->current_connect_channel[0] = 0;
+    ctrl_block->current_connect_channel[1] = 0;
+
+}
+#endif
+
+
+uint32_t fr_698_current_esam_timeout_get(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cilent_index)
+{
+    uint8_t i = 0;
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    uint8_t commchannel[4] = { chl_ir_698, chl_RS485_1_698,  chl_PLC_698,  chl_RS485_2_698 };
+    
+    for (i = 0; i < (sizeof(commchannel) / sizeof(commchannel[0])); i++)
+    {
+        if (ctrl_block->current_connect_channel[cilent_index] == commchannel[i]) // 应用连接时 current_connect_channel置位 待调整
         {
-            *length = 0;
-            return NULL;
+            break;
         }
-
-        hfp_memcopy(&security.attach[0], p, len);
-        dar = dl698_api_security_decrypt(&security);
-        break;
-
-    default:
-        aprint("security auth: ERROR\r\n");
-        *length = 0;
-        return NULL;
     }
 
-    if (security.apdu_len == 0)
+    if(i >= 4)      
     {
-        dar = DAR_SECURITY_AUTH_FAILED;
+        return 0;
     }
     
-    if (dar != DAR_SUCCESS)
+    return ctrl_block->esam_connect_timeout[cilent_index];
+}
+
+uint8_t fr_698_current_channel_num_get(struct instance_t* instance, struct pipeline_t* pipeline)
+{
+    uint8_t i = 0;
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    uint8_t cilent_index = 0;
+    uint8_t commchannel[4] = { chl_ir_698, chl_RS485_1_698,  chl_PLC_698,  chl_RS485_2_698 };
+   
+    
+    if (CA_TYPE_TER(ctx->CA))//终端
     {
-        *length = dl698_al_security_error(tx_apdu, dar);
-        return NULL;
+        cilent_index = 1;
     }
     else
     {
-
-        tmp = security.apdu;
-        oad =   (tmp[3] << 24) + (tmp[4] << 16) + (tmp[5] << 8) + tmp[6]; 
-#if 0        
-        /* 针对明文RN_MAC,明文sid_mac方式广播校时，未建立应用连接，应返回失败 */
-        
-        if((link->af.bits.type != 0x03) &&( link->af.bits.type != 0x02))
-        {
-            oad =   (tmp[3] << 24) + (tmp[4] << 16) + (tmp[5] << 8) + tmp[6]; 
-            if(oad == 0x40007f00)
-            {
-               if (dl698_current_connect_status_get(cilent_index)== false)
-               {
-                    aprint("chiper security is disconnect\r\n");
-                    *length = dl698_al_security_error(tx_apdu, DAR_ESAM_CHECK_FAILED);
-                    return NULL;
-               } 
-            }
-        }
-#else
-        
-        if(oad == 0x40007f00)//  广播校时     // 注意 明文或密文+RN方式拦截再 广播校时操作函数内
-        {
-            cipher_sidmac = 0;
-            if ((session->req.sec_flag.bits.cipher == 1) && (session->req.sec_flag.bits.auth_type == 0))
-            {
-                cipher_sidmac=1; // 密文+ SID_MAC
-            }
-
-            if (link->af.bits.type == 0x00)  // 单地址 
-            {
-                // 广播校时 安全传输时 应判断应用连接状态,且为密文+SID_MAC, 其他情况都返回拒绝。
-                if ((dl698_current_connect_status_get(cilent_index)== false) || (cipher_sidmac == 0 ))
-                {
-                    aprint("chiper security is disconnect\r\n");
-                    *length = dl698_al_security_error(tx_apdu, DAR_RW_REJECT);
-                    return NULL;
-                }
-            }
-            else if (link->af.bits.type == 0x03) //广播地址
-            {
-                //广播校时 安全传输时,应为密文+SID_MAC,其他安全方式不处理，不应答
-                if (cipher_sidmac == 0 )
-                {
-                    *length = 0;
-                    return NULL;
-                }
-            }
-            else if (link->af.bits.type == 0x01) //通配地址
-            {
-                // 不支持 返回否定应答
-                aprint("chiper security is disconnect\r\n");
-                *length = dl698_al_security_error(tx_apdu, DAR_RW_REJECT);
-                return NULL;
-            }
-            else // 组地址
-            {
-                // 不支持 不应答
-                *length = 0;
-                return NULL;
-            }
-        }
-#endif
-        
+        cilent_index = 0;
     }
-    *length = security.apdu_len;
-    return security.apdu;
+    
+    for (i = 0; i < (sizeof(commchannel) / sizeof(commchannel[0])); i++)
+    {
+        if (ctrl_block->current_connect_channel[cilent_index] == commchannel[i]) // 应用连接时 current_connect_channel置位 待调整
+        {
+            break;
+        }
+    }
+
+    return i;
 }
-#endif

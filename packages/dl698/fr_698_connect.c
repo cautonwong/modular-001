@@ -131,6 +131,7 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     uint8_t len_len = 0;
     uint16_t data_len = 0;
     uint16_t offset = 0;
+    uint8_t cilent_index = 0;
     struct connect_request_t connect = {0x1500, 
     0xFF,0xFF,0xFF,0xff,0xc0,0x00,0x00,0x00,
     0xFF,0xFE,0xC4,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -140,6 +141,16 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     0xd007,
     0x201c0000};
 
+    
+    if (CA_TYPE_TER(ctx->CA))//from 终端
+    {
+        cilent_index = 1;
+    }
+    else
+    {
+        cilent_index = 0;
+    }
+    
     memcpy(buf, apdu_rx + ctx->apdu_rx_offset, 38);
     ctx->apdu_rx_offset += 38;
     
@@ -188,6 +199,11 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
         read_esam_info(instance, buf,0X05);
         mem_swap_cpy((uint8_t*)&mbase_cb->authen_tmr, (uint8_t*)&buf[0], 4);
         mbase_cb->authen_tmr = mbase_cb->authen_tmr * 60;
+        
+        mbase_cb->current_connect_channel[cilent_index] = ctx->channel;
+        mbase_cb->connect_status[ctx->channel][cilent_index] = true;
+        
+        MeterWr_obj_list_clear(instance, pipeline, mesg);
         return DAR_SUCCESS;
     }
     else
@@ -196,6 +212,8 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
         cache->wr++;
         *(p_apdu+cache->wr) = 0;//认证附加信息
         cache->wr++;
+
+        mbase_cb->connect_status[ctx->channel][cilent_index] = false;
         return DAR_ESAM_CHECK_FAILED;
     }
 #if 0    
@@ -265,10 +283,33 @@ int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipelin
 {
     //uint8_t result = DAR_SUCCESS;
     struct mbase_control_block_t* mbase_cb;
+    uint8_t cilent_index = 0;
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+   
+    
+    if (CA_TYPE_TER(ctx->CA))//终端
+    {
+        cilent_index = 1;
+    }
+    else
+    {
+        cilent_index = 0;
+    }
+    
     
     mbase_cb->authen_tmr = 0;
     mbase_cb->irauthen_tmr = 0;
+    
+    
+    mbase_cb->esam_connect_timeout[cilent_index] = 0;
+    mbase_cb->connect_status[ctx->channel][cilent_index] = false;
+    
+    if ((mbase_cb->connect_status[ctx->channel][0] == false)&& (mbase_cb->connect_status[ctx->channel][1] == false))
+    {
+        MeterWr_obj_list_clear(instance, pipeline, mesg);
+    }
     
     //复位ESAM
     return 1;
