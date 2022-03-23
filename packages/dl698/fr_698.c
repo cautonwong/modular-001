@@ -374,7 +374,7 @@ int fr_addr_handle(struct instance_t* instance, struct pipeline_t* pipeline, str
     if(NULL == mbase_cb){
         return 0;
     }
-#if 0 
+#if 1 
     if(0 == get_addr_type(ctx->SA)){
         if (0 != mem_compare(ctx->addr, mbase_cb->tsa, SA_LEN(ctx->SA) + 1)){
             if(0 != mem_compare(ctx->addr, aa_addrbuf, 6)){
