@@ -324,7 +324,7 @@ void dev_init(uint8_t power_mode)
 {
     mcu_main_power_on_config(power_mode);
     
-    ndv_timer_init();
+    //ndv_timer_init();
 	
     IOStateCheckInit();
     

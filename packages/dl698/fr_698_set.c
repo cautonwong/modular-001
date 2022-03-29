@@ -3,7 +3,15 @@
 
 #define SetRequestNormal            1
 #define SetRequestNormalList        2
-#define SetThenGetRequestNormalList 3
+#define SetActionThenGetRequestNormalList 3
+
+#define ActionRequestNormal             1
+#define ActionRequestNormalList         2
+#define ActionThenGetRequestNormalList  3
+
+
+extern int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cmd, uint32_t oad);
+
 
 int get_SET_and_ACTION_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -38,7 +46,7 @@ int get_SET_and_ACTION_Request_len(struct instance_t* instance, struct pipeline_
     return len;
 }
 
-int fr_set_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+static int __fr_handle_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -47,10 +55,10 @@ int fr_set_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
     uint32_t oad = mesg->id;
     uint16_t len = 0;
     uint16_t offset = 0;
+    uint8_t req_type = 0;
     int r = 0;
 
-    if (((mesg->ctrl & 0x7f) == 0x09) ||
-        (mesg->ctrl & 0x7f) == 0x09)
+    if ((mesg->ctrl & 0x7f) == 0x09)
     {
         uint8_t type = apdu_rx[ctx->apdu_rx_offset++];
         if (type == 0x09)//octet-string
@@ -68,8 +76,12 @@ int fr_set_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
             //return -1;
         }
         offset = cache->wr;
+        if(ACTION_Request == ctx->service)
+            req_type = 2;
+        if(SET_Request == ctx->service)
+            req_type = 1;
         
-        r = security_mode_word_check(instance, pipeline, 1, oad);
+        r = security_mode_word_check(instance, pipeline, req_type, oad);
         //安全模式不匹配 待调整
 #if 0        
         if (r < 0)
@@ -79,68 +91,99 @@ int fr_set_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
             return r;
         }
 #endif         
-        r = fr_698_set(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
+        if(ACTION_Request == ctx->service){
+            r = fr_698_action(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
+        }
+        
+        if(SET_Request == ctx->service){
+            r = fr_698_set(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
+        }
 
         cache->wr = offset;
         if (r < 0)
         {
-            p[cache->wr++] = -r;
+            p[cache->wr++] = -r;//DAR
+            p[cache->wr++] = 0;
             r = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
         }
         else
         {
-            p[cache->wr++] = 0x00;//DAR
+            if(cache->wr > offset)
+            {
+                p[offset++] = 0;
+                p[offset++] = 1;
+            }
+            else
+            {
+                p[cache->wr++] = 0;
+                p[cache->wr++] = 0;
+            }
             fr_698_MeterWr_program_judge(instance, pipeline, mesg); //编程记录
         }
-        
-        
     }
 
-    
-    
     return r;
 }
 
-int fr_handle_set_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int fr_handle_set_action_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
-    uint16_t then_get_delay = 0; //读取延时
+
+    uint8_t then_get_delay = 0; 
     uint32_t get_oad = 0;
-    uint16_t r = 0;
-
-    uint8_t password[16];
-
+    uint16_t offset = 0;
     uint8_t oad_n = mesg->oad_n;
+    int r = 0;
 
     while (oad_n-- > 0)
     {
+        //apdu分帧处理
+       // if (fifoBuf_getFree(cache) < size(oad))
+        {
+            //omd
             mesg->id = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
             memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, 4);
             cache->wr += 4;
             ctx->apdu_rx_offset += 4;
 
-            r = fr_set_one_object(instance, pipeline, mesg);
+            r = __fr_handle_one_object(instance, pipeline, mesg);
             ctx->apdu_rx_offset += r;
             
-            if(SetThenGetRequestNormalList == ctx->choice)
+            if(SetActionThenGetRequestNormalList == ctx->choice)
             {
                 get_oad = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
                 memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, 4);
                 cache->wr += 4;
                 ctx->apdu_rx_offset += 4;
             
-                then_get_delay = buf_to_uint16_msb(apdu_rx+ctx->apdu_rx_offset);
-                ctx->apdu_rx_offset += 2;
+                then_get_delay = apdu_rx[ctx->apdu_rx_offset++];
                 //延时                
                 
-                if (fr_698_get(instance, get_oad, p + cache->wr, sizeof(password), NULL) < 0)
+                r = security_mode_word_check(instance, pipeline, 0, get_oad);
+                if(r < 0){
+                    return r;
+                }  
+                
+                offset = cache->wr;
+                p[cache->wr++] = 0x01;
+                
+                r = fr_698_get(instance, get_oad, p+cache->wr, 0, NULL);
+                if (r < 0)
                 {
-                    return DAR_OTHERS_ERROR;
+                    p[offset] = 0x00;//DAR
+                    p[cache->wr++] = -r;
+                    //r = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
                 }
+                else
+                {
+                    cache->wr += r;//DAR
+                }
+        
             }
+        }
     }
     return 1;
 }

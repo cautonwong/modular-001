@@ -5,8 +5,7 @@ extern int fr_security_request(struct instance_t* instance, struct pipeline_t* p
 extern int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-extern int fr_handle_set_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-extern int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int fr_handle_set_action_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
 extern int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
@@ -14,6 +13,7 @@ extern int get_CONNECT_Request_len(struct instance_t* instance, struct pipeline_
 extern int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int get_SET_and_ACTION_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
+extern int fr_follow_report_optional(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
 uint16_t get_crc16(uint16_t cs)
 {
@@ -676,10 +676,8 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
             err_no = fr_handle_get_request(instance, pipeline, mesg);
             break;
         case SET_Request:
-            err_no = fr_handle_set_request(instance, pipeline, mesg);
-            break;
         case ACTION_Request:
-            err_no = fr_handle_action_request(instance, pipeline, mesg);
+            err_no = fr_handle_set_action_request(instance, pipeline, mesg);
             break;
         case REPORT_Response://8上报应答 client
             break;
@@ -784,10 +782,8 @@ int fr_gatekeeper_client(struct instance_t* instance, struct pipeline_t* pipelin
             fr_handle_get_request(instance, pipeline, mesg);
             break;
         case 0x86:
-            fr_handle_set_request(instance, pipeline, mesg);
-            break;
         case 0x87:
-            fr_handle_action_request(instance, pipeline, mesg);
+            fr_handle_set_action_request(instance, pipeline, mesg);
             break;
         case 0x02://connect
         case 0x03://release

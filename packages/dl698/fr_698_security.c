@@ -7,6 +7,7 @@ static int __verification_RN(struct instance_t* instance, struct pipeline_t* pip
 static int __verification_RN_MAC(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 static int __verification_SID(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
+static int fr_698_security_request_check(struct instance_t* instance, struct pipeline_t* pipeline);
 
 #define choice_FUNC                                        \
     DEF_X(verification_choice_SID_MAC,  __verification_SID_MAC)\
@@ -231,7 +232,6 @@ static int ___get_encode_and_mac(struct instance_t* instance, struct pipeline_t*
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
-    int ret = 0;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
     uint8_t data_mac[16] = {0};
@@ -254,7 +254,7 @@ static int ___get_encode_and_mac(struct instance_t* instance, struct pipeline_t*
     output.MAC_data = data_mac;
     output.MAC_len  = 16;
     
-    ret = fr_698_handle_esam(&input, &output);
+    fr_698_handle_esam(&input, &output);
     if(output.esam_err_no == 0x9000){
         if(output.MAC_len == 4){
             if(ctx->security_data_len < output.data_len)
@@ -894,7 +894,7 @@ int fr698_inital(struct instance_t* instance, struct pipeline_t* pipeline)
 
     ctrl_block->current_connect_channel[0] = 0;
     ctrl_block->current_connect_channel[1] = 0;
-
+    return 1;
 }
 #endif
 

@@ -1,12 +1,16 @@
 #include "nidavellir.h"
 #include "fr_698.h"
 
+#define SetRequestNormal            1
+#define SetRequestNormalList        2
+#define SetActionThenGetRequestNormalList 3
+
 #define ActionRequestNormal             1
 #define ActionRequestNormalList         2
 #define ActionThenGetRequestNormalList  3
 
 
-int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+static int __fr_handle_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -15,10 +19,10 @@ int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipelin
     uint32_t oad = mesg->id;
     uint16_t len = 0;
     uint16_t offset = 0;
+    uint8_t req_type = 0;
     int r = 0;
 
-    if (((mesg->ctrl & 0x7f) == 0x09) ||
-        (mesg->ctrl & 0x7f) == 0x09)
+    if ((mesg->ctrl & 0x7f) == 0x09)
     {
         uint8_t type = apdu_rx[ctx->apdu_rx_offset++];
         if (type == 0x09)//octet-string
@@ -36,15 +40,30 @@ int fr_action_one_object(struct instance_t* instance, struct pipeline_t* pipelin
             //return -1;
         }
         offset = cache->wr;
-        //p[cache->wr++] = 0x01;
+        if(ACTION_Request == ctx->service)
+            req_type = 2;
+        if(SET_Request == ctx->service)
+            req_type = 1;
         
-        
-        r = security_mode_word_check(instance, pipeline, 2, oad);
-        if(r < 0){
+        r = security_mode_word_check(instance, pipeline, req_type, oad);
+        //安全模式不匹配 待调整
+#if 0        
+        if (r < 0)
+        {
+            ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+            p[cache->wr++] = -r;//DAR
             return r;
         }
+#endif         
+        if(ACTION_Request == ctx->service){
+            r = fr_698_action(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
+        }
+        
+        if(SET_Request == ctx->service){
+            r = fr_698_set(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
+        }
 
-        r = fr_698_action(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
+        cache->wr = offset;
         if (r < 0)
         {
             p[cache->wr++] = -r;//DAR
@@ -79,13 +98,7 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
 
     uint8_t then_get_delay = 0; 
     uint32_t get_oad = 0;
-    uint16_t len = 0;
-    int16_t data_len = 0;
-    uint16_t dar_offset = 0;
     uint16_t offset = 0;
-    uint8_t dar = DAR_SUCCESS;
-
-    uint8_t password[16];
     uint8_t oad_n = mesg->oad_n;
     int r = 0;
 
@@ -99,14 +112,12 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
             memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, 4);
             cache->wr += 4;
             ctx->apdu_rx_offset += 4;
+
+            r = __fr_handle_one_object(instance, pipeline, mesg);
+            ctx->apdu_rx_offset += r;
             
-            data_len = fr_action_one_object(instance, pipeline, mesg);
-            ctx->apdu_rx_offset += data_len;
-            
-            if(ActionThenGetRequestNormalList == ctx->choice)
+            if(SetActionThenGetRequestNormalList == ctx->choice)
             {
-                //len 数据需要消耗掉
-                //oad
                 get_oad = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
                 memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, 4);
                 cache->wr += 4;
@@ -123,7 +134,7 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
                 offset = cache->wr;
                 p[cache->wr++] = 0x01;
                 
-                r = fr_698_get(instance, get_oad, p+cache->wr, sizeof(password), NULL);
+                r = fr_698_get(instance, get_oad, p+cache->wr, 0, NULL);
                 if (r < 0)
                 {
                     p[offset] = 0x00;//DAR

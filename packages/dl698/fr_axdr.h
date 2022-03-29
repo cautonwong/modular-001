@@ -2,55 +2,56 @@
 #define __FR_AXDR_H__
 
 
-enum data_type_choice_e
+
+typedef enum 
 {
-    TYPE_null = 0,
-    TYPE_array = 1,
-    TYPE_structure = 2,
-    TYPE_bool = 3,
-    TYPE_bit_string = 4,
-    TYPE_double_long = 5,
-    TYPE_double_long_unsigned = 6,
+    TYPE_null                   = 0,
+    TYPE_array                  = 1,
+    TYPE_structure              = 2,
+    TYPE_bool                   = 3,
+    TYPE_bit_string             = 4,
+    TYPE_double_long            = 5,
+    TYPE_double_long_unsigned   = 6,
     //7--8保留
-    TYPE_octet_string = 9,
-    TYPE_visible_string = 10,
+    TYPE_octet_string           = 9,
+    TYPE_visible_string         = 10,
     //11保留
-    TYPE_UTF8_string = 12,
+    TYPE_UTF8_string            = 12,
     //13--14保留
-    TYPE_integer = 15,
-    TYPE_long = 16,
-    TYPE_unsigned = 17,
-    TYPE_long_unsigned = 18,
+    TYPE_integer                = 15,
+    TYPE_long                   = 16,
+    TYPE_unsigned               = 17,
+    TYPE_long_unsigned          = 18,
     //19保留
-    TYPE_long64 = 20,
-    TYPE_long64_unsigned = 21,
-    TYPE_enum = 22,
-    TYPE_float32 = 23,
-    TYPE_float64 = 24,
-    TYPE_date_time = 25,
-    TYPE_date = 26,
-    TYPE_time = 27,
-    TYPE_date_time_s = 28,
+    TYPE_long64                 = 20,
+    TYPE_long64_unsigned        = 21,
+    TYPE_enum                   = 22,
+    TYPE_float32                = 23,
+    TYPE_float64                = 24,
+    TYPE_date_time              = 25,
+    TYPE_date                   = 26,
+    TYPE_time                   = 27,
+    TYPE_date_time_s            = 28,
     //29--79保留
 
-    TYPE_OI = 80,
-    TYPE_OAD = 81,
-    TYPE_ROAD = 82,
-    TYPE_OMD = 83,
-    TYPE_TI = 84,
-    TYPE_TSA = 85,
-    TYPE_MAC = 86,
-    TYPE_RN = 87,
-    TYPE_Region = 88,
-    TYPE_Scaler_Unit = 89,
-    TYPE_RSD = 90,
-    TYPE_CSD = 91,
-    TYPE_MS = 92,
-    TYPE_SID = 93,
-    TYPE_SID_MAC = 94,
-    TYPE_COMDCB = 95,
-    TYPE_RCSD = 96,
-    TYPE_VQDS = 97,
+    TYPE_OI             = 80,
+    TYPE_OAD            = 81,
+    TYPE_ROAD           = 82,
+    TYPE_OMD            = 83,
+    TYPE_TI             = 84,
+    TYPE_TSA            = 85,
+    TYPE_MAC            = 86,
+    TYPE_RN             = 87,
+    TYPE_Region         = 88,
+    TYPE_Scaler_Unit    = 89,
+    TYPE_RSD            = 90,
+    TYPE_CSD            = 91,
+    TYPE_MS             = 92,
+    TYPE_SID            = 93,
+    TYPE_SID_MAC        = 94,
+    TYPE_COMDCB         = 95,
+    TYPE_RCSD           = 96,
+    TYPE_VQDS           = 97,
     //98--255保留
 
     //以下类型协议中无定义，具体作用?
@@ -60,13 +61,17 @@ enum data_type_choice_e
 	TYPE_USER_SPECIAL_PROCESS	  = 244,
 	TYPE_USER_PUSH_PROCESS         = 245,  /*事件上报标志 特殊标志*/
     TYPE_USER_ERROR                = 255,
-};
+}tlv_type_e;
 
 uint8_t axdr_decode(uint8_t type, const uint8_t *buf, uint16_t *len);
 uint8_t axdr_data_len_decode(uint8_t type, uint8_t* buf, uint16_t* len);
 
 uint8_t axdr_len_encode(uint8_t* buf, uint16_t len);
 uint16_t axdr_get_len(const uint8_t *data);
+
+uint16_t get_octet_string(struct context_698_t* ctx, uint16_t *offset);
+
+
 
 
 
