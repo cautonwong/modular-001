@@ -87,10 +87,12 @@ uint16_t axdr_get_len(const uint8_t *data)
         break;
     case TYPE_array: 
     case TYPE_structure:
-        num = *data++;
+        data_len++;
+        num = data[data_len];
+        data_len++;
         while (num--)
         {
-            data_len += axdr_get_len(data);
+            data_len += axdr_get_len(data+data_len);
             data = data + data_len;
         }
         return data_len;

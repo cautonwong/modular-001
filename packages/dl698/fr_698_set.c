@@ -91,14 +91,18 @@ static int __fr_handle_one_object(struct instance_t* instance, struct pipeline_t
             return r;
         }
 #endif         
-        if(ACTION_Request == ctx->service){
-            r = fr_698_action(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
+        if(2 != ctx->timeTag_valid){
+            if(ACTION_Request == ctx->service){
+                r = fr_698_action(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
+            }
+            
+            if(SET_Request == ctx->service){
+                r = fr_698_set(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
+            }
+        }else{
+            r = -DAR_TIME_TAG_INVALID;
         }
         
-        if(SET_Request == ctx->service){
-            r = fr_698_set(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
-        }
-
         cache->wr = offset;
         if (r < 0)
         {

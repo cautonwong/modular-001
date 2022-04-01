@@ -344,12 +344,13 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
             time_tag_sec = dl_datetime_to_second(&ctx->timeTag[1], 0);
             time_sec     = rtc_mktime(&instance->time);
             
-            if ((time_tag_sec + interval_sec) < time_sec){
-                ctx->timeTag_valid = 1;//时间标签,有效
+            if((time_tag_sec >= time_sec) && 
+               ((time_tag_sec + interval_sec) <= time_sec)){
+                ctx->timeTag_valid = 1;
             }
         }
     }else{
-        ctx->timeTag_valid = 0;//无时间标签
+        ctx->timeTag_valid = 0;
     }
     return 1;
 }
@@ -467,7 +468,7 @@ int fr_timeTag_optional(struct instance_t* instance, struct pipeline_t* pipeline
         p[cache->wr++] = 0x00;
     }
     
-    if (ctx->timeTag_valid == 1){
+    if (ctx->timeTag_valid >= 1){
         memcpy(p+cache->wr, ctx->timeTag, 11);
         cache->wr += 11;
     }else{
