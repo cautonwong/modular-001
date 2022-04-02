@@ -90,9 +90,10 @@ uint16_t axdr_get_len(const uint8_t *data)
         data_len++;
         num = data[data_len];
         data_len++;
+        data = data + data_len;
         while (num--)
         {
-            data_len += axdr_get_len(data+data_len);
+            data_len += axdr_get_len(data);
             data = data + data_len;
         }
         return data_len;
@@ -632,14 +633,14 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
+    uint8_t* p = (apdu_rx + ctx->apdu_rx_offset); //当临时缓存
 
     uint16_t value;
     uint32_t rsd_oad;
     uint16_t oi = get_OAD_OI(oad);
 
     rsd_oad = buf_to_uint32_msb(p);
-    p += 4;
+    ctx->apdu_rx_offset += 4;
 
     switch (rsd_oad)
     {

@@ -82,7 +82,7 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
         if(r < 0){
             return r;
         }  
-        //DAR_TIME_TAG_INVALID
+
         if(2 != ctx->timeTag_valid){
             r = fr_698_get(instance, oad, p + cache->wr, len, (void*)ctx);
         }else{

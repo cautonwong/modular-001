@@ -76,21 +76,17 @@ static int __fr_handle_one_object(struct instance_t* instance, struct pipeline_t
             //return -1;
         }
         offset = cache->wr;
+
         if(ACTION_Request == ctx->service)
             req_type = 2;
         if(SET_Request == ctx->service)
             req_type = 1;
         
         r = security_mode_word_check(instance, pipeline, req_type, oad);
-        //安全模式不匹配 待调整
-#if 0        
-        if (r < 0)
-        {
-            ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
-            p[cache->wr++] = -r;//DAR
+        if(r < 0){
             return r;
-        }
-#endif         
+        }  
+        
         if(2 != ctx->timeTag_valid){
             if(ACTION_Request == ctx->service){
                 r = fr_698_action(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
@@ -107,7 +103,9 @@ static int __fr_handle_one_object(struct instance_t* instance, struct pipeline_t
         if (r < 0)
         {
             p[cache->wr++] = -r;//DAR
-            p[cache->wr++] = 0;
+            if(ACTION_Request == ctx->service){
+                p[cache->wr++] = 0;
+            }
             r = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
         }
         else
@@ -115,12 +113,16 @@ static int __fr_handle_one_object(struct instance_t* instance, struct pipeline_t
             if(cache->wr > offset)
             {
                 p[offset++] = 0;
-                p[offset++] = 1;
+                if(ACTION_Request == ctx->service){
+                    p[offset++] = 1;
+                }
             }
             else
             {
                 p[cache->wr++] = 0;
-                p[cache->wr++] = 0;
+                if(ACTION_Request == ctx->service){
+                    p[cache->wr++] = 0;
+                }
             }
             fr_698_MeterWr_program_judge(instance, pipeline, mesg); //编程记录
         }
