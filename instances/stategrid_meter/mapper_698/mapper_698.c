@@ -152,7 +152,7 @@ extern int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* bu
 extern int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int ACTION_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf);
-extern int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf);
+extern int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *pctx);
 extern int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx);
 
 extern int GET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf);
@@ -1287,7 +1287,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
         case 0x5://冻结
             return ACTION_5_Frozen(instance, id, buf);
         case 0x8://控制类
-            return ACTION_8_Parameter(instance, id, buf);
+            return ACTION_8_Parameter(instance, id, buf, ctx);
         case 0xf://其他
             return ACTION_F_Other(instance, id, buf, buf_size, ctx);
         default:

@@ -1,8 +1,10 @@
 #include "nidavellir.h"
 #include "fr_698.h"
 
-int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
-{    
+int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *pctx)
+{   
+    struct context_698_t* ctx = (struct context_698_t*)pctx;
+    
     struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
     uint8_t method,relayon_type=0,password[8]={0};
@@ -59,6 +61,10 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     break;
                 case 0x82://合闸
                 case 0x83://明文合闸
+                    if(1 != ctx->timeTag_valid){
+                        return -DAR_TIME_TAG_INVALID;
+                    }
+                  
                     p = p + 5;
                     mem_swap_cpy((uint8_t*)&OI, p, 4);
                     p = p + 5;
@@ -85,6 +91,9 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
             switch(method)
             {
                 case 0x7F://投入保电
+                    if(1 != ctx->timeTag_valid){
+                        return -DAR_TIME_TAG_INVALID;
+                    }
                     mbase_cb->sta |= F_RemoteRelayOn;
                     break;
                 case 0x80://解除保电
