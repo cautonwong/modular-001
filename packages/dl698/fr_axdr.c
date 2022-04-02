@@ -438,7 +438,7 @@ int decode_rsd_event_selector_1(struct instance_t* instance, struct pipeline_t* 
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
+    uint8_t* p = instance->apdu_cache; //当临时缓存
     uint32_t rsd_oad;
     
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -519,7 +519,7 @@ int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pi
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
+    uint8_t* p = p = instance->apdu_cache; //当临时缓存
 
     uint32_t rcsd, range_sec = 0,index;
     uint16_t frz_oi = (uint16_t)((oad&0xFFFF0000) >> 16);
@@ -584,7 +584,7 @@ int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t*
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
+    uint8_t* p = instance->apdu_cache; //当临时缓存
     uint32_t rsd_oad;
 
     memcpy(p, apdu_rx + ctx->apdu_rx_offset, 4);
@@ -781,7 +781,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
+    uint8_t* p = instance->apdu_cache; //当临时缓存
 
     uint16_t value;
     uint32_t rsd_oad;
@@ -913,7 +913,7 @@ int decode_rsd_selector_9(struct instance_t* instance, struct pipeline_t* pipeli
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
+    uint8_t* p = instance->apdu_cache; //当临时缓存
 
     *p = apdu_rx[ctx->apdu_rx_offset++];
     rsd_info->last_no = *p;
@@ -1052,7 +1052,7 @@ int rsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = instance->apdu_cache;; //当临时缓存
+    uint8_t* p = instance->apdu_cache; //当临时缓存
     int ret;
     uint8_t dar;
     uint8_t oad_type = (uint8_t)(oad>>28);
