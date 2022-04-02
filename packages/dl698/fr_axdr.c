@@ -630,14 +630,14 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
-
+    uint8_t* p = instance->apdu_cache;//当临时缓存
     uint16_t value;
     uint32_t rsd_oad;
     uint16_t oi = get_OAD_OI(oad);
 
-    rsd_oad = buf_to_uint32_msb(p);
-    p += 4;
+
+    rsd_oad = buf_to_uint32_msb(&apdu_rx[ctx->apdu_rx_offset]);
+    ctx->apdu_rx_offset += 4;
 
     switch (rsd_oad)
     {
@@ -671,7 +671,6 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
 
         //fifoBuf_getDataPeek(fifo, p, 4);
         memcpy(p, apdu_rx + ctx->apdu_rx_offset, 4);
-        ctx->apdu_rx_offset += 4;
         
         if (*p != TYPE_null)
         {
@@ -713,13 +712,13 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
             }
 
             //fifoBuf_getData(fifo, p, 3); // 剪切3个字节
-            memcpy(p, apdu_rx + ctx->apdu_rx_offset, 3);
+            //memcpy(p, apdu_rx + ctx->apdu_rx_offset, 3);
             ctx->apdu_rx_offset += 3;
         }
 
         //fifoBuf_getData(fifo, p, 1);// 剪切1个字节
-        *p = apdu_rx[ctx->apdu_rx_offset++];
- 
+        //*p = apdu_rx[ctx->apdu_rx_offset++];
+        ctx->apdu_rx_offset++;//
 
         rsd_info->mode = 2;
         break;
@@ -1050,7 +1049,7 @@ int rsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = (cache->buf_ptr + cache->wr); //当临时缓存
+    uint8_t* p = &apdu_rx[ctx->apdu_rx_offset]; //当临时缓存
     int ret;
     uint8_t dar;
     uint8_t oad_type = (uint8_t)(oad>>28);

@@ -575,7 +575,7 @@ int ACTION_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf)
     case 3: // 触发一次冻结 
         if ((0x5000 != oi) || (p[0] != TYPE_long_unsigned))
         {
-            dar = DAR_OTHERS_ERROR;
+            dar = DAR_TYPE_NOT_MATCH;
             return -1;
         }
         p++;
