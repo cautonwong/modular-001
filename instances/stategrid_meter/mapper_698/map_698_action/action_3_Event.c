@@ -146,7 +146,7 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     {
         temp_oad = buf_to_uint32_msb(oadlist);
         oadlist += 4;
-
+#if 0
         if (capture_oad == temp_oad)
         {
             //return DAR_SUCCESS;
@@ -154,6 +154,7 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
             return -1;
             //重复关联对象 返回拒绝
         }
+#endif        
     }
     memcpy(oadlist, p, 4);
     p += 4;
@@ -183,8 +184,8 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     }
 #endif
 
-    //清零
-    ret = clr_record(instance, oad);
+    //修改关联对象后 清零处理
+    ret = modify_capture_clr_pro(instance, oad);
     if (ret < 0)
     {
         *dar = DAR_OTHERS_ERROR;
@@ -320,8 +321,8 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
     }
 #endif
 
-    //清零
-    ret = clr_record(instance, oad);
+    //修改关联对象后 清零处理
+    ret = modify_capture_clr_pro(instance, oad);
     if (ret < 0)
     {
         *dar = DAR_OTHERS_ERROR;

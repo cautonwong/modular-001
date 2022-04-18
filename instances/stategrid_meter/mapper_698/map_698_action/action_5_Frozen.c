@@ -1,6 +1,6 @@
 #include "nidavellir.h"
 #include "fr_698.h"
-
+#include "gs_record.h"
 
 
 int freeze_add_one_capture(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
@@ -87,13 +87,13 @@ int freeze_add_one_capture(struct instance_t* instance, uint32_t oad, uint8_t* b
         *dar = DAR_OTHERS_ERROR;
         return -1;
     }
-
+#if 0
     if (false == capture_check(capture_oad, tempbuf))
     {
         *dar = DAR_OTHERS_ERROR;
         return -1;
     }
-
+#endif
     //周期
     offset = scheme * 3;
     uint16_to_buf_msb(period, period_buf + offset + 1);
@@ -158,16 +158,17 @@ int freeze_add_one_capture(struct instance_t* instance, uint32_t oad, uint8_t* b
     }
 #endif
 
-    //清零
-    ret = clr_record(instance, oad);
+    //修改关联对象后 清零处理
+    ret = modify_capture_clr_pro(instance, oad);
+    
     if (ret < 0)
     {
         *dar = DAR_OTHERS_ERROR;
         return -1;
     }
 
-    return (int)(p - buf);
 
+    return (int)(p - buf);
 }
 
 int freeze_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
@@ -248,13 +249,13 @@ int freeze_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t
         }
         oadlist += 4;
     }
-
+#if 0
     if (i >= num)
     {
         *dar = DAR_OTHERS_ERROR;
         return -1;
     }
-
+#endif
     offset = scheme * 3;//对应周期
     period_buf[offset]--;
 
@@ -291,8 +292,8 @@ int freeze_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t
     }
 #endif
 
-    //清零
-    ret = clr_record(instance, oad);
+    //修改关联对象后 清零处理
+    ret = modify_capture_clr_pro(instance, oad);
     if (ret < 0)
     {
         *dar = DAR_OTHERS_ERROR;
@@ -394,13 +395,13 @@ int freeze_add_multi_capture(struct instance_t* instance, uint32_t oad, uint8_t*
             *dar = DAR_OTHERS_ERROR;
             return -1;
         }
-
+#if 0
         if (false == capture_check(capture_oad, tempbuf))
         {
             *dar = DAR_OTHERS_ERROR;
             return -1;
         }
-
+#endif
         //周期
         offset = scheme * 3;
         uint16_to_buf_msb(period, period_buf + offset + 1);
@@ -466,8 +467,8 @@ int freeze_add_multi_capture(struct instance_t* instance, uint32_t oad, uint8_t*
     }
 #endif
 
-    //清零
-    ret = clr_record(instance, oad);
+    //修改关联对象后 清零处理
+    ret = modify_capture_clr_pro(instance, oad);
     if (ret < 0)
     {
         *dar = DAR_OTHERS_ERROR;
@@ -490,6 +491,12 @@ int freeze_delete_all_capture(struct instance_t* instance, uint32_t oad, uint8_t
     struct record_storage_id_info_t  record_id_info;
     int ret;
 
+    if (*p++ != TYPE_null)
+    {
+        *dar = DAR_TYPE_NOT_MATCH;
+        return -DAR_TYPE_NOT_MATCH;
+    } 
+    
     ret = get_record_id_info(instance, oad, &record_id_info);
     if (ret <= 0)
     {
@@ -535,8 +542,8 @@ int freeze_delete_all_capture(struct instance_t* instance, uint32_t oad, uint8_t
     }
 #endif
 
-    //清零
-    ret = clr_record(instance, oad);
+    //修改关联对象后 清零处理
+    ret = modify_capture_clr_pro(instance, oad);
     if (ret < 0)
     {
         *dar = DAR_OTHERS_ERROR;

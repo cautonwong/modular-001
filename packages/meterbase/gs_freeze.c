@@ -37,6 +37,7 @@ int cal_freeze_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, u
             sectorMax = 27;
             break;
     default:
+        return 1;  //其他
         break;
     }
 

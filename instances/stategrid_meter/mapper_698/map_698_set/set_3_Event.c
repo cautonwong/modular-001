@@ -65,7 +65,8 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
 
     nd_set_index(instance, info.capture_index, &tempbuf[0], (1 + num * 4));
 
-    clr_record(instance, oad);
+    //修改关联对象后 清零处理
+    ret = modify_capture_clr_pro(instance, oad);
     return (p - buf);
 }
 

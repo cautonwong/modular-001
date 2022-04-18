@@ -100,7 +100,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
     maxnum = sizeof(idbuf)/sizeof(idmatch);
     for(i=0; i<maxnum; i++)
     {
-        if(id == idbuf[i].id)
+        if((id & 0xFFFF1FFF) == idbuf[i].id)
         {
             switch(mode)
             {

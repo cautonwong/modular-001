@@ -1045,6 +1045,7 @@ int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_l
     uint32_t *p = (rcsd_list + 1);
     uint32_t rcsd_num = 0;
     uint8_t tempbuf[200];//待调整  读取e2p关联对象缓存
+    uint8_t schemNo = get_OAD_Schem(oad);
     struct record_storage_id_info_t info;
     int ret = get_record_id_info(instance, (oad&0xFFFF1FFF), &info);
     
@@ -1089,6 +1090,10 @@ int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_l
 
         for(i = 0; i < num; i++)
         {
+            if (((oad&0xFFFF0000) == 0x50020000) && (schemNo != get_OAD_Schem( buf_to_uint32_msb(tempbuf+1+4*i)))) //分钟冻结特殊处理
+            {
+                continue;
+            }
             mem_swap_cpy(p, (tempbuf+1+4*i), 4);
             p++;
             rcsd_num += 1;

@@ -373,8 +373,6 @@ const uint32_t event_oad[] =
     0x30400200,   //零线电流异常事件  
 };
 
-
-
 //事件清零 // 不包含事件清零事件
 int event_clr(struct instance_t* instance)
 {
@@ -410,6 +408,24 @@ int meter_clr(struct instance_t* instance)
 
     //其他清零  待添加
 
+}
+
+//修改关联对象时 调用 清零
+int modify_capture_clr_pro(struct instance_t* instance, uint32_t oad)
+{
+    uint8_t i, schem_num = 1;
+    int ret = 0;
+    
+    if (0x5002 == get_OAD_OI(oad))
+    {
+        schem_num = 8;
+    }
+        
+    for (i = 0; i < schem_num; i++)
+    {
+        ret = clr_record(instance, (oad | (i<<13)));
+    }
+    return ret;
 }
 
 // 每秒调用

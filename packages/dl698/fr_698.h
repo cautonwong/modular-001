@@ -42,6 +42,9 @@
 #define get_OAD_Schem(oad)      (uint8_t)(0x07 & (uint8_t)((oad) >> 13))
 #define get_OAD_OI(oad)         ((uint16_t)(((oad)&0xFFFF0000) >> 16))
 
+#define ignore_OAD_Schem(oad)   (uint32_t)((oad)&0xFFFF1FFFF)
+
+
 #define TIME_WILDCARD   1
 
 

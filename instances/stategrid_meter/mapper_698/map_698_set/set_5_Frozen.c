@@ -289,6 +289,9 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
     //index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + DepthId);
     nd_set_index(instance, DepthId, &depth_buf[0], DepthLen);
 
+    //修改关联对象后 清零处理
+    ret = modify_capture_clr_pro(instance, oad);
+    
     dar = DAR_SUCCESS;
     return (p - buf);// 
 }

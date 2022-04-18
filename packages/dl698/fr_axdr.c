@@ -1158,7 +1158,48 @@ int record_response_null(uint8_t *resbuf)
     return 1;
 }
 
-
+//rcsd请求的方案号处理，返回方案号 
+uint8_t rcsd_req_schem_pro(uint32_t oad, uint32_t *rcsd_req)
+{
+    uint8_t i, schemNo = 0;
+    //方案号 
+    if((oad&0xFFFF0000) == 0x50020000) 
+    {
+        for(i = 1; i <= *(rcsd_req); i++ )
+        {
+            if((0x2021 != get_OAD_OI(*(rcsd_req + i)))  && (0x2023 != get_OAD_OI(*(rcsd_req + i))))
+            {
+                break;
+            }
+        }
+        
+        if (i > *(rcsd_req))
+        {
+            i = 1;      //找不到取第一个
+        }
+        
+        schemNo = get_OAD_Schem((*(rcsd_req + i)));
+        
+        if (schemNo > 7)
+        {
+            schemNo = 0;
+        }
+        
+        //修改 请求的方案号
+        for(i = 1; i <= *(rcsd_req); i++ )
+        {
+            if((0x2021 == get_OAD_OI(*(rcsd_req + i))) || (0x2023 == get_OAD_OI(*(rcsd_req + i))))
+            {
+                *(rcsd_req + i) |=  (schemNo<<13);  // 分钟冻结 记录头 先加方案号
+            }
+        }
+    }
+    else // 其他 
+    {
+        schemNo = 0;
+    }
+    return schemNo;
+}
 //读记录型数据打包
 int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info)
 {
@@ -1175,8 +1216,8 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     uint8_t *p = (buf + 3); // 预留3个字节条数
     int ret = 0;
     
-    //方案号暂取第一个rscd //待调整
-    rcsd_schem = get_OAD_Schem((*(rcsd_req + 1)));
+    //方案号 
+    rcsd_schem = rcsd_req_schem_pro(oad, rcsd_req);
     oad_schem = oad | (rcsd_schem<<13);
     ret = get_record_id_info(instance, oad_schem, &record_id_info);
     if(ret < 0)
