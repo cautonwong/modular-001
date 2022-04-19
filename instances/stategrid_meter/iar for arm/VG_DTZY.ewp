@@ -2176,6 +2176,18 @@
             </file>
         </group>
         <group>
+            <name>dl645</name>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_645\645id_table.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_645\ctl_11_read.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_645\ctl_14_write.c</name>
+            </file>
+        </group>
+        <group>
             <name>dl698</name>
             <file>
                 <name>$PROJ_DIR$\..\..\..\applications\app_698_server\app_698_server_entry.c</name>
