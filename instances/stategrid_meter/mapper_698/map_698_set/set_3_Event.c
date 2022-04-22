@@ -2,7 +2,51 @@
 #include "fr_698.h"
 
 
+// 698设置事件上报标识或上报方式   mode  0: 上报标识      1:上报方式
+int set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t mode)
+{
+    uint8_t tempbuf[200] = { 0 };
+    uint8_t* p = buf;
+    struct record_storage_id_info_t  record_id_info;
+    int ret;
+    uint32_t AddrID = 0;
+    uint8_t index = (uint8_t)oad;
 
+    if ((index != 0) || (*p++ != TYPE_enum))
+    {
+        return -DAR_OTHERS_ERROR;
+    }
+
+    tempbuf[0] = *p++;
+
+    ret = get_record_id_info(instance, oad, &record_id_info);
+    if (ret <= 0)
+    {
+        return -DAR_OTHERS_ERROR;
+    }
+
+    if (mode == 0)
+    {
+        AddrID = record_id_info.rpt_flag;
+        if (tempbuf[0] > 3)
+        {
+            return -DAR_OTHERS_ERROR;
+        }
+    }
+    else //if (mode == 1)
+    {
+        AddrID = record_id_info.rpt_mode;
+        if (tempbuf[0] > 1)
+        {
+            return -DAR_OTHERS_ERROR;
+        }
+
+    }
+
+    nd_set_index(instance, AddrID, &tempbuf[0], 1);
+
+    return (p - buf);
+}
 
 
 //  关联对象检查  待添加
@@ -32,7 +76,7 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
     if (ret < 0)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     CaptureId = info.capture_index;
@@ -172,31 +216,31 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
     {
         switch (attr) //属性
         {
-        case 3:// 关联对象
-        {
-            return set_event_obj(instance, id, p, &dar);
-        }
-        break;
-
-        case 6: // 配置参数 
-        {
-            return set_struct_event_para_t(instance, id, p, &dar);
-        }
-        break;
-
-        case 8:  // 上报标识  //待添加
-        {
-            //return current_value_get(instance, id, p, &dar);
-        }
-        break;
-        case 11: // 上报方式 //待添加
-        {
-            //return current_value_get(instance, id, p, &dar);
-        }
-        break;
-
-        default:
+            case 3:// 关联对象
+            {
+                return set_event_obj(instance, id, p, &dar);
+            }
             break;
+
+            case 6: // 配置参数 
+            {
+                return set_struct_event_para_t(instance, id, p, &dar);
+            }
+            break;
+
+            case 8:  // 上报标识  
+            {
+                return set_event_report_flag_mode(instance, id, p, 0);
+            }
+            break;
+            case 11: // 上报方式 
+            {
+                return set_event_report_flag_mode(instance, id, p, 1);
+            }
+            break;
+
+            default:
+                break;
         }
     }
     break;
@@ -204,21 +248,30 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
     {
         switch (attr) //属性
         {
-        case 2: // 关联对象属性表 
-        {
-            return set_event_obj(instance, id, p, &dar);
-        }
-        break;
-        case 5: // 配置参数 
-        {
-            return set_struct_event_para_t(instance, id, p, &dar);
-        }
-        break;
+            case 2: // 关联对象属性表 
+            {
+                return set_event_obj(instance, id, p, &dar);
+            }
+            break;
+            case 5: // 配置参数 
+            {
+                return set_struct_event_para_t(instance, id, p, &dar);
+            }
+            break;
 
-        case 11: // 上报标识 
-        case 15:// 上报方式 
-            //return dl698_normal_data_get(element, req, res);
-          break;
+            case 11: // 上报标识 
+            {
+                return set_event_report_flag_mode(instance, id, p, 0);
+            }
+            break;
+            case 15:// 上报方式 
+            {
+                return set_event_report_flag_mode(instance, id, p, 1);
+            }
+            break;
+            default:
+                break;
+
         }
     }
     break;

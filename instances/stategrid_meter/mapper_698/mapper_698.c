@@ -14,7 +14,11 @@ extern const uint8_t  init_FeePriceCutFreeze_oad[];
 extern const uint8_t  init_StepCutFreeze_oad[];
 extern const uint8_t  init_StepBillFreeze_oad[];
 extern const uint8_t  init_InstantFreeze_oad[];
- 
+extern const uint8_t  init_Event_ReportFlag_3[];  
+extern const uint8_t  init_Event_ReportFlag_1[]; 
+extern const uint8_t  init_Event_ReportFlag_0[]; 
+extern const uint8_t  init_Event_ReportMode_1[]; 
+extern const uint8_t  init_Event_ReportMode_0[]; 
 
 extern const uint8_t  init_MinuteFreeze_period[];        
 extern const uint8_t  init_HourFreeze_period[];          
@@ -339,6 +343,64 @@ const  parameter_item_t  parameter_item[] =
     { StepBillFreeze_oad            , 0x01,  61, init_StepBillFreeze_oad     }, //oad列表 1+ 4*15   
     { InstantFreeze_oad             , 0x01,  61, init_InstantFreeze_oad      }, //oad列表 1+ 4*15   
 
+    //上报标识
+    { OverCurrentAS_RptFlag         , 0x01,   0x01,  init_Event_ReportFlag_1 },// 上报标识   电能表A相过流事件
+    { PowerOffS_RptFlag             , 0x01,   0x01,  init_Event_ReportFlag_3 },// 上报标识   电能表掉电事件            
+    { MeterWrS_RptFlag              , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表编程事件            
+    { MeterClrS_RptFlag             , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表清零事件            
+    { EventClrS_RptFlag             , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表事件清零事件        
+    { SetTimeS_RptFlag              , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表校时事件            
+    { DayTabWrS_RptFlag             , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表时段表编程事件      
+    { SeasonTabWrS_RptFlag          , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表时区表编程事件      
+    { WeekTabWrS_RptFlag            , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表周休日编程事件      
+    { BillDayWrS_RptFlag            , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表结算日编程事件  
+    { CoverOpenS_RptFlag            , 0x01,   0x01,  init_Event_ReportFlag_1 },// 上报标识   电能表开盖事件            
+    { SwitchOffS_RptFlag            , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表跳闸事件            
+    { SwitchOnS_RptFlag             , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表合闸事件            
+    { HolidayWrS_RptFlag            , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表节假日编程事件      
+    { ActCombWrS_RptFlag            , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表有功组合方式编程事件
+    { FeeTabWrS_RptFlag             , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表费率参数表编程事件  
+    { StepTabWrS_RptFlag            , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表阶梯表编程事件      
+    { SecretKeyWrS_RptFlag          , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表密钥更新事件 
+    { ErrPlugCardS_RptFlag          , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表异常插卡事件        
+    { RechargeS_RptFlag             , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表购电记录            
+    { RefundS_RptFlag               , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表退费记录  
+    { SwitchErrS_RptFlag            , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表负荷开关误动作事件  
+    { PowerAbnormalS_RptFlag        , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表电源异常事件 
+    { RTCErrS_RptFlag               , 0x01,   0x01,  init_Event_ReportFlag_1 },// 上报标识   电能表时钟故障事件 
+    { EmuErrS_RptFlag               , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表计量芯片故障事件
+    { BroadcastTimeS_RptFlag        , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   广播校时事件 
+    { ZeroLineErrS_RptFlag          , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   零线电流异常事件 
+
+     //上报方式
+    { OverCurrentAS_RptMode         , 0x01,   0x01,  init_Event_ReportMode_0 },// 上报方式   电能表A相过流事件
+    { PowerOffS_RptMode             , 0x01,   0x01,  init_Event_ReportMode_0 },// 上报方式   电能表掉电事件            
+    { MeterWrS_RptMode              , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表编程事件            
+    { MeterClrS_RptMode             , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表清零事件            
+    { EventClrS_RptMode             , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表事件清零事件        
+    { SetTimeS_RptMode              , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表校时事件            
+    { DayTabWrS_RptMode             , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表时段表编程事件      
+    { SeasonTabWrS_RptMode          , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表时区表编程事件      
+    { WeekTabWrS_RptMode            , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表周休日编程事件      
+    { BillDayWrS_RptMode            , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表结算日编程事件  
+    { CoverOpenS_RptMode            , 0x01,   0x01,  init_Event_ReportMode_0 },// 上报方式   电能表开盖事件            
+    { SwitchOffS_RptMode            , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表跳闸事件            
+    { SwitchOnS_RptMode             , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表合闸事件            
+    { HolidayWrS_RptMode            , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表节假日编程事件      
+    { ActCombWrS_RptMode            , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表有功组合方式编程事件
+    { FeeTabWrS_RptMode             , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表费率参数表编程事件  
+    { StepTabWrS_RptMode            , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表阶梯表编程事件      
+    { SecretKeyWrS_RptMode          , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表密钥更新事件 
+    { ErrPlugCardS_RptMode          , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表异常插卡事件        
+    { RechargeS_RptMode             , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表购电记录            
+    { RefundS_RptMode               , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表退费记录  
+    { SwitchErrS_RptMode            , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表负荷开关误动作事件  
+    { PowerAbnormalS_RptMode        , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表电源异常事件 
+    { RTCErrS_RptMode               , 0x01,   0x01,  init_Event_ReportMode_0 },// 上报方式   电能表时钟故障事件 
+    { EmuErrS_RptMode               , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表计量芯片故障事件
+    { BroadcastTimeS_RptMode        , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   广播校时事件 
+    { ZeroLineErrS_RptMode          , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   零线电流异常事件 
+
 
     //事件记录序号
     { OverCurrentAS_seq             , 0x01,  4,     0  },//记录序号  电能表A相过流
@@ -414,6 +476,10 @@ const  parameter_item_t  parameter_item[] =
     { StepCutFreeze_depth           , 0x01,  2, init_StepCutFreeze_depth      }, //分钟冻结 深度     2   
     { StepBillFreeze_depth          , 0x01,  2, init_StepBillFreeze_depth     }, //分钟冻结 深度     2   
     { InstantFreeze_depth           , 0x01,  2, init_InstantFreeze_depth      }, //分钟冻结 深度     2   
+
+
+
+
 
 
     //记录数据中间缓存
@@ -682,7 +748,7 @@ const uint32_t record_head_t6[] = { 7, 0x20220200, 0x201E0200, 0x20200200, 0x202
 int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_storage_id_info_t* info)
 {
     
-    uint16_t SaveId = 0, SeqId = 0, CaptureId = 0, PeriodId = 0, DepthId = 0;
+    uint16_t SaveId = 0, SeqId = 0, CaptureId = 0, PeriodId = 0, DepthId = 0, ReportFlagId = 0, ReportModeId = 0;
     uint8_t SaveDevice, SaveBlock;
 //    uint8_t schem = get_OAD_Schem(oad);
     uint8_t temp = 0;
@@ -706,8 +772,6 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
         class = 24;
     }
 
-
-    
     info->record_head = record_head_t0; //默认事件记录单元
 
     switch (oad&0xF0000000)
@@ -727,6 +791,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     SaveBlock = mbase_block_event;
                     CaptureId = OverCurrentAS_oad;          // 关联对象存储地址信息
                     SeqId = OverCurrentAS_seq;              // 序号存储地址信息
+                    ReportFlagId = OverCurrentAS_RptFlag;   //上报标识
+                    ReportModeId = OverCurrentAS_RptMode;   //上报方式   
                     info->record_head = record_head_t0;     // 记录单元
                     info->acc_time = &mbase_cb->OverCurrentAS_acc_time;
                 }
@@ -739,6 +805,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     SaveBlock = mbase_block_event;
                     CaptureId = PowerOffS_oad;          // 关联对象存储地址信息
                     SeqId = PowerOffS_seq;              // 序号存储地址信息
+                    ReportFlagId = PowerOffS_RptFlag;   //上报标识
+                    ReportModeId = PowerOffS_RptMode;   //上报方式   
                     info->record_head = record_head_t0;     // 记录单元
                     info->acc_time = &mbase_cb->PowerOffS_acc_time;
                 }
@@ -750,6 +818,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     SaveBlock = mbase_block_event;
                     CaptureId = MeterWrS_oad;          // 关联对象存储地址信息
                     SeqId = MeterWrS_seq;              // 序号存储地址信息
+                    ReportFlagId = MeterWrS_RptFlag;   //上报标识
+                    ReportModeId = MeterWrS_RptMode;   //上报方式  
                     info->record_head = record_head_t4;     // 记录单元
                 }
                 break;
@@ -760,6 +830,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     SaveBlock = mbase_block_event;
                     CaptureId = MeterClrS_oad;          // 关联对象存储地址信息
                     SeqId = MeterClrS_seq;              // 序号存储地址信息
+                    ReportFlagId = MeterClrS_RptFlag;   //上报标识
+                    ReportModeId = MeterClrS_RptMode;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
                 }
                 break;
@@ -776,6 +848,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     SaveBlock = mbase_block_event;
                     CaptureId = EventClrS_oad + temp;          // 关联对象存储地址信息
                     SeqId = EventClrS_seq + temp;              // 序号存储地址信息
+                    ReportFlagId = EventClrS_RptFlag + temp;   //上报标识
+                    ReportModeId = EventClrS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
                 }
                 break;
@@ -787,6 +861,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     SaveBlock = mbase_block_event;
                     CaptureId = EventClrS_oad + temp;          // 关联对象存储地址信息
                     SeqId = EventClrS_seq + temp;              // 序号存储地址信息
+                    ReportFlagId = EventClrS_RptFlag + temp;   //上报标识
+                    ReportModeId = EventClrS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t3;     // 记录单元
                 }
                 break;
@@ -798,6 +874,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     SaveBlock = mbase_block_event;
                     CaptureId = DayTabWrS_oad;          // 关联对象存储地址信息
                     SeqId = DayTabWrS_seq;              // 序号存储地址信息
+                    ReportFlagId = DayTabWrS_RptFlag + temp;   //上报标识
+                    ReportModeId = DayTabWrS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t5;     // 记录单元
                 }
                 break;
@@ -808,6 +886,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     SaveBlock = mbase_block_event;
                     CaptureId = CoverOpenS_oad;          // 关联对象存储地址信息
                     SeqId = CoverOpenS_seq;              // 序号存储地址信息
+                    ReportFlagId = CoverOpenS_RptFlag + temp;   //上报标识
+                    ReportModeId = CoverOpenS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
                     info->acc_time = &mbase_cb->CoverOpenS_acc_time;
                 }
@@ -824,6 +904,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     SaveBlock = mbase_block_event;
                     CaptureId = SwitchOffS_oad + temp;          // 关联对象存储地址信息
                     SeqId = SwitchOffS_seq + temp;              // 序号存储地址信息
+                    ReportFlagId = SwitchOffS_RptFlag + temp;   //上报标识
+                    ReportModeId = SwitchOffS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
                 }
                 break;
@@ -836,7 +918,9 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     SaveBlock = mbase_block_event;
                     CaptureId = HolidayWrS_oad;          // 关联对象存储地址信息
                     SeqId = HolidayWrS_seq;              // 序号存储地址信息
-                    info->record_head = record_head_t6;     // 记录单元
+                    ReportFlagId = HolidayWrS_RptFlag + temp;   //上报标识
+                    ReportModeId = HolidayWrS_RptMode + temp;   //上报方式  
+                    info->record_head = record_head_t6;         // 记录单元
                 }
                 break;
                 
@@ -855,6 +939,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     SaveBlock = mbase_block_event;
                     CaptureId = FeeTabWrS_oad + temp;          // 关联对象存储地址信息
                     SeqId = FeeTabWrS_seq + temp;              // 序号存储地址信息
+                    ReportFlagId = FeeTabWrS_RptFlag + temp;   //上报标识
+                    ReportModeId = FeeTabWrS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
                 }
                 break;
@@ -865,6 +951,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     SaveBlock = mbase_block_event;
                     CaptureId = SwitchErrS_oad;          // 关联对象存储地址信息
                     SeqId = SwitchErrS_seq;              // 序号存储地址信息
+                    ReportFlagId = SwitchErrS_RptFlag + temp;   //上报标识
+                    ReportModeId = SwitchErrS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
                     info->acc_time = &mbase_cb->SwitchErrS_acc_time;
                 }
@@ -876,6 +964,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     SaveBlock = mbase_block_event;
                     CaptureId = PowerAbnormalS_oad;          // 关联对象存储地址信息
                     SeqId = PowerAbnormalS_seq;              // 序号存储地址信息
+                    ReportFlagId = PowerAbnormalS_RptFlag + temp;   //上报标识
+                    ReportModeId = PowerAbnormalS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
                     info->acc_time = &mbase_cb->PowerAbnormalS_acc_time;
                 }
@@ -887,6 +977,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     SaveBlock = mbase_block_event;
                     CaptureId = RTCErrS_oad;          // 关联对象存储地址信息
                     SeqId = RTCErrS_seq;              // 序号存储地址信息
+                    ReportFlagId = RTCErrS_RptFlag + temp;   //上报标识
+                    ReportModeId = RTCErrS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
                 }
                 break;
@@ -897,6 +989,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     SaveBlock = mbase_block_event;
                     CaptureId = EmuErrS_oad;          // 关联对象存储地址信息
                     SeqId = EmuErrS_seq;              // 序号存储地址信息
+                    ReportFlagId = EmuErrS_RptFlag + temp;   //上报标识
+                    ReportModeId = EmuErrS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
                     info->acc_time = &mbase_cb->EmuErrS_acc_time;
                 }
@@ -908,6 +1002,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     SaveBlock = mbase_block_event;
                     CaptureId = BroadcastTimeS_oad;          // 关联对象存储地址信息
                     SeqId = BroadcastTimeS_seq;              // 序号存储地址信息
+                    ReportFlagId = BroadcastTimeS_RptFlag + temp;   //上报标识
+                    ReportModeId = BroadcastTimeS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
                 }
                 break;
@@ -918,6 +1014,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     SaveBlock = mbase_block_event;
                     CaptureId = ZeroLineErrS_oad;          // 关联对象存储地址信息
                     SeqId = ZeroLineErrS_seq;              // 序号存储地址信息
+                    ReportFlagId = ZeroLineErrS_RptFlag + temp;   //上报标识
+                    ReportModeId = ZeroLineErrS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
                     info->acc_time = &mbase_cb->ZeroLineErrS_acc_time;
                 }
@@ -1029,9 +1127,20 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
     {
         info->period_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodId);
     }
+
     if (DepthId)
     {
         info->depth_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + DepthId);
+    }
+
+    if (ReportFlagId)   //上报标识
+    {
+        info->rpt_flag = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ReportFlagId);
+    }
+
+    if (ReportModeId) //上报方式  
+    {
+        info->rpt_mode = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ReportModeId);
     }
 
     return 1;

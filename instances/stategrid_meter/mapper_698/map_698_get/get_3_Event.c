@@ -1,6 +1,45 @@
 #include "nidavellir.h"
 #include "fr_698.h"
 
+// 698读取事件上报标识或上报方式   mode  0: 上报标识      1:上报方式
+int get_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t mode)
+{
+    uint8_t tempbuf[200] = {0};
+    uint8_t* p = buf;
+    struct record_storage_id_info_t  record_id_info;
+    int ret;
+    uint32_t AddrID = 0;
+    uint8_t index = (uint8_t)oad;
+
+    if (index != 0)
+    {
+        return -1;
+    }
+ 
+    ret = get_record_id_info(instance, oad, &record_id_info);
+    if (ret <= 0)
+    {
+        return -1;
+    }
+
+    if (mode == 0)
+    {
+        AddrID = record_id_info.rpt_flag;
+    }
+    else //if (mode == 1)
+    {
+        AddrID = record_id_info.rpt_mode;
+    }
+
+    nd_get_index(instance, AddrID, &tempbuf[0], 1);
+
+    *p++ = TYPE_enum;
+    *p++ = tempbuf[0];
+
+    return (p - buf);
+}
+
+
 
 
 
@@ -906,17 +945,17 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     return get_current_value(instance, id, p, &dar);
                 }
                 break;
-                case 8:  // 上报标识  //待添加
+                case 8:  // 上报标识
                 {
-                    //return current_value_get(instance, id, p, &dar);
+                    return get_event_report_flag_mode(instance, id, p, 0);
                 }
                 break;
-                case 11: // 上报方式 //待添加
+                case 11: // 上报方式 
                 {
-                    //return current_value_get(instance, id, p, &dar);
+                    return get_event_report_flag_mode(instance, id, p, 1);
                 }
                 break;
-                case 29: // 非法插卡总次数 
+                case 29: // 非法插卡总次数  //待添加
                 {   //return dl698_normal_data_get(element, req, res);
 
 
@@ -973,10 +1012,10 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 }
                 break;
                 case 11: // 上报标识 
-                //case 12: // 有效标识 
-                case 15:// 上报方式 
-                    //return dl698_normal_data_get(element, req, res);
-
+                {
+                    return get_event_report_flag_mode(instance, id, p, 0);
+                }
+                break;
                 case 12: // 有效标识 固定1
                 {
                     *p++ = TYPE_bool;
@@ -985,9 +1024,14 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 }
                 break;
 
-                case 14: //
+                case 14: //时间状态表
                 {
                     return get_time_status_record_ic_24(instance, id, p, &dar);
+                }
+                break;
+                case 15:// 上报方式 
+                {
+                    return get_event_report_flag_mode(instance, id, p, 1);
                 }
                 break;
             }

@@ -347,6 +347,8 @@ struct record_storage_id_info_t
     uint16_t capture_len;   // 关联对象存储长度
     uint16_t period_len;    // 周期存储长度
     uint16_t depth_len;     // 深度存储长度
+    uint32_t rpt_flag;      // 上报标识
+    uint32_t rpt_mode;      // 上报方式
     uint32_t *acc_time;     // 事件累计时间   使用前需判断是否位null
     const uint32_t *record_head;  // 记录头
 };

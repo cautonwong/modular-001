@@ -432,7 +432,64 @@ enum block_parameter_item_id_t
     BroadcastTimeS_oad                  ,   //关联对象    广播校时事件 
     ZeroLineErrS_oad                    ,   //关联对象    零线电流异常事件 
 
+    //上报标识  顺序不随意改变 
+    OverCurrentAS_RptFlag               ,   //上报标识   电能表A相过流事件
+    PowerOffS_RptFlag                   ,   //上报标识   电能表掉电事件            
+    MeterWrS_RptFlag                    ,   //上报标识   电能表编程事件            
+    MeterClrS_RptFlag                   ,   //上报标识   电能表清零事件            
+    EventClrS_RptFlag                   ,   //上报标识   电能表事件清零事件        
+    SetTimeS_RptFlag                    ,   //上报标识   电能表校时事件            
+    DayTabWrS_RptFlag                   ,   //上报标识   电能表时段表编程事件      
+    SeasonTabWrS_RptFlag                ,   //上报标识   电能表时区表编程事件      
+    WeekTabWrS_RptFlag                  ,   //上报标识   电能表周休日编程事件      
+    BillDayWrS_RptFlag                  ,   //上报标识   电能表结算日编程事件  
+    CoverOpenS_RptFlag                  ,   //上报标识   电能表开盖事件            
+    SwitchOffS_RptFlag                  ,   //上报标识   电能表跳闸事件            
+    SwitchOnS_RptFlag                   ,   //上报标识   电能表合闸事件            
+    HolidayWrS_RptFlag                  ,   //上报标识   电能表节假日编程事件      
+    ActCombWrS_RptFlag                  ,   //上报标识   电能表有功组合方式编程事件
+    FeeTabWrS_RptFlag                   ,   //上报标识   电能表费率参数表编程事件  
+    StepTabWrS_RptFlag                  ,   //上报标识   电能表阶梯表编程事件      
+    SecretKeyWrS_RptFlag                ,   //上报标识   电能表密钥更新事件 
+    ErrPlugCardS_RptFlag                ,   //上报标识   电能表异常插卡事件        
+    RechargeS_RptFlag                   ,   //上报标识   电能表购电记录            
+    RefundS_RptFlag                     ,   //上报标识   电能表退费记录  
+    SwitchErrS_RptFlag                  ,   //上报标识   电能表负荷开关误动作事件  
+    PowerAbnormalS_RptFlag              ,   //上报标识   电能表电源异常事件 
+    RTCErrS_RptFlag                     ,   //上报标识   电能表时钟故障事件 
+    EmuErrS_RptFlag                     ,   //上报标识   电能表计量芯片故障事件
+    BroadcastTimeS_RptFlag              ,   //上报标识   广播校时事件 
+    ZeroLineErrS_RptFlag                ,   //上报标识   零线电流异常事件 
 
+    //上报方式 顺序不随意改变
+    OverCurrentAS_RptMode               ,   //上报方式   电能表A相过流事件
+    PowerOffS_RptMode                   ,   //上报方式   电能表掉电事件            
+    MeterWrS_RptMode                    ,   //上报方式   电能表编程事件            
+    MeterClrS_RptMode                   ,   //上报方式   电能表清零事件            
+    EventClrS_RptMode                   ,   //上报方式   电能表事件清零事件        
+    SetTimeS_RptMode                    ,   //上报方式   电能表校时事件            
+    DayTabWrS_RptMode                   ,   //上报方式   电能表时段表编程事件      
+    SeasonTabWrS_RptMode                ,   //上报方式   电能表时区表编程事件      
+    WeekTabWrS_RptMode                  ,   //上报方式   电能表周休日编程事件      
+    BillDayWrS_RptMode                  ,   //上报方式   电能表结算日编程事件  
+    CoverOpenS_RptMode                  ,   //上报方式   电能表开盖事件            
+    SwitchOffS_RptMode                  ,   //上报方式   电能表跳闸事件            
+    SwitchOnS_RptMode                   ,   //上报方式   电能表合闸事件            
+    HolidayWrS_RptMode                  ,   //上报方式   电能表节假日编程事件      
+    ActCombWrS_RptMode                  ,   //上报方式   电能表有功组合方式编程事件
+    FeeTabWrS_RptMode                   ,   //上报方式   电能表费率参数表编程事件  
+    StepTabWrS_RptMode                  ,   //上报方式   电能表阶梯表编程事件      
+    SecretKeyWrS_RptMode                ,   //上报方式   电能表密钥更新事件 
+    ErrPlugCardS_RptMode                ,   //上报方式   电能表异常插卡事件        
+    RechargeS_RptMode                   ,   //上报方式   电能表购电记录            
+    RefundS_RptMode                     ,   //上报方式   电能表退费记录  
+    SwitchErrS_RptMode                  ,   //上报方式   电能表负荷开关误动作事件  
+    PowerAbnormalS_RptMode              ,   //上报方式   电能表电源异常事件 
+    RTCErrS_RptMode                     ,   //上报方式   电能表时钟故障事件 
+    EmuErrS_RptMode                     ,   //上报方式   电能表计量芯片故障事件
+    BroadcastTimeS_RptMode              ,   //上报方式   广播校时事件 
+    ZeroLineErrS_RptMode                ,   //上报方式   零线电流异常事件 
+    //以上不能改变顺序
 
     //事件记录序号 顺序不随意改变               
     OverCurrentAS_seq                   ,   //记录序号  电能表A相过流事件

@@ -25,8 +25,14 @@ const uint8_t  init_FeePriceCutFreeze_oad[] = { 0x03, U32toBufMSB(0x00100400), U
 const uint8_t  init_StepCutFreeze_oad[]     = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
 const uint8_t  init_StepBillFreeze_oad[]    = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
 const uint8_t  init_InstantFreeze_oad[]     = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
-           
-          
+
+const uint8_t  init_Event_ReportFlag_3[]    = { 0x03 };
+const uint8_t  init_Event_ReportFlag_1[]    = { 0x01 };
+const uint8_t  init_Event_ReportFlag_0[]    = { 0x00 };
+
+const uint8_t  init_Event_ReportMode_1[] = { 0x01 }; // 跟随
+const uint8_t  init_Event_ReportMode_0[] = { 0x00 }; // 主动
+
 const uint8_t  init_MinuteFreeze_period[]   = { 0x07, 0x00, 0x0F,     0x00, 0x00, 0x00,   0x00, 0x00, 0x00,   0x00, 0x00, 0x00,   0x00, 0x00, 0x00,   0x00, 0x00, 0x00,   0x00, 0x00, 0x00,   0x00, 0x00, 0x00, };   
 const uint8_t  init_HourFreeze_period[]     = { 0x02, 0x00, 0x01 };
 const uint8_t  init_DayFreeze_period[]      = { 0x03, 0x00, 0x01 };
