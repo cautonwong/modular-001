@@ -4,8 +4,8 @@
 #include "target.h"
 #include "lib_clk.h"
 
-#define     P_BACKLIGHT_ON      GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT |= 0x10; //推挽输出高
-#define     P_BACKLIGHT_OFF     GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT &=~0x10; //推挽输出低
+//#define     P_BACKLIGHT_ON      GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT |= 0x10; //推挽输出高
+//#define     P_BACKLIGHT_OFF     GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT &=~0x10; //推挽输出低
 
 #if 1  //  GS
 
@@ -24,9 +24,7 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     if(mbase_control_block->AutoInv > 0)   mbase_control_block->AutoInv--;
     
     if(mbase_control_block->KeyInv > 0)    mbase_control_block->KeyInv--;
-    
-    if(mbase_control_block->BackLightTmr > 0) mbase_control_block->BackLightTmr--;
-    
+       
     if(mbase_control_block->commdisp_ir485 > 0) mbase_control_block->commdisp_ir485--;
     
     if(mbase_control_block->commdisp_plc > 0)   mbase_control_block->commdisp_plc--;
@@ -88,7 +86,6 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
       switch (mesg->ctrl)
       {
       case 0x86://采样的外设数据抵达
-          //backlight_pro();
           break;
       case 0x87:
           break;
@@ -111,6 +108,8 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
           event_pro(instance, pipeline, mesg);
 
           Display(instance, pipeline);
+          
+          backlight_pro(instance, pipeline, mesg);
           
           do_relay(instance, pipeline);
           

@@ -73,6 +73,9 @@ struct mbase_control_block_t
     uint8_t relay_ctl_mode; //继电器控制方式（0：脉冲式，1：保持式）
     uint8_t AuthOn; //身份认证启用标志，1启用
     
+    uint16_t Limit_T_Max;   //广播校时最大允许范围
+    uint16_t Limit_T_Min;   //广播校时最小允许范围
+    
     static_end     
     //运行期更改 && 掉电不保存 && 上电不需要IO请求的区域 && 初始化时直接清零
     dyn_cache_start   
@@ -120,7 +123,7 @@ struct mbase_control_block_t
     uint8_t KeyPtr;
     uint8_t KeyInv;
     uint8_t Key;        //按键标志
-    uint32_t BackLightTmr;
+    uint16_t BackLightTmr;  //背光显示时间
     uint16_t Page_ID;   //显示ID
     uint8_t under_un68; //所有相电压均低于68%   
     uint8_t auxiliary_power;//辅助电源供电标志

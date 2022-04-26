@@ -411,6 +411,14 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    //struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_cb;
+    
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    if(mbase_cb == NULL)
+    {
+        return -1;
+    }
 
     if ((ctx->ctrl & (1 << 7)) == 1){   //合法性和一致性判断
         fifoBuf_removeData(fifo, ctx->min_len + 2);
@@ -446,6 +454,16 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
             break;
         default:
             ctx->channel = chl_ir_698;
+    }
+    
+    if((ctx->channel == chl_ir_698) || (ctx->channel == chl_RS485_1_698))
+    {
+        if(ctx->channel == chl_ir_698)  mbase_cb->BackLightTmr = 2* (mbase_cb->lcd_autodis_list_num) * (mbase_cb->lcd_autodis_keep_sec);
+        mbase_cb->commdisp_ir485 = 2;
+    }
+    else if(ctx->channel == chl_PLC_698)
+    {
+        mbase_cb->commdisp_plc = 2;
     }
     
     return 1;

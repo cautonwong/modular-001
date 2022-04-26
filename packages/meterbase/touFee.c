@@ -56,8 +56,8 @@ unsigned long GetTotalMin( unsigned char* Addr )
 	unsigned long Min,Hour,Day;
 
 	Day = GetTotalDay( Addr+2 );
-	Hour = BCD_BYTE( *(Addr+1) );
-	Min = BCD_BYTE( *Addr );
+	Hour =  *(Addr+1);
+	Min =  *Addr ;
 	Min = Min + Hour*60 + Day*60*24;
 	return Min;
 }

@@ -589,23 +589,14 @@ enum block_parameter_item_id_t
 #define     AuthMeth                    996 //连接认证机制
 
 /***************** 计量相关 *****************/
-#define     Heat_Value_10L              1000    //1.0L自热补偿
-#define     Heat_Value_05L              1015    //0.5L自热补偿
+#define     Heat_Value_10L              1000    //1.0L自热补偿  15*2=30
+#define     Heat_Value_05L              1001    //0.5L自热补偿  15*2=30
+#define     Un_Cmp_Value                1002    //电压补偿 80%，90%，110%，115%    4*2=8
 
-#define     U80_Value                   1030    //80%Un补偿
-#define     U90_Value                   1031    //90%Un补偿
-#define     U100_Value                  1032    //110%Un补偿
-#define     U115_Value                  1033    //110%Un补偿
-
-#define 	ADJ_Pgain0                  1040    //功率增益
-#define 	ADJ_Pofst0                  1041    //功率偏移
-#define 	ADJ_Ph0                     1042    //相位补偿
-#define     ADJ_Pstart                  1043    //启动阈值
-#define     ADJ_Hfcont                  1044    //Hfconst
-#define     ADJ_Kp                      1045    //Kp
-#define     ADJ_Ku                      1046    //Ku
-#define     ADJ_Ki                      1047    //Ki
-#define     ADJ_Kin                     1048    //零线K系数
+#define     ADJ_Pgain0                  1003    //火线校表参数（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
+#define 	ADJ_Pgain1                  1004    //零线功率增益（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
+#define     ADJ_Other                   1005    //计量其他参数（启动阀值、HFconst）1 + 2 = 3
+#define     ADJ_K                       1006    //Ku Kil Kin零线K系数 Kp 4*4 = 16
 
 /*
 #define     KeyDisp_Num                 695 //按键显示屏数

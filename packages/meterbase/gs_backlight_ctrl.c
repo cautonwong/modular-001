@@ -2,6 +2,7 @@
 #include "pipeline.h"
 #include "applications.h"
 #include "port.h"
+#include "pin_function_def.h"
 
 struct alarm_t
 {
@@ -86,79 +87,28 @@ int event_alarm_control(struct instance_t* instance, struct pipeline_t* task, st
 int backlight_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
-    uint32_t *switchOn_H_sec = &ctrl_block->backlight_switchOn_Hpriority_sec;
-    uint32_t *switchOn_L_sec = &ctrl_block->backlight_switchOn_Lpriority_sec;
-    //uint8_t *check_enabled = &ctrl_block->backlight_enabled;
     
-    switch (mesg->id)
+    if( ctrl_block->sta & F_RemoteAlarm )//远程告警
     {
-	    case 0://上电 待调整 
-	        //上电立即打开背光 待调整 
-            *switchOn_H_sec = ctrl_block->lcd_poweron_all_dis_time; //上电全显期间不受其他控制
-	        break;
-
-        case 1://插卡信号 待调整 
-            if((ctrl_block->auxiliary_power == true) || (ctrl_block->under_un68 == false))
-            {
-                *switchOn_H_sec = 60; 
-            }
-            break;
-
-        case 2://收到红外信号       两个轮显周期 待调整 
-            *switchOn_L_sec = 60;
-            *switchOn_L_sec = 2* (ctrl_block->lcd_autodis_list_num) * (ctrl_block->lcd_autodis_keep_sec);
-            break;
-
-        case 3://收到按键信号        待调整 
-            *switchOn_L_sec = ctrl_block->backlight_key_time;
-            break;   
-
-        case 4://显示查看唤醒背光         待调整 
-            *switchOn_L_sec = 10; // 参数无效时？？
-            *switchOn_L_sec = ctrl_block->lcd_checkdis_keep_sec;
-            break;
-            
-        case 5://显示查看全屏命令唤醒背光 待调整 
-            *switchOn_L_sec = 5;
-            *switchOn_L_sec = ctrl_block->lcd_checkdis_all_keep_sec;
-            break;
-
-        case 6://收到实时背光点亮信号(跳闸延时期间/余额不足报警等)   待调整 
-            *switchOn_L_sec = 5;
-            break;
-            
-        default:
-            break;
-
+        ctrl_block->BackLightTmr = 0xFFFF;
     }
-
-    if (*switchOn_H_sec > 0)
+    
+    if(ctrl_block->BackLightTmr == 0xFFFF)   //故障报警
     {
-        *switchOn_H_sec--;
+        LCD_BACK_LIGHT_OPEN(); // 打开背光
+        return 1;
     }
+    
+    if(ctrl_block->BackLightTmr > 0)    ctrl_block->BackLightTmr--;
 
-    if (*switchOn_L_sec > 0)
+    if(ctrl_block->BackLightTmr == 0)
     {
-        *switchOn_L_sec--;
-    }
-    // 
-    if((ctrl_block->auxiliary_power == false) && (ctrl_block->under_un68 == true))
-    {
-        *switchOn_L_sec = 0;
-        if(*switchOn_H_sec == 0) 
-        {
-            return 0;
-        }
-    }
-
-    if ((*switchOn_L_sec > 0) || (*switchOn_H_sec > 0))
-    {
-        return 1; // 打开背光
+        LCD_BACK_LIGHT_CLOSE();
     }
     else
     {
-        return event_alarm_control(instance, task, mesg);
+        LCD_BACK_LIGHT_OPEN(); // 打开背光
     }
-
+    return 1;
 }
 

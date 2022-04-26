@@ -2,6 +2,7 @@
 #include "string.h"
 #include "nidavellir.h"
 #include "applications.h"
+#include "pin_function_def.h"
 /**********************************************************************/
 /*  液晶显示程序                                                       */
 /***********************************************************************/
@@ -215,9 +216,6 @@
 //需要重新定义
 #define		Init_LCD()			{;;}	//初始化LCD
 #define		P_RELAY_ON			1;		
-
-#define     P_BACKLIGHT_ON      GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT |= 0x10; //推挽输出高
-#define     P_BACKLIGHT_OFF     GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT &=~0x10; //推挽输出低
 
 //按键
 #define     KeyPortIn           {GPIOA->OEN |=BIT2; GPIOA->IE |=BIT2;}
@@ -640,12 +638,14 @@ void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
 	
-	P_BACKLIGHT_ON;	//背光
+    LCD_BACK_LIGHT_OPEN();
 	if((mbase_control_block->lcd_poweron_all_dis_time > 30) || (mbase_control_block->lcd_poweron_all_dis_time == 0))
 		mbase_control_block->AutoInv = 5;
     else
         mbase_control_block->AutoInv = mbase_control_block->lcd_poweron_all_dis_time;
 
+    mbase_control_block->BackLightTmr = mbase_control_block->AutoInv;
+    
 	mbase_control_block->AutoPtr = 0xFF;
 	mbase_control_block->Page_ID = 0xFFFF;
 }

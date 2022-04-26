@@ -576,6 +576,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
                     mbase_cb->Page_ID = pageid;
                     mbase_cb->KeyInv = mbase_cb->lcd_keydis_keep_sec;
+                    mbase_cb->BackLightTmr = 60;
                     return 1;
                 case 0x04://上翻
                     if(0 != p[0]){
@@ -589,6 +590,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
                     mbase_cb->Page_ID = pageid;
                     mbase_cb->KeyInv = mbase_cb->lcd_keydis_keep_sec;
+                    mbase_cb->BackLightTmr = 60;
                     return 1;
                 case 0x05://显示查看
                     break;
@@ -598,6 +600,11 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     p++;
                     mem_swap_cpy((uint8_t*)&mbase_cb->AutoInv, p, 2);
                     p = p + 2;
+                    
+                    if((mbase_cb->lcd_poweron_all_dis_time > 30) || (mbase_cb->lcd_poweron_all_dis_time == 0))
+                        mbase_cb->BackLightTmr = 5;
+                    else
+                        mbase_cb->BackLightTmr = mbase_cb->lcd_poweron_all_dis_time;
                     return (p-buf);
                 default:
                     break;
