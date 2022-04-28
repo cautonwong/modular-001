@@ -223,7 +223,7 @@ static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8
         esam_out->esam_err_no = 0x9000;
         return 0;
     }else{
-        esam_out->esam_err_no = err_no;
+        esam_out->esam_err_no = sw;
         return -1;
     }
 }

@@ -257,6 +257,11 @@ int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_
                 p_input->cmd_type = 3;
                 request = esam_type_sid_mac_cmd;
             }
+            if((SECURITY_CHOICE_0_Plaintext == p_input->security_choice) &&
+               (verification_choice_SID_MAC == p_input->verification_choice)){
+                p_input->cmd_type = 1;
+                request = esam_type_sid_mac_cmd;
+            }
         }
         p_output->MAC_len = 4;
     }else{

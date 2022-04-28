@@ -1,25 +1,27 @@
 #include "nidavellir.h"
 #define data_max_len 222
 
-int __update_cs(struct context_645_t* ctx, uint8_t* byte)
+int __update_cs(void* pctx, uint8_t* byte)
 {
+    struct context_645_t* ctx = pctx;
     ctx->tx_len++;
     ctx->cs += *byte;
     return 0;
 }
 
-int __update_scrambler_and_cs(struct context_645_t* ctx, uint8_t* byte)
+int __update_scrambler_and_cs(void* pctx, uint8_t* byte)
 {
+    struct context_645_t* ctx = pctx;
     ctx->tx_len++;
     *byte += 0x33;
     ctx->cs += *byte;
     return 0;
 }
 
-int __matcher_645(struct pipeline_t* pipeline, uint8_t* b)
+int __matcher_645(void* pctx, uint8_t* b)
 {
+    struct context_645_t* ctx = pctx;
     uint8_t byte = *b;
-    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
 
     switch (ctx->step)
     {
@@ -62,9 +64,9 @@ int __matcher_645(struct pipeline_t* pipeline, uint8_t* b)
         }
         ctx->len = byte;
         ctx->min_len = byte + 12;
-        if (ctx->min_len > fifoBuf_getUsed(pipeline->in_queue))
+        //if (ctx->min_len > fifoBuf_getUsed(pipeline->in_queue))
         {
-            return 2;//���Ȳ���  �´�����
+//            return 2;//���Ȳ���  �´�����
         }
         ctx->cs += byte;
         ctx->addr_n = 0;
@@ -99,6 +101,7 @@ int __matcher_645(struct pipeline_t* pipeline, uint8_t* b)
 
 int fr_decode_645_11(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
+#if 0
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* fifo = pipeline->in_queue;
     int r = 0;
@@ -107,10 +110,10 @@ int fr_decode_645_11(struct instance_t* instance, struct pipeline_t* pipeline, s
     mesg->ctrl = 0x91;
     mesg->id = 0x00;//��ʱû��
     mesg->len = 0;//������ĳ���
-    memcpy(instance->cache, mesg, sizeof(struct message_t));
+    //memcpy(instance->cache, mesg, sizeof(struct message_t));
     uint8_t len = ctx->min_len - 12;//�յ���������ĳ���
-    uint8_t* p = instance->cache + sizeof(struct message_t);//���������ʼ
-    fifoBuf_getData(fifo, p + mesg->len, 4);
+    //uint8_t* p = instance->cache + sizeof(struct message_t);//���������ʼ
+    //fifoBuf_getData(fifo, p + mesg->len, 4);
     uint32_t id = buf_to_uint32_lsb(p + mesg->len);
     mesg->len += 4;
     uint8_t byte;
@@ -144,7 +147,7 @@ int fr_decode_645_11(struct instance_t* instance, struct pipeline_t* pipeline, s
             mesg->len += r;
         }
     }
-
+#endif
     return 1;
 }
 
@@ -152,8 +155,8 @@ int fr_encode_645_11(struct instance_t* instance, struct pipeline_t* pipeline, s
 {
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* fifo = pipeline->in_queue;
-    memcpy(instance->cache, mesg, sizeof(struct message_t));
-    uint8_t* p = instance->cache + sizeof(struct message_t);//���������ʼ
+    //memcpy(instance->cache, mesg, sizeof(struct message_t));
+    uint8_t* p;// = instance->cache + sizeof(struct message_t);//���������ʼ
     uint32_to_buf_lsb(mesg->id, p);
     if (mesg->len > 4)
     {
@@ -164,6 +167,7 @@ int fr_encode_645_11(struct instance_t* instance, struct pipeline_t* pipeline, s
 }
 int fr_decode_645_08(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
+#if 0
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     uint8_t len = ctx->min_len - 12;
@@ -190,12 +194,13 @@ int fr_decode_645_08(struct instance_t* instance, struct pipeline_t* pipeline, s
         mesg->to = pid_msta;
         send_mesg(instance, pipeline, mesg, p);
     }
-
+#endif
     return 0;
 }
 
 int fr_encode_645_86(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
+#if 0
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* fifo = pipeline->in_queue;
     memcpy(instance->cache, mesg, sizeof(struct message_t));
@@ -210,11 +215,13 @@ int fr_encode_645_86(struct instance_t* instance, struct pipeline_t* pipeline, s
         int r = __read(mesg->id, p + 4, 4);
         mesg->len += r;
     }
+#endif
     return 1;
 }
 
 int fr_decode_645_86(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
+#if 0
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     uint32_t id;
@@ -232,10 +239,11 @@ int fr_decode_645_86(struct instance_t* instance, struct pipeline_t* pipeline, s
 
     __write(id, p + mesg->len, len - 4);
     p[mesg->len++] = 0x00;
+#endif
     return 1;
 }
 
-
+#if 0
 int fr_encode_645_08(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     memcpy(instance->cache, mesg, sizeof(struct message_t));
@@ -436,7 +444,7 @@ int fr_645_decode_91(struct instance_t* instance, struct pipeline_t* pipeline, s
 
     return 0;
 }
-
+#endif
 int fr_pack_645_head(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
@@ -475,8 +483,8 @@ int fr_pack_645_data(struct instance_t* instance, struct pipeline_t* pipeline, s
 
     append_byte(fifo, mesg->ctrl, __update_cs, ctx);
     append_byte(fifo, mesg->len, __update_cs, ctx);
-    append_data(fifo, instance->cache + sizeof(struct message_t),
-        mesg->len, __update_scrambler_and_cs, ctx);
+    //append_data(fifo, instance->cache + sizeof(struct message_t),
+    //    mesg->len, __update_scrambler_and_cs, ctx);
 
     return 1;
 }
@@ -491,65 +499,49 @@ int fr_pack_645_tail(struct instance_t* instance, struct pipeline_t* pipeline, s
     return 1;
 }
 
-int fr_rx_645_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{
-    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
-    ctx->step = 0;
-
-    int r = ringbuffer_filter(fifo, __matcher_645, pipeline);
-    if (r > 0)
-    {
-#ifdef VERBOSE
-        uint8_t buf[256];
-        printf("                   {%s,recv", get_pipeline_name(instance, pipeline->id));
-        uint16_t len = fifoBuf_getDataPeek(pipeline->in_queue, buf, ctx->min_len);
-        printf(",");
-        for (size_t i = 0; i < len; i++)
-        {
-            printf("%02x", buf[i]);
-        }
-
-        printf("}\n");
-#endif
-        return 1;
-    }
-    return 0;
-}
 
 int fr_rx_645_end(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
-    struct message_t* n = (struct message_t*)instance->cache;
+    //struct message_t* n = (struct message_t*)instance->cache;
 
     fifoBuf_getByte(ififo);//fcs-0
     assert(fifoBuf_getByte(ififo) == 0x16);//0x16
-    n->len = mesg->len;
+    //n->len = mesg->len;
     //todo  ���Ƿ�Ҫ����
     fr_pack_645_head(instance, pipeline, mesg);
     fr_pack_645_data(instance, pipeline, mesg);
     fr_pack_645_tail(instance, pipeline, mesg);
-    //ʹ�ܷ���
-#ifdef VERBOSE
-    if (ctx->tx_len > 0)
-    {
-        uint8_t buf[256];
-        printf("                   {%s,send", get_pipeline_name(instance, pipeline->id));
-        uint16_t len = fifoBuf_getDataPeek(pipeline->out_queue, buf, ctx->tx_len);
-        printf(",");
-        for (size_t i = 0; i < len; i++)
-        {
-            printf("%02x", buf[i]);
-        }
-
-        printf("}\n");
-    }
-#endif
-
     return 0;
 }
+
+int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    
+}
+
+int fr_rx_645_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    ctx->step = 0;
+    int r = ringbuffer_filter(fifo, __matcher_645, ctx);
+    if (r > 0){
+        assert(r == ctx->min_len + 2);
+#ifdef WIN32
+        log_hex(fifo->buf_ptr + fifo->rd, fifo->wr - fifo->rd);
+#endif
+        return 1;
+    }
+    return r;
+    
+}
+
+
 
 int fr_tx_645_end(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {

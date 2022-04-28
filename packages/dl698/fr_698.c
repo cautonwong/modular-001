@@ -50,7 +50,7 @@ int __pack_apdu_byte(void* pctx, uint8_t* byte)
     return 0;
 }
 
-int matcher_698(void* pctx, uint8_t* b)
+int __matcher_698(void* pctx, uint8_t* b)
 {
     uint8_t byte = *b;
     struct context_698_t* ctx = pctx;
@@ -604,7 +604,7 @@ int fr_check_service_and_choice(struct instance_t* instance, struct pipeline_t* 
     return 0;
 }
 
-int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
@@ -714,7 +714,11 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     if (service == SECURITY_Request){
         err_no = fr_security_encode(instance, pipeline, mesg);
         if(err_no < 0){
-            return err_no;
+            cache->buf_ptr[0] = SECURITY_Response;
+            cache->buf_ptr[1] = 2;
+            cache->buf_ptr[2] = DAR_OTHERS_ERROR;
+            cache->buf_ptr[3] = 0;
+            cache->wr = 4;
         }else{
             uint8_t len = 2;
             data[0] = SECURITY_Response;
@@ -737,7 +741,7 @@ int fr_gatekeeper_server(struct instance_t* instance, struct pipeline_t* pipelin
     return 0;
 }
 
-int fr_gatekeeper_client(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int fr_gatekeeper_698_client(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
@@ -840,7 +844,7 @@ int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     ctx->step = 0;
-    int r = ringbuffer_filter(fifo, matcher_698, ctx);
+    int r = ringbuffer_filter(fifo, __matcher_698, ctx);
     if (r > 0){
         assert(r == ctx->min_len + 2);
 #ifdef WIN32
