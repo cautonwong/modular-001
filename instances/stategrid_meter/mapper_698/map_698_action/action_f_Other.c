@@ -257,6 +257,30 @@ int _f101_m129_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
 
     return (p - buf);
 }
+
+//协商失效
+void connect_failture(struct instance_t* instance, struct context_698_t* ctx )
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    uint8 cilent_index;
+
+    if (CA_TYPE_TER(ctx->CA)) 
+    {
+        cilent_index = 1;
+    }
+    else
+    {
+        cilent_index = 0;
+    }
+
+    mbase_cb->connect_timeout[ctx->channel][cilent_index] = 0;
+    mbase_cb->esam_connect_timeout[ctx->channel][cilent_index] = 0;
+}
+
+
+
+
 int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx)
 {    
     struct mbase_control_block_t* mbase_cb;
@@ -340,6 +364,8 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 p = p + 1;
                 mbase_cb->authen_tmr = 0;
                 mbase_cb->irauthen_tmr = 0;
+
+                connect_failture(instance, ctx); 
                 return (p-buf);
             }
             else if(method == 0x07) //秘钥更新

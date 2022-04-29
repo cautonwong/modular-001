@@ -482,7 +482,7 @@ int get_current_value_ic_24(struct instance_t* instance, uint32_t oad, uint8_t* 
 }
 
 
-uint8_t get_time_status_record(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
+int get_time_status_record(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
 #ifndef WIN32
     uint32_t sequence, time;
@@ -503,7 +503,7 @@ uint8_t get_time_status_record(struct instance_t* instance, uint32_t oad, uint8_
         return -1;
     }
 
-    if (OI == 0x3023)
+    if (OI == 0x3023)// 待调整
     {
  
     }
@@ -526,8 +526,8 @@ uint8_t get_time_status_record(struct instance_t* instance, uint32_t oad, uint8_
         *p++ = 2;
 
         //事件发生源  除特殊事件外
-        *p++ = 0;
-
+        *p++ = 0; //待调整 if else
+       
         *p++ = TYPE_structure;
         *p++ = 2;
 

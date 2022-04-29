@@ -920,7 +920,7 @@ uint32_t fr_698_current_esam_timeout_get(struct instance_t* instance, struct pip
         return 0;
     }
     
-    return ctrl_block->esam_connect_timeout[cilent_index];
+    return ctrl_block->esam_connect_timeout[i][cilent_index];
 }
 
 uint8_t fr_698_current_channel_num_get(struct instance_t* instance, struct pipeline_t* pipeline)

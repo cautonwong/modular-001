@@ -132,14 +132,15 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     uint16_t data_len = 0;
     uint16_t offset = 0;
     uint8_t cilent_index = 0;
-    struct connect_request_t connect = {0x1500, 
+    uint32_t esam_session_timeout = 0xffffffffU;
+    struct connect_request_t connect = {0x1600, 
     0xFF,0xFF,0xFF,0xff,0xc0,0x00,0x00,0x00,
     0xFF,0xFE,0xC4,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x0002,
-    0x0002,
+    0x0200,
+    0x0200,
     0x01,
-    0xd007,
-    0x201c0000};
+    0x07d0,
+    0x00001C20};
 
     
     if (CA_TYPE_TER(ctx->CA))//from 终端
@@ -154,6 +155,8 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     memcpy(buf, apdu_rx + ctx->apdu_rx_offset, 38);
     ctx->apdu_rx_offset += 38;
     
+    apdu_rx += 2;
+    
     len_len = esam_consult_key(instance, CA_TYPE_TER(ctx->CA) , buf+1 );
 
     cache->wr = cache->wr - 3;
@@ -164,23 +167,40 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     memset((p_apdu+cache->wr), 0x30, 32);//厂家信息
     cache->wr = cache->wr + 32;
     
-    memcpy((p_apdu+cache->wr), (uint8_t*)&connect.pro_ver, 2);//版本号
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&connect.pro_ver, 2);//版本号
     cache->wr = cache->wr + 2;
-    memcpy((p_apdu+cache->wr), (uint8_t*)&connect.protocal_conformance, 8);//期望协议一致性块
+    apdu_rx += 2;
+    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&connect.protocal_conformance, 8);//期望协议一致性块
     cache->wr = cache->wr + 8;
-    memcpy((p_apdu+cache->wr), (uint8_t*)&connect.function_conformance, 16);  //期望的功能一致性块 
+    apdu_rx += 8;
+    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&connect.function_conformance, 16);  //期望的功能一致性块 
     cache->wr = cache->wr + 16;
-    memcpy((p_apdu+cache->wr), (uint8_t*)&connect.send_frm_size, 2);    //发送最大尺寸
+    apdu_rx += 16;
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&connect.send_frm_size, 2);    //发送最大尺寸
     cache->wr = cache->wr + 2;
-    memcpy((p_apdu+cache->wr), (uint8_t*)&connect.recv_frm_size, 2);    //接收最大尺寸
+    apdu_rx += 2;
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&connect.recv_frm_size, 2);    //接收最大尺寸
     cache->wr = cache->wr + 2;
+    apdu_rx += 2;
     *(p_apdu+cache->wr) = connect.client_win_size;//客户机接收帧最大窗口尺寸
     cache->wr = cache->wr + 1;
-    memcpy((p_apdu+cache->wr), (uint8_t*)&connect.client_apdu_size, 2);    //客户机最大可处理帧尺寸
+    apdu_rx += 1;
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&connect.client_apdu_size, 2);    //客户机最大可处理帧尺寸
     cache->wr = cache->wr + 2;
-    memcpy((p_apdu+cache->wr), (uint8_t*)&connect.connect_time, 4);     //期望的应用连接超时时间    
-    cache->wr = cache->wr + 4;
+    apdu_rx += 2;
     
+     //期望的应用连接超时时间 
+    mbase_cb->connect_timeout[ctx->channel][cilent_index] = buf_to_uint32_msb(apdu_rx);
+    if ((mbase_cb->connect_timeout[ctx->channel][cilent_index] == 0) || (mbase_cb->connect_timeout[ctx->channel][cilent_index] > connect.connect_time))
+    {
+        mbase_cb->connect_timeout[ctx->channel][cilent_index] = connect.connect_time;
+    }
+    
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&mbase_cb->connect_timeout[ctx->channel][cilent_index], 4);     //期望的应用连接超时时间    
+    cache->wr = cache->wr + 4;
+    apdu_rx += 4;
+
+
     if(len_len == 52)
     {
         *(p_apdu+cache->wr) = 0;//允许建立应用连接
@@ -195,13 +215,38 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
         cache->wr++;
         memcpy((p_apdu+cache->wr), buf+49,4);//MAC
         cache->wr = cache->wr + 4;
+
+        if(cilent_index)
+        {
+            read_esam_info(instance, buf, 20);
+        }
+        else
+        {
+            read_esam_info(instance, buf, 5);
+        }
+
+        esam_session_timeout = buf_to_uint32_msb(&buf[0]);
+        esam_session_timeout = 60 * esam_session_timeout;
         
-        read_esam_info(instance, buf,0X05);
         mem_swap_cpy((uint8_t*)&mbase_cb->authen_tmr, (uint8_t*)&buf[0], 4);
         mbase_cb->authen_tmr = mbase_cb->authen_tmr * 60;
+
+        if (esam_session_timeout == 0)
+        {
+            esam_session_timeout = mbase_cb->connect_timeout[ctx->channel][cilent_index];
+        }
+
+        if (mbase_cb->connect_timeout[ctx->channel][cilent_index] > esam_session_timeout)
+        {
+            mbase_cb->connect_timeout[ctx->channel][cilent_index] = esam_session_timeout;
+        }
+        
+    
+        mbase_cb->esam_connect_timeout[ctx->channel][cilent_index] = esam_session_timeout;
         
         mbase_cb->current_connect_channel[cilent_index] = ctx->channel;
         mbase_cb->connect_status[ctx->channel][cilent_index] = true;
+        mbase_cb->connect_timeout_cnt[ctx->channel][cilent_index] = 0;
         
         MeterWr_obj_list_clear(instance, pipeline, mesg);
         return DAR_SUCCESS;
@@ -214,6 +259,7 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
         cache->wr++;
 
         mbase_cb->connect_status[ctx->channel][cilent_index] = false;
+        mbase_cb->connect_timeout[ctx->channel][cilent_index]   = 0;
         return DAR_ESAM_CHECK_FAILED;
     }
 #if 0    
@@ -302,8 +348,8 @@ int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipelin
     mbase_cb->authen_tmr = 0;
     mbase_cb->irauthen_tmr = 0;
     
-    
-    mbase_cb->esam_connect_timeout[cilent_index] = 0;
+    mbase_cb->connect_timeout[ctx->channel][cilent_index] = 0;  
+    mbase_cb->esam_connect_timeout[ctx->channel][cilent_index] = 0;
     mbase_cb->connect_status[ctx->channel][cilent_index] = false;
     
     if ((mbase_cb->connect_status[ctx->channel][0] == false)&& (mbase_cb->connect_status[ctx->channel][1] == false))
@@ -314,6 +360,41 @@ int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipelin
     //复位ESAM
     return 1;
 }
+
+int fr_handle_disconnect2(struct instance_t* instance,  struct pipeline_t* pipeline,  uint8_t cilent_index, uint8_t channel)
+{
+    struct message_t mesg;
+    //uint8_t result = DAR_SUCCESS;
+    struct mbase_control_block_t* mbase_cb;
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+   
+    if (cilent_index > 1)//终端
+    {
+        return -1;
+    }
+
+    if (channel > 3)//终端
+    {
+        return -1;
+    }
+
+ 
+    mbase_cb->authen_tmr = 0;
+    mbase_cb->irauthen_tmr = 0;
+    
+    mbase_cb->connect_timeout[channel][cilent_index] = 0;  
+    mbase_cb->esam_connect_timeout[channel][cilent_index] = 0;
+    mbase_cb->connect_status[channel][cilent_index] = false;
+    
+    if ((mbase_cb->connect_status[channel][0] == false)&& (mbase_cb->connect_status[channel][1] == false))
+    {
+        MeterWr_obj_list_clear(instance, pipeline, mesg);
+    }
+    
+    //复位ESAM
+    return 1;
+}
+
 
 
 const struct connect_request_t cfg_connect = {

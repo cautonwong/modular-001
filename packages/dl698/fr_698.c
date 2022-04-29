@@ -344,8 +344,8 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
             time_tag_sec = dl_datetime_to_second(&ctx->timeTag[1], 0);
             time_sec     = rtc_mktime(&instance->time);
             
-            if((time_tag_sec >= time_sec) && 
-               ((time_tag_sec + interval_sec) <= time_sec)){
+            //if((time_tag_sec >= time_sec) && 
+               if(((time_tag_sec + interval_sec) > time_sec)){
                 ctx->timeTag_valid = 1;
             }
         }
@@ -606,6 +606,8 @@ int fr_check_service_and_choice(struct instance_t* instance, struct pipeline_t* 
 
 int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -614,6 +616,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     
     int err_no = 0;
     uint8_t service = 0;
+    uint8_t cilent_index = 0;
     
     //协议一致性判断和apdu合法判断
     if(0 == fr_pack_698_check(instance, pipeline, mesg)){
@@ -637,6 +640,23 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
         }
         fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len);
         handle_scrambler(instance, pipeline, mesg);
+    }
+
+
+
+    if (CA_TYPE_TER(ctx->CA))//from 终端
+    {
+        cilent_index = 1;
+    }
+    else
+    {
+        cilent_index = 0;
+    }
+
+
+    if (mbase_cb->connect_status[ctx->channel][cilent_index] == true)
+    {
+        mbase_cb->connect_timeout_cnt[ctx->channel][cilent_index] = 0;
     }
     
     ctx->service = apdu_rx[ctx->apdu_rx_offset++];
