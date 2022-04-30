@@ -91,12 +91,13 @@ uint16_t axdr_get_len(const uint8_t *data)
         num = data[data_len];
         data_len++;
         data = data + data_len;
+        data_len = 0;
         while (num--)
         {
             data_len += axdr_get_len(data);
             data = data + data_len;
         }
-        return data_len;
+        return (data_len + 2);
         break;
     case TYPE_bool:
     case TYPE_enum:
@@ -140,7 +141,7 @@ uint16_t axdr_get_len(const uint8_t *data)
         break;
     case TYPE_date:
     case TYPE_COMDCB:
-        return 5;
+        return 6;
         break;
     case TYPE_time:
     case TYPE_TI:
