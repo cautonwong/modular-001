@@ -16,10 +16,11 @@ struct esam_698_input_t
     uint8_t *AttachData;
     uint8_t *MAC_data;
     uint8_t *RN_Data;
+    uint8_t *Dispersion_factor;
     uint8_t *data_buf;      //临时缓冲区
     uint16_t RN_Data_len;
     uint16_t data_buf_len;  //临时缓冲长度
-
+    uint16_t Dispersion_factor_len;
 };
 
 struct esam_698_output_t

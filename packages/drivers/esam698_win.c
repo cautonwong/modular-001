@@ -521,6 +521,47 @@ static  int f_esam_type_write(struct esam_698_data_t *para, void *esam_hal)
     return -1;
 }
 
+static  int f_esam_type_software_check(struct esam_698_data_t *para, void *esam_hal)
+{
+    struct esam_698_input_t *esam_in = para->input; 
+    struct esam_698_output_t *esam_out = para->output;
+    uint8_t head[4] = {0x80,0x0A,0x48,0x00};
+    uint16_t len=0;
+    uint16_t sw = 0;
+    uint16_t err_no = 0;
+    
+    if((esam_in->cmd_type > 0x08) && (esam_in->cmd_type < 0x0E))
+    {
+        head[3] = esam_in->cmd_type;
+    }
+    else{
+        return -1;
+    }
+
+    memcpy(esam_in->data_buf , esam_in->Dispersion_factor , esam_in->Dispersion_factor_len);
+    len += esam_in->Dispersion_factor_len;
+
+    memcpy(&esam_in->data_buf[len] , esam_in->RN_Data , esam_in->RN_Data_len);
+    len += esam_in->RN_Data_len;
+
+    memcpy(&esam_in->data_buf[len] , esam_in->data , esam_in->data_len);
+    len += esam_in->data_len;
+    
+    tx_esam(head , esam_in->data_buf , len , esam_hal);
+    
+    err_no = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
+    if(sw == 0x9000)
+    {
+        memcpy(esam_out->data , esam_in->data_buf , len);
+        esam_out->data_len = len;
+        esam_out->esam_err_no = 0x9000;
+        return 0;
+    }else
+    {
+        esam_out->esam_err_no = sw;
+        return -1;
+    }
+}
 
 typedef int(*pFunc)(struct esam_698_data_t *para, void *esam_hal);
 
@@ -610,6 +651,9 @@ int openM_ioctl(int fd, int request, void *param)
               break;
          case esam_type_read_esam_data:
               ret = f_esam_type_read_esam_data(esam_698_data, 0);
+              break;
+         case esam_type_software_check:
+              ret = f_esam_type_software_check(esam_698_data, 0);
               break;
          default:
               break;

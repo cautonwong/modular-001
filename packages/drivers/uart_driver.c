@@ -27,7 +27,7 @@
 #define UART_DEVICE_TIME_OUT2	  1
 
 #define UART_RX_TIME_OUT   10
-#define UART_TX_TIME_OUT   3
+#define UART_TX_TIME_OUT   2
 
 
 
