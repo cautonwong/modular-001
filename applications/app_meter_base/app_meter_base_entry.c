@@ -174,6 +174,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
           break;
       case MSG_POWERON:
         //上电恢复参数
+        read_mcu_rtc(0x00, instance);
         get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_static, &addr);//RAM对应的地址
         nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, (uint8_t*)addr, mbase_block_static_size); //将EPROM中的数据恢复到RAM;  
         //上电需要恢复数据

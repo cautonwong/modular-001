@@ -233,17 +233,17 @@ int baremetal_instance_entry_main(int argc, char** argv)
 
     //初始化时间
     instance->ms = 0;
-    struct tm time =
+    /*struct tm time =
     {
-        .tm_year = 2021 - 1900,   /* years are counted from 1900 */
-        .tm_mon = 3,                      /* 0 = January, 11 = December */
+        .tm_year = 2021 - 1900,  
+        .tm_mon = 3,                     
         .tm_mday = 30,
         .tm_hour = 23,
         .tm_min = 59,
         .tm_sec = 57
     };
-    memcpy(&instance->time, &time, sizeof(struct tm));
-
+    memcpy(&instance->time, &time, sizeof(struct tm));*/
+    read_mcu_rtc(0x00, instance);
     ///////////////////////////////申请一个cache的BLOCK = 02/////////////////////////////////////////////
     if (NULL == add_block(instance, RES_DEV_RAM, control_block_cache, (1024*3)))
     {
