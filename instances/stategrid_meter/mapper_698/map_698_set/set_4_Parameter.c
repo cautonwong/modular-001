@@ -515,12 +515,14 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 {
                     if((*(p+2+8*i+3) > 12) || (*(p+2+8*i+3) == 0)) return -DAR_RW_REJECT;
                     if((*(p+2+8*i+5) > 31) || (*(p+2+8*i+5) == 0)) return -DAR_RW_REJECT;
+                    if(*(p+2+8*i+5) > MonTab[*(p+2+8*i+3)]) return -DAR_RW_REJECT;
                 }
             }
             else
             {
                 if((*(p+3) > 12) || (*(p+3) == 0))  return -DAR_RW_REJECT;
                 if((*(p+5) > 31) || (*(p+5) == 0))  return -DAR_RW_REJECT;
+                if(*(p+5) > MonTab[*(p+3)])     return -DAR_RW_REJECT;
             }
             
             if(oad == 0x4014)   
