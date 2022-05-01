@@ -7,10 +7,11 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
     struct mbase_control_block_t* mbase_cb;
     uint8_t i;
     uint16_t OI;
-    uint8_t attr_index, attribute;
+    uint8_t attr_index, attribute,Num;
     int16_t len=-1;
     uint8_t *ptr, *p=buf;
     int32_t tmp=0;
+    uint32_t s_index=0;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
@@ -51,6 +52,13 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
       }
     }
     
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3);    //读取费率个数
+    nd_get_index(instance, s_index, (uint8_t*)&Num, 1);
+    if((Num==0) || (Num>12))
+    {
+        Num = 12;
+    }
+    Num += 1;
     switch(OI)
     {
         case 0x0000:
@@ -58,7 +66,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
             if(attr_index==0)
             {
                 buf[0] = 0x01;//数组
-                buf[1] = 13;//数据块
+                buf[1] = Num;//数据块
                 len = 2;
                 ptr = &buf[2];
                 if(attribute == 2)
@@ -66,7 +74,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                     switch(mode)
                     {
                     case 0x00:
-                      for(i=0;i<13;i++)
+                      for(i=0;i<Num;i++)
                       {
                           *ptr++ = TYPE_double_long;
                           tmp = Get_Cal_Active_Energy(mbase_cb , i , 0);
@@ -76,7 +84,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                       }                      
                       break;
                     case 0x01:
-                      for(i=0;i<13;i++)
+                      for(i=0;i<Num;i++)
                       {
                           *ptr++ = TYPE_double_long;
                           *ptr++ = 0x04;
@@ -90,7 +98,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                     switch(mode)
                     {
                     case 0x00:
-                      for(i=0;i<13;i++)
+                      for(i=0;i<Num;i++)
                       {
                           *ptr++ = TYPE_long64;
                           tmp = Get_Cal_Active_Energy(mbase_cb , i , 0);
@@ -103,7 +111,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                       }
                       break;
                     case 0x01:
-                      for(i=0;i<13;i++)
+                      for(i=0;i<Num;i++)
                       {
                           *ptr++ = TYPE_long64;
                           *ptr++ = 0x08;
@@ -113,7 +121,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                     }
                 }
             }
-            else if(attr_index<13)
+            else if(attr_index<Num)
             {
                 if(attribute == 2)
                 {
@@ -166,13 +174,13 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                 if(attribute == 2)
                 {
                     buf[0] = 0x01;//数组
-                    buf[1] = 13;//数据块
+                    buf[1] = Num;//数据块
                     len = 2;
                     ptr = &buf[2];
                     switch(mode)
                     {
                         case 0x00:
-                          for(i=0;i<13;i++)
+                          for(i=0;i<Num;i++)
                           {
                               *ptr++ = TYPE_double_long_unsigned;
                               memcpy(ptr, (uint8_t*)&mbase_cb->active_p[i], 4);
@@ -181,7 +189,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                           }                  
                           break;
                         case 0x01:
-                          for(i=0;i<13;i++)
+                          for(i=0;i<Num;i++)
                           {
                               *ptr++ = TYPE_double_long_unsigned;
                               *ptr++= 4;
@@ -210,7 +218,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                     }
                 }
             }
-            else if(attr_index<13)
+            else if(attr_index<Num)
             {
                 switch(mode)
                 {
@@ -252,13 +260,13 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                 if(attribute == 2)
                 {
                     buf[0] = 0x01;//数组
-                    buf[1] = 13;//数据块
+                    buf[1] = Num;//数据块
                     len = 2;
                     ptr = &buf[2];
                     switch(mode)
                     {
                     case 0x00:
-                      for(i=0;i<13;i++)
+                      for(i=0;i<Num;i++)
                       {
                           *ptr++ = TYPE_double_long_unsigned;
                           memcpy(ptr, (uint8_t*)&mbase_cb->active_n[i], 4);
@@ -267,7 +275,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                       }
                       break;
                     case 0x01:
-                      for(i=0;i<13;i++)
+                      for(i=0;i<Num;i++)
                       {
                           *ptr++ = TYPE_double_long_unsigned;
                           *ptr++ = 4;
@@ -296,7 +304,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                     }
                 }
             }
-            else if(attr_index<13)
+            else if(attr_index<Num)
             {
                 switch(mode)
                 {
