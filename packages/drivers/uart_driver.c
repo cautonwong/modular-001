@@ -72,6 +72,7 @@ void ndv_uart0_tx(void)
     }
     else
     {
+        RS485_RCV_EN();        
         mcu_uart_send_enable(0, 0);
     }
 }
