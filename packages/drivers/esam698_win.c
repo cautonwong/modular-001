@@ -6,7 +6,6 @@
 #include "fr_698_esam.h"
 #include "io_type.h"
 
-#if 1
 
 enum verification_choice_e
 {
@@ -179,7 +178,7 @@ static uint16 rx_esam(uint8 *rx_data , uint16 *len , const struct esam_hal_t *es
 }
 
 
-
+//已调整
 static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8_t type, void *esam_hal)
 {
     struct esam_698_output_t *esam_out = para->output;
@@ -188,6 +187,11 @@ static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8
     uint16_t len = 0 , sw = 0;
     uint16_t err_no = 0;
 	
+    if(esam_in->Dispersion_factor_len){
+        memcpy(esam_in->data_buf , esam_in->Dispersion_factor , esam_in->Dispersion_factor_len);
+        len += esam_in->Dispersion_factor_len;
+    }
+    
     if(esam_in->RN_Data_len){
         memcpy(esam_in->data_buf , esam_in->RN_Data , esam_in->RN_Data_len);
         len += esam_in->RN_Data_len;
@@ -229,7 +233,7 @@ static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8
 }
 
 
-
+//////////////////////////////////////////////////////////////////////////////////////////
 static int f_esam_type_get_esam_all_info1(struct esam_698_data_t *para, void *esam_hal)
 {
     struct esam_698_input_t *esam_in = para->input;
@@ -253,17 +257,6 @@ static uint8_t f_esam_type_get_esam_all_info2(struct esam_698_data_t *para , voi
     return  __comm_esam_handle(head, para, 1, esam_hal);
 }
 
-
-
-
-
-
-
-
-
-
-
-
 static uint8_t f_esam_type_broadcast(struct esam_698_data_t *para, void *esam_hal)
 {
     struct esam_698_input_t *esam_in = para->input;    
@@ -277,7 +270,6 @@ static uint8_t f_esam_type_broadcast(struct esam_698_data_t *para, void *esam_ha
       
     return  __comm_esam_handle(head, para, 1, esam_hal);
 }
-
 
 static  uint8_t f_esam_type_point_get_data2(struct esam_698_data_t *para, void *esam_hal)
 {
@@ -304,7 +296,7 @@ static  uint8_t f_esam_type_point_get_data2(struct esam_698_data_t *para, void *
 
 
 //////////////////////////////////////////////////////////////////////////////////
-
+//已调整
 static int f_esam_698_power_ctrl_on(struct esam_698_data_t *para, void *esam_hal)
 {
     ESAM_CS_HIGH();
@@ -331,6 +323,8 @@ static int f_esam_type_read_esam_no(struct esam_698_data_t *para, void *esam_hal
     //esam_in->AttachData_len = 0;
     esam_in->data_len = 0;
     //esam_in->MAC_len = 0;
+    esam_in->Dispersion_factor_len = 0;
+    
     esam_in->data = tx_data;
 
     return  __comm_esam_handle(head, para, 7, esam_hal);
@@ -347,6 +341,7 @@ static int f_esam_type_read_esam_data(struct esam_698_data_t *para, void *esam_h
     //esam_in->AttachData_len = 0;
     esam_in->data_len = 0;
     esam_in->MAC_len = 0;
+    esam_in->Dispersion_factor_len = 0;
 
     return  __comm_esam_handle(head, para, 1, esam_hal);
 }
@@ -366,6 +361,7 @@ static int f_esam_type_meet_consult(struct esam_698_data_t *para, void *esam_hal
     esam_in->AttachData_len = 0;
     esam_in->data_len = 32;
     esam_in->MAC_len = 4;
+    esam_in->Dispersion_factor_len = 0;
       
     if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
         if(esam_in->cmd_type == 1){//终端会话
@@ -393,6 +389,7 @@ static int f_esam_type_get_esam_p2_info2(struct esam_698_data_t *para , void *es
     esam_in->AttachData_len = 0;
     esam_in->data_len = 0;
     esam_in->MAC_len = 0;
+    esam_in->Dispersion_factor_len = 0;
       
     return  __comm_esam_handle(head, para, 1, esam_hal);
 }
@@ -420,6 +417,7 @@ static  int f_esam_type_ver_rn_mac(struct esam_698_data_t *para, void *esam_hal)
     esam_in->AttachData_len = 0;
     //esam_in->data_len = 0;
     esam_in->MAC_len = 0;
+    esam_in->Dispersion_factor_len = 0;
       
     if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
         if(esam_in->cmd_type == 1){
@@ -453,6 +451,7 @@ static  int f_esam_type_ver_sid_mac(struct esam_698_data_t *para, void *esam_hal
     //esam_in->AttachData_len = 0;
     //esam_in->data_len = 0;
     //esam_in->MAC_len = 0;
+    esam_in->Dispersion_factor_len = 0;
       
     if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
         memcpy(esam_out->data, esam_in->data_buf , esam_out->data_len); 
@@ -483,6 +482,7 @@ static int f_esam_type_sid_mac(struct esam_698_data_t *para, void *esam_hal)
     esam_in->AttachData_len = 0;
     //esam_in->data_len = 0;
     esam_in->MAC_len = 0;
+    esam_in->Dispersion_factor_len = 0;
     
     if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
         if(2 == esam_in->cmd_type){
@@ -513,6 +513,7 @@ static  int f_esam_type_write(struct esam_698_data_t *para, void *esam_hal)
     //esam_in->AttachData_len = 0;
     //esam_in->data_len = 0;
     //esam_in->MAC_len = 0;
+    esam_in->Dispersion_factor_len = 0;
       
     if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
         memcpy(esam_out->data, esam_in->data_buf , esam_out->data_len); 
@@ -523,44 +524,27 @@ static  int f_esam_type_write(struct esam_698_data_t *para, void *esam_hal)
 
 static  int f_esam_type_software_check(struct esam_698_data_t *para, void *esam_hal)
 {
-    struct esam_698_input_t *esam_in = para->input; 
     struct esam_698_output_t *esam_out = para->output;
+    struct esam_698_input_t *esam_in = para->input;    
     uint8_t head[4] = {0x80,0x0A,0x48,0x00};
-    uint16_t len=0;
-    uint16_t sw = 0;
-    uint16_t err_no = 0;
     
-    if((esam_in->cmd_type > 0x08) && (esam_in->cmd_type < 0x0E))
-    {
-        head[3] = esam_in->cmd_type;
-    }
-    else{
+    if((esam_in->cmd_type < 0x09) && (esam_in->cmd_type > 0x0D)){
         return -1;
     }
-
-    memcpy(esam_in->data_buf , esam_in->Dispersion_factor , esam_in->Dispersion_factor_len);
-    len += esam_in->Dispersion_factor_len;
-
-    memcpy(&esam_in->data_buf[len] , esam_in->RN_Data , esam_in->RN_Data_len);
-    len += esam_in->RN_Data_len;
-
-    memcpy(&esam_in->data_buf[len] , esam_in->data , esam_in->data_len);
-    len += esam_in->data_len;
+    head[3] = esam_in->cmd_type;
     
-    tx_esam(head , esam_in->data_buf , len , esam_hal);
-    
-    err_no = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
-    if(sw == 0x9000)
-    {
-        memcpy(esam_out->data , esam_in->data_buf , len);
-        esam_out->data_len = len;
-        esam_out->esam_err_no = 0x9000;
+    //esam_in->RN_Data_len = 0;
+    esam_in->AttachData_len = 0;
+    //esam_in->data_len = 0;
+    esam_in->MAC_len = 0;
+    //esam_in->Dispersion_factor_len = 0;
+      
+    if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
+        memcpy(esam_out->data, esam_in->data_buf , esam_out->data_len); 
         return 0;
-    }else
-    {
-        esam_out->esam_err_no = sw;
-        return -1;
     }
+    return -1;
+    
 }
 
 typedef int(*pFunc)(struct esam_698_data_t *para, void *esam_hal);
@@ -568,36 +552,29 @@ typedef int(*pFunc)(struct esam_698_data_t *para, void *esam_hal);
 
 struct Func_esam_698_t
 {
-    //uint8_t cmd;
     int(*pFunc)(struct esam_698_data_t *para, void *esam_hal);
 };
 
 
 static const struct Func_esam_698_t Func_esam[] = 
 {
-    {/*esam_type_poweron_cmd,*/               f_esam_698_power_ctrl_on},
-    {/*esam_type_poweroff_cmd,*/              f_esam_698_power_ctrl_off},
+    {f_esam_698_power_ctrl_on},
+    {f_esam_698_power_ctrl_off},
 
-    {/*esam_type_read_esam_no_cmd,*/          f_esam_type_read_esam_no},
-    {/*esam_type_read_esam_data_cmd,*/        f_esam_type_read_esam_data},
+    {f_esam_type_read_esam_no},
+    {f_esam_type_read_esam_data},
     
-    {/*esam_type_meet_consult_cmd,*/          f_esam_type_meet_consult},
-    {/*esam_type_get_esam_p2_info_cmd,*/      f_esam_type_get_esam_p2_info2},
+    {f_esam_type_meet_consult},
+    {f_esam_type_get_esam_p2_info2},
     
-    {/*esam_type_rn_mac_cmd,*/                f_esam_type_ver_rn_mac},
-    {/*esam_type_ver_sid_mac_cmd,*/           f_esam_type_ver_sid_mac},
-    {/*esam_type_sid_mac_cmd,*/               f_esam_type_sid_mac}, 
+    {f_esam_type_ver_rn_mac},
+    {f_esam_type_ver_sid_mac},
+    {f_esam_type_sid_mac}, 
     
-    {/*esam_type_write_cmd,*/                 f_esam_type_write},
+    {f_esam_type_write},
+    {f_esam_type_software_check}
 
-    
-#if 0
-    {esam_type_key_updata_cmd, f_esam_type_write},
-    {esam_type_poweron_cmd, esam_698_power_ctrl_on},
-#endif
 };
-
-
 
 
 int openM_ioctl(int fd, int request, void *param)
@@ -606,61 +583,5 @@ int openM_ioctl(int fd, int request, void *param)
         return Func_esam[request - esam_type_base].pFunc((struct esam_698_data_t *)param, 0);
     }
     return -1;
-#if 0
-    switch(request)
-    {
-         case esam_type_poweron:
-              ret = esam_698_power_ctrl_on(esam_698_data, 0);
-              break;
-         case esam_type_poweroff:
-              ret = esam_698_power_ctrl_off(esam_698_data, 0);
-              break;
-              
-         case esam_type_read_esam_no:
-              f_esam_type_read_esam_no(esam_698_data->input , esam_698_data->output , 0);
-              break;
-              
-         
-         case esam_type_get_esam_all_info1:
-              ret = f_esam_type_get_esam_all_info1(esam_698_data, 0);
-              break;
-         case esam_type_get_esam_all_info2:
-              ret = f_esam_type_get_esam_all_info2(esam_698_data , 0);
-              break;
-              
-         case esam_type_get_esam_p2_info:
-              ret = f_esam_type_get_esam_p2_info2(esam_698_data , 0);
-              break;
-         case esam_type_meet_consult:
-              ret = f_esam_type_meet_consult(esam_698_data, 0);
-              break;
-
-         case esam_type_plaintext_ciphertext_mac:
-              ret = f_esam_type_read_meter(esam_698_data, 0);
-              break;              
-              
-         case esam_type_hes_broadcast:
-         case esam_type_terminal_broadcast:
-              ret = f_esam_type_broadcast(esam_698_data , 0);
-              break;
-         case esam_type_hes_point_get_data2:
-              ret = f_esam_type_point_get_data2(esam_698_data, 0);
-              break;
-         case esam_type_hes_point_get_data4:
-              ret = f_esam_hes_point_get_data4(esam_698_data, 0);
-              break;
-         case esam_type_read_esam_data:
-              ret = f_esam_type_read_esam_data(esam_698_data, 0);
-              break;
-         case esam_type_software_check:
-              ret = f_esam_type_software_check(esam_698_data, 0);
-              break;
-         default:
-              break;
-    }
-    return ret;
-#endif
 }
-
-#endif
 

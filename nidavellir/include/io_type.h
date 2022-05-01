@@ -49,6 +49,7 @@ enum esam_cmd_e
     esam_type_sid_mac_cmd,
     
     esam_type_write_cmd,
+    esam_type_software_check,   
     
     esam_type_max_cmd,
 };

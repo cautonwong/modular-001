@@ -12,8 +12,6 @@ int app_rx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipe
     if(ctx == NULL){
         return 0;
     }
-    ctx->fr_err = 0;
-
     ctx->fr_err = fr_rx_698_entry(instance, pipeline, mesg);
     if (ctx->fr_err > 0)
     {
