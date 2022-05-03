@@ -168,21 +168,6 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
         return -1;
     }
 
-#if 0 //待调整  //记录编程列表
-    if ((session->client & 0xF0) == 0x00)//终端
-    {
-        cilent_index = 1;
-    }
-    else//主站及其他
-    {
-        cilent_index = 0;
-    }
-
-    if (current_connect_status_get(cilent_index))
-    {
-        program_object_list_add(req->oad.data, DT_OMD);
-    }
-#endif
 
     //修改关联对象后 清零处理
     ret = modify_capture_clr_pro(instance, oad);
@@ -304,22 +289,6 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
         return -1;
     }
 
-
-#if 0 //待调整  //记录编程列表
-    if ((session->client & 0xF0) == 0x00)//终端
-    {
-        cilent_index = 1;
-    }
-    else//主站及其他
-    {
-        cilent_index = 0;
-    }
-
-    if (current_connect_status_get(cilent_index))
-    {
-        program_object_list_add(req->oad.data, DT_OMD);
-    }
-#endif
 
     //修改关联对象后 清零处理
     ret = modify_capture_clr_pro(instance, oad);

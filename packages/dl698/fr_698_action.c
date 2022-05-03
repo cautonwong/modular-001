@@ -45,16 +45,18 @@ static int __fr_handle_one_object(struct instance_t* instance, struct pipeline_t
         if(SET_Request == ctx->service)
             req_type = 1;
         
-        r = security_mode_word_check(instance, pipeline, req_type, oad);
-        //安全模式不匹配 待调整
-#if 0        
+        r = security_mode_word_check(instance, pipeline, req_type, oad);    //安全模式
         if (r < 0)
         {
             ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
-            p[cache->wr++] = -r;//DAR
+            p[cache->wr++] = -r;
+            if(ACTION_Request == ctx->service)
+            {
+                p[cache->wr++] = 0;
+            }
             return r;
         }
-#endif         
+        
         if(ACTION_Request == ctx->service){
             r = fr_698_action(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
         }
@@ -127,7 +129,14 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
                 //延时                
                 
                 r = security_mode_word_check(instance, pipeline, 0, get_oad);
-                if(r < 0){
+                if(r < 0)
+                {
+                    ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+                    p[cache->wr++] = -r;
+                    if(ACTION_Request == ctx->service)
+                    {
+                        p[cache->wr++] = 0;
+                    }
                     return r;
                 }  
                 

@@ -15,55 +15,7 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 }
 
 #endif
-void dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline)
-{
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)pipeline->ctx;
-    uint8_t cilent_index, channel;
-    
-    for(cilent_index=0; cilent_index<2; cilent_index++)
-    {
-        //待调整
-#if 0
-        if ((s->block_timeout[cilent_index] > 0) && ((req->block[cilent_index].data != 0xffff) || (res->block[cilent_index].data != 0xffff)))
-        {
-            para = dl698_cfg_para_get(channel);
-            tick = hfp_get_tick_diff(s->block_timeout[cilent_index]);
-    
-            if (tick > ((req->do_then_get_timeout * 1000ul) + para->block_timeout))
-            {
-                aprint("block timeout\r\n");
-                sprint("warning: block timer is timeout\r\n");
-                s->block_timeout[cilent_index] = 0;
-                s->block_error_count[cilent_index] = 0;
-                req->block[cilent_index].data = 0xffff;
-                res->block[cilent_index].data = 0xffff;
-            }
-        }
-#endif
-        for(channel=0; channel<4; channel++)
-        {
-            if (mbase_cb->connect_status[channel][cilent_index])
-            {
-                if (mbase_cb->esam_connect_timeout[channel][cilent_index] > 0)
-                {
-                    mbase_cb->esam_connect_timeout[channel][cilent_index]--;
-                }
 
-                mbase_cb->connect_timeout_cnt[channel][cilent_index]++;
-
-                if ((mbase_cb->connect_timeout_cnt[channel][cilent_index] >  mbase_cb->connect_timeout[channel][cilent_index]) || (mbase_cb->esam_connect_timeout[channel][cilent_index] == 0))
-                {
-                    //待调整 主动释放链接
-                    //return dl698_al_release_notification(channel, s,cilent_index);
-                    fr_handle_disconnect2(instance,  pipeline, cilent_index,  channel);
-                    
-                }
-            }
-
-        }
-    }
-    
-}
 
 void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
 {
@@ -78,11 +30,7 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     
     if(mbase_control_block->commdisp_plc > 0)   mbase_control_block->commdisp_plc--;
 
-    if(mbase_control_block->irauthen_tmr > 0)   mbase_control_block->irauthen_tmr--;
-    
-    if(mbase_control_block->authen_tmr > 0)   mbase_control_block->authen_tmr--;
-
-    dl698_sec_task(instance, pipeline);
+    fr_dl698_sec_task(instance, pipeline);
 
 
 //    backlight_pro(instance, pipeline);
@@ -185,6 +133,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
         AllDisplayLCD(instance, pipeline);
         mbase_control_block->key_state = get_key_status(instance);//获取秘钥状态
         Magnetic_hold_relay_Init();
+        fr_dl698_init(instance, pipeline);
         break;
       case MSG_POWEROFF:
         //掉电需要保存数据

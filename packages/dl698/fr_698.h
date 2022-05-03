@@ -357,5 +357,5 @@ extern int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct
 extern int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern uint32_t dt_buf_to_second(uint8_t* dt);
 extern int second_to_dt_buf(uint32_t timesec, uint8_t* dt);
-
+extern uint8_t fr_698_current_connect_status_get(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index);
 #endif //__FR_698_H__

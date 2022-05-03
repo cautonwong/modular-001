@@ -80,7 +80,10 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
         
         r = security_mode_word_check(instance, pipeline, 0, oad);
         if(r < 0){
-            return r;
+            ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+            p[offset] = 0x00;//DAR
+            p[cache->wr++] = -r;
+            return 1;
         }  
 
         if(2 != ctx->timeTag_valid){

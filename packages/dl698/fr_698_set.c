@@ -83,7 +83,14 @@ static int __fr_handle_one_object(struct instance_t* instance, struct pipeline_t
             req_type = 1;
         
         r = security_mode_word_check(instance, pipeline, req_type, oad);
-        if(r < 0){
+        if(r < 0)
+        {
+            ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+            p[cache->wr++] = -r;
+            if(ACTION_Request == ctx->service)
+            {
+                p[cache->wr++] = 0;
+            }
             return r;
         }  
         
@@ -169,8 +176,12 @@ int fr_handle_set_action_request(struct instance_t* instance, struct pipeline_t*
                 //延时                
                 
                 r = security_mode_word_check(instance, pipeline, 0, get_oad);
-                if(r < 0){
-                    return r;
+                if(r < 0)
+                {
+                    ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+                    p[offset] = 0x00;//DAR
+                    p[cache->wr++] = -r;
+                    return 1;
                 }  
                 
                 offset = cache->wr;

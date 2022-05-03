@@ -259,12 +259,20 @@ int _f101_m129_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
 }
 
 //协商失效
-void connect_failture(struct instance_t* instance, struct context_698_t* ctx )
+int connect_failture(struct instance_t* instance, uint8_t* req_buf, struct context_698_t* ctx )
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-
-    uint8 cilent_index;
-
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t cilent_index, temp[42]={0};
+    uint8_t *p_req = req_buf;
+    uint8_t *p_res = &cache->buf_ptr[cache->wr];
+    uint8_t *p_res_tmp = p_res;
+    
+    if (*p_req++ != 0)
+    {
+        return -DAR_OTHERS_ERROR;
+    }
+    
     if (CA_TYPE_TER(ctx->CA)) 
     {
         cilent_index = 1;
@@ -276,6 +284,23 @@ void connect_failture(struct instance_t* instance, struct context_698_t* ctx )
 
     mbase_cb->connect_timeout[ctx->channel][cilent_index] = 0;
     mbase_cb->esam_connect_timeout[ctx->channel][cilent_index] = 0;
+    mbase_cb->authen_tmr = 0; // 待调整
+    mbase_cb->irauthen_tmr = 0;
+
+
+    *p_res++ = TYPE_date_time_s;
+    rtc_get_from_tm(instance,temp);
+    *p_res++ = temp[6];
+    *p_res++ = temp[5];
+    *p_res++ = temp[4];
+    *p_res++ = temp[3];
+    *p_res++ = temp[2];
+    *p_res++ = temp[1];
+    *p_res++ = temp[0];
+
+    cache->wr += (p_res - p_res_tmp);
+
+    return (p_req - req_buf);
 }
 
 
@@ -283,14 +308,14 @@ void connect_failture(struct instance_t* instance, struct context_698_t* ctx )
 
 int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx)
 {    
-    struct mbase_control_block_t* mbase_cb;
-    
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct pipeline_t* pipeline =  get_pipeline(instance, pid_meter_base); 
     struct context_698_t* p_ctx = (struct context_698_t*)ctx;
     struct fifo_t* cache = p_ctx->apdu;
     uint8_t *apdu_rx = p_ctx->apdu_d_rx + p_ctx->apdu_rx_offset;
     uint16_t offset = 0;
     
-    uint8_t  method,dar=0,buffer[16],keybuf[128],len1=0,len2=0;
+    uint8_t  method,dar=0,buffer[16],keybuf[128],len1=0,len2=0, cilent_index = 0;
     uint16_t oad,pageid=0,txlen=0,rxlen=0;
     uint8_t *p = buf;
     uint32_t temp = 0,s_index=0,addr=0;
@@ -299,10 +324,19 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
     method = (unsigned char)((id & 0x0000FF00) >> 8);    //方法
     
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
     if(mbase_cb == NULL)
     {
         return -1;
+    }
+    
+    if (CA_TYPE_TER(p_ctx->CA)) 
+    {
+        cilent_index = 1;
+    }
+    else
+    {
+        cilent_index = 0;
     }
     
     switch (oad)
@@ -361,12 +395,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             }
             else if(method == 0x05) //协商失效
             {
-                p = p + 1;
-                mbase_cb->authen_tmr = 0;
-                mbase_cb->irauthen_tmr = 0;
-
-                connect_failture(instance, ctx); 
-                return (p-buf);
+                return connect_failture(instance, buf, ctx); 
             }
             else if(method == 0x07) //秘钥更新
             {
@@ -380,8 +409,48 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 }
                 return (p-buf);
             }
+            else if(method == 0x09) //ESAM参数设置  待验证，在方法4的基础上改的
+            {
+                p = p + 3;
+                len1 = *p++;
+                memcpy(buffer, p, len1);//oad+data
+                p = p + len1;
+                p++;
+                memcpy((uint8_t*)&addr, p, 4);//sid
+                p = p + 4;
+                len2 = *p++;
+                mem_swap_cpy((uint8_t*)&txlen, p, 2);//len
+                p = p + 2;
+                memcpy(keybuf, p, len2-2);
+                p = p + len2-2;
+                p++;
+                memcpy((uint8_t*)&keybuf[len2-2], buffer, len1);
+                memcpy((uint8_t*)&keybuf[len2-2+len1], p, 4);//MAC
+                p = p + 4;
+                write_esam(instance, addr , keybuf , txlen);
+                
+                if(((addr & 0x00000700) == 0x00000700)) // sid
+                {
+                    if(0 != read_esam_info(instance, keybuf, 0x08))
+                    {
+                        mbase_cb->esam_auth_enable = keybuf[0];
+                    }
+                    else      
+                        mbase_cb->esam_auth_enable = 0;
+                }
+                return (p-buf);
+            }
             else if(method == 0x0B) //红外请求
             {
+                 if((cilent_index == 0) && (p_ctx->channel != chl_ir_698))//主站只能红外
+                {
+                    return -DAR_OTHERS_ERROR;
+                }
+                if((cilent_index == 1) && (p_ctx->channel == chl_ir_698))//终端不能红外
+                {
+                    return -DAR_OTHERS_ERROR;
+                }
+                
                 read_esam_no(instance, buffer);
                 memcpy(keybuf, (uint8_t*)&buffer[5], 8);//表号, 8bytes
 
@@ -393,11 +462,22 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 p = p + 2;
                 memcpy((uint8_t*)&keybuf[8], p, 8); //随机数
                 p = p + 8;
-                memcpy(buffer, keybuf, 16); // 表号，随机数
-                addr = 0x03080880;
-                txlen = 0x0010;
-                rxlen = write_esam(instance, addr , buffer , txlen);  //80 08 08 03 00 10 + 表号，随机数，返回密文
                 
+                if(cilent_index == 0)
+                {
+                    memcpy(buffer, keybuf, 16); // 表号，随机数
+                    addr = 0x03080880;
+                    txlen = 0x0010;
+                    rxlen = write_esam(instance, addr , buffer , txlen);  //80 08 08 03 00 10 + 表号，随机数，返回密文
+                }
+                else
+                {
+                    memcpy(buffer, (uint8_t*)&keybuf[8], 8); // 随机数
+                    addr = 0x04000880;
+                    txlen = 0x0008;
+                    rxlen = write_esam(instance, addr , buffer , txlen);  //0x80, 0x08, 0x00, 0x04, 0x00, 0x08 + ，随机数，返回密文
+                }
+             
                 addr = 0x08000480;
                 txlen = 0;
                 rxlen = write_esam(instance, addr , (uint8_t*)&keybuf[24] , txlen);  //返回随机数2
@@ -429,6 +509,15 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             }
             else if(method == 0x0C) //红外认证
             {
+                if((cilent_index == 0) && (p_ctx->channel != chl_ir_698))//主站只能红外
+                {
+                    return -DAR_OTHERS_ERROR;
+                }
+                if((cilent_index == 1) && (p_ctx->channel == chl_ir_698))//终端不能红外
+                {
+                    return -DAR_OTHERS_ERROR;
+                }
+
                 //80 06 00 01 00 08 + 密文
                 p = p + 2;
                 memcpy(buffer, p, 8); 
@@ -444,8 +533,29 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 {
                     addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + IrAuthenTime);
                     nd_get_index(instance, addr, buffer, 4); 
+                    
+                    mem_swap_cpy((uint8_t*)&temp, buffer, 4);
                     mem_swap_cpy((uint8_t*)&mbase_cb->irauthen_tmr, buffer, 4);
                     mbase_cb->irauthen_tmr = mbase_cb->irauthen_tmr * 60;
+                   
+                    if(cilent_index )
+                    {
+                        mbase_cb->term_auth_timeout = temp * 60;
+                    }
+                    else
+                    {
+                        mbase_cb->infrared_auth_timeout = temp * 60;
+                    }                
+                    
+                    if(cilent_index)//终端需断开所有应用链接
+                    {
+                        fr_handle_disconnect_all_channel(instance,  pipeline, cilent_index);
+                    }
+                    else
+                    {
+                        fr_handle_disconnect2(instance,  pipeline, cilent_index,  p_ctx->channel);
+                    }
+                    
                     return (p-buf);
                 }
             }

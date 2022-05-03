@@ -8,18 +8,20 @@ const uint8_t name_ir[5] = {'I', 'N', 'F', 'R', 'A'};
 const uint8_t name_plc[3] = {'P', 'L', 'C'};
 const uint8_t name_relay[5] = {'R', 'E', 'L', 'A', 'Y'};
 
-int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
+int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *ctx)
 {    
 #ifndef WIN32
-    struct mbase_control_block_t* mbase_cb;
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct pipeline_t* pipeline =  get_pipeline(instance, pid_meter_base); 
+    struct context_698_t* p_ctx = (struct context_698_t*)ctx;
     uint16_t oad,displayid;
-    uint8_t index,attribute,i,len,dispalyseque,maxnum, count = 0;;
+    uint8_t index,attribute,i,len,dispalyseque,maxnum, count = 0;
     uint8_t* p = buf;
     uint8_t *ptr_tmp = instance->apdu_cache;
-    uint32_t displayoad1,displayoad2,addr=0,s_index=0,atrtime=0;
-    uint8_t esam_inf[45]; 
+    uint32_t displayoad1,displayoad2,addr=0,s_index=0,atrtime=0, tmp32=0;
+    uint8_t esam_inf[45] = {0}; 
+    uint8_t cilent_index = 0;
     
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
         return -1;
@@ -28,6 +30,15 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
     index = (unsigned char)(id & 0x000000FF);
     attribute = (unsigned char)((id & 0x00001F00) >> 8);    //属性
+
+    if (CA_TYPE_TER(p_ctx->CA)) 
+    {
+        cilent_index = 1;
+    }
+    else
+    {
+        cilent_index = 0;
+    }
    
     if((oad == 0xF201) || (oad == 0xF202) || (oad == 0xF209) || (oad == 0xF205) || (oad == 0xF207))
     {
@@ -309,10 +320,32 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                     break;
                 case 0x06://会话时效剩余时间
                     *p++ = TYPE_double_long_unsigned;
-                    atrtime = mbase_cb->authen_tmr/60;
-                    mem_swap_cpy(p, (uint8_t*)&atrtime, 4);
+                    //atrtime = mbase_cb->authen_tmr/60;
+                    //mem_swap_cpy(p, (uint8_t*)&atrtime, 4);
+                    //p = p + 4;
+                    //return (p - buf);
+
+                    if(0 == fr_698_current_connect_status_get(instance,pipeline,  0))//连接失效返回0
+                    {
+                        tmp32 = 0;
+                    }
+                    else
+                    {
+                        tmp32 = fr_698_current_esam_timeout_get( instance, pipeline, 0);
+                    }
+                    if ((tmp32%60) > 0 && (tmp32%60) < 60)
+                    {
+                        tmp32 = (tmp32/60) +1;
+                    }
+                    else
+                    {
+                        tmp32 /= 60;
+                    }            
+
+                    mem_swap_cpy(p, (uint8_t*)&tmp32, 4);
                     p = p + 4;
                     return (p - buf);
+                    
                     break;
                 case 0x07://当前计数器
                     *p++ = TYPE_structure;
@@ -361,10 +394,69 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, struct r
                     return (p-buf);
                     break;
                 case 0x15://终端会话时间
-                    *p++ = TYPE_double_long_unsigned;
                     read_esam_info(instance, esam_inf,0X14);
-                    memcpy(p, esam_inf, 4);
-                    p = p + 4;
+                    
+                    if(index == 0)
+                    {
+                        *p++ = TYPE_structure;
+                        *p++ = 2;
+                        *p++ = TYPE_double_long_unsigned;
+                        memcpy(p, esam_inf, 4);
+                        p = p + 4;
+
+                        *p++ = TYPE_double_long_unsigned;
+                        if(0 == fr_698_current_connect_status_get(instance,pipeline,  1))//连接失效返回 0
+                        {
+                            tmp32 = 0;
+                        }
+                        else
+                        {
+                            tmp32 = fr_698_current_esam_timeout_get( instance, pipeline, 1);
+                        }
+                        if ((tmp32%60) > 0 && (tmp32%60) < 60)//
+                        {
+                            tmp32 = (tmp32/60) +1;
+                        }
+                        else
+                        {
+                            tmp32 /= 60;
+                        }
+                        mem_swap_cpy(p, (uint8_t*)&tmp32, 4);
+                        p = p + 4;
+                    }
+                    else if(index == 1)
+                    {
+                        *p++ = TYPE_double_long_unsigned;
+                        memcpy(p, esam_inf, 4);
+                        p = p + 4;
+                    }
+                    else if(index == 2)
+                    {
+                        *p++ = TYPE_double_long_unsigned;
+                        if(0 == fr_698_current_connect_status_get(instance,pipeline,  1))//连接失效返回 0
+                        {
+                            tmp32 = 0;
+                        }
+                        else
+                        {
+                            tmp32 = fr_698_current_esam_timeout_get( instance, pipeline, 1);
+                        }
+                        if ((tmp32%60) > 0 && (tmp32%60) < 60)
+                        {
+                            tmp32 = (tmp32/60) +1;
+                        }
+                        else
+                        {
+                            tmp32 /= 60;
+                        }
+                        mem_swap_cpy(p, (uint8_t*)&tmp32, 4);
+                        p = p + 4;
+                    }
+                    else
+                    {
+                        return -1;
+                    }
+
                     return (p-buf);
                     break;
             }

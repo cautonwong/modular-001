@@ -361,6 +361,7 @@ int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipelin
     return 1;
 }
 
+//给定通道号的 断开应用链接
 int fr_handle_disconnect2(struct instance_t* instance,  struct pipeline_t* pipeline,  uint8_t cilent_index, uint8_t channel)
 {
     struct message_t mesg;
@@ -395,7 +396,20 @@ int fr_handle_disconnect2(struct instance_t* instance,  struct pipeline_t* pipel
     return 1;
 }
 
+// 断开所有通道 应用链接
+int fr_handle_disconnect_all_channel(struct instance_t* instance,  struct pipeline_t* pipeline,  uint8_t cilent_index)
+{
+    uint8_t i;
+   
 
+    for(i = 0; i< 4; i++)
+    {
+         fr_handle_disconnect2(instance,  pipeline, cilent_index,  i);
+    }
+
+    return 1;
+
+}
 
 const struct connect_request_t cfg_connect = {
     0x1500, 

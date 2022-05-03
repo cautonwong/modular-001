@@ -166,7 +166,7 @@ extern int GET_7_Aggregate(struct instance_t* instance, uint32_t id, uint8_t* bu
 extern int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int SET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern int GET_e_Monitor(struct instance_t* instance, uint32_t id, uint8_t* buf);
-extern int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf);
+extern int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
 extern int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf);
 
 #define POINTER_EMPTY(a)  if(a == NULL) { return -1; }
@@ -1357,7 +1357,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
             return GET_e_Monitor(instance, id, buf);
             break;
         case 0xf://其他
-            return GET_f_Other(instance, id, buf);
+            return GET_f_Other(instance, id, buf, ctx);
             break;
         default:
             return -DAR_OBJECT_NOT_EXIST;
@@ -1640,7 +1640,7 @@ int para_init(struct instance_t* instance )
         if( parameter_item[i].data != 0 )
         {
             if (((parameter_item[i].paramerer_index >= MinuteFreeze_oad) && (parameter_item[i].paramerer_index <= ZeroLineErrS_seq))
-                || ((parameter_item[i].paramerer_index >= EventClr_List) && (parameter_item[i].paramerer_index <= MinFrez_Sectors)))
+                || ((parameter_item[i].paramerer_index >= EventClr_List) && (parameter_item[i].paramerer_index <= SecurityMode_EXData)))
             {
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + parameter_item[i].paramerer_index);
                 nd_set_index(instance, s_index, (uint8_t*)(parameter_item[i].data), parameter_item[i].len); 
@@ -1729,3 +1729,124 @@ void fr_698_MeterWr_program_judge(struct instance_t* instance, struct pipeline_t
     }
     
 }
+
+
+// 协议相关 、应用链接相关----------------start
+
+//更新（重新计数）应用连接超时时间
+void update_connect_timeout_cnt(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    uint8_t cilent_index = 0;
+
+    if (CA_TYPE_TER(ctx->CA))//from 终端
+    {
+        cilent_index = 1;
+    }
+    else
+    {
+        cilent_index = 0;
+    }
+
+
+    if (mbase_cb->connect_status[ctx->channel][cilent_index] == true)
+    {
+        mbase_cb->connect_timeout_cnt[ctx->channel][cilent_index] = 0;
+    }
+}
+
+// 698协议 秒任务
+void fr_dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t cilent_index, channel;
+
+    if(mbase_cb->irauthen_tmr > 0)   mbase_cb->irauthen_tmr--;
+    
+    if(mbase_cb->authen_tmr > 0)   mbase_cb->authen_tmr--;
+
+    for(cilent_index=0; cilent_index<2; cilent_index++)
+    {
+        //待调整
+#if 0
+        if ((s->block_timeout[cilent_index] > 0) && ((req->block[cilent_index].data != 0xffff) || (res->block[cilent_index].data != 0xffff)))
+        {
+            para = dl698_cfg_para_get(channel);
+            tick = hfp_get_tick_diff(s->block_timeout[cilent_index]);
+    
+            if (tick > ((req->do_then_get_timeout * 1000ul) + para->block_timeout))
+            {
+                aprint("block timeout\r\n");
+                sprint("warning: block timer is timeout\r\n");
+                s->block_timeout[cilent_index] = 0;
+                s->block_error_count[cilent_index] = 0;
+                req->block[cilent_index].data = 0xffff;
+                res->block[cilent_index].data = 0xffff;
+            }
+        }
+#endif
+        for(channel=0; channel<4; channel++)
+        {
+            if (mbase_cb->connect_status[channel][cilent_index])
+            {
+                if (mbase_cb->esam_connect_timeout[channel][cilent_index] > 0)
+                {
+                    mbase_cb->esam_connect_timeout[channel][cilent_index]--;
+                }
+
+                mbase_cb->connect_timeout_cnt[channel][cilent_index]++;
+
+                if ((mbase_cb->connect_timeout_cnt[channel][cilent_index] >  mbase_cb->connect_timeout[channel][cilent_index]) || (mbase_cb->esam_connect_timeout[channel][cilent_index] == 0))
+                {
+                    //待调整    释放链接通知
+                    //return release_notification(channel, s,cilent_index);
+                    fr_handle_disconnect2(instance,  pipeline, cilent_index,  channel);
+                    
+                }
+            }
+
+        }
+    }
+    
+}
+
+// 698协议 初始化
+void fr_dl698_init(struct instance_t* instance,  struct pipeline_t* pipeline)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+
+    mbase_cb->infrared_auth_timeout = 0;
+    mbase_cb->term_auth_timeout = 0;
+
+#if 0 // 待调整
+    report_poweron_second = 0;
+    report_time_second = 0;
+    report_timeout_count_3011= 0;
+    report_time_second_3011= 0;
+    report_count_3011_start = 0;
+    reort_piid = 0;
+    current_connect_channel[0] = 0;        
+    current_connect_channel[1] = 0;
+#endif 
+
+    fr_handle_disconnect_all_channel(instance,  pipeline, 0);
+    fr_handle_disconnect_all_channel(instance,  pipeline, 1);
+
+
+
+#if 0 // 待调整
+    /*模块eventout管脚上电控制*/
+    if (channel == 0x1062)
+    {
+        modem_event_pin_set(0);
+    }
+#endif 
+    
+}
+
+
+// 应用链接相关----------------end
+
+

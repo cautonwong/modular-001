@@ -204,7 +204,7 @@ int fr_security_request(struct instance_t* instance, struct pipeline_t* pipeline
     }
     
     ret = fr_698_security_request_check(instance, pipeline); 
-    if(ret <= 0)//待调整  错误异常应答或不应答
+    if(ret <= 0)//待调整      错误异常应答或不应答
     {
         if(ret == 0)// 不应答
         {
@@ -313,12 +313,12 @@ int fr_698_esam_plain_read_check(struct instance_t* instance, struct pipeline_t*
     uint8_t i;
     uint16_t oi;
 
-#if 0 // 待调整 需开启
-    if ((0 == ctrl_block->esam_auth_enable) || (dl698_current_connect_status_get(client_index))) // 待调整 身份认证未启用或当前客户机应用链接状态
+
+    if ((0 == ctrl_block->esam_auth_enable) || (true == fr_698_current_connect_status_get(instance, pipeline, client_index))) //身份认证未启用或当前客户机应用链接状态
     {
         return 1;
     }
-#endif
+
     if ((1 == client_index) && ctrl_block->term_auth_timeout)//终端
     {
         return 1;
@@ -519,17 +519,17 @@ static int __security_mode_word_check(struct instance_t* instance, struct pipeli
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     uint8_t *tmp_buf = instance->apdu_cache;
-    uint8_t cilent_index = 0; 
+    uint8_t client_index = 0; 
     uint16_t security_mode = 0;
     int ret;
 
     if (CA_TYPE_TER(ctx->CA))//from 终端
     {
-        cilent_index = 1;
+        client_index = 1;
     }
     else
     {
-        cilent_index = 0;
+        client_index = 0;
     }
 
     if (ctrl_block->factor_mode == true)
@@ -540,7 +540,7 @@ static int __security_mode_word_check(struct instance_t* instance, struct pipeli
 #if 1// 待调整
     if (ctx->channel == chl_ir_698)//红外    待调整
     {
-        if (cilent_index == 1)//拒绝终端通过红外访问
+        if (client_index == 1)//拒绝终端通过红外访问
         {
             return -DAR_RW_REJECT;
         }
@@ -655,7 +655,7 @@ static int __security_mode_word_check(struct instance_t* instance, struct pipeli
             }
             else
             {
-                ret = fr_698_esam_plain_read_check(instance, pipeline, cilent_index, oad);
+                ret = fr_698_esam_plain_read_check(instance, pipeline, client_index, oad);
                 if (ret >= 0)
                     return 1;
                 else
@@ -682,22 +682,15 @@ int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pip
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     int    r = __security_mode_word_check(instance, pipeline, cmd, oad);
         //安全模式不匹配 待调整
-#if 0        
-    if (r < 0)
-    {
-        ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
-        p[cache->wr++] = -r;//DAR
-        return r;
-    }
-#endif  
-    return 0;
+ 	return 1；
+    //return r;
 }
 #endif
 #endif    //----698安全模式字-----------------------------结束
 
 
 
-uint8_t fr_698_current_connect_status_get(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cilent_index)
+uint8_t fr_698_current_connect_status_get(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -707,7 +700,7 @@ uint8_t fr_698_current_connect_status_get(struct instance_t* instance, struct pi
 
     for (i = 0; i < (sizeof(commchannel) / sizeof(commchannel[0])); i++)
     {
-        if (ctrl_block->current_connect_channel[cilent_index] == commchannel[i]) // 应用连接时 current_connect_channel置位 待调整
+        if (ctrl_block->current_connect_channel[client_index] == commchannel[i]) // 应用连接时 current_connect_channel置位 待调整
         {
             break;
         }
@@ -717,7 +710,7 @@ uint8_t fr_698_current_connect_status_get(struct instance_t* instance, struct pi
         return 0;
     }
 
-    rlt |= ctrl_block->connect_status[i][cilent_index];
+    rlt |= ctrl_block->connect_status[i][client_index];
 
     return rlt;
 }
@@ -749,17 +742,17 @@ static int fr_698_security_request_check(struct instance_t* instance, struct pip
 
     uint32_t oad = 0;
     uint8_t  *tmp;
-    uint8_t cilent_index,cipher_sidmac = 0;
+    uint8_t client_index,cipher_sidmac = 0;
     int ret = 0;
 
     
     if (CA_TYPE_TER(ctx->CA))//终端
     {
-        cilent_index = 1;
+        client_index = 1;
     }
     else
     {
-        cilent_index = 0;
+        client_index = 0;
     }
 
 #if 1 
@@ -775,7 +768,7 @@ static int fr_698_security_request_check(struct instance_t* instance, struct pip
         tmp = ctx->security_data;
         oad =   (tmp[3] << 24) + (tmp[4] << 16) + (tmp[5] << 8) + tmp[6]; 
 
-        ret = fr_698_esam_plain_read_check(instance, pipeline, cilent_index, oad);
+        ret = fr_698_esam_plain_read_check(instance, pipeline, client_index, oad);
         if (ret > 0)
         {
             // 避免esam电源未关闭   应该两个连接都不在的时候应该关闭esam电源  暂时先打补丁
@@ -792,7 +785,7 @@ static int fr_698_security_request_check(struct instance_t* instance, struct pip
     if(judge == true)
     {            
         if (((ctx->security_choice == 1) || (ctx->verification_choice == AUTH_SID_MAC) || (ctx->verification_choice == AUTH_RN_MAC) || (ctx->verification_choice == AUTH_SID))
-        && (fr_698_current_connect_status_get(instance, pipeline, cilent_index)== false))
+        && (fr_698_current_connect_status_get(instance, pipeline, client_index)== false))
         {
             //待调整 直接报错
             //*length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);
@@ -801,9 +794,9 @@ static int fr_698_security_request_check(struct instance_t* instance, struct pip
 
         if (ctx->security_choice == 0) // 明文    
         {
-            if(cilent_index == 0)//主站
+            if(client_index == 0)//主站
             {
-                if( ctrl_block->esam_auth_enable && (fr_698_current_connect_status_get(instance, pipeline, cilent_index)== false))
+                if( ctrl_block->esam_auth_enable && (fr_698_current_connect_status_get(instance, pipeline, client_index)== false))
                 {
                     if (ctx->channel == chl_ir_698) //红外情况下，有红外认证，不判断身份认证开启和关闭
                     {
@@ -824,7 +817,7 @@ static int fr_698_security_request_check(struct instance_t* instance, struct pip
             }
             else//终端
             {
-                if( ctrl_block->esam_auth_enable && (fr_698_current_connect_status_get(instance, pipeline, cilent_index)== false) && (ctrl_block->term_auth_timeout == 0))
+                if( ctrl_block->esam_auth_enable && (fr_698_current_connect_status_get(instance, pipeline, client_index)== false) && (ctrl_block->term_auth_timeout == 0))
                 {
                     //待调整 直接报错
                     //*length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明
@@ -849,7 +842,7 @@ static int fr_698_security_request_check(struct instance_t* instance, struct pip
         if (SA_TYPE(ctx->SA) == 0x00)  // 单地址 
         {
             // 广播校时 安全传输时 应判断应用连接状态,且为密文+SID_MAC, 其他情况都返回拒绝。
-            if ((fr_698_current_connect_status_get(instance, pipeline, cilent_index)== false) || (cipher_sidmac == 0 ))
+            if ((fr_698_current_connect_status_get(instance, pipeline, client_index)== false) || (cipher_sidmac == 0 ))
             {
                 //待调整
                 //*length = dl698_al_security_error(tx_apdu, DAR_RW_REJECT);
@@ -899,7 +892,7 @@ int fr698_inital(struct instance_t* instance, struct pipeline_t* pipeline)
 #endif
 
 
-uint32_t fr_698_current_esam_timeout_get(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cilent_index)
+uint32_t fr_698_current_esam_timeout_get(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index)
 {
     uint8_t i = 0;
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
@@ -909,7 +902,7 @@ uint32_t fr_698_current_esam_timeout_get(struct instance_t* instance, struct pip
     
     for (i = 0; i < (sizeof(commchannel) / sizeof(commchannel[0])); i++)
     {
-        if (ctrl_block->current_connect_channel[cilent_index] == commchannel[i]) // 应用连接时 current_connect_channel置位 待调整
+        if (ctrl_block->current_connect_channel[client_index] == commchannel[i]) // 应用连接时 current_connect_channel置位 待调整
         {
             break;
         }
@@ -920,7 +913,7 @@ uint32_t fr_698_current_esam_timeout_get(struct instance_t* instance, struct pip
         return 0;
     }
     
-    return ctrl_block->esam_connect_timeout[i][cilent_index];
+    return ctrl_block->esam_connect_timeout[i][client_index];
 }
 
 uint8_t fr_698_current_channel_num_get(struct instance_t* instance, struct pipeline_t* pipeline)
@@ -929,22 +922,22 @@ uint8_t fr_698_current_channel_num_get(struct instance_t* instance, struct pipel
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
-    uint8_t cilent_index = 0;
+    uint8_t client_index = 0;
     uint8_t commchannel[4] = { chl_ir_698, chl_RS485_1_698,  chl_PLC_698,  chl_RS485_2_698 };
    
     
     if (CA_TYPE_TER(ctx->CA))//终端
     {
-        cilent_index = 1;
+        client_index = 1;
     }
     else
     {
-        cilent_index = 0;
+        client_index = 0;
     }
     
     for (i = 0; i < (sizeof(commchannel) / sizeof(commchannel[0])); i++)
     {
-        if (ctrl_block->current_connect_channel[cilent_index] == commchannel[i]) // 应用连接时 current_connect_channel置位 待调整
+        if (ctrl_block->current_connect_channel[client_index] == commchannel[i]) // 应用连接时 current_connect_channel置位 待调整
         {
             break;
         }
