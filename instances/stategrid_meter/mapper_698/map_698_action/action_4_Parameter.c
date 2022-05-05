@@ -46,7 +46,7 @@ unsigned long GetTotalSec( unsigned char* Addr )
 	return Sec;
 }
 
-int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
+int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
     struct mbase_control_block_t* mbase_cb;
     struct pipeline_t* pipeline;

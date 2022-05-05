@@ -27,7 +27,7 @@ const ATBE3 Atbe3_table[] =
     0x2041,     0,      unit_undefined,
 };
 
-int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode)
+int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, void *ctx)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;

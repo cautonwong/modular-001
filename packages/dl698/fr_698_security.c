@@ -682,7 +682,7 @@ int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pip
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     int    r = __security_mode_word_check(instance, pipeline, cmd, oad);
         //安全模式不匹配 待调整
- 	return 1；
+ 	return 1;
     //return r;
 }
 #endif

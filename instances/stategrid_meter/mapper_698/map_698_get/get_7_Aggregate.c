@@ -3,7 +3,7 @@
 
 
 
-int GET_7_Aggregate(struct instance_t* instance, uint32_t id, uint8_t* buf)
+int GET_7_Aggregate(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {   
     struct mbase_control_block_t* mbase_cb;
     

@@ -305,7 +305,7 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
 
 
 
-int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
+int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;

@@ -227,7 +227,7 @@ uint8_t CheckData400C(uint8_t *p,uint8_t index)
 
 extern const uint8_t  MonTab[13];// = {	0,31,28,31,30,31,30,31,31,30,31,30,31};
 
-int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf)
+int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad,year2;

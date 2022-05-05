@@ -183,7 +183,7 @@ int set_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
 
 
 
-int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf)
+int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;

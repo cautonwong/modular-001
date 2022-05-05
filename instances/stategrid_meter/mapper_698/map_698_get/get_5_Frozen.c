@@ -104,7 +104,7 @@ int get_frozen_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, stru
     return (p - buf);
 }
 
-int GET_5_Frozen(struct instance_t* instance, uint32_t oad, uint8_t* buf)
+int GET_5_Frozen(struct instance_t* instance, uint32_t oad, uint8_t* buf, void *ctx)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint8_t dar = DAR_SUCCESS;

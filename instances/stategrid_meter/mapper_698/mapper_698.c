@@ -143,31 +143,31 @@ extern const uint32_t record_head_t0[];
 
 extern void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id);
 
-extern int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode);
-extern int GET_1_Demand(struct instance_t* instance, uint32_t id, uint8_t* buf);
-extern int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode);
+extern int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, void *ctx);
+extern int GET_1_Demand(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
+extern int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, void *ctx);
 
-extern int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf);
-extern int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf);
+extern int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
+extern int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
 
-extern int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf);
-extern int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf);
+extern int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
+extern int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
 
-extern int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf);
-extern int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf);
-extern int ACTION_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf);
+extern int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
+extern int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
+extern int ACTION_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
 extern int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *pctx);
 extern int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx);
 
-extern int GET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf);
-extern int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf);
-extern int GET_6_Collection(struct instance_t* instance, uint32_t id, uint8_t* buf);
-extern int GET_7_Aggregate(struct instance_t* instance, uint32_t id, uint8_t* buf);
-extern int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf);
-extern int SET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf);
-extern int GET_e_Monitor(struct instance_t* instance, uint32_t id, uint8_t* buf);
+extern int GET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
+extern int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
+extern int GET_6_Collection(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
+extern int GET_7_Aggregate(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
+extern int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
+extern int SET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
+extern int GET_e_Monitor(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
 extern int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-extern int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf);
+extern int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
 
 #define POINTER_EMPTY(a)  if(a == NULL) { return -1; }
 struct record_item_t
@@ -1327,34 +1327,34 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
         switch (OIA1)
         {
         case 0x0://电量
-            return GET_0_Energy(instance, id, buf, h_mode);
+            return GET_0_Energy(instance, id, buf, h_mode, ctx);
             break;
         case 0x1://需量
-            return GET_1_Demand(instance, id, buf);
+            return GET_1_Demand(instance, id, buf, ctx);
             break;
         case 0x2://变量
-            return GET_2_Variable(instance, id, buf, h_mode);
+            return GET_2_Variable(instance, id, buf, h_mode, ctx);
             break;
         case 0x3://事件
-            return GET_3_Event(instance, id, buf);
+            return GET_3_Event(instance, id, buf, ctx);
             break;
         case 0x4://参变量
-            return GET_4_Parameter(instance, id, buf);
+            return GET_4_Parameter(instance, id, buf, ctx);
             break;
         case 0x5://冻结
-            return GET_5_Frozen(instance, id, buf);
+            return GET_5_Frozen(instance, id, buf, ctx);
             break;
         case 0x6://采集
-            return GET_6_Collection(instance, id, buf);
+            return GET_6_Collection(instance, id, buf, ctx);
             break;
         case 0x7://集合
-            return GET_7_Aggregate(instance, id, buf);
+            return GET_7_Aggregate(instance, id, buf, ctx);
             break;
         case 0x8://控制
-            return GET_8_Control(instance, id, buf);
+            return GET_8_Control(instance, id, buf, ctx);
             break;
         case 0xe://监控
-            return GET_e_Monitor(instance, id, buf);
+            return GET_e_Monitor(instance, id, buf, ctx);
             break;
         case 0xf://其他
             return GET_f_Other(instance, id, buf, ctx);
@@ -1368,15 +1368,15 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
       	switch (OIA1)
         {
         case 0x3:// 事件
-            return SET_3_Event(instance, id, buf);
+            return SET_3_Event(instance, id, buf, ctx);
         case 0x4://参变量
-            return SET_4_Parameter(instance, id, buf);
+            return SET_4_Parameter(instance, id, buf, ctx);
         case 0x5:// 事件
-            return SET_5_Frozen(instance, id, buf);
+            return SET_5_Frozen(instance, id, buf, ctx);
         case 0x8:// 控制类
-            return SET_8_Control(instance, id, buf);
+            return SET_8_Control(instance, id, buf, ctx);
         case 0xf://其他
-            return SET_f_Other(instance, id, buf);
+            return SET_f_Other(instance, id, buf, ctx);
         default:
             return -DAR_OBJECT_NOT_EXIST;
             break;
@@ -1386,11 +1386,11 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
         switch (OIA1)
         {
         case 0x3://事件
-            return ACTION_3_Event(instance, id, buf);
+            return ACTION_3_Event(instance, id, buf, ctx);
         case 0x4://参变量
-            return ACTION_4_Parameter(instance, id, buf);
+            return ACTION_4_Parameter(instance, id, buf, ctx);
         case 0x5://冻结
-            return ACTION_5_Frozen(instance, id, buf);
+            return ACTION_5_Frozen(instance, id, buf, ctx);
         case 0x8://控制类
             return ACTION_8_Parameter(instance, id, buf, ctx);
         case 0xf://其他

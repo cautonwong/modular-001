@@ -3,7 +3,7 @@
 
 #define		F_RemoteRelayOn  	    0x01	//保电
 
-int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf)
+int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad;

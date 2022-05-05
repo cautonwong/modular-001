@@ -156,7 +156,7 @@ int general_get_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
     return -1;
 }
 
-int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
+int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint32_t addr = 0,s_index=0;

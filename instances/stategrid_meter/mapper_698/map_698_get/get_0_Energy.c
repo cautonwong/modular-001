@@ -2,7 +2,7 @@
 #include "fr_698.h"
 
 
-int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode)
+int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, void *ctx)
 {    
     struct mbase_control_block_t* mbase_cb;
     uint8_t i;

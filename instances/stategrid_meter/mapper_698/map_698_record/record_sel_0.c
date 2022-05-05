@@ -3,7 +3,7 @@
 
 
 
-int GET_record_sel_0(struct instance_t* instance, uint32_t id, uint8_t* buf, struct resources_obj_t* obj)
+int GET_record_sel_0(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {    
     return -1;
 }

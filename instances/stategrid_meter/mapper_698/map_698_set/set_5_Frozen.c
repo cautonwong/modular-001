@@ -296,7 +296,7 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
     return (p - buf);// 
 }
 
-int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf)
+int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
     struct mbase_control_block_t* mbase_cb;
 
