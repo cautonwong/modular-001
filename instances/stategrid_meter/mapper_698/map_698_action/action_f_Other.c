@@ -1,6 +1,125 @@
 #include "nidavellir.h"
 #include "fr_698.h"
 
+#define PROGRAMEND1	0x03FFFF	//程序空间1结束地址
+#define PROGRAMPROZ	0x03FFFF//0x03F800	//程序保护区起始地址
+#define DefEsamProcLen  2000 //默认ESAM处理的最大长度：字节
+
+
+
+void Xor_Data( unsigned char *BufA, unsigned char *BufB, uint16 Num )
+{
+	uint16 i;
+
+	for( i=0; i<Num; i++ )
+	{
+		BufA[i] ^= BufB[i];
+	}
+}
+uint16 Byte2uShort(uint8_t* byte)
+{
+  return byte[1]+((uint16)byte[0]<<8);
+}
+uint32 Byte2uInt(uint8_t* byte)
+{
+  return byte[3]+((uint32)byte[2]<<8) + ((uint32)byte[1]<<16) +((uint32)byte[0]<<24) ;
+}
+//文件传输类接口
+uint16_t ActionFile( struct instance_t* instance, uint32_t id, uint8_t* inbuf, uint16_t buf_size, void *ctx, uint8_t* outbuf)
+{
+    struct mbase_control_block_t* mbase_cb;
+	unsigned char i, result;
+	//RetFrame Ret = {0,0,0,0};
+	//union B16_B08  DataLen;
+	unsigned char *Ptr;//,codebuf[400];
+	unsigned char BufA[16], RnBuf[64];
+//	unsigned char code *Code_Flash_Char;
+    const unsigned char *Code_Flash_Char;
+	unsigned char *RtBuf = instance->apdu_cache;
+	uint16 cc16,DataLen;
+	uint32 cc32;
+    uint8_t *p = inbuf;
+    
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    if(mbase_cb == NULL)
+    {
+        return -1;
+    }
+
+	if( !Byte2uShort(p+17) || ( Byte2uShort(p+17) > DefEsamProcLen ) || ((Byte2uShort(p+17)%64)!=0) || (p[3] != 0x00) ) 
+	{
+		return -DAR_RW_REJECT;//每次比较数据长度<1K 拒绝读写
+	}
+	
+	result = p[5];
+	mem_swap_cpy((uint8_t*)&DataLen, p+17, 2);	//比较的数据长度
+  
+	//判断地址是否异常和准备数据
+	for( i=0; i<3; i++ )
+	{
+		if( i== 0 ) //比对因子8字节
+		{
+			Ptr = BufA;
+			cc16 = 16; 
+			cc32 = Byte2uInt(p+7);//比对因子起始地址
+		}
+		else if( i== 1 ) //随机数64/4字节
+		{
+			Ptr = RnBuf;
+			cc16 = 64; 
+			cc32 = Byte2uInt(p+12);//比对数据起始地址
+		}
+		else 				//比对数据
+		{
+			Ptr = RtBuf;
+			cc16 = Byte2uShort( p+17); 
+			cc32 = Byte2uInt(p+12);//比对数据起始地址
+		}
+		Code_Flash_Char = (const uint8*)cc32;
+		if( (cc32 > PROGRAMEND1)|| p[7] || p[12] )
+		{
+			break;		//地址异常
+		}
+		else if(cc32+cc16>PROGRAMEND1+1)
+		{
+			memset(Ptr,0,cc16);
+			memcpy(Ptr,Code_Flash_Char,PROGRAMEND1+1-cc32);
+			Ptr[PROGRAMEND1+1-cc32] = 0x80;
+		}
+		else if( (cc32 < PROGRAMPROZ) && (cc32+cc16 > PROGRAMPROZ) )
+		{
+			memset(Ptr,0,cc16);
+			memcpy(Ptr,Code_Flash_Char,PROGRAMPROZ-cc32);
+			Ptr[PROGRAMPROZ-cc32] = 0x80;
+		}
+		else
+		{
+			memcpy(Ptr,Code_Flash_Char,cc16);
+		}
+	}
+	
+	if( i != 3 )
+	{
+		return -DAR_ADDRESS_ABNORMAL;   //地址异常
+	}
+	
+	Xor_Data( BufA, BufA+8, 8 ); //16字节比对因子，前后8字节异或，得到8字节比对因子BufA
+
+	for( i=1; i<4; i++ )
+	{
+		Xor_Data( RnBuf, RnBuf+16*i, 16 ); //随机数平均4等分，异或后得到data5
+	}
+	
+	cc16 = cc16/4;
+	for( i=1; i<4; i++ )
+	{
+		Xor_Data( RtBuf, RtBuf+cc16*i, cc16 ); //数据平均4等分，异或后得到data10
+	}
+
+	return software_esam_check(instance, BufA, RnBuf, RtBuf, result, cc16, outbuf);
+
+}
+
 int _f101_m127_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx)
 {
     struct mbase_control_block_t* mbase_cb;
@@ -317,9 +436,13 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
     
     uint8_t  method,dar=0,buffer[16],keybuf[128],len1=0,len2=0, cilent_index = 0;
     uint16_t oad,pageid=0,txlen=0,rxlen=0;
+    int16_t complen;
     uint8_t *p = buf;
     uint32_t temp = 0,s_index=0,addr=0;
     uint8_t* ptr_tmp = instance->apdu_cache;
+    
+    //struct fifo_t* cache_t = p_ctx->apdu;
+    uint8_t* p_tx = cache->buf_ptr;
 
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
     method = (unsigned char)((id & 0x0000FF00) >> 8);    //方法
@@ -341,6 +464,42 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
     
     switch (oad)
     {
+case 0xF001://软件比对
+            if(method != 0x0a)  return -1;
+            
+            complen = ActionFile(instance, id, p, buf_size, ctx, ptr_tmp);
+            if(complen > 0)
+            {
+                //p[cache->wr++] = 0;  //成功
+                //p[cache->wr++] = 1;  //有数据
+                cache->wr = cache->wr + 2;
+                p_tx[cache->wr++] = TYPE_structure;
+                p_tx[cache->wr++] = 1;
+                p_tx[cache->wr++] = TYPE_octet_string;
+                
+                if(complen <= 127) 
+                {
+                    p_tx[cache->wr++] = complen;
+                }
+                else if(complen <= 0xff)
+                {
+                    p_tx[cache->wr++] = 0x81;
+                    p_tx[cache->wr++] = complen;
+                }
+                else 
+                {
+                    p_tx[cache->wr++] = 0x82;
+                    p_tx[cache->wr++] = complen>>8;
+                    p_tx[cache->wr++] = complen;
+                }
+                
+                memcpy((uint8_t*)&p_tx[cache->wr], ptr_tmp, complen);
+                cache->wr = cache->wr + complen;
+                return (22);
+            }
+            else 
+              return -1;
+            break;
         case 0xF100://ESAM
             if(method == 0x03)  //ESAM数据读取
             {

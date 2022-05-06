@@ -524,27 +524,73 @@ static  int f_esam_type_write(struct esam_698_data_t *para, void *esam_hal)
 
 static  int f_esam_type_software_check(struct esam_698_data_t *para, void *esam_hal)
 {
+    struct esam_698_input_t *esam_in = para->input; 
     struct esam_698_output_t *esam_out = para->output;
-    struct esam_698_input_t *esam_in = para->input;    
     uint8_t head[4] = {0x80,0x0A,0x48,0x00};
+    uint16_t len=0;
+    uint16_t sw = 0;
+    uint16_t err_no = 0;
     
-    if((esam_in->cmd_type < 0x09) && (esam_in->cmd_type > 0x0D)){
+    if((esam_in->cmd_type > 0x08) && (esam_in->cmd_type < 0x0E))
+    {
+        head[3] = esam_in->cmd_type;
+    }
+    else{
         return -1;
     }
-    head[3] = esam_in->cmd_type;
+
+    memcpy(esam_in->data_buf , esam_in->Dispersion_factor , esam_in->Dispersion_factor_len);
+    len += esam_in->Dispersion_factor_len;
+
+    memcpy(&esam_in->data_buf[len] , esam_in->RN_Data , esam_in->RN_Data_len);
+    len += esam_in->RN_Data_len;
+
+    memcpy(&esam_in->data_buf[len] , esam_in->data , esam_in->data_len);
+    len += esam_in->data_len;
     
-    //esam_in->RN_Data_len = 0;
-    esam_in->AttachData_len = 0;
-    //esam_in->data_len = 0;
-    esam_in->MAC_len = 0;
-    //esam_in->Dispersion_factor_len = 0;
-      
-    if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
-        memcpy(esam_out->data, esam_in->data_buf , esam_out->data_len); 
+    tx_esam(head , esam_in->data_buf , len , esam_hal);
+    
+    err_no = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
+    if(sw == 0x9000)
+    {
+        memcpy(esam_out->data , esam_in->data_buf , len);
+        esam_out->data_len = len;
+        esam_out->esam_err_no = 0x9000;
         return 0;
+    }else
+    {
+        esam_out->esam_err_no = sw;
+        return -1;
     }
-    return -1;
+}
+
+uint16_t software_esam_check(struct instance_t* instance, uint8_t *key, uint8_t *rn, uint8_t *data, uint8_t p2, uint16_t datalen, uint8_t *outbuf)
+{
+    int fd = 0;
+    int request = esam_type_softwarecheck_cmd;
+    struct esam_698_data_t param;
+    struct esam_698_input_t  input = {0};
+    struct esam_698_output_t output= {0};
     
+    input.cmd_type = p2;//这里填秘钥索引
+    input.data_buf      = instance->apdu_cache; //临时缓冲区
+    input.data_buf_len  = cache_max;            //临时缓冲长度
+    input.Dispersion_factor = key;//这里填比对因子内容。
+    input.Dispersion_factor_len = 8;
+    input.RN_Data = rn;//这里填随机数
+    input.RN_Data_len = 16;  //这里填随机数长度
+    input.data = data;//这里填密文
+    input.data_len = datalen;//这里填密文长度
+    output.data = outbuf;  
+    param.input  = (struct esam_698_input_t *)&input;
+    param.output = (struct esam_698_output_t *)&output;    
+    openM_ioctl(fd, request, (void *)&param);
+    if(output.data_len > 0)
+    {
+        return output.data_len;
+    }
+    
+    return 0;
 }
 
 typedef int(*pFunc)(struct esam_698_data_t *para, void *esam_hal);

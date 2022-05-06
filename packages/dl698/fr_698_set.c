@@ -106,7 +106,7 @@ static int __fr_handle_one_object(struct instance_t* instance, struct pipeline_t
             r = -DAR_TIME_TAG_INVALID;
         }
         
-        cache->wr = offset;
+        //cache->wr = offset;
         if (r < 0)
         {
             p[cache->wr++] = -r;//DAR
