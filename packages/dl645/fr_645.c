@@ -519,9 +519,26 @@ int fr_rx_645_end(struct instance_t* instance, struct pipeline_t* pipeline, stru
 
 int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
+    uint8_t data[8]={0};
+    //struct fifo_t* cache = ctx->apdu;
     
+    int err_no = 0;
+    uint8_t service = 0;
+    
+    //协议一致性判断和apdu合法判断
+    //if(0 == fr_pack_698_check(instance, pipeline, mesg)){
+    //    fifoBuf_removeData(fifo, ctx->min_len + 2);
+    //    return -1;
+    //}
+    
+    //fifoBuf_removeData(fifo, APDU_OFFSET(ctx->SA));
+    //ringbuffer_clear(ctx->apdu);
+    ctx->apdu_rx_offset = 0;
+    ctx->apdu_rx_len = ctx->min_len;
+    fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len);
 }
 
 int fr_rx_645_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -529,13 +546,16 @@ int fr_rx_645_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     ctx->step = 0;
+    uint16_t rd = fifo->rd;
     int r = ringbuffer_filter(fifo, __matcher_645, ctx);
     if (r > 0){
-        assert(r == ctx->min_len + 2);
+        assert(r == ctx->min_len);
 #ifdef WIN32
         log_hex(fifo->buf_ptr + fifo->rd, fifo->wr - fifo->rd);
 #endif
         return 1;
+    }else{
+        fifo->rd = rd;
     }
     return r;
     

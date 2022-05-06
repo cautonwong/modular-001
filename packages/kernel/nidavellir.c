@@ -328,8 +328,7 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     for (size_t i = 0; i < pipeline_n; i++)
     {
         pipeline = recipe->pipelines[i];
-        //cache->used = 0;
-        if (fifoBuf_getUsed(pipeline->in_queue) >= sizeof(struct message_t))
+        if (fifoBuf_getUsed(pipeline->in_queue) >= 12)
         {
             filter = pipeline->filters;
             n = pipeline->filter_n;
@@ -379,21 +378,8 @@ int baremetal_instance_entry(struct instance_t *instance)
     }
 }
 
-
-
 int nidavellir_loop(struct instance_t *instance)
 {
-    /*
-    struct message_t mesg;
-    mesg.ctrl = 0x13;
-    mesg.id = 0x04000401;
-    mesg.len = 4;
-    mesg.to = msta_tx_to_meter;
-    memset(msta_context.addr, 0x00, 6);
-    send_mesg(instance, &pl_msta, &mesg, NULL);
-    nidavellir_run(instance);
-    nidavellir_run(instance);
-    */
     while(1)
     {
         nidavellir_run_baremetal(instance);
@@ -402,17 +388,6 @@ int nidavellir_loop(struct instance_t *instance)
 
 int baremetal_loop(struct instance_t* instance)
 {
-    /*
-    struct message_t mesg;
-    mesg.ctrl = 0x13;
-    mesg.id = 0x04000401;
-    mesg.len = 4;
-    mesg.to = msta_tx_to_meter;
-    memset(msta_context.addr, 0x00, 6);
-    send_mesg(instance, &pl_msta, &mesg, NULL);
-    nidavellir_run(instance);
-    nidavellir_run(instance);
-    */
     while (1)
     {
         nidavellir_run(instance);
