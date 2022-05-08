@@ -140,6 +140,9 @@ extern struct pipeline_t pl_tx_dlms;
 #define pid_4852_tx_698    29
 #define pid_lowpower_wakeup 30
 
+#define pid_rx_645   60
+#define pid_tx_645   61
+
 enum channel_id_t 
 {
     chl_ir_698          = 0,
@@ -196,6 +199,10 @@ struct context_645_t
     uint8_t times;//重发次数
     uint8_t seconds;//超时时间
     uint16_t tx_len;
+    
+    uint8_t apdu_d_rx[128]; 
+    uint16_t apdu_rx_len;
+    uint16_t apdu_rx_offset;
     
     //接收和发送都要用的状态
     struct object_t object;//对象标识

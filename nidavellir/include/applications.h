@@ -316,6 +316,10 @@ int16_t supply_event_flash_2_info(struct instance_t* instance, uint16_t event_fl
 int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx, uint16_t mode);
 int app_rx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 int app_tx_server_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+
+int app_rx_server_645_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+
+
 int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 int app_meter_lowpower_wakeup_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);

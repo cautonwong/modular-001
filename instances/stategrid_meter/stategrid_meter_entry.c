@@ -51,9 +51,11 @@ struct pipeline_t pl_meter_base =
     fr_meter_base,
 };
 
-const struct filter_t fr_rx_698[1] =
+const struct filter_t fr_rx_698[2] =
 {
-    {0x01,app_rx_server_698_entry,0,13},
+    {0x01,app_rx_server_645_entry,0,0x02},    
+    {0x02,app_rx_server_698_entry,0,13},
+
 };
 
 struct pipeline_t pl_rx_698 =
@@ -91,6 +93,21 @@ struct pipeline_t pl_ir_rx_698 =
     sizeof(fr_rx_698) / sizeof(fr_rx_698[0]),
     fr_rx_698,
 };
+
+
+
+struct pipeline_t pl_rx_645 =
+{
+    pid_rx_645,
+    "pl_rx_645",
+    NULL,
+    NULL,//serial driver isr put byte into this 
+    NULL,//pl_rx_645 put apdu into this 
+    app_rx_server_645_entry,
+    //sizeof(fr_rx_645) / sizeof(fr_rx_645[0]),
+    //fr_rx_645,
+};
+
 
 
 
