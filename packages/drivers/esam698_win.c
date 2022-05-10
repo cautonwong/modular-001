@@ -564,34 +564,7 @@ static  int f_esam_type_software_check(struct esam_698_data_t *para, void *esam_
     }
 }
 
-uint16_t software_esam_check(struct instance_t* instance, uint8_t *key, uint8_t *rn, uint8_t *data, uint8_t p2, uint16_t datalen, uint8_t *outbuf)
-{
-    int fd = 0;
-    int request = esam_type_softwarecheck_cmd;
-    struct esam_698_data_t param;
-    struct esam_698_input_t  input = {0};
-    struct esam_698_output_t output= {0};
-    
-    input.cmd_type = p2;//这里填秘钥索引
-    input.data_buf      = instance->apdu_cache; //临时缓冲区
-    input.data_buf_len  = cache_max;            //临时缓冲长度
-    input.Dispersion_factor = key;//这里填比对因子内容。
-    input.Dispersion_factor_len = 8;
-    input.RN_Data = rn;//这里填随机数
-    input.RN_Data_len = 16;  //这里填随机数长度
-    input.data = data;//这里填密文
-    input.data_len = datalen;//这里填密文长度
-    output.data = outbuf;  
-    param.input  = (struct esam_698_input_t *)&input;
-    param.output = (struct esam_698_output_t *)&output;    
-    openM_ioctl(fd, request, (void *)&param);
-    if(output.data_len > 0)
-    {
-        return output.data_len;
-    }
-    
-    return 0;
-}
+
 
 typedef int(*pFunc)(struct esam_698_data_t *para, void *esam_hal);
 
@@ -606,20 +579,15 @@ static const struct Func_esam_698_t Func_esam[] =
 {
     {f_esam_698_power_ctrl_on},
     {f_esam_698_power_ctrl_off},
-
     {f_esam_type_read_esam_no},
     {f_esam_type_read_esam_data},
-    
     {f_esam_type_meet_consult},
     {f_esam_type_get_esam_p2_info2},
-    
     {f_esam_type_ver_rn_mac},
     {f_esam_type_ver_sid_mac},
     {f_esam_type_sid_mac}, 
-    
     {f_esam_type_write},
     {f_esam_type_software_check}
-
 };
 
 
