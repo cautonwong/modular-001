@@ -339,6 +339,62 @@ int fr_698_esam_plain_read_check(struct instance_t* instance, struct pipeline_t*
     return -1;
 }
 
+//红外通道 认证检查
+int fr_infrared_auth_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cmd, uint32_t oad)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t i;
+
+    if (ctx->channel != chl_ir_698 || (mbase_cb->infrared_auth_timeout != 0) || (mbase_cb->factor_mode == true))
+    {
+        return 1;
+    }
+    else
+    {
+        if ((oad == 0x80008300))
+        {
+            return 1;
+        }
+    }
+
+    if (cmd == 1)
+    {
+        return -DAR_SECURITY_AUTH_FAILED;
+    }
+
+    if (cmd == 2)
+    {
+#if 0
+        if (BATTER_SUPPLY == hfp_system_state.power_state)//待调整 
+        {
+            return false;
+        }
+#endif 
+        if ((oad == 0xf1000b00) || (oad == 0xf1000c00))
+        {
+            return 1;
+        }
+
+        return -DAR_SECURITY_AUTH_FAILED;
+    }
+
+    if ((oad & 0xF0000000) == 0x00000000) //类1
+    {
+        return 1;
+    }
+
+    for (i = 0; i < (sizeof(fr_698_infrared_read_infinitize_oad) / sizeof(fr_698_infrared_read_infinitize_oad[0])); i++)
+    {
+        if ((oad & 0xffffff00) == fr_698_infrared_read_infinitize_oad[i])
+        {
+            return 1;
+        }
+    }
+
+
+    return -DAR_SECURITY_AUTH_FAILED;
+}
 
 #if 1   //----698安全模式字-----------------------------开始
 
@@ -410,6 +466,8 @@ const struct security_mode_t security_mode_match_high_half_byte_tab[] =
 };
 
 const uint16_t security_default_mode = (TEST_RIGHT | GET_PLAIN_MAC | SET_CIPHER_MAC | ACTION_CIPHER_MAC);
+
+
 
 
 #if 1
@@ -676,17 +734,27 @@ static int __security_mode_word_check(struct instance_t* instance, struct pipeli
 
     return -DAR_SECURITY_AUTH_NOT_MATCH;
 }
-
+//安全模式
 int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cmd, uint32_t oad)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    int    r = __security_mode_word_check(instance, pipeline, cmd, oad);
-        //安全模式不匹配 待调整
- 	return 1;
-    //return r;
+    int r;   
+
+    r = __security_mode_word_check(instance, pipeline, cmd, oad);
+    if(r < 0)
+    {
+        return 1;  
+        //return r;  //安全模式不匹配 待调整
+    }
+
+    r = fr_infrared_auth_check(instance, pipeline, cmd, oad); 
+    return 1; 
+    //return r;  //安全模式不匹配 待调整
+
 }
 #endif
 #endif    //----698安全模式字-----------------------------结束
+
 
 
 

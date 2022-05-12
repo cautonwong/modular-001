@@ -491,6 +491,8 @@ enum block_parameter_item_id_t
     ZeroLineErrS_RptMode                ,   //上报方式   零线电流异常事件 
     //以上不能改变顺序
 
+    Follow2015_RptMode                  ,   //上报方式   2015跟随上报状态字  
+
     //事件记录序号 顺序不随意改变               
     OverCurrentAS_seq                   ,   //记录序号  电能表A相过流事件
     PowerOffS_seq                       ,   //记录序号  电能表掉电事件            
@@ -616,7 +618,9 @@ enum block_parameter_item_id_t
 */
 
 
-
+#define     MinFrez_Sectors             1400 //分钟冻结各方案的扇区偏移 9*2   // 待调整 不易改和易改的区分开
+#define     SecurityMode_En             1401 //安全模式参数使能0-dis   1-en
+#define     SecurityMode_EXData         1402 //显式安全模式参数缓存    
 #define     EventClr_List               1500 //事件清零列表  array OMD   事件清零事件记录用
 #define     SwitchErr_State             1501 //负荷开关误动作状态040A0130160?16001600
 #define     BeforSetT_Time              1502 //校时前时间 秒 分 时 日 月 年(2字节)
@@ -627,9 +631,13 @@ enum block_parameter_item_id_t
 #define     BeforSet_DayTab             1507 //编程前备用套时段表
 #define     Set_Holiday_Oad             1508 //编程时节假日对象
 #define     BeforSet_Holiday            1509 //编程前节假日
-#define     MinFrez_Sectors             1510 //分钟冻结各方案的扇区偏移 9*2 
-#define     SecurityMode_En             1511 //安全模式参数使能0-dis   1-en
-#define     SecurityMode_EXData         1512 //显式安全模式参数缓存    //------------------特殊初始化到此结束
+#define     Report3320_EnableList       1510 // 3320 上报使能列表  1 + 2*80
+#define     Report3320_OADList1         1511 // 3320 oad上报列表   1 + 4*60     //红外
+#define     Report3320_OADList2         1512 // 3320 oad上报列表   1 + 4*60     //rs485-1
+#define     Report3320_OADList3         1513 // 3320 oad上报列表   1 + 4*60     //PLC  | rs485-2
+
+
+
 #define     MAX_FEE_NO                  12                                  
 
 #endif

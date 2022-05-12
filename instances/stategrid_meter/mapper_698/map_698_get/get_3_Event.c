@@ -1,7 +1,43 @@
 #include "nidavellir.h"
 #include "fr_698.h"
 
-// 698读取事件上报标识或上报方式   mode  0: 上报标识      1:上报方式
+
+// 获取事件上报标识或上报方式   mode  0: 上报标识      1:上报方式
+uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t mode)
+{
+    uint8_t tempbuf[2] = {0};
+    struct record_storage_id_info_t  record_id_info;
+    int ret;
+    uint32_t AddrID = 0;
+
+ 
+    ret = get_record_id_info(instance, oad, &record_id_info);
+    if (ret <= 0)
+    {
+        return 0;
+    }
+
+    if (mode == 0)
+    {
+        AddrID = record_id_info.rpt_flag;
+    }
+    else //if (mode == 1)
+    {
+        AddrID = record_id_info.rpt_mode;
+    }
+
+    if (AddrID == 0)
+    {
+        return 0;
+    }
+
+    nd_get_index(instance, AddrID, &tempbuf[0], 1);
+
+    return tempbuf[0];
+}
+
+
+// 698协议读取事件上报标识或上报方式   mode  0: 上报标识      1:上报方式
 int get_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t mode)
 {
     uint8_t tempbuf[200] = {0};
@@ -16,6 +52,9 @@ int get_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_
         return -1;
     }
  
+    tempbuf[0] = read_event_report_flag_mode(instance, oad,mode);
+        
+#if 0 
     ret = get_record_id_info(instance, oad, &record_id_info);
     if (ret <= 0)
     {
@@ -32,7 +71,7 @@ int get_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_
     }
 
     nd_get_index(instance, AddrID, &tempbuf[0], 1);
-
+#endif
     *p++ = TYPE_enum;
     *p++ = tempbuf[0];
 

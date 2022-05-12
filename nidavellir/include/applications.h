@@ -141,6 +141,18 @@ struct mbase_control_block_t
     uint32_t infrared_auth_timeout;//红外身份认证剩余时间  待调整
     uint8_t esam_auth_enable;  //身份认证启用标志
 
+    //主动上报相关  active_report
+    uint8_t poweron_active_report_dly;      //主动上报上电延迟时间 (秒)
+    uint16_t active_report_CMDtype;         //主动上报 命令类别     需掉电保存   //待调整
+
+    uint8_t active_report_retry_dly[4];        //主动上报 重试等待时间 //待调整
+    uint8_t active_report_retry_cnt[4];        //主动上报 重试次数 //待调整
+    uint8_t report_piid;                       //主动上报帧的PIID缓存 挪到协议  //待调整
+    uint8_t report_random_data[12];            //主动上报 随机数 缓存 //待调整
+
+    //跟随上报2015状态字
+    uint32_t report_2015state[4];           //跟随上报状态字  chl_NUM
+
     //显示相关
     uint8_t commdisp_plc;    //通讯符号显示
     uint8_t commdisp_ir485;    //通讯符号显示

@@ -247,6 +247,15 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
         mbase_cb->current_connect_channel[cilent_index] = ctx->channel;
         mbase_cb->connect_status[ctx->channel][cilent_index] = true;
         mbase_cb->connect_timeout_cnt[ctx->channel][cilent_index] = 0;
+
+        
+        if(1 == cilent_index)//建立终端应用链接时，要失效终端身份认证
+        {
+            mbase_cb->term_auth_timeout = 0;
+        }
+
+
+
         
         MeterWr_obj_list_clear(instance, pipeline, mesg);
         return DAR_SUCCESS;

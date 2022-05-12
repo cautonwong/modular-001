@@ -159,6 +159,9 @@
     <ClCompile Include="..\mapper_698\map_698_action\action_f_Other.c">
       <Filter>mapper_698\action</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\packages\dl698\fr_report.c">
+      <Filter>app_698_server</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="app_698_server">

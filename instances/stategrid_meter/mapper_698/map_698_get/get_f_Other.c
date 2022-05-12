@@ -367,14 +367,33 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     return (p - buf);
                     break;
                 case 0x0F://剩余红外认证时效
+                    if(cilent_index )
+                    {
+                        tmp32 = mbase_cb->term_auth_timeout;
+                    }
+                    else
+                    {
+                        tmp32 = mbase_cb->infrared_auth_timeout;
+                    }     
+                
+                    if ((tmp32%60) > 0 && (tmp32%60) < 60)
+                    {
+                        tmp32 = (tmp32/60) +1;
+                    }
+                    else
+                    {
+                        tmp32 /= 60;
+                    }
+       
                     *p++ = TYPE_double_long_unsigned;
-                    atrtime = mbase_cb->irauthen_tmr/60;
-                    mem_swap_cpy(p, (uint8_t*)&atrtime, 4); 
+                    mem_swap_cpy(p, (uint8_t*)&tmp32, 4); 
                     p = p + 4;
                     return (p - buf);
                     break;
                 case 0x11://身份权限
                     *p++ = TYPE_unsigned;
+                    read_esam_info(instance, esam_inf,8);
+                    memcpy(&mbase_cb->AuthOn, esam_inf, 1);
                     *p++ = mbase_cb->AuthOn;
                     return (p-buf);
                     break;
@@ -389,6 +408,13 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 case 0x13://广播计数器
                     *p++ = TYPE_double_long_unsigned;
                     read_esam_info(instance, esam_inf,0X12);
+                    memcpy(p, esam_inf, 4);
+                    p = p + 4;
+                    return (p-buf);
+                    break;
+                case 0x14://终端会话计数器
+                    *p++ = TYPE_double_long_unsigned;
+                    read_esam_info(instance, esam_inf,0X13);
                     memcpy(p, esam_inf, 4);
                     p = p + 4;
                     return (p-buf);

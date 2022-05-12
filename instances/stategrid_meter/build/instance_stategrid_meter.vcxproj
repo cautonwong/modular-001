@@ -31,6 +31,7 @@
     <ClCompile Include="..\..\..\packages\dl698\fr_698_security.c" />
     <ClCompile Include="..\..\..\packages\dl698\fr_698_set.c" />
     <ClCompile Include="..\..\..\packages\dl698\fr_axdr.c" />
+    <ClCompile Include="..\..\..\packages\dl698\fr_report.c" />
     <ClCompile Include="..\..\..\packages\drivers\eeprom_win.c" />
     <ClCompile Include="..\..\..\packages\kernel\bitarithm.c" />
     <ClCompile Include="..\..\..\packages\kernel\fifo.c" />

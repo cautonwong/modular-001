@@ -347,6 +347,37 @@ enum auth_type_t
 
 
 
+
+
+
+//---- 上报相关
+//上报数据内容类型
+enum active_report_type_t {
+    R_3320 = 0,
+    R_2015 = 1,
+    R_3011_END = 2,
+    R_3011_START = 3,
+};
+
+//事件上报标志
+enum report_flag_t {
+    NO_RPT = 0,     //不上报
+    START_RPT = 1,  //发生上报
+    END_RPT = 2,    //恢复上报
+    ALL_RPT = 3,    //发生恢复均上报
+};
+//事件上报方式
+enum report_mode_t {
+    ACTIVE_RPT = 0,     //主动上报
+    FOLLOW_RPT = 1,     //跟随上报
+};
+//
+
+
+
+
+
+
 extern int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_para_pack_t *para_pack);
 
 

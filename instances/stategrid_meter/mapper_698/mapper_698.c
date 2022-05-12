@@ -400,8 +400,8 @@ const  parameter_item_t  parameter_item[] =
     { EmuErrS_RptMode               , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表计量芯片故障事件
     { BroadcastTimeS_RptMode        , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   广播校时事件 
     { ZeroLineErrS_RptMode          , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   零线电流异常事件 
-
-
+    { Follow2015_RptMode            , 0x01,   0x01,  init_Event_ReportMode_1 }, //上报方式   2015跟随上报状态字  
+        
     //事件记录序号
     { OverCurrentAS_seq             , 0x01,  4,     0  },//记录序号  电能表A相过流
     { PowerOffS_seq                 , 0x01,  4,     0  },//记录序号  电能表掉电事件            
@@ -477,11 +477,6 @@ const  parameter_item_t  parameter_item[] =
     { StepBillFreeze_depth          , 0x01,  2, init_StepBillFreeze_depth     }, //分钟冻结 深度     2   
     { InstantFreeze_depth           , 0x01,  2, init_InstantFreeze_depth      }, //分钟冻结 深度     2   
 
-
-
-
-
-
     //记录数据中间缓存
     { EventClr_List                 , 0x01,  7, 0 }, //事件清零列表  array OMD   事件清零事件记录用 
     { SwitchErr_State               , 0x01, 10, 0 }, //负荷开关误动作状态040A0130160?16001600 
@@ -494,6 +489,13 @@ const  parameter_item_t  parameter_item[] =
     { Set_Holiday_Oad               , 0x01,  5, 0 }, //编程时节假日对象         
     { BeforSet_Holiday              , 0x01, 10, 0 }, //编程前节假日
  
+        //待调整
+    { Report3320_EnableList         , 0x01, 161, 0 }, // 3320 上报使能列表  1 + 2*80         
+    { Report3320_OADList1           , 0x01, 241, 0 }, // 3320 oad上报列表   1 + 4*60     //红外
+    { Report3320_OADList2           , 0x01, 241, 0 }, // 3320 oad上报列表   1 + 4*60     //rs485-1
+    { Report3320_OADList3           , 0x01, 241, 0 }, // 3320 oad上报列表   1 + 4*60     //PLC  | rs485-2
+
+
     { MinFrez_Sectors               , 0x01, 18, 0 }, //分钟冻结各方案的扇区偏移 9*2 
 
     { SecurityMode_En               , 0x01,  1, init_SecurityMode_En }, //安全模式参数使能0-dis   1-en
@@ -767,6 +769,19 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
 
     switch (oad&0xF0000000)
     {
+        case 0x20000000: 
+        {
+            switch (oad&0xFFFF0000)// OI
+            {
+                case 0x20150000: //2015 //只获取上报方式
+                    ReportModeId = OverCurrentAS_RptMode;   //上报方式   
+                    break;
+                default:
+                    return -1;
+                    break;
+            }
+        }
+            break;
         case 0x30000000: //事件类
         {
             info->capture_len = 61;
@@ -1762,9 +1777,12 @@ void fr_dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t cilent_index, channel;
 
-    if(mbase_cb->irauthen_tmr > 0)   mbase_cb->irauthen_tmr--;
-    
-    if(mbase_cb->authen_tmr > 0)   mbase_cb->authen_tmr--;
+    if(mbase_cb->irauthen_tmr > 0)              mbase_cb->irauthen_tmr--;
+    if(mbase_cb->authen_tmr > 0)                mbase_cb->authen_tmr--;
+    if (mbase_cb->infrared_auth_timeout > 0)    mbase_cb->infrared_auth_timeout--;
+    if (mbase_cb->term_auth_timeout > 0)        mbase_cb->term_auth_timeout--;
+    if (mbase_cb->poweron_active_report_dly < 10)     mbase_cb->poweron_active_report_dly++;
+
 
     for(cilent_index=0; cilent_index<2; cilent_index++)
     {
@@ -1819,16 +1837,45 @@ void fr_dl698_init(struct instance_t* instance,  struct pipeline_t* pipeline)
 
     mbase_cb->infrared_auth_timeout = 0;
     mbase_cb->term_auth_timeout = 0;
+    mbase_cb->poweron_active_report_dly = 0;   
+    mbase_cb->active_report_retry_dly[R_3320] = 0;  //R_3011_END
+    mbase_cb->active_report_retry_dly[R_2015] = 0;
+    mbase_cb->active_report_retry_dly[R_3011_END] = 0;
+    mbase_cb->active_report_retry_dly[R_3011_START] = 0;
+
+
+
+    mbase_cb->active_report_retry_cnt[R_3011_END] = 0;
+    mbase_cb->active_report_retry_cnt[R_3011_START] = 0;
 
 #if 0 // 待调整
-    report_poweron_second = 0;
-    report_time_second = 0;
-    report_timeout_count_3011= 0;
+    //report_poweron_second = 0;
+    //report_time_second = 0;
+    //report_timeout_count_3011= 0;
     report_time_second_3011= 0;
-    report_count_3011_start = 0;
+    //report_count_3011_start = 0;
     reort_piid = 0;
     current_connect_channel[0] = 0;        
     current_connect_channel[1] = 0;
+
+
+
+
+
+
+    uint16_t active_report_CMDtype;         //主动上报 命令类别     需掉电保存   //待调整
+
+    uint8_t active_report_retry_dly[4];        //主动上报 重试等待时间 //待调整
+    uint8_t active_report_retry_cnt[4];        //主动上报 重试次数 //待调整
+    uint8_t report_piid;                       //主动上报帧的PIID缓存 挪到协议  //待调整
+    uint8_t report_random_data[12];            //主动上报 随机数 缓存 //待调整
+
+    //跟随上报2015状态字
+    uint32_t report_2015state[4];           //跟随上报状态字  chl_NUM
+
+
+
+    
 #endif 
 
     fr_handle_disconnect_all_channel(instance,  pipeline, 0);
