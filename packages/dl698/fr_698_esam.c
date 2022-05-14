@@ -323,3 +323,22 @@ int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_
     param.output = p_output;
     return openM_ioctl(fd, request, (void *)&param);
 }
+
+//ok
+uint8_t get_upreport_esam_info(struct instance_t* instance, uint8_t *Rn, uint8_t *Mac , uint8_t *input)
+{
+    int fd = 0;
+    int request = esam_type_upreport_cmd;
+    struct esam_698_data_t param;
+    struct esam_698_input_t  input = {0};
+    struct esam_698_output_t output= {0};
+    
+    param.input = p_input;
+    param.output = p_output;
+    
+    
+    
+    return openM_ioctl(fd, request, (void *)&param);    
+}
+
+
