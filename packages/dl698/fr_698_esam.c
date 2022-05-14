@@ -324,8 +324,8 @@ int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_
     return openM_ioctl(fd, request, (void *)&param);
 }
 
-//ok
-uint8_t get_upreport_esam_info(struct instance_t* instance, uint8_t *Rn, uint8_t *Mac , uint8_t *input)
+//主动上报  
+uint8_t get_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *apdu, uint8_t apdu_len , uint8 *dst)
 {
     int fd = 0;
     int request = esam_type_upreport_cmd;
@@ -333,12 +333,28 @@ uint8_t get_upreport_esam_info(struct instance_t* instance, uint8_t *Rn, uint8_t
     struct esam_698_input_t  input = {0};
     struct esam_698_output_t output= {0};
     
-    param.input = p_input;
-    param.output = p_output;
+    input.data = apdu;
+    input.data_len = apdu_len;
+    param.input = &input;
     
+    output.data = dst;
+    param.output = &output;
     
-    
-    return openM_ioctl(fd, request, (void *)&param);    
+    return openM_ioctl(fd, request, (void *)&param);
 }
+//主动上报验证
+uint8_t check_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *apdu, uint8_t apdu_len)
+{
+    int fd = 0;
+    int request = esam_type_upreportcheck_cmd;
+    struct esam_698_data_t param;
+    struct esam_698_input_t  input = {0};
+    struct esam_698_output_t output= {0};
+    
+    input.data = apdu;
+    input.data_len = apdu_len;
+    param.input = &input;
 
+    return openM_ioctl(fd, request, (void *)&param);
+}
 

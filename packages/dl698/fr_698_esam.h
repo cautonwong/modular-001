@@ -32,7 +32,7 @@ struct esam_698_output_t
     uint8_t *data;
     uint8_t *MAC_data;
     uint8_t MAC_len;
-    uint8_t esam_chip_abnormal;
+    uint8_t esam_chip_abnormal; //硬件故障
 };
 
 struct esam_698_security_t
