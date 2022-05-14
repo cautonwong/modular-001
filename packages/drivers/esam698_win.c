@@ -565,6 +565,37 @@ static  int f_esam_type_software_check(struct esam_698_data_t *para, void *esam_
 }
 
 
+static  int f_esam_type_upreport(struct esam_698_data_t *para, void *esam_hal)
+{
+    struct esam_698_input_t *esam_in = para->input; 
+    struct esam_698_output_t *esam_out = para->output;
+    uint8_t head[4] = {0x80,0x14,0x01,0x03};
+    uint16_t len=0;
+    uint16_t sw = 0;
+    uint16_t err_no = 0;
+
+
+    memcpy(&esam_in->data_buf[len] , esam_in->RN_Data , esam_in->RN_Data_len);
+    len += esam_in->RN_Data_len;
+
+    tx_esam(head , esam_in->data_buf , len , esam_hal);
+    
+    err_no = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
+    if(sw == 0x9000)
+    {
+        memcpy(esam_out->data , esam_in->data_buf , len);
+        esam_out->data_len = len;
+        esam_out->esam_err_no = 0x9000;
+        return 0;
+    }
+    else
+    {
+        esam_out->esam_err_no = sw;
+        return -1;
+    }
+}
+
+
 
 typedef int(*pFunc)(struct esam_698_data_t *para, void *esam_hal);
 
@@ -587,7 +618,8 @@ static const struct Func_esam_698_t Func_esam[] =
     {f_esam_type_ver_sid_mac},
     {f_esam_type_sid_mac}, 
     {f_esam_type_write},
-    {f_esam_type_software_check}
+    {f_esam_type_software_check},
+    {f_esam_type_upreport}
 };
 
 
