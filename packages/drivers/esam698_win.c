@@ -586,9 +586,9 @@ static  int f_esam_type_upreport(struct esam_698_data_t *para, void *esam_hal)
     err_no = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
     if(sw == 0x9000)
     {
-        memcpy(esam_out->data , esam_in->data_buf , 12);
+        memcpy(esam_out->data , esam_in->data_buf , 16);
         
-        memcpy(esam_out->MAC_data , &esam_in->data_buf[12] , 4);
+        //memcpy(esam_out->MAC_data , &esam_in->data_buf[12] , 4);
         
         esam_out->esam_err_no = 0x9000;
         return 0;
