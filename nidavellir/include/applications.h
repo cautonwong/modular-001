@@ -115,6 +115,7 @@ struct mbase_control_block_t
     uint8_t  power_abnormal;
     uint8_t  rtc_chip_abnormal;
     uint8_t  meter_chip_abnormal;
+    uint8_t  esam_chip_abnormal;    
     
     uint16_t lcd_checkdis_keep_sec;/*显示查看显示时间 */
     uint16_t lcd_checkdis_all_keep_sec;/*显示查看全屏显示时间 */

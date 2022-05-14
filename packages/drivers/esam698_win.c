@@ -43,6 +43,7 @@ struct esam_hal_t
     uint8_t      spi_NO;
 };
 
+static uint8_t esam_chip_abnormal = EVENT_RESET;
 
 static uint8 tx_esam(uint8 *tx_apdu , uint8 *tx_data , uint16 len , const struct esam_hal_t *esam_hal)
 {
@@ -169,10 +170,12 @@ static uint16 rx_esam(uint8 *rx_data , uint16 *len , const struct esam_hal_t *es
     *sw = ((uint16)ret[0]<<8) + ret[1];
     if(cnt < 3)
     {
+        esam_chip_abnormal = EVENT_RESET;
         return true;
     }
     else
     {
+        esam_chip_abnormal = EVENT_SET;
         return false;
     }
 }
