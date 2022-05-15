@@ -95,7 +95,8 @@ int fr_sw_rtc(struct instance_t* instance, struct pipeline_t* pipeline, struct m
             mesg->ctrl = MSG_SECOND;
             mesg->id = 0x0000001;
             mesg->len = 0;
-            send_mesg(instance, NULL, mesg, NULL);
+            send_mesg(instance, NULL, mesg);
+            //active_report_handle(instance, NULL, mesg);
         }
     }
 
@@ -126,7 +127,7 @@ int fr_sw_key(struct instance_t* instance, struct pipeline_t* pipeline, struct m
             mesg->ctrl = MSG_PAGE_KEY_UP;
             mesg->id = 0x0000001;
             mesg->len = 0;
-            send_mesg(instance, NULL, mesg, NULL);
+            send_mesg(instance, NULL, mesg);
         }
     }
 
@@ -160,7 +161,7 @@ int fr_sw_uart(struct instance_t* instance, struct pipeline_t* pipeline, struct 
             default:
                 break;
         }
-        //send_mesg(instance, NULL, mesg, NULL);
+        //send_mesg(instance, NULL, );
     }
 
     return 0;
@@ -179,13 +180,13 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
             mesg->ctrl = MSG_POWEROFF;
             mesg->id = 0x0000001;
             mesg->len = 0;
-            send_mesg(instance, NULL, mesg, NULL);
+            send_mesg(instance, NULL, mesg);
             mesg->from = kernel;
             mesg->to = pid_resource_manager;
             mesg->ctrl = MSG_POWEROFF;
             mesg->id = 0x0000001;
             mesg->len = 0;
-            send_mesg(instance, NULL, mesg, NULL);
+            send_mesg(instance, NULL, mesg);
             instance->ac_power_statue = AC_POWER_OFF;
             device_power_close(instance);
         }
@@ -200,13 +201,13 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
             mesg->ctrl = MSG_POWERON;
             mesg->id = 0x0000001;
             mesg->len = 0;
-            send_mesg(instance, NULL, mesg, NULL);
+            send_mesg(instance, NULL, mesg);
             mesg->from = kernel;
             mesg->to = pid_resource_manager;
             mesg->ctrl = MSG_POWERON;
             mesg->id = 0x0000001;
             mesg->len = 0;
-            send_mesg(instance, NULL, mesg, NULL);
+            send_mesg(instance, NULL, mesg);
             instance->ac_power_statue = AC_POWER_ON;
         }
     }
@@ -395,7 +396,7 @@ int baremetal_loop(struct instance_t* instance)
 }
 
 
-int send_mesg(struct instance_t *instance,struct pipeline_t *pipeline,struct message_t *mesg, uint8_t* payload)
+int send_mesg(struct instance_t *instance,struct pipeline_t *pipeline,struct message_t *mesg)
 {
     struct  fifo_t* fifo = get_pipeline_stdin(instance,mesg->to);
     if (pipeline == NULL)
@@ -405,57 +406,36 @@ int send_mesg(struct instance_t *instance,struct pipeline_t *pipeline,struct mes
     else
     {
         mesg->from = pipeline->id;
-    }
+    }   
+    mesg->magic = MSG_MAGIC;
+    mesg->check = nd_get_crc16((uint8_t*)mesg, sizeof(struct message_t) - 2);
+  
     fifoBuf_putData(fifo, mesg, sizeof(struct message_t));
-    if (mesg->len > 0)//payload exist
+    if ((mesg->len > 0)&&(mesg->payload))//payload exist
     {
 #ifdef WIN32
         log_hex(payload, mesg->len);
 #endif
-        fifoBuf_putData(fifo, payload, mesg->len);
+        fifoBuf_putData(fifo, mesg->payload, mesg->len);
     }
     return 0;
 }
 
-int recv_mesg(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t* payload)
-{
-    uint16_t r = 0;
-    if (fifoBuf_getUsed(pipeline->in_queue) >= sizeof(struct message_t))
-    {
-        r = fifoBuf_getData(pipeline->in_queue, mesg, sizeof(struct message_t));
-
-        if (mesg->len > 4)
-        {
-            fifoBuf_getData(pipeline->in_queue, payload, mesg->len - 4);
-#ifdef WIN32
-            log_hex(payload, mesg->len);
-#endif
-        }
-        return r;
-    }
-
-    return 0;
-}
-
-int recv_mesg_header(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int recv_mesg_v2(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     uint16_t r = 0;
     uint16_t check = 0;
     if (fifoBuf_getUsed(pipeline->in_queue) >= sizeof(struct message_t))
     {
         r = fifoBuf_getData(pipeline->in_queue, mesg, sizeof(struct message_t));
-        return r;
-        if (MSG_MAGIC == mesg->magic)
-        {
-//            check = nd_get_crc16((uint8_t*)mesg, sizeof(struct message_t) - 2);
-            if (check == mesg->check)
+        if(r == sizeof(struct message_t)){
+            if (MSG_MAGIC == mesg->magic)
             {
-#if WIN32
-                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_BLUE | FOREGROUND_INTENSITY);
-                //printf("                   {%s,recv,%s,{0x%02x,%d,0x%04x", get_pipeline_name(instance, pipeline->id), get_pipeline_name(instance, mesg->from), mesg->ctrl, mesg->len, mesg->id);
-                //printf("}}\n");
-#endif
-                return r;
+                check = nd_get_crc16((uint8_t*)mesg, sizeof(struct message_t) - 2);
+                if (check == mesg->check)
+                {
+                    return r;
+                }
             }
         }
     }

@@ -244,13 +244,14 @@ void send_recordflag_mesg(struct instance_t* instance, struct pipeline_t* task, 
     mesg.to = pid_resource_manager;
     mesg.ctrl = 0;
     mesg.qos = 0;
-    mesg.len = 4;
     mesg.id = RecordId;
     mesg.oad_n = 1;
+    mesg.payload = payload;
+    mesg.len = 4;
 
     set_recordflag(instance, mesg.id);
 
-    send_mesg(instance, NULL, &mesg, payload);
+    send_mesg(instance, NULL, &mesg);
 }
 
 //事件记录接口
@@ -845,7 +846,7 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
     remain_size = sizeof(data_buff);
     
     //mesg 的id 就是事件代码
-    int r = recv_mesg_header(instance, pipeline, mesg);
+    int r = recv_mesg_v2(instance, pipeline, mesg);
     
     if (r > 0)
     {

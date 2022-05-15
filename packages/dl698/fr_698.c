@@ -872,7 +872,7 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
 
 
     //client  或者 主动上报 或者 延时读取发送
-    if (recv_mesg_header(instance, pipeline, mesg)){
+    if (recv_mesg_v2(instance, pipeline, mesg)){
 #if WIN32
         if ((TEST_CASE_Request == mesg->ctrl) && (TEST_CASE_ID == mesg->id)){
             cache->wr = 0;//临时清0
@@ -904,24 +904,6 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
         fr_pack_698_head(instance, pipeline, mesg);
         fr_pack_698_apdu(instance, pipeline, mesg);
         fr_pack_698_tail(instance, pipeline, mesg);
-#ifdef VERBOSE
-        uint8_t buf[256];
-        ctx->rx_count++;
-        fifo = (struct fifo_t*)pipeline->out_queue;
-        uint16_t len = fifoBuf_getDataPeek(fifo, buf, ctx->tx_len + 2);
-        printf("                   {%s,send", get_pipeline_name(instance, pipeline->id));
-        printf(",");
-        for (size_t i = 0; i < len; i++)
-        {
-            printf("%02x", buf[i]);
-        }
-        printf(",apdu:");
-        for (size_t i = APDU_OFFSET(ctx->SA); i < len - 3; i++)
-        {
-            printf("%02x", buf[i]);
-        }
-        printf("}\n");
-#endif
     }
 
     return 0;

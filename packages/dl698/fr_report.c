@@ -4,10 +4,10 @@
 
 
 /**主动上报 类型 active_report_CMDtype */
-#define  ACTIVE_REPORT_3320            (1 << R_3320)
-#define  ACTIVE_REPORT_2015            (1 << R_2015)
-#define  ACTIVE_REPORT_3011_END        (1 << R_3011_END)//掉电恢复
-#define  ACTIVE_REPORT_3011_START      (1 << R_3011_START)//掉电发生
+#define  ACTIVE_REPORT_3320            (1 << R_3320)   //事件列表
+#define  ACTIVE_REPORT_2015            (1 << R_2015)   // 状态字
+#define  ACTIVE_REPORT_3011_END        (1 << R_3011_END)//掉电恢复  时间
+#define  ACTIVE_REPORT_3011_START      (1 << R_3011_START)//掉电发生  时间
 
 
 
@@ -537,3 +537,28 @@ int fr_active_report_pro(struct instance_t* instance, struct pipeline_t* pipelin
     }
     return 0;
 }
+
+
+
+int active_report_handle(struct instance_t* instance, struct pipeline_t* p_pipeline, struct message_t* mesg)
+{
+    struct pipeline_t pipeline = {0};
+    uint8_t buf[4];
+    int ret = 1;//fr_active_report_pro(instance, p_pipeline, mesg);
+    if(ret > 0){
+        //pipeline.id
+        mesg->len = 4;
+        mesg->to = pid_tx_698;
+        pipeline.id = pid_rx_698;
+        mesg->payload = buf;
+        send_mesg(instance, &pipeline, mesg);
+    }
+}
+
+
+int get_report_apdu(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+
+}
+
+

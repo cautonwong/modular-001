@@ -190,9 +190,10 @@ int fr_decode_645_08(struct instance_t* instance, struct pipeline_t* pipeline, s
     {
         mesg->ctrl = 0x08;
         mesg->id = 0x00000001;
-        mesg->len = len + 4;
         mesg->to = pid_msta;
-        send_mesg(instance, pipeline, mesg, p);
+        mesg->len = len + 4;
+        mesg->payload = p;
+        send_mesg(instance, pipeline, mesg);
     }
 #endif
     return 0;
@@ -347,14 +348,15 @@ int fr_645_decode_91_from_meter(struct instance_t* instance, struct pipeline_t* 
     mesg->to = pid_msta;
     mesg->ctrl = 0x91;
     mesg->id = id;
-    mesg->len = len;
+    mesg->len = len + 4;
+    mesg->payload = p+4;
     if (len == 5)
     {
         // return 1;//������ todo
     }
     //����ȫ���ض�����pl_mstaȥ����
     //ҪŪ���ض������  todo
-    send_mesg(instance, pipeline, mesg, p + 4);
+    send_mesg(instance, pipeline, mesg);
     return 0;
 }
 
@@ -421,9 +423,10 @@ int fr_645_decode_93_from_meter(struct instance_t* instance, struct pipeline_t* 
     mesg->ctrl = 0x93;
     mesg->id = 0x04000401;
     mesg->len = len + 4;
+    mesg->payload = p;
     //����ȫ���ض�����pl_mstaȥ����
     //ҪŪ���ض������  todo
-    send_mesg(instance, pipeline, mesg, p);
+    send_mesg(instance, pipeline, mesg);
     return 0;
 }
 
@@ -597,7 +600,7 @@ int fr_tx_645_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
     struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
     uint16_t len = 0;
 
-    if (recv_mesg_header(instance, pipeline, mesg))
+    if (recv_mesg_v2(instance, pipeline, mesg))
     {
         return 1;
     }

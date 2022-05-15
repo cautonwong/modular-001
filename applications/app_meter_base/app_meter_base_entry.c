@@ -74,7 +74,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
         }
     }
     
-    int r = recv_mesg_header(instance,pipeline,mesg);
+    int r = recv_mesg_v2(instance,pipeline,mesg);
     uint8_t buf[20];
     if(r > 0 )
     {
@@ -159,7 +159,7 @@ int app_meter_lowpower_wakeup_entry(struct instance_t* instance, struct pipeline
     {
         return -1;
     }
-    int r = recv_mesg_header(instance,pipeline,mesg);
+    int r = recv_mesg_v2(instance,pipeline,mesg);
     uint8_t buf[20];
     if(r > 0 )
     {
