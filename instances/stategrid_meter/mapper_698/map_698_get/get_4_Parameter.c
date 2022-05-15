@@ -165,7 +165,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
     uint8_t* p = buf;
     int len = 0;
     int ret;
-    
+
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
