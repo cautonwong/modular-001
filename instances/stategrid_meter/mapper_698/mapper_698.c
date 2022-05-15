@@ -493,8 +493,10 @@ const  parameter_item_t  parameter_item[] =
     { Report3320_EnableList         , 0x01, 161, 0 }, // 3320 上报使能列表  1 + 2*80         
     { Report3320_OADList1           , 0x01, 241, 0 }, // 3320 oad上报列表   1 + 4*60     //红外
     { Report3320_OADList2           , 0x01, 241, 0 }, // 3320 oad上报列表   1 + 4*60     //rs485-1
-    { Report3320_OADList3           , 0x01, 241, 0 }, // 3320 oad上报列表   1 + 4*60     //PLC  | rs485-2
-
+    { Report3320_OADList3           , 0x01, 241, 0 }, // 3320 oad上报列表   1 + 4*60     //PLC  
+    { Report3320_OADList4           , 0x01, 241, 0 }, // 3320 oad上报列表   1 + 4*60     //rs485-2
+    { ActReport_Info                , 0x01,   4, 0 }, // 主动上报 停电下缓存信息  2 + 1 + 1   主动上报标志（2） + 3320上报次数（1）+2015上报次数（1） 
+        
 
     { MinFrez_Sectors               , 0x01, 18, 0 }, //分钟冻结各方案的扇区偏移 9*2 
 
@@ -1829,8 +1831,8 @@ void fr_dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline
     
 }
 
-// 698协议 初始化
-void fr_dl698_init(struct instance_t* instance,  struct pipeline_t* pipeline)
+// 698协议相关的认证、上报等数据上电初始化
+void fr_dl698_power_on(struct instance_t* instance,  struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
@@ -1843,16 +1845,20 @@ void fr_dl698_init(struct instance_t* instance,  struct pipeline_t* pipeline)
     mbase_cb->active_report_retry_dly[R_3011_END] = 0;
     mbase_cb->active_report_retry_dly[R_3011_START] = 0;
 
-
-
     mbase_cb->active_report_retry_cnt[R_3011_END] = 0;
     mbase_cb->active_report_retry_cnt[R_3011_START] = 0;
+
+    //mbase_cb->active_report_retry_cnt[R_3320] = 0; //从 e2p中获取      待调整
+    //mbase_cb->active_report_retry_cnt[R_2015] = 0;
+
+    mbase_cb->report_piid = 0;
+    
 
 #if 0 // 待调整
     //report_poweron_second = 0;
     //report_time_second = 0;
     //report_timeout_count_3011= 0;
-    report_time_second_3011= 0;
+    //report_time_second_3011= 0;
     //report_count_3011_start = 0;
     reort_piid = 0;
     current_connect_channel[0] = 0;        
@@ -1882,15 +1888,7 @@ void fr_dl698_init(struct instance_t* instance,  struct pipeline_t* pipeline)
     fr_handle_disconnect_all_channel(instance,  pipeline, 1);
 
 
-
-#if 0 // 待调整
-    /*模块eventout管脚上电控制*/
-    if (channel == 0x1062)
-    {
-        modem_event_pin_set(0);
-    }
-#endif 
-    
+    EventOut_698_check(instance);  
 }
 
 

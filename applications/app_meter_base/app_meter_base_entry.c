@@ -133,7 +133,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
         AllDisplayLCD(instance, pipeline);
         mbase_control_block->key_state = get_key_status(instance);//获取秘钥状态
         Magnetic_hold_relay_Init();
-        fr_dl698_init(instance, pipeline);
+        fr_dl698_power_on(instance, pipeline);
         break;
       case MSG_POWEROFF:
         //掉电需要保存数据

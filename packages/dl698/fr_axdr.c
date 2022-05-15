@@ -326,7 +326,7 @@ uint16_t get_octet_string(struct context_698_t* ctx, uint16_t *offset)
 
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
-//GS   Ôİ´æ
+//GS   æš‚å­˜
 
 uint32_t datetimes_to_second(struct data_time_s_t* dt)
 {
@@ -434,12 +434,12 @@ uint32_t dt_buf_to_month(uint8_t* dt)
 
 
 
-// ·½·¨1 ÊÂ¼şrsd½âÎö
+// æ–¹æ³•1 äº‹ä»¶rsdè§£æ
 int decode_rsd_event_selector_1(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = instance->apdu_cache; //µ±ÁÙÊ±»º´æ
+    uint8_t* p = instance->apdu_cache; //å½“ä¸´æ—¶ç¼“å­˜
     uint32_t rsd_oad;
     
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -449,8 +449,8 @@ int decode_rsd_event_selector_1(struct instance_t* instance, struct pipeline_t* 
 
     switch (rsd_oad)
     {
-    case 0x201e0200: // ÊÂ¼ş·¢ÉúÊ±¼ä
-    case 0x20200200: // ÊÂ¼ş½áÊøÊ±¼ä 
+    case 0x201e0200: // äº‹ä»¶å‘ç”Ÿæ—¶é—´
+    case 0x20200200: // äº‹ä»¶ç»“æŸæ—¶é—´ 
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
@@ -470,7 +470,7 @@ int decode_rsd_event_selector_1(struct instance_t* instance, struct pipeline_t* 
         }
         break;
 
-    case 0x20220200: //ÊÂ¼ş¼ÇÂ¼ĞòºÅ
+    case 0x20220200: //äº‹ä»¶è®°å½•åºå·
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
@@ -489,22 +489,22 @@ int decode_rsd_event_selector_1(struct instance_t* instance, struct pipeline_t* 
 
     return (1);
 }
-// ·ÇÖÜÆÚĞÔ¶³½áÅĞ¶Ï
+// éå‘¨æœŸæ€§å†»ç»“åˆ¤æ–­
 int frz_non_period_type_judge(uint16_t oi)
 {
 
     if ((oi <= 0x5007) && (oi >= 0x5001) && (oi != 0x5005))
     {
-        return -1;   //ÖÜÆÚĞÔ¶³½á
+        return -1;   //å‘¨æœŸæ€§å†»ç»“
     }
 
-    return 1;        //·ÇÖÜÆÚĞÔ¶³½á
+    return 1;        //éå‘¨æœŸæ€§å†»ç»“
 }
 struct frz_period_t
 {
     uint16_t oi;
     uint16_t period_id;
-    uint32_t one_period;// Ãë
+    uint32_t one_period;// ç§’
 };
 const struct frz_period_t frz_period_tab[] =
 {
@@ -514,13 +514,13 @@ const struct frz_period_t frz_period_tab[] =
 };
 
 
-//ÖÜÆÚĞÔ¶³½á(³ıÈ¥ÔÂ¶³½á) ÓÃ·½·¨1 Ê±¼äµãÉ¸Ñ¡Ê± ¸øÓèÊ±¼äµã¿ªÊ¼ÔÙ¼ÓÒ»¸öÖÜÆÚµÄÊ±¼ä·¶Î§ËÑË÷
+//å‘¨æœŸæ€§å†»ç»“(é™¤å»æœˆå†»ç»“) ç”¨æ–¹æ³•1 æ—¶é—´ç‚¹ç­›é€‰æ—¶ ç»™äºˆæ—¶é—´ç‚¹å¼€å§‹å†åŠ ä¸€ä¸ªå‘¨æœŸçš„æ—¶é—´èŒƒå›´æœç´¢
 int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = p = instance->apdu_cache; //µ±ÁÙÊ±»º´æ
+    uint8_t* p = p = instance->apdu_cache; //å½“ä¸´æ—¶ç¼“å­˜
 
     uint32_t rcsd, range_sec = 0,index;
     uint16_t frz_oi = (uint16_t)((oad&0xFFFF0000) >> 16);
@@ -528,13 +528,13 @@ int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pi
     uint8_t period_buf[24], scheme = 0, i, period = 0, rcsd_num = 0;
     int ret;
 
-    //ÅĞ¶ÏÊÇ·ñÎªÖÜÆÚ¶³½á
+    //åˆ¤æ–­æ˜¯å¦ä¸ºå‘¨æœŸå†»ç»“
     if ((1 == frz_non_period_type_judge(frz_oi)) || (frz_oi == 0x5006))
     {
         return -1;
     }
 
-    //¸ù¾İ¶³½á »ñÈ¡¶³½áÖÜÆÚ
+    //æ ¹æ®å†»ç»“ è·å–å†»ç»“å‘¨æœŸ
     for (i = 0; i < sizeof(frz_period_tab) / sizeof(frz_period_tab[0]); i++)
     {
         if (frz_oi == frz_period_tab[i].oi)
@@ -550,17 +550,17 @@ int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pi
         return -1;
     }
 
-    //»ñÈ¡²¶»ñÖÜÆÚ
+    //è·å–æ•è·å‘¨æœŸ
     index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodId);
     nd_get_index(instance, index, &period_buf[0], sizeof(period_buf));
 
     memcpy(p, apdu_rx + ctx->apdu_rx_offset, 15);
     ctx->apdu_rx_offset += 15;
       
-    rcsd_num = *(p+0); //´ıµ÷Õû
+    rcsd_num = *(p+0); //å¾…è°ƒæ•´
     if (rcsd_num)
     {
-        rcsd = buf_to_uint32_msb(p + 2);//ÔİÈ¡µÚÒ»¸örcsd
+        rcsd = buf_to_uint32_msb(p + 2);//æš‚å–ç¬¬ä¸€ä¸ªrcsd
         scheme = get_OAD_Schem(rcsd);
     }
 
@@ -574,7 +574,7 @@ int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pi
         period = period_buf[scheme * 3 + 1];
     }
     range_sec = range_sec * period;
-    // ½áÊøÊ±¼ä  Ôö¼Ó ÖÜÆÚsµÄÊ±¼ä
+    // ç»“æŸæ—¶é—´  å¢åŠ  å‘¨æœŸsçš„æ—¶é—´
     rsd_info->end_mark += (range_sec);
 
     return true;
@@ -585,7 +585,7 @@ int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t*
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = instance->apdu_cache; //µ±ÁÙÊ±»º´æ
+    uint8_t* p = instance->apdu_cache; //å½“ä¸´æ—¶ç¼“å­˜
     uint32_t rsd_oad;
 
     memcpy(p, apdu_rx + ctx->apdu_rx_offset, 4);
@@ -594,7 +594,7 @@ int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t*
 
     switch (rsd_oad)
     {
-    case 0x20210200: // ¶³½áÊ±¼ä    
+    case 0x20210200: // å†»ç»“æ—¶é—´    
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
@@ -607,7 +607,7 @@ int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t*
         frz_selector_1_add_period(instance,pipeline,oad, rsd_info);
         break;
 
-    case 0x20230200: // ¶³½á¼ÇÂ¼ĞòºÅ
+    case 0x20230200: // å†»ç»“è®°å½•åºå·
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
@@ -627,14 +627,14 @@ int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t*
 }
 int selector_2_seq(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t* rsd_info)
 {
-    return 1;//´ıµ÷Õû
+    return 1;//å¾…è°ƒæ•´
 }
 int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = instance->apdu_cache;//µ±ÁÙÊ±»º´æ
+    uint8_t* p = instance->apdu_cache;//å½“ä¸´æ—¶ç¼“å­˜
     uint16_t value;
     uint32_t rsd_oad;
     uint16_t oi = get_OAD_OI(oad);
@@ -645,7 +645,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
 
     switch (rsd_oad)
     {
-    case 0x20210200: // ¶³½áÊ±¼ä   
+    case 0x20210200: // å†»ç»“æ—¶é—´   
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
@@ -663,7 +663,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
         rsd_info->end_mark = dt_buf_to_second(apdu_rx + ctx->apdu_rx_offset);
         ctx->apdu_rx_offset += 7;
         
-        // Ğ­ÒéËÑË÷·¶Î§Ç°±Õºó¿ª £¬±íÄÚ²¿¶ÁÈ¡Çı¶¯ÎªÇ°±Õºó±Õ 
+        // åè®®æœç´¢èŒƒå›´å‰é—­åå¼€ ï¼Œè¡¨å†…éƒ¨è¯»å–é©±åŠ¨ä¸ºå‰é—­åé—­ 
         if ((rsd_info->start_mark == 0) && (rsd_info->end_mark == 0))
         {
             rsd_info->start_mark = 1; 
@@ -678,16 +678,16 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
         
         if (*p != TYPE_null)
         {
-            //ÖÜÆÚĞÔ¶³½á  ¼ä¸ô±ØĞëÓë¶³½áÖÜÆÚµ¥Î»Ò»ÖÂ,·ñÔò·µ»Ø DAR=3
+            //å‘¨æœŸæ€§å†»ç»“  é—´éš”å¿…é¡»ä¸å†»ç»“å‘¨æœŸå•ä½ä¸€è‡´,å¦åˆ™è¿”å› DAR=3
             if ((oi <= 0x5007) && (oi >= 0x5001) && (oi != 0x5005))
             {
-                //Ö»Ö§³ÖÃë£¬·Ö£¬Ê±£¬ÈÕ, ÔÂ ¼ä¸ô
+                //åªæ”¯æŒç§’ï¼Œåˆ†ï¼Œæ—¶ï¼Œæ—¥, æœˆ é—´éš”
                 if ((p[0] != TYPE_TI) || (p[1] > 5))
                 {
                     return -1;
                 }
 
-                //Ö»ÓĞ¶³½áÖ§³Ö¶³½á¼ä¸ôËÑË÷
+                //åªæœ‰å†»ç»“æ”¯æŒå†»ç»“é—´éš”æœç´¢
                 if ((oi < 0x5000) || (oi > 0x5011))
                 {
                     return -1;
@@ -704,7 +704,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
                 }
 
                 rsd_info->interval = ti_to_second(*p, value);
-                if ((p[0] == 4) && (oi == 0x5006) && (value != 0))    //ÔÂ¶³½áÔÂ¼ä¸ôÌØÊâ´¦Àí
+                if ((p[0] == 4) && (oi == 0x5006) && (value != 0))    //æœˆå†»ç»“æœˆé—´éš”ç‰¹æ®Šå¤„ç†
                 {
                     rsd_info->interval_special = value;
                 }
@@ -715,19 +715,19 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
                 rsd_info->interval_special = 0;
             }
 
-            //fifoBuf_getData(fifo, p, 3); // ¼ôÇĞ3¸ö×Ö½Ú
+            //fifoBuf_getData(fifo, p, 3); // å‰ªåˆ‡3ä¸ªå­—èŠ‚
             //memcpy(p, apdu_rx + ctx->apdu_rx_offset, 3);
             ctx->apdu_rx_offset += 3;
         }
 
-        //fifoBuf_getData(fifo, p, 1);// ¼ôÇĞ1¸ö×Ö½Ú
+        //fifoBuf_getData(fifo, p, 1);// å‰ªåˆ‡1ä¸ªå­—èŠ‚
         //*p = apdu_rx[ctx->apdu_rx_offset++];
         ctx->apdu_rx_offset++;//
 
         rsd_info->mode = 2;
         break;
 
-    case 0x20230200: // ¶³½á¼ÇÂ¼ĞòºÅ     selector_2_seq()
+    case 0x20230200: // å†»ç»“è®°å½•åºå·     selector_2_seq()
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
@@ -782,7 +782,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = instance->apdu_cache; //µ±ÁÙÊ±»º´æ
+    uint8_t* p = instance->apdu_cache; //å½“ä¸´æ—¶ç¼“å­˜
 
     uint16_t value;
     uint32_t rsd_oad;
@@ -794,8 +794,8 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
 
     switch (rsd_oad)
     {
-    case 0x201e0200: // ÊÂ¼ş·¢ÉúÊ±¼ä
-    case 0x20200200: // ÊÂ¼ş½áÊøÊ±¼ä 
+    case 0x201e0200: // äº‹ä»¶å‘ç”Ÿæ—¶é—´
+    case 0x20200200: // äº‹ä»¶ç»“æŸæ—¶é—´ 
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
@@ -813,7 +813,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
         rsd_info->end_mark = dt_buf_to_second(apdu_rx+ctx->apdu_rx_offset);
         ctx->apdu_rx_offset += 7;  
 
-        // Ğ­ÒéËÑË÷·¶Î§Ç°±Õºó¿ª £¬±íÄÚ²¿¶ÁÈ¡Çı¶¯ÎªÇ°±Õºó±Õ 
+        // åè®®æœç´¢èŒƒå›´å‰é—­åå¼€ ï¼Œè¡¨å†…éƒ¨è¯»å–é©±åŠ¨ä¸ºå‰é—­åé—­ 
         if ((rsd_info->start_mark == 0) && (rsd_info->end_mark == 0))
         {
             rsd_info->start_mark = 1;
@@ -827,7 +827,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
         ctx->apdu_rx_offset += 4;
         if (*p != TYPE_null)
         {
-            //Ö»Ö§³ÖÃë£¬·Ö£¬Ê±£¬ÈÕ¼ä¸ô
+            //åªæ”¯æŒç§’ï¼Œåˆ†ï¼Œæ—¶ï¼Œæ—¥é—´éš”
             if ((p[0] != TYPE_TI) || (p[1] > 5))
             {
                 //return -1;
@@ -857,7 +857,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
 
         break;
 
-    case 0x20220200: // ÊÂ¼ş¼ÇÂ¼ĞòºÅ 
+    case 0x20220200: // äº‹ä»¶è®°å½•åºå· 
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
@@ -914,7 +914,7 @@ int decode_rsd_selector_9(struct instance_t* instance, struct pipeline_t* pipeli
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = instance->apdu_cache; //µ±ÁÙÊ±»º´æ
+    uint8_t* p = instance->apdu_cache; //å½“ä¸´æ—¶ç¼“å­˜
 
     *p = apdu_rx[ctx->apdu_rx_offset++];
     rsd_info->last_no = *p;
@@ -926,14 +926,14 @@ int decode_rsd_selector_9(struct instance_t* instance, struct pipeline_t* pipeli
     return (1);
 }
 
-//Ğ­ÒéÁĞÑ¡´ò°ü    rcsd_req:ÁĞÑ¡oad£¬   rcsd_src£ºÔ­¹ØÁª¶ÔÏóoad£¬   
-//mode£º0£¬²»¿½±´Êı¾İ£¬Ö»¼ÆËã³¤¶È   1£¬  ½âÎöÊı¾İ£¬²¢·µ»Ø³¤¶È 
+//åè®®åˆ—é€‰æ‰“åŒ…    rcsd_req:åˆ—é€‰oadï¼Œ   rcsd_srcï¼šåŸå…³è”å¯¹è±¡oadï¼Œ   
+//modeï¼š0ï¼Œä¸æ‹·è´æ•°æ®ï¼Œåªè®¡ç®—é•¿åº¦   1ï¼Œ  è§£ææ•°æ®ï¼Œå¹¶è¿”å›é•¿åº¦ 
 int _record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src, uint8_t mode)
 {
     uint32_t i, k, n;
     uint8_t *p_des = des, *p_src = src;
     int single_len, store_len, orig_len;
-    uint8_t tmpbuf[200];//µ¥¸öoad×î´ó³¤¶È
+    uint8_t tmpbuf[200];//å•ä¸ªoadæœ€å¤§é•¿åº¦
     
     for(i=1; i < (rcsd_req[0] + 1); i++)
     {
@@ -942,18 +942,18 @@ int _record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t 
         {
             if (rcsd_req[i] == rcsd_src[k])  // 
             {
-                //ÌØÊârcsd³¤¶È´¦Àí
+                //ç‰¹æ®Šrcsdé•¿åº¦å¤„ç†
                 single_len = record_change_format(tmpbuf, p_src, rcsd_req[i], RFC_GET_STORE_LEN);
                 if (single_len < 0)
                 {
-                    //Õı³£´¦Àí
+                    //æ­£å¸¸å¤„ç†
                     single_len = nd_size(instance, rcsd_req[i]);
                 }
 
                 if (single_len > 0)
                 {
-                    // ¸ö±ğÊı¾İÈÔĞèÌØÊâ´¦Àí
-                    for (n = 0; n < single_len; n++) // Êı¾İÈ«fÊ± ×ª¿Õ
+                    // ä¸ªåˆ«æ•°æ®ä»éœ€ç‰¹æ®Šå¤„ç†
+                    for (n = 0; n < single_len; n++) // æ•°æ®å…¨fæ—¶ è½¬ç©º
                     {
                         if (p_src[n] != 0xff)
                         {
@@ -1034,26 +1034,26 @@ int _record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t 
     return (p_des - des);
 }
 
-//»ñÈ¡Ğ­ÒéÁĞÑ¡´ò°ü³¤¶È   rcsd_req:ÁĞÑ¡oad£¬   rcsd_src£ºÔ­¹ØÁª¶ÔÏóoad£¬   mode£º0£¬²»¿½±´Êı¾İ£¬Ö»¼ÆËã³¤¶È¡£  1£¬  ½âÎöÊı¾İ£¬²¢·µ»Ø³¤¶È 
+//è·å–åè®®åˆ—é€‰æ‰“åŒ…é•¿åº¦   rcsd_req:åˆ—é€‰oadï¼Œ   rcsd_srcï¼šåŸå…³è”å¯¹è±¡oadï¼Œ   modeï¼š0ï¼Œä¸æ‹·è´æ•°æ®ï¼Œåªè®¡ç®—é•¿åº¦ã€‚  1ï¼Œ  è§£ææ•°æ®ï¼Œå¹¶è¿”å›é•¿åº¦ 
 int get_package_01_len(struct instance_t* instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src)
 {
     return _record_data_package_01(instance,  des, src, rcsd_req, rcsd_src, 0);
 }
 
-//Ğ­ÒéÁĞÑ¡´ò°ü   rcsd_req:ÁĞÑ¡oad£¬   rcsd_src£ºÔ­¹ØÁª¶ÔÏóoad£¬   mode£º0£¬²»¿½±´Êı¾İ£¬Ö»¼ÆËã³¤¶È¡£  1£¬  ½âÎöÊı¾İ£¬²¢·µ»Ø³¤¶È 
+//åè®®åˆ—é€‰æ‰“åŒ…   rcsd_req:åˆ—é€‰oadï¼Œ   rcsd_srcï¼šåŸå…³è”å¯¹è±¡oadï¼Œ   modeï¼š0ï¼Œä¸æ‹·è´æ•°æ®ï¼Œåªè®¡ç®—é•¿åº¦ã€‚  1ï¼Œ  è§£ææ•°æ®ï¼Œå¹¶è¿”å›é•¿åº¦ 
 int record_package_01(struct instance_t* instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src)
 {
     return _record_data_package_01(instance,  des, src, rcsd_req, rcsd_src, 1);
 }
 
 
-//rsd ½âÎö
+//rsd è§£æ
 int rsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = instance->apdu_cache; //µ±ÁÙÊ±»º´æ
+    uint8_t* p = instance->apdu_cache; //å½“ä¸´æ—¶ç¼“å­˜
     int ret;
     uint8_t dar;
     uint8_t oad_type = (uint8_t)(oad>>28);
@@ -1070,12 +1070,12 @@ int rsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_
         break;
 
     case 1: 
-        // ÖÜÆÚĞÔ¶³½á·½·¨1 ĞèÖÁÉÙ¶àËÑË÷Ò»¸öÖÜÆÚ  // ´ıÌí¼Ó
-        if (oad_type == 5)// ¶³½á
+        // å‘¨æœŸæ€§å†»ç»“æ–¹æ³•1 éœ€è‡³å°‘å¤šæœç´¢ä¸€ä¸ªå‘¨æœŸ  // å¾…æ·»åŠ 
+        if (oad_type == 5)// å†»ç»“
         {
             ret = decode_rsd_freeze_selector_1(instance, pipeline, oad, rsd_info);
         }
-        else // ÊÂ¼ş
+        else // äº‹ä»¶
         {
             ret = decode_rsd_event_selector_1(instance, pipeline, oad, rsd_info);
         }
@@ -1104,7 +1104,7 @@ int rsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_
     return ret;
 }
 
-//rcsd ½âÎö   µ½rcsd_list[]. µÚÒ»¸öÔªËØÎª rcsd¸öÊı
+//rcsd è§£æ   åˆ°rcsd_list[]. ç¬¬ä¸€ä¸ªå…ƒç´ ä¸º rcsdä¸ªæ•°
 int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad,  uint32_t *rcsd_list)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
@@ -1114,17 +1114,17 @@ int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32
     uint8_t i;
     //int ret;
 
-    //RCSD ¸öÊı
+    //RCSD ä¸ªæ•°
     rcsd_list[0] = apdu_rx[ctx->apdu_rx_offset++];
 
-    if (rcsd_list[0] > REQ_RCSD_MAXNUM) // ÇëÇóµÄrcsd¸öÊı³¬³ö£¬·µ»Ø´íÎó 
+    if (rcsd_list[0] > REQ_RCSD_MAXNUM) // è¯·æ±‚çš„rcsdä¸ªæ•°è¶…å‡ºï¼Œè¿”å›é”™è¯¯ 
     {
-        // ´ıÌí¼Ó
+        // å¾…æ·»åŠ 
         return -1;
     }
-    else // ¸³Öµrcsd  
+    else // èµ‹å€¼rcsd  
     {
-        if (rcsd_list[0] == 0) //È«Ñ¡
+        if (rcsd_list[0] == 0) //å…¨é€‰
         {
             get_capture_list(instance, oad, rcsd_list, 3);
 
@@ -1159,11 +1159,11 @@ int record_response_null(uint8_t *resbuf)
     return 1;
 }
 
-//rcsdÇëÇóµÄ·½°¸ºÅ´¦Àí£¬·µ»Ø·½°¸ºÅ 
+//rcsdè¯·æ±‚çš„æ–¹æ¡ˆå·å¤„ç†ï¼Œè¿”å›æ–¹æ¡ˆå· 
 uint8_t rcsd_req_schem_pro(uint32_t oad, uint32_t *rcsd_req)
 {
     uint8_t i, schemNo = 0;
-    //·½°¸ºÅ 
+    //æ–¹æ¡ˆå· 
     if((oad&0xFFFF0000) == 0x50020000) 
     {
         for(i = 1; i <= *(rcsd_req); i++ )
@@ -1176,7 +1176,7 @@ uint8_t rcsd_req_schem_pro(uint32_t oad, uint32_t *rcsd_req)
         
         if (i > *(rcsd_req))
         {
-            i = 1;      //ÕÒ²»µ½È¡µÚÒ»¸ö
+            i = 1;      //æ‰¾ä¸åˆ°å–ç¬¬ä¸€ä¸ª
         }
         
         schemNo = get_OAD_Schem((*(rcsd_req + i)));
@@ -1186,38 +1186,38 @@ uint8_t rcsd_req_schem_pro(uint32_t oad, uint32_t *rcsd_req)
             schemNo = 0;
         }
         
-        //ĞŞ¸Ä ÇëÇóµÄ·½°¸ºÅ
+        //ä¿®æ”¹ è¯·æ±‚çš„æ–¹æ¡ˆå·
         for(i = 1; i <= *(rcsd_req); i++ )
         {
             if((0x2021 == get_OAD_OI(*(rcsd_req + i))) || (0x2023 == get_OAD_OI(*(rcsd_req + i))))
             {
-                *(rcsd_req + i) |=  (schemNo<<13);  // ·ÖÖÓ¶³½á ¼ÇÂ¼Í· ÏÈ¼Ó·½°¸ºÅ
+                *(rcsd_req + i) |=  (schemNo<<13);  // åˆ†é’Ÿå†»ç»“ è®°å½•å¤´ å…ˆåŠ æ–¹æ¡ˆå·
             }
         }
     }
-    else // ÆäËû 
+    else // å…¶ä»– 
     {
         schemNo = 0;
     }
     return schemNo;
 }
-//¶Á¼ÇÂ¼ĞÍÊı¾İ´ò°ü
+//è¯»è®°å½•å‹æ•°æ®æ‰“åŒ…
 int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info)
 {
 #ifndef WIN32
     struct record_storage_id_info_t record_id_info; 
     struct circular_info_t circular_info = {0};
-    uint32_t *rcsd_req = (uint32_t *)rcsd_info; // ´ı¶¨
-    uint8_t *ptr_tmp = instance->apdu_cache; //ĞèÒªÌæ»»Ğ­Òé¹²ÓÃ»º´æ 2k  ´ıµ÷Õû   apdu_cacheÊÇ·ñÖ§³Ö2k
-    uint32_t rcsd_src[REQ_RCSD_MAXNUM];//´ıµ÷Õû   ÉèÖÃµÄ¹ØÁª¶ÔÏó£¬ÓÃÓÚÓëÇëÇóµÄ¹ØÁª¶ÔÏó×÷±È¶ÔÉ¸Ñ¡
+    uint32_t *rcsd_req = (uint32_t *)rcsd_info; // å¾…å®š
+    uint8_t *ptr_tmp = instance->apdu_cache; //éœ€è¦æ›¿æ¢åè®®å…±ç”¨ç¼“å­˜ 2k  å¾…è°ƒæ•´   apdu_cacheæ˜¯å¦æ”¯æŒ2k
+    uint32_t rcsd_src[REQ_RCSD_MAXNUM];//å¾…è°ƒæ•´   è®¾ç½®çš„å…³è”å¯¹è±¡ï¼Œç”¨äºä¸è¯·æ±‚çš„å…³è”å¯¹è±¡ä½œæ¯”å¯¹ç­›é€‰
     uint16_t i, read_num, number = 0;
     uint16_t one_len = 0,len = 0;
     uint8_t count = 0, rcsd_schem = 0;
     uint32_t oad_schem = 0;
-    uint8_t *p = (buf + 3); // Ô¤Áô3¸ö×Ö½ÚÌõÊı
+    uint8_t *p = (buf + 3); // é¢„ç•™3ä¸ªå­—èŠ‚æ¡æ•°
     int ret = 0;
     
-    //·½°¸ºÅ 
+    //æ–¹æ¡ˆå· 
     rcsd_schem = rcsd_req_schem_pro(oad, rcsd_req);
     oad_schem = oad | (rcsd_schem<<13);
     ret = get_record_id_info(instance, oad_schem, &record_id_info);
@@ -1252,7 +1252,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
             //circular_info.curr_num--;
             break;
             
-        case 9: //ÉÏn´Î
+        case 9: //ä¸Šnæ¬¡
             if ((rsd_info->last_no == 0) || (rsd_info->last_no > circular_info.valid_num))
             {
                 return record_response_null(p);
@@ -1275,19 +1275,19 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
             return -1;
         }
         
-        //³¤¶ÈÅĞ¶Ï
+        //é•¿åº¦åˆ¤æ–­
         if (one_len == 0)
         {   
-            //Ô¤Ëã´ò°ü³¤¶È
+            //é¢„ç®—æ‰“åŒ…é•¿åº¦
             one_len = get_package_01_len(instance, p+len, ptr_tmp, rcsd_req, rcsd_src);
         }
 
-        if((p - buf + len + one_len) > 2000) //´ıµ÷Õû
+        if((p - buf + len + one_len) > 2000) //å¾…è°ƒæ•´
         {
             //DAR_BUFFER_OVERFLOW;
             return -1;
         }
-        //¿ªÊ¼´ò°ü
+        //å¼€å§‹æ‰“åŒ…
         one_len = record_package_01(instance, p+len, ptr_tmp, rcsd_req, rcsd_src);
         len += one_len;
         number++;
@@ -1300,11 +1300,16 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
         memcpy(buf + count, p, len);
     }
     len += count;
-             
+    
+    //è¯»å–äº‹ä»¶æ—¶ ç¡®è®¤ä¸ŠæŠ¥
+    if ((oad & 0xF0000000) == 0x30000000) //å¾…è°ƒæ•´  é¦–æ¬¡è¯»å–ï¼Ÿ 
+    {
+        report_3320list_confirmed(instance, chl_PLC_698, oad);
+    }
     return len;
 #endif
 }
-//GS   Ôİ´æ
+//GS   æš‚å­˜
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
 

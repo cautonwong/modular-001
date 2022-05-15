@@ -386,7 +386,9 @@ int event_clr(struct instance_t* instance)
     int ret;
 
     ret = list_record_clr(instance, event_oad, (sizeof(event_oad) / sizeof(event_oad[0])));
-    
+
+    report_3320list_2015state_clear(instance); // 清事件上报列表和状态
+
     return ret;
 }
 //冻结清零
@@ -840,7 +842,7 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
     uint32_t CaptureList[50 + 1] = { 0 };
     struct record_storage_id_info_t record_id_info; 
     uint8_t pairs_event = 0;
-    uint8_t freez_scheme = 0;
+    uint8_t freez_scheme = 0,event_scheme = START_MODE;
     int ret;
       
     remain_size = sizeof(data_buff);
@@ -1029,7 +1031,19 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
             nd_log_append(instance, record_id_info.save_index, data_buff, (pdata - data_buff));
         }
 
-
+        //上报列表 新增
+        if((mode == START_MODE) || (mode == END_MODE)) //事件类
+        {
+            if((mode == START_MODE))
+            {
+                event_scheme = 1;
+            }
+            else
+            {
+                event_scheme = 4;
+            }
+            report_3320list_add(instance,Oad|(event_scheme<<13));
+        }
     }
     return 0;//返回0代表结束
 }

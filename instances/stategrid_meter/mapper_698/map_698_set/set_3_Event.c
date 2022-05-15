@@ -45,6 +45,8 @@ int set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_
 
     nd_set_index(instance, AddrID, &tempbuf[0], 1);
 
+    
+    EventOut_698_check(instance);  
     return (p - buf);
 }
 
@@ -111,6 +113,9 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
 
     //修改关联对象后 清零处理
     ret = modify_capture_clr_pro(instance, oad);
+    
+    report_3320list_confirmed_All_channel(instance, oad);
+    
     return (p - buf);
 }
 

@@ -372,13 +372,28 @@ enum report_mode_t {
     FOLLOW_RPT = 1,     //跟随上报
 };
 //
+/**主动上报 请求类型 active_report_CMDtype */
+#define  ACTIVE_REPORT_3320            (1 << R_3320)
+#define  ACTIVE_REPORT_2015            (1 << R_2015)
+#define  ACTIVE_REPORT_3011_END        (1 << R_3011_END)//掉电恢复
+#define  ACTIVE_REPORT_3011_START      (1 << R_3011_START)//掉电发生
 
 
+
+// 上报相关
+extern uint8_t report_2015state_update(struct instance_t* instance, uint32_t mask);
+extern void report_3320list_add(struct instance_t* instance,uint32_t oad);
+extern uint8_t active_report_3320list_confirmed(struct instance_t* instance, uint8_t *tmpbuf);
+extern uint8_t report_3320list_confirmed(struct instance_t* instance, uint8_t cnl, uint32_t oad);
+extern uint8_t report_3320list_confirmed_All_channel(struct instance_t* instance, uint32_t oad);
+extern int fr_handle_report_response(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
 
 
 
 extern int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_para_pack_t *para_pack);
+
+extern uint8_t get_event_oad_class(uint32_t oad);
 
 
 

@@ -764,11 +764,11 @@ uint8_t fr_698_current_connect_status_get(struct instance_t* instance, struct pi
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     uint8_t rlt = 0, i;
-    uint8_t commchannel[4] = { chl_ir_698, chl_RS485_1_698,  chl_PLC_698,  chl_RS485_2_698 };
+    uint8_t comm_chn[4] = { chl_ir_698, chl_RS485_1_698,  chl_PLC_698,  chl_RS485_2_698 };
 
-    for (i = 0; i < (sizeof(commchannel) / sizeof(commchannel[0])); i++)
+    for (i = 0; i < (sizeof(comm_chn) / sizeof(comm_chn[0])); i++)
     {
-        if (ctrl_block->current_connect_channel[client_index] == commchannel[i]) // 应用连接时 current_connect_channel置位 待调整
+        if (ctrl_block->current_connect_channel[client_index] == comm_chn[i]) // 应用连接时 current_connect_channel置位 待调整
         {
             break;
         }
@@ -966,11 +966,11 @@ uint32_t fr_698_current_esam_timeout_get(struct instance_t* instance, struct pip
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
-    uint8_t commchannel[4] = { chl_ir_698, chl_RS485_1_698,  chl_PLC_698,  chl_RS485_2_698 };
+    uint8_t comm_chn[4] = { chl_ir_698, chl_RS485_1_698,  chl_PLC_698,  chl_RS485_2_698 };
     
-    for (i = 0; i < (sizeof(commchannel) / sizeof(commchannel[0])); i++)
+    for (i = 0; i < (sizeof(comm_chn) / sizeof(comm_chn[0])); i++)
     {
-        if (ctrl_block->current_connect_channel[client_index] == commchannel[i]) // 应用连接时 current_connect_channel置位 待调整
+        if (ctrl_block->current_connect_channel[client_index] == comm_chn[i]) // 应用连接时 current_connect_channel置位 待调整
         {
             break;
         }
@@ -991,7 +991,7 @@ uint8_t fr_698_current_channel_num_get(struct instance_t* instance, struct pipel
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     uint8_t client_index = 0;
-    uint8_t commchannel[4] = { chl_ir_698, chl_RS485_1_698,  chl_PLC_698,  chl_RS485_2_698 };
+    uint8_t comm_chn[4] = { chl_ir_698, chl_RS485_1_698,  chl_PLC_698,  chl_RS485_2_698 };
    
     
     if (CA_TYPE_TER(ctx->CA))//终端
@@ -1003,9 +1003,9 @@ uint8_t fr_698_current_channel_num_get(struct instance_t* instance, struct pipel
         client_index = 0;
     }
     
-    for (i = 0; i < (sizeof(commchannel) / sizeof(commchannel[0])); i++)
+    for (i = 0; i < (sizeof(comm_chn) / sizeof(comm_chn[0])); i++)
     {
-        if (ctrl_block->current_connect_channel[client_index] == commchannel[i]) // 应用连接时 current_connect_channel置位 待调整
+        if (ctrl_block->current_connect_channel[client_index] == comm_chn[i]) // 应用连接时 current_connect_channel置位 待调整
         {
             break;
         }

@@ -8,13 +8,13 @@ int _record_sel_2(struct instance_t* instance, uint32_t oad, uint8_t* buf, struc
 #if 0
     struct record_storage_id_info_t record_id_info; 
     struct circular_info_t circular_info = {0};
-    uint32_t *rcsd_req = (uint32_t *)rcsd_info; // ´ý¶¨
-    uint8_t temp[2000]; //´ýµ÷Õû ÐèÒªÌæ»»Ð­Òé¹²ÓÃ»º´æ 2k   ÇëÇó¹ØÁª¶ÔÏó
-    uint32_t rcsd_src[50];//´ýµ÷Õû   Ô´¹ØÁª¶ÔÏó
+    uint32_t *rcsd_req = (uint32_t *)rcsd_info; // å¾…å®š
+    uint8_t temp[2000]; //å¾…è°ƒæ•´ éœ€è¦æ›¿æ¢åè®®å…±ç”¨ç¼“å­˜ 2k   è¯·æ±‚å…³è”å¯¹è±¡
+    uint32_t rcsd_src[50];//å¾…è°ƒæ•´   æºå…³è”å¯¹è±¡
     uint16_t i, read_num, number = 0;
     uint16_t one_len = 0,len = 0;
     uint8_t count = 0;
-    uint8_t *p = (buf + 3); // Ô¤Áô3¸ö×Ö½ÚÌõÊý
+    uint8_t *p = (buf + 3); // é¢„ç•™3ä¸ªå­—èŠ‚æ¡æ•°
     int ret = 0;
     
     ret = get_record_id_info(instance, oad, &record_id_info);
@@ -39,19 +39,19 @@ int _record_sel_2(struct instance_t* instance, uint32_t oad, uint8_t* buf, struc
             return -1;
         }
         
-        //³¤¶ÈÅÐ¶Ï
+        //é•¿åº¦åˆ¤æ–­
         if (one_len == 0)
         {   
-            //Ô¤Ëã´ò°ü³¤¶È
+            //é¢„ç®—æ‰“åŒ…é•¿åº¦
             one_len = get_package_01_len(instance, p+len, temp, rcsd_req, rcsd_src);
         }
 
-        if((p - buf + len + one_len) > 2000) //´ýµ÷Õû
+        if((p - buf + len + one_len) > 2000) //å¾…è°ƒæ•´
         {
             //DAR_BUFFER_OVERFLOW;
             return -1;
         }
-        //¿ªÊ¼´ò°ü
+        //å¼€å§‹æ‰“åŒ…
         one_len = record_package_01(instance, p+len, temp, rcsd_req, rcsd_src);
         len += one_len;
         number++;

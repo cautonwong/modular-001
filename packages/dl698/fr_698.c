@@ -705,6 +705,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
             err_no = fr_handle_set_action_request(instance, pipeline, mesg);
             break;
         case REPORT_Response://8上报应答 client
+            err_no = fr_handle_report_response(instance, pipeline, mesg);
             break;
         default:
             cache->buf_ptr[0] = ERROR_S_Response;

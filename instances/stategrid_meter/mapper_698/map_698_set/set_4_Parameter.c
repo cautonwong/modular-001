@@ -186,6 +186,7 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + set4300_table[i].s_index);
             nd_set_index(instance, addr, p, set4300_table[i].len); 
             p = p + set4300_table[i].len - 1;
+            EventOut_698_check(instance);  
             return (p-buf);
         }
     }

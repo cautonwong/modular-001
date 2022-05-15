@@ -1,16 +1,21 @@
 #include "nidavellir.h"
 #include "fr_698.h"
+#include "pin_function_def.h"
 
 
 
-/**主动上报 类型 active_report_CMDtype */
-#define  ACTIVE_REPORT_3320            (1 << R_3320)   //事件列表
-#define  ACTIVE_REPORT_2015            (1 << R_2015)   // 状态字
-#define  ACTIVE_REPORT_3011_END        (1 << R_3011_END)//掉电恢复  时间
-#define  ACTIVE_REPORT_3011_START      (1 << R_3011_START)//掉电发生  时间
+
+extern uint8_t report_2015state_update(struct instance_t* instance, uint32_t mask);
+extern void report_3320list_add(struct instance_t* instance,uint32_t oad);
+extern uint8_t active_report_3320list_confirmed(struct instance_t* instance, uint8_t *tmpbuf);
+extern uint8_t report_3320list_confirmed(struct instance_t* instance, uint8_t cnl, uint32_t oad);
+extern uint8_t report_3320list_confirmed_All_channel(struct instance_t* instance, uint32_t oad);
+extern int fr_handle_report_response(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern void EventOut_698_check(struct instance_t* instance);
+extern void report_3320list_2015state_clear(struct instance_t* instance);
 
 
-
+//跟随上报相关
 int fr_follow_report_optional(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
@@ -23,29 +28,35 @@ int fr_follow_report_optional(struct instance_t* instance, struct pipeline_t* pi
     //    p[cache->wr++] = 0x01;//follow_report
     //}
 }
-
-//主动上报 使能 检查
-uint8_t active_report_enable_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+uint32_t get_3320_save_addr(struct instance_t* instance, uint16 chn)
 {
-    int ret;
-    uint32_t addr;
-#if 1
-    uint8_t flag = 0;
-
-    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ActiveReport_en);
-    ret = nd_get_index(instance, addr, &flag, 1);
-
-
-    if ((ret < 0) || (flag == 0))
+    uint32_t addr; 
+    
+    switch (chn)
     {
-        return false;
+    case chl_ir_698: 
+        addr = Report3320_OADList1;
+        break;
+    case chl_RS485_1_698: 
+        addr = Report3320_OADList2;
+        break;
+
+    case chl_PLC_698: 
+        addr = Report3320_OADList3;
+        break;
+    case chl_RS485_2_698: 
+        addr = Report3320_OADList4;
+        break;
+
+    default:
+        return 0;
+        break;
     }
 
-#endif
-    return true;
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr); 
 }
 // 上报通道使能检查
-uint8_t report_channel_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint16_t channel)
+uint8_t report_channel_check(struct instance_t* instance, uint16_t channel)
 {
     int ret;
     uint32_t addr, oad;
@@ -97,7 +108,586 @@ uint8_t report_channel_check(struct instance_t* instance, struct pipeline_t* pip
 
     return false;
 }
+//获取3320中最新的 跟随上报 oad
+uint32_t follow_report_3320List_Latest_oad_get(struct instance_t* instance, uint8_t chn)
+{
+    uint8_t buf[241],num,i,*p, rptmode;
+    uint32_t oad = 0;
+    uint32_t addr, ret;
+    
+    addr = get_3320_save_addr(instance, chn);
+    ret = nd_get_index(instance, addr, buf, 241);
+    if(ret < 0)
+    {
+        return 0;
+    }
+    
+    num = buf[0];
+    if(num > 60)
+        num = 60;
+    p = buf+1;
+    for (i = 0; i < num; i++)
+    {
+        oad = buf_to_uint32_lsb(p);
+        p += 4;
+        rptmode = read_event_report_flag_mode(instance, oad, 1);
+        if(rptmode == 1)//跟随上报
+        {
+            return oad;
+        }
+    }
+    return 0;
+}
 
+
+
+//模块上报引脚 EventOut处理             //调用    待调整     2015set、action
+void EventOut_698_check(struct instance_t* instance)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t rptmode, count, buf[5];
+    uint32_t mask;
+    uint32_t addr, ret;
+ 
+                  
+    //eventout受43000700允许跟随上报开关影响             //后续做成可配
+    if (1)
+    {
+        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + FollowReport_en);
+        ret = nd_get_index(instance, addr, buf, 1); 
+        if (0 == buf[0])//是否打开跟随上报
+        {
+            PLC_EVENOUT_DIS();
+            return;
+        }
+    }
+
+    //是否是上报通道
+    if (false == report_channel_check(instance, chl_PLC_698))
+    {
+        PLC_EVENOUT_DIS();
+        return;
+    }
+
+    count = 0;
+
+    if(0x00000000 != follow_report_3320List_Latest_oad_get(instance, chl_PLC_698))
+    {
+        count = 1;  
+    }
+    
+    mask = mbase_cb->report_2015state[chl_PLC_698];
+
+    rptmode = read_event_report_flag_mode(instance, 0x20150200, 1);
+    if(rptmode != 1 )
+    {
+        mask = 0;
+    }
+
+    if (count == 0 && mask == 0)
+    {
+        PLC_EVENOUT_DIS(); //关闭
+    }
+    else
+    {
+        PLC_EVENOUT_EN();   //打开 置高    
+    }
+}
+
+//清除3320和2015事件清零时调用 
+void report_3320list_2015state_clear(struct instance_t* instance)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t i, buf[5];
+    uint32_t addr, ret;
+    
+    for (i = 0; i< 4; i++)
+    {
+        mbase_cb->report_2015state[i] = 0;      //待调整    //调用存e2p
+        buf[0] = 0;
+        addr = get_3320_save_addr(instance, i);
+        nd_set_index(instance, addr, buf, 1);
+    }
+
+    EventOut_698_check(instance);
+}
+
+
+//上报应答
+int fr_handle_report_response(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{  
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8 i,need_report_piid = false;
+    uint8 num,flag;
+    uint32 oad;
+    uint8 *p;
+    uint8 *buf = instance->apdu_cache;
+    uint8_t *apdu_rx = (ctx->apdu_d_rx + ctx->apdu_rx_offset);
+
+    
+
+    if (1 == get_addr_type(ctx->SA))
+    {
+        return 0;
+    }
+
+    if(ctx->channel != chl_PLC_698)//RS485是1061，模块是1062
+    {
+         return 0;
+    }
+    
+    p = apdu_rx + 6;
+    num = *p++;
+    ctx->apdu_rx_offset += 7;
+
+    for(flag = 0; flag < num; flag++)
+    {
+        oad = buf_to_uint32_msb(p);
+        p += 4;     
+        ctx->apdu_rx_offset += 4;
+        if((oad == 0x33200201) || (oad == 0x33200200))
+        {            
+            if(active_report_3320list_confirmed(instance, buf))
+            {
+                mbase_cb->active_report_CMDtype &=~ ACTIVE_REPORT_3320;
+                mbase_cb->active_report_retry_cnt[R_3320] = 0;
+                need_report_piid = true;
+            }               
+        }
+        else if(oad == 0x30110201)
+        {           
+            
+            if(report_3320list_confirmed(instance, chl_PLC_698, oad&0xFFFFFF00))
+            {
+                //mbase_cb->active_report_CMDtype &=~ ACTIVE_REPORT_3011_END; //挪report_3320list_confirmed里面
+                //mbase_cb->active_report_retry_cnt[R_3011_END] = 0;
+                need_report_piid = true;
+            }                
+        }
+        else if(oad == 0x20150200)
+        {            
+            if(mbase_cb->report_2015state[chl_PLC_698] == 0)//确认2015时没有要确认的数据，则不做后续处理
+            {                       
+                return 0;
+            }
+            mbase_cb->report_2015state[chl_PLC_698] = 0;           
+            mbase_cb->active_report_CMDtype &=~ ACTIVE_REPORT_2015;
+            mbase_cb->active_report_retry_cnt[R_2015] = 0;
+            need_report_piid = true;        
+        }
+    }
+    if(need_report_piid)
+        mbase_cb->report_piid++;
+
+    return 0;
+}
+
+
+
+
+
+//主动上报相关
+
+//清主动上报 重发次数 和 间隔时间
+void clear_active_report_time_count(struct instance_t* instance, enum active_report_type_t type) //调用待调整
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
+    mbase_cb->active_report_retry_dly[type] = 0;  
+    mbase_cb->active_report_retry_cnt[type] = 0;
+
+    if ((type == R_3011_START)||(type == R_3011_END))
+    {
+        mbase_cb->active_report_retry_dly[R_3011_START] = 0;  
+        mbase_cb->active_report_retry_cnt[R_3011_START] = 0;
+        mbase_cb->active_report_retry_dly[R_3011_END] = 0;  
+        mbase_cb->active_report_retry_cnt[R_3011_END] = 0;
+    }
+
+}
+
+
+//置位3320或2015的主动上报 
+//setType: 0 开启2015主动上报   1   开启3320主动上报
+void active_report_normal_CMD_set(struct instance_t* instance, uint8_t chn, uint8_t setType)
+{   
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t buf[10];
+    uint32_t addr, ret;  
+
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ActReport_Info);
+    
+    if(chn == chl_PLC_698) 
+    {
+        if(setType)//3320
+        {
+            if (instance->ac_power_statue == AC_POWER_OFF) 
+            {
+                ret = nd_get_index(instance, addr, buf, 4);
+                if(ret > 0)//恢复主动上报状态字和主动上报次数
+                {
+                    mbase_cb->active_report_CMDtype = buf[0] | ((uint16)buf[1]<<8);
+                    mbase_cb->active_report_retry_cnt[R_3320] = buf[2];
+                    mbase_cb->active_report_retry_cnt[R_2015] = buf[3];
+                }
+            }    
+            mbase_cb->active_report_CMDtype |= ACTIVE_REPORT_3320;
+        }
+        else//2015
+        {
+            mbase_cb->active_report_CMDtype |= ACTIVE_REPORT_2015;
+        }
+        
+        //3320和2015 可合并上报，可分开确认
+        clear_active_report_time_count(instance, R_3320);
+        clear_active_report_time_count(instance, R_2015);
+
+        if (instance->ac_power_statue == AC_POWER_OFF)
+        {
+            ndv_memcopy(buf, (uint8 *)&mbase_cb->active_report_CMDtype, 2);
+            ndv_memcopy(buf+2, (uint8 *)&mbase_cb->active_report_retry_cnt[R_3320], 1);
+            ndv_memcopy(buf+3, (uint8 *)&mbase_cb->active_report_retry_cnt[R_2015], 1);
+            ret = nd_set_index(instance, addr, buf, 4);
+        }
+    }
+}
+
+
+// 上报标识检查，传入上报标识和oad特征
+int report_flag_schem_check(uint8_t rptflag, uint8_t Schem)
+{
+
+    switch (rptflag)
+    {
+    case START_RPT: //事件发生上报
+        if ((Schem == 1) || (Schem == 2))
+        {
+            return 1;
+        }
+        break;
+
+    case END_RPT: //事件恢复上报
+        if ((Schem == 3) || (Schem == 4))
+        {
+            return 1;
+        }
+        break;
+
+    case ALL_RPT: //事件发生恢复均上报
+        if ((Schem >= 1) && (Schem <= 4))
+        {
+            return 1;
+        }
+        break;
+
+    default:
+        break;
+    }
+    return -1;
+}
+
+
+
+
+//更新 3320列表，   
+//add_or_del: 0 删除  1新增
+//chn通道
+uint8_t report_3320list_update(struct instance_t* instance, uint8_t chn, uint8_t add_or_del, uint32_t oad)
+{
+    uint8_t  rptmode = 0, i, wflag,  count, maxnum, *p, buf[300];
+    uint16_t id, len, len2;
+    uint32_t data;
+
+
+    uint32_t addr, ret;
+    
+
+    addr = get_3320_save_addr(instance, chn);
+    ret = nd_get_index(instance, addr, buf, 241);
+    
+    p = buf;
+
+    wflag = 0;
+    count = *p++;
+    len = 1 + count * 4;
+
+    maxnum = 60;  //固定60个
+    if (count > maxnum)
+    {
+        return false;
+    }
+
+    oad &= 0xffff1fff;
+
+    for (i = 0; i < count; i++)
+    {
+        //delete the same oad
+        data = buf_to_uint32_lsb(p);
+
+        if (oad == data)
+        {
+            len2 = len - ((p - buf) + 4);
+            ndv_memcopy(p, p + 4, len2);
+            len -= 4;
+            count--;
+            wflag = 1;
+            break;
+        }
+
+        p += 4;
+    }
+
+
+    if (add_or_del)
+    {
+        //add new oad
+        if (count > 0)
+        {
+            ndv_memcopy(buf + 5, buf + 1, len - 1);
+        }
+
+        if (count < maxnum)
+        {
+            count++;
+        }
+
+        uint32_to_buf_lsb(oad, buf + 1);
+        wflag = 1;
+
+        rptmode = read_event_report_flag_mode(instance, oad, 1);
+
+        if(rptmode == 0)//上报方式为主动上报
+        {
+            if(oad == 0x30110200)//    待调整
+            {
+                #if 0  //    待调整 不打开
+                if(true == hfp_read(0x2806, (uint8 *)&status_buf, 8, __NULL))
+                {
+                    hfp_memcopy((uint8 *)&data, &status_buf[4], 4);
+                    if(data >= 3600)//上电超过1小时才会进行掉电期间的上报
+                    {
+                        active_report_status |= ACTIVE_REPORT_POWEROFF;
+                        clear_report_time_count_3011();
+                    }
+                }
+                #endif
+            }
+            else
+            {
+                active_report_normal_CMD_set(instance, chn, 1);
+            }
+        }
+    }
+
+    if (wflag != 0)
+    {
+        buf[0] = count;
+        ret = nd_set_index(instance, addr, buf, 241);
+        if (ret < 0)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+//3320上报列表新增         oad 带属性特征   
+//事件记录处调用
+void report_3320list_add(struct instance_t* instance,uint32_t oad)
+{
+    uint8_t i;
+    uint8_t comm_chn[4] = { chl_ir_698, chl_RS485_1_698,  chl_PLC_698,  chl_RS485_2_698 };
+
+    uint8_t Schem = 0,rptflag = 0;
+    uint32_t ret;
+
+    //获取事件上报标识
+    rptflag = read_event_report_flag_mode(instance, oad, 0);
+
+    Schem = get_OAD_Schem(oad);
+
+    ret = report_flag_schem_check(rptflag, Schem);
+    if (ret < 0)
+    {
+        return;
+    }
+
+    //本地表在公钥状态下, 电表清零事情不允许上报*/
+    if (get_OAD_OI(oad) == 0x3013)
+    {
+        //测试秘钥状态0-私钥 1-公钥
+        //if (dl698_esam_key_status_get() != 0) //待调整
+        {
+            return;
+        }
+    }
+
+    for (i = 0; i< (sizeof(comm_chn) / sizeof(comm_chn[0])); i++)
+    {
+        report_3320list_update(instance, comm_chn[i], 1, oad);
+    }
+
+    EventOut_698_check(instance);
+
+}
+
+//上报列表中只确认主动上报oad              调用    待调整
+uint8_t active_report_3320list_confirmed(struct instance_t* instance, uint8_t *tmpbuf)//确认掉3320里面处于主动上报的OAD
+{
+    uint8_t count,i,*p,num, rptmode = 0;
+    uint16_t len,len2;
+    uint32_t oad = 0;
+    uint32_t addr, ret;
+
+    addr = get_3320_save_addr(instance, chl_PLC_698);
+    ret = nd_get_index(instance, addr, tmpbuf, 241);
+
+    p = tmpbuf;
+    count = *p++;
+    num = count;    
+    len = count * 4;
+    for (i = 0; i < num; i++)
+    {
+        oad = buf_to_uint32_lsb(p);
+        rptmode = read_event_report_flag_mode(instance, oad, 1);
+        if((rptmode == 0) && (oad != 0x30110200))//剔除主动上报的OAD
+        {
+            len2 = (num - 1-i) * 4;
+            ndv_memcopy(p, p + 4, len2);
+            count--;
+        }
+        else
+        {
+            p += 4;
+        }
+    }
+    if(num == count)//没有OAD被确认，无需处理后续响应
+    {        
+        return false;
+    }
+    tmpbuf[0] = count;
+    len = 1 + count * 4;
+    
+    ret = nd_set_index(instance, addr, tmpbuf, 241);
+    if (ret < 0)
+    {
+        return false;
+    }
+
+    return true ;    
+}
+
+
+//上报列表确认         调用    待调整
+uint8_t report_3320list_confirmed(struct instance_t* instance, uint8_t chn, uint32_t oad)
+{
+    struct mbase_control_block_t*  mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    //新增事件列表
+
+    if (false == report_3320list_update(instance, chn, 0, oad))
+    {
+        return false;
+    }
+
+    if (chn == chl_PLC_698)
+    {
+        if(0x3011 == get_OAD_OI(oad)) // 3320中确认3011，同步也要确认停电上报事件
+        {
+            mbase_cb->active_report_CMDtype &=~ ACTIVE_REPORT_3011_END;
+            mbase_cb->active_report_retry_cnt[R_3011_END] = 0;
+        }
+    
+        EventOut_698_check(instance);
+    }
+
+    return true;
+}
+
+uint8_t report_3320list_confirmed_All_channel(struct instance_t* instance, uint32_t oad)
+{
+    uint8_t i, j, oadClass;
+    uint8_t comm_chn[4] = { chl_ir_698, chl_RS485_1_698,  chl_PLC_698,  chl_RS485_2_698 };
+
+
+    for (i = 0; i< (sizeof(comm_chn) / sizeof(comm_chn[0])); i++)
+    {
+        oad = oad & 0xffff0000;
+        oadClass = get_event_oad_class(oad);
+
+        if (oadClass == 24)
+        {
+            oad += 0x00000600;  //待调整
+
+            for (j=0; j < 4; j++)
+            {
+                report_3320list_confirmed(instance, comm_chn[i], oad); 
+                oad += 0x00000100;
+            }
+        }
+        else
+        {
+            oad += 0x00000200;
+            report_3320list_confirmed(instance, comm_chn[i], oad); 
+        }
+    }
+
+    return true;
+}
+
+
+
+//2015上报状态字更新                调用地方      待调整
+uint8_t report_2015state_update(struct instance_t* instance, uint32_t mask)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t comm_chn[4] = { chl_ir_698, chl_RS485_1_698,  chl_PLC_698,  chl_RS485_2_698 };
+    uint8_t i, rptmode;
+
+    if(mbase_cb->report_2015mode & mask)
+    {
+        for (i = 0; i< (sizeof(comm_chn) / sizeof(comm_chn[0])); i++)
+        {
+            mbase_cb->report_2015state[i] |= mask;
+            if(comm_chn[i] == chl_PLC_698)
+            {
+                rptmode = read_event_report_flag_mode(instance, 0x20150200, 1);
+                if(rptmode == 0)// 主动上报
+                {
+                    active_report_normal_CMD_set(instance, chl_PLC_698, 0);
+                }
+            }
+        }
+    }
+
+    EventOut_698_check(instance);
+
+    return true;
+}
+
+//主动上报 使能 检查
+uint8_t active_report_enable_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    int ret;
+    uint32_t addr;
+#if 1
+    uint8_t flag = 0;
+
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ActiveReport_en);
+    ret = nd_get_index(instance, addr, &flag, 1);
+
+
+    if ((ret < 0) || (flag == 0))
+    {
+        return false;
+    }
+
+#endif
+    return true;
+}
 
 //3011事件的主动上报方式和标识  检查    
 //eventtype: 0掉电发生，1掉电恢复
@@ -180,7 +770,7 @@ int active_report_3011_pro(struct instance_t* instance, struct pipeline_t* pipel
         return 0;
     }
     
-    if (false == report_channel_check(instance, pipeline, mesg, chl_PLC_698)) 
+    if (false == report_channel_check(instance, chl_PLC_698)) 
     {
         return 0;
     }
@@ -357,7 +947,7 @@ int active_report_normal_pro(struct instance_t* instance, struct pipeline_t* pip
         return 0;
     }
 
-    if (false == report_channel_check(instance, pipeline, mesg, chl_PLC_698))
+    if (false == report_channel_check(instance, chl_PLC_698))
     {
         return 0;
     }

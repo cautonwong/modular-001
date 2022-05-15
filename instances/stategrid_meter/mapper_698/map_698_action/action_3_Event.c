@@ -176,9 +176,9 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
         *dar = DAR_OTHERS_ERROR;
         return -1;
     }
-    //待调整 上报确认
-    //api_event_report_object_all_channel_confirmed(req);
 
+    report_3320list_confirmed_All_channel(instance, oad);
+    
     return (int)(p - buf);
 }
 
@@ -297,9 +297,9 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
         *dar = DAR_OTHERS_ERROR;
         return -1;
     }
-    //待调整 上报确认
-    //api_event_report_object_all_channel_confirmed(req);
 
+    report_3320list_confirmed_All_channel(instance, oad);
+    
     return (int)(p - buf);
 }
 
@@ -366,11 +366,10 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
             return ret;
         }
 
+        report_3320list_confirmed_All_channel(instance, id);
+        
         send_event_mesg_pro(instance, NULL, EventClrS, NULL, 1);
 
-
-        //待调整 上报确认
-        //dl698_api_event_report_object_all_channel_confirmed(req);
         return (p - buf);
 
     case 4: //添加一个事件关联对象属性 

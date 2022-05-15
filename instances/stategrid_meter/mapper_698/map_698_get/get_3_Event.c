@@ -77,10 +77,18 @@ int get_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_
 
     return (p - buf);
 }
-
-
-
-
+//获取事件oad 类
+uint8_t get_event_oad_class(uint32_t oad)
+{
+    uint16_t OI;
+    OI = get_OAD_OI(oad);
+    
+    if (((OI >= 0x3000) && (OI <= 0x3008)) || (OI == 0x300B))
+    {
+        return 24;
+    }
+    return 7;
+}
 
 // 获取事件关联对象
 int get_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
@@ -853,7 +861,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
     uint8_t* src = tempbuf;
     uint16_t i, len = 0;
     uint16_t OI;
-    uint8_t attr, class = 7;
+    uint8_t attr, OadClass = 7;
     uint8_t dar = DAR_SUCCESS;
     uint32_t index;
     int ret;
@@ -869,7 +877,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
 
     if (((OI >= 0x3000) && (OI <= 0x3008)) || (OI == 0x300B))
     {
-        class = 24;
+        OadClass = 24;
     }
 
     switch(id)
@@ -951,7 +959,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
             break;
     }
     
-    switch (class)
+    switch (OadClass)
     {
         case 7://class7
         {

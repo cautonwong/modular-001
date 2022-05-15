@@ -634,9 +634,9 @@ enum block_parameter_item_id_t
 #define     Report3320_EnableList       1510 // 3320 上报使能列表  1 + 2*80
 #define     Report3320_OADList1         1511 // 3320 oad上报列表   1 + 4*60     //红外
 #define     Report3320_OADList2         1512 // 3320 oad上报列表   1 + 4*60     //rs485-1
-#define     Report3320_OADList3         1513 // 3320 oad上报列表   1 + 4*60     //PLC  | rs485-2
-
-
+#define     Report3320_OADList3         1513 // 3320 oad上报列表   1 + 4*60     //PLC  
+#define     Report3320_OADList4         1514 // 3320 oad上报列表   1 + 4*60     //rs485-2
+#define     ActReport_Info              1515 // 主动上报 停电下缓存信息   //待调整  现是否存两份？
 
 #define     MAX_FEE_NO                  12                                  
 

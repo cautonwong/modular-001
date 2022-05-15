@@ -147,12 +147,13 @@ struct mbase_control_block_t
     uint16_t active_report_CMDtype;         //主动上报 命令类别     需掉电保存   //待调整
 
     uint8_t active_report_retry_dly[4];        //主动上报 重试等待时间 //待调整
-    uint8_t active_report_retry_cnt[4];        //主动上报 重试次数 //待调整
+    uint8_t active_report_retry_cnt[4];        //主动上报 重试次数 //待调整            R_3320
     uint8_t report_piid;                       //主动上报帧的PIID缓存 挪到协议  //待调整
     uint8_t report_random_data[12];            //主动上报 随机数 缓存 //待调整
 
     //跟随上报2015状态字
     uint32_t report_2015state[4];           //跟随上报状态字  chl_NUM
+    uint32_t report_2015mode;                //跟随上报模式字
 
     //显示相关
     uint8_t commdisp_plc;    //通讯符号显示

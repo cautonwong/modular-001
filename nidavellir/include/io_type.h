@@ -54,7 +54,7 @@ enum esam_cmd_e
     
     esam_type_upreport_cmd,
     
-    esam_type_upreportcheck_cmd
+    esam_type_upreportcheck_cmd,
     
     esam_type_max_cmd,
 };

@@ -184,7 +184,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
 #endif
                     event_clear_omd_add(instance, id, 0 /*req->channel */); //待调整    如何在map  case中  取到通道号
                     event_clr(instance);// 事件清零
-					p++;
+                    p++;                     
                     send_event_mesg_pro(instance, NULL, EventClrS, NULL, 1);
                     return (p-buf);
                     break;
