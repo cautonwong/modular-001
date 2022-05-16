@@ -2552,6 +2552,9 @@
             <group>
                 <name>action</name>
                 <file>
+                    <name>$PROJ_DIR$\..\mapper_698\map_698_action\action_2_Variable.c</name>
+                </file>
+                <file>
                     <name>$PROJ_DIR$\..\mapper_698\map_698_action\action_3_Event.c</name>
                 </file>
                 <file>
@@ -2620,6 +2623,9 @@
             </group>
             <group>
                 <name>set</name>
+                <file>
+                    <name>$PROJ_DIR$\..\mapper_698\map_698_set\set_2_Variable.c</name>
+                </file>
                 <file>
                     <name>$PROJ_DIR$\..\mapper_698\map_698_set\set_3_Event.c</name>
                 </file>

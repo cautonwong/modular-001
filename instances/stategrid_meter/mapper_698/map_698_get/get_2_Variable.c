@@ -34,6 +34,8 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
     uint8_t i,j,maxnum=0;
     uint16_t oad;
     uint8_t index,attribute, temp[10] = {0};
+    struct context_698_t* p_ctx = (struct context_698_t*)ctx;
+
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
@@ -72,7 +74,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
         0x20110200,     0x00,   TYPE_long_unsigned,         (uint8_t*)&mbase_cb->voltage_battery,   2,  //电池电压
         0x20130200,     0x00,   TYPE_double_long_unsigned,  (uint8_t*)&mbase_cb->battery_used_time, 4,  //电池工作时间     
         0x20310200,     0x00,   TYPE_double_long_unsigned,  (uint8_t*)&mbase_cb->MonthEnegery,      4,  //月度用电量
-        0x20150400,     0x00,   TYPE_bit_string,            (uint8_t*)&mbase_cb->report_state,      4,  //跟随上报状态字
+        //0x20150400,     0x00,   TYPE_bit_string,            (uint8_t*)&mbase_cb->report_2015state[0], 4,  //跟随上报状态字
         0x20400200,     0x00,   TYPE_bit_string,            (uint8_t*)&mbase_cb->cmd_dostate,       2,  //控制命令执行状态字
         0x20410200,     0x00,   TYPE_bit_string,            (uint8_t*)&mbase_cb->cmd_errstate,      2,  //控制命令错误状态字
     };
@@ -182,7 +184,29 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
             }
             else
                 return -1;
-  
+        case 0x2015://跟随上报状态字
+            if(attribute == 0x02)
+            {
+                *p++ = TYPE_bit_string;
+                *p++ = 32;
+                mem_swap_cpy(p, (uint8_t*)&mbase_cb->report_2015state[p_ctx->channel], 4); //待调整
+                p += 4;
+                return (p-buf);
+            }
+            else if(attribute == 0x04) //模式字
+            {
+                *p++ = TYPE_bit_string;
+                *p++ = 32;
+                mem_swap_cpy(p, (uint8_t*)&mbase_cb->report_2015mode, 4); //待调整
+                p += 4;
+                return (p-buf);
+            }
+            else if(attribute == 0x05) //2015上报方式
+            {
+                return get_event_report_flag_mode(instance, id, p, 1);
+            }
+            else
+                return -1;
         default:
             break;
     }

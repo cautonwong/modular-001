@@ -54,6 +54,7 @@ uint32_t get_3320_save_addr(struct instance_t* instance, uint16 chn)
     }
 
     addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr); 
+    return addr;
 }
 // 上报通道使能检查
 uint8_t report_channel_check(struct instance_t* instance, uint16_t channel)
@@ -62,9 +63,7 @@ uint8_t report_channel_check(struct instance_t* instance, uint16_t channel)
     uint32_t addr, oad;
     uint8_t i, * p, buf[13] = {0};
 
-
-
-    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Report_channel); // 待调整
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Report_channel); 
     ret = nd_get_index(instance, addr, buf, 13);
 
     if (ret < 0)
@@ -141,7 +140,7 @@ uint32_t follow_report_3320List_Latest_oad_get(struct instance_t* instance, uint
 
 
 
-//模块上报引脚 EventOut处理             //调用    待调整     2015set、action
+//模块上报引脚 EventOut处理    
 void EventOut_698_check(struct instance_t* instance)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);

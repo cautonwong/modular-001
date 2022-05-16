@@ -146,6 +146,7 @@ extern void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id);
 extern int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, void *ctx);
 extern int GET_1_Demand(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
 extern int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, void *ctx);
+extern int SET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
 
 extern int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
 extern int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
@@ -153,6 +154,7 @@ extern int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, v
 extern int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
 extern int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
 
+extern int ACTION_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
 extern int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
 extern int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
 extern int ACTION_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
@@ -1384,6 +1386,8 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
     case RESOURCE_MAP_SET:
       	switch (OIA1)
         {
+        case 0x2:// 变量
+            return SET_2_Variable(instance, id, buf, ctx);
         case 0x3:// 事件
             return SET_3_Event(instance, id, buf, ctx);
         case 0x4://参变量
@@ -1402,6 +1406,8 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
     case RESOURCE_MAP_ACTION:
         switch (OIA1)
         {
+        case 0x2://变量
+            return ACTION_2_Variable(instance, id, buf, ctx);
         case 0x3://事件
             return ACTION_3_Event(instance, id, buf, ctx);
         case 0x4://参变量
