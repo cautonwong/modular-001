@@ -6,58 +6,58 @@
 
 typedef struct 
 {
-    uint32_t    s_index;    //µØÖ·
+    uint32_t    s_index;    //åœ°å€
     uint16_t    oad;        
-    uint8_t     offset;     //Æ«ÒÆ
-    uint8_t     len;        //³¤¶È
+    uint8_t     offset;     //åç§»
+    uint8_t     len;        //é•¿åº¦
 }general_set4;
 
 const general_set4  set4300_table[] = 
 {
-     Device_descriptor,   0x0200,   0x02,   32,//Éè±¸ÃèÊö·û
+     Device_descriptor,   0x0200,   0x02,   32,//è®¾å¤‡æè¿°ç¬¦
     
-     Factory_No,          0x0301,   0x02,    4, //³§¼Ò´úÂë
-     Version_SoftWare,    0x0302,   0x02,    4, //Èí¼ş°æ±¾
-     Date_SoftWare,       0x0303,   0x02,    6, //Èí¼ş°æ±¾ÈÕÆÚ
-     Version_HardWare,    0x0304,   0x02,    4, //Ó²¼ş°æ±¾
-     Date_HardWare,       0x0305,   0x02,    6, //Ó²¼ş°æ±¾ÈÕÆÚ
-     Extend_Info,         0x0306,   0x02,    8, //À©Õ¹ĞÅÏ¢
+     Factory_No,          0x0301,   0x02,    4, //å‚å®¶ä»£ç 
+     Version_SoftWare,    0x0302,   0x02,    4, //è½¯ä»¶ç‰ˆæœ¬
+     Date_SoftWare,       0x0303,   0x02,    6, //è½¯ä»¶ç‰ˆæœ¬æ—¥æœŸ
+     Version_HardWare,    0x0304,   0x02,    4, //ç¡¬ä»¶ç‰ˆæœ¬
+     Date_HardWare,       0x0305,   0x02,    6, //ç¡¬ä»¶ç‰ˆæœ¬æ—¥æœŸ
+     Extend_Info,         0x0306,   0x02,    8, //æ‰©å±•ä¿¡æ¯
     
-     Produced_Date,       0x0400,   0x02,    7, //Éú²úÈÕÆÚ
-//     Subset_List,       0x0500,  0x05,    2, //×ÓÉè±¸ÁĞ±í(num+2*oi)
-     Protocol_List,       0x0601,   0x02,   20, //Ğ­ÒéÁĞ±í
-     FollowReport_en,     0x0700,   0x01,    1, //ÔÊĞí¸úËæÉÏ±¨
-     ActiveReport_en,     0x0800,   0x01,    1, //ÔÊĞíÖ÷¶¯ÉÏ±¨
-     Comm_Master_en,      0x0900,   0x01,    1, //ÔÊĞíÓëÖ÷Õ¾Í¨Ñ¶
-     Report_channel,      0x0A00,   0x03,    4, //ÉÏ±¨Í¨µÀ
+     Produced_Date,       0x0400,   0x02,    7, //ç”Ÿäº§æ—¥æœŸ
+//     Subset_List,       0x0500,  0x05,    2, //å­è®¾å¤‡åˆ—è¡¨(num+2*oi)
+     Protocol_List,       0x0601,   0x02,   20, //åè®®åˆ—è¡¨
+     FollowReport_en,     0x0700,   0x01,    1, //å…è®¸è·Ÿéšä¸ŠæŠ¥
+     ActiveReport_en,     0x0800,   0x01,    1, //å…è®¸ä¸»åŠ¨ä¸ŠæŠ¥
+     Comm_Master_en,      0x0900,   0x01,    1, //å…è®¸ä¸ä¸»ç«™é€šè®¯
+     //Report_channel,      0x0A00,   0x03,    4, //ä¸ŠæŠ¥é€šé“
 };
 
 const general_set4  general_set4_talble[] =
 {
-//     Comm_Number,               0x4001,     0x02,   6,//±íµØÖ·
-//     Meter_Number,              0x4002,     0x02,   6,//±íºÅ
-     User_Number,               0x4003,     0x02,   6,//¿Í»§±àºÅ
-//     Meter_Location,            0x4004,     0x01,   27,//Éè±¸µØÀíÎ»ÖÃ
-     SeasonTable_Changetime,    0x4008,     0x01,   7,//Á½Ì×Ê±ÇøÇĞ»»Ê±¼ä
-     DayTable_Changetime,       0x4009,     0x01,   7,//Á½Ì×Ê±¶ÎÇĞ»»Ê±¼ä
-     SecretKey_Num,             0x400F,     0x01,   1,//ÃØÔ¿×ÜÌõÊı
-     Meter_Num,                 0x4010,     0x01,   1,//¼ÆÁ¿Ôª¼ş¸öÊı
-     Weekend,                   0x4012,     0x02,   1,//ÖÜĞİÈÕÌØÕ÷×Ö
-     WeekendFee,                0x4013,     0x01,   1,//ÖÜĞİÈÕ²ÉÓÃ·ÑÂÊºÅ
+//     Comm_Number,               0x4001,     0x02,   6,//è¡¨åœ°å€
+//     Meter_Number,              0x4002,     0x02,   6,//è¡¨å·
+     User_Number,               0x4003,     0x02,   6,//å®¢æˆ·ç¼–å·
+//     Meter_Location,            0x4004,     0x01,   27,//è®¾å¤‡åœ°ç†ä½ç½®
+     SeasonTable_Changetime,    0x4008,     0x01,   7,//ä¸¤å¥—æ—¶åŒºåˆ‡æ¢æ—¶é—´
+     DayTable_Changetime,       0x4009,     0x01,   7,//ä¸¤å¥—æ—¶æ®µåˆ‡æ¢æ—¶é—´
+     SecretKey_Num,             0x400F,     0x01,   1,//ç§˜é’¥æ€»æ¡æ•°
+     Meter_Num,                 0x4010,     0x01,   1,//è®¡é‡å…ƒä»¶ä¸ªæ•°
+     Weekend,                   0x4012,     0x02,   1,//å‘¨ä¼‘æ—¥ç‰¹å¾å­—
+     WeekendFee,                0x4013,     0x01,   1,//å‘¨ä¼‘æ—¥é‡‡ç”¨è´¹ç‡å·
      Meter_CT,                  0x401C,     0x01,   4,//CT
      Meter_PT,                  0x401D,     0x01,   4,//PT
-     Pulse_Width,               0x4102,     0x01,   1,//Âö³å¿í¶È
-     ASCII_AssetsMan,           0x4103,     0x02,   32,//×Ê²ú¹ÜÀí±àÂë
-     ASCII_Un,                  0x4104,     0x01,   6,//¶î¶¨µçÑ¹
-     ASCII_Ib,                  0x4105,     0x01,   6,//¶î¶¨µçÁ÷
-     ASCII_Imax,                0x4106,     0x01,   6,//×î´óµçÁ÷
-     ASCII_AccuracyClass1,      0x4107,     0x01,   4,//ÓĞ¹¦×¼È·¶ÈµÈ¼¶
-     Meter_Const1,              0x4109,     0x01,   4,//ÓĞ¹¦Âö³å³£Êı
-     ASCII_MeterType,           0x410B,     0x02,   32,//µçÄÜ±íĞÍºÅ
-     MeterRunWord,              0x4110,     0x01,   1,//µçÄÜ±íÔËĞĞÌØÕ÷×Ö
-     SoftWareNo,                0x4111,     0x01,   16,//Èí¼ş±¸°¸ºÅ
-     Measure_Mode,              0x4112,     0x02,   1,//ÓĞ¹¦×éºÏÌØÕ÷×Ö
-     Meter_Password,            0x4401,     0x01,   8,//Ó¦ÓÃÁ¬½ÓÃÜÂë
+     Pulse_Width,               0x4102,     0x01,   1,//è„‰å†²å®½åº¦
+     ASCII_AssetsMan,           0x4103,     0x02,   32,//èµ„äº§ç®¡ç†ç¼–ç 
+     ASCII_Un,                  0x4104,     0x01,   6,//é¢å®šç”µå‹
+     ASCII_Ib,                  0x4105,     0x01,   6,//é¢å®šç”µæµ
+     ASCII_Imax,                0x4106,     0x01,   6,//æœ€å¤§ç”µæµ
+     ASCII_AccuracyClass1,      0x4107,     0x01,   4,//æœ‰åŠŸå‡†ç¡®åº¦ç­‰çº§
+     Meter_Const1,              0x4109,     0x01,   4,//æœ‰åŠŸè„‰å†²å¸¸æ•°
+     ASCII_MeterType,           0x410B,     0x02,   32,//ç”µèƒ½è¡¨å‹å·
+     MeterRunWord,              0x4110,     0x01,   1,//ç”µèƒ½è¡¨è¿è¡Œç‰¹å¾å­—
+     SoftWareNo,                0x4111,     0x01,   16,//è½¯ä»¶å¤‡æ¡ˆå·
+     Measure_Mode,              0x4112,     0x02,   1,//æœ‰åŠŸç»„åˆç‰¹å¾å­—
+     Meter_Password,            0x4401,     0x01,   8,//åº”ç”¨è¿æ¥å¯†ç 
 };
 #define		set4num			sizeof(general_set4_talble)/sizeof(general_set4)
 
@@ -82,30 +82,30 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
             {
                 switch(oad)
                 {
-                    case 0x4010://ÔªÆ÷¼ş¸öÊı
+                    case 0x4010://å…ƒå™¨ä»¶ä¸ªæ•°
                         if(*(p+1) != 1)   return -DAR_TYPE_NOT_MATCH;
                         break;
-                    case 0x4012://ÖÜĞİÈÕ
-                    case 0x4112://ÓĞ¹¦×éºÏÌØÕ÷×Ö
+                    case 0x4012://å‘¨ä¼‘æ—¥
+                    case 0x4112://æœ‰åŠŸç»„åˆç‰¹å¾å­—
                         if(*p != 4) return -DAR_TYPE_NOT_MATCH;
                         break;
-                    case 0x4013://ÖÜĞİÈÕÈÕÊ±¶Î±íºÅ
+                    case 0x4013://å‘¨ä¼‘æ—¥æ—¥æ—¶æ®µè¡¨å·
                         if(*p != 17) return -DAR_TYPE_NOT_MATCH;
                         break;
-                    case 0x4102:    //Âö³å¿í¶È
-                    case 0x4104:    //¶î¶¨µçÑ¹
-                    case 0x4105:    //¶î¶¨µçÁ÷
-                    case 0x4106:    //×î´óµçÁ÷
-                    case 0x4107:    //ÓĞ¹¦×¼È·¶ÈµÈ¼¶
-                    case 0x4109:    //ÓĞ¹¦Âö³å³£Êı
+                    case 0x4102:    //è„‰å†²å®½åº¦
+                    case 0x4104:    //é¢å®šç”µå‹
+                    case 0x4105:    //é¢å®šç”µæµ
+                    case 0x4106:    //æœ€å¤§ç”µæµ
+                    case 0x4107:    //æœ‰åŠŸå‡†ç¡®åº¦ç­‰çº§
+                    case 0x4109:    //æœ‰åŠŸè„‰å†²å¸¸æ•°
                         return -DAR_RW_REJECT;
-                    case 0x410B:    //µç±íĞÍºÅ
+                    case 0x410B:    //ç”µè¡¨å‹å·
                         if(*p != 0X0A) return -DAR_RW_REJECT;
-                    case 0x4103:    //×Ê²ú¹ÜÀí±àÂë
-                    case 0x4111:    //Èí¼ş±¸°¸ºÅ
+                    case 0x4103:    //èµ„äº§ç®¡ç†ç¼–ç 
+                    case 0x4111:    //è½¯ä»¶å¤‡æ¡ˆå·
                         if(*p != 0x0A)    return -DAR_TYPE_NOT_MATCH;
 						break;
-                    case 0x4008://ÇĞ»»Ê±¼ä
+                    case 0x4008://åˆ‡æ¢æ—¶é—´
                     case 0x4009:
                         mem_swap_cpy((uint8_t*)&year2, p+1, 2);
                         if(year2 < 2000) return -DAR_RW_REJECT;
@@ -139,9 +139,9 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
 int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {
     struct mbase_control_block_t* mbase_cb;
-    uint8_t i,timer[6];
+    uint8_t i,timer[6], num, tmpbuf[13]={0};
     uint8_t* p = buf;
-    uint32_t addr=0;
+    uint32_t addr=0, chn;
     uint16_t idl = 0,year2;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -158,10 +158,10 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
         {
             switch(idl)
             {
-                case 0x0200:   //Éè±¸ÃèÊö·û
-                    if(mbase_cb->factor_mode == false)  return -DAR_OTHERS_ERROR; //¹¤³§Ä£Ê½Íâ£¬½ûÖ¹Ğ´Èë
+                case 0x0200:   //è®¾å¤‡æè¿°ç¬¦
+                    if(mbase_cb->factor_mode == false)  return -DAR_OTHERS_ERROR; //å·¥å‚æ¨¡å¼å¤–ï¼Œç¦æ­¢å†™å…¥
                     break;
-                case 0x0400://Éú²úÈÕÆÚ
+                case 0x0400://ç”Ÿäº§æ—¥æœŸ
                     mem_swap_cpy((uint8_t*)&year2, p+1, 2);
                     if(year2 < 2000) return -DAR_RW_REJECT;
                     year2 = year2 - 2000;
@@ -175,12 +175,11 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     if(Date_Format_Check(timer))  return -DAR_RW_REJECT;
                     if(Time_Format_Check(&timer[3])) return -DAR_RW_REJECT;
                     break;
-                case 0x0700://ÔÊĞí¸úËæÉÏ±¨
-                case 0x0800://ÔÊĞíÖ÷¶¯ÉÏ±¨
+                case 0x0700://å…è®¸è·Ÿéšä¸ŠæŠ¥
+                case 0x0800://å…è®¸ä¸»åŠ¨ä¸ŠæŠ¥
                     if(*p != 3)   return -DAR_TYPE_NOT_MATCH;
                     break;
-                
-               
+
             }
             p = p + set4300_table[i].offset;
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + set4300_table[i].s_index);
@@ -190,16 +189,52 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
             return (p-buf);
         }
     }
+    if(idl == 0x0A00)//ä¸ŠæŠ¥é€šé“
+    {
+        num = p[1];
+        if ((p[0] != TYPE_array) || (num > 3) || ((id & 0x000000FF) != 0))
+        {
+            return -DAR_OTHERS_ERROR;
+        }
+        p += 2;
+
+        tmpbuf[0] = num;
+        
+        for (i = 0; i < num; i++)
+        {
+            if(*p++ != TYPE_OAD)
+            {
+                return -DAR_OTHERS_ERROR;
+            }
+        
+            chn = buf_to_uint32_msb(p);
+            p += 4;
+        
+            if ((chn == 0xf2020201) || ((chn != 0xf2010201)&&(chn != 0xf2010202) && chn != 0xf2090201))
+            {
+                return -DAR_OTHERS_ERROR;
+            }
+        
+            uint32_to_buf_lsb(chn, &tmpbuf[4*i+1]);
+        }
+
+        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Report_channel);
+        nd_set_index(instance, addr, tmpbuf, 13); 
+
+        EventOut_698_check(instance);  
+        return (p-buf);
+    }   
+    
     return -1;
 }
 
 uint8_t lcd_data_chk(uint8_t *p)
 {
-    if((*(p+3) < 5) || (*(p+3) > 30))   //È«ÏÔÊ±¼ä5~30
+    if((*(p+3) < 5) || (*(p+3) > 30))   //å…¨æ˜¾æ—¶é—´5~30
         return 1;
-    if((*(p+14) > 4) || (*(p+16) > 4))   //Ğ¡ÊıÏÔÊ¾0~4
+    if((*(p+14) > 4) || (*(p+16) > 4))   //å°æ•°æ˜¾ç¤º0~4
         return 1;
-    if(*(p+18) > 1) //Òº¾§12×ÖÑù 0~1
+    if(*(p+18) > 1) //æ¶²æ™¶12å­—æ · 0~1
         return 1;
     return 0;
 }
@@ -254,7 +289,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
     
     switch (oad)
     {
-        case 0x4000://Ê±¼ä
+        case 0x4000://æ—¶é—´
             if(attribute == 0x02)
             {
                 uint8_t settimebuf[8]={0};
@@ -279,7 +314,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 if(Date_Format_Check(timer))  return -DAR_OTHERS_ERROR;
                 if(Time_Format_Check(&timer[3])) return -DAR_OTHERS_ERROR;
                 
-                //±£´æĞ£Ê±Ç°Ê±¼ä 
+                //ä¿å­˜æ ¡æ—¶å‰æ—¶é—´ 
                 rtc_get_from_tm(instance,temp);
                 buffer[0] = temp[6];
                 buffer[1] = temp[5];
@@ -295,17 +330,17 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 mem_swap_cpy((uint8_t*)&oad, p, 2);
                 year = oad - 2000;
                 p = p + 2;
-                settimebuf[5] = BYTE_BCD(year);//Äê
-                settimebuf[4] = BYTE_BCD(*p++);//ÔÂ
-                settimebuf[3] = BYTE_BCD(*p++);//ÈÕ
-                settimebuf[2] = BYTE_BCD(*p++);//Ê±
-                settimebuf[1] = BYTE_BCD(*p++);//·Ö
-                settimebuf[0] = BYTE_BCD(*p++);//Ãë
+                settimebuf[5] = BYTE_BCD(year);//å¹´
+                settimebuf[4] = BYTE_BCD(*p++);//æœˆ
+                settimebuf[3] = BYTE_BCD(*p++);//æ—¥
+                settimebuf[2] = BYTE_BCD(*p++);//æ—¶
+                settimebuf[1] = BYTE_BCD(*p++);//åˆ†
+                settimebuf[0] = BYTE_BCD(*p++);//ç§’
                 settimebuf[6] = GetWeek(&timer[0]);
                 write_mcu_rtc(0, settimebuf, 7);
                 read_mcu_rtc(0x00, instance);
                 
-                //±£´æĞ£Ê±ºóÊ±¼ä 
+                //ä¿å­˜æ ¡æ—¶åæ—¶é—´ 
                 rtc_get_from_tm(instance,temp);
                 buffer[0] = temp[6];
                 buffer[1] = temp[5];
@@ -317,14 +352,14 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
                 nd_set_index(instance, addr, buffer, 7);
                
-                send_event_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// Ğ£Ê±¼ÇÂ¼
+                send_event_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// æ ¡æ—¶è®°å½•
                 
                 record_rollback_after_set_time(instance);
                 
                 return (p-buf);
             }
             break;
-        case 0x4001://±íµØÖ·
+        case 0x4001://è¡¨åœ°å€
             if(attribute == 0x02)
             {
                 p = p + 2;
@@ -336,7 +371,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 return (p-buf);
             }
             break;
-        case 0x4004://µØÀíÎ»ÖÃ
+        case 0x4004://åœ°ç†ä½ç½®
             if(attribute != 0x02)   return -1;
             if(index == 0)
             {
@@ -377,17 +412,17 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 return -1;
             }
             break;
-        case 0x4007://LCD²ÎÊı
+        case 0x4007://LCDå‚æ•°
             if(attribute == 0x02)
             {
                 uint32_t idbuf[] = {
-                (uint32_t)&mbase_cb->lcd_poweron_all_dis_time,            //ÉÏµçÈ«ÏÔÊ±¼ä
-                (uint32_t)&mbase_cb->backlight_key_time,                  //±³¹âµãÁÁÊ±¼ä
-                (uint32_t)&mbase_cb->lcd_checkdis_keep_sec,               //ÏÔÊ¾²é¿´±³¹âµãÁÁÊ±¼ä
-                (uint32_t)&mbase_cb->lcd_nopower_key_keep_sec,            //ÎŞµç°´¼ü×¤ÁôÊ±¼ä
-                (uint32_t)&mbase_cb->energy_point,                        //µçÄÜĞ¡ÊıÏÔÊ¾Î»
-                (uint32_t)&mbase_cb->power_point,                         //¹¦ÂÊĞ¡ÊıÏÔÊ¾Î»
-                (uint32_t)&mbase_cb->lcd_12_mean,                         //Òº¾§12×ÖÑùÒâÒå
+                (uint32_t)&mbase_cb->lcd_poweron_all_dis_time,            //ä¸Šç”µå…¨æ˜¾æ—¶é—´
+                (uint32_t)&mbase_cb->backlight_key_time,                  //èƒŒå…‰ç‚¹äº®æ—¶é—´
+                (uint32_t)&mbase_cb->lcd_checkdis_keep_sec,               //æ˜¾ç¤ºæŸ¥çœ‹èƒŒå…‰ç‚¹äº®æ—¶é—´
+                (uint32_t)&mbase_cb->lcd_nopower_key_keep_sec,            //æ— ç”µæŒ‰é”®é©»ç•™æ—¶é—´
+                (uint32_t)&mbase_cb->energy_point,                        //ç”µèƒ½å°æ•°æ˜¾ç¤ºä½
+                (uint32_t)&mbase_cb->power_point,                         //åŠŸç‡å°æ•°æ˜¾ç¤ºä½
+                (uint32_t)&mbase_cb->lcd_12_mean,                         //æ¶²æ™¶12å­—æ ·æ„ä¹‰
                 };
                 uint8_t lens[] = {1, 2, 2, 2, 1, 1, 1};
                 uint8_t offset[] = {0, 1, 3, 5, 7, 8, 9};
@@ -414,14 +449,14 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 {
                     switch(index)
                     {
-                        case 0x01://È«ÆÁ
+                        case 0x01://å…¨å±
                           if((*(p+1)<5)||(*(p+1)>30))  return -DAR_OTHERS_ERROR;
                           break;
                         case 0x05:
-                        case 0x06://Ğ¡ÊıÎ»Êı
+                        case 0x06://å°æ•°ä½æ•°
                           if(*(p+1)>4)  return -DAR_OTHERS_ERROR;
                           break;
-                        case 0x07://Òº¾§12×ÖÑù
+                        case 0x07://æ¶²æ™¶12å­—æ ·
                           if(*(p+1)>1)  return -DAR_OTHERS_ERROR;
                           break;
                     }
@@ -446,7 +481,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 return -1;
             }
             break;
-        case 0x400C://Ê±ÇøÊ±¶ÎÊı
+        case 0x400C://æ—¶åŒºæ—¶æ®µæ•°
             if(index > 5)   return -1;
             if(index == 0)
             {
@@ -471,7 +506,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 return (p-buf);
             }
             break;
-        case 0x4011://¹«¹²¼ÙÈÕ±í
+        case 0x4011://å…¬å…±å‡æ—¥è¡¨
             if((index == 0) || (index > 10))    return -1;
             
             mem_swap_cpy((uint8_t*)&year2, p+3, 2);
@@ -482,9 +517,9 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             timer[2] = (uint8_t)year2;
             
             if(Date_Format_Check(timer))  return -DAR_OTHERS_ERROR;
-            if(*(p+7) != GetWeek(timer))    return -DAR_RW_REJECT;//ÖÜ´íÎó
+            if(*(p+7) != GetWeek(timer))    return -DAR_RW_REJECT;//å‘¨é”™è¯¯
 
-            // ±à³ÌÊÂ¼ş-±£´æ±à³ÌÇ°
+            // ç¼–ç¨‹äº‹ä»¶-ä¿å­˜ç¼–ç¨‹å‰
             nd_get(instance, id, temp, 10, NULL);
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Holiday);
             nd_set_index(instance, s_index, temp, 10);                                          
@@ -501,11 +536,11 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + HoliDay_Table + (index-1));
             nd_set_index(instance, s_index, buffer, 6); 
 
-            send_event_mesg_pro(instance, NULL, HolidayWrS, NULL, 1);// ¹«¹²¼ÙÈÕ±à³ÌÊÂ¼ş
+            send_event_mesg_pro(instance, NULL, HolidayWrS, NULL, 1);// å…¬å…±å‡æ—¥ç¼–ç¨‹äº‹ä»¶
             return (p-buf);
             break;
-        case 0x4014://µ±Ç°Ì×Ê±Çø±í
-        case 0x4015://±¸ÓÃÌ×Ê±Çø±í
+        case 0x4014://å½“å‰å¥—æ—¶åŒºè¡¨
+        case 0x4015://å¤‡ç”¨å¥—æ—¶åŒºè¡¨
             if(index > 14)    return -1;
             
             if(index == 0)
@@ -531,7 +566,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             else 
                 addr = Season_Table1;
 
-            // ±à³ÌÊÂ¼ş-±£´æ±à³ÌÇ°
+            // ç¼–ç¨‹äº‹ä»¶-ä¿å­˜ç¼–ç¨‹å‰
             if (oad == 0x4015)
             {
                 nd_get(instance, 0x40150200, temp, 114, NULL);
@@ -570,8 +605,8 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             send_event_mesg_pro(instance, NULL, SeasonTabWrS, NULL, 1);// 
             return (p - buf);
             break;
-        case 0x4016://µ±Ç°Ì×ÈÕÊ±¶Î±í
-        case 0x4017://±¸ÓÃÌ×ÈÕÊ±¶Î±í
+        case 0x4016://å½“å‰å¥—æ—¥æ—¶æ®µè¡¨
+        case 0x4017://å¤‡ç”¨å¥—æ—¥æ—¶æ®µè¡¨
             if(index > 0x08)    return -1;
             
             if(index == 0)
@@ -596,7 +631,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             else
                 addr = Day_Table10;
 
-            // ±à³ÌÊÂ¼ş-±£´æ±à³ÌÇ°
+            // ç¼–ç¨‹äº‹ä»¶-ä¿å­˜ç¼–ç¨‹å‰
             if (oad == 0x4017)
             {
                 nd_get(instance, id, temp, 114, NULL);
@@ -616,7 +651,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 for(j=0;j<num;j++)
                 {
                     p++;
-                    num_hourtab = *p++; //ÈÕÊ±¶ÎÊı£¬Ã¿ÈÕÇĞ»»Êı
+                    num_hourtab = *p++; //æ—¥æ—¶æ®µæ•°ï¼Œæ¯æ—¥åˆ‡æ¢æ•°
                     for(i=0; i<num_hourtab; i++)
                     {
                         p = p + 3;
@@ -634,7 +669,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             else
             {
                 p++;
-                num_hourtab = *p++; //ÈÕÊ±¶ÎÊı£¬Ã¿ÈÕÇĞ»»Êı
+                num_hourtab = *p++; //æ—¥æ—¶æ®µæ•°ï¼Œæ¯æ—¥åˆ‡æ¢æ•°
                 for(i=0; i<num_hourtab; i++)
                 {
                     p = p + 3;
@@ -649,11 +684,11 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 
             }
 
-            send_event_mesg_pro(instance, NULL, DayTabWrS, NULL, 1);// Ê±¶Î±í±à³ÌÊÂ¼ş
+            send_event_mesg_pro(instance, NULL, DayTabWrS, NULL, 1);// æ—¶æ®µè¡¨ç¼–ç¨‹äº‹ä»¶
             return (p - buf);
             break;
         
-        case 0x4116://½áËãÈÕ
+        case 0x4116://ç»“ç®—æ—¥
             if(index == 0)
             {
                 if(*(p+1) > 0x03)    return -1;
@@ -695,7 +730,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             else
                 return -1;
             break;
-        case 0x4300://Éè±¸ĞÅÏ¢
+        case 0x4300://è®¾å¤‡ä¿¡æ¯
             return set4300(instance, id, buf);
             
         case 0x4400:
@@ -704,7 +739,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 case 0x03:
                     return -DAR_RW_REJECT;
                     break;
-                case 0x05://ÈÏÖ¤Á¬½Ó»úÖÆ
+                case 0x05://è®¤è¯è¿æ¥æœºåˆ¶
                     if(*(p+1) > 3)  return -DAR_RW_REJECT;
                     p++;
                     buffer[0] = *p++;
@@ -729,17 +764,17 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
 /*
 struct inis_para_t 
 {
-    uint8_t Device_descriptor[8];           979 //Éè±¸ÃèÊö·û
-    uint8_t Factory_No[8];                  980 //³§¼Ò´úÂë
-    uint8_t Version_SoftWare[2];            981 //Èí¼ş°æ±¾
+    uint8_t Device_descriptor[8];           979 //è®¾å¤‡æè¿°ç¬¦
+    uint8_t Factory_No[8];                  980 //å‚å®¶ä»£ç 
+    uint8_t Version_SoftWare[2];            981 //è½¯ä»¶ç‰ˆæœ¬
       uint32_t xx[];
 }
 
 
 const struct inis_para_t inis_para =
 {
-  {0,0,0,},  //Éè±¸ÃèÊö·û
-  {},  //³§¼Ò´úÂë
-  {},  //Èí¼ş°æ±¾
+  {0,0,0,},  //è®¾å¤‡æè¿°ç¬¦
+  {},  //å‚å®¶ä»£ç 
+  {},  //è½¯ä»¶ç‰ˆæœ¬
 }
 */

@@ -130,7 +130,7 @@ extern const uint8_t  init_Protocol_List[]; //协议列表
 extern const uint8_t  init_FollowReport_en[]; //允许跟随上报
 extern const uint8_t  init_ActiveReport_en[]; //允许主动上报
 extern const uint8_t  init_Comm_Master_en[]; //允许与主站通讯
-
+extern const uint8_t  init_Report_channel[]; //上报通道
 extern const uint8_t  init_ImaxProtectValue[]; //继电器拉闸电流门限值
 extern const uint8_t  init_ImaxProtectTime[]; //超电流门限保护延时时间
 
@@ -556,7 +556,7 @@ const  parameter_item_t  parameter_item[] =
     { FollowReport_en,     0x01,    1,      init_FollowReport_en }, //允许跟随上报
     { ActiveReport_en,     0x01,    1,      init_ActiveReport_en }, //允许主动上报
     { Comm_Master_en,      0x01,    1,      init_Comm_Master_en }, //允许与主站通讯
-    { Report_channel,      0x03,    4,      0}, //上报通道
+    { Report_channel,      0x01,    13,     init_Report_channel }, //上报通道
     
     { ImaxProtectValue,    0x01,    4,      init_ImaxProtectValue }, //继电器拉闸电流门限值
     { ImaxProtectTime,     0x01,    2,      init_ImaxProtectTime }, //超电流门限保护延时时间

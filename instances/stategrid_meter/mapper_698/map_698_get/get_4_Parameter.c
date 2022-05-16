@@ -29,7 +29,6 @@ const general_get4  get4300_table[] =
      FollowReport_en,     0x0700,   TYPE_bool,              1, //允许跟随上报
      ActiveReport_en,     0x0800,   TYPE_bool,              1, //允许主动上报
      Comm_Master_en,      0x0900,   TYPE_bool,              1, //允许与主站通讯
-     Report_channel,      0x0A00,   TYPE_array,             4, //上报通道
 };
 
 
@@ -64,9 +63,9 @@ const general_get4  general_get4_talble[] =
 int get4300_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {
     uint16_t idl=0;
-    uint8_t i;
+    uint8_t i, tmpbuf[13] = {0}, num;
     uint8_t* p = buf;
-    uint32_t addr = 0;
+    uint32_t ret, addr = 0;
     
     idl = (uint16_t)(id & 0x0000FFFF);
     
@@ -108,6 +107,27 @@ int get4300_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
     {
         *p++ = TYPE_array;
         *p++ = 0;
+        return (p-buf);
+    }
+    else if(idl == 0x0A00)//上报通道
+    {
+        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Report_channel);
+        ret = nd_get_index(instance, addr, tmpbuf, 13); 
+        num = tmpbuf[0];
+        if(ret < 0)
+        {
+            num = 0;
+        }
+        
+        *p++ = TYPE_array;
+        *p++ = num;
+        
+        for (i = 0; i < num; i++)
+        {
+            *p++ = TYPE_OAD;
+            mem_swap_cpy(p, &tmpbuf[4*i+1], 4);
+            p += 4;
+        }
         return (p-buf);
     }
     
