@@ -271,7 +271,27 @@ void ndv_memcopy(void *tb, void *sb, uint16_t length)
         }
     }
 }
-
+void ndv_move_buffer(uint8_t *sbuff, uint8_t *tbuff, uint16_t length)
+{
+    /* 先判断是否有正向移动重叠区域 */
+    if ((sbuff < tbuff) && (sbuff + length > tbuff))
+    {
+        /* 有就从反向移动 */
+        while (length != 0)                 /**< 根据长度进行移动 */
+        {
+            length--;
+            tbuff[length] = sbuff[length];  /**< 移动 */
+        }
+    }
+    else                                    /**< 其它情况进行正向移动 */
+    {
+        while (length != 0)
+        {
+            length--;
+            *tbuff++ = *sbuff++;            /**< 移动 */
+        }
+    }
+}
 
 uint8_t mem_compare(void* data1, void* data2, uint16_t length)
 {

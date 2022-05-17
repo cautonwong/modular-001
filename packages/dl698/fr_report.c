@@ -1,13 +1,13 @@
 #include "nidavellir.h"
 #include "fr_698.h"
 #include "pin_function_def.h"
-
+#include "cpu_surport.h"
 
 
 
 extern uint8_t report_2015state_update(struct instance_t* instance, uint32_t mask);
 extern void report_3320list_add(struct instance_t* instance,uint32_t oad);
-extern uint8_t active_report_3320list_confirmed(struct instance_t* instance, uint8_t *tmpbuf);
+extern uint8_t active_report_3320list_confirmed(struct instance_t* instance);
 extern uint8_t report_3320list_confirmed(struct instance_t* instance, uint8_t cnl, uint32_t oad);
 extern uint8_t report_3320list_confirmed_All_channel(struct instance_t* instance, uint32_t oad);
 extern int fr_handle_report_response(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
@@ -247,7 +247,7 @@ int fr_handle_report_response(struct instance_t* instance, struct pipeline_t* pi
         ctx->apdu_rx_offset += 4;
         if((oad == 0x33200201) || (oad == 0x33200200))
         {            
-            if(active_report_3320list_confirmed(instance, buf))
+            if(active_report_3320list_confirmed(instance))
             {
                 mbase_cb->active_report_CMDtype &=~ ACTIVE_REPORT_3320;
                 mbase_cb->active_report_retry_cnt[R_3320] = 0;
@@ -533,13 +533,15 @@ void report_3320list_add(struct instance_t* instance,uint32_t oad)
 
 }
 
-//上报列表中只确认主动上报oad              调用    待调整
-uint8_t active_report_3320list_confirmed(struct instance_t* instance, uint8_t *tmpbuf)//确认掉3320里面处于主动上报的OAD
+//上报列表中只确认主动上报oad 
+uint8_t active_report_3320list_confirmed(struct instance_t* instance)//确认掉3320里面处于主动上报的OAD
 {
     uint8_t count,i,*p,num, rptmode = 0;
     uint16_t len,len2;
     uint32_t oad = 0;
     uint32_t addr, ret;
+    uint8 *tmpbuf = instance->apdu_cache;
+
 
     addr = get_3320_save_addr(instance, chl_PLC_698);
     ret = nd_get_index(instance, addr, tmpbuf, 241);
@@ -580,7 +582,7 @@ uint8_t active_report_3320list_confirmed(struct instance_t* instance, uint8_t *t
 }
 
 
-//上报列表确认         调用    待调整
+//上报列表确认 
 uint8_t report_3320list_confirmed(struct instance_t* instance, uint8_t chn, uint32_t oad)
 {
     struct mbase_control_block_t*  mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -702,7 +704,7 @@ uint8_t active_report_check_3011(struct instance_t* instance, struct pipeline_t*
 
     if (eventtype == 1) //恢复
     {
-        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Report3320_OADList3); //待调整  读取模块通道的 上报列表
+        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Report3320_OADList3); // 读取模块通道的 上报列表
         ret = nd_get_index(instance, addr, buf, 241);
 
         if (ret < 0)
@@ -841,7 +843,7 @@ int active_report_3011_pro(struct instance_t* instance, struct pipeline_t* pipel
         *ptr_cache++ = 0x02;//RN+MAC
         *ptr_cache++ = 0x0c;//RN长度
 
-        if (0)//待调整 ESAM故障标志  mbase_cb-> ？
+        if (mbase_cb->esam_chip_abnormal == EVENT_SET)//待调整 ESAM故障标志  mbase_cb-> ？
         {
             data_len = 12 + 5;
             memset(ptr_cache, 0xFF, data_len);
@@ -849,7 +851,10 @@ int active_report_3011_pro(struct instance_t* instance, struct pipeline_t* pipel
         }
         else
         {
-            //data_len = esam_report_rn_mac(res.cache_idx, data_len, res.cache_ptr);  //待调整 esam交互 获取主动上报的随机数和mac
+            get_upreport_esam_rn_mac(instance, ptr, data_len , ptr_cache);//待调整 esam交互 获取主动上报的随机数和mac
+            data_len = 12 + 5;
+            ndv_move_buffer(ptr_cache+12, ptr_cache+13, 4);
+            *(ptr_cache+12) = 0x04;       
         }
         ndv_memcopy(mbase_cb->report_random_data, ptr_cache, 12); //拷贝随机数
         ptr_cache += data_len;
@@ -1039,7 +1044,7 @@ int active_report_normal_pro(struct instance_t* instance, struct pipeline_t* pip
     *p++ = 0x02;//RN+MAC
     *p++ = 0x0c;//RN长度
 
-    if (1)//待调整 ESAM故障标志  mbase_cb-> ？
+    if (mbase_cb->esam_chip_abnormal == EVENT_SET)//待调整 ESAM故障标志  mbase_cb-> ？
     {
         encry_len = 12 + 5;
         memset(p, 0xFF, encry_len);
@@ -1047,7 +1052,10 @@ int active_report_normal_pro(struct instance_t* instance, struct pipeline_t* pip
     }
     else
     {
-        //encry_len = esam_report_rn_mac(apdu, len_apdu, p);  //待调整 esam交互 获取主动上报的随机数和mac
+        get_upreport_esam_rn_mac(instance, ptr, len_apdu , p);//待调整 esam交互 获取主动上报的随机数和mac
+        encry_len = 12 + 5;
+        ndv_move_buffer(p+12, p+13, 4);
+        *(p+12) = 0x04;       
     }
     ndv_memcopy(mbase_cb->report_random_data, p, 12); //拷贝随机数
     p += encry_len;
