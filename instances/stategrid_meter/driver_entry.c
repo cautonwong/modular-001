@@ -12,7 +12,7 @@ extern const struct driver_ops_t  uart_driver;
 extern const struct driver_ops_t rn8209_drv;
 extern const struct driver_ops_t nor_flash_driver;
 extern const struct bus_ops_t mcu_uart_bus_ops;
-
+extern void gpio_configuration_AC(void);
 
 static uint8_t fifo_buf[32];
 static struct fifo_t irq_fifo;
@@ -320,6 +320,39 @@ void irq_transform_to_instance(struct instance_t* instance)
 void IOStateCheckInit(void);
 
 
+void mcu_main_frequency_mode(uint8 clk_mode)
+{
+    CLK_InitTypeDef CLK_Struct;
+    uint32_t Periphral = 0;
+
+    if (clk_mode)
+    {
+        CLK_Struct.ClockType = CLK_TYPE_AHBSRC \
+            | CLK_TYPE_PLLL   \
+            | CLK_TYPE_HCLK   \
+            | CLK_TYPE_PCLK;
+        CLK_Struct.AHBSource = CLK_AHBSEL_LSPLL;
+        CLK_Struct.PLLL.Frequency = CLK_PLLL_26_2144MHz;
+        CLK_Struct.PLLL.Source = CLK_PLLLSRC_XTALL;
+        CLK_Struct.PLLL.State = CLK_PLLL_ON;
+        CLK_Struct.HCLK.Divider = 1;
+        CLK_Struct.PCLK.Divider = 1;
+        CLK_ClockConfig(&CLK_Struct);
+
+        Periphral = CLK_APBPERIPHRAL_PMU | CLK_APBPERIPHRAL_RTC | CLK_APBPERIPHRAL_ANA \
+            | CLK_APBPERIPHRAL_TIMER | CLK_APBPERIPHRAL_UART3 \
+            | CLK_APBPERIPHRAL_UART4 | CLK_APBPERIPHRAL_UART5 \
+            | CLK_APBPERIPHRAL_UART0;
+        CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_LCD | CLK_AHBPERIPHRAL_GPIO), ENABLE);
+        CLK_APBPeriphralCmd(Periphral, ENABLE);
+    }
+    else
+    {
+
+    }
+}
+
+
 void dev_init(uint8_t power_mode)
 {
     mcu_main_power_on_config(power_mode);
@@ -354,7 +387,9 @@ void dev_init(uint8_t power_mode)
 //打开串口，高速定时器，tick，初始化IO上电配置
  void device_power_open(struct instance_t* instance)
  {
-     dev_init(AC_POWER_ON);
+      mcu_main_frequency_mode(1);
+      gpio_configuration_AC();
+      dev_init(AC_POWER_ON);
  }
 
 //初始化IO低功耗配置，初始化系统低功耗配置，准备进入sleep模式。
@@ -460,7 +495,88 @@ void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
     PMU_EnterSleep_LowPower(&LowPower_InitStruct);
 }
 
+void gpio_configuration_AC(void)
+{
+    //PMU_INTConfig(PMU_INT_IOAEN, DISABLE);
+    
+    GPIOC->OEN &= ~BIT6; // V_EEP 
+    GPIOC->IE &= ~BIT6;
+    GPIOC->ATT &= ~BIT6;
+    GPIOC->DAT |= BIT6;
+    
+    GPIOB->OEN &= ~BIT8; // V_FLASH
+    GPIOB->IE &= ~BIT8;
+    GPIOB->ATT &= ~BIT8;
+    GPIOB->DAT &= ~BIT8;
 
+    GPIOA->OEN |= BIT15; // 计量串口输入
+    GPIOA->IE |= BIT15;
+  
+    GPIOA->OEN |= BIT14; // 开盖输入
+    GPIOA->IE |= BIT14;
+   
+    GPIOC->OEN &= ~BIT9;//plc_rst
+    GPIOC->IE &= ~BIT9;
+    GPIOC->ATT |= (BIT9 | BIT10);
+    GPIOC->DAT |= BIT9;//RST 高
+    GPIOC->OEN |= BIT10;//plc_event，高阻态
+    GPIOC->IE |= BIT10;
+    
+    GPIOF->OEN |= BIT1;//plc_STA，高组态
+    GPIOF->IE |= BIT1;
+    GPIOF->ATT |= BIT1;
+    
+    GPIOB->ATT |= BIT0;//plcrx
+    GPIOB->ATT |= BIT6;//plctx
+    
+    
+    GPIOB->ATT |= BIT9 | BIT10 | BIT11 | BIT12;//FLASH开漏
+    
+
+    
+    GPIOA->OEN |=BIT2; 
+    GPIOA->IE |=BIT2;
+    PMU_WakeUpPinConfig(GPIO_Pin_2, IOA_EDGEBOTH);   //使能外部IO口唤醒
+    PMU_ClearIOAINTStatus(GPIO_Pin_2);
+    
+    
+#if 0   
+     /* 涓婃媺鐢甸樆閰嶇疆 */
+     GPIO->PUA = 0x00300000;
+     GPIO->PUB = 0x00000004;
+     GPIO->PUC = BIT28;
+     /* 杈撳嚭妯″紡閰嶇疆 */  
+     GPIO->PIMA = 0x00000000;
+     GPIO->PIMB = 0x00000000;
+     GPIO->PIMC = 0x00000000;
+     
+     GPIO->PMA = PM31_OUT | PM32_IN | PM33_OUT | PM34_OUT | PM35_OUT | PM36_IN | PM37_IN |
+                 PM20_OUT | PM21_OUT | PM22_IN | PM23_OUT | PM24_IN | PM25_IN | PM26_IN | PM27_IN |
+                 PM10_OUT | PM11_OUT | PM12_OUT| PM13_OUT | PM14_OUT| PM15_OUT |PM16_OUT| PM17_IN|
+                 PM00_IN  | PM01_OUT | PM02_IN | PM03_IN  | PM04_IN ;
+     
+     GPIO->PMB = PM70_OUT | PM71_OUT | PM72_OUT | PM73_IN | PM74_OUT | PM75_OUT | PM76_OUT | PM77_OUT |
+                 PM60_OUT | PM61_OUT | PM62_OUT | PM63_OUT | PM64_OUT | PM65_OUT | PM66_OUT | PM67_OUT |
+                 PM50_OUT | PM51_OUT | PM52_OUT| PM53_IN | PM54_OUT| PM55_OUT |PM56_IN| PM57_OUT|
+                 PM40_IN  | PM41_IN  | PM42_OUT | PM43_IN  | PM44_IN | PM45_IN |PM46_IN| PM47_OUT;/* 20标准液晶新增一个seg72口 */
+
+     GPIO->PMC = PM110_OUT | PM111_OUT | PM112_IN | PM113_OUT | PM114_IN | PM115_OUT | PM116_IN | PM117_IN |
+                 PM100_IN | PM101_IN | PM102_OUT | PM103_OUT | PM104_OUT | PM105_IN | PM106_OUT | PM107_OUT |
+                 PM90_OUT | PM91_OUT | PM92_OUT| PM93_OUT | PM94_OUT| PM95_OUT |PM96_OUT| PM97_OUT|
+                 PM80_OUT | PM81_OUT | PM82_OUT| PM83_OUT | PM84_OUT| PM85_OUT |PM86_OUT| PM87_OUT;
+
+     /*杈撳叆浣胯兘閰嶇疆*/
+     GPIO->PIEA = BIT31 + BIT30 + BIT27 + BIT17 + BIT19 + BIT22 + BIT23 + BIT12 + BIT13 + BIT14;
+     GPIO->PIEB = 0;
+     GPIO->PIEC = 0;
+
+#if POWER_OFF_TEST
+     GPIO->PMA |= PM30_OUT;
+#else
+     GPIO->PMA |= PM30_IN;
+#endif
+#endif
+}
 
 static uint8_t IOState(void *ptr)
 {

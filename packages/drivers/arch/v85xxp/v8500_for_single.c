@@ -840,38 +840,6 @@ uint8 ac_power_on_monitor(void)
 
 }
 
-void mcu_main_frequency_mode(uint8 clk_mode)
-{
-    CLK_InitTypeDef CLK_Struct;
-    uint32_t Periphral = 0;
-
-    if (clk_mode)
-    {
-        CLK_Struct.ClockType = CLK_TYPE_AHBSRC \
-            | CLK_TYPE_PLLL   \
-            | CLK_TYPE_HCLK   \
-            | CLK_TYPE_PCLK;
-        CLK_Struct.AHBSource = CLK_AHBSEL_LSPLL;
-        CLK_Struct.PLLL.Frequency = CLK_PLLL_26_2144MHz;
-        CLK_Struct.PLLL.Source = CLK_PLLLSRC_XTALL;
-        CLK_Struct.PLLL.State = CLK_PLLL_ON;
-        CLK_Struct.HCLK.Divider = 1;
-        CLK_Struct.PCLK.Divider = 1;
-        CLK_ClockConfig(&CLK_Struct);
-
-        Periphral = CLK_APBPERIPHRAL_PMU | CLK_APBPERIPHRAL_RTC | CLK_APBPERIPHRAL_ANA \
-            | CLK_APBPERIPHRAL_TIMER | CLK_APBPERIPHRAL_UART3 \
-            | CLK_APBPERIPHRAL_UART4 | CLK_APBPERIPHRAL_UART5 \
-            | CLK_APBPERIPHRAL_UART0;
-        CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_LCD | CLK_AHBPERIPHRAL_GPIO), ENABLE);
-        CLK_APBPeriphralCmd(Periphral, ENABLE);
-    }
-    else
-    {
-
-    }
-}
-
 void fnINTTC3_Init(uint8 cmd)//2ms
 {
         TMR_InitType    TMR_InitStruct;
