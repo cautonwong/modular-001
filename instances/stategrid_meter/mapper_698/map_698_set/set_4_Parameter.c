@@ -14,7 +14,7 @@ typedef struct
 
 const general_set4  set4300_table[] = 
 {
-     Device_descriptor,   0x0200,   0x02,   32,//设备描述符
+     Device_descriptor,   0x0200,   0x01,   33,//设备描述符
     
      Factory_No,          0x0301,   0x02,    4, //厂家代码
      Version_SoftWare,    0x0302,   0x02,    4, //软件版本
@@ -23,9 +23,9 @@ const general_set4  set4300_table[] =
      Date_HardWare,       0x0305,   0x02,    6, //硬件版本日期
      Extend_Info,         0x0306,   0x02,    8, //扩展信息
     
-     Produced_Date,       0x0400,   0x02,    7, //生产日期
+     Produced_Date,       0x0400,   0x01,    7, //生产日期
 //     Subset_List,       0x0500,  0x05,    2, //子设备列表(num+2*oi)
-     Protocol_List,       0x0601,   0x02,   20, //协议列表
+//     Protocol_List,       0x0601,   0x02,   20, //协议列表
      FollowReport_en,     0x0700,   0x01,    1, //允许跟随上报
      ActiveReport_en,     0x0800,   0x01,    1, //允许主动上报
      Comm_Master_en,      0x0900,   0x01,    1, //允许与主站通讯
@@ -136,13 +136,97 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
     return -1;
 }
 
+
+int set_support_protocol_list(struct instance_t* instance, uint32_t id, uint8_t* buf)
+{
+
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t i;
+    uint8_t* p = buf;
+    uint32_t addr=0;
+    uint16_t idl = 0;
+    uint8_t index = 0;
+    uint8_t *tmp = instance->apdu_cache;
+    uint8_t *tmp_cache = instance->apdu_cache;
+    uint8_t count, len,maxlen;
+
+    if(mbase_cb == NULL)
+    {
+        return -1;
+    }
+
+    idl = (uint16_t)(id & 0x0000FFFF);
+    index = (uint8_t)(id & 0x000000FF);
+
+    
+    if (index > 3)
+    {
+        return -DAR_OTHERS_ERROR;
+    }
+
+    maxlen = (76 - 1) / 3;
+    
+    if (index == 0)
+    {
+        count = p[1];
+
+        if (p[0] != TYPE_array || count > 3)
+        {
+            return -DAR_OTHERS_ERROR;
+        }
+
+        p += 2;
+        *tmp++ = count;
+
+        for (i = 0; i < count; i++)
+        {
+            len = p[1];
+
+            if ((p[0] != TYPE_visible_string) || (len > maxlen - 1))
+            {
+                return -DAR_OTHERS_ERROR;
+            }
+
+            ndv_memcopy(tmp, &p[1], len + 1);
+            p += len + 2;
+            tmp += maxlen;
+        }
+
+        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Protocol_List);
+        nd_set_index(instance, addr, tmp_cache, (uint16)(tmp - tmp_cache)); 
+        p = p + (uint16)(tmp - tmp_cache);
+
+    }
+    else
+    {
+        len = p[1];
+
+        if ((p[0] != TYPE_visible_string) || (len > maxlen - 1))
+        {
+            return -DAR_OTHERS_ERROR;
+        }
+
+        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Protocol_List);
+        nd_get_index(instance, addr, tmp_cache, 76); 
+
+        ndv_memcopy((tmp_cache + (index - 1) * maxlen + 1), &p[1], len + 1);
+
+        nd_set_index(instance, addr, tmp_cache, 76); 
+
+        p += (len + 2);
+    }
+
+    return (p-buf);
+}
+
+
 int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {
     struct mbase_control_block_t* mbase_cb;
-    uint8_t i,timer[6], num, tmpbuf[13]={0};
+    uint8_t j, i,timer[6], num, Tnum,tmpbuf[13]={0};
     uint8_t* p = buf;
     uint32_t addr=0, chn;
-    uint16_t idl = 0,year2;
+    uint16_t idl = 0,year2, tmpid1;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
@@ -160,6 +244,7 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
             {
                 case 0x0200:   //设备描述符
                     if(mbase_cb->factor_mode == false)  return -DAR_OTHERS_ERROR; //工厂模式外，禁止写入
+                    if(p[1] > 32)  return -DAR_TYPE_NOT_MATCH;
                     break;
                 case 0x0400://生产日期
                     mem_swap_cpy((uint8_t*)&year2, p+1, 2);
@@ -184,45 +269,108 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
             p = p + set4300_table[i].offset;
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + set4300_table[i].s_index);
             nd_set_index(instance, addr, p, set4300_table[i].len); 
-            p = p + set4300_table[i].len - 1;
+            p = p + set4300_table[i].len - 1; // 凯哥？ 为何-1
             EventOut_698_check(instance);  
             return (p-buf);
         }
     }
+    
+    
+    switch(idl)
+    {
+        case 0x0300: //版本信息
+        {
+#if 0
+Factory_No,          0x0301,   0x02,    4, //厂家代码
+Version_SoftWare,    0x0302,   0x02,    4, //软件版本
+Date_SoftWare,       0x0303,   0x02,    6, //软件版本日期
+Version_HardWare,    0x0304,   0x02,    4, //硬件版本
+Date_HardWare,       0x0305,   0x02,    6, //硬件版本日期
+Extend_Info,         0x0306,   0x02,    8, //扩展信息
+#endif
+            tmpid1 = idl;
+
+            num = p[1];
+            if ((p[0] != TYPE_structure) || (num != 6))
+            {
+                return -DAR_TYPE_NOT_MATCH;
+            }
+            p += 2;
+            Tnum = 6; // 6个成员
+            for (j = 1; j < (Tnum + 1) ; j++)
+            {
+                for(i=0; i<sizeof(set4300_table)/sizeof(general_set4); i++)
+                {
+                    if((tmpid1 + j) == set4300_table[i].oad)
+                    {
+                        if ((p[0] != TYPE_visible_string) || (p[1] != set4300_table[i].len)) //类型不匹配
+                        {
+                            return -DAR_TYPE_NOT_MATCH;
+                        }
+                        
+                        p = p + set4300_table[i].offset;
+                        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + set4300_table[i].s_index);
+                        nd_set_index(instance, addr, p, set4300_table[i].len); 
+                        p = p + set4300_table[i].len ;
+                    }
+                }
+            }
+            return (p-buf); 
+        }
+        break;
+        case 0x0600: //协议列表
+        case 0x0601: //协议列表
+        case 0x0602: //协议列表
+        case 0x0603: //协议列表
+        {
+            return set_support_protocol_list(instance,id, buf);
+        }
+        break;
+
+        case 0x0A00: //上报通道
+        {
+            num = p[1];
+            if ((p[0] != TYPE_array) || (num > 3))
+            {
+                return -DAR_TYPE_NOT_MATCH;
+            }
+            p += 2;
+
+            tmpbuf[0] = num;
+            
+            for (i = 0; i < num; i++)
+            {
+                if(*p++ != TYPE_OAD)
+                {
+                    return -DAR_OTHERS_ERROR;
+                }
+            
+                chn = buf_to_uint32_msb(p);
+                p += 4;
+            
+                if ((chn == 0xf2020201) || ((chn != 0xf2010201)&&(chn != 0xf2010202) && chn != 0xf2090201))
+                {
+                    return -DAR_OTHERS_ERROR;
+                }
+            
+                uint32_to_buf_lsb(chn, &tmpbuf[4*i+1]);
+            }
+
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Report_channel);
+            nd_set_index(instance, addr, tmpbuf, 13); 
+
+            EventOut_698_check(instance);  
+            return (p-buf);            
+        }
+        break;
+        default:
+            break;
+    }
+    
+    
     if(idl == 0x0A00)//上报通道
     {
-        num = p[1];
-        if ((p[0] != TYPE_array) || (num > 3) || ((id & 0x000000FF) != 0))
-        {
-            return -DAR_OTHERS_ERROR;
-        }
-        p += 2;
-
-        tmpbuf[0] = num;
         
-        for (i = 0; i < num; i++)
-        {
-            if(*p++ != TYPE_OAD)
-            {
-                return -DAR_OTHERS_ERROR;
-            }
-        
-            chn = buf_to_uint32_msb(p);
-            p += 4;
-        
-            if ((chn == 0xf2020201) || ((chn != 0xf2010201)&&(chn != 0xf2010202) && chn != 0xf2090201))
-            {
-                return -DAR_OTHERS_ERROR;
-            }
-        
-            uint32_to_buf_lsb(chn, &tmpbuf[4*i+1]);
-        }
-
-        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Report_channel);
-        nd_set_index(instance, addr, tmpbuf, 13); 
-
-        EventOut_698_check(instance);  
-        return (p-buf);
     }   
     
     return -1;

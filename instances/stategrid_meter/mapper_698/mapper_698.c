@@ -543,7 +543,7 @@ const  parameter_item_t  parameter_item[] =
     { Meter_Location2,     0x01,   10,      init_Meter_Location2},//设备地理位置纬度
     { Meter_Location3,     0x01,   5,       init_Meter_Location3},//设备地理位置高度
     
-    { Device_descriptor,   0x01,   32,      init_Device_descriptor},//设备描述符
+    { Device_descriptor,   0x01,   33,      init_Device_descriptor},//设备描述符
     
     { Factory_No,          0x01,    4,      init_Factory_No }, //厂家代码
     { Version_SoftWare,    0x01,    4,      init_Version_SoftWare }, //软件版本
@@ -554,7 +554,7 @@ const  parameter_item_t  parameter_item[] =
     
     { Produced_Date,       0x01,    7,      init_Produced_Date }, //生产日期
     { Subset_List,         0x01,    1,      init_Subset_List }, //子设备列表(num+2*oi)
-    { Protocol_List,       0x01,   20,      init_Protocol_List }, //协议列表
+    { Protocol_List,       0x01,   76,      init_Protocol_List }, //协议列表
     { FollowReport_en,     0x01,    1,      init_FollowReport_en }, //允许跟随上报
     { ActiveReport_en,     0x01,    1,      init_ActiveReport_en }, //允许主动上报
     { Comm_Master_en,      0x01,    1,      init_Comm_Master_en }, //允许与主站通讯
@@ -1663,7 +1663,7 @@ int para_init(struct instance_t* instance )
         if( parameter_item[i].data != 0 )
         {
             if (((parameter_item[i].paramerer_index >= MinuteFreeze_oad) && (parameter_item[i].paramerer_index <= ZeroLineErrS_seq))
-                || ((parameter_item[i].paramerer_index >= EventClr_List) && (parameter_item[i].paramerer_index <= SecurityMode_EXData)))
+                || ((parameter_item[i].paramerer_index >= __INITFLAG2_Start) && (parameter_item[i].paramerer_index <= __INITFLAG2_End)))
             {
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + parameter_item[i].paramerer_index);
                 nd_set_index(instance, s_index, (uint8_t*)(parameter_item[i].data), parameter_item[i].len); 

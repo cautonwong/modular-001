@@ -392,7 +392,7 @@ const uint8_t  init_ASCII_MeterType[] =
 }; 
 const uint8_t  init_SoftWareNo[] = { 16, 'A', 'A', 'A', 'A', 'A', 'A',  'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',  'A', 'A' }; /**< 软件备案号 */
 const uint8_t  init_Measure_Mode[] = {1, 0xA0 }; /**< 有功组合方式特征字 */
-const uint8_t  init_Balance_Time[] = { 6,0, 1, 0x63, 0x63, 0x63, 0x63 }; /**< 结算日 */
+const uint8_t  init_Balance_Time[] = { 6,  1, 0, 0x63, 0x63, 0x63, 0x63 }; /**< 结算日 */
 const uint8_t  init_Meter_Password[] = {8, '0', '0', '0', '0', '0', '0', '0', '0' }; /**< 认证密码 */
 const uint8_t  init_MeterRunWord[] = { 1,0 };//运行特征字
 const uint8_t  init_4580[] = { 0 /*0x03*/ }; /**< 上报标识*/

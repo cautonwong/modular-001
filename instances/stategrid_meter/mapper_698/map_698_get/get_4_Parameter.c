@@ -13,7 +13,7 @@ typedef struct
 
 const general_get4  get4300_table[] = 
 {
-     Device_descriptor,   0x0200,   TYPE_visible_string,   32,//设备描述符
+     //Device_descriptor,   0x0200,   TYPE_visible_string,   33,//设备描述符
     
      Factory_No,          0x0301,   TYPE_visible_string,    4, //厂家代码
      Version_SoftWare,    0x0302,   TYPE_visible_string,    4, //软件版本
@@ -24,8 +24,8 @@ const general_get4  get4300_table[] =
     
      Produced_Date,       0x0400,   TYPE_date_time_s,       7, //生产日期
 //     Subset_List,       0x0500,  0x05,    2, //子设备列表(num+2*oi)
-     Protocol_List,       0x0600,   TYPE_visible_string,    20, //协议列表
-     Protocol_List,       0x0601,   TYPE_array,             20, //协议列表
+//     Protocol_List,       0x0600,   TYPE_visible_string,    20, //协议列表
+//     Protocol_List,       0x0601,   TYPE_array,             20, //协议列表
      FollowReport_en,     0x0700,   TYPE_bool,              1, //允许跟随上报
      ActiveReport_en,     0x0800,   TYPE_bool,              1, //允许主动上报
      Comm_Master_en,      0x0900,   TYPE_bool,              1, //允许与主站通讯
@@ -59,11 +59,86 @@ const general_get4  general_get4_talble[] =
 };
 #define		get4num			sizeof(general_get4_talble)/sizeof(general_get4)
 
+int get_support_protocol_list(struct instance_t* instance, uint32_t id, uint8_t* buf)
+{
+    uint16_t idl=0;
+    uint8_t* p = buf;
+    uint32_t ret, addr = 0;
+
+    uint8_t index = 0;
+    uint8_t *tmp1 = instance->apdu_cache,  *tmp1_cache = instance->apdu_cache;;
+    uint8_t *tmp2 = instance->apdu_cache + 100;
+    uint8_t  i, count, len, maxlen;
+
+    
+    idl = (uint16_t)(id & 0x0000FFFF);
+    index = (uint8_t)(id & 0x000000FF);
+
+    //tmp1 = res->tmp_buf;
+    //tmp2 = tmp1 + 100;
+
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Protocol_List);
+    nd_get_index(instance, addr, tmp2, 76); 
+
+
+    maxlen = (76 - 1) / 3;
+    count = *tmp2++;
+
+    if ((index > count) || (count > 3))
+    {
+        return -DAR_OTHERS_ERROR;
+    }
+
+    if (index == 0)
+    {
+        *tmp1++ = TYPE_array;
+        *tmp1++ = count;
+
+        for (i = 0; i < count; i++)
+        {
+            *tmp1++ = TYPE_visible_string;
+            len = tmp2[0] + 1;
+
+            if (len > maxlen)
+            {
+                return -DAR_OTHERS_ERROR;
+            }
+
+            ndv_memcopy(tmp1, tmp2, len);
+            tmp1 += len;
+            tmp2 += maxlen;
+        }
+    }
+    else
+    {
+        tmp2 += (index - 1) * maxlen;
+        *tmp1++ = TYPE_visible_string;
+        len = tmp2[0] + 1;
+
+        if (len > maxlen)
+        {
+            return -DAR_OTHERS_ERROR;
+        }
+
+        ndv_memcopy(tmp1, tmp2, len);
+        tmp1 += len;
+    }
+
+    len = tmp1 - tmp1_cache;
+
+
+
+    ndv_memcopy(p, tmp1_cache, len);
+    p += len;
+    
+    return (p-buf);
+}
+
 
 int get4300_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {
-    uint16_t idl=0;
-    uint8_t i, tmpbuf[13] = {0}, num;
+    uint16_t idl=0, tmpid1;
+    uint8_t j, i, tmpbuf[13] = {0}, num, Tnum;
     uint8_t* p = buf;
     uint32_t ret, addr = 0;
     
@@ -89,17 +164,37 @@ int get4300_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
             return (p-buf);
         }
     }
-    if(idl == 0x0300)//版本信息
+    
+  
+    if(idl == 0x0200)//设备描述符
+    {
+        *p++ = TYPE_visible_string;
+
+        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Device_descriptor);
+        nd_get_index(instance, addr, p, 33); 
+        num = p[0];
+        p = p + num + 1;
+        return (p-buf);
+    }
+    else if(idl == 0x0300)//版本信息
     {
         *p++ = TYPE_structure;
         *p++ = 6;
-        for(i=0; i<6; i++)
+        Tnum = 6; // 6个成员
+        tmpid1 = idl;
+        for (j = 1; j < (Tnum + 1) ; j++)
         {
-            *p++ = TYPE_visible_string;
-            *p++ = get4300_table[1+i].len;
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + get4300_table[1+i].s_index);
-            nd_get_index(instance, addr, p, get4300_table[1+i].len); 
-            p = p + get4300_table[1+i].len;
+            for(i=0; i<sizeof(get4300_table)/sizeof(general_get4); i++)
+            {
+                if((tmpid1 + j) == get4300_table[i].oad)   
+                {
+                    *p++ = TYPE_visible_string;
+                    *p++ = get4300_table[i].len;
+                    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + get4300_table[i].s_index);
+                    nd_get_index(instance, addr, p, get4300_table[i].len); 
+                    p = p + get4300_table[i].len;
+                }
+            }
         }
         return (p-buf);
     }
@@ -108,6 +203,10 @@ int get4300_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
         *p++ = TYPE_array;
         *p++ = 0;
         return (p-buf);
+    }
+    else if((idl&0xFF00) == 0x0600)//协议列表
+    {
+        return  get_support_protocol_list(instance, id, buf);
     }
     else if(idl == 0x0A00)//上报通道
     {

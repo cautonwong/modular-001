@@ -342,7 +342,7 @@ enum block_parameter_item_id_t
 {
     //-----关联对象列表 存储EE块号
     //冻结关联对象  冻结相关所有顺序不随意改变
-    MinuteFreeze_oad        =        300, // 分钟冻结关联对象
+    MinuteFreeze_oad        =        300, // 分钟冻结关联对象             // 初始化特殊处理起始
     HourFreeze_oad          =        301, // 小时冻结关联对象
     DayFreeze_oad           =        302, // 日冻结关联对象
     BillFreeze_oad          =        303, //结算日冻结   
@@ -520,7 +520,7 @@ enum block_parameter_item_id_t
     RTCErrS_seq                         ,   //记录序号  电能表时钟故障事件 
     EmuErrS_seq                         ,   //记录序号  电能表计量芯片故障事件
     BroadcastTimeS_seq                  ,   //记录序号  广播校时事件 
-    ZeroLineErrS_seq                    ,   //记录序号  零线电流异常事件 
+    ZeroLineErrS_seq                    ,   //记录序号  零线电流异常事件              // 初始化特殊处理结束
     //以上不能改变顺序
 
 
@@ -617,6 +617,7 @@ enum block_parameter_item_id_t
 #define     DispMean12Show              707 //液晶12字符意义
 */
 
+#define     __INITFLAG2_Start           1400 //初始化 特殊处理标记  
 
 #define     MinFrez_Sectors             1400 //分钟冻结各方案的扇区偏移 9*2   // 待调整 不易改和易改的区分开
 #define     SecurityMode_En             1401 //安全模式参数使能0-dis   1-en
@@ -637,6 +638,9 @@ enum block_parameter_item_id_t
 #define     Report3320_OADList3         1513 // 3320 oad上报列表   1 + 4*60     //PLC  
 #define     Report3320_OADList4         1514 // 3320 oad上报列表   1 + 4*60     //rs485-2
 #define     ActReport_Info              1515 // 主动上报 停电下缓存信息   //待调整  现是否存两份？
+
+#define     __INITFLAG2_End             ActReport_Info //初始化 特殊处理标记  
+
 
 #define     MAX_FEE_NO                  12                                  
 

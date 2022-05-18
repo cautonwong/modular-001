@@ -196,5 +196,5 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
         default:
             break;
     }
-    return 0x01;
+    return -DAR_OBJECT_NOT_EXIST;
 }
