@@ -364,8 +364,14 @@ uint8_t get_current_value(struct instance_t* instance, uint32_t oad, uint8_t* bu
 
         //事件累计时间/
         *p++ = TYPE_double_long_unsigned;
-
-        p += uint32_to_buf_msb(*record_id_info.acc_time, p);
+        if (record_id_info.acc_time == __NULL)
+        {
+            p += uint32_to_buf_msb(0, p);
+        }
+        else
+        {
+            p += uint32_to_buf_msb(*record_id_info.acc_time, p);
+        }
     }
 
     *dar = DAR_SUCCESS;
@@ -584,11 +590,6 @@ int get_time_status_record(struct instance_t* instance, uint32_t oad, uint8_t* b
         circular_info.mode = 0;
 
         ret = nd_log_output(instance, record_id_info.save_index, tempbuf, 1, &circular_info);
-        if (ret <= 0)
-        {
-            *dar = DAR_OTHERS_ERROR;
-            return -1;
-        }
 
         *p = TYPE_date_time_s;
          memset(time_buf, 0xff, sizeof(time_buf));

@@ -247,7 +247,7 @@ void send_recordflag_mesg(struct instance_t* instance, struct pipeline_t* task, 
     mesg.id = RecordId;
     mesg.oad_n = 1;
     mesg.payload = payload;
-    mesg.len = 4;
+    mesg.len = 0;
 
     set_recordflag(instance, mesg.id);
 
@@ -853,7 +853,10 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
     if (r > 0)
     {
         Oad = 0xFFFFFFFF;
-        fifoBuf_getData(pipeline->in_queue, payload, mesg->len);
+        if ((mesg->len > 0)&&(mesg->payload))//payload exist
+        {
+            fifoBuf_getData(pipeline->in_queue, payload, mesg->len);
+        }
         switch (mesg->id)
         {
             case OverCurrentAE:         //过流事件结束
@@ -956,7 +959,7 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
                 break;
 
             case InstantFreeze:         //瞬时冻结
-                Oad = 0x50030200;
+                Oad = 0x50000200;
                 mode = FRZ_1;
                 break;
 

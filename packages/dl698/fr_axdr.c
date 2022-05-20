@@ -1234,7 +1234,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
 
     if (circular_info.valid_num == 0)
     {
-        return record_response_null(p);
+        return record_response_null(buf);
     }
     
     switch(rsd_info->select)
@@ -1255,7 +1255,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
         case 9: //上n次
             if ((rsd_info->last_no == 0) || (rsd_info->last_no > circular_info.valid_num))
             {
-                return record_response_null(p);
+                return record_response_null(buf);
             }
             circular_info.curr_num = circular_info.valid_num - rsd_info->last_no;
             circular_info.valid_num = circular_info.curr_num + 1;

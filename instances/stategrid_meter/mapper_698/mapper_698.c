@@ -219,7 +219,14 @@ const struct record_item_t  record_item[] =
     { BroadcastTimeS,       0,                          600,       10 },//  0x303C    广播校时事件 
     { ZeroLineErrS  ,       ZeroLineErrE,               600,       10 },//  0x3040    零线电流异常事件 
 
-    { BillFreeze,           0,                          600,       10 },// 结算日冻结
+    { BillFreeze,           0,                          600,       10 },//  0x5005      结算日冻结 //待调整
+    { SeasonTabCutFreeze,   0,                          5*4096,    3, },//  0x5008      时区表切换冻结 
+    { DayTabCutFreeze   ,   0,                          4*4096,    2, },//  0x5009      日时段表切换冻结    
+    { FeePriceCutFreeze ,   0,                          4*4096,    2, },//  0x500A      费率电价切换冻结  
+    { StepCutFreeze     ,   0,                          4*4096,    2, },//  0x500B      阶梯切换冻结
+    { StepBillFreeze    ,   0,                          4*4096,    2, },//  0x5011      阶梯结算冻结
+    { InstantFreeze     ,   0,                          4*4096,    4, },//  0x5000      瞬时冻结
+
 };
 
 
@@ -244,7 +251,7 @@ const struct record_item_t  record_item_2[] =
 {
     { HourFreeze , 0,     5 * 4096,    254 },//小时冻结
     { DayFreeze  , 0,    27 * 4096,    365 },//日冻结
-    { MonthFreeze, 0,     5 * 4096,     24 },//日冻结
+    { MonthFreeze, 0,     5 * 4096,     24 },//月冻结
 };
 
 const  parameter_item_t  parameter_item[] =
@@ -1049,8 +1056,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 case 0x50000000://瞬时冻结
                 {
                     SaveId = InstantFreeze;                    // 记录存储地址信息
-                    SaveDevice = RES_DEV_FLASH;
-                    SaveBlock = mbase_block_event_flash2;
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
                     CaptureId = InstantFreeze_oad;             // 关联对象存储地址信息
                     SeqId = InstantFreeze_seq;                 // 序号存储地址信息
                     PeriodId = InstantFreeze_period;           // 周期存储地址信息
@@ -1076,10 +1083,10 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 //case 0x50050000://结算日冻结
                 case 0x50060000://月冻结
                 //case 0x50070000://年冻结 （不要求，但需占用位置）
-                case 0x50080000://时区表切换冻结
-                case 0x50090000://日时段表切换冻结
-                case 0x500A0000://费率电价切换冻结
-                case 0x500B0000://阶梯切换冻结
+                //case 0x50080000://时区表切换冻结
+                //case 0x50090000://日时段表切换冻结
+                //case 0x500A0000://费率电价切换冻结
+                //case 0x500B0000://阶梯切换冻结
                 {
                     temp = (((oad & 0xFFFF0000) - 0x50030000) >> 16);
                     SaveId = HourFreeze + temp;                    // 记录存储地址信息
@@ -1103,7 +1110,23 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     DepthId = BillFreeze_depth;             // 深度存储地址信息
                 }
                 break;
-
+                
+                case 0x50080000://时区表切换冻结
+                case 0x50090000://日时段表切换冻结
+                case 0x500A0000://费率电价切换冻结
+                case 0x500B0000://阶梯切换冻结
+                {
+                    temp = (((oad & 0xFFFF0000) - 0x50030000) >> 16);
+                    SaveId = HourFreeze + temp;                    // 记录存储地址信息
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = HourFreeze_oad + temp;             // 关联对象存储地址信息
+                    SeqId = HourFreeze_seq + temp;                 // 序号存储地址信息
+                    PeriodId = HourFreeze_period + temp;           // 周期存储地址信息
+                    DepthId = HourFreeze_depth + temp;             // 深度存储地址信息
+                }
+                break;
+                
                 case 0x50110000://阶梯结算冻结
                 {
                     SaveId = StepBillFreeze;                    // 记录存储地址信息
