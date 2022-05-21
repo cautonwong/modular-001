@@ -101,6 +101,26 @@ extern struct pipeline_t pl_rx_from_serial;
 extern struct pipeline_t pl_rx_dlms;
 extern struct pipeline_t pl_tx_dlms;
 
+//-3--消息头校验异常
+//-2--消息头幻数异常
+//-1--消息头长度异常
+// 0--无消息
+// 1--消息头
+// 2--消息头+消息内容
+// 3--消息头+消息内容(缓冲太小，外部自行获取)
+enum recv_mesg_v2_e 
+{
+    MESG_V2_ERR_LEN             = -3,
+    MESG_V2_ERR_MAGIC           = -2,
+    MESG_V2_ERR_CHECK           = -1,
+    
+    MESG_V2_OK                  = 0,
+    MESG_V2_HEAD                = 1,
+    MESG_V2_HEAD_PAYLOAD        = 2,
+    MESG_V2_HEAD_PAYLOAD_EXT    = 3,
+ 
+};
+
 
 //
 #define MSG_MAGIC  0xe8f9ab39

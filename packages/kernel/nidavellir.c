@@ -418,31 +418,32 @@ int send_mesg(struct instance_t *instance,struct pipeline_t *pipeline,struct mes
     return 0;
 }
 
-//0-无消息
-//1-消息头
-//2-消息头+消息内容
-//3-消息头+消息内容(缓冲太小，外部自行获取)
+
 int recv_mesg_v2(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t *payload, uint16_t max_len)
 {
     uint16_t len = 0;
     uint16_t check = 0;
+    int ret = MESG_V2_OK;
     if (fifoBuf_getUsed(pipeline->in_queue) >= sizeof(struct message_t)){
         len = fifoBuf_getData(pipeline->in_queue, mesg, sizeof(struct message_t));
+        ret = MESG_V2_ERR_LEN;
         if(len == sizeof(struct message_t)){
+            ret = MESG_V2_ERR_MAGIC;
             if (MSG_MAGIC == mesg->magic){
                 check = nd_get_crc16((uint8_t*)mesg, sizeof(struct message_t) - 2);
+                ret = MESG_V2_ERR_CHECK;
                 if (check == mesg->check){
                     if ((mesg->len > 0) && (mesg->payload) && (payload)){
                         if(mesg->len < max_len){
                             fifoBuf_getData(pipeline->in_queue, payload, mesg->len); 
-                            return 2;
+                            ret = MESG_V2_HEAD_PAYLOAD;
                         }
-                        return 3;
+                        ret = MESG_V2_HEAD_PAYLOAD_EXT;
                     }
-                    return 1;
+                    ret = MESG_V2_HEAD;
                 }
             }
         }
     }
-    return 0;
+    return ret;
 }
