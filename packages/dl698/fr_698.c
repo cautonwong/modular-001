@@ -873,7 +873,7 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
 
 
     //client  或者 主动上报 或者 延时读取发送
-    if (recv_mesg_v2(instance, pipeline, mesg)){
+    if (recv_mesg_v2(instance, pipeline, mesg, NULL, 0)){
 #if WIN32
         if ((TEST_CASE_Request == mesg->ctrl) && (TEST_CASE_ID == mesg->id)){
             cache->wr = 0;//临时清0

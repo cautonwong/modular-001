@@ -395,8 +395,7 @@ extern int send_log(uint8_t s,uint8_t v,uint32_t o);
 int send_pipe(struct fifo_t* fifo, uint8_t ctrl, uint32_t id, uint8_t len, uint8_t* payload);
 
 int send_mesg(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-int recv_mesg_v2(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-
+int recv_mesg_v2(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t *payload, uint16_t max_len);
 
 struct bus_ops_t
 {

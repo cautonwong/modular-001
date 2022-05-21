@@ -600,7 +600,7 @@ int fr_tx_645_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
     struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
     uint16_t len = 0;
 
-    if (recv_mesg_v2(instance, pipeline, mesg))
+    if (recv_mesg_v2(instance, pipeline, mesg, NULL, 0))
     {
         return 1;
     }

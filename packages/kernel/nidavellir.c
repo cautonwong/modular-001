@@ -399,46 +399,50 @@ int baremetal_loop(struct instance_t* instance)
 int send_mesg(struct instance_t *instance,struct pipeline_t *pipeline,struct message_t *mesg)
 {
     struct  fifo_t* fifo = get_pipeline_stdin(instance,mesg->to);
-    if (pipeline == NULL)
-    {
+    if (pipeline == NULL){
         mesg->from = kernel;
-    }
-    else
-    {
+    }else{
         mesg->from = pipeline->id;
     }   
     mesg->magic = MSG_MAGIC;
     mesg->check = nd_get_crc16((uint8_t*)mesg, sizeof(struct message_t) - 2);
   
     fifoBuf_putData(fifo, mesg, sizeof(struct message_t));
-    if ((mesg->len > 0)&&(mesg->payload))//payload exist
-    {
+    if ((mesg->len > 0)&&(mesg->payload)){
 #ifdef WIN32
         log_hex(payload, mesg->len);
 #endif
         fifoBuf_putData(fifo, mesg->payload, mesg->len);
+        return 1;
     }
     return 0;
 }
 
-int recv_mesg_v2(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+//0-无消息
+//1-消息头
+//2-消息头+消息内容
+//3-消息头+消息内容(缓冲太小，外部自行获取)
+int recv_mesg_v2(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t *payload, uint16_t max_len)
 {
-    uint16_t r = 0;
+    uint16_t len = 0;
     uint16_t check = 0;
-    if (fifoBuf_getUsed(pipeline->in_queue) >= sizeof(struct message_t))
-    {
-        r = fifoBuf_getData(pipeline->in_queue, mesg, sizeof(struct message_t));
-        if(r == sizeof(struct message_t)){
-            if (MSG_MAGIC == mesg->magic)
-            {
+    if (fifoBuf_getUsed(pipeline->in_queue) >= sizeof(struct message_t)){
+        len = fifoBuf_getData(pipeline->in_queue, mesg, sizeof(struct message_t));
+        if(len == sizeof(struct message_t)){
+            if (MSG_MAGIC == mesg->magic){
                 check = nd_get_crc16((uint8_t*)mesg, sizeof(struct message_t) - 2);
-                if (check == mesg->check)
-                {
-                    return r;
+                if (check == mesg->check){
+                    if ((mesg->len > 0) && (mesg->payload) && (payload)){
+                        if(mesg->len < max_len){
+                            fifoBuf_getData(pipeline->in_queue, payload, mesg->len); 
+                            return 2;
+                        }
+                        return 3;
+                    }
+                    return 1;
                 }
             }
         }
     }
-
     return 0;
 }

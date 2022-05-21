@@ -73,16 +73,10 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             event_flags_clr(instance, i);
         }
     }
-    
-    int r = recv_mesg_v2(instance,pipeline,mesg);
-    uint8_t buf[20];
+    uint8_t buf[20] = {0};
+    int r = recv_mesg_v2(instance,pipeline,mesg, buf, 20);
     if(r > 0 )
     {
-      if((mesg->len > 0) && (mesg->len <20))
-      {
-        fifoBuf_getData(pipeline->in_queue,buf,mesg->len);
-      }
-
       switch (mesg->ctrl)
       {
       case 0x86://采样的外设数据抵达
@@ -159,15 +153,10 @@ int app_meter_lowpower_wakeup_entry(struct instance_t* instance, struct pipeline
     {
         return -1;
     }
-    int r = recv_mesg_v2(instance,pipeline,mesg);
-    uint8_t buf[20];
+    uint8_t buf[20] = {0};
+    int r = recv_mesg_v2(instance,pipeline,mesg, buf, 20);
     if(r > 0 )
     {
-        if((mesg->len > 0) && (mesg->len <20))
-        {
-            fifoBuf_getData(pipeline->in_queue,buf,mesg->len);
-        }
-
         //开启EE电源和IO口时钟
         CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);
         GPIOC->OEN &= ~(BIT4|BIT5|BIT6); 

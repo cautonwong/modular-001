@@ -848,14 +848,14 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
     remain_size = sizeof(data_buff);
     
     //mesg 的id 就是事件代码
-    int r = recv_mesg_v2(instance, pipeline, mesg);
+    int r = recv_mesg_v2(instance, pipeline, mesg, payload, 100);
     
     if (r > 0)
     {
         Oad = 0xFFFFFFFF;
-        if ((mesg->len > 0)&&(mesg->payload))//payload exist
+        if (r == 2)//payload exist
         {
-            fifoBuf_getData(pipeline->in_queue, payload, mesg->len);
+            //有消息内容，已经获取到payload中
         }
         switch (mesg->id)
         {
