@@ -12,5 +12,5 @@ int GET_7_Aggregate(struct instance_t* instance, uint32_t id, uint8_t* buf, void
     {
         return -1;
     }
-    return 0x01;
+    return -DAR_OBJECT_NOT_EXIST;
 }

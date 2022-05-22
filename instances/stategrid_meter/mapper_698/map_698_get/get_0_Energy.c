@@ -162,7 +162,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
             }
             else
             {
-                len = -1;
+                len = -DAR_OBJECT_NOT_EXIST;
             }
         }
         break;
@@ -248,7 +248,8 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
             }
             else
             {
-                len = -1;
+                len = -DAR_OBJECT_NOT_EXIST;
+
             }
         }
         break;
@@ -334,7 +335,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
             }
             else
             {
-                len = -1;
+                len = -DAR_OBJECT_NOT_EXIST;
             }
         }
         break;

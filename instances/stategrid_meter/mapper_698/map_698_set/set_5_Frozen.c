@@ -330,5 +330,5 @@ int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, void *c
     default:
         break;
     }
-    return -DAR_RW_REJECT;
+    return -DAR_OBJECT_NOT_EXIST;
 }

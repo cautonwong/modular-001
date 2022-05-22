@@ -246,5 +246,5 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
     }
    
     
-    return -DAR_OBJECT_NOT_EXIST;;
+    return -DAR_OBJECT_NOT_EXIST;
 }

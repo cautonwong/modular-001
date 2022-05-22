@@ -129,11 +129,11 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
             }
             else
             {
-                return -1;
+                return -DAR_RW_REJECT;
             }
         }
     }
-    return -1;
+    return -DAR_RW_REJECT;
 }
 
 
@@ -367,13 +367,7 @@ Extend_Info,         0x0306,   0x02,    8, //扩展信息
             break;
     }
     
-    
-    if(idl == 0x0A00)//上报通道
-    {
-        
-    }   
-    
-    return -1;
+    return -DAR_OBJECT_NOT_EXIST;
 }
 
 uint8_t lcd_data_chk(uint8_t *p)
@@ -520,7 +514,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             break;
         case 0x4004://地理位置
-            if(attribute != 0x02)   return -1;
+            if(attribute != 0x02)   return -DAR_RW_REJECT;
             if(index == 0)
             {
                 if((*(p+5) > 1) || (*(p+15) > 1))   return -DAR_BUFFER_OVERFLOW;
@@ -557,7 +551,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             else 
             {
-                return -1;
+                return -DAR_RW_REJECT;
             }
             break;
         case 0x4007://LCD参数
@@ -621,16 +615,16 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 }
                 else
                 {
-                    return -1;
+                    return -DAR_OTHERS_ERROR;
                 }
             }
             else
             {
-                return -1;
+                return -DAR_OTHERS_ERROR;
             }
             break;
         case 0x400C://时区时段数
-            if(index > 5)   return -1;
+            if(index > 5)   return -DAR_OTHERS_ERROR;
             if(index == 0)
             {
                 p = p + 2;
@@ -646,7 +640,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             else
             {
-                if( CheckData400C(p,index-1) ) return -DAR_OTHERS_ERROR;
+                if( CheckData400C(p,index-1) ) return -DAR_RW_REJECT;
                 p++;
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + (index - 1));
                 nd_set_index(instance, s_index, p, 1); 
@@ -655,7 +649,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             break;
         case 0x4011://公共假日表
-            if((index == 0) || (index > 10))    return -1;
+            if((index == 0) || (index > 10))    return -DAR_RW_REJECT;
             
             mem_swap_cpy((uint8_t*)&year2, p+3, 2);
             if(year2 < 2000) return -DAR_OTHERS_ERROR;
@@ -689,7 +683,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             break;
         case 0x4014://当前套时区表
         case 0x4015://备用套时区表
-            if(index > 14)    return -1;
+            if(index > 14)    return -DAR_OTHERS_ERROR;
             
             if(index == 0)
             {
@@ -755,7 +749,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             break;
         case 0x4016://当前套日时段表
         case 0x4017://备用套日时段表
-            if(index > 0x08)    return -1;
+            if(index > 0x08)    return -DAR_RW_REJECT;
             
             if(index == 0)
             {
@@ -839,7 +833,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
         case 0x4116://结算日
             if(index == 0)
             {
-                if(*(p+1) > 0x03)    return -1;
+                if(*(p+1) > 0x03)    return -DAR_RW_REJECT;
                 num = *(p+1);
                 p = p + 2;
                 for(i=0;i<num;i++)
@@ -876,7 +870,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 return (p-buf);
             }
             else
-                return -1;
+                return -DAR_OBJECT_NOT_EXIST;
             break;
         case 0x4300://设备信息
             return set4300(instance, id, buf);
