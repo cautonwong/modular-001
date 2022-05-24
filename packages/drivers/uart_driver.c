@@ -249,14 +249,17 @@ uint8 uart_time_process(void *tickpara)
     struct uart_chl_init_t *chl = (struct uart_chl_init_t *)tickpara;
     uint8_t send_data;
     
-    if(chl->rx_time_out > 0)
-    {
-        chl->rx_time_out--;
+    if(chl->rx_time_out != 0xFFFFFFFF){
+        if(chl->rx_time_out > 0)
+        {
+            chl->rx_time_out--;
+        }
+        else
+        {
+            chl->CallBackReceiveTimeOut();
+            chl->rx_time_out = 0xFFFFFFFF;
+        }  
     }
-    else
-    {
-        chl->CallBackReceiveTimeOut();
-    }   
     if(chl->tx_time_out > 0)
     {
         chl->tx_time_out--;

@@ -136,36 +136,6 @@ int fr_sw_key(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 
 
 
-int fr_sw_uart(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{
-    if (fifoBuf_getUsed(&instance->pipe_uart) > 0)
-    {
-        uint8_t byte = fifoBuf_getByte(&instance->pipe_uart);
-        mesg->from = kernel;
-        mesg->id = 0x0000001;
-        mesg->len = 0;
-        switch(byte)
-        {
-            case IRQ_RS485_RX_TM_OUT:
-                mesg->to = pid_rx_698;
-                mesg->ctrl = MSG_RS485_BYTE_TIMEOUT;
-                break;
-            case IRQ_IR_RX_TM_OUT:
-                mesg->to = pid_ir_rx_698;
-                mesg->ctrl = MSG_IR_BYTE_TIMEOUT;
-                break;
-            case IRQ_PLC_RX_TM_OUT:
-                mesg->to = pid_plc_rx_698;
-                mesg->ctrl = MSG_PLC_BYTE_TIMEOUT;
-                break;
-            default:
-                break;
-        }
-        //send_mesg(instance, NULL, );
-    }
-
-    return 0;
-}
 
 int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -216,14 +186,12 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
 }
 
 
-
 int nidavellir_run(struct instance_t *instance)
 {
-    struct message_t mesg;
-    //struct log_item_t log_item;
+    struct message_t mesg = {0};
     const struct recipe_t *recipe = instance->recipe;
     const struct filter_t *filter; 
-    
+    pid_t pid = 0;
     int ret = 0;
     size_t n = 0;
     uint8_t pipeline_n = recipe->pipeline_n;
@@ -241,7 +209,6 @@ int nidavellir_run(struct instance_t *instance)
     for (size_t i = 0; i < pipeline_n; i++)
     {
         pipeline = recipe->pipelines[i];
-        //cache->used = 0;
         while(fifoBuf_getUsed(pipeline->in_queue) >= sizeof(struct message_t ))//waitmesg
         {
             filter = pipeline->filters;
@@ -291,6 +258,40 @@ struct pipeline_t* get_pipeline(struct instance_t* instance, pid_t id)
     return NULL;
 }
 
+int fr_uart_timeout(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    int ret = 0;
+
+    if (fifoBuf_getUsed(&instance->pipe_uart) > 0)
+    {
+        uint8_t byte = fifoBuf_getByte(&instance->pipe_uart);
+        switch(byte)
+        {
+                case IRQ_RS485_RX_TM_OUT:
+                    if(pipeline->id == pid_rx_698){
+                        ret = 1;
+                    }
+                    break;
+                case IRQ_IR_RX_TM_OUT:
+                    if(pipeline->id == pid_ir_rx_698)
+                    {
+                        ret = 1;
+                    }
+                    break;
+                case IRQ_PLC_RX_TM_OUT:
+                    if(pipeline->id == pid_plc_rx_698)
+                    {
+                        ret = 1;
+                    }
+                    break;
+                default:
+                    break;
+        }
+    }
+                  
+    return ret;
+}
+
 int nidavellir_run_baremetal(struct instance_t* instance)
 {
     struct message_t mesg;
@@ -319,8 +320,7 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     fr_sw_key(instance,NULL,&mesg);
     
     fr_sw_ac_power(instance,NULL,&mesg);
-    
-    fr_sw_uart(instance,NULL,&mesg);
+   
 
     //处理事件标志组  事件驱动
     //handle_event_flags()
@@ -329,6 +329,12 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     for (size_t i = 0; i < pipeline_n; i++)
     {
         pipeline = recipe->pipelines[i];
+        if((pipeline->id == pid_rx_698) ||(pipeline->id == pid_ir_rx_698) ||(pipeline->id == pid_plc_rx_698)){
+            if(fr_uart_timeout(instance, pipeline, &mesg) == 0){
+                continue;
+            }                
+        }
+        
         if (fifoBuf_getUsed(pipeline->in_queue) >= 12)
         {
             filter = pipeline->filters;
