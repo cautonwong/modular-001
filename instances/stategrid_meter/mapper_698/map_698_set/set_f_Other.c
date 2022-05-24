@@ -224,5 +224,5 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
         default:
             break;
     }
-    return 0x01;
+    return -DAR_OBJECT_NOT_EXIST;
 }

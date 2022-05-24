@@ -908,5 +908,5 @@ case 0xF001://软件比对
             dar = DAR_OBJECT_NOT_EXIST;
             break;
     }
-    return 0x01;
+    return -DAR_OBJECT_NOT_EXIST;
 }

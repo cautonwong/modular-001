@@ -50,5 +50,5 @@ int ACTION_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, vo
         default:
             break;
     }
-    return -DAR_OBJECT_UNDEF;
+    return -DAR_OBJECT_NOT_EXIST;
 }
