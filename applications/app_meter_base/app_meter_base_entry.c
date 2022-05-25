@@ -38,8 +38,10 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     
     
     
-    if( instance->ac_power_statue != AC_POWER_ON )
+    if( instance->ac_power_statue != AC_POWER_ON ) //低功耗
     {
+        mbase_control_block->power_down_sec_accum++;
+        
         event_LowPower_pro(instance, pipeline, &mesg); // 事件 低功耗下处理
         
 /*        if( (mbase_control_block->Key & F_KeyDispay) && (mbase_control_block->KeyInv == 0) )//退出键显,息屏
@@ -51,6 +53,11 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
             mbase_control_block->Key &= ~F_KeyAwake;
         }*/
         
+        
+    }
+    else
+    {
+        mbase_control_block->power_on_sec_accum++;
         
     }
 }
@@ -128,12 +135,15 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
         mbase_control_block->key_state = get_key_status(instance);//获取秘钥状态
         Magnetic_hold_relay_Init();
         fr_dl698_power_on(instance, pipeline);
+        mbase_control_block->power_on_sec_accum = 0;
         break;
       case MSG_POWEROFF:
         //掉电需要保存数据
         //获取对应的RAM地址
         get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
-        nd_set_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;        
+        nd_set_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;      
+        mbase_control_block->power_down_sec_accum = 0;
+        
         break;
       default:
         break;
