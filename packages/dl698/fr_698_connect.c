@@ -254,7 +254,7 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
             mbase_cb->term_auth_timeout = 0;
         }
 
-
+        mbase_cb->clientaddr = ctx->CA;
 
         
         MeterWr_obj_list_clear(instance, pipeline, mesg);

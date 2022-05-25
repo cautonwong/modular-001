@@ -278,9 +278,10 @@ int general_get_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
 int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
     struct mbase_control_block_t* mbase_cb;
+    struct context_698_t* p_ctx = (struct context_698_t*)ctx;
     uint32_t addr = 0,s_index=0;
     uint16_t oad;
-    uint8_t index,attribute,i,j,temp[42]={0},num=0,num_hourtab = 0;
+    uint8_t index,attribute,i,j,temp[42]={0},num=0,num_hourtab = 0, cilent_index = 0;
     uint8_t* p = buf;
     int len = 0;
     int ret;
@@ -295,6 +296,15 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
     if( len != -1)
     {
         return len;
+    }
+
+    if (CA_TYPE_TER(p_ctx->CA)) 
+    {
+        cilent_index = 1;
+    }
+    else
+    {
+        cilent_index = 0;
     }
     
 
@@ -712,8 +722,18 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     *p++ = TYPE_double_long_unsigned;
                     *p++ = 0x00;
                     *p++ = 0x00;
-                    *p++ = 0x07;
-                    *p++ = 0x08;
+                    
+                    if (0 != mbase_cb->connect_timeout[p_ctx->channel][cilent_index])
+                    {
+                        mem_swap_cpy(p, &mbase_cb->connect_timeout[p_ctx->channel][cilent_index], 2);
+                        p += 2;
+                    }
+                    else
+                    {  
+                        *p++ = 0x07;
+                        *p++ = 0x08;
+                    }
+
                     return (p-buf);
                 case 0x04://当前连接的客户机地址
                     *p++ = TYPE_unsigned;
