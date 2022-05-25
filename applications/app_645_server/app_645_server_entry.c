@@ -5,7 +5,7 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
 
 int app_rx_server_645_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     
     if(ctx == NULL){
         return 0;

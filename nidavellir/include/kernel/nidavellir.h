@@ -213,6 +213,7 @@ struct context_645_t
     uint16_t len;//to-be-deleted
     uint8_t min_len;//发送时和接收时的报文总长度
     uint32_t err_n;
+    int32_t fr_err;
     //作为主站方时用的临时状态
     uint8_t dst_addr[6];//目的地址
     uint8_t seq;//当前发送的帧序号 每次作为主站方加一
@@ -220,6 +221,10 @@ struct context_645_t
     uint8_t times;//重发次数
     uint8_t seconds;//超时时间
     uint16_t tx_len;
+    
+    struct fifo_t apdu;
+    
+    uint8_t apdu_tx[256]; 
     
     uint8_t apdu_d_rx[128]; 
     uint16_t apdu_rx_len;

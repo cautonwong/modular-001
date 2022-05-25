@@ -448,6 +448,8 @@ int fr_645_decode_91(struct instance_t* instance, struct pipeline_t* pipeline, s
     return 0;
 }
 #endif
+
+
 int fr_pack_645_head(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
@@ -455,10 +457,10 @@ int fr_pack_645_head(struct instance_t* instance, struct pipeline_t* pipeline, s
     ctx->cs = 0;
     ctx->tx_len = 0;
     uint8_t buf[6];
-    fifoBuf_putByte(fifo, 0xfe);
-    fifoBuf_putByte(fifo, 0xfe);
-    fifoBuf_putByte(fifo, 0xfe);
-    fifoBuf_putByte(fifo, 0xfe);
+
+    for(int i = 0; i < 3; i ++){
+        fifoBuf_putByte(fifo, 0xfe);
+    }
     append_byte(fifo, 0x68, __update_cs, ctx);
     //todo ��ַת��
     if (mesg->ctrl == 0x08)
@@ -481,13 +483,12 @@ int fr_pack_645_head(struct instance_t* instance, struct pipeline_t* pipeline, s
 
 int fr_pack_645_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
 
     append_byte(fifo, mesg->ctrl, __update_cs, ctx);
     append_byte(fifo, mesg->len, __update_cs, ctx);
-    //append_data(fifo, instance->cache + sizeof(struct message_t),
-    //    mesg->len, __update_scrambler_and_cs, ctx);
+    append_data(fifo, ctx->apdu_tx, mesg->len, __update_scrambler_and_cs, ctx);
 
     return 1;
 }
@@ -508,17 +509,31 @@ int fr_rx_645_end(struct instance_t* instance, struct pipeline_t* pipeline, stru
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
-    //struct message_t* n = (struct message_t*)instance->cache;
+ 
+    uint8_t tail = fifoBuf_getByte(ififo);
+    assert(tail == 0x16);
 
-    fifoBuf_getByte(ififo);//fcs-0
-    assert(fifoBuf_getByte(ififo) == 0x16);//0x16
-    //n->len = mesg->len;
-    //todo  ���Ƿ�Ҫ����
     fr_pack_645_head(instance, pipeline, mesg);
     fr_pack_645_data(instance, pipeline, mesg);
     fr_pack_645_tail(instance, pipeline, mesg);
     return 0;
 }
+
+int fr_pack_645_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    struct mbase_control_block_t* mbase_cb;
+    
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    if(mbase_cb == NULL)
+    {
+        return -1;
+    }
+    
+    return 1;
+}
+
 
 int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -526,22 +541,44 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t data[8]={0};
-    //struct fifo_t* cache = ctx->apdu;
-    
+    int tx_len = 0;
+
     int err_no = 0;
-    uint8_t service = 0;
+
+    if(0 == fr_pack_645_check(instance, pipeline, mesg)){
+        fifoBuf_removeData(fifo, ctx->min_len + 2);
+        return -1;
+    }
     
-    //协议一致性判断和apdu合法判断
-    //if(0 == fr_pack_698_check(instance, pipeline, mesg)){
-    //    fifoBuf_removeData(fifo, ctx->min_len + 2);
-    //    return -1;
-    //}
-    
-    //fifoBuf_removeData(fifo, APDU_OFFSET(ctx->SA));
-    //ringbuffer_clear(ctx->apdu);
     ctx->apdu_rx_offset = 0;
-    ctx->apdu_rx_len = ctx->min_len;
+    ctx->apdu_rx_len = ctx->min_len - 1;
     fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len);
+    fifoBuf_init(&ctx->apdu, ctx->apdu_tx, 256);
+    mesg->ctrl = ctx->ctrl | 0x80;
+        
+    switch (ctx->ctrl)
+    {
+        case 0X11:
+            tx_len = Comm_Read(instance, apdu_rx+10, ctx->apdu_tx,  0);
+            break;   
+        case 0X14:
+            tx_len = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx,  0);
+            break;
+        default:
+            break;
+    }
+    tx_len = 7;
+    ctx->apdu.wr = tx_len;
+    if (fifoBuf_getUsed(&ctx->apdu)  > 0){
+        mesg->len = fifoBuf_getUsed(&ctx->apdu);
+        if (mesg->len > 512){
+            mesg->len = 512;
+        }
+
+        fr_rx_645_end(instance, pipeline, mesg);
+    }
+    return 0;
+    
 }
 
 int fr_rx_645_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
