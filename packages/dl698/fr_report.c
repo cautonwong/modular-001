@@ -935,7 +935,8 @@ uint32_t report_2015_get(struct instance_t* instance, struct pipeline_t* pipelin
     return value;
 }
 // 常规的3320和2015 主动上报组帧(apdu)
-int active_report_normal_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+// get_data:0 只判断是否需要上报。  其他:获取一次上报内容
+int active_report_normal_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t get_data)
 {
     uint8_t* p, * apdu, num, flag, count, need_report_piid = false;
     uint32_t value;
@@ -966,17 +967,25 @@ int active_report_normal_pro(struct instance_t* instance, struct pipeline_t* pip
         if ((mbase_cb->active_report_retry_dly[R_3320] == 0) && (mbase_cb->active_report_retry_cnt[R_3320] < 3))//已发送，主站未确认，等待超时
         {
             count = active_report_3320list_get(instance, pipeline, mesg, &tmp_buff[0]);
+
             if (count)
             {
                 flag |= 0x01;
                 num++;
-                mbase_cb->active_report_retry_cnt[R_3320]++;
-                if (3 == mbase_cb->active_report_retry_cnt[R_3320])
-                    need_report_piid = true;
+                if(get_data)
+                {
+                    mbase_cb->active_report_retry_cnt[R_3320]++;
+                    if (3 == mbase_cb->active_report_retry_cnt[R_3320])
+                        need_report_piid = true;
+                }
+
             }
             else
             {
-                mbase_cb->active_report_CMDtype &= ~ACTIVE_REPORT_3320;
+                if(get_data)
+                {
+                    mbase_cb->active_report_CMDtype &= ~ACTIVE_REPORT_3320;
+                }
             }
         }
     }
@@ -986,17 +995,24 @@ int active_report_normal_pro(struct instance_t* instance, struct pipeline_t* pip
         if ((mbase_cb->active_report_retry_dly[R_3320] == 0) && (mbase_cb->active_report_retry_cnt[R_2015] < 3))//已发送，主站未确认，等待超时
         {
             value = report_2015_get(instance, pipeline, mesg, chl_PLC_698, ACTIVE_RPT);// 获取模块通道 需上报 2015
+            
             if (value != 0)
             {
-                num++;
                 flag |= 0x02;
-                mbase_cb->active_report_retry_cnt[R_2015]++;
-                if (3 == mbase_cb->active_report_retry_cnt[R_2015])
-                    need_report_piid = true;
+                num++;
+                if(get_data)
+                {
+                    mbase_cb->active_report_retry_cnt[R_2015]++;
+                    if (3 == mbase_cb->active_report_retry_cnt[R_2015])
+                        need_report_piid = true;
+                }        
             }
             else
             {
-                mbase_cb->active_report_CMDtype &= ~ACTIVE_REPORT_2015;
+                if(get_data)
+                {
+                    mbase_cb->active_report_CMDtype &= ~ACTIVE_REPORT_2015;
+                }
             }
         }
     }
@@ -1067,12 +1083,12 @@ int active_report_normal_pro(struct instance_t* instance, struct pipeline_t* pip
 }
 
 // 主动上报处理  每秒调用   
-// 主动上报apdu数据存instance->apdu_cache， 返回值len为上报apdu数据长度
-int fr_active_report_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+// 主动上报apdu数据存instance->apdu_cache， 返回值len为上报apdu数据长度。 获取一次上报内容，相应消耗一次上报次数。
+// get_data:0 只判断是否需要上报。  其他:获取一次上报内容
+int fr_active_report_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t get_data)
 {
     struct mbase_control_block_t*  mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     int len;
-
 
     if (mbase_cb->poweron_active_report_dly < 5)
     {
@@ -1083,18 +1099,27 @@ int fr_active_report_pro(struct instance_t* instance, struct pipeline_t* pipelin
         if ((mbase_cb->active_report_retry_dly[R_3011_END] == 0) && (mbase_cb->active_report_retry_cnt[R_3011_END] < 3))//已发送，主站未确认，等待超时
         {
             len = active_report_3011_pro(instance, pipeline, mesg, 1);
+            
             if (len > 0)
             {
-                mbase_cb->active_report_retry_dly[R_3011_END] = 10;//  若无响应 10秒后重发       
-                mbase_cb->active_report_retry_cnt[R_3011_END]++;
+                if (get_data)
+                {
+                    mbase_cb->active_report_retry_dly[R_3011_END] = 10;//  若无响应 10秒后重发       
+                    mbase_cb->active_report_retry_cnt[R_3011_END]++;
 
-                if (3 == mbase_cb->active_report_retry_cnt[R_3011_END])
-                    mbase_cb->report_piid++;
-
+                    if (3 == mbase_cb->active_report_retry_cnt[R_3011_END])
+                        mbase_cb->report_piid++;
+                }
                 return len;
+
             }
             else
-                mbase_cb->active_report_CMDtype &= ~ACTIVE_REPORT_3011_END;
+            {
+                if (get_data)
+                {
+                    mbase_cb->active_report_CMDtype &= ~ACTIVE_REPORT_3011_END;
+                }
+            }
 
         }
     }
@@ -1102,20 +1127,29 @@ int fr_active_report_pro(struct instance_t* instance, struct pipeline_t* pipelin
     else if (mbase_cb->active_report_CMDtype & ACTIVE_REPORT_3011_START)
     {
         len = active_report_3011_pro(instance, pipeline, mesg, 0);
+
         if (len > 0)
         {
-            mbase_cb->active_report_retry_cnt[R_3011_START]++;
-            if (3 == mbase_cb->active_report_retry_cnt[R_3011_START])
+            if (get_data)
             {
-                mbase_cb->report_piid++;
-                mbase_cb->active_report_CMDtype &= ~ACTIVE_REPORT_3011_START;
+                mbase_cb->active_report_retry_cnt[R_3011_START]++;
+                if (3 == mbase_cb->active_report_retry_cnt[R_3011_START])
+                {
+                    mbase_cb->report_piid++;
+                    mbase_cb->active_report_CMDtype &= ~ACTIVE_REPORT_3011_START;
+                }
             }
             return len;
         }
         else
-            mbase_cb->active_report_CMDtype &= ~ACTIVE_REPORT_3011_START;
-
+        {
+            if (get_data)
+            {
+                mbase_cb->active_report_CMDtype &= ~ACTIVE_REPORT_3011_START;
+            }
+        }
     }
+    
     if ((mbase_cb->active_report_CMDtype & ACTIVE_REPORT_3011_END) && (mbase_cb->active_report_retry_cnt[R_3011_END] < 3))
     {
         return 0;
@@ -1124,11 +1158,15 @@ int fr_active_report_pro(struct instance_t* instance, struct pipeline_t* pipelin
         return 0;
     if (mbase_cb->active_report_CMDtype & (ACTIVE_REPORT_3320 | ACTIVE_REPORT_2015))//有上报请求
     {
-        len = active_report_normal_pro(instance, pipeline, mesg);
+        len = active_report_normal_pro(instance, pipeline, mesg, get_data);
+        
         if (len > 0)
         {
-            mbase_cb->active_report_retry_dly[R_3320] = 10;//  10秒无响应重发     
-            mbase_cb->active_report_retry_dly[R_2015] = 10;//  10秒无响应重发     
+            if (get_data)
+            {
+                mbase_cb->active_report_retry_dly[R_3320] = 10;//  10秒无响应重发     
+                mbase_cb->active_report_retry_dly[R_2015] = 10;//  10秒无响应重发   
+            }
             return len;
         }
     }
@@ -1141,7 +1179,7 @@ int active_report_handle(struct instance_t* instance, struct pipeline_t* p_pipel
 {
     struct pipeline_t pipeline = {0};
     uint8_t buf[4];
-    int ret = 1;//fr_active_report_pro(instance, p_pipeline, mesg);
+    int ret = fr_active_report_pro(instance, p_pipeline, mesg, 0);//只判断是否有主动上报
     if(ret > 0){
         //pipeline.id
         mesg->len = 4;
@@ -1155,7 +1193,7 @@ int active_report_handle(struct instance_t* instance, struct pipeline_t* p_pipel
 
 int get_report_apdu(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-
+     int ret = fr_active_report_pro(instance, pipeline, mesg, 1); //获取出主动上报内容  存instance->apdu_cache   
 }
 
 

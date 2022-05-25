@@ -75,11 +75,13 @@ void PowerOff_LowPower_pro(struct instance_t* instance, struct pipeline_t* task,
 
 
      // 是否为停电下第一秒 // 待调整   //  停电下第一秒记录一次掉电事件 
-#if 0
-    if ( )
-    send_event_mesg_pro(instance, task,  RecordId, NULL, result);
-#endif
-
+    if ( ctrl_block->power_down_sec_accum == 1 )
+    {
+        if (false == get_activeflag(instance, RecordId))
+        {
+            send_event_mesg_pro(instance, task,  RecordId, NULL, 1);
+        }
+    }
 
     if (true == get_activeflag(instance, RecordId))
     {

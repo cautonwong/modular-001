@@ -288,7 +288,7 @@ int get_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
         for (i = 0; i < count; i++)
         {
             *p++ = para_pack.event_para[i].tag;
-            memcpy(p, (uint8_t*)para_pack.event_para[i].ctrlblock_para, para_pack.event_para[i].datalen);
+            mem_swap_cpy(p, (uint8_t*)para_pack.event_para[i].ctrlblock_para, para_pack.event_para[i].datalen);
             p += para_pack.event_para[i].datalen;
         }
     }
@@ -296,7 +296,7 @@ int get_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
     {
         i = index - 1;
         *p++ = para_pack.event_para[i].tag;
-        memcpy(p, (uint8_t*)para_pack.event_para[i].ctrlblock_para, para_pack.event_para[i].datalen);
+        mem_swap_cpy(p, (uint8_t*)para_pack.event_para[i].ctrlblock_para, para_pack.event_para[i].datalen);
         p += para_pack.event_para[i].datalen;
     }
 

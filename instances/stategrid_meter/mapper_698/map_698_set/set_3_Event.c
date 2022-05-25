@@ -163,7 +163,7 @@ int set_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
             }
             p++;
 
-            memcpy((uint8_t*)para_pack.event_para[i].ctrlblock_para, p, para_pack.event_para[i].datalen);
+            mem_swap_cpy((uint8_t*)para_pack.event_para[i].ctrlblock_para, p, para_pack.event_para[i].datalen);
             p += para_pack.event_para[i].datalen;
         }
     }
@@ -178,7 +178,7 @@ int set_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
         }
         p++;
 
-        memcpy((uint8_t*)para_pack.event_para[i].ctrlblock_para, p, para_pack.event_para[i].datalen);
+        mem_swap_cpy((uint8_t*)para_pack.event_para[i].ctrlblock_para, p, para_pack.event_para[i].datalen);
         p += para_pack.event_para[i].datalen;
     }
 
@@ -285,87 +285,5 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
     }
 
 
-#if 0
-    switch (id)
-    {
-    case 0x30050200://关联对象属性表
-    {
-        uint8_t num,maxnum;
-        uint32_t oad_tmp;
-
-        struct record_storage_id_info_t info;
-        int ret = get_record_id_info(instance,0x30050700, &info);
-        if (ret < 0)
-        {
-            return -DAR_OTHERS_ERROR;
-        }
-        
-        maxnum = ((13*init_30050200[1]+9)/10);
-        // tag 判断  待添加
-        
-        p++; //TYPE_array
-        num = *p++;
-        if (num > maxnum)  // 关联对象按个数的1.3倍限制 or 按默认存储空间的1.3倍限制
-        {
-            return -DAR_OTHERS_ERROR;
-        }
-        
-        *des++ = num;
-        for (i = 0; i < num; i++)
-        {
-            p++; // DTC_OAD
-            oad_tmp = buf_to_uint32_msb(p);
-            if (false == oad_valid_check(oad_tmp))  //无效关联对象
-            {
-                return -DAR_OTHERS_ERROR;
-            }
-            memcpy(des, p, 4);
-            des += 4;
-            p += 4;            
-        }
-
-        nd_set_index(instance, info.capture_index, &tempbuf[0], (1 + num*4));
-        
-        clr_record(instance, 0x30050700);
-        return (p - buf);
-    }
-    case 0x30050500://过流阈值
-        {
-            //obj->block_name = 0x0A;//只是举例
-            //obj->device_name = 0x0D;//只是举例
-            //obj->offset = container_of(mbase_cb,struct mbase_control_block_t, UA);
-            p++;
-            p++;
-            p++;
-            memcpy((uint8_t*)&mbase_cb->OverCurrent_threshold, p, 0x04);
-            p += 4;
-            p++;
-            memcpy((uint8_t*)&mbase_cb->OverCurrent_duration_para, p, 0x01);
-            p++;
-            return (p - buf);
-        }
-    case 0x30050B00://上报标识
-    {
-        p++;
-        //memcpy((uint8_t*)&mbase_cb->OverCurrent_report_type, p, 0x01);
-        p++;
-        return (p - buf);
-    }
-
-    case 0x30050F00://上报方式
-    {
-        p++;
-        //memcpy((uint8_t*)&mbase_cb->OverCurrent_report_mode, p, 0x01);
-        p++;
-        return (p - buf);
-    }
-
-    break;
-    
-    default:
-        break;
-    }
-    
-#endif
     return -DAR_OBJECT_UNDEF;
 }

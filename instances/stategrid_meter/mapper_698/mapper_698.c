@@ -1680,6 +1680,23 @@ int para_init(struct instance_t* instance )
     offsetof(struct mbase_control_block_t, tsa));
     nd_set_offset(instance, s_index, mbase_cb->tsa, 6);
     
+
+    mbase_cb->OverCurrent_threshold = 720000;         //参数 电能表过流事件-电流触发下限 
+    mbase_cb->ZeroLineErrS_rate_threshold = 5000;   // 电能表零线电流异常事件 限值
+    mbase_cb->ZeroLineErrS_Current_threshold = 10000;// 电能表零线电流异常事件-电流触发下限
+    mbase_cb->OverCurrent_duration_para = 60;  //参数 判定延时时间  
+    mbase_cb->PowerOffS_duration_para = 1;    //参数 判定延时时间  
+    mbase_cb->CoverOpenS_duration_para = 3;   //参数 判定延时时间  
+    mbase_cb->SwitchErrS_duration_para = 5;   //参数 判定延时时间  
+    mbase_cb->EmuErrS_duration_para = 5;      //参数 判定延时时间  
+    mbase_cb->RTCErrS_duration_para = 1;      //参数 判定延时时间  
+    mbase_cb->ZeroLineErrS_duration_para = 60; //参数 判定延时时间      
+       
+    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+    offsetof(struct mbase_control_block_t, OverCurrent_threshold));
+    s_len = offsetof(struct mbase_control_block_t, ZeroLineErrS_duration_para) - offsetof(struct mbase_control_block_t, OverCurrent_threshold);
+    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->OverCurrent_threshold, s_len);  
+     
     //EE部分更新
     for(i=0; i<num; i++)
     {

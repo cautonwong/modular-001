@@ -120,6 +120,10 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                       break;                   
                     }
                 }
+                else
+                {
+                    len = -DAR_OBJECT_NOT_EXIST;
+                }
             }
             else if(attr_index<Num)
             {
@@ -158,6 +162,10 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                       len = 2;                        
                       break;
                     }
+                }
+                else
+                {
+                    len = -DAR_OBJECT_NOT_EXIST;
                 }
             }
             else
@@ -217,6 +225,10 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                           break;
                     }
                 }
+                else
+                {
+                    len = -DAR_OBJECT_NOT_EXIST;
+                }
             }
             else if(attr_index<Num)
             {
@@ -238,6 +250,10 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                       memcpy(&buf[5], (uint8_t*)&tmp, 4);
                       len = 9;
                   }
+                  else
+                    {
+                        len = -DAR_OBJECT_NOT_EXIST;
+                    }
                   break;
                 case 0x01:
                   buf[0] = TYPE_double_long_unsigned;
@@ -304,6 +320,10 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                           break;
                     }
                 }
+                else
+                {
+                    len = -DAR_OBJECT_NOT_EXIST;
+                }
             }
             else if(attr_index<Num)
             {
@@ -325,6 +345,10 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                       memcpy(&buf[5], (uint8_t*)&tmp, 4);
                       len = 9;
                   }
+                else
+                {
+                    len = -DAR_OBJECT_NOT_EXIST;
+                }
                   break;
                 case 0x01:
                   buf[0] = TYPE_double_long_unsigned;
@@ -341,7 +365,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
         break;
         
        default:
-        len = -1;
+        len = -DAR_OBJECT_NOT_EXIST;
         break;
     }
     return len;
