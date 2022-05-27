@@ -75,7 +75,10 @@ void Energy_Meter_PowerON(struct instance_t* instance, struct pipeline_t* pipeli
 {
     ec_pluse_cnt = 0;
 
-
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    
+    mbase_control_block->meter_const = 20;
+    mbase_control_block->active_energy_cal_word = 0x05;
 
 }
 
