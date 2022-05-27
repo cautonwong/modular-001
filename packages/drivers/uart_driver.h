@@ -30,7 +30,7 @@ struct uart_chl_init_t
 
 
 extern int uart_chl_initialize(struct uart_chl_init_t *uart_chl);
-
+extern int uart_chl_open(uint8_t chl_type);
 
 
 
