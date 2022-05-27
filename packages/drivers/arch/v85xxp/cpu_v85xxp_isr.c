@@ -243,7 +243,7 @@ void RTC_IRQHandler(void)
     RTC->INTSTS = 0xFF; 
 }
 
-
+extern void IO_Interrupt(void);
 /**
   * @brief  This function handles PMU interrupt request.
   * @param  None
@@ -251,10 +251,7 @@ void RTC_IRQHandler(void)
   */
 void PMU_IRQHandler(void)
 {
-    if(isr[IRQ_PMU])
-    {
-        isr[IRQ_PMU]();
-    }
+    IO_Interrupt();
 }
 
 
