@@ -177,7 +177,7 @@ void Energy_Pluse_Count(struct instance_t* instance, struct pipeline_t* pipeline
     //DISABLE_ALL_INT();
     if((ec_pluse_cnt < 64) && (ec_pluse_cnt > 0))
     {
-        if(mbase_control_block->power_dir == 1)
+        if(mbase_control_block->power_dir == 0)
         {
             mbase_control_block->p_pluse += ec_pluse_cnt;
         }
