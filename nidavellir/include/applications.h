@@ -396,14 +396,14 @@ enum format_conversion_mode // record_change_format
 struct format_conversion_t
 {
     uint32_t oad;
-    uint16_t original_len; // ffff 按照tag格式解析
-    uint16_t store_len;
-    int (*format_fun)(uint8_t *des, uint8_t* src, enum format_conversion_mode mode);
+    uint16_t original_len; // ffff 按照tag格式解析        或  特殊处理
+    uint16_t store_len;    // ffff 按照tag格式解析        或  特殊处理 
+    int (*format_fun)(struct instance_t* instance, uint8_t *des, uint8_t* src, enum format_conversion_mode mode);
 };
 
 
 extern int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_storage_id_info_t* info);
-extern int record_change_format(uint8_t *des,  uint8_t* src, uint32_t oad, enum format_conversion_mode mode);
+extern int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* src, uint32_t oad, enum format_conversion_mode mode);
 extern int clr_record(struct instance_t* instance, uint32_t oad);
 extern int para_init(struct instance_t* instance );
 extern int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);

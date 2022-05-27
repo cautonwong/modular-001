@@ -420,7 +420,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
         return -1;
     }
     len = general_set_4_para(instance, id, buf);
-    if(len != -1)
+    if(len > 0)
     {
         return len;
     }

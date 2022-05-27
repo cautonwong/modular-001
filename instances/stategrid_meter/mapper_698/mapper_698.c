@@ -1249,7 +1249,7 @@ int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_l
 
 
 // data_time_s 转4字节
-int fc_fun_01(uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
+int fc_fun_01(struct instance_t* instance, uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
 {
     uint32_t temp;
     uint8_t *p = des;
@@ -1270,7 +1270,7 @@ int fc_fun_01(uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
 }
 
 // 编程列表  按解析取数据长度
-int fc_fun_02(uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
+int fc_fun_02(struct instance_t* instance, uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
 {
     uint16_t decode_len = 0;
     uint8_t *p = des;
@@ -1297,6 +1297,169 @@ int fc_fun_02(uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
     return (p - des);
 }
 
+
+// 电能数据 存储和协议转换  //待调整
+int fc_fun_Energy(struct instance_t* instance, uint32_t oad, uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    uint8_t i, type, attr, index, len, block_num = (4+1);
+    uint16_t oi;
+    uint8_t *p = des;
+    uint8_t energy_tag;
+    uint32_t addr;
+    
+    type = get_OAD_Class(oad);
+    attr = get_OAD_Attribute(oad);
+    index = get_OAD_Index(oad);
+    oi = get_OAD_OI(oad);
+
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 4); //读取费率数
+    nd_get_index(instance, addr, &block_num, 1); 
+    
+    block_num += 1;   // 总加 费率个数
+    if(block_num > 13)  block_num = 13;
+
+    if (mode == RFC_WRITE)
+    {
+        if(attr == 2)//普通
+        {
+            if(index)
+            {
+                src++;
+                ndv_memcopy(p, src, 4);
+                p += 4;
+            }
+            else
+            {
+                src += 2;
+                for (i = 0; i < 13; i++)
+                {
+                    src++;
+                    if (i < block_num)
+                    {
+                        ndv_memcopy(p, src, 4);
+                    }
+                    else
+                    {
+                        memset(p, 0, 4);
+                    }
+
+                    p += 4;
+                }
+            }
+        }
+        else if(attr == 4) // 高精度
+        {
+            if(index)
+            {
+                src++;//tag
+                src += 3;
+                ndv_memcopy(p, src, 5);
+                p += 5;
+            }
+            else
+            {
+                src += 2;
+                for (i = 0; i < 13; i++)
+                {
+                    src++;//tag
+                    src += 3;
+                    if (i < block_num)
+                    {
+                        ndv_memcopy(p, src, 5);
+                    }
+                    else
+                    {
+                        memset(p, 0, 5);
+                    }
+                    p += 5;
+                }
+            }
+        }
+        else  //不支持
+        {
+            
+        }
+
+
+    }
+    else if (mode == RFC_READ)
+    {
+        if (((oi&0x0FF0) == 0x0000) || ((oi&0x0FF0) == 0x0030) || ((oi&0x0FF0) == 0x0040))
+        {
+            energy_tag = TYPE_double_long;
+            if(attr == 4) //
+            {
+               energy_tag = TYPE_long64;
+            }
+        }
+        else
+        {
+            energy_tag = TYPE_double_long_unsigned;
+            if(attr == 4) //
+            {
+               energy_tag = TYPE_long64_unsigned;
+            }
+        }
+  
+        if(attr == 2)//普通
+        {
+            if(index)
+            {
+                *p++ = energy_tag;
+                ndv_memcopy(p, src, 4);
+                p += 4;
+            }
+            else
+            {
+                *p++ = TYPE_structure;
+                *p++ = block_num;
+                for (i = 0; i < block_num; i++)
+                {
+                    *p++ = energy_tag;
+                    ndv_memcopy(p, src, 4);
+                    p += 4;
+                }
+            }
+        }
+        else if(attr == 4) // 高精度
+        {
+            if(index)
+            {
+                *p++ = energy_tag;
+                *p++ = 0;
+                *p++ = 0;
+                *p++ = 0;
+                ndv_memcopy(p, src, 5);
+                p += 5;
+            }
+            else
+            {
+                *p++ = TYPE_structure;
+                *p++ = block_num;
+                for (i = 0; i < block_num; i++)
+                {
+                    *p++ = energy_tag;
+                    *p++ = 0;
+                    *p++ = 0;
+                    *p++ = 0;
+                    ndv_memcopy(p, src, 5);
+                    p += 5;
+                }
+            }
+        }
+        else  //不支持
+        {
+            
+        }
+
+    }
+    return (p - des);
+}
+
+
+
 // record存储格式特殊处理的 oad
 const struct format_conversion_t format_conversion_tab[] =
 {
@@ -1307,6 +1470,16 @@ const struct format_conversion_t format_conversion_tab[] =
     {   0x33020206,   0xFFFF,  52,      fc_fun_02   },  //待调整
 };
 
+// record存储格式特殊处理的 oad 电能
+const struct format_conversion_t format_conversion_0[] =
+{
+    {   0x00000200,     0xFFFF,         0xFFFF,      fc_fun_01   },
+    {   0x00000400,     0xFFFF,         0xFFFF,      fc_fun_01   },
+
+};
+
+
+
 //enum format_conversion_mode // record_change_format
 //
 //    RFC_WRITE,           //存储写入转换
@@ -1314,46 +1487,136 @@ const struct format_conversion_t format_conversion_tab[] =
 //    RFC_GET_ORIGINAL_LEN,//获取原协议格式len
 //    RFC_GET_STORE_LEN,   //获取存储格式len
 //
-int record_change_format(uint8_t *des,  uint8_t* src, uint32_t oad, enum format_conversion_mode mode)
+int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* src, uint32_t oad, enum format_conversion_mode mode)
 {
     uint16_t i;
+    uint8_t type, attr, index, len, block_num = (4+1);
+    uint32_t addr;
 
-    for (i = 0; i < (sizeof(format_conversion_tab) / sizeof(format_conversion_tab[0])); i++)
+    type = get_OAD_Class(oad);
+    attr = get_OAD_Attribute(oad);
+    index = get_OAD_Index(oad);
+    switch(type)
     {
-        if ((oad & (0xFFFF1FFF)) == format_conversion_tab[i].oad)
+        case 0: //电能
         {
+            
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 4); //读取费率数
+            nd_get_index(instance, addr, &block_num, 1); 
+            
+            block_num += 1;   // 总加 费率个数
+            if (mode == RFC_GET_ORIGINAL_LEN) 
+            {
+                if(attr == 2)//普通
+                {
+                    if(index)
+                    {
+                        len = (4+1); //待调整
+                    }
+                    else
+                    {
+                        len = (4+1)*block_num + 2; //待调整
+                    }
+                }
+                else if(attr == 4) // 高精度
+                {
+                    if(index)
+                    {
+                        len = (8+1);//待调整
+                    }
+                    else
+                    {
+                        len = (8+1)*block_num + 2;//待调整
+                    }
+                }
+                else  //不支持
+                {
+                    len = 0;
+                }
+                return len;
+            }
+            else if (mode == RFC_GET_STORE_LEN)
+            {
+                if(attr == 2)//普通
+                {
+                    if(index)
+                    {
+                        len = (4); //待调整
+                    }
+                    else
+                    {
+                        len = (4)*13; //待调整
+                    }
+                }
+                else if(attr == 4) // 高精度
+                {
+                    if(index)
+                    {
+                        len = (5);//待调整
+                    }
+                    else
+                    {
+                        len = (5)*13;//待调整
+                    }
+                }
+                else  //不支持
+                {
+                    len = 0;
+                }
+                return len;
+            }
+            else
+            {
+                return fc_fun_Energy(instance, oad, des, src, mode);
+            }
+        }
             break;
+        default:
+        {
+            for (i = 0; i < (sizeof(format_conversion_tab) / sizeof(format_conversion_tab[0])); i++)
+            {
+                if ((oad & (0xFFFF1FFF)) == format_conversion_tab[i].oad)
+                {
+                    break;
+                }
+            }
+            
+            if (i >= (sizeof(format_conversion_tab) / sizeof(format_conversion_tab[0])))
+            {
+                return -1;
+            }
+            
+            if (mode == RFC_GET_ORIGINAL_LEN)
+            {
+                if(format_conversion_tab[i].original_len == 0xFFFF) 
+                {
+                    return axdr_get_len(src); // 待调整  目前解析长度 只有数据域 不带tag
+                }
+                else
+                {
+                    return format_conversion_tab[i].original_len;
+                }
+                
+            }
+            else if (mode == RFC_GET_STORE_LEN)
+            {
+                return format_conversion_tab[i].store_len;
+            }
+            else
+            {
+                if(format_conversion_tab[i].format_fun)
+                {
+                    return format_conversion_tab[i].format_fun(instance, des, src, mode);
+                }
+            }
+
         }
+        break;
     }
 
-    if (i >= (sizeof(format_conversion_tab) / sizeof(format_conversion_tab[0])))
-    {
-        return -1;
-    }
 
-    if (mode == RFC_GET_ORIGINAL_LEN)
-    {
-        if(format_conversion_tab[i].original_len == 0xFFFF) 
-        {
-            return axdr_get_len(src); // 待调整  目前解析长度 只有数据域 不带tag
-        }
-        else
-        {
-            return format_conversion_tab[i].original_len;
-        }
-        
-    }
-    else if (mode == RFC_GET_STORE_LEN)
-    {
-        return format_conversion_tab[i].store_len;
-    }
-    else
-    {
-        if(format_conversion_tab[i].format_fun)
-        {
-            return format_conversion_tab[i].format_fun(des, src, mode);
-        }
-    }
+
+
 }
 
 

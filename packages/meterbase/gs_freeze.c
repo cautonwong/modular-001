@@ -56,7 +56,7 @@ int cal_freeze_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, u
                 single_len = nd_size(instance, obj);
                 if (single_len > 0)
                 {
-                    ret = record_change_format(NULL, NULL, obj, RFC_GET_STORE_LEN);
+                    ret = record_change_format(instance, NULL, NULL, obj, RFC_GET_STORE_LEN);
                     if (ret >= 0)
                     {
                         single_len = ret;

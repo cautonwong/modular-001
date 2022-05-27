@@ -774,7 +774,7 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
                 {
                     // 特殊事件关联对象的特殊处理 
                     // format改变，长度改变
-                    ret = record_change_format(p, tmpbuf, obj, RFC_WRITE);
+                    ret = record_change_format(instance, p, tmpbuf, obj, RFC_WRITE);
                     if (ret >= 0)
                     {
                         single_len = ret;
@@ -801,7 +801,7 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
                 single_len = nd_size(instance, obj);
                 if (single_len > 0)
                 {
-                    ret = record_change_format(tmpbuf, p, obj, RFC_GET_STORE_LEN);
+                    ret = record_change_format(instance, tmpbuf, p, obj, RFC_GET_STORE_LEN);
                     if (ret >= 0)
                     {
                         single_len = ret;
