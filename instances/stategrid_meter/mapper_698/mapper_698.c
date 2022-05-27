@@ -1413,7 +1413,7 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad, uint8_t *des, uint8
             }
             else
             {
-                *p++ = TYPE_structure;
+                *p++ = TYPE_array;
                 *p++ = block_num;
                 for (i = 0; i < block_num; i++)
                 {
@@ -1436,7 +1436,7 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad, uint8_t *des, uint8
             }
             else
             {
-                *p++ = TYPE_structure;
+                *p++ = TYPE_array;
                 *p++ = block_num;
                 for (i = 0; i < block_num; i++)
                 {

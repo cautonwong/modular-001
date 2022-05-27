@@ -212,7 +212,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                     switch(mode)
                     {
                         case 0x00:
-                          buf[0] = TYPE_long64;
+                          buf[0] = TYPE_long64_unsigned;
                           tmp = Get_Active_Energy(mbase_cb , attr_index , 0 , 0);
                           memcpy(&buf[1], (uint8_t*)&tmp, 4);
                           tmp = Get_Active_Energy(mbase_cb , attr_index , 1 , 0);
@@ -220,7 +220,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                           len = 9;                        
                           break;
                         case 0x01:
-                          buf[0] = TYPE_long64;
+                          buf[0] = TYPE_long64_unsigned;
                           buf[1] = 0x08;
                           len = 2;
                           break;
@@ -245,7 +245,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                   }
                   else if(attribute==4)
                   {
-                      buf[0] = TYPE_long64;
+                      buf[0] = TYPE_long64_unsigned;
                       tmp = Get_Active_Energy(mbase_cb , attr_index , 0 , 0);
                       memcpy(&buf[1], (uint8_t*)&tmp, 4);
                       tmp = Get_Active_Energy(mbase_cb , attr_index , 1 , 0);
@@ -308,7 +308,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                     switch(mode)
                     {
                         case 0x00:
-                          buf[0] = TYPE_long64;
+                          buf[0] = TYPE_long64_unsigned;
                           tmp = Get_Active_Energy(mbase_cb , attr_index , 0 , 1);
                           memcpy(&buf[1], (uint8_t*)&tmp, 4);
                           tmp = Get_Active_Energy(mbase_cb , attr_index , 1 , 1);
@@ -316,7 +316,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                           len = 9;
                           break;
                         case 0x01:
-                          buf[0] = TYPE_long64;
+                          buf[0] = TYPE_long64_unsigned;
                           buf[1] = 0x08;
                           len = 2;
                           break;
@@ -341,7 +341,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                   }
                   else if(attribute==4)
                   {
-                      buf[0] = TYPE_long64;
+                      buf[0] = TYPE_long64_unsigned;
                       tmp = Get_Active_Energy(mbase_cb , attr_index , 0 , 0);
                       memcpy(&buf[1], (uint8_t*)&tmp, 4);
                       tmp = Get_Active_Energy(mbase_cb , attr_index , 1 , 0);
