@@ -20,7 +20,7 @@ extern uint8 mcu_delay_us(volatile uint16 count);
 uint32 over_Imax;
 static uint8 Buffer[50];
 static struct factor_adj_meter_t Factory3;
-static uint8 key_cnt;
+static uint16 key_cnt;
 
 #define	lock_heat_compensate	0x5a
 #define	lock_voltage_compensate	0xa5
@@ -49,7 +49,7 @@ struct emu_voltage_adj_t
 static struct adj_std_source_t	adj_std_source;
 static struct emu_voltage_adj_t	emu_voltage_adj;
 
-/*×ÔÈÈ²¹³¥º¯Êı*/
+/*è‡ªçƒ­è¡¥å¿å‡½æ•°*/
 void heat_compensate(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -62,11 +62,11 @@ void heat_compensate(struct instance_t* instance, struct pipeline_t* pipeline)
 		for(i=0;i<15;i++)
 		{
 			nowtime = (3600-(i*4)*60);
-			if(adj_std_source.countstart >= nowtime)    //3600sec,60min£¬15¸öµã£¬4·ÖÖÓ1¸öµã
+			if(adj_std_source.countstart >= nowtime)    //3600sec,60minï¼Œ15ä¸ªç‚¹ï¼Œ4åˆ†é’Ÿ1ä¸ªç‚¹
 			{
-                rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , GPQA , 2 , &value);   //¶ÁÈ¡¼ÆÁ¿Ğ¾Æ¬¼Ä´æÆ÷ÔöÒæÖµ
+                rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , GPQA , 2 , &value);   //è¯»å–è®¡é‡èŠ¯ç‰‡å¯„å­˜å™¨å¢ç›Šå€¼
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Heat_Value_10L);
-                nd_get_index(instance, s_index, (uint8_t*)&tmp, 30); //¶ÁÈ¡EEÖĞµÄ²¹³¥Öµ
+                nd_get_index(instance, s_index, (uint8_t*)&tmp, 30); //è¯»å–EEä¸­çš„è¡¥å¿å€¼
 
                 if(tmp[14-i] != value)
                 {
@@ -89,7 +89,7 @@ void heat_compensate(struct instance_t* instance, struct pipeline_t* pipeline)
 			if(adj_std_source.countend>30)
 			{
 				s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Pgain0);
-                nd_get_index(instance, s_index, (uint8_t*)&value, 2); //¶ÁÈ¡EEÖĞµÄÔöÒæÖµ
+                nd_get_index(instance, s_index, (uint8_t*)&value, 2); //è¯»å–EEä¸­çš„å¢ç›Šå€¼
                 
                 rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, GPQA, 2, &value);
                 adj_std_source.lock &= ~lock_heat_compensate;
@@ -100,7 +100,7 @@ void heat_compensate(struct instance_t* instance, struct pipeline_t* pipeline)
 	}
 }
 
-/* µçÑ¹Ó°ÏìÁ¿²¹³¥ */
+/* ç”µå‹å½±å“é‡è¡¥å¿ */
 void voltage_compensate(struct instance_t* instance, struct pipeline_t* pipeline, uint8 mode)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -108,10 +108,10 @@ void voltage_compensate(struct instance_t* instance, struct pipeline_t* pipeline
     uint32_t s_index=0;
     uint8_t buf[8];
 	
-	if(mode == compensate_start)    //¿ªÊ¼
+	if(mode == compensate_start)    //å¼€å§‹
 	{
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Un_Cmp_Value);
-        nd_get_index(instance, s_index, (uint8 *)&emu_voltage_adj.un80_offset, 8); //¶ÁÈ¡EEÖĞµÄ²¹³¥Öµ
+        nd_get_index(instance, s_index, (uint8 *)&emu_voltage_adj.un80_offset, 8); //è¯»å–EEä¸­çš„è¡¥å¿å€¼
 
 		if(mbase_control_block->voltage_ac > 17500)
 		{
@@ -129,7 +129,7 @@ void voltage_compensate(struct instance_t* instance, struct pipeline_t* pipeline
 		{
 			tmp = emu_voltage_adj.un115_offset;
 		}
-        rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , APOSA , 2 , &value);   //¶ÁÈ¡¼ÆÁ¿Ğ¾Æ¬¼Ä´æÆ÷¹¦ÂÊÆ«ÒÆ
+        rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , APOSA , 2 , &value);   //è¯»å–è®¡é‡èŠ¯ç‰‡å¯„å­˜å™¨åŠŸç‡åç§»
         
         if(tmp != value)
         {
@@ -137,19 +137,40 @@ void voltage_compensate(struct instance_t* instance, struct pipeline_t* pipeline
             adj_std_source.lock |= lock_voltage_compensate;
         }
 	}
-	else//½áÊø
+	else//ç»“æŸ
 	{
 		if((adj_std_source.lock & lock_voltage_compensate) == lock_voltage_compensate)
 		{
 			s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Pgain0);
-            nd_get_index(instance, s_index, (uint8 *)&buf[0], 8); //¶ÁÈ¡EEÖĞµÄ²¹³¥Öµ
+            nd_get_index(instance, s_index, (uint8 *)&buf[0], 8); //è¯»å–EEä¸­çš„è¡¥å¿å€¼
 
-            memcpy(&tmp, (uint8 *)&buf[2], 2);//¹¦ÂÊÆ«ÒÆ
+            memcpy(&tmp, (uint8 *)&buf[2], 2);//åŠŸç‡åç§»
             rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, APOSA, 2, &tmp);
             adj_std_source.lock &= ~lock_voltage_compensate;
 		}
 	}
 }
+
+#define REAL_K_U_INIT     0.137414116
+#define REAL_K_I_INIT     0.016
+#define REAL_K_P_INIT     0.0023294272
+
+
+void emu_calibration_clear(struct instance_t* instance, struct pipeline_t* pipeline)
+{
+
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    signed short Pgain = 0;
+    unsigned char Tofst = 0;
+    
+    mbase_control_block->k_u = REAL_K_U_INIT;
+    mbase_control_block->k_il = REAL_K_I_INIT;
+    mbase_control_block->k_p = REAL_K_P_INIT;
+    
+    rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, GPQA, 2, &Pgain);
+    rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, PHSA, 1, &Tofst);
+}
+
 
 void meterchip_adj_self(struct instance_t* instance, struct pipeline_t* pipeline)
 {
@@ -163,47 +184,50 @@ void meterchip_adj_self(struct instance_t* instance, struct pipeline_t* pipeline
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     memset((unsigned char*)Buffer,0x00,16);
 
-    //E2P_Read((unsigned char*)&hfconst, Meter_VHFconst, 4 );	//»ñÈ¡Âö³åËÙÂÊ
-    //E2P_Read((unsigned char*)&BaseErr, MeterBaseErr, 4);	//»ñÈ¡»ù×¼Æ«²îÖµ
+    //E2P_Read((unsigned char*)&hfconst, Meter_VHFconst, 4 );	//è·å–è„‰å†²é€Ÿç‡
+    //E2P_Read((unsigned char*)&BaseErr, MeterBaseErr, 4);	//è·å–åŸºå‡†åå·®å€¼
     
-    //²âÊÔÓÃ£¬ºóÆÚÉ¾³ı
+    //æµ‹è¯•ç”¨ï¼ŒåæœŸåˆ é™¤
+    
+
+    
     
     Factory3.adjflag = 0xff;
-    hfconst = 0x096F;
+    hfconst = 0x064a;
     BaseErr = 0;
-    Factory3.Ua = 0x55F0;
-    Factory3.Ia = 0xC34A;
-    Factory3.Pa = 0xD6FF;
-    Factory3.Ian = 0xC34A;
+    Factory3.Ua = 0x55F0;    //220V 
+    Factory3.Ia = 0xC34A;    //5A
+    Factory3.Pa = 0xD6FF;    //550W
+    Factory3.Ian = 0xC34A;   //5A
     
     if (Factory3.adjflag & F_ALadj)
     {
         for (i = 0; i < 3; i++)
         {
-            //»ñÈ¡µçÑ¹
+            //è·å–ç”µå‹
             rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , URMS , 3 , &U_value);
-            if( U_value & 0x00800000 )//µçÑ¹×î¸ßÎ»Îª1Ê±£¬Êı¾İÎŞĞ§
+            if( U_value & 0x00800000 )//ç”µå‹æœ€é«˜ä½ä¸º1æ—¶ï¼Œæ•°æ®æ— æ•ˆ
                 U_value = 0;
             else
                 U_value &= 0x00FFFFFF;
             TempUrms += U_value;
 
-            //»ñÈ¡µçÁ÷
+            //è·å–ç”µæµ
             rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , IARMS , 3 , &I1_value);
-            if( I1_value & 0x00800000 )//µçÁ÷×î¸ßÎ»Îª1Ê±£¬Êı¾İÎŞĞ§
+            if( I1_value & 0x00800000 )//ç”µæµæœ€é«˜ä½ä¸º1æ—¶ï¼Œæ•°æ®æ— æ•ˆ
                 I1_value = 0;
             else
                 I1_value &= 0x00FFFFFF;
             TempIrms += I1_value;
 
-            //»ñÈ¡¹¦ÂÊ
+            //è·å–åŠŸç‡
             rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , POWERPA , 4 , &P_value);
             if(P_value >= 0x80000000)
                 P_value=~P_value;
             TempPw += P_value;
             for(j=0;j<10;j++)
             {
-                mcu_delay_us(50000);	//µÈ´ı500ms
+                mcu_delay_us(50000);	//ç­‰å¾…500ms
                 mcu_clear_watchdog();
             }
         }
@@ -213,11 +237,11 @@ void meterchip_adj_self(struct instance_t* instance, struct pipeline_t* pipeline
 
         if (mem_compare( &Factory3.Ua, Buffer, 12 ) != 0)
         {
-            Corretion_Pw = (unsigned long)(((float)Factory3.Ua*(float)Factory3.Ia/10000)/mbase_control_block->k_p);//Ì¨ÌåÊÓÔÚ¹¦ÂÊ
-            CalcPw = (unsigned long)(((float)TempUrms * (float)TempIrms)/32768); //±íÊÓÔÚ¹¦ÂÊ
+            Corretion_Pw = (unsigned long)(((float)Factory3.Ua*(float)Factory3.Ia/100000)/mbase_control_block->k_p);//å°ä½“è§†åœ¨åŠŸç‡
+            CalcPw = (unsigned long)(((float)TempUrms * (float)TempIrms)/32768); //è¡¨è§†åœ¨åŠŸç‡
 
-            mbase_control_block->k_u = (float)Factory3.Ua/TempUrms/10;
-            mbase_control_block->k_il = (float)Factory3.Ia/10/TempIrms;
+            mbase_control_block->k_u = (float)Factory3.Ua/TempUrms;
+            mbase_control_block->k_il = (float)Factory3.Ia/TempIrms;
 
             err = (CalcPw - (float)Corretion_Pw)/(float)Corretion_Pw;
             err = err + BaseErr*0.01;
@@ -274,7 +298,7 @@ void meterchip_adj_self(struct instance_t* instance, struct pipeline_t* pipeline
     }
 }
 
-
+            
 void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     
@@ -282,7 +306,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     int32_t temp = 0;
    
-    //¶Á¼ÆÁ¿Ğ¾Æ¬µçÑ¹
+    //è¯»è®¡é‡èŠ¯ç‰‡ç”µå‹
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , URMS , 3 , &temp);
     
     mbase_control_block->voltage_ac = (uint32_t)(mbase_control_block->k_u * temp)/10;
@@ -294,26 +318,26 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     {
         mbase_control_block->voltage_ac = 0;
     }
-    //¶Á¼ÆÁ¿Ğ¾Æ¬µçÁ÷
+    //è¯»è®¡é‡èŠ¯ç‰‡ç”µæµ
     temp = 0;
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , IARMS , 3 , &temp);
     mbase_control_block->current_l = (int32_t)(mbase_control_block->k_il * temp)/10;
     
-    //ÊÓÔÚ¹¦ÂÊ
+    //è§†åœ¨åŠŸç‡
     mbase_control_block->apparent_power = mbase_control_block->current_l * mbase_control_block->voltage_ac/1000;
     
-    //¶Á¼ÆÁ¿Ğ¾Æ¬¹¦ÂÊ
+    //è¯»è®¡é‡èŠ¯ç‰‡åŠŸç‡
     temp = 0;
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , POWERPA , 4 , &temp);
     mbase_control_block->active_power = (int32_t)(mbase_control_block->k_p * temp);
     
     if(mbase_control_block->active_power < 0)
     {
-        mbase_control_block->power_dir = true;
+        mbase_control_block->power_dir = 1;
     }
     else
     {
-        mbase_control_block->power_dir = false;
+        mbase_control_block->power_dir = 0;
     }
     
     if(abs(mbase_control_block->current_l) < MIN_CURRENT)
@@ -331,12 +355,12 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     }
     
     
-    //¶Á¼ÆÁ¿Ğ¾Æ¬ÆµÂÊ 
+    //è¯»è®¡é‡èŠ¯ç‰‡é¢‘ç‡ 
     temp = 0;
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , UFREQ , 2 , &temp);
     mbase_control_block->frequency = (uint32_t)(44744312.5/temp);
     
-    //¶Á¼ÆÁ¿Ğ¾Æ¬ÁãÏßµçÁ÷
+    //è¯»è®¡é‡èŠ¯ç‰‡é›¶çº¿ç”µæµ
     temp = 0;
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , IBRMS , 3 , &temp);
     mbase_control_block->current_n = (int32_t)(mbase_control_block->k_in * temp);
@@ -349,12 +373,21 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     {
         key_cnt++;
     }
+    else
+    {
+        key_cnt = 0;
+    }
+    
+    if(key_cnt == 2)
+    {
+         emu_calibration_clear(instance, pipeline);
+    }
     if(key_cnt == 3)
     {
         meterchip_adj_self(instance, pipeline);
     }
     
-    //Ó‹Ëã¹¦ÂÊÒò”µ
+    //è¨ˆç®—åŠŸç‡å› æ•¸
     if((mbase_control_block->voltage_ac != 0) && (mbase_control_block->current_l != 0))
     {
         mbase_control_block->power_factor = mbase_control_block->active_power / (mbase_control_block->voltage_ac * mbase_control_block->current_l);
@@ -364,8 +397,8 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
         mbase_control_block->power_factor = 1000;
     }
     
-    /****************** ²¹³¥¹¦ÄÜ ******************/
-    heat_compensate(instance, pipeline);    //×ÔÈÈ²¹³¥
+    /****************** è¡¥å¿åŠŸèƒ½ ******************/
+    heat_compensate(instance, pipeline);    //è‡ªçƒ­è¡¥å¿
     
     if((mbase_control_block->voltage_ac < 19900) || (mbase_control_block->voltage_ac > 23900))
     {
@@ -376,7 +409,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
         voltage_compensate(instance, pipeline, compensate_end);
     }
     
-    /****************** ÎÂ¶È²ÉÑù ******************/
+    /****************** æ¸©åº¦é‡‡æ · ******************/
     if(true == mcu_adc_start_once(ADC_CHL_TEMP))
     {
         if(true == read_mcu_adc_measure_value(ADC_CHL_TEMP , (int32 *)&temp))
@@ -385,7 +418,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
         }
     }
     
-    /****************** µç³Ø²ÉÑù ******************/
+    /****************** ç”µæ± é‡‡æ · ******************/
     if(true == mcu_adc_start_once(ADC_CHL_BATTER))
     {
         if(true == read_mcu_adc_measure_value(ADC_CHL_BATTER , (int32 *)&temp))
@@ -404,7 +437,9 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
 void Electrical_measurement_poweron(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
-  
+    struct Rn8209AdjSet_t adj_set;
+    unsigned long addr=0;
+    uint8_t adj_buf[8];
 //    int32_t temp = 0;
     
     mbase_control_block->voltage_ac = 0;
@@ -417,18 +452,25 @@ void Electrical_measurement_poweron(struct instance_t* instance, struct pipeline
     mbase_control_block->p_pluse = 0;
     mbase_control_block->n_pluse = 0;
     
-    mbase_control_block->k_u = 1.413436490e-2;
-    mbase_control_block->k_il = 0.166826248;//»ğÏß
-    mbase_control_block->k_in = 0.166826248;
-    mbase_control_block->k_p = 0.0155295;
     
-    /********* ×ÔÈÈ *********/
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_K);
+    nd_get_index(instance, addr, (uint8_t*)&mbase_control_block->k_u, 16);
+
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Pgain0);
+    nd_get_index(instance, addr, (uint8_t*)adj_buf, 8);
+    memcpy((uint8_t*)&adj_set, (uint8_t*)adj_buf, 7);
+    
+    rn8209_dev.dev_driver_ops->dev_control(&rn8209_dev , AC_POWER_ON , &adj_set);
+    
+    /********* è‡ªçƒ­ *********/
     adj_std_source.countstart = 0;
     adj_std_source.countend = 0;
     adj_std_source.lock = 0;
     
-    /********* µçÑ¹²¹³¥ *********/
+    /********* ç”µå‹è¡¥å¿ *********/
     memset((uint8_t*)&emu_voltage_adj.un80_offset, 0x00, 8);
+    
+    key_cnt = 0;
 }
 
 
