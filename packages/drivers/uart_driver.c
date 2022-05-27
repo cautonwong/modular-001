@@ -339,6 +339,42 @@ int uart_chl_initialize(struct uart_chl_init_t *uart_chl)
 }
 
 
+int uart_chl_open(uint8_t chl_type)
+{
+    uint8_t index;
+    uint8_t infrared_enable = 0;
+    struct tm_list_init_t tm;
+    
+    for(index = 0; index<MCU_UART_NUM ; index++)
+    {
+        if(uart_dev[index].chl_type == chl_type)
+        {
+              switch(chl_type)
+              {
+                  case UART_RS4851_CHL:
+                       RS485_RCV_EN();
+                       RS485_RX_INPUT();
+                       RS485_TX_OUTPUT();
+                       RS485_TX_HIGH();
+                       tm.tm_id = RS4851_TM;
+                       break;
+                  case UART_IR_CHL:
+                       infrared_enable = 1;
+                       tm.tm_id = IR_TM;
+                      break;
+                  case UART_MODULE_CHL:
+                      tm.tm_id = MODULE_TM;
+                      break;
+                  default:
+                      break;
+              }
+              mcu_uart_init((void*)uart_dev[index].uart_cfg, index, infrared_enable);
+              mcu_uart_recive_enable(1 , index);
+              return true;
+        }
+    }
+    return false;
+}
 
 
 
