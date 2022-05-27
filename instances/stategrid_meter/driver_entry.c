@@ -390,6 +390,10 @@ void dev_init(uint8_t power_mode)
       mcu_main_frequency_mode(1);
       gpio_configuration_AC();
       dev_init(AC_POWER_ON);
+	 
+      uart_chl_open(UART_RS4851_CHL);
+      uart_chl_open(UART_IR_CHL);
+      uart_chl_open(UART_MODULE_CHL);
  }
 
 //初始化IO低功耗配置，初始化系统低功耗配置，准备进入sleep模式。
