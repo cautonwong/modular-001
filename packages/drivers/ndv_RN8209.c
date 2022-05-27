@@ -139,15 +139,12 @@ unsigned char Rn8209InitConfig(const struct dev_info_t* dev)
     //RN8209初始化配置的参数，直接在这里修改配置。
     unsigned short SysCon = 0x1643;
     unsigned short EmuCon = 0x0001;
-    unsigned short Hfconst = 0x096F;
+    unsigned short Hfconst = 0x064a;
     unsigned short Pstart = 0x0049;
     unsigned char regIE = 0x01;
-
-
+    unsigned char i;
+    mcu_delay_us(5000);
     CmdRn8209(CMD_WR_EN , dev);
-    mcu_delay_us(5000);
-    mcu_delay_us(5000);
-    mcu_delay_us(5000);
     mcu_delay_us(5000);
 
     if (false == WriteRn8209Check(SYSCON, (unsigned char*)&SysCon, 2 , dev))
@@ -170,8 +167,10 @@ unsigned char Rn8209InitConfig(const struct dev_info_t* dev)
     {
         return false;
     }
-
+    mcu_delay_us(5000);
     CmdRn8209(CMD_WR_DIS , dev);
+    mcu_delay_us(5000);
+    
     return true;
 }
 
@@ -180,12 +179,17 @@ void ResetRn8209(void)
 {
     PIN_RN8209_RX_OUT_MODE();
     PIN_RN8209_RX_OUT_HIGH();
+    mcu_clear_watchdog();
     mcu_delay_us(30000);
     PIN_RN8209_RX_OUT_LOW();
+    mcu_clear_watchdog();
     mcu_delay_us(30000);
     PIN_RN8209_RX_OUT_HIGH();
     mcu_delay_us(10000);
     PIN_RN8209_RX_IN_MODE();
+    mcu_clear_watchdog();
+    mcu_delay_us(50000);
+    mcu_clear_watchdog();
 }
 
 unsigned char Rn8209DeviceIDCheck(const struct dev_info_t* dev)
@@ -246,13 +250,8 @@ int Rn8209_control(const struct dev_info_t* dev , uint8 ctrl , void* ctrl_parame
 {
     const struct bus_ops_t *bus_ops = dev->dev_bus_ops;
     
-    struct Rn8209AdjSet_t set_test=
-    {
-        0x0000,
-        0x0000,
-        0x0000,
-        0x00,
-    };
+    struct Rn8209AdjSet_t *set_test= (struct Rn8209AdjSet_t*)ctrl_parameter;
+
     
     switch (ctrl)
     {
@@ -267,7 +266,7 @@ int Rn8209_control(const struct dev_info_t* dev , uint8 ctrl , void* ctrl_parame
                 Rn8209InitConfig(dev);
             }
             
-            Rn8209AdjParaSet(&set_test , dev);
+            Rn8209AdjParaSet(set_test , dev);
             break;
         case AC_POWER_OFF:
             ResetRn8209();
