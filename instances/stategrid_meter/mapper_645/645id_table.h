@@ -4,6 +4,17 @@
 #define	Mem_E2PROM			3
 #define MEMVALUE            0x03
 
+//错误信息字定义
+#define 	RS_ERR_LEN		        	0x01//数据域长度错误,其它错误
+#define 	RS_ERR_OTHERS		       	0x01//其它错误
+#define 	RS_ERR_ID		        	0x02//ID错误
+#define 	RS_ERR_PASS		        	0x04//密码错/未授权
+#define 	RS_ERR_WR		        	0x04//读写权限
+#define 	RS_ERR_BAUT		        	0x08//波特率不能更改
+#define     RS_ERR_SEAOV                0x10//年时区数超
+#define     RS_ERR_TOUOV                0x20//日时段数超
+#define     RS_ERR_FEEOV                0x40//费率数超
+
 //Info16bit定义
 // 6 bits	数据长度
 #define		CommDataLen				0x003F

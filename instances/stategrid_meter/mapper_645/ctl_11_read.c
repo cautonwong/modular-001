@@ -63,13 +63,69 @@ int Direct_Read( unsigned long ID , uint8_t* p_tx)
 	}
 }
 
+void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx)
+{
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint32_t s_index=0;
+    uint16_t pstart=0;
+    uint8_t buf[40]={0,};
+    
+    memset(buf, 0x00, 8);
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Pgain0);    //火线增益、相位
+    nd_set_index(instance, s_index, buf, 8); 
+    
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Pgain1);    //零线增益、相位
+    nd_set_index(instance, s_index, buf, 8); 
+    
+    pstart = 0x0049;
+    memcpy(buf, (uint8_t*)&pstart, 2);
+    if(p_rx==0)
+    {
+        buf[2] = 0x6F;
+        buf[3] = 0x09;
+    }
+    else
+        memcpy((uint8_t*)&buf[2], p_rx+3, 2);//写入脉冲速率
+        
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Other);
+    nd_set_index(instance, s_index, buf, 4); 
+    
+    memset((uint8_t*)&mbase_control_block->k_u, 0x00, 16);
+    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+            offsetof(struct mbase_control_block_t, k_u));
+    nd_set_offset(instance, s_index, (uint8_t*)&mbase_control_block->k_u, 16);//存储至EE
+}
+
+
+unsigned char adj_meter(struct instance_t* instance, uint8_t *p_rx)
+{
+    uint32_t id=0;
+    
+    
+    switch(*(p_rx-1))
+    {
+        case 0x07://校表初始化
+            memcpy((uint8_t*)&id, p_rx, 3);
+            if(id == 0x02FC01)
+            {
+                meteric_para_clr(instance, p_rx);
+            }
+            break;
+        case 0x11://校表
+            break;
+        default:
+            break;
+    }
+    return 0;
+    
+}
 
 /***********************************************************************/
 /*  函数名称：Comm_Read                                                */
 /*  函数功能：通讯读                                                   */
 /*  输出参数：读结果：0为正确,其余为错误                              */
 /***********************************************************************/
-unsigned char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t len)
+signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len)
 {
 	unsigned char Ptr,MemType;
     int Err_Byte;
@@ -82,37 +138,53 @@ unsigned char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_t
     {
         return -1;
     }
+    
+    if(*(p_rx-1) != 0x04)   //扩展命令——校表
+    {
+        Err_Byte = adj_meter(instance, p_rx);
+        if(Err_Byte != 0)
+        {
+            *p_tx = Err_Byte;
+            return 1;
+        }
+        else
+            return 0;
+    }
 
+    memcpy(p_tx, p_rx, 4);
+    p_tx = p_tx+4;
 	memcpy((unsigned char*)&ID, p_rx, 4);
+    
 
 	Err_Byte = Direct_Read( ID , p_tx);//根据ID,直接读取数据
 	if( Err_Byte != -1)
     {
-        len = Err_Byte;
-        return 0;
+        *p_tx = Err_Byte;
+        return 1;
     }
     
 
 	Ptr = GetCommTable( ID );//查表
 	if( Ptr == 0xFF )
-		return 1;
+		return -1;
 	Addr = CommTab[Ptr].Addr;
 	Info = CommTab[Ptr].Info;
 
 	if( (Info & CommData_R) == 0 ) //数据不可读
-		return 1;
+		return -1;
 		
-	len = (unsigned char)(Info & CommDataLen);
+	*len = (unsigned char)(Info & CommDataLen);
 	MemType = (unsigned char)((Info>>6) & MEMVALUE);
 	if(MemType == Mem_E2PROM)
 	{
 		addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Addr);
-		nd_get_index(instance, addr1, p_tx, len);
+		nd_get_index(instance, addr1, p_tx, *len);
 	}
 	else 
 	{
-		memcpy( p_tx, (unsigned char*)Addr, len );
+		memcpy( p_tx, (unsigned char*)Addr, *len );
 	}
-
+    *len = *len+4;
+    
     return 0;
 }

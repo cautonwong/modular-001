@@ -142,7 +142,15 @@ unsigned char Rn8209InitConfig(const struct dev_info_t* dev)
     unsigned short Hfconst = 0x064a;
     unsigned short Pstart = 0x0049;
     unsigned char regIE = 0x01;
-    unsigned char i;
+    unsigned long s_index=0;
+    unsigned char i,buf[4]={0,};
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Other);//写入脉冲速率
+    //nd_get_index(instance, s_index, buf, 4);
+    memcpy((unsigned char*)&Pstart, buf, 2);
+    memcpy((unsigned char*)&Hfconst, buf+2, 2);
+    
+    if((Pstart == 0) || (Pstart == 0xFFFF))   Pstart = 0x0049;
+    if((Hfconst == 0) || (Hfconst == 0xFFFF))   Hfconst = 0x096F;
     mcu_delay_us(5000);
     CmdRn8209(CMD_WR_EN , dev);
     mcu_delay_us(5000);

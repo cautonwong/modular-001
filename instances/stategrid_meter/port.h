@@ -535,7 +535,7 @@ enum block_parameter_item_id_t
 
 //mbase_block_parameter E2P存储ID------结束                           
                                   
-//#define     Comm_Number                 900 //表地址
+#define     Comm_Number                 900 //表地址
 #define     Meter_Number                901 //表号
 #define     User_Number                 902 //客户编号
 #define     Meter_Num                   903 //计量元件数
@@ -597,7 +597,7 @@ enum block_parameter_item_id_t
 
 #define     ADJ_Pgain0                  1003    //火线校表参数（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
 #define 	ADJ_Pgain1                  1004    //零线功率增益（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
-#define     ADJ_Other                   1005    //计量其他参数（启动阀值、HFconst）1 + 2 = 3
+#define     ADJ_Other                   1005    //计量其他参数（启动阀值、HFconst）2 + 2 = 4
 #define     ADJ_K                       1006    //Ku Kil Kin零线K系数 Kp 4*4 = 16
 
 /*

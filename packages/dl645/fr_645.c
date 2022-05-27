@@ -458,7 +458,7 @@ int fr_pack_645_head(struct instance_t* instance, struct pipeline_t* pipeline, s
     ctx->tx_len = 0;
     uint8_t buf[6];
 
-    for(int i = 0; i < 3; i ++){
+    for(int i = 0; i < 4; i ++){
         fifoBuf_putByte(fifo, 0xfe);
     }
     append_byte(fifo, 0x68, __update_cs, ctx);
@@ -540,8 +540,8 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
-    uint8_t data[8]={0};
-    int tx_len = 0;
+    uint8_t data[8]={0}, ERRBYTE=0;
+    uint16_t tx_len = 0;
 
     int err_no = 0;
 
@@ -554,22 +554,43 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     ctx->apdu_rx_len = ctx->min_len - 1;
     fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len);
     fifoBuf_init(&ctx->apdu, ctx->apdu_tx, 256);
-    mesg->ctrl = ctx->ctrl | 0x80;
-        
+       
     switch (ctx->ctrl)
     {
         case 0X11:
-            tx_len = Comm_Read(instance, apdu_rx+10, ctx->apdu_tx,  0);
+            ERRBYTE = Comm_Read(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
             break;   
         case 0X14:
-            tx_len = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx,  0);
+            ERRBYTE = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
+            if(ERRBYTE == 0)
+            {
+                tx_len = 0;
+            }
+            else
+            {
+                tx_len = 1;
+                *ctx->apdu_tx = ERRBYTE;
+            }
+            break;
+        case 0x1F:
+            ERRBYTE = Comm_Other(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
             break;
         default:
             break;
     }
-    tx_len = 7;
+    
+    if(ERRBYTE == 0)
+    {
+        mesg->ctrl = ctx->ctrl | 0x80;
+    }
+    else
+    {
+        mesg->ctrl = ctx->ctrl | 0xC0;
+    }
+            
+    tx_len = tx_len;
     ctx->apdu.wr = tx_len;
-    if (fifoBuf_getUsed(&ctx->apdu)  > 0){
+    if (fifoBuf_getUsed(&ctx->apdu)  >= 0){
         mesg->len = fifoBuf_getUsed(&ctx->apdu);
         if (mesg->len > 512){
             mesg->len = 512;
