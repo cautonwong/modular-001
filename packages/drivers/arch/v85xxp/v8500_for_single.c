@@ -33,7 +33,7 @@ static uint32 get_system_clk(void)
 
     if (!(ANA->REG3 & ANA_REG3_PLLLPDN))
     {
-        temp = 32768;// 调整
+        temp = 32768;// 璋冩暣
     }
 
     return temp;
@@ -97,20 +97,20 @@ void MComp1Init(void)
     GPIOBToF_Init(GPIOE, &GPIO_InitStruct);
     //    GPIOE->OEN |= 0xFFFF;       	                    
     //	GPIOE->IE &=~0xFFFF;
-    ANA->CTRL = (2 << ANA_CTRL_CMP1DEB_Pos) | (3 << ANA_CTRL_COMP1_SEL_Pos);  //3个RTCCLK时钟周期消抖  双边沿
-    //ANA->REG2  = 1 << ANA_REG2_REFSEL_CMP1_Pos; //比较电压  BGPREF=1.2V
+    ANA->CTRL = (2 << ANA_CTRL_CMP1DEB_Pos) | (3 << ANA_CTRL_COMP1_SEL_Pos);  //3涓猂TCCLK鏃堕挓鍛ㄦ湡娑堟姈  鍙岃竟娌�
+    //ANA->REG2  = 1 << ANA_REG2_REFSEL_CMP1_Pos; //姣旇緝鐢靛帇  BGPREF=1.2V
 
-    ANA->REG2 |= 1 << ANA_REG2_CMP1_SEL_Pos;    //comp1_n与REF
+    ANA->REG2 |= 1 << ANA_REG2_CMP1_SEL_Pos;    //comp1_n涓嶳EF
 
-    //ANA->REG3 &= ~ANA_REG3_BGPPD;               //上电BGP
-    ANA->REG3 |= ANA_REG3_CMP1PDN;              //开启CMP1
-    ANA->INTEN |= ANA_INTEN_INTEN2;//开启comp1中断
+    //ANA->REG3 &= ~ANA_REG3_BGPPD;               //涓婄數BGP
+    ANA->REG3 |= ANA_REG3_CMP1PDN;              //寮�鍚疌MP1
+    ANA->INTEN |= ANA_INTEN_INTEN2;//寮�鍚痗omp1涓柇
 
     //    KHandlerTabCfg(ANA_IRQn,ANA_COMP1_Interrupt,2);
 }
 
 
-/*全速运行26M */
+/*鍏ㄩ�熻繍琛�26M */
 void sys_clock_normal(void) 
 {
     CLK_InitTypeDef CLK_Struct;
@@ -135,19 +135,19 @@ void sys_clock_normal(void)
     CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_LCD | CLK_AHBPERIPHRAL_GPIO), ENABLE);
     CLK_APBPeriphralCmd(Periphral , ENABLE);
     
-    // 初始化上电检测?
+    // 鍒濆鍖栦笂鐢垫娴�?
     GPIOE->OEN |= (0x00000001 << 5);// powercheck
     GPIOE->IE  |= (0x00000001 << 5);
 }
 
 
 
-/* 实测�?0us�?0ms误差�?%以内。@ 147435*/
-/* 复位运行 3685875*/
-/* 上电全速运�?14743500*/
-/* 唤醒运行7371750*/
-/* 休眠运行327687*/
-/* 实测�?0us�?0ms误差�?%以内。@ 147435*/
+/* 瀹炴祴璇?0us鍒?0ms璇樊鍦?%浠ュ唴銆侤 147435*/
+/* 澶嶄綅杩愯 3685875*/
+/* 涓婄數鍏ㄩ�熻繍琛?14743500*/
+/* 鍞ら啋杩愯7371750*/
+/* 浼戠湢杩愯327687*/
+/* 瀹炴祴璇?0us鍒?0ms璇樊鍦?%浠ュ唴銆侤 147435*/
 uint8 mcu_delay_us(volatile uint16 count)
 {
     uint32 timeout = 1000000;
@@ -164,7 +164,7 @@ uint8 mcu_delay_us(volatile uint16 count)
     /* clear interrupt status */
     TMR1->INT = TMR_INT_INT;
     TMR1->RELOAD = 0;
-    TMR1->VALUE = count * 40; //待调�?  
+    TMR1->VALUE = count * 40; //寰呰皟鏁?  
     TMR1->CTRL |= TMR_CTRL_EN;
 
     while (0 == (TMR1->INT & 0x00000001))
@@ -183,7 +183,7 @@ uint8 mcu_delay_us(volatile uint16 count)
 
 static void RTCWriteEnable(void)
 {
-    while(RTC->CE & RTC_CE_BSY)            /* ��wr_busy=1ʱ��RTC�Ĵ���д����æ */
+    while(RTC->CE & RTC_CE_BSY)            /* 当wr_busy=1时，RTC寄存器写操作忙 */
     {
     }
     
@@ -191,7 +191,7 @@ static void RTCWriteEnable(void)
     RTC->CE = RTCCE_SETKEY;       
 	     
     mcu_delay_us(500);                  /* delay needed! */
-    while(RTC->CE & RTC_CE_BSY)            /* ��wr_busy=1ʱ��RTC�Ĵ���д����æ */
+    while(RTC->CE & RTC_CE_BSY)            /* 当wr_busy=1时，RTC寄存器写操作忙 */
     {
     }
 }
@@ -204,7 +204,7 @@ static void RTCWriteDisable(void)
 
   	/* RTC Write disable */
     mcu_delay_us(500);
-    while(RTC->CE & RTC_CE_BSY)            /* ��wr_busy=1ʱ��RTC�Ĵ���д����æ */
+    while(RTC->CE & RTC_CE_BSY)            /* 当wr_busy=1时，RTC寄存器写操作忙 */
     {
     }
 }
@@ -222,7 +222,7 @@ uint8 init_v85xxp_rtc( uint8 power_mode )
     
     mcu_delay_us(500);
 
-    RTC->WKUSEC = 0;// ����ÿ���ж�
+    RTC->WKUSEC = 0;// 配置每秒中断
     RTC->INTEN = BIT0;    
     
     mcu_delay_us(500);
@@ -237,7 +237,7 @@ uint8 init_v85xxp_rtc( uint8 power_mode )
     //          break;
     //    case RESET_MODE:
     //          rtc_multifunction_port.tmr_id = hfp_tick_timer.create(end_multifunction_port_driver, &rtc_multifunction_port.operate_pin, 8, true);
-              /*ע�⣬����û��break*/
+              /*注意，这里没有break*/
     //    default:
     //          rtc_out(0 , rtc_hal->multifunction_port);
     //          break;
@@ -326,18 +326,18 @@ uint8_t write_mcu_rtc(uint8_t addr, uint8_t *buf, uint16 len)
 /***********************************************************
  * @function_name: v85xxp_init
  * @function_file: cpu.c
- * @描述:mcu初始化函数
+ * @鎻忚堪:mcu鍒濆鍖栧嚱鏁�
  *
- * @参数:
- * @返回:
- * @作者:C
+ * @鍙傛暟:
+ * @杩斿洖:
+ * @浣滆��:C
  **********************************************************/
 void mcu_init(void *init_type)
 {
     uint16 flag = 0x5aa5;
     uint32 val = 0;
 
-    // 看门狗初始化
+    // 鐪嬮棬鐙楀垵濮嬪寲
     WDT_SetPeriod(WDT_2_SECS);
     WDT_Enable();
 
@@ -345,18 +345,18 @@ void mcu_init(void *init_type)
     __disable_irq();
 
     /**
-    复位之后首先设置CMPLVD_EN 、RTC_SAR_EN 、WDT_EN 、LCD_EN、 GPIO_EN
+    澶嶄綅涔嬪悗棣栧厛璁剧疆CMPLVD_EN 銆丷TC_SAR_EN 銆乄DT_EN 銆丩CD_EN銆� GPIO_EN
     */
 
     CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_LCD | CLK_AHBPERIPHRAL_GPIO), ENABLE);
     CLK_APBPeriphralCmd((CLK_APBPERIPHRAL_PMU | CLK_APBPERIPHRAL_RTC | CLK_APBPERIPHRAL_ANA), ENABLE);
 
-    // 初始化上电检测?
+    // 鍒濆鍖栦笂鐢垫娴�?
     GPIOE->OEN |= (0x00000001 << 5);// powercheck
     GPIOE->IE |= (0x00000001 << 5);
 
     /**
-    MCU第一次上电时，需要等待约???的起震时间，才可以使用PLL//待调整
+    MCU绗竴娆′笂鐢垫椂锛岄渶瑕佺瓑寰呯害???鐨勮捣闇囨椂闂达紝鎵嶅彲浠ヤ娇鐢≒LL//寰呰皟鏁�
     */
     for (val = 0; val < 20000; val++)
     {
@@ -488,7 +488,7 @@ void mcu_uart_recive_enable(uint8 ops_enable, size_t uart_index)
         }
         UARTx->STATE = BIT1 | BIT3 | BIT4;
         
-        tmp = UARTx->DATA;  //��ʼ����ȡһ������.
+        tmp = UARTx->DATA;  //初始化后取一次数据.
         tmp = tmp - 0;
     }
 }
@@ -631,7 +631,7 @@ uint8 mcu_spi_bus_init(uint8 spi_index, uint8 mode)
     SPI2->CTRL = 0x00;
 
     mcu_delay_us(10);
-    // CS软件控制 /  前边沿建立数据 / sck空闲状态为高 / MSB先传输   / 主机/ apbclk 4分频
+    // CS杞欢鎺у埗 /  鍓嶈竟娌垮缓绔嬫暟鎹� / sck绌洪棽鐘舵�佷负楂� / MSB鍏堜紶杈�   / 涓绘満/ apbclk 4鍒嗛
     SPI2->CTRL = BIT10 | BIT5 | BIT4 | BIT0;
 
     SPI2->MISC_ |= BIT8;
@@ -646,7 +646,7 @@ uint8 mcu_spi_bus_init(uint8 spi_index, uint8 mode)
 
 uint8 mcu_spi_send_byte(uint8 byte, uint8 spi_index)
 {
-    uint16 timeout = 50000; // 待调整
+    uint16 timeout = 50000; // 寰呰皟鏁�
     uint8  rxd;
 
 
@@ -771,11 +771,11 @@ void  mcu_clear_watchdog(void)
 
 
 
-uint8 poweroff_test = 1;//改回来
+uint8 poweroff_test = 1;//鏀瑰洖鏉�
 uint8 ac_power_off_monitor(void)
 {
 #if 0 
-    if (poweroff_test) // 改回来
+    if (poweroff_test) // 鏀瑰洖鏉�
     {
         return true;
     }
@@ -796,7 +796,7 @@ uint8 ac_power_off_monitor(void)
     }
 #endif    
 
-    if (ANA_GetStatus(ANA_STATUS_VDCINDROP))     //掉电
+    if (ANA_GetStatus(ANA_STATUS_VDCINDROP))     //鎺夌數
     {
         return true;
     }
@@ -810,7 +810,7 @@ uint8 ac_power_off_monitor(void)
 uint8 ac_power_on_monitor(void)
 {
 #if 0 
-    if (poweroff_test) // 改回来
+    if (poweroff_test) // 鏀瑰洖鏉�
     {
         return false;
     }
@@ -911,11 +911,11 @@ void mcu_enter_lowpower_then_sleep(void)
     GPIOA->OEN |= BIT14;
     GPIOA->IE |= BIT14;
     GPIOA->DAT |= BIT2;
-    PMU_WakeUpPinConfig(GPIO_Pin_2, IOA_EDGEBOTH);   //使能外部IO口唤醒
+    PMU_WakeUpPinConfig(GPIO_Pin_2, IOA_EDGEBOTH);   //浣胯兘澶栭儴IO鍙ｅ敜閱�
     PMU_ClearIOAINTStatus(GPIO_Pin_2);
     PMU_INTConfig(PMU_INT_IOAEN, ENABLE);
     PMU_WakeUpPinConfig(GPIO_Pin_8, IOA_DISABLE);
-    CORTEX_SetPriority_ClearPending_EnableIRQ(PMU_IRQn, 0); //优先级高
+    CORTEX_SetPriority_ClearPending_EnableIRQ(PMU_IRQn, 0); //浼樺厛绾ч珮
 
     /*------------------ Low power configuration ------------------*/
 /*        if((Flag.Disp & F_DispOff) == 0)
@@ -939,7 +939,7 @@ void mcu_enter_lowpower_then_sleep(void)
     LowPower_InitStruct.VDCINDetector = PMU_VDCINDET_ENABLE;
     LowPower_InitStruct.VDDDetector = PMU_VDDDET_DISABLE;
     RTC_PLLDIVOutputCmd(DISABLE);
-    MComp1Init();//电池状态监测初始化
+    MComp1Init();//鐢垫睜鐘舵�佺洃娴嬪垵濮嬪寲
     WDT_Disable();
     PMU_EnterSleep_LowPower(&LowPower_InitStruct);
 }
@@ -956,7 +956,7 @@ int v85xxp_spi_bus_init(size_t index)
     SPI2->CTRL = 0x00;
     
     mcu_delay_us(10);
-    // CS�������� /  ǰ���ؽ������� / sck����״̬Ϊ�� / MSB�ȴ���   / ����/ apbclk 4��Ƶ
+    // CS软件控制 /  前边沿建立数据 / sck空闲状态为高 / MSB先传输   / 主机/ apbclk 4分频
     SPI2->CTRL = BIT10 | BIT5 | BIT4 | BIT0;
 
     SPI2->MISC_ |= BIT8;
@@ -971,7 +971,7 @@ int v85xxp_spi_bus_init(size_t index)
 
 int v85xxp_spi_send_byte(uint8 byte , size_t index)
 {
-   uint16 timeout = 50000; // ������
+   uint16 timeout = 50000; // 待调整
    uint8  rxd;
     
 
@@ -1049,14 +1049,14 @@ void v85xxp_spi_ctrl(uint8 ctrl , size_t index)
 }
 
 
-/* lcd io�����ģʽ���� */
+/* lcd io口输出模式配置 */
 uint8 lcd_port_config(uint8 mode)
 {
 #if 1
     //MISC2->HCLKEN &= (~(uint32)BIT6);
     if(mode == AC_POWER_ON)
     {
-            GPIOD->OEN   |= (BIT0| BIT1| BIT2| BIT3| BIT4| BIT5| BIT6| BIT7| BIT12| BIT13| BIT14| BIT15);//ʹ�����
+            GPIOD->OEN   |= (BIT0| BIT1| BIT2| BIT3| BIT4| BIT5| BIT6| BIT7| BIT12| BIT13| BIT14| BIT15);//使能输出
 
             GPIOE->OEN   |= (BIT0| BIT1| BIT6| BIT7| BIT13| BIT14| BIT15);
 
@@ -1064,9 +1064,9 @@ uint8 lcd_port_config(uint8 mode)
 
             GPIOB->OEN   |= (BIT13| BIT14| BIT15);
     }
-    else if(mode == AC_POWER_OFF)//����͵�ƽ
+    else if(mode == AC_POWER_OFF)//输出低电平
     {
-            GPIOD->OEN   &= ~(BIT0| BIT1| BIT2| BIT3| BIT4| BIT5| BIT6| BIT7| BIT12| BIT13| BIT14| BIT15);//ʹ�����
+            GPIOD->OEN   &= ~(BIT0| BIT1| BIT2| BIT3| BIT4| BIT5| BIT6| BIT7| BIT12| BIT13| BIT14| BIT15);//使能输出
 
             GPIOE->OEN   &= ~(BIT0| BIT1| BIT6| BIT7| BIT13| BIT14| BIT15);
 
@@ -1075,7 +1075,7 @@ uint8 lcd_port_config(uint8 mode)
             GPIOB->OEN   &= ~(BIT13| BIT14| BIT15);
     }
     
-    GPIOD->IE    &= ~(BIT0| BIT1| BIT2| BIT3| BIT4| BIT5| BIT6| BIT7| BIT12| BIT13| BIT14| BIT15);//��ֹ����
+    GPIOD->IE    &= ~(BIT0| BIT1| BIT2| BIT3| BIT4| BIT5| BIT6| BIT7| BIT12| BIT13| BIT14| BIT15);//禁止输入
     GPIOD->DAT   &= ~(BIT0| BIT1| BIT2| BIT3| BIT4| BIT5| BIT6| BIT7| BIT12| BIT13| BIT14| BIT15);
 
     GPIOE->IE    &= ~(BIT0| BIT1| BIT6| BIT7| BIT13| BIT14| BIT15);
@@ -1100,7 +1100,7 @@ uint8 lcd_init(uint8 power_mode)
         case AC_POWER_ON:
           memset((uint8 *)&lcd_init_para, 0x00, sizeof(lcd_init_para));
           memset((uint8 *)&lcd_io_para,   0x00, sizeof(lcd_init_para));
-          MISC2->HCLKEN |= BIT6;//��lcdʱ��
+          MISC2->HCLKEN |= BIT6;//打开lcd时钟
           lcd_port_config(AC_POWER_ON);
 
           lcd_init_para.Type   = LCD_TYPE_6COM;
@@ -1186,12 +1186,14 @@ void mcu_main_power_on_config(uint8_t power_mode)
     
     GPIOA->OEN |=BIT2; 
     GPIOA->IE |=BIT2;
-    PMU_WakeUpPinConfig(GPIO_Pin_2, IOA_FALLING);   //ʹ���ⲿIO�ڻ���
+    PMU_WakeUpPinConfig(GPIO_Pin_2, IOA_FALLING);   //使能外部IO口唤醒
     PMU_ClearIOAINTStatus(GPIO_Pin_2);
     
     PMU->CONTROL |= PMU_CONTROL_INT_IOA_EN;
     
     NVIC_EnableIRQ(PMU_IRQn);
+	
+    cm0_systick_init(1);
 }
 
 void mcu_main_power_off_config(void)
