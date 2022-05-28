@@ -150,7 +150,7 @@ unsigned char Rn8209InitConfig(const struct dev_info_t* dev)
     memcpy((unsigned char*)&Hfconst, buf+2, 2);
     
     if((Pstart == 0) || (Pstart == 0xFFFF))   Pstart = 0x0049;
-    if((Hfconst == 0) || (Hfconst == 0xFFFF))   Hfconst = 0x096F;
+    if((Hfconst == 0) || (Hfconst == 0xFFFF))   Hfconst = 0x064a;
     mcu_delay_us(5000);
     CmdRn8209(CMD_WR_EN , dev);
     mcu_delay_us(5000);
