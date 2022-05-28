@@ -193,7 +193,7 @@ const struct record_item_t  record_item[] =
 {
     { OverCurrentAS ,       OverCurrentAE,              800,       10 },// 过流 预留空间待调整
     { PowerOffS     ,       PowerOffE,                 2000,      100 },//  0x3011    电能表掉电事件             
-    { MeterWrS      ,       0,                          600,       10 },//  0x3012    电能表编程事件             
+    { MeterWrS      ,       0,                          800,       10 },//  0x3012    电能表编程事件             
     { MeterClrS     ,       0,                          600,       10 },//  0x3013    电能表清零事件             
     { EventClrS     ,       0,                          600,       10 },//  0x3015    电能表事件清零事件         
     { SetTimeS      ,       0,                          600,       10 },//  0x3016    电能表校时事件             

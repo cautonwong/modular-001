@@ -490,12 +490,12 @@ int decode_rsd_event_selector_1(struct instance_t* instance, struct pipeline_t* 
     return (1);
 }
 // 非周期性冻结判断
-int frz_non_period_type_judge(uint16_t oi)
+uint8_t frz_non_period_type_judge(uint16_t oi)
 {
 
     if ((oi <= 0x5007) && (oi >= 0x5001) && (oi != 0x5005))
     {
-        return -1;   //周期性冻结
+        return 0;   //周期性冻结
     }
 
     return 1;        //非周期性冻结
@@ -520,7 +520,7 @@ int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pi
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = p = instance->apdu_cache; //当临时缓存
+    uint8_t* p = instance->apdu_cache; //当临时缓存
 
     uint32_t rcsd, range_sec = 0,index;
     uint16_t frz_oi = (uint16_t)((oad&0xFFFF0000) >> 16);
@@ -704,6 +704,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
                 }
 
                 rsd_info->interval = ti_to_second(*p, value);
+                rsd_info->interval_special = 0;
                 if ((p[0] == 4) && (oi == 0x5006) && (value != 0))    //月冻结月间隔特殊处理
                 {
                     rsd_info->interval_special = value;
@@ -824,7 +825,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
         }
         
         memcpy(p, apdu_rx + ctx->apdu_rx_offset, 4);
-        ctx->apdu_rx_offset += 4;
+        
         if (*p != TYPE_null)
         {
             //只支持秒，分，时，日间隔
@@ -843,10 +844,12 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
 
             rsd_info->interval = ti_to_second(*p, value);
             memcpy(p, apdu_rx + ctx->apdu_rx_offset, 3);
-            ctx->apdu_rx_offset += 3;
+            ctx->apdu_rx_offset += 4;
         }
-
-        *p = apdu_rx[ctx->apdu_rx_offset++];
+        else
+        {
+            ctx->apdu_rx_offset += 1;
+        }
 
         rsd_info->mode = 2;
 
@@ -1201,6 +1204,115 @@ uint8_t rcsd_req_schem_pro(uint32_t oad, uint32_t *rcsd_req)
     }
     return schemNo;
 }
+
+
+//协议筛选该条记录是否符合检索时间区间或时间点，主要用于非周期性的时间检索
+//入参src:记录内容            non_period
+//0: 不满足检索范围的
+//1: 方法1按时间检索条件满足
+//2: 方法2按时间检索条件满足,或无需协议层筛选的都返回2; 
+uint8_t select_record_time_check(uint8_t *src, uint8_t non_period, struct rsd_info_t *rsd_info)
+{
+    uint8_t *p, v, buf[7];
+    uint16_t selec_mode;
+    uint32_t row_start, row_end, cur_data;
+
+    if (!non_period)
+    {
+        return 2; 
+    }
+
+    if ((rsd_info->mode != 2) && (rsd_info->mode != 3))
+    {
+         return 2; 
+    }
+
+    p = src;
+    selec_mode = rsd_info->mode;
+    row_start = rsd_info->start_mark;
+    row_end = rsd_info->end_mark;
+
+    v = 0;
+
+    (selec_mode == 2)?(p += 6):(p += 11);  //发生时间或结束时间
+
+    cur_data = buf_to_uint32_msb(p);
+
+    if ((rsd_info->select == 1) && (cur_data == row_start) && (cur_data == row_end))
+    {
+        v = 1;
+    }     
+    if ((rsd_info->select == 2) && (cur_data >= row_start) && (cur_data <= row_end))
+    {
+        v = 2;
+    }
+
+
+    return v;
+
+}
+
+//获取间隔搜索的基值
+uint32_t get_interval_basic_value(uint8_t *src, struct rsd_info_t *rsd_info)
+{
+    uint8_t *p, buf[8];
+    uint32_t value = 0xffffffffU;
+
+    p = src;
+
+    switch (rsd_info->mode)
+    {
+    case 0x02: 
+    case 0x03: 
+        if (rsd_info->mode == 2)
+        {
+            p = src + 5;
+        }
+        else
+        {
+            p = src + 10;
+
+            if (p[1] == 0xff)
+            {
+                p = src + 6;
+            }
+        }
+
+        if (*p != TYPE_date_time_s)
+        {
+            break;
+        }
+
+       
+        if ((rsd_info->interval_special) > 0)
+        {
+            //value = dl698_api_dt_buf_to_month(buf + 1);  //转月间隔 待调整
+            //value = buf_to_uint32_msb(p + 1); 
+        }
+        else
+        {
+            value = buf_to_uint32_msb(p + 1);
+        }
+
+        break;
+
+    case 0x01: // 按序号搜索 
+        if (*p != TYPE_double_long_unsigned)
+        {
+            break;
+        }
+
+        value = buf_to_uint32_msb(p + 1);
+        break;
+
+    default: 
+        break;
+    }
+
+    return value;
+}
+
+
 //读记录型数据打包
 int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info)
 {
@@ -1211,9 +1323,9 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     uint8_t *ptr_tmp = instance->apdu_cache; //需要替换协议共用缓存 2k  待调整   apdu_cache是否支持2k
     uint32_t rcsd_src[REQ_RCSD_MAXNUM];//待调整   设置的关联对象，用于与请求的关联对象作比对筛选
     uint16_t i, read_num, number = 0;
-    uint16_t one_len = 0,len = 0;
-    uint8_t count = 0, rcsd_schem = 0;
-    uint32_t oad_schem = 0;
+    uint16_t judge_size, one_len = 0,len = 0;
+    uint8_t count = 0, rcsd_schem = 0, non_period = 0, check_result = 0;
+    uint32_t oad_schem = 0, value = 0;
     uint8_t *p = (buf + 3); // 预留3个字节条数
     int ret = 0;
     
@@ -1226,17 +1338,14 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
         return -1;
     }
 
+    non_period = frz_non_period_type_judge((uint16_t)(oad>>16));
+
+    //---获取条数
+    
     circular_info.start_mark = rsd_info->start_mark;
     circular_info.end_mark = rsd_info->end_mark;
     circular_info.mode =   rsd_info->mode;
 
-    ret = nd_log_output(instance, record_id_info.save_index,  ptr_tmp, 1, &circular_info);
-
-    if (circular_info.valid_num == 0)
-    {
-        return record_response_null(buf);
-    }
-    
     switch(rsd_info->select)
     {
         case 0:
@@ -1245,14 +1354,17 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
             break;
             
         case 1:
-            //circular_info.curr_num--;
-            break;
-            
         case 2:
-            //circular_info.curr_num--;
+            if((1 == non_period) && ((rsd_info->mode == 2) || (rsd_info->mode == 3))) //方法1/2 非周期性类 按时间搜索时 由协议筛选
+            {
+                circular_info.mode = 0;
+            }
+            ret = nd_log_output(instance, record_id_info.save_index,  ptr_tmp, 1, &circular_info);
+            circular_info.mode =   rsd_info->mode; 
             break;
             
         case 9: //上n次
+            ret = nd_log_output(instance, record_id_info.save_index,  ptr_tmp, 1, &circular_info);
             if ((rsd_info->last_no == 0) || (rsd_info->last_no > circular_info.valid_num))
             {
                 return record_response_null(buf);
@@ -1264,40 +1376,114 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
             break;
     }
 
-    get_capture_list(instance, oad_schem, rcsd_src, 3);
+    if (circular_info.valid_num == 0)
+    {
+        return record_response_null(buf);
+    }
+    //------------
     
+    //获取关联对象
+    get_capture_list(instance, oad_schem, rcsd_src, 3);
+
+    check_result = 0;
     read_num = circular_info.valid_num;
     for (i = circular_info.curr_num; i < read_num; i++)
     {
+        //获取1条记录内容
         ret = nd_log_output(instance, record_id_info.save_index,  ptr_tmp, circular_info.unit_size, &circular_info);
         if(ret < 0)
         {
-            return -1;
+            return -DAR_OTHERS_ERROR;
         }
         
-        //长度判断
+
+        //-----长度判断
         if (one_len == 0)
         {   
             //预算打包长度
             one_len = get_package_01_len(instance, p+len, ptr_tmp, rcsd_req, rcsd_src);
         }
-
-        if((p - buf + len + one_len) > 2000) //待调整
+        
+        if (check_result == 1) //非周期性 方法1 按时间检索 若有多条，返回记录序号最大的一条  
         {
-            //DAR_BUFFER_OVERFLOW;
-            return -1;
+            judge_size = p - buf + one_len;
         }
-        //开始打包
-        one_len = record_package_01(instance, p+len, ptr_tmp, rcsd_req, rcsd_src);
-        len += one_len;
-        number++;
+        else
+        {
+            judge_size = (p - buf + len + one_len);
+        }
+
+        if((judge_size) > 2000) //待调整
+        {
+            return -DAR_BUFFER_OVERFLOW;
+        }
+        //-----------
+
+        //----协议筛选
+        if (rsd_info->interval_special)
+        {
+            rsd_info->interval = rsd_info->interval_special;
+        }
+        if (rsd_info->interval > 0)
+        {
+            value = get_interval_basic_value(ptr_tmp, rsd_info);
+            
+            if (number == 0)
+            {
+                circular_info.start_mark = value;
+            }
+            
+            if (value == circular_info.start_mark)
+            {
+                one_len = record_package_01(instance, p+len, ptr_tmp, rcsd_req, rcsd_src);
+                len += one_len;
+                number++;
+                circular_info.start_mark += rsd_info->interval;
+            }
+            else if (value > circular_info.start_mark)
+            {
+                if (((value - circular_info.start_mark) % rsd_info->interval) == 0)
+                {
+                    one_len = record_package_01(instance, p+len, ptr_tmp, rcsd_req, rcsd_src);
+                    len += one_len;
+                    number++;
+                    circular_info.start_mark = value + rsd_info->interval;
+                }
+                else
+                {
+                    // 方法2读取 周期性冻结 返回应为 以搜索范围内第一条时间点作为起始时间 + 整数倍间隔时间
+                    circular_info.start_mark += (((value - circular_info.start_mark) / rsd_info->interval) + 1) * rsd_info->interval;
+            
+                    // 方法2读取 周期性冻结 返回应为 读取起始时间 + 整数倍间隔时间
+                    //circular_info.start_mark = circular_info.start_mark + rsd_info->interval;  
+                }
+            }
+        }
+        else
+        {
+            //协议判断是否符合要求
+            check_result = select_record_time_check(ptr_tmp, non_period, rsd_info);
+            if ( check_result > 0 )
+            {
+                if ((check_result == 1) && (number >= 1)) // 至少已搜索到一条
+                {
+                    len -= one_len; // 
+                }
+            
+                //开始打包
+                one_len = record_package_01(instance, p+len, ptr_tmp, rcsd_req, rcsd_src);
+                len += one_len;
+                number++;
+            }
+        }
+
     }      
         
     count = axdr_len_encode(buf, number);
 
     if (count < 3)
     {
-        memcpy(buf + count, p, len);
+        ndv_memcopy(buf + count, p, len);
     }
     len += count;
     
@@ -1306,7 +1492,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     {
         report_3320list_confirmed(instance, chl_PLC_698, oad);
     }
-    return len;
+    return (int)len;
 #endif
 }
 //GS   暂存

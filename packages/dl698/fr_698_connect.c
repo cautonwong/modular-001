@@ -162,7 +162,7 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     cache->wr = cache->wr - 3;
     *(p_apdu+cache->wr) |= 0x82;  //应答
     cache->wr++;
-    *(p_apdu+cache->wr) = 0;  //PIID
+    *(p_apdu+cache->wr) = ctx->PIID;  //PIID
     cache->wr++;
     memset((p_apdu+cache->wr), 0x30, 32);//厂家信息
     cache->wr = cache->wr + 32;

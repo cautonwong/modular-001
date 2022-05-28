@@ -607,8 +607,9 @@ int read_record_head(struct instance_t* instance, uint8_t* databuf, const uint32
     return (p - databuf);
 }
 //记录时捕获对象转换
-uint32_t record_capture_change(uint32_t obj, uint16_t record_id)
+uint32_t record_capture_change(struct instance_t* instance, uint32_t obj, uint16_t record_id)
 {
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     switch (record_id)
     {
     case SetTimeS:    
@@ -622,7 +623,7 @@ uint32_t record_capture_change(uint32_t obj, uint16_t record_id)
         }
         break;
     case MeterWrS: //若第一个编程为校时,则编程开始时间取校时前时间
-        if (obj == 0x201E0200)
+        if ((obj == 0x201E0200)&&(mbase_cb->MeterWr_SetTime_flag == 0x5A))
         {
             obj = 0x40002200;
         }
@@ -754,7 +755,7 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
             obj = CaptureList[1 + i];
             scheme = (obj >> 13) & 0x07; 
 
-            obj = record_capture_change(obj,RecordID);
+            obj = record_capture_change(instance, obj,RecordID);
            
             scheme_valid = true;
             scheme_valid = check_scheme(mode,obj, RecordID); //方案号 & 属性特征 判断
