@@ -61,7 +61,7 @@ unsigned char CommWrite_SpecProc( struct instance_t* instance,  unsigned char* p
                 nd_set_index(instance, s_index, buf, 4);
 				break;
         case 0xA8000208://单点校表
-                meterchip_adj_self(instance, pipeline);
+//                meterchip_adj_self(instance, pipeline);
                 break;
 	}
 	return 0;

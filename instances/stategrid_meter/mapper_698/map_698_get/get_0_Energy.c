@@ -12,6 +12,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
     uint8_t *ptr, *p=buf;
     int32_t tmp=0;
     uint32_t s_index=0;
+    unsigned long long engery=0;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
@@ -78,7 +79,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                       {
                           *ptr++ = TYPE_double_long;
                           tmp = Get_Cal_Active_Energy(mbase_cb , i , 0);
-                          memcpy(ptr, (uint8_t*)&tmp, 4);
+                          mem_swap_cpy(ptr, (uint8_t*)&tmp, 4);
                           ptr += 4;
                           len += 5;
                       }                      
@@ -100,14 +101,15 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                     case 0x00:
                       for(i=0;i<Num;i++)
                       {
-                          *ptr++ = TYPE_long64;
-                          tmp = Get_Cal_Active_Energy(mbase_cb , i , 0);
-                          memcpy(ptr, (uint8_t*)&tmp, 4);
-                          ptr += 4;
-                          tmp = Get_Cal_Active_Energy(mbase_cb , i , 1);
-                          memcpy(ptr, (uint8_t*)&tmp, 4);
-                          ptr += 4;
-                          len += 9;
+                            *ptr++ = TYPE_long64;
+                            tmp = Get_Cal_Active_Energy(mbase_cb , i , 0);
+                            engery = tmp;
+                            engery = engery * 100;
+                            tmp = Get_Cal_Active_Energy(mbase_cb , i , 1);
+                            engery = engery +  (uint8)tmp;
+                            mem_swap_cpy(ptr, (uint8_t*)&engery, 8);
+                            ptr += 8;
+                            len += 9;
                       }
                       break;
                     case 0x01:
@@ -135,7 +137,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                     case 0x00:
                       buf[0] = TYPE_double_long;
                       tmp = Get_Cal_Active_Energy(mbase_cb , attr_index , 0);
-                      memcpy(&buf[1], (uint8_t*)&tmp, 4);
+                      mem_swap_cpy(&buf[1], (uint8_t*)&tmp, 4);
                       len = 5;                        
                       break;
                     case 0x01:
@@ -152,10 +154,12 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                     case 0x00:
                       buf[0] = TYPE_long64;
                       tmp = Get_Cal_Active_Energy(mbase_cb , attr_index , 0);
-                      memcpy(&buf[1], (uint8_t*)&tmp, 4);
+                      engery = tmp;
+                      engery = engery * 100;
                       tmp = Get_Cal_Active_Energy(mbase_cb , attr_index , 1);
-                      memcpy(&buf[5], (uint8_t*)&tmp, 4);
-                      len = 9;                        
+                      engery = engery +  (uint8)tmp;
+                      mem_swap_cpy(&buf[1], (uint8_t*)&engery, 8);
+                      len = 9;      
                       break;
                     case 0x01:
                       buf[0] = TYPE_long64;
@@ -180,19 +184,19 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
         {
             if(attr_index==0)
             {
+                buf[0] = 0x01;//数组
+                buf[1] = Num;//数据块
+                len = 2;
+                ptr = &buf[2];
                 if(attribute == 2)
                 {
-                    buf[0] = 0x01;//数组
-                    buf[1] = Num;//数据块
-                    len = 2;
-                    ptr = &buf[2];
                     switch(mode)
                     {
                         case 0x00:
                           for(i=0;i<Num;i++)
                           {
                               *ptr++ = TYPE_double_long_unsigned;
-                              memcpy(ptr, (uint8_t*)&mbase_cb->active_p[i], 4);
+                              mem_swap_cpy(ptr, (uint8_t*)&mbase_cb->active_p[i], 4);
                               ptr += 4;
                               len += 5;
                           }                  
@@ -212,12 +216,18 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                     switch(mode)
                     {
                         case 0x00:
-                          buf[0] = TYPE_long64_unsigned;
-                          tmp = Get_Active_Energy(mbase_cb , attr_index , 0 , 0);
-                          memcpy(&buf[1], (uint8_t*)&tmp, 4);
-                          tmp = Get_Active_Energy(mbase_cb , attr_index , 1 , 0);
-                          memcpy(&buf[5], (uint8_t*)&tmp, 4);
-                          len = 9;                        
+                          for(i=0;i<Num;i++)
+                          {
+                            *ptr++ = TYPE_long64_unsigned;
+                            tmp = Get_Active_Energy(mbase_cb , i , 0 , 0);
+                            engery = tmp;
+                            engery = engery * 100;
+                            tmp = Get_Active_Energy(mbase_cb , i , 1 , 0);
+                            engery = engery +  (uint8)tmp;
+                            mem_swap_cpy(ptr, (uint8_t*)&engery, 8);
+                            ptr += 8;
+                            len += 9;
+                          }
                           break;
                         case 0x01:
                           buf[0] = TYPE_long64_unsigned;
@@ -240,16 +250,18 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                   if(attribute==2)
                   {
                       buf[0] = TYPE_double_long_unsigned;
-                      memcpy(&buf[1], (uint8_t*)&mbase_cb->active_p[attr_index], 4);
+                      mem_swap_cpy(&buf[1], (uint8_t*)&mbase_cb->active_p[attr_index], 4);
                       len = 5;
                   }
                   else if(attribute==4)
                   {
                       buf[0] = TYPE_long64_unsigned;
                       tmp = Get_Active_Energy(mbase_cb , attr_index , 0 , 0);
-                      memcpy(&buf[1], (uint8_t*)&tmp, 4);
+                      engery = tmp;
+                      engery = engery * 100;
                       tmp = Get_Active_Energy(mbase_cb , attr_index , 1 , 0);
-                      memcpy(&buf[5], (uint8_t*)&tmp, 4);
+                      engery = engery +  (uint8)tmp;
+                      mem_swap_cpy(&buf[1], (uint8_t*)&engery, 8);
                       len = 9;
                   }
                   else
@@ -276,19 +288,19 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
         {
             if(attr_index==0)
             {
+                buf[0] = 0x01;//数组
+                buf[1] = Num;//数据块
+                len = 2;
+                ptr = &buf[2];
                 if(attribute == 2)
                 {
-                    buf[0] = 0x01;//数组
-                    buf[1] = Num;//数据块
-                    len = 2;
-                    ptr = &buf[2];
                     switch(mode)
                     {
                     case 0x00:
                       for(i=0;i<Num;i++)
                       {
                           *ptr++ = TYPE_double_long_unsigned;
-                          memcpy(ptr, (uint8_t*)&mbase_cb->active_n[i], 4);
+                          mem_swap_cpy(ptr, (uint8_t*)&mbase_cb->active_n[i], 4);
                           ptr += 4;
                           len += 5;
                       }
@@ -308,12 +320,18 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                     switch(mode)
                     {
                         case 0x00:
-                          buf[0] = TYPE_long64_unsigned;
-                          tmp = Get_Active_Energy(mbase_cb , attr_index , 0 , 1);
-                          memcpy(&buf[1], (uint8_t*)&tmp, 4);
-                          tmp = Get_Active_Energy(mbase_cb , attr_index , 1 , 1);
-                          memcpy(&buf[5], (uint8_t*)&tmp, 4);
-                          len = 9;
+                          for(i=0;i<Num;i++)
+                          {
+                            *ptr++ = TYPE_long64_unsigned;
+                            tmp = Get_Active_Energy(mbase_cb , i , 0 , 1);
+                            engery = tmp;
+                            engery = engery * 100;
+                            tmp = Get_Active_Energy(mbase_cb , i , 1 , 1);
+                            engery = engery +  (uint8)tmp;
+                            mem_swap_cpy(ptr, (uint8_t*)&engery, 8);
+                            ptr += 8;
+                            len += 9;
+                          }
                           break;
                         case 0x01:
                           buf[0] = TYPE_long64_unsigned;
@@ -336,16 +354,18 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                   if(attribute==2)
                   {
                       buf[0] = TYPE_double_long_unsigned;
-                      memcpy(&buf[1], (uint8_t*)&mbase_cb->active_n[attr_index], 4);
+                      mem_swap_cpy(&buf[1], (uint8_t*)&mbase_cb->active_n[attr_index], 4);
                       len = 5;
                   }
                   else if(attribute==4)
                   {
                       buf[0] = TYPE_long64_unsigned;
-                      tmp = Get_Active_Energy(mbase_cb , attr_index , 0 , 0);
-                      memcpy(&buf[1], (uint8_t*)&tmp, 4);
-                      tmp = Get_Active_Energy(mbase_cb , attr_index , 1 , 0);
-                      memcpy(&buf[5], (uint8_t*)&tmp, 4);
+                      tmp = Get_Active_Energy(mbase_cb , attr_index , 0 , 1);
+                      engery = tmp;
+                      engery = engery * 100;
+                      tmp = Get_Active_Energy(mbase_cb , attr_index , 1 , 1);
+                      engery = engery +  (uint8)tmp;
+                      mem_swap_cpy(&buf[1], (uint8_t*)&engery, 8);
                       len = 9;
                   }
                 else
