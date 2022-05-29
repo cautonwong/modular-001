@@ -5,7 +5,7 @@
 int single_event_clear_judge(uint16_t oi)
 {
 
-    if ((0x400B == oi) || (0x4009 == oi) || (0x400a == oi))
+    if ((0x3013 == oi) || (0x3014 == oi) || (0x3015 == oi))
     {
         return -1;
     }
@@ -73,13 +73,13 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if (mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     int ret = get_record_id_info(instance, oad, &info);
     if (ret < 0)
     {
-        return -1;
+        return -DAR_OBJECT_NOT_EXIST;
     }
     
     CaptureId = info.capture_index;
@@ -94,7 +94,7 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     if ((*p++ != TYPE_OAD) || ( oad & 0xF0000000 != 0x30000000))
     {
         *dar =  DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_TYPE_NOT_MATCH;
     }
     
     capture_oad = buf_to_uint32_msb(p);
@@ -105,7 +105,7 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     if ((oi == 0x3013) && (0 == esam_key_status_get()))
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 #endif
 
@@ -115,7 +115,7 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     if (true == oad_valid_check(capture_oad))
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 #endif
 
@@ -123,7 +123,7 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     if ((Schem < 1) || (Schem > 4))
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 #endif
     
@@ -131,7 +131,7 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     if (ret < 0)
     {
         tempbuf[0]=0;//*dar = DAR_OTHERS_ERROR;
-        //return -1;
+        //return -DAR_OTHERS_ERROR;
     }
     oadlist = tempbuf;
     num = *oadlist++;
@@ -139,7 +139,7 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     if (num >= maxnum)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_BUFFER_OVERFLOW;
     }
     
     for (i = 0; i < num; i++)
@@ -151,7 +151,7 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
         {
             //return DAR_SUCCESS;
             *dar = DAR_RW_REJECT;
-            return -1;
+            return -DAR_RW_REJECT;
             //重复关联对象 返回拒绝
         }
 #endif        
@@ -165,7 +165,7 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     if (ret < 0)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
 
@@ -174,7 +174,7 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     if (ret < 0)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     report_3320list_confirmed_All_channel(instance, oad);
@@ -198,13 +198,13 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if (mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     int ret = get_record_id_info(instance, oad, &info);
     if (ret < 0)
     {
-        return -1;
+        return -DAR_OBJECT_NOT_EXIST;;
     }
 
     CaptureId = info.capture_index;
@@ -219,7 +219,7 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
     if ((*p++ != TYPE_OAD) || ((oad & 0xF0000000) != 0x30000000))
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_TYPE_NOT_MATCH;
     }
     capture_oad = buf_to_uint32_msb(p);
     
@@ -251,7 +251,7 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
     if (ret < 0)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     oadlist = tempbuf;
@@ -260,7 +260,7 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
     if ((num > maxnum) || (num == 0))
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     for (i = 0; i < num; i++)
@@ -276,7 +276,7 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
     if (i >= num)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     memcpy(oadlist, oadlist + 4, CaptureLen + tempbuf - oadlist);
@@ -286,7 +286,7 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
     if (ret < 0)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
 
@@ -295,7 +295,7 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
     if (ret < 0)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     report_3320list_confirmed_All_channel(instance, oad);
@@ -318,7 +318,7 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if (mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     uint16_t oi;
@@ -334,7 +334,7 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
         if (p[0] != TYPE_integer || p[1] != 0)
         {
             dar = DAR_OTHERS_ERROR;
-            return -1;
+            return -DAR_OTHERS_ERROR;
         }
         p += 2;
         // 待调整
@@ -344,13 +344,12 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
         //    return DAR_TIME_TAG_INVALID;
         //}
 
-
         ret = single_event_clear_judge(oi);
     
         if (ret < 0)
         {
             dar = DAR_OTHERS_ERROR;
-            return -1;
+            return -DAR_OTHERS_ERROR;
         }
 
         if (oi == 0x3023)
@@ -363,7 +362,7 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
         if (ret < 0)
         {
             dar = DAR_OTHERS_ERROR;
-            return ret;
+            return -DAR_OBJECT_NOT_EXIST;
         }
 
         report_3320list_confirmed_All_channel(instance, id);
@@ -384,5 +383,5 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
 
 
 
-    return -DAR_OBJECT_NOT_EXIST;
+    return -DAR_OBJECT_UNDEF;
 }

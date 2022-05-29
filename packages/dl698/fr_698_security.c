@@ -743,13 +743,12 @@ int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pip
     r = __security_mode_word_check(instance, pipeline, cmd, oad);
     if(r < 0)
     {
-        return 1;  
-        //return r;  //安全模式不匹配 待调整
+        return r;  //安全模式不匹配
     }
 
     r = fr_infrared_auth_check(instance, pipeline, cmd, oad); 
-    return 1; 
-    //return r;  //安全模式不匹配 待调整
+
+    return r;  //安全模式不匹配
 
 }
 #endif

@@ -3,6 +3,7 @@
 
 
 // 获取事件上报标识或上报方式   mode  0: 上报标识      1:上报方式
+//返回0xFF 未找到对象
 uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t mode)
 {
     uint8_t tempbuf[2] = {0};
@@ -14,7 +15,7 @@ uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, u
     ret = get_record_id_info(instance, oad, &record_id_info);
     if (ret <= 0)
     {
-        return 0;
+        return 0xFF;
     }
 
     if (mode == 0)
@@ -49,16 +50,22 @@ int get_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_
 
     if (index != 0)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
  
     tempbuf[0] = read_event_report_flag_mode(instance, oad,mode);
-        
+
+    if (tempbuf[0] == 0xFF)
+    {
+        return -DAR_OBJECT_NOT_EXIST;
+    }
+    
+    
 #if 0 
     ret = get_record_id_info(instance, oad, &record_id_info);
     if (ret <= 0)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     if (mode == 0)
@@ -107,7 +114,7 @@ int get_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
     ret = get_record_id_info(instance, oad, &record_id_info);
     if (ret <= 0)
     {
-        return -1;
+        return -DAR_OBJECT_NOT_EXIST;
     }
 
     CaptureId = record_id_info.capture_index;
@@ -123,7 +130,7 @@ int get_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
     if (num > maxnum)  // 关联对象按个数的1.3倍限制 or 按默认存储空间的1.3倍限制
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     *p++ = num;
@@ -154,7 +161,7 @@ int get_current_record_number(struct instance_t* instance, uint32_t oad, uint8_t
     if (ret <= 0)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     circular_info.start_mark = 0;
@@ -190,7 +197,7 @@ int get_current_record_number_ic_24(struct instance_t* instance, uint32_t oad, u
     if (index != 0)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
 
@@ -216,7 +223,7 @@ int get_current_record_number_ic_24(struct instance_t* instance, uint32_t oad, u
         if (ret <= 0)
         {
             *dar = DAR_OTHERS_ERROR;
-            return -1;
+            return -DAR_OTHERS_ERROR;
         }
         
         *p++ = TYPE_long_unsigned;
@@ -259,7 +266,7 @@ int get_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
 {
     struct event_para_pack_t para_pack;
     uint8_t* p;
-    uint16_t ret;
+    int16_t ret;
     uint8_t i, count = 0, index = (uint8_t)oad;
     p = buf;
 
@@ -268,17 +275,18 @@ int get_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
     ret = get_event_para_pack(instance, oad, &para_pack);
     if (ret < 0)
     {
-        *p++ = TYPE_structure;
-        *p++ = 0;
-        return (p - buf);
+        //*p++ = TYPE_structure;
+        //*p++ = 0;
+        //return (p - buf);
+        return -DAR_OBJECT_UNDEF;
     }
 
     count = para_pack.para_num;
 
     if (index > count)
     {
-        *dar = DAR_OTHERS_ERROR;
-        return -1;
+        *dar = DAR_OBJECT_UNDEF;
+        return -DAR_OBJECT_UNDEF;
     }
 
     if (index == 0)
@@ -318,25 +326,19 @@ uint8_t get_current_value(struct instance_t* instance, uint32_t oad, uint8_t* bu
     if (ret <= 0)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
-    }
-
-    if (ret <= 0)
-    {
-        *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OBJECT_NOT_EXIST;
     }
 
     if (OI == 0x3023) //
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
     else
     {
         if ((index > 1))
         {
             *dar = DAR_OTHERS_ERROR;
-            return -1;
+            return -DAR_OTHERS_ERROR;
         }
 
         if (index == 0)
@@ -402,7 +404,7 @@ int get_current_value_one_element_ic_24(struct instance_t* instance, uint32_t oa
     if (ret <= 0)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OBJECT_NOT_EXIST;
     }
 
     *p++ = TYPE_structure;
@@ -450,7 +452,7 @@ int get_current_value_ic_24(struct instance_t* instance, uint32_t oad, uint8_t* 
     if (index > 4)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     if (index == 0)
@@ -477,7 +479,7 @@ int get_current_value_ic_24(struct instance_t* instance, uint32_t oad, uint8_t* 
             if (ret < 0)
             {
                 *dar = DAR_OTHERS_ERROR;
-                return -1;
+                return ret;
             }
 
             p += ret;
@@ -501,7 +503,7 @@ int get_current_value_ic_24(struct instance_t* instance, uint32_t oad, uint8_t* 
             if (ret < 0)
             {
                 *dar = DAR_OTHERS_ERROR;
-                return -1;
+                return -DAR_OTHERS_ERROR;
             }
 
             p += ret;
@@ -522,7 +524,7 @@ int get_current_value_ic_24(struct instance_t* instance, uint32_t oad, uint8_t* 
                 if (ret < 0)
                 {
                     *dar = DAR_OTHERS_ERROR;
-                    return -1;
+                    return -DAR_OTHERS_ERROR;
                 }
 
                 p += ret;
@@ -553,7 +555,7 @@ int get_time_status_record(struct instance_t* instance, uint32_t oad, uint8_t* b
     if (ret <= 0)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OBJECT_NOT_EXIST;
     }
 
     if (OI == 0x3023)// 待调整
@@ -566,7 +568,7 @@ int get_time_status_record(struct instance_t* instance, uint32_t oad, uint8_t* b
         if ((index > 1))
         {
             *dar = DAR_OTHERS_ERROR;
-            return -1;
+            return -DAR_OTHERS_ERROR;
         }
 
         if (index == 0)
@@ -603,7 +605,7 @@ int get_time_status_record(struct instance_t* instance, uint32_t oad, uint8_t* b
             if (ret < 0)
             {
                 *dar = DAR_OTHERS_ERROR;
-                return -1;
+                return -DAR_OTHERS_ERROR;
             }
 
             start_t = buf_to_uint32_msb(&tempbuf[5+1]);
@@ -673,7 +675,7 @@ int get_time_status_record_one_element_ic_24(struct instance_t* instance, uint32
     if (ret <= 0)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OBJECT_NOT_EXIST;
     }
 
 
@@ -689,7 +691,7 @@ int get_time_status_record_one_element_ic_24(struct instance_t* instance, uint32
     if (ret <= 0)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     *p = TYPE_date_time_s;
@@ -704,7 +706,7 @@ int get_time_status_record_one_element_ic_24(struct instance_t* instance, uint32
         if (ret < 0)
         {
             *dar = DAR_OTHERS_ERROR;
-            return -1;
+            return -DAR_OTHERS_ERROR;
         }
         start_t = buf_to_uint32_msb(&tempbuf[5 + 1]);
         end_t = buf_to_uint32_msb(&tempbuf[10 + 1]);
@@ -774,7 +776,7 @@ int get_time_status_record_ic_24(struct instance_t* instance, uint32_t oad, uint
 
     if ((index > 4))
     {
-        return DAR_OTHERS_ERROR;
+        return -DAR_OTHERS_ERROR;
     }
 
     if (index == 0)//支持块
@@ -796,7 +798,7 @@ int get_time_status_record_ic_24(struct instance_t* instance, uint32_t oad, uint
             if (ret < 0)
             {
                 *dar = DAR_OTHERS_ERROR;
-                return -1;
+                return -DAR_OTHERS_ERROR;
             }
 
             p += ret;
@@ -820,7 +822,7 @@ int get_time_status_record_ic_24(struct instance_t* instance, uint32_t oad, uint
             if (ret < 0)
             {
                 *dar = DAR_OTHERS_ERROR;
-                return -1;
+                return -DAR_OTHERS_ERROR;
             }
 
             p += ret;
@@ -840,7 +842,7 @@ int get_time_status_record_ic_24(struct instance_t* instance, uint32_t oad, uint
                 if (ret < 0)
                 {
                     *dar = DAR_OTHERS_ERROR;
-                    return -1;
+                    return -DAR_OTHERS_ERROR;
                 }
 
                 p += ret;
@@ -853,6 +855,18 @@ int get_time_status_record_ic_24(struct instance_t* instance, uint32_t oad, uint
     return (p - buf);
 }
 
+int check_record_oad_support(struct instance_t* instance, uint32_t oad)
+{
+    struct record_storage_id_info_t  record_id_info;
+    int ret;
+    
+    ret = get_record_id_info(instance, oad, &record_id_info);
+    if (ret <= 0)
+    {
+        return -DAR_OBJECT_NOT_EXIST;
+    }
+    return 1;
+}
 
 int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
@@ -870,7 +884,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     OI = get_OAD_OI(id);
@@ -1011,6 +1025,11 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 break;
                 case 9: // 有效标识 固定为1
                 {
+                    ret = check_record_oad_support(instance, id);
+                    if(ret < 0)
+                    {
+                        return ret;
+                    }
                     *p++ = TYPE_bool;
                     *p++ = 1;
                     return (p - buf);
@@ -1066,6 +1085,11 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 break;
                 case 12: // 有效标识 固定1
                 {
+                    ret = check_record_oad_support(instance, id);
+                    if(ret < 0)
+                    {
+                        return ret;
+                    }
                     *p++ = TYPE_bool;
                     *p++ = 1;
                     return (p - buf);

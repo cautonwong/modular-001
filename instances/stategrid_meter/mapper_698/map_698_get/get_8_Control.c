@@ -14,7 +14,7 @@ int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
@@ -72,7 +72,7 @@ int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *
                     break;
             }
         case 0x8001://保电
-            if((attribute != 0x02) || (index != 0x00))  return -1;
+            if((attribute != 0x02) || (index != 0x00))  return -DAR_OTHERS_ERROR;
             *p++ = TYPE_enum;
             if(mbase_cb->sta & F_RemoteRelayOn)//保电
                 *p++ = 1;

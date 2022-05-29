@@ -1193,7 +1193,7 @@ int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_l
     
     if (ret < 0)
     {
-        return -1;
+        return -DAR_OBJECT_NOT_EXIST;
     }
    
     if(mode & 0x01)

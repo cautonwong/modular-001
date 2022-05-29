@@ -151,7 +151,7 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
     ret = get_record_id_info(instance, id, &record_id_info);
     if (ret <= 0)
     {
-        return -1;
+        return -DAR_OBJECT_NOT_EXIST;
     }
 
     CaptureId = record_id_info.capture_index;
@@ -189,14 +189,14 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
     if (*p++ != TYPE_array)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     num = *p++;
     if (num > maxnum)  // 关联对象按个数的1.3倍限制 or 按默认存储空间的1.3倍限制
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     //tempbuf[0] = num;
@@ -205,7 +205,7 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
         if ((p[0] != TYPE_structure) || (p[1] != 3) || (p[2] != TYPE_long_unsigned) || (p[5] != TYPE_OAD) || (p[10] != TYPE_long_unsigned))
         {
             *dar = DAR_OTHERS_ERROR;
-            return -1;
+            return -DAR_TYPE_NOT_MATCH;
         }
 
         p += 3;
@@ -225,13 +225,13 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
         if (true != period_check1(OI, &period))
         {
             *dar = DAR_OTHERS_ERROR;
-            return -1;
+            return -DAR_OTHERS_ERROR;
         }
 
         if (true != period_check2(scheme, period, period_buf))
         {
             *dar = DAR_OTHERS_ERROR;
-            return -1;
+            return -DAR_OTHERS_ERROR;
         }
 
         offset = scheme * 3;
@@ -241,7 +241,7 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
         if (false == capture_check(oad, tempbuf))
         {
             *dar = DAR_OTHERS_ERROR;
-            return -1;
+            return -DAR_OTHERS_ERROR;
         }
 
         tempbuf[0]++;
@@ -255,7 +255,7 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
             if ((i != 0) && ((period_buf[scheme * 3] > 1) && (depth != buf_to_uint16_msb(depth_buf + offset))))
             {
                 *dar = DAR_OTHERS_ERROR;
-                return -1;
+                return -DAR_OTHERS_ERROR;
             }
         }
         else
@@ -263,7 +263,7 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
             if ((0 != scheme) || ((i != 0) && (period_buf[0] > 1) && (depth != buf_to_uint16_msb(depth_buf ))))   /*其他冻结 属性特征固定0,每个关联对象周期、深度必须一致*/
             {
                 *dar = DAR_OTHERS_ERROR;
-                return -1;
+                return -DAR_OTHERS_ERROR;
             }
             offset = 0;
         }
@@ -274,7 +274,7 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
     ret = cal_freeze_size_sectors(instance,tempbuf, depth_buf, id);
     if (ret <= 0)
     {
-        return -1;
+        return -DAR_BUFFER_OVERFLOW;
     }
 #endif     
     // write  period
@@ -330,5 +330,5 @@ int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, void *c
     default:
         break;
     }
-    return -DAR_OBJECT_NOT_EXIST;
+    return -DAR_OBJECT_UNDEF;
 }

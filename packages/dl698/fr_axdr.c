@@ -1335,7 +1335,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     ret = get_record_id_info(instance, oad_schem, &record_id_info);
     if(ret < 0)
     {
-        return -1;
+        return -DAR_OBJECT_NOT_EXIST;
     }
 
     non_period = frz_non_period_type_judge((uint16_t)(oad>>16));

@@ -137,6 +137,7 @@ int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_
         break;
 
     default:
+        return -1;
         break;
     }
 }
@@ -285,7 +286,7 @@ int clr_record(struct instance_t* instance, uint32_t oad)
 
     if (ret < 0)
     {
-        return -1;
+        return ret;
     }
 
     //清记录

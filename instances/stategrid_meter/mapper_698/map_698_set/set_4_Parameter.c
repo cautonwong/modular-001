@@ -157,7 +157,7 @@ int set_support_protocol_list(struct instance_t* instance, uint32_t id, uint8_t*
 
     if(mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     idl = (uint16_t)(id & 0x0000FFFF);
@@ -236,7 +236,7 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
     
     idl = (uint16_t)(id & 0x0000FFFF);
@@ -422,7 +422,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
     len = general_set_4_para(instance, id, buf);
     if(len > 0)

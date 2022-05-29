@@ -189,6 +189,15 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
             {
                 //cache->wr += ret;
             } 
+
+            //安全模式判断
+            ret = security_mode_word_check(instance, pipeline, 0, mesg->id);
+            if(ret < 0){
+                ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+                p[cache->wr++] = 0x00;//DAR
+                p[cache->wr++] = -ret;
+                return 1;
+            }  
             
             if ((Selector == 0) || (Selector == 1) || (Selector == 2)|| (Selector == 9))
             {

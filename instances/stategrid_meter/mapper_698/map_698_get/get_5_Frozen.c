@@ -19,7 +19,7 @@ int get_frozen_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, stru
     ret = get_record_id_info(instance, oad, &record_id_info);
     if (ret <= 0)
     {
-        return -1;
+        return -DAR_OBJECT_NOT_EXIST;
     }
 
     CaptureId = record_id_info.capture_index;
@@ -64,7 +64,7 @@ int get_frozen_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, stru
     if (num > maxnum)  // 关联对象按个数的1.3倍限制 or 按默认存储空间的1.3倍限制
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     *p++ = num;

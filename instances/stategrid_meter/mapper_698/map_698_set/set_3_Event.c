@@ -22,7 +22,7 @@ int set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_
     ret = get_record_id_info(instance, oad, &record_id_info);
     if (ret <= 0)
     {
-        return -DAR_OTHERS_ERROR;
+        return -DAR_OBJECT_NOT_EXIST;
     }
 
     if (mode == 0)
@@ -78,7 +78,7 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
     if (ret < 0)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -DAR_OTHERS_ERROR;
+        return -DAR_OBJECT_NOT_EXIST;
     }
 
     CaptureId = info.capture_index;
@@ -102,7 +102,7 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
         if (false == oad_valid_check(oad_tmp))  //无效关联对象
         {
             *dar = DAR_OTHERS_ERROR;
-            return -1;
+            return -DAR_OTHERS_ERROR;
         }
         memcpy(oadlist, p, 4);
         oadlist += 4;
@@ -133,7 +133,7 @@ int set_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
     if (ret < 0)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     count = para_pack.para_num;
@@ -141,7 +141,7 @@ int set_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
     if (index > count)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     if (index == 0)
@@ -149,7 +149,7 @@ int set_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
         if ((p[0] != TYPE_structure) || (p[1] != count))
         {
             *dar = DAR_OTHERS_ERROR;
-            return -1;
+            return -DAR_OTHERS_ERROR;
         }
 
         p += 2;
@@ -159,7 +159,7 @@ int set_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
             if ((*p) != para_pack.event_para[i].tag)
             {
                 *dar = DAR_OTHERS_ERROR;
-                return -1;
+                return -DAR_OTHERS_ERROR;
             }
             p++;
 
@@ -174,7 +174,7 @@ int set_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
         if ((*p) != para_pack.event_para[i].tag)
         {
             *dar = DAR_OTHERS_ERROR;
-            return -1;
+            return -DAR_OTHERS_ERROR;
         }
         p++;
 
@@ -201,7 +201,7 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
 

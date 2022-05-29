@@ -24,7 +24,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
     
     if(mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
@@ -57,7 +57,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
         case 0xF209://载波模块
             if(attribute == 0x02)
             {
-                if(index >1 )   return -1;
+                if(index >1 )   return -DAR_OTHERS_ERROR;
                 if(index == 0x00)
                 {
                     *p++ = TYPE_array;
@@ -103,7 +103,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 }
             }
             else
-                return -1;
+                return -DAR_OTHERS_ERROR;
             return (p-buf);
         case 0xF205://继电器输出
             if(attribute == 0x02)
@@ -124,7 +124,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 *p++ = 0;
             }
             else
-                return -1;
+                return -DAR_OTHERS_ERROR;
             return (p-buf);
             break;
         case 0xF207://多功能端子
@@ -136,7 +136,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 *p++ = mbase_cb->MulPortMode;
             }
             else
-                return -1;
+                return -DAR_OTHERS_ERROR;
             return (p-buf);
         case 0xF300://循环显示
         case 0xF301://按键显示
@@ -229,7 +229,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     return (p-buf);
                     break;
                 case 0x03://显示时间
-                    if(index != 0)  return -1;
+                    if(index != 0)  return -DAR_OTHERS_ERROR;
                     *p++ = TYPE_long_unsigned;
                     if(oad == 0xF300)
                         mem_swap_cpy(p, (uint8_t*)&mbase_cb->lcd_autodis_keep_sec, 2);
@@ -480,7 +480,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     }
                     else
                     {
-                        return -1;
+                        return -DAR_OTHERS_ERROR;
                     }
 
                     return (p-buf);
@@ -500,7 +500,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 case 0x03://安全模式参数
                     if (index != 0)
                     {
-                        return -1;
+                        return -DAR_OTHERS_ERROR;
                     }
 
                     ptr_tmp[0] = 0;

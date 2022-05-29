@@ -40,7 +40,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
     
     typedef struct 
@@ -96,7 +96,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
                 return (p-buf);
             }
         }
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
     
     maxnum = sizeof(idbuf)/sizeof(idmatch);
@@ -183,7 +183,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
             
             }
             else
-                return -1;
+                return -DAR_OTHERS_ERROR;
         case 0x2015://跟随上报状态字
             if(attribute == 0x02)
             {
@@ -206,7 +206,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
                 return get_event_report_flag_mode(instance, id, p, 1);
             }
             else
-                return -1;
+                return -DAR_OTHERS_ERROR;
         default:
             break;
     }

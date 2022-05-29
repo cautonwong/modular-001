@@ -17,7 +17,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
     switch (oad)
     {
@@ -33,8 +33,8 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                 case 0x81://拉闸
                     p = p + 5;
                     mem_swap_cpy((uint8_t*)&OI, p, 4);
-                    if(OI != 0xF2050201)    return -1;
-                    if(mbase_cb->sta & F_RemoteRelayOn)  return -1;//保电   
+                    if(OI != 0xF2050201)    return -DAR_OTHERS_ERROR;
+                    if(mbase_cb->sta & F_RemoteRelayOn)  return -DAR_OTHERS_ERROR;//保电   
                     p = p + 5;
                     mbase_cb->alarmmin = (uint32_t)(*p);       //拉闸延时时间
                     mbase_cb->alarmmin = mbase_cb->alarmmin*60;
@@ -50,7 +50,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     }
                     else
                     {
-                        if(mbase_cb->sta & F_RemoteRelayOff)     return -1;    //跳闸后，下发预跳闸失败
+                        if(mbase_cb->sta & F_RemoteRelayOff)     return -DAR_OTHERS_ERROR;    //跳闸后，下发预跳闸失败
                         if(relayon_type == 0)   mbase_cb->sta |= F_RemoteGaoJing0;
                         else if(relayon_type == 1)   mbase_cb->sta |= F_RemoteGaoJing1;
                     }
@@ -68,7 +68,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     p = p + 5;
                     mem_swap_cpy((uint8_t*)&OI, p, 4);
                     p = p + 5;
-                    if(OI != 0xF2050201)    return -1;
+                    if(OI != 0xF2050201)    return -DAR_OTHERS_ERROR;
                     if(method == 0x83)
                     {
                         mem_swap_cpy(password, p+3, 8);//判断密码
@@ -100,7 +100,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     mbase_cb->sta &= ~F_RemoteRelayOn;
                     break;
                 default:
-                    return -1;
+                    return -DAR_OTHERS_ERROR;
                     break;
             }
             break;

@@ -289,7 +289,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
     
     len = general_get_4_para(instance, id, buf);
@@ -355,10 +355,10 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 break;
 
                 default:
-                    return -1;
+                    return -DAR_OTHERS_ERROR;
                     break;
             }
-            return -1;
+            return -DAR_OTHERS_ERROR;
         }
             break;
         case 0x4001://地址
@@ -372,7 +372,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             else
             {
-                return -1;
+                return -DAR_OTHERS_ERROR;
             }
             break;
         case 0x4002://表号
@@ -387,7 +387,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             else
             {
-                return -1;
+                return -DAR_OTHERS_ERROR;
             }
             break;
         case 0x4004://设备地理位置
@@ -422,7 +422,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 len = 5;
             }
             else
-                return -1;
+                return -DAR_OTHERS_ERROR;
             
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + s_index);
             nd_get_index(instance, addr, p, len); 
@@ -464,16 +464,16 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 }
                 else
                 {
-                    return -1;
+                    return -DAR_OTHERS_ERROR;
                 }
             }
             else
             {
-                return -1;
+                return -DAR_OTHERS_ERROR;
             }
             break;
         case 0x400C://时区时段表数
-            if(index > 5)   return -1;
+            if(index > 5)   return -DAR_OTHERS_ERROR;
             if(index == 0)
             {
                 *p++ = TYPE_structure;
@@ -498,7 +498,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             break;
             break;
         case 0x4011://公共假日表
-            if(index > 10)    return -1;
+            if(index > 10)    return -DAR_OTHERS_ERROR;
             if(index == 0)
             {
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 4);
@@ -553,7 +553,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 return (p - buf);
             }
 
-            if(index > 14)    return -1;
+            if(index > 14)    return -DAR_OTHERS_ERROR;
             if(oad == 0x4014)   
                 addr = Season_Table0;
             else 
@@ -597,7 +597,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             break;
         case 0x4016://当前套日时段表
         case 0x4017://备用套日时段表
-            if(index > 0x08)    return -1;
+            if(index > 0x08)    return -DAR_OTHERS_ERROR;
             if(oad == 0x4016)
                 addr = Day_Table00;
             else
@@ -687,7 +687,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 return (p-buf);
             }
             else
-                return -1;
+                return -DAR_OTHERS_ERROR;
             break;
         case 0x4300:
             return get4300_para(instance,  id,  buf);

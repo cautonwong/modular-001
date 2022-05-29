@@ -43,7 +43,7 @@ uint16_t ActionFile( struct instance_t* instance, uint32_t id, uint8_t* inbuf, u
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
 	if( !Byte2uShort(p+17) || ( Byte2uShort(p+17) > DefEsamProcLen ) || ((Byte2uShort(p+17)%64)!=0) || (p[3] != 0x00) ) 
@@ -136,7 +136,7 @@ int _f101_m127_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if (mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     uint16_t oi, right;
@@ -148,14 +148,14 @@ int _f101_m127_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
 
     if ( (p[0] != TYPE_structure) || (p[1] != 2))
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     p += 2;
 
     if ((p[0] != TYPE_OI) || (p[3] != TYPE_long_unsigned))
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
     p += 2;
 
@@ -172,7 +172,7 @@ int _f101_m127_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
 
     if (count >= maxnum)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     for (i = 0; i < count; i++)
@@ -219,12 +219,12 @@ int _f101_m128_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if (mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     if ( (p[0] != TYPE_OI))
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
     p++;
 
@@ -239,7 +239,7 @@ int _f101_m128_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
 
     if ((count == 0) || (count > maxnum))
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     for (i = 0; i < count; i++)
@@ -256,7 +256,7 @@ int _f101_m128_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
 
     if (i == count)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     instance->apdu_cache[0]--;
@@ -278,7 +278,7 @@ int _f101_m129_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if (mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     uint8_t  num, write_flag, noadd_flag;
@@ -293,7 +293,7 @@ int _f101_m129_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
 
     if (p[0] != TYPE_array)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
     p++;
 
@@ -309,7 +309,7 @@ int _f101_m129_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
 
     if (len > SecurityMode_EXData_LEN)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 
     while (num--)
@@ -320,7 +320,7 @@ int _f101_m129_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
 
         if ((p[0] != TYPE_OI) || (p[3] != TYPE_long_unsigned))
         {
-            return -1;
+            return -DAR_OTHERS_ERROR;
         }
 
         obj.oi = buf_to_uint16_msb(p + 1);
@@ -355,7 +355,7 @@ int _f101_m129_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
 
             if (len > SecurityMode_EXData_LEN)
             {
-                return -1;
+                return -DAR_OTHERS_ERROR;
             }
 
             memcpy(ptr_tmp, (uint8_t*)&obj.oi, 2);
@@ -450,7 +450,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
     
     if(mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
     
     if (CA_TYPE_TER(p_ctx->CA)) 
@@ -465,7 +465,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
     switch (oad)
     {
 case 0xF001://软件比对
-            if(method != 0x0a)  return -1;
+            if(method != 0x0a)  return -DAR_OTHERS_ERROR;
             
             complen = ActionFile(instance, id, p, buf_size, ctx, ptr_tmp);
             if(complen > 0)
@@ -498,7 +498,7 @@ case 0xF001://软件比对
                 return (22);
             }
             else 
-              return -1;
+              return -DAR_OTHERS_ERROR;
             break;
         case 0xF100://ESAM
             if(method == 0x03)  //ESAM数据读取
@@ -686,7 +686,7 @@ case 0xF001://软件比对
                 rxlen = write_esam(instance, addr , buffer , txlen);
                 if(rxlen == 0xff)
                 {
-                    return -1;
+                    return -DAR_OTHERS_ERROR;
                 }
                 else
                 {
@@ -725,7 +725,7 @@ case 0xF001://软件比对
             {
                 if ((*p) != TYPE_integer)
                 {
-                    return -1;
+                    return -DAR_OTHERS_ERROR;
                 }
                 memset(ptr_tmp, 0, SecurityMode_EXData_LEN);
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
@@ -757,12 +757,12 @@ case 0xF001://软件比对
                 if(temp != 0xF2010201)
                 {
                     dar = DAR_OBJECT_NOT_EXIST;
-                    return -1;
+                    return -DAR_OBJECT_NOT_EXIST;
                 }
                 if((*p > 10) || (*(p+1) != 2) || (*(p+2) != 8) || (*(p+3) != 1) || (*(p+4) != 0) || (*(p+6) != 0))
                 {
                     dar = DAR_BUFFER_OVERFLOW;
-                    return -1;
+                    return -DAR_BUFFER_OVERFLOW;
                 }
                 mbase_cb->Baut_rs485 = *p;
                 p = p + 7;
@@ -770,7 +770,7 @@ case 0xF001://软件比对
             else
             {
                 dar = DAR_OBJECT_NOT_EXIST;
-                return -1;
+                return -DAR_OBJECT_NOT_EXIST;
             }
             return (p-buf);
             break;
@@ -792,19 +792,19 @@ case 0xF001://软件比对
                 if(temp != 0xF2050201)
                 {
                     dar = DAR_OBJECT_NOT_EXIST;
-                    return -1;
+                    return -DAR_OBJECT_NOT_EXIST;
                 }
                 if((*p != 0) && (*p != 1))
                 {
                     dar = DAR_BUFFER_OVERFLOW;
-                    return -1;
+                    return -DAR_BUFFER_OVERFLOW;
                 }
                 mbase_cb->relay_ctl_mode = *p++;
             }
             else
             {
                 dar = DAR_OBJECT_NOT_EXIST;
-                return -1;
+                return -DAR_OBJECT_NOT_EXIST;
             }
             return (p-buf);
         case 0xF207://多功能端子
@@ -816,19 +816,19 @@ case 0xF001://软件比对
                 if(temp != 0xF2070201)
                 {
                     dar = DAR_OBJECT_NOT_EXIST;
-                    return -1;
+                    return -DAR_OBJECT_NOT_EXIST;
                 }
                 if((*p != F_PortSec) && (*p != F_PortTouCut))
                 {
                     dar = DAR_BUFFER_OVERFLOW;
-                    return -1;
+                    return -DAR_BUFFER_OVERFLOW;
                 }
                 mbase_cb->MulPortMode = *p++;
             }
             else
             {
                 dar = DAR_OBJECT_NOT_EXIST;
-                return -1;
+                return -DAR_OBJECT_NOT_EXIST;
             }
             return (p-buf);
         case 0xF209://载波模块
@@ -840,12 +840,12 @@ case 0xF001://软件比对
                 if(temp != 0xF2090201)
                 {
                     dar = DAR_OBJECT_NOT_EXIST;
-                    return -1;
+                    return -DAR_OBJECT_NOT_EXIST;
                 }
                 if((*p > 10) || (*(p+1) != 2) || (*(p+2) != 8) || (*(p+3) != 1) || (*(p+4) != 0))
                 {
                     dar = DAR_BUFFER_OVERFLOW;
-                    return -1;
+                    return -DAR_BUFFER_OVERFLOW;
                 }
                 mbase_cb->Baut_plc = *p;
                 p = p + 5;
@@ -853,7 +853,7 @@ case 0xF001://软件比对
             else
             {
                 dar = DAR_OBJECT_NOT_EXIST;
-                return -1;
+                return -DAR_OBJECT_NOT_EXIST;
             }
             return (p-buf);
         case 0xF301://按键循显

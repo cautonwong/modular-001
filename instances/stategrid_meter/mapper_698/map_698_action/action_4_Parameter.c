@@ -63,13 +63,13 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
     
     pipeline = get_pipeline(instance, pid_meter_base);
     if(pipeline == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }  
     
     switch (oad)
@@ -98,7 +98,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     timer[3] = *(p+4);  //hour
                     timer[4] = *(p+5);  //min
                     timer[5] = *(p+6);  //sec
-                    if(Time_Format_Check(&timer[3]) || Date_Format_Check(timer))  return -1;  //时间非法
+                    if(Time_Format_Check(&timer[3]) || Date_Format_Check(timer))  return -DAR_OTHERS_ERROR;  //时间非法
                     
                     //if()//当日已校时且是明文校时
                             
@@ -149,30 +149,34 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     meter_clr(instance);
                     if(ret < 0)
                     {
-                        return -1;
+                        return -DAR_OTHERS_ERROR;
                     }
 					p = p + 7;
                     return (p-buf);
                     break;
                 case 0x03://数据初始化（电表清零）
         
-                    // 时间标签 标志  待调整
+                    // 时间标签 标志   待调整
 #if 0
                     if ((mbase_cb->time_tag == false) && (mbase_cb->factor_mode == false))
                     {
                         return (1-DAR_TIME_TAG_INVALID);
                     }
 #endif
-#if 0
+#if 0//待调整
                     if ((mbase_cb->SecretKey_state == 0) && (mbase_cb->factor_mode == false))//0私钥，1公钥，私钥不允许清零
                     {
-                        return (1 - DAR_UNAUTHORIZED);
+                        return (-DAR_UNAUTHORIZED);
                     }
 #endif
                     
                     meter_clr(instance);
                     p++;
-                    send_event_mesg_pro(instance, NULL, MeterClrS, NULL, 1);
+                    if(mbase_cb->factor_mode == false)
+                    {
+                        send_event_mesg_pro(instance, NULL, MeterClrS, NULL, 1);
+                    }
+
                     return (p-buf);
                     break;
                 case 0x05://事件初始化
@@ -189,12 +193,12 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     return (p-buf);
                     break;
                 default:
-                    dar = DAR_OBJECT_NOT_EXIST;
+                    dar = DAR_OBJECT_UNDEF;
                     break;
             }
             break;
         default:
             break;
     }
-    return -DAR_OBJECT_NOT_EXIST;
+    return -DAR_OBJECT_UNDEF;
 }
