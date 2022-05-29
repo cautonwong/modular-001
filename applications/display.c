@@ -369,26 +369,23 @@ const  DISPLAYLIST   Display_List[] =
 
 #define displaytablenum     sizeof(Display_List)/sizeof(DISPLAYLIST)
 
-void HEX_BCD( unsigned char* BCD, unsigned long HEX )
+void HEX_BCD( unsigned char* BCD, unsigned long long HEX )
 {
 	unsigned char i;
 
-	if( HEX > 99999999 )
+	if( HEX > 9999999999999999 )
 	{
-		*BCD = 0x00;
-		*(BCD+1) = 0x00;
-		*(BCD+2) = 0x00;
-		*(BCD+3) = 0x00;
+        memset(BCD, 0x00, 8);
 	}
 	else
 	{
-		for( i=0;i<4;i++ )
+		for( i=0;i<8;i++ )
 		{
 			*BCD = (unsigned char)(HEX%10);
-	        	HEX = HEX/10;
-	        	*BCD += (unsigned char)((HEX%10)<<4) & 0xF0;
-	        	HEX = HEX/10;
-	        	BCD++;
+            HEX = HEX/10;
+            *BCD += (unsigned char)((HEX%10)<<4) & 0xF0;
+            HEX = HEX/10;
+            BCD++;
 		}
 	}
 }
@@ -823,26 +820,28 @@ unsigned long GetDispAddrInfo( struct instance_t* instance, unsigned short ID, u
     switch( D1 )
     {
         case 0xC0://正向
+            temp |= DispData_HEX;
             *(SignBuf+5) = Sign_Zhengxiang;//正向
             if(D2 == 0x00)  
-                oad = 0x00100200;
+                oad = 0x00100400;
             else 
-                oad = 0x50050200;
+                oad = 0x50050400;
             break;
         case 0xD0://反向
+            temp |= DispData_HEX;
             *(SignBuf+5) = Sign_Fanxiang;//反向
             if(D2 == 0x00)  
-                oad = 0x00200200;
+                oad = 0x00200400;
             else 
-                oad = 0x50050200;
+                oad = 0x50050400;
             break;
         case 0xE0://组合
-            temp |= DispData_Sign;//组合有功电量最高位是符号位
+            temp |= DispData_Sign+DispData_HEX;//组合有功电量最高位是符号位
             *(SignBuf+5) = Sign_Zuhe;//组合
             if(D2 == 0x00)  
-                oad = 0x00000200;
+                oad = 0x00000400;
             else 
-                oad = 0x50050200;
+                oad = 0x50050400;
             break;
         default:
             return 1;
@@ -850,11 +849,13 @@ unsigned long GetDispAddrInfo( struct instance_t* instance, unsigned short ID, u
     }
     if(D2 == 0x00)//当前
     {
-        nd_get(instance, oad + D3, data, 5, NULL);
+        nd_get(instance, oad + D3, data, 9, NULL);
+        ndv_move_buffer(data+4, data, 5);
     }
     else
     {   
-        nd_get(instance, oad + D3, data, 5, NULL);
+        nd_get(instance, oad + D3, data, 9, NULL);
+        ndv_move_buffer(data+4, data, 5);
     }
     
     *(SignBuf+6) = Sign_FeiLvNum;//T1~T12
@@ -974,7 +975,7 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 void Disp_Value( unsigned short id, unsigned char *data, unsigned int Info )
 {
 	unsigned char Len,i;
-	unsigned long Tmp=0;
+	unsigned long long Tmp=0;
 	unsigned char Sign = 0;
 	Len = (unsigned char)(Info & DispDataLen);
 //	MemType = (unsigned char)((Info>>6) & MEMVALUE);
@@ -990,12 +991,12 @@ void Disp_Value( unsigned short id, unsigned char *data, unsigned int Info )
         case 0xB001://表地址高4位
         case 0xB003://表号高4位
         case 0xB005://客户号高4位
-            memcpy( (unsigned char*)&Buffer, (unsigned char*)(data+4), 2 );
+            memcpy( (unsigned char*)&Buffer, (unsigned char*)(data+4+2), 2 );
             break;
         case 0xB002://表地址低8位
         case 0xB004://表号低8位
         case 0xB006://客户号低8位
-            memcpy( (unsigned char*)&Buffer, (unsigned char*)data, 4 );
+            memcpy( (unsigned char*)&Buffer, (unsigned char*)(data+2), 4 );
             break;
         default:
             memcpy( (unsigned char*)&Buffer, (unsigned char*)data, Len );
@@ -1004,7 +1005,7 @@ void Disp_Value( unsigned short id, unsigned char *data, unsigned int Info )
     }
     if( Info & DispData_HEX )
 	{
-        memcpy( (unsigned char*)&Tmp, (unsigned char*)data, 3 );
+        mem_swap_cpy( (unsigned char*)&Tmp, (unsigned char*)data, Len );
         HEX_BCD( Buffer, Tmp );
 	}
 	else
@@ -1331,7 +1332,11 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
         oad = DisplayTab[i].Oad;
         Info1 = DisplayTab[i].Info;
         Len = (unsigned char)(Info1 & DispDataLen);
-        if((Info1 & DispData_RAM) == DispData_RAM)
+        if((Info1 & DispData_E2PROM) == DispData_E2PROM)
+        {
+            nd_get(instance, oad, buf, 10, NULL);
+        }   
+        else if((Info1 & DispData_RAM) == DispData_RAM)
         {
             if((DisplayTab[i].Id == 0xA001) || (DisplayTab[i].Id == 0xA002))
             {
@@ -1353,8 +1358,6 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
             else
                 memcpy(buf, (unsigned char*)idbuf[i].addr, Len);
         }
-        else
-            nd_get(instance, oad, buf, 10, NULL);
         memcpy( SignBuf, (unsigned char*)DisplayTab[i].Sign, 9 );
     }
 	//清屏
