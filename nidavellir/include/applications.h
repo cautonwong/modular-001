@@ -402,6 +402,19 @@ struct format_conversion_t
 };
 
 
+#define     MaxSeasonNum    		14
+#define 	MaxTouNum     			14
+#define 	MaxFeeNum     			12
+#define     MaxHolidayNum   		10
+#define		MaxTouTabNum			8
+
+//Fee
+#define		F_TOUChange			0x01
+#define     F_DAYTABChange      0x02
+#define		F_TOUFeeChangeTm    0x04
+#define		F_ChangeTmOn        0x08
+
+
 extern int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_storage_id_info_t* info);
 extern int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* src, uint32_t oad, enum format_conversion_mode mode);
 extern int clr_record(struct instance_t* instance, uint32_t oad);

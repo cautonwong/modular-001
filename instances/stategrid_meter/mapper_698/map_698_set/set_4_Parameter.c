@@ -54,8 +54,8 @@ const general_set4  general_set4_talble[] =
      ASCII_AccuracyClass1,      0x4107,     0x01,   4,//有功准确度等级
      Meter_Const1,              0x4109,     0x01,   4,//有功脉冲常数
      ASCII_MeterType,           0x410B,     0x02,   32,//电能表型号
-     MeterRunWord,              0x4110,     0x01,   1,//电能表运行特征字
-     SoftWareNo,                0x4111,     0x01,   16,//软件备案号
+//     MeterRunWord,              0x4110,     0x01,   1,//电能表运行特征字
+     SoftWareNo,                0x4111,     0x02,   16,//软件备案号
      Measure_Mode,              0x4112,     0x02,   1,//有功组合特征字
      Meter_Password,            0x4401,     0x01,   8,//应用连接密码
 };
@@ -70,6 +70,9 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
     uint8_t attribute,timer[6];
     uint8_t* p = buf;
     uint32_t addr=0;
+    struct mbase_control_block_t* mbase_cb;
+    
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
     attribute = (unsigned char)((id & 0x00001F00) >> 8);
@@ -119,6 +122,8 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         
                         if(Date_Format_Check(timer))  return -DAR_OTHERS_ERROR;
                         if(Time_Format_Check(&timer[3])) return -DAR_OTHERS_ERROR;
+                        
+                        mbase_cb->Fee |= F_ChangeTmOn;
                         break;
 						
                 }
@@ -647,6 +652,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 p++;
                 return (p-buf);
             }
+            mbase_cb->Fee |= F_DAYTABChange;
             break;
         case 0x4011://公共假日表
             if((index == 0) || (index > 10))    return -DAR_RW_REJECT;
@@ -679,6 +685,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             nd_set_index(instance, s_index, buffer, 6); 
 
             send_event_mesg_pro(instance, NULL, HolidayWrS, NULL, 1);// 公共假日编程事件
+            mbase_cb->Fee |= F_DAYTABChange;
             return (p-buf);
             break;
         case 0x4014://当前套时区表
@@ -745,6 +752,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 nd_set_index(instance, s_index, buffer, 3);
             }
             send_event_mesg_pro(instance, NULL, SeasonTabWrS, NULL, 1);// 
+            mbase_cb->Fee |= F_DAYTABChange;
             return (p - buf);
             break;
         case 0x4016://当前套日时段表
@@ -827,6 +835,8 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
 
             send_event_mesg_pro(instance, NULL, DayTabWrS, NULL, 1);// 时段表编程事件
+                
+            mbase_cb->Fee |= F_TOUChange;
             return (p - buf);
             break;
         

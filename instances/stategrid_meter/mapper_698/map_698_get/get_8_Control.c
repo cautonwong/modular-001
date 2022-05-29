@@ -68,6 +68,7 @@ int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *
                     *p++ = mbase_cb->sta;
                     return (p-buf);
                 default:
+                    return -DAR_OBJECT_NOT_EXIST;
                     break;
             }
         case 0x8001://保电

@@ -897,7 +897,7 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
             Lcdcon[18] |= DS_Chr_Reverse;
         }
         
-		if( mbase_control_block->voltage_battery < 0x300 )//电池欠压指示
+		if( mbase_control_block->voltage_battery < 300 )//电池欠压指示
             Lcdcon[18] |= DS_Chr_Bat;
 		//密码验证闭锁指示
 		//Lcdcon[17] |= DS_Chr_Lock;

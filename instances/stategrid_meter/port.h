@@ -548,57 +548,57 @@ enum block_parameter_item_id_t
 #define     WeekendFee                  923 //周休日采用费率号
 #define     Season_Table0               924 //当前套时区表，≤14
 #define     Season_Table1               938 //备用套时区表，≤14
-#define     Day_Table00                 942 //当前套日时段表数据 ≤8
-#define     Day_Table10                 950 //备用套日时段表数据 ≤8
-#define     Meter_CT                    958 //CT
-#define     Meter_PT                    959 //PT
-#define     Pulse_Width                 960 //脉冲宽度
-#define     ASCII_AssetsMan             961 //资产管理编码
-#define     ASCII_Un                    962 //额定电压
-#define     ASCII_Ib                    963 //额定电流
-#define     ASCII_Imax                  964 //最大电流
-#define     ASCII_AccuracyClass1        965 //有功准确度等级
-#define     Meter_Const1                966 //有功脉冲常数
-#define     ASCII_MeterType             967 //电能表型号
-#define     MeterRunWord                968 //电能表运行特征字
-#define     SoftWareNo                  969 //软件备案号
-#define     Measure_Mode                970 //有功组合特征字
-#define     Balance_Time                971 //结算日
-#define     Meter_Password              974 //应用连接密码     
+#define     Day_Table00                 952 //当前套日时段表数据 ≤8
+#define     Day_Table10                 960 //备用套日时段表数据 ≤8
+#define     Meter_CT                    968 //CT    1
+#define     Meter_PT                    969 //PT    1
+#define     Pulse_Width                 970 //脉冲宽度  1
+#define     ASCII_AssetsMan             971 //资产管理编码    1
+#define     ASCII_Un                    972 //额定电压  1
+#define     ASCII_Ib                    973 //额定电流  1
+#define     ASCII_Imax                  974 //最大电流  1
+#define     ASCII_AccuracyClass1        975 //有功准确度等级   1
+#define     Meter_Const1                976 //有功脉冲常数    1
+#define     ASCII_MeterType             977 //电能表型号 1
+#define     MeterRunWord                978 //电能表运行特征字  1
+#define     SoftWareNo                  979 //软件备案号 1
+#define     Measure_Mode                980 //有功组合特征字   1
+#define     Balance_Time                981 //结算日   3
+#define     Meter_Password              984 //应用连接密码    1     
                                   
-#define     Meter_Location1             975 //设备地理位置经度
-#define     Meter_Location2             976 //设备地理位置纬度
-#define     Meter_Location3             977 //设备地理位置高度    
+#define     Meter_Location1             985 //设备地理位置经度
+#define     Meter_Location2             986 //设备地理位置纬度
+#define     Meter_Location3             987 //设备地理位置高度    
                                   
-#define     Device_descriptor           979 //设备描述符
-#define     Factory_No                  980 //厂家代码
-#define     Version_SoftWare            981 //软件版本
-#define     Date_SoftWare               982 //软件版本日期
-#define     Version_HardWare            983 //硬件版本
-#define     Date_HardWare               984 //硬件版本日期
-#define     Extend_Info                 985 //扩展信息
-#define     Produced_Date               986 //生产日期
-#define     Subset_List                 987 //子设备列表
-#define     Protocol_List               988 //协议列表
-#define     FollowReport_en             989 //允许跟随上报
-#define     ActiveReport_en             990 //允许主动上报
-#define     Comm_Master_en              991 //允许与主站通讯
-#define     Report_channel              992 //上报通道
+#define     Device_descriptor           989 //设备描述符
+#define     Factory_No                  990 //厂家代码
+#define     Version_SoftWare            991 //软件版本
+#define     Date_SoftWare               992 //软件版本日期
+#define     Version_HardWare            993 //硬件版本
+#define     Date_HardWare               994 //硬件版本日期
+#define     Extend_Info                 995 //扩展信息
+#define     Produced_Date               996 //生产日期
+#define     Subset_List                 997 //子设备列表
+#define     Protocol_List               998 //协议列表
+#define     FollowReport_en             999 //允许跟随上报
+#define     ActiveReport_en             1000 //允许主动上报
+#define     Comm_Master_en              1001 //允许与主站通讯
+#define     Report_channel              1002 //上报通道
 
-#define     ImaxProtectValue            993 //继电器拉闸电流门限值
-#define     ImaxProtectTime             994 //超电流门限保护延时时间
-#define     IrAuthenTime                995 //红外认证时效
-#define     AuthMeth                    996 //连接认证机制
+#define     ImaxProtectValue            1003 //继电器拉闸电流门限值
+#define     ImaxProtectTime             1004 //超电流门限保护延时时间
+#define     IrAuthenTime                1005 //红外认证时效
+#define     AuthMeth                    1006 //连接认证机制
 
 /***************** 计量相关 *****************/
-#define     Heat_Value_10L              1000    //1.0L自热补偿  15*2=30
-#define     Heat_Value_05L              1001    //0.5L自热补偿  15*2=30
-#define     Un_Cmp_Value                1002    //电压补偿 80%，90%，110%，115%    4*2=8
+#define     Heat_Value_10L              1100    //1.0L自热补偿  15*2=30
+#define     Heat_Value_05L              1101    //0.5L自热补偿  15*2=30
+#define     Un_Cmp_Value                1102    //电压补偿 80%，90%，110%，115%    4*2=8
 
-#define     ADJ_Pgain0                  1003    //火线校表参数（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
-#define 	ADJ_Pgain1                  1004    //零线功率增益（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
-#define     ADJ_Other                   1005    //计量其他参数（启动阀值、HFconst）2 + 2 = 4
-#define     ADJ_K                       1006    //Ku Kil Kin零线K系数 Kp 4*4 = 16
+#define     ADJ_Pgain0                  1103    //火线校表参数（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
+#define 	ADJ_Pgain1                  1104    //零线功率增益（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
+#define     ADJ_Other                   1105    //计量其他参数（启动阀值、HFconst）2 + 2 = 4
+#define     ADJ_K                       1106    //Ku Kil Kin零线K系数 Kp 4*4 = 16
 
 /*
 #define     KeyDisp_Num                 695 //按键显示屏数

@@ -153,7 +153,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
     switch (oad)
     {
         case 0x2014://电能表运行状态字
-            if(index > 7)  return -1;
+            if(index > 7)  return -DAR_OBJECT_NOT_EXIST;
             if(attribute == 0x02)
             {
                 if(index == 0)

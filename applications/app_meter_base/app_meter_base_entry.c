@@ -69,6 +69,9 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
     size_t mbase_block_persistent_size = offsetof(struct mbase_control_block_t, persistent_section_start) - offsetof(struct mbase_control_block_t, persistent_section_end);
     size_t mbase_block_static_size = offsetof(struct mbase_control_block_t, static_section_end) - offsetof(struct mbase_control_block_t, static_section_start);
     uint32_t addr = 0;
+    struct mbase_control_block_t* mbase_cb;
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
     //cmd len data cmd 接入校验
     //调用领域层完成业务  要反映用例场景
     for (int i = 0; i < max_event_flag; i++)
@@ -116,6 +119,8 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
           
           IOStateCheck(instance, pipeline);
 
+          TouFeePro(instance, pipeline);
+          
           break;
       case MSG_PAGE_KEY_UP:
            Key_Display(instance, pipeline, MSG_PAGE_KEY_UP);
@@ -137,6 +142,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
         Magnetic_hold_relay_Init();
         fr_dl698_power_on(instance, pipeline);
         mbase_control_block->power_on_sec_accum = 0;
+        mbase_cb->Fee |= (F_TOUChange+F_ChangeTmOn+F_DAYTABChange);;    //获取当前时区时段费率
         break;
       case MSG_POWEROFF:
         //掉电需要保存数据

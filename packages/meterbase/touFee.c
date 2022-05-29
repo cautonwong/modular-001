@@ -6,18 +6,6 @@
     //1.user define
     //2.mesg[秒]
 
-#define     MaxSeasonNum    		14
-#define 	MaxTouNum     			14
-#define 	MaxFeeNum     			12
-#define     MaxHolidayNum   		10
-#define		MaxTouTabNum			8
-
-//Fee
-#define		F_TOUChange			0x01
-#define     F_DAYTABChange      0x02
-#define		F_TOUFeeChangeTm    0x04
-#define		F_ChangeTmOn        0x08
-
 uint8_t Buf[60];
 
 const unsigned char  MonTab[13] = {	0,31,28,31,30,31,30,31,31,30,31,30,31};
@@ -150,23 +138,23 @@ unsigned char FeeTable_CmpFind( struct instance_t* instance, struct pipeline_t* 
 	//比较查找
 	for( i=0;i<Num;i++ )
 	{
-		Int = ((unsigned int)Buf[3*i+2]<<8) + (unsigned int)Buf[3*i+1];
-		Int1 = ((unsigned int)Buf[3*((i+1)%Num)+2]<<8) + (unsigned int)Buf[3*((i+1)%Num)+1];
+		Int = ((unsigned int)Buf[3*i]<<8) + (unsigned int)Buf[3*i+1];
+		Int1 = ((unsigned int)Buf[3*((i+1)%Num)]<<8) + (unsigned int)Buf[3*((i+1)%Num)];
 		if( Int < Int1 )
-   	    	{
-   		    if( (Now >= Int) && (Now < Int1) )
-   		        break;
-        	}
-   	    	else if( Int == Int1 )
-   	    	{
-   		    if( Now >= Int )
-   		        break;
-        	}
-   	    	else
-   	    	{
-   		    if( (Now >= Int) || (Now < Int1) )//过0点判断
-   		        break;
-        	}
+        {
+            if( (Now >= Int) && (Now < Int1) )
+                break;
+        }
+        else if( Int == Int1 )
+        {
+            if( Now >= Int )
+                break;
+        }
+        else
+        {
+            if( (Now >= Int) || (Now < Int1) )//过0点判断
+                break;
+        }
 	}
 	if( i >= Num)
 		i = Num - 1;	
@@ -174,9 +162,9 @@ unsigned char FeeTable_CmpFind( struct instance_t* instance, struct pipeline_t* 
 	if( Table == 1 )
 	{
 		if( Num == 1 )	
-			mbase_cb->TouBefNo = Buf[0];
+			mbase_cb->TouBefNo = Buf[2];
 		else
-			mbase_cb->TouBefNo = Buf[3*i];
+			mbase_cb->TouBefNo = Buf[3*i+2];
 		
 		if( ((Now == Int) || (mbase_cb->TouBefNo != mbase_cb->TOUNo)) && (mbase_cb->MulPortMode == F_PortTouCut) )
 		{
@@ -301,7 +289,7 @@ void GetTOUFee(struct instance_t* instance, struct pipeline_t* pipeline)
         nd_get_index(instance, s_index, Buf, 3*Num);//读取当前日时段表
         
 		i = FeeTable_CmpFind( instance, pipeline, Num, 1 );//比较查找日时段表
-		mbase_cb->TOUNo = BCD_BYTE(Buf[3*i]);
+		mbase_cb->TOUNo = BCD_BYTE(Buf[3*i+2]);
 		if( (mbase_cb->TOUNo == 0) || (mbase_cb->TOUNo > MaxFeeNum) ) //若时段表中费率号超出，则按照尖费率处理
 			mbase_cb->TOUNo = 1;
 	}
@@ -325,11 +313,12 @@ void TouFeePro(struct instance_t* instance, struct pipeline_t* pipeline)
 		mbase_cb->Fee &= ~F_DAYTABChange;
 		GetFeeTab(instance, pipeline);
 	}
-	if( mbase_cb->Fee & F_TOUChange )
-	{
-		mbase_cb->Fee &= ~F_TOUChange;
-		GetTOUFee(instance, pipeline);
-	}
+
+    if(mbase_cb->Fee & F_TOUChange)
+    {
+        mbase_cb->Fee &= ~F_TOUChange;
+        GetTOUFee(instance, pipeline);
+    }
 
 }
 
@@ -348,6 +337,9 @@ void rtc_get_from_tm(struct instance_t* instance, uint8_t* p)
 void Rtc_Prossecc(struct instance_t* instance, struct pipeline_t* pipeline)
 {
 //    uint8_t buf[7];
+    struct mbase_control_block_t* mbase_cb;
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
     if(instance->time.tm_sec != 20)//每分鐘的20秒對時
     {
         instance->time.tm_sec++;
@@ -361,7 +353,7 @@ void Rtc_Prossecc(struct instance_t* instance, struct pipeline_t* pipeline)
     
     if(instance->time.tm_sec == 0)
     {
-        TouFeePro(instance, pipeline);
+        mbase_cb->Fee |= F_TOUChange;
     }
 }
 

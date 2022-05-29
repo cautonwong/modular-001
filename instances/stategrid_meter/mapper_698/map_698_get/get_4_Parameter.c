@@ -52,7 +52,7 @@ const general_get4  general_get4_talble[] =
      ASCII_AccuracyClass1,      0x4107,     TYPE_visible_string,    4,//有功准确度等级
      Meter_Const1,              0x4109,     TYPE_double_long_unsigned,   4,//有功脉冲常数
      ASCII_MeterType,           0x410B,     TYPE_visible_string,    32,//电能表型号
-     MeterRunWord,              0x4110,     TYPE_bit_string,        1,//电能表运行特征字
+//     MeterRunWord,              0x4110,     TYPE_bit_string,        1,//电能表运行特征字
      SoftWareNo,                0x4111,     TYPE_visible_string,    16,//软件备案号
      Measure_Mode,              0x4112,     TYPE_bit_string,        1,//有功组合特征字
      Meter_Password,            0x4401,     TYPE_visible_string,    8,//应用连接密码
