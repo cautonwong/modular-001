@@ -1908,7 +1908,7 @@ int record_data_add_tag(uint8_t* des, uint8_t* src, uint32_t* obj_list, uint8_t 
 #endif
 int para_init(struct instance_t* instance )
 {
-    uint16_t i,num=0,s_len;
+    uint16_t i,num=0,s_len,j,sm=0;
     uint32_t s_index=0;
     struct mbase_control_block_t* mbase_cb;
     int ret;
@@ -1973,8 +1973,19 @@ int para_init(struct instance_t* instance )
             }
             else
             {
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + parameter_item[i].paramerer_index);
-                nd_set_index(instance, s_index, (uint8_t*)(parameter_item[i].data+1), (*parameter_item[i].data)); 
+                if((parameter_item[i].paramerer_index == Day_Table00) || (parameter_item[i].paramerer_index == Day_Table10))
+                {
+                    sm = parameter_item[i].same;
+                }
+                else
+                {
+                    sm = 1;
+                }
+                for(j=0; j<sm; j++)
+                {
+                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + parameter_item[i].paramerer_index + j);
+                    nd_set_index(instance, s_index, (uint8_t*)(parameter_item[i].data+1), (*parameter_item[i].data)); 
+                }
             }
         }
     }
