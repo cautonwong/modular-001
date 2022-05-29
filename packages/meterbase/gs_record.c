@@ -676,6 +676,10 @@ uint8_t check_scheme(enum scheme_mode mode, uint32_t obj, uint16_t record_id)
         {
             scheme_valid = false;
         }
+        if (record_id == MeterWrS) 
+        {
+            scheme_valid = false;
+        }
         break;
         
     default:
@@ -877,6 +881,7 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
             case MeterWrR:
                 Oad = 0x30120200;
                 mode = START_MODE + (mesg->id - MeterWrS);
+                pairs_event = 1;
                 break;
             case MeterClrS:      
                 Oad = 0x30130200;

@@ -95,6 +95,9 @@ struct mbase_control_block_t
     uint8_t ZeroLineErrS_duration_para; //参数 判定延时时间  
 
 
+    uint8_t factor_mode; //工厂模式
+    
+    
     
     static_end     
     //运行期更改 && 掉电不保存 && 上电不需要IO请求的区域 && 初始化时直接清零
@@ -287,7 +290,7 @@ struct mbase_control_block_t
 
     uint8_t meterclr_event_recordflag; //记录标识*/ // 通过fifo传递
     uint8_t meterclr_event_resetflag; //复位标识
-    uint8_t factor_mode; //工厂模式
+    
     
     uint32_t battery_used_time; //电池使用时间
 };

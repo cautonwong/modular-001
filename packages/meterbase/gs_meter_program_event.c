@@ -65,7 +65,7 @@ int MeterWr_obj_list_add(struct instance_t* instance, struct pipeline_t* task, s
     index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr_List);;
     ret = nd_set_index(instance, index, &tempbuf[0], sizeof(tempbuf));
 
-    if (1)//if (tempbuf[1] <= 1) //待调整 测试
+    if (tempbuf[1] <= 1) //
     {
         ctrl_block->MeterWr_SetTime_flag = 0; 
         if (oad == 0x40000200)  //若第一个编程为校时,则编程开始时间取校时前时间

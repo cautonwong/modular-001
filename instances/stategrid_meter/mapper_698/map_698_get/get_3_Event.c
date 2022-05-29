@@ -161,7 +161,7 @@ int get_current_record_number(struct instance_t* instance, uint32_t oad, uint8_t
     if (ret <= 0)
     {
         *dar = DAR_OTHERS_ERROR;
-        return -DAR_OTHERS_ERROR;
+        return -DAR_OBJECT_NOT_EXIST;
     }
 
     circular_info.start_mark = 0;
@@ -199,6 +199,15 @@ int get_current_record_number_ic_24(struct instance_t* instance, uint32_t oad, u
         *dar = DAR_OTHERS_ERROR;
         return -DAR_OTHERS_ERROR;
     }
+
+
+    ret = get_record_id_info(instance, oad, &record_id_info);
+    if (ret <= 0)
+    {
+        *dar = DAR_OTHERS_ERROR;
+        return -DAR_OBJECT_NOT_EXIST;
+    }
+
 
 
     //需区分个数
@@ -798,7 +807,7 @@ int get_time_status_record_ic_24(struct instance_t* instance, uint32_t oad, uint
             if (ret < 0)
             {
                 *dar = DAR_OTHERS_ERROR;
-                return -DAR_OTHERS_ERROR;
+                return ret;
             }
 
             p += ret;
@@ -993,6 +1002,11 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 break;
                 case 5: // 最大记录数
                 {    
+                    ret = check_record_oad_support(instance, id);
+                    if(ret < 0)
+                    {
+                        return ret;
+                    }
                     return get_max_record_number(instance, id, p, &dar);
                 }
                 break;
@@ -1063,6 +1077,11 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 break;
                 case 4: // 最大记录数 
                 {
+                    ret = check_record_oad_support(instance, id);
+                    if(ret < 0)
+                    {
+                        return ret;
+                    }
                     return get_max_record_number(instance, id, p, &dar);
                 }
                 break;

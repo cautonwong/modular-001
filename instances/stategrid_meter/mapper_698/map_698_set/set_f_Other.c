@@ -15,7 +15,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
@@ -163,7 +163,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                                 nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->backlight_key_time, len);
                                 break;
                             default:
-                                return -1;
+                                return -DAR_OTHERS_ERROR;
                                 break;
                         }
                         
@@ -186,11 +186,11 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                         }
                         else
                         {
-                            return -1;
+                            return -DAR_OTHERS_ERROR;
                         }
                         break;
                   default:
-                        return -1;
+                        return -DAR_OTHERS_ERROR;
                         break;
             }
             break;
@@ -212,7 +212,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                     }
                     else 
                     {
-                        return -1;
+                        return -DAR_OTHERS_ERROR;
                     }
                     // 写 e2p 待调整
                 }
