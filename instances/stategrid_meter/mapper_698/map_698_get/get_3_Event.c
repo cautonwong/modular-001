@@ -954,7 +954,8 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
             {
                 p += (p[1] * 8 + 2);
             }
-            return (p - buf);
+            
+            return  (114);//(p - buf);  //固定返回 114
         }
         break;
         case 0x33150206: //编程节假日对象  事件记录用
@@ -989,6 +990,16 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
         {
             switch (attr) //属性
             {
+                case 2: //返回拒绝读写
+                {
+                    ret = check_record_oad_support(instance, id);
+                    if(ret < 0)
+                    {
+                        return ret;
+                    }
+                    return -DAR_RW_REJECT;
+                }
+                break;
                 case 3:// 关联对象
                 {
                     return get_event_obj(instance, id, p, &dar);

@@ -632,14 +632,17 @@ enum block_parameter_item_id_t
 #define     BeforSet_SeasonT            1505 //编程前备用套时区表 
 #define     Set_DayTab_Oad              1506 //编程时段表对象
 #define     BeforSet_DayTab             1507 //编程前备用套时段表
-#define     Set_Holiday_Oad             1508 //编程时节假日对象
-#define     BeforSet_Holiday            1509 //编程前节假日
-#define     Report3320_EnableList       1510 // 3320 上报使能列表  1 + 2*80
-#define     Report3320_OADList1         1511 // 3320 oad上报列表   1 + 4*60     //红外
-#define     Report3320_OADList2         1512 // 3320 oad上报列表   1 + 4*60     //rs485-1
-#define     Report3320_OADList3         1513 // 3320 oad上报列表   1 + 4*60     //PLC  
-#define     Report3320_OADList4         1514 // 3320 oad上报列表   1 + 4*60     //rs485-2
-#define     ActReport_Info              1515 // 主动上报 停电下缓存信息   //待调整  现是否存两份？
+#define     BeforSet_WeekTab            1508 //编程前备用套时段表
+#define     Set_Holiday_Oad             1509 //编程时节假日对象
+#define     BeforSet_Holiday            1510 //编程前节假日
+#define     BeforSet_Balance            1511 //编程前结算日
+
+#define     Report3320_EnableList       1521 // 3320 上报使能列表  1 + 2*80
+#define     Report3320_OADList1         1522 // 3320 oad上报列表   1 + 4*60     //红外
+#define     Report3320_OADList2         1523 // 3320 oad上报列表   1 + 4*60     //rs485-1
+#define     Report3320_OADList3         1524 // 3320 oad上报列表   1 + 4*60     //PLC  
+#define     Report3320_OADList4         1525 // 3320 oad上报列表   1 + 4*60     //rs485-2
+#define     ActReport_Info              1526 // 主动上报 停电下缓存信息   //待调整  现是否存两份？
 
 #define     __INITFLAG2_End             ActReport_Info //初始化 特殊处理标记  
 

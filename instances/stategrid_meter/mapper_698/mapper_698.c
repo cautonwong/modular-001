@@ -497,9 +497,13 @@ const  parameter_item_t  parameter_item[] =
     { BeforSet_SeasonT              , 0x01,114, 0 }, //编程前备用套时区  array num 14*8  
     { Set_DayTab_Oad                , 0x01,  5, 0 }, //编程时段表对象          
     { BeforSet_DayTab               , 0x01,114, 0 }, //编程前备用套时段表  array num 14*8  
+    { BeforSet_WeekTab              , 0x01,  1, 0 }, //编程前周休日时段表号   
     { Set_Holiday_Oad               , 0x01,  5, 0 }, //编程时节假日对象         
     { BeforSet_Holiday              , 0x01, 10, 0 }, //编程前节假日
- 
+    { BeforSet_Balance              , 0x01, 20, 0 }, //编程前结算日
+
+
+   
         //待调整
     { Report3320_EnableList         , 0x01, 161, 0 }, // 3320 上报使能列表  1 + 2*80         
     { Report3320_OADList1           , 0x01, 241, 0 }, // 3320 oad上报列表   1 + 4*60     //红外
@@ -1253,7 +1257,7 @@ int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_l
 
 
 // data_time_s 转4字节
-int fc_fun_01(struct instance_t* instance, uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
+int fc_fun_01(struct instance_t* instance, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint32_t temp;
     uint8_t *p = des;
@@ -1274,7 +1278,7 @@ int fc_fun_01(struct instance_t* instance, uint8_t *des, uint8_t* src, enum form
 }
 
 // 编程列表  按解析取数据长度
-int fc_fun_02(struct instance_t* instance, uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
+int fc_fun_02(struct instance_t* instance, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint16_t decode_len = 0;
     uint8_t *p = des;
@@ -1292,6 +1296,35 @@ int fc_fun_02(struct instance_t* instance, uint8_t *des, uint8_t* src, enum form
         decode_len = 5*num + 2;
         
         if (decode_len > 52)
+        {
+            decode_len = 0;
+        }
+        ndv_memcopy(des, src, decode_len);
+        p += decode_len;
+    }
+    return (p - des);
+}
+
+// 编程前时段列表  按解析取数据长度
+int fc_fun_03(struct instance_t* instance, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+{
+    uint16_t decode_len = 0;
+    uint8_t *p = des;
+    uint8_t num = 0;
+    
+    if (mode == RFC_WRITE)
+    {
+        if (fc->store_len != 0xFFFF)
+        {
+            ndv_memcopy(des, src, fc->store_len);
+            p += fc->store_len;
+        }
+    }
+    else if (mode == RFC_READ)
+    {
+        decode_len = axdr_get_len(src); //待调整
+
+        if (decode_len > fc->store_len)
         {
             decode_len = 0;
         }
@@ -1472,6 +1505,10 @@ const struct format_conversion_t format_conversion_tab[] =
     {   0x20210200,     8,      5,      fc_fun_01   },
     {   0x40000200,     8,      5,      fc_fun_01   },
     {   0x33020206,   0xFFFF,  52,      fc_fun_02   },  //待调整
+    {   0x33140207,   0xFFFF,  114,     fc_fun_03   },  
+    {   0x40152200,   0xFFFF,  114,     fc_fun_03   },  
+    {   0x41162200,   0xFFFF,  20,      fc_fun_03   },  
+    
 };
 
 // record存储格式特殊处理的 oad 电能
@@ -1610,7 +1647,7 @@ int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* sr
             {
                 if(format_conversion_tab[i].format_fun)
                 {
-                    return format_conversion_tab[i].format_fun(instance, des, src, mode);
+                    return format_conversion_tab[i].format_fun(instance, des, src, mode, (struct format_conversion_t *)&format_conversion_tab[i]);
                 }
             }
 

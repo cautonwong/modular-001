@@ -630,6 +630,14 @@ uint32_t record_capture_change(struct instance_t* instance, uint32_t obj, uint16
         }
         break;
     default:
+        if (obj == 0x40002200)
+        {
+            obj = 0x201E0200; // 发生时间
+        }
+        else if (obj == 0x40008200)
+        {
+            obj = 0x20200200; // 结束时间
+        }
         break;
     }
 
