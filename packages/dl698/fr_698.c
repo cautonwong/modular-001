@@ -579,6 +579,75 @@ int handle_scrambler(struct instance_t* instance, struct pipeline_t* pipeline, s
     return 1;
 }
 
+int __fr_send_handle(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    uint8_t data[2]={0};
+    
+    if (fifoBuf_getUsed(ctx->apdu)  > 0){
+        mesg->len = fifoBuf_getUsed(ctx->apdu);
+        if (mesg->len > 512){
+            set_segment(ctx->ctrl);
+            if(0 == ctx->segment_tx){
+                ctx->segment_tx_no = 0;
+                ctx->segment_tx = 1;
+                set_first_segment_no(ctx->segment_tx_no);
+            }else{
+                set_middle_segment_no(ctx->segment_tx_no);
+            }
+            mesg->len = 512;
+        } else {
+            if(ctx->segment_tx){
+                set_segment(ctx->ctrl);
+                set_last_segment_no(ctx->segment_tx_no);
+  
+            }
+        }
+
+        if(ctx->segment_tx){
+            data[0] = ctx->segment_tx_no;
+            data[1] = ctx->segment_tx_no>>8;
+            fifoBuf_update_rd(ctx->apdu, 2, 0);
+            memcpy(ctx->apdu->buf_ptr + ctx->apdu->rd, data, 2);
+        }
+        fr_rx_698_end(instance, pipeline, mesg);
+        if (mesg->len < 512){
+            ringbuffer_clear(ctx->apdu);
+            ctx->segment_tx_no = 0;
+            ctx->segment_tx = 0;
+        }
+    }
+    return 0;
+}
+
+
+int __fr_segment_tx_handle(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
+    uint8_t type = 0;
+    uint16_t segment_no = 0;
+    uint16_t segment = 0;
+    if(is_segment_set(ctx->ctrl)){
+        fifoBuf_getData(fifo, apdu_rx,  2);
+        handle_scrambler(instance, pipeline, mesg);
+        
+        segment = apdu_rx[0] + (apdu_rx[1]<< 8);
+        type = get_segment_type(segment);
+        if(type == 2)
+        {
+            segment_no = get_segment_no(segment);
+            if(segment_no == get_segment_no(ctx->segment_tx_no))
+            {
+                ctx->segment_tx_no++;
+                __fr_send_handle(instance, pipeline, mesg);
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
 
 int fr_check_service_and_choice(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -626,6 +695,10 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     }
     
     fifoBuf_removeData(fifo, APDU_OFFSET(ctx->SA));
+    if(__fr_segment_tx_handle(instance, pipeline, mesg)){
+        return -1;
+    }
+    
     ringbuffer_clear(ctx->apdu);
     ctx->apdu_rx_offset = 0;
     if(is_segment_set(ctx->ctrl)){
@@ -735,16 +808,8 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
             memcpy(cache->buf_ptr + cache->rd, data, len);
         }
     }
-    
-    if (fifoBuf_getUsed(ctx->apdu)  > 0){
-        mesg->len = fifoBuf_getUsed(ctx->apdu);
-        if (mesg->len > 512){
-            set_segment(ctx->ctrl);
-            mesg->len = 512;
-        }
-
-        fr_rx_698_end(instance, pipeline, mesg);
-    }
+    ctx->apdu->wr = 1500;
+    __fr_send_handle(instance, pipeline, mesg);
     return 0;
 }
 

@@ -294,6 +294,9 @@ struct context_698_t
     uint8_t seconds;//超时时间
     uint16_t tx_len;
 
+    uint16_t segment_tx; 
+    uint16_t segment_tx_no;
+    
     struct fifo_t* apdu;
 
 #if 1
