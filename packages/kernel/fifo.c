@@ -27,14 +27,21 @@ uint16_t fifoBuf_update_wr(struct fifo_t* buf, uint16_t len)
     return wr;
 }
 
-uint16_t fifoBuf_update_rd(struct fifo_t* buf, uint16_t len)
+uint16_t fifoBuf_update_rd(struct fifo_t* buf, uint16_t len, uint8_t type)
 {
     uint16_t rd = buf->rd;
     uint16_t buf_size = buf->buf_size;
-
-    rd += len;
-    if (rd >= buf_size)
-        rd -= buf_size;
+    
+    if(type){
+        rd += len;
+        if (rd >= buf_size)
+            rd -= buf_size;
+    }else{
+        if(rd >= len)
+            rd -= len;
+        else
+            rd = buf_size - len - rd;
+    }
 
     buf->rd = rd;
     return rd;
