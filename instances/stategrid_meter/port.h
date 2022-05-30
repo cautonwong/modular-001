@@ -555,40 +555,42 @@ enum block_parameter_item_id_t
 #define     Pulse_Width                 970 //脉冲宽度  1
 #define     ASCII_AssetsMan             971 //资产管理编码    1
 #define     ASCII_Un                    972 //额定电压  1
-#define     ASCII_Ib                    973 //额定电流  1
-#define     ASCII_Imax                  974 //最大电流  1
-#define     ASCII_AccuracyClass1        975 //有功准确度等级   1
-#define     Meter_Const1                976 //有功脉冲常数    1
-#define     ASCII_MeterType             977 //电能表型号 1
-#define     MeterRunWord                978 //电能表运行特征字  1
-#define     SoftWareNo                  979 //软件备案号 1
-#define     Measure_Mode                980 //有功组合特征字   1
-#define     Balance_Time                981 //结算日   3
-#define     Meter_Password              984 //应用连接密码    1     
+#define     ASCII_Imin                  973 //最新电流
+#define     ASCII_Itr                   974 //转折电流
+#define     ASCII_Ib                    975 //额定电流  1
+#define     ASCII_Imax                  976 //最大电流  1
+#define     ASCII_AccuracyClass1        977 //有功准确度等级   1
+#define     Meter_Const1                978 //有功脉冲常数    1
+#define     ASCII_MeterType             979 //电能表型号 1
+#define     MeterRunWord                980 //电能表运行特征字  1
+#define     SoftWareNo                  981 //软件备案号 1
+#define     Measure_Mode                982 //有功组合特征字   1
+#define     Balance_Time                983 //结算日   3
+#define     Meter_Password              986 //应用连接密码    1     
                                   
-#define     Meter_Location1             985 //设备地理位置经度
-#define     Meter_Location2             986 //设备地理位置纬度
-#define     Meter_Location3             987 //设备地理位置高度    
+#define     Meter_Location1             987 //设备地理位置经度
+#define     Meter_Location2             988 //设备地理位置纬度
+#define     Meter_Location3             989 //设备地理位置高度    
                                   
-#define     Device_descriptor           989 //设备描述符
-#define     Factory_No                  990 //厂家代码
-#define     Version_SoftWare            991 //软件版本
-#define     Date_SoftWare               992 //软件版本日期
-#define     Version_HardWare            993 //硬件版本
-#define     Date_HardWare               994 //硬件版本日期
-#define     Extend_Info                 995 //扩展信息
-#define     Produced_Date               996 //生产日期
-#define     Subset_List                 997 //子设备列表
-#define     Protocol_List               998 //协议列表
-#define     FollowReport_en             999 //允许跟随上报
-#define     ActiveReport_en             1000 //允许主动上报
-#define     Comm_Master_en              1001 //允许与主站通讯
-#define     Report_channel              1002 //上报通道
+#define     Device_descriptor           990 //设备描述符
+#define     Factory_No                  991 //厂家代码
+#define     Version_SoftWare            992 //软件版本
+#define     Date_SoftWare               993 //软件版本日期
+#define     Version_HardWare            994 //硬件版本
+#define     Date_HardWare               995 //硬件版本日期
+#define     Extend_Info                 996 //扩展信息
+#define     Produced_Date               997 //生产日期
+#define     Subset_List                 998 //子设备列表
+#define     Protocol_List               999 //协议列表
+#define     FollowReport_en             1000 //允许跟随上报
+#define     ActiveReport_en             1001 //允许主动上报
+#define     Comm_Master_en              1002 //允许与主站通讯
+#define     Report_channel              1003 //上报通道
 
-#define     ImaxProtectValue            1003 //继电器拉闸电流门限值
-#define     ImaxProtectTime             1004 //超电流门限保护延时时间
-#define     IrAuthenTime                1005 //红外认证时效
-#define     AuthMeth                    1006 //连接认证机制
+#define     ImaxProtectValue            1004 //继电器拉闸电流门限值
+#define     ImaxProtectTime             1005 //超电流门限保护延时时间
+#define     IrAuthenTime                1006 //红外认证时效
+#define     AuthMeth                    1007 //连接认证机制
 
 /***************** 计量相关 *****************/
 #define     Heat_Value_10L              1100    //1.0L自热补偿  15*2=30

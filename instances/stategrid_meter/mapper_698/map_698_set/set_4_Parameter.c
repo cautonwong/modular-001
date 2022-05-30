@@ -8,56 +8,59 @@ typedef struct
 {
     uint32_t    s_index;    //地址
     uint16_t    oad;        
+    uint8_t     atr;        //属性
     uint8_t     offset;     //偏移
     uint8_t     len;        //长度
 }general_set4;
 
 const general_set4  set4300_table[] = 
 {
-     Device_descriptor,   0x0200,   0x01,   33,//设备描述符
+     Device_descriptor,   0x0200,   0x02,   0x01,   33,//设备描述符
     
-     Factory_No,          0x0301,   0x02,    4, //厂家代码
-     Version_SoftWare,    0x0302,   0x02,    4, //软件版本
-     Date_SoftWare,       0x0303,   0x02,    6, //软件版本日期
-     Version_HardWare,    0x0304,   0x02,    4, //硬件版本
-     Date_HardWare,       0x0305,   0x02,    6, //硬件版本日期
-     Extend_Info,         0x0306,   0x02,    8, //扩展信息
+     Factory_No,          0x0301,   0x03,   0x02,    4, //厂家代码
+     Version_SoftWare,    0x0302,   0x03,   0x02,    4, //软件版本
+     Date_SoftWare,       0x0303,   0x03,   0x02,    6, //软件版本日期
+     Version_HardWare,    0x0304,   0x03,   0x02,    4, //硬件版本
+     Date_HardWare,       0x0305,   0x03,   0x02,    6, //硬件版本日期
+     Extend_Info,         0x0306,   0x03,   0x02,    8, //扩展信息
     
-     Produced_Date,       0x0400,   0x01,    7, //生产日期
-//     Subset_List,       0x0500,  0x05,    2, //子设备列表(num+2*oi)
-//     Protocol_List,       0x0601,   0x02,   20, //协议列表
-     FollowReport_en,     0x0700,   0x01,    1, //允许跟随上报
-     ActiveReport_en,     0x0800,   0x01,    1, //允许主动上报
-     Comm_Master_en,      0x0900,   0x01,    1, //允许与主站通讯
-     //Report_channel,      0x0A00,   0x03,    4, //上报通道
+     Produced_Date,       0x0400,   0x04,   0x01,    7, //生产日期
+//   Subset_List,         0x0500,   0x04,   0x05,    2, //子设备列表(num+2*oi)
+//   Protocol_List,       0x0601,   0x06,   0x02,   20, //协议列表
+     FollowReport_en,     0x0700,   0x07,   0x01,    1, //允许跟随上报
+     ActiveReport_en,     0x0800,   0x08,   0x01,    1, //允许主动上报
+     Comm_Master_en,      0x0900,   0x09,   0x01,    1, //允许与主站通讯
+//   Report_channel,      0x0A00,   0x0a,   0x03,    4, //上报通道
 };
 
 const general_set4  general_set4_talble[] =
 {
-//     Comm_Number,               0x4001,     0x02,   6,//表地址
-//     Meter_Number,              0x4002,     0x02,   6,//表号
-     User_Number,               0x4003,     0x02,   6,//客户编号
-//     Meter_Location,            0x4004,     0x01,   27,//设备地理位置
-     SeasonTable_Changetime,    0x4008,     0x01,   7,//两套时区切换时间
-     DayTable_Changetime,       0x4009,     0x01,   7,//两套时段切换时间
-     SecretKey_Num,             0x400F,     0x01,   1,//秘钥总条数
-     Meter_Num,                 0x4010,     0x01,   1,//计量元件个数
-     Weekend,                   0x4012,     0x02,   1,//周休日特征字
-     WeekendFee,                0x4013,     0x01,   1,//周休日采用费率号
-     Meter_CT,                  0x401C,     0x01,   4,//CT
-     Meter_PT,                  0x401D,     0x01,   4,//PT
-     Pulse_Width,               0x4102,     0x01,   1,//脉冲宽度
-     ASCII_AssetsMan,           0x4103,     0x02,   32,//资产管理编码
-     ASCII_Un,                  0x4104,     0x01,   6,//额定电压
-     ASCII_Ib,                  0x4105,     0x01,   6,//额定电流
-     ASCII_Imax,                0x4106,     0x01,   6,//最大电流
-     ASCII_AccuracyClass1,      0x4107,     0x01,   4,//有功准确度等级
-     Meter_Const1,              0x4109,     0x01,   4,//有功脉冲常数
-     ASCII_MeterType,           0x410B,     0x02,   32,//电能表型号
-//     MeterRunWord,              0x4110,     0x01,   1,//电能表运行特征字
-     SoftWareNo,                0x4111,     0x02,   16,//软件备案号
-     Measure_Mode,              0x4112,     0x02,   1,//有功组合特征字
-     Meter_Password,            0x4401,     0x01,   8,//应用连接密码
+//   Comm_Number,               0x4001,     0x02,   0x02,   6,//表地址
+//   Meter_Number,              0x4002,     0x02,   0x02,   6,//表号
+     User_Number,               0x4003,     0x02,   0x02,   6,//客户编号
+//   Meter_Location,            0x4004,     0x02,   0x01,   27,//设备地理位置
+     SeasonTable_Changetime,    0x4008,     0x02,   0x01,   7,//两套时区切换时间
+     DayTable_Changetime,       0x4009,     0x02,   0x01,   7,//两套时段切换时间
+     SecretKey_Num,             0x400F,     0x02,   0x01,   1,//秘钥总条数
+     Meter_Num,                 0x4010,     0x02,   0x01,   1,//计量元件个数
+     Weekend,                   0x4012,     0x02,   0x02,   1,//周休日特征字
+     WeekendFee,                0x4013,     0x02,   0x01,   1,//周休日采用费率号
+     Meter_CT,                  0x401C,     0x02,   0x01,   4,//CT
+     Meter_PT,                  0x401D,     0x02,   0x01,   4,//PT
+     Pulse_Width,               0x4102,     0x02,   0x01,   1,//脉冲宽度
+     ASCII_AssetsMan,           0x4103,     0x02,   0x02,   32,//资产管理编码
+     ASCII_Un,                  0x4104,     0x02,   0x01,   6,//额定电压
+     ASCII_Ib,                  0x4105,     0x02,   0x01,   6,//额定电流
+     ASCII_Imax,                0x4106,     0x02,   0x01,   6,//最大电流
+     ASCII_Imin,                0x4106,     0x03,   0x01,   6,//最小电流
+     ASCII_Itr,                 0x4106,     0x04,   0x01,   6,//转折电流
+     ASCII_AccuracyClass1,      0x4107,     0x02,   0x01,   4,//有功准确度等级
+     Meter_Const1,              0x4109,     0x02,   0x01,   4,//有功脉冲常数
+     ASCII_MeterType,           0x410B,     0x02,   0x02,   32,//电能表型号
+//   MeterRunWord,              0x4110,     0x02,   0x01,   1,//电能表运行特征字
+     SoftWareNo,                0x4111,     0x02,   0x02,   16,//软件备案号
+     Measure_Mode,              0x4112,     0x02,   0x02,   1,//有功组合特征字
+     Meter_Password,            0x4401,     0x02,   0x01,   8,//应用连接密码
 };
 #define		set4num			sizeof(general_set4_talble)/sizeof(general_set4)
 
@@ -503,6 +506,22 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 
                 record_rollback_after_set_time(instance);
                 
+                return (p-buf);
+            }
+            else if(attribute == 0x05)  //广播校时参数
+            {
+                p = p + 3;
+                mem_swap_cpy((uint8_t*)&mbase_cb->Limit_T_Min, p, 2);
+                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                offsetof(struct mbase_control_block_t, Limit_T_Min));
+                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->Limit_T_Min, 2);
+                p = p + 2;
+                p++;
+                mem_swap_cpy((uint8_t*)&mbase_cb->Limit_T_Max, p, 2);
+                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                offsetof(struct mbase_control_block_t, Limit_T_Max));
+                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->Limit_T_Max, 2);
+                p = p + 2;
                 return (p-buf);
             }
             break;

@@ -65,24 +65,25 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 }
                 *p++ = TYPE_structure;
                 *p++ = 3;
-                *p++ = TYPE_visible_string;
                 if(oad == 0xF201)
                 {
+                    *p++ = TYPE_visible_string;
                     *p++ = 5;
                     memcpy(p, name_rs485, 5);
                     p = p + 5;
                 }
                 else if(oad == 0xF202)
                 {
+                    *p++ = TYPE_visible_string;
                     *p++ = 5;
                     memcpy(p, name_ir, 5);
                     p = p + 5;
                 }
                 else
                 {
-                    *p++ = 3;
-                    memcpy(p, name_plc, 3);
-                    p = p + 3;
+                    *p++ = 0;
+                    //memcpy(p, name_plc, 3);
+                    p = p + 0;
                 }
                 *p++ = TYPE_COMDCB;
                 if(oad == 0xF201)   *p++ = mbase_cb->Baut_rs485;    //485波特率

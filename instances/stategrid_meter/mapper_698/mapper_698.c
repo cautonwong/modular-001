@@ -103,6 +103,8 @@ extern const uint8_t   init_ASCII_AssetsMan[];//资产管理编码
 extern const uint8_t   init_ASCII_Un[];//额定电压
 extern const uint8_t  init_ASCII_Ib[];//额定电流
 extern const uint8_t  init_ASCII_Imax[];//最大电流
+extern const uint8_t    init_ASCII_Imin[];//最小电流
+extern const uint8_t    init_ASCII_Itr[];//转折电流
 extern const uint8_t  init_ASCII_AccuracyClass1[];//有功准确度等级
 extern const uint8_t  init_Meter_Const1[];//有功脉冲常数
 extern const uint8_t  init_ASCII_MeterType[];//电能表型号
@@ -536,6 +538,8 @@ const  parameter_item_t  parameter_item[] =
     { Pulse_Width,         0x01,   1,       init_Pulse_Width},//脉冲宽度
     { ASCII_AssetsMan,     0x01,   32,      init_ASCII_AssetsMan},//资产管理编码
     { ASCII_Un,            0x01,   6,       init_ASCII_Un },//额定电压
+    { ASCII_Imin,          0x01,   6,       init_ASCII_Imin },  //最小电流
+    { ASCII_Itr,           0x01,   6,       init_ASCII_Itr },   //转折电流
     { ASCII_Ib,            0x01,   6,       init_ASCII_Ib },//额定电流
     { ASCII_Imax,          0x01,   6,       init_ASCII_Imax },//最大电流
     { ASCII_AccuracyClass1,0x01,   4,       init_ASCII_AccuracyClass1 },//有功准确度等级
@@ -1932,10 +1936,15 @@ int para_init(struct instance_t* instance )
     mbase_cb->lcd_keydis_keep_sec = 60;                           /*按键轮显持续时间 */
     mbase_cb->Baut_rs485 = 6;
     mbase_cb->Baut_plc = 6;
+    mbase_cb->SafeEn = 1;       //安全模式启用
+    mbase_cb->relay_ctl_mode = 0; //脉冲式控制方式
+    mbase_cb->AuthOn = 0;       //身份认证启用默认不启用
+    mbase_cb->Limit_T_Max = 300;  //广播校时最大允许时间
+    mbase_cb->Limit_T_Min = 60;   //广播校时最小允许时间
     
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
     offsetof(struct mbase_control_block_t, backlight_key_time));
-    s_len = offsetof(struct mbase_control_block_t, Baut_plc) - offsetof(struct mbase_control_block_t, backlight_key_time);
+    s_len = offsetof(struct mbase_control_block_t, OverCurrent_threshold) - offsetof(struct mbase_control_block_t, backlight_key_time);
     nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->backlight_key_time, s_len);
     
     memset(mbase_cb->tsa, 0x11, 6);//表地址

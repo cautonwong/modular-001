@@ -376,8 +376,8 @@ const uint8_t  init_ASCII_AssetsMan[] =
 const uint8_t  init_ASCII_Un[] = {6, '2', '2', '0','V',0x00, 0x00 }; /**< 额定电压 */
 const uint8_t  init_ASCII_Ib[] = { 6, '5', 'A', 0x00, 0x00, 0x00, 0x00,  };  /**< 额定电流/基本电流 */
 const uint8_t  init_ASCII_Imax[] = { 6, '6', '0', 'A',  0x00, 0x00, 0x00,  }; /**< 最大电流 */
-const uint8_t  init_3030[] = { 6, '0', '.', '2', '5',   'A',  0x00,  }; /**< 最小电流  */
-const uint8_t  init_3031[] = { 6, '0', '.', '5', 'A',   0x00, 0x00,  }; /**< 最转折电流*/
+const uint8_t  init_ASCII_Imin[] = { 6, '0', '.', '2', '5',   'A',  0x00,  }; /**< 最小电流  */
+const uint8_t  init_ASCII_Itr[] = { 6, '0', '.', '5', 'A',   0x00, 0x00,  }; /**< 最转折电流*/
 const uint8_t  init_ASCII_AccuracyClass1[] = { 4, 'A', 0x00, 0x00, 0x00 };  /**< 有功准确度等级 */
 const uint8_t  init_Meter_Const1[] = { 4, 0x00, 0x00, 0x07, 0xD0 }; /**< 有功，无功 脉冲常数  2000*/
 
