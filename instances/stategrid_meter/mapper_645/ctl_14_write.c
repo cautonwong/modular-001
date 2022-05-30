@@ -1,5 +1,7 @@
 #include "nidavellir.h"
 #include "645id_table.h"
+#include "ndvh_rn8209.h"
+
 /*
 //错误信息字定义
 #define 	RS_ERR_LEN		        	0x01//数据域长度错误,其它错误
@@ -13,6 +15,7 @@
 #define     RS_ERR_FEEOV                0x40//费率数超
 */
 extern unsigned char GetCommTable( unsigned long ID );
+struct factor_adj_meter_t factory3;
 
 /***********************************************************************/
 /*  函数名称：CommWrite_SpecProc                                       */
@@ -61,7 +64,21 @@ unsigned char CommWrite_SpecProc( struct instance_t* instance,  unsigned char* p
                 nd_set_index(instance, s_index, buf, 4);
 				break;
         case 0xA8000208://单点校表
-//                meterchip_adj_self(instance, pipeline);
+                //0000C350 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 0000D742 0000C350 000055F0
+                memcpy((unsigned char*)&factory3.Ua, prx+12, 4); //电压220.00V，2位小数
+                memcpy((unsigned char*)&factory3.Ia, prx+16, 4); //电流5.0000A，4位小数
+                memcpy((unsigned char*)&factory3.Pa, prx+20, 4); //有功功率550.00W，2位小数
+                memcpy((unsigned char*)&factory3.Ian, prx+60, 4);//零线电流5.0000A，4位小数
+                if(factory3.Pa != 0)    //火线修正
+                  factory3.adjflag |= F_ALadj;
+                else
+                  factory3.adjflag &= ~F_ALadj;
+                
+                if(factory3.Ian != 0)   //零线修正
+                    factory3.adjflag |= F_ANadj;
+                else
+                    factory3.adjflag &= ~F_ANadj;
+                //meterchip_adj_self(instance, &factory3);
                 break;
 	}
 	return 0;
