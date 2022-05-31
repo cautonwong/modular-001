@@ -629,11 +629,11 @@ void IOStateCheck(struct instance_t* instance, struct pipeline_t* pipeline)
     METER_COVER_INPUT();
     if(meter_cover_cnt==50)
     {
-        mbase_control_block->meter_cover_sta = EVENT_SET;
+        mbase_control_block->meter_cover_sta = EVENT_RESET;
     }
     else if(meter_cover_cnt==0)
     {
-        mbase_control_block->meter_cover_sta = EVENT_RESET;
+        mbase_control_block->meter_cover_sta = EVENT_SET;
     }
 }
 

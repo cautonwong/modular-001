@@ -8,6 +8,7 @@
 #include "string.h"
 #include "nidavellir.h"
 #include "applications.h"
+#include "gs_record.h"
 
 #define     KeyPortIn           {GPIOA->OEN |=BIT2; GPIOA->IE |=BIT2;}
 #define     KeyPortCheck        (GPIOA->STS & BIT2)
@@ -84,10 +85,12 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
         if(switchon == 1)
         {
             Magnetic_hold_relay_connect();//合闸
+            send_event_mesg_pro(instance, NULL, SwitchOnS, NULL, 1);
         }
         else 
         {
             Magnetic_hold_relay_disconnect();//拉闸
+            send_event_mesg_pro(instance, NULL, SwitchOffS, NULL, 1);
         }
         lastswitchsta = switchon;
     }

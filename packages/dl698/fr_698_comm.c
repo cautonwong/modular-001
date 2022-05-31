@@ -132,8 +132,8 @@ uint32_t dl_datetime_to_second(uint8_t* date, uint8_t type)
     time.tm_min  = date[5];
     time.tm_hour = date[4];
     time.tm_mday = date[3];
-    time.tm_mon  = date[2];
-    time.tm_year = year;
+    time.tm_mon  = date[2] - 1;
+    time.tm_year = year - 1900;
     return rtc_mktime(&time);
 }
 

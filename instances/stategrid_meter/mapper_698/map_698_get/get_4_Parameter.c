@@ -245,8 +245,24 @@ int general_get_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
     uint8_t* p = buf;
     uint32_t addr=0;
     
+    //事件用
+    switch(id)
+    {
+        case 0x40132200: //编程前周休日时段表号
+        {
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_WeekTab);
+            nd_get_index(instance, addr, p, 1);
+            p += 1;
+            return (p-buf);
+        }
+            break;
+        default:
+            break;
+    }
+
+
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
-    attribute = (unsigned char)((id & 0x00001F00) >> 8);
+    attribute = (unsigned char)((id & 0x0000FF00) >> 8);
     
     for(i=0; i<get4num; i++)
     {
@@ -559,7 +575,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 {
                     p += (p[1] * 8 + 2);
                 }
-                return (p - buf);
+                return 114;//(p - buf);
             }
 
             if(index > 14)    return -DAR_OTHERS_ERROR;
@@ -664,6 +680,14 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             break;
         case 0x4116://结算日
+            if (id == 0x41162200) // 编程事件用
+            {
+                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Balance);
+                nd_get_index(instance, s_index, p, 20);
+                p += 20;
+                return (p-buf);
+            }
+
             if(index == 0)
             {
                 *p++ = TYPE_array;

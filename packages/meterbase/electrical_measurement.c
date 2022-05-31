@@ -19,7 +19,7 @@ extern void  mcu_clear_watchdog(void);
 extern uint8 mcu_delay_us(volatile uint16 count);
 uint32 over_Imax;
 static uint8 Buffer[50];
-static struct factor_adj_meter_t Factory3;
+//static struct factor_adj_meter_t Factory3;
 static uint16 key_cnt;
 
 #define	lock_heat_compensate	0x5a
@@ -156,10 +156,10 @@ void voltage_compensate(struct instance_t* instance, struct pipeline_t* pipeline
 #define REAL_K_P_INIT     0.0023294272
 
 
-void emu_calibration_clear(struct instance_t* instance, struct pipeline_t* pipeline)
+void emu_calibration_clear(struct instance_t* instance)
 {
 
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     signed short Pgain = 0;
     unsigned char Tofst = 0;
     
@@ -172,16 +172,16 @@ void emu_calibration_clear(struct instance_t* instance, struct pipeline_t* pipel
 }
 
 
-void meterchip_adj_self(struct instance_t* instance, struct pipeline_t* pipeline)
+void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t *adj_data)
 {
     unsigned char i=0, Tofst , j=0, adj_buf[8];
     signed short Pgain;
     unsigned long TempUrms=0, TempIrms=0, TempPw=0, CalcPw=0, Corretion_Pw=0, U_value=0, I1_value=0, I2_value=0, P_value=0;
     unsigned long BaseErr,hfconst,addr=0;
     float err=0;
-    
+    struct factor_adj_meter_t Factory3;
     //struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)&ctx;
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     memset((unsigned char*)Buffer,0x00,16);
 
     //E2P_Read((unsigned char*)&hfconst, Meter_VHFconst, 4 );	//获取脉冲速率
@@ -191,15 +191,24 @@ void meterchip_adj_self(struct instance_t* instance, struct pipeline_t* pipeline
     
 
     
-    
-    Factory3.adjflag = 0xff;
-    hfconst = 0x064a;
+    if(adj_data != 0)
+    {
+        Factory3.adjflag = adj_data->adjflag;
+        Factory3.Ua = adj_data->Ua;   
+        Factory3.Ia = adj_data->Ia;  
+        Factory3.Pa = adj_data->Pa; 
+        Factory3.Ian = adj_data->Ian;  
+    }
+    else
+    {
+        Factory3.adjflag = 0xff;
+        Factory3.Ua = 0x55F0;    //220V 
+        Factory3.Ia = 0xC34A;    //5A
+        Factory3.Pa = 0xD6FF;    //550W
+        Factory3.Ian = 0xC34A;   //5A
+    }
     BaseErr = 0;
-    Factory3.Ua = 0x55F0;    //220V 
-    Factory3.Ia = 0xC34A;    //5A
-    Factory3.Pa = 0xD6FF;    //550W
-    Factory3.Ian = 0xC34A;   //5A
-    
+    hfconst = 0x064a;
     if (Factory3.adjflag & F_ALadj)
     {
         for (i = 0; i < 3; i++)
@@ -305,6 +314,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     //struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)&ctx;
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     int32_t temp = 0;
+    float pf , pa , u , i ;
    
     //读计量芯片电压
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , URMS , 3 , &temp);
@@ -380,17 +390,23 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     
     if(key_cnt == 2)
     {
-         emu_calibration_clear(instance, pipeline);
+         emu_calibration_clear(instance);
     }
     if(key_cnt == 3)
     {
-        meterchip_adj_self(instance, pipeline);
+        meterchip_adj_self(instance, 0);
     }
     
     //計算功率因數
     if((mbase_control_block->voltage_ac != 0) && (mbase_control_block->current_l != 0))
     {
-        mbase_control_block->power_factor = mbase_control_block->active_power / (mbase_control_block->voltage_ac * mbase_control_block->current_l);
+        u = (float)mbase_control_block->voltage_ac/10;
+        i = (float)mbase_control_block->current_l/1000;
+        pa = (float)mbase_control_block->active_power/10;
+        pf = pa / (u*i);
+        if(pf>1) pf = 1;
+        if(pf<-1) pf = -1;
+        mbase_control_block->power_factor = pf * 1000;
     }
     else
     {

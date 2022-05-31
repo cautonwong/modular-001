@@ -401,7 +401,7 @@ struct format_conversion_t
     uint32_t oad;
     uint16_t original_len; // ffff 按照tag格式解析        或  特殊处理
     uint16_t store_len;    // ffff 按照tag格式解析        或  特殊处理 
-    int (*format_fun)(struct instance_t* instance, uint8_t *des, uint8_t* src, enum format_conversion_mode mode);
+    int (*format_fun)(struct instance_t* instance, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc);
 };
 
 

@@ -97,6 +97,11 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         break;
                     case 0x4013://周休日日时段表号
                         if(*p != 17) return -DAR_TYPE_NOT_MATCH;
+                        //保存编程前
+                        nd_get(instance, id, timer, 1, NULL);
+                        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_WeekTab);
+                        nd_set_index(instance, addr, timer, 1);
+                        send_event_mesg_pro(instance, NULL, WeekTabWrS, NULL, 1);// 周休日编程事件
                         break;
                     case 0x4102:    //脉冲宽度
                     case 0x4104:    //额定电压
@@ -417,7 +422,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
 {    
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad,year2;
-    uint8_t index,attribute,i,num,buffer[42]={0},temp[114]={0},num_hourtab=0,j,year,timer[6];
+    uint8_t index,attribute,i,num,buffer[42]={0},temp[114]={0},num_hourtab=0,j,year,timer[6], flag = 0;
     uint8_t* p = buf;
     uint32_t s_index = 0x00,addr=0;
     int len=0;
@@ -860,6 +865,11 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             break;
         
         case 0x4116://结算日
+            //-保存编程前
+            nd_get(instance, 0x41160200, temp, 20, NULL);
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Balance);
+            nd_set_index(instance, s_index, temp, 20);
+
             if(index == 0)
             {
                 if(*(p+1) > 0x03)    return -DAR_RW_REJECT;
@@ -881,7 +891,13 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     memset(buffer, 0xaa, 2);
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
                     nd_get_index(instance, s_index, buffer, 2);
+                    if(i == 0)
+                    {
+                        send_event_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
+                    }
                 }
+
+                send_event_mesg_pro(instance, NULL, BillDayWrS, NULL, 1);//
                 return (p-buf);
             }
             else if(index < 4)
@@ -896,6 +912,12 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + (index - 1));
                 nd_set_index(instance, s_index, buffer, 2);
+                if(index == 1)
+                {
+                    send_event_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
+                }
+                
+                send_event_mesg_pro(instance, NULL, BillDayWrS, NULL, 1);//
                 return (p-buf);
             }
             else
