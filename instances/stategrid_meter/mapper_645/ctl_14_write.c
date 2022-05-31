@@ -13,7 +13,8 @@
 #define     RS_ERR_FEEOV                0x40//费率数超
 */
 extern unsigned char GetCommTable( unsigned long ID );
-
+extern void emu_calibration_clear(struct instance_t* instance);
+extern void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t *adj_data);
 /***********************************************************************/
 /*  函数名称：CommWrite_SpecProc                                       */
 /*  函数功能：关于通讯写的特殊处理                                     */
@@ -35,6 +36,7 @@ unsigned char CommWrite_SpecProc( struct instance_t* instance,  unsigned char* p
 	{
 		case 0xA8000202:    //计量参数初始化
                 meteric_para_clr(instance, 0);
+                emu_calibration_clear(instance);
                 break;
         case 0x04F0FFFE:
                 break;
@@ -60,8 +62,9 @@ unsigned char CommWrite_SpecProc( struct instance_t* instance,  unsigned char* p
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Other);//写入脉冲速率
                 nd_set_index(instance, s_index, buf, 4);
 				break;
-        case 0xA8000208://单点校表
-//                meterchip_adj_self(instance, pipeline);
+                 case 0xA8000208://单点校表
+
+                  meterchip_adj_self(instance , );
                 break;
 	}
 	return 0;
