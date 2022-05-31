@@ -106,7 +106,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                             engery = tmp;
                             engery = engery * 100;
                             tmp = Get_Cal_Active_Energy(mbase_cb , i , 1);
-                            engery = engery +  (uint8)tmp;
+                            engery = engery +  tmp;
                             mem_swap_cpy(ptr, (uint8_t*)&engery, 8);
                             ptr += 8;
                             len += 9;
@@ -157,7 +157,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                       engery = tmp;
                       engery = engery * 100;
                       tmp = Get_Cal_Active_Energy(mbase_cb , attr_index , 1);
-                      engery = engery +  (uint8)tmp;
+                      engery = engery +  tmp;
                       mem_swap_cpy(&buf[1], (uint8_t*)&engery, 8);
                       len = 9;      
                       break;
@@ -223,7 +223,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                             engery = tmp;
                             engery = engery * 100;
                             tmp = Get_Active_Energy(mbase_cb , i , 1 , 0);
-                            engery = engery +  (uint8)tmp;
+                            engery = engery +  tmp;
                             mem_swap_cpy(ptr, (uint8_t*)&engery, 8);
                             ptr += 8;
                             len += 9;
@@ -260,7 +260,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                       engery = tmp;
                       engery = engery * 100;
                       tmp = Get_Active_Energy(mbase_cb , attr_index , 1 , 0);
-                      engery = engery +  (uint8)tmp;
+                      engery = engery +  tmp;
                       mem_swap_cpy(&buf[1], (uint8_t*)&engery, 8);
                       len = 9;
                   }
@@ -327,7 +327,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                             engery = tmp;
                             engery = engery * 100;
                             tmp = Get_Active_Energy(mbase_cb , i , 1 , 1);
-                            engery = engery +  (uint8)tmp;
+                            engery = engery +  tmp;
                             mem_swap_cpy(ptr, (uint8_t*)&engery, 8);
                             ptr += 8;
                             len += 9;
@@ -364,7 +364,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                       engery = tmp;
                       engery = engery * 100;
                       tmp = Get_Active_Energy(mbase_cb , attr_index , 1 , 1);
-                      engery = engery +  (uint8)tmp;
+                      engery = engery +  tmp;
                       mem_swap_cpy(&buf[1], (uint8_t*)&engery, 8);
                       len = 9;
                   }
