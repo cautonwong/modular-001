@@ -324,7 +324,7 @@ static int f_esam_type_read_esam_no(struct esam_698_data_t *para, void *esam_hal
 
     esam_in->RN_Data_len = 0;
     //esam_in->AttachData_len = 0;
-    esam_in->data_len = 0;
+    esam_in->data_len = 7;
     //esam_in->MAC_len = 0;
     esam_in->Dispersion_factor_len = 0;
     

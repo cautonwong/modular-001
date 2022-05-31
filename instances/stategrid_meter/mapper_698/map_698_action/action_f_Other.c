@@ -464,7 +464,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
     
     switch (oad)
     {
-case 0xF001://软件比对
+        case 0xF001://软件比对
             if(method != 0x0a)  return -DAR_OTHERS_ERROR;
             
             complen = ActionFile(instance, id, p, buf_size, ctx, ptr_tmp);
@@ -536,7 +536,7 @@ case 0xF001://软件比对
                 memcpy(buffer, p, len1);//oad+data
                 p = p + len1;
                 p++;
-                memcpy((uint8_t*)&addr, p, 4);//sid
+                mem_swap_cpy((uint8_t*)&addr, p, 4);//sid
                 p = p + 4;
                 len2 = *p++;
                 mem_swap_cpy((uint8_t*)&txlen, p, 2);//len
