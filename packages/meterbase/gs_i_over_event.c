@@ -6,7 +6,7 @@ uint8_t test_record_ = 0;
 // 掉电事件 判断:  返回1:记录发生                0:不记录        -1:记录结束
 int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t payload[100];
     uint8_t state = false;
     int result = 0;
@@ -17,8 +17,8 @@ int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, st
     
     uint16_t RecordId           = OverCurrentAS;
 
-    int32_t* I                  = &ctrl_block->Ia;
-    uint32_t threshold          = ctrl_block->OverCurrent_threshold;
+    int32_t* I                  = &ctrl_block->current_l;
+    uint32_t threshold          = ctrl_block->OverCurrent_threshold / 10;
 
     if (threshold == 0) // 限值为0
     {

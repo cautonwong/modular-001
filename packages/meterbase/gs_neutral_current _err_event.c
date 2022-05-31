@@ -10,19 +10,19 @@
 // 掉电事件 判断:  返回1:记录发生                0:不记录        -1:记录结束
 int ZeroLineErr_event_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t payload[100];
     uint8_t state = false;
     int result = 0;
     
 
 
-    int32_t Ia = _value(ctrl_block->Ia);
-    int32_t In = _value(ctrl_block->In);    
+    int32_t Ia = _value(ctrl_block->current_l);
+    int32_t In = _value(ctrl_block->current_n);    
 
 
     uint8_t duration_para = ctrl_block->ZeroLineErrS_duration_para;
-    uint32_t threshold1 = ctrl_block->ZeroLineErrS_Current_threshold; // 电能表零线电流异常事件-电流触发下限
+    uint32_t threshold1 = ctrl_block->ZeroLineErrS_Current_threshold / 10; // 电能表零线电流异常事件-电流触发下限
     uint32_t threshold2 = ctrl_block->ZeroLineErrS_rate_threshold;    // 电能表零线电流异常事件 限值
     uint8_t *duration = &ctrl_block->ZeroLineErrS_duration;
     uint32_t *accumulate_time = &ctrl_block->ZeroLineErrS_acc_time;

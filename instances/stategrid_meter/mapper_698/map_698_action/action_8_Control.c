@@ -63,7 +63,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     if(1 != ctx->timeTag_valid){
                         return -DAR_TIME_TAG_INVALID;
                     }
-                  
+                    
                     p = p + 5;
                     mem_swap_cpy((uint8_t*)&OI, p, 4);
                     p = p + 5;

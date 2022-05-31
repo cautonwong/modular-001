@@ -808,7 +808,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
             memcpy(cache->buf_ptr + cache->rd, data, len);
         }
     }
-    ctx->apdu->wr = 1500;
+    //ctx->apdu->wr = 1500;
     __fr_send_handle(instance, pipeline, mesg);
     return 0;
 }

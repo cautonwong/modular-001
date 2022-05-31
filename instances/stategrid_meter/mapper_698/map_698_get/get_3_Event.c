@@ -229,7 +229,7 @@ int get_current_record_number_ic_24(struct instance_t* instance, uint32_t oad, u
         circular_info.mode = 0;
 
         ret = nd_log_output(instance, record_id_info.save_index, tempbuf, 1, &circular_info);
-        if (ret <= 0)
+        if (ret < 0)
         {
             *dar = DAR_OTHERS_ERROR;
             return -DAR_OTHERS_ERROR;
@@ -697,7 +697,7 @@ int get_time_status_record_one_element_ic_24(struct instance_t* instance, uint32
     circular_info.mode = 0;
 
     ret = nd_log_output(instance, record_id_info.save_index, tempbuf, 1, &circular_info);
-    if (ret <= 0)
+    if (ret < 0)
     {
         *dar = DAR_OTHERS_ERROR;
         return -DAR_OTHERS_ERROR;
@@ -978,7 +978,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
             {
                 p += 10;
             }
-            return (p - buf);
+            return 10;//(p - buf);
 
         default:
             break;

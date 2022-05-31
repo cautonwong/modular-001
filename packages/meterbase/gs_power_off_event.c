@@ -10,7 +10,7 @@
 // 掉电事件 判断:  返回1:记录发生                0:不记录        -1:记录结束
 int PowerOff_event_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t payload[100];
     int result = 0;
     uint8_t state = false;
@@ -21,15 +21,15 @@ int PowerOff_event_judge(struct instance_t* instance, struct pipeline_t* task, s
     uint16_t RecordId = PowerOffS;
     uint8_t i;
 
-    uint16_t* U[PHASE_NUM] =
+    uint32_t* U[PHASE_NUM] =
     {
-       &ctrl_block->Ua,
+       &ctrl_block->voltage_ac,
 #if (PHASE_NUM == 3 ) 
-       &ctrl_block->Ub,
-       &ctrl_block->Uc
+       &ctrl_block->voltage_ac,
+       &ctrl_block->voltage_ac
 #endif       
     };
-    uint16_t* val1;
+    uint32_t* val1;
 
 
     for (int i = 0; i < PHASE_NUM; i++)
