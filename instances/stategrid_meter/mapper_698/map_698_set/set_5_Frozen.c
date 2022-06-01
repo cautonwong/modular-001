@@ -290,7 +290,7 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
     nd_set_index(instance, DepthId, &depth_buf[0], DepthLen);
 
     //修改关联对象后 清零处理
-    ret = modify_capture_clr_pro(instance, oad);
+    ret = modify_capture_clr_pro(instance, id);
     
     dar = DAR_SUCCESS;
     return (p - buf);// 

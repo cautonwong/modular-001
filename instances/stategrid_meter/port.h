@@ -391,7 +391,7 @@ enum block_parameter_item_id_t
     MinuteFreeze8_seq       =        346, //分钟冻结记录方案8 记录序号
     HourFreeze_seq          =        347, //小时冻结  记录序号
     DayFreeze_seq           =        348, //日冻结    记录序号
-    BillFreeze_seq          =        349, //月冻结    记录序号
+    BillFreeze_seq          =        349, //结算日冻结    记录序号
     MonthFreeze_seq         =        350, //月冻结    记录序号
     YearFreeze_seq          =        351, //年冻结 冻结    记录序号 （不要求，但需占用位置）
     SeasonTabCutFreeze_seq  =        352, //时区表切换冻结冻结    记录序号

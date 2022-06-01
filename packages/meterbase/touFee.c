@@ -111,11 +111,11 @@ void FeeTable_Change(struct instance_t* instance, struct pipeline_t* pipeline)
 			switch( i )
 			{
 				case 0:
-					//HisRecord_Write( SeasonTabFroze, START );//时区表切换冻结
+					send_event_mesg_pro(instance, NULL, SeasonTabCutFreeze, NULL, 1);//时区表切换冻结
 					mbase_cb->Fee |= (F_TOUChange+F_DAYTABChange);
 					break;
 				case 1:
-					//HisRecord_Write( DayTabFroze, START );//日时段表切换冻结
+					send_event_mesg_pro(instance, NULL, DayTabCutFreeze, NULL, 1);//日时段表切换冻结
 					mbase_cb->Fee |= F_TOUChange;
 					break;
                 default:

@@ -227,7 +227,7 @@ const struct record_item_t  record_item[] =
     { FeePriceCutFreeze ,   0,                          4*4096,    2, },//  0x500A      费率电价切换冻结  
     { StepCutFreeze     ,   0,                          4*4096,    2, },//  0x500B      阶梯切换冻结
     { StepBillFreeze    ,   0,                          4*4096,    2, },//  0x5011      阶梯结算冻结
-    { InstantFreeze     ,   0,                          4*4096,    4, },//  0x5000      瞬时冻结
+    { InstantFreeze     ,   0,                          4*4096,    3, },//  0x5000      瞬时冻结
 
 };
 
@@ -1732,7 +1732,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
         }
         break;
     case RESOURCE_MAP_ACTION:
-        if(1 != pctx->timeTag_valid) return -DAR_TIME_TAG_INVALID;
+        //if(1 != pctx->timeTag_valid) return -DAR_TIME_TAG_INVALID;  //待调整
         switch (OIA1)
         {
         case 0x2://变量

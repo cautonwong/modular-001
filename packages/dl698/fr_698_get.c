@@ -167,9 +167,11 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
             ret = rsd_decode(instance, pipeline, mesg->id, &rsd_info);
             if (ret < 0)
             {
-                //p[offset] = 0; // 无记录
-                //p[offset+1] = -ret;
-                return DAR_RW_REJECT;  // 想返回dar  如何处理 ？？
+                ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+                p[cache->wr++] = 0x00; //rcsd
+                p[cache->wr++] = 0x00;//DAR
+                p[cache->wr++] = -ret;
+                return ret;  // 想返回dar  如何处理 ？？
             }
             else
             {
@@ -181,9 +183,11 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
             ret = rcsd_decode(instance, pipeline,mesg->id, rcsd_list);
             if (ret < 0)
             {
-                //p[offset] = 0; // 无记录
-                //p[offset+1] = -ret;
-                return DAR_RW_REJECT;  // 想返回dar  如何处理 ？？
+                ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+                p[cache->wr++] = 0x00; //rcsd
+                p[cache->wr++] = 0x00;//DAR
+                p[cache->wr++] = -ret;
+                return ret;  // 想返回dar  如何处理 ？？
             }
             else
             {
@@ -196,7 +200,7 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
                 ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
                 p[cache->wr++] = 0x00;//DAR
                 p[cache->wr++] = -ret;
-                return 1;
+                return ret;
             }  
             
             if ((Selector == 0) || (Selector == 1) || (Selector == 2)|| (Selector == 9))

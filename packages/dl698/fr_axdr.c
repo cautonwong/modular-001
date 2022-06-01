@@ -1125,12 +1125,16 @@ int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32
     if (rcsd_list[0] > REQ_RCSD_MAXNUM) // 请求的rcsd个数超出，返回错误 
     {
         // 待添加
-        return -1;
+        return -DAR_RW_REJECT;
     }
     else // 赋值rcsd  
     {
         if (rcsd_list[0] == 0) //全选
         {
+            if(0x50020200 == oad)
+            {
+                return -DAR_RW_REJECT;
+            }
             get_capture_list(instance, oad, rcsd_list, 3);
 
             p[cache->wr++] = rcsd_list[0];
