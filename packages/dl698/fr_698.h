@@ -15,7 +15,7 @@
 #define clr_segment(ctrl)  ((ctrl) &= 0xDF)
 #define set_segment(ctrl)  ((ctrl) |= (1<<5))
 #define get_segment_no(s)  ((s) & 0x0fff)
-#define set_segment_no(s)  ((s)=((s) & 0xfff)+1)
+#define set_segment_no(s)  ((s)=((s) & 0xfff))
 #define get_segment_type(s)  (((s)>>14)&0x03)
 #define is_confirm_segment(s)  ((((s)>>14)&0x03) == 2)
 #define is_first_segment(s)  ((((s)>>14)&0x03) == 0)

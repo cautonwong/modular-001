@@ -629,7 +629,7 @@ int __fr_segment_tx_handle(struct instance_t* instance, struct pipeline_t* pipel
     uint8_t type = 0;
     uint16_t segment_no = 0;
     uint16_t segment = 0;
-    if(is_segment_set(ctx->ctrl)){
+    if((is_segment_set(ctx->ctrl)) && (ctx->segment_tx)){
         fifoBuf_getData(fifo, apdu_rx,  2);
         handle_scrambler(instance, pipeline, mesg);
         
@@ -698,6 +698,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     if(__fr_segment_tx_handle(instance, pipeline, mesg)){
         return -1;
     }
+    ctx->segment_tx = 0;
     
     ringbuffer_clear(ctx->apdu);
     ctx->apdu_rx_offset = 0;
