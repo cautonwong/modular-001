@@ -378,7 +378,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     {
         mbase_control_block->current_n = 0;
     }   
-    
+    /*
     if(DISPLAY_KEY_GET_DIN() == 0)
     {
         key_cnt++;
@@ -396,7 +396,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     {
         meterchip_adj_self(instance, 0);
     }
-    
+    */
     //計算功率因數
     if((mbase_control_block->voltage_ac != 0) && (mbase_control_block->current_l != 0))
     {
