@@ -80,7 +80,7 @@ unsigned char CommWrite_SpecProc( struct instance_t* instance,  unsigned char* p
                     factory3.adjflag |= F_ANadj;
                 else
                     factory3.adjflag &= ~F_ANadj;
-                //meterchip_adj_self(instance, &factory3);
+                meterchip_adj_self(instance, &factory3);
                 break;
 	}
 	return 0;
