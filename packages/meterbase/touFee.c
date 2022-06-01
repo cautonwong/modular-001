@@ -39,8 +39,10 @@ unsigned int GetTotalDay( unsigned char* Addr )
    	return Day;
 }*/
 
+
 unsigned long GetTotalMin( unsigned char* Addr )
 {
+    //min,hour,day,mon,year
 	unsigned long Min,Hour,Day;
 
 	Day = GetTotalDay( Addr+2 );
@@ -77,22 +79,32 @@ unsigned char Time_Format_Check( unsigned char* Addr )
 void FeeTable_Change(struct instance_t* instance, struct pipeline_t* pipeline)
 {
 	unsigned char i,*ptr;
-	unsigned long CurrentTime,ChangeTime,addr=0; 
+	unsigned long CurrentTime,ChangeTime,addr=0;
+    unsigned int year;
     struct mbase_control_block_t* mbase_cb;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
 	ptr = (unsigned char*)&mbase_cb->SeasonTable;
-	CurrentTime = GetTotalMin( (unsigned char*)&instance->time.tm_min );
+    Buf[0] = instance->time.tm_min; //min,hour,day,mon,year
+    Buf[1] = instance->time.tm_hour;
+    Buf[2] = instance->time.tm_mday;
+    Buf[3] = instance->time.tm_mon+1;
+    Buf[4] = (unsigned char)(instance->time.tm_year+1900 - 2000);
+	CurrentTime = GetTotalMin( Buf );
 
 	for( i=0;i<2;i++ )
 	{
         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonTable_Changetime + i);
         nd_get_index(instance, addr, Buf, 7); 
+        Buf[6] = 0;
+        year = ((uint16_t)Buf[0]<<8) + Buf[1];
+        Buf[1] = (uint8_t)(year-2000);
         
-		ChangeTime = GetTotalMin( Buf );
+        mem_swap_cpy((uint8_t*)&Buf[7], (uint8_t*)&Buf[1], 5);
+		ChangeTime = GetTotalMin( (uint8_t*)&Buf[7] );//min,hour,day,mon,year
 
-		if( Time_Format_Check( Buf ) != 0 )//切换时间合法性判断
+		if(( Time_Format_Check( (uint8_t*)&Buf[4] ) ) || (Date_Format_Check((uint8_t*)&Buf[2])))//切换时间合法性判断
 			continue;
 		if( CurrentTime >= ChangeTime )
 		{
@@ -113,9 +125,24 @@ void FeeTable_Change(struct instance_t* instance, struct pipeline_t* pipeline)
 				*(ptr+i) = 1;
 			else
 				*(ptr+i) = 0;
-			//MEM_DBWrite( FeeTab_ChangeNO+i, ptr+i, 1, Mem_E2PROM );
-			memset( Buf, 0x00, 5 );
-			//MEM_DBWrite( SeasonTable_Changetime+5*i, Buf, 5, Mem_E2PROM );//切换完成后要清掉切换时间
+            
+            if(i == 0)
+            {
+                addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                            offsetof(struct mbase_control_block_t, SeasonTable));
+                nd_set_offset(instance, addr, (uint8_t*)&mbase_cb->SeasonTable, 1);//存储至EE
+            }
+            else
+            {
+                addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                            offsetof(struct mbase_control_block_t, DayTable));
+                nd_set_offset(instance, addr, (uint8_t*)&mbase_cb->DayTable, 1);//存储至EE
+            }
+            
+			memset( Buf, 0x00, 6 );
+            Buf[6] = 0xFF;
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonTable_Changetime + i);
+            nd_set_index(instance, addr, Buf, 7); 
 		}
 	}
 }
@@ -354,6 +381,10 @@ void Rtc_Prossecc(struct instance_t* instance, struct pipeline_t* pipeline)
     if(instance->time.tm_sec == 0)
     {
         mbase_cb->Fee |= F_TOUChange;
+    }
+    if(instance->time.tm_min == 0)
+    {
+        mbase_cb->Fee |= F_ChangeTmOn + F_DAYTABChange;
     }
 }
 

@@ -417,6 +417,9 @@ struct format_conversion_t
 #define		F_TOUFeeChangeTm    0x04
 #define		F_ChangeTmOn        0x08
 
+//relay
+#define     Relay_Ck_Time       500    //1秒
+
 
 extern int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_storage_id_info_t* info);
 extern int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* src, uint32_t oad, enum format_conversion_mode mode);

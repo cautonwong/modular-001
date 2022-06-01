@@ -9,10 +9,12 @@
 #include "nidavellir.h"
 #include "applications.h"
 #include "gs_record.h"
+#include "pin_function_def.h"
 
 #define     KeyPortIn           {GPIOA->OEN |=BIT2; GPIOA->IE |=BIT2;}
 #define     KeyPortCheck        (GPIOA->STS & BIT2)
 
+uint16_t relay_off_chk,relay_on_chk; //继电器状态监测
 extern uint8_t Magnetic_hold_relay_connect(void);
 extern uint8_t Magnetic_hold_relay_disconnect();
 
@@ -86,13 +88,63 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
         {
             Magnetic_hold_relay_connect();//合闸
             send_event_mesg_pro(instance, NULL, SwitchOnS, NULL, 1);
+            relay_off_chk = 0;
+            relay_on_chk = 0;
         }
         else 
         {
             Magnetic_hold_relay_disconnect();//拉闸
             send_event_mesg_pro(instance, NULL, SwitchOffS, NULL, 1);
+            relay_off_chk = 0;
+            relay_on_chk = 0;
         }
         lastswitchsta = switchon;
     }
 }
 
+
+void relay_led_ctl(struct instance_t* instance,  struct pipeline_t* pipeline)
+{
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)pipeline->ctx;
+    
+    if(ctrl_block->BackLightTmr > 0)    //全屏
+    {
+        RELAY_LED_OPEN();
+        return;
+    }
+    
+    if((mbase_control_block->current_l == 0) && (relay_off_chk >= Relay_Ck_Time))//功率为0且继电器检测为断开，拉闸灯亮
+    {
+        mbase_control_block->relay_true_sta = 1;
+    }
+    
+    if((mbase_control_block->current_l > 0) || (relay_on_chk >= Relay_Ck_Time)) //有电流或检测到继电器为合，灯灭
+    {
+        mbase_control_block->relay_true_sta = 0;
+    }
+
+    if(mbase_control_block->sta & F_RemoteRelayOnAllow) //合闸允许状态，闪烁
+    {
+        if(instance->time.tm_sec & 0x01)
+        {
+            RELAY_LED_OPEN();
+        }
+        else
+        {
+            RELAY_LED_CLOSE();
+        }
+        return;
+    }
+    
+    if(mbase_control_block->relay_true_sta)
+    {
+        RELAY_LED_OPEN();
+    }
+    else
+    {
+        RELAY_LED_CLOSE();
+    }
+    
+    
+}

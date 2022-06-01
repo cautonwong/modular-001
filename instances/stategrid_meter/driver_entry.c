@@ -4,6 +4,7 @@
 #include "time_link.h"
 #include "uart_driver.h"
 #include "pin_function_def.h"
+#include "applications.h"
 
 extern const struct driver_ops_t  eeprom_driver;
 extern const struct bus_ops_t iic_bus;
@@ -163,10 +164,23 @@ void IO_Interrupt(void)
 
 extern  uint32_t over_Imax;
 extern void Energy_Pluse_Add(void);
+extern uint16_t relay_off_chk,relay_on_chk; //继电器状态监测
 
 void timing_ftr(void)
 {
       uint8_t dly1,dly2=0;
+      
+      
+      if(RELAY_CHECK())
+      {
+         if(relay_off_chk < Relay_Ck_Time)  relay_off_chk++;
+         relay_on_chk = 0;
+      }
+      else
+      {
+         if(relay_on_chk < Relay_Ck_Time)   relay_on_chk++;
+         relay_off_chk = 0;
+      }
       
       if(over_Imax == 0x55)
       {
@@ -222,6 +236,7 @@ void timing_ftr(void)
               IO_DAT( GPIOF_DAT, 1) = 1;
           }
       }
+
 }
 
 void rs485_receive_timeout(void)

@@ -117,6 +117,8 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
           
           do_relay(instance, pipeline);
           
+          relay_led_ctl(instance, pipeline);
+          
           IOStateCheck(instance, pipeline);
 
           TouFeePro(instance, pipeline);

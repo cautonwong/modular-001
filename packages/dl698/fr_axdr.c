@@ -75,7 +75,7 @@ uint8_t axdr_len_encode(uint8_t* buf, uint16_t len)
 uint16_t axdr_get_len(const uint8_t *data)
 {
     uint16_t type_len = 0;
-    uint16_t data_len = 0;
+    uint16_t data_len = 0,total_len=0;
     uint16_t len = 0;
     uint8_t num = 0;
     uint8_t type = data[0];
@@ -92,12 +92,14 @@ uint16_t axdr_get_len(const uint8_t *data)
         data_len++;
         data = data + data_len;
         data_len = 0;
+        total_len = 0;
         while (num--)
         {
-            data_len += axdr_get_len(data);
+            data_len = axdr_get_len(data);
+            total_len = total_len + data_len;
             data = data + data_len;
         }
-        return (data_len + 2);
+        return (total_len + 2);
         break;
     case TYPE_bool:
     case TYPE_enum:

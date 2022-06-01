@@ -87,9 +87,10 @@
 
 #define  RELAY_CHECK()       *((uint32*)BITBAND_ADDR(GPIOC_STS,8))
 
-#define  RELAY_LED_OPEN()    {*((uint32*)BITBAND_ADDR(GPIOE_DAT,11)) = 1;  \
-                             *((uint32*)GPIOE_OEN) &= ~BIT(11);}
-                             
+#define  RELAY_LED_OPEN()    {*((uint32*)BITBAND_ADDR(GPIOE_DAT,12)) = 1;  \
+                             *((uint32*)GPIOE_OEN) &= ~BIT(12);}
+#define  RELAY_LED_CLOSE()   {*((uint32*)BITBAND_ADDR(GPIOE_DAT,12)) = 0;  \
+                             *((uint32*)GPIOE_OEN) &= ~BIT(12);}                             
 
 /*---------------------------------上翻页键----------------------------------*/                              
 #define DISPLAY_KEY_INPUT()     {*((uint32*)GPIOA_IE) |= BIT(2); *((uint32*)GPIOA_OEN) |= BIT(2);}

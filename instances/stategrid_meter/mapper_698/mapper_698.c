@@ -1666,6 +1666,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
     uint8_t OIA1 = get_OAD_OIA1(id);
     uint8_t h_mode = (uint8_t) (mode >> 8);
     uint8_t l_mode = (uint8_t) mode;
+    struct context_698_t* pctx = (struct context_698_t*)ctx;
     
     switch (l_mode)
 	{
@@ -1731,6 +1732,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
         }
         break;
     case RESOURCE_MAP_ACTION:
+        if(1 != pctx->timeTag_valid) return -DAR_TIME_TAG_INVALID;
         switch (OIA1)
         {
         case 0x2://变量

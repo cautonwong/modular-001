@@ -130,7 +130,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         
                         if(Date_Format_Check(timer))  return -DAR_OTHERS_ERROR;
                         if(Time_Format_Check(&timer[3])) return -DAR_OTHERS_ERROR;
-                        
+                        *(p+7) = 0xFF;
                         mbase_cb->Fee |= F_ChangeTmOn;
                         break;
 						
@@ -451,9 +451,9 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 if(p[0] != TYPE_date_time_s){
                     return -DAR_TYPE_NOT_MATCH;
                 }
-                if(check_date((p[1]<<8)+p[2], p[3], p[4], p[5], p[6], p[7]) < 0){
+/*                if(check_date((p[1]<<8)+p[2], p[3], p[4], p[5], p[6], p[7]) < 0){
                     return -DAR_OTHERS_ERROR;
-                }
+                }*/
                 p++;
                 
                 mem_swap_cpy((uint8_t*)&year2, p, 2);

@@ -96,7 +96,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
                 return (p-buf);
             }
         }
-        return -DAR_OTHERS_ERROR;
+        return -DAR_OBJECT_NOT_EXIST;
     }
     
     maxnum = sizeof(idbuf)/sizeof(idmatch);
