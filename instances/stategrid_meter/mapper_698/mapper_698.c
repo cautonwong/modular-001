@@ -1732,7 +1732,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
         }
         break;
     case RESOURCE_MAP_ACTION:
-        //if(1 != pctx->timeTag_valid) return -DAR_TIME_TAG_INVALID;  //待调整
+        if((1 != pctx->timeTag_valid) && (pctx->timeTag[0] == 1)) return -DAR_TIME_TAG_INVALID;
         switch (OIA1)
         {
         case 0x2://变量

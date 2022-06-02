@@ -859,21 +859,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
         case 0xF301://按键循显
             switch(method)
             {
-                case 0x03://下翻
-                    if(0 != p[0]){
-                        return -DAR_TYPE_NOT_MATCH;
-                    }
-                    if( mbase_cb->KeyPtr == 0 )
-                        mbase_cb->KeyPtr = mbase_cb->lcd_keydis_list_num-1;
-                    else
-                        mbase_cb->KeyPtr--;
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + mbase_cb->KeyPtr);
-                    nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
-                    mbase_cb->Page_ID = pageid;
-                    mbase_cb->KeyInv = mbase_cb->lcd_keydis_keep_sec;
-                    mbase_cb->BackLightTmr = 60;
-                    return 1;
-                case 0x04://上翻
+            case 0x03://下翻
                     if(0 != p[0]){
                         return -DAR_TYPE_NOT_MATCH;
                     }
@@ -884,7 +870,21 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + mbase_cb->KeyPtr);
                     nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
                     mbase_cb->Page_ID = pageid;
-                    mbase_cb->KeyInv = mbase_cb->lcd_keydis_keep_sec;
+                    mbase_cb->AutoInv = mbase_cb->lcd_keydis_keep_sec;
+                    mbase_cb->BackLightTmr = 60;
+                    return 1;
+            case 0x04://上翻
+                    if(0 != p[0]){
+                        return -DAR_TYPE_NOT_MATCH;
+                    }
+                    if( mbase_cb->KeyPtr == 0 )
+                        mbase_cb->KeyPtr = mbase_cb->lcd_keydis_list_num-1;
+                    else
+                        mbase_cb->KeyPtr--;
+                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + mbase_cb->KeyPtr);
+                    nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
+                    mbase_cb->Page_ID = pageid;
+                    mbase_cb->AutoInv = mbase_cb->lcd_keydis_keep_sec;
                     mbase_cb->BackLightTmr = 60;
                     return 1;
                 case 0x05://显示查看
@@ -896,10 +896,10 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     mem_swap_cpy((uint8_t*)&mbase_cb->AutoInv, p, 2);
                     p = p + 2;
                     
-                    if((mbase_cb->lcd_poweron_all_dis_time > 30) || (mbase_cb->lcd_poweron_all_dis_time == 0))
+                    if((mbase_cb->AutoInv > 30) || (mbase_cb->AutoInv == 0))
                         mbase_cb->BackLightTmr = 5;
                     else
-                        mbase_cb->BackLightTmr = mbase_cb->lcd_poweron_all_dis_time;
+                        mbase_cb->BackLightTmr = mbase_cb->AutoInv;
                     return (p-buf);
                 default:
                     break;

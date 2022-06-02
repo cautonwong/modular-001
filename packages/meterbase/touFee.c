@@ -104,6 +104,7 @@ void FeeTable_Change(struct instance_t* instance, struct pipeline_t* pipeline)
         mem_swap_cpy((uint8_t*)&Buf[7], (uint8_t*)&Buf[1], 5);
 		ChangeTime = GetTotalMin( (uint8_t*)&Buf[7] );//min,hour,day,mon,year
 
+        mbase_cb->Disp12 = 0;
 		if(( Time_Format_Check( (uint8_t*)&Buf[4] ) ) || (Date_Format_Check((uint8_t*)&Buf[2])))//切换时间合法性判断
 			continue;
 		if( CurrentTime >= ChangeTime )
@@ -144,6 +145,13 @@ void FeeTable_Change(struct instance_t* instance, struct pipeline_t* pipeline)
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonTable_Changetime + i);
             nd_set_index(instance, addr, Buf, 7); 
 		}
+        else
+        {
+            if(i == 1)  
+            {   
+                mbase_cb->Disp12 = 1;    //时段表切换时间是未来时
+            }
+        }
 	}
 }
 

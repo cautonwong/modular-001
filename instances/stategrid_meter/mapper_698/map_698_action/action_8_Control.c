@@ -31,6 +31,9 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     mbase_cb->sta &= ~F_RemoteAlarm;
                     break;
                 case 0x81://拉闸
+                    if((1 != ctx->timeTag_valid) || (ctx->timeTag[0] == 0)){
+                        return -DAR_TIME_TAG_INVALID;
+                    }
                     p = p + 5;
                     mem_swap_cpy((uint8_t*)&OI, p, 4);
                     if(OI != 0xF2050201)    return -DAR_OTHERS_ERROR;
@@ -60,7 +63,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     break;
                 case 0x82://合闸
                 case 0x83://明文合闸
-                    if(1 != ctx->timeTag_valid){
+                    if((1 != ctx->timeTag_valid) || (ctx->timeTag[0] == 0)){
                         return -DAR_TIME_TAG_INVALID;
                     }
                     
@@ -68,6 +71,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     mem_swap_cpy((uint8_t*)&OI, p, 4);
                     p = p + 5;
                     if(OI != 0xF2050201)    return -DAR_OTHERS_ERROR;
+
                     if(method == 0x83)
                     {
                         mem_swap_cpy(password, p+3, 8);//判断密码
@@ -90,7 +94,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
             switch(method)
             {
                 case 0x7F://投入保电
-                    if(1 != ctx->timeTag_valid){
+                    if((1 != ctx->timeTag_valid) || (ctx->timeTag[0] == 0)){
                         return -DAR_TIME_TAG_INVALID;
                     }
                     mbase_cb->sta |= F_RemoteRelayOn;

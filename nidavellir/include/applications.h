@@ -224,6 +224,7 @@ struct mbase_control_block_t
     uint8_t   DayTable;//日表主副表序号
     uint8_t   TouPriceTable;//费率电价表主副表序号
     uint8_t   StepTable;//阶梯表主副表序号
+    uint8_t   Disp12;   //
     
 
     uint16_t  trigger_insfreeze_delay_sec; //触发瞬时冻结 延时时间 sec  FFFF无效

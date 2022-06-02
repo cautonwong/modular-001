@@ -415,13 +415,13 @@ unsigned char display_id_to_oad(unsigned short id, unsigned char *oad)
     switch (idh)
     {
         case 0x0E://组合
-            oad2 = 0x00000200 + idl;
+            oad2 = 0x00000400 + idl;
             break;
         case 0x0C://正向
-            oad2 = 0x00100200 + idl;
+            oad2 = 0x00100400 + idl;
             break;
         case 0x0D://反向
-            oad2 = 0x00200200 + idl;
+            oad2 = 0x00200400 + idl;
             break;
         default:
             return 1;
@@ -461,20 +461,20 @@ unsigned short display_oad_to_id(unsigned char *oad, unsigned char len)
             }
         }
         memcpy((unsigned char*)&oad2, (unsigned char*)&oad, 4);
-        if(((oad2 & 0xFFFFFF00) != 0x00000200) && ((oad2 & 0xFFFFFF00) != 0x00100200) && ((oad2 & 0xFFFFFF00) != 0x00200200))   return 0;
+        if(((oad2 & 0xFFFFFF00) != 0x00000400) && ((oad2 & 0xFFFFFF00) != 0x00100400) && ((oad2 & 0xFFFFFF00) != 0x00200400))   return 0;
         idl = (unsigned char)(oad2 & 0x000000FF);
         if(idl > 0x0c)  return 0;
         id |= idl;
         oad2 = oad2 & 0xFFFFFF00;
         switch(oad2)
         {
-            case 0x00000200:
+            case 0x00000400:
                 id |= 0xE000;
                 break;
-            case 0x00100200:
+            case 0x00100400:
                 id |= 0xC000;
                 break;
-            case 0x00200200:
+            case 0x00200400:
                 id |= 0xD000;
                 break;  
             default:
@@ -491,20 +491,20 @@ unsigned short display_oad_to_id(unsigned char *oad, unsigned char len)
             if(idmid > 0x18)    return 0;
             id |= (((unsigned short)(idmid)) << 4);
             memcpy((unsigned char*)&oad2, (unsigned char*)(oad+4), 4);
-            if(((oad2 & 0xFFFFFF00) != 0x00000200) && ((oad2 & 0xFFFFFF00) != 0x00100200) && ((oad2 & 0xFFFFFF00) != 0x00200200))   return 0;
+            if(((oad2 & 0xFFFFFF00) != 0x00000400) && ((oad2 & 0xFFFFFF00) != 0x00100400) && ((oad2 & 0xFFFFFF00) != 0x00200400))   return 0;
             idl = (unsigned char)(oad2 & 0x000000FF);
             if(idl > 0x0c)  return 0;
             id |= idl;
             oad2 = oad2 & 0xFFFFFF00;
             switch(oad2)
             {
-                case 0x00000200:
+                case 0x00000400:
                     id |= 0xE000;
                     break;
-                case 0x00100200:
+                case 0x00100400:
                     id |= 0xC000;
                     break;
-                case 0x00200200:
+                case 0x00200400:
                     id |= 0xD000;
                     break;  
                 default:
@@ -515,7 +515,6 @@ unsigned short display_oad_to_id(unsigned char *oad, unsigned char len)
     }
     return id;
 }
-
 
 //0-F显示表格
 const unsigned char  NumSeg[16] = 
@@ -921,6 +920,11 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
               Lcdcon[15] |= DS_Chr_TouTable1;
 			else 
               Lcdcon[14] |= DS_Chr_TouTable2;
+            if( mbase_control_block->Disp12 == 1)
+            {
+                Lcdcon[15] |= DS_Chr_TouTable1;
+                Lcdcon[14] |= DS_Chr_TouTable2;
+            }
 		}
 
 		//分时费率指示
@@ -998,14 +1002,23 @@ void Disp_Value( unsigned short id, unsigned char *data, unsigned int Info )
         case 0xB006://客户号低8位
             memcpy( (unsigned char*)&Buffer, (unsigned char*)(data+2), 4 );
             break;
+        case 0xA012:
+        case 0xA013:
+        case 0xA00B:
+        case 0xA00A:
+        case 0xA009:
+        case 0xA006:
+        case 0xA003:
+            mem_swap_cpy( (unsigned char*)Buffer, (unsigned char*)data, Len );
+            break;
         default:
-            memcpy( (unsigned char*)&Buffer, (unsigned char*)data, Len );
+            memcpy( (unsigned char*)Buffer, (unsigned char*)data, Len );
             break;
         
     }
     if( Info & DispData_HEX )
 	{
-        mem_swap_cpy( (unsigned char*)&Tmp, (unsigned char*)data, Len );
+        mem_swap_cpy( (unsigned char*)&Tmp, (unsigned char*)Buffer, Len );
         HEX_BCD( Buffer, Tmp );
 	}
 	else
