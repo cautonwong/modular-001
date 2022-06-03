@@ -275,6 +275,7 @@ struct context_698_t
     uint16_t segment_rx; 
     uint16_t segment;
     uint16_t segment_no;
+    uint8_t resp_choice;
     
     uint8_t timeTag_valid;
     uint8_t timeTag[11]; //date_time_s + TI
