@@ -14,6 +14,34 @@ extern int fr_handle_report_response(struct instance_t* instance, struct pipelin
 extern void EventOut_698_check(struct instance_t* instance);
 extern void report_3320list_2015state_clear(struct instance_t* instance);
 
+#if 1
+uint8_t rep_data[72] = {
+0x88, 0x02, 0x00, 0x01, 0x30, 0x11, 0x02, 0x01, 0x07, 0x00, 
+0x20, 0x22, 0x02, 0x00, 0x00, 0x20, 0x1e, 0x02, 0x00, 0x00, 
+0x20, 0x20, 0x02, 0x00, 0x00, 0x20, 0x24, 0x02, 0x00, 0x00, 
+0x33, 0x00, 0x02, 0x00, 0x00, 0x00, 0x10, 0x22, 0x01, 0x00, 
+0x00, 0x20, 0x22, 0x01, 0x01, 0x01, 0x06, 0x00, 0x00, 0x00, 
+0x04, 0x1c, 0x07, 0xe5, 0x04, 0x18, 0x14, 0x27, 0x20, 0x00, 
+0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 
+0x00, 0x00
+};
+
+int _fr_active_report_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t get_data)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    if(get_data == 0){
+        return 72;
+    }
+    if(get_data == 1){
+        ringbuffer_clear(ctx->apdu);
+        fifoBuf_putData(ctx->apdu, rep_data, 72);
+        return 72;
+    }
+}
+#else
+#define _fr_active_report_pro  fr_active_report_pro
+#endif
+
 
 //跟随上报相关
 int fr_follow_report_optional(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -1174,18 +1202,22 @@ int fr_active_report_pro(struct instance_t* instance, struct pipeline_t* pipelin
 }
 
 
-
 int active_report_handle(struct instance_t* instance, struct pipeline_t* p_pipeline, struct message_t* mesg)
 {
     struct pipeline_t pipeline = {0};
     uint8_t buf[4];
-    int ret = fr_active_report_pro(instance, p_pipeline, mesg, 0);//只判断是否有主动上报
-    if(ret > 0){
-        //pipeline.id
+    int len = _fr_active_report_pro(instance, p_pipeline, mesg, 0);//只判断是否有主动上报
+    if(len > 0 ){
+        buf[0] = 0x88;
+        buf[1] = 0x01;
+        buf[2] = len>>8;
+        buf[3] = len;        
         mesg->len = 4;
-        mesg->to = pid_tx_698;
-        pipeline.id = pid_rx_698;
         mesg->payload = buf;
+        mesg->to = pid_tx_698;
+        mesg->from = pid_tx_698;
+        pipeline.id = pid_rx_698;
+
         send_mesg(instance, &pipeline, mesg);
     }
 }
@@ -1193,7 +1225,7 @@ int active_report_handle(struct instance_t* instance, struct pipeline_t* p_pipel
 
 int get_report_apdu(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-     int ret = fr_active_report_pro(instance, pipeline, mesg, 1); //获取出主动上报内容  存instance->apdu_cache   
+    return _fr_active_report_pro(instance, pipeline, mesg, 1);
 }
 
 

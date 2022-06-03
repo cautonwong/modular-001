@@ -99,7 +99,6 @@ int fr_sw_rtc(struct instance_t* instance, struct pipeline_t* pipeline, struct m
             //active_report_handle(instance, NULL, mesg);
         }
     }
-
     return 0;
 }
 
@@ -439,14 +438,16 @@ int recv_mesg_v2(struct instance_t* instance, struct pipeline_t* pipeline, struc
                 check = nd_get_crc16((uint8_t*)mesg, sizeof(struct message_t) - 2);
                 ret = MESG_V2_ERR_CHECK;
                 if (check == mesg->check){
+                    ret = MESG_V2_OK;
                     if ((mesg->len > 0) && (mesg->payload) && (payload)){
-                        if(mesg->len < max_len){
+                        ret = MESG_V2_HEAD_PAYLOAD_EXT;                        
+                        if(mesg->len <= max_len){
                             fifoBuf_getData(pipeline->in_queue, payload, mesg->len); 
                             ret = MESG_V2_HEAD_PAYLOAD;
                         }
-                        ret = MESG_V2_HEAD_PAYLOAD_EXT;
+                    }else{
+                        ret = MESG_V2_HEAD;
                     }
-                    ret = MESG_V2_HEAD;
                 }
             }
         }

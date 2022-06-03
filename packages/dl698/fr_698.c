@@ -320,14 +320,6 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
     case ACTION_Request:
         offset = get_SET_and_ACTION_Request_len(instance, pipeline, mesg);
         break;
-
-    case REPORT_Response:
-#if 0
-        list = *p;
-        len = list * 4 + 1;
-        p += len;
-#endif
-        break;
     default:
         return 1;
     }
@@ -930,46 +922,33 @@ int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
 
 int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
+    struct mbase_control_block_t* mbase_cb;
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo_out = (struct fifo_t*)pipeline->out_queue;
-#if WIN32
-    struct fifo_t* fifo_in = (struct fifo_t*)pipeline->in_queue;
-#endif
     struct fifo_t* cache = ctx->apdu;
-
+    uint8_t payload[4];
 
     //client  或者 主动上报 或者 延时读取发送
-    if (recv_mesg_v2(instance, pipeline, mesg, NULL, 0)){
-#if WIN32
-        if ((TEST_CASE_Request == mesg->ctrl) && (TEST_CASE_ID == mesg->id)){
-            cache->wr = 0;//临时清0
-            cache->rd = 0;
-            fifoBuf_getData(fifo_in, cache->buf_ptr + cache->wr, mesg->len);
-            fifoBuf_putData(fifo_out, cache->buf_ptr + cache->wr, mesg->len);
-            return 0;
-        }
-#endif
-        mesg->len -= 4;
-        ctx->ctrl = 0x43;
+    if (recv_mesg_v2(instance, pipeline, mesg, payload, 4) >= MESG_V2_OK){
+
+        ctx->ctrl = 0x83;        
+        ctx->CA = 0x00;
         ctx->SA = 0x05;
         ctx->addr[0] = 0x08;
-        ctx->CA = 0x00;
-        fifoBuf_putByte(cache, mesg->ctrl);//05
-        fifoBuf_putByte(cache, 0x01);//01
-        fifoBuf_putByte(cache, ctx->PIID); 
-
-        ringbuffer_putU32(cache, mesg->id);
-        mesg->len = 7;
-        ringbuffer_putU32(cache, 0);
-        mesg->len += 1;
-
-        fifoBuf_getData(fifo_out, cache->buf_ptr + cache->wr, mesg->len);
-        cache->wr += mesg->len;
-        
-
-        //区分  上报ID和上报内容
+        memcpy(ctx->addr, mbase_cb->tsa, SA_LEN(ctx->SA) + 1);
+        mesg->from = pid_tx_698;
+        mesg->len = (payload[2]<<8) + payload[3] + 2;
         fr_pack_698_head(instance, pipeline, mesg);
-        fr_pack_698_apdu(instance, pipeline, mesg);
+        if(mesg->len){
+            if(get_report_apdu(instance, pipeline, mesg) > 0){                
+                fr_pack_698_apdu(instance, pipeline, mesg);
+                if(0 == fr_follow_report_optional(instance, pipeline, mesg)){
+                    fifoBuf_putByte(cache, 0);
+                }
+                fifoBuf_putByte(cache, 0);
+            }
+        }
         fr_pack_698_tail(instance, pipeline, mesg);
     }
 
