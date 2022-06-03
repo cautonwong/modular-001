@@ -265,6 +265,8 @@ struct context_698_t
     uint8_t len_unit;
     uint8_t service;
     uint8_t choice;
+    uint8_t resp_choice;
+    
     uint16_t fcs;
     uint16_t hcs;
     uint16_t min_len;//发送时和接收时的报文总长度

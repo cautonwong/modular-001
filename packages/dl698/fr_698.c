@@ -271,7 +271,7 @@ int fr_pack_698_tail(struct instance_t* instance, struct pipeline_t* pipeline, s
     return 1;
 }
 
-int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+static void __fr_rx_698_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
@@ -282,6 +282,12 @@ int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, stru
     tail = fifoBuf_getByte(ififo);
     //请排查消耗数据map长度是否正确
     assert(tail == 0x16);
+}
+
+int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    __fr_rx_698_check(instance, pipeline, mesg);
+
     fr_pack_698_head(instance, pipeline, mesg);
     if(mesg->len)
         fr_pack_698_apdu(instance, pipeline, mesg);
@@ -432,7 +438,6 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
         return 0;
     }
 
-    //ctx->channel = pipeline->id;
     switch(pipeline->id)
     {
         case pid_ir_rx_698: 
@@ -675,11 +680,9 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t data[8]={0};
     struct fifo_t* cache = ctx->apdu;
-    
     int err_no = 0;
     uint8_t service = 0;
 
-    
     //协议一致性判断和apdu合法判断
     if(0 == fr_pack_698_check(instance, pipeline, mesg)){
         fifoBuf_removeData(fifo, ctx->min_len + 2);
@@ -691,7 +694,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
         return -1;
     }
     ctx->segment_tx = 0;
-    
+    ctx->resp_choice = 0;
     ringbuffer_clear(ctx->apdu);
     ctx->apdu_rx_offset = 0;
     if(is_segment_set(ctx->ctrl)){
@@ -801,8 +804,13 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
             memcpy(cache->buf_ptr + cache->rd, data, len);
         }
     }
-    //ctx->apdu->wr = 1500;
-    __fr_send_handle(instance, pipeline, mesg);
+
+    if( (0 == get_addr_type(ctx->SA)) || 
+        ((1 == get_addr_type(ctx->SA)) && (0 == ctx->resp_choice)) ){
+        __fr_send_handle(instance, pipeline, mesg);
+        return 0;
+    }
+    __fr_rx_698_check(instance, pipeline, mesg); 
     return 0;
 }
 
