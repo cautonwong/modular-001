@@ -108,7 +108,7 @@ void relay_led_ctl(struct instance_t* instance,  struct pipeline_t* pipeline)
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)pipeline->ctx;
     
-    if(ctrl_block->BackLightTmr > 0)    //全屏
+    if(mbase_control_block->Page_ID == 0xFFFF)    //全屏
     {
         RELAY_LED_OPEN();
         return;
@@ -146,5 +146,28 @@ void relay_led_ctl(struct instance_t* instance,  struct pipeline_t* pipeline)
         RELAY_LED_CLOSE();
     }
     
+    /******************** 误动作检测 ***************/
+    if(switchon == 0) //拉闸状态下，检测到继电器合闸或有电流，则误动作
+    {
+        if((mbase_control_block->relay_true_sta == 0) || (mbase_control_block->current_l > MIN_CURRENT))   //继电器状态合或电流大于启动电流
+        {
+            mbase_control_block->SwitchErrS_status = 1; //误动作
+        }
+        else
+        {
+            mbase_control_block->SwitchErrS_status = 0; 
+        }
+    }
+    else    //合闸状态下，检测到继电器断开
+    {
+        if(mbase_control_block->relay_true_sta == 1)
+        {
+            mbase_control_block->SwitchErrS_status = 1; //误动作
+        }
+        else
+        {
+            mbase_control_block->SwitchErrS_status = 0; 
+        }
+    }
     
 }

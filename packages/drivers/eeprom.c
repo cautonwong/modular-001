@@ -18,7 +18,7 @@
 
 static uint8    eeprom_err_cnts = 0;
 static uint16    eeprom_operate_cnts = 0;
-
+uint8   DEVICE_ERR = 0;//BIT0(ESAM),BIT1(EEPROM)
 
 
 static uint8 send_device_addr(uint32 device_addr , const struct bus_ops_t *iic_ops)
@@ -306,6 +306,7 @@ int eeprom_read_chk(const struct dev_info_t* dev, uint32_t addr, uint16_t len, v
         return false;
     }
 
+    DEVICE_ERR &= ~BIT1;
     for (errcnt = 0; errcnt < 8; errcnt++)
     {
         if (eeprom_read(physics_addr, src, len, dev) == false)
@@ -320,6 +321,7 @@ int eeprom_read_chk(const struct dev_info_t* dev, uint32_t addr, uint16_t len, v
 
     if (errcnt >= 8)
     {
+        DEVICE_ERR |= BIT1;
         return false;
     }
     return true;
@@ -336,7 +338,7 @@ int eeprom_write_chk(const struct dev_info_t* dev, uint32_t addr, uint16_t len, 
     {
         return false;
     }
-
+    DEVICE_ERR &= ~BIT1;
     for (errcnt = 0; errcnt < 8; errcnt++)
     {
         if (errcnt != 0)
@@ -356,6 +358,7 @@ int eeprom_write_chk(const struct dev_info_t* dev, uint32_t addr, uint16_t len, 
 
     if (errcnt == 8)
     {
+        DEVICE_ERR |= BIT1;
         return false;
     }
 

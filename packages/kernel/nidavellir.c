@@ -8,6 +8,8 @@
 #define AC_POWER_OFF 0x55
 #endif 
 
+#include "pin_function_def.h"
+
 char* get_pipeline_name(struct instance_t* instance, pid_t pipeline_id)
 {
     struct recipe_t* recipe = instance->recipe;
@@ -105,7 +107,7 @@ int fr_sw_rtc(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 
 int fr_sw_key(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-
+    uint8_t keydly=0;
     if (fifoBuf_getUsed(&instance->pipe_key) > 0)
     {
         uint8_t byte = fifoBuf_getByte(&instance->pipe_key);
@@ -119,12 +121,25 @@ int fr_sw_key(struct instance_t* instance, struct pipeline_t* pipeline, struct m
             if(instance->ac_power_statue == AC_POWER_ON)
             {
                 mesg->to = pid_meter_base;
+                mesg->ctrl = MSG_PAGE_KEY_UP;
             }
             else
             {
-                mesg->to = pid_lowpower_wakeup;
+                for(keydly=0; keydly<keydlymax; keydly++)
+                {
+                    if(DISPLAY_KEY_GET_DIN() == 1)    //消抖，按键抬起的时候不进入唤醒
+                    {
+                        keydly = 0;
+                        return 0;
+                    }
+                }
+                
+                if(keydly >= keydlymax)
+                {
+                    mesg->to = pid_lowpower_wakeup;
+                    mesg->ctrl = MSG_PAGE_KEY_UP;
+                }
             }
-            mesg->ctrl = MSG_PAGE_KEY_UP;
             mesg->id = 0x0000001;
             mesg->len = 0;
             send_mesg(instance, NULL, mesg);

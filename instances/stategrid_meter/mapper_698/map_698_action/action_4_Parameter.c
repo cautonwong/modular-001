@@ -1,5 +1,6 @@
 #include "nidavellir.h"
 #include "fr_698.h"
+#include "pin_function_def.h"
 #ifndef WIN32
 #include "gs_record.h"
 #endif // !WIN32
@@ -56,7 +57,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
     uint8_t *p = buf;
     int ret;
     uint8_t Hour, Min, Sec;
-    uint32_t Temp32A,Temp32B,Temp32C;
+    uint32_t Temp32A,Temp32B,Temp32C,s_index;
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
     method = (unsigned char)((id & 0x0000FF00) >> 8);    //方法
@@ -78,31 +79,38 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
         case 0x4000:
             if(method == 127)//广播校时
             {
-                uint8_t timer[7];
+                uint8_t timer_set[7],timer[7],time_js[7],timeout=0,year;
+                RELAY_LED_OPEN();
                 if( 0x1C != *p++ )
                 {
                     return -DAR_TYPE_NOT_MATCH;	//类型不匹配
                 }
                 else
                 {
-                  /*
-                    if(Security_Type == 0x01)
+                    if(pctx->security_choice == 0x01)
                     {
-                        if(Security_Mode == 0x80) Uart[Ch].Buf[ 8] = 0x88; //密文+SID_MAC广播校时
-                        else Uart[Ch].Buf[ 8] = 0x89;//密文+SID广播校时(程序不支持)
+                        if( pctx->verification_choice != AUTH_SID_MAC) //密文+SID广播校时(程序不支持)
+                        {
+                            return -DAR_UNAUTHORIZED;
+                        }
                     }
-                    else if(Security_Type == 0x00) Uart[Ch].Buf[ 8] = 0x89; //明文广播校时(带安全)(程序不支持)
-                    else Uart[Ch].Buf[ 8] = 0x08;
-*/
-                    timer[0] = *(p+3); //day
-                    timer[1] = *(p+2); //month
-                    timer[3] = *(p+4);  //hour
-                    timer[4] = *(p+5);  //min
-                    timer[5] = *(p+6);  //sec
-                    if(Time_Format_Check(&timer[3]) || Date_Format_Check(timer))  return -DAR_OTHERS_ERROR;  //时间非法
+                    else if(pctx->security_choice == 0x00)  //明文广播校时(带安全)(程序不支持)
+                    {
+                        return -DAR_UNAUTHORIZED;
+                    }
+
+                    timer_set[0] = *(p+3); //day
+                    timer_set[1] = *(p+2); //month
+                    timer_set[3] = *(p+4);  //hour
+                    timer_set[4] = *(p+5);  //min
+                    timer_set[5] = *(p+6);  //sec
+                    if(Time_Format_Check(&timer_set[3]) || Date_Format_Check(timer_set))  return -DAR_OTHERS_ERROR;  //时间非法
                     
-                    //if()//当日已校时且是明文校时
-                            
+                    if((pctx->security_choice == 0x00) && (mbase_cb->boardadjtime == 0xAA))//当日已校时且是明文校时
+                    {
+                        return -DAR_UNAUTHORIZED;
+                    }
+                    
                     Hour = ((mbase_cb->Limit_T_Max)/60)/60;
                     Min = ((mbase_cb->Limit_T_Max)/60)%60;
                     Sec = (mbase_cb->Limit_T_Max)%60;
@@ -114,27 +122,75 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
 
                     Temp32A = GetTotalSec(timer);   //当前时间
                     
-                    timer[0] = *(p+6);  //sec
-                    timer[1] = *(p+5);  //min
-                    timer[2] = *(p+4);  //hour
-                    timer[3] = *(p+3);  //day
-                    timer[4] = *(p+2);  //month
+                    timer_set[0] = *(p+6);  //sec
+                    timer_set[1] = *(p+5);  //min
+                    timer_set[2] = *(p+4);  //hour
+                    timer_set[3] = *(p+3);  //day
+                    timer_set[4] = *(p+2);  //month
                     temp = *p;
                     temp = (temp << 8) + *(p+1);
-                    timer[5] = (uint8_t)(temp - 2000);
-                    Temp32B = GetTotalSec(timer);	//设置时间
+                    timer_set[5] = (uint8_t)(temp - 2000);
+                    Temp32B = GetTotalSec(timer_set);	//设置时间
                             
                     if( Temp32A >= Temp32B ) Temp32C= Temp32A-Temp32B;
                     else Temp32C = Temp32B-Temp32A;
-                    /*
-                    if( Uart[Ch].Buf[8] == 0x08 )	//明文广播校时
-                    {
                     
+                    if(pctx->security_choice != 0x01)	//明文广播校时
+                    {
+                        //------ 广播校时不允许在跨天 -------
+                        if(timer_set[3] != timer[3])    return -DAR_UNAUTHORIZED;
+                        
+                        //最小校时偏差：小于此范围所有校时均不响应，包括明文广播校时、密文广播校时，默认60秒；
+                        //最大校时偏差：超过此范围的明文广播校时不响应，密文广播校时响应，默认300秒。
+                        if(Temp32C < mbase_cb->Limit_T_Min)  return -DAR_UNAUTHORIZED;
+                        
+                        if(Temp32C > mbase_cb->Limit_T_Max)  
+                        {
+                            //记录时钟故障(时钟非法)
+                            return -DAR_UNAUTHORIZED;
+                        }
+                        //------ 不允许在结算日的±5min内广播校时 -------
+                        for(i=0; i<3; i++)
+                        {
+                            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
+                            nd_get_index(instance, s_index, (uint8_t*)&time_js[0], 2);
+                            time_js[2] = time_js[1];
+                            time_js[3] = time_js[0];
+                            time_js[0] = 0;//sec
+                            time_js[1] = 0;//min
+                            time_js[4] = timer[4];//month
+                            time_js[5] = timer[5];//year
+                            Temp32C = GetTotalSec(time_js);
+                            if( ((Temp32A >= Temp32C)&&(Temp32C >= Temp32B)) || ((Temp32A <= Temp32C)&&(Temp32C <= Temp32B)) )
+                            {
+                                timeout = 1;
+                                break;
+                            }
+                        }
+                        if(timeout == 1)    return -DAR_UNAUTHORIZED;
+                        
                     }
-                    else
+                    else    //密文广播校时
                     {
+                        //最小校时偏差：小于此范围所有校时均不响应，包括明文广播校时、密文广播校时，默认60秒；
+                        if(Temp32C < mbase_cb->Limit_T_Min)  return -DAR_UNAUTHORIZED;
+                    }
                     
-                    }*/
+                    mem_swap_cpy((uint8_t*)&oad, p, 2);
+                    year = oad - 2000;
+                    p = p + 2;
+                    timer_set[5] = BYTE_BCD(year);//年
+                    timer_set[4] = BYTE_BCD(*p++);//月
+                    timer_set[3] = BYTE_BCD(*p++);//日
+                    timer_set[2] = BYTE_BCD(*p++);//时
+                    timer_set[1] = BYTE_BCD(*p++);//分
+                    timer_set[0] = BYTE_BCD(*p++);//秒
+                    timer_set[6] = GetWeek(&timer[0]);
+                    write_mcu_rtc(0, timer_set, 7);
+                    read_mcu_rtc(0x00, instance);
+                    mbase_cb->boardadjtime = 0xAA;
+                    
+                    return 8;
                 }
             }
             else 

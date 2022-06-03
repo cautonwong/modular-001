@@ -12,7 +12,7 @@
 #include "type_def.h"
 #include "lib_conf.h"
 #include "cpu_surport.h"
-
+#include "pin_function_def.h"
 
 
 #define IS_ACPOWER_OFF  1
@@ -90,12 +90,26 @@ void NMI_Handler(void)
 * Return         : None
 *******************************************************************************/
 extern void test_pin_turn(void);
-void SysTick_Handler(void)
+extern uint16_t relay_off_chk,relay_on_chk; //继电器状态监测
+void SysTick_Handler(void) //10ms
 {
     if(isr[IRQ_SYSTICK])
     {
         isr[IRQ_SYSTICK]();
     }
+    
+    if(RELAY_CHECK())
+    {
+         if(relay_off_chk < Relay_Ck_Time)  relay_off_chk++;
+         relay_on_chk = 0;
+    }
+    else
+    {
+         if(relay_on_chk < Relay_Ck_Time)   relay_on_chk++;
+         relay_off_chk = 0;
+    }
+      
+    
 }
 
 //¶¨Ê±Æ÷

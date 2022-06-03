@@ -1,6 +1,7 @@
 #include "nidavellir.h"
 #include "applications.h"
 #include "fr_698.h"
+#include "pin_function_def.h"
 
 //bit0~bit15
 //MeterRun1
@@ -30,11 +31,7 @@
 #define		Status_Poweroff	    0x0400  //bit5
 #define		Status_Open		    0x0040  //bit9
 
-void Check_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
-{
-    //开盖键
-}
-
+extern uint8_t DEVICE_ERR;
 
 void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
 {
@@ -43,12 +40,12 @@ void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     /***************** 运行状态字1.2 *****************/
-	if( 1 ) //电池电压低
+	if( mbase_cb->voltage_battery < 300 ) //电池电压低
 		mbase_cb->run_state[1] |= Status_BatLow;
 	else
 		mbase_cb->run_state[1] &= ~Status_BatLow;
 	
-	if( 1 ) //有功功率反向
+	if( mbase_cb->power_dir == 1 ) //有功功率反向
 	{
 		mbase_cb->run_state[1] |= Status_Reverse;
 		mbase_cb->run_state[2] |= Status_Negative;
@@ -59,34 +56,34 @@ void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
 		mbase_cb->run_state[2] &= ~Status_Negative;
 	}
 	
-	if( 1 ) //控制回路错误
+	if (true == get_activeflag(instance, SwitchErrS)) //控制回路错误
 		mbase_cb->run_state[1] |= Status_RelayErr;
 	else
 		mbase_cb->run_state[1] &= ~Status_RelayErr;
 	
-	if( 1 ) //ESAM错误
+	if( mbase_cb->esam_chip_abnormal == EVENT_SET ) //ESAM错误
 		mbase_cb->run_state[1] |= Status_EsamErr;
 	else
 		mbase_cb->run_state[1] &= ~Status_EsamErr;
 	
-	if( 1 ) //存储器故障
+	if( DEVICE_ERR & BIT1 ) //存储器故障
 		mbase_cb->run_state[1] |= Status_E2promErr;
 	else
 		mbase_cb->run_state[1] &= ~Status_E2promErr;
 	
-	if( 1 ) //时钟故障
+	if( mbase_cb->RTCErrS_status == 1 ) //时钟故障
 		mbase_cb->run_state[1] |= Status_ClockErr;
 	else
 		mbase_cb->run_state[1] &= ~Status_ClockErr;
 	
 
     /***************** 运行状态字4 *****************/
-	if( 1)  //过流
+	if (true == get_activeflag(instance, OverCurrentAS))  //过流
 		mbase_cb->run_state[4] |= Status_ImaxOver;
 	else
 		mbase_cb->run_state[4] &= ~Status_ImaxOver;
     
-	if( 1 ) //有功功率反向
+	if( mbase_cb->power_dir == 1 ) //有功功率反向
 		mbase_cb->run_state[4] |= Status_Rev;
 	else
 		mbase_cb->run_state[4] &= ~Status_Rev;
@@ -118,7 +115,7 @@ void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
 	else
 	   	mbase_cb->run_state[3] &= ~Status_RelayCmd;
     
-	if( 1 ) //继电器状态
+	if( RELAY_CHECK() == 1) //继电器状态
 		mbase_cb->run_state[3] |= Status_RelayOff;
 	else 
 		mbase_cb->run_state[3] &= ~Status_RelayOff;
@@ -129,12 +126,12 @@ void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
     
     
     /***************** 运行状态字7 *****************/
-	if(1)   //开表盖
+	if (true == get_activeflag(instance, CoverOpenS))   //开表盖
 		mbase_cb->run_state[7] |= Status_Open;
 	else
 		mbase_cb->run_state[7] &= ~Status_Open;
     
-    if(1)   //掉电
+    if (true == get_activeflag(instance, PowerOffS))   //掉电
 		mbase_cb->run_state[7] |= Status_Poweroff;
 	else
 		mbase_cb->run_state[7] &= ~Status_Poweroff;

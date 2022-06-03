@@ -644,6 +644,11 @@ void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
     
 	mbase_control_block->AutoPtr = 0xFF;
 	mbase_control_block->Page_ID = 0xFFFF;
+    
+    mbase_control_block->KeyPtr = 0;
+    mbase_control_block->KeyInv = 0;
+    mbase_control_block->Key = 0;
+    
 }
 
 /***********************************************************************/
