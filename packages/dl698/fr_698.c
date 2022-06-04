@@ -271,7 +271,7 @@ int fr_pack_698_tail(struct instance_t* instance, struct pipeline_t* pipeline, s
     return 1;
 }
 
-int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+static void __fr_rx_698_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
@@ -282,6 +282,12 @@ int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, stru
     tail = fifoBuf_getByte(ififo);
     //请排查消耗数据map长度是否正确
     assert(tail == 0x16);
+}
+
+int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    __fr_rx_698_check(instance, pipeline, mesg);
+
     fr_pack_698_head(instance, pipeline, mesg);
     if(mesg->len)
         fr_pack_698_apdu(instance, pipeline, mesg);
@@ -319,14 +325,6 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
     case SET_Request:
     case ACTION_Request:
         offset = get_SET_and_ACTION_Request_len(instance, pipeline, mesg);
-        break;
-
-    case REPORT_Response:
-#if 0
-        list = *p;
-        len = list * 4 + 1;
-        p += len;
-#endif
         break;
     default:
         return 1;
@@ -440,7 +438,6 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
         return 0;
     }
 
-    //ctx->channel = pipeline->id;
     switch(pipeline->id)
     {
         case pid_ir_rx_698: 
@@ -683,11 +680,9 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t data[8]={0};
     struct fifo_t* cache = ctx->apdu;
-    
     int err_no = 0;
     uint8_t service = 0;
 
-    
     //协议一致性判断和apdu合法判断
     if(0 == fr_pack_698_check(instance, pipeline, mesg)){
         fifoBuf_removeData(fifo, ctx->min_len + 2);
@@ -699,7 +694,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
         return -1;
     }
     ctx->segment_tx = 0;
-    
+    ctx->resp_choice = 0;
     ringbuffer_clear(ctx->apdu);
     ctx->apdu_rx_offset = 0;
     if(is_segment_set(ctx->ctrl)){
@@ -809,8 +804,13 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
             memcpy(cache->buf_ptr + cache->rd, data, len);
         }
     }
-    //ctx->apdu->wr = 1500;
-    __fr_send_handle(instance, pipeline, mesg);
+
+    if( (0 == get_addr_type(ctx->SA)) || 
+        ((1 == get_addr_type(ctx->SA)) && (0 == ctx->resp_choice)) ){
+        __fr_send_handle(instance, pipeline, mesg);
+        return 0;
+    }
+    __fr_rx_698_check(instance, pipeline, mesg); 
     return 0;
 }
 
@@ -930,46 +930,33 @@ int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
 
 int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
+    struct mbase_control_block_t* mbase_cb;
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo_out = (struct fifo_t*)pipeline->out_queue;
-#if WIN32
-    struct fifo_t* fifo_in = (struct fifo_t*)pipeline->in_queue;
-#endif
     struct fifo_t* cache = ctx->apdu;
-
+    uint8_t payload[4];
 
     //client  或者 主动上报 或者 延时读取发送
-    if (recv_mesg_v2(instance, pipeline, mesg, NULL, 0)){
-#if WIN32
-        if ((TEST_CASE_Request == mesg->ctrl) && (TEST_CASE_ID == mesg->id)){
-            cache->wr = 0;//临时清0
-            cache->rd = 0;
-            fifoBuf_getData(fifo_in, cache->buf_ptr + cache->wr, mesg->len);
-            fifoBuf_putData(fifo_out, cache->buf_ptr + cache->wr, mesg->len);
-            return 0;
-        }
-#endif
-        mesg->len -= 4;
-        ctx->ctrl = 0x43;
+    if (recv_mesg_v2(instance, pipeline, mesg, payload, 4) >= MESG_V2_OK){
+
+        ctx->ctrl = 0x83;        
+        ctx->CA = 0x00;
         ctx->SA = 0x05;
         ctx->addr[0] = 0x08;
-        ctx->CA = 0x00;
-        fifoBuf_putByte(cache, mesg->ctrl);//05
-        fifoBuf_putByte(cache, 0x01);//01
-        fifoBuf_putByte(cache, ctx->PIID); 
-
-        ringbuffer_putU32(cache, mesg->id);
-        mesg->len = 7;
-        ringbuffer_putU32(cache, 0);
-        mesg->len += 1;
-
-        fifoBuf_getData(fifo_out, cache->buf_ptr + cache->wr, mesg->len);
-        cache->wr += mesg->len;
-        
-
-        //区分  上报ID和上报内容
+        memcpy(ctx->addr, mbase_cb->tsa, SA_LEN(ctx->SA) + 1);
+        mesg->from = pid_tx_698;
+        mesg->len = (payload[2]<<8) + payload[3] + 2;
         fr_pack_698_head(instance, pipeline, mesg);
-        fr_pack_698_apdu(instance, pipeline, mesg);
+        if(mesg->len){
+            if(get_report_apdu(instance, pipeline, mesg) > 0){                
+                fr_pack_698_apdu(instance, pipeline, mesg);
+                if(0 == fr_follow_report_optional(instance, pipeline, mesg)){
+                    fifoBuf_putByte(cache, 0);
+                }
+                fifoBuf_putByte(cache, 0);
+            }
+        }
         fr_pack_698_tail(instance, pipeline, mesg);
     }
 
