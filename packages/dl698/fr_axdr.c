@@ -931,6 +931,56 @@ int decode_rsd_selector_9(struct instance_t* instance, struct pipeline_t* pipeli
     return (1);
 }
 
+uint8_t check_capture_exist(uint32_t rcsd_req, uint32_t rcsd_src)
+{
+    uint8_t type, attr_req, attr_src, index_req,index_src;
+    uint16_t oi_req, oi_src;
+
+
+    //常规
+    if (rcsd_req == rcsd_src)
+    {
+        return true;
+    }
+
+    //特殊
+    type = get_OAD_Class(rcsd_req);
+    attr_req = get_OAD_Attribute(rcsd_req);
+    index_req = get_OAD_Index(rcsd_req);
+    oi_req = get_OAD_OI(rcsd_req);
+
+    attr_src = get_OAD_Attribute(rcsd_src);
+    index_src = get_OAD_Index(rcsd_src);
+    oi_src = get_OAD_OI(rcsd_src);
+
+    if ((type) == 0) //电能
+    {
+        if(oi_req == oi_src)
+        {
+            if (((attr_req == 2) || (attr_req == 4)) && ((attr_src == 2) || (attr_src == 4)))
+            {
+                if( index_req > 13 ) // 不存在的费率  // 或者改为 fee num 待调整
+                {
+                    return false;
+                }
+                
+                if(index_req != index_src)
+                {
+                    if(index_src != 0)
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+
 //协议列选打包    rcsd_req:列选oad，   rcsd_src：原关联对象oad，   
 //mode：0，不拷贝数据，只计算长度   1，  解析数据，并返回长度 
 int _record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src, uint8_t mode)
@@ -945,10 +995,11 @@ int _record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t 
         p_src = src;
         for(k=1; k < (rcsd_src[0] + 1); k++)
         {
-            if (rcsd_req[i] == rcsd_src[k])  // 
+            if (true == check_capture_exist(rcsd_req[i], rcsd_src[k]))
+            //if (rcsd_req[i] == rcsd_src[k])  // 
             {
                 //特殊rcsd长度处理
-                single_len = record_change_format(instance, tmpbuf, p_src, rcsd_req[i], RFC_GET_STORE_LEN);
+                single_len = record_change_format(instance, tmpbuf, p_src, rcsd_req[i], 0, RFC_GET_STORE_LEN);
                 if (single_len < 0)
                 {
                     //正常处理
@@ -979,7 +1030,7 @@ int _record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t 
                         orig_len = single_len;
                         if (mode)
                         {
-                            orig_len = record_change_format(instance, tmpbuf, p_src, rcsd_req[i], RFC_READ);
+                            orig_len = record_change_format(instance, tmpbuf, p_src, rcsd_req[i], rcsd_src[k], RFC_READ);
                             if (orig_len >= 0)
                             {
                                 memcpy(p_des, tmpbuf, orig_len);
@@ -1009,7 +1060,7 @@ int _record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t 
             }
             else
             {
-                single_len = record_change_format(instance, tmpbuf, p_src, rcsd_src[k], RFC_GET_STORE_LEN);
+                single_len = record_change_format(instance, tmpbuf, p_src, rcsd_src[k], 0,  RFC_GET_STORE_LEN);
                 if (single_len < 0)
                 {
                     single_len = nd_size(instance, rcsd_src[k]);
