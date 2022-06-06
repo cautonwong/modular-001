@@ -323,9 +323,7 @@ static int f_esam_type_read_esam_no(struct esam_698_data_t *para, void *esam_hal
     uint8_t tx_data[7] = { 0, 5, 0, 0, 0, 0, 0x0D };
 
     esam_in->RN_Data_len = 0;
-    //esam_in->AttachData_len = 0;
     esam_in->data_len = 7;
-    //esam_in->MAC_len = 0;
     esam_in->Dispersion_factor_len = 0;
     
     esam_in->data = tx_data;
@@ -341,7 +339,6 @@ static int f_esam_type_read_esam_data(struct esam_698_data_t *para, void *esam_h
     memcpy(head , (uint8_t *)&esam_in->sid_id , 4);
 
     esam_in->RN_Data_len = 0;
-    //esam_in->AttachData_len = 0;
     esam_in->data_len = 0;
     esam_in->MAC_len = 0;
     esam_in->Dispersion_factor_len = 0;
@@ -416,9 +413,7 @@ static  int f_esam_type_ver_rn_mac(struct esam_698_data_t *para, void *esam_hal)
         return -1;
     }
 
-    //esam_in->RN_Data_len = 0;
     esam_in->AttachData_len = 0;
-    //esam_in->data_len = 0;
     esam_in->MAC_len = 0;
     esam_in->Dispersion_factor_len = 0;
       
@@ -451,13 +446,9 @@ static  int f_esam_type_ver_sid_mac(struct esam_698_data_t *para, void *esam_hal
          
     mem_swap_cpy(head, (uint8_t *)&esam_in->sid_id , 4);
     esam_in->RN_Data_len = 0;
-    //esam_in->AttachData_len = 0;
-    //esam_in->data_len = 0;
-    //esam_in->MAC_len = 0;
     esam_in->Dispersion_factor_len = 0;
       
-    if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
-        memcpy(esam_out->data, esam_in->data_buf , esam_out->data_len); 
+    if(0 == __comm_esam_handle(head, para, 1, esam_hal)){
         return 0;
     }
     return -1;
@@ -483,7 +474,6 @@ static int f_esam_type_sid_mac(struct esam_698_data_t *para, void *esam_hal)
     
     esam_in->RN_Data_len = 0;
     esam_in->AttachData_len = 0;
-    //esam_in->data_len = 0;
     esam_in->MAC_len = 0;
     esam_in->Dispersion_factor_len = 0;
     
@@ -493,7 +483,7 @@ static int f_esam_type_sid_mac(struct esam_698_data_t *para, void *esam_hal)
             esam_out->MAC_len = 0;
             return 0;
         }
-        if(3 == esam_in->cmd_type){
+        if((3 == esam_in->cmd_type) || (1 == esam_in->cmd_type)){
             memcpy(esam_out->data, esam_in->data_buf , esam_out->data_len); 
             esam_out->MAC_len = 4;
             esam_out->data_len = esam_out->data_len - esam_out->MAC_len;
@@ -513,13 +503,9 @@ static  int f_esam_type_write(struct esam_698_data_t *para, void *esam_hal)
          
     mem_swap_cpy(head, (uint8_t *)&esam_in->sid_id , 4);
     esam_in->RN_Data_len = 0;
-    //esam_in->AttachData_len = 0;
-    //esam_in->data_len = 0;
-    //esam_in->MAC_len = 0;
     esam_in->Dispersion_factor_len = 0;
       
-    if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
-        memcpy(esam_out->data, esam_in->data_buf , esam_out->data_len); 
+    if(0 == __comm_esam_handle(head, para, 1, esam_hal)){
         return 0;
     }
     return -1;
@@ -542,29 +528,12 @@ static  int f_esam_type_software_check(struct esam_698_data_t *para, void *esam_
         return -1;
     }
 
-    memcpy(esam_in->data_buf , esam_in->Dispersion_factor , esam_in->Dispersion_factor_len);
-    len += esam_in->Dispersion_factor_len;
-
-    memcpy(&esam_in->data_buf[len] , esam_in->RN_Data , esam_in->RN_Data_len);
-    len += esam_in->RN_Data_len;
-
-    memcpy(&esam_in->data_buf[len] , esam_in->data , esam_in->data_len);
-    len += esam_in->data_len;
-    
-    tx_esam(head , esam_in->data_buf , len , esam_hal);
-    
-    err_no = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
-    if(sw == 0x9000)
-    {
-        memcpy(esam_out->data , esam_in->data_buf , len);
-        esam_out->data_len = len;
-        esam_out->esam_err_no = 0x9000;
+    esam_in->AttachData_len = 0;
+    esam_in->MAC_len = 0;
+    if(0 == __comm_esam_handle(head, para, 1, esam_hal)){
         return 0;
-    }else
-    {
-        esam_out->esam_err_no = sw;
-        return -1;
     }
+    return -1;
 }
 
 
@@ -577,27 +546,17 @@ static  int f_esam_type_upreport(struct esam_698_data_t *para, void *esam_hal)
     uint16_t sw = 0;
     uint16_t err_no = 0;
 
-
-    memcpy(&esam_in->data_buf[len] , esam_in->data , esam_in->data_len);
-    len += esam_in->data_len;
-
-    tx_esam(head , esam_in->data_buf , len , esam_hal);
+    esam_in->Dispersion_factor_len = 0;
+    esam_in->RN_Data_len = 0;
+    esam_in->AttachData_len = 0;
+    esam_in->MAC_len = 0;
     
-    err_no = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
-    if(sw == 0x9000)
-    {
-        memcpy(esam_out->data , esam_in->data_buf , 16);
-        
-        //memcpy(esam_out->MAC_data , &esam_in->data_buf[12] , 4);
-        
-        esam_out->esam_err_no = 0x9000;
+    if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
+        esam_out->data_len = 16;
+        memcpy(esam_out->data, esam_in->data_buf , esam_out->data_len); 
         return 0;
     }
-    else
-    {
-        esam_out->esam_err_no = sw;
-        return -1;
-    }
+    return -1;
 }
 
 
@@ -611,23 +570,15 @@ static  int f_esam_type_upreport_check(struct esam_698_data_t *para, void *esam_
     uint16_t sw = 0;
     uint16_t err_no = 0;
 
-
-    memcpy(&esam_in->data_buf[len] , esam_in->data , esam_in->data_len);
-    len += esam_in->data_len;
-
-    tx_esam(head , esam_in->data_buf , len , esam_hal);
+    esam_in->Dispersion_factor_len = 0;
+    esam_in->RN_Data_len = 0;
+    esam_in->AttachData_len = 0;
+    esam_in->MAC_len = 0;
     
-    err_no = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
-    if(sw == 0x9000)
-    {
-        esam_out->esam_err_no = 0x9000;
+    if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
         return 0;
     }
-    else
-    {
-        esam_out->esam_err_no = sw;
-        return -1;
-    }
+    return -1;
 }
 
 
