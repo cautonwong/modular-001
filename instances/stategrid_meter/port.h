@@ -636,6 +636,9 @@ enum block_parameter_item_id_t
 #define     Set_Holiday_Oad             1509 //编程时节假日对象
 #define     BeforSet_Holiday            1510 //编程前节假日
 #define     BeforSet_Balance            1511 //编程前结算日
+#define     BeforSet_ActCom             1512 //编程前有功组合特征字
+#define     LastBillingTime             1513 //最近一次结算时间 //待调整
+
 
 #define     Report3320_EnableList       1521 // 3320 上报使能列表  1 + 2*80
 #define     Report3320_OADList1         1522 // 3320 oad上报列表   1 + 4*60     //红外

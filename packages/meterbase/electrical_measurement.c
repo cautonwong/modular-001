@@ -6,11 +6,6 @@
 #include "cpu_surport.h"
 #include "pin_function_def.h"
 
-#define MAX_VOLTAGE  4000 //400v
-#define MIN_VOLTAGE  500 //50v
-#define UN_VOLTAGE   220000 //220v
-#define MAX_CURRENT  120000 //120A
-#define MIN_CURRENT  10     //10mA
 
 extern const struct dev_info_t rn8209_dev;
     
@@ -341,6 +336,12 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , POWERPA , 4 , &temp);
     mbase_control_block->active_power = (int32_t)(mbase_control_block->k_p * temp);
     
+    if(abs(mbase_control_block->current_l) < MIN_CURRENT)
+    {
+        mbase_control_block->current_l = 0;
+        mbase_control_block->active_power = 0;
+    }
+    
     if(mbase_control_block->active_power < 0)
     {
         mbase_control_block->power_dir = 1;
@@ -350,11 +351,6 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
         mbase_control_block->power_dir = 0;
     }
     
-    if(abs(mbase_control_block->current_l) < MIN_CURRENT)
-    {
-        mbase_control_block->current_l = 0;
-        mbase_control_block->active_power = 0;
-    }
     if(abs(mbase_control_block->current_l) > 70000)
     {
         over_Imax = 0x55;
@@ -487,6 +483,14 @@ void Electrical_measurement_poweron(struct instance_t* instance, struct pipeline
     memset((uint8_t*)&emu_voltage_adj.un80_offset, 0x00, 8);
     
     key_cnt = 0;
+    
+    /********* 各类门限 *********/
+    mbase_control_block->volt_60 = AS_Un*0.6;   //60%电压
+    mbase_control_block->volt_78 = AS_Un*0.78;   //78%电压
+    mbase_control_block->volt_125 = AS_Un*1.25;  //125%电压
+    
+    mbase_control_block->curt_33 = AS_Ib*0.0033;  //0.3%电流
+    mbase_control_block->power_33 = AS_P*0.0033;  //启动功率0.33%*P
 }
 
 

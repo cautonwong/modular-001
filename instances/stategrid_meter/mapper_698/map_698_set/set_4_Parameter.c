@@ -92,15 +92,14 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         if(*(p+1) != 1)   return -DAR_TYPE_NOT_MATCH;
                         break;
                     case 0x4012://周休日
-                    case 0x4112://有功组合特征字
                         if(*p != 4) return -DAR_TYPE_NOT_MATCH;
                         break;
                     case 0x4013://周休日日时段表号
                         if(*p != 17) return -DAR_TYPE_NOT_MATCH;
                         //保存编程前
-                        nd_get(instance, id, timer, 1, NULL);
+                        nd_get(instance, id, timer, 2, NULL);
                         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_WeekTab);
-                        nd_set_index(instance, addr, timer, 1);
+                        nd_set_index(instance, addr, timer, 2);
                         send_event_mesg_pro(instance, NULL, WeekTabWrS, NULL, 1);// 周休日编程事件
                         break;
                     case 0x4102:    //脉冲宽度
@@ -132,6 +131,13 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         if(Time_Format_Check(&timer[3])) return -DAR_OTHERS_ERROR;
                         *(p+7) = 0xFF;
                         mbase_cb->Fee |= F_ChangeTmOn;
+                        break;
+                    case 0x4112://有功组合特征字
+                        if(*p != 4) return -DAR_TYPE_NOT_MATCH;
+                        nd_get(instance, id, timer, 3, NULL);
+                        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
+                        nd_set_index(instance, addr, timer, 3);
+                        send_event_mesg_pro(instance, NULL, ActCombWrS, NULL, 1);// 
                         break;
 						
                 }

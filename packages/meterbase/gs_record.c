@@ -641,6 +641,12 @@ uint32_t record_capture_change(struct instance_t* instance, uint32_t obj, uint16
         break;
     }
 
+
+    if((obj & 0xF0000F00) == 0x00000200) // 普通电能oad  转高精度 存储  // 事件 冻结？ 待调整
+    {
+        obj += 0x00000200;
+    }
+
     return obj;
 }
 //方案号 & 属性特征 判断
@@ -788,7 +794,7 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
                 {
                     // 特殊事件关联对象的特殊处理 
                     // format改变，长度改变
-                    ret = record_change_format(instance, p, tmpbuf, obj, RFC_WRITE);
+                    ret = record_change_format(instance, p, tmpbuf, obj, 0, RFC_WRITE);
                     if (ret >= 0)
                     {
                         single_len = ret;
@@ -815,7 +821,7 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
                 single_len = nd_size(instance, obj);
                 if (single_len > 0)
                 {
-                    ret = record_change_format(instance, tmpbuf, p, obj, RFC_GET_STORE_LEN);
+                    ret = record_change_format(instance, tmpbuf, p, obj, 0, RFC_GET_STORE_LEN);
                     if (ret >= 0)
                     {
                         single_len = ret;

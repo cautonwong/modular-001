@@ -251,8 +251,16 @@ int general_get_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
         case 0x40132200: //编程前周休日时段表号
         {
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_WeekTab);
-            nd_get_index(instance, addr, p, 1);
-            p += 1;
+            nd_get_index(instance, addr, p, 2);
+            p += 2;
+            return (p-buf);
+        }
+            break;
+        case 0x41122200: //编程前组合有功特征字
+        {
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
+            nd_get_index(instance, addr, p, 3);
+            p += 3;
             return (p-buf);
         }
             break;

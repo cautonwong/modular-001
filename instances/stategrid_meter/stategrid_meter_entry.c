@@ -330,10 +330,10 @@ int baremetal_instance_entry_main(int argc, char** argv)
     register_log(instance, RES_DEV_EEPROM, mbase_block_event, RES_DEV_EEPROM, mbase_block_parameter, 43 * 1024, supply_event_info);
 
     //注册冻结1
-    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash1, RES_DEV_EEPROM, mbase_block_parameter, 830 * 4 * 1024, supply_event_flash_1_info);
+    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash1, RES_DEV_EEPROM, mbase_block_parameter, (830 + 2) * 4 * 1024, supply_event_flash_1_info);
 
     //注册冻结2
-    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash2, RES_DEV_EEPROM, mbase_block_parameter, 37 * 4 * 1024, supply_event_flash_2_info);
+    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash2, RES_DEV_EEPROM, mbase_block_parameter, (37 + 2) * 4 * 1024, supply_event_flash_2_info); //待调整
     //申请一块参数保存区的EPROM区域
     add_block(instance, RES_DEV_FLASH, public_block_flash, 4096*2);
     //注册一个698的MAP
@@ -341,7 +341,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
 #ifdef WIN32
     init_timer(instance);
 #endif
-    uint32_t addr = 0;
+    uint32_t addr = 0;  
     get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_static, &addr);//RAM对应的地址
     nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, (uint8_t*)addr, mbase_block_static_size); //将EPROM中的数据恢复到RAM;  
     return baremetal_instance_entry(instance);

@@ -98,9 +98,11 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         return -DAR_TIME_TAG_INVALID;
                     }
                     mbase_cb->sta |= F_RemoteRelayOn;
+                    return 1;
                     break;
                 case 0x80://解除保电
                     mbase_cb->sta &= ~F_RemoteRelayOn;
+                    return 1;
                     break;
                 default:
                     return -DAR_OTHERS_ERROR;

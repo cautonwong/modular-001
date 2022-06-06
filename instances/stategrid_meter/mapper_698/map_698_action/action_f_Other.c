@@ -562,7 +562,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 rxlen = esam_key_updata(instance, pdata, txlen);
                 p = p + 1692;
                 //成功后 再触发 密钥更新事件
-                if(rxlen != 0xff)
+                if(rxlen != 0xff)// 待调整  秘钥更新事件  缓存冲突
                 {
                     send_event_mesg_pro(instance, NULL, SecretKeyWrS, NULL, 1);
                 }

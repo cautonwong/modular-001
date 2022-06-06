@@ -644,6 +644,11 @@ void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
     
 	mbase_control_block->AutoPtr = 0xFF;
 	mbase_control_block->Page_ID = 0xFFFF;
+    
+    mbase_control_block->KeyPtr = 0;
+    mbase_control_block->KeyInv = 0;
+    mbase_control_block->Key = 0;
+    
 }
 
 /***********************************************************************/
@@ -916,10 +921,10 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 		else
 		{
 			//日时段主、副表指示
-			if( mbase_control_block->DayTable == 0 ) 
+			//if( mbase_control_block->DayTable == 0 ) 
               Lcdcon[15] |= DS_Chr_TouTable1;
-			else 
-              Lcdcon[14] |= DS_Chr_TouTable2;
+			//else 
+              //Lcdcon[14] |= DS_Chr_TouTable2;
             if( mbase_control_block->Disp12 == 1)
             {
                 Lcdcon[15] |= DS_Chr_TouTable1;
@@ -932,7 +937,7 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
         if(mbase_control_block->TOUNo < 10)    Lcdcon[11] |= NumSeg[mbase_control_block->TOUNo];
         else
         {
-            Lcdcon[13] |= DS_Chr_P2;
+            Lcdcon[13] |= DS_Chr_L18;
             Lcdcon[11] |= NumSeg[mbase_control_block->TOUNo-10];
         }
                     

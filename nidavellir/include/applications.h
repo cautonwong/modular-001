@@ -43,9 +43,9 @@ struct mbase_control_block_t
 {
     //上电需要发起IO请求的参数区  运行期不更改
     static_start  
-    uint8_t tsa[6];
+    uint8_t tsa[6];  
 
-    float k_u;
+    float k_u; 
     float k_il;
     float k_in;
     float k_p;    
@@ -75,12 +75,6 @@ struct mbase_control_block_t
     
     uint16_t Limit_T_Max;   //广播校时最大允许范围
     uint16_t Limit_T_Min;   //广播校时最小允许范围
-
-
-
-
-
-
 
         //事件参数
     uint32_t OverCurrent_threshold;         //参数 电能表过流事件-电流触发下限 
@@ -117,6 +111,12 @@ struct mbase_control_block_t
     
     uint8_t MulPortMode;    //多功能口模式
           
+    uint32_t volt_60;   //60%电压
+    uint32_t volt_78;   //78%电压
+    uint32_t volt_125;  //125%电压
+    uint32_t curt_33;  //0.3%电流
+    uint32_t power_33;  //启动功率0.33%*P
+    
     uint32_t voltage_ac;
     int32_t current_l;
     int32_t active_power;
@@ -217,13 +217,15 @@ struct mbase_control_block_t
     uint8_t mac_suspend_state;  // mac挂起状态 协议或显示模块可调用。 true为挂起
     uint8_t key_state;  //秘钥状态，显示调用，true为公钥
     
+    uint8_t boardadjtime;   //广播校时标志位
+    
     //report
     uint32_t report_state;//跟随上报状态字
     
-    uint8_t   SeasonTable;//时区表主副表序号
-    uint8_t   DayTable;//日表主副表序号
+//    uint8_t   SeasonTable;//时区表主副表序号
+//    uint8_t   DayTable;//日表主副表序号
     uint8_t   TouPriceTable;//费率电价表主副表序号
-    uint8_t   StepTable;//阶梯表主副表序号
+//    uint8_t   StepTable;//阶梯表主副表序号
     uint8_t   Disp12;   //
     
 
@@ -420,11 +422,24 @@ struct format_conversion_t
 #define		F_ChangeTmOn        0x08
 
 //relay
-#define     Relay_Ck_Time       500    //1秒
+#define     Relay_Ck_Time       100    //1秒
+
+//key
+#define     keydlymax           100     
+
+#define     MAX_VOLTAGE     4000 //400v
+#define     MIN_VOLTAGE     500 //50v
+#define     UN_VOLTAGE      220000 //220v
+#define     MAX_CURRENT     120000 //120A
+#define     MIN_CURRENT     15     //10mA
+
+#define     AS_Un      2200
+#define     AS_Ib      5000
+#define     AS_P       11000
 
 
 extern int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_storage_id_info_t* info);
-extern int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* src, uint32_t oad, enum format_conversion_mode mode);
+extern int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* src, uint32_t oad_req,uint32_t oad_src, enum format_conversion_mode mode);
 extern int clr_record(struct instance_t* instance, uint32_t oad);
 extern int para_init(struct instance_t* instance );
 extern int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);

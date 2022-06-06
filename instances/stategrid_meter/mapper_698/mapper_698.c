@@ -453,7 +453,7 @@ const  parameter_item_t  parameter_item[] =
     { MinuteFreeze8_seq             , 0x01,  4,0   },//分钟冻结记录方案8 记录序号
     { HourFreeze_seq                , 0x01,  4,0   },//小时冻结  记录序号
     { DayFreeze_seq                 , 0x01,  4,0   },//日冻结    记录序号
-    { BillFreeze_seq                , 0x01,  4,0   },//月冻结    记录序号
+    { BillFreeze_seq                , 0x01,  4,0   },//结算日冻结      记录序号
     { MonthFreeze_seq               , 0x01,  4,0   },//月冻结    记录序号
     { SeasonTabCutFreeze_seq        , 0x01,  4,0   },//时区表切换冻结冻结    记录序号
     { DayTabCutFreeze_seq           , 0x01,  4,0   },//日时段表切换冻结冻结    记录序号
@@ -497,11 +497,13 @@ const  parameter_item_t  parameter_item[] =
     { BeforSet_SeasonT              , 0x01,114, 0 }, //编程前备用套时区  array num 14*8  
     { Set_DayTab_Oad                , 0x01,  5, 0 }, //编程时段表对象          
     { BeforSet_DayTab               , 0x01,114, 0 }, //编程前备用套时段表  array num 14*8  
-    { BeforSet_WeekTab              , 0x01,  1, 0 }, //编程前周休日时段表号   
+    { BeforSet_WeekTab              , 0x01,  2, 0 }, //编程前周休日时段表号   
     { Set_Holiday_Oad               , 0x01,  5, 0 }, //编程时节假日对象         
     { BeforSet_Holiday              , 0x01, 10, 0 }, //编程前节假日
     { BeforSet_Balance              , 0x01, 20, 0 }, //编程前结算日
-
+    { BeforSet_ActCom               , 0x01,  3, 0 }, //编程前有功组合特征字
+    { LastBillingTime               , 0x01,  5, 0 }, //最近一次结算时间 YYMMDDhhmm   
+        
 
    
         //待调整
@@ -1336,22 +1338,26 @@ int fc_fun_03(struct instance_t* instance, uint8_t *des, uint8_t* src, enum form
 
 
 // 电能数据 存储和协议转换  //待调整
-int fc_fun_Energy(struct instance_t* instance, uint32_t oad, uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
+int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src,uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
-    uint8_t i, type, attr, index, len, block_num = (4+1);
+    uint8_t i, type, attr, index, index_src,  len, block_num = (4+1);
     uint16_t oi;
     uint8_t *p = des;
     uint8_t energy_tag;
     uint32_t addr;
+    int64_t tmp_64 = 0;
     
-    type = get_OAD_Class(oad);
-    attr = get_OAD_Attribute(oad);
-    index = get_OAD_Index(oad);
-    oi = get_OAD_OI(oad);
+    type = get_OAD_Class(oad_req);
+    attr = get_OAD_Attribute(oad_req);
+    index = get_OAD_Index(oad_req);
+    oi = get_OAD_OI(oad_req);
 
-    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 4); //读取费率数
+
+    index_src = get_OAD_Index(oad_src);
+
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3); //读取费率数
     nd_get_index(instance, addr, &block_num, 1); 
     
     block_num += 1;   // 总加 费率个数
@@ -1381,10 +1387,10 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad, uint8_t *des, uint8
                     {
                         memset(p, 0, 4);
                     }
-
+                    src += 4;
                     p += 4;
                 }
-            }
+            } 
         }
         else if(attr == 4) // 高精度
         {
@@ -1410,6 +1416,7 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad, uint8_t *des, uint8
                     {
                         memset(p, 0, 5);
                     }
+                    src += 5;
                     p += 5;
                 }
             }
@@ -1444,9 +1451,28 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad, uint8_t *des, uint8
         {
             if(index)
             {
+                if (index_src == 0) //取索引偏移
+                {
+                    src += (index-1)*5;
+                }
+                
                 *p++ = energy_tag;
-                ndv_memcopy(p, src, 4);
+
+                tmp_64 = (int64)(src[0]<<32)+ (src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
+                if(src[0] & 0x80)
+                {
+                    tmp_64 += 0xFFFFFF0000000000;
+                }
+                tmp_64 /= 100;
+
+                p[0] = (uint8)(tmp_64 >> (3*8));
+                p[1] = (uint8)(tmp_64 >> (2*8));
+                p[2] = (uint8)(tmp_64 >> (1*8));
+                p[3] = (uint8)(tmp_64 >> (0*8));
+
+                //mem_swap_cpy(p, src, 4);
                 p += 4;
+                src += 5;
             }
             else
             {
@@ -1455,7 +1481,20 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad, uint8_t *des, uint8
                 for (i = 0; i < block_num; i++)
                 {
                     *p++ = energy_tag;
-                    ndv_memcopy(p, src, 4);
+
+                    tmp_64 = (int64)(src[0]<<32)+ (src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
+                    if(src[0] & 0x80)
+                    {
+                        tmp_64 += 0xFFFFFF0000000000;
+                    }
+                    tmp_64 /= 100;
+                    
+                    p[0] = (uint8)(tmp_64 >> (3*8));
+                    p[1] = (uint8)(tmp_64 >> (2*8));
+                    p[2] = (uint8)(tmp_64 >> (1*8));
+                    p[3] = (uint8)(tmp_64 >> (0*8));
+
+                    src += 5;
                     p += 4;
                 }
             }
@@ -1464,12 +1503,30 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad, uint8_t *des, uint8
         {
             if(index)
             {
+                if (index_src == 0) //取索引偏移
+                {
+                    src += (index-1)*5;
+                }
+                
                 *p++ = energy_tag;
-                *p++ = 0;
-                *p++ = 0;
-                *p++ = 0;
-                ndv_memcopy(p, src, 5);
-                p += 5;
+                tmp_64 = (int64)(src[0]<<32)+ (src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
+                
+                if(src[0] & 0x80)
+                {
+                    tmp_64 += 0xFFFFFF0000000000;
+                }
+
+                p[0] = (uint8)(tmp_64 >> (7*8));
+                p[1] = (uint8)(tmp_64 >> (6*8));
+                p[2] = (uint8)(tmp_64 >> (5*8));
+                p[3] = (uint8)(tmp_64 >> (4*8));
+                p[4] = (uint8)(tmp_64 >> (3*8));
+                p[5] = (uint8)(tmp_64 >> (2*8));
+                p[6] = (uint8)(tmp_64 >> (1*8));
+                p[7] = (uint8)(tmp_64 >> (0*8));
+
+                src += 5;
+                p += 8;
             }
             else
             {
@@ -1478,11 +1535,24 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad, uint8_t *des, uint8
                 for (i = 0; i < block_num; i++)
                 {
                     *p++ = energy_tag;
-                    *p++ = 0;
-                    *p++ = 0;
-                    *p++ = 0;
-                    ndv_memcopy(p, src, 5);
-                    p += 5;
+                    tmp_64 = (int64)(src[0]<<32)+ (src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
+                    
+                    if(src[0] & 0x80)
+                    {
+                        tmp_64 += 0xFFFFFF0000000000;
+                    }
+                    
+                    p[0] = (uint8)(tmp_64 >> (7*8));
+                    p[1] = (uint8)(tmp_64 >> (6*8));
+                    p[2] = (uint8)(tmp_64 >> (5*8));
+                    p[3] = (uint8)(tmp_64 >> (4*8));
+                    p[4] = (uint8)(tmp_64 >> (3*8));
+                    p[5] = (uint8)(tmp_64 >> (2*8));
+                    p[6] = (uint8)(tmp_64 >> (1*8));
+                    p[7] = (uint8)(tmp_64 >> (0*8));
+
+                    src += 5;
+                    p += 8;
                 }
             }
         }
@@ -1516,7 +1586,6 @@ const struct format_conversion_t format_conversion_0[] =
 {
     {   0x00000200,     0xFFFF,         0xFFFF,      fc_fun_01   },
     {   0x00000400,     0xFFFF,         0xFFFF,      fc_fun_01   },
-
 };
 
 
@@ -1528,21 +1597,21 @@ const struct format_conversion_t format_conversion_0[] =
 //    RFC_GET_ORIGINAL_LEN,//获取原协议格式len
 //    RFC_GET_STORE_LEN,   //获取存储格式len
 //
-int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* src, uint32_t oad, enum format_conversion_mode mode)
+int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* src, uint32_t oad_req, uint32_t oad_src, enum format_conversion_mode mode)
 {
     uint16_t i;
     uint8_t type, attr, index, len, block_num = (4+1);
     uint32_t addr;
 
-    type = get_OAD_Class(oad);
-    attr = get_OAD_Attribute(oad);
-    index = get_OAD_Index(oad);
+    type = get_OAD_Class(oad_req);
+    attr = get_OAD_Attribute(oad_req);
+    index = get_OAD_Index(oad_req);
     switch(type)
     {
         case 0: //电能
         {
             
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 4); //读取费率数
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3); //读取费率数
             nd_get_index(instance, addr, &block_num, 1); 
             
             block_num += 1;   // 总加 费率个数
@@ -1608,7 +1677,7 @@ int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* sr
             }
             else
             {
-                return fc_fun_Energy(instance, oad, des, src, mode);
+                return fc_fun_Energy(instance, oad_req, oad_src, des, src, mode);
             }
         }
             break;
@@ -1616,7 +1685,7 @@ int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* sr
         {
             for (i = 0; i < (sizeof(format_conversion_tab) / sizeof(format_conversion_tab[0])); i++)
             {
-                if ((oad & (0xFFFF1FFF)) == format_conversion_tab[i].oad)
+                if ((oad_req & (0xFFFF1FFF)) == format_conversion_tab[i].oad)
                 {
                     break;
                 }
