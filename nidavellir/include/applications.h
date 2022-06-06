@@ -91,6 +91,7 @@ struct mbase_control_block_t
 
     uint8_t factor_mode; //工厂模式
     
+    struct tm v_powerdown_tm;// 模拟停电时间  补结算测试用              待调整
     
     
     static_end     
@@ -247,6 +248,9 @@ struct mbase_control_block_t
     //uint32_t RTCErrS_acc_time;          //累计时间 时钟故障事件
     uint32_t ZeroLineErrS_acc_time;     //累计时间 零线电流异常事件  
 
+
+    struct tm powerdown_tm;// 停电时间      待调整
+
     
     dyn_persistent_end
 
@@ -286,7 +290,6 @@ struct mbase_control_block_t
     uint8_t EmuErrS_duration;           //当前状态持续时间 计量芯片故障事件
     uint8_t RTCErrS_duration;           //当前状态持续时间 时钟故障事件
     uint8_t ZeroLineErrS_duration;      //当前状态持续时间 零线电流异常事件  
-
 
     uint8_t mac_err_cnt; // 当日mac错误次数
     uint8_t mac_suspend_date[3];// mac错误 挂起日期 yymmdd

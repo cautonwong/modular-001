@@ -174,6 +174,7 @@ int set_support_protocol_list(struct instance_t* instance, uint32_t id, uint8_t*
         return -DAR_OTHERS_ERROR;
     }
 
+
     idl = (uint16_t)(id & 0x0000FFFF);
     index = (uint8_t)(id & 0x000000FF);
 
@@ -266,6 +267,8 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     if(p[1] > 32)  return -DAR_TYPE_NOT_MATCH;
                     break;
                 case 0x0400://生产日期
+            		if(mbase_cb->factor_mode == false)  return -DAR_OTHERS_ERROR; //工厂模式外，禁止写入
+            
                     mem_swap_cpy((uint8_t*)&year2, p+1, 2);
                     if(year2 < 2000) return -DAR_RW_REJECT;
                     year2 = year2 - 2000;
@@ -299,15 +302,8 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
     {
         case 0x0300: //版本信息
         {
-#if 0
-Factory_No,          0x0301,   0x02,    4, //厂家代码
-Version_SoftWare,    0x0302,   0x02,    4, //软件版本
-Date_SoftWare,       0x0303,   0x02,    6, //软件版本日期
-Version_HardWare,    0x0304,   0x02,    4, //硬件版本
-Date_HardWare,       0x0305,   0x02,    6, //硬件版本日期
-Extend_Info,         0x0306,   0x02,    8, //扩展信息
-#endif
-            tmpid1 = idl;
+            if(mbase_cb->factor_mode == false)  return -DAR_OTHERS_ERROR; //工厂模式外，禁止写入
+                        tmpid1 = idl;
 
             num = p[1];
             if ((p[0] != TYPE_structure) || (num != 6))
@@ -342,6 +338,8 @@ Extend_Info,         0x0306,   0x02,    8, //扩展信息
         case 0x0602: //协议列表
         case 0x0603: //协议列表
         {
+            if(mbase_cb->factor_mode == false)  return -DAR_OTHERS_ERROR; //工厂模式外，禁止写入
+            
             return set_support_protocol_list(instance,id, buf);
         }
         break;

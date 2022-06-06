@@ -355,7 +355,19 @@ void rtc_get_from_tm(struct instance_t* instance, uint8_t* p)
     temp = instance->time.tm_year + 1900;
     memcpy((uint8_t*)(p+5), (uint8_t*)&temp, 2);
 }
-    
+
+void rtc_format_change_from_tm(struct tm *time, uint8_t* p)
+{
+    unsigned long temp = 0;
+    *p = time->tm_sec;
+    *(p+1) = time->tm_min;
+    *(p+2) = time->tm_hour;
+    *(p+3) = time->tm_mday;
+    *(p+4)= time->tm_mon + 1;
+    temp = time->tm_year + 1900;
+    memcpy((uint8_t*)(p+5), (uint8_t*)&temp, 2);
+}
+
 void Rtc_Prossecc(struct instance_t* instance, struct pipeline_t* pipeline)
 {
 //    uint8_t buf[7];

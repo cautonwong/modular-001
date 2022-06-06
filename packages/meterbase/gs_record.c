@@ -732,7 +732,7 @@ uint8_t check_scheme(enum scheme_mode mode, uint32_t obj, uint16_t record_id)
 }
 //capturelist  关联对象列表  首字节为个数，后续为OAD，  
 //mode 0-7 为冻结方案， 10为 事件发生 11为 结束
-int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t* CaptureList, enum scheme_mode mode, uint16_t* remain_size,  struct record_storage_id_info_t *record_id_info)
+int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t* CaptureList, enum scheme_mode mode, uint16_t* remain_size,  struct record_storage_id_info_t *record_id_info, uint8_t* payload)
 {
     uint8_t* p, i, scheme, scheme_valid = true;
     int16_t single_len = 0;
@@ -789,7 +789,21 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
  
             if (true == scheme_valid)
             {
-                single_len = nd_get(instance, obj, tmpbuf, *remain_size, NULL);
+                //外部传入内容
+                if(payload)
+                {   //oad[4] + len[1] + 内容
+                    if (obj == buf_to_uint32_msb(&payload[0]))
+                    {
+                        single_len = payload[4];
+                        ndv_memcopy(tmpbuf, &payload[5], single_len);
+                    }
+                }
+                //map获取
+                if(single_len == 0)
+                {
+                    single_len = nd_get(instance, obj, tmpbuf, *remain_size, NULL);
+                }
+
                 if ((single_len > 0) && (single_len < (sizeof(tmpbuf))))
                 {
                     // 特殊事件关联对象的特殊处理 
@@ -852,10 +866,12 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
     return (p - databuf);
 }
 
-int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+//记录数据
+//直接提供mesg->id   可不走消息 记录事件
+int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t* payload)
 {
     enum scheme_mode mode = START_MODE;
-    uint8_t data_buff[400] = { 0 }, payload[100];
+    uint8_t data_buff[400] = { 0 };
     uint8_t *pdata = data_buff;
     uint16_t remain_size;
     uint32_t sequence = 0,Oad;
@@ -864,8 +880,224 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
     uint8_t pairs_event = 0;
     uint8_t freez_scheme = 0,event_scheme = START_MODE;
     int ret;
-      
-    remain_size = sizeof(data_buff);
+
+
+    Oad = 0xFFFFFFFF;
+    //if (r == 2)//payload exist
+    //{
+        //有消息内容，已经获取到payload中
+    //}
+    switch (mesg->id)
+    {
+        case OverCurrentAE:         //过流事件结束
+        case OverCurrentAS:         //过流事件发生
+            Oad = 0x30050700;
+            mode = START_MODE + (mesg->id - OverCurrentAS);
+            pairs_event = 1;
+            break;
+        case PowerOffE:             //电能表掉电事件结束
+        case PowerOffS:             //电能表掉电事件发生
+            Oad = 0x30110200;
+            mode = START_MODE + (mesg->id - PowerOffS);
+            pairs_event = 1;
+            break;
+        case MeterWrS:             //电能表编程事件  
+        case MeterWrR:
+            Oad = 0x30120200;
+            mode = START_MODE + (mesg->id - MeterWrS);
+            pairs_event = 1;
+            break;
+        case MeterClrS:      
+            Oad = 0x30130200;
+            mode = START_MODE;
+            break;
+        case EventClrS:
+            Oad = 0x30150200;
+            mode = START_MODE;
+            break;
+        case SetTimeS:
+            Oad = 0x30160200;
+            mode = START_MODE;
+            break;
+        
+        case DayTabWrS:
+        case SeasonTabWrS:
+        case WeekTabWrS:
+        case BillDayWrS:
+            Oad = 0x30170200 + ((mesg->id - DayTabWrS) << 16);
+            mode = START_MODE ;
+            break;
+
+        case CoverOpenE:            //开盖事件结束
+        case CoverOpenS:            //开盖事件发生
+            Oad = 0x301B0200;
+            mode = START_MODE + (mesg->id - CoverOpenS);
+            pairs_event = 1;
+            break;
+
+        case SwitchOffS:
+        case SwitchOnS:
+        case HolidayWrS:
+        case ActCombWrS:
+            Oad = 0x301F0200 + ((mesg->id - SwitchOffS) << 16);
+            mode = START_MODE;
+            break;
+
+        case FeeTabWrS:
+        case StepTabWrS:
+        case SecretKeyWrS:
+        case ErrPlugCardS:
+        case RechargeS:
+        case RefundS:
+            Oad = 0x30240200 + ((mesg->id - FeeTabWrS) << 16);
+            mode = START_MODE;
+            break;
+
+        case SwitchErrE:            
+        case SwitchErrS:            
+            Oad = 0x302B0200;
+            mode = START_MODE + (mesg->id - SwitchErrS);
+            pairs_event = 1;
+            break;
+        case PowerAbnormalE:
+        case PowerAbnormalS:
+            Oad = 0x302C0200;
+            mode = START_MODE + (mesg->id - PowerAbnormalS);
+            pairs_event = 1;
+            break;
+        case RTCErrE:
+        case RTCErrS:
+            Oad = 0x302E0200;
+            mode = START_MODE + (mesg->id - RTCErrS);
+            pairs_event = 1;
+            break;
+        case EmuErrE:
+        case EmuErrS:
+            Oad = 0x302F0200;
+            mode = START_MODE + (mesg->id - EmuErrS);
+            pairs_event = 1;
+            break;
+
+        case BroadcastTimeS:
+            Oad = 0x303C0200;
+            mode = START_MODE;
+            break;
+        case ZeroLineErrE:
+        case ZeroLineErrS:
+            Oad = 0x30400200;
+            mode = START_MODE + (mesg->id - ZeroLineErrS);
+            pairs_event = 1;
+            break;
+
+        case InstantFreeze:         //瞬时冻结
+            Oad = 0x50000200;
+            mode = FRZ_1;
+            break;
+
+        case MinuteFreeze1: //分钟冻结记录方案1
+        case MinuteFreeze2: //分钟冻结记录方案2
+        case MinuteFreeze3: //分钟冻结记录方案3
+        case MinuteFreeze4: //分钟冻结记录方案4
+        case MinuteFreeze5: //分钟冻结记录方案5
+        case MinuteFreeze6: //分钟冻结记录方案6
+        case MinuteFreeze7: //分钟冻结记录方案7
+        case MinuteFreeze8: //分钟冻结记录方案8 
+            freez_scheme = (mesg->id - MinuteFreeze1);//(uint8_t)(0x07 & (uint8_t)(oad >> 13))
+            Oad = 0x50020200 + (freez_scheme<<13);
+            mode = FRZ_1 + freez_scheme;                
+            break;     
+
+        case SeasonTabCutFreeze:    //时区表切换冻结
+        case DayTabCutFreeze:       //日时段表切换冻结
+        case FeePriceCutFreeze:     //费率电价切换冻结
+        case StepCutFreeze:         //阶梯切换冻结
+        case MonthFreeze:           //月冻结
+        case BillFreeze:            //结算日冻结
+        case DayFreeze:             //日冻结
+        case HourFreeze:            //小时冻结
+            Oad = 0x50030200 + ((mesg->id - HourFreeze)<<16);
+            mode = FRZ_1;
+            break;
+
+        case StepBillFreeze:        //阶梯结算冻结
+            Oad = 0x50110200;
+            mode = FRZ_1;
+            break;
+        default:
+
+            break;
+    }
+
+    if (Oad == 0xFFFFFFFF)
+    {
+        return 0;
+    }
+    //以下部分共用
+    //获取 存储地址信息
+    ret = get_record_id_info(instance, Oad, &record_id_info);
+    if (ret <= 0)
+    {
+        return -1;
+    }
+
+    //获取 关联对象列表
+    get_capture_list(instance, Oad, CaptureList, 3);
+
+    //读取关联对象数据
+    pdata += read_record_capture(instance, pdata, CaptureList, mode, &remain_size, &record_id_info, payload);
+
+    // 读取序号 ++
+    if ((pairs_event != 1) || (mode != END_MODE)) 
+    {
+        nd_get_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+        mem_swap_cpy(data_buff + 1, (uint8_t*)&sequence, 4);
+        sequence++;
+        nd_set_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+    }
+
+    //调用ND_SET保存数据
+    if (mode == END_MODE)
+    {
+        nd_log_append_revise(instance, record_id_info.save_index, data_buff, 0, (pdata - data_buff));
+    }
+    else
+    {
+        nd_log_append(instance, record_id_info.save_index, data_buff, (pdata - data_buff));
+    }
+
+    //上报列表 新增
+    if((mode == START_MODE) || (mode == END_MODE)) //事件类
+    {
+        if((mode == START_MODE))
+        {
+            event_scheme = 1;
+        }
+        else
+        {
+            event_scheme = 4;
+        }
+        report_3320list_add(instance,Oad|(event_scheme<<13));
+    }
+
+    return 1;
+
+}
+
+int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    uint8_t payload[100]={0};
+    
+    enum scheme_mode mode = START_MODE;
+    uint8_t data_buff[400] = { 0 };
+    uint8_t *pdata = data_buff;
+    uint16_t remain_size;
+    uint32_t sequence = 0,Oad;
+    uint32_t CaptureList[50 + 1] = { 0 };
+    struct record_storage_id_info_t record_id_info; 
+    uint8_t pairs_event = 0;
+    uint8_t freez_scheme = 0,event_scheme = START_MODE;
+    int ret;
+    
     
     //mesg 的id 就是事件代码
     int r = recv_mesg_v2(instance, pipeline, mesg, payload, 100);
@@ -873,10 +1105,10 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
     if (r > 0)
     {
         Oad = 0xFFFFFFFF;
-        if (r == 2)//payload exist
-        {
+        //if (r == 2)//payload exist
+        //{
             //有消息内容，已经获取到payload中
-        }
+        //}
         switch (mesg->id)
         {
             case OverCurrentAE:         //过流事件结束
@@ -1034,7 +1266,7 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
         get_capture_list(instance, Oad, CaptureList, 3);
 
         //读取关联对象数据
-        pdata += read_record_capture(instance, pdata, CaptureList, mode, &remain_size, &record_id_info);
+        pdata += read_record_capture(instance, pdata, CaptureList, mode, &remain_size, &record_id_info, payload);
 
         // 读取序号 ++
         if ((pairs_event != 1) || (mode != END_MODE)) 

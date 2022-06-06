@@ -407,16 +407,19 @@ int month_freeze_judge(struct instance_t* instance, struct pipeline_t* task, str
     return 1;
 }
 
-#if 0
+#if 1
 //  上电补结算冻结处理           上电调用 
-int bill_freeze_fill_up(struct instance_t* instance, struct tm* time, struct task_t* task, struct message_t* mesg)
+int bill_freeze_power_on_pro(struct instance_t* instance, struct task_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
-    uint8_t cycle, i; 
+    uint8_t cycle, i, tmp[10]; 
     uint32  now,pd,last,recently;
-    struct tm now_tm,pd_tm;
-
+    struct tm now_tm,pd_tm, last_time;
+    uint32_t index,s_index;
+    uint8_t billdate[3][2];
+    uint8_t payload[20];
+    uint8_t *p = payload;
 
     ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->v_powerdown_tm), sizeof(ctrl_block->v_powerdown_tm));
 
@@ -429,14 +432,33 @@ int bill_freeze_fill_up(struct instance_t* instance, struct tm* time, struct tas
         memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->powerdown_tm), sizeof(ctrl_block->powerdown_tm));
     }
 
-    memcopy((uint8_t *)&now_tm,(uint8_t *)time, sizeof(now_tm));
+    ndv_memcopy((uint8_t *)&now_tm,(uint8_t *)&instance->time, sizeof(now_tm));
     now_tm.tm_sec = 0;
     pd_tm.tm_sec = 0;
-    ctrl_block->mbill_last_tm.tm_sec = 0;
-    
+
+
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillingTime);
+    nd_get_index(instance, s_index, &tmp[0], 5);
+    last_time.tm_sec  = tmp[0];
+    last_time.tm_min  = tmp[1];
+    last_time.tm_hour = tmp[2];
+    last_time.tm_mday = tmp[3];
+    last_time.tm_mon  = tmp[4] - 1;
+    last_time.tm_year = tmp[5] + 2000 - 1900;
+
+
+    for(i=0;i<3;i++)
+    {
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
+        nd_get_index(instance, s_index, tmp, 2); 
+        billdate[i][0] = tmp[0];
+        billdate[i][1] = tmp[1];
+    }
+
+
     now = rtc_mktime(&now_tm);
     pd  = rtc_mktime(&pd_tm);
-    last = rtc_mktime(&ctrl_block->mbill_last_tm);    
+    last = rtc_mktime(&last_time);    
 
     recently  = pd;
 
@@ -444,26 +466,43 @@ int bill_freeze_fill_up(struct instance_t* instance, struct tm* time, struct tas
     {
         for (i = 0; i < 3; i++)
         {
-            if ((ctrl_block->mbill_day[i].day == 0x63) && (ctrl_block->mbill_day[i].hour == 0x63)
-                || (ctrl_block->mbill_day[i].day == 0x99) && (ctrl_block->mbill_day[i].hour == 0x99)
-                || (ctrl_block->mbill_day[i].day == 0xFF) && (ctrl_block->mbill_day[i].hour == 0xFF))
+            pd_tm.tm_min = 0;
+            pd_tm.tm_mday = billdate[i][0];
+            pd_tm.tm_hour = billdate[i][1];
+            
+            if ((pd_tm.tm_mday == 0x63) && (pd_tm.tm_hour == 0x63)
+                || (pd_tm.tm_mday == 0x99) && (pd_tm.tm_hour == 0x99)
+                || (pd_tm.tm_mday == 0xFF) && (pd_tm.tm_hour == 0xFF))
             {
                 continue;
             }
-
-            pd_tm.tm_min = 0;
-            pd_tm.tm_mday = ctrl_block->mbill_day[i].day;
-            pd_tm.tm_hour = ctrl_block->mbill_day[i].hour;
-
-            last   =  rtc_mktime(&ctrl_block->mbill_last_tm);  
+            
+            last   =  rtc_mktime(&last_time);  
             recently =  rtc_mktime(&pd_tm); 
             if (recently <= now)
             {
                 if ((recently > last)&&(recently >= pd))
                 {
-                    memcopy((uint8_t *)&ctrl_block->mbill_last_tm,(uint8_t *)&pd_tm, sizeof(pd_tm)); // 刷新最近一次结算时间
-                    memcopy((uint8_t *)&ctrl_block->mbill_store_tm,(uint8_t *)&pd_tm, sizeof(pd_tm));// 本条记录存储的时间
-                    // 待添加
+                    // 刷新最近一次结算时间
+                    tmp[0] = pd_tm.tm_sec ;
+                    tmp[1] = pd_tm.tm_min ;
+                    tmp[2] = pd_tm.tm_hour;
+                    tmp[3] = pd_tm.tm_mday;
+                    tmp[4] = pd_tm.tm_mon + 1;
+                    tmp[5] = (uint8_t)((pd_tm.tm_year + 1900)-2000);
+                    
+                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillingTime);
+                    nd_set_index(instance, s_index, &tmp[0], 5);
+                    
+                    // 本条记录存储的时间
+                    mesg->id = BillFreeze;
+                    uint32_to_buf_msb(0x20210200, &payload[0]);
+                    payload[4] = 8; //data len
+                    payload[5] = 28;//TYPE_date_time_s;
+                    rtc_format_change_from_tm(pd_tm,tmp);
+                    mem_swap_cpy(&payload[6], &tmp[0], 7);
+ 
+                    recv_record_process(instance, task, mesg, payload);                    
                     // 记录1次结算       需根据i判断需量结算是否填空，
                     // 第1结算日过后，最大需量清零                是否需要发送消息？             待添加
                 }
@@ -476,13 +515,13 @@ int bill_freeze_fill_up(struct instance_t* instance, struct tm* time, struct tas
 
         CLEAR_WATCH_DOG();
 
-        if (pd_tm.tm_mon < 0x0c)
+        if (pd_tm.tm_mon < 11)
         {
             pd_tm.tm_mon++;
         }
         else
         {
-            pd_tm.tm_mon  = 0x01;
+            pd_tm.tm_mon  = 0x00;
             pd_tm.tm_year  += 0x01;
         }
 
