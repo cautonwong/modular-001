@@ -78,14 +78,14 @@ unsigned char Time_Format_Check( unsigned char* Addr )
 
 void FeeTable_Change(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-	unsigned char i,*ptr;
-	unsigned long CurrentTime,ChangeTime,addr=0;
+	unsigned char i,j;
+	unsigned long CurrentTime,ChangeTime,addr=0,s_index;
     unsigned int year;
     struct mbase_control_block_t* mbase_cb;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
-	ptr = (unsigned char*)&mbase_cb->SeasonTable;
+//	ptr = (unsigned char*)&mbase_cb->SeasonTable;
     Buf[0] = instance->time.tm_min; //min,hour,day,mon,year
     Buf[1] = instance->time.tm_hour;
     Buf[2] = instance->time.tm_mday;
@@ -114,31 +114,30 @@ void FeeTable_Change(struct instance_t* instance, struct pipeline_t* pipeline)
 				case 0:
 					send_event_mesg_pro(instance, NULL, SeasonTabCutFreeze, NULL, 1);//时区表切换冻结
 					mbase_cb->Fee |= (F_TOUChange+F_DAYTABChange);
+                    for(j=0; j<14; j++)
+                    {
+                        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Season_Table1);  //读取备用套时区表
+                        nd_get_index(instance, s_index, (uint8_t*)&Buf[j*3], 3);
+                        
+                        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Season_Table0);  //覆盖当前时区表
+                        nd_set_index(instance, s_index, (uint8_t*)&Buf[j*3], 3);
+                    }
 					break;
 				case 1:
 					send_event_mesg_pro(instance, NULL, DayTabCutFreeze, NULL, 1);//日时段表切换冻结
 					mbase_cb->Fee |= F_TOUChange;
+                    for(j=0; j<8; j++)
+                    {
+                        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Day_Table10 + j);
+                        nd_get_index(instance, s_index, Buf, 42);//读取备用套日时段表
+                        
+                        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Day_Table00 + j);
+                        nd_set_index(instance, s_index, Buf, 42);//读取备用套日时段表
+                    }
 					break;
                 default:
 					break;
 			}
-			if( *(ptr+i) == 0 )
-				*(ptr+i) = 1;
-			else
-				*(ptr+i) = 0;
-            
-            if(i == 0)
-            {
-                addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                            offsetof(struct mbase_control_block_t, SeasonTable));
-                nd_set_offset(instance, addr, (uint8_t*)&mbase_cb->SeasonTable, 1);//存储至EE
-            }
-            else
-            {
-                addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                            offsetof(struct mbase_control_block_t, DayTable));
-                nd_set_offset(instance, addr, (uint8_t*)&mbase_cb->DayTable, 1);//存储至EE
-            }
             
 			memset( Buf, 0x00, 6 );
             Buf[6] = 0xFF;
@@ -166,7 +165,7 @@ unsigned char FeeTable_CmpFind( struct instance_t* instance, struct pipeline_t* 
 
 	//获取当前时间
 	if( Table == 0 )
-		Now = ((unsigned int)instance->time.tm_mon<<8) + (unsigned int)instance->time.tm_mday;
+		Now = ((unsigned int)(instance->time.tm_mon+1)<<8) + (unsigned int)instance->time.tm_mday;
 	else 
 		Now = ((unsigned int)instance->time.tm_hour<<8) + (unsigned int)instance->time.tm_min;
 
@@ -174,7 +173,7 @@ unsigned char FeeTable_CmpFind( struct instance_t* instance, struct pipeline_t* 
 	for( i=0;i<Num;i++ )
 	{
 		Int = ((unsigned int)Buf[3*i]<<8) + (unsigned int)Buf[3*i+1];
-		Int1 = ((unsigned int)Buf[3*((i+1)%Num)]<<8) + (unsigned int)Buf[3*((i+1)%Num)];
+		Int1 = ((unsigned int)Buf[3*((i+1)%Num)]<<8) + (unsigned int)Buf[3*((i+1)%Num)+1];
 		if( Int < Int1 )
         {
             if( (Now >= Int) && (Now < Int1) )
@@ -219,7 +218,7 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
 {
 	uint8_t i,Weekstate,Num0;
 	uint32_t Num=0,Num1=0;
-    uint32_t s_index= 0,addr=0;
+    uint32_t s_index= 0;
     struct mbase_control_block_t* mbase_cb;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -266,9 +265,6 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
 	    return;
 	}
 
-	//时区表
-	if( mbase_cb->SeasonTable > 1 ) mbase_cb->SeasonTable = 0;
-    
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para);//读取时区表个数
     nd_get_index(instance, s_index, (uint8_t*)&Num, 1);
     
@@ -279,19 +275,14 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
 	{
 		if( Num > MaxSeasonNum ) Num = MaxSeasonNum;
         
-        if(mbase_cb->SeasonTable == 0) 
-            addr = Season_Table0;
-        else 
-            addr = Season_Table1;
-        
         for(i=0; i<Num; i++)
         {
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);  //读取当前时区表
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Season_Table0);  //读取当前时区表
             nd_get_index(instance, s_index, (uint8_t*)&Buf[i*3], 3);
         }
         
 		i = FeeTable_CmpFind( instance, pipeline, (unsigned char)Num, 0 );//比较查找时区表
-		mbase_cb->DayTableNo = Buf[3*i];
+		mbase_cb->DayTableNo = Buf[3*i+2];
 	}
 }
 
@@ -304,7 +295,6 @@ void GetTOUFee(struct instance_t* instance, struct pipeline_t* pipeline)
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
-	if( mbase_cb->DayTable > 1 ) mbase_cb->DayTable = 0;
 	if( mbase_cb->DayTableNo == 0 ) mbase_cb->DayTableNo = 1;
 	if( mbase_cb->DayTableNo > MaxTouTabNum ) mbase_cb->DayTableNo = MaxTouTabNum;
     
@@ -317,10 +307,7 @@ void GetTOUFee(struct instance_t* instance, struct pipeline_t* pipeline)
 	{
 		if( Num > MaxTouNum ) Num = MaxTouNum;
         
-        if(mbase_cb->DayTable == 0)
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Day_Table00 + (mbase_cb->DayTableNo-1));
-        else
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Day_Table10 + (mbase_cb->DayTableNo-1));
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Day_Table00 + (mbase_cb->DayTableNo-1));
         nd_get_index(instance, s_index, Buf, 3*Num);//读取当前日时段表
         
 		i = FeeTable_CmpFind( instance, pipeline, Num, 1 );//比较查找日时段表
@@ -388,12 +375,12 @@ void Rtc_Prossecc(struct instance_t* instance, struct pipeline_t* pipeline)
     
     if(instance->time.tm_sec == 0)
     {
-        mbase_cb->Fee |= F_TOUChange;
+        mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
     }
-    if(instance->time.tm_min == 0)
+/*    if(instance->time.tm_min == 0)
     {
         mbase_cb->Fee |= F_ChangeTmOn + F_DAYTABChange;
-    }
+    }*/
 }
 
 

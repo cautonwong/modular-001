@@ -314,7 +314,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     //读计量芯片电压
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , URMS , 3 , &temp);
     
-    mbase_control_block->voltage_ac = (uint32_t)(mbase_control_block->k_u * temp)/100;
+    mbase_control_block->voltage_ac = (uint32_t)(mbase_control_block->k_u * temp)/10;
     if(mbase_control_block->voltage_ac > MAX_VOLTAGE)
     {
         mbase_control_block->voltage_ac = UN_VOLTAGE;

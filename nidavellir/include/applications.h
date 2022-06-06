@@ -222,10 +222,10 @@ struct mbase_control_block_t
     //report
     uint32_t report_state;//跟随上报状态字
     
-    uint8_t   SeasonTable;//时区表主副表序号
-    uint8_t   DayTable;//日表主副表序号
+//    uint8_t   SeasonTable;//时区表主副表序号
+//    uint8_t   DayTable;//日表主副表序号
     uint8_t   TouPriceTable;//费率电价表主副表序号
-    uint8_t   StepTable;//阶梯表主副表序号
+//    uint8_t   StepTable;//阶梯表主副表序号
     uint8_t   Disp12;   //
     
 
