@@ -516,9 +516,6 @@ static  int f_esam_type_software_check(struct esam_698_data_t *para, void *esam_
     struct esam_698_input_t *esam_in = para->input; 
     struct esam_698_output_t *esam_out = para->output;
     uint8_t head[4] = {0x80,0x0A,0x48,0x00};
-    uint16_t len=0;
-    uint16_t sw = 0;
-    uint16_t err_no = 0;
     
     if((esam_in->cmd_type > 0x08) && (esam_in->cmd_type < 0x0E))
     {
@@ -542,9 +539,6 @@ static  int f_esam_type_upreport(struct esam_698_data_t *para, void *esam_hal)
     struct esam_698_input_t *esam_in = para->input; 
     struct esam_698_output_t *esam_out = para->output;
     uint8_t head[4] = {0x80,0x14,0x01,0x03};
-    uint16_t len=0;
-    uint16_t sw = 0;
-    uint16_t err_no = 0;
 
     esam_in->Dispersion_factor_len = 0;
     esam_in->RN_Data_len = 0;
@@ -566,9 +560,6 @@ static  int f_esam_type_upreport_check(struct esam_698_data_t *para, void *esam_
     struct esam_698_input_t *esam_in = para->input; 
     struct esam_698_output_t *esam_out = para->output;
     uint8_t head[4] = {0x80,0x0e,0x40,0x81};
-    uint16_t len=0;
-    uint16_t sw = 0;
-    uint16_t err_no = 0;
 
     esam_in->Dispersion_factor_len = 0;
     esam_in->RN_Data_len = 0;
