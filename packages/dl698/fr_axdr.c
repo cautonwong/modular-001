@@ -130,7 +130,9 @@ uint16_t axdr_get_len(const uint8_t *data)
     case TYPE_TSA:
     case TYPE_MAC:
     case TYPE_RN:
+        data++; //待调整
         type_len = axdr_decode(type, data, &data_len);
+        type_len++;
         if(TYPE_bit_string == type)
             type_len += (data_len + 7) / 8;
         else
@@ -557,7 +559,6 @@ int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pi
     nd_get_index(instance, index, &period_buf[0], sizeof(period_buf));
 
     memcpy(p, apdu_rx + ctx->apdu_rx_offset, 15);
-    ctx->apdu_rx_offset += 15;
       
     rcsd_num = *(p+0); //待调整
     if (rcsd_num)
