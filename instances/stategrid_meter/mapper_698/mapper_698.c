@@ -222,12 +222,12 @@ const struct record_item_t  record_item[] =
     { ZeroLineErrS  ,       ZeroLineErrE,               600,       10 },//  0x3040    零线电流异常事件 
 
     { BillFreeze,           0,                          600,       10 },//  0x5005      结算日冻结 //待调整
-    { SeasonTabCutFreeze,   0,                          5*4096,    3, },//  0x5008      时区表切换冻结 
-    { DayTabCutFreeze   ,   0,                          4*4096,    2, },//  0x5009      日时段表切换冻结    
-    { FeePriceCutFreeze ,   0,                          4*4096,    2, },//  0x500A      费率电价切换冻结  
-    { StepCutFreeze     ,   0,                          4*4096,    2, },//  0x500B      阶梯切换冻结
-    { StepBillFreeze    ,   0,                          4*4096,    2, },//  0x5011      阶梯结算冻结
-    { InstantFreeze     ,   0,                          4*4096,    3, },//  0x5000      瞬时冻结
+    { SeasonTabCutFreeze,   0,                          1000,    3, },//  0x5008      时区表切换冻结 
+    { DayTabCutFreeze   ,   0,                          1000,    2, },//  0x5009      日时段表切换冻结    
+    { FeePriceCutFreeze ,   0,                          1000,    2, },//  0x500A      费率电价切换冻结  
+    { StepCutFreeze     ,   0,                          1000,    2, },//  0x500B      阶梯切换冻结
+    { StepBillFreeze    ,   0,                          1000,    2, },//  0x5011      阶梯结算冻结
+    { InstantFreeze     ,   0,                          1000,    3, },//  0x5000      瞬时冻结
 
 };
 
@@ -635,7 +635,7 @@ int16_t supply_event_info(struct instance_t* instance, uint16_t event_flag, uint
     *addr = 0x00;
     for (i = 0; i < sizeof(record_item) / sizeof(record_item[0]); i++)
     {
-        *addr += record_item[i].len;
+        
         if ((event_flag == record_item[i].event_flag_id_start) || 
             (event_flag == record_item[i].event_flag_id_end))
         {
@@ -647,6 +647,7 @@ int16_t supply_event_info(struct instance_t* instance, uint16_t event_flag, uint
 
             return 1;
         }
+        *addr += record_item[i].len;
     }
     *addr = 0x00;
     return -1;
@@ -677,7 +678,7 @@ int16_t supply_event_flash_1_info(struct instance_t* instance, uint16_t event_fl
     *addr = 0x00;
     for (i = 0; i < sizeof(record_item_1) / sizeof(record_item_1[0]); i++)
     {
-        *addr = sector_size[i] * 4096;//record_item_1[i].len;
+        
         if ((event_flag == record_item_1[i].event_flag_id_start) ||
             (event_flag == record_item_1[i].event_flag_id_end))
         {
@@ -699,6 +700,7 @@ int16_t supply_event_flash_1_info(struct instance_t* instance, uint16_t event_fl
 
             return 1;
         }
+        *addr = sector_size[i] * 4096;//record_item_1[i].len;
     }
     *addr = 0x00;
     return -1;
@@ -712,9 +714,7 @@ int16_t supply_event_flash_2_info(struct instance_t* instance, uint16_t event_fl
     *addr = 0x00;
     for (i = 0; i < sizeof(record_item_2) / sizeof(record_item_2[0]); i++)
     {
-
-        *addr += record_item_2[i].len;
-
+        
         if ((event_flag == record_item_2[i].event_flag_id_start) ||
             (event_flag == record_item_2[i].event_flag_id_end))
         {
@@ -726,6 +726,7 @@ int16_t supply_event_flash_2_info(struct instance_t* instance, uint16_t event_fl
 
             return 1;
         }
+        *addr += record_item_2[i].len;
     }
     *addr = 0x00;
     return -1;

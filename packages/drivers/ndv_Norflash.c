@@ -88,7 +88,7 @@ uint8 flash_read_and_compare(struct spi_io_t *read_data, const struct bus_ops_t 
     bus_ops->ctrl(STOP , index);
     
     return true;
-}
+} 
 
 uint8 flash_write_data(struct spi_io_t *write_data ,  const struct dev_info_t* dev)
 {
@@ -315,7 +315,7 @@ int flash_write(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void*
         spi_io.command[2] = (uint8)(addr >> 8);
         spi_io.command[3] = (uint8)addr;          /* 地址低字节 */
         
-        spi_io.buffer = src;           /* 缓存数据 */
+        spi_io.buffer = buf;           /* 缓存数据 */
         spi_io.cmdnum = 4;             /* 命令长度 */
         spi_io.length = cnt;           /* 数据长度 */
         mcu_delay_us(10);
