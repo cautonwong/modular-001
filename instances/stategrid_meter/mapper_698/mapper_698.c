@@ -1651,11 +1651,11 @@ int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* sr
                 {
                     if(index)
                     {
-                        len = (4); //待调整
+                        len = (5);//待调整
                     }
                     else
                     {
-                        len = (4)*13; //待调整
+                        len = (5)*13;//待调整
                     }
                 }
                 else if(attr == 4) // 高精度
