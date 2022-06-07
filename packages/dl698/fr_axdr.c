@@ -129,10 +129,9 @@ uint16_t axdr_get_len(const uint8_t *data)
     case TYPE_UTF8_string:
     case TYPE_TSA:
     case TYPE_MAC:
-    case TYPE_RN:
-        data++; //待调整
-        type_len = axdr_decode(type, data, &data_len);
-        type_len++;
+    case TYPE_RN:        
+        type_len = 1;
+        type_len += axdr_decode(type, data+type_len, &data_len);
         if(TYPE_bit_string == type)
             type_len += (data_len + 7) / 8;
         else
