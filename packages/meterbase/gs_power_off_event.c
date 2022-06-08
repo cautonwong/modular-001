@@ -32,12 +32,12 @@ int PowerOff_event_judge(struct instance_t* instance, struct pipeline_t* task, s
     uint32_t* val1;
 
 
-    for (int i = 0; i < PHASE_NUM; i++)
+    for (i = 0; i < PHASE_NUM; i++)
     {
         val1 = U[i];
 
         // 所有相均低于60%un
-        if ((*val1) >= (ctrl_block->Un_60))
+        if ((*val1) >= (ctrl_block->volt_60)*100)
         {
             break;
         }
