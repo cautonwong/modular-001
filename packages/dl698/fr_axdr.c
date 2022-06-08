@@ -151,7 +151,7 @@ uint16_t axdr_get_len(const uint8_t *data)
         return 3;
         break;
     case TYPE_date_time_s:
-        return 7;
+        return 7+1;
         break;
 
     case TYPE_Region:

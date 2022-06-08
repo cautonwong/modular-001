@@ -125,7 +125,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         timer[2] = (uint8_t)year2;
                         timer[3] = *(p+5);  //hour
                         timer[4] = *(p+6);  //min
-                        timer[5] = *(p+7);  //sec
+                        timer[5] = 0;  //sec
                         
                         if(Date_Format_Check(timer))  return -DAR_OTHERS_ERROR;
                         if(Time_Format_Check(&timer[3])) return -DAR_OTHERS_ERROR;
@@ -683,7 +683,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             mbase_cb->Fee |= F_DAYTABChange;
             break;
         case 0x4011://公共假日表
-            if((index == 0) || (index > 10))    return -DAR_RW_REJECT;
+            if((index == 0) || (index > 20))    return -DAR_RW_REJECT;
             
             mem_swap_cpy((uint8_t*)&year2, p+3, 2);
             if(year2 < 2000) return -DAR_OTHERS_ERROR;
@@ -719,7 +719,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
         case 0x4014://当前套时区表
         case 0x4015://备用套时区表
             if(index > 14)    return -DAR_OTHERS_ERROR;
-            
+            if((oad == 0x4014) && (mbase_cb->factor_mode == false))    return    -DAR_RW_REJECT;
             if(index == 0)
             {
                 num = *(p+1);
@@ -797,6 +797,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
         case 0x4016://当前套日时段表
         case 0x4017://备用套日时段表
             if(index > 0x08)    return -DAR_RW_REJECT;
+            if((oad == 0x4016) && (mbase_cb->factor_mode == false))    return    -DAR_RW_REJECT;
             
             if(index == 0)
             {
@@ -937,10 +938,10 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 p = p + 2;
                 p++;//tag
                 buffer[0] = *p++;
-                if(buffer[0] > 23)  return -DAR_OTHERS_ERROR; 
+                if(((buffer[0] > 28) && (buffer[0] != 99)) || (buffer[0] == 0))  return -DAR_OTHERS_ERROR; 
                 p++;//tag
                 buffer[1] = *p++;
-                if(buffer[1] > 59)  return -DAR_OTHERS_ERROR;
+                if((buffer[1] > 23) && (buffer[1] != 99))  return -DAR_OTHERS_ERROR;
                 
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + (index - 1));
                 nd_set_index(instance, s_index, buffer, 2);

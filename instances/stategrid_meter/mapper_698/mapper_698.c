@@ -532,7 +532,7 @@ const  parameter_item_t  parameter_item[] =
     { DayTable_Changetime,      0x01,   7,  init_SeasonTable_Changetime },//两套时段切换时间
     { SeasonDay_Para,      0x05,   1,       init_SeasonDay_Para },//时区时段参数（年时区数、日时段表数、日时段数、费率数、公共假日数）
     { SecretKey_Num,       0x01,   1,       init_SecretKey_Num },//秘钥总条数
-    { HoliDay_Table,       0x0A,   6,       init_HoliDay_Table },//公共假日表，10张，每张6字节
+    { HoliDay_Table,       0x14,   6,       init_HoliDay_Table },//公共假日表，20张，每张6字节
     { Weekend,             0x01,   1,       init_Weekend },//周休日特征字
     { WeekendFee,          0x01,   1,       init_WeekendFee },//周休日采用费率号
     { Season_Table0,       0x0E,   3,       init_Season_Table0 },//当前套时区表，≤14

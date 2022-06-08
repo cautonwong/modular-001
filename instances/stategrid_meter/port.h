@@ -543,7 +543,7 @@ enum block_parameter_item_id_t
 #define     DayTable_Changetime         905 //两套时段切换时间
 #define     SeasonDay_Para              906 //时区时段参数（年时区数、日时段表数、日时段数、费率数、公共假日数）
 #define     SecretKey_Num               911 //秘钥总条数
-#define     HoliDay_Table               912 //公共假日表，10张，每张6字节
+
 #define     Weekend                     922 //周休日特征字
 #define     WeekendFee                  923 //周休日采用费率号
 #define     Season_Table0               924 //当前套时区表，≤14
@@ -591,6 +591,7 @@ enum block_parameter_item_id_t
 #define     ImaxProtectTime             1005 //超电流门限保护延时时间
 #define     IrAuthenTime                1006 //红外认证时效
 #define     AuthMeth                    1007 //连接认证机制
+#define     HoliDay_Table               1008 //公共假日表，20张，每张6字节
 
 /***************** 计量相关 *****************/
 #define     Heat_Value_10L              1100    //1.0L自热补偿  15*2=30

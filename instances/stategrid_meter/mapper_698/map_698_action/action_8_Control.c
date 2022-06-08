@@ -7,9 +7,9 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
     
     struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
-    uint8_t method,relayon_type=0,password[8]={0};
+    uint8_t method,relayon_type=0,password[8]={0},password_des[8]={0};
     uint16_t oad;
-    uint32_t OI;
+    uint32_t OI,addr;
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
     method = (unsigned char)((id & 0x0000FF00) >> 8);    //方法
@@ -74,8 +74,16 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
 
                     if(method == 0x83)
                     {
-                        mem_swap_cpy(password, p+3, 8);//判断密码
+                        memcpy(password, p+3, 8);//判断密码
                         p = p + 3;
+                        
+                        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Password);
+                        nd_get_index(instance, addr, password_des, 8); 
+                        
+                        if(mem_compare(password_des, password, 8)!=0)
+                        {
+                            return -DAR_UNAUTHORIZED;
+                        }
                     }
                     if(*p == 0) 
                         mbase_cb->sta |= F_RemoteRelayOnAllow;  //合闸允许

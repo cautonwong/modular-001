@@ -531,7 +531,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             break;
             break;
         case 0x4011://公共假日表
-            if(index > 10)    return -DAR_OTHERS_ERROR;
+            if(index > 20)    return -DAR_OTHERS_ERROR;
             if(index == 0)
             {
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 4);
