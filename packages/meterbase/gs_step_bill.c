@@ -34,7 +34,7 @@ struct tm powerdown_tm;// 停电时间
 
 
 /*对4个阶梯结算日进行又小到大排序，并返回有效结算日个数*/
-static uint8_t sort_step_bill_day(uint8_t *mode, uint8_t *ptr, struct task_t* task,)
+static uint8_t sort_step_bill_day(uint8_t *mode, uint8_t *ptr, struct pipeline_t* task,)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->control_block;
 
@@ -66,7 +66,7 @@ static uint8_t sort_step_bill_day(uint8_t *mode, uint8_t *ptr, struct task_t* ta
 
 
 // 每秒调     返回0 表示无阶梯结算。 返回1表示结算。
-uint8_t step_bill_pro(struct tm* time,struct task_t* task, struct message_t* mesg)
+uint8_t step_bill_pro(struct tm* time,struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->control_block;
 
@@ -119,7 +119,7 @@ uint8_t step_bill_pro(struct tm* time,struct task_t* task, struct message_t* mes
 
 
 //  上电调用    ---补阶梯结算处理  
-uint8_t step_bill_power_on_pro(struct tm* time, struct task_t* task, struct message_t* mesg)
+uint8_t step_bill_power_on_pro(struct tm* time, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->control_block;
     

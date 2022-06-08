@@ -269,12 +269,6 @@ void send_event_mesg_pro(struct instance_t* instance, struct pipeline_t* task, u
     }
 }
 
-// 上电运行期间 每秒的调用
-int record_judge(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{
-	ia_over_event_judge(instance, pipeline, mesg);
-    CoverOpen_judge(instance, pipeline, mesg);
-}
 
 
 //冻结或事件清零 接口    传入要清除的oad 
@@ -349,6 +343,17 @@ const uint32_t freeze_oad[] =
     0x50000200,   //瞬时冻结
 };
 
+//电网类事件 
+const uint32_t power_grid_event_oad[] = 
+{
+    0x30050700,   //A过流                              
+    0x302B0200,   //电能表负荷开关误动作事件  
+    0x302F0200,   //电能表计量芯片故障事件
+    0x30400200,   //零线电流异常事件  
+};
+
+
+
 //现存事件oad列表
 const uint32_t event_oad[] =
 {
@@ -380,6 +385,7 @@ const uint32_t event_oad[] =
     0x303C0200,   //广播校时事件 
     0x30400200,   //零线电流异常事件  
 };
+
 
 //事件清零 // 不包含事件清零事件
 int event_clr(struct instance_t* instance)
@@ -502,6 +508,39 @@ int event_LowPower_pro(struct instance_t* instance, struct pipeline_t* pipeline,
 }
 
 
+//上电处理
+int event_PowerOn_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t payload[20] ={0}, tmp[15]={0};
+    uint16_t i, RecordId;
+    uint32_t oad;
+    struct record_storage_id_info_t info;
+    struct message_t mesg_tmp;
+    int ret;
+
+    for (i = 0; i < (sizeof(power_grid_event_oad) / sizeof(power_grid_event_oad[0])); i++)
+    {
+        ret = get_record_id_info(instance, power_grid_event_oad[i], &info);
+        if(ret < 0)
+        {
+            continue;
+        }
+        RecordId = (uint16)info.save_index;
+        if (true == get_activeflag(instance, RecordId))
+        {
+            // 本条记录存储的时间
+            mesg_tmp.id = RecordId+1; // 结束
+            uint32_to_buf_msb(0x20200200, &payload[0]);
+            payload[4] = 8; //data len
+            payload[5] = 0x1C;//TYPE_date_time_s;
+            rtc_format_change_from_tm(&ctrl_block->powerdown_tm,  tmp);
+            mem_swap_cpy(&payload[6], &tmp[0], 7);
+            recv_record_process(instance, pipeline, &mesg_tmp, payload);    
+        }
+    }
+}
 
 
 

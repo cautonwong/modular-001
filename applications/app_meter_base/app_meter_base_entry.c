@@ -145,9 +145,16 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
         fr_dl698_power_on(instance, pipeline);
         mbase_control_block->power_on_sec_accum = 0;
         mbase_cb->Fee |= (F_TOUChange+F_ChangeTmOn+F_DAYTABChange);;    //获取当前时区时段费率
+
+        
+        freeze_power_on_pro(instance, pipeline, mesg);
+        //事件
+        event_PowerOn_pro(instance, pipeline, mesg);
         break;
       case MSG_POWEROFF:
         //掉电需要保存数据
+        //先刷新停电时间ram
+        ndv_memcopy((uint8_t *)(&mbase_control_block->powerdown_tm),  (uint8_t *)&instance->time,  sizeof(mbase_control_block->powerdown_tm));
         //获取对应的RAM地址
         get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
         nd_set_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;      

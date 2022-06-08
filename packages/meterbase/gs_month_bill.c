@@ -26,7 +26,7 @@ struct tm powerdown_tm;// 停电时间
 
 
 // 每秒调     返回0 表示无月结算。 返回1，2，3表示1，2，3月结算。
-uint8_t mbill_pro(struct tm* time,struct task_t* task, struct message_t* mesg)
+uint8_t mbill_pro(struct tm* time,struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->control_block;
 
@@ -74,7 +74,7 @@ uint8_t mbill_pro(struct tm* time,struct task_t* task, struct message_t* mesg)
 
 
 //  上电调用    ---补月结算处理  
-uint8_t mbill_power_on_pro(struct tm* time, struct task_t* task, struct message_t* mesg)
+uint8_t mbill_power_on_pro(struct tm* time, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->control_block;
     

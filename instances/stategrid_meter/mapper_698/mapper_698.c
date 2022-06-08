@@ -678,7 +678,7 @@ int16_t supply_event_flash_1_info(struct instance_t* instance, uint16_t event_fl
     *addr = 0x00;
     for (i = 0; i < sizeof(record_item_1) / sizeof(record_item_1[0]); i++)
     {
-        
+        *addr = sector_size[i] * 4096;//record_item_1[i].len;
         if ((event_flag == record_item_1[i].event_flag_id_start) ||
             (event_flag == record_item_1[i].event_flag_id_end))
         {
@@ -700,7 +700,7 @@ int16_t supply_event_flash_1_info(struct instance_t* instance, uint16_t event_fl
 
             return 1;
         }
-        *addr = sector_size[i] * 4096;//record_item_1[i].len;
+        
     }
     *addr = 0x00;
     return -1;

@@ -23,18 +23,18 @@ int cal_freeze_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, u
     switch (oad & 0xFFFF0000)
     {
         case 0x50000000: //  瞬时
-            sectorMax = 2;
+            sectorMax = 2; //待调整
             break;
         case 0x50020000:// 分钟
-            sectorMax = 830;
+            sectorMax = 830; //待调整
             scheme_num = 8;
             break;
         case 0x50030000: // 小时
         case 0x50060000: // 月
-            sectorMax = 5;
+            sectorMax = 5;  //待调整
             break;
         case 0x50040000: // 日
-            sectorMax = 27;
+            sectorMax = 27; //待调整
             break;
     default:
         return 1;  //其他
@@ -409,7 +409,7 @@ int month_freeze_judge(struct instance_t* instance, struct pipeline_t* task, str
 
 #if 1
 //  上电补结算冻结处理           上电调用 
-int bill_freeze_power_on_pro(struct instance_t* instance, struct task_t* task, struct message_t* mesg)
+int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
@@ -420,6 +420,7 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct task_t* task, s
     uint8_t billdate[3][2];
     uint8_t payload[20];
     uint8_t *p = payload;
+    struct message_t mesg_tmp;
 
     ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->v_powerdown_tm), sizeof(ctrl_block->v_powerdown_tm));
 
@@ -429,7 +430,7 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct task_t* task, s
         {
             return 0;
         }
-        memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->powerdown_tm), sizeof(ctrl_block->powerdown_tm));
+        ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->powerdown_tm), sizeof(ctrl_block->powerdown_tm));
     }
 
     ndv_memcopy((uint8_t *)&now_tm,(uint8_t *)&instance->time, sizeof(now_tm));
@@ -495,14 +496,14 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct task_t* task, s
                     nd_set_index(instance, s_index, &tmp[0], 5);
                     
                     // 本条记录存储的时间
-                    mesg->id = BillFreeze;
+                    mesg_tmp.id = BillFreeze;
                     uint32_to_buf_msb(0x20210200, &payload[0]);
                     payload[4] = 8; //data len
                     payload[5] = 28;//TYPE_date_time_s;
                     rtc_format_change_from_tm(pd_tm,tmp);
                     mem_swap_cpy(&payload[6], &tmp[0], 7);
  
-                    recv_record_process(instance, task, mesg, payload);                    
+                    recv_record_process(instance, task, &mesg_tmp, payload);                    
                     // 记录1次结算       需根据i判断需量结算是否填空，
                     // 第1结算日过后，最大需量清零                是否需要发送消息？             待添加
                 }
@@ -513,8 +514,8 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct task_t* task, s
             }
         }    
 
-        CLEAR_WATCH_DOG();
-
+        //CLEAR_WATCH_DOG();  清看门狗  待调整
+        v85xxp_clear_watchdog();
         if (pd_tm.tm_mon < 11)
         {
             pd_tm.tm_mon++;
@@ -650,5 +651,13 @@ int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct mess
 }
 
 
+// 上电调用
+int freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+{
+
+    
+    bill_freeze_power_on_pro(instance, task, mesg);
+    return 1;
+}
 
 

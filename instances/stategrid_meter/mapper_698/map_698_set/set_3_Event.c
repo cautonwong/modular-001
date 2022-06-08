@@ -121,10 +121,14 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
 
 int set_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
+    struct mbase_control_block_t* mbase_cb= (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     struct event_para_pack_t para_pack;
     uint8_t* p;
     int16_t ret;
     uint8_t i, count = 0, index = (uint8_t)oad;
+    uint16_t s_len;
+    uint32_t s_index=0;
+    
     p = buf;
 
     memset((uint8_t*)&para_pack, 0, sizeof(struct event_para_pack_t));
@@ -182,6 +186,14 @@ int set_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
         p += para_pack.event_para[i].datalen;
     }
 
+    
+    // 事件参数 全部更新// 待调整
+    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+    offsetof(struct mbase_control_block_t, OverCurrent_threshold));
+    s_len = offsetof(struct mbase_control_block_t, ZeroLineErrS_duration_para) - offsetof(struct mbase_control_block_t, OverCurrent_threshold);
+    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->OverCurrent_threshold, s_len);  
+    
+    
     *dar = DAR_SUCCESS;
     return (p - buf);
 }

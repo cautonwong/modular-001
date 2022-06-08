@@ -457,7 +457,7 @@ int decode_rsd_event_selector_1(struct instance_t* instance, struct pipeline_t* 
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
-            return -1;
+            return -DAR_TYPE_NOT_MATCH;
         }
         rsd_info->start_mark = dt_buf_to_second(apdu_rx + ctx->apdu_rx_offset);
         ctx->apdu_rx_offset += 7;
@@ -477,7 +477,7 @@ int decode_rsd_event_selector_1(struct instance_t* instance, struct pipeline_t* 
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
-            return -1;
+            return -DAR_TYPE_NOT_MATCH;
         }
 
         rsd_info->start_mark = buf_to_uint32_msb(apdu_rx + ctx->apdu_rx_offset);
@@ -487,7 +487,7 @@ int decode_rsd_event_selector_1(struct instance_t* instance, struct pipeline_t* 
         break;
 
     default:
-        return -1;
+        return -DAR_TYPE_NOT_MATCH;
     }
 
     return (1);
@@ -534,7 +534,7 @@ int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pi
     //判断是否为周期冻结
     if ((1 == frz_non_period_type_judge(frz_oi)) || (frz_oi == 0x5006))
     {
-        return -1;
+        return -DAR_TYPE_NOT_MATCH;
     }
 
     //根据冻结 获取冻结周期
@@ -550,7 +550,7 @@ int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pi
 
     if (PeriodId == 0xFFFF)
     {
-        return -1;
+        return -DAR_TYPE_NOT_MATCH;
     }
 
     //获取捕获周期
@@ -579,7 +579,7 @@ int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pi
     // 结束时间  增加 周期s的时间
     rsd_info->end_mark += (range_sec);
 
-    return true;
+    return 1;
 }
 
 int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad,  struct rsd_info_t* rsd_info)
@@ -600,7 +600,7 @@ int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t*
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
-            return -1;
+            return -7;
         }
         rsd_info->start_mark = dt_buf_to_second(apdu_rx + ctx->apdu_rx_offset);
         ctx->apdu_rx_offset += 7;
@@ -613,7 +613,7 @@ int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t*
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
-            return -1;
+            return -7;
         }
         rsd_info->start_mark = buf_to_uint32_msb(apdu_rx + ctx->apdu_rx_offset);
         ctx->apdu_rx_offset += 4;
@@ -622,7 +622,7 @@ int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t*
         break;
 
     default:
-        return -1;
+        return -7;
     }
 
     return (1);
@@ -651,7 +651,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
-            return -1;
+            return -DAR_TYPE_NOT_MATCH;
         }
         rsd_info->start_mark = dt_buf_to_second(apdu_rx + ctx->apdu_rx_offset);
         ctx->apdu_rx_offset += 7;
@@ -659,7 +659,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
-            return -1;
+            return -DAR_TYPE_NOT_MATCH;
         }
         
         rsd_info->end_mark = dt_buf_to_second(apdu_rx + ctx->apdu_rx_offset);
@@ -686,13 +686,13 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
                 //只支持秒，分，时，日, 月 间隔
                 if ((p[0] != TYPE_TI) || (p[1] > 5))
                 {
-                    return -1;
+                    return -DAR_TYPE_NOT_MATCH;
                 }
 
                 //只有冻结支持冻结间隔搜索
                 if ((oi < 0x5000) || (oi > 0x5011))
                 {
-                    return -1;
+                    return -DAR_TYPE_NOT_MATCH;
                 }
                 
                 p++;
@@ -702,7 +702,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
                     || ((p[0] == 3) && (oi == 0x5004)) || ((p[0] == 4) && (oi == 0x5006))
                     || ((p[0] == 0) && (oi == 0x5001)) || ((p[0] == 5) && (oi == 0x5007))))
                 {
-                    return -1;
+                    return -DAR_TYPE_NOT_MATCH;
                 }
 
                 rsd_info->interval = ti_to_second(*p, value);
@@ -734,7 +734,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
-            return -1;
+            return -DAR_TYPE_NOT_MATCH;
         }
         
         rsd_info->start_mark = buf_to_uint32_msb(apdu_rx + ctx->apdu_rx_offset);
@@ -743,7 +743,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
-            return -1;
+            return -DAR_TYPE_NOT_MATCH;
         }
 
         rsd_info->end_mark = buf_to_uint32_msb(apdu_rx + ctx->apdu_rx_offset);
@@ -763,7 +763,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
         {
             if (*p != TYPE_double_long_unsigned)
             {
-                return -1;
+                return -DAR_TYPE_NOT_MATCH;
             }
             rsd_info->interval = buf_to_uint32_msb(apdu_rx + ctx->apdu_rx_offset);
             ctx->apdu_rx_offset += 4;
@@ -774,7 +774,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
         break;
 
     default:
-        return -1;
+        return -DAR_TYPE_NOT_MATCH;
     }
 
     return (1);
@@ -802,7 +802,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
-            return -1;
+            return -DAR_TYPE_NOT_MATCH;
         }
         rsd_info->start_mark = dt_buf_to_second(apdu_rx+ctx->apdu_rx_offset);
         ctx->apdu_rx_offset += 7;  
@@ -810,7 +810,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
-            return -1;
+            return -DAR_TYPE_NOT_MATCH;
         }
 
         rsd_info->end_mark = dt_buf_to_second(apdu_rx+ctx->apdu_rx_offset);
@@ -833,7 +833,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
             //只支持秒，分，时，日间隔
             if ((p[0] != TYPE_TI) || (p[1] > 5))
             {
-                //return -1;
+                //return -DAR_TYPE_NOT_MATCH;
             }
 
             p++;
@@ -841,7 +841,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
 
             if ((p[0] == 4 || p[0] == 5) && (value != 0))
             {
-                //return -1;
+                //return -DAR_TYPE_NOT_MATCH;
             }
 
             rsd_info->interval = ti_to_second(*p, value);
@@ -866,7 +866,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
-            return -1;
+            return -DAR_TYPE_NOT_MATCH;
         }
 
         rsd_info->start_mark = buf_to_uint32_msb(apdu_rx + ctx->apdu_rx_offset);
@@ -875,7 +875,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
-            return -1;
+            return -DAR_TYPE_NOT_MATCH;
         }
 
         rsd_info->end_mark = buf_to_uint32_msb(apdu_rx + ctx->apdu_rx_offset);
@@ -895,7 +895,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
         {
             if (*p != TYPE_double_long_unsigned)
             {
-                return -1;
+                return -DAR_TYPE_NOT_MATCH;
             }
 
             rsd_info->interval = buf_to_uint32_msb(apdu_rx + ctx->apdu_rx_offset);
@@ -908,7 +908,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
 
 
     default:
-        return -1;
+        return -DAR_TYPE_NOT_MATCH;
     }
 
     return (1);
