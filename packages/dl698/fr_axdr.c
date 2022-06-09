@@ -1384,7 +1384,14 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     uint8_t count = 0, rcsd_schem = 0, non_period = 0, check_result = 0;
     uint32_t oad_schem = 0, value = 0;
     uint8_t *p = (buf + 3); // 预留3个字节条数
+    uint8_t attr = get_OAD_Attribute(oad);
+    uint16_t oi = get_OAD_OI(oad);
     int ret = 0;
+
+    if((0x3005 == oi ) && (attr != 7))
+    {
+        return record_response_null(buf);
+    }
     
     //方案号 
     rcsd_schem = rcsd_req_schem_pro(oad, rcsd_req);
@@ -1446,6 +1453,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     read_num = circular_info.valid_num;
     for (i = circular_info.curr_num; i < read_num; i++)
     {
+        v85xxp_clear_watchdog();
         //获取1条记录内容
         ret = nd_log_output(instance, record_id_info.save_index,  ptr_tmp, circular_info.unit_size, &circular_info);
         if(ret < 0)

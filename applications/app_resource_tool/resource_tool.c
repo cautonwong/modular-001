@@ -1068,7 +1068,8 @@ int16_t _Data_handling(uint32_t addr_a, uint32_t addr_b, int32_t len, struct blo
     return 1;
 }
 
-int16_t nd_log_append_rollback(struct instance_t* instance, uint32_t index, uint8_t public_flash_name, uint32_t last_time,uint32_t curr_time)
+//返回-1 改为 返回0， 
+uint16_t nd_log_append_rollback(struct instance_t* instance, uint32_t index, uint8_t public_flash_name, uint32_t last_time,uint32_t curr_time)
 {
     struct circular_info_t info;
     struct block_device_t* device01 = NULL, * device02 = NULL;
@@ -1079,30 +1080,30 @@ int16_t nd_log_append_rollback(struct instance_t* instance, uint32_t index, uint
     uint32_t len01 = 0x00, len02 = 0x00;
     uint32_t depth = 0x00, over_num = 0x00;
     int32_t s_len = 0x00;
-    uint32_t last_num, curr_num;
+    uint16_t last_num, curr_num;
     
     memset((uint8_t*)&info, 0x00, sizeof(struct circular_info_t));
     memset((uint8_t*)&manager, 0x00, sizeof(struct log_manager_t));
     device01 = look_up_device(instance, (uint8_t)(index >> 24));//查找设备   
-    res_conditions_true(device01 == NULL, -1);
+    res_conditions_true(device01 == NULL, 0);
     //查找块
     block01 = look_up_block(instance, device01, (uint8_t)(index >> 16));
-    res_conditions_true((block01 == NULL) || (block01->hook == NULL), -1);
+    res_conditions_true((block01 == NULL) || (block01->hook == NULL), 0);
     block01->hook(instance, (uint16_t)index, &addr01, &len01, &depth);
 
     driver01 = device01->dev->dev_driver_ops;
-    res_conditions_true((driver01 == NULL) || (driver01->dev_read == NULL), -1);
+    res_conditions_true((driver01 == NULL) || (driver01->dev_read == NULL), 0);
     //先获取管理区
     device02 = look_up_device(instance, block01->relation_device);
-    res_conditions_true(device02 == NULL, -1);
+    res_conditions_true(device02 == NULL, 0);
     block02 = look_up_block(instance, device02, block01->relation_name);
-    res_conditions_true((block02 == NULL) || (block02->hook == NULL), -1);
+    res_conditions_true((block02 == NULL) || (block02->hook == NULL), 0);
     block02->hook(instance, (uint16_t)index, &addr02, &len02, NULL);
 
     driver02 = device02->dev->dev_driver_ops;
-    res_conditions_true((driver02 == NULL) || (driver02->dev_read == NULL), -1);
+    res_conditions_true((driver02 == NULL) || (driver02->dev_read == NULL), 0);
     res_conditions_true(0x00 > verify_data(block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
-        sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02, device02->dev), -1);
+        sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02, device02->dev), 0);
     res_conditions_true((manager.num == 0x00) || (manager.unit_size == 0x00), 0x00);
     over_num = len01 / manager.unit_size;
     
@@ -1119,7 +1120,7 @@ int16_t nd_log_append_rollback(struct instance_t* instance, uint32_t index, uint
     info.end_mark = curr_time;
     search_circular(instance, device01->dev, block01->first_addr + addr01, &info, &manager, len01 / manager.unit_size);
     curr_num = info.valid_num;
-    res_conditions_true(last_num < curr_num, -1);
+    res_conditions_true(last_num < curr_num, 0);
     if(last_num >= curr_num)
     {
         if(last_num != curr_num )
@@ -1135,21 +1136,27 @@ int16_t nd_log_append_rollback(struct instance_t* instance, uint32_t index, uint
             manager.num = curr_num;   
             //更新管理区
             res_conditions_true(0x00 > update_verify(block02->first_addr + addr02, 0x00, (uint8_t*)&manager, 
-                sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02, device02->dev), -1);        
+                sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02, device02->dev), 0);        
         }
         //搬运数据
         block03 = look_up_block(instance, device01, public_flash_name);
-        res_conditions_true(block03 == NULL, -1);
+        res_conditions_true(block03 == NULL, 0);
         addr01 += manager.w_ptr * manager.unit_size;
         s_len = addr01 % 4096;
         addr01 -= s_len;
         
         if(s_len > 0)
         {
-            res_conditions_true(0x00 > _Data_handling(block01->first_addr + addr01, block03->first_addr, s_len, device01), -1);
-        }    
+            res_conditions_true(0x00 > _Data_handling(block01->first_addr + addr01, block03->first_addr, s_len, device01), 0);
+        }   
+        
     }
-    return 1;
+    else
+    {
+        last_num = curr_num;
+    }
+
+    return (last_num-curr_num);
 }
 
 int nd_log_clean(struct instance_t* instance, uint32_t index)

@@ -212,9 +212,14 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     break;
                 case 0x03://数据初始化（电表清零）
                     // 时间标签 标志   待调整
-                    if((1 != pctx->timeTag_valid) || (pctx->timeTag[0] == 0)){
-                        return -DAR_TIME_TAG_INVALID;
+                    if(mbase_cb->factor_mode == false)
+                    {
+                        if((1 != pctx->timeTag_valid) || (pctx->timeTag[0] == 0))
+                        {
+                            return -DAR_TIME_TAG_INVALID;
+                        }
                     }
+
 #if 0//待调整
                     if ((mbase_cb->SecretKey_state == 0) && (mbase_cb->factor_mode == false))//0私钥，1公钥，私钥不允许清零
                     {

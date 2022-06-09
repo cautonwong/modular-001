@@ -222,6 +222,31 @@ void rtc_normal_to_tm(struct tm* time, uint8_t* p)
 }
 
 
+int rollback_sequence(struct instance_t* instance, uint32_t oad,  uint16_t rollback_num)
+{
+    uint32_t sequence = 0;
+    struct record_storage_id_info_t record_id_info; 
+    int ret;
+    ret = get_record_id_info(instance, oad, &record_id_info);
+    if (ret < 0)
+    {
+        return -(255);
+    }
+    
+    nd_get_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+    if (sequence <  rollback_num)
+    {
+        sequence = 0;
+    }
+    else
+    {
+        sequence -= rollback_num;
+    }
+    
+    nd_set_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+}
+
+
 //设置或修改时间后调用  冻结回退处理
 int record_rollback_after_set_time(struct instance_t* instance)
 {
@@ -229,9 +254,10 @@ int record_rollback_after_set_time(struct instance_t* instance)
     uint8_t i, num = 0, buffer[10] = { 0xFF };
     struct tm t_before, t_after;
     uint32_t addr,last_timesec, curr_timesec;
+    uint16_t rollback_seq_num[11] = 0;
     int ret = 0;
     //uint16_t FlagID[] = { MinuteFreeze1, MinuteFreeze2, MinuteFreeze3, MinuteFreeze4, MinuteFreeze5, MinuteFreeze6, MinuteFreeze7, MinuteFreeze8, HourFreeze, DayFreeze, MonthFreeze, };
-    uint32_t TabOAD[] = { 0x50020200, 0x50022200, 0x50024200, 0x50026200, 0x50028200, 0x5002A200, 0x5002C200, 0x5002E200, 0x50030200, 0x50040200, 0x50060200, };
+    uint32_t TabOAD[11] = { 0x50020200, 0x50022200, 0x50024200, 0x50026200, 0x50028200, 0x5002A200, 0x5002C200, 0x5002E200, 0x50030200, 0x50040200, 0x50060200, };
 
 
     //时间合法性判断 待调整
@@ -263,12 +289,15 @@ int record_rollback_after_set_time(struct instance_t* instance)
                 continue;
             }
             
-            ret = nd_log_append_rollback(instance, record_id_info.save_index  , public_block_flash, last_timesec, curr_timesec);
-            if (ret > 0)
+            rollback_seq_num[i] = nd_log_append_rollback(instance, record_id_info.save_index  , public_block_flash, last_timesec, curr_timesec);
+            if (rollback_seq_num[i] > 0)
             {
+                rollback_sequence(instance, TabOAD[i], rollback_seq_num[i]);
                 num++;
                 //需要分每个id单独记录
             }
+            
+            
         }
 
         if (num == (sizeof(TabOAD) / sizeof(TabOAD[0])))

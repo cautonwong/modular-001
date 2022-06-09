@@ -226,9 +226,10 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
                 
                 if (ret < 0)
                 {
-                    p[offset] = 0; // 无记录
-                    p[offset+1] = -ret;
-                    return DAR_OTHERS_ERROR;
+                    p[offset] = -ret; // 无记录
+                    //p[offset+1] = ret;
+                    cache->wr += 1;
+                    return -DAR_OTHERS_ERROR;
                 }
                 else
                 {

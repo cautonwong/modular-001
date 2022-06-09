@@ -229,12 +229,7 @@ int get_current_record_number_ic_24(struct instance_t* instance, uint32_t oad, u
         circular_info.mode = 0;
 
         ret = nd_log_output(instance, record_id_info.save_index, tempbuf, 1, &circular_info);
-        if (ret < 0)
-        {
-            *dar = DAR_OTHERS_ERROR;
-            return -DAR_OTHERS_ERROR;
-        }
-        
+
         *p++ = TYPE_long_unsigned;
         tims += circular_info.valid_num;
         p += uint16_to_buf_msb(circular_info.valid_num, p);
@@ -611,11 +606,6 @@ int get_time_status_record(struct instance_t* instance, uint32_t oad, uint8_t* b
             circular_info.curr_num = circular_info.valid_num - 1;
 
             ret = nd_log_output(instance, record_id_info.save_index, tempbuf, sizeof(tempbuf), &circular_info);
-            if (ret < 0)
-            {
-                *dar = DAR_OTHERS_ERROR;
-                return -DAR_OTHERS_ERROR;
-            }
 
             start_t = buf_to_uint32_msb(&tempbuf[5+1]);
             end_t = buf_to_uint32_msb(&tempbuf[10+1]);
@@ -697,11 +687,7 @@ int get_time_status_record_one_element_ic_24(struct instance_t* instance, uint32
     circular_info.mode = 0;
 
     ret = nd_log_output(instance, record_id_info.save_index, tempbuf, 1, &circular_info);
-    if (ret < 0)
-    {
-        *dar = DAR_OTHERS_ERROR;
-        return -DAR_OTHERS_ERROR;
-    }
+
 
     *p = TYPE_date_time_s;
     memset(time_buf, 0xff, sizeof(time_buf));
@@ -712,11 +698,7 @@ int get_time_status_record_one_element_ic_24(struct instance_t* instance, uint32
         circular_info.curr_num = circular_info.valid_num - 1;
 
         ret = nd_log_output(instance, record_id_info.save_index, tempbuf, sizeof(tempbuf), &circular_info);
-        if (ret < 0)
-        {
-            *dar = DAR_OTHERS_ERROR;
-            return -DAR_OTHERS_ERROR;
-        }
+
         start_t = buf_to_uint32_msb(&tempbuf[5 + 1]);
         end_t = buf_to_uint32_msb(&tempbuf[10 + 1]);
         second_to_dt_buf(start_t, (p + 1));

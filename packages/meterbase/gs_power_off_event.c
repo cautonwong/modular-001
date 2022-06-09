@@ -37,7 +37,7 @@ int PowerOff_event_judge(struct instance_t* instance, struct pipeline_t* task, s
         val1 = U[i];
 
         // 所有相均低于60%un
-        if ((*val1) >= (ctrl_block->volt_60)*100)
+        if ((*val1) >= (ctrl_block->volt_60))
         {
             break;
         }

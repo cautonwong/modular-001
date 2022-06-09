@@ -294,6 +294,13 @@ int clr_record(struct instance_t* instance, uint32_t oad)
         *info.acc_time = 0;
     }
 
+    clr_recordflag(instance, (uint16)info.save_index);
+    //清事件标志
+    if(oad & 0xF0000000 == 0x30000000)
+    {
+        clr_activeflag(instance, (uint16)info.save_index);
+    }
+
     if (oad == 0x30120200) // 编程记录
     {
         MeterWr_obj_list_clear(instance, NULL, NULL);
@@ -537,6 +544,7 @@ int event_PowerOn_pro(struct instance_t* instance, struct pipeline_t* pipeline, 
             payload[5] = 0x1C;//TYPE_date_time_s;
             rtc_format_change_from_tm(&ctrl_block->powerdown_tm,  tmp);
             mem_swap_cpy(&payload[6], &tmp[0], 7);
+            clr_activeflag(instance, RecordId);
             recv_record_process(instance, pipeline, &mesg_tmp, payload);    
         }
     }
@@ -1118,6 +1126,7 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
         report_3320list_add(instance,Oad|(event_scheme<<13));
     }
 
+    clr_recordflag(instance, mesg->id);
     return 1;
 
 }
@@ -1339,7 +1348,11 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
             }
             report_3320list_add(instance,Oad|(event_scheme<<13));
         }
+
+
+        clr_recordflag(instance, mesg->id);
     }
+    
     return 0;//返回0代表结束
 }
 

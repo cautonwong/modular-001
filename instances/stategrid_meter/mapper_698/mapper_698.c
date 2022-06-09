@@ -814,6 +814,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
 
                 case 0x30050000:
                 {
+                    
                     SaveId = OverCurrentAS;                 // 记录存储地址信息
                     SaveDevice = RES_DEV_EEPROM;
                     SaveBlock = mbase_block_event;
@@ -2029,6 +2030,8 @@ int para_init(struct instance_t* instance )
     
     num = sizeof(parameter_item)/sizeof(parameter_item_t);
     
+    v85xxp_clear_watchdog();
+    
     //RAM部分更新
     mbase_cb->lcd_poweron_all_dis_time = 5;            //上电全显时间
     mbase_cb->backlight_key_time = 60;                  //背光点亮时间
@@ -2078,6 +2081,7 @@ int para_init(struct instance_t* instance )
     s_len = offsetof(struct mbase_control_block_t, ZeroLineErrS_duration_para) - offsetof(struct mbase_control_block_t, OverCurrent_threshold);
     nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->OverCurrent_threshold, s_len);  
      
+    v85xxp_clear_watchdog();
     //EE部分更新
     for(i=0; i<num; i++)
     {

@@ -340,7 +340,10 @@ int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipelin
     struct mbase_control_block_t* mbase_cb;
     uint8_t cilent_index = 0;
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
+    uint8_t* p = cache->buf_ptr;
+   
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
    
     
@@ -367,6 +370,12 @@ int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipelin
     }
     
     //复位ESAM
+    //memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, 2);
+    //cache->wr += 2;
+    //ctx->apdu_rx_offset += 1; 
+    //cache->wr += 1;
+    p[cache->wr-2] = p[cache->wr-1];
+    p[cache->wr-1] = 0;
     return 1;
 }
 
