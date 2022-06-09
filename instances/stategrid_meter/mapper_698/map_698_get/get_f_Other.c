@@ -252,10 +252,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                                 memcpy(p, (uint8_t*)&mbase_cb->lcd_keydis_list_num, 1);
                             p++;
                             *p++ = TYPE_unsigned;
-                            if(oad == 0xF300)
-                                memcpy(p, (uint8_t*)&mbase_cb->lcd_autodis_list_maxnum, 1);
-                            else
-                                memcpy(p, (uint8_t*)&mbase_cb->lcd_keydis_list_maxnum, 1);
+                            *p = 99;
                             p = p + 1;
                             return (p - buf);
                             break;
@@ -270,10 +267,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                             break;
                         case 0x02://最大对象数
                             *p++ = TYPE_unsigned;
-                            if(oad == 0xF300)
-                                memcpy(p, (uint8_t*)&mbase_cb->lcd_autodis_list_maxnum, 1);
-                            else
-                                memcpy(p, (uint8_t*)&mbase_cb->lcd_keydis_list_maxnum, 1);
+                            *p = 99;
                             p = p + 1;
                             return (p - buf);
                             break;

@@ -117,21 +117,22 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
 						break;
                     case 0x4008://切换时间
                     case 0x4009:
-                        mem_swap_cpy((uint8_t*)&year2, p+1, 2);
-                        if(year2 < 2000) return -DAR_RW_REJECT;
-                        year2 = year2 - 2000;
-                        timer[0] = *(p+4); //day
-                        timer[1] = *(p+3); //month
-                        timer[2] = (uint8_t)year2;
-                        timer[3] = *(p+5);  //hour
-                        timer[4] = *(p+6);  //min
-                        timer[5] = *(p+7);  //sec
-                        if((Time_Format_Check(&timer[3])) && (Date_Format_Check(timer))) 
+                        if((*(p+7) == 0xFF) && (*(p+6) == 0x00) && (*(p+5) == 0x00) && (*(p+4) == 0x00) && (*(p+3) == 0x00) && (*(p+2) == 0x00) && (*(p+1) == 0x00))
                         {
-                            if((timer[5] != 0xFF) && (timer[4] != 0x00) && (timer[3] != 0x00) && (timer[2] != 0x00) && (timer[1] != 0x00) && (timer[1] != 0x00))
-                                return -DAR_OTHERS_ERROR;
                         }
-                        *(p+7) = 0xFF;
+                        else
+                        {
+                            mem_swap_cpy((uint8_t*)&year2, p+1, 2);
+                            if((year2 < 2000)&& (year2 > 0)) return -DAR_RW_REJECT;
+                            year2 = year2 - 2000;
+                            timer[0] = *(p+4); //day
+                            timer[1] = *(p+3); //month
+                            timer[2] = (uint8_t)year2;
+                            timer[3] = *(p+5);  //hour
+                            timer[4] = *(p+6);  //min
+                            timer[5] = *(p+7);  //sec
+                            if((Time_Format_Check(&timer[3])) || (Date_Format_Check(timer)))    return -DAR_OTHERS_ERROR;
+                        }
                         mbase_cb->Fee |= F_ChangeTmOn;
                         break;
                     case 0x4112://有功组合特征字

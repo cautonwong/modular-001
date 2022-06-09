@@ -119,9 +119,9 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                                     mbase_cb->lcd_keydis_list_num = *p;
                                 p = p + 2;
                                 if(oad == 0xF300)
-                                    mbase_cb->lcd_autodis_list_maxnum = *p++;
+                                    mbase_cb->lcd_autodis_list_maxnum = 99;
                                 else
-                                    mbase_cb->lcd_keydis_list_maxnum = *p++;
+                                    mbase_cb->lcd_keydis_list_maxnum = 99;
                                 //len = 2;
                                 //s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_cb << 16) + 
                                 //offsetof(struct mbase_control_block_t, lcd_autodis_list_num));
@@ -151,7 +151,8 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                                 return (p-buf);
                                 break;
                             case 0x02://允许最大对象数
-                                p = p + 1;
+                                return -DAR_OTHERS_ERROR;
+                                /*p = p + 1;
                                 if(oad == 0xF300)
                                     mbase_cb->lcd_autodis_list_maxnum = *p++;
                                 else
@@ -164,7 +165,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                                 offsetof(struct mbase_control_block_t, backlight_key_time));
                                 len = offsetof(struct mbase_control_block_t, Baut_plc) - offsetof(struct mbase_control_block_t, backlight_key_time);
                                 nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->backlight_key_time, len);
-                                return (p-buf);
+                                return (p-buf);*/
                                 break;
                             default:
                                 return -DAR_OTHERS_ERROR;
