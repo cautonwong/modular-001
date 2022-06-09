@@ -60,7 +60,7 @@ const general_set4  general_set4_talble[] =
 //   MeterRunWord,              0x4110,     0x02,   0x01,   1,//电能表运行特征字
      SoftWareNo,                0x4111,     0x02,   0x02,   16,//软件备案号
      Measure_Mode,              0x4112,     0x02,   0x02,   1,//有功组合特征字
-     Meter_Password,            0x4401,     0x02,   0x01,   8,//应用连接密码
+     Meter_Password,            0x4401,     0x02,   0x02,   8,//应用连接密码
 };
 #define		set4num			sizeof(general_set4_talble)/sizeof(general_set4)
 
