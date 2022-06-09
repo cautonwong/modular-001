@@ -91,9 +91,11 @@ void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx)
     nd_set_index(instance, s_index, buf, 4); 
     
     memset((uint8_t*)&mbase_control_block->k_u, 0x00, 16);
-    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-            offsetof(struct mbase_control_block_t, k_u));
-    nd_set_offset(instance, s_index, (uint8_t*)&mbase_control_block->k_u, 16);//存储至EE
+    mbase_control_block->k_u = 0.0137414116;
+    mbase_control_block->k_il = 0.016;
+    mbase_control_block->k_p = 0.0023294272;
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_K);
+    nd_set_index(instance, s_index, (uint8_t*)&mbase_control_block->k_u, 16);//存储至EE
 }
 
 

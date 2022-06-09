@@ -146,7 +146,7 @@ void voltage_compensate(struct instance_t* instance, struct pipeline_t* pipeline
 	}
 }
 
-#define REAL_K_U_INIT     0.137414116
+#define REAL_K_U_INIT     0.0137414116
 #define REAL_K_I_INIT     0.016
 #define REAL_K_P_INIT     0.0023294272
 

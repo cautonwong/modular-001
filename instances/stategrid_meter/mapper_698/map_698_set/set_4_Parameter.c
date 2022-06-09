@@ -125,10 +125,12 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         timer[2] = (uint8_t)year2;
                         timer[3] = *(p+5);  //hour
                         timer[4] = *(p+6);  //min
-                        timer[5] = 0;  //sec
-                        
-                        if(Date_Format_Check(timer))  return -DAR_OTHERS_ERROR;
-                        if(Time_Format_Check(&timer[3])) return -DAR_OTHERS_ERROR;
+                        timer[5] = *(p+7);  //sec
+                        if((Time_Format_Check(&timer[3])) && (Date_Format_Check(timer))) 
+                        {
+                            if((timer[5] != 0xFF) && (timer[4] != 0x00) && (timer[3] != 0x00) && (timer[2] != 0x00) && (timer[1] != 0x00) && (timer[1] != 0x00))
+                                return -DAR_OTHERS_ERROR;
+                        }
                         *(p+7) = 0xFF;
                         mbase_cb->Fee |= F_ChangeTmOn;
                         break;

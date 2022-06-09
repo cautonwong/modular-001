@@ -430,10 +430,10 @@ struct format_conversion_t
 //key
 #define     keydlymax           100     
 
-#define     MAX_VOLTAGE     4000 //400v
-#define     MIN_VOLTAGE     500 //50v
-#define     UN_VOLTAGE      220000 //220v
-#define     MAX_CURRENT     120000 //120A
+#define     MAX_VOLTAGE     4000 //400.0v
+#define     MIN_VOLTAGE     500 //50.0v
+#define     UN_VOLTAGE      2200 //220.0v
+#define     MAX_CURRENT     120000 //120.000A
 #define     MIN_CURRENT     15     //10mA
 
 #define     AS_Un      2200
