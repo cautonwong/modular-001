@@ -15,7 +15,8 @@ extern uint8 mcu_delay_us(volatile uint16 count);
 uint32 over_Imax;
 static uint8 Buffer[50];
 //static struct factor_adj_meter_t Factory3;
-static uint16 key_cnt;
+static uint16 avg_activepower_cnt;
+static int32_t avg_activepower_sum;
 
 #define	lock_heat_compensate	0x5a
 #define	lock_voltage_compensate	0xa5
@@ -323,6 +324,10 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     {
         mbase_control_block->voltage_ac = 0;
     }
+    
+
+    
+    
     //读计量芯片电流
     temp = 0;
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , IARMS , 3 , &temp);
@@ -342,6 +347,25 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
         mbase_control_block->active_power = 0;
     }
     
+    if(mbase_control_block->active_avg_power == 0)
+    {
+        mbase_control_block->active_avg_power = mbase_control_block->active_power;
+    }
+    else
+    {
+        if(avg_activepower_cnt < 60)
+        {
+            avg_activepower_sum += mbase_control_block->active_power;
+            avg_activepower_cnt++;
+        }
+        else
+        {
+            mbase_control_block->active_avg_power = avg_activepower_sum/avg_activepower_cnt;
+            avg_activepower_cnt = 0;
+            avg_activepower_sum = 0;
+        }
+    }
+
     if(mbase_control_block->active_power < 0)
     {
         mbase_control_block->power_dir = 1;
@@ -482,7 +506,9 @@ void Electrical_measurement_poweron(struct instance_t* instance, struct pipeline
     /********* 电压补偿 *********/
     memset((uint8_t*)&emu_voltage_adj.un80_offset, 0x00, 8);
     
-    key_cnt = 0;
+    avg_activepower_cnt = 0;
+    avg_activepower_sum = 0;
+    mbase_control_block->active_avg_power = 0;
     
     /********* 各类门限 *********/
     mbase_control_block->volt_60 = AS_Un*0.6;   //60%电压

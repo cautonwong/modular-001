@@ -241,6 +241,22 @@ void ir_receive_timeout(void)
     fifoBuf_putByte(&irq_fifo, IRQ_IR_RX_TM_OUT);
 }   
 
+void rs485_send_timeout(void)
+{
+    //这里是发送结束最后一个字节后调用的函数，可以在这里判断是否有波特率修改，并调用修改波特率函数，注意该函数是在中断调用，因此要简洁
+}
+
+void plc_send_timeout(void)
+{
+    //这里是发送结束最后一个字节后调用的函数，可以在这里判断是否有波特率修改，并调用修改波特率函数，注意该函数是在中断
+}
+
+void ir_send_timeout(void)
+{
+    //这里是发送结束最后一个字节后调用的函数，可以在这里判断是否有波特率修改，并调用修改波特率函数，注意该函数是在中断
+}   
+
+
 void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uint8_t chl_type)
 {
     struct uart_chl_init_t chl_init;
@@ -251,16 +267,19 @@ void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uin
              chl_init.uart_cfg = (const void*)&Uart_InitType_485;
              chl_init.mcu_uart_index = UART_RS4851_AT_MCU_UART_INDEX;
              chl_init.CallBackReceiveTimeOut = rs485_receive_timeout;
+             chl_init.CallBackSendTimeOut = rs485_send_timeout;
              break;
         case UART_IR_CHL:
              chl_init.uart_cfg = (const void*)&Uart_InitType_ir;
              chl_init.mcu_uart_index = UART_IR_AT_MCU_UART_INDEX;
              chl_init.CallBackReceiveTimeOut = ir_receive_timeout;
+             chl_init.CallBackSendTimeOut = ir_send_timeout;
             break;
         case UART_MODULE_CHL:
              chl_init.uart_cfg = (const void*)&Uart_InitType_module;
              chl_init.mcu_uart_index = UART_MODULE_AT_MCU_UART_INDEX;
              chl_init.CallBackReceiveTimeOut = plc_receive_timeout;
+             chl_init.CallBackSendTimeOut = plc_send_timeout;
             break;
         default:
             break;

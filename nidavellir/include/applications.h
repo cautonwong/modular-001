@@ -339,6 +339,7 @@ void Energy_Meter_PowerON(struct instance_t* instance, struct pipeline_t* pipeli
 void Energy_Meter_PowerOFF(struct instance_t* instance, struct pipeline_t* pipeline);
 int32_t Get_Cal_Active_Energy(struct mbase_control_block_t* mbase_control_block, uint8_t index , uint8_t type);
 int32_t Get_Active_Energy(struct mbase_control_block_t* mbase_control_block, uint8_t index , uint8_t type , uint8_t pn);
+int32_t Get_Month_Active_Energy(struct mbase_control_block_t* mbase_control_block, uint8_t index , uint8_t pn);
 void Energy_clr(struct instance_t* instance);
 
 int16_t supply_parameter_info(struct instance_t* instance, uint16_t id, uint32_t* addr, uint16_t* size,uint16_t *offset);

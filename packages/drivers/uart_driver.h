@@ -26,6 +26,7 @@ struct uart_chl_init_t
     uint8_t mcu_uart_index;
     uint8_t chl_type;
     void (*CallBackReceiveTimeOut)(void);
+    void (*CallBackSendTimeOut)(void);
 };
 
 

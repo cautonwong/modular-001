@@ -74,6 +74,11 @@ void ndv_uart0_tx(void)
     {
         RS485_RCV_EN();        
         mcu_uart_send_enable(0, 0);
+        
+        if(uart_dev[0].CallBackSendTimeOut)
+        {
+            uart_dev[0].CallBackSendTimeOut();
+        }
     }
 }
 
@@ -100,6 +105,11 @@ void ndv_uart1_tx(void)
     else
     {
         mcu_uart_send_enable(0, 1);
+        
+        if(uart_dev[1].CallBackSendTimeOut)
+        {
+            uart_dev[1].CallBackSendTimeOut();
+        }
     }
 }
 
@@ -126,6 +136,11 @@ void ndv_uart2_tx(void)
     else
     {
         mcu_uart_send_enable(0, 2);
+        
+        if(uart_dev[2].CallBackSendTimeOut)
+        {
+            uart_dev[2].CallBackSendTimeOut();
+        }
     }
 }
 
@@ -152,6 +167,10 @@ void ndv_uart3_tx(void)
     else
     {
         mcu_uart_send_enable(0, 3);
+        if(uart_dev[3].CallBackSendTimeOut)
+        {
+            uart_dev[3].CallBackSendTimeOut();
+        }
     }
 }
 
@@ -177,6 +196,10 @@ void ndv_uart4_tx(void)
     else
     {
         mcu_uart_send_enable(0, 4);
+        if(uart_dev[4].CallBackSendTimeOut)
+        {
+            uart_dev[4].CallBackSendTimeOut();
+        }
     }
 }
 
@@ -202,6 +225,10 @@ void ndv_uart5_tx(void)
     else
     {
         mcu_uart_send_enable(0, 5);
+        if(uart_dev[5].CallBackSendTimeOut)
+        {
+            uart_dev[5].CallBackSendTimeOut();
+        }
     }
 }
 
@@ -227,6 +254,10 @@ void ndv_uart6_tx(void)
     else
     {
         mcu_uart_send_enable(0, 6);
+        if(uart_dev[6].CallBackSendTimeOut)
+        {
+            uart_dev[6].CallBackSendTimeOut();
+        }
     }
 }
 
@@ -306,6 +337,7 @@ int uart_chl_initialize(struct uart_chl_init_t *uart_chl)
         uart_dev[index].rx_time_out = 0;
         uart_dev[index].tx_time_out = 0;
         uart_dev[index].CallBackReceiveTimeOut = uart_chl->CallBackReceiveTimeOut;
+        uart_dev[index].CallBackSendTimeOut = uart_chl->CallBackSendTimeOut;
         switch(uart_chl->chl_type)
         {
             case UART_RS4851_CHL:
