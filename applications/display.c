@@ -443,7 +443,7 @@ unsigned char display_id_to_oad(unsigned short id, unsigned char *oad)
     return len;
 }
 
-unsigned short display_oad_to_id(unsigned char *oad, unsigned char len)
+unsigned short display_oad_to_id(unsigned char *oad, unsigned char *oad_son, unsigned char Sequ, unsigned char len)
 {
     unsigned char i,idmid,idl;
     unsigned short id = 0;
@@ -454,26 +454,31 @@ unsigned short display_oad_to_id(unsigned char *oad, unsigned char len)
         for(i=0; i<displaytablenum; i++)
         {
             mem_swap_cpy((unsigned char*)&temp, (unsigned char*)&Display_List[i].oad[0], 4);
-            if( mem_compare( (unsigned char*)&temp, (unsigned char*)&oad, 4 ) == 0 )
+            if(( mem_compare( (unsigned char*)&temp, (unsigned char*)oad, 4 ) == 0 ) && (Sequ == Display_List[i].Sequ))
             {
                 id = Display_List[i].Id;
                 return id;
             }
         }
+        if(Sequ > 0)    return 0;
         memcpy((unsigned char*)&oad2, (unsigned char*)&oad, 4);
-        if(((oad2 & 0xFFFFFF00) != 0x00000400) && ((oad2 & 0xFFFFFF00) != 0x00100400) && ((oad2 & 0xFFFFFF00) != 0x00200400))   return 0;
+        if(((oad2 & 0xFFFFFF00) != 0x00000400) && ((oad2 & 0xFFFFFF00) != 0x00100400) && ((oad2 & 0xFFFFFF00) != 0x00200400)
+               && ((oad2 & 0xFFFFFF00) != 0x00000200) && ((oad2 & 0xFFFFFF00) != 0x00100200) && ((oad2 & 0xFFFFFF00) != 0x00200200))   return 0;
         idl = (unsigned char)(oad2 & 0x000000FF);
         if(idl > 0x0c)  return 0;
         id |= idl;
         oad2 = oad2 & 0xFFFFFF00;
         switch(oad2)
         {
+            case 0x00000200:
             case 0x00000400:
                 id |= 0xE000;
                 break;
+            case 0x00100200:
             case 0x00100400:
                 id |= 0xC000;
                 break;
+            case 0x00200200:
             case 0x00200400:
                 id |= 0xD000;
                 break;  
@@ -485,25 +490,30 @@ unsigned short display_oad_to_id(unsigned char *oad, unsigned char len)
     else if(len == 8)
     {
         memcpy((unsigned char*)&oad1, (unsigned char*)oad, 4);
+        if(Sequ > 0)    return 0;
         if((oad1 & 0xffffff00) == 0x50050200)//月结算
         {
             idmid = (unsigned char)(oad1 & 0x000000ff);
-            if(idmid > 0x18)    return 0;
+            if((idmid > 0x18) || (idmid == 0))    return 0;
             id |= (((unsigned short)(idmid)) << 4);
-            memcpy((unsigned char*)&oad2, (unsigned char*)(oad+4), 4);
-            if(((oad2 & 0xFFFFFF00) != 0x00000400) && ((oad2 & 0xFFFFFF00) != 0x00100400) && ((oad2 & 0xFFFFFF00) != 0x00200400))   return 0;
+            memcpy((unsigned char*)&oad2, (unsigned char*)oad_son, 4);
+            if(((oad2 & 0xFFFFFF00) != 0x00000400) && ((oad2 & 0xFFFFFF00) != 0x00100400) && ((oad2 & 0xFFFFFF00) != 0x00200400)
+               && ((oad2 & 0xFFFFFF00) != 0x00000200) && ((oad2 & 0xFFFFFF00) != 0x00100200) && ((oad2 & 0xFFFFFF00) != 0x00200200))   return 0;
             idl = (unsigned char)(oad2 & 0x000000FF);
             if(idl > 0x0c)  return 0;
             id |= idl;
             oad2 = oad2 & 0xFFFFFF00;
             switch(oad2)
             {
+                case 0x00000200:
                 case 0x00000400:
                     id |= 0xE000;
                     break;
+                case 0x00100200:
                 case 0x00100400:
                     id |= 0xC000;
                     break;
+                case 0x00200200:
                 case 0x00200400:
                     id |= 0xD000;
                     break;  

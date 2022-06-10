@@ -489,7 +489,7 @@ extern void rtc_get_from_tm(struct instance_t* instance, uint8_t* p);
 
 extern uint8_t get_key_status(struct instance_t* instance);
 
-extern unsigned short display_oad_to_id(unsigned char *oad, unsigned char len);
+extern unsigned short display_oad_to_id(unsigned char *oad, unsigned char *oad_son, unsigned char Sequ, unsigned char len);
 extern int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern void send_event_mesg_pro(struct instance_t* instance, struct pipeline_t* task, uint16_t RecordId, uint8_t* payload, int mode);
 

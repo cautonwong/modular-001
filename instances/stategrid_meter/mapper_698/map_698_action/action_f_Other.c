@@ -434,11 +434,11 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
     uint8_t *apdu_rx = p_ctx->apdu_d_rx + p_ctx->apdu_rx_offset;
     uint16_t offset = 0;
     
-    uint8_t  method,dar=0,buffer[16],keybuf[128],len1=0,len2=0, cilent_index = 0;
+    uint8_t  method,dar=0,buffer[16],keybuf[128],len1=0,len2=0, cilent_index = 0,len=0;
     uint16_t oad,pageid=0,txlen=0,rxlen=0;
     int16_t complen;
-    uint8_t *p = buf;
-    uint32_t temp = 0,s_index=0,addr=0;
+    uint8_t *p = buf,disp_sequ=0;
+    uint32_t temp = 0,s_index=0,addr=0,displayid=0,displayoad1=0,displayoad2=0;
     uint8_t* ptr_tmp = instance->apdu_cache;
     
     //struct fifo_t* cache_t = p_ctx->apdu;
@@ -856,6 +856,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 return -DAR_OBJECT_NOT_EXIST;
             }
             return (p-buf);
+        case 0xF300://自动循显
         case 0xF301://按键循显
             switch(method)
             {
@@ -888,6 +889,43 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     mbase_cb->BackLightTmr = 60;
                     return 1;
                 case 0x05://显示查看
+                    p=p+2;
+                    if(*p == TYPE_CSD)    
+                    {
+                        if(*(p+1) == 0)
+                            len = 4;
+                        else if(*(p+1) == 1)
+                            len = 8;
+                    }
+                    else 
+                    {
+                        return -1;
+                    }
+                    p = p + 2;
+                    if(len == 4)
+                    {
+                        mem_swap_cpy((uint8_t*)&displayoad1, p, 4);
+                    }
+                    else if(len == 8)
+                    {
+                        mem_swap_cpy((uint8_t*)&displayoad1, p, 4);
+                        p = p + 5;
+                        mem_swap_cpy((uint8_t*)&displayoad2, p, 4);
+                    }
+                    else
+                    {
+                        return -1;
+                    }
+                    p = p + 5;
+                    disp_sequ = *p;
+                    p = p + 2;
+                    displayid = display_oad_to_id((uint8_t*)&displayoad1, (uint8_t*)&displayoad2, disp_sequ, len);
+                    if(displayid == 0)  return -DAR_BUFFER_OVERFLOW;
+                    mbase_cb->Page_ID = displayid;
+                    mem_swap_cpy((uint8_t*)&mbase_cb->AutoInv, p, 2);//持续时间
+                    p=p+2;  
+                    mbase_cb->BackLightTmr = mbase_cb->AutoInv;
+                    return (p-buf);
                     break;
                 case 0x06://全屏显示
                     mbase_cb->AutoPtr = 0xFF;

@@ -8,7 +8,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad,displayid;
     uint8_t index=0,attribute,i,num=0,dar=0, tempbuf[10] = {0};
-    uint8_t* p = buf;
+    uint8_t* p = buf,Sequ=0;
     uint32_t displayoad1,displayoad2,s_index=0;
     uint16_t len = 0;
     
@@ -82,29 +82,32 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                             p = p + 4;
                             if(len == 8)
                             {
-                                mem_swap_cpy((uint8_t*)&displayoad2, p+5, 4);
-                                p = p + 5;
+                                p++;
+                                mem_swap_cpy((uint8_t*)&displayoad2, p, 4);
+                                p = p + 4;
                             }
-                            displayid = display_oad_to_id((uint8_t*)&displayoad1, len);
+                            p++;
+                            Sequ = *p++;
+                            displayid = display_oad_to_id((uint8_t*)&displayoad1, (uint8_t*)&displayoad2, Sequ, len);
+                            if(displayid == 0)  return -DAR_BUFFER_OVERFLOW;
                             if(oad == 0xF300)
                             {
                                 if(index > 0)
                                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AutoDisplayList + (index - 1));
                                 else
-                                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AutoDisplayList);
+                                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AutoDisplayList + i);
                             }
                             else
                             {
                                 if(index > 0)
                                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + (index - 1));
                                 else
-                                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList);
+                                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + i);
                             }
                             if(index > 0)
                                 nd_set_index(instance, s_index, (uint8_t*)&displayid, 2); 
                             else
                                 nd_set_index(instance, s_index, (uint8_t*)&displayid, 2); 
-                            p = p + 2;
                         }
                         return (p-buf);
                         break;
