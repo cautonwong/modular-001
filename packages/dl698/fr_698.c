@@ -398,6 +398,10 @@ int fr_addr_handle(struct instance_t* instance, struct pipeline_t* pipeline, str
             }
         }
         memcpy(ctx->addr, mbase_cb->tsa, SA_LEN(ctx->SA) + 1);
+    }else if(3 == get_addr_type(ctx->SA)){
+        if(!((1 == (SA_LEN(ctx->SA) + 1)) && (ctx->addr[0] == 0xaa))){
+            return 0;
+        }
     }else{
         return 0;
     }
@@ -482,6 +486,9 @@ int fr_timeTag_optional(struct instance_t* instance, struct pipeline_t* pipeline
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
     
+    if(ctx->service == SECURITY_Response){
+        return 1;
+    }
     if(0 == fr_follow_report_optional(instance, pipeline, mesg)){
         p[cache->wr++] = 0x00;
     }
@@ -720,9 +727,10 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     if ((SECURITY_Request == ctx->service) || (SECURITY_Response == ctx->service)){
         service = ctx->service;
         err_no = fr_security_request(instance, pipeline, mesg);
-        if(err_no < 0){
-            return err_no;
+        if(err_no == 0){
+            return -1;
         }
+
         ctx->service = apdu_rx[ctx->apdu_rx_offset++];
     }
     
@@ -752,6 +760,10 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     if(fr_check_service_and_choice(instance, pipeline, mesg)){
         ctx->service = ERROR_S_Response;
     }
+    if((service == SECURITY_Request) && (err_no < 0)){
+        ctx->service = SECURITY_Response;
+        service = SECURITY_Response;
+    }
     
     if(0 == fr_apdu_effective_check(instance, pipeline, mesg)){
         fifoBuf_removeData(fifo, ctx->min_len + 2);
@@ -775,6 +787,13 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
             break;
         case REPORT_Response://8上报应答 client
             err_no = fr_handle_report_response(instance, pipeline, mesg);
+            break;
+        case SECURITY_Response:
+            cache->buf_ptr[0] = SECURITY_Response;
+            cache->buf_ptr[1] = 2;
+            cache->buf_ptr[2] = err_no;
+            cache->buf_ptr[3] = 0;
+            cache->wr = 4;
             break;
         default:
             cache->buf_ptr[0] = ERROR_S_Response;

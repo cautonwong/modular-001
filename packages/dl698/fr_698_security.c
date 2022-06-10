@@ -204,27 +204,18 @@ int fr_security_request(struct instance_t* instance, struct pipeline_t* pipeline
     }
     
     ret = fr_698_security_request_check(instance, pipeline); 
-    if(ret <= 0)//待调整      错误异常应答或不应答
-    {
-        if(ret == 0)// 不应答
-        {
-            //return -1;
+    if(ret > 0){
+        if ((SECURITY_CHOICE_1_Ciphertext == ctx->security_choice)
+            ||(SECURITY_CHOICE_0_Plaintext  == ctx->security_choice)){
+            if(Func_verification[ctx->verification_choice]){
+                ret = Func_verification[ctx->verification_choice](instance, pipeline, mesg);
+                ctx->apdu_rx_offset = ctx->security_data - apdu_rx;
+                return ret;
+            }
         }
-        else // 错误dar
-        {
-            //return ret;//return fr_698_al_security_error(apdu, (uint8_t)(-ret));
-        }  
+        return -1;
     }
-    
-    if ((SECURITY_CHOICE_1_Ciphertext == ctx->security_choice)
-      ||(SECURITY_CHOICE_0_Plaintext  == ctx->security_choice)){
-        if(Func_verification[ctx->verification_choice]){
-            ret = Func_verification[ctx->verification_choice](instance, pipeline, mesg);
-            ctx->apdu_rx_offset = ctx->security_data - apdu_rx;
-            return ret;
-        }
-    }
-    return -1;
+    return ret;
 }
 
 
