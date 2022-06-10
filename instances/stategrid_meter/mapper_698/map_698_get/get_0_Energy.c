@@ -22,6 +22,11 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
     attr_index = (uint8_t)(id&0x000000FF);
     attribute = (unsigned char)((id & 0x00001F00) >> 8);
     
+    if((OI != 0x0000) && (OI != 0x0010) && (OI != 0x0020))
+    {
+        return -DAR_OBJECT_NOT_EXIST;
+    }
+    
     if(attribute == 0x03)
     {
       switch(mode)

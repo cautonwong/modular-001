@@ -133,6 +133,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                             timer[5] = *(p+7);  //sec
                             if((Time_Format_Check(&timer[3])) || (Date_Format_Check(timer)))    return -DAR_OTHERS_ERROR;
                         }
+                        *(p+7) = 0xFF;
                         mbase_cb->Fee |= F_ChangeTmOn;
                         break;
                     case 0x4112://有功组合特征字

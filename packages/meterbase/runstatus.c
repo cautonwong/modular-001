@@ -5,28 +5,28 @@
 
 //bit0~bit15
 //MeterRun1
-#define		Status_BatLow		0x2000  //bit2		
-#define		Status_Reverse		0x0800  //bit4
-#define		Status_MeterIcErr	0x0200  //bit6
-#define		Status_RelayErr	    0x0080  //bit8
-#define		Status_EsamErr		0x0040  //bit9
-#define		Status_E2promErr	0x0004  //bit13
-#define		Status_TouZhi		0x0002  //bit14
-#define		Status_ClockErr	    0x0001  //bit15
+#define		Status_BatLow		0x0020  //bit2		
+#define		Status_Reverse		0x0008  //bit4
+#define		Status_MeterIcErr	0x0000  //bit6
+#define		Status_RelayErr	    0x8000  //bit8
+#define		Status_EsamErr		0x4000  //bit9
+#define		Status_E2promErr	0x0400  //bit13
+#define		Status_TouZhi		0x0200  //bit14
+#define		Status_ClockErr	    0x0100  //bit15
 //MeterRun2
 #define		Status_Negative	    0x8000  //bit0
 //MeterRun4
 #define		Status_ImaxOver	    0x0800  //bit4
 #define		Status_Rev		    0x0200  //bit6
 //MeterRun3
-#define		Status_IrAuthen		0x1000  //bit3
-#define		Status_RelayOff	    0x0800  //bit4
-#define		Status_RelayCmd     0x0200  //bit6
-#define		Status_RelayAlm     0x0100  //bit7
-#define		Status_BaoDian		0x0008  //bit12
-#define		Status_Authen		0x0004  //bit13
-#define		Status_KaiHuBen	    0x0002  //bit14
-#define		Status_KaiHuYuan	0x0001  //bit15
+#define		Status_IrAuthen		0x0010  //bit3
+#define		Status_RelayOff	    0x0008  //bit4
+#define		Status_RelayCmd     0x0002  //bit6
+#define		Status_RelayAlm     0x0001  //bit7
+#define		Status_BaoDian		0x0800  //bit12
+#define		Status_Authen		0x0400  //bit13
+#define		Status_KaiHuBen	    0x0200  //bit14
+#define		Status_KaiHuYuan	0x0100  //bit15
 //MeterRun7
 #define		Status_Poweroff	    0x0400  //bit5
 #define		Status_Open		    0x0040  //bit9
@@ -56,7 +56,8 @@ void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
 		mbase_cb->run_state[2] &= ~Status_Negative;
 	}
 	
-	if (true == get_activeflag(instance, SwitchErrS)) //控制回路错误
+	//if (true == get_activeflag(instance, SwitchErrS)) 
+    if(mbase_cb->SwitchErrS_status == 1)//控制回路错误
 		mbase_cb->run_state[1] |= Status_RelayErr;
 	else
 		mbase_cb->run_state[1] &= ~Status_RelayErr;

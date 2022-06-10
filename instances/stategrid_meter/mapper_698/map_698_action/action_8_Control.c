@@ -26,9 +26,11 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
             {
                 case 0x7F://告警
                     mbase_cb->sta |= F_RemoteAlarm;
+                    return 1;
                     break;
                 case 0x80://解除告警
                     mbase_cb->sta &= ~F_RemoteAlarm;
+                    return 1;
                     break;
                 case 0x81://拉闸
                     if((1 != ctx->timeTag_valid) || (ctx->timeTag[0] == 0)){

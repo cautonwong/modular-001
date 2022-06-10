@@ -173,7 +173,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
                 {
                     *p++ = TYPE_bit_string;
                     *p++ = 16;
-                    mem_swap_cpy(p, (uint8_t*)&mbase_cb->run_state[index], 0x02);
+                    memcpy(p, (uint8_t*)&mbase_cb->run_state[index], 0x02);
                     p = p + 2;
                     return (p-buf);
                 }
