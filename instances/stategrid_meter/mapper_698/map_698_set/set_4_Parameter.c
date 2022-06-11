@@ -503,6 +503,11 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 write_mcu_rtc(0, settimebuf, 7);
                 read_mcu_rtc(0x00, instance);
                 
+                if(buffer[3] != instance->time.tm_mday)  //跨日，清除广播校时标志位
+                {
+                    mbase_cb->boardadjtime = 0;
+                }
+                
                 //保存校时后时间 
                 rtc_get_from_tm(instance,temp);
                 buffer[0] = temp[6];
@@ -518,7 +523,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 send_event_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
                 
                 record_rollback_after_set_time(instance);
-                
+                mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
                 return (p-buf);
             }
             else if(attribute == 0x05)  //广播校时参数

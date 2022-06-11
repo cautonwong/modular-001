@@ -461,7 +461,7 @@ unsigned short display_oad_to_id(unsigned char *oad, unsigned char *oad_son, uns
             }
         }
         if(Sequ > 0)    return 0;
-        memcpy((unsigned char*)&oad2, (unsigned char*)&oad, 4);
+        memcpy((unsigned char*)&oad2, (unsigned char*)oad, 4);
         if(((oad2 & 0xFFFFFF00) != 0x00000400) && ((oad2 & 0xFFFFFF00) != 0x00100400) && ((oad2 & 0xFFFFFF00) != 0x00200400)
                && ((oad2 & 0xFFFFFF00) != 0x00000200) && ((oad2 & 0xFFFFFF00) != 0x00100200) && ((oad2 & 0xFFFFFF00) != 0x00200200))   return 0;
         idl = (unsigned char)(oad2 & 0x000000FF);

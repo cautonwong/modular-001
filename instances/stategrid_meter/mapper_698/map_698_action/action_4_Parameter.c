@@ -105,7 +105,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     timer_set[5] = *(p+6);  //sec
                     if(Time_Format_Check(&timer_set[3]) || Date_Format_Check(timer_set))  return -DAR_OTHERS_ERROR;  //时间非法
                     
-                    if((pctx->security_choice == 0x00) && (mbase_cb->boardadjtime == 0xAA))//当日已校时且是明文校时
+                    if((pctx->security_choice != 0x01) && (mbase_cb->boardadjtime == 0xAA))//当日已校时且是明文校时
                     {
                         return -DAR_UNAUTHORIZED;
                     }
