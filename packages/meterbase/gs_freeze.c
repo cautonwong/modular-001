@@ -629,9 +629,10 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
             bill_hour = rtc_mktime(&bill_time);
             bill_hour = bill_hour / 60 /60;
     
+            
             if ((cur_hour == bill_hour)&&(last_hour != bill_hour))
             {
-
+                
                 //第二、第三结算日时需量需要清成FF                 待调整
                 if (i == 0x00)
                 {
@@ -651,6 +652,8 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
    
                 ndv_memcopy((uint8_t *)&record_time, (uint8_t *)&instance->time, sizeof(struct tm));   
                 send_recordflag_mesg(instance, task,  FlagID, NULL);
+                
+                last_hour = bill_hour;
             }
         }
     
