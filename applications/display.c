@@ -392,8 +392,9 @@ void HEX_BCD( unsigned char* BCD, unsigned long long HEX )
 
 unsigned char display_id_to_oad(unsigned short id, unsigned char *oad)
 {
-    unsigned char i,idh,idmid,idl,len=0;
+    unsigned char i,idmid,idl,len=0;
     unsigned long oad1,oad2;
+    unsigned short idh;
     
     for(i=0; i<displaytablenum; i++)
     {
@@ -406,21 +407,30 @@ unsigned char display_id_to_oad(unsigned short id, unsigned char *oad)
         }
     }
     oad1 = 0x50050200;//组合电能
-    idh = (unsigned char)((id & 0xF000) >> 12);
-    idmid = (unsigned char)((id & 0x0FF0) >> 4);
+    idh = id & 0xF800;
+    idmid = (unsigned char)((id & 0x07F0) >> 4);
     idl = (unsigned char)(id & 0x000F);
     if(idl > 0x0c)  return 1;
     if(idmid > 0x18)    return 1;
     oad1 = oad1 + idmid;
     switch (idh)
     {
-        case 0x0E://组合
+        case 0xE000://组合
+            oad2 = 0x00000200 + idl;
+            break;
+        case 0xE800://组合
             oad2 = 0x00000400 + idl;
             break;
-        case 0x0C://正向
+        case 0xC000://正向
+            oad2 = 0x00100200 + idl;
+            break;
+        case 0xC800://正向
             oad2 = 0x00100400 + idl;
             break;
-        case 0x0D://反向
+        case 0xD000://反向
+            oad2 = 0x00200200 + idl;
+            break;
+        case 0xD800://反向
             oad2 = 0x00200400 + idl;
             break;
         default:
@@ -471,16 +481,22 @@ unsigned short display_oad_to_id(unsigned char *oad, unsigned char *oad_son, uns
         switch(oad2)
         {
             case 0x00000200:
-            case 0x00000400:
                 id |= 0xE000;
                 break;
+            case 0x00000400:
+                id |= 0xE800;
+                break;
             case 0x00100200:
-            case 0x00100400:
                 id |= 0xC000;
                 break;
+            case 0x00100400:
+                id |= 0xC800;
+                break;
             case 0x00200200:
-            case 0x00200400:
                 id |= 0xD000;
+                break;
+            case 0x00200400:
+                id |= 0xD800;
                 break;  
             default:
                 id = 0;
@@ -506,16 +522,22 @@ unsigned short display_oad_to_id(unsigned char *oad, unsigned char *oad_son, uns
             switch(oad2)
             {
                 case 0x00000200:
-                case 0x00000400:
                     id |= 0xE000;
                     break;
+                case 0x00000400:
+                    id |= 0xE800;
+                    break;
                 case 0x00100200:
-                case 0x00100400:
                     id |= 0xC000;
                     break;
+                case 0x00100400:
+                    id |= 0xC800;
+                    break;
                 case 0x00200200:
-                case 0x00200400:
                     id |= 0xD000;
+                    break; 
+                case 0x00200400:
+                    id |= 0xD800;
                     break;  
                 default:
                     id = 0;
