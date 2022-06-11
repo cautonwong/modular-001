@@ -278,10 +278,11 @@ void send_event_mesg_pro(struct instance_t* instance, struct pipeline_t* task, u
 //冻结或事件清零 接口    传入要清除的oad 
 int clr_record(struct instance_t* instance, uint32_t oad)
 {
-    uint32_t temp = 0;
+    uint32_t temp = 0,s_index = 0;
+    uint8_t tmpbuf[10] = {0};
     struct record_storage_id_info_t info;
     int ret = get_record_id_info(instance, oad, &info);
-
+    
     if (ret < 0)
     {
         return ret;
@@ -308,6 +309,23 @@ int clr_record(struct instance_t* instance, uint32_t oad)
     if (oad == 0x30120200) // 编程记录
     {
         MeterWr_obj_list_clear(instance, NULL, NULL);
+    }
+
+
+    //清最近一次日冻结时间
+    if (oad == 0x50040200)
+    {
+        memset(tmpbuf, 0, sizeof(tmpbuf));
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastDayFreezTime);
+        nd_set_index(instance, s_index, &tmpbuf[0], 5);
+    }
+
+    //清最近一次结算冻结时间
+    if (oad == 0x50050200)
+    {
+        memset(tmpbuf, 0, sizeof(tmpbuf));
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillingTime);
+        nd_set_index(instance, s_index, &tmpbuf[0], 5);
     }
 
 }

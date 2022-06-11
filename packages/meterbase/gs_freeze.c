@@ -378,7 +378,7 @@ int hour_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
 int day_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint8_t period[24];
+    uint8_t period[24]= {0}, tmp[10] = {0};
     uint32_t index;
     struct tm record_time;
     uint16_t PeriodID = DayFreeze_period;
@@ -398,6 +398,17 @@ int day_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struc
 
     if (1 == freeze_judge(instance, &period[0], 60*24, &record_time))
     {
+            //保存 结算时间
+        tmp[0] = instance->time.tm_sec ;
+        tmp[1] = instance->time.tm_min ;
+        tmp[2] = instance->time.tm_hour;
+        tmp[3] = instance->time.tm_mday;
+        tmp[4] = instance->time.tm_mon + 1;
+        tmp[5] = (uint8_t)((instance->time.tm_year + 1900)-2000);
+
+        index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastDayFreezTime);
+        nd_set_index(instance, index, &tmp[0], 5);
+        
         send_recordflag_mesg(instance, task,  FlagID, NULL);
     }
 
@@ -435,6 +446,121 @@ int month_freeze_judge(struct instance_t* instance, struct pipeline_t* task, str
 }
 
 #if 1
+
+
+//上电日冻结补冻结处理
+int day_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+{
+
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
+    uint8_t cycle, i, tmp[10]; 
+    uint32_t  now,pd,last,recently;
+    struct tm now_tm,pd_tm, last_time;
+    uint32_t index,s_index;
+    uint8_t billdate[3][2];
+    uint8_t payload[20];
+    uint8_t *p = payload;
+    struct message_t mesg_tmp;
+    uint16_t    period;
+
+
+    //获取周期 分钟
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + DayFreeze_period);
+    nd_get_index(instance, s_index, &tmp[0], 3);
+    
+    period =  buf_to_uint16_msb(&tmp[1]);
+    period = period*24*60;
+
+
+    ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->v_powerdown_tm), sizeof(ctrl_block->v_powerdown_tm));
+
+    if (false == rtc_tm_valid(&ctrl_block->v_powerdown_tm))    // 模拟停电时间无效          取上次停电时间
+    {
+        if (false == rtc_tm_valid(&ctrl_block->powerdown_tm))   // 停电时间无效       退出
+        {
+            return 0;
+        }
+        ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->powerdown_tm), sizeof(ctrl_block->powerdown_tm));
+    }
+
+    ndv_memcopy((uint8_t *)&now_tm,(uint8_t *)&instance->time, sizeof(now_tm));
+    now_tm.tm_sec = 0;
+    pd_tm.tm_sec = 0;
+
+
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastDayFreezTime);
+    nd_get_index(instance, s_index, &tmp[0], 5);
+    last_time.tm_sec  = tmp[0];
+    last_time.tm_min  = tmp[1];
+    last_time.tm_hour = tmp[2];
+    last_time.tm_mday = tmp[3];
+    last_time.tm_mon  = tmp[4] - 1;
+    last_time.tm_year = tmp[5] + 2000 - 1900;
+
+
+
+    now = rtc_mktime(&now_tm)/86400;
+    pd  = rtc_mktime(&pd_tm)/86400;          //earliest
+    last = rtc_mktime(&last_time)/86400;    //lasted
+
+    recently = pd;
+
+    // 以上电时刻为准，补最近7个日冻结数据
+    if ((now - recently) / period > 7)
+    {
+        pd  =  now - 7 * period + 1;
+        
+        recently  =  pd;
+    }
+    else
+    {
+        recently += period;
+    }
+        
+    while(recently <= now)
+    {
+        if (recently > last)
+        {
+            last = recently;
+            
+            rtc_localtime(recently * 86400, &last_time);
+            last_time.tm_min = 0;
+            last_time.tm_sec = 0;
+
+
+            //日冻结数据补数据 相关处理               待调整
+
+
+            // 刷新最近一次时间
+            tmp[0] = last_time.tm_sec ;
+            tmp[1] = last_time.tm_min ;
+            tmp[2] = last_time.tm_hour;
+            tmp[3] = last_time.tm_mday;
+            tmp[4] = last_time.tm_mon + 1;
+            tmp[5] = (uint8_t)((last_time.tm_year + 1900)-2000);
+            
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastDayFreezTime);
+            nd_set_index(instance, s_index, &tmp[0], 5);
+            
+            // 本条记录存储的时间
+            mesg_tmp.id = DayFreeze;
+            uint32_to_buf_msb(0x20210200, &payload[0]);
+            payload[4] = 8; //data len
+            payload[5] = 28;//TYPE_date_time_s;
+            rtc_format_change_from_tm(last_time,tmp);
+            mem_swap_cpy(&payload[6], &tmp[0], 7);
+            recv_record_process(instance, task, &mesg_tmp, payload);  
+        }
+        recently += period;
+    }
+
+
+    return 1;
+}
+
+
+
 //  上电补结算冻结处理           上电调用 
 int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
@@ -685,7 +811,7 @@ int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct mess
 int freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
 
-    
+    day_freeze_power_on_pro(instance, task, mesg);
     bill_freeze_power_on_pro(instance, task, mesg);
     return 1;
 }
