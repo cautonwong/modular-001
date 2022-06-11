@@ -65,7 +65,7 @@ uint8_t ndv_timer_stop(uint8_t timerid)
 }
 
 
-void ndv_timer_tick(void)
+void ndv_timer_tick(void *para)
 {
     uint8_t i;
     
@@ -111,6 +111,7 @@ uint8_t ndv_timer_start_one(uint8_t timerid, uint32_t count)
 void ndv_timer_init(void)
 {
     uint8_t i;
+    struct isr_reg_ctx_t IsrReg;
     
     for(i=0;i<TIME_OBJ_NUM;i++)
     {
@@ -121,7 +122,9 @@ void ndv_timer_init(void)
         tick_timer_list[i].stoped = 0;
     }
     
-    ndv_isr_handle_regsit(ndv_timer_tick , IRQ_SYSTICK);
+    IsrReg.IsrFunctionRegister = ndv_timer_tick;
+    IsrReg.para = (void*)(0);
+    Isr_handle_regsit((struct isr_reg_ctx_t*)&IsrReg , IRQ_SYSTICK);
     
     cm0_systick_init(1);
     
