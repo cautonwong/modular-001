@@ -7,22 +7,22 @@
 
 
 
-void Xor_Data( unsigned char *BufA, unsigned char *BufB, uint16 Num )
+void Xor_Data( unsigned char *BufA, unsigned char *BufB, uint16_t Num )
 {
-	uint16 i;
+	uint16_t i;
 
 	for( i=0; i<Num; i++ )
 	{
 		BufA[i] ^= BufB[i];
 	}
 }
-uint16 Byte2uShort(uint8_t* byte)
+uint16_t Byte2uShort(uint8_t* byte)
 {
-  return byte[1]+((uint16)byte[0]<<8);
+  return byte[1]+((uint16_t)byte[0]<<8);
 }
-uint32 Byte2uInt(uint8_t* byte)
+uint32_t Byte2uInt(uint8_t* byte)
 {
-  return byte[3]+((uint32)byte[2]<<8) + ((uint32)byte[1]<<16) +((uint32)byte[0]<<24) ;
+  return byte[3]+((uint32_t)byte[2]<<8) + ((uint32_t)byte[1]<<16) +((uint32_t)byte[0]<<24) ;
 }
 //文件传输类接口
 uint16_t ActionFile( struct instance_t* instance, uint32_t id, uint8_t* inbuf, uint16_t buf_size, void *ctx, uint8_t* outbuf)
@@ -36,8 +36,8 @@ uint16_t ActionFile( struct instance_t* instance, uint32_t id, uint8_t* inbuf, u
 //	unsigned char code *Code_Flash_Char;
     const unsigned char *Code_Flash_Char;
 	unsigned char *RtBuf = instance->apdu_cache;
-	uint16 cc16,DataLen;
-	uint32 cc32;
+	uint16_t cc16,DataLen;
+	uint32_t cc32;
     uint8_t *p = inbuf;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -75,7 +75,7 @@ uint16_t ActionFile( struct instance_t* instance, uint32_t id, uint8_t* inbuf, u
 			cc16 = Byte2uShort( p+17); 
 			cc32 = Byte2uInt(p+12);//比对数据起始地址
 		}
-		Code_Flash_Char = (const uint8*)cc32;
+		Code_Flash_Char = (const uint8_t*)cc32;
 		if( (cc32 > PROGRAMEND1)|| p[7] || p[12] )
 		{
 			break;		//地址异常

@@ -45,18 +45,18 @@ struct esam_hal_t
 
 static uint8_t esam_chip_abnormal = EVENT_RESET;
 
-static uint8 tx_esam(uint8 *tx_apdu , uint8 *tx_data , uint16 len , const struct esam_hal_t *esam_hal)
+static uint8_t tx_esam(uint8_t *tx_apdu , uint8_t *tx_data , uint16_t len , const struct esam_hal_t *esam_hal)
 {
-    uint8 value = 0;
-    uint8 len1 , len2;
-    uint8 lrc1 = 0;
-    uint16 i;
+    uint8_t value = 0;
+    uint8_t len1 , len2;
+    uint8_t lrc1 = 0;
+    uint16_t i;
 
     
     ESAM_CS_LOW();
     
-    len1 = (uint8)(len>>8);
-    len2 = (uint8)len;
+    len1 = (uint8_t)(len>>8);
+    len2 = (uint8_t)len;
     mcu_delay_us(120);
     mcu_clear_watchdog();
 
@@ -98,13 +98,13 @@ static uint8 tx_esam(uint8 *tx_apdu , uint8 *tx_data , uint16 len , const struct
 
 
 
-static uint16 rx_esam(uint8 *rx_data , uint16 *len , const struct esam_hal_t *esam_hal , uint16_t *sw)
+static uint16_t rx_esam(uint8_t *rx_data , uint16_t *len , const struct esam_hal_t *esam_hal , uint16_t *sw)
 {
-    uint8  busy = 0,lrc1 = 0;
-    uint8  err,ret[4] = {0},cnt = 0;
-    uint16 i,rcv_len;
-    int16  timeout;
-    uint8  tmp;
+    uint8_t  busy = 0,lrc1 = 0;
+    uint8_t  err,ret[4] = {0},cnt = 0;
+    uint16_t i,rcv_len;
+    int16_t  timeout;
+    uint8_t  tmp;
     do
     {
         cnt++;
@@ -132,7 +132,7 @@ static uint16 rx_esam(uint8 *rx_data , uint16 *len , const struct esam_hal_t *es
                 if ((0x90 == ret[0])&&(0x00 == ret[1]))
                 {
                     lrc1 = ret[0] ^ ret[1] ^ ret[2] ^ ret[3];
-                    rcv_len = ((uint16)ret[2]<<8) + ret[3];
+                    rcv_len = ((uint16_t)ret[2]<<8) + ret[3];
                     if(rcv_len > ESAM698_MAX_BUF_SIZE)
                     {
                         rcv_len = ESAM698_MAX_BUF_SIZE;
@@ -167,7 +167,7 @@ static uint16 rx_esam(uint8 *rx_data , uint16 *len , const struct esam_hal_t *es
         ESAM_CS_HIGH();
         mcu_delay_us(50);
     }while((cnt <= 3)&&(err));
-    *sw = ((uint16)ret[0]<<8) + ret[1];
+    *sw = ((uint16_t)ret[0]<<8) + ret[1];
     if(cnt < 3)
     {
         esam_chip_abnormal = EVENT_RESET;

@@ -91,7 +91,7 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     index = (uint8_t)(oad & 0x000000FF);
     
 
-    if ((*p++ != TYPE_OAD) || ( oad & 0xF0000000 != 0x30000000))
+    if ((*p++ != TYPE_OAD) || ( (oad & 0xF0000000) != 0x30000000))
     {
         *dar =  DAR_OTHERS_ERROR;
         return -DAR_TYPE_NOT_MATCH;

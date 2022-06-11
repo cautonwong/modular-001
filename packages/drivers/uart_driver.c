@@ -275,7 +275,7 @@ const struct uart_irq_list_t uart_irq_list[] =
 
 
 
-uint8 uart_time_process(void *tickpara)
+uint8_t uart_time_process(void *tickpara)
 {
     struct uart_chl_init_t *chl = (struct uart_chl_init_t *)tickpara;
     uint8_t send_data;

@@ -294,11 +294,11 @@ int clr_record(struct instance_t* instance, uint32_t oad)
         *info.acc_time = 0;
     }
 
-    clr_recordflag(instance, (uint16)info.save_index);
+    clr_recordflag(instance, (uint16_t)info.save_index);
     //清事件标志
-    if(oad & 0xF0000000 == 0x30000000)
+    if((oad & 0xF0000000) == 0x30000000)
     {
-        clr_activeflag(instance, (uint16)info.save_index);
+        clr_activeflag(instance, (uint16_t)info.save_index);
     }
 
     if (oad == 0x30120200) // 编程记录
@@ -534,7 +534,7 @@ int event_PowerOn_pro(struct instance_t* instance, struct pipeline_t* pipeline, 
         {
             continue;
         }
-        RecordId = (uint16)info.save_index;
+        RecordId = (uint16_t)info.save_index;
         if (true == get_activeflag(instance, RecordId))
         {
             // 本条记录存储的时间

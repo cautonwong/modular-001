@@ -217,8 +217,8 @@ int set_support_protocol_list(struct instance_t* instance, uint32_t id, uint8_t*
         }
 
         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Protocol_List);
-        nd_set_index(instance, addr, tmp_cache, (uint16)(tmp - tmp_cache)); 
-        p = p + (uint16)(tmp - tmp_cache);
+        nd_set_index(instance, addr, tmp_cache, (uint16_t)(tmp - tmp_cache)); 
+        p = p + (uint16_t)(tmp - tmp_cache);
 
     }
     else

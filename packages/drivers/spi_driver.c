@@ -147,7 +147,7 @@ int spi_send_byte(uint8_t byte  , size_t index)
 
 int spi_recive_byte(uint8_t* byte , size_t index)
 {
-    register uint32 rcv_byte = 0;
+    register uint32_t rcv_byte = 0;
 
     DO_CLK_HIGH();
     SPI_DELAY();
@@ -220,7 +220,7 @@ int spi_recive_byte(uint8_t* byte , size_t index)
         rcv_byte |= 0x01;
     }
     
-    *byte =  (uint8)(rcv_byte & 0x000000FF);
+    *byte =  (uint8_t)(rcv_byte & 0x000000FF);
     
     return true;
 }
@@ -232,7 +232,7 @@ int spi_recive_byte(uint8_t* byte , size_t index)
 
 int spi_send_byte_mode3(uint8_t byte  , size_t index)
 {
-    register uint32 send_byte = byte;
+    register uint32_t send_byte = byte;
     DO_CLK_LOW();
     if (send_byte & 0x80)
     {
@@ -321,7 +321,7 @@ int spi_send_byte_mode3(uint8_t byte  , size_t index)
 
 int spi_recive_byte_mode3(uint8_t* byte , size_t index)
 {
-    register uint32 rcv_byte = 0;
+    register uint32_t rcv_byte = 0;
     
     DO_SCK_HIGH();
     rcv_byte += (DO_MISO_RD() << 7);
@@ -363,7 +363,7 @@ int spi_recive_byte_mode3(uint8_t* byte , size_t index)
 
 
 
-void spi_ctrl(uint8 ctrl , size_t index)
+void spi_ctrl(uint8_t ctrl , size_t index)
 {
     switch(ctrl)
     {

@@ -10,7 +10,7 @@
 #define  ADD_NEG    0x04
 #define  DEC_NEG    0x08
 
-static uint32 ec_pluse_cnt = 0;
+static uint32_t ec_pluse_cnt = 0;
 
 void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 {
@@ -243,7 +243,7 @@ void Energy_Pluse_Add(void)
 
 void Energy_clr(struct instance_t* instance)
 {
-    uint8 fee_index = 0;
+    uint8_t fee_index = 0;
     uint32_t s_index;
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     

@@ -667,7 +667,7 @@ void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
 /***********************************************************************/
 void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t ctr)
 {
-    uint16 pageid=0;
+    uint16_t pageid=0;
     uint32_t    s_index = 0;
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     

@@ -11,17 +11,18 @@
 #ifndef TYPE_BDEF_H_
 #define TYPE_BDEF_H_
 
-
+#include <stdint.h>
 
 /**********************************************************************************************************
 *                   数据类型1
 **********************************************************************************************************/
+#if 0
 typedef signed char         int8;       /**< 8位有符号数 */
-typedef unsigned char       uint8;      /**< 8位无符号数 */
-typedef short               int16;      /**< 16位有符号数 */
-typedef unsigned short      uint16;     /**< 16位无符号数 */
+typedef unsigned char       uint8_t;      /**< 8位无符号数 */
+typedef short               int16_t;      /**< 16位有符号数 */
+typedef unsigned short      uint16_t;     /**< 16位无符号数 */
 typedef long                int32;      /**< 32位有符号数 */
-typedef unsigned long       uint32;     /**< 32位无符号数 */
+typedef unsigned long       uint32_t;     /**< 32位无符号数 */
 typedef long long           int64;      /**< 64位有符号数 */
 typedef unsigned long long  uint64;     /**< 64位无符号数 */
 typedef void *              Object;     /**< 定义任意类型为Object */
@@ -31,11 +32,12 @@ typedef void (*TCallback)(void);
 
 
 #ifndef bool
-typedef uint8            bool;
+typedef uint8_t            bool;
 #endif
 
 typedef String           string;
 
+#endif
 #define  CODE
 
 
@@ -58,16 +60,16 @@ typedef double           FP64;                /**< 双精度浮点数(64位长度) */
 **********************************************************************************************************/
 typedef union
 {
-    uint16 word;
-    uint8  byte[2];
+    uint16_t word;
+    uint8_t  byte[2];
 } Word16;
 
 
 typedef union
 {
-    uint32 lword;
-    uint16 word[2];
-    uint8  byte[4];
+    uint32_t lword;
+    uint16_t word[2];
+    uint8_t  byte[4];
 } Word32;
 
 
@@ -77,11 +79,11 @@ typedef union
 **********************************************************************************************************/
 
 #ifndef true
-#define true    (uint8)1
+#define true    (uint8_t)1
 #endif
 
 #ifndef false
-#define false    (uint8)0
+#define false    (uint8_t)0
 #endif
 
 #ifndef __NULL

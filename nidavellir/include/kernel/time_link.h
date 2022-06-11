@@ -20,20 +20,20 @@ struct tm_list_init_t
 {
     uint32_t timeout;
     void *tickpara;
-    uint8 (*tickfunc)(void *);
-    uint8 tm_id;
-    uint8 stoped;
+    uint8_t (*tickfunc)(void *);
+    uint8_t tm_id;
+    uint8_t stoped;
 };
 
-extern uint8 ndv_timer_create(struct tm_list_init_t *tm_init);
+extern uint8_t ndv_timer_create(struct tm_list_init_t *tm_init);
 
-extern uint8 ndv_timer_start(uint8 timerid);
+extern uint8_t ndv_timer_start(uint8_t timerid);
 
-extern uint8 ndv_timer_stop(uint8 timerid);
+extern uint8_t ndv_timer_stop(uint8_t timerid);
 
 extern void ndv_timer_tick(void);
 
-extern uint8 ndv_timer_start_one(uint8_t timerid, uint32_t count);
+extern uint8_t ndv_timer_start_one(uint8_t timerid, uint32_t count);
 
 extern void ndv_timer_init(void);
 

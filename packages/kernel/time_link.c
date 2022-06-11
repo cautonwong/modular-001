@@ -6,11 +6,11 @@
 
 struct tick_timer_list_t
 {
-    uint8 (*tickfunc)(void *);
+    uint8_t (*tickfunc)(void *);
     void                 *tickpara;
     uint32_t             timeout;
     uint32_t             dlyctr;
-    uint8                stoped;
+    uint8_t                stoped;
 };
 
 static struct tick_timer_list_t tick_timer_list[TIME_OBJ_NUM];
@@ -20,7 +20,7 @@ static struct tick_timer_list_t tick_timer_list[TIME_OBJ_NUM];
 
 
 
-uint8 ndv_timer_create(struct tm_list_init_t *tm_init)
+uint8_t ndv_timer_create(struct tm_list_init_t *tm_init)
 {    
     if(tm_init->tm_id < TIME_OBJ_NUM)
     {
@@ -36,7 +36,7 @@ uint8 ndv_timer_create(struct tm_list_init_t *tm_init)
 }
 
 
-uint8 ndv_timer_start(uint8 timerid)
+uint8_t ndv_timer_start(uint8_t timerid)
 {
     if(timerid < TIME_OBJ_NUM)
     {
@@ -51,7 +51,7 @@ uint8 ndv_timer_start(uint8 timerid)
 }
 
 
-uint8 ndv_timer_stop(uint8 timerid)
+uint8_t ndv_timer_stop(uint8_t timerid)
 {
     if(timerid < TIME_OBJ_NUM)
     {
@@ -93,7 +93,7 @@ void ndv_timer_tick(void)
 }
 
 
-uint8 ndv_timer_start_one(uint8_t timerid, uint32_t count)
+uint8_t ndv_timer_start_one(uint8_t timerid, uint32_t count)
 {
     if(timerid < TIME_OBJ_NUM)
     {

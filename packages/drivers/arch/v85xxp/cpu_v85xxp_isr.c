@@ -391,7 +391,7 @@ void UART3_IRQHandler(void)
         UART3->INTSTS = 0x00000062;
     }
 }
-//uint32 test_ir_RX_CNT = 0;//¸Ä»ØÀ´
+//uint32_t test_ir_RX_CNT = 0;//¸Ä»ØÀ´
 /*******************************************************************************
 * Function Name  : UART4_HANDLER
 * Description    : This function handles UART4 HANDLER.

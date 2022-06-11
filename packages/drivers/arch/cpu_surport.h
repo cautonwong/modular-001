@@ -13,42 +13,42 @@ typedef void (*isr_handle)(void);
 /*MCU¶ÔÍâÌá¹©µÄ·þÎñ½Ó¿Úº¯ÊýÉùÃ÷*/
 extern void mcu_init(void* init_type);
 
-extern uint8 mcu_uart_init(void* init_config, uint8 uart_index, uint8 infrared_enable);
-extern void mcu_uart_recive_enable(uint8 ops_enable, size_t uart_index);
-extern int mcu_uart_send_byte(uint8 send_data, size_t uart_index);
+extern uint8_t mcu_uart_init(void* init_config, uint8_t uart_index, uint8_t infrared_enable);
+extern void mcu_uart_recive_enable(uint8_t ops_enable, size_t uart_index);
+extern int mcu_uart_send_byte(uint8_t send_data, size_t uart_index);
 
-extern int mcu_uart_recive_byte(uint8* byte , size_t uart_index);
-extern void mcu_uart_send_enable(uint8 ops_enable, size_t uart_index);
+extern int mcu_uart_recive_byte(uint8_t* byte , size_t uart_index);
+extern void mcu_uart_send_enable(uint8_t ops_enable, size_t uart_index);
 
-extern uint8 mcu_uart_close(uint8 uart_index);
-extern uint8 mcu_uart_set_baud(uint16 baud, uint8 uart_index);
-extern uint8 mcu_uart_get_status(uint8 uart_index, uint8 status);
+extern uint8_t mcu_uart_close(uint8_t uart_index);
+extern uint8_t mcu_uart_set_baud(uint16_t baud, uint8_t uart_index);
+extern uint8_t mcu_uart_get_status(uint8_t uart_index, uint8_t status);
 
-extern uint8 mcu_spi_bus_init(uint8 spi_index , uint8 mode);
-extern uint8 mcu_spi_send_byte(uint8 byte , uint8 spi_index);
-extern uint8 mcu_spi_recive_byte(uint8 *byte, uint8 spi_index);
+extern uint8_t mcu_spi_bus_init(uint8_t spi_index , uint8_t mode);
+extern uint8_t mcu_spi_send_byte(uint8_t byte , uint8_t spi_index);
+extern uint8_t mcu_spi_recive_byte(uint8_t *byte, uint8_t spi_index);
 
 extern void  mcu_clear_watchdog(void);
-extern uint8 mcu_delay_us(volatile uint16 count);
-extern uint8 ac_power_off_monitor(void);
-extern uint8 ac_power_on_monitor(void);
+extern uint8_t mcu_delay_us(volatile uint16_t count);
+extern uint8_t ac_power_off_monitor(void);
+extern uint8_t ac_power_on_monitor(void);
 
-extern void mcu_timer_ctrl(uint32 period_ms, uint8 index , uint8 stop_or_start);
+extern void mcu_timer_ctrl(uint32_t period_ms, uint8_t index , uint8_t stop_or_start);
 
-extern void mcu_main_frequency_mode(uint8 clk_mode);
+extern void mcu_main_frequency_mode(uint8_t clk_mode);
 extern void mcu_enter_lowpower_then_sleep(void);
 extern void mcu_exit_sleep_then_enter_normal(void);
 
 extern void mcu_main_power_on_config(uint8_t power_mode);
 extern void mcu_main_power_off_config(void);
-extern void cm0_systick_init(uint8 cmd);
-extern void ndv_isr_handle_regsit(isr_handle isr_handle_f , uint8 irq);
+extern void cm0_systick_init(uint8_t cmd);
+extern void ndv_isr_handle_regsit(isr_handle isr_handle_f , uint8_t irq);
 
 extern uint8_t read_mcu_rtc(uint8_t addr, struct instance_t* instance);
-extern uint8_t write_mcu_rtc(uint8_t addr, uint8_t *buf, uint16 len);
+extern uint8_t write_mcu_rtc(uint8_t addr, uint8_t *buf, uint16_t len);
 
-extern uint8 mcu_adc_start_once(uint8 chl_type);
-extern uint32 read_mcu_adc_measure_value(uint8 chl_type , int32 *adc_measure);
+extern uint8_t mcu_adc_start_once(uint8_t chl_type);
+extern uint32_t read_mcu_adc_measure_value(uint8_t chl_type , int32_t *adc_measure);
 
 extern void device_power_close(struct instance_t* instance);
 extern void device_power_open(struct instance_t* instance);

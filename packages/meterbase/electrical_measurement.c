@@ -11,11 +11,11 @@ extern const struct dev_info_t rn8209_dev;
     
 
 extern void  mcu_clear_watchdog(void);
-extern uint8 mcu_delay_us(volatile uint16 count);
-uint32 over_Imax;
-static uint8 Buffer[50];
+extern uint8_t mcu_delay_us(volatile uint16_t count);
+uint32_t over_Imax;
+static uint8_t Buffer[50];
 //static struct factor_adj_meter_t Factory3;
-static uint16 avg_activepower_cnt;
+static uint16_t avg_activepower_cnt;
 static int32_t avg_activepower_sum;
 
 #define	lock_heat_compensate	0x5a
@@ -25,21 +25,21 @@ static int32_t avg_activepower_sum;
 
 struct adj_std_source_t
 {
-    int32 volatge;      /**< 0.01V */
-    int32 current;      /**< 0.1ma */
-    int32 actPower;     /**< 0.01W */
-    int32 reactPower;   /**< 0.01W */
-    int32 countstart;
-    int32 countend;
-    int8 lock;
+    int32_t volatge;      /**< 0.01V */
+    int32_t current;      /**< 0.1ma */
+    int32_t actPower;     /**< 0.01W */
+    int32_t reactPower;   /**< 0.01W */
+    int32_t countstart;
+    int32_t countend;
+    int8_t lock;
 };
 
 struct emu_voltage_adj_t
 {
-    uint16 un80_offset;    
-    uint16 un90_offset;   
-    uint16 un110_offset;   
-    uint16 un115_offset;   
+    uint16_t un80_offset;    
+    uint16_t un90_offset;   
+    uint16_t un110_offset;   
+    uint16_t un115_offset;   
 };
 
 static struct adj_std_source_t	adj_std_source;
@@ -97,7 +97,7 @@ void heat_compensate(struct instance_t* instance, struct pipeline_t* pipeline)
 }
 
 /* 电压影响量补偿 */
-void voltage_compensate(struct instance_t* instance, struct pipeline_t* pipeline, uint8 mode)
+void voltage_compensate(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t mode)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 	uint16_t value=0,tmp=0;
@@ -107,7 +107,7 @@ void voltage_compensate(struct instance_t* instance, struct pipeline_t* pipeline
 	if(mode == compensate_start)    //开始
 	{
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Un_Cmp_Value);
-        nd_get_index(instance, s_index, (uint8 *)&emu_voltage_adj.un80_offset, 8); //读取EE中的补偿值
+        nd_get_index(instance, s_index, (uint8_t *)&emu_voltage_adj.un80_offset, 8); //读取EE中的补偿值
 
 		if(mbase_control_block->voltage_ac > 17500)
 		{
@@ -138,9 +138,9 @@ void voltage_compensate(struct instance_t* instance, struct pipeline_t* pipeline
 		if((adj_std_source.lock & lock_voltage_compensate) == lock_voltage_compensate)
 		{
 			s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Pgain0);
-            nd_get_index(instance, s_index, (uint8 *)&buf[0], 8); //读取EE中的补偿值
+            nd_get_index(instance, s_index, (uint8_t *)&buf[0], 8); //读取EE中的补偿值
 
-            memcpy(&tmp, (uint8 *)&buf[2], 2);//功率偏移
+            memcpy(&tmp, (uint8_t *)&buf[2], 2);//功率偏移
             rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, APOSA, 2, &tmp);
             adj_std_source.lock &= ~lock_voltage_compensate;
 		}
@@ -448,7 +448,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     /****************** 温度采样 ******************/
     if(true == mcu_adc_start_once(ADC_CHL_TEMP))
     {
-        if(true == read_mcu_adc_measure_value(ADC_CHL_TEMP , (int32 *)&temp))
+        if(true == read_mcu_adc_measure_value(ADC_CHL_TEMP , (int32_t *)&temp))
         {
             mbase_control_block->temperature = temp/100;
         }
@@ -457,7 +457,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     /****************** 电池采样 ******************/
     if(true == mcu_adc_start_once(ADC_CHL_BATTER))
     {
-        if(true == read_mcu_adc_measure_value(ADC_CHL_BATTER , (int32 *)&temp))
+        if(true == read_mcu_adc_measure_value(ADC_CHL_BATTER , (int32_t *)&temp))
         {
             mbase_control_block->voltage_battery = temp/100;
             if(temp < 26000)

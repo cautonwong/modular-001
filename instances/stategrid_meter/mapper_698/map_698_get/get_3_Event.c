@@ -1094,7 +1094,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 {
                     return get_event_report_flag_mode(instance, id, p, 0);
                 }
-                break;
+                break; 
                 case 12: // 有效标识 固定1
                 {
                     ret = check_record_oad_support(instance, id);

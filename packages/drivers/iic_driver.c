@@ -39,7 +39,7 @@ int iic_bus_init(size_t index)
     return true;
 }
 
-void iic_ctrl(uint8 ctrl , size_t index)
+void iic_ctrl(uint8_t ctrl , size_t index)
 {
     switch(ctrl)
     {
@@ -90,7 +90,7 @@ void iic_ctrl(uint8 ctrl , size_t index)
 
 
 
-int iic_send_byte(uint8 Data , size_t index)
+int iic_send_byte(uint8_t Data , size_t index)
 {
     register uint8_t i;
         
@@ -135,8 +135,8 @@ int iic_send_byte(uint8 Data , size_t index)
 
 int iic_recive_byte(uint8_t* byte , size_t index)
 {
-    register uint32 rcv_data = 0;
-    register uint32 i;
+    register uint32_t rcv_data = 0;
+    register uint32_t i;
     
     SDA_INPUT();
     
@@ -151,7 +151,7 @@ int iic_recive_byte(uint8_t* byte , size_t index)
         IIC_DELAY();
     }
     
-    *byte = (uint8)(rcv_data&0x000000FF);
+    *byte = (uint8_t)(rcv_data&0x000000FF);
     
     return true;
 }

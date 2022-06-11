@@ -254,7 +254,7 @@ int record_rollback_after_set_time(struct instance_t* instance)
     uint8_t i, num = 0, buffer[10] = { 0xFF };
     struct tm t_before, t_after;
     uint32_t addr,last_timesec, curr_timesec;
-    uint16_t rollback_seq_num[11] = 0;
+    uint16_t rollback_seq_num[11] = { 0 };
     int ret = 0;
     //uint16_t FlagID[] = { MinuteFreeze1, MinuteFreeze2, MinuteFreeze3, MinuteFreeze4, MinuteFreeze5, MinuteFreeze6, MinuteFreeze7, MinuteFreeze8, HourFreeze, DayFreeze, MonthFreeze, };
     uint32_t TabOAD[11] = { 0x50020200, 0x50022200, 0x50024200, 0x50026200, 0x50028200, 0x5002A200, 0x5002C200, 0x5002E200, 0x50030200, 0x50040200, 0x50060200, };
@@ -296,8 +296,6 @@ int record_rollback_after_set_time(struct instance_t* instance)
                 num++;
                 //需要分每个id单独记录
             }
-            
-            
         }
 
         if (num == (sizeof(TabOAD) / sizeof(TabOAD[0])))
@@ -443,7 +441,7 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     uint8_t cycle, i, tmp[10]; 
-    uint32  now,pd,last,recently;
+    uint32_t  now,pd,last,recently;
     struct tm now_tm,pd_tm, last_time;
     uint32_t index,s_index;
     uint8_t billdate[3][2];
@@ -612,7 +610,7 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
             billdate[i][1] = tmp[1];
         }
         
-        ndv_memcopy((uint8 *)&bill_time, (uint8 *)&instance->time, sizeof(struct tm));
+        ndv_memcopy((uint8_t *)&bill_time, (uint8_t *)&instance->time, sizeof(struct tm));
 
         for (i = 0; i < 3; i++)
         {
@@ -651,7 +649,7 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillTimeID);
                 nd_set_index(instance, s_index, &tmp[0], 5);
    
-                ndv_memcopy((uint8 *)&record_time, (uint8 *)&instance->time, sizeof(struct tm));   
+                ndv_memcopy((uint8_t *)&record_time, (uint8_t *)&instance->time, sizeof(struct tm));   
                 send_recordflag_mesg(instance, task,  FlagID, NULL);
             }
         }

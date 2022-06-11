@@ -325,7 +325,7 @@ int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_
 }
 
 //主动上报  
-uint8_t get_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *apdu, uint8_t apdu_len , uint8 *dst)
+uint8_t get_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *apdu, uint8_t apdu_len , uint8_t *dst)
 {
     int fd = 0;
     int request = esam_type_upreport_cmd;

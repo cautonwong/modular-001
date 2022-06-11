@@ -8,7 +8,7 @@
 #define   RELAY_PLUSE_WD  8
 
 
-static uint8 shut_pluse_driver(void *ptr)
+static uint8_t shut_pluse_driver(void *ptr)
 {
     REALY_ON_DIS_ACTIVE();
     REALY_OFF_DIS_ACTIVE();

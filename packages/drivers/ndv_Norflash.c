@@ -34,10 +34,10 @@
 
 struct spi_io_t
 {
-    uint8  command[8];
-    uint8  *buffer;
-    uint16 length;
-    uint16 cmdnum;
+    uint8_t  command[8];
+    uint8_t  *buffer;
+    uint16_t length;
+    uint16_t cmdnum;
 };
 
 #define  MX_CMD_WRSR     0x01        /** write status register */
@@ -54,11 +54,11 @@ struct spi_io_t
 #define  MX_CMD_RDID     0x9F        /** Read Identification  */
 
 
-uint8 flash_read_and_compare(struct spi_io_t *read_data, const struct bus_ops_t *bus_ops)
+uint8_t flash_read_and_compare(struct spi_io_t *read_data, const struct bus_ops_t *bus_ops)
 {
-    uint16 ui_i;
-    uint8 index = bus_ops->bus_index;
-    uint8 rcv_data;
+    uint16_t ui_i;
+    uint8_t index = bus_ops->bus_index;
+    uint8_t rcv_data;
 
     
     if (read_data->cmdnum > 8)
@@ -90,11 +90,11 @@ uint8 flash_read_and_compare(struct spi_io_t *read_data, const struct bus_ops_t 
     return true;
 } 
 
-uint8 flash_write_data(struct spi_io_t *write_data ,  const struct dev_info_t* dev)
+uint8_t flash_write_data(struct spi_io_t *write_data ,  const struct dev_info_t* dev)
 {
-    uint16 ui_i;                         /* 循环变量 */
+    uint16_t ui_i;                         /* 循环变量 */
     const struct bus_ops_t *bus_ops = dev->dev_bus_ops;
-    uint8 index = bus_ops->bus_index;
+    uint8_t index = bus_ops->bus_index;
     
     if (write_data->cmdnum > 8)
     {
@@ -123,11 +123,11 @@ uint8 flash_write_data(struct spi_io_t *write_data ,  const struct dev_info_t* d
 
 
 
-uint8 flash_read_data(struct spi_io_t *read_data, const struct dev_info_t* dev)
+uint8_t flash_read_data(struct spi_io_t *read_data, const struct dev_info_t* dev)
 {
-    uint16 ui_i;                         /* 循环变量 */
+    uint16_t ui_i;                         /* 循环变量 */
     const struct bus_ops_t *bus_ops = dev->dev_bus_ops;
-    uint8 index = bus_ops->bus_index;
+    uint8_t index = bus_ops->bus_index;
     
     if (read_data->cmdnum > 8)
     {
@@ -157,10 +157,10 @@ uint8 flash_read_data(struct spi_io_t *read_data, const struct dev_info_t* dev)
 
 
 
-uint8 get_flash_status(const struct dev_info_t* dev)
+uint8_t get_flash_status(const struct dev_info_t* dev)
 {
     struct spi_io_t spi_io;
-    uint8 flash_statue = 0;
+    uint8_t flash_statue = 0;
     
     spi_io.command[0] = MX_CMD_RDSR;
     spi_io.buffer = &flash_statue;
@@ -195,11 +195,11 @@ void flash_write_enable(const struct dev_info_t* dev)
     
 }
 
-uint8 flash_erase(uint32 address, const struct dev_info_t* dev, uint8 erase_mode)
+uint8_t flash_erase(uint32_t address, const struct dev_info_t* dev, uint8_t erase_mode)
 {
     struct spi_io_t spi_io;
-    uint8 err;
-    uint16 cnt = 2000;
+    uint8_t err;
+    uint16_t cnt = 2000;
 
  
     if (address > dev->data_size)
@@ -219,9 +219,9 @@ uint8 flash_erase(uint32 address, const struct dev_info_t* dev, uint8 erase_mode
         spi_io.command[0] = MX_CMD_BE;
     }
     
-    spi_io.command[1] = (uint8)(address >> 16);
-    spi_io.command[2] = (uint8)(address >> 8);
-    spi_io.command[3] = (uint8)address;
+    spi_io.command[1] = (uint8_t)(address >> 16);
+    spi_io.command[2] = (uint8_t)(address >> 8);
+    spi_io.command[3] = (uint8_t)address;
     spi_io.buffer = NULL;
     spi_io.cmdnum = 4;
     spi_io.length = 0;
@@ -254,9 +254,9 @@ int flash_read(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* 
     }
     
     spi_io.command[0] = MX_CMD_READ;
-    spi_io.command[1] = (uint8)(addr >> 16);
-    spi_io.command[2] = (uint8)(addr >> 8);
-    spi_io.command[3] = (uint8)addr;
+    spi_io.command[1] = (uint8_t)(addr >> 16);
+    spi_io.command[2] = (uint8_t)(addr >> 8);
+    spi_io.command[3] = (uint8_t)addr;
     spi_io.buffer = src;
     spi_io.length = len;
     spi_io.cmdnum = 4;
@@ -273,11 +273,11 @@ int flash_read(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* 
 int flash_write(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
 {
     struct spi_io_t spi_io;
-    uint8 ret;
-    uint8 tmp;
-    uint16 cnt;
-    uint16 timeout = 2000;
-    uint8* buf = (uint8*)src;
+    uint8_t ret;
+    uint8_t tmp;
+    uint16_t cnt;
+    uint16_t timeout = 2000;
+    uint8_t* buf = (uint8_t*)src;
     
     const struct bus_ops_t *bus_ops = dev->dev_bus_ops;
     
@@ -310,10 +310,10 @@ int flash_write(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void*
         /* page program */
         spi_io.command[0] = MX_CMD_PP;
         /* 地址高字节 */
-        spi_io.command[1] = (uint8)(addr >> 16);
+        spi_io.command[1] = (uint8_t)(addr >> 16);
         /* 地址中字节 */
-        spi_io.command[2] = (uint8)(addr >> 8);
-        spi_io.command[3] = (uint8)addr;          /* 地址低字节 */
+        spi_io.command[2] = (uint8_t)(addr >> 8);
+        spi_io.command[3] = (uint8_t)addr;          /* 地址低字节 */
         
         spi_io.buffer = buf;           /* 缓存数据 */
         spi_io.cmdnum = 4;             /* 命令长度 */
@@ -351,11 +351,11 @@ int flash_write(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void*
 
 
 
-uint8 test_flash(const struct dev_info_t* dev)
+uint8_t test_flash(const struct dev_info_t* dev)
 {
-    uint8 i;
+    uint8_t i;
     
-    uint8 test_data[128];
+    uint8_t test_data[128];
     
     
     for(i=0;i<128;i++)
@@ -383,9 +383,9 @@ uint8 test_flash(const struct dev_info_t* dev)
 
 
 
-int flash_ioctrl(const struct dev_info_t* dev , uint8 ctrl , void* ctrl_parameter)
+int flash_ioctrl(const struct dev_info_t* dev , uint8_t ctrl , void* ctrl_parameter)
 {
-    uint32 *addr = (uint32 *)ctrl_parameter;
+    uint32_t *addr = (uint32_t *)ctrl_parameter;
 
     if (*addr >= dev->data_size)
     {

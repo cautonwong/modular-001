@@ -1460,17 +1460,17 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
                 
                 *p++ = energy_tag;
 
-                tmp_64 = (int64)(src[0]<<32)+ (src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
+                tmp_64 = (int64_t)(src[0]<<32)+ (src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
                 if(src[0] & 0x80)
                 {
                     tmp_64 += 0xFFFFFF0000000000;
                 }
                 tmp_64 /= 100;
 
-                p[0] = (uint8)(tmp_64 >> (3*8));
-                p[1] = (uint8)(tmp_64 >> (2*8));
-                p[2] = (uint8)(tmp_64 >> (1*8));
-                p[3] = (uint8)(tmp_64 >> (0*8));
+                p[0] = (uint8_t)(tmp_64 >> (3*8));
+                p[1] = (uint8_t)(tmp_64 >> (2*8));
+                p[2] = (uint8_t)(tmp_64 >> (1*8));
+                p[3] = (uint8_t)(tmp_64 >> (0*8));
 
                 //mem_swap_cpy(p, src, 4);
                 p += 4;
@@ -1484,17 +1484,17 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
                 {
                     *p++ = energy_tag;
 
-                    tmp_64 = (int64)(src[0]<<32)+ (src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
+                    tmp_64 = (int64_t)(src[0]<<32)+ (src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
                     if(src[0] & 0x80)
                     {
                         tmp_64 += 0xFFFFFF0000000000;
                     }
                     tmp_64 /= 100;
                     
-                    p[0] = (uint8)(tmp_64 >> (3*8));
-                    p[1] = (uint8)(tmp_64 >> (2*8));
-                    p[2] = (uint8)(tmp_64 >> (1*8));
-                    p[3] = (uint8)(tmp_64 >> (0*8));
+                    p[0] = (uint8_t)(tmp_64 >> (3*8));
+                    p[1] = (uint8_t)(tmp_64 >> (2*8));
+                    p[2] = (uint8_t)(tmp_64 >> (1*8));
+                    p[3] = (uint8_t)(tmp_64 >> (0*8));
 
                     src += 5;
                     p += 4;
@@ -1511,21 +1511,21 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
                 }
                 
                 *p++ = energy_tag;
-                tmp_64 = (int64)(src[0]<<32)+ (src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
+                tmp_64 = (int64_t)(src[0]<<32)+ (src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
                 
                 if(src[0] & 0x80)
                 {
                     tmp_64 += 0xFFFFFF0000000000;
                 }
 
-                p[0] = (uint8)(tmp_64 >> (7*8));
-                p[1] = (uint8)(tmp_64 >> (6*8));
-                p[2] = (uint8)(tmp_64 >> (5*8));
-                p[3] = (uint8)(tmp_64 >> (4*8));
-                p[4] = (uint8)(tmp_64 >> (3*8));
-                p[5] = (uint8)(tmp_64 >> (2*8));
-                p[6] = (uint8)(tmp_64 >> (1*8));
-                p[7] = (uint8)(tmp_64 >> (0*8));
+                p[0] = (uint8_t)(tmp_64 >> (7*8));
+                p[1] = (uint8_t)(tmp_64 >> (6*8));
+                p[2] = (uint8_t)(tmp_64 >> (5*8));
+                p[3] = (uint8_t)(tmp_64 >> (4*8));
+                p[4] = (uint8_t)(tmp_64 >> (3*8));
+                p[5] = (uint8_t)(tmp_64 >> (2*8));
+                p[6] = (uint8_t)(tmp_64 >> (1*8));
+                p[7] = (uint8_t)(tmp_64 >> (0*8));
 
                 src += 5;
                 p += 8;
@@ -1537,21 +1537,21 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
                 for (i = 0; i < block_num; i++)
                 {
                     *p++ = energy_tag;
-                    tmp_64 = (int64)(src[0]<<32)+ (src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
+                    tmp_64 = (int64_t)(src[0]<<32)+ (src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
                     
                     if(src[0] & 0x80)
                     {
                         tmp_64 += 0xFFFFFF0000000000;
                     }
                     
-                    p[0] = (uint8)(tmp_64 >> (7*8));
-                    p[1] = (uint8)(tmp_64 >> (6*8));
-                    p[2] = (uint8)(tmp_64 >> (5*8));
-                    p[3] = (uint8)(tmp_64 >> (4*8));
-                    p[4] = (uint8)(tmp_64 >> (3*8));
-                    p[5] = (uint8)(tmp_64 >> (2*8));
-                    p[6] = (uint8)(tmp_64 >> (1*8));
-                    p[7] = (uint8)(tmp_64 >> (0*8));
+                    p[0] = (uint8_t)(tmp_64 >> (7*8));
+                    p[1] = (uint8_t)(tmp_64 >> (6*8));
+                    p[2] = (uint8_t)(tmp_64 >> (5*8));
+                    p[3] = (uint8_t)(tmp_64 >> (4*8));
+                    p[4] = (uint8_t)(tmp_64 >> (3*8));
+                    p[5] = (uint8_t)(tmp_64 >> (2*8));
+                    p[6] = (uint8_t)(tmp_64 >> (1*8));
+                    p[7] = (uint8_t)(tmp_64 >> (0*8));
 
                     src += 5;
                     p += 8;
@@ -1944,7 +1944,7 @@ const uint8_t*  get_tag(uint32_t oad)
     const struct attr_tag_t* data_tags;
     
     oi = (oad & 0xFFFF0000) >> 16;
-    index = oad & 0x000000FF;
+    index = (oad & 0x000000FF);
     attr = (oad & 0x0000FF00) >> 8;
     num = 0;
 
@@ -2147,8 +2147,8 @@ void fr_698_MeterWr_program_judge(struct instance_t* instance, struct pipeline_t
     if (ctx->service == 7) //action
     {
         tag = TYPE_OMD;
-        if ((oi & 0xF000 == 0x3000) && ((attribute == 4) || (attribute == 5)) 
-         || (oi & 0xF000 == 0x5000) && ((attribute == 4) || (attribute == 5) || (attribute == 7) || (attribute == 8))
+        if (((oi & 0xF000) == 0x3000) && ((attribute == 4) || (attribute == 5)) 
+         || ((oi & 0xF000) == 0x5000) && ((attribute == 4) || (attribute == 5) || (attribute == 7) || (attribute == 8))
          || (oi == 0xF100) && ((attribute == 4) || (attribute == 7) || (attribute == 9))
          || (oi == 0xF101) && ((attribute == 127) || (attribute == 128) || (attribute == 129)))
         {

@@ -56,7 +56,7 @@ int fr_follow_report_optional(struct instance_t* instance, struct pipeline_t* pi
     //    p[cache->wr++] = 0x01;//follow_report
     //}
 }
-uint32_t get_3320_save_addr(struct instance_t* instance, uint16 chn)
+uint32_t get_3320_save_addr(struct instance_t* instance, uint16_t chn)
 {
     uint32_t addr; 
     
@@ -245,11 +245,11 @@ int fr_handle_report_response(struct instance_t* instance, struct pipeline_t* pi
 {  
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint8 i,need_report_piid = false;
-    uint8 num,flag;
-    uint32 oad;
-    uint8 *p;
-    uint8 *buf = instance->apdu_cache;
+    uint8_t i,need_report_piid = false;
+    uint8_t num,flag;
+    uint32_t oad;
+    uint8_t *p;
+    uint8_t *buf = instance->apdu_cache;
     uint8_t *apdu_rx = (ctx->apdu_d_rx + ctx->apdu_rx_offset);
 
     
@@ -354,7 +354,7 @@ void active_report_normal_CMD_set(struct instance_t* instance, uint8_t chn, uint
                 ret = nd_get_index(instance, addr, buf, 4);
                 if(ret > 0)//恢复主动上报状态字和主动上报次数
                 {
-                    mbase_cb->active_report_CMDtype = buf[0] | ((uint16)buf[1]<<8);
+                    mbase_cb->active_report_CMDtype = buf[0] | ((uint16_t)buf[1]<<8);
                     mbase_cb->active_report_retry_cnt[R_3320] = buf[2];
                     mbase_cb->active_report_retry_cnt[R_2015] = buf[3];
                 }
@@ -372,9 +372,9 @@ void active_report_normal_CMD_set(struct instance_t* instance, uint8_t chn, uint
 
         if (instance->ac_power_statue == AC_POWER_OFF)
         {
-            ndv_memcopy(buf, (uint8 *)&mbase_cb->active_report_CMDtype, 2);
-            ndv_memcopy(buf+2, (uint8 *)&mbase_cb->active_report_retry_cnt[R_3320], 1);
-            ndv_memcopy(buf+3, (uint8 *)&mbase_cb->active_report_retry_cnt[R_2015], 1);
+            ndv_memcopy(buf, (uint8_t *)&mbase_cb->active_report_CMDtype, 2);
+            ndv_memcopy(buf+2, (uint8_t *)&mbase_cb->active_report_retry_cnt[R_3320], 1);
+            ndv_memcopy(buf+3, (uint8_t *)&mbase_cb->active_report_retry_cnt[R_2015], 1);
             ret = nd_set_index(instance, addr, buf, 4);
         }
     }
@@ -489,9 +489,9 @@ uint8_t report_3320list_update(struct instance_t* instance, uint8_t chn, uint8_t
             if(oad == 0x30110200)//    待调整
             {
                 #if 0  //    待调整 不打开
-                if(true == hfp_read(0x2806, (uint8 *)&status_buf, 8, __NULL))
+                if(true == hfp_read(0x2806, (uint8_t *)&status_buf, 8, __NULL))
                 {
-                    hfp_memcopy((uint8 *)&data, &status_buf[4], 4);
+                    hfp_memcopy((uint8_t *)&data, &status_buf[4], 4);
                     if(data >= 3600)//上电超过1小时才会进行掉电期间的上报
                     {
                         active_report_status |= ACTIVE_REPORT_POWEROFF;
@@ -568,7 +568,7 @@ uint8_t active_report_3320list_confirmed(struct instance_t* instance)//确认掉
     uint16_t len,len2;
     uint32_t oad = 0;
     uint32_t addr, ret;
-    uint8 *tmpbuf = instance->apdu_cache;
+    uint8_t *tmpbuf = instance->apdu_cache;
 
 
     addr = get_3320_save_addr(instance, chl_PLC_698);

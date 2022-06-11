@@ -18,10 +18,10 @@ struct uart_chl_init_t
     struct fifo_t* rx_fifo;
     const void* uart_cfg;
 
-    uint32 reset_tmr;
-    uint32 rx_time_out;
-    uint32 tx_time_out;
-    uint32 module_reset_tmr;
+    uint32_t reset_tmr;
+    uint32_t rx_time_out;
+    uint32_t tx_time_out;
+    uint32_t module_reset_tmr;
 
     uint8_t mcu_uart_index;
     uint8_t chl_type;

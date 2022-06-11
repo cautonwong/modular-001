@@ -13,10 +13,10 @@
 #define WDTCLR_KEY  0x55AAAA55
 
 
-const uint32 CODE freq[8] = { 26214400,13107200,6553600,3276800,1638400,819200,409600,204800, };
-static uint32 get_system_clk(void)
+const uint32_t CODE freq[8] = { 26214400,13107200,6553600,3276800,1638400,819200,409600,204800, };
+static uint32_t get_system_clk(void)
 {
-    uint32 temp;
+    uint32_t temp;
 
     /* Get PLLL Frequency */
     temp = ANA->REG9 & ANA_REG9_PLLLSEL;
@@ -40,9 +40,9 @@ static uint32 get_system_clk(void)
 }
 
 
-void cm0_systick_init(uint8 cmd)
+void cm0_systick_init(uint8_t cmd)
 {
-    uint32 cpu_clk;
+    uint32_t cpu_clk;
     
     if(cmd)
     {
@@ -58,7 +58,7 @@ void cm0_systick_init(uint8 cmd)
     }
 }
 
-static void sysclk_at_3m2768(uint16 flag)
+static void sysclk_at_3m2768(uint16_t flag)
 {
 
     
@@ -148,9 +148,9 @@ void sys_clock_normal(void)
 /* 鍞ら啋杩愯7371750*/
 /* 浼戠湢杩愯327687*/
 /* 瀹炴祴璇?0us鍒?0ms璇樊鍦?%浠ュ唴銆侤 147435*/
-uint8 mcu_delay_us(volatile uint16 count)
+uint8_t mcu_delay_us(volatile uint16_t count)
 {
-    uint32 timeout = 1000000;
+    uint32_t timeout = 1000000;
 
     if (count == 0)
     {
@@ -209,7 +209,7 @@ static void RTCWriteDisable(void)
     }
 }
 
-uint8 init_v85xxp_rtc( uint8 power_mode )
+uint8_t init_v85xxp_rtc( uint8_t power_mode )
 {
     
     MISC2->PCLKEN |= MISC2_PCLKEN_RTC;
@@ -297,9 +297,9 @@ uint8_t read_mcu_rtc(uint8_t addr, struct instance_t* instance)
     return true;
 }
 
-uint8_t write_mcu_rtc(uint8_t addr, uint8_t *buf, uint16 len)
+uint8_t write_mcu_rtc(uint8_t addr, uint8_t *buf, uint16_t len)
 {
-    uint8 time_data[7];
+    uint8_t time_data[7];
     
     RTCWriteEnable();
     
@@ -334,8 +334,8 @@ uint8_t write_mcu_rtc(uint8_t addr, uint8_t *buf, uint16 len)
  **********************************************************/
 void mcu_init(void *init_type)
 {
-    uint16 flag = 0x5aa5;
-    uint32 val = 0;
+    uint16_t flag = 0x5aa5;
+    uint32_t val = 0;
 
     // 鐪嬮棬鐙楀垵濮嬪寲
     WDT_SetPeriod(WDT_2_SECS);
@@ -395,7 +395,7 @@ const IRQn_Type CODE UART_IRQ[] =
     UART5_IRQn,
 };
 
-const uint32 CODE clock_en[] =
+const uint32_t CODE clock_en[] =
 {
     MISC2_PCLKEN_UART0_Msk,
     MISC2_PCLKEN_UART1_Msk,
@@ -405,7 +405,7 @@ const uint32 CODE clock_en[] =
     MISC2_PCLKEN_UART5_Msk,
 };
 
-uint8 mcu_uart_init(void* init_config, uint8 uart_index, uint8 infrared_enable)
+uint8_t mcu_uart_init(void* init_config, uint8_t uart_index, uint8_t infrared_enable)
 {
     UART_TypeDef* UARTx;
     UART_InitType* InitType = (UART_InitType*)init_config;
@@ -445,7 +445,7 @@ uint8 mcu_uart_init(void* init_config, uint8 uart_index, uint8 infrared_enable)
     return true;
 }
 
-uint8 mcu_uart_close(uint8 uart_index)
+uint8_t mcu_uart_close(uint8_t uart_index)
 {
     UART_TypeDef* UARTx;
 
@@ -465,10 +465,10 @@ uint8 mcu_uart_close(uint8 uart_index)
     return true;
 }
 
-void mcu_uart_recive_enable(uint8 ops_enable, size_t uart_index)
+void mcu_uart_recive_enable(uint8_t ops_enable, size_t uart_index)
 {
     UART_TypeDef* UARTx;
-    uint8 tmp = 0;
+    uint8_t tmp = 0;
 
     if (uart_index < 6)
     {
@@ -493,7 +493,7 @@ void mcu_uart_recive_enable(uint8 ops_enable, size_t uart_index)
     }
 }
 
-int mcu_uart_send_byte(uint8 send_data, size_t uart_index)
+int mcu_uart_send_byte(uint8_t send_data, size_t uart_index)
 {
     UART_TypeDef* UARTx;
 
@@ -509,7 +509,7 @@ int mcu_uart_send_byte(uint8 send_data, size_t uart_index)
     return false;
 }
 
-int mcu_uart_recive_byte(uint8* byte , size_t uart_index)
+int mcu_uart_recive_byte(uint8_t* byte , size_t uart_index)
 {
     UART_TypeDef* UARTx;
 
@@ -538,7 +538,7 @@ int mcu_uart_recive_byte(uint8* byte , size_t uart_index)
     return false;
 }
 
-void mcu_uart_send_enable(uint8 ops_enable, size_t uart_index)
+void mcu_uart_send_enable(uint8_t ops_enable, size_t uart_index)
 {
     UART_TypeDef* UARTx;
 
@@ -562,9 +562,9 @@ void mcu_uart_send_enable(uint8 ops_enable, size_t uart_index)
     }
 }
 
-uint8 mcu_uart_set_baud(uint16 baud, uint8 uart_index)
+uint8_t mcu_uart_set_baud(uint16_t baud, uint8_t uart_index)
 {
-    uint32	ClkDiv, pclk;
+    uint32_t	ClkDiv, pclk;
     UART_TypeDef* UARTx;
 
     if (uart_index < 6)
@@ -620,7 +620,7 @@ int mcu_uart_get_rx_status(size_t uart_index)
     return false;
 }
 
-uint8 mcu_spi_bus_init(uint8 spi_index, uint8 mode)
+uint8_t mcu_spi_bus_init(uint8_t spi_index, uint8_t mode)
 {
 
     MISC2->PCLKEN |= MISC2_PCLKEN_SPI2;
@@ -644,10 +644,10 @@ uint8 mcu_spi_bus_init(uint8 spi_index, uint8 mode)
 }
 
 
-uint8 mcu_spi_send_byte(uint8 byte, uint8 spi_index)
+uint8_t mcu_spi_send_byte(uint8_t byte, uint8_t spi_index)
 {
-    uint16 timeout = 50000; // 寰呰皟鏁�
-    uint8  rxd;
+    uint16_t timeout = 50000; // 寰呰皟鏁�
+    uint8_t  rxd;
 
 
     while ((0 == (SPI2->MISC_ & SPI_MISC_TFE)) && (timeout > 0))
@@ -674,10 +674,10 @@ uint8 mcu_spi_send_byte(uint8 byte, uint8 spi_index)
     return false;
 }
 
-uint8 mcu_spi_recive_byte(uint8* byte, uint8 spi_index)
+uint8_t mcu_spi_recive_byte(uint8_t* byte, uint8_t spi_index)
 {
-    uint16 timeout = 50000;
-    uint8  rxd = 0;
+    uint16_t timeout = 50000;
+    uint8_t  rxd = 0;
 
 
 
@@ -708,7 +708,7 @@ uint8 mcu_spi_recive_byte(uint8* byte, uint8 spi_index)
 
 
 
-void mcu_timer_ctrl(uint32 period_ms, uint8 index, uint8 stop_or_start)
+void mcu_timer_ctrl(uint32_t period_ms, uint8_t index, uint8_t stop_or_start)
 {
     TMR_InitType    TMR_InitStruct;
 
@@ -771,8 +771,8 @@ void  mcu_clear_watchdog(void)
 
 
 
-uint8 poweroff_test = 1;//鏀瑰洖鏉�
-uint8 ac_power_off_monitor(void)
+uint8_t poweroff_test = 1;//鏀瑰洖鏉�
+uint8_t ac_power_off_monitor(void)
 {
 #if 0 
     if (poweroff_test) // 鏀瑰洖鏉�
@@ -784,7 +784,7 @@ uint8 ac_power_off_monitor(void)
         return false;
     }
 
-    static uint8 test;
+    static uint8_t test;
     if (test == 0x5a)
     {
         return false;
@@ -807,7 +807,7 @@ uint8 ac_power_off_monitor(void)
 
 }
 
-uint8 ac_power_on_monitor(void)
+uint8_t ac_power_on_monitor(void)
 {
 #if 0 
     if (poweroff_test) // 鏀瑰洖鏉�
@@ -819,7 +819,7 @@ uint8 ac_power_on_monitor(void)
         return true;
     }
 
-    static uint8 test;
+    static uint8_t test;
 
     if (test == 0x5a)
     {
@@ -840,7 +840,7 @@ uint8 ac_power_on_monitor(void)
 
 }
 
-void fnINTTC3_Init(uint8 cmd)//2ms
+void fnINTTC3_Init(uint8_t cmd)//2ms
 {
         TMR_InitType    TMR_InitStruct;
 
@@ -869,7 +869,7 @@ void mcu_enter_lowpower_then_sleep(void)
 {
     GPIO_InitType GPIO_InitStruct;
     PMU_LowPWRTypeDef LowPower_InitStruct;
-    uint32 lcd_tmp[20] = {0,};
+    uint32_t lcd_tmp[20] = {0,};
 
     MISC_IRCmd(MISC_IREN_TX5, DISABLE);
     TMR_INTConfig(TMR0, DISABLE);
@@ -882,8 +882,8 @@ void mcu_enter_lowpower_then_sleep(void)
     UART_INTConfig(UART5, UART_INT_RX | UART_INT_TXDONE, DISABLE);
 
     LCD->CTRL |= LCD_CTRL_EN;
-    MISC2->HCLKEN |= (uint32)BIT6;
-    memcpy((uint8*)(&LCD->FB[0]), (uint8*)&lcd_tmp[0], sizeof(lcd_tmp));
+    MISC2->HCLKEN |= (uint32_t)BIT6;
+    memcpy((uint8_t*)(&LCD->FB[0]), (uint8_t*)&lcd_tmp[0], sizeof(lcd_tmp));
     //lcd_init(__NULL, 0);
 
     /*------------------ Forbidden all GPIOs ------------------*/
@@ -969,10 +969,10 @@ int v85xxp_spi_bus_init(size_t index)
 }
 
 
-int v85xxp_spi_send_byte(uint8 byte , size_t index)
+int v85xxp_spi_send_byte(uint8_t byte , size_t index)
 {
-   uint16 timeout = 50000; // 待调整
-   uint8  rxd;
+   uint16_t timeout = 50000; // 待调整
+   uint8_t  rxd;
     
 
    while((0 == (SPI2->MISC_ & SPI_MISC_TFE))&&(timeout>0))
@@ -999,10 +999,10 @@ int v85xxp_spi_send_byte(uint8 byte , size_t index)
    return false;
 }
 
-int v85xxp_spi_recive_byte(uint8 *byte , size_t index)
+int v85xxp_spi_recive_byte(uint8_t *byte , size_t index)
 {
-   uint16 timeout = 50000;
-   uint8  rxd = 0;
+   uint16_t timeout = 50000;
+   uint8_t  rxd = 0;
    
    while((0 == (SPI2->MISC_ & SPI_MISC_TFE))&&(timeout>0))
    {
@@ -1026,7 +1026,7 @@ int v85xxp_spi_recive_byte(uint8 *byte , size_t index)
    return false;
 }
 
-void v85xxp_spi_ctrl(uint8 ctrl , size_t index)
+void v85xxp_spi_ctrl(uint8_t ctrl , size_t index)
 {
     switch(ctrl)
     {
@@ -1050,10 +1050,10 @@ void v85xxp_spi_ctrl(uint8 ctrl , size_t index)
 
 
 /* lcd io口输出模式配置 */
-uint8 lcd_port_config(uint8 mode)
+uint8_t lcd_port_config(uint8_t mode)
 {
 #if 1
-    //MISC2->HCLKEN &= (~(uint32)BIT6);
+    //MISC2->HCLKEN &= (~(uint32_t)BIT6);
     if(mode == AC_POWER_ON)
     {
             GPIOD->OEN   |= (BIT0| BIT1| BIT2| BIT3| BIT4| BIT5| BIT6| BIT7| BIT12| BIT13| BIT14| BIT15);//使能输出
@@ -1091,15 +1091,15 @@ uint8 lcd_port_config(uint8 mode)
 }
 
 
-uint8 lcd_init(uint8 power_mode)
+uint8_t lcd_init(uint8_t power_mode)
 {   
     LCD_InitType lcd_init_para;
     LCD_IOInitType lcd_io_para;
     switch(power_mode)
     {
         case AC_POWER_ON:
-          memset((uint8 *)&lcd_init_para, 0x00, sizeof(lcd_init_para));
-          memset((uint8 *)&lcd_io_para,   0x00, sizeof(lcd_init_para));
+          memset((uint8_t *)&lcd_init_para, 0x00, sizeof(lcd_init_para));
+          memset((uint8_t *)&lcd_io_para,   0x00, sizeof(lcd_init_para));
           MISC2->HCLKEN |= BIT6;//打开lcd时钟
           lcd_port_config(AC_POWER_ON);
 
@@ -1129,7 +1129,7 @@ uint8 lcd_init(uint8 power_mode)
           lcd_io_para.SegCtrl1 = 0x00;
           lcd_io_para.SegCtrl2 = 0x00;
           LCD->CTRL &=~LCD_CTRL_EN;
-          MISC2->HCLKEN &= (~(uint32)BIT6);
+          MISC2->HCLKEN &= (~(uint32_t)BIT6);
           LCD_Cmd(&lcd_io_para, DISABLE);
             break;
     }
@@ -1139,14 +1139,14 @@ uint8 lcd_init(uint8 power_mode)
 
 #define MAX_LCD_BUF  24
 #define MCU_BUF_MAX  20
-const uint8 CODE mcu_seg_map [] =
+const uint8_t CODE mcu_seg_map [] =
 {
    2, 3, 8, 9, 10, 11, 75, 74, 68, 67, 66, 61, 60, 57, 56, 55, 54, 53, 49, 48, 47, 42, 41, 40,
 };
-uint8 lcd_mapping(uint32 addr, uint8 *buf, uint16 len)
+uint8_t lcd_mapping(uint32_t addr, uint8_t *buf, uint16_t len)
 { 
-    uint8 i = 0x00, index = 0x00, offset = 0x00;
-    uint32 lcd_tmp[MCU_BUF_MAX] = {0x00};
+    uint8_t i = 0x00, index = 0x00, offset = 0x00;
+    uint32_t lcd_tmp[MCU_BUF_MAX] = {0x00};
 	
     if((addr+len) > MAX_LCD_BUF)
     {
@@ -1158,10 +1158,10 @@ uint8 lcd_mapping(uint32 addr, uint8 *buf, uint16 len)
         index  = mcu_seg_map[i] / 4;
         offset = mcu_seg_map[i] % 4;
 
-        lcd_tmp[index] |= ((uint32)buf[i] << offset * 8);
+        lcd_tmp[index] |= ((uint32_t)buf[i] << offset * 8);
     }
 
-    memcpy((uint8*)(&LCD->FB[addr]), (uint8 *)&lcd_tmp[0], sizeof(lcd_tmp));
+    memcpy((uint8_t*)(&LCD->FB[addr]), (uint8_t *)&lcd_tmp[0], sizeof(lcd_tmp));
 	
     return true;
 }
@@ -1216,7 +1216,7 @@ int emu_uart_init(size_t index)
 
 
 
-uint8 mcu_adc_start_once(uint8 chl_type)
+uint8_t mcu_adc_start_once(uint8_t chl_type)
 { 
 
     ADCInitType ADC_InitStruct;
@@ -1253,12 +1253,12 @@ uint8 mcu_adc_start_once(uint8 chl_type)
 
 }
 
-uint32 read_mcu_adc_measure_value(uint8 chl_type , int32 *adc_measure)
+uint32_t read_mcu_adc_measure_value(uint8_t chl_type , int32_t *adc_measure)
 {
     float value = 0, Vbatcap;
-    int32 ad = 0;
-    int32 P0,P1,P2;
-    uint32 retval;
+    int32_t ad = 0;
+    int32_t P0,P1,P2;
+    uint32_t retval;
     NVR_RTCINFO RTC_DataStruct;
     NVR_BATMEARES BAT_OffsetInfo;
     
@@ -1282,7 +1282,7 @@ uint32 read_mcu_adc_measure_value(uint8 chl_type , int32 *adc_measure)
             value = ((float)ad  - 49.588)/7088.91575 + Vbatcap;
             value *= 10000;
         }
-        *adc_measure = (int32)value;
+        *adc_measure = (int32_t)value;
 
     }
     else if(chl_type == 10)
@@ -1304,10 +1304,10 @@ uint32 read_mcu_adc_measure_value(uint8 chl_type , int32 *adc_measure)
         value = (float)((((P0 * ((ad*ad)>>16)) + P1*ad + P2) >> 8)*10 / 256.0);
         value *= 100;
         
-        *adc_measure = (int32)value;
+        *adc_measure = (int32_t)value;
     }
 
-//    *adc_measure = (uint32)value;
+//    *adc_measure = (uint32_t)value;
     
     /* ADC resource release */
     ADC_DeInit();

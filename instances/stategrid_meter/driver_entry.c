@@ -116,7 +116,7 @@ static uint8_t key_keep_flag = 0;
 static uint8_t key_keep_width = 0;
 void IO_Interrupt(void)
 {
-   uint16 cnt;
+   uint16_t cnt;
     
     if( PMU_GetIOAINTStatus(GPIO_Pin_8))   //有功脉冲
     {
@@ -340,7 +340,7 @@ void irq_transform_to_instance(struct instance_t* instance)
 
 void IOStateCheckInit(void);
 
-void mcu_main_frequency_mode(uint8 clk_mode)
+void mcu_main_frequency_mode(uint8_t clk_mode)
 {
     CLK_InitTypeDef CLK_Struct;
     uint32_t Periphral = 0;
@@ -397,7 +397,7 @@ void dev_init(uint8_t power_mode)
 //关闭用电大户外设的电源，比如背光，LED，串口，高速定时器，tick
  void device_power_close(struct instance_t* instance)
  {
-    uint32 lcd_tmp[20] = {0,};
+    uint32_t lcd_tmp[20] = {0,};
     
     GPIO_InitType GPIO_InitStruct;
     PMU_LowPWRTypeDef LowPower_InitStruct;
@@ -415,8 +415,8 @@ void dev_init(uint8_t power_mode)
     UART_INTConfig(UART5, UART_INT_RX | UART_INT_TXDONE, DISABLE);
     
     LCD->CTRL |= LCD_CTRL_EN;
-    MISC2->HCLKEN |= (uint32)BIT6;
-    memcpy((uint8*)(&LCD->FB[0]), (uint8 *)&lcd_tmp[0], sizeof(lcd_tmp));
+    MISC2->HCLKEN |= (uint32_t)BIT6;
+    memcpy((uint8_t*)(&LCD->FB[0]), (uint8_t *)&lcd_tmp[0], sizeof(lcd_tmp));
     lcd_init(AC_POWER_OFF);
 
     /*------------------ Forbidden all GPIOs ------------------*/
