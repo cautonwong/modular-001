@@ -791,7 +791,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
         case SECURITY_Response:
             cache->buf_ptr[0] = SECURITY_Response;
             cache->buf_ptr[1] = 2;
-            cache->buf_ptr[2] = err_no;
+            cache->buf_ptr[2] = -err_no;
             cache->buf_ptr[3] = 0;
             cache->wr = 4;
             break;

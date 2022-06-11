@@ -150,7 +150,7 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
     uint32_t rcsd_list[(REQ_RCSD_MAXNUM+1)]; //个数 + n个OAD  //[0][]协议筛选  [1][]事件全关联对象
     struct rsd_info_t rsd_info;
     
-    int ret;
+    int ret, rsd_ret, rcsd_ret;
     uint32_t i;
         
     while (oad_n-- > 0)
@@ -164,35 +164,47 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
             ctx->apdu_rx_offset += 4;
             
             //RSD
-            ret = rsd_decode(instance, pipeline, mesg->id, &rsd_info);
-            if (ret < 0)
+            rsd_ret = rsd_decode(instance, pipeline, mesg->id, &rsd_info);
+            if (rsd_ret < 0)
             {
                 ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
                 p[cache->wr++] = 0x00; //rcsd
                 p[cache->wr++] = 0x00;//DAR
-                p[cache->wr++] = -ret;
-                return ret;  // 想返回dar  如何处理 ？？
+                p[cache->wr++] = -rsd_ret;
+                return rsd_ret;  // 想返回dar  如何处理 ？？
             }
             else
             {
                 //cache->wr += ret;
             }  
+
             Selector = rsd_info.select;
-            
+
             //RCSD
-            ret = rcsd_decode(instance, pipeline,mesg->id, rcsd_list);
-            if (ret < 0)
+            rcsd_ret = rcsd_decode(instance, pipeline,mesg->id, rcsd_list);
+            //if ((rsd_ret < 0) || (rcsd_ret < 0))
+            if(rsd_ret == 0)
             {
+                //ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+                if (rcsd_ret < 0)
+                {
+                    p[cache->wr++] = 0x00; //rcsd
+                }
+                p[cache->wr++] = 0x00;//DAR
+                p[cache->wr++] = DAR_TYPE_NOT_MATCH;
+                return 1;  // 想返回dar  如何处理 ？？
+            }
+            
+            if ((rcsd_ret < 0 ))
+            {   
+
                 ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
                 p[cache->wr++] = 0x00; //rcsd
                 p[cache->wr++] = 0x00;//DAR
-                p[cache->wr++] = -ret;
-                return ret;  // 想返回dar  如何处理 ？？
+                p[cache->wr++] = -rcsd_ret;
+                return 1;  // 想返回dar  如何处理 ？？
             }
-            else
-            {
-                //cache->wr += ret;
-            } 
+
 
             //安全模式判断
             ret = security_mode_word_check(instance, pipeline, 0, mesg->id);
@@ -226,7 +238,8 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
                 
                 if (ret < 0)
                 {
-                    p[offset] = -ret; // 无记录
+                    p[offset] = 0;
+                    p[offset + 1] = -ret; // 无记录
                     //p[offset+1] = ret;
                     cache->wr += 1;
                     return -DAR_OTHERS_ERROR;

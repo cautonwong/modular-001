@@ -51,7 +51,10 @@ void PowerAbnormal_LowPower_pro(struct instance_t* instance, struct pipeline_t* 
     // 是否为停电下第一秒 // 待调整   //  停电下第x秒检测
 #if 0
     if ()
+    {
+        set_activeflag(instance, RecordId);
         send_event_mesg_pro(instance, task,  RecordId, NULL, result);
+    }
 #endif
 
 

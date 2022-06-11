@@ -443,13 +443,15 @@ int decode_rsd_event_selector_1(struct instance_t* instance, struct pipeline_t* 
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = instance->apdu_cache; //当临时缓存
-    uint32_t rsd_oad;
-    
+    uint32_t rsd_oad = 0;
+    uint16_t data_len = 0;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     memcpy(p, apdu_rx + ctx->apdu_rx_offset, 4);
     ctx->apdu_rx_offset += 4;
     rsd_oad = buf_to_uint32_msb(p);
 
+    data_len = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+    
     switch (rsd_oad)
     {
     case 0x201e0200: // 事件发生时间
@@ -487,7 +489,8 @@ int decode_rsd_event_selector_1(struct instance_t* instance, struct pipeline_t* 
         break;
 
     default:
-        return -DAR_TYPE_NOT_MATCH;
+        ctx->apdu_rx_offset += data_len;
+        return 0;
     }
 
     return (1);
@@ -589,18 +592,21 @@ int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t*
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = instance->apdu_cache; //当临时缓存
     uint32_t rsd_oad;
+    uint16_t data_len = 0;
 
     memcpy(p, apdu_rx + ctx->apdu_rx_offset, 4);
     ctx->apdu_rx_offset += 4;
     rsd_oad = buf_to_uint32_msb(p);
 
+    data_len = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+    
     switch (rsd_oad)
     {
     case 0x20210200: // 冻结时间    
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
-            return -7;
+            return -DAR_TYPE_NOT_MATCH;
         }
         rsd_info->start_mark = dt_buf_to_second(apdu_rx + ctx->apdu_rx_offset);
         ctx->apdu_rx_offset += 7;
@@ -613,7 +619,7 @@ int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t*
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
-            return -7;
+            return -DAR_TYPE_NOT_MATCH;
         }
         rsd_info->start_mark = buf_to_uint32_msb(apdu_rx + ctx->apdu_rx_offset);
         ctx->apdu_rx_offset += 4;
@@ -622,7 +628,8 @@ int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t*
         break;
 
     default:
-        return -7;
+        ctx->apdu_rx_offset += data_len;
+        return 0;
     }
 
     return (1);
@@ -640,11 +647,15 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
     uint16_t value;
     uint32_t rsd_oad;
     uint16_t oi = get_OAD_OI(oad);
-
+    uint16_t data_len = 0;
 
     rsd_oad = buf_to_uint32_msb(&apdu_rx[ctx->apdu_rx_offset]);
     ctx->apdu_rx_offset += 4;
 
+    data_len = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+    data_len += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+    data_len += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+    
     switch (rsd_oad)
     {
     case 0x20210200: // 冻结时间   
@@ -774,7 +785,8 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
         break;
 
     default:
-        return -DAR_TYPE_NOT_MATCH;
+        ctx->apdu_rx_offset += data_len;
+        return 0;
     }
 
     return (1);
@@ -787,14 +799,19 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = instance->apdu_cache; //当临时缓存
 
-    uint16_t value;
-    uint32_t rsd_oad;
+    uint16_t value=0, data_len = 0;
+    uint32_t rsd_oad = 0;
     uint16_t oi = get_OAD_OI(oad);
-
+    int dar = 0;
+    
     memcpy(p, apdu_rx + ctx->apdu_rx_offset, 4);
     ctx->apdu_rx_offset += 4;    
     rsd_oad = buf_to_uint32_msb(p);
 
+    data_len = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+    data_len += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+    data_len += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+    
     switch (rsd_oad)
     {
     case 0x201e0200: // 事件发生时间
@@ -908,7 +925,8 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
 
 
     default:
-        return -DAR_TYPE_NOT_MATCH;
+        ctx->apdu_rx_offset += data_len;
+        return 0;
     }
 
     return (1);
@@ -1478,7 +1496,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
             judge_size = (p - buf + len + one_len);
         }
 
-        if((judge_size) > 2000) //待调整
+        if((judge_size) > 1800) //待调整
         {
             return -DAR_BUFFER_OVERFLOW;
         }

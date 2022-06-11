@@ -11,7 +11,7 @@
 int PowerOff_event_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint8_t payload[100];
+    //uint8_t payload[100];
     int result = 0;
     uint8_t state = false;
 
@@ -69,17 +69,21 @@ int PowerOff_event_judge(struct instance_t* instance, struct pipeline_t* task, s
 //  下电状态 每秒调用 
 void PowerOff_LowPower_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t* accumulate_time = &ctrl_block->PowerOffS_acc_time;
     uint16_t RecordId = PowerOffS;
+    struct message_t mesg_tmp;
 
 
      // 是否为停电下第一秒 // 待调整   //  停电下第一秒记录一次掉电事件 
     if ( ctrl_block->power_down_sec_accum == 1 )
     {
-        if (false == get_activeflag(instance, RecordId))
+        if (false == get_activeflag(instance, RecordId)) //|| ((true == get_recordflag(instance, RecordId))  )
         {
-            send_event_mesg_pro(instance, task,  RecordId, NULL, 1);
+            set_activeflag(instance, RecordId);
+            mesg_tmp.id = RecordId;
+            recv_record_process(instance, task, &mesg_tmp, NULL);
+            //send_event_mesg_pro(instance, task,  RecordId, NULL, 1);
         }
     }
 

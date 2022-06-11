@@ -44,6 +44,8 @@ extern const uint8_t  init_StepCutFreeze_depth[];
 extern const uint8_t  init_StepBillFreeze_depth[];    
 extern const uint8_t  init_InstantFreeze_depth[];     
 
+extern const uint8_t  init_BeforSet_SeasonT[];
+
 extern const uint8_t  init_SecurityMode_En[];
 extern const uint8_t  init_SecurityMode_EXData[];
 
@@ -199,8 +201,8 @@ const struct record_item_t  record_item[] =
     { MeterClrS     ,       0,                          600,       10 },//  0x3013    电能表清零事件             
     { EventClrS     ,       0,                          600,       10 },//  0x3015    电能表事件清零事件         
     { SetTimeS      ,       0,                          600,       10 },//  0x3016    电能表校时事件             
-    { DayTabWrS     ,       0,                          600,       10 },//  0x3017    电能表时段表编程事件       
-    { SeasonTabWrS  ,       0,                          600,       10 },//  0x3018    电能表时区表编程事件       
+    { DayTabWrS     ,       0,                         1300,       10 },//  0x3017    电能表时段表编程事件       
+    { SeasonTabWrS  ,       0,                         1300,       10 },//  0x3018    电能表时区表编程事件       
     { WeekTabWrS    ,       0,                          600,       10 },//  0x3019    电能表周休日编程事件       
     { BillDayWrS    ,       0,                          600,       10 },//  0x301A    电能表结算日编程事件  
     { CoverOpenS    ,       CoverOpenE,                 600,       10 },//  0x301B    电能表开盖事件             
@@ -222,12 +224,12 @@ const struct record_item_t  record_item[] =
     { ZeroLineErrS  ,       ZeroLineErrE,               600,       10 },//  0x3040    零线电流异常事件 
 
     { BillFreeze,           0,                          600,       10 },//  0x5005      结算日冻结 //待调整
-    { SeasonTabCutFreeze,   0,                          1000,    3, },//  0x5008      时区表切换冻结 
-    { DayTabCutFreeze   ,   0,                          1000,    2, },//  0x5009      日时段表切换冻结    
-    { FeePriceCutFreeze ,   0,                          1000,    2, },//  0x500A      费率电价切换冻结  
-    { StepCutFreeze     ,   0,                          1000,    2, },//  0x500B      阶梯切换冻结
-    { StepBillFreeze    ,   0,                          1000,    2, },//  0x5011      阶梯结算冻结
-    { InstantFreeze     ,   0,                          1000,    3, },//  0x5000      瞬时冻结
+    { SeasonTabCutFreeze,   0,                         1000,        3 },//  0x5008      时区表切换冻结 
+    { DayTabCutFreeze   ,   0,                         1000,        2 },//  0x5009      日时段表切换冻结    
+    { FeePriceCutFreeze ,   0,                         1000,        2 },//  0x500A      费率电价切换冻结  
+    { StepCutFreeze     ,   0,                         1000,        2 },//  0x500B      阶梯切换冻结
+    { StepBillFreeze    ,   0,                         1000,        2 },//  0x5011      阶梯结算冻结
+    { InstantFreeze     ,   0,                         1000,        3 },//  0x5000      瞬时冻结
 
 };
 
@@ -494,7 +496,7 @@ const  parameter_item_t  parameter_item[] =
     { BeforSetT_Time                , 0x01,  7, 0 }, //校时前时间 秒 分 时 日 月 年(2字节)
     { AfterSetT_Time                , 0x01,  7, 0 }, //校时后时间 秒 分 时 日 月 年(2字节)
     { MeterWr_List                  , 0x01, 52, 0 }, //编程对象列表  array OAD    
-    { BeforSet_SeasonT              , 0x01,114, 0 }, //编程前备用套时区  array num 14*8  
+    { BeforSet_SeasonT              , 0x01,114, init_BeforSet_SeasonT }, //编程前备用套时区  array num 14*8  
     { Set_DayTab_Oad                , 0x01,  5, 0 }, //编程时段表对象          
     { BeforSet_DayTab               , 0x01,114, 0 }, //编程前备用套时段表  array num 14*8  
     { BeforSet_WeekTab              , 0x01,  2, 0 }, //编程前周休日时段表号   
@@ -1460,7 +1462,7 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
                 
                 *p++ = energy_tag;
 
-                tmp_64 = (int64_t)(src[0]<<32)+ (src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
+                tmp_64 = (int64_t)((int64_t)src[0]<<32)+ ((int64_t)src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
                 if(src[0] & 0x80)
                 {
                     tmp_64 += 0xFFFFFF0000000000;
@@ -1484,7 +1486,7 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
                 {
                     *p++ = energy_tag;
 
-                    tmp_64 = (int64_t)(src[0]<<32)+ (src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
+                    tmp_64 = (int64_t)((int64_t)src[0]<<32)+ ((int64_t)src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
                     if(src[0] & 0x80)
                     {
                         tmp_64 += 0xFFFFFF0000000000;
@@ -1511,7 +1513,7 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
                 }
                 
                 *p++ = energy_tag;
-                tmp_64 = (int64_t)(src[0]<<32)+ (src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
+                tmp_64 = (int64_t)((int64_t)src[0]<<32)+ ((int64_t)src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
                 
                 if(src[0] & 0x80)
                 {
@@ -1537,7 +1539,7 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
                 for (i = 0; i < block_num; i++)
                 {
                     *p++ = energy_tag;
-                    tmp_64 = (int64_t)(src[0]<<32)+ (src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
+                    tmp_64 = (int64_t)((int64_t)src[0]<<32)+ ((int64_t)src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
                     
                     if(src[0] & 0x80)
                     {
@@ -1687,10 +1689,21 @@ int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* sr
         {
             for (i = 0; i < (sizeof(format_conversion_tab) / sizeof(format_conversion_tab[0])); i++)
             {
-                if ((oad_req & (0xFFFF1FFF)) == format_conversion_tab[i].oad)
+                if ((format_conversion_tab[i].oad & (0x0000F000)) != 0 ) //指定方案  全字比对
                 {
-                    break;
+                    if ((oad_req ) == format_conversion_tab[i].oad)
+                    {
+                        break;
+                    }
                 }
+                else
+                {
+                    if ((oad_req & (0xFFFF1FFF)) == format_conversion_tab[i].oad)
+                    {
+                        break;
+                    }
+                }
+
             }
             
             if (i >= (sizeof(format_conversion_tab) / sizeof(format_conversion_tab[0])))

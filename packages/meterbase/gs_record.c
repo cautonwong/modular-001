@@ -57,6 +57,10 @@ const uint8_t  init_StepCutFreeze_depth[] = { 0x00,0x02 };//待调整
 const uint8_t  init_StepBillFreeze_depth[] = { 0x00,0x02 };//待调整                                                         
 const uint8_t  init_InstantFreeze_depth[] = { 0x00,0x03 };
 
+const uint8_t  init_BeforSet_SeasonT [] = { 0x01,0x01,0x02,0x03,0x11,0x01,0x11,0x01,0x11,0x11};
+
+
+
 const uint8_t  init_SecurityMode_En[] = { 0x01 };
 const uint8_t  init_SecurityMode_EXData[] = { 0x00 };
 
