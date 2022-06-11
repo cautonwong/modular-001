@@ -102,7 +102,7 @@ const struct dev_info_t nor_flash_dev=
 };
 
 
-void RTC_Second(void)
+void RTC_Second(void *para)
 {
     fifoBuf_putByte(&irq_fifo, IRQ_RTC);
 }
@@ -114,7 +114,7 @@ static uint8_t wplse_light_width = 0;
 
 static uint8_t key_keep_flag = 0;
 static uint8_t key_keep_width = 0;
-void IO_Interrupt(void)
+void IO_Interrupt(void *para)
 {
    uint16_t cnt;
     
@@ -165,7 +165,7 @@ void IO_Interrupt(void)
 extern  uint32_t over_Imax;
 extern void Energy_Pluse_Add(void);
 
-void timing_ftr(void)
+void timing_ftr(void *para)
 {
       uint8_t dly1,dly2=0;
       
@@ -241,23 +241,29 @@ void ir_receive_timeout(void)
     fifoBuf_putByte(&irq_fifo, IRQ_IR_RX_TM_OUT);
 }   
 
-void rs485_send_timeout(void)
+void rs485_send_timeout(void *CallBackSendPara)
 {
+    struct instance_t* instance = (struct instance_t*)CallBackSendPara;
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
+    RS485_RCV_EN();
+    
     //这里是发送结束最后一个字节后调用的函数，可以在这里判断是否有波特率修改，并调用修改波特率函数，注意该函数是在中断调用，因此要简洁
+    
 }
 
-void plc_send_timeout(void)
+void plc_send_timeout(void *CallBackSendPara)
 {
     //这里是发送结束最后一个字节后调用的函数，可以在这里判断是否有波特率修改，并调用修改波特率函数，注意该函数是在中断
 }
 
-void ir_send_timeout(void)
+void ir_send_timeout(void *CallBackSendPara)
 {
     //这里是发送结束最后一个字节后调用的函数，可以在这里判断是否有波特率修改，并调用修改波特率函数，注意该函数是在中断
 }   
 
 
-void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uint8_t chl_type)
+void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uint8_t chl_type , struct instance_t* p_instance)
 {
     struct uart_chl_init_t chl_init;
     
@@ -267,7 +273,7 @@ void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uin
              chl_init.uart_cfg = (const void*)&Uart_InitType_485;
              chl_init.mcu_uart_index = UART_RS4851_AT_MCU_UART_INDEX;
              chl_init.CallBackReceiveTimeOut = rs485_receive_timeout;
-             chl_init.CallBackSendTimeOut = rs485_send_timeout;
+             chl_init.CallBackSendTimeOut = rs485_send_timeout; 
              break;
         case UART_IR_CHL:
              chl_init.uart_cfg = (const void*)&Uart_InitType_ir;
@@ -284,6 +290,7 @@ void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uin
         default:
             break;
     }
+    chl_init.CallBackSendPara = p_instance;
     chl_init.tx_fifo = txfifo;
     chl_init.rx_fifo = rxfifo;
     chl_init.chl_type = chl_type;    
@@ -292,11 +299,21 @@ void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uin
 
 void irq_system_init(void)
 {
+    struct isr_reg_ctx_t IsrReg;
+    
     fifoBuf_init(&irq_fifo, fifo_buf, 32);
     
-    ndv_isr_handle_regsit(RTC_Second , IRQ_RTC );
-    ndv_isr_handle_regsit(IO_Interrupt , IRQ_PMU );
-    ndv_isr_handle_regsit(timing_ftr , IRQ_TMR3 );
+    IsrReg.IsrFunctionRegister = RTC_Second;
+    IsrReg.para = (void*)(0);
+    Isr_handle_regsit((struct isr_reg_ctx_t*)&IsrReg , IRQ_RTC);
+    
+    IsrReg.IsrFunctionRegister = IO_Interrupt;
+    IsrReg.para = (void*)(0);
+    Isr_handle_regsit((struct isr_reg_ctx_t*)&IsrReg , IRQ_PMU);
+    
+    IsrReg.IsrFunctionRegister = timing_ftr;
+    IsrReg.para = (void*)(0);
+    Isr_handle_regsit((struct isr_reg_ctx_t*)&IsrReg , IRQ_TMR3);    
     
     __enable_irq();
     
