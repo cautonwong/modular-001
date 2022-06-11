@@ -31,7 +31,7 @@ extern uint8_t ndv_timer_start(uint8_t timerid);
 
 extern uint8_t ndv_timer_stop(uint8_t timerid);
 
-extern void ndv_timer_tick(void);
+extern void ndv_timer_tick(void *para);
 
 extern uint8_t ndv_timer_start_one(uint8_t timerid, uint32_t count);
 
