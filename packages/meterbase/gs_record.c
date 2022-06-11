@@ -1140,7 +1140,7 @@ int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, s
     uint8_t payload[100]={0};
     
     enum scheme_mode mode = START_MODE;
-    uint8_t data_buff[400] = { 0 };
+    uint8_t data_buff[500] = { 0 };
     uint8_t *pdata = data_buff;
     uint16_t remain_size;
     uint32_t sequence = 0,Oad;

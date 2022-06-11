@@ -223,7 +223,7 @@ const struct record_item_t  record_item[] =
     { BroadcastTimeS,       0,                          600,       10 },//  0x303C    广播校时事件 
     { ZeroLineErrS  ,       ZeroLineErrE,               600,       10 },//  0x3040    零线电流异常事件 
 
-    { BillFreeze,           0,                          600,       10 },//  0x5005      结算日冻结 //待调整
+    { BillFreeze,           0,                         4000,       12 },//  0x5005      结算日冻结 //待调整
     { SeasonTabCutFreeze,   0,                         1000,        3 },//  0x5008      时区表切换冻结 
     { DayTabCutFreeze   ,   0,                         1000,        2 },//  0x5009      日时段表切换冻结    
     { FeePriceCutFreeze ,   0,                         1000,        2 },//  0x500A      费率电价切换冻结  
