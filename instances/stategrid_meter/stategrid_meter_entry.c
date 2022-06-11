@@ -215,7 +215,7 @@ int communication_channel_init(struct instance_t* p_instance, struct pipeline_t 
     fifoBuf_init(pl_tx->in_queue, nd_malloc(p_instance, control_block_698_name, pl_tx_698_len), pl_tx_698_len);
     pl_tx->out_queue = pl_rx->out_queue;
     
-    communication_chlx_init((struct fifo_t*)pl_tx->out_queue, (struct fifo_t*)pl_rx->in_queue, chl_type);
+    communication_chlx_init((struct fifo_t*)pl_tx->out_queue, (struct fifo_t*)pl_rx->in_queue, chl_type , p_instance);
     return true;
 }
 
