@@ -42,237 +42,47 @@ static struct fifo_t uart_rx_fifo[MCU_UART_NUM];
 
 
 
-struct uart_irq_list_t
-{
-    isr_handle tx_fun;
-    isr_handle rx_fun;
-};
 
 
 
-
-void ndv_uart0_rx(void)
+void UartReceiveHandle(void *para)
 {
     uint8_t rcv_data = 0;
-    if(true == mcu_uart_recive_byte(&rcv_data , 0))
+    
+    uint8_t uartIndex = (uint8_t)para;
+    if(uartIndex < MCU_UART_NUM)
     {
-        fifoBuf_putByte(uart_dev[0].rx_fifo, rcv_data);
-        uart_dev[0].rx_time_out = UART_RX_TIME_OUT;
-    }
-}
-
-void ndv_uart0_tx(void)
-{
-    uint8_t tx_data = 0;
-    if(fifoBuf_getUsed(uart_dev[0].tx_fifo) > 0 )
-    {
-        tx_data = fifoBuf_getByte(uart_dev[0].tx_fifo);
-        mcu_uart_send_byte(tx_data, 0);
-        uart_dev[0].tx_time_out = UART_TX_TIME_OUT;
-    }
-    else
-    {
-        RS485_RCV_EN();        
-        mcu_uart_send_enable(0, 0);
-        
-        if(uart_dev[0].CallBackSendTimeOut)
+        if(true == mcu_uart_recive_byte(&rcv_data , uartIndex))
         {
-            uart_dev[0].CallBackSendTimeOut();
+            fifoBuf_putByte(uart_dev[uartIndex].rx_fifo, rcv_data);
+            uart_dev[uartIndex].rx_time_out = UART_RX_TIME_OUT;
         }
     }
 }
 
-
-void ndv_uart1_rx(void)
-{
-    uint8_t rcv_data = 0;
-    if (true == mcu_uart_recive_byte(&rcv_data, 1))
-    {
-        fifoBuf_putByte(uart_dev[1].rx_fifo, rcv_data);
-        uart_dev[1].rx_time_out = UART_RX_TIME_OUT;
-    }
-}
-
-void ndv_uart1_tx(void)
+void UartTransmissionHandle(void *para)
 {
     uint8_t tx_data = 0;
-    if (fifoBuf_getUsed(uart_dev[1].tx_fifo) > 0)
+    uint8_t uartIndex = (uint8_t)para;
+    if(uartIndex < MCU_UART_NUM)
     {
-        tx_data = fifoBuf_getByte(uart_dev[1].tx_fifo);
-        mcu_uart_send_byte(tx_data, 1);
-        uart_dev[1].tx_time_out = UART_TX_TIME_OUT;
-    }
-    else
-    {
-        mcu_uart_send_enable(0, 1);
-        
-        if(uart_dev[1].CallBackSendTimeOut)
+        if(fifoBuf_getUsed(uart_dev[uartIndex].tx_fifo) > 0 )
         {
-            uart_dev[1].CallBackSendTimeOut();
+            tx_data = fifoBuf_getByte(uart_dev[uartIndex].tx_fifo);
+            mcu_uart_send_byte(tx_data, uartIndex);
+            uart_dev[uartIndex].tx_time_out = UART_TX_TIME_OUT;
+        }
+        else
+        {
+            mcu_uart_send_enable(false, uartIndex);
+            
+            if(uart_dev[uartIndex].CallBackSendTimeOut)
+            {
+                uart_dev[uartIndex].CallBackSendTimeOut(uart_dev[uartIndex].CallBackSendPara);
+            }
         }
     }
 }
-
-
-void ndv_uart2_rx(void)
-{
-    uint8_t rcv_data = 0;
-    if (true == mcu_uart_recive_byte(&rcv_data, 2))
-    {
-        fifoBuf_putByte(uart_dev[2].rx_fifo, rcv_data);
-        uart_dev[2].rx_time_out = UART_RX_TIME_OUT;
-    }
-}
-
-void ndv_uart2_tx(void)
-{
-    uint8_t tx_data = 0;
-    if (fifoBuf_getUsed(uart_dev[2].tx_fifo) > 0)
-    {
-        tx_data = fifoBuf_getByte(uart_dev[2].tx_fifo);
-        mcu_uart_send_byte(tx_data, 2);
-        uart_dev[2].tx_time_out = UART_TX_TIME_OUT;
-    }
-    else
-    {
-        mcu_uart_send_enable(0, 2);
-        
-        if(uart_dev[2].CallBackSendTimeOut)
-        {
-            uart_dev[2].CallBackSendTimeOut();
-        }
-    }
-}
-
-
-void ndv_uart3_rx(void)
-{
-    uint8_t rcv_data = 0;
-    if (true == mcu_uart_recive_byte(&rcv_data, 3))
-    {
-        fifoBuf_putByte(uart_dev[3].rx_fifo, rcv_data);
-        uart_dev[3].rx_time_out = UART_RX_TIME_OUT;
-    }
-}
-
-void ndv_uart3_tx(void)
-{
-    uint8_t tx_data = 0;
-    if (fifoBuf_getUsed(uart_dev[3].tx_fifo) > 0)
-    {
-        tx_data = fifoBuf_getByte(uart_dev[3].tx_fifo);
-        mcu_uart_send_byte(tx_data, 3);
-        uart_dev[3].tx_time_out = UART_TX_TIME_OUT;
-    }
-    else
-    {
-        mcu_uart_send_enable(0, 3);
-        if(uart_dev[3].CallBackSendTimeOut)
-        {
-            uart_dev[3].CallBackSendTimeOut();
-        }
-    }
-}
-
-void ndv_uart4_rx(void)
-{
-    uint8_t rcv_data = 0;
-    if (true == mcu_uart_recive_byte(&rcv_data, 4))
-    {
-        fifoBuf_putByte(uart_dev[4].rx_fifo, rcv_data);
-        uart_dev[4].rx_time_out = UART_RX_TIME_OUT;
-    }
-}
-
-void ndv_uart4_tx(void)
-{
-    uint8_t tx_data = 0;
-    if (fifoBuf_getUsed(uart_dev[4].tx_fifo) > 0)
-    {
-        tx_data = fifoBuf_getByte(uart_dev[4].tx_fifo);
-        mcu_uart_send_byte(tx_data, 4);
-        uart_dev[4].tx_time_out = UART_TX_TIME_OUT;
-    }
-    else
-    {
-        mcu_uart_send_enable(0, 4);
-        if(uart_dev[4].CallBackSendTimeOut)
-        {
-            uart_dev[4].CallBackSendTimeOut();
-        }
-    }
-}
-
-void ndv_uart5_rx(void)
-{
-    uint8_t rcv_data = 0;
-    if (true == mcu_uart_recive_byte(&rcv_data, 5))
-    {
-        fifoBuf_putByte(uart_dev[5].rx_fifo, rcv_data);
-        uart_dev[5].rx_time_out = UART_RX_TIME_OUT;
-    }
-}
-
-void ndv_uart5_tx(void)
-{
-    uint8_t tx_data = 0;
-    if (fifoBuf_getUsed(uart_dev[5].tx_fifo) > 0)
-    {
-        tx_data = fifoBuf_getByte(uart_dev[5].tx_fifo);
-        mcu_uart_send_byte(tx_data, 5);
-        uart_dev[5].tx_time_out = UART_TX_TIME_OUT;
-    }
-    else
-    {
-        mcu_uart_send_enable(0, 5);
-        if(uart_dev[5].CallBackSendTimeOut)
-        {
-            uart_dev[5].CallBackSendTimeOut();
-        }
-    }
-}
-
-void ndv_uart6_rx(void)
-{
-    uint8_t rcv_data = 0;
-    if (true == mcu_uart_recive_byte(&rcv_data, 6))
-    {
-        fifoBuf_putByte(uart_dev[6].rx_fifo, rcv_data);
-        uart_dev[6].rx_time_out = UART_RX_TIME_OUT;
-    }
-}
-
-void ndv_uart6_tx(void)
-{
-    uint8_t tx_data = 0;
-    if (fifoBuf_getUsed(uart_dev[6].tx_fifo) > 0)
-    {
-        tx_data = fifoBuf_getByte(uart_dev[6].tx_fifo);
-        mcu_uart_send_byte(tx_data, 6);
-        uart_dev[6].tx_time_out = UART_TX_TIME_OUT;
-    }
-    else
-    {
-        mcu_uart_send_enable(0, 6);
-        if(uart_dev[6].CallBackSendTimeOut)
-        {
-            uart_dev[6].CallBackSendTimeOut();
-        }
-    }
-}
-
-
-const struct uart_irq_list_t uart_irq_list[] =
-{
-    {ndv_uart0_tx,ndv_uart0_rx},
-    {ndv_uart1_tx,ndv_uart1_rx},
-    {ndv_uart2_tx,ndv_uart2_rx},
-    {ndv_uart3_tx,ndv_uart3_rx},
-    {ndv_uart4_tx,ndv_uart4_rx},
-    {ndv_uart5_tx,ndv_uart5_rx},
-    {ndv_uart6_tx,ndv_uart6_rx},
-};
-
 
 
 uint8_t uart_time_process(void *tickpara)
@@ -325,6 +135,7 @@ int uart_chl_initialize(struct uart_chl_init_t *uart_chl)
     uint8_t index;
     uint8_t infrared_enable = 0;
     struct tm_list_init_t tm;
+    struct isr_reg_ctx_t IsrReg;
     
     if(uart_chl->mcu_uart_index < MCU_UART_NUM)
     {        
@@ -362,8 +173,15 @@ int uart_chl_initialize(struct uart_chl_init_t *uart_chl)
         tm.tickfunc = uart_time_process;
         tm.stoped = false;
         ndv_timer_create(&tm);
-        ndv_isr_handle_regsit(uart_irq_list[index].tx_fun, IRQ_UART0_TX+(index<<1));
-        ndv_isr_handle_regsit(uart_irq_list[index].rx_fun, IRQ_UART0_RX+(index<<1));
+        
+        IsrReg.IsrFunctionRegister = UartTransmissionHandle;
+        IsrReg.para = (void*)(index);
+        Isr_handle_regsit((struct isr_reg_ctx_t*)&IsrReg , IRQ_UART0_TX+(index<<1));
+
+        IsrReg.IsrFunctionRegister = UartReceiveHandle;
+        IsrReg.para = (void*)(index);
+        Isr_handle_regsit((struct isr_reg_ctx_t*)&IsrReg , IRQ_UART0_RX+(index<<1));
+        
         mcu_uart_init((void*)uart_chl->uart_cfg, index, infrared_enable);
         mcu_uart_recive_enable(1 , index);
     }
