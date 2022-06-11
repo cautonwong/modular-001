@@ -4,8 +4,14 @@
 #include "type_def.h"
 #include "nidavellir.h"
 
-typedef void (*isr_handle)(void);
+//typedef void (*isr_handle)(void);
 
+struct isr_reg_ctx_t
+{
+    void (*IsrFunctionRegister)(void *);
+    void *para;
+    uint8_t irq_index;
+};
 
 #define   IO_DAT(IOX, PINX)  *((volatile unsigned long *)((((uint32_t)IOX) & 0xF0000000)\
                               +0x2000000+((((uint32_t)IOX) &0xFFFFF)<<5)+(PINX<<2)))
@@ -42,7 +48,8 @@ extern void mcu_exit_sleep_then_enter_normal(void);
 extern void mcu_main_power_on_config(uint8_t power_mode);
 extern void mcu_main_power_off_config(void);
 extern void cm0_systick_init(uint8_t cmd);
-extern void ndv_isr_handle_regsit(isr_handle isr_handle_f , uint8_t irq);
+//extern void ndv_isr_handle_regsit(isr_handle isr_handle_f , uint8_t irq);
+extern uint8_t Isr_handle_regsit(struct isr_reg_ctx_t *isrRegctx , uint8_t irq);
 
 extern uint8_t read_mcu_rtc(uint8_t addr, struct instance_t* instance);
 extern uint8_t write_mcu_rtc(uint8_t addr, uint8_t *buf, uint16_t len);
