@@ -1,11 +1,3 @@
-/**
- * @ingroup    RN8318
- * @brief      RN8318 isr¶¨Òå
- *
- * @{
- * @file
- *
- */
 
 #include "target.h"
 #include "target_isr.h"
@@ -22,17 +14,25 @@
 
 
 
-static isr_handle isr[IRQ_NUM] = {0};
+
+static struct isr_reg_ctx_t Isr_Function[IRQ_NUM] = {0};
 
 
-void ndv_isr_handle_regsit(isr_handle isr_handle_f , uint8_t irq)
+
+
+uint8_t Isr_handle_regsit(struct isr_reg_ctx_t *isrRegctx , uint8_t irq)
 {
-   if((isr_handle_f) && (irq<IRQ_NUM))
+   if(irq<IRQ_NUM)
    {
-      isr[irq] = isr_handle_f;
+      if(isrRegctx->IsrFunctionRegister != 0)
+      {
+          Isr_Function[irq].IsrFunctionRegister = isrRegctx->IsrFunctionRegister;
+          Isr_Function[irq].para = isrRegctx->para;
+          return 1;
+      }
    }
+   return 0;
 }
-
 
 
 /**
@@ -92,10 +92,10 @@ void NMI_Handler(void)
 extern void test_pin_turn(void);
 extern uint16_t relay_off_chk,relay_on_chk; //继电器状态监测
 void SysTick_Handler(void) //10ms
-{
-    if(isr[IRQ_SYSTICK])
+{    
+    if(Isr_Function[IRQ_SYSTICK].IsrFunctionRegister)
     {
-        isr[IRQ_SYSTICK]();
+        Isr_Function[IRQ_SYSTICK].IsrFunctionRegister(Isr_Function[IRQ_SYSTICK].para);
     }
     
     if(RELAY_CHECK())
@@ -108,8 +108,6 @@ void SysTick_Handler(void) //10ms
          if(relay_on_chk < Relay_Ck_Time)   relay_on_chk++;
          relay_off_chk = 0;
     }
-      
-    
 }
 
 //¶¨Ê±Æ÷
@@ -148,9 +146,9 @@ void TMR3_IRQHandler(void)
     if( TMR_GetINTStatus(TMR3))
     {
         TMR_ClearINTStatus(TMR3);
-        if(isr[IRQ_TMR3])
+        if(Isr_Function[IRQ_TMR3].IsrFunctionRegister)
         {
-            isr[IRQ_TMR3]();
+            Isr_Function[IRQ_TMR3].IsrFunctionRegister(Isr_Function[IRQ_TMR3].para);
         }
     }
 }
@@ -249,10 +247,10 @@ void RTC_IRQHandler(void)
 {
     if(RTC->INTSTS & BIT(0))
     {
-        if(isr[IRQ_RTC])
+        if(Isr_Function[IRQ_RTC].IsrFunctionRegister)
         {
-            isr[IRQ_RTC]();
-        }
+            Isr_Function[IRQ_RTC].IsrFunctionRegister(Isr_Function[IRQ_RTC].para);
+        }        
     }
     RTC->INTSTS = 0xFF; 
 }
@@ -280,18 +278,18 @@ void UART0_IRQHandler(void)
 {
     if(UART0->INTSTS & UART_INTSTS_TXDONEIF)
     {
-        if(isr[IRQ_UART0_TX])
+        if(Isr_Function[IRQ_UART0_TX].IsrFunctionRegister)
         {
-            isr[IRQ_UART0_TX]();
+            Isr_Function[IRQ_UART0_TX].IsrFunctionRegister(Isr_Function[IRQ_UART0_TX].para);
         }
         UART0->INTSTS = UART_INTSTS_TXDONEIF;
     }
     if(UART0->INTSTS & UART_INTSTS_RXIF)
     {
-        if(isr[IRQ_UART0_RX])
+        if(Isr_Function[IRQ_UART0_RX].IsrFunctionRegister)
         {
-            isr[IRQ_UART0_RX]();
-        }        
+            Isr_Function[IRQ_UART0_RX].IsrFunctionRegister(Isr_Function[IRQ_UART0_RX].para);
+        }
         UART0->INTSTS = UART_INTSTS_RXIF;
     }
     if(UART0->INTSTS & 0x00000062)
@@ -310,18 +308,18 @@ void UART1_IRQHandler(void)
 {
     if(UART1->INTSTS & UART_INTSTS_TXDONEIF)
     {
-        if(isr[IRQ_UART1_TX])
+        if(Isr_Function[IRQ_UART1_TX].IsrFunctionRegister)
         {
-            isr[IRQ_UART1_TX]();
+            Isr_Function[IRQ_UART1_TX].IsrFunctionRegister(Isr_Function[IRQ_UART1_TX].para);
         }
         UART1->INTSTS = UART_INTSTS_TXDONEIF;
     }
     if(UART1->INTSTS & UART_INTSTS_RXIF)
     {
-        if(isr[IRQ_UART1_RX])
+        if(Isr_Function[IRQ_UART1_RX].IsrFunctionRegister)
         {
-            isr[IRQ_UART1_RX]();
-        }        
+            Isr_Function[IRQ_UART1_RX].IsrFunctionRegister(Isr_Function[IRQ_UART1_RX].para);
+        }
         UART1->INTSTS = UART_INTSTS_RXIF;
     }
     if(UART1->INTSTS & 0x00000062)
@@ -341,17 +339,17 @@ void UART2_IRQHandler(void)
 {
     if(UART2->INTSTS & UART_INTSTS_TXDONEIF)
     {
-        if(isr[IRQ_UART2_TX])
+        if(Isr_Function[IRQ_UART2_TX].IsrFunctionRegister)
         {
-            isr[IRQ_UART2_TX]();
+            Isr_Function[IRQ_UART2_TX].IsrFunctionRegister(Isr_Function[IRQ_UART2_TX].para);
         }
         UART2->INTSTS = UART_INTSTS_TXDONEIF;
     }
     if(UART2->INTSTS & UART_INTSTS_RXIF)
     {
-        if(isr[IRQ_UART2_RX])
+        if(Isr_Function[IRQ_UART2_RX].IsrFunctionRegister)
         {
-            isr[IRQ_UART2_RX]();
+            Isr_Function[IRQ_UART2_RX].IsrFunctionRegister(Isr_Function[IRQ_UART2_RX].para);
         }
         UART2->INTSTS = UART_INTSTS_RXIF;
     }
@@ -372,17 +370,17 @@ void UART3_IRQHandler(void)
 {
     if(UART3->INTSTS & UART_INTSTS_TXDONEIF)
     {
-        if(isr[IRQ_UART3_TX])
+        if(Isr_Function[IRQ_UART3_TX].IsrFunctionRegister)
         {
-            isr[IRQ_UART3_TX]();
+            Isr_Function[IRQ_UART3_TX].IsrFunctionRegister(Isr_Function[IRQ_UART3_TX].para);
         }
         UART3->INTSTS = UART_INTSTS_TXDONEIF;
     }
     if(UART3->INTSTS & UART_INTSTS_RXIF)
     {
-        if(isr[IRQ_UART3_RX])
+        if(Isr_Function[IRQ_UART3_RX].IsrFunctionRegister)
         {
-            isr[IRQ_UART3_RX]();
+            Isr_Function[IRQ_UART3_RX].IsrFunctionRegister(Isr_Function[IRQ_UART3_RX].para);
         }
         UART3->INTSTS = UART_INTSTS_RXIF;
     }
@@ -403,18 +401,18 @@ void UART4_IRQHandler(void)
 {
     if(UART4->INTSTS & UART_INTSTS_TXDONEIF)
     {
-        if(isr[IRQ_UART4_TX])
+        if(Isr_Function[IRQ_UART4_TX].IsrFunctionRegister)
         {
-            isr[IRQ_UART4_TX]();
+            Isr_Function[IRQ_UART4_TX].IsrFunctionRegister(Isr_Function[IRQ_UART4_TX].para);
         }
         UART4->INTSTS = UART_INTSTS_TXDONEIF;
     }
     if(UART4->INTSTS & UART_INTSTS_RXIF)
     {
-        if(isr[IRQ_UART4_RX])
+        if(Isr_Function[IRQ_UART4_RX].IsrFunctionRegister)
         {
-            isr[IRQ_UART4_RX]();
-        }       
+            Isr_Function[IRQ_UART4_RX].IsrFunctionRegister(Isr_Function[IRQ_UART4_RX].para);
+        }
         UART4->INTSTS = UART_INTSTS_RXIF;
     }
     if(UART4->INTSTS & 0x00000062)
@@ -434,28 +432,25 @@ void UART5_IRQHandler(void)
 {
     if(UART5->INTSTS & UART_INTSTS_TXDONEIF)
     {
-        if(isr[IRQ_UART5_TX])
+        if(Isr_Function[IRQ_UART5_TX].IsrFunctionRegister)
         {
-            isr[IRQ_UART5_TX]();
+            Isr_Function[IRQ_UART5_TX].IsrFunctionRegister(Isr_Function[IRQ_UART5_TX].para);
         }
         UART5->INTSTS = UART_INTSTS_TXDONEIF;
     }
     if(UART5->INTSTS & UART_INTSTS_RXIF)
     {
-        if(isr[IRQ_UART5_RX])
+        if(Isr_Function[IRQ_UART5_RX].IsrFunctionRegister)
         {
-            isr[IRQ_UART5_RX]();
-        }
+            Isr_Function[IRQ_UART5_RX].IsrFunctionRegister(Isr_Function[IRQ_UART5_RX].para);
+        }        
         UART5->INTSTS = UART_INTSTS_RXIF;
     }
     if(UART5->INTSTS & 0x00000062)
     {
         UART5->INTSTS = 0x00000062;
-    } 
+    }
 }
-
-
-
 /*******************************************************************************
 * Function Name  : CMP_HANDLER
 * Description    : This function handles CMP_HANDLER
