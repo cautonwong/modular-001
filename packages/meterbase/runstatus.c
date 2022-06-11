@@ -14,10 +14,10 @@
 #define		Status_TouZhi		0x0200  //bit14
 #define		Status_ClockErr	    0x0100  //bit15
 //MeterRun2
-#define		Status_Negative	    0x8000  //bit0
+#define		Status_Negative	    0x0080  //bit0
 //MeterRun4
-#define		Status_ImaxOver	    0x0800  //bit4
-#define		Status_Rev		    0x0200  //bit6
+#define		Status_ImaxOver	    0x0008  //bit4
+#define		Status_Rev		    0x0002  //bit6
 //MeterRun3
 #define		Status_IrAuthen		0x0010  //bit3
 #define		Status_RelayOff	    0x0008  //bit4
@@ -28,8 +28,8 @@
 #define		Status_KaiHuBen	    0x0200  //bit14
 #define		Status_KaiHuYuan	0x0100  //bit15
 //MeterRun7
-#define		Status_Poweroff	    0x0400  //bit5
-#define		Status_Open		    0x0040  //bit9
+#define		Status_Poweroff	    0x0004  //bit5
+#define		Status_Open		    0x4000  //bit9
 
 extern uint8_t DEVICE_ERR;
 

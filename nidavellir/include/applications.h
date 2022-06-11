@@ -153,6 +153,8 @@ struct mbase_control_block_t
     uint8_t under_un68; //所有相电压均低于68%   
     uint8_t auxiliary_power;//辅助电源供电标志
     
+    uint8_t baud_chg;   //波特率改变，BIT0(485),BIT1(PLC)
+    
     //认证相关
     uint8_t current_connect_channel[2]; //最近一次应用连接通道 0 主站， 1终端
     uint8_t connect_status[4][2];        //应用连接状态 [通道][主站或终端]，   通道顺序 :红外、485-1，载波，485-2；

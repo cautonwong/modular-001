@@ -764,7 +764,13 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     dar = DAR_BUFFER_OVERFLOW;
                     return -DAR_BUFFER_OVERFLOW;
                 }
-                mbase_cb->Baut_rs485 = *p;
+                mbase_cb->baud_chg = 0;
+                if(mbase_cb->Baut_rs485 != *p)
+                {
+                    mbase_cb->Baut_rs485 = *p;
+                    mbase_cb->baud_chg = 0x01;
+                }
+                
                 p = p + 7;
             }
             else
