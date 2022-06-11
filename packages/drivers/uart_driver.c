@@ -149,6 +149,7 @@ int uart_chl_initialize(struct uart_chl_init_t *uart_chl)
         uart_dev[index].tx_time_out = 0;
         uart_dev[index].CallBackReceiveTimeOut = uart_chl->CallBackReceiveTimeOut;
         uart_dev[index].CallBackSendTimeOut = uart_chl->CallBackSendTimeOut;
+        uart_dev[index].CallBackSendPara = = uart_chl->CallBackSendPara;
         switch(uart_chl->chl_type)
         {
             case UART_RS4851_CHL:
