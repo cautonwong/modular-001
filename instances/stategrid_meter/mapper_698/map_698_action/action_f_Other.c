@@ -867,6 +867,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             switch(method)
             {
             case 0x03://下翻
+                    if(oad == 0xF300)   return -DAR_RW_REJECT;
                     if(0 != p[0]){
                         return -DAR_TYPE_NOT_MATCH;
                     }
@@ -881,6 +882,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     mbase_cb->BackLightTmr = 60;
                     return 1;
             case 0x04://上翻
+                    if(oad == 0xF300)   return -DAR_RW_REJECT;
                     if(0 != p[0]){
                         return -DAR_TYPE_NOT_MATCH;
                     }

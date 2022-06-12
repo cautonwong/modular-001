@@ -116,10 +116,10 @@ void FeeTable_Change(struct instance_t* instance, struct pipeline_t* pipeline)
 					mbase_cb->Fee |= (F_TOUChange+F_DAYTABChange);
                     for(j=0; j<14; j++)
                     {
-                        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Season_Table1);  //读取备用套时区表
+                        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Season_Table1+j);  //读取备用套时区表
                         nd_get_index(instance, s_index, (uint8_t*)&Buf[j*3], 3);
                         
-                        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Season_Table0);  //覆盖当前时区表
+                        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Season_Table0+j);  //覆盖当前时区表
                         nd_set_index(instance, s_index, (uint8_t*)&Buf[j*3], 3);
                     }
 					break;

@@ -932,8 +932,11 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
         if( mbase_control_block->power_dir == true )  //电流反向
         {
             Lcdcon[18] |= DS_Chr_Reverse;
-        }
-        
+            if((mbase_control_block->Page_ID == 0xA006) || (mbase_control_block->Page_ID == 0xA00A) || (mbase_control_block->Page_ID == 0xA00B) 
+              || (mbase_control_block->Page_ID == 0xA012) || (mbase_control_block->Page_ID == 0xA013)) 
+                Lcdcon[19] |= DS_Chr_Fu;
+        }       
+                
 		if( mbase_control_block->voltage_battery < 300 )//电池欠压指示
             Lcdcon[18] |= DS_Chr_Bat;
 		//密码验证闭锁指示
@@ -1109,7 +1112,7 @@ void ZeroDark( unsigned char i )
 /***********************************************************************/
 void Disp_Char( struct instance_t* instance, struct pipeline_t* pipeline, unsigned char* SignBuf )
 {
-	unsigned char j,EnergyDot = 2, PowerDot = 4;
+	unsigned char j,EnergyDot = 2, PowerDot = 4,i=0;
 	unsigned char ID1L;
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     
@@ -1128,26 +1131,17 @@ void Disp_Char( struct instance_t* instance, struct pipeline_t* pipeline, unsign
 				Lcdcon[13] |= DS_Chr_h;
 				switch( EnergyDot )//电能小数点
 				{
-					case 0:
-						memset( Buffer, NumSeg[0], 8 );
-						memcpy( (unsigned char*)&Buffer[0], (unsigned char*)&Lcdcon[4], 6 );
-						memcpy( (unsigned char*)&Lcdcon[6], Buffer, 6 );
-						break;
-					case 1:
-						memset( Buffer, NumSeg[0], 8 );
-						memcpy( (unsigned char*)&Buffer[0], (unsigned char*)&Lcdcon[4], 6 );
-						memcpy( (unsigned char*)&Lcdcon[6], Buffer, 6 );
-						break;
-					case 2:
-						memset( Buffer, NumSeg[0], 8 );
-						memcpy( (unsigned char*)&Buffer[0], (unsigned char*)&Lcdcon[0], 8 );
-						memcpy( (unsigned char*)&Lcdcon[2], Buffer, 6 );
-						*(SignBuf+1) = Sign_dot2;
-						break;
-					case 3:
-						memset( Buffer, NumSeg[0], 8 );
-						memcpy( (unsigned char*)&Buffer[(4-EnergyDot)/2], (unsigned char*)&Lcdcon[EnergyDot/2], 6+(EnergyDot%2) );
-						memcpy( Lcdcon, Buffer, 8 );
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                        //memset( Buffer, NumSeg[0], 8 );
+						//memcpy( (unsigned char*)&Buffer[0], (unsigned char*)&Lcdcon[0], 8 );
+                        for(i=0;i<8;i++)
+                        {
+                            Lcdcon[7-i] = Lcdcon[7-(4-EnergyDot)-i];
+                        }
 						if( EnergyDot == 0 )
 						{
 							*(SignBuf+1) = 0;
@@ -1155,7 +1149,7 @@ void Disp_Char( struct instance_t* instance, struct pipeline_t* pipeline, unsign
 						}
 						else
 							*(SignBuf+1) = Sign_dot1 + (EnergyDot-1);//注意：Sign_dot2一定要在Sign_kWh之后的寄存器		
-						break;
+                        break;
 					default:
 						break;
 				}
@@ -1350,6 +1344,7 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
     unsigned char i,buf[10]={0,},Len=0,temp[7];
 	unsigned long oad,Info=0,Info1;
 	unsigned char SignBuf[9]={0,};
+    signed long value=0;
     uint16_t year;
     struct idmatch
     {
@@ -1407,6 +1402,15 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
                     buf[1] = (temp[1]);
                     buf[2] = (temp[2]);
                 }
+            }
+            if((Info1 & DispData_Sign) == DispData_Sign)
+            {
+                memcpy((unsigned char*)&value, (unsigned char*)idbuf[i].addr, 4);
+                if(value<0)
+                {
+                    value = ~value + 1;
+                }
+                memcpy(buf, (unsigned char*)&value, Len);
             }
             else
                 memcpy(buf, (unsigned char*)idbuf[i].addr, Len);

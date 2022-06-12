@@ -30,7 +30,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     return  -DAR_METER_SUSPEND;
                 }
             }
-            if(mbase_cb->authen_tmr == 0)   //安全认证超时
+            if((mbase_cb->authen_tmr == 0) && (mbase_cb->factor_mode != true))   //安全认证超时
             {
                 mbase_cb->cmd_errstate = 0x1000;    //安全认证超时
                 return  -DAR_SECURITY_AUTH_FAILED;

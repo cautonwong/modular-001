@@ -398,25 +398,6 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     {
         mbase_control_block->current_n = 0;
     }   
-    /*
-    if(DISPLAY_KEY_GET_DIN() == 0)
-    {
-        key_cnt++;
-    }
-    else
-    {
-        key_cnt = 0;
-    }
-    
-    if(key_cnt == 2)
-    {
-         emu_calibration_clear(instance);
-    }
-    if(key_cnt == 3)
-    {
-        meterchip_adj_self(instance, 0);
-    }
-    */
     //計算功率因數
     if((mbase_control_block->voltage_ac != 0) && (mbase_control_block->current_l != 0))
     {
@@ -431,6 +412,11 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     else
     {
         mbase_control_block->power_factor = 1000;
+    }
+    
+    if(mbase_control_block->power_dir == 1) 
+    {
+        mbase_control_block->current_l = -mbase_control_block->current_l;
     }
     
     /****************** 补偿功能 ******************/
