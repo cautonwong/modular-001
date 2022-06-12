@@ -15,11 +15,8 @@ int ZeroLineErr_event_judge(struct instance_t* instance, struct pipeline_t* task
     uint8_t state = false;
     int result = 0;
     
-
-
-    int32_t Ia = _value(ctrl_block->current_l);
-    int32_t In = _value(ctrl_block->current_n);    
-
+    int32_t Ia_abs = (ctrl_block->current_l);
+    int32_t In_abs = (ctrl_block->current_n);    
 
     uint8_t duration_para = ctrl_block->ZeroLineErrS_duration_para;
     uint32_t threshold1 = ctrl_block->ZeroLineErrS_Current_threshold / 10; // 电能表零线电流异常事件-电流触发下限
@@ -30,9 +27,9 @@ int ZeroLineErr_event_judge(struct instance_t* instance, struct pipeline_t* task
 
     uint16_t RecordId = ZeroLineErrS;
 
-
+    _value(Ia_abs);
+    _value(In_abs);  
     
-
 #if 0
     if (ctrl_block->Imax == 100) /*最大电流小于10A 互感式表不启用*/
     {
@@ -45,18 +42,18 @@ int ZeroLineErr_event_judge(struct instance_t* instance, struct pipeline_t* task
         return 0;
     }
 
-    if((Ia < threshold1) && (In < threshold1))
+    if((Ia_abs < threshold1) && (In_abs < threshold1))
     {
         return 0;
     }
 
-    if(Ia >= In)
+    if(Ia_abs >= In_abs)
     {
-        rate = (Ia - In) * 10000 /Ia;
+        rate = (Ia_abs - In_abs) * 10000 /Ia_abs;
     }
     else
     {
-        rate = (In - Ia) * 10000 /In;
+        rate = (In_abs - Ia_abs) * 10000 /In_abs;
     }
       
 
