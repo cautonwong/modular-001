@@ -410,7 +410,7 @@ unsigned char display_id_to_oad(unsigned short id, unsigned char *oad)
     idh = id & 0xF800;
     idmid = (unsigned char)((id & 0x07F0) >> 4);
     idl = (unsigned char)(id & 0x000F);
-    if(idl > 0x0c)  return 1;
+    if(idl > 0x0D)  return 1;
     if(idmid > 0x18)    return 1;
     oad1 = oad1 + idmid;
     switch (idh)
@@ -837,7 +837,7 @@ unsigned long GetDispAddrInfo( struct instance_t* instance, unsigned short ID, u
     D2 = (ID & 0x0FF0)>>4;
     if(D2 > 0x18)   return 1;
     D3 = (ID & 0x000F);
-    if(D3 > 0x0C)   return 1;    
+    if(D3 > 0x0D)   return 1;    
     
     D1 = (ID & 0xF000)>>8;
 	memcpy( SignBuf, SIGN_NULL, 8 );

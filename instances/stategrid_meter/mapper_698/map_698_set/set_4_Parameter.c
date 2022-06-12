@@ -15,7 +15,7 @@ typedef struct
 
 const general_set4  set4300_table[] = 
 {
-     Device_descriptor,   0x0200,   0x02,   0x01,   33,//设备描述符
+     Device_descriptor,   0x0200,   0x02,   0x02,   32,//设备描述符
     
      Factory_No,          0x0301,   0x03,   0x02,    4, //厂家代码
      Version_SoftWare,    0x0302,   0x03,   0x02,    4, //软件版本
@@ -130,7 +130,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                             timer[2] = (uint8_t)year2;
                             timer[3] = *(p+5);  //hour
                             timer[4] = *(p+6);  //min
-                            timer[5] = *(p+7);  //sec
+                            timer[5] = 0;  //sec
                             if((Time_Format_Check(&timer[3])) || (Date_Format_Check(timer)))    return -DAR_OTHERS_ERROR;
                         }
                         *(p+7) = 0xFF;
@@ -247,7 +247,7 @@ int set_support_protocol_list(struct instance_t* instance, uint32_t id, uint8_t*
 int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {
     struct mbase_control_block_t* mbase_cb;
-    uint8_t j, i,timer[6], num, Tnum,tmpbuf[13]={0};
+    uint8_t j, i,timer[6], num, Tnum,tmpbuf[32]={0};
     uint8_t* p = buf;
     uint32_t addr=0, chn;
     uint16_t idl = 0,year2, tmpid1;
@@ -292,9 +292,11 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     break;
 
             }
+            memset(tmpbuf, 0x00, set4300_table[i].len);
             p = p + set4300_table[i].offset;
+            memcpy(tmpbuf, p, set4300_table[i].len);
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + set4300_table[i].s_index);
-            nd_set_index(instance, addr, p, set4300_table[i].len); 
+            nd_set_index(instance, addr, tmpbuf, set4300_table[i].len); 
             p = p + set4300_table[i].len - 1; // 凯哥？ 为何-1
             EventOut_698_check(instance);  
             return (p-buf);

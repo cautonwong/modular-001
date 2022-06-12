@@ -277,7 +277,7 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
         
         for(i=0; i<Num; i++)
         {
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Season_Table0);  //读取当前时区表
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Season_Table0+i);  //读取当前时区表
             nd_get_index(instance, s_index, (uint8_t*)&Buf[i*3], 3);
         }
         

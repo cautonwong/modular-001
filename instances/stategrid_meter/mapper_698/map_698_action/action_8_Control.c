@@ -98,11 +98,15 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectTime);
                     nd_get_index(instance, addr, (uint8_t*)&password, 2); 
                     mem_swap_cpy((uint8_t*)&Prot_time, password, 2);
-                    if(mbase_cb->current_l > I_Prot)    
+                    if(abs(mbase_cb->current_l) > I_Prot)    
                     {
                         mbase_cb->imaxmin = Prot_time;   
                         mbase_cb->imaxmin = mbase_cb->imaxmin*60;
                         mbase_cb->cmd_dostate = 0x0400;  //bit5;
+                    }
+                    else
+                    {
+                        mbase_cb->imaxmin = 0;
                     }
                     return (p-buf);
                     break;
