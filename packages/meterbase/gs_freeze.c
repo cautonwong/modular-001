@@ -465,12 +465,12 @@ int day_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task
     uint16_t    period;
 
 
-    //获取周期 分钟
+    //获取周期 天
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + DayFreeze_period);
     nd_get_index(instance, s_index, &tmp[0], 3);
     
     period =  buf_to_uint16_msb(&tmp[1]);
-    period = period*24*60;
+    period = period;
 
 
     ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->v_powerdown_tm), sizeof(ctrl_block->v_powerdown_tm));
