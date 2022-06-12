@@ -17,10 +17,10 @@ int SET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *
         return -DAR_OTHERS_ERROR;
     }
     
-    if(general_set_4_para(instance, id, buf) != -1)
+/*    if(general_set_4_para(instance, id, buf) != -1)
     {
         return 1;
-    }
+    }*/
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
     index = (unsigned char)(id & 0x000000FF);

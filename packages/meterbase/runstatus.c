@@ -106,7 +106,8 @@ void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
     else
         mbase_cb->run_state[3] &= ~Status_BaoDian;
     
-    if(mbase_cb->sta & 0x18)	    //预跳闸
+    //if(mbase_cb->sta & 0x18)	    //预跳闸
+    if(mbase_cb->sta & F_RemoteAlarm)
 		mbase_cb->run_state[3] |= Status_RelayAlm;
 	else
 		mbase_cb->run_state[3] &= ~Status_RelayAlm;	
