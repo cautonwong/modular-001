@@ -152,6 +152,12 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
         event_PowerOn_pro(instance, pipeline, mesg);
         break;
       case MSG_POWEROFF:
+              //开启EE电源和IO口时钟 //
+        CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);
+        GPIOC->OEN &= ~(BIT4|BIT5|BIT6); 
+        GPIOC->IE &= ~(BIT4|BIT5|BIT6);
+        GPIOC->DAT |= (BIT6);
+      
         //掉电需要保存数据
         //先刷新停电时间ram
         ndv_memcopy((uint8_t *)(&mbase_control_block->powerdown_tm),  (uint8_t *)&instance->time,  sizeof(mbase_control_block->powerdown_tm));
