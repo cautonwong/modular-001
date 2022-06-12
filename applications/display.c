@@ -1113,6 +1113,9 @@ void Disp_Char( struct instance_t* instance, struct pipeline_t* pipeline, unsign
 	unsigned char ID1L;
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     
+    EnergyDot = mbase_control_block->energy_point;
+    PowerDot = mbase_control_block->power_point;
+    
 	ID1L = (unsigned char)(mbase_control_block->Page_ID & 0x000F);
     if(ID1L >= 1)    ID1L = ID1L - 1;
     

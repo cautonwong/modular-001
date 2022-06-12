@@ -806,25 +806,11 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             break;
         case 0x4016://当前套日时段表
         case 0x4017://备用套日时段表
-            if(index > 0x08)    return -DAR_RW_REJECT;
+            if((index > 0x08) || (index == 0))    return -DAR_RW_REJECT;
             if((oad == 0x4016) && (mbase_cb->factor_mode == false))    return    -DAR_RW_REJECT;
             
-            if(index == 0)
-            {
-                num = *(p+1);
-                if(num>8) num = 8;
-                for(i=0; i<num; i++)
-                {
-                    if(*(p+2+10*i+5) > 23)  return -DAR_RW_REJECT;
-                    if(*(p+2+10*i+7) > 59)  return -DAR_RW_REJECT;
-                }
-            }
-            else
-            {
-                if(*(p+5) > 23)  return -DAR_RW_REJECT;
-                if(*(p+7) > 59)  return -DAR_RW_REJECT;
-            }
-            
+            if(*(p+5) > 23)  return -DAR_RW_REJECT;
+            if(*(p+7) > 59)  return -DAR_RW_REJECT;
             
             if(oad == 0x4016)
                 addr = Day_Table00;
@@ -844,7 +830,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 nd_set_index(instance, s_index, temp, 5);
             }
 
-            if(index == 0)
+/*            if(index == 0)
             {
                 p++;
                 num = *p++;//
@@ -874,7 +860,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     nd_set_index(instance, s_index, buffer, 42);
                 }
             }
-            else
+            else*/
             {
                 p++;
                 num_hourtab = *p++; //日时段数，每日切换数

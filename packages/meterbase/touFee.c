@@ -105,7 +105,7 @@ void FeeTable_Change(struct instance_t* instance, struct pipeline_t* pipeline)
 		ChangeTime = GetTotalMin( (uint8_t*)&Buf[7] );//min,hour,day,mon,year
 
         mbase_cb->Disp12 = 0;
-		if(( Time_Format_Check( (uint8_t*)&Buf[4] ) ) || (Date_Format_Check((uint8_t*)&Buf[2])))//切换时间合法性判断
+		if(( Time_Format_Check( (uint8_t*)&Buf[4] ) ) || (Date_Format_Check((uint8_t*)&Buf[9])))//切换时间合法性判断
 			continue;
 		if( CurrentTime >= ChangeTime )
 		{
