@@ -137,4 +137,14 @@ void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
 		mbase_cb->run_state[7] |= Status_Poweroff;
 	else
 		mbase_cb->run_state[7] &= ~Status_Poweroff;
+    
+    if(mbase_cb->cmd_dostate != 0)
+    {
+        mbase_cb->cmd_errstate = 0;
+    }
+    if(mbase_cb->cmd_errstate != 0)
+    {
+        mbase_cb->cmd_dostate = 0;
+    }
+    
 }

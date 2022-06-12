@@ -38,11 +38,17 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
             switch(method)//方法
             {
                 case 0x7F://告警
+                    if((1 != ctx->timeTag_valid) || (ctx->timeTag[0] == 0)){
+                        return -DAR_TIME_TAG_INVALID;
+                    }
                     mbase_cb->sta |= F_RemoteAlarm;
                     mbase_cb->cmd_dostate = 0x0020;  //bit10;
                     return 1;
                     break;
                 case 0x80://解除告警
+                    if((1 != ctx->timeTag_valid) || (ctx->timeTag[0] == 0)){
+                        return -DAR_TIME_TAG_INVALID;
+                    }
                     mbase_cb->sta &= ~F_RemoteAlarm;
                     mbase_cb->cmd_dostate = 0x0010;  //bit11;
                     return 1;
@@ -167,6 +173,9 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     return 1;
                     break;
                 case 0x80://解除保电
+                    if((1 != ctx->timeTag_valid) || (ctx->timeTag[0] == 0)){
+                        return -DAR_TIME_TAG_INVALID;
+                    }
                     mbase_cb->sta &= ~F_RemoteRelayOn;
                     mbase_cb->cmd_dostate = 0x0040;  //bit9;
                     return 1;
