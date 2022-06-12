@@ -51,7 +51,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
     struct context_698_t* pctx = (struct context_698_t*)ctx;
     struct mbase_control_block_t* mbase_cb;
     struct pipeline_t* pipeline;
-    uint8_t  method,dar=0,i;
+    uint8_t  method,dar=0,i, tmpbuf[20] = {0};
     uint16_t oad,temp=0;
     uint8_t *p = buf;
     int ret;
@@ -146,6 +146,19 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         if(Temp32C > mbase_cb->Limit_T_Max)  
                         {
                             //记录时钟故障(时钟非法)
+                            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBroadcastTimeERR);
+                            nd_get_index(instance, s_index, (uint8_t*)&tmpbuf[0], 3);
+                            if((tmpbuf[0] != (uint8_t)instance->time.tm_year)||(tmpbuf[1] != (uint8_t)instance->time.tm_mon)||(tmpbuf[2] != (uint8_t)instance->time.tm_mday))
+                            {
+
+                                tmpbuf[0] = instance->time.tm_year;
+                                tmpbuf[1] = instance->time.tm_mon;
+                                tmpbuf[2] = instance->time.tm_mday;
+                                
+                                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBroadcastTimeERR);
+                                nd_get_index(instance, s_index, (uint8_t*)&tmpbuf[0], 3);
+                                mbase_cb->RTCErrS_status = 1;
+                            }
                             return -DAR_UNAUTHORIZED;
                         }
                         //------ 不允许在结算日的±5min内广播校时 -------
@@ -174,7 +187,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         //最小校时偏差：小于此范围所有校时均不响应，包括明文广播校时、密文广播校时，默认60秒；
                         if(Temp32C < mbase_cb->Limit_T_Min)  return -DAR_UNAUTHORIZED;
                     }
-                    
+
                     mem_swap_cpy((uint8_t*)&oad, p, 2);
                     year = oad - 2000;
                     p = p + 2;
@@ -188,7 +201,8 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     write_mcu_rtc(0, timer_set, 7);
                     read_mcu_rtc(0x00, instance);
                     mbase_cb->boardadjtime = 0xAA;
-                    
+
+                    send_event_mesg_pro(instance, NULL, BroadcastTimeS, NULL, 1);// 广播校时记录
                     return 8;
                 }
             }

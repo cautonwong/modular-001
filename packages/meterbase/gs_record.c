@@ -327,6 +327,13 @@ int clr_record(struct instance_t* instance, uint32_t oad)
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillingTime);
         nd_set_index(instance, s_index, &tmpbuf[0], 5);
     }
+    //清最近一次广播导致时钟异常时间
+    if(oad == 0x302E0200)
+    {
+        memset(tmpbuf, 0, sizeof(tmpbuf));
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBroadcastTimeERR);
+        nd_set_index(instance, s_index, &tmpbuf[0], 3);
+    }
 
 }
 

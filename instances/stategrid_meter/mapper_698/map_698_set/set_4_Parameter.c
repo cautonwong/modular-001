@@ -524,6 +524,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 
                 record_rollback_after_set_time(instance);
                 mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+                mbase_cb->RTCErrS_status = 0;
                 return (p-buf);
             }
             else if(attribute == 0x05)  //广播校时参数
