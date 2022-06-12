@@ -41,13 +41,13 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
     
 //    if(mbase_control_block->voltage_ac > )    return; //电压过高过低不执行
     
-    if((mbase_control_block->sta & F_RemoteRelayOn) || (mbase_control_block->sta == F_RemoteNull))    //保电或正常用电
+    if((mbase_control_block->sta == F_RemoteRelayOn) || (mbase_control_block->sta == F_RemoteNull))    //保电或正常用电
     {
         switchon = 1;
     }
     else if(mbase_control_block->sta & F_RemoteRelayOnAllow)   //合闸允许
     {
-        if(KeyPortCheck == 1)    //按键3秒
+        if(KeyPortCheck)    //按键3秒
         {
             switchon = 1;
             mbase_control_block->sta &= ~F_RemoteRelayOnAllow;
