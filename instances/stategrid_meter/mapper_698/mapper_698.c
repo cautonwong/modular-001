@@ -563,7 +563,7 @@ const  parameter_item_t  parameter_item[] =
     { Meter_Location2,     0x01,   10,      init_Meter_Location2},//设备地理位置纬度
     { Meter_Location3,     0x01,   5,       init_Meter_Location3},//设备地理位置高度
     
-    { Device_descriptor,   0x01,   33,      init_Device_descriptor},//设备描述符
+    { Device_descriptor,   0x01,   32,      init_Device_descriptor},//设备描述符
     
     { Factory_No,          0x01,    4,      init_Factory_No }, //厂家代码
     { Version_SoftWare,    0x01,    4,      init_Version_SoftWare }, //软件版本

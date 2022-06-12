@@ -172,11 +172,11 @@ int get4300_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
     if(idl == 0x0200)//设备描述符
     {
         *p++ = TYPE_visible_string;
-
+        *p++ = 32;
         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Device_descriptor);
-        nd_get_index(instance, addr, p, 33); 
-        num = p[0];
-        p = p + num + 1;
+        nd_get_index(instance, addr, p, 32); 
+        //num = p[0];
+        p = p + 32;
         return (p-buf);
     }
     else if(idl == 0x0300)//版本信息

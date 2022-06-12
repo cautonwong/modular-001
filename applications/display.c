@@ -475,7 +475,7 @@ unsigned short display_oad_to_id(unsigned char *oad, unsigned char *oad_son, uns
         if(((oad2 & 0xFFFFFF00) != 0x00000400) && ((oad2 & 0xFFFFFF00) != 0x00100400) && ((oad2 & 0xFFFFFF00) != 0x00200400)
                && ((oad2 & 0xFFFFFF00) != 0x00000200) && ((oad2 & 0xFFFFFF00) != 0x00100200) && ((oad2 & 0xFFFFFF00) != 0x00200200))   return 0;
         idl = (unsigned char)(oad2 & 0x000000FF);
-        if(idl > 0x0c)  return 0;
+        if(idl > 0x0D)  return 0;
         id |= idl;
         oad2 = oad2 & 0xFFFFFF00;
         switch(oad2)
@@ -516,7 +516,7 @@ unsigned short display_oad_to_id(unsigned char *oad, unsigned char *oad_son, uns
             if(((oad2 & 0xFFFFFF00) != 0x00000400) && ((oad2 & 0xFFFFFF00) != 0x00100400) && ((oad2 & 0xFFFFFF00) != 0x00200400)
                && ((oad2 & 0xFFFFFF00) != 0x00000200) && ((oad2 & 0xFFFFFF00) != 0x00100200) && ((oad2 & 0xFFFFFF00) != 0x00200200))   return 0;
             idl = (unsigned char)(oad2 & 0x000000FF);
-            if(idl > 0x0c)  return 0;
+            if(idl > 0x0D)  return 0;
             id |= idl;
             oad2 = oad2 & 0xFFFFFF00;
             switch(oad2)
