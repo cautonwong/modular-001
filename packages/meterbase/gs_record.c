@@ -516,7 +516,7 @@ int event_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct m
       EmuErr_event_judge(instance, pipeline, mesg);     // 电能表计量芯片故障事件
 
 
-      report_2015state_judge(instance)
+      report_2015state_judge(instance);
 
       return 1;
 #if 0
