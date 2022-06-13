@@ -11,6 +11,8 @@ struct event_duration_t
     uint8_t state;
 };
 
+extern const uint32_t event_oad[];
+extern const uint8_t event_oad_num;
 
 
 uint8_t get_activeflag(struct instance_t* instance, uint16_t RecordId);

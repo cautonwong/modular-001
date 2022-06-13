@@ -337,7 +337,7 @@ int clr_record(struct instance_t* instance, uint32_t oad)
 
 }
 
-//多个记录 清零
+//多个记录 清零    根据oad_list
 static int list_record_clr(struct instance_t* instance, const uint32_t* oad_list, uint16_t num)
 {
     uint16_t i;
@@ -353,6 +353,29 @@ static int list_record_clr(struct instance_t* instance, const uint32_t* oad_list
     }
     return 1;
 }
+
+
+//多个记录 清零    根据oad_list中      除去事件清零事件和电表清零事件
+static int list_record_clr_2(struct instance_t* instance, const uint32_t* oad_list, uint16_t num)
+{
+    uint16_t i;
+    int ret;
+
+    for (i = 0; i < num; i++)
+    {
+        if((oad_list[i] == 0x30130200) || (oad_list[i] == 0x30150200)) //除去事件清零事件和电表清零事件
+        {
+            continue;
+        }
+        ret = clr_record(instance, oad_list[i]);
+        if (ret < 0)
+        {
+            return -1;
+        }
+    }
+    return 1;
+}
+
 
 
 //现存冻结oad列表
@@ -396,8 +419,8 @@ const uint32_t event_oad[] =
     0x30050700,   //A过流 
     0x30110200,   //电能表掉电事件                      
     0x30120200,   //电能表编程事件            
-    //0x30130200,   //电能表清零事件       // 单独处理      
-    //0x30150200,   //电能表事件清零事件   // 单独处理      
+    0x30130200,   //电能表清零事件       // 单独处理      
+    0x30150200,   //电能表事件清零事件   // 单独处理      
     0x30160200,   //电能表校时事件            
     0x30170200,   //电能表时段表编程事件      
     0x30180200,   //电能表时区表编程事件      
@@ -421,14 +444,14 @@ const uint32_t event_oad[] =
     0x303C0200,   //广播校时事件 
     0x30400200,   //零线电流异常事件  
 };
+const uint8_t event_oad_num = sizeof(event_oad) / sizeof(event_oad[0]);
 
-
-//事件清零 // 不包含事件清零事件
+//事件清零 // 不包含事件清零事件 和电表清零事件
 int event_clr(struct instance_t* instance)
 {
     int ret;
 
-    ret = list_record_clr(instance, event_oad, (sizeof(event_oad) / sizeof(event_oad[0])));
+    ret = list_record_clr_2(instance, event_oad, (sizeof(event_oad) / sizeof(event_oad[0])));
 
     report_3320list_2015state_clear(instance); // 清事件上报列表和状态
 
@@ -491,6 +514,9 @@ int event_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct m
       CoverOpen_event_judge(instance, pipeline, mesg);  // 电能表开盖事件  
       RTCErr_event_judge(instance, pipeline, mesg);     // 电能表时钟故障事件 
       EmuErr_event_judge(instance, pipeline, mesg);     // 电能表计量芯片故障事件
+
+
+      report_2015state_judge(instance)
 
       return 1;
 #if 0

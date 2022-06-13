@@ -182,7 +182,9 @@ struct mbase_control_block_t
     
     //跟随上报2015状态字
     uint32_t report_2015state[4];           //跟随上报状态字  chl_NUM
-    uint32_t report_2015mode;                //跟随上报模式字
+    uint32_t report_2015mode;               //跟随上报模式字
+    uint32_t report_2015state_cache;        //跟随上报状态字缓存
+
 
     //显示相关
     uint8_t commdisp_plc;    //通讯符号显示
@@ -222,8 +224,10 @@ struct mbase_control_block_t
     
     uint8_t boardadjtime;   //广播校时标志位
     
-    //report
-    uint32_t report_state;//跟随上报状态字
+    uint8_t switch_on_succees;          //0x5A 表示成功      由2015上报清零
+    uint8_t switch_off_succees;         //0x5A 表示成功       由2015上报清零
+
+
     
 //    uint8_t   SeasonTable;//时区表主副表序号
 //    uint8_t   DayTable;//日表主副表序号

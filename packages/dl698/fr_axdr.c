@@ -948,12 +948,11 @@ int decode_rsd_selector_9(struct instance_t* instance, struct pipeline_t* pipeli
 
     return (1);
 }
-
+//检查搜索的关联对象是否存在
 uint8_t check_capture_exist(uint32_t rcsd_req, uint32_t rcsd_src)
 {
-    uint8_t type, attr_req, attr_src, index_req,index_src;
+    uint8_t type, attr_req, attr_src, index_req,index_src, schem_req, schem_src;
     uint16_t oi_req, oi_src;
-
 
     //常规
     if (rcsd_req == rcsd_src)
@@ -966,14 +965,16 @@ uint8_t check_capture_exist(uint32_t rcsd_req, uint32_t rcsd_src)
     attr_req = get_OAD_Attribute(rcsd_req);
     index_req = get_OAD_Index(rcsd_req);
     oi_req = get_OAD_OI(rcsd_req);
-
+    schem_req = get_OAD_Schem(rcsd_req);
+    
     attr_src = get_OAD_Attribute(rcsd_src);
     index_src = get_OAD_Index(rcsd_src);
     oi_src = get_OAD_OI(rcsd_src);
+    schem_src = get_OAD_Schem(rcsd_src);
 
     if ((type) == 0) //电能
     {
-        if(oi_req == oi_src)
+        if((oi_req == oi_src) && (schem_req == schem_src))
         {
             if (((attr_req == 2) || (attr_req == 4)) && ((attr_src == 2) || (attr_src == 4)))
             {
@@ -1389,9 +1390,10 @@ uint32_t get_interval_basic_value(uint8_t *src, struct rsd_info_t *rsd_info)
 
 
 //读记录型数据打包
-int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info)
+int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info,  void *ctx)
 {
 #ifndef WIN32
+    struct context_698_t* p_ctx = (struct context_698_t*)ctx;
     struct record_storage_id_info_t record_id_info; 
     struct circular_info_t circular_info = {0};
     uint32_t *rcsd_req = (uint32_t *)rcsd_info; // 待定
@@ -1571,10 +1573,14 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     len += count;
     
     //读取事件时 确认上报
-    if ((oad & 0xF0000000) == 0x30000000) //待调整  首次读取？ 
+    if (p_ctx) // 协议进来
     {
-        report_3320list_confirmed(instance, chl_PLC_698, oad);
+        if ((oad & 0xF0000000) == 0x30000000) //待调整  首次读取？ 
+        {
+            report_3320list_confirmed(instance, p_ctx->channel, oad);
+        }
     }
+
     return (int)len;
 #endif
 }

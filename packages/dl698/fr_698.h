@@ -381,6 +381,23 @@ enum report_mode_t {
 
 
 
+// 2015跟随上报状态字 // 
+#define RPT_2015_ESAM_ERR           (BIT1) //ESAM错误    //待添加
+#define RPT_2015_RTC_BATTERY_LOW    (BIT3) //时钟电池欠压    //待添加
+#define RPT_2015_MEMORIZER_ERR      (BIT5) //存储器故障或损坏    //待添加
+#define RPT_2015_READ_BATTERY_LOW   (BIT8) //停电抄表电池欠压    //待添加
+#define RPT_2015_OVERDRAFT          (BIT9) //透支状态    //待添加
+#define RPT_2015_SWITCH_ON_SUCCEES  (BIT14) //合闸成功    //待添加
+#define RPT_2015_SWITCH_OFF_SUCCEES  (BIT15) //跳闸成功    //待添加
+
+extern uint8_t report_2015state_update(struct instance_t* instance, uint32_t mask);
+
+
+
+
+
+
+
 // 上报相关
 extern uint8_t report_2015state_update(struct instance_t* instance, uint32_t mask);
 extern void report_3320list_add(struct instance_t* instance,uint32_t oad);

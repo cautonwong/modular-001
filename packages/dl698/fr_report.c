@@ -4,7 +4,7 @@
 #include "cpu_surport.h"
 
 
-
+extern uint8_t DEVICE_ERR;
 extern uint8_t report_2015state_update(struct instance_t* instance, uint32_t mask);
 extern void report_3320list_add(struct instance_t* instance,uint32_t oad);
 extern uint8_t active_report_3320list_confirmed(struct instance_t* instance);
@@ -14,6 +14,8 @@ extern int fr_handle_report_response(struct instance_t* instance, struct pipelin
 extern void EventOut_698_check(struct instance_t* instance);
 extern void report_3320list_2015state_clear(struct instance_t* instance);
 
+extern uint8_t report_channel_check(struct instance_t* instance, uint16_t channel);
+extern uint32_t follow_report_3320List_Latest_oad_get(struct instance_t* instance, uint8_t chn);
 #if 1
 uint8_t rep_data[72] = {
 0x88, 0x02, 0x00, 0x01, 0x30, 0x11, 0x02, 0x01, 0x07, 0x00, 
@@ -43,14 +45,182 @@ int _fr_active_report_pro(struct instance_t* instance, struct pipeline_t* pipeli
 #endif
 
 
+
+//每秒调用
+void report_2015state_judge(struct instance_t* instance)
+{
+    struct mbase_control_block_t* mbase_cb= (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    static uint8_t   rtc_cnt = 0;
+
+
+    if( mbase_cb->voltage_battery < 300 ) //电池电压低
+    {
+        if (!(mbase_cb->report_2015state_cache & RPT_2015_RTC_BATTERY_LOW))
+        {
+            mbase_cb->report_2015state_cache |= RPT_2015_RTC_BATTERY_LOW;
+            report_2015state_update(instance, RPT_2015_RTC_BATTERY_LOW);
+        }
+    }
+    else
+    {
+         mbase_cb->report_2015state_cache &=~RPT_2015_RTC_BATTERY_LOW;
+    }
+
+    //ESAM故障
+    if ( mbase_cb->esam_chip_abnormal == EVENT_SET )
+    {
+        if (!(mbase_cb->report_2015state_cache & RPT_2015_ESAM_ERR))
+        {
+            mbase_cb->report_2015state_cache |= RPT_2015_ESAM_ERR;
+            report_2015state_update(instance, RPT_2015_ESAM_ERR);
+        }
+    }
+    else
+    {
+        mbase_cb->report_2015state_cache &=~RPT_2015_ESAM_ERR;
+    }
+
+
+    
+    //存储器故障
+    if ( DEVICE_ERR & BIT1 )
+    {
+        if (!(mbase_cb->report_2015state_cache & RPT_2015_MEMORIZER_ERR))
+        {
+            mbase_cb->report_2015state_cache |= RPT_2015_MEMORIZER_ERR;
+            report_2015state_update(instance, RPT_2015_MEMORIZER_ERR);
+        }
+    }
+    else
+    {
+        mbase_cb->report_2015state_cache &=~RPT_2015_MEMORIZER_ERR;
+    }
+
+    //拉合闸成功    
+
+    if ( mbase_cb->switch_on_succees == 0x5A   )
+    {
+        mbase_cb->switch_on_succees = 0;
+        report_2015state_update(instance, RPT_2015_SWITCH_ON_SUCCEES);
+    }
+
+    if ( mbase_cb->switch_off_succees == 0x5A   )
+    {
+        mbase_cb->switch_off_succees = 0;
+        report_2015state_update(instance, RPT_2015_SWITCH_OFF_SUCCEES);
+    }
+
+
+
+}
+
+
+
+
+
+//获取跟随上报使能开关
+uint8_t follow_report_enable_get(struct instance_t* instance)
+{
+    uint32_t addr, ret;
+    uint8_t buf[5];
+
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + FollowReport_en);
+    ret = nd_get_index(instance, addr, buf, 1); 
+    if (1 == buf[0])//是否打开跟随上报
+    {
+        return 1;
+    }
+    return 0;
+}
+
+
+
 //跟随上报相关
 int fr_follow_report_optional(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = cache->buf_ptr;
+    uint8_t* p = cache->buf_ptr + cache->wr;  //线性缓存  待调整
+    uint32_t oad = 0, mask = 0;
+    uint16_t offset = 0;
+    uint8_t num = 0, flag = 0, rptmode = 0;
+    uint8_t* p_tmp = p;
+
+    if((ctx == NULL) || (mbase_cb == NULL))
+    {
+        return 0;
+    }
+
+    if (false == report_channel_check(instance, ctx->channel))
+    {
+        return 0;
+    }
+
+    if(0 == follow_report_enable_get(instance))
+    {
+        return 0;
+    }
+
+    //判断 协议apdu 缓存是否足够   // 待调整
+    oad = follow_report_3320List_Latest_oad_get(instance, ctx->channel);
+    if (oad != 0)
+    {
+        num++;
+        flag |= 0x01;
+    }
+
+    mask = mbase_cb->report_2015state[ctx->channel];
+    rptmode = read_event_report_flag_mode(instance, 0x20150200, 1);
+    if(rptmode != 1 )
+    {
+        mask = 0;
+    }
+
+    if (mask != 0)
+    {
+        num++;
+        flag |= 0x02;    
+    }
     
-    return 0;
+    if (num == 0)
+    {
+        return 0;
+    }
+
+    *p++ = 1; 
+    *p++ = 1; 
+    *p++ = num;
+
+    if (flag & 0x01)
+    {
+        *p++ = 0x33;
+        *p++ = 0x20;
+        *p++ = 0x02;
+        *p++ = 0x01;
+        *p++ = 1;
+        *p++ = TYPE_OAD;
+        p += uint32_to_buf_msb(oad, p);
+    }
+
+    if (flag & 0x02)
+    {
+        *p++ = 0x20;
+        *p++ = 0x15;
+        *p++ = 0x02;
+        *p++ = 0x00;
+        *p++ = 1;
+        *p++ = TYPE_bit_string;
+        *p++ = 0x20;
+         p += uint32_to_buf_lsb(mask, p);
+    }
+
+    cache->wr += (p - p_tmp);
+
+    return (uint16_t)(p - p_tmp);
+
+
     //读取3320 判断是否跟随上报
     //{
     //    p[cache->wr++] = 0x01;//follow_report
@@ -180,9 +350,7 @@ void EventOut_698_check(struct instance_t* instance)
     //eventout受43000700允许跟随上报开关影响             //后续做成可配
     if (1)
     {
-        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + FollowReport_en);
-        ret = nd_get_index(instance, addr, buf, 1); 
-        if (0 == buf[0])//是否打开跟随上报
+        if (0 == follow_report_enable_get(instance))//是否打开跟随上报
         {
             PLC_EVENOUT_DIS();
             return;
@@ -849,7 +1017,7 @@ int active_report_3011_pro(struct instance_t* instance, struct pipeline_t* pipel
     rsd_info.end_mark = 0xffffffffU;
     rsd_info.mode = 0;
 
-    ret = record_data_package(instance, oad, tmp_buff, &rsd_info, rcsd_list);
+    ret = record_data_package(instance, oad, tmp_buff, &rsd_info, rcsd_list, NULL);
     if (ret < 0)
     {
         return 0;

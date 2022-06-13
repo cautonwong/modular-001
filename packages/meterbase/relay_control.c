@@ -88,6 +88,7 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
         {
             Magnetic_hold_relay_connect();//合闸
             send_event_mesg_pro(instance, NULL, SwitchOnS, NULL, 1);
+            mbase_control_block->switch_on_succees = 0x5A;  //要挪到成功 待调整
             relay_off_chk = 0;
             relay_on_chk = 0;
         }
@@ -95,6 +96,7 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
         {
             Magnetic_hold_relay_disconnect();//拉闸
             send_event_mesg_pro(instance, NULL, SwitchOffS, NULL, 1);
+            mbase_control_block->switch_off_succees = 0x5A;  //要挪到成功 待调整
             relay_off_chk = 0;
             relay_on_chk = 0;
         }

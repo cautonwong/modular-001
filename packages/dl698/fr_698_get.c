@@ -224,13 +224,13 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
                         //ret = GET_record_sel_0(instance, pipeline, mesg);
                         break;
                     case 1:
-                        ret = GET_record_sel_1(instance, mesg->id, p + cache->wr, &rsd_info, rcsd_list); //指定时间或序号
+                        ret = GET_record_sel_1(instance, mesg->id, p + cache->wr, &rsd_info, rcsd_list, ctx); //指定时间或序号
                         break;
                     case 2:
-                        ret = GET_record_sel_2(instance, mesg->id, p + cache->wr, &rsd_info, rcsd_list);// 按序号、时间范围搜索，带间隔
+                        ret = GET_record_sel_2(instance, mesg->id, p + cache->wr, &rsd_info, rcsd_list, ctx);// 按序号、时间范围搜索，带间隔
                         break;
                     case 9:
-                        ret = GET_record_sel_9(instance, mesg->id, p + cache->wr, &rsd_info, rcsd_list);// 上X次
+                        ret = GET_record_sel_9(instance, mesg->id, p + cache->wr, &rsd_info, rcsd_list, ctx);// 上X次
                         break;
                     default:
                         break;

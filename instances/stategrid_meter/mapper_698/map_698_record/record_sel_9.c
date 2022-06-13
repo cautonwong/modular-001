@@ -36,7 +36,7 @@ int _record_sel_9(struct instance_t* instance, uint32_t oad, uint8_t* buf, struc
 }
 #endif
 
-int GET_record_sel_9(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info)
+int GET_record_sel_9(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info,  void *ctx)
 {
-    return record_data_package(instance, oad, buf, rsd_info, rcsd_info);
+    return record_data_package(instance, oad, buf, rsd_info, rcsd_info,  ctx);
 }

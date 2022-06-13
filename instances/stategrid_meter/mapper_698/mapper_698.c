@@ -799,7 +799,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
             switch (oad&0xFFFF0000)// OI
             {
                 case 0x20150000: //2015 //只获取上报方式
-                    ReportModeId = OverCurrentAS_RptMode;   //上报方式   
+                    ReportModeId = Follow2015_RptMode;   //上报方式   
                     break;
                 default:
                     return -1;
@@ -2040,6 +2040,7 @@ int para_init(struct instance_t* instance )
     uint32_t s_index=0;
     struct mbase_control_block_t* mbase_cb;
     int ret;
+    
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     num = sizeof(parameter_item)/sizeof(parameter_item_t);
@@ -2101,9 +2102,16 @@ int para_init(struct instance_t* instance )
     {
         if( parameter_item[i].data != 0 )
         {
+#if 0     // test        
+            if (parameter_item[i].paramerer_index == Follow2015_RptMode)
+            {
+                v85xxp_clear_watchdog();
+            }
+#endif            
             if (((parameter_item[i].paramerer_index >= MinuteFreeze_oad) && (parameter_item[i].paramerer_index <= ZeroLineErrS_seq))
                 || ((parameter_item[i].paramerer_index >= __INITFLAG2_Start) && (parameter_item[i].paramerer_index <= __INITFLAG2_End)))
             {
+
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + parameter_item[i].paramerer_index);
                 nd_set_index(instance, s_index, (uint8_t*)(parameter_item[i].data), parameter_item[i].len); 
             }

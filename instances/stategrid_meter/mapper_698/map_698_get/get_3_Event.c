@@ -1,5 +1,104 @@
 #include "nidavellir.h"
 #include "fr_698.h"
+#include "gs_record.h"
+
+extern uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t mode);
+
+int get_3320_attr2(struct instance_t* instance, uint32_t oad, uint8_t* buf,void *ctx)
+{
+    struct context_698_t* pctx = (struct context_698_t*)ctx;
+
+    uint8_t* p = buf;
+    uint16_t OI = get_OAD_OI(oad);
+    uint8_t index = (uint8_t)(oad);
+    uint8_t tempbuf[250] = {0};
+    uint8_t* tmp = tempbuf;
+    uint32_t addr;
+    uint8_t i, count, unit_size;
+    int ret;
+
+    addr = get_3320_save_addr(instance, pctx->channel);
+    ret = nd_get_index(instance, addr, tempbuf, 241);
+    tmp = tempbuf;
+    unit_size = 4;
+
+    count = *tmp++;
+
+    if (((count * unit_size + 1) > 241) || (index > count))
+    {
+        return -DAR_OTHERS_ERROR;
+    }
+
+    //apdu剩余长度是否足够？ 协议里待调整
+    if (index == 0)
+    {
+        *p++ = TYPE_array;
+        *p++ = count;
+
+        for (i = 0; i < count; i++)
+        {
+            *p++ = TYPE_OAD;
+            mem_swap_cpy(p, tmp, 4);
+            p += 4;
+            tmp += 4;
+        }
+    }
+    else
+    {
+        tmp += (index - 1) * 4;
+        *p++ = TYPE_OAD;
+        mem_swap_cpy(p, tmp, 4);
+        p += 4;
+    }
+
+    return (p - buf);
+}
+
+
+int get_3320_attr3(struct instance_t* instance, uint32_t oad, uint8_t* buf,void *ctx)
+{
+
+    struct context_698_t* pctx = (struct context_698_t*)ctx;
+
+    uint8_t* p = buf;
+    uint16_t OI = get_OAD_OI(oad);
+    uint8_t index = (uint8_t)(oad);
+    uint8_t tempbuf[250] = {0};
+    uint8_t* tmp = tempbuf;
+    uint32_t addr;
+    uint8_t rptflag;
+    uint16_t i, num;
+    int ret;
+
+
+    if ( index != 0 )
+    {
+        return -DAR_OTHERS_ERROR;
+    }
+
+    buf[0] = TYPE_array;
+    buf[1] = 0;
+    p += 2;
+    
+    //num = (sizeof(event_oad) / sizeof(event_oad[0]));
+    
+    for (i = 0; i < event_oad_num; i++)
+    {
+        rptflag = 0;
+        rptflag = read_event_report_flag_mode(instance, event_oad[i], 0);
+        
+        if (rptflag & 0x03)
+        {
+            buf[1] += 1;
+            *p++ = TYPE_OI;
+            p += uint16_to_buf_msb(get_OAD_OI(event_oad[i]), p);
+        }
+    }
+    
+    return (p - buf);
+}
+
+
 
 
 // 获取事件上报标识或上报方式   mode  0: 上报标识      1:上报方式
@@ -861,6 +960,7 @@ int check_record_oad_support(struct instance_t* instance, uint32_t oad)
 
 int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
+    struct context_698_t* pctx = (struct context_698_t*)ctx;
     struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
     uint8_t tempbuf[200];
@@ -885,7 +985,12 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
     {
         OadClass = 24;
     }
+    else if(OI == 0x3320)
+    {
+        OadClass = 8;
+    }
 
+    //记录过程数据 ---start
     switch(id)
     {
         case 0x33000200: 
@@ -965,9 +1070,38 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
         default:
             break;
     }
+    //记录过程数据 ---end
+    
     
     switch (OadClass)
     {
+        //非事件类
+        case 8:
+        {
+            switch(OI)
+            {
+                case 0x3320: //新增事件单元 
+                {
+                    switch(attr)
+                    {
+                        case 2://新增事件列表
+                            return get_3320_attr2(instance, id, buf, pctx);
+                        
+                        break;
+                        case 3://需上报事件列表
+                            return get_3320_attr3(instance, id, buf, pctx);
+                        break;
+                        default:
+                        break;
+                    }
+                }
+                break;
+                default:
+                    break;
+            }
+        }
+        break;
+        
         case 7://class7
         {
             switch (attr) //属性
