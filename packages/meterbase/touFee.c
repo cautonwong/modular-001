@@ -247,6 +247,7 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
 			if( (year == (instance->time.tm_year+1900)) && (Buf[6*i+2] == (instance->time.tm_mon+1)) && (Buf[6*i+3] == instance->time.tm_mday) )
 			{
 				mbase_cb->DayTableNo = Buf[6*i+5];//年月日相同，获取日时段表号
+                mbase_cb->Fee |= F_TOUChange;
 				return;
 			}
 		}
@@ -264,6 +265,7 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + WeekendFee);//周休日表
         nd_get_index(instance, s_index, (uint8_t*)&Buf[1], 1);
 	  	mbase_cb->DayTableNo = Buf[1];
+        mbase_cb->Fee |= F_TOUChange;
 	    return;
 	}
 
