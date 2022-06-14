@@ -783,9 +783,9 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 {
                     for(i=num; i<14; i++)
                     {
-                        buffer[0+(num-1+i)*3] = buffer[0+(num-1)*3];
-                        buffer[1+(num-1+i)*3] = buffer[1+(num-1)*3];
-                        buffer[2+(num-1+i)*3] = buffer[2+(num-1)*3];
+                        buffer[0+i*3] = buffer[0+(num-1)*3];
+                        buffer[1+i*3] = buffer[1+(num-1)*3];
+                        buffer[2+i*3] = buffer[2+(num-1)*3];
                         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
                         nd_set_index(instance, s_index, buffer, 3);
                     }
@@ -879,9 +879,9 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 {
                     for(i=num_hourtab; i<14; i++)
                     {
-                        buffer[0+(num_hourtab-1+i)*3] = buffer[0+(num_hourtab-1)*3];
-                        buffer[1+(num_hourtab-1+i)*3] = buffer[1+(num_hourtab-1)*3];
-                        buffer[2+(num_hourtab-1+i)*3] = buffer[2+(num_hourtab-1)*3];
+                        buffer[0+i*3] = buffer[0+(num_hourtab-1)*3];
+                        buffer[1+i*3] = buffer[1+(num_hourtab-1)*3];
+                        buffer[2+i*3] = buffer[2+(num_hourtab-1)*3];
                     }
                 }
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index - 1));
