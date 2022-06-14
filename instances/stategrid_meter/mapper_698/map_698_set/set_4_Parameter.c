@@ -93,6 +93,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         break;
                     case 0x4012://周休日
                         if(*p != 4) return -DAR_TYPE_NOT_MATCH;
+                        mbase_cb->Fee |= F_DAYTABChange;
                         break;
                     case 0x4013://周休日日时段表号
                         if(*p != 17) return -DAR_TYPE_NOT_MATCH;
@@ -101,6 +102,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_WeekTab);
                         nd_set_index(instance, addr, timer, 2);
                         send_event_mesg_pro(instance, NULL, WeekTabWrS, NULL, 1);// 周休日编程事件
+                        mbase_cb->Fee |= F_DAYTABChange;
                         break;
                     case 0x4102:    //脉冲宽度
                     case 0x4104:    //额定电压

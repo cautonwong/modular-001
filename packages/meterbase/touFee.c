@@ -219,6 +219,7 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
 	uint8_t i,Weekstate,Num0;
 	uint32_t Num=0,Num1=0;
     uint32_t s_index= 0;
+    uint16_t year=0;
     struct mbase_control_block_t* mbase_cb;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -242,9 +243,10 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
         
 		for( i=0;i<Num0;i++ )
 		{
-			if( (Buf[4*i+3] == instance->time.tm_year) && (Buf[4*i+2] == instance->time.tm_mon) && (Buf[4*i+1] == instance->time.tm_mday) )
+            mem_swap_cpy((uint8_t*)&year, (uint8_t*)&Buf[6*i+0], 2);
+			if( (year == (instance->time.tm_year+1900)) && (Buf[6*i+2] == (instance->time.tm_mon+1)) && (Buf[6*i+3] == instance->time.tm_mday) )
 			{
-				mbase_cb->DayTableNo = Buf[4*i+0];//年月日相同，获取日时段表号
+				mbase_cb->DayTableNo = Buf[6*i+5];//年月日相同，获取日时段表号
 				return;
 			}
 		}
@@ -255,8 +257,8 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
 	//周休日表
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Weekend);
     nd_get_index(instance, s_index, (uint8_t*)&Buf[0], 1);
-	Weekstate = 0x01;
-	Weekstate <<= instance->time.tm_wday;
+	Weekstate = 0x80;
+	Weekstate >>= instance->time.tm_wday;
 	if( (Weekstate & Buf[0]) == 0 )//0表示休息日
 	{
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + WeekendFee);//周休日表
