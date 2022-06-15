@@ -1022,7 +1022,7 @@ int _record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t 
                 if (single_len < 0)
                 {
                     //正常处理
-                    single_len = nd_size(instance, rcsd_req[i]);
+                    single_len = nd_size(instance, tmpbuf,rcsd_req[i]);
                 }
 
                 if (single_len > 0)
@@ -1082,7 +1082,7 @@ int _record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t 
                 single_len = record_change_format(instance, tmpbuf, p_src, rcsd_src[k], 0,  RFC_GET_STORE_LEN);
                 if (single_len < 0)
                 {
-                    single_len = nd_size(instance, rcsd_src[k]);
+                    single_len = nd_size(instance, tmpbuf,rcsd_src[k]);
                 }
 
                 if (single_len > 0)

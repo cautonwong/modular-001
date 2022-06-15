@@ -530,9 +530,9 @@ uint32_t* register_parameter(struct instance_t* instance, uint8_t device_name, u
     return __register(instance, device_name, block_name, 0x00, 0x00, block_size, (int16_t(*)(struct instance_t* instance, uint16_t id, uint32_t * addr, uint32_t * len, uint32_t * depth))fun);
 }
 
-int16_t nd_size(struct instance_t* instance, uint32_t id)
+int16_t nd_size(struct instance_t* instance, uint8_t *buf, uint32_t id)
 {
-    return look_up_map(instance, id, NULL, 0, NULL, RESOURCE_MAP_GET);  
+    return look_up_map(instance, id, buf, 0, NULL, RESOURCE_MAP_GET);  
 }
 
 int16_t get_block_frist_addr(struct instance_t *instance, uint8_t device_name, uint8_t block_name, uint32_t *addr)

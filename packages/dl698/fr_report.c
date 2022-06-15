@@ -697,7 +697,7 @@ void report_3320list_add(struct instance_t* instance,uint32_t oad)
     uint8_t comm_chn[4] = { chl_ir_698, chl_RS485_1_698,  chl_PLC_698,  chl_RS485_2_698 };
 
     uint8_t Schem = 0,rptflag = 0;
-    uint32_t ret;
+    int ret;
 
     //获取事件上报标识
     rptflag = read_event_report_flag_mode(instance, oad, 0);

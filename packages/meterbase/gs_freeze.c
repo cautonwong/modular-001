@@ -8,7 +8,7 @@
 //并且计算保存分钟冻结0-7  8个方案中每个方案的空间大小偏移(扇区)
 int cal_freeze_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, uint8_t *depth_ptr, uint32_t oad)
 {
-    uint8_t scheme = 0,obj_num, scheme_num;
+    uint8_t scheme = 0,obj_num, scheme_num, tmpbuf[220] = {0};
     uint16_t i, k, depth, sector = 0, sectorMax = 0, t_num = 0;
     uint16_t sector_size[9];
     int16_t single_len = 0;
@@ -53,7 +53,7 @@ int cal_freeze_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, u
 
             if (scheme == i)
             {
-                single_len = nd_size(instance, obj);
+                single_len = nd_size(instance,tmpbuf, obj);
                 if (single_len > 0)
                 {
                     ret = record_change_format(instance, NULL, NULL, obj, 0, RFC_GET_STORE_LEN);
@@ -112,7 +112,7 @@ int freez_size_sectors_init(struct instance_t* instance, uint32_t oad)
     ret = get_record_id_info(instance, oad, &record_id_info);
     if (ret <= 0)
     {
-        return -1;
+        return -1; 
     }
 
     CaptureId = record_id_info.capture_index;
@@ -551,6 +551,7 @@ int day_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task
             rtc_format_change_from_tm(last_time,tmp);
             mem_swap_cpy(&payload[6], &tmp[0], 7);
             recv_record_process(instance, task, &mesg_tmp, payload);  
+            v85xxp_clear_watchdog();//清看门狗
         }
         recently += period;
     }

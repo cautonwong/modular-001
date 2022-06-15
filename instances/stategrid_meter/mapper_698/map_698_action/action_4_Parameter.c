@@ -183,6 +183,20 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         if(Temp32C < mbase_cb->Limit_T_Min)  return -DAR_UNAUTHORIZED;
                     }
 
+
+                    //保存校时前时间 
+                    rtc_get_from_tm(instance,tmpbuf);
+                    timer_set[0] = tmpbuf[6];
+                    timer_set[1] = tmpbuf[5];
+                    timer_set[2] = tmpbuf[4];
+                    timer_set[3] = tmpbuf[3];
+                    timer_set[4] = tmpbuf[2];
+                    timer_set[5] = tmpbuf[1];
+                    timer_set[6] = tmpbuf[0];
+                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
+                    nd_set_index(instance, s_index, timer_set, 7);
+
+
                     mem_swap_cpy((uint8_t*)&oad, p, 2);
                     year = oad - 2000;
                     p = p + 2;
@@ -197,7 +211,23 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     read_mcu_rtc(0x00, instance);
                     mbase_cb->boardadjtime = 0xAA;
 
+
+                    //保存校时后时间 
+                    rtc_get_from_tm(instance,tmpbuf);
+                    timer_set[0] = tmpbuf[6];
+                    timer_set[1] = tmpbuf[5];
+                    timer_set[2] = tmpbuf[4];
+                    timer_set[3] = tmpbuf[3];
+                    timer_set[4] = tmpbuf[2];
+                    timer_set[5] = tmpbuf[1];
+                    timer_set[6] = tmpbuf[0];
+                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
+                    nd_set_index(instance, s_index, timer_set, 7);
+
                     send_event_mesg_pro(instance, NULL, BroadcastTimeS, NULL, 1);// 广播校时记录
+
+                    record_rollback_after_set_time(instance);
+
                     return 8;
                 }
             }

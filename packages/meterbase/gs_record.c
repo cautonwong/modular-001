@@ -631,7 +631,7 @@ enum scheme_mode
 //mode 0-7 为冻结方案， 10为 事件发生 11位 结束
 int read_record_head(struct instance_t* instance, uint8_t* databuf, const uint32_t* record_head, enum scheme_mode mode, uint16_t *remain_size,  struct record_storage_id_info_t *record_id_info)
 {
-    uint8_t *p , i, scheme_valid = true,  normal_type;
+    uint8_t *p , i, scheme_valid = true,  normal_type, tmpbuf[220] = {0};
     int16_t single_len = 0, transform_len;
     uint32_t obj,seq;
     
@@ -692,7 +692,7 @@ int read_record_head(struct instance_t* instance, uint8_t* databuf, const uint32
                 }
                 else
                 {
-                    single_len = nd_size(instance, obj);
+                    single_len = nd_size(instance, tmpbuf,obj);
                     if (single_len > 0)
                     {
                         memset(p, 0xFF, single_len);
@@ -718,6 +718,7 @@ uint32_t record_capture_change(struct instance_t* instance, uint32_t obj, uint16
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     switch (record_id)
     {
+    case BroadcastTimeS:
     case SetTimeS:    
         if (obj == 0x201E0200)
         {
@@ -827,7 +828,7 @@ uint8_t check_scheme(enum scheme_mode mode, uint32_t obj, uint16_t record_id)
         break;
     }
 
-    if(record_id == SetTimeS) //待调整
+    if((record_id == SetTimeS) || (record_id == BroadcastTimeS)) //待调整 
     {
         scheme_valid = true;
     }
@@ -937,7 +938,7 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
             }
             else
             {
-                single_len = nd_size(instance, obj);
+                single_len = nd_size(instance, tmpbuf, obj);
                 if (single_len > 0)
                 {
                     ret = record_change_format(instance, tmpbuf, p, obj, 0, RFC_GET_STORE_LEN);
