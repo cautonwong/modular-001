@@ -964,8 +964,8 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
     struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
     uint8_t tempbuf[200];
-    uint8_t* src = tempbuf;
-    uint16_t i, len = 0;
+//    uint8_t* src = tempbuf;
+    uint16_t len = 0;
     uint16_t OI;
     uint8_t attr, OadClass = 7;
     uint8_t dar = DAR_SUCCESS;

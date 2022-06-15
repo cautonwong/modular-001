@@ -169,7 +169,6 @@ int set_support_protocol_list(struct instance_t* instance, uint32_t id, uint8_t*
     uint8_t i;
     uint8_t* p = buf;
     uint32_t addr=0;
-    uint16_t idl = 0;
     uint8_t index = 0;
     uint8_t *tmp = instance->apdu_cache;
     uint8_t *tmp_cache = instance->apdu_cache;
@@ -180,10 +179,7 @@ int set_support_protocol_list(struct instance_t* instance, uint32_t id, uint8_t*
         return -DAR_OTHERS_ERROR;
     }
 
-
-    idl = (uint16_t)(id & 0x0000FFFF);
     index = (uint8_t)(id & 0x000000FF);
-
     
     if (index > 3)
     {
@@ -434,7 +430,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
 {    
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad,year2;
-    uint8_t index,attribute,i,num,buffer[42]={0},temp[114]={0},num_hourtab=0,j,year,timer[6], flag = 0;
+    uint8_t index,attribute,i,num,buffer[42]={0},temp[114]={0},num_hourtab=0,year,timer[6];
     uint8_t* p = buf;
     uint32_t s_index = 0x00,addr=0;
     int len=0;
@@ -683,6 +679,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     nd_set_index(instance, s_index, p, 1); 
                     p++;
                 }
+                mbase_cb->Fee |= F_DAYTABChange;
                 return (p-buf);
             }
             else
@@ -692,9 +689,9 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + (index - 1));
                 nd_set_index(instance, s_index, p, 1); 
                 p++;
+                mbase_cb->Fee |= F_DAYTABChange;
                 return (p-buf);
             }
-            mbase_cb->Fee |= F_DAYTABChange;
             break;
         case 0x4011://公共假日表
             if((index == 0) || (index > 20))    return -DAR_RW_REJECT;

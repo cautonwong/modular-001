@@ -153,8 +153,8 @@ int fr_decode_645_11(struct instance_t* instance, struct pipeline_t* pipeline, s
 
 int fr_encode_645_11(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
-    struct fifo_t* fifo = pipeline->in_queue;
+//    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
+//    struct fifo_t* fifo = pipeline->in_queue;
     //memcpy(instance->cache, mesg, sizeof(struct message_t));
     uint8_t* p;// = instance->cache + sizeof(struct message_t);//���������ʼ
     uint32_to_buf_lsb(mesg->id, p);
@@ -506,9 +506,9 @@ int fr_pack_645_tail(struct instance_t* instance, struct pipeline_t* pipeline, s
 
 int fr_rx_645_end(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
+//    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
+//    struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
  
     uint8_t tail = fifoBuf_getByte(ififo);
     assert(tail == 0x16);
@@ -521,8 +521,8 @@ int fr_rx_645_end(struct instance_t* instance, struct pipeline_t* pipeline, stru
 
 int fr_pack_645_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
-    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+//    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
+//    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     struct mbase_control_block_t* mbase_cb;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -540,10 +540,10 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
-    uint8_t data[8]={0}, ERRBYTE=0;
+    uint8_t ERRBYTE=0;//data[8]={0}, 
     uint16_t tx_len = 0;
 
-    int err_no = 0;
+//    int err_no = 0;
 
     if(0 == fr_pack_645_check(instance, pipeline, mesg)){
         fifoBuf_removeData(fifo, ctx->min_len + 2);
@@ -654,9 +654,9 @@ int fr_tx_645_end(struct instance_t* instance, struct pipeline_t* pipeline, stru
 
 int fr_tx_645_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
-    struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
-    uint16_t len = 0;
+//    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
+//    struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
+//    uint16_t len = 0;
 
     if (recv_mesg_v2(instance, pipeline, mesg, NULL, 0))
     {

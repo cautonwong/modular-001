@@ -112,8 +112,8 @@ static uint8_t wpulse_light_open = 0;
 static uint8_t wpulse_light_open_flag = 0;
 static uint8_t wplse_light_width = 0;
 
-static uint8_t key_keep_flag = 0;
-static uint8_t key_keep_width = 0;
+//static uint8_t key_keep_flag = 0;
+//static uint8_t key_keep_width = 0;
 void IO_Interrupt(void *para)
 {
    uint16_t cnt;
@@ -132,13 +132,13 @@ void IO_Interrupt(void *para)
     if(GPIOA->INT & BIT2)  // 按键
     {
         
-        key_keep_flag = 0x5a;
-        key_keep_width = 0;
+//        key_keep_flag = 0x5a;
+//        key_keep_width = 0;
         
         //// 停电下按键消抖
         if(ANA->COMPOUT & ANA_STATUS_VDCINDROP)
         {
-             key_keep_flag = 0; // 避免停电下 tick被打开 发两次 按键消息
+//             key_keep_flag = 0; // 避免停电下 tick被打开 发两次 按键消息
              if(ANA->COMPOUT & BIT2)//有电池
              {
                  for(cnt = 0; cnt< 3; cnt++)  
@@ -241,10 +241,10 @@ void ir_receive_timeout(void)
     fifoBuf_putByte(&irq_fifo, IRQ_IR_RX_TM_OUT);
 }   
 
-const uint16_t baud_table[11]={300,600,1200,2400,4800,7200,9600,19200,38400,57600,115200};
+const uint32_t baud_table[11]={300,600,1200,2400,4800,7200,9600,19200,38400,57600,115200};
 void rs485_send_timeout(void *CallBackSendPara)
 {
-    uint16_t baud=9600,i; 
+    uint32_t baud=9600,i; 
     struct instance_t* instance = (struct instance_t*)CallBackSendPara;
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     

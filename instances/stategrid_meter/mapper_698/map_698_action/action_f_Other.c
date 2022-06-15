@@ -25,7 +25,7 @@ uint32_t Byte2uInt(uint8_t* byte)
   return byte[3]+((uint32_t)byte[2]<<8) + ((uint32_t)byte[1]<<16) +((uint32_t)byte[0]<<24) ;
 }
 //文件传输类接口
-uint16_t ActionFile( struct instance_t* instance, uint32_t id, uint8_t* inbuf, uint16_t buf_size, void *ctx, uint8_t* outbuf)
+int16_t ActionFile( struct instance_t* instance, uint32_t id, uint8_t* inbuf, uint16_t buf_size, void *ctx, uint8_t* outbuf)
 {
     struct mbase_control_block_t* mbase_cb;
 	unsigned char i, result;
@@ -124,14 +124,10 @@ int _f101_m127_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
 {
     struct mbase_control_block_t* mbase_cb;
 
-    uint8_t  i, method, dar = 0, count, maxnum;
-    uint16_t oad;
+    uint8_t  i, count, maxnum;
     uint8_t* p = buf;
-    uint32_t temp = 0, s_index = 0, addr = 0;
+    uint32_t s_index = 0;
     uint8_t* ptr_tmp = instance->apdu_cache;
-
-    oad = (unsigned short)((id & 0xFFFF0000) >> 16);
-    method = (unsigned char)((id & 0x0000FF00) >> 8);    //方法
 
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if (mbase_cb == NULL)
@@ -211,9 +207,9 @@ int _f101_m127_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
 int _f101_m128_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx) 
 {
     struct mbase_control_block_t* mbase_cb;
-    uint8_t  i, dar = 0, count, maxnum;
+    uint8_t  i, count, maxnum;
     uint8_t* p = buf;
-    uint32_t temp = 0, s_index = 0, addr = 0;
+    uint32_t s_index = 0;
     uint8_t* ptr_tmp = instance->apdu_cache;
     uint16_t oi, tmp_oi;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -271,9 +267,9 @@ int _f101_m128_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
 int _f101_m129_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx)
 {
     struct mbase_control_block_t* mbase_cb;
-    uint8_t  i, dar = 0, count, maxnum;
+    uint8_t  i,count;
     uint8_t* p = buf;
-    uint32_t temp = 0, s_index = 0, addr = 0;
+    uint32_t s_index = 0;
     uint8_t* ptr_tmp = instance->apdu_cache;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if (mbase_cb == NULL)
@@ -432,9 +428,8 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
     struct context_698_t* p_ctx = (struct context_698_t*)ctx;
     struct fifo_t* cache = p_ctx->apdu;
     uint8_t *apdu_rx = p_ctx->apdu_d_rx + p_ctx->apdu_rx_offset;
-    uint16_t offset = 0;
     
-    uint8_t  method,dar=0,buffer[16],keybuf[128],len1=0,len2=0, cilent_index = 0,len=0;
+    uint8_t  method,buffer[16],keybuf[128],len1=0,len2=0, cilent_index = 0,len=0;
     uint16_t oad,pageid=0,txlen=0,rxlen=0;
     int16_t complen;
     uint8_t *p = buf,disp_sequ=0;
@@ -756,12 +751,10 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 p = p + 5;
                 if(temp != 0xF2010201)
                 {
-                    dar = DAR_OBJECT_NOT_EXIST;
                     return -DAR_OBJECT_NOT_EXIST;
                 }
                 if((*p > 10) || (*(p+1) != 2) || (*(p+2) != 8) || (*(p+3) != 1) || (*(p+4) != 0) || (*(p+6) != 0))
                 {
-                    dar = DAR_BUFFER_OVERFLOW;
                     return -DAR_BUFFER_OVERFLOW;
                 }
                 mbase_cb->baud_chg = 0;
@@ -775,7 +768,6 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             }
             else
             {
-                dar = DAR_OBJECT_NOT_EXIST;
                 return -DAR_OBJECT_NOT_EXIST;
             }
             return (p-buf);
@@ -797,19 +789,16 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 p = p + 5;
                 if(temp != 0xF2050201)
                 {
-                    dar = DAR_OBJECT_NOT_EXIST;
                     return -DAR_OBJECT_NOT_EXIST;
                 }
                 if((*p != 0) && (*p != 1))
                 {
-                    dar = DAR_BUFFER_OVERFLOW;
                     return -DAR_BUFFER_OVERFLOW;
                 }
                 mbase_cb->relay_ctl_mode = *p++;
             }
             else
             {
-                dar = DAR_OBJECT_NOT_EXIST;
                 return -DAR_OBJECT_NOT_EXIST;
             }
             return (p-buf);
@@ -821,19 +810,16 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 p = p + 5;
                 if(temp != 0xF2070201)
                 {
-                    dar = DAR_OBJECT_NOT_EXIST;
                     return -DAR_OBJECT_NOT_EXIST;
                 }
                 if((*p != F_PortSec) && (*p != F_PortTouCut))
                 {
-                    dar = DAR_BUFFER_OVERFLOW;
                     return -DAR_BUFFER_OVERFLOW;
                 }
                 mbase_cb->MulPortMode = *p++;
             }
             else
             {
-                dar = DAR_OBJECT_NOT_EXIST;
                 return -DAR_OBJECT_NOT_EXIST;
             }
             return (p-buf);
@@ -845,12 +831,10 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 p = p + 5;
                 if(temp != 0xF2090201)
                 {
-                    dar = DAR_OBJECT_NOT_EXIST;
                     return -DAR_OBJECT_NOT_EXIST;
                 }
                 if((*p > 10) || (*(p+1) != 2) || (*(p+2) != 8) || (*(p+3) != 1) || (*(p+4) != 0))
                 {
-                    dar = DAR_BUFFER_OVERFLOW;
                     return -DAR_BUFFER_OVERFLOW;
                 }
                 mbase_cb->Baut_plc = *p;
@@ -858,7 +842,6 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             }
             else
             {
-                dar = DAR_OBJECT_NOT_EXIST;
                 return -DAR_OBJECT_NOT_EXIST;
             }
             return (p-buf);
@@ -951,7 +934,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     break;
             }
         default:
-            dar = DAR_OBJECT_NOT_EXIST;
+            return -DAR_OBJECT_NOT_EXIST;
             break;
     }
     return -DAR_OBJECT_NOT_EXIST;

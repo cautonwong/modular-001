@@ -15,10 +15,10 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
     struct pipeline_t* pipeline =  get_pipeline(instance, pid_meter_base); 
     struct context_698_t* p_ctx = (struct context_698_t*)ctx;
     uint16_t oad,displayid;
-    uint8_t index,attribute,i,len,dispalyseque,maxnum, count = 0;
+    uint8_t index,attribute,i,len,maxnum, count = 0;
     uint8_t* p = buf;
     uint8_t *ptr_tmp = instance->apdu_cache;
-    uint32_t displayoad1,displayoad2,addr=0,s_index=0,atrtime=0, tmp32=0;
+    uint32_t addr=0,s_index=0, tmp32=0;
     uint8_t esam_inf[45] = {0}; 
     uint8_t cilent_index = 0;
     

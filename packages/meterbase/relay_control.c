@@ -108,7 +108,7 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
 void relay_led_ctl(struct instance_t* instance,  struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)pipeline->ctx;
+//    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)pipeline->ctx;
     
     if(mbase_control_block->Page_ID == 0xFFFF)    //全屏
     {

@@ -142,16 +142,16 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
     struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t* p = cache->buf_ptr;
-    uint16_t n = 0;
+//    uint16_t n = 0;
     uint16_t offset = 0;
     uint8_t Selector = 0;
-    uint8_t last_no = 0;
+//    uint8_t last_no = 0;
     uint8_t oad_n = mesg->oad_n;
     uint32_t rcsd_list[(REQ_RCSD_MAXNUM+1)]; //个数 + n个OAD  //[0][]协议筛选  [1][]事件全关联对象
     struct rsd_info_t rsd_info;
     
     int ret, rsd_ret, rcsd_ret;
-    uint32_t i;
+//    uint32_t i;
         
     while (oad_n-- > 0)
     {

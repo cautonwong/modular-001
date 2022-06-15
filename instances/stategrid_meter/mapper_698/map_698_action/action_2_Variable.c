@@ -13,7 +13,6 @@ int ACTION_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, vo
     uint8_t  method;
     uint16_t oad;
     uint8_t *p = buf;
-    int ret;
     uint32_t Temp32A;
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);

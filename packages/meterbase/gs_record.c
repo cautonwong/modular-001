@@ -568,6 +568,7 @@ int event_LowPower_pro(struct instance_t* instance, struct pipeline_t* pipeline,
 {
     PowerOff_LowPower_pro(instance, pipeline, mesg);
     PowerAbnormal_LowPower_pro(instance, pipeline, mesg);
+    return true;
 }
 
 
@@ -604,6 +605,7 @@ int event_PowerOn_pro(struct instance_t* instance, struct pipeline_t* pipeline, 
             recv_record_process(instance, pipeline, &mesg_tmp, payload);    
         }
     }
+    return true;
 }
 
 

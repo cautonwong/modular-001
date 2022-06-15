@@ -7,7 +7,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
 {    
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad,displayid;
-    uint8_t index=0,attribute,i,num=0,dar=0, tempbuf[10] = {0};
+    uint8_t index=0,attribute,i,num=0, tempbuf[10] = {0};
     uint8_t* p = buf,Sequ=0;
     uint32_t displayoad1,displayoad2,s_index=0;
     uint16_t len = 0;
@@ -55,7 +55,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
         case 0xF205://继电器输出
         case 0xF207://多功能端子
         case 0xF209://载波模块
-            dar = DAR_RW_REJECT;
+            return -DAR_RW_REJECT;
             break;
         case 0xF300://显示
         case 0xF301:

@@ -6,7 +6,7 @@ int SET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
 {    
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad;
-    uint8_t index,attribute;
+    uint8_t attribute;
     uint8_t* p = buf;
 
 
@@ -18,7 +18,7 @@ int SET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
     }
 
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
-    index = (unsigned char)(id & 0x000000FF);
+//    index = (unsigned char)(id & 0x000000FF);
     attribute = (unsigned char)((id & 0x00001F00) >> 8);
     
     switch (oad)

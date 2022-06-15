@@ -27,7 +27,7 @@ extern int mcu_uart_recive_byte(uint8_t* byte , size_t uart_index);
 extern void mcu_uart_send_enable(uint8_t ops_enable, size_t uart_index);
 
 extern uint8_t mcu_uart_close(uint8_t uart_index);
-extern uint8_t mcu_uart_set_baud(uint16_t baud, uint8_t uart_index);
+extern uint8_t mcu_uart_set_baud(uint32_t baud, uint8_t uart_index);
 extern uint8_t mcu_uart_get_status(uint8_t uart_index, uint8_t status);
 
 extern uint8_t mcu_spi_bus_init(uint8_t spi_index , uint8_t mode);

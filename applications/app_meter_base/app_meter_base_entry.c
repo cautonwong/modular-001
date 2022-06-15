@@ -3,6 +3,7 @@
 #include "resource_tool.h"
 #include "target.h"
 #include "lib_clk.h"
+#include "lib_conf.h"
 
 //#define     P_BACKLIGHT_ON      GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT |= 0x10; //推挽输出高
 //#define     P_BACKLIGHT_OFF     GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT &=~0x10; //推挽输出低
@@ -33,7 +34,7 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     fr_dl698_sec_task(instance, pipeline);
 
 
-//    backlight_pro(instance, pipeline);
+//  backlight_pro(instance, pipeline);
     Meter_Run_State(instance, pipeline);//运行状态字刷新
     
     
@@ -52,14 +53,21 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
             //Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
             mbase_control_block->Key &= ~F_KeyAwake;
         }*/
-        
-        
+        if(instance->time.tm_sec == 0)
+        {
+            if(ANA_GetStatus(ANA_STATUS_COMP1))//判断电池是否存在
+            {
+                mbase_control_block->battery_used_time++;   //电池使用时间
+            }
+        }
     }
     else
     {
         mbase_control_block->power_on_sec_accum++;
         
     }
+    
+    
 }
 
 // !!!在此app中不做IO操作!!!
@@ -97,78 +105,83 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
           //controlData(instance,pipeline,mesg);
           break;
       case MSG_SECOND:
-          SecTick_Task(instance, pipeline);
-          
-          Rtc_Prossecc(instance, pipeline);
-          
-          Electrical_measurement(instance, pipeline);
-          
-          Energy_Pluse_Count(instance, pipeline);
-          
-          Energy_Meter(instance, pipeline);
+            SecTick_Task(instance, pipeline);
 
-          freeze_pro(instance, pipeline, mesg);
-          
-          event_pro(instance, pipeline, mesg);
+            Rtc_Prossecc(instance, pipeline);
 
-          Display(instance, pipeline);
-          
-          backlight_pro(instance, pipeline, mesg);
-          
-          do_relay(instance, pipeline);
-          
-          relay_led_ctl(instance, pipeline);
-          
-          IOStateCheck(instance, pipeline);
+            Electrical_measurement(instance, pipeline);
 
-          TouFeePro(instance, pipeline);
-          
-          break;
+            Energy_Pluse_Count(instance, pipeline);
+
+            Energy_Meter(instance, pipeline);
+
+            freeze_pro(instance, pipeline, mesg);
+
+            event_pro(instance, pipeline, mesg);
+
+            Display(instance, pipeline);
+
+            backlight_pro(instance, pipeline, mesg);
+
+            do_relay(instance, pipeline);
+
+            relay_led_ctl(instance, pipeline);
+
+            IOStateCheck(instance, pipeline);
+
+            TouFeePro(instance, pipeline);
+
+            break;
       case MSG_PAGE_KEY_UP:
-           Key_Display(instance, pipeline, MSG_PAGE_KEY_UP);
-           Display(instance, pipeline);
-          break;
+            Key_Display(instance, pipeline, MSG_PAGE_KEY_UP);
+            Display(instance, pipeline);
+            break;
       case MSG_POWERON:
-        //上电恢复参数
-        read_mcu_rtc(0x00, instance);
-        get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_static, &addr);//RAM对应的地址
-        nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, (uint8_t*)addr, mbase_block_static_size); //将EPROM中的数据恢复到RAM;  
-        //上电需要恢复数据
-        //获取对应的RAM地址
-        get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
-        nd_get_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)addr,mbase_block_persistent_size); //将EPROM中的数据恢复到RAM;        
-        Electrical_measurement_poweron(instance, pipeline);
-        Energy_Meter_PowerON(instance, pipeline);
-        AllDisplayLCD(instance, pipeline);
-        mbase_control_block->key_state = get_key_status(instance);//获取秘钥状态
-        Magnetic_hold_relay_Init();
-        fr_dl698_power_on(instance, pipeline);
-        mbase_control_block->power_on_sec_accum = 0;
-        mbase_cb->Fee |= (F_TOUChange+F_ChangeTmOn+F_DAYTABChange);;    //获取当前时区时段费率
+            //上电恢复参数
+            read_mcu_rtc(0x00, instance);
+            get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_static, &addr);//RAM对应的地址
+            nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, (uint8_t*)addr, mbase_block_static_size); //将EPROM中的数据恢复到RAM;  
+            //上电需要恢复数据
+            //获取对应的RAM地址
+            get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
+            nd_get_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)addr,mbase_block_persistent_size); //将EPROM中的数据恢复到RAM;        
+            Electrical_measurement_poweron(instance, pipeline);
+            Energy_Meter_PowerON(instance, pipeline);
+            AllDisplayLCD(instance, pipeline);
+            mbase_control_block->key_state = get_key_status(instance);//获取秘钥状态
+            Magnetic_hold_relay_Init();
+            fr_dl698_power_on(instance, pipeline);
+            mbase_control_block->power_on_sec_accum = 0;
+            mbase_cb->Fee |= (F_TOUChange+F_ChangeTmOn+F_DAYTABChange);;    //获取当前时区时段费率
 
-        
-        freeze_power_on_pro(instance, pipeline, mesg);
-        //事件
-        event_PowerOn_pro(instance, pipeline, mesg);
-        break;
+            
+            freeze_power_on_pro(instance, pipeline, mesg);
+            //事件
+            event_PowerOn_pro(instance, pipeline, mesg);
+            
+            //保存电池使用时间
+            break;
       case MSG_POWEROFF:
-              //开启EE电源和IO口时钟 //
-        CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);
-        GPIOC->OEN &= ~(BIT4|BIT5|BIT6); 
-        GPIOC->IE &= ~(BIT4|BIT5|BIT6);
-        GPIOC->DAT |= (BIT6);
-      
-        //掉电需要保存数据
-        //先刷新停电时间ram
-        ndv_memcopy((uint8_t *)(&mbase_control_block->powerdown_tm),  (uint8_t *)&instance->time,  sizeof(mbase_control_block->powerdown_tm));
-        //获取对应的RAM地址
-        get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
-        nd_set_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;      
-        mbase_control_block->power_down_sec_accum = 0;
-        
-        break;
+            //开启EE电源和IO口时钟 //
+            CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);
+            GPIOC->OEN &= ~(BIT4|BIT5|BIT6); 
+            GPIOC->IE &= ~(BIT4|BIT5|BIT6);
+            GPIOC->DAT |= (BIT6);
+          
+            //掉电需要保存数据
+            //先刷新停电时间ram
+            ndv_memcopy((uint8_t *)(&mbase_control_block->powerdown_tm),  (uint8_t *)&instance->time,  sizeof(mbase_control_block->powerdown_tm));
+            //获取对应的RAM地址
+            get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
+            nd_set_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;      
+            mbase_control_block->power_down_sec_accum = 0;
+            //掉电清空显示相关内容
+            memset((uint8_t *)&mbase_control_block->voltage_ac, 0x00, 32);
+            memset((uint8_t *)&mbase_control_block->AutoPtr, 0x00, 10);
+            //读取电池使用时间
+            break;
       default:
-        break;
+            break;
       }
     }
 

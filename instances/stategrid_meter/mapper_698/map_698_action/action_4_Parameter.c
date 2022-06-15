@@ -51,11 +51,10 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
     struct context_698_t* pctx = (struct context_698_t*)ctx;
     struct mbase_control_block_t* mbase_cb;
     struct pipeline_t* pipeline;
-    uint8_t  method,dar=0,i, tmpbuf[20] = {0};
+    uint8_t  method,i, tmpbuf[20] = {0};
     uint16_t oad,temp=0;
     uint8_t *p = buf;
     int ret;
-    uint8_t Hour, Min, Sec;
     uint32_t Temp32A,Temp32B,Temp32C,s_index;
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
@@ -109,10 +108,6 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     {
                         return -DAR_UNAUTHORIZED;
                     }
-                    
-                    Hour = ((mbase_cb->Limit_T_Max)/60)/60;
-                    Min = ((mbase_cb->Limit_T_Max)/60)%60;
-                    Sec = (mbase_cb->Limit_T_Max)%60;
                     
                     rtc_get_from_tm(instance,timer);
                     temp = timer[6];
@@ -261,7 +256,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     return (p-buf);
                     break;
                 default:
-                    dar = DAR_OBJECT_UNDEF;
+                    return -DAR_OBJECT_UNDEF;
                     break;
             }
             break;

@@ -499,4 +499,48 @@ extern unsigned short display_oad_to_id(unsigned char *oad, unsigned char *oad_s
 extern int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf);
 extern void send_event_mesg_pro(struct instance_t* instance, struct pipeline_t* task, uint16_t RecordId, uint8_t* payload, int mode);
 
+extern uint8_t Date_Format_Check( unsigned char* Addr );
+extern uint8_t Time_Format_Check( unsigned char* Addr );
+extern uint8_t display_id_to_oad(unsigned short id, unsigned char *oad);
+extern void relay_led_ctl(struct instance_t* instance,  struct pipeline_t* pipeline);
+extern signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
+extern signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
+extern signed char Comm_Other(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
+
+extern uint16_t software_esam_check(struct instance_t* instance, uint8_t *key, uint8_t *rn, uint8_t *data, uint8_t p2, uint16_t datalen, uint8_t *outbuf);
+extern uint16_t esam_key_updata(struct instance_t* instance, uint8_t *buf, uint16_t len);
+extern uint32_t fr_698_current_esam_timeout_get(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index);
+
+extern int record_rollback_after_set_time(struct instance_t* instance);
+extern int cal_freeze_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, uint8_t *depth_ptr, uint32_t oad);
+extern int modify_capture_clr_pro(struct instance_t* instance, uint32_t oad);
+extern int set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t mode);
+extern uint8_t get_activeflag(struct instance_t* instance, uint16_t RecordId);
+extern int meter_clr(struct instance_t* instance);
+extern void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx);
+extern int event_clear_omd_add(struct instance_t* instance, uint32_t omd, uint16_t chn);
+extern int get_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t mode);
+extern int freez_size_sectors_init(struct instance_t* instance, uint32_t oad);
+extern int MeterWr_obj_list_add(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg, uint32_t oad, uint8_t tag);
+extern int event_PowerOn_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
+extern void fr_dl698_power_on(struct instance_t* instance,  struct pipeline_t* pipeline);
+extern int event_LowPower_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern void fr_dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline);
+//extern int GET_record_sel_9(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info,  void *ctx);
+//extern int GET_record_sel_2(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info,  void *ctx);
+//extern int GET_record_sel_1(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info,  void *ctx);
+extern int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cmd, uint32_t oad);
+extern void fr_698_MeterWr_program_judge(struct instance_t* instance, struct pipeline_t* pipeline,  struct message_t* mesg);
+
+extern int fr_handle_disconnect_all_channel(struct instance_t* instance,  struct pipeline_t* pipeline,  uint8_t cilent_index);
+extern int fr_handle_disconnect2(struct instance_t* instance,  struct pipeline_t* pipeline,  uint8_t cilent_index, uint8_t channel);
+extern int check_oad(uint32_t oad);
+
+
+extern void ndv_timer_init(void);
+
+extern void MComp1Init(void);
+extern void esam_698_init(uint8_t power_mode);
+extern void  v85xxp_clear_watchdog(void);
 #endif

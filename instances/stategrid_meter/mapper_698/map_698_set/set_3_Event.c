@@ -68,7 +68,7 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
     uint8_t* p = buf;
     uint8_t* oadlist = tempbuf;
     uint16_t CaptureLen;
-    uint32_t CaptureId;
+//    uint32_t CaptureId;
     uint32_t oad_tmp;
 
     struct record_storage_id_info_t  info;
@@ -81,7 +81,7 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
         return -DAR_OBJECT_NOT_EXIST;
     }
 
-    CaptureId = info.capture_index;
+//    CaptureId = info.capture_index;
     CaptureLen = info.capture_len;// 
     maxnum = (CaptureLen - 1) / 4;
 
@@ -204,11 +204,10 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
 {    
     struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
-    uint16_t i;
-    uint8_t tempbuf[200];
-    uint8_t *des = tempbuf;
+//    uint8_t tempbuf[200];
+//    uint8_t *des = tempbuf;
     uint16_t OI;
-    uint8_t attr, index, class;
+    uint8_t attr, class;
     uint8_t dar = 0;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
@@ -219,7 +218,7 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
 
     OI = get_OAD_OI(id);
     attr = get_OAD_Attribute(id);
-    index = (uint8_t)(id & 0x000000FF);
+//    index = (uint8_t)(id & 0x000000FF);
 
     class = 7;
     if (((OI >= 0x3000) && (OI <= 0x3008)) || (OI == 0x300B))

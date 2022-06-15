@@ -3,6 +3,7 @@
 #include "nidavellir.h"
 #include "applications.h"
 #include "pin_function_def.h"
+#include "lib_conf.h"
 /**********************************************************************/
 /*  液晶显示程序                                                       */
 /***********************************************************************/
@@ -700,6 +701,13 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline, uint8
             mbase_control_block->BackLightTmr = mbase_control_block->backlight_key_time;//按键时,背光点亮
         else
         {
+            if(ANA_GetStatus(ANA_STATUS_COMP1) == 0)
+            {
+                lcd_init(AC_POWER_OFF);
+                mbase_control_block->Key &= ~F_KeyAwake;
+                Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
+                return;
+            }
             Flag.Disp &= ~F_DispStop;
             if( ((mbase_control_block->Key & F_KeyAwake) == 0))// && (Flag.Disp & F_DispOff) )
             {
@@ -775,6 +783,7 @@ void Get_DisplayPage(struct instance_t* instance, struct pipeline_t* pipeline)
             if( (instance->ac_power_statue != AC_POWER_ON) && ((mbase_control_block->AutoPtr == (mbase_control_block->lcd_autodis_list_num-1))) )//自动循环显示一遍后，进入掉电暂显
 			{
                 lcd_init(AC_POWER_OFF);
+                memset((uint8_t *)&mbase_control_block->AutoPtr, 0x00, 10);
                 mbase_control_block->Key &= ~F_KeyAwake;
 				Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
 				return;
@@ -831,7 +840,7 @@ void DispNum( unsigned char* Addr, unsigned char Lenth )
 /***********************************************************************/
 unsigned long GetDispAddrInfo( struct instance_t* instance, unsigned short ID, unsigned char* data, unsigned long Info, unsigned char* SignBuf )
 {
-	unsigned char j=0,D1,D2,D3;
+	unsigned char D1,D2,D3;
     unsigned long oad,temp=0;
 
     D2 = (ID & 0x0FF0)>>4;
@@ -847,7 +856,7 @@ unsigned long GetDispAddrInfo( struct instance_t* instance, unsigned short ID, u
         *SignBuf = Sign_dangqian;//当前
     else
     {
-        *SignBuf = Sign_1 + j;
+        *SignBuf = D2;
         *(SignBuf+1) = Sign_shangyue;
     }
     *(SignBuf+2) = Sign_kWh;//注意：Sign_dot2一定要在Sign_kWh之后的寄存器
@@ -1403,17 +1412,20 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
                     buf[2] = (temp[2]);
                 }
             }
-            if((Info1 & DispData_Sign) == DispData_Sign)
-            {
-                memcpy((unsigned char*)&value, (unsigned char*)idbuf[i].addr, 4);
-                if(value<0)
-                {
-                    value = ~value + 1;
-                }
-                memcpy(buf, (unsigned char*)&value, Len);
-            }
             else
-                memcpy(buf, (unsigned char*)idbuf[i].addr, Len);
+            {
+                if((Info1 & DispData_Sign) == DispData_Sign)
+                {
+                    memcpy((unsigned char*)&value, (unsigned char*)idbuf[i].addr, 4);
+                    if(value<0)
+                    {
+                        value = ~value + 1;
+                    }
+                    memcpy(buf, (unsigned char*)&value, Len);
+                }
+                else
+                    memcpy(buf, (unsigned char*)idbuf[i].addr, Len);
+            }
         }
         memcpy( SignBuf, (unsigned char*)DisplayTab[i].Sign, 9 );
     }
@@ -1431,6 +1443,20 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
 /***********************************************************************/
 void Display(struct instance_t* instance, struct pipeline_t* pipeline)
 {
+  
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    
+    if(instance->ac_power_statue != AC_POWER_ON)
+    {
+        if(ANA_GetStatus(ANA_STATUS_COMP1)==0)
+        {
+            lcd_init(AC_POWER_OFF);
+            memset((uint8_t *)&mbase_control_block->AutoPtr, 0x00, 10);
+            mbase_control_block->Key &= ~F_KeyAwake;
+            Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
+            return;
+        }
+    }
 	//获取显示项ID
     //if(instance->ac_power_statue == AC_POWER_ON)
     {

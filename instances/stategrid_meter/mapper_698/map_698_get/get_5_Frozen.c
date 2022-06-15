@@ -11,7 +11,7 @@ int get_frozen_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, stru
     uint8_t* tmp0, * tmp1;
     uint8_t* p = buf;
     uint8_t* oadlist = tempbuf;
-    uint16_t OI, CaptureLen, PeriodLen, DepthLen;
+    uint16_t OI, CaptureLen;//, PeriodLen, DepthLen;
     uint32_t CaptureId, PeriodId, DepthId;
     struct record_storage_id_info_t  record_id_info;
     int ret;
@@ -26,8 +26,8 @@ int get_frozen_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, stru
     PeriodId = record_id_info.period_index;
     DepthId = record_id_info.depth_index;
     CaptureLen = record_id_info.capture_len;// 
-    PeriodLen = record_id_info.period_len;
-    DepthLen = record_id_info.depth_len;
+//    PeriodLen = record_id_info.period_len;
+//    DepthLen = record_id_info.depth_len;
     maxnum = (CaptureLen - 1) / 4;
 
     //CaptureId = frozen_obj.CaptureId;

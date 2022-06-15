@@ -1,7 +1,7 @@
 #include "nidavellir.h"
 #include "645id_table.h"
 
-extern void  v85xxp_clear_watchdog(void);
+
 /***********************************************************************/
 /*  函数名称：GetCommTable                                             */
 /*  函数功能：根据给定的ID,找出其在CommTab里的位置                    */

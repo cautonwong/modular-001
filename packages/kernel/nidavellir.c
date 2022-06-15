@@ -205,7 +205,7 @@ int nidavellir_run(struct instance_t *instance)
     struct message_t mesg = {0};
     const struct recipe_t *recipe = instance->recipe;
     const struct filter_t *filter; 
-    pid_t pid = 0;
+//    pid_t pid = 0;
     int ret = 0;
     size_t n = 0;
     uint8_t pipeline_n = recipe->pipeline_n;

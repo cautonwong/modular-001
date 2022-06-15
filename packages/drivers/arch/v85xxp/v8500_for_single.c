@@ -562,7 +562,7 @@ void mcu_uart_send_enable(uint8_t ops_enable, size_t uart_index)
     }
 }
 
-uint8_t mcu_uart_set_baud(uint16_t baud, uint8_t uart_index)
+uint8_t mcu_uart_set_baud(uint32_t baud, uint8_t uart_index)
 {
     uint32_t	ClkDiv, pclk;
     UART_TypeDef* UARTx;

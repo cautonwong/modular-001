@@ -64,17 +64,14 @@ const general_get4  general_get4_talble[] =
 
 int get_support_protocol_list(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {
-    uint16_t idl=0;
     uint8_t* p = buf;
-    uint32_t ret, addr = 0;
+    uint32_t addr = 0;
 
     uint8_t index = 0;
     uint8_t *tmp1 = instance->apdu_cache,  *tmp1_cache = instance->apdu_cache;;
     uint8_t *tmp2 = instance->apdu_cache + 100;
     uint8_t  i, count, len, maxlen;
 
-    
-    idl = (uint16_t)(id & 0x0000FFFF);
     index = (uint8_t)(id & 0x000000FF);
 
     //tmp1 = res->tmp_buf;
@@ -143,7 +140,8 @@ int get4300_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
     uint16_t idl=0, tmpid1;
     uint8_t j, i, tmpbuf[13] = {0}, num, Tnum;
     uint8_t* p = buf;
-    uint32_t ret, addr = 0;
+    int16_t ret;
+    uint32_t addr = 0;
     
     idl = (uint16_t)(id & 0x0000FFFF);
     
@@ -386,12 +384,10 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     return (p - buf);
                 }
                 break;
-
                 default:
                     return -DAR_OTHERS_ERROR;
                     break;
             }
-            return -DAR_OTHERS_ERROR;
         }
             break;
         case 0x4001://地址

@@ -2,6 +2,8 @@
 #include "645id_table.h"
 #include "port.h"
 
+extern const  unsigned char FirmWareVersion[20];
+
 const COMMTAB  CommTab[] =
 {
     0x04000401, Comm_Number,                                    CommData_WR + CommData_HEX + CommData_E2PROM + CommData_FACTORY + 6,	//表地址
@@ -12,14 +14,12 @@ const COMMTAB  CommTab[] =
 	0xA6000306,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + CommData_FACTORY + 4,	//表内计量常数
 	0xA6000307,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + CommData_FACTORY + 18,	//交采规格配置
 	0xA6000309,	Un_Cmp_Value,                                   CommData_WR + CommData_HEX + CommData_E2PROM + CommData_FACTORY + 8,	//电压影响量补偿
-	0xA601100F,	0xFFFF,											CommData_R + CommData_HEX + 4, //程序CRC16校验码
-	0xA6011053,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + CommData_PROGRAM + 10,//模板号
 	0xA6011054, 0xFFFF,											CommData_R + CommData_HEX + CommData_E2PROM + 10,//复位次数
 	
 	0xA8000100,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + 1,	//工厂模式
 	0xA8000105, 0xFFFF,											CommData_W + CommData_FACTORY + 0,					//默认参数初始化
 	
-	0xA8001001,	0xFFFF,											CommData_R + CommData_RAM + 20,//厂家内部软件版本号    
+	0xA8001001,	(unsigned int)FirmWareVersion,                  CommData_R + CommData_RAM + 20,//厂家内部软件版本号    
 	0xA8F00001,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + 4,	//继电器报警控制字
 	0xA8F00002,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + 4,	//背光报警控制字
 	0xA8F00003,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + 2,	//电能表类型、功能配置字
@@ -29,7 +29,6 @@ const COMMTAB  CommTab[] =
 	0xA8F000FF,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + 0xFF,//万能读写
 
     0xA8000200, 0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + CommData_FACTORY + 8,
-//	0xA8000201,	ADJ_Other,                                      CommData_WR + CommData_HEX + CommData_E2PROM + CommData_FACTORY + 4,//电表计量参数
 	0xA8000202, 0xFFFF,											CommData_W + CommData_HEX + CommData_FACTORY+ 0,	//初始化校表参数
     0xA8000203,	ADJ_Pgain0,                                     CommData_WR + CommData_HEX + CommData_E2PROM + CommData_FACTORY + 8,//A相校表参数
 	0xA8000204,	ADJ_Pgain1,                                     CommData_WR + CommData_HEX + CommData_E2PROM + CommData_FACTORY + 8,//B相校表参数

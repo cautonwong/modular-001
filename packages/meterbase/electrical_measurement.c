@@ -407,7 +407,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
         pf = pa / (u*i);
         if(pf>1) pf = 1;
         if(pf<-1) pf = -1;
-        mbase_control_block->power_factor = pf * 1000;
+        mbase_control_block->power_factor = (int32_t)(pf * 1000);
     }
     else
     {
@@ -501,8 +501,8 @@ void Electrical_measurement_poweron(struct instance_t* instance, struct pipeline
     mbase_control_block->volt_78 = AS_Un*0.78;   //78%电压
     mbase_control_block->volt_125 = AS_Un*1.25;  //125%电压
     
-    mbase_control_block->curt_33 = AS_Ib*0.0033;  //0.3%电流
-    mbase_control_block->power_33 = AS_P*0.0033;  //启动功率0.33%*P
+    mbase_control_block->curt_33 = (uint32_t)(AS_Ib*0.0033);  //0.3%电流
+    mbase_control_block->power_33 = (uint32_t)(AS_P*0.0033);  //启动功率0.33%*P
 }
 
 
