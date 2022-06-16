@@ -2,22 +2,123 @@
 #include "645id_table.h"
 #include "ndvh_rn8209.h"
 
-/*
-//错误信息字定义
-#define 	RS_ERR_LEN		        	0x01//数据域长度错误,其它错误
-#define 	RS_ERR_OTHERS		       	0x01//其它错误
-#define 	RS_ERR_ID		        	0x02//ID错误
-#define 	RS_ERR_PASS		        	0x04//密码错/未授权
-#define 	RS_ERR_WR		        	0x04//读写权限
-#define 	RS_ERR_BAUT		        	0x08//波特率不能更改
-#define     RS_ERR_SEAOV                0x10//年时区数超
-#define     RS_ERR_TOUOV                0x20//日时段数超
-#define     RS_ERR_FEEOV                0x40//费率数超
-*/
 extern unsigned char GetCommTable( unsigned long ID );
 struct factor_adj_meter_t factory3;
 extern void emu_calibration_clear(struct instance_t* instance);
 extern void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t *adj_data);
+extern const struct dev_info_t rn8209_dev;
+
+int rn8209c_set( struct instance_t* instance, uint8_t *p_rx )
+{
+    uint8_t addr=0,lenth=0,temp_buffer[8]={0};
+    int16_t tmp,temp[30]={0,};
+    uint32_t s_index=0,data=0;
+    uint8_t* buf = p_rx;
+    
+    addr = *(buf+16);//地址
+    memcpy((uint8_t*)&data, (uint8_t*)(buf+12), 2);//数据
+    
+    if((addr==0x07)||(addr==0x08))//相位寄存器
+        lenth = 1;
+    else
+        lenth = 2;
+    
+    if(addr<=0x17)//00~17H,需要效验
+    {
+        CmdRn8209(CMD_WR_EN , &rn8209_dev);
+        if(addr == 0x17)
+        {
+            rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , EMUCON2 , 2 , &tmp);
+            if(data == 0x01)
+            {
+                data = tmp | 0x0100;
+            }
+            else
+            {
+                data = tmp & 0xFEFF;
+            }
+        }
+        rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, addr, lenth, (uint8_t*)&data);
+        memcpy((uint8_t*)&tmp, (uint8_t*)&data, lenth);
+        CmdRn8209(CMD_WR_DIS , &rn8209_dev);
+        
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Pgain0);    //火线增益、相位
+        nd_get_index(instance, s_index, temp_buffer, 8); 
+        switch(addr)//存入EEPROM
+        {
+            case 0x05://增益
+                temp_buffer[0] = (uint8_t)data;
+                temp_buffer[1] = (uint8_t)(data>>8);
+                break;
+            case 0x07://相位
+                temp_buffer[2] = (uint8_t)data;
+                break;
+            case 0x0A://功率偏置
+                temp_buffer[4] = (uint8_t)data;
+                temp_buffer[5] = (uint8_t)(data>>8);
+                break;
+            case 0x17://相位微调
+                temp_buffer[3] = (uint8_t)(data>>8);
+                break;
+        }
+        nd_set_index(instance, s_index, temp_buffer, 8); 
+        
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Other);    
+        nd_get_index(instance, s_index, temp_buffer, 4);
+        switch(addr)
+        {
+            case 0x03:  //启动阀值
+                temp_buffer[0] = (uint8_t)data;
+                temp_buffer[1] = (uint8_t)(data>>8);
+                break;
+            case 0x02:  //hfconst
+                temp_buffer[2] = (uint8_t)data;
+                temp_buffer[3] = (uint8_t)(data>>8);
+                break;
+        }
+        nd_set_index(instance, s_index, temp_buffer, 4);
+    }
+    else if(addr >= 0xA0)//0.5L 自热影响量
+    {
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Heat_Value_05L);    
+        nd_get_index(instance, s_index, (uint8_t*)&temp[0], 30);
+        memcpy((uint8_t*)&temp[addr-0xA0], (uint8_t*)(buf), 2);
+        nd_set_index(instance, s_index, (uint8_t*)&temp[0], 30);
+    }
+    else if(addr>=0x90)//自热影响
+    {
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Heat_Value_10L);    
+        nd_get_index(instance, s_index, (uint8_t*)&temp[0], 30);
+        memcpy((uint8_t*)&temp[addr-0x90], (uint8_t*)(buf), 2);
+        nd_set_index(instance, s_index, (uint8_t*)&temp[0], 30);
+    }
+    else if(addr>=0x80)//电压影响量
+    {
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Un_Cmp_Value);    
+        nd_get_index(instance, s_index, (uint8_t*)&temp[0], 8);
+        switch(addr)
+        {
+            case 0x80:
+                memcpy((uint8_t*)&temp[0], (uint8_t*)&data, 2);
+                break;
+            case 0x81:
+                memcpy((uint8_t*)&temp[1], (uint8_t*)&data, 2);
+                break;
+            case 0x82:
+                memcpy((uint8_t*)&temp[2], (uint8_t*)&data, 2);
+                break;
+            case 0x83:
+                memcpy((uint8_t*)&temp[3], (uint8_t*)&data, 2);
+                break;
+            default:
+                return false;
+                break;
+        }
+        nd_set_index(instance, s_index, (uint8_t*)&temp[0], 8);
+    }
+    return true;
+}
+
 /***********************************************************************/
 /*  函数名称：CommWrite_SpecProc                                       */
 /*  函数功能：关于通讯写的特殊处理                                     */
@@ -60,6 +161,9 @@ unsigned char CommWrite_SpecProc( struct instance_t* instance,  unsigned char* p
 				break;
 		case 0xA800020A://K系数
 				break;
+        case 0xA800020C://微调与补偿,计量相关万能写
+                rn8209c_set(instance, prx);
+                break;
 		case 0xA6000305://启动阈值和脉冲速率
                 memcpy(buf, prx+12, 4);
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Other);//写入脉冲速率
