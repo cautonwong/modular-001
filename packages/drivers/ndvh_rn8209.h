@@ -125,5 +125,6 @@ extern unsigned char Rn8209AdjParaSet(struct Rn8209AdjSet_t* Set , const struct 
 extern unsigned char Rn8209DeviceIDCheck();     //RN8209èŠ¯ç‰‡IDæ£€æŸ¥
 extern unsigned char Rn8209InitConfig();        //RN8209èŠ¯ç‰‡åŸºæœ¬å‚æ•°è®¾ç½®æ ¡è¡¨
 extern void MeasureValue(struct dev_info_t* dev);//ä¸»ç¨‹åºè°ƒç”¨å®žæ—¶æ•°æ®è®¡ç®—
+extern unsigned char CmdRn8209(unsigned char cmd  , const struct dev_info_t* dev);
 
 #endif

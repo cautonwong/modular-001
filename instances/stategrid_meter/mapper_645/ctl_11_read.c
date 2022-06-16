@@ -1,6 +1,7 @@
 #include "nidavellir.h"
 #include "645id_table.h"
 
+extern const struct dev_info_t rn8209_dev;
 
 /***********************************************************************/
 /*  函数名称：GetCommTable                                             */
@@ -39,16 +40,116 @@ unsigned long SoftwareCHK(void)
 	return FFFFCHK;
 
 }
+typedef struct 
+{
+    uint8_t address;
+    uint8_t len;
+}meterchip;
+const  meterchip  Mtable[8]=
+{
+    0x20,   2,  //快速有功脉冲计数器
+    0x22,   3,  //通道A电流的有效值
+    0x23,   3,  //通道B电流的有效值
+    0x24,   3,  //电压有效值
+    0x26,   4,  //有功功率A
+    0x27,   4,  //有功功率B
+    0x28,   4,  //无功功率
+    0x2d,   3,  //计量状态及校验和寄存器
+};
 
+
+int rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx)
+{
+    uint8_t addr=0,lenth=0,i;
+    int16_t tmp[15]={0,};
+    uint32_t s_index=0,data=0;
+    //uint8_t* buf = p_tx;
+    
+    addr = *(p_rx+4);
+    *p_tx = addr;
+    memset( p_tx+1,0x00,4);
+    if(addr >= 0xA0)    //自热影响量 0.5L
+    {
+        if(addr >= 0xAF)	return false;
+        
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Heat_Value_05L);
+        nd_get_index(instance, s_index, (uint8_t*)&tmp[0], 30); //读取EE中的补偿值
+        memcpy( (p_tx+1), (uint8_t*)&tmp[addr-0x90], 2);
+        return 2;
+    }
+    else if(addr >= 0x90)//自热影响量 1.0L
+    {
+        if(addr >= 0x9F)	return false;
+
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Heat_Value_10L);
+        nd_get_index(instance, s_index, (uint8_t*)&tmp[0], 30); //读取EE中的补偿值
+        memcpy( (p_tx+1), (uint8_t*)&tmp[addr-0x90], 2);
+        return 2;
+    }
+    else if(addr >= 0x80)//电压影响量
+    {
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Un_Cmp_Value);
+        nd_get_index(instance, s_index, (uint8_t *)&tmp[0], 8); //读取EE中的补偿值
+        switch(addr)
+        {
+            case 0x80://80%
+                memcpy( p_tx+1, (uint8_t*)&tmp[0], 2);
+                break;
+            case 0x81://90%
+                memcpy( p_tx+1, (uint8_t*)&tmp[1], 2);
+                break;
+            case 0x82://110%
+                memcpy( p_tx+1, (uint8_t*)&tmp[2], 2);
+                break;
+            case 0x83://115%
+                memcpy( p_tx+1, (uint8_t*)&tmp[3], 2);
+                break;
+            default:
+                return false;
+                break;
+        }
+        return 2;
+    }
+    else if(addr <= 0x17)
+    {
+        if((addr==0x07)||(addr == 0x08))
+            lenth = 1;
+        else
+            lenth = 2;
+        rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , addr , lenth , &data);
+        
+        if(addr == 0x17)
+        {
+            data = data>>8;
+        }
+        memcpy( p_tx+1, (uint8_t*)&data, lenth);
+        
+        return lenth;
+    }
+    else
+    {
+        for(i=0; i<8; i++)
+        {
+            if(addr == Mtable[i].address)
+            {
+                rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , addr , Mtable[i].len , &data);
+                memcpy( p_tx+1, (uint8_t*)&data, lenth);
+                return lenth;
+            }
+        }
+    }
+    return -1;
+}
 /***********************************************************************/
 /*  函数名称：Direct_Read                                          		*/
 /*  函数功能：特殊数据,直接读取                                       */
 /*  输入参数：ID:通讯ID                                                */
 /*  输出参数：1为特殊数据,其它为非特殊数据                            */
 /***********************************************************************/
-int Direct_Read( unsigned long ID , uint8_t* p_tx)
+int Direct_Read( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
 	unsigned long StAddr;
+    unsigned char len;
 
 	switch( ID )
 	{
@@ -57,6 +158,10 @@ int Direct_Read( unsigned long ID , uint8_t* p_tx)
 			memcpy( (unsigned char*)&p_tx, (unsigned char*)&StAddr, 4 );
 			return 4;
 			break;
+        case 0xA800020C://微调与补偿
+            len = rn8209c_get(instance, p_rx, p_tx);
+            return len;
+            break;
 		default:
 			return -1;
 			break;
@@ -141,7 +246,7 @@ signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx,
         return -1;
     }
     
-    if(*(p_rx-1) != 0x04)   //扩展命令——校表
+    if((*(p_rx-1) != 0x04) && (*(p_rx-1) != 0x05))   //扩展命令——校表
     {
         Err_Byte = adj_meter(instance, p_rx);
         if(Err_Byte != 0)
@@ -158,11 +263,11 @@ signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx,
 	memcpy((unsigned char*)&ID, p_rx, 4);
     
 
-	Err_Byte = Direct_Read( ID , p_tx);//根据ID,直接读取数据
+	Err_Byte = Direct_Read( instance, ID, p_rx, p_tx);//根据ID,直接读取数据
 	if( Err_Byte != -1)
     {
-        *p_tx = Err_Byte;
-        return 1;
+        *len = 9;
+        return 0;
     }
     
 
