@@ -220,16 +220,16 @@ const struct record_item_t  record_item[] =
     { PowerAbnormalS,       PowerAbnormalE,             600,       10 },//  0x302C    电能表电源异常事件 
     { RTCErrS       ,       RTCErrE,                    600,       10 },//  0x302E    电能表时钟故障事件 
     { EmuErrS       ,       EmuErrE,                    600,       10 },//  0x302F    电能表计量芯片故障事件
-    { BroadcastTimeS,       0,                          600,       10 },//  0x303C    广播校时事件 
+    { BroadcastTimeS,       0,                         3560,      100 },//  0x303C    广播校时事件 
     { ZeroLineErrS  ,       ZeroLineErrE,               600,       10 },//  0x3040    零线电流异常事件 
 
     { BillFreeze,           0,                         4000,       12 },//  0x5005      结算日冻结 //待调整
-    { SeasonTabCutFreeze,   0,                         1000,        3 },//  0x5008      时区表切换冻结 
-    { DayTabCutFreeze   ,   0,                         1000,        2 },//  0x5009      日时段表切换冻结    
-    { FeePriceCutFreeze ,   0,                         1000,        2 },//  0x500A      费率电价切换冻结  
-    { StepCutFreeze     ,   0,                         1000,        2 },//  0x500B      阶梯切换冻结
-    { StepBillFreeze    ,   0,                         1000,        2 },//  0x5011      阶梯结算冻结
-    { InstantFreeze     ,   0,                         1000,        3 },//  0x5000      瞬时冻结
+    { SeasonTabCutFreeze,   0,                          400,        3 },//  0x5008      时区表切换冻结 
+    { DayTabCutFreeze   ,   0,                          400,        2 },//  0x5009      日时段表切换冻结    
+    { FeePriceCutFreeze ,   0,                          100,        2 },//  0x500A      费率电价切换冻结  
+    { StepCutFreeze     ,   0,                          100,        2 },//  0x500B      阶梯切换冻结
+    { StepBillFreeze    ,   0,                          100,        2 },//  0x5011      阶梯结算冻结
+    { InstantFreeze     ,   0,                          700,        3 },//  0x5000      瞬时冻结
 
 };
 
