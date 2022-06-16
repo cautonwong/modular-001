@@ -1176,7 +1176,7 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
     {
         if((mode == START_MODE))
         {
-            event_scheme = 1;
+            event_scheme = 1; 
         }
         else
         {

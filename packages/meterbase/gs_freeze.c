@@ -470,7 +470,10 @@ int day_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task
     nd_get_index(instance, s_index, &tmp[0], 3);
     
     period =  buf_to_uint16_msb(&tmp[1]);
-    period = period;
+    if (period == 0)
+    {
+        period = 1;
+    }
 
 
     ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->v_powerdown_tm), sizeof(ctrl_block->v_powerdown_tm));
@@ -520,6 +523,10 @@ int day_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task
         
     while(recently <= now)
     {
+        if(now == 0)
+        {
+            return 0;
+        }
         if (recently > last)
         {
             last = recently;
