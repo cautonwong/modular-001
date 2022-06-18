@@ -204,11 +204,12 @@ struct mbase_control_block_t
         //电能数据
     uint32_t active_p[MAX_FEE_NO+1];
     uint32_t active_n[MAX_FEE_NO+1];
-    uint32_t month_active_p[MAX_FEE_NO+1];
-    uint32_t month_active_n[MAX_FEE_NO+1];
+    //uint32_t month_active_p[MAX_FEE_NO+1];
+    //uint32_t month_active_n[MAX_FEE_NO+1];
     uint16_t active_p_dec[MAX_FEE_NO+1];
     uint16_t active_n_dec[MAX_FEE_NO+1];
-    
+    uint16_t MonthEnegery_dec;
+    uint32_t  MonthEnegery;   //当前月度用电量    
     //RELAY
     uint8_t cmd;	    //控制命令  0x1A , 0x1B....
     uint8_t mode;     //拉合闸方式（直接、允许）
@@ -237,8 +238,7 @@ struct mbase_control_block_t
     
 
     uint16_t  trigger_insfreeze_delay_sec; //触发瞬时冻结 延时时间 sec  FFFF无效
-    
-    uint32_t  MonthEnegery;   //当前月度用电量
+
         //需量数据
 
     //事件相关
