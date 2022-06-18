@@ -220,18 +220,16 @@ uint16_t axdr_get_len(const uint8_t *data)
         break;
 
     case TYPE_SID:
-        len = 4;
-        if(TYPE_octet_string == data[len])
-            type_len = axdr_decode(data[len], data+len, &data_len);
+        len = 5;
+        type_len = axdr_decode(data[len], data+len, &data_len);
         return (len + type_len + data_len);
         break;
 
     case TYPE_SID_MAC:
-        len = 4;
-        type_len = axdr_decode(data[len], data+len, &data_len);
-        len += type_len + data_len;
-        type_len = axdr_decode(data[len], data+len, &data_len);
-        return (len + type_len + data_len);
+        data_len = axdr_get_len(data+len);
+        len += data_len;
+        data_len += axdr_get_len(data+len);
+        return data_len;
         break;
 
     case TYPE_ROAD:
@@ -255,13 +253,7 @@ uint16_t axdr_get_len(const uint8_t *data)
         }
         return len;
         break;
-
-#if 0
-    case DTC_HIGH_ENERGY_INTEGER:
-    case DTC_HIGH_ENERGY_UNSIGNED:
-        p += 5;
-        break;
-#endif
+        
     default:
         break;
     }

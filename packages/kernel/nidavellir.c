@@ -275,34 +275,25 @@ struct pipeline_t* get_pipeline(struct instance_t* instance, pid_t id)
 int fr_uart_timeout(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     int ret = 0;
-
-    if (fifoBuf_getUsed(&instance->pipe_uart) > 0)
-    {
-        uint8_t byte = fifoBuf_getByte(&instance->pipe_uart);
-        switch(byte)
-        {
-                case IRQ_RS485_RX_TM_OUT:
-                    if(pipeline->id == pid_rx_698){
-                        ret = 1;
-                    }
-                    break;
-                case IRQ_IR_RX_TM_OUT:
-                    if(pipeline->id == pid_ir_rx_698)
-                    {
-                        ret = 1;
-                    }
-                    break;
-                case IRQ_PLC_RX_TM_OUT:
-                    if(pipeline->id == pid_plc_rx_698)
-                    {
-                        ret = 1;
-                    }
-                    break;
-                default:
-                    break;
+    uint8_t index = 0xff;
+    
+    if(pipeline->id == pid_rx_698){
+        index = 0;
+    }else if(pipeline->id == pid_ir_rx_698){
+        index = 2;
+    }else if(pipeline->id == pid_plc_rx_698){
+        index = 1;
+    }else{
+        return 1;
+    }
+    
+    if (fifoBuf_getUsed(&instance->pipe_uart[index]) > 0){
+        uint8_t byte = fifoBuf_getByte(&instance->pipe_uart[index]);
+        if(IRQ_UART_RX_TM_OUT == byte){
+            ret = 1;
         }
     }
-                  
+       
     return ret;
 }
 
@@ -343,10 +334,9 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     for (size_t i = 0; i < pipeline_n; i++)
     {
         pipeline = recipe->pipelines[i];
-        if((pipeline->id == pid_rx_698) ||(pipeline->id == pid_ir_rx_698) ||(pipeline->id == pid_plc_rx_698)){
-            if(fr_uart_timeout(instance, pipeline, &mesg) == 0){
-                continue;
-            }                
+
+        if(fr_uart_timeout(instance, pipeline, &mesg) == 0){
+            continue;               
         }
         
         if (fifoBuf_getUsed(pipeline->in_queue) >= 12)

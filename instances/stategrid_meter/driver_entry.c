@@ -229,6 +229,7 @@ void timing_ftr(void *para)
 void rs485_receive_timeout(void)
 {
     fifoBuf_putByte(&irq_fifo, IRQ_RS485_RX_TM_OUT);
+    //fifoBuf_putByte(&irq_fifo, IRQ_PLC_RX_TM_OUT);
 }
 
 void plc_receive_timeout(void)
@@ -358,13 +359,13 @@ void irq_transform_to_instance(struct instance_t* instance)
                 fifoBuf_putByte(&instance->pipe_key, IRQ_PMU);
                 break;
            case IRQ_RS485_RX_TM_OUT:
-                fifoBuf_putByte(&instance->pipe_uart, IRQ_RS485_RX_TM_OUT);
+                fifoBuf_putByte(&instance->pipe_uart[UART_RS4851_CHL], IRQ_UART_RX_TM_OUT);
                 break;
            case IRQ_PLC_RX_TM_OUT:
-                fifoBuf_putByte(&instance->pipe_uart, IRQ_PLC_RX_TM_OUT);
+                fifoBuf_putByte(&instance->pipe_uart[UART_MODULE_CHL], IRQ_UART_RX_TM_OUT);
                 break;
            case IRQ_IR_RX_TM_OUT:
-                fifoBuf_putByte(&instance->pipe_uart, IRQ_IR_RX_TM_OUT);
+                fifoBuf_putByte(&instance->pipe_uart[UART_IR_CHL], IRQ_UART_RX_TM_OUT);
                 break;
            default:
                 break;

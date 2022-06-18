@@ -215,6 +215,10 @@ int communication_channel_init(struct instance_t* p_instance, struct pipeline_t 
     fifoBuf_init(pl_tx->in_queue, nd_malloc(p_instance, control_block_698_name, pl_tx_698_len), pl_tx_698_len);
     pl_tx->out_queue = pl_rx->out_queue;
     
+    if(chl_type<4){
+        uint8_t* buf = nd_malloc(p_instance, control_block_cache, 16);
+        fifoBuf_init(&p_instance->pipe_uart[chl_type], buf, 16);
+    }
     communication_chlx_init((struct fifo_t*)pl_tx->out_queue, (struct fifo_t*)pl_rx->in_queue, chl_type , p_instance);
     return true;
 }
@@ -277,8 +281,6 @@ int baremetal_instance_entry_main(int argc, char** argv)
     buf = nd_malloc(instance, control_block_cache, 8);
     fifoBuf_init(&instance->pipe_key, buf, 8);
     
-    buf = nd_malloc(instance, control_block_cache, 8);
-    fifoBuf_init(&instance->pipe_uart, buf, 8);
     instance->apdu_cache = nd_malloc(instance, control_block_cache, cache_max);
         
     /////////////////////////////////////申请一个698应用的BLOCK = 03/////////////////////////////////////////////////
@@ -286,7 +288,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     {
         return -1;
     }
-    
+
     communication_channel_init(instance, &pl_rx_698, &pl_tx_698, UART_RS4851_CHL);
     //communication_channel_init(instance, &pl_plc_rx_698, &pl_plc_tx_698 , UART_MODULE_CHL);
     //communication_channel_init(instance, &pl_ir_rx_698, &pl_ir_tx_698, UART_IR_CHL);
