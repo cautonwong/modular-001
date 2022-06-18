@@ -341,9 +341,14 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , POWERPA , 4 , &temp);
     mbase_control_block->active_power = (int32_t)(mbase_control_block->k_p * temp);
     
-    if(abs(mbase_control_block->current_l) < MIN_CURRENT)
+    if(abs(mbase_control_block->current_l) < mbase_control_block->curt_33)
     {
         mbase_control_block->current_l = 0;
+        mbase_control_block->active_power = 0;
+    }
+    
+    if(abs(mbase_control_block->active_power) < mbase_control_block->power_33)
+    {
         mbase_control_block->active_power = 0;
     }
     

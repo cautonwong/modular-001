@@ -82,13 +82,7 @@ void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
 	if (true == get_activeflag(instance, OverCurrentAS))  //过流
 		mbase_cb->run_state[4] |= Status_ImaxOver;
 	else
-		mbase_cb->run_state[4] &= ~Status_ImaxOver;
-    
-	if( mbase_cb->power_dir == 1 ) //有功功率反向
-		mbase_cb->run_state[4] |= Status_Rev;
-	else
-		mbase_cb->run_state[4] &= ~Status_Rev;
-    
+		mbase_cb->run_state[4] &= ~Status_ImaxOver;  
     
     /***************** 运行状态字3 *****************/
 	if( mbase_cb->irauthen_tmr > 0 )    //红外认证
@@ -101,11 +95,6 @@ void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
 	else
 		mbase_cb->run_state[3] &= ~Status_Authen;
     
-    if(mbase_cb->sta & 0x01)    //保电
-        mbase_cb->run_state[3] |= Status_BaoDian;
-    else
-        mbase_cb->run_state[3] &= ~Status_BaoDian;
-    
     //if(mbase_cb->sta & 0x18)	    //预跳闸
     if(mbase_cb->sta & F_RemoteAlarm)
 		mbase_cb->run_state[3] |= Status_RelayAlm;
@@ -117,15 +106,21 @@ void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
 	else
 	   	mbase_cb->run_state[3] &= ~Status_RelayCmd;
     
+    if(mbase_cb->sta & 0x01)    //保电
+    {
+        mbase_cb->run_state[3] |= Status_BaoDian;
+        mbase_cb->run_state[3] &= ~Status_RelayCmd;
+    }
+    else
+        mbase_cb->run_state[3] &= ~Status_BaoDian;
+    
 	if( RELAY_CHECK() == 1) //继电器状态
 		mbase_cb->run_state[3] |= Status_RelayOff;
 	else 
 		mbase_cb->run_state[3] &= ~Status_RelayOff;
     
-    mbase_cb->run_state[3] |= Status_KaiHuBen;  //本地未开户
-	
-    mbase_cb->run_state[3] |= Status_KaiHuYuan; //远程未开户
-    
+//    mbase_cb->run_state[3] |= Status_KaiHuBen;  //本地未开户
+//    mbase_cb->run_state[3] |= Status_KaiHuYuan; //远程未开户
     
     /***************** 运行状态字7 *****************/
 	if (true == get_activeflag(instance, CoverOpenS))   //开表盖
@@ -137,14 +132,4 @@ void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
 		mbase_cb->run_state[7] |= Status_Poweroff;
 	else
 		mbase_cb->run_state[7] &= ~Status_Poweroff;
-    
-    if(mbase_cb->cmd_dostate != 0)
-    {
-        mbase_cb->cmd_errstate = 0;
-    }
-    if(mbase_cb->cmd_errstate != 0)
-    {
-        mbase_cb->cmd_dostate = 0;
-    }
-    
 }

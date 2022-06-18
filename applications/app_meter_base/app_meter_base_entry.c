@@ -153,7 +153,9 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             fr_dl698_power_on(instance, pipeline);
             mbase_control_block->power_on_sec_accum = 0;
             mbase_cb->Fee |= (F_TOUChange+F_ChangeTmOn+F_DAYTABChange);;    //获取当前时区时段费率
-
+            mbase_cb->cmd_dostate = 0;  //上电清除控制命令状态字和错误状态字
+            mbase_cb->cmd_errstate = 0;
+            mbase_control_block->alarmmin = 0;  //上电后清零
             
             freeze_power_on_pro(instance, pipeline, mesg);
             //事件

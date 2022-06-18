@@ -31,6 +31,7 @@ void Relay_Sec_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
 
 static unsigned char switchon = 1;
 static unsigned char lastswitchsta = 0xaa;
+static unsigned char key_relay_on_tick = 0;
 
 //每秒调用
 void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
@@ -41,16 +42,45 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
     
 //    if(mbase_control_block->voltage_ac > )    return; //电压过高过低不执行
     
-    if((mbase_control_block->sta == F_RemoteRelayOn) || (mbase_control_block->sta == F_RemoteNull))    //保电或正常用电
+    if((mbase_control_block->sta & F_RemoteRelayOn) || (mbase_control_block->sta == F_RemoteNull))    //保电或正常用电
     {
-        switchon = 1;
+        if((mbase_control_block->sta & F_RemoteRelayOn) && (mbase_control_block->sta & F_RemoteRelayOff))   //拉闸后保电
+        {
+            if(KeyPortCheck == 0)    //按键3秒
+            {
+                if(key_relay_on_tick < 3)   key_relay_on_tick++;
+                if(key_relay_on_tick >= 3)
+                {
+                    switchon = 1;
+                    mbase_control_block->sta &= ~F_RemoteRelayOff;
+                    key_relay_on_tick = 0;
+                }
+            }
+            else
+            {
+                key_relay_on_tick = 0;
+            }
+        }
+        else
+        {
+            switchon = 1;
+        }
     }
     else if(mbase_control_block->sta & F_RemoteRelayOnAllow)   //合闸允许
     {
-        if(KeyPortCheck)    //按键3秒
+        if(KeyPortCheck == 0)    //按键3秒
         {
-            switchon = 1;
-            mbase_control_block->sta &= ~F_RemoteRelayOnAllow;
+            if(key_relay_on_tick < 3)   key_relay_on_tick++;
+            if(key_relay_on_tick >= 3)
+            {
+                switchon = 1;
+                mbase_control_block->sta &= ~F_RemoteRelayOnAllow;
+                key_relay_on_tick = 0;
+            }
+        }
+        else
+        {
+            key_relay_on_tick = 0;
         }
     }
     else if(mbase_control_block->sta & F_RemoteRelayOff)   //拉闸
@@ -116,17 +146,18 @@ void relay_led_ctl(struct instance_t* instance,  struct pipeline_t* pipeline)
         return;
     }
     
-    if((mbase_control_block->current_l == 0) && (relay_off_chk >= Relay_Ck_Time))//功率为0且继电器检测为断开，拉闸灯亮
+    if((mbase_control_block->active_power == 0) && (relay_off_chk >= Relay_Ck_Time))//功率为0且继电器检测为断开，拉闸灯亮
     {
         mbase_control_block->relay_true_sta = 1;
     }
     
-    if((mbase_control_block->current_l > 0) || (relay_on_chk >= Relay_Ck_Time)) //有电流或检测到继电器为合，灯灭
+    if((mbase_control_block->active_power > 0) || (relay_on_chk >= Relay_Ck_Time)) //有电流或检测到继电器为合，灯灭
     {
         mbase_control_block->relay_true_sta = 0;
     }
 
-    if(mbase_control_block->sta & F_RemoteRelayOnAllow) //合闸允许状态，闪烁
+    if((mbase_control_block->sta & F_RemoteRelayOnAllow) 
+      || ((mbase_control_block->sta & F_RemoteRelayOn) && (mbase_control_block->sta & F_RemoteRelayOff)))//合闸允许状态，闪烁
     {
         if(instance->time.tm_sec & 0x01)
         {

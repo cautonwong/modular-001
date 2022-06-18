@@ -441,7 +441,7 @@ struct format_conversion_t
 #define     MIN_VOLTAGE     500 //50.0v
 #define     UN_VOLTAGE      2200 //220.0v
 #define     MAX_CURRENT     120000 //120.000A
-#define     MIN_CURRENT     15     //10mA
+#define     MIN_CURRENT     17     //10mA
 
 #define     AS_Un      2200
 #define     AS_Ib      5000

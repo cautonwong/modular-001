@@ -22,6 +22,8 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
     switch (oad)
     {
         case 0x8000://遥控
+            mbase_cb->cmd_errstate = 0;
+            mbase_cb->cmd_dostate = 0;
             if(method != 0x83)  //明文合闸除外
             {
                 if( mbase_cb->mac_suspend_state == true )   //挂起
@@ -75,7 +77,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                             mbase_cb->cmd_errstate = 0x0400;//bit5 跳闸失败（保电）
                         else
                             mbase_cb->cmd_errstate = 0x0200;//bit6 跳闸自动恢复失败（保电）
-                        return -DAR_OTHERS_ERROR;//保电   
+                        return -DAR_UNAUTHORIZED;//保电   
                     }
                     if(mbase_cb->limitmin == 0)//拉闸
                     {
@@ -149,8 +151,10 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     else
                     {
                         mbase_cb->sta |= F_RemoteRelayOnDirect; //直接合闸
+                        mbase_cb->sta &= ~F_RemoteRelayOnAllow;
                         mbase_cb->cmd_dostate = 0x8000;  //bit0;
                     }
+                    mbase_cb->sta &= ~(F_RemoteGaoJing0 + F_RemoteGaoJing1);
                     p++;
                     if(method == 0x83) p = p+10;
                     mbase_cb->sta &= ~F_RemoteRelayOff;
@@ -162,6 +166,8 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
             }
             break;
         case 0x8001://保电
+            mbase_cb->cmd_errstate = 0;
+            mbase_cb->cmd_dostate = 0;
             switch(method)
             {
                 case 0x7F://投入保电

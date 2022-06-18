@@ -994,6 +994,7 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 				Lcdcon[13] |= DS_Chr_LaZha;
             if(mbase_control_block->factor_mode == true)//工厂模式
                 Lcdcon[17] |= DS_Chr_KeyProgram;
+            Flag.Disp |= F_DispFlash;
 		}
 		else
 		{
@@ -1003,12 +1004,12 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 				Lcdcon[13] &= ~DS_Chr_LaZha;
             if(mbase_control_block->factor_mode == true)
                 Lcdcon[17] &= ~DS_Chr_KeyProgram;
-
+            Flag.Disp &= ~F_DispFlash;
 		}
 		//继电器状态指示
 //		if( (Flag.Relay & F_StateOff) && (Flag.Relay & F_RelayOff) 
 //		&& (((Credit_Block.Credit.Amount+MeterPara_Block.MeterPara.OverdraftCredit) <= 0) || ( (Credit_Block.Credit.Amount <= MeterPara_Block.MeterPara.RelayOnCredit)&&(Flag.MeterState & F_RelayOffed) ) || (Flag.RemoteCmd & F_RemoteRelayOff))) 
-		if(mbase_control_block->sta & F_RemoteRelayOff)   //拉闸
+		if((mbase_control_block->sta & F_RemoteRelayOff) || (mbase_control_block->sta & F_RemoteGaoJing0) || (mbase_control_block->sta & F_RemoteGaoJing1))//拉闸
         {
             if((mbase_control_block->alarmmin == 0) && (mbase_control_block->imaxmin == 0))   Lcdcon[13] |= DS_Chr_LaZha;
         }
