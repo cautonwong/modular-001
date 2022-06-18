@@ -126,11 +126,11 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     struct fifo_t* cache = ctx->apdu;
 
     uint8_t *p_apdu = cache->buf_ptr;
-    uint8_t *p_password = cache->buf_ptr;
+    //uint8_t *p_password = cache->buf_ptr;
 	uint8_t buf[70];
     uint8_t len_len = 0;
-    uint16_t data_len = 0;
-    uint16_t offset = 0;
+    //uint16_t data_len = 0;
+    //uint16_t offset = 0;
     uint8_t cilent_index = 0;
     uint32_t esam_session_timeout = 0xffffffffU;
     struct connect_request_t connect = {0x1600, 
@@ -341,7 +341,7 @@ int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipelin
     uint8_t cilent_index = 0;
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
-    uint8_t *apdu_rx = ctx->apdu_d_rx;
+    //uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t* p = cache->buf_ptr;
     uint16_t offset= 0;
     
@@ -446,7 +446,7 @@ const struct connect_request_t cfg_connect = {
 int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* cache = ctx->apdu;
+    //struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct connect_request_t connect = {0};
     int result = DAR_OTHERS_ERROR;

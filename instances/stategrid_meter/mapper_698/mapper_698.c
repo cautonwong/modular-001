@@ -770,8 +770,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
     uint8_t SaveDevice, SaveBlock;
 //    uint8_t schem = get_OAD_Schem(oad);
     uint8_t temp = 0;
-    uint16_t OI;
-    uint8_t attr = 0, class = 7, scheme = 0;
+    //uint16_t OI;
+    uint8_t /*attr = 0, oadclass = 7, */scheme = 0;
 
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -782,13 +782,9 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
 
     memset((uint8_t*)info, 0, sizeof(struct record_storage_id_info_t));
     
-    OI = get_OAD_OI(oad);
-    attr = get_OAD_Attribute(oad);
+    //OI = get_OAD_OI(oad);
+    //attr = get_OAD_Attribute(oad);
     scheme = get_OAD_Schem(oad);
-    if (((OI >= 0x3000) && (OI <= 0x3008)) || (OI == 0x300B))
-    {
-        class = 24;
-    }
 
     info->record_head = record_head_t0; //默认事件记录单元
 
@@ -1317,7 +1313,7 @@ int fc_fun_03(struct instance_t* instance, uint8_t *des, uint8_t* src, enum form
 {
     uint16_t decode_len = 0;
     uint8_t *p = des;
-    uint8_t num = 0;
+    //uint8_t num = 0;
     
     if (mode == RFC_WRITE)
     {
@@ -1347,14 +1343,14 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
-    uint8_t i, type, attr, index, index_src,  len, block_num = (4+1);
+    uint8_t i, /*type,*/ attr, index, index_src,  /*len, */block_num = (4+1);
     uint16_t oi;
     uint8_t *p = des;
     uint8_t energy_tag;
     uint32_t addr;
     int64_t tmp_64 = 0;
     
-    type = get_OAD_Class(oad_req);
+    //type = get_OAD_Class(oad_req);
     attr = get_OAD_Attribute(oad_req);
     index = get_OAD_Index(oad_req);
     oi = get_OAD_OI(oad_req);
@@ -1739,10 +1735,7 @@ int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* sr
         }
         break;
     }
-
-
-
-
+    return 1;
 }
 
 
