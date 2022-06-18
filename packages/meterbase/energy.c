@@ -33,6 +33,10 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
     {
         mbase_control_block->active_p_dec[0] += mbase_control_block->p_pluse;
         mbase_control_block->active_p_dec[fee_index] += mbase_control_block->p_pluse;
+        if(mbase_control_block->active_energy_cal_word & ADD_POS)
+        {
+             mbase_control_block->MonthEnegery_dec += mbase_control_block->p_pluse;
+        }
         mbase_control_block->p_pluse = 0;
     }
     
@@ -40,14 +44,14 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
     if(mbase_control_block->active_p_dec[fee_index] >= mbase_control_block->meter_const)
     {
         mbase_control_block->active_p[fee_index] += 1;
-        mbase_control_block->month_active_p[fee_index] += 1;
+        //mbase_control_block->month_active_p[fee_index] += 1;
         mbase_control_block->active_p_dec[fee_index] -= mbase_control_block->meter_const;
     }    
     //总正电能，总月度电能
     if(mbase_control_block->active_p_dec[0] >= mbase_control_block->meter_const)
     {
         mbase_control_block->active_p[0] += 1;
-        mbase_control_block->month_active_p[0] += 1;
+        //mbase_control_block->month_active_p[0] += 1;
         mbase_control_block->active_p_dec[0] -= mbase_control_block->meter_const;
         
         s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + \
@@ -60,25 +64,42 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
     {
         mbase_control_block->active_n_dec[0] += mbase_control_block->n_pluse;
         mbase_control_block->active_n_dec[fee_index] += mbase_control_block->n_pluse;
+        if(mbase_control_block->active_energy_cal_word & ADD_NEG)
+        {
+             mbase_control_block->MonthEnegery_dec += mbase_control_block->n_pluse;
+        }
         mbase_control_block->n_pluse = 0;
     }
 
     if(mbase_control_block->active_n_dec[fee_index] >= mbase_control_block->meter_const)
     {
         mbase_control_block->active_n[fee_index] += 1;
-        mbase_control_block->month_active_n[fee_index] += 1;
+        //mbase_control_block->month_active_n[fee_index] += 1;
         mbase_control_block->active_n_dec[fee_index] -= mbase_control_block->meter_const;
     }
     
     if(mbase_control_block->active_n_dec[0] >= mbase_control_block->meter_const)
     {
         mbase_control_block->active_n[0] += 1;
-        mbase_control_block->month_active_n[0] += 1;
+        //mbase_control_block->month_active_n[0] += 1;
         mbase_control_block->active_n_dec[0] -= mbase_control_block->meter_const;
         
        s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + \
        offsetof(struct mbase_control_block_t, active_n));
        nd_set_offset(instance, s_index, (uint8_t*)&mbase_control_block->active_n, 52);
+    }
+    
+    if(mbase_control_block->MonthEnegery_dec >= mbase_control_block->meter_const/100 )
+    {
+        mbase_control_block->MonthEnegery += 1;
+        mbase_control_block->MonthEnegery_dec = 0;
+        
+        if((mbase_control_block->MonthEnegery % 100)==0)
+        {
+            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + \
+            offsetof(struct mbase_control_block_t, MonthEnegery));
+            nd_set_offset(instance, s_index, (uint8_t*)&mbase_control_block->MonthEnegery, 4);
+        }
     }
     
 }
@@ -188,31 +209,6 @@ int32_t Get_Active_Energy(struct mbase_control_block_t* mbase_control_block, uin
 }
 
 
-int32_t Get_Month_Active_Energy(struct mbase_control_block_t* mbase_control_block, uint8_t index , uint8_t pn)
-{
-    int32_t energy_kwh = 0;
-    int32_t energy_pulse = 0;
-    
-    if((mbase_control_block->meter_const==0) || (index>Max_tou_fee))
-    {
-        return 0;
-    }
-    
-    if(pn ==0)
-    {
-        energy_kwh += mbase_control_block->month_active_p[index];
-        energy_pulse += mbase_control_block->month_active_p[index];
-    }
-    else
-    {
-        energy_kwh += mbase_control_block->month_active_n[index];
-        energy_pulse += mbase_control_block->month_active_n[index];
-    }
-
-    energy_kwh = energy_kwh*100;//0.01kwh
-
-    return energy_kwh;
-}
 
 void Energy_Pluse_Count(struct instance_t* instance, struct pipeline_t* pipeline)
 {
@@ -255,8 +251,6 @@ void Energy_clr(struct instance_t* instance)
         mbase_control_block->active_p[fee_index] = 0x00;
         mbase_control_block->active_p_dec[fee_index] = 0x00;
           
-        mbase_control_block->month_active_p[fee_index] = 0x00;
-        mbase_control_block->month_active_n[fee_index] = 0x00;
     }
     
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + \
