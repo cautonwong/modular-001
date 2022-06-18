@@ -16,6 +16,10 @@ extern void report_3320list_2015state_clear(struct instance_t* instance);
 
 extern uint8_t report_channel_check(struct instance_t* instance, uint16_t channel);
 extern uint32_t follow_report_3320List_Latest_oad_get(struct instance_t* instance, uint8_t chn);
+
+
+
+extern uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t mode);
 #if 1
 uint8_t rep_data[72] = {
 0x88, 0x02, 0x00, 0x01, 0x30, 0x11, 0x02, 0x01, 0x07, 0x00, 
@@ -39,6 +43,7 @@ int _fr_active_report_pro(struct instance_t* instance, struct pipeline_t* pipeli
         fifoBuf_putData(ctx->apdu, rep_data, 72);
         return 72;
     }
+    return 0;
 }
 #else
 #define _fr_active_report_pro  fr_active_report_pro
@@ -310,8 +315,8 @@ uint32_t follow_report_3320List_Latest_oad_get(struct instance_t* instance, uint
 {
     uint8_t buf[241],num,i,*p, rptmode;
     uint32_t oad = 0;
-    uint32_t addr, ret;
-    
+    uint32_t addr;
+    int ret;
     addr = get_3320_save_addr(instance, chn);
     ret = nd_get_index(instance, addr, buf, 241);
     if(ret < 0)
@@ -595,8 +600,8 @@ uint8_t report_3320list_update(struct instance_t* instance, uint8_t chn, uint8_t
     uint32_t data;
 
 
-    uint32_t addr, ret;
-    
+    uint32_t addr;
+    int ret;
 
     addr = get_3320_save_addr(instance, chn);
     ret = nd_get_index(instance, addr, buf, 241);
@@ -735,9 +740,9 @@ uint8_t active_report_3320list_confirmed(struct instance_t* instance)//确认掉
     uint8_t count,i,*p,num, rptmode = 0;
     uint16_t len,len2;
     uint32_t oad = 0;
-    uint32_t addr, ret;
+    uint32_t addr;
     uint8_t *tmpbuf = instance->apdu_cache;
-
+    int ret;
 
     addr = get_3320_save_addr(instance, chl_PLC_698);
     ret = nd_get_index(instance, addr, tmpbuf, 241);
@@ -1388,6 +1393,7 @@ int active_report_handle(struct instance_t* instance, struct pipeline_t* p_pipel
 
         send_mesg(instance, &pipeline, mesg);
     }
+    return 0;
 }
 
 

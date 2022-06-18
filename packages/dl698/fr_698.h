@@ -422,4 +422,14 @@ extern int fr_security_encode(struct instance_t* instance, struct pipeline_t* pi
 extern uint32_t dt_buf_to_second(uint8_t* dt);
 extern int second_to_dt_buf(uint32_t timesec, uint8_t* dt);
 extern uint8_t fr_698_current_connect_status_get(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index);
+
+
+// 待调整
+extern uint32_t get_3320_save_addr(struct instance_t* instance, uint16_t chn);
+extern int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_list, uint8_t mode);
+extern uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t mode);
+extern int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_list, uint8_t mode);
+extern uint8_t get_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *apdu, uint8_t apdu_len , uint8_t *dst);
+extern uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t mode);
+extern int MeterWr_obj_list_clear(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
 #endif //__FR_698_H__

@@ -10,6 +10,9 @@
 #define GetRequestSimplifyRecord    23
 
 extern uint16_t axdr_record_len_get(uint8_t* data, uint16_t* rsdLen, uint16_t* rcsdLen);
+extern int GET_record_sel_1(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info,  void *ctx);
+extern int GET_record_sel_2(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info,  void *ctx);
+extern int GET_record_sel_9(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info,  void *ctx);
 
 int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {

@@ -343,7 +343,8 @@ int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipelin
     struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t* p = cache->buf_ptr;
-   
+    uint16_t offset= 0;
+    
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
    
     
@@ -374,8 +375,9 @@ int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipelin
     //cache->wr += 2;
     //ctx->apdu_rx_offset += 1; 
     //cache->wr += 1;
-    p[cache->wr-2] = p[cache->wr-1];
-    p[cache->wr-1] = 0;
+    offset = cache->wr;
+    p[offset-2] = p[offset-1];
+    p[offset-1] = 0;
     return 1;
 }
 
@@ -407,7 +409,7 @@ int fr_handle_disconnect2(struct instance_t* instance,  struct pipeline_t* pipel
     
     if ((mbase_cb->connect_status[channel][0] == false)&& (mbase_cb->connect_status[channel][1] == false))
     {
-        MeterWr_obj_list_clear(instance, pipeline, mesg);
+        MeterWr_obj_list_clear(instance, pipeline, &mesg);
     }
     
     //复位ESAM

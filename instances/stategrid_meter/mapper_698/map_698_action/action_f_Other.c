@@ -136,11 +136,8 @@ int _f101_m127_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
     }
 
     uint16_t oi, right;
-    struct obj_right_t
-    {
-        uint16_t oi;
-        uint16_t right;
-    }obj;
+    uint16_t obj_oi, obj_right;
+
 
     if ( (p[0] != TYPE_structure) || (p[1] != 2))
     {
@@ -155,8 +152,8 @@ int _f101_m127_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
     }
     p += 2;
 
-    obj.oi = buf_to_uint16_msb(p + 1);
-    obj.right = buf_to_uint16_msb(p + 4);
+    obj_oi = buf_to_uint16_msb(p + 1);
+    obj_right = buf_to_uint16_msb(p + 4);
     p += 4;
 
     instance->apdu_cache[0] = 0;
@@ -176,15 +173,15 @@ int _f101_m127_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
         oi = buf_to_uint16_lsb(ptr_tmp);
         right = buf_to_uint16_lsb(ptr_tmp + 2);
 
-        if (oi == obj.oi)
+        if (oi == obj_oi)
         {
-            if (right == obj.right)
+            if (right == obj_right)
             {
                 return (p - buf);
             }
             else
             {
-                memcpy(ptr_tmp + 2, (uint8_t*)&obj.right, 2);
+                memcpy(ptr_tmp + 2, (uint8_t*)&obj_right, 2);
 
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
                 nd_set_index(instance, s_index, instance->apdu_cache, SecurityMode_EXData_LEN);
@@ -196,7 +193,8 @@ int _f101_m127_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
         ptr_tmp += 4;
     }
 
-    memcpy(ptr_tmp, (uint8_t*)&obj, 4);
+    memcpy(ptr_tmp, (uint8_t*)&obj_oi, 2);
+    memcpy(ptr_tmp+2, (uint8_t*)&obj_right, 2);
     instance->apdu_cache[0]++;
 
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
@@ -279,12 +277,8 @@ int _f101_m129_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
 
     uint8_t  num, write_flag, noadd_flag;
     uint16_t len, oi, right;
+    uint16_t obj_oi, obj_right;
 
-    struct obj_right_t
-    {
-        uint16_t oi;
-        uint16_t right;
-    }obj;
 
 
     if (p[0] != TYPE_array)
@@ -319,9 +313,9 @@ int _f101_m129_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
             return -DAR_OTHERS_ERROR;
         }
 
-        obj.oi = buf_to_uint16_msb(p + 1);
+        obj_oi = buf_to_uint16_msb(p + 1);
         p += 4;
-        obj.right = buf_to_uint16_msb(p);
+        obj_right = buf_to_uint16_msb(p);
         p += 2;
 
         for (i = 0; i < count; i++)
@@ -329,11 +323,11 @@ int _f101_m129_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
             oi = buf_to_uint16_lsb(ptr_tmp);
             right = buf_to_uint16_lsb(ptr_tmp + 2);
 
-            if (oi == obj.oi)
+            if (oi == obj_oi)
             {
-                if (right != obj.right)
+                if (right != obj_right)
                 {
-                    memcpy(ptr_tmp + 2, (uint8_t *)&obj.right, 2);
+                    memcpy(ptr_tmp + 2, (uint8_t *)&obj_right, 2);
                     write_flag = 1;
                 }
 
@@ -354,8 +348,8 @@ int _f101_m129_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
                 return -DAR_OTHERS_ERROR;
             }
 
-            memcpy(ptr_tmp, (uint8_t*)&obj.oi, 2);
-            memcpy(ptr_tmp + 2, (uint8_t*)&obj.right, 2);
+            memcpy(ptr_tmp, (uint8_t*)&obj_oi, 2);
+            memcpy(ptr_tmp + 2, (uint8_t*)&obj_right, 2);
             write_flag = 1;
         }
     }

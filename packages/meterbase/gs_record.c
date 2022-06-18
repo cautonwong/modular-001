@@ -334,7 +334,7 @@ int clr_record(struct instance_t* instance, uint32_t oad)
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBroadcastTimeERR);
         nd_set_index(instance, s_index, &tmpbuf[0], 3);
     }
-
+    return 1;
 }
 
 //多个记录 清零    根据oad_list
@@ -483,7 +483,7 @@ int meter_clr(struct instance_t* instance)
 
     //其他清零  待添加
     mbase_cb->sta &= ~F_RemoteRelayOn;  //清除控制命令状态,保留保电状态
-    
+    return 1;
 }
 
 //修改关联对象时 调用 清零
@@ -579,7 +579,6 @@ int event_PowerOn_pro(struct instance_t* instance, struct pipeline_t* pipeline, 
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t payload[20] ={0}, tmp[15]={0};
     uint16_t i, RecordId;
-    uint32_t oad;
     struct record_storage_id_info_t info;
     struct message_t mesg_tmp;
     int ret;
@@ -632,8 +631,8 @@ enum scheme_mode
 int read_record_head(struct instance_t* instance, uint8_t* databuf, const uint32_t* record_head, enum scheme_mode mode, uint16_t *remain_size,  struct record_storage_id_info_t *record_id_info)
 {
     uint8_t *p , i, scheme_valid = true,  normal_type, tmpbuf[220] = {0};
-    int16_t single_len = 0, transform_len;
-    uint32_t obj,seq;
+    int16_t single_len = 0;
+    uint32_t obj;
     
     
     p = databuf;
@@ -840,7 +839,7 @@ uint8_t check_scheme(enum scheme_mode mode, uint32_t obj, uint16_t record_id)
 //mode 0-7 为冻结方案， 10为 事件发生 11为 结束
 int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t* CaptureList, enum scheme_mode mode, uint16_t* remain_size,  struct record_storage_id_info_t *record_id_info, uint8_t* payload)
 {
-    uint8_t* p, i, scheme, scheme_valid = true;
+    uint8_t* p, i, scheme_valid = true;
     int16_t single_len = 0;
     uint32_t obj;
     uint8_t tmpbuf[200];//单个关联对象 最大长度
@@ -878,7 +877,7 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
         for (i = 0; i < (CaptureList[0]); i++)
         {
             obj = CaptureList[1 + i];
-            scheme = (obj >> 13) & 0x07; 
+            //scheme = (obj >> 13) & 0x07; 
 
             obj = record_capture_change(instance, obj,RecordID);
            
@@ -976,7 +975,7 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
 //直接提供mesg->id   可不走消息 记录事件
 int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t* payload)
 {
-    enum scheme_mode mode = START_MODE;
+    uint8_t mode = START_MODE;//enum scheme_mode mode = START_MODE;
     uint8_t data_buff[400] = { 0 };
     uint8_t *pdata = data_buff;
     uint16_t remain_size;
@@ -1150,7 +1149,7 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
     get_capture_list(instance, Oad, CaptureList, 3);
 
     //读取关联对象数据
-    pdata += read_record_capture(instance, pdata, CaptureList, mode, &remain_size, &record_id_info, payload);
+    pdata += read_record_capture(instance, pdata, CaptureList, (enum scheme_mode)mode, &remain_size, &record_id_info, payload);
 
     // 读取序号 ++
     if ((pairs_event != 1) || (mode != END_MODE)) 
@@ -1193,18 +1192,6 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
 int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     uint8_t payload[100]={0};
-    
-    enum scheme_mode mode = START_MODE;
-    uint8_t data_buff[500] = { 0 };
-    uint8_t *pdata = data_buff;
-    uint16_t remain_size;
-    uint32_t sequence = 0,Oad;
-    uint32_t CaptureList[50 + 1] = { 0 };
-    struct record_storage_id_info_t record_id_info; 
-    uint8_t pairs_event = 0;
-    uint8_t freez_scheme = 0,event_scheme = START_MODE;
-    int ret;
-    
     
     //mesg 的id 就是事件代码
     int r = recv_mesg_v2(instance, pipeline, mesg, payload, 100);

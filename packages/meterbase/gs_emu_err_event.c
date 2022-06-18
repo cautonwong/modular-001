@@ -8,7 +8,7 @@
 int EmuErr_event_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint8_t payload[100];
+    //uint8_t payload[100];
     int8_t result = 0;
 
     uint8_t duration_para       =  ctrl_block->EmuErrS_duration_para;

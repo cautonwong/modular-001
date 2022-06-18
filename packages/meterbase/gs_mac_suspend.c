@@ -53,6 +53,7 @@ uint8_t mac_suspend_pro(struct tm* time,struct instance_t* instance, struct pipe
         ctrl_block->mac_suspend_date[2] = 0;
         ctrl_block->mac_err_cnt = 0;
     }
+    return 1;
 }
 
 

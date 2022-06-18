@@ -2,23 +2,23 @@
 #include "fr_698.h"
 #include "gs_record.h"
 
-extern uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t mode);
+//extern uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t mode);
 
 int get_3320_attr2(struct instance_t* instance, uint32_t oad, uint8_t* buf,void *ctx)
 {
     struct context_698_t* pctx = (struct context_698_t*)ctx;
 
     uint8_t* p = buf;
-    uint16_t OI = get_OAD_OI(oad);
+    //uint16_t OI = get_OAD_OI(oad);
     uint8_t index = (uint8_t)(oad);
     uint8_t tempbuf[250] = {0};
     uint8_t* tmp = tempbuf;
     uint32_t addr;
     uint8_t i, count, unit_size;
-    int ret;
+    //int ret;
 
     addr = get_3320_save_addr(instance, pctx->channel);
-    ret = nd_get_index(instance, addr, tempbuf, 241);
+    nd_get_index(instance, addr, tempbuf, 241);
     tmp = tempbuf;
     unit_size = 4;
 
@@ -58,17 +58,17 @@ int get_3320_attr2(struct instance_t* instance, uint32_t oad, uint8_t* buf,void 
 int get_3320_attr3(struct instance_t* instance, uint32_t oad, uint8_t* buf,void *ctx)
 {
 
-    struct context_698_t* pctx = (struct context_698_t*)ctx;
+    //struct context_698_t* pctx = (struct context_698_t*)ctx;
 
     uint8_t* p = buf;
-    uint16_t OI = get_OAD_OI(oad);
+    //uint16_t OI = get_OAD_OI(oad);
     uint8_t index = (uint8_t)(oad);
     uint8_t tempbuf[250] = {0};
-    uint8_t* tmp = tempbuf;
-    uint32_t addr;
+    //uint8_t* tmp = tempbuf;
+    //uint32_t addr;
     uint8_t rptflag;
-    uint16_t i, num;
-    int ret;
+    uint16_t i;
+    //int ret;
 
 
     if ( index != 0 )
@@ -142,9 +142,9 @@ int get_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_
 {
     uint8_t tempbuf[200] = {0};
     uint8_t* p = buf;
-    struct record_storage_id_info_t  record_id_info;
-    int ret;
-    uint32_t AddrID = 0;
+    //struct record_storage_id_info_t  record_id_info;
+    //int ret;
+    //uint32_t AddrID = 0;
     uint8_t index = (uint8_t)oad;
 
     if (index != 0)
@@ -200,9 +200,9 @@ uint8_t get_event_oad_class(uint32_t oad)
 int get_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
 
-    uint8_t i, num, maxnum, scheme;
+    uint8_t i, num, maxnum;
     uint8_t tempbuf[200];
-    uint8_t* tmp0, * tmp1;
+    //uint8_t* tmp0, * tmp1;
     uint8_t* p = buf;
     uint8_t* oadlist = tempbuf;
     uint16_t CaptureLen;
@@ -290,7 +290,7 @@ int get_current_record_number_ic_24(struct instance_t* instance, uint32_t oad, u
     struct record_storage_id_info_t  record_id_info;
     int ret;
 
-    uint16_t OI = get_OAD_OI(oad);
+    //uint16_t OI = get_OAD_OI(oad);
     uint8_t index = (uint8_t)(oad);
 
     if (index != 0)
@@ -415,7 +415,7 @@ int get_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
     return (p - buf);
 }
 
-uint8_t get_current_value(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar )
+int get_current_value(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar )
 {
     uint32_t sequence;
     uint8_t* p = buf;
@@ -486,13 +486,13 @@ int get_current_value_one_element_ic_24(struct instance_t* instance, uint32_t oa
 {
 #ifndef WIN32
     uint32_t sequence;
-    struct circular_info_t circular_info = { 0 };
-    uint8_t temp[200];
+    //struct circular_info_t circular_info = { 0 };
+    //uint8_t temp[200];
     uint8_t* p = buf;
     struct record_storage_id_info_t  record_id_info;
     int ret;
-    uint16_t OI = get_OAD_OI(oad);
-    uint8_t index = (uint8_t)(oad);
+    //uint16_t OI = get_OAD_OI(oad);
+    //uint8_t index = (uint8_t)(oad);
 
     struct current_value_t
     {
@@ -532,11 +532,11 @@ int get_current_value_one_element_ic_24(struct instance_t* instance, uint32_t oa
 }
 int get_current_value_ic_24(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
-    uint32_t sequence, time;
-    uint8_t tempbuf[200];
+    //uint32_t /*sequence, */time;
+    //uint8_t tempbuf[200];
     uint8_t* p = buf;
     int ret;
-    uint16_t OI = get_OAD_OI(oad);
+    //uint16_t OI = get_OAD_OI(oad);
     uint8_t index = (uint8_t)(oad);
 
     uint8_t i, num;

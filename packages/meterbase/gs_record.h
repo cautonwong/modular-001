@@ -50,6 +50,16 @@ int freez_size_sectors_init(struct instance_t* instance, uint32_t oad);
 int record_rollback_after_set_time(struct instance_t* instance);
 int modify_capture_clr_pro(struct instance_t* instance, uint32_t oad);
 
+int MeterWr_obj_list_clear(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
 
 
+
+//外部接口
+extern void report_2015state_judge(struct instance_t* instance);
+extern void rtc_format_change_from_tm(struct tm *time, uint8_t* p);
+extern int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t* payload);
+extern int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_list, uint8_t mode);
+extern uint16_t nd_log_append_rollback(struct instance_t* instance, uint32_t index, uint8_t public_flash_name, uint32_t last_time,uint32_t curr_time);
+
+extern uint32_t dt_buf_to_second(uint8_t* dt);
 #endif //__GS_RECORD_H__

@@ -64,7 +64,7 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     uint16_t i;
     uint8_t tempbuf[200] = {0};
     uint16_t oi;
-    uint8_t attr, index, Schem, maxnum, num;
+    uint8_t attr, index, Schem,  maxnum, num;
     struct record_storage_id_info_t info;
     uint8_t* oadlist = tempbuf;
     uint16_t CaptureLen;

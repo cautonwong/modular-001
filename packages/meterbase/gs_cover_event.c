@@ -11,7 +11,7 @@ int CoverOpen_event_judge(struct instance_t* instance, struct pipeline_t* task, 
 {
     
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint8_t payload[100];
+    //uint8_t payload[100];
     int result = 0;
 
     uint8_t duration_para       =  3;//ctrl_block->CoverOpenS_duration_para;

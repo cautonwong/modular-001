@@ -103,9 +103,7 @@ int cal_freeze_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, u
 int freez_size_sectors_init(struct instance_t* instance, uint32_t oad)
 {
     uint8_t tempbuf[200], depth[1 + 2 * 15];
-    uint8_t i, num, maxnum, scheme;
-    uint16_t OI, CaptureLen, PeriodLen, DepthLen;
-    uint32_t CaptureId, PeriodId, DepthId /*, oad = 0x50020200*/;
+    uint32_t CaptureId, DepthId /*, oad = 0x50020200*/;
     struct record_storage_id_info_t  record_id_info;
     int ret = -1;
 
@@ -116,12 +114,12 @@ int freez_size_sectors_init(struct instance_t* instance, uint32_t oad)
     }
 
     CaptureId = record_id_info.capture_index;
-    PeriodId = record_id_info.period_index;
+    //PeriodId = record_id_info.period_index;
     DepthId = record_id_info.depth_index;
-    CaptureLen = record_id_info.capture_len;// 
-    PeriodLen = record_id_info.period_len;
-    DepthLen = record_id_info.depth_len;
-    maxnum = (CaptureLen - 1) / 4;
+    //CaptureLen = record_id_info.capture_len;// 
+    //PeriodLen = record_id_info.period_len;
+    //DepthLen = record_id_info.depth_len;
+    //maxnum = (CaptureLen - 1) / 4;
 
     //获取捕获对象
     ret = nd_get_index(instance, CaptureId, &tempbuf[0], sizeof(tempbuf));
@@ -244,6 +242,7 @@ int rollback_sequence(struct instance_t* instance, uint32_t oad,  uint16_t rollb
     }
     
     nd_set_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+    return 1;
 }
 
 
@@ -252,7 +251,7 @@ int record_rollback_after_set_time(struct instance_t* instance)
 {
     struct record_storage_id_info_t record_id_info; 
     uint8_t i, num = 0, buffer[10] = { 0xFF };
-    struct tm t_before, t_after;
+    struct tm ;
     uint32_t addr,last_timesec, curr_timesec;
     uint16_t rollback_seq_num[11] = { 0 };
     int ret = 0;
@@ -309,18 +308,15 @@ int record_rollback_after_set_time(struct instance_t* instance)
 //设置或修改时间后 因停电或其他情况导致 回退未完成，需要补处理    待调整 未调用
 int record_rollback_finish_check(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint8_t i, num = 0, buffer[10] = { 0xFF };
-    struct tm t_before, t_after;
-    uint32_t addr, last_timesec, curr_timesec;
-    int ret = 0;
-    //uint16_t FlagID[] = { MinuteFreeze1, MinuteFreeze2, MinuteFreeze3, MinuteFreeze4, MinuteFreeze5, MinuteFreeze6, MinuteFreeze7, MinuteFreeze8, HourFreeze, DayFreeze, MonthFreeze, };
-    uint32_t TabOAD[] = { 0x50020200, 0x50022200, 0x50024200, 0x50026200, 0x50028200, 0x5002A200, 0x5002C200, 0x5002E200, 0x50030200, 0x50040200, 0x50060200, };
+    //struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    int ret = 1;
+    //uint32_t TabOAD[] = { 0x50020200, 0x50022200, 0x50024200, 0x50026200, 0x50028200, 0x5002A200, 0x5002C200, 0x5002E200, 0x50030200, 0x50040200, 0x50060200, };
 
     //读取回退是否完成标志
   
 
-    return 1;
+    return ret;
 }
 
 int minute_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
@@ -353,7 +349,7 @@ int hour_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t period[24];
-    uint16_t timeinv = 0;
+    //uint16_t timeinv = 0;
     uint32_t index;
     struct tm record_time;
     uint16_t PeriodID = HourFreeze_period;
@@ -454,13 +450,12 @@ int day_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task
 
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
-    uint8_t cycle, i, tmp[10]; 
+    uint8_t tmp[10]; 
     uint32_t  now,pd,last,recently;
     struct tm now_tm,pd_tm, last_time;
-    uint32_t index,s_index;
-    uint8_t billdate[3][2];
-    uint8_t payload[20];
-    uint8_t *p = payload;
+    uint32_t s_index;
+    uint8_t payload[20] = {0};
+    //uint8_t *p = payload;
     struct message_t mesg_tmp;
     uint16_t    period;
 
@@ -555,7 +550,7 @@ int day_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task
             uint32_to_buf_msb(0x20210200, &payload[0]);
             payload[4] = 8; //data len
             payload[5] = 28;//TYPE_date_time_s;
-            rtc_format_change_from_tm(last_time,tmp);
+            rtc_format_change_from_tm(&last_time,tmp);
             mem_swap_cpy(&payload[6], &tmp[0], 7);
             recv_record_process(instance, task, &mesg_tmp, payload);  
             v85xxp_clear_watchdog();//清看门狗
@@ -577,10 +572,10 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
     uint8_t cycle, i, tmp[10]; 
     uint32_t  now,pd,last,recently;
     struct tm now_tm,pd_tm, last_time;
-    uint32_t index,s_index;
+    uint32_t s_index;
     uint8_t billdate[3][2];
-    uint8_t payload[20];
-    uint8_t *p = payload;
+    uint8_t payload[20] = {0};
+    //uint8_t *p = payload;
     struct message_t mesg_tmp;
 
     ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->v_powerdown_tm), sizeof(ctrl_block->v_powerdown_tm));
@@ -661,7 +656,7 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
                     uint32_to_buf_msb(0x20210200, &payload[0]);
                     payload[4] = 8; //data len
                     payload[5] = 28;//TYPE_date_time_s;
-                    rtc_format_change_from_tm(pd_tm,tmp);
+                    rtc_format_change_from_tm(&pd_tm,tmp);
                     mem_swap_cpy(&payload[6], &tmp[0], 7);
  
                     recv_record_process(instance, task, &mesg_tmp, payload);                    
@@ -703,8 +698,8 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
 int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
         struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-        uint32_t index,s_index;
-        struct tm cur_time, last_time, bill_time, record_time;//
+        uint32_t s_index;
+        struct tm last_time, bill_time, record_time;//
         uint8_t tmp[20];
         uint8_t billdate[3][2];
         uint16_t LastBillTimeID = LastBillingTime;
