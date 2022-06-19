@@ -107,6 +107,7 @@ enum irq_en
    IRQ_RS485_RX_TM_OUT,
    IRQ_PLC_RX_TM_OUT,
    IRQ_IR_RX_TM_OUT,
+   IRQ_UART_RX_TM_OUT,
    IRQ_NUM
 };
 

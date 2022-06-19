@@ -251,7 +251,7 @@ int record_rollback_after_set_time(struct instance_t* instance)
 {
     struct record_storage_id_info_t record_id_info; 
     uint8_t i, num = 0, buffer[10] = { 0xFF };
-    struct tm ;
+
     uint32_t addr,last_timesec, curr_timesec;
     uint16_t rollback_seq_num[11] = { 0 };
     int ret = 0;

@@ -1367,35 +1367,162 @@ int fc_fun_04(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, u
         {
             *p++ = TYPE_array;
             *p++ = 1;
-            
-            
-            
-            
-            
-            
-            
+            *p++ = TYPE_long_unsigned;
+            ndv_memcopy(p, src, 2);
+            p += 2;
+            src += 2;
         }
         else if (index == 1)
         {
-        
+            *p++ = TYPE_long_unsigned;
+            ndv_memcopy(p, src, 2);
+            p += 2;
+            src += 2;
         }
         else
         {
         
         }
-
-        if (decode_len > fc->store_len)
-        {
-            decode_len = 0;
-        }
-        ndv_memcopy(des, src, decode_len);
-        p += decode_len;
     }
     return (p - des);
 }
 
+//电流块 支持单个读取
+int fc_fun_05(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+{
+    uint16_t decode_len = 0;
+    uint8_t *p = des;
+    //uint8_t num = 0;
+    uint8_t index;
+    
+    index = get_OAD_Index(oad_req);
 
+    if (mode == RFC_WRITE)
+    {
+        src++;//array
+        src++;
+        src++;
+        ndv_memcopy(des, src, 4);
+        p += 4;
+    }
+    else if (mode == RFC_READ)
+    {
+        if (index == 0)
+        {
+            *p++ = TYPE_array;
+            *p++ = 1;
+            *p++ = TYPE_double_long;
+            ndv_memcopy(p, src, 4);
+            p += 4;
+            src += 4;
+        }
+        else if (index == 1)
+        {
+            *p++ = TYPE_double_long;
+            ndv_memcopy(p, src, 4);
+            p += 4;
+            src += 4;
+        }
+        else//三相 
+        {
+        
+        }
+    }
+    return (p - des);
+}
 
+//功率块 支持单个读取
+int fc_fun_06(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+{
+    uint16_t decode_len = 0;
+    uint8_t *p = des;
+    //uint8_t num = 0;
+    uint8_t index;
+    
+    index = get_OAD_Index(oad_req);
+
+    if (mode == RFC_WRITE)
+    {
+        src++;//array
+        src++;
+        src++;
+        ndv_memcopy(des, src, 4);
+        p += 4;
+    }
+    else if (mode == RFC_READ)
+    {
+        if (index == 0)
+        {
+            *p++ = TYPE_array;
+            *p++ = 2;
+            *p++ = TYPE_double_long;
+            ndv_memcopy(p, src, 4);
+            p += 4;
+            *p++ = TYPE_double_long;
+            ndv_memcopy(p, src, 4);
+            p += 4;
+            src += 4;
+        }
+        else if (index == 1)
+        {
+            *p++ = TYPE_double_long;
+            ndv_memcopy(p, src, 4);
+            p += 4;
+            src += 4;
+        }
+        else//三相 
+        {
+        
+        }
+    }
+    return (p - des);
+}
+//功率因数块 支持单个读取
+int fc_fun_07(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+{
+    uint16_t decode_len = 0;
+    uint8_t *p = des;
+    //uint8_t num = 0;
+    uint8_t index;
+    
+    index = get_OAD_Index(oad_req);
+
+    if (mode == RFC_WRITE)
+    {
+        src++;//array
+        src++;
+        src++;
+        ndv_memcopy(des, src, 2);
+        p += 2;
+    }
+    else if (mode == RFC_READ)
+    {
+        if (index == 0)
+        {
+            *p++ = TYPE_array;
+            *p++ = 2;
+            *p++ = TYPE_long;
+            ndv_memcopy(p, src, 2);
+            p += 2;
+            *p++ = TYPE_long;
+            ndv_memcopy(p, src, 2);
+            p += 2;
+            src += 2;
+        }
+        else if (index == 1)
+        {
+            *p++ = TYPE_long;
+            ndv_memcopy(p, src, 2);
+            p += 2;
+            src += 2;
+        }
+        else//三相 
+        {
+        
+        }
+    }
+    return (p - des);
+}
 // 电能数据 存储和协议转换  //待调整
 int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src,uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
 {
@@ -1634,10 +1761,10 @@ const struct format_conversion_t format_conversion_tab[] =
     {   0x20210200,     8,      5,      fc_fun_01   },
     {   0x40000200,     8,      5,      fc_fun_01   },
     
-    //{   0x20000200,     5,      2,      fc_fun_04   },//电压
-    //{   0x20010200,     7,      4,      fc_fun_01   },//电流
-    //{   0x20040200,     12,     4,      fc_fun_01   },//功率  
-    //{   0x200A0200,     8,      2,      fc_fun_01   },//功率因数
+    {   0x20000200,     5,      2,      fc_fun_04   },//电压
+    {   0x20010200,     7,      4,      fc_fun_05   },//电流
+    {   0x20040200,     12,     4,      fc_fun_06   },//功率  
+    {   0x200A0200,     8,      2,      fc_fun_07   },//功率因数
    
     {   0x33020206,   0xFFFF,  52,      fc_fun_02   },  
     {   0x33140207,   0xFFFF,  114,     fc_fun_03   },  
