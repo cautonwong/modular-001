@@ -195,43 +195,47 @@ typedef struct
 //一个表格只能放在一个存储器上，注册的时候绑定设备
 const struct record_item_t  record_item[] =
 {
-    { OverCurrentAS ,       OverCurrentAE,              800,       10 },// 过流 预留空间待调整
-    { PowerOffS     ,       PowerOffE,                 2000,      100 },//  0x3011    电能表掉电事件             
-    { MeterWrS      ,       0,                          800,       10 },//  0x3012    电能表编程事件             
-    { MeterClrS     ,       0,                          600,       10 },//  0x3013    电能表清零事件             
-    { EventClrS     ,       0,                          600,       10 },//  0x3015    电能表事件清零事件         
-    { SetTimeS      ,       0,                          600,       10 },//  0x3016    电能表校时事件             
-    { DayTabWrS     ,       0,                         1300,       10 },//  0x3017    电能表时段表编程事件       
-    { SeasonTabWrS  ,       0,                         1300,       10 },//  0x3018    电能表时区表编程事件       
-    { WeekTabWrS    ,       0,                          600,       10 },//  0x3019    电能表周休日编程事件       
-    { BillDayWrS    ,       0,                          600,       10 },//  0x301A    电能表结算日编程事件  
-    { CoverOpenS    ,       CoverOpenE,                 600,       10 },//  0x301B    电能表开盖事件             
-    { SwitchOffS    ,       0,                          600,       10 },//  0x301F    电能表跳闸事件             
-    { SwitchOnS     ,       0,                          600,       10 },//  0x3020    电能表合闸事件             
-    { HolidayWrS    ,       0,                          600,       10 },//  0x3021    电能表节假日编程事件       
-    { ActCombWrS    ,       0,                          600,       10 },//  0x3022    电能表有功组合方式编程事件 
-    { FeeTabWrS     ,       0,                          600,       10 },//  0x3024    电能表费率参数表编程事件   
-    { StepTabWrS    ,       0,                          600,       10 },//  0x3025    电能表阶梯表编程事件       
-    { SecretKeyWrS  ,       0,                          600,       10 },//  0x3026    电能表密钥更新事件 
-    { ErrPlugCardS  ,       0,                          600,       10 },//  0x3027    电能表异常插卡事件         
-    { RechargeS     ,       0,                          600,       10 },//  0x3028    电能表购电记录             
-    { RefundS       ,       0,                          600,       10 },//  0x3029    电能表退费记录  
-    { SwitchErrS    ,       SwitchErrE,                 600,       10 },//  0x302B    电能表负荷开关误动作事件   
-    { PowerAbnormalS,       PowerAbnormalE,             600,       10 },//  0x302C    电能表电源异常事件 
-    { RTCErrS       ,       RTCErrE,                    600,       10 },//  0x302E    电能表时钟故障事件 
-    { EmuErrS       ,       EmuErrE,                    600,       10 },//  0x302F    电能表计量芯片故障事件
+    { OverCurrentAS ,       OverCurrentAE,              630,       10 },// 过流 预留空间待调整
+    { PowerOffS     ,       PowerOffE,                 3560,      100 },//  0x3011    电能表掉电事件             
+    { MeterWrS      ,       0,                          910,       10 },//  0x3012    电能表编程事件             
+    { MeterClrS     ,       0,                          360,       10 },//  0x3013    电能表清零事件             
+    { EventClrS     ,       0,                          320,       10 },//  0x3015    电能表事件清零事件         
+    { SetTimeS      ,       0,                          360,       10 },//  0x3016    电能表校时事件             
+    { DayTabWrS     ,       0,                         1780,       10 },//  0x3017    电能表时段表编程事件       
+    { SeasonTabWrS  ,       0,                         1710,       10 },//  0x3018    电能表时区表编程事件       
+    { WeekTabWrS    ,       0,                          260,       10 },//  0x3019    电能表周休日编程事件       
+    { BillDayWrS    ,       0,                          490,       10 },//  0x301A    电能表结算日编程事件  
+    { CoverOpenS    ,       CoverOpenE,                 490,       10 },//  0x301B    电能表开盖事件             
+    { SwitchOffS    ,       0,                          360,       10 },//  0x301F    电能表跳闸事件             
+    { SwitchOnS     ,       0,                          360,       10 },//  0x3020    电能表合闸事件             
+    { HolidayWrS    ,       0,                          430,       10 },//  0x3021    电能表节假日编程事件       
+    { ActCombWrS    ,       0,                          270,       10 },//  0x3022    电能表有功组合方式编程事件 
+//    { FeeTabWrS     ,       0,                            0,        0 },//  0x3024    电能表费率参数表编程事件   
+//    { StepTabWrS    ,       0,                            0,        0 },//  0x3025    电能表阶梯表编程事件       
+    { SecretKeyWrS  ,       0,                          100,        2 },//  0x3026    电能表密钥更新事件 
+//    { ErrPlugCardS  ,       0,                            0,        0 },//  0x3027    电能表异常插卡事件         
+//    { RechargeS     ,       0,                            0,        0 },//  0x3028    电能表购电记录             
+//    { RefundS       ,       0,                            0,        0 },//  0x3029    电能表退费记录  
+    { SwitchErrS    ,       SwitchErrE,                 710,       10 },//  0x302B    电能表负荷开关误动作事件   
+    { PowerAbnormalS,       PowerAbnormalE,             360,       10 },//  0x302C    电能表电源异常事件 
+    { RTCErrS       ,       RTCErrE,                    490,       10 },//  0x302E    电能表时钟故障事件 
+    { EmuErrS       ,       EmuErrE,                    360,       10 },//  0x302F    电能表计量芯片故障事件
     { BroadcastTimeS,       0,                         3560,      100 },//  0x303C    广播校时事件 
-    { ZeroLineErrS  ,       ZeroLineErrE,               600,       10 },//  0x3040    零线电流异常事件 
+    { ZeroLineErrS  ,       ZeroLineErrE,               330,       10 },//  0x3040    零线电流异常事件 
 
-    { BillFreeze,           0,                         4000,       12 },//  0x5005      结算日冻结 //待调整
-    { SeasonTabCutFreeze,   0,                          400,        3 },//  0x5008      时区表切换冻结 
-    { DayTabCutFreeze   ,   0,                          400,        2 },//  0x5009      日时段表切换冻结    
-    { FeePriceCutFreeze ,   0,                          100,        2 },//  0x500A      费率电价切换冻结  
-    { StepCutFreeze     ,   0,                          100,        2 },//  0x500B      阶梯切换冻结
-    { StepBillFreeze    ,   0,                          100,        2 },//  0x5011      阶梯结算冻结
-    { InstantFreeze     ,   0,                          700,        3 },//  0x5000      瞬时冻结
+    { BillFreeze,           0,                         3280,       12 },//  0x5005      结算日冻结 //待调整
+    { SeasonTabCutFreeze,   0,                          380,        2 },//  0x5008      时区表切换冻结 
+    { DayTabCutFreeze   ,   0,                          380,        2 },//  0x5009      日时段表切换冻结    
+//    { FeePriceCutFreeze ,   0,                          100,        2 },//  0x500A      费率电价切换冻结  
+//    { StepCutFreeze     ,   0,                            0,        2 },//  0x500B      阶梯切换冻结
+//    { StepBillFreeze    ,   0,                            0,        2 },//  0x5011      阶梯结算冻结
+    { InstantFreeze     ,   0,                          570,        3 },//  0x5000      瞬时冻结
+
+    { HourFreeze ,          0,                         6610,        254 },//小时冻结
+    { MonthFreeze,          0,                         6410,         24 },//月冻结
 
 };
+
 
 
 //一个表格只能放在一个存储器上，注册的时候绑定设备   FLASH  分钟冻结
@@ -253,9 +257,9 @@ const struct record_item_t  record_item_1[] =
 // 计算冻结空间大小处同步修改
 const struct record_item_t  record_item_2[] =
 {
-    { HourFreeze , 0,     5 * 4096,    254 },//小时冻结
+
     { DayFreeze  , 0,    27 * 4096,    365 },//日冻结
-    { MonthFreeze, 0,     5 * 4096,     24 },//月冻结
+
 };
 
 const  parameter_item_t  parameter_item[] =
@@ -1089,10 +1093,10 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 }
                 break;
 
-                case 0x50030000://小时冻结
+                //case 0x50030000://小时冻结
                 case 0x50040000://日冻结
                 //case 0x50050000://结算日冻结
-                case 0x50060000://月冻结
+                //case 0x50060000://月冻结
                 //case 0x50070000://年冻结 （不要求，但需占用位置）
                 //case 0x50080000://时区表切换冻结
                 //case 0x50090000://日时段表切换冻结
@@ -1122,6 +1126,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 }
                 break;
                 
+                case 0x50030000://小时冻结
+                case 0x50060000://月冻结
                 case 0x50080000://时区表切换冻结
                 case 0x50090000://日时段表切换冻结
                 case 0x500A0000://费率电价切换冻结
@@ -1260,7 +1266,7 @@ int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_l
 
 
 // data_time_s 转4字节
-int fc_fun_01(struct instance_t* instance, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_01(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint32_t temp;
     uint8_t *p = des;
@@ -1281,7 +1287,7 @@ int fc_fun_01(struct instance_t* instance, uint8_t *des, uint8_t* src, enum form
 }
 
 // 编程列表  按解析取数据长度
-int fc_fun_02(struct instance_t* instance, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_02(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint16_t decode_len = 0;
     uint8_t *p = des;
@@ -1308,8 +1314,8 @@ int fc_fun_02(struct instance_t* instance, uint8_t *des, uint8_t* src, enum form
     return (p - des);
 }
 
-// 编程前时段列表  按解析取数据长度
-int fc_fun_03(struct instance_t* instance, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+// 按解析取数据长度
+int fc_fun_03(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint16_t decode_len = 0;
     uint8_t *p = des;
@@ -1336,6 +1342,58 @@ int fc_fun_03(struct instance_t* instance, uint8_t *des, uint8_t* src, enum form
     }
     return (p - des);
 }
+
+//电压块 支持单个电压读取
+int fc_fun_04(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+{
+    uint16_t decode_len = 0;
+    uint8_t *p = des;
+    //uint8_t num = 0;
+    uint8_t index;
+    
+    index = get_OAD_Index(oad_req);
+
+    if (mode == RFC_WRITE)
+    {
+        src++;//array
+        src++;
+        src++;
+        ndv_memcopy(des, src, 2);
+        p += 2;
+    }
+    else if (mode == RFC_READ)
+    {
+        if (index == 0)
+        {
+            *p++ = TYPE_array;
+            *p++ = 1;
+            
+            
+            
+            
+            
+            
+            
+        }
+        else if (index == 1)
+        {
+        
+        }
+        else
+        {
+        
+        }
+
+        if (decode_len > fc->store_len)
+        {
+            decode_len = 0;
+        }
+        ndv_memcopy(des, src, decode_len);
+        p += decode_len;
+    }
+    return (p - des);
+}
+
 
 
 // 电能数据 存储和协议转换  //待调整
@@ -1575,7 +1633,13 @@ const struct format_conversion_t format_conversion_tab[] =
     {   0x20200200,     8,      5,      fc_fun_01   },
     {   0x20210200,     8,      5,      fc_fun_01   },
     {   0x40000200,     8,      5,      fc_fun_01   },
-    {   0x33020206,   0xFFFF,  52,      fc_fun_02   },  //待调整
+    
+    //{   0x20000200,     5,      2,      fc_fun_04   },//电压
+    //{   0x20010200,     7,      4,      fc_fun_01   },//电流
+    //{   0x20040200,     12,     4,      fc_fun_01   },//功率  
+    //{   0x200A0200,     8,      2,      fc_fun_01   },//功率因数
+   
+    {   0x33020206,   0xFFFF,  52,      fc_fun_02   },  
     {   0x33140207,   0xFFFF,  114,     fc_fun_03   },  
     {   0x40152200,   0xFFFF,  114,     fc_fun_03   },  
     {   0x41162200,   0xFFFF,  20,      fc_fun_03   },  
@@ -1583,11 +1647,6 @@ const struct format_conversion_t format_conversion_tab[] =
 };
 
 // record存储格式特殊处理的 oad 电能
-const struct format_conversion_t format_conversion_0[] =
-{
-    {   0x00000200,     0xFFFF,         0xFFFF,      fc_fun_01   },
-    {   0x00000400,     0xFFFF,         0xFFFF,      fc_fun_01   },
-};
 
 
 
@@ -1728,7 +1787,7 @@ int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* sr
             {
                 if(format_conversion_tab[i].format_fun)
                 {
-                    return format_conversion_tab[i].format_fun(instance, des, src, mode, (struct format_conversion_t *)&format_conversion_tab[i]);
+                    return format_conversion_tab[i].format_fun(instance, oad_req, oad_src, des, src, mode, (struct format_conversion_t *)&format_conversion_tab[i]);
                 }
             }
 
