@@ -186,6 +186,11 @@ unsigned char CommWrite_SpecProc( struct instance_t* instance,  unsigned char* p
                     factory3.adjflag &= ~F_ANadj;
                 meterchip_adj_self(instance, &factory3);
                 break;
+ 		case 0xA800020F://复位次数
+                memcpy(buf, prx+12, 4);
+                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ResetCount);
+                nd_set_index(instance, s_index, buf, 4);         
+                break;              
 	}
 	return 0;
 }

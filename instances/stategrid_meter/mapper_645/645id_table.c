@@ -41,4 +41,5 @@ const COMMTAB  CommTab[] =
 	0xA8000103,	0xFFFF,											CommData_R + CommData_RAM + 6,//自检状态字
 	0xA8000106,	0xFFFF,											CommData_W + CommData_FACTORY + 0,//初始化电表
 	0xA8000107,	0xFFFF,											CommData_R + CommData_RAM + 20,//厂家内部软件版本号
+	0xA800020F,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + CommData_FACTORY + 4,//复位命令
 };

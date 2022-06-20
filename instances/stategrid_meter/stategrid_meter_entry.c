@@ -346,6 +346,14 @@ int baremetal_instance_entry_main(int argc, char** argv)
     uint32_t addr = 0;  
     get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_static, &addr);//RAM对应的地址
     nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, (uint8_t*)addr, mbase_block_static_size); //将EPROM中的数据恢复到RAM;  
+    
+    //复位次数
+    uint32_t count = 0;
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ResetCount);
+    nd_get_index(instance, addr, (uint8_t*)&count, sizeof(count));
+    count++;
+    nd_set_index(instance, addr, (uint8_t*)&count, sizeof(count));   
+
     return baremetal_instance_entry(instance);
 }
 

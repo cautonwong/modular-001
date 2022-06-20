@@ -511,7 +511,7 @@ const  parameter_item_t  parameter_item[] =
     { LastBillingTime               , 0x01,  5, 0 }, //最近一次结算时间 YYMMDDhhmm   
     { LastDayFreezTime              , 0x01,  5, 0 }, //最近一次日冻结时间 YYMMDDhhmm           
     { LastBroadcastTimeERR          , 0x01,  3, 0 }, //最近一次广播校时引起时钟故障 年月日       
-
+    { ResetCount                    , 0x01,  4, 0 }, //复位次数   
    
         //待调整
     { Report3320_EnableList         , 0x01, 161, 0 }, // 3320 上报使能列表  1 + 2*80         
@@ -600,6 +600,7 @@ const  parameter_item_t  parameter_item[] =
     { ADJ_Pgain1,          0x01,    8,      0 },    //零线校表参数（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
     { ADJ_Other,           0x01,    4,      0 },    //计量其他参数（启动阀值、HFconst）1 + 2 = 3
     { ADJ_K,               0x01,    16,     0 },    //Kp Ku Ki 零线K系数 4*4 = 16
+     
 #else
     {0}
 #endif
@@ -2496,36 +2497,6 @@ void fr_dl698_power_on(struct instance_t* instance,  struct pipeline_t* pipeline
 
     mbase_cb->report_piid = 0;
     
-
-#if 0 // 待调整
-    //report_poweron_second = 0;
-    //report_time_second = 0;
-    //report_timeout_count_3011= 0;
-    //report_time_second_3011= 0;
-    //report_count_3011_start = 0;
-    reort_piid = 0;
-    current_connect_channel[0] = 0;        
-    current_connect_channel[1] = 0;
-
-
-
-
-
-
-    uint16_t active_report_CMDtype;         //主动上报 命令类别     需掉电保存   //待调整
-
-    uint8_t active_report_retry_dly[4];        //主动上报 重试等待时间 //待调整
-    uint8_t active_report_retry_cnt[4];        //主动上报 重试次数 //待调整
-    uint8_t report_piid;                       //主动上报帧的PIID缓存 挪到协议  //待调整
-    uint8_t report_random_data[12];            //主动上报 随机数 缓存 //待调整
-
-    //跟随上报2015状态字
-    uint32_t report_2015state[4];           //跟随上报状态字  chl_NUM
-
-
-
-    
-#endif 
 
     fr_handle_disconnect_all_channel(instance,  pipeline, 0);
     fr_handle_disconnect_all_channel(instance,  pipeline, 1);

@@ -150,6 +150,8 @@ int Direct_Read( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, 
 {
 	unsigned long StAddr;
     unsigned char len;
+    uint8_t tmpbuf[10] = {0};
+    uint32_t s_index;
 
 	switch( ID )
 	{
@@ -162,6 +164,14 @@ int Direct_Read( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, 
             len = rn8209c_get(instance, p_rx, p_tx);
             return len;
             break;
+  		case 0xA800020F://复位次数
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ResetCount);
+            nd_get_index(instance, s_index, tmpbuf, 4);   
+            memcpy( (unsigned char*)p_tx, tmpbuf, 4 );
+            return 4;
+            break;                 
+            
+            
 		default:
 			return -1;
 			break;

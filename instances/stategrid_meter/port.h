@@ -641,6 +641,8 @@ enum block_parameter_item_id_t
 #define     LastBillingTime             1513 //最近一次结算时间 
 #define     LastDayFreezTime            1514 //最近一次日冻结时间 
 #define     LastBroadcastTimeERR        1515 //最近一次广播校时引起时钟故障 年月日
+#define     ResetCount                  1516 //复位次数
+
 
 #define     Report3320_EnableList       1521 // 3320 上报使能列表  1 + 2*80
 #define     Report3320_OADList1         1522 // 3320 oad上报列表   1 + 4*60     //红外
