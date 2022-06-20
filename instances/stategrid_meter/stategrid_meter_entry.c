@@ -216,8 +216,8 @@ int communication_channel_init(struct instance_t* p_instance, struct pipeline_t 
     pl_tx->out_queue = pl_rx->out_queue;
     
     if(chl_type<4){
-        uint8_t* buf = nd_malloc(p_instance, control_block_cache, 16);
-        fifoBuf_init(&p_instance->pipe_uart[chl_type], buf, 16);
+        uint8_t* buf = nd_malloc(p_instance, control_block_cache, 8);
+        fifoBuf_init(&p_instance->pipe_uart[chl_type], buf, 8);
     }
     communication_chlx_init((struct fifo_t*)pl_tx->out_queue, (struct fifo_t*)pl_rx->in_queue, chl_type , p_instance);
     return true;
@@ -266,7 +266,7 @@ int baremetal_instance_entry_main(int argc, char** argv)
     memcpy(&instance->time, &time, sizeof(struct tm));*/
     read_mcu_rtc(0x00, instance);
     ///////////////////////////////申请一个cache的BLOCK = 02/////////////////////////////////////////////
-    if (NULL == add_block(instance, RES_DEV_RAM, control_block_cache, (1024*3)))
+    if (NULL == add_block(instance, RES_DEV_RAM, control_block_cache, (2100)))
     {
         return -1;
     }
@@ -284,17 +284,17 @@ int baremetal_instance_entry_main(int argc, char** argv)
     instance->apdu_cache = nd_malloc(instance, control_block_cache, cache_max);
         
     /////////////////////////////////////申请一个698应用的BLOCK = 03/////////////////////////////////////////////////
-    if (NULL == add_block(instance, RES_DEV_RAM, control_block_698_name, 13 * 1024))//16
+    if (NULL == add_block(instance, RES_DEV_RAM, control_block_698_name, 15 * 1024 + 640))//16
     {
         return -1;
     }
 
     communication_channel_init(instance, &pl_rx_698, &pl_tx_698, UART_RS4851_CHL);
-    //communication_channel_init(instance, &pl_plc_rx_698, &pl_plc_tx_698 , UART_MODULE_CHL);
-    //communication_channel_init(instance, &pl_ir_rx_698, &pl_ir_tx_698, UART_IR_CHL);
+    communication_channel_init(instance, &pl_plc_rx_698, &pl_plc_tx_698 , UART_MODULE_CHL);
+    communication_channel_init(instance, &pl_ir_rx_698, &pl_ir_tx_698, UART_IR_CHL);
 
     ////////////////////////////申请一个mbase应用的BLOCK = 04/////////////////////////////////////////////
-    if (NULL == add_block(instance, RES_DEV_RAM, mbase_control_block_name, 6 * 1024)) //剩余4k
+    if (NULL == add_block(instance, RES_DEV_RAM, mbase_control_block_name, 4 * 1024)) //剩余4k
     {
         return -1;
     }

@@ -226,10 +226,11 @@ uint16_t axdr_get_len(const uint8_t *data)
         break;
 
     case TYPE_SID_MAC:
-        data_len = axdr_get_len(data+len);
-        len += data_len;
-        data_len += axdr_get_len(data+len);
-        return data_len;
+        len = 4;
+        type_len = axdr_decode(data[len], data+len, &data_len);
+        len += type_len + data_len;
+        type_len = axdr_decode(data[len], data+len, &data_len);
+        return (len + type_len + data_len);
         break;
 
     case TYPE_ROAD:
