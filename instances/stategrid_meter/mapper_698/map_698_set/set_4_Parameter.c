@@ -407,17 +407,19 @@ uint8_t CheckData400C(uint8_t *p,uint8_t index)
     switch(index)
     {
         case 0:
+          if(*(p+1) > 14)   return DAR_TIME_ZONE_EXCEED;
+          break;
         case 2:
-          if(*(p+1) > 14)   return 1;
+          if(*(p+1) > 14)   return DAR_DAY_INTERVAL_EXCEED;
           break;
         case 1:
-          if(*(p+1) > 8)   return 1;
+          if(*(p+1) > 8)   return DAR_BUFFER_OVERFLOW;
           break;
         case 3:
-          if(*(p+1) > 63)   return 1;
+          if(*(p+1) > 12)   return DAR_TARIFF_NUM_EXCEED;
           break;
         case 4:
-          if(*(p+1) > 254)   return 1;
+          if(*(p+1) > 20)   return DAR_BUFFER_OVERFLOW;
           break;
     }
     return 0;
@@ -431,6 +433,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad,year2;
     uint8_t index,attribute,i,num,buffer[42]={0},temp[114]={0},num_hourtab=0,year,timer[6];
+    int8_t dar =0;
     uint8_t* p = buf;
     uint32_t s_index = 0x00,addr=0;
     int len=0;
@@ -673,7 +676,8 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 p = p + 2;
                 for(i=0;i<5;i++)
                 {
-                    if( CheckData400C(p,i) ) return -DAR_OTHERS_ERROR;
+                    dar = CheckData400C(p,i);
+                    if( dar != 0 ) return -dar;
                     p++;
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + i);
                     nd_set_index(instance, s_index, p, 1); 
@@ -684,7 +688,8 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             else
             {
-                if( CheckData400C(p,index-1) ) return -DAR_RW_REJECT;
+                dar = CheckData400C(p,index-1);
+                if( dar != 0 ) return -dar;
                 p++;
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + (index - 1));
                 nd_set_index(instance, s_index, p, 1); 

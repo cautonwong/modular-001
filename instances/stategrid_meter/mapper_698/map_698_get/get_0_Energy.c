@@ -62,7 +62,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
     nd_get_index(instance, s_index, (uint8_t*)&Num, 1);
     if((Num==0) || (Num>12))
     {
-        Num = 12;
+        Num = 0;
     }
     Num += 1;
     switch(OI)
