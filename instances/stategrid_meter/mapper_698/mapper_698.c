@@ -231,8 +231,7 @@ const struct record_item_t  record_item[] =
 //    { StepBillFreeze    ,   0,                            0,        2 },//  0x5011      阶梯结算冻结
     { InstantFreeze     ,   0,                          570,        3 },//  0x5000      瞬时冻结
 
-    { HourFreeze ,          0,                         6610,        254 },//小时冻结
-    { MonthFreeze,          0,                         6410,         24 },//月冻结
+
 
 };
 
@@ -257,8 +256,11 @@ const struct record_item_t  record_item_1[] =
 // 计算冻结空间大小处同步修改
 const struct record_item_t  record_item_2[] =
 {
+    { HourFreeze ,          0,                         4 * 4096,        254 },//小时冻结
 
-    { DayFreeze  , 0,    27 * 4096,    365 },//日冻结
+    { DayFreeze  ,          0,                      27 * 4096,          365 },//日冻结
+    
+    { MonthFreeze,          0,                         4 * 4096,         24 },//月冻结
 
 };
 
@@ -1094,10 +1096,10 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 }
                 break;
 
-                //case 0x50030000://小时冻结
+                case 0x50030000://小时冻结
                 case 0x50040000://日冻结
                 //case 0x50050000://结算日冻结
-                //case 0x50060000://月冻结
+                case 0x50060000://月冻结
                 //case 0x50070000://年冻结 （不要求，但需占用位置）
                 //case 0x50080000://时区表切换冻结
                 //case 0x50090000://日时段表切换冻结
@@ -1127,8 +1129,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 }
                 break;
                 
-                case 0x50030000://小时冻结
-                case 0x50060000://月冻结
+                //case 0x50030000://小时冻结
+                //case 0x50060000://月冻结
                 case 0x50080000://时区表切换冻结
                 case 0x50090000://日时段表切换冻结
                 case 0x500A0000://费率电价切换冻结
