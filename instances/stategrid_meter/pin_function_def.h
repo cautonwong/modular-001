@@ -85,6 +85,7 @@
 #define  REALY_OFF_DIS_ACTIVE()    {*((uint32_t*)BITBAND_ADDR(GPIOC_DAT,11)) = 0;  \
                                    *((uint32_t*)GPIOC_OEN) &= ~BIT(11);}
 
+#define  RELAY_CHECK_IN()      {*((uint32_t*)GPIOC_IE) |= BIT(8); *((uint32_t*)GPIOC_OEN) |= BIT(8);}
 #define  RELAY_CHECK()       *((uint32_t*)BITBAND_ADDR(GPIOC_STS,8))
 
 #define  RELAY_LED_OPEN()    {*((uint32_t*)BITBAND_ADDR(GPIOE_DAT,12)) = 1;  \

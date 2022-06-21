@@ -92,7 +92,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         if(mbase_cb->sta & F_RemoteRelayOff)     
                         {
                             mbase_cb->cmd_errstate = 0x0080;  //bit8;
-                            return -DAR_OTHERS_ERROR;    //跳闸后，下发预跳闸失败
+                            return -DAR_UNAUTHORIZED;    //跳闸后，下发预跳闸失败
                         }
                         if(relayon_type == 0)   mbase_cb->sta |= F_RemoteGaoJing0;
                         else if(relayon_type == 1)   mbase_cb->sta |= F_RemoteGaoJing1;

@@ -396,7 +396,7 @@ int connect_failture(struct instance_t* instance, uint8_t* req_buf, struct conte
     mbase_cb->authen_tmr = 0; // 待调整
     mbase_cb->irauthen_tmr = 0;
 
-
+    p_res = p_res + 2;
     *p_res++ = TYPE_date_time_s;
     rtc_get_from_tm(instance,temp);
     *p_res++ = temp[6];
@@ -523,6 +523,12 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 p = p + 3;
                 len1 = *p++;
                 memcpy(buffer, p, len1);//oad+data
+                mem_swap_cpy((uint8_t*)&displayoad2, buffer, 4);
+                if(displayoad2 == 0x40020200)   //表号需要判断BCD
+                {
+                    if(BCD_Check((uint8_t*)&buffer[5], 8) == 1)    return -DAR_TYPE_NOT_MATCH;
+                }
+                displayoad2 = 0;
                 p = p + len1;
                 p++;
                 mem_swap_cpy((uint8_t*)&addr, p, 4);//sid

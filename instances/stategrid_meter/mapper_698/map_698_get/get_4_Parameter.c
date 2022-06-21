@@ -395,7 +395,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             {
                 *p++ = TYPE_octet_string;
                 *p++ = 6;
-                memcpy(p, mbase_cb->tsa, 6);
+                mem_swap_cpy(p, mbase_cb->tsa, 6);
                 p = p + 6;
                 return (p - buf);
             }

@@ -37,7 +37,7 @@ const general_set4  general_set4_talble[] =
 {
 //   Comm_Number,               0x4001,     0x02,   0x02,   6,//表地址
 //   Meter_Number,              0x4002,     0x02,   0x02,   6,//表号
-     User_Number,               0x4003,     0x02,   0x02,   6,//客户编号
+//     User_Number,               0x4003,     0x02,   0x02,   6,//客户编号
 //   Meter_Location,            0x4004,     0x02,   0x01,   27,//设备地理位置
      SeasonTable_Changetime,    0x4008,     0x02,   0x01,   7,//两套时区切换时间
      DayTable_Changetime,       0x4009,     0x02,   0x01,   7,//两套时段切换时间
@@ -64,7 +64,17 @@ const general_set4  general_set4_talble[] =
 };
 #define		set4num			sizeof(general_set4_talble)/sizeof(general_set4)
 
-
+uint8_t BCD_Check( uint8_t* Addr, uint8_t Len )
+{
+	while( Len > 0 )
+    {
+	    if( (*Addr&0x0F) > 0x09 ) return 1;
+	    if( (*Addr&0xF0) > 0x90 ) return 1;
+	    Addr++;
+	    Len--;
+    }
+	return 0;
+}
 
 int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {
@@ -548,14 +558,34 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             break;
         case 0x4001://表地址
+        case 0x4003://客户编号
             if(attribute == 0x02)
             {
+                len = *(p+1);
+                if(len <= 6)
+                {
+                    memset(buffer, 0x00, 6);
+                    memcpy((uint8_t*)&buffer[6-*(p+1)], (p+2), len);
+                }
+                else
+                {
+                    return -DAR_TYPE_NOT_MATCH;
+                }
                 p = p + 2;
-                memcpy(mbase_cb->tsa, p, 6);
-                p = p + 6;
-                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                offsetof(struct mbase_control_block_t, tsa));
-                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->tsa, 6);
+                if(BCD_Check(buffer, 6) == 1)    return -DAR_TYPE_NOT_MATCH;
+                if(oad == 0x4001)
+                {
+                    mem_swap_cpy(mbase_cb->tsa, buffer, 6);
+                    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                    offsetof(struct mbase_control_block_t, tsa));
+                    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->tsa, 6);
+                }
+                else
+                {
+                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + User_Number);
+                    nd_set_index(instance, s_index, buffer, 6); 
+                }
+                p = p + len;
                 return (p-buf);
             }
             break;

@@ -99,12 +99,13 @@ void SysTick_Handler(void) //10ms
         Isr_Function[IRQ_SYSTICK].IsrFunctionRegister(Isr_Function[IRQ_SYSTICK].para);
     }
     
-    if(RELAY_CHECK())
+    RELAY_CHECK_IN();
+    if(RELAY_CHECK())   //拉闸状态
     {
          if(relay_off_chk < Relay_Ck_Time)  relay_off_chk++;
          relay_on_chk = 0;
     }
-    else
+    else    //合闸状态
     {
          if(relay_on_chk < Relay_Ck_Time)   relay_on_chk++;
          relay_off_chk = 0;
