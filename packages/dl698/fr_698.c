@@ -120,6 +120,9 @@ int __matcher_698(void* pctx, uint8_t* b)
         if (ctx->index == SA_LEN(ctx->SA) + 1){
             ctx->CA = byte;
             ctx->step = 7;
+            //uint8_t tmpbuf[32] = {0};
+            //mem_swap_cpy(tmpbuf, ctx->addr, ctx->index);
+            //memcpy(ctx->addr, tmpbuf, ctx->index);
         }else{
             ctx->addr[ctx->index++] = byte;
         }

@@ -125,6 +125,18 @@ int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_
             return 1;
         }
         break;
+        case 0x3011:// 掉电事件
+        {
+            struct para_698_tag_t PowerOffS_para[1] =
+            {
+                {TYPE_unsigned,         (uint8_t*)&mbase_cb->PowerOffS_duration_para,        1},
+            };
+            mbase_cb->PowerOffS_duration_para = 1;
+            memcpy((uint8_t*)para_pack->event_para, (uint8_t*)PowerOffS_para, sizeof(PowerOffS_para));
+            para_pack->para_num = sizeof(PowerOffS_para) / sizeof(PowerOffS_para[0]);
+            return 1;
+        }
+        break;        
         case 0x3040:// 零线电流异常
         {
             struct para_698_tag_t ZeroLineErrS_para[3] =
@@ -408,7 +420,7 @@ const uint32_t power_grid_event_oad[] =
     0x30050700,   //A过流                              
     0x302B0200,   //电能表负荷开关误动作事件  
     0x302F0200,   //电能表计量芯片故障事件
-    0x30400200,   //零线电流异常事件  
+    0x30400200,   //零线电流异常事件
 };
 
 
