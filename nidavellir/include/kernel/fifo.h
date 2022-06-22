@@ -45,7 +45,7 @@ int16_t fifoBuf_getByteCount(struct fifo_t* buf, uint16_t* count);
 
 uint16_t fifoBuf_putByte(struct fifo_t *buf, const uint8_t b);
 uint16_t fifoBuf_putData(struct fifo_t *buf, const void *data, uint16_t len);
-
+uint16_t fifoBuf_update_rd(struct fifo_t* buf, uint16_t len, uint8_t type);
 void fifoBuf_init(struct fifo_t *buf, const void *buffer, const uint16_t buffer_size);
 
 int ringbuffer_filter(struct fifo_t* buf, int (*callback)(void* ctx, uint8_t *b), void* ctx);

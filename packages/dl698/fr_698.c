@@ -376,9 +376,12 @@ int fr_addr_handle(struct instance_t* instance, struct pipeline_t* pipeline, str
     if(NULL == mbase_cb){
         return 0;
     }
+    //uint8_t tsa[16] = {0};
+    //mem_swap_cpy(tsa, mbase_cb->tsa, SA_LEN(ctx->SA) + 1);
+    uint8_t *tsa = mbase_cb->tsa;
 #if 1 
     if(0 == get_addr_type(ctx->SA)){
-        if (0 != mem_compare(ctx->addr, mbase_cb->tsa, SA_LEN(ctx->SA) + 1)){
+        if (0 != mem_compare(ctx->addr, tsa, SA_LEN(ctx->SA) + 1)){
             if(0 != mem_compare(ctx->addr, aa_addrbuf, 6)){
                 return 0;
             }
@@ -387,12 +390,12 @@ int fr_addr_handle(struct instance_t* instance, struct pipeline_t* pipeline, str
         for (i = 0; i < (SA_LEN(ctx->SA) + 1); i++)
         {
             if ((ctx->addr[i] & 0xf0) != 0xa0){
-                if ((mbase_cb->tsa[i] & 0xf0) != (ctx->addr[i]  & 0xf0)){
+                if ((tsa[i] & 0xf0) != (ctx->addr[i]  & 0xf0)){
                     return 0;
                 }
             }
             if ((ctx->addr[i] & 0x0f) != 0x0a){
-                if ((mbase_cb->tsa[i] & 0x0f) != (ctx->addr[i]  & 0x0f)){
+                if ((tsa[i] & 0x0f) != (ctx->addr[i]  & 0x0f)){
                     return 0;
                 }
             }
@@ -475,8 +478,11 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
 
 
 int fr_apdu_effective_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{//协议一致性检查正常，检查APDU是否为有效数据
-
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    if((1 == get_addr_type(ctx->SA)) &&  (ctx->service == SET_Request)){
+        return 0;
+    }
     return 1;
 }
 
@@ -719,6 +725,10 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
         handle_scrambler(instance, pipeline, mesg);
     }
 
+#ifdef TX_APDU_EN
+    apdu_send(UART_MODULE_CHL, 0x55, ctx->apdu_d_rx, ctx->apdu_rx_len);
+#endif   
+    
     update_connect_timeout_cnt(instance, pipeline, mesg);
 
     ctx->service = apdu_rx[ctx->apdu_rx_offset++];
@@ -805,6 +815,10 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     if(err_no < 0){
         return err_no;
     }
+
+#ifdef TX_APDU_EN
+    apdu_send(UART_MODULE_CHL, 0xAA, ctx->apdu->buf_ptr, fifoBuf_getUsed(ctx->apdu));
+#endif 
     
     if (service == SECURITY_Request){
         err_no = fr_security_encode(instance, pipeline, mesg);
@@ -963,7 +977,7 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
         ctx->CA = 0x00;
         ctx->SA = 0x05;
         ctx->addr[0] = 0x08;
-        memcpy(ctx->addr, mbase_cb->tsa, SA_LEN(ctx->SA) + 1);
+        mem_swap_cpy(ctx->addr, mbase_cb->tsa, SA_LEN(ctx->SA) + 1);
         mesg->from = pid_tx_698;
         mesg->len = (payload[2]<<8) + payload[3] + 2;
         fr_pack_698_head(instance, pipeline, mesg);
