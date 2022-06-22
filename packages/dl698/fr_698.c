@@ -478,8 +478,11 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
 
 
 int fr_apdu_effective_check(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
-{//协议一致性检查正常，检查APDU是否为有效数据
-
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    if((1 == get_addr_type(ctx->SA)) &&  (ctx->service == SET_Request)){
+        return 0;
+    }
     return 1;
 }
 
