@@ -272,7 +272,27 @@ void rs485_send_timeout(void *CallBackSendPara)
 
 void plc_send_timeout(void *CallBackSendPara)
 {
+    uint32_t baud=9600,i; 
+    struct instance_t* instance = (struct instance_t*)CallBackSendPara;
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
     //这里是发送结束最后一个字节后调用的函数，可以在这里判断是否有波特率修改，并调用修改波特率函数，注意该函数是在中断
+    if(mbase_control_block->baud_chg & 0x02)
+    {
+        for(i=0;i<11;i++)
+        {
+            if(mbase_control_block->Baut_plc == i)
+            {
+                baud = baud_table[i];
+                break;
+            }
+        }
+        if(i<11)
+        {
+            mcu_uart_set_baud(baud, 4);
+        }
+        mbase_control_block->baud_chg = 0;
+    }
 }
 
 void ir_send_timeout(void *CallBackSendPara)

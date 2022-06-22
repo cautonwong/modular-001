@@ -240,6 +240,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
             switch(method)
             {
                 case 0x04://出厂参数初始化
+                    if(mbase_cb->factor_mode == false)  return -DAR_UNAUTHORIZED;
                     ret = para_init( instance );
                     meter_clr(instance);
                     if(ret < 0)

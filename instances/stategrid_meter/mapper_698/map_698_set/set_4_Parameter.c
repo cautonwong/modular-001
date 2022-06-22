@@ -275,11 +275,11 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
             switch(idl)
             {
                 case 0x0200:   //设备描述符
-                    if(mbase_cb->factor_mode == false)  return -DAR_OTHERS_ERROR; //工厂模式外，禁止写入
+                    if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
                     if(p[1] > 32)  return -DAR_TYPE_NOT_MATCH;
                     break;
                 case 0x0400://生产日期
-            		if(mbase_cb->factor_mode == false)  return -DAR_OTHERS_ERROR; //工厂模式外，禁止写入
+            		if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
             
                     mem_swap_cpy((uint8_t*)&year2, p+1, 2);
                     if(year2 < 2000) return -DAR_RW_REJECT;
@@ -316,7 +316,7 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
     {
         case 0x0300: //版本信息
         {
-            if(mbase_cb->factor_mode == false)  return -DAR_OTHERS_ERROR; //工厂模式外，禁止写入
+            if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
                         tmpid1 = idl;
 
             num = p[1];
@@ -352,7 +352,7 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
         case 0x0602: //协议列表
         case 0x0603: //协议列表
         {
-            if(mbase_cb->factor_mode == false)  return -DAR_OTHERS_ERROR; //工厂模式外，禁止写入
+            if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
             
             return set_support_protocol_list(instance,id, buf);
         }
@@ -569,7 +569,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 }
                 else
                 {
-                    return -DAR_TYPE_NOT_MATCH;
+                    return -DAR_BUFFER_OVERFLOW;
                 }
                 p = p + 2;
                 if(BCD_Check(buffer, 6) == 1)    return -DAR_TYPE_NOT_MATCH;
