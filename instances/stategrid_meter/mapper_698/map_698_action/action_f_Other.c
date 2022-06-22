@@ -498,7 +498,8 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 txlen = *p++;
                 memcpy(keybuf, p, txlen);
                 p = p + txlen;
-                rxlen = read_esam_data(instance, addr , keybuf , txlen);
+                txlen = ((uint16_t)keybuf[0]<<8) + keybuf[1];
+                rxlen = read_esam_data(instance, addr , (uint8_t*)&keybuf[2] , txlen);
                 
                 //cache->buf_ptr[cache->wr++] = 0;  //成功
                 //cache->buf_ptr[cache->wr++] = 1;  //有数据
@@ -513,7 +514,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     cache->buf_ptr[cache->wr++] = 0x81;  //长度
                     cache->buf_ptr[cache->wr++] = rxlen;  //长度
                 }
-                memcpy((uint8_t*)&cache->buf_ptr[cache->wr], keybuf, rxlen);
+                memcpy((uint8_t*)&cache->buf_ptr[cache->wr], (uint8_t*)&keybuf[2], rxlen);
                 cache->wr = cache->wr + rxlen;
                 
                 return (p-buf);

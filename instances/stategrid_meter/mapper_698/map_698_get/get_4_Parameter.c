@@ -385,7 +385,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 }
                 break;
                 default:
-                    return -DAR_OTHERS_ERROR;
+                    return -DAR_OBJECT_NOT_EXIST;
                     break;
             }
         }
@@ -401,7 +401,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             else
             {
-                return -DAR_OTHERS_ERROR;
+                return -DAR_OBJECT_NOT_EXIST;
             }
             break;
         case 0x4002://表号
@@ -416,7 +416,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             else
             {
-                return -DAR_OTHERS_ERROR;
+                return -DAR_OBJECT_NOT_EXIST;
             }
             break;
         case 0x4004://设备地理位置
@@ -451,7 +451,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 len = 5;
             }
             else
-                return -DAR_OTHERS_ERROR;
+                return -DAR_OBJECT_NOT_EXIST;
             
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + s_index);
             nd_get_index(instance, addr, p, len); 
@@ -493,16 +493,16 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 }
                 else
                 {
-                    return -DAR_OTHERS_ERROR;
+                    return -DAR_OBJECT_NOT_EXIST;
                 }
             }
             else
             {
-                return -DAR_OTHERS_ERROR;
+                return -DAR_OBJECT_NOT_EXIST;
             }
             break;
         case 0x400C://时区时段表数
-            if(index > 5)   return -DAR_OTHERS_ERROR;
+            if(index > 5)   return -DAR_OBJECT_NOT_EXIST;
             if(index == 0)
             {
                 *p++ = TYPE_structure;
@@ -527,7 +527,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             break;
             break;
         case 0x4011://公共假日表
-            if(index > 20)    return -DAR_OTHERS_ERROR;
+            if(index > 20)    return -DAR_OBJECT_NOT_EXIST;
             if(index == 0)
             {
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 4);
@@ -582,7 +582,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 return 114;//(p - buf);
             }
 
-            if(index > 14)    return -DAR_OTHERS_ERROR;
+            if(index > 14)    return -DAR_OBJECT_NOT_EXIST;
             if(oad == 0x4014)   
                 addr = Season_Table0;
             else 
@@ -626,7 +626,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             break;
         case 0x4016://当前套日时段表
         case 0x4017://备用套日时段表
-            if(index > 0x08)    return -DAR_OTHERS_ERROR;
+            if(index > 0x08)    return -DAR_OBJECT_NOT_EXIST;
             if(oad == 0x4016)
                 addr = Day_Table00;
             else
@@ -724,7 +724,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 return (p-buf);
             }
             else
-                return -DAR_OTHERS_ERROR;
+                return -DAR_OBJECT_NOT_EXIST;
             break;
         case 0x4300:
             return get4300_para(instance,  id,  buf);
@@ -787,6 +787,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             break;
         default:
+            return -DAR_OBJECT_NOT_EXIST;
             break;
     }
     return -DAR_OBJECT_NOT_EXIST;

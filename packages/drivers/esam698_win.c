@@ -339,7 +339,7 @@ static int f_esam_type_read_esam_data(struct esam_698_data_t *para, void *esam_h
     memcpy(head , (uint8_t *)&esam_in->sid_id , 4);
 
     esam_in->RN_Data_len = 0;
-    esam_in->data_len = 0;
+//    esam_in->data_len = 0;
     esam_in->MAC_len = 0;
     esam_in->Dispersion_factor_len = 0;
 

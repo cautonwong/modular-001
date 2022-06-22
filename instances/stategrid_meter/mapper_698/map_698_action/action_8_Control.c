@@ -187,7 +187,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     return 1;
                     break;
                 default:
-                    return -DAR_OTHERS_ERROR;
+                    return -DAR_OBJECT_NOT_EXIST;
                     break;
             }
             break;

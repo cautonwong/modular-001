@@ -60,6 +60,12 @@ int SET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *
                 }
             }
             break;
+        case 0x8001://保电
+            if(attribute == 0x02)
+            {
+                return -DAR_RW_REJECT;
+            }
+            break;
         default:
             break;
     }

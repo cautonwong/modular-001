@@ -2282,6 +2282,7 @@ int para_init(struct instance_t* instance )
     //EE部分更新
     for(i=0; i<num; i++)
     {
+        v85xxp_clear_watchdog();
         if( parameter_item[i].data != 0 )
         {
 #if 0     // test        
