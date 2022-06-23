@@ -88,12 +88,7 @@ int backlight_pro(struct instance_t* instance, struct pipeline_t* task, struct m
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
     
-    if( ctrl_block->sta & F_RemoteAlarm )//远程告警
-    {
-        ctrl_block->BackLightTmr = 0xFFFF;
-    }
-    
-    if(ctrl_block->BackLightTmr == 0xFFFF)   //故障报警
+    if(ctrl_block->sta & F_RemoteAlarm)   //远程告警
     {
         LCD_BACK_LIGHT_OPEN(); // 打开背光
         return 1;

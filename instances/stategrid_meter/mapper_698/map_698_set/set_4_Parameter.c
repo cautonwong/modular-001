@@ -99,6 +99,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 switch(oad)
                 {
                     case 0x4010://元器件个数
+                        if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
                         if(*(p+1) != 1)   return -DAR_TYPE_NOT_MATCH;
                         break;
                     case 0x4012://周休日
@@ -114,6 +115,11 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         send_event_mesg_pro(instance, NULL, WeekTabWrS, NULL, 1);// 周休日编程事件
                         mbase_cb->Fee |= F_DAYTABChange;
                         break;
+                    case 0x400F://秘钥总条数
+                    case 0x401C://变比
+                    case 0x401D:
+                        return -DAR_RW_REJECT;
+                        break;
                     case 0x4102:    //脉冲宽度
                     case 0x4104:    //额定电压
                     case 0x4105:    //额定电流
@@ -122,9 +128,11 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     case 0x4109:    //有功脉冲常数
                         return -DAR_RW_REJECT;
                     case 0x410B:    //电表型号
+                        if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
                         if(*p != 0X0A) return -DAR_RW_REJECT;
                     case 0x4103:    //资产管理编码
                     case 0x4111:    //软件备案号
+                        if((mbase_cb->factor_mode == false) && (0x4111 == oad))  return -DAR_RW_REJECT; //工厂模式外，禁止写入
                         if(*p != 0x0A)    return -DAR_TYPE_NOT_MATCH;
 						break;
                     case 0x4008://切换时间
@@ -168,7 +176,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
             }
         }
     }
-    return -DAR_RW_REJECT;
+    return 0;
 }
 
 
@@ -275,11 +283,11 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
             switch(idl)
             {
                 case 0x0200:   //设备描述符
-                    if(mbase_cb->factor_mode == false)  return -DAR_OTHERS_ERROR; //工厂模式外，禁止写入
+                    if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
                     if(p[1] > 32)  return -DAR_TYPE_NOT_MATCH;
                     break;
                 case 0x0400://生产日期
-            		if(mbase_cb->factor_mode == false)  return -DAR_OTHERS_ERROR; //工厂模式外，禁止写入
+            		if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
             
                     mem_swap_cpy((uint8_t*)&year2, p+1, 2);
                     if(year2 < 2000) return -DAR_RW_REJECT;
@@ -316,7 +324,7 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
     {
         case 0x0300: //版本信息
         {
-            if(mbase_cb->factor_mode == false)  return -DAR_OTHERS_ERROR; //工厂模式外，禁止写入
+            if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
                         tmpid1 = idl;
 
             num = p[1];
@@ -352,7 +360,7 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
         case 0x0602: //协议列表
         case 0x0603: //协议列表
         {
-            if(mbase_cb->factor_mode == false)  return -DAR_OTHERS_ERROR; //工厂模式外，禁止写入
+            if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
             
             return set_support_protocol_list(instance,id, buf);
         }
@@ -454,7 +462,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
         return -DAR_OTHERS_ERROR;
     }
     len = general_set_4_para(instance, id, buf);
-    if(len > 0)
+    if(len != 0)
     {
         return len;
     }
@@ -569,7 +577,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 }
                 else
                 {
-                    return -DAR_TYPE_NOT_MATCH;
+                    return -DAR_BUFFER_OVERFLOW;
                 }
                 p = p + 2;
                 if(BCD_Check(buffer, 6) == 1)    return -DAR_TYPE_NOT_MATCH;

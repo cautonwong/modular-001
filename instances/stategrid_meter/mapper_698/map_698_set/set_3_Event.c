@@ -140,6 +140,12 @@ int set_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
         return -DAR_OTHERS_ERROR;
     }
 
+    if ((oad & 0xFFFF0000)== 0x30110000) //掉电 配置参数 不支持设置
+    {
+        *dar = DAR_OTHERS_ERROR;
+        return -DAR_OTHERS_ERROR;
+    }
+    
     count = para_pack.para_num;
 
     if (index > count)
