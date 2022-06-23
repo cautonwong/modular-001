@@ -728,10 +728,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
         handle_scrambler(instance, pipeline, mesg);
     }
 
-#ifdef TX_APDU_EN
-    apdu_send(UART_MODULE_CHL, 0x55, ctx->apdu_d_rx, ctx->apdu_rx_len);
-#endif   
-    
+
     update_connect_timeout_cnt(instance, pipeline, mesg);
 
     ctx->service = apdu_rx[ctx->apdu_rx_offset++];
@@ -746,6 +743,10 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
 
         ctx->service = apdu_rx[ctx->apdu_rx_offset++];
     }
+    
+#ifdef TX_APDU_EN
+    apdu_send(UART_MODULE_CHL, 0x55, ctx->apdu_d_rx, ctx->apdu_rx_len);
+#endif  
     
     if (!((CONNECT_Request == ctx->service) || (RELEASE_Request == ctx->service))){
         ctx->choice = apdu_rx[ctx->apdu_rx_offset++];
