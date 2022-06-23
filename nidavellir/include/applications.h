@@ -7,6 +7,8 @@
 #include "cpu_surport.h"
 #endif // !WIN32
 
+#define TX_APDU_EN 0
+
 struct energy_ctx_t
 {
     uint32_t pa;

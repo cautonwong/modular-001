@@ -60,12 +60,18 @@ int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *
                 case 0x04://告警状态
                     *p++ = TYPE_bit_string;
                     *p++ = 8;
-                    *p++ = 00;
+                    if((mbase_cb->sta & F_RemoteAlarm) == F_RemoteAlarm)
+                        *p++ = 0x80;
+                    else
+                        *p++ = 0;
                     return (p-buf);
                 case 0x05://命令状态
                     *p++ = TYPE_bit_string;
                     *p++ = 8;
-                    *p++ = mbase_cb->sta;
+                    if((mbase_cb->sta & F_RemoteRelayOff) == F_RemoteRelayOff)
+                        *p++ = 0x80;
+                    else
+                        *p++ = 0;
                     return (p-buf);
                 default:
                     return -DAR_OBJECT_NOT_EXIST;
