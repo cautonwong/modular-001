@@ -99,6 +99,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 switch(oad)
                 {
                     case 0x4010://元器件个数
+                        if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
                         if(*(p+1) != 1)   return -DAR_TYPE_NOT_MATCH;
                         break;
                     case 0x4012://周休日
@@ -114,6 +115,11 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         send_event_mesg_pro(instance, NULL, WeekTabWrS, NULL, 1);// 周休日编程事件
                         mbase_cb->Fee |= F_DAYTABChange;
                         break;
+                    case 0x400F://秘钥总条数
+                    case 0x401C://变比
+                    case 0x401D:
+                        return -DAR_RW_REJECT;
+                        break;
                     case 0x4102:    //脉冲宽度
                     case 0x4104:    //额定电压
                     case 0x4105:    //额定电流
@@ -126,7 +132,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         if(*p != 0X0A) return -DAR_RW_REJECT;
                     case 0x4103:    //资产管理编码
                     case 0x4111:    //软件备案号
-                        if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
+                        if((mbase_cb->factor_mode == false) && (0x4111 == oad))  return -DAR_RW_REJECT; //工厂模式外，禁止写入
                         if(*p != 0x0A)    return -DAR_TYPE_NOT_MATCH;
 						break;
                     case 0x4008://切换时间
@@ -170,7 +176,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
             }
         }
     }
-    return -DAR_RW_REJECT;
+    return 0;
 }
 
 
