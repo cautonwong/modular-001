@@ -122,9 +122,11 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     case 0x4109:    //有功脉冲常数
                         return -DAR_RW_REJECT;
                     case 0x410B:    //电表型号
+                        if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
                         if(*p != 0X0A) return -DAR_RW_REJECT;
                     case 0x4103:    //资产管理编码
                     case 0x4111:    //软件备案号
+                        if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
                         if(*p != 0x0A)    return -DAR_TYPE_NOT_MATCH;
 						break;
                     case 0x4008://切换时间
@@ -454,7 +456,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
         return -DAR_OTHERS_ERROR;
     }
     len = general_set_4_para(instance, id, buf);
-    if(len > 0)
+    if(len != 0)
     {
         return len;
     }
