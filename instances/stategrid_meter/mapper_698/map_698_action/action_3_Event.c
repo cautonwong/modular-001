@@ -307,6 +307,7 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
 
 int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
+    struct context_698_t* pctx = (struct context_698_t*)ctx;
     struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
 //    uint16_t i;
@@ -337,12 +338,13 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
             return -DAR_OTHERS_ERROR;
         }
         p += 2;
-        // 待调整
-        // 如何判断是否带时间标签 及厂内
-        //if ((req->time_tag_len < 2) && ((ctrl_block->factor_mode == false)))
-        //{
-        //    return DAR_TIME_TAG_INVALID;
-        //}
+        if(mbase_cb->factor_mode == false)
+        {
+            if((1 != pctx->timeTag_valid) || (pctx->timeTag[0] == 0))
+            {
+                return -DAR_TIME_TAG_INVALID;
+            }
+        }
 
         ret = single_event_clear_judge(oi);
     

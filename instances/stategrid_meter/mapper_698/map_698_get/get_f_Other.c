@@ -21,6 +21,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
     uint32_t addr=0,s_index=0, tmp32=0;
     uint8_t esam_inf[45] = {0}; 
     uint8_t cilent_index = 0;
+    uint8_t schem = 0;
     
     if(mbase_cb == NULL)
     {
@@ -30,7 +31,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
     index = (unsigned char)(id & 0x000000FF);
     attribute = (unsigned char)((id & 0x00001F00) >> 8);    //属性
-
+    schem = get_OAD_Schem(id);
     if (CA_TYPE_TER(p_ctx->CA)) 
     {
         cilent_index = 1;
@@ -299,13 +300,20 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     return (p - buf);
                     break;
                 case 0x04://对称秘钥版本
+                    if( schem )//事件记录用
+                    {
+                        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_KeyVer);
+                        nd_get_index(instance, addr, p, 18);
+                        p += 18;
+                        return (p-buf);
+                    }
                     *p++ = TYPE_octet_string;
                     *p++ = 16;
                     read_esam_info(instance, esam_inf,0X04);
                     memcpy(p, (uint8_t*)&esam_inf[0], 16);
                     p = p + 16;
                     return (p - buf);
-                    break;
+                    break;                    
                 case 0x05://会话时效门限
                     *p++ = TYPE_double_long_unsigned;
                     read_esam_info(instance, esam_inf,0X05);

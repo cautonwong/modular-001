@@ -37,6 +37,10 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
         case 0xF101://
             if(attribute == 0x02)   //安全模式参数
             {
+                if(mbase_cb->factor_mode == false)
+                {
+                    return -DAR_RW_REJECT;
+                }
                 p++;
                 tempbuf[0] = *p++;
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_En);
@@ -48,6 +52,10 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 nd_set_offset(instance, s_index, p, 1);
 #endif                
                 return (p-buf);
+            }
+            else if(attribute == 0x03) //安全模式参数
+            {
+            
             }
             break;
         case 0xF201://rs485
