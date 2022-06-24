@@ -50,6 +50,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
 {
     struct context_698_t* pctx = (struct context_698_t*)ctx;
     struct mbase_control_block_t* mbase_cb;
+    struct message_t mesg_tmp;
     struct pipeline_t* pipeline;
     uint8_t  method,i, tmpbuf[20] = {0};
     uint16_t oad,temp=0;
@@ -266,13 +267,16 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         return (-DAR_UNAUTHORIZED);
                     }
 #endif
-                    
+                    //if(mbase_cb->factor_mode == false) //待调整
+                    {
+                        //set_activeflag(instance, RecordId);
+                        mesg_tmp.id = MeterClrS;
+                        recv_record_process(instance, NULL, &mesg_tmp, NULL);
+                        //send_event_mesg_pro(instance, NULL, MeterClrS, NULL, 1);
+                    }
                     meter_clr(instance);
                     p++;
-                    if(mbase_cb->factor_mode == false)
-                    {
-                        send_event_mesg_pro(instance, NULL, MeterClrS, NULL, 1);
-                    }
+
 
                     return (p-buf);
                     break;

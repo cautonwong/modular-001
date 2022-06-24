@@ -357,7 +357,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     for(i=0;i<3;i++)
                     {
                         *p++ = TYPE_double_long_unsigned;
-                        memcpy(p, (uint8_t*)&esam_inf[0], 4);
+                        memcpy(p, (uint8_t*)&esam_inf[i*4], 4);
                         p = p + 4;
                     }
                     return (p - buf);
