@@ -363,7 +363,6 @@ int fr_addr_handle(struct instance_t* instance, struct pipeline_t* pipeline, str
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct mbase_control_block_t* mbase_cb;
-    uint8_t aa_addrbuf[6] = {0xAA,0xAA,0xAA,0xAA,0xAA,0xAA};
     uint8_t i = 0;
     
     if (2 == get_addr_type(ctx->SA)) {
@@ -385,9 +384,7 @@ int fr_addr_handle(struct instance_t* instance, struct pipeline_t* pipeline, str
 #if 1 
     if(0 == get_addr_type(ctx->SA)){
         if (0 != mem_compare(ctx->addr, tsa, SA_LEN(ctx->SA) + 1)){
-            if(0 != mem_compare(ctx->addr, aa_addrbuf, 6)){
-                return 0;
-            }
+            return 0;
         }
     }else if(1 == get_addr_type(ctx->SA)){
         for (i = 0; i < (SA_LEN(ctx->SA) + 1); i++)
@@ -412,9 +409,7 @@ int fr_addr_handle(struct instance_t* instance, struct pipeline_t* pipeline, str
         return 0;
     }
 #endif
-    if (1 == get_addr_type(ctx->SA)) {
-        ctx->SA &= 0x3F;
-    }
+
     return 1;
 }
 
@@ -485,6 +480,9 @@ int fr_apdu_effective_check(struct instance_t* instance, struct pipeline_t* pipe
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     if((1 == get_addr_type(ctx->SA)) &&  (ctx->service == SET_Request)){
         return 0;
+    }
+    if (1 == get_addr_type(ctx->SA)) {
+        ctx->SA &= 0x3F;
     }
     return 1;
 }
