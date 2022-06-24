@@ -150,7 +150,6 @@ int _f101_m127_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
     {
         return -DAR_OTHERS_ERROR;
     }
-    p += 2;
 
     obj_oi = buf_to_uint16_msb(p + 1);
     obj_right = buf_to_uint16_msb(p + 4);

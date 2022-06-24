@@ -2,6 +2,84 @@
 #include "fr_698.h"
 
 
+int SET_F10103XX(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t count,maxnum = 0, offset = 0, index=0,i, tempbuf[SecurityMode_EXData_LEN+1] = {0};
+    uint8_t *p = buf, *Ptmp = tempbuf;
+    uint32_t s_index=0;
+    
+    if(mbase_cb == NULL)
+    {
+        return -DAR_OTHERS_ERROR;
+    }
+
+    index = (unsigned char)(id & 0x000000FF);
+    maxnum = (SecurityMode_EXData_LEN - 1) / 4;
+
+    if (index > maxnum)
+    {
+        return -DAR_BUFFER_OVERFLOW;
+    }   
+
+    if (index == 0)
+    {
+        count = p[1];
+
+        if (p[0] != TYPE_array || count > maxnum)
+        {
+            return -DAR_OTHERS_ERROR;
+        }
+
+        p += 2;
+        *Ptmp++ = count;
+
+        for (i = 0; i < count; i++)
+        {
+            if (p[0] != TYPE_structure || p[1] != 2 || p[2] != TYPE_OI || p[5] != TYPE_long_unsigned)
+            {
+                return -DAR_OTHERS_ERROR;
+            }
+
+            *Ptmp++ = p[4];
+            *Ptmp++ = p[3];
+            *Ptmp++ = p[7];
+            *Ptmp++ = p[6];
+            p += 8;
+        }
+
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+        nd_set_index(instance, s_index, tempbuf, SecurityMode_EXData_LEN);
+    }
+    else
+    {
+        if (p[0] != TYPE_structure || p[1] != 2 || p[2] != TYPE_OI || p[5] != TYPE_long_unsigned)
+        {
+            return DAR_OTHERS_ERROR;
+        }
+
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+        nd_get_index(instance, s_index, tempbuf, SecurityMode_EXData_LEN);
+        
+        offset = 1 + (index - 1) * 4;
+        
+
+        tempbuf[offset++] = p[4];
+        tempbuf[offset++] = p[3];
+        tempbuf[offset++] = p[7];
+        tempbuf[offset++] = p[6];
+
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+        nd_set_index(instance, s_index, tempbuf, SecurityMode_EXData_LEN);
+
+    }
+
+    return (p-buf);
+}
+
+
+
+
 
 int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
@@ -55,7 +133,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
             }
             else if(attribute == 0x03) //安全模式参数
             {
-            
+                return SET_F10103XX(instance,  id, buf, ctx);
             }
             break;
         case 0xF201://rs485
