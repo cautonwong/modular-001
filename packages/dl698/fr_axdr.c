@@ -1179,7 +1179,7 @@ int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
-    uint8_t i;
+    uint8_t i,schemNo=0;
     //int ret;
 
     //RCSD 个数
@@ -1196,6 +1196,7 @@ int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32
         {
             if(0x50020200 == oad)
             {
+                p[cache->wr++] = 0x00; //rcsd 补0 
                 return -DAR_RW_REJECT;
             }
             get_capture_list(instance, oad, rcsd_list, 3);
@@ -1211,6 +1212,9 @@ int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32
         else
         {
             p[cache->wr++] = rcsd_list[0];
+            
+            schemNo = 0;
+            
             for (i = 0; i < rcsd_list[0]; i++)
             {
                 p[cache->wr++] = apdu_rx[ctx->apdu_rx_offset++]; // csd
@@ -1218,6 +1222,22 @@ int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32
                 ctx->apdu_rx_offset += 4;    
                 rcsd_list[1 + i] = buf_to_uint32_msb(&p[cache->wr]);
                 cache->wr += 4;
+                
+                if (i == 0)
+                {
+                    schemNo = get_OAD_Schem( rcsd_list[1]);
+                }
+                
+                if (((oad&0xFFFF0000) == 0x50020000) && (schemNo != get_OAD_Schem( rcsd_list[1 + i]))) 
+                {
+                    schemNo = 0xFF;
+                }
+                
+            }
+            
+            if (schemNo == 0xFF)
+            {
+                return -DAR_RW_REJECT;
             }
         }
     }

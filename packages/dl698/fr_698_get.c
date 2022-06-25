@@ -191,7 +191,7 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
                 //ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
                 if (rcsd_ret < 0)
                 {
-                    p[cache->wr++] = 0x00; //rcsd
+                    //p[cache->wr++] = 0x00; //rcsd
                 }
                 p[cache->wr++] = 0x00;//DAR
                 p[cache->wr++] = DAR_TYPE_NOT_MATCH;
@@ -202,7 +202,7 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
             {   
 
                 ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
-                p[cache->wr++] = 0x00; //rcsd
+                //p[cache->wr++] = 0x00; //rcsd
                 p[cache->wr++] = 0x00;//DAR
                 p[cache->wr++] = -rcsd_ret;
                 return 1;  // 想返回dar  如何处理 ？？
