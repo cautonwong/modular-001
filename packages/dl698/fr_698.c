@@ -442,6 +442,8 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     if(0 == fr_addr_handle(instance, pipeline, mesg)){
         return 0;
     }
+    
+    mbase_cb->clientaddr = ctx->CA;
 
     switch(pipeline->id)
     {

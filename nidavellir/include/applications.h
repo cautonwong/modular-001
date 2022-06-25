@@ -200,6 +200,11 @@ struct mbase_control_block_t
     
     uint8_t clientaddr; //客户机地址
     
+//    uint16_t send_frm_size;             //客户机发送帧最大尺寸 long-unsigned
+//    uint16_t recv_frm_size;             //客户机接收帧最大尺寸 long-unsigned
+//    uint32_t connect_time;              //期望的应用连接超时时间 double-long-unsigned，
+    uint8_t  connect_mode;              //认证模式enum connect_mode_e
+        
     dyn_cache_end
     //运行期更改&&掉电或定时保存&&上电需要IO请求的数据分区
     dyn_persistent_start

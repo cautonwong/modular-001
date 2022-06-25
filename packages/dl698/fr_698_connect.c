@@ -58,14 +58,15 @@ struct factory_version_t
 
 
 struct connect_request_t cfg_connect = {
-    0x0014, 
+    0x0016, 
     0xFF,0xFF,0xFF,0xff,0xc0,0x00,0x00,0x00,
     0xFF,0xFE,0xC4,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
     0x0200,
     0x0200,
     0x01,
     0x07d0,
-    0x00001C20
+    0x00001C20,
+    0x00
 };
     
     
@@ -187,6 +188,8 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     cache->wr = cache->wr + 2;
     apdu_rx += 2;
     
+    mbase_cb->connect_mode = cfg_connect.connect_mode;
+    
      //期望的应用连接超时时间 
     mbase_cb->connect_timeout[ctx->channel][cilent_index] = buf_to_uint32_msb(apdu_rx);
     if (   (mbase_cb->connect_timeout[ctx->channel][cilent_index] == 0) 
@@ -253,7 +256,7 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
             mbase_cb->term_auth_timeout = 0;
         }
 
-        mbase_cb->clientaddr = ctx->CA;
+//        mbase_cb->clientaddr = ctx->CA;
 
         
         MeterWr_obj_list_clear(instance, pipeline, mesg);
@@ -360,6 +363,7 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct connect_request_t connect = {0};
     int result = DAR_OTHERS_ERROR;
+    uint32_t temp=0;
     
     // 通配地址 拒绝服务
     if(SA_TYPE_GENERAL == SA_TYPE(ctx->SA)) {
@@ -367,6 +371,21 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
     }
     
     memcpy(&connect, apdu_rx+ctx->apdu_rx_offset, sizeof(struct connect_request_t));
+    
+    mem_swap_cpy((uint8_t*)&temp, (uint8_t*)&connect.send_frm_size, 2);
+    if(cfg_connect.send_frm_size >= temp)//发送帧最大尺寸
+    {
+        cfg_connect.send_frm_size = temp;
+    }
+    temp=0;
+    mem_swap_cpy((uint8_t*)&temp, (uint8_t*)&connect.recv_frm_size, 2);
+    if(cfg_connect.recv_frm_size >= temp)//接收帧最大尺寸
+    {
+        cfg_connect.recv_frm_size = temp;
+    }
+    
+    cfg_connect.connect_mode = connect.connect_mode;
+    
     ctx->apdu_rx_offset += sizeof(struct connect_request_t);
     
     if (connect.connect_mode > 4){

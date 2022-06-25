@@ -779,9 +779,8 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     break;
                 case 0x05:
                     *p++ = TYPE_enum;
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AuthMeth);
-                    nd_get_index(instance, s_index, temp, 1); 
-                    *p++ = temp[0];
+                    if(mbase_cb->connect_mode > 3)  mbase_cb->connect_mode = 0;
+                    *p++ = mbase_cb->connect_mode;
                     return (p-buf);
                     break;
             }
