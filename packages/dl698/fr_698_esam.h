@@ -47,6 +47,16 @@ struct esam_698_data_t
 {
     struct esam_698_input_t  *input;
     struct esam_698_output_t *output;
+
+};
+
+struct esam_data_t
+{
+    struct esam_698_input_t  *input;
+    struct esam_698_output_t *output;
+    uint8_t *head;
+    uint16_t len;
+    uint16_t sw;
 };
 
 int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_t *p_output);

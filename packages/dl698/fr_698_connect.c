@@ -57,6 +57,18 @@ struct factory_version_t
 
 
 
+struct connect_request_t cfg_connect = {
+    0x0014, 
+    0xFF,0xFF,0xFF,0xff,0xc0,0x00,0x00,0x00,
+    0xFF,0xFE,0xC4,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x0200,
+    0x0200,
+    0x01,
+    0x07d0,
+    0x00001C20
+};
+    
+    
 
 
 static int __common_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
@@ -101,8 +113,6 @@ static int __password_process(struct instance_t* instance, struct pipeline_t* pi
     struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t *p_password = cache->buf_ptr;
-    //uint8_t *p_password = cache + sizeof(struct connect_request_t);
-
     uint8_t password[33] = {0};
     uint32_t oad = 0;
 
@@ -126,23 +136,11 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     struct fifo_t* cache = ctx->apdu;
 
     uint8_t *p_apdu = cache->buf_ptr;
-    //uint8_t *p_password = cache->buf_ptr;
 	uint8_t buf[70];
     uint8_t len_len = 0;
-    //uint16_t data_len = 0;
-    //uint16_t offset = 0;
     uint8_t cilent_index = 0;
     uint32_t esam_session_timeout = 0xffffffffU;
-    struct connect_request_t connect = {0x1600, 
-    0xFF,0xFF,0xFF,0xff,0xc0,0x00,0x00,0x00,
-    0xFF,0xFE,0xC4,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x0200,
-    0x0200,
-    0x01,
-    0x07d0,
-    0x00001C20};
 
-    
     if (CA_TYPE_TER(ctx->CA))//from 终端
     {
         cilent_index = 1;
@@ -167,33 +165,34 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     memset((p_apdu+cache->wr), 0x30, 32);//厂家信息
     cache->wr = cache->wr + 32;
     
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&connect.pro_ver, 2);//版本号
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.pro_ver, 2);//版本号
     cache->wr = cache->wr + 2;
     apdu_rx += 2;
-    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&connect.protocal_conformance, 8);//期望协议一致性块
+    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.protocal_conformance, 8);//期望协议一致性块
     cache->wr = cache->wr + 8;
     apdu_rx += 8;
-    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&connect.function_conformance, 16);  //期望的功能一致性块 
+    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.function_conformance, 16);  //期望的功能一致性块 
     cache->wr = cache->wr + 16;
     apdu_rx += 16;
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&connect.send_frm_size, 2);    //发送最大尺寸
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.send_frm_size, 2);    //发送最大尺寸
     cache->wr = cache->wr + 2;
     apdu_rx += 2;
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&connect.recv_frm_size, 2);    //接收最大尺寸
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.recv_frm_size, 2);    //接收最大尺寸
     cache->wr = cache->wr + 2;
     apdu_rx += 2;
-    *(p_apdu+cache->wr) = connect.client_win_size;//客户机接收帧最大窗口尺寸
+    *(p_apdu+cache->wr) = cfg_connect.client_win_size;//客户机接收帧最大窗口尺寸
     cache->wr = cache->wr + 1;
     apdu_rx += 1;
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&connect.client_apdu_size, 2);    //客户机最大可处理帧尺寸
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.client_apdu_size, 2);    //客户机最大可处理帧尺寸
     cache->wr = cache->wr + 2;
     apdu_rx += 2;
     
      //期望的应用连接超时时间 
     mbase_cb->connect_timeout[ctx->channel][cilent_index] = buf_to_uint32_msb(apdu_rx);
-    if ((mbase_cb->connect_timeout[ctx->channel][cilent_index] == 0) || (mbase_cb->connect_timeout[ctx->channel][cilent_index] > connect.connect_time))
+    if (   (mbase_cb->connect_timeout[ctx->channel][cilent_index] == 0) 
+        || (mbase_cb->connect_timeout[ctx->channel][cilent_index] > cfg_connect.connect_time))
     {
-        mbase_cb->connect_timeout[ctx->channel][cilent_index] = connect.connect_time;
+        mbase_cb->connect_timeout[ctx->channel][cilent_index] = cfg_connect.connect_time;
     }
     
     mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&mbase_cb->connect_timeout[ctx->channel][cilent_index], 4);     //期望的应用连接超时时间    
@@ -271,19 +270,6 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
         mbase_cb->connect_timeout[ctx->channel][cilent_index]   = 0;
         return DAR_ESAM_CHECK_FAILED;
     }
-#if 0    
-    //  密文 1 octet-string，
-    len_len = axdr_decode(TYPE_octet_string, p_apdu, &data_len);
-    //memcpy((uint8_t*)&buf[offset], p_apdu + len_len, data_len);
-    offset += data_len;
-    p_apdu += len_len + data_len;
-
-    //  客户机签名 1 octet-string
-    len_len = axdr_decode(TYPE_octet_string, p_apdu, &data_len);
-	//memcpy((uint8_t*)&buf[offset], p_apdu + len_len, data_len);
-    offset += data_len;
-    p_apdu += len_len + data_len;
-#endif
 }
 
 static int __signature_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -291,57 +277,40 @@ static int __signature_process(struct instance_t* instance, struct pipeline_t* p
     return 1;
 }
 
-
-
-
 static uint32_t __get_connect_info(uint32_t val, uint32_t cfg_val)
 {
-    //if ((connect.client_win_size < session->send_buffer_size) || (connect.client_win_size > para->client_process_apdu_size))
-    {
-    //    connect.client_win_size = para->client_process_apdu_size;
+    if (val > cfg_val){
+        return cfg_val;
     }
-    return 1;
+    return val;
 }
 
 static void __consistency_block(uint8_t *data, const uint8_t* cfg_data, uint8_t len)
 {
-    for (uint8_t i = 0; i < len; i++)//商定的协议一致性块
-    {
-        //temp = dl698_byte_swap(*p++);
-        //session->protocal_conformance[i] = temp & para->protocal_conformance[i];
+    for (uint8_t i = 0; i < len; i++){
         data[i] = data[i] & cfg_data[i];
     }
 }
 
-
 static void ___get_consult_info(struct connect_request_t *connect, const struct connect_request_t *p_connect)
 {
-    //商定的协议一致性块
     __consistency_block(connect->protocal_conformance, p_connect->protocal_conformance, 8);
-    //商定的功能一致性块
     __consistency_block(connect->function_conformance, p_connect->function_conformance, 16);
 
-    //客户机发送帧最大尺寸
-    connect->send_frm_size = __get_connect_info(connect->send_frm_size, p_connect->recv_frm_size);
-    // 客户机接收帧最大尺寸
-    connect->recv_frm_size = __get_connect_info(connect->recv_frm_size, p_connect->send_frm_size);
-    // 客户机接收帧最大窗口尺寸
-    connect->client_win_size = __get_connect_info(connect->client_win_size, p_connect->client_apdu_size);
-    // 客户机最大可处理帧尺寸
-    connect->client_apdu_size = __get_connect_info(connect->client_apdu_size, p_connect->client_apdu_size);
-    /* 期望的应用连接超时时间 */
-    connect->connect_time = __get_connect_info(connect->connect_time, p_connect->connect_time);
+    connect->send_frm_size      = __get_connect_info(connect->send_frm_size, p_connect->recv_frm_size);
+    connect->recv_frm_size      = __get_connect_info(connect->recv_frm_size, p_connect->send_frm_size);
+    connect->client_win_size    = __get_connect_info(connect->client_win_size, p_connect->client_apdu_size);
+    connect->client_apdu_size   = __get_connect_info(connect->client_apdu_size, p_connect->client_apdu_size);
+    connect->connect_time       = __get_connect_info(connect->connect_time, p_connect->connect_time);
 }
 
 
 int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    //uint8_t result = DAR_SUCCESS;
     struct mbase_control_block_t* mbase_cb;
     uint8_t cilent_index = 0;
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
-    //uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t* p = cache->buf_ptr;
     uint16_t offset= 0;
     
@@ -381,66 +350,7 @@ int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipelin
     return 1;
 }
 
-//给定通道号的 断开应用链接
-int fr_handle_disconnect2(struct instance_t* instance,  struct pipeline_t* pipeline,  uint8_t cilent_index, uint8_t channel)
-{
-    struct message_t mesg;
-    //uint8_t result = DAR_SUCCESS;
-    struct mbase_control_block_t* mbase_cb;
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-   
-    if (cilent_index > 1)//终端
-    {
-        return -1;
-    }
 
-    if (channel > 3)//终端
-    {
-        return -1;
-    }
-
- 
-    mbase_cb->authen_tmr = 0;
-    mbase_cb->irauthen_tmr = 0;
-    
-    mbase_cb->connect_timeout[channel][cilent_index] = 0;  
-    mbase_cb->esam_connect_timeout[channel][cilent_index] = 0;
-    mbase_cb->connect_status[channel][cilent_index] = false;
-    
-    if ((mbase_cb->connect_status[channel][0] == false)&& (mbase_cb->connect_status[channel][1] == false))
-    {
-        MeterWr_obj_list_clear(instance, pipeline, &mesg);
-    }
-    
-    //复位ESAM
-    return 1;
-}
-
-// 断开所有通道 应用链接
-int fr_handle_disconnect_all_channel(struct instance_t* instance,  struct pipeline_t* pipeline,  uint8_t cilent_index)
-{
-    uint8_t i;
-   
-
-    for(i = 0; i< 4; i++)
-    {
-         fr_handle_disconnect2(instance,  pipeline, cilent_index,  i);
-    }
-
-    return 1;
-
-}
-
-const struct connect_request_t cfg_connect = {
-    0x1500, 
-    0xFF,0xFF,0xFF,0xff,0xc0,0x00,0x00,0x00,
-    0xFF,0xFE,0xC4,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x0002,
-    0x0002,
-    0x01,
-    0xd007,
-    0x201c0000
-};
 
 
 int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -515,3 +425,61 @@ int get_CONNECT_Request_len(struct instance_t* instance, struct pipeline_t* pipe
     return offset;
 }
 
+
+
+
+
+
+
+
+
+
+//给定通道号的 断开应用链接
+int fr_handle_disconnect2(struct instance_t* instance,  struct pipeline_t* pipeline,  uint8_t cilent_index, uint8_t channel)
+{
+    struct message_t mesg;
+    //uint8_t result = DAR_SUCCESS;
+    struct mbase_control_block_t* mbase_cb;
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+   
+    if (cilent_index > 1)//终端
+    {
+        return -1;
+    }
+
+    if (channel > 3)//终端
+    {
+        return -1;
+    }
+
+ 
+    mbase_cb->authen_tmr = 0;
+    mbase_cb->irauthen_tmr = 0;
+    
+    mbase_cb->connect_timeout[channel][cilent_index] = 0;  
+    mbase_cb->esam_connect_timeout[channel][cilent_index] = 0;
+    mbase_cb->connect_status[channel][cilent_index] = false;
+    
+    if ((mbase_cb->connect_status[channel][0] == false)&& (mbase_cb->connect_status[channel][1] == false))
+    {
+        MeterWr_obj_list_clear(instance, pipeline, &mesg);
+    }
+    
+    //复位ESAM
+    return 1;
+}
+
+// 断开所有通道 应用链接
+int fr_handle_disconnect_all_channel(struct instance_t* instance,  struct pipeline_t* pipeline,  uint8_t cilent_index)
+{
+    uint8_t i;
+   
+
+    for(i = 0; i< 4; i++)
+    {
+         fr_handle_disconnect2(instance,  pipeline, cilent_index,  i);
+    }
+
+    return 1;
+
+}
