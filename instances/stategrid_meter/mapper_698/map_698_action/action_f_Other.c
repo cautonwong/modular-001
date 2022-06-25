@@ -945,6 +945,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                         mbase_cb->BackLightTmr = mbase_cb->AutoInv;
                     return (p-buf);
                 default:
+                    return -DAR_OBJECT_NOT_EXIST;
                     break;
             }
         default:

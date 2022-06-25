@@ -1002,16 +1002,14 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
         case 0x4400:
             switch(attribute)
             {
+                case 0x02:
                 case 0x03:
+                case 0x04:
+                case 0x05://认证连接机制
                     return -DAR_RW_REJECT;
                     break;
-                case 0x05://认证连接机制
-                    if(*(p+1) > 3)  return -DAR_RW_REJECT;
-                    p++;
-                    buffer[0] = *p++;
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AuthMeth );
-                    nd_get_index(instance, s_index, buffer, 1);
-                    return (p-buf);
+                default:
+                    return -DAR_OBJECT_NOT_EXIST;
                     break;
             }
             break;
