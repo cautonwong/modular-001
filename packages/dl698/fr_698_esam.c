@@ -170,7 +170,8 @@ uint8_t esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
     struct esam_698_data_t param;
     struct esam_698_input_t  input = {0};
     struct esam_698_output_t output= {0};
-
+    int ret = 0;
+    
     request = esam_type_meet_consult_cmd;
     input.cmd_type = cmd;
     input.data     = p;
@@ -189,7 +190,12 @@ uint8_t esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
     
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;
-    esam_pro_handle(fd, request, (void *)&param);
+    ret = esam_pro_handle(fd, request, (void *)&param);
+    if (ret < 0) //错误
+    {
+        return 0xFF;
+    }
+    
     return (output.data_len + output.MAC_len) ;
 }
 

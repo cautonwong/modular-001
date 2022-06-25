@@ -564,6 +564,9 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 uint8_t *pdata = apdu_rx + 3;
                 rxlen = esam_key_updata(instance, pdata, txlen);
                 p = p + 1692;
+
+                mbase_cb->key_state = get_key_status(instance);//获取秘钥状态
+                
                 //成功后 再触发 密钥更新事件
                 if(rxlen != 0xff)// 
                 {

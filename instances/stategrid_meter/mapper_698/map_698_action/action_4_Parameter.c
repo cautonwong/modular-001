@@ -261,12 +261,11 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         }
                     }
 
-#if 0//待调整
-                    if ((mbase_cb->SecretKey_state == 0) && (mbase_cb->factor_mode == false))//0私钥，1公钥，私钥不允许清零
+                    if (( mbase_cb->key_state == false ) && (mbase_cb->factor_mode == false))//0私钥，1公钥，私钥不允许清零
                     {
                         return (-DAR_UNAUTHORIZED);
                     }
-#endif
+
                     //if(mbase_cb->factor_mode == false) //待调整
                     {
                         //set_activeflag(instance, RecordId);

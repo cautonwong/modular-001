@@ -138,10 +138,10 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
 
     uint8_t *p_apdu = cache->buf_ptr;
 	uint8_t buf[70];
-    uint8_t len_len = 0;
+    uint8_t len_len = 0, rn_len = 0;
     uint8_t cilent_index = 0;
     uint32_t esam_session_timeout = 0xffffffffU;
-
+    
     if (CA_TYPE_TER(ctx->CA))//from 终端
     {
         cilent_index = 1;
@@ -203,19 +203,29 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     apdu_rx += 4;
 
 
-    if(len_len == 52)
+    if(len_len != 0xFF)
     {
         *(p_apdu+cache->wr) = 0;//允许建立应用连接
         cache->wr++;
         *(p_apdu+cache->wr) = 1;//认证附加信息
         cache->wr++;
-        *(p_apdu+cache->wr) = 48;//长度
+        
+        if(cilent_index)
+        {
+            rn_len = 64;
+        }
+        else
+        {
+            rn_len = 48;
+        }
+        
+        *(p_apdu+cache->wr) = rn_len;//长度
         cache->wr++;
-        memcpy((p_apdu+cache->wr), buf+1,48);//随机数
-        cache->wr = cache->wr + 48;
+        memcpy((p_apdu+cache->wr), buf+1,rn_len);//随机数
+        cache->wr = cache->wr + rn_len;
         *(p_apdu+cache->wr) = 4;
         cache->wr++;
-        memcpy((p_apdu+cache->wr), buf+49,4);//MAC
+        memcpy((p_apdu+cache->wr), buf+1+rn_len,4);//MAC
         cache->wr = cache->wr + 4;
 
         if(cilent_index)

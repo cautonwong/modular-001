@@ -218,7 +218,7 @@ int fr_follow_report_optional(struct instance_t* instance, struct pipeline_t* pi
         *p++ = 1;
         *p++ = TYPE_bit_string;
         *p++ = 0x20;
-         p += uint32_to_buf_lsb(mask, p);
+         p += uint32_to_buf_msb(mask, p);
     }
 
     cache->wr += (p - p_tmp);

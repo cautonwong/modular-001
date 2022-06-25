@@ -1190,7 +1190,7 @@ int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
-    uint8_t i,schemNo=0;
+    uint8_t i,schemNo=0xFF;
     //int ret;
 
     //RCSD 个数
@@ -1224,7 +1224,7 @@ int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32
         {
             p[cache->wr++] = rcsd_list[0];
             
-            schemNo = 0;
+            schemNo = 0xFF;
             
             for (i = 0; i < rcsd_list[0]; i++)
             {
@@ -1233,20 +1233,29 @@ int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32
                 ctx->apdu_rx_offset += 4;    
                 rcsd_list[1 + i] = buf_to_uint32_msb(&p[cache->wr]);
                 cache->wr += 4;
-                
-                if (i == 0)
+
+                if ((oad&0xFFFF0000) == 0x50020000)
                 {
-                    schemNo = get_OAD_Schem( rcsd_list[1]);
-                }
-                
-                if (((oad&0xFFFF0000) == 0x50020000) && (schemNo != get_OAD_Schem( rcsd_list[1 + i]))) 
-                {
-                    schemNo = 0xFF;
+                    if ((schemNo == 0xFF) && (0x20210200 !=( rcsd_list[1 + i])) && (0x20230200 !=( rcsd_list[1 + i])))
+                    {
+                        schemNo = get_OAD_Schem( rcsd_list[1 + i]);
+                    }
+                    
+                    if ((schemNo == 0xFF) && ((i+1) == rcsd_list[0]))
+                    {
+                        schemNo = get_OAD_Schem( rcsd_list[1 + i]);
+                    }
+                    
+                    if ((schemNo != 0xFF)&&(schemNo != get_OAD_Schem( rcsd_list[1 + i]))&& (0x20210200 !=( rcsd_list[1 + i])) && (0x20230200 !=( rcsd_list[1 + i]))) 
+                    {
+                        schemNo = 0x55;
+                    }
+
                 }
                 
             }
             
-            if (schemNo == 0xFF)
+            if (schemNo == 0x55)
             {
                 return -DAR_RW_REJECT;
             }
