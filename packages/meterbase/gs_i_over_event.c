@@ -19,10 +19,11 @@ int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, st
 
     int32_t* I                  = &ctrl_block->current_l;
     uint32_t threshold          = ctrl_block->OverCurrent_threshold / 10;
-
+    uint8_t invalid = 0; 
+    
     if (threshold == 0) // 限值为0
     {
-        return 0;
+        invalid = 1;
     }
 
     // 所有相均低于60%un
@@ -31,6 +32,11 @@ int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, st
         state = true;
     }
 
+    if(invalid == 1)
+    {
+        state = false;
+    }
+    
     result = event_duration_pro(duration_para, duration, state, instance, RecordId);
 
     if (result != 0)
