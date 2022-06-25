@@ -91,7 +91,7 @@ const uint8_t  init_PowerAbnormalS_oad[]= { 0x02, U32toBufMSB(0x00102201), U32to
 const uint8_t  init_RTCErrS_oad[]       = { 0x04, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201), U32toBufMSB(0x00108201), U32toBufMSB(0x00208201) };
 const uint8_t  init_EmuErrS_oad[]       = { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201) };
 const uint8_t  init_BroadcastTimeS_oad[]= { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201) };
-const uint8_t  init_ZeroLineErrS_oad[]  = { 0x02, U32toBufMSB(0x20010201), U32toBufMSB(0x20010400) };
+const uint8_t  init_ZeroLineErrS_oad[]  = { 0x02, U32toBufMSB(0x20012201), U32toBufMSB(0x20012400) };
 
 
 
