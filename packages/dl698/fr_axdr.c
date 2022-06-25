@@ -175,7 +175,9 @@ uint16_t axdr_get_len(const uint8_t *data)
         {
             len += 4;
             if ((TYPE_date_time_s != data[len]) && (TYPE_double_long_unsigned != data[len]  ))
-                return 0;
+            {
+                //return 0;
+            }
 
             type_len = axdr_decode(data[len], data+len, &data_len);
             len += type_len + data_len;
@@ -184,19 +186,27 @@ uint16_t axdr_get_len(const uint8_t *data)
         {
             len += 4;
             if ((TYPE_date_time_s != data[len]) && (TYPE_double_long_unsigned != data[len]))
-                return 0;
+            {
+                //return 0;
+            }
 
             type_len = axdr_decode(data[len], data+len, &data_len);
             len += type_len + data_len;
 
             if ((TYPE_date_time_s != data[len]) && (TYPE_double_long_unsigned != data[len] ))
-                return 0;
+            {
+                //return 0;
+            }
+
 
             type_len = axdr_decode(data[len], data+len, &data_len);
             len += type_len + data_len;
             if ((TYPE_TI != data[len]) && (TYPE_double_long_unsigned != data[len]) && (TYPE_null != data[len]))
-                return 0;
-
+            {
+                //return 0;
+            }
+            
+            type_len = axdr_decode(data[len], data+len, &data_len);
             len += type_len + data_len;
         }
         else if ( 9 == type)

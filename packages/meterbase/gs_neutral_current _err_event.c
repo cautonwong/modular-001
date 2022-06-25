@@ -24,6 +24,7 @@ int ZeroLineErr_event_judge(struct instance_t* instance, struct pipeline_t* task
     uint8_t *duration = &ctrl_block->ZeroLineErrS_duration;
     uint32_t *accumulate_time = &ctrl_block->ZeroLineErrS_acc_time;
     uint16_t rate = 0;
+    uint8_t invalid = 0; 
 
     uint16_t RecordId = ZeroLineErrS;
 
@@ -33,18 +34,18 @@ int ZeroLineErr_event_judge(struct instance_t* instance, struct pipeline_t* task
 #if 0
     if (ctrl_block->Imax == 100) /*最大电流小于10A 互感式表不启用*/
     {
-        return 0;
+        invalid = 1;
     }
 #endif 
     
     if (threshold2 == 0) // 限值rate为0
     {
-        return 0;
+        invalid = 1;
     }
 
     if((Ia_abs < threshold1) && (In_abs < threshold1))
     {
-        return 0;
+        invalid = 1;
     }
 
     if(Ia_abs >= In_abs)
@@ -60,6 +61,11 @@ int ZeroLineErr_event_judge(struct instance_t* instance, struct pipeline_t* task
     if(rate > threshold2 )
     {
         state = true;
+    }
+    
+    if(invalid == 1)
+    {
+        state = false;
     }
     
     result = event_duration_pro(duration_para, duration, state, instance, RecordId);
