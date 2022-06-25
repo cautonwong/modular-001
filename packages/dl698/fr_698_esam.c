@@ -11,7 +11,7 @@ enum verification_choice_e
    verification_choice_SID,
 };
 
-int openM_ioctl(int fd, int request, void *param);
+extern int esam_pro_handle(int fd, int request, void *param);
 
 
 uint16_t software_esam_check(struct instance_t* instance, uint8_t *key, uint8_t *rn, uint8_t *data, uint8_t p2, uint16_t datalen, uint8_t *outbuf)
@@ -35,7 +35,7 @@ uint16_t software_esam_check(struct instance_t* instance, uint8_t *key, uint8_t 
     
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;    
-    openM_ioctl(fd, request, (void *)&param);
+    esam_pro_handle(fd, request, (void *)&param);
     
     if(output.esam_err_no == 0x9000){
         return output.data_len;
@@ -44,9 +44,6 @@ uint16_t software_esam_check(struct instance_t* instance, uint8_t *key, uint8_t 
     return 0;
 }
 
-
-
-//no
 uint16_t write_esam(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_t len)
 {
     int fd = 0;
@@ -65,7 +62,7 @@ uint16_t write_esam(struct instance_t* instance, uint32_t addr, uint8_t *buf, ui
     
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;
-    openM_ioctl(fd, request, (void *)&param);
+    esam_pro_handle(fd, request, (void *)&param);
 
     if(output.esam_err_no == 0x9000){
         return output.data_len;
@@ -73,7 +70,6 @@ uint16_t write_esam(struct instance_t* instance, uint32_t addr, uint8_t *buf, ui
     return 0xff;
 }
 
-//
 uint16_t esam_key_updata(struct instance_t* instance, uint8_t *buf, uint16_t len)
 {
     int fd = 0;
@@ -110,7 +106,7 @@ uint16_t esam_key_updata(struct instance_t* instance, uint8_t *buf, uint16_t len
     
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;
-    openM_ioctl(fd, request, (void *)&param);
+    esam_pro_handle(fd, request, (void *)&param);
 
     if(output.esam_err_no == 0x9000){
         return offset;
@@ -118,7 +114,6 @@ uint16_t esam_key_updata(struct instance_t* instance, uint8_t *buf, uint16_t len
     return 0xff;
 }
 
-//ok
 uint8_t read_esam_no(struct instance_t* instance, uint8_t *esam_info)
 {
     int fd = 0;
@@ -135,7 +130,7 @@ uint8_t read_esam_no(struct instance_t* instance, uint8_t *esam_info)
     
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;
-    openM_ioctl(fd, request, (void *)&param);
+    esam_pro_handle(fd, request, (void *)&param);
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     mbase_cb->esam_chip_abnormal = output.esam_chip_abnormal;
@@ -143,8 +138,6 @@ uint8_t read_esam_no(struct instance_t* instance, uint8_t *esam_info)
     return output.data_len;
 }
 
-
-//ok
 uint8_t read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_t len)
 {
     int fd = 0;
@@ -164,14 +157,12 @@ uint8_t read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf,
     
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;
-    openM_ioctl(fd, request, (void *)&param);
+    esam_pro_handle(fd, request, (void *)&param);
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     mbase_cb->esam_chip_abnormal = output.esam_chip_abnormal;
     return output.data_len;
 }
 
-
-//ok
 uint8_t esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
 {
     int fd = 0;
@@ -181,7 +172,7 @@ uint8_t esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
     struct esam_698_output_t output= {0};
 
     request = esam_type_meet_consult_cmd;
-    input.cmd_type = cmd;// 1-from 终端  0-from 主站
+    input.cmd_type = cmd;
     input.data     = p;
     input.data_len = 32;
     input.MAC_data = p + 32 + 1;
@@ -198,12 +189,11 @@ uint8_t esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
     
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;
-    openM_ioctl(fd, request, (void *)&param);
+    esam_pro_handle(fd, request, (void *)&param);
     return (output.data_len + output.MAC_len) ;
 }
 
 
-//ok
 uint8_t read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t index)
 {
     int fd = 0;
@@ -220,7 +210,7 @@ uint8_t read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t 
 
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;    
-    openM_ioctl(fd, request, (void *)&param);
+    esam_pro_handle(fd, request, (void *)&param);
         
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     mbase_cb->esam_chip_abnormal = output.esam_chip_abnormal;
@@ -230,8 +220,6 @@ uint8_t read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t 
     return 0;
 }
 
-
-//ok
 uint8_t get_key_status(struct instance_t* instance)
 {
     uint8_t Buf[16] = {0};
@@ -246,7 +234,7 @@ uint8_t get_key_status(struct instance_t* instance)
         return true;
 }
 
-//OK
+
 void esam_698_init(uint8_t power_mode)
 {
     int fd = 0;
@@ -256,7 +244,7 @@ void esam_698_init(uint8_t power_mode)
     if(power_mode == AC_POWER_ON)
     {
         request = esam_type_poweron_cmd;
-        openM_ioctl(fd, request, (void *)&param);
+        esam_pro_handle(fd, request, (void *)&param);
     }
 }
 
@@ -321,7 +309,7 @@ int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_
     }
     param.input = p_input;
     param.output = p_output;
-    return openM_ioctl(fd, request, (void *)&param);
+    return esam_pro_handle(fd, request, (void *)&param);
 }
 
 //主动上报  
@@ -340,7 +328,7 @@ uint8_t get_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *apdu, uin
     output.data = dst;
     param.output = &output;
     
-    return openM_ioctl(fd, request, (void *)&param);
+    return esam_pro_handle(fd, request, (void *)&param);
 }
 //主动上报验证
 uint8_t check_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *apdu, uint8_t apdu_len)
@@ -355,6 +343,6 @@ uint8_t check_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *apdu, u
     input.data_len = apdu_len;
     param.input = &input;
 
-    return openM_ioctl(fd, request, (void *)&param);
+    return esam_pro_handle(fd, request, (void *)&param);
 }
 

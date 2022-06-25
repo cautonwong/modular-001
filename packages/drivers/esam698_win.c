@@ -6,7 +6,7 @@
 #include "fr_698_esam.h"
 #include "io_type.h"
 
-
+#if 1
 enum verification_choice_e
 {
    verification_choice_SID_MAC,
@@ -180,7 +180,6 @@ static uint16_t rx_esam(uint8_t *rx_data , uint16_t *len , const struct esam_hal
     }
 }
 
-
 //已调整
 static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8_t type, void *esam_hal)
 {
@@ -218,10 +217,11 @@ static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8
     if(esam_in->AttachData_len >= 2){
         len = (esam_in->AttachData[0]<<8)+esam_in->AttachData[1];
     }
-    
+
     tx_esam(head , esam_in->data_buf , len , esam_hal);
     
     err_no = rx_esam(esam_in->data_buf , &len , esam_hal , &sw);
+    
     if(sw == 0x9000){
         if(type){
             memcpy(esam_out->data , esam_in->data_buf , len);
@@ -600,11 +600,11 @@ static const struct Func_esam_698_t Func_esam[] =
 };
 
 
-int openM_ioctl(int fd, int request, void *param)
+int esam_pro_handle(int fd, int request, void *param)
 {
     if((request < esam_type_max_cmd) && (request >= esam_type_base)){
         return Func_esam[request - esam_type_base].pFunc((struct esam_698_data_t *)param, 0);
     }
     return -1;
 }
-
+#endif
