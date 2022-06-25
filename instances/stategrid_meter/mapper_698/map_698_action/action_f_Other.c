@@ -616,7 +616,8 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 read_esam_no(instance, buffer);
                 memcpy(keybuf, (uint8_t*)&buffer[5], 8);//表号, 8bytes
 
-                addr = 0x02003680;
+                //addr = 0x02003680;
+                addr = 0x80360002;
                 txlen = 0;
                 write_esam(instance, addr , buffer , txlen);
                 memcpy((uint8_t*)&keybuf[16], buffer, 8);   //ESAM序列号, 8bytes
@@ -628,19 +629,19 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 if(cilent_index == 0)
                 {
                     memcpy(buffer, keybuf, 16); // 表号，随机数
-                    addr = 0x03080880;
+                    addr = 0x80080803;
                     txlen = 0x0010;
                     rxlen = write_esam(instance, addr , buffer , txlen);  //80 08 08 03 00 10 + 表号，随机数，返回密文
                 }
                 else
                 {
                     memcpy(buffer, (uint8_t*)&keybuf[8], 8); // 随机数
-                    addr = 0x04000880;
+                    addr = 0x80080004;
                     txlen = 0x0008;
                     rxlen = write_esam(instance, addr , buffer , txlen);  //0x80, 0x08, 0x00, 0x04, 0x00, 0x08 + ，随机数，返回密文
                 }
              
-                addr = 0x08000480;
+                addr = 0x80040008;
                 txlen = 0;
                 rxlen = write_esam(instance, addr , (uint8_t*)&keybuf[24] , txlen);  //返回随机数2
                 
@@ -684,7 +685,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 p = p + 2;
                 memcpy(buffer, p, 8); 
                 p = p + 8;
-                addr = 0x01000680;
+                addr = 0x80060001;
                 txlen = 8;
                 rxlen = write_esam(instance, addr , buffer , txlen);
                 if(rxlen == 0xff)
