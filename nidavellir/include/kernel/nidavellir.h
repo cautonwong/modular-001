@@ -301,17 +301,13 @@ struct context_698_t
     
     struct fifo_t* apdu;
 
-#if 1
-
-    //uint16_t apdu_len;
+    uint16_t apdu_len_valid;
     uint16_t apdu_offset;
     
     uint8_t apdu_d_rx[Max698_apdu_rx]; 
     uint16_t apdu_rx_len;
     uint16_t apdu_rx_offset;
    
-#endif
-    
     //接收和发送都要用的状态
     struct object_t object;//对象标识
     struct pipeline_t* pipeline;//to-be-deleted

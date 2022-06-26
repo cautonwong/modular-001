@@ -353,9 +353,13 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
                 ctx->timeTag_valid = 1;
             }
         }
+        offset += 11;
     }else{
         ctx->timeTag_valid = 0;
+        offset += 1;
     }
+    
+    ctx->apdu_len_valid = ctx->apdu_rx_offset + offset;
     return 1;
 }
 
@@ -485,6 +489,11 @@ int fr_apdu_effective_check(struct instance_t* instance, struct pipeline_t* pipe
     }
     if (1 == get_addr_type(ctx->SA)) {
         ctx->SA &= 0x3F;
+    }
+    
+    if(ctx->apdu_len_valid != ctx->apdu_rx_len){
+        ctx->service = ERROR_S_Response;
+        ctx->err_n = 1;
     }
     return 1;
 }
@@ -711,6 +720,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     }
     ctx->segment_tx = 0;
     ctx->resp_choice = 0;
+    ctx->err_n = 0;
     ringbuffer_clear(ctx->apdu);
     ctx->apdu_rx_offset = 0;
     if(is_segment_set(ctx->ctrl)){
@@ -773,6 +783,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
 
     if(fr_check_service_and_choice(instance, pipeline, mesg)){
         ctx->service = ERROR_S_Response;
+        ctx->err_n = 2;
     }
     if((service == SECURITY_Request) && (err_no < 0)){
         ctx->service = SECURITY_Response;
@@ -811,7 +822,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
             break;
         default:
             cache->buf_ptr[0] = ERROR_S_Response;
-            cache->buf_ptr[2] = 2;
+            cache->buf_ptr[2] = ctx->err_n;
             break;
     }
 
