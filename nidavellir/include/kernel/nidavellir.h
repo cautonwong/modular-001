@@ -283,6 +283,7 @@ struct context_698_t
 
     uint8_t security_choice;
     uint8_t verification_choice;
+    uint16_t verification_len;
     uint8_t RN_len;
     uint8_t RN_data[64];
     uint8_t *security_data;

@@ -69,7 +69,7 @@ uint8_t axdr_data_len_decode(uint8_t type, uint8_t* buf, uint16_t* len);
 uint8_t axdr_len_encode(uint8_t* buf, uint16_t len);
 uint16_t axdr_get_len(const uint8_t *data);
 
-uint16_t get_octet_string(struct context_698_t* ctx, uint16_t *offset);
+uint16_t get_octet_string(struct context_698_t* ctx, uint16_t *offset, uint16_t *len_len);
 
 
 

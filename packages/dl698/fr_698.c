@@ -358,8 +358,9 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
         ctx->timeTag_valid = 0;
         offset += 1;
     }
-    
-    ctx->apdu_len_valid = ctx->apdu_rx_offset + offset;
+    if(ctx->apdu_len_valid == 0){
+        ctx->apdu_len_valid = ctx->apdu_rx_offset + offset;
+    }
     return 1;
 }
 
@@ -698,6 +699,18 @@ int fr_check_service_and_choice(struct instance_t* instance, struct pipeline_t* 
     return 0;
 }
 
+int fr_ctx_clear(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    ctx->apdu_len_valid = 0;
+    ctx->segment_tx = 0;
+    ctx->resp_choice = 0;
+    ctx->err_n = 0;
+    ringbuffer_clear(ctx->apdu);
+    ctx->apdu_rx_offset = 0;
+    return 0;
+}
+
 int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
@@ -718,11 +731,8 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     if(__fr_segment_tx_handle(instance, pipeline, mesg)){
         return -1;
     }
-    ctx->segment_tx = 0;
-    ctx->resp_choice = 0;
-    ctx->err_n = 0;
-    ringbuffer_clear(ctx->apdu);
-    ctx->apdu_rx_offset = 0;
+
+    fr_ctx_clear(instance, pipeline,  mesg);    
     if(is_segment_set(ctx->ctrl)){
         ctx->segment_rx = 0;
         err_no = fr_segments_handle(instance, pipeline,  mesg);
@@ -737,8 +747,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
         fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len);
         handle_scrambler(instance, pipeline, mesg);
     }
-
-
+    
     update_connect_timeout_cnt(instance, pipeline, mesg);
 
     ctx->service = apdu_rx[ctx->apdu_rx_offset++];

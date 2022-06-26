@@ -315,11 +315,12 @@ uint16_t axdr_record_len_get(uint8_t* data, uint16_t* rsdLen, uint16_t* rcsdLen)
     return p - data;
 }
 
-uint16_t get_octet_string(struct context_698_t* ctx, uint16_t *offset)
+uint16_t get_octet_string(struct context_698_t* ctx, uint16_t *offset, uint16_t *len_len)
 {
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint16_t len = 0;
-    ctx->apdu_rx_offset += axdr_decode(TYPE_octet_string, apdu_rx+ctx->apdu_rx_offset, &len);
+    *len_len = axdr_decode(TYPE_octet_string, apdu_rx+ctx->apdu_rx_offset, &len);
+    ctx->apdu_rx_offset += *len_len;
     *offset = ctx->apdu_rx_offset;
     ctx->apdu_rx_offset += len;
     return len;

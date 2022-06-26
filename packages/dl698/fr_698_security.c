@@ -41,11 +41,13 @@ static int ___get_sid(struct context_698_t* ctx, struct esam_698_input_t *input)
 {
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint16_t offset = 0;
+    uint16_t len = 0;
     
-    input->sid_id                = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
+    input->sid_id        = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
     ctx->apdu_rx_offset += 4;
-    input->AttachData_len = get_octet_string(ctx, &offset);
-    input->AttachData = apdu_rx + offset;
+    input->AttachData_len = get_octet_string(ctx, &offset, &len);
+    input->AttachData     = apdu_rx + offset;
+    ctx->apdu_len_valid += 4 + len + input->AttachData_len;
     return 1;
 }
 
@@ -74,6 +76,7 @@ static int __verification_SID_MAC(struct instance_t* instance, struct pipeline_t
     struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint16_t offset = 0; 
+    uint16_t len = 0;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
     
@@ -84,7 +87,7 @@ static int __verification_SID_MAC(struct instance_t* instance, struct pipeline_t
     input.data_len              = ctx->security_data_len;
    
     ___get_sid(ctx, &input);
-    input.MAC_len  = get_octet_string(ctx, &offset);
+    input.MAC_len  = get_octet_string(ctx, &offset, &len);
     input.MAC_data = apdu_rx + offset;
 
     input.data_buf      = instance->apdu_cache; //临时缓冲区
@@ -92,7 +95,9 @@ static int __verification_SID_MAC(struct instance_t* instance, struct pipeline_t
     
     output.data         = ctx->security_data;
     output.data_len     = Max698_apdu_rx - 5;
-          
+    
+    ctx->apdu_len_valid += len + input.MAC_len;
+    
     return ___verification_handle(&input, &output, 0);
 }
 
@@ -102,6 +107,7 @@ static int __verification_RN(struct instance_t* instance, struct pipeline_t* pip
     struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint16_t offset = 0;
+    uint16_t len = 0;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
     
@@ -111,7 +117,7 @@ static int __verification_RN(struct instance_t* instance, struct pipeline_t* pip
     input.data                  = ctx->security_data;
     input.data_len              = ctx->security_data_len;
 
-    input.RN_Data_len   = get_octet_string(ctx, &offset);
+    input.RN_Data_len   = get_octet_string(ctx, &offset, &len);
     input.RN_Data       = apdu_rx + offset;
 
     ctx->RN_len = input.RN_Data_len;
@@ -121,6 +127,7 @@ static int __verification_RN(struct instance_t* instance, struct pipeline_t* pip
     if(ctx->service == SECURITY_Response){
         ___verification_handle(&input, &output, 1);//ESAM错误的情况下  不验证MAC 直接返回成功   //ESAM错误的情况，不验证MAC  //MAC验证不过，不能确认，也不需要响应
     }
+    ctx->apdu_len_valid += len + input.RN_Data_len;
     return 1;
 }
 
@@ -130,6 +137,7 @@ static int __verification_RN_MAC(struct instance_t* instance, struct pipeline_t*
     struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint16_t offset = 0; 
+    uint16_t len = 0;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
     
@@ -139,10 +147,13 @@ static int __verification_RN_MAC(struct instance_t* instance, struct pipeline_t*
     input.data                  = ctx->security_data;
     input.data_len              = ctx->security_data_len;
 
-    input.RN_Data_len = get_octet_string(ctx, &offset);
+    input.RN_Data_len = get_octet_string(ctx, &offset, &len);
     input.RN_Data     = apdu_rx + offset;
-    input.MAC_len     = get_octet_string(ctx, &offset);
+    ctx->apdu_len_valid += len + input.RN_Data_len;
+      
+    input.MAC_len     = get_octet_string(ctx, &offset, &len);
     input.MAC_data    = apdu_rx + offset;
+    ctx->apdu_len_valid += len + input.MAC_len;
     
     ctx->RN_len = input.RN_Data_len;
     if(ctx->RN_len > 64)
@@ -154,7 +165,7 @@ static int __verification_RN_MAC(struct instance_t* instance, struct pipeline_t*
     
     output.MAC_data = cache->buf_ptr + ctx->security_data_len + 3;
     output.MAC_len = 0;
-    
+
     return ___verification_handle(&input, &output, 1);
 }
 
@@ -180,7 +191,7 @@ static int __verification_SID(struct instance_t* instance, struct pipeline_t* pi
 
     output.MAC_data = cache->buf_ptr + ctx->security_data_len + 3;
     output.MAC_len  = 0;
-    
+
     return ___verification_handle(&input, &output, 0);
 }
 
@@ -202,7 +213,7 @@ int fr_security_request(struct instance_t* instance, struct pipeline_t* pipeline
     if(ctx->verification_choice > verification_choice_SID){
         return -1;
     }
-    
+    ctx->apdu_len_valid = ctx->apdu_rx_offset;
     ret = fr_698_security_request_check(instance, pipeline); 
     if(ret > 0){
         if ((SECURITY_CHOICE_1_Ciphertext == ctx->security_choice)
@@ -214,6 +225,8 @@ int fr_security_request(struct instance_t* instance, struct pipeline_t* pipeline
             }
         }
         return -1;
+    }else{
+      
     }
     return ret;
 }
