@@ -261,4 +261,16 @@ void Energy_clr(struct instance_t* instance)
     offsetof(struct mbase_control_block_t, active_n));
     nd_set_offset(instance, s_index, (uint8_t*)&mbase_control_block->active_n, (MAX_FEE_NO+1)<<2);
 
+
+
+    mbase_control_block->MonthEnegery = 0;
+    
+    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + \
+    offsetof(struct mbase_control_block_t, MonthEnegery));
+    nd_set_offset(instance, s_index, (uint8_t*)&mbase_control_block->MonthEnegery, 4);
+
+
+
+
+
 }

@@ -304,6 +304,8 @@ struct mbase_control_block_t
     uint8_t RTCErrS_duration;           //当前状态持续时间 时钟故障事件
     uint8_t ZeroLineErrS_duration;      //当前状态持续时间 零线电流异常事件  
 
+    uint8_t first_MbillDay_flag;
+
     uint8_t mac_err_cnt; // 当日mac错误次数
     uint8_t mac_suspend_date[3];// mac错误 挂起日期 yymmdd
 

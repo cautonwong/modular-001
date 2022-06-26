@@ -488,6 +488,7 @@ int meter_clr(struct instance_t* instance)
     freeze_clr(instance); //冻结清零
     event_clr(instance);  // 事件清零
     clr_record(instance, 0x30150200); //事件清零事件 清零
+    clr_last_bill_time(instance);
     if ((mbase_cb->factor_mode == true)) //电表清零事件 清零
     {
         clr_record(instance, 0x30130200);
@@ -497,6 +498,35 @@ int meter_clr(struct instance_t* instance)
     mbase_cb->sta &= ~F_RemoteRelayOn;  //清除控制命令状态,保留保电状态
     return 1;
 }
+
+//清月度用电量
+int clr_MonthEC(struct instance_t* instance)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint32_t s_index;
+    
+    mbase_cb->MonthEnegery = 0;
+    
+    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + \
+    offsetof(struct mbase_control_block_t, MonthEnegery));
+    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->MonthEnegery, 4);
+
+}
+
+//清最近一次结算时间
+int clr_last_bill_time(struct instance_t* instance)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint32_t s_index;
+    uint8_t tmpbuf[10] = {0};
+    
+    memset(tmpbuf, 0, sizeof(tmpbuf));
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillingTime);
+    nd_set_index(instance, s_index, &tmpbuf[0], 5);
+
+}
+
+
 
 //修改关联对象时 调用 清零
 int modify_capture_clr_pro(struct instance_t* instance, uint32_t oad)
@@ -987,6 +1017,8 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
 //直接提供mesg->id   可不走消息 记录事件
 int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t* payload)
 {
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
     uint8_t mode = START_MODE;//enum scheme_mode mode = START_MODE;
     uint8_t data_buff[400] = { 0 };
     uint8_t *pdata = data_buff;
@@ -1195,6 +1227,15 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
         }
         report_3320list_add(instance,Oad|(event_scheme<<13));
     }
+
+    if(BillFreeze == mesg->id)
+    {
+        if(mbase_cb->first_MbillDay_flag == 0x5A)
+        {
+            clr_MonthEC(instance);
+        }
+    }
+    
 
     clr_recordflag(instance, mesg->id);
     return 1;

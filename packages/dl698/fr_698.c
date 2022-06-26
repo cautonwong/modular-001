@@ -493,8 +493,8 @@ int fr_apdu_effective_check(struct instance_t* instance, struct pipeline_t* pipe
     }
     
     if(ctx->apdu_len_valid != ctx->apdu_rx_len){
-        ctx->service = ERROR_S_Response;
-        ctx->err_n = 1;
+        //ctx->service = ERROR_S_Response;
+        //ctx->err_n = 1;
     }
     return 1;
 }

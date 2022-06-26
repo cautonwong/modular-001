@@ -569,7 +569,7 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
-    uint8_t cycle, i, tmp[10]; 
+    uint8_t cnt, i, tmp[10]; 
     uint32_t  now,pd,last,recently;
     struct tm now_tm,pd_tm, last_time;
     uint32_t s_index;
@@ -612,6 +612,7 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
         billdate[i][1] = tmp[1];
     }
 
+    cnt     =   0;
 
     now = rtc_mktime(&now_tm);
     pd  = rtc_mktime(&pd_tm);
@@ -638,8 +639,13 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
             recently =  rtc_mktime(&pd_tm); 
             if (recently <= now)
             {
-                if ((recently > last)&&(recently >= pd))
+                if (/*(recently > last)&&*/(recently >= pd))
                 {
+                    if(i == 0)
+                    {
+                        ctrl_block->first_MbillDay_flag == 0x5A;
+                    }
+                
                     // 刷新最近一次结算时间
                     tmp[0] = pd_tm.tm_sec ;
                     tmp[1] = pd_tm.tm_min ;
@@ -658,10 +664,12 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
                     payload[5] = 28;//TYPE_date_time_s;
                     rtc_format_change_from_tm(&pd_tm,tmp);
                     mem_swap_cpy(&payload[6], &tmp[0], 7);
- 
-                    recv_record_process(instance, task, &mesg_tmp, payload);                    
-                    // 记录1次结算       需根据i判断需量结算是否填空，
+                     // 记录1次结算       需根据i判断需量结算是否填空，
                     // 第1结算日过后，最大需量清零                是否需要发送消息？             待添加
+                    recv_record_process(instance, task, &mesg_tmp, payload);                    
+
+
+
                 }
             }
             else
@@ -683,7 +691,7 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
         }
 
         /*最多补5年的数据*/
-        if (++cycle > 60)
+        if (++cnt > 12)
         {
             return 0;
         }  
@@ -741,6 +749,7 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
         
         ndv_memcopy((uint8_t *)&bill_time, (uint8_t *)&instance->time, sizeof(struct tm));
 
+        ctrl_block->first_MbillDay_flag = 0;
         for (i = 0; i < 3; i++)
         {
             bill_time.tm_mday = billdate[i][0];
@@ -765,7 +774,7 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
                 //第二、第三结算日时需量需要清成FF                 待调整
                 if (i == 0x00)
                 {
-                
+                    ctrl_block->first_MbillDay_flag = 0x5A;
                 }
 
                 //保存 结算时间
