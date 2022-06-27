@@ -711,6 +711,10 @@ int fr_ctx_clear(struct instance_t* instance, struct pipeline_t* pipeline, struc
     return 0;
 }
 
+    uint16_t fr_1_rx = 0;
+    uint16_t fr_2_rx = 0;
+    uint16_t fr_1_tx = 0;
+    uint16_t fr_2_tx = 0;
 int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
@@ -721,6 +725,10 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     int err_no = 0;
     uint8_t service = 0;
 
+#ifdef TX_APDU_EN
+    fr_1_rx++;
+    apdu_send(UART_MODULE_CHL, 0xBB, &fr_1_rx, NULL, 0);
+#endif 
     //协议一致性判断和apdu合法判断
     if(0 == fr_pack_698_check(instance, pipeline, mesg)){
         fifoBuf_removeData(fifo, ctx->min_len + 2);
@@ -764,7 +772,8 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     }
     
 #ifdef TX_APDU_EN
-    apdu_send(UART_MODULE_CHL, 0x55, ctx->apdu_d_rx, ctx->apdu_rx_len);
+    fr_2_rx++;
+    apdu_send(UART_MODULE_CHL, 0x55, &fr_2_rx, ctx->apdu_d_rx, ctx->apdu_rx_len);
 #endif  
     
     if (!((CONNECT_Request == ctx->service) || (RELEASE_Request == ctx->service))){
@@ -841,7 +850,8 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     }
 
 #ifdef TX_APDU_EN
-    apdu_send(UART_MODULE_CHL, 0xAA, ctx->apdu->buf_ptr, fifoBuf_getUsed(ctx->apdu));
+    fr_1_tx++;
+    apdu_send(UART_MODULE_CHL, 0xAA, &fr_1_tx, ctx->apdu->buf_ptr, fifoBuf_getUsed(ctx->apdu));
 #endif 
     
     if (service == SECURITY_Request){
