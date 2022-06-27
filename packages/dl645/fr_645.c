@@ -454,9 +454,12 @@ int fr_pack_645_head(struct instance_t* instance, struct pipeline_t* pipeline, s
 {
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* fifo = pipeline->out_queue;
+    struct mbase_control_block_t* mbase_cb;
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     ctx->cs = 0;
     ctx->tx_len = 0;
     uint8_t buf[6];
+    
 
     for(int i = 0; i < 4; i ++){
         fifoBuf_putByte(fifo, 0xfe);
@@ -473,7 +476,7 @@ int fr_pack_645_head(struct instance_t* instance, struct pipeline_t* pipeline, s
     }
     else
     {
-        memcpy(buf, ctx->addr, 6);
+        memcpy(buf, mbase_cb->tsa, 6);
         //memcpy(buf, &msta_context.addr, 6);
     }
     append_data(fifo, buf, 6, __update_cs, ctx);
@@ -542,6 +545,8 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t ERRBYTE=0;//data[8]={0}, 
     uint16_t tx_len = 0;
+    struct mbase_control_block_t* mbase_cb;
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
 //    int err_no = 0;
 
@@ -559,7 +564,15 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     {
         case 0X11:
             ERRBYTE = Comm_Read(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
-            break;   
+            break;
+        case 0x13://读地址
+            if(*(apdu_rx+9) == 0)
+            {
+                memcpy(ctx->apdu_tx, mbase_cb->tsa, 6);
+                tx_len = 6;
+                ERRBYTE = 0;
+            }
+            break;
         case 0X14:
             ERRBYTE = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
             if(ERRBYTE == 0)
