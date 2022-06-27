@@ -801,20 +801,38 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
 
 
 
-
-
-
+#if 0
+uint8_t test_freeze = 0;
+#endif
 // 每秒调用
 int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     //freeze_rollback(instance, task, mesg);
 
-    minute_freeze_judge(instance, task, mesg);
-    hour_freeze_judge(instance, task, mesg);
-    day_freeze_judge(instance, task, mesg);
-    month_freeze_judge(instance, task, mesg);  
-    instant_freeze_judge(instance, task, mesg); //瞬时冻结
-    bill_freeze_judge(instance, task, mesg);
+
+#if 0    
+    if (test_freeze)
+    {
+    
+        send_recordflag_mesg(instance, task,  MinuteFreeze1, NULL);
+        send_recordflag_mesg(instance, task,  HourFreeze, NULL);
+        send_recordflag_mesg(instance, task,  DayFreeze, NULL);          
+        send_recordflag_mesg(instance, task,  MonthFreeze, NULL);           
+        send_recordflag_mesg(instance, task,  BillFreeze, NULL);          
+    }
+    else
+#endif    
+    {
+   
+        minute_freeze_judge(instance, task, mesg);
+        hour_freeze_judge(instance, task, mesg);
+        day_freeze_judge(instance, task, mesg);
+        month_freeze_judge(instance, task, mesg);  
+        instant_freeze_judge(instance, task, mesg); //瞬时冻结
+        bill_freeze_judge(instance, task, mesg);
+
+    }
+
     return 1;
 }
 

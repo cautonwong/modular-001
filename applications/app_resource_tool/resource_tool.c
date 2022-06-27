@@ -1010,7 +1010,7 @@ int16_t _Data_handling(uint32_t addr_a, uint32_t addr_b, int32_t len, struct blo
     const struct driver_ops_t* driver = NULL;
     uint8_t buf[256];
     uint16_t size = 0;
-    int32_t s_len = len;
+    int32_t offset = 0, s_len = len;
     uint64_t step;
 
     driver = device->dev->dev_driver_ops;
@@ -1034,14 +1034,15 @@ int16_t _Data_handling(uint32_t addr_a, uint32_t addr_b, int32_t len, struct blo
       step = 0xF8F8F8F8F8F8F8F8;
       res_conditions_true(0x00 > driver->dev_write(device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);
     case 0xF8F8F8F8F8F8F8F8:  //数据拷贝 F8
+      offset = 0;
       while(s_len > 0)
       {
           if(s_len > 256) { size = 256; }
           else{ size = s_len; }
           
-          res_conditions_true(0x00 > driver->dev_read(device->dev, addr_a, size, buf), -1);
-          res_conditions_true(0x00 > driver->dev_write(device->dev, addr_b, size, buf), -1);
-          
+          res_conditions_true(0x00 > driver->dev_read(device->dev, addr_a + offset, size, buf), -1);
+          res_conditions_true(0x00 > driver->dev_write(device->dev, addr_b + offset, size, buf), -1);
+          offset += size;
           s_len -= size;
       }
       step = 0xF0F0F0F0F0F0F0F0;
@@ -1052,14 +1053,15 @@ int16_t _Data_handling(uint32_t addr_a, uint32_t addr_b, int32_t len, struct blo
       res_conditions_true(0x00 > driver->dev_write(device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);      
     case 0xE0E0E0E0E0E0E0E0:  //目标区数据拷贝 E0
       s_len = len;
+      offset = 0;
       while(s_len > 0)
       {
           if(s_len > 256) { size = 256; }
           else{ size = s_len; }
           
-          res_conditions_true(0x00 > driver->dev_read(device->dev, addr_b, size, buf), -1);
-          res_conditions_true(0x00 > driver->dev_write(device->dev, addr_a, size, buf), -1);
-          
+          res_conditions_true(0x00 > driver->dev_read(device->dev, addr_b + offset, size, buf), -1);
+          res_conditions_true(0x00 > driver->dev_write(device->dev, addr_a + offset, size, buf), -1);
+          offset += size;
           s_len -= size;
       }
       step = 0x0000000000000000;
