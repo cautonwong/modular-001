@@ -133,7 +133,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                     len = -DAR_OBJECT_NOT_EXIST;
                 }
             }
-            else if(attr_index<=(Num+1))
+            else if(attr_index<=Num)
             {
                 attr_index -= 1;
                 if(attribute == 2)
@@ -250,7 +250,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                     len = -DAR_OBJECT_NOT_EXIST;
                 }
             }
-            else if(attr_index<=(Num+1))
+            else if(attr_index<=Num)
             {
                 attr_index -= 1;
                 switch(mode)
@@ -358,7 +358,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                     len = -DAR_OBJECT_NOT_EXIST;
                 }
             }
-            else if(attr_index<=(Num+1))
+            else if(attr_index<=Num)
             {
                 attr_index -= 1;
                 switch(mode)

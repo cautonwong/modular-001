@@ -210,27 +210,27 @@ int rtc_tm_compare(const struct tm *a, const struct tm *b)
 
 bool rtc_tm_valid(const struct tm *t)
 {
-    if (t->tm_sec < 0) {
+    if ((t->tm_sec < 0) || (t->tm_sec > 59)) {
         return false;
     }
 
-    if (t->tm_min < 0) {
+    if ((t->tm_min < 0) || (t->tm_min > 59)) {
         return false;
     }
 
-    if (t->tm_hour < 0) {
+    if ((t->tm_hour < 0) || (t->tm_hour > 23)) {
         return false;
     }
 
-    if (t->tm_mday < 0) {
+    if ((t->tm_mday < 1) || (t->tm_mday > 31)) {
         return false;
     }
 
-    if (t->tm_mon < 0) {
+    if ((t->tm_mon < 0) || (t->tm_mon > 11)) {
         return false;
     }
 
-    if (t->tm_year < 0) {
+    if (t->tm_year < 1900) {
         return false;
     }
 
