@@ -597,12 +597,15 @@ int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t*
     uint8_t* p = instance->apdu_cache; //当临时缓存
     uint32_t rsd_oad;
     uint16_t data_len = 0;
+    uint16_t rx_offset_cache = 0;
 
     memcpy(p, apdu_rx + ctx->apdu_rx_offset, 4);
     ctx->apdu_rx_offset += 4;
     rsd_oad = buf_to_uint32_msb(p);
 
+    rx_offset_cache = ctx->apdu_rx_offset;
     data_len = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+    rx_offset_cache += data_len;
     
     switch (rsd_oad)
     {
@@ -610,6 +613,7 @@ int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t*
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
+            ctx->apdu_rx_offset = rx_offset_cache;
             return -DAR_TYPE_NOT_MATCH;
         }
         rsd_info->start_mark = dt_buf_to_second(apdu_rx + ctx->apdu_rx_offset);
@@ -623,6 +627,7 @@ int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t*
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
+            ctx->apdu_rx_offset = rx_offset_cache;
             return -DAR_TYPE_NOT_MATCH;
         }
         rsd_info->start_mark = buf_to_uint32_msb(apdu_rx + ctx->apdu_rx_offset);
@@ -652,13 +657,16 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
     uint32_t rsd_oad;
     uint16_t oi = get_OAD_OI(oad);
     uint16_t data_len = 0;
+    uint16_t rx_offset_cache = 0;
 
     rsd_oad = buf_to_uint32_msb(&apdu_rx[ctx->apdu_rx_offset]);
     ctx->apdu_rx_offset += 4;
 
+    rx_offset_cache = ctx->apdu_rx_offset;
     data_len = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
     data_len += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
     data_len += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+    rx_offset_cache += data_len;
     
     switch (rsd_oad)
     {
@@ -666,6 +674,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
+            ctx->apdu_rx_offset = rx_offset_cache;
             return -DAR_TYPE_NOT_MATCH;
         }
         rsd_info->start_mark = dt_buf_to_second(apdu_rx + ctx->apdu_rx_offset);
@@ -674,6 +683,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
+            ctx->apdu_rx_offset = rx_offset_cache;
             return -DAR_TYPE_NOT_MATCH;
         }
         
@@ -701,12 +711,14 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
                 //只支持秒，分，时，日, 月 间隔
                 if ((p[0] != TYPE_TI) || (p[1] > 5))
                 {
+                    ctx->apdu_rx_offset = rx_offset_cache;
                     return -DAR_TYPE_NOT_MATCH;
                 }
 
                 //只有冻结支持冻结间隔搜索
                 if ((oi < 0x5000) || (oi > 0x5011))
                 {
+                    ctx->apdu_rx_offset = rx_offset_cache;
                     return -DAR_TYPE_NOT_MATCH;
                 }
                 
@@ -717,6 +729,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
                     || ((p[0] == 3) && (oi == 0x5004)) || ((p[0] == 4) && (oi == 0x5006))
                     || ((p[0] == 0) && (oi == 0x5001)) || ((p[0] == 5) && (oi == 0x5007))))
                 {
+                    ctx->apdu_rx_offset = rx_offset_cache;
                     return -DAR_TYPE_NOT_MATCH;
                 }
 
@@ -749,6 +762,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
+            ctx->apdu_rx_offset = rx_offset_cache;
             return -DAR_TYPE_NOT_MATCH;
         }
         
@@ -758,6 +772,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
+            ctx->apdu_rx_offset = rx_offset_cache;
             return -DAR_TYPE_NOT_MATCH;
         }
 
@@ -778,6 +793,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
         {
             if (*p != TYPE_double_long_unsigned)
             {
+                ctx->apdu_rx_offset = rx_offset_cache;
                 return -DAR_TYPE_NOT_MATCH;
             }
             rsd_info->interval = buf_to_uint32_msb(apdu_rx + ctx->apdu_rx_offset);
@@ -807,14 +823,18 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
     uint32_t rsd_oad = 0;
     uint16_t oi = get_OAD_OI(oad);
     int dar = 0;
+    uint16_t rx_offset_cache = 0;
+
     
     memcpy(p, apdu_rx + ctx->apdu_rx_offset, 4);
     ctx->apdu_rx_offset += 4;    
     rsd_oad = buf_to_uint32_msb(p);
 
+    rx_offset_cache = ctx->apdu_rx_offset;
     data_len = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
     data_len += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
     data_len += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+    rx_offset_cache += data_len;
     
     switch (rsd_oad)
     {
@@ -823,6 +843,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
+            ctx->apdu_rx_offset = rx_offset_cache;
             return -DAR_TYPE_NOT_MATCH;
         }
         rsd_info->start_mark = dt_buf_to_second(apdu_rx+ctx->apdu_rx_offset);
@@ -831,6 +852,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_date_time_s)
         {
+            ctx->apdu_rx_offset = rx_offset_cache;
             return -DAR_TYPE_NOT_MATCH;
         }
 
@@ -854,6 +876,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
             //只支持秒，分，时，日间隔
             if ((p[0] != TYPE_TI) || (p[1] > 5))
             {
+                //ctx->apdu_rx_offset = rx_offset_cache;
                 //return -DAR_TYPE_NOT_MATCH;
             }
 
@@ -862,6 +885,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
 
             if ((p[0] == 4 || p[0] == 5) && (value != 0))
             {
+                //ctx->apdu_rx_offset = rx_offset_cache;
                 //return -DAR_TYPE_NOT_MATCH;
             }
 
@@ -887,6 +911,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
+            ctx->apdu_rx_offset = rx_offset_cache;
             return -DAR_TYPE_NOT_MATCH;
         }
 
@@ -896,6 +921,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
         *p = apdu_rx[ctx->apdu_rx_offset++];
         if (*p != TYPE_double_long_unsigned)
         {
+            ctx->apdu_rx_offset = rx_offset_cache;
             return -DAR_TYPE_NOT_MATCH;
         }
 
@@ -916,6 +942,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
         {
             if (*p != TYPE_double_long_unsigned)
             {
+                ctx->apdu_rx_offset = rx_offset_cache;
                 return -DAR_TYPE_NOT_MATCH;
             }
 
