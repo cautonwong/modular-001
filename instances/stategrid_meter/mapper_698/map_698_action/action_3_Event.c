@@ -24,26 +24,6 @@ int event_clear_omd_add(struct instance_t* instance, uint32_t omd, uint16_t chn)
 
     memset(tempbuf, 0, sizeof(tempbuf));
 
-#if 0 //待调整 清当前通道2015 的合闸成功或跳闸成功    //可考虑挪统一清零接口中
-    id = event_report_fsid_get(chn, 1);
-
-    if (omd == 0x301F0100 || omd == 0x30200100)
-    {
-        read(id, buf, 5, NULL);
-        buf[0] = 32;
-
-        if (omd == 0x301F0100)
-        {
-            buf[2] &= ~0x40;
-        }
-        else
-        {
-            buf[2] &= ~0x80;
-        }
-
-        write(id, buf, 5, NULL);
-    }
-#endif
     tempbuf[0] = 0x01;
     tempbuf[1] = 0x01;
     tempbuf[2] = 0x53;
@@ -100,14 +80,12 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     capture_oad = buf_to_uint32_msb(p);
     Schem = get_OAD_Schem(capture_oad);
     
-    //待调整  秘钥状态如何获取？
-#if 0
-    if ((oi == 0x3013) && (0 == esam_key_status_get()))
+    if ((oi == 0x3013) && ( mbase_cb->key_state == false ))
     {
         *dar = DAR_OTHERS_ERROR;
-        return -DAR_OTHERS_ERROR;
+        return -DAR_RW_REJECT;
     }
-#endif
+
 
 
     //待调整 判断表型无关的oad
@@ -215,7 +193,6 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
     attr = (uint8_t)((oad & 0x00001F00) >> 8);
     index = (uint8_t)(oad & 0x000000FF);
 
-
     if ((*p++ != TYPE_OAD) || ((oad & 0xF0000000) != 0x30000000))
     {
         *dar = DAR_OTHERS_ERROR;
@@ -229,14 +206,12 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
     }
     p += 4;
     Schem = get_OAD_Schem(capture_oad);
-    //待调整  秘钥状态如何获取？
-#if 0
-    if ((oi == 0x3013) && (0 == esam_key_status_get()))
+
+    if ((oi == 0x3013) && ( mbase_cb->key_state == false ))
     {
         *dar = DAR_OTHERS_ERROR;
-        return -1;
+        return -DAR_RW_REJECT;
     }
-#endif
 
 
 #if 0 // vs 要求 其他
@@ -358,7 +333,7 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
         {
             //无功组合特征字特殊处理
         }
-        event_clear_omd_add(instance, id, 0 /*req->channel */); //待调整    如何在map  case中  取到通道号
+        event_clear_omd_add(instance, id, 0 /*req->channel */);
         //清零
         ret = clr_record(instance, id);
         if (ret < 0)

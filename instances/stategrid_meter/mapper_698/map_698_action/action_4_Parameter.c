@@ -252,7 +252,6 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     return (p-buf);
                     break;
                 case 0x03://数据初始化（电表清零）
-                    // 时间标签 标志   待调整
                     if(mbase_cb->factor_mode == false)
                     {
                         if((1 != pctx->timeTag_valid) || (pctx->timeTag[0] == 0))
@@ -266,7 +265,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         return (-DAR_UNAUTHORIZED);
                     }
 
-                    //if(mbase_cb->factor_mode == false) //待调整
+                    if(mbase_cb->factor_mode == false) 
                     {
                         //set_activeflag(instance, RecordId);
                         mesg_tmp.id = MeterClrS;
@@ -283,7 +282,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     if((1 != pctx->timeTag_valid) || (pctx->timeTag[0] == 0)){
                         return -DAR_TIME_TAG_INVALID;
                     }
-                    event_clear_omd_add(instance, id, 0 /*req->channel */); //待调整    如何在map  case中  取到通道号
+                    event_clear_omd_add(instance, id, 0 ); 
                     event_clr(instance);// 事件清零
                     p++;                     
                     send_event_mesg_pro(instance, NULL, EventClrS, NULL, 1);

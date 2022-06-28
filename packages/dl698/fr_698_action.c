@@ -116,7 +116,8 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
             ctx->apdu_rx_offset += 4;
 
             r = __fr_handle_one_object(instance, pipeline, mesg);
-            ctx->apdu_rx_offset += r;
+            if(r >= 0)
+                ctx->apdu_rx_offset += r;
             
             if(SetActionThenGetRequestNormalList == ctx->choice)
             {
