@@ -189,7 +189,6 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
             {
                 *p++ = TYPE_bit_string;
                 *p++ = 32;
-                //mem_swap_cpy(p, (uint8_t*)&mbase_cb->report_2015state[p_ctx->channel], 4); //待调整
                 p += uint32_to_buf_msb(mbase_cb->report_2015state[p_ctx->channel], p);
                 return (p-buf);
             }

@@ -147,7 +147,7 @@ int fr_follow_report_optional(struct instance_t* instance, struct pipeline_t* pi
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = cache->buf_ptr + cache->wr;  //线性缓存  待调整
+    uint8_t* p = cache->buf_ptr + cache->wr;  
     uint32_t oad = 0, mask = 0;
     uint16_t offset = 0;
     uint8_t num = 0, flag = 0, rptmode = 0;
@@ -662,9 +662,9 @@ uint8_t report_3320list_update(struct instance_t* instance, uint8_t chn, uint8_t
             if(oad == 0x30110200)//    待调整
             {
                 #if 0  //    待调整 不打开
-                if(true == hfp_read(0x2806, (uint8_t *)&status_buf, 8, __NULL))
+                if(true == read(0x2806, (uint8_t *)&status_buf, 8, __NULL))
                 {
-                    hfp_memcopy((uint8_t *)&data, &status_buf[4], 4);
+                    memcopy((uint8_t *)&data, &status_buf[4], 4);
                     if(data >= 3600)//上电超过1小时才会进行掉电期间的上报
                     {
                         active_report_status |= ACTIVE_REPORT_POWEROFF;
@@ -698,6 +698,7 @@ uint8_t report_3320list_update(struct instance_t* instance, uint8_t chn, uint8_t
 //事件记录处调用
 void report_3320list_add(struct instance_t* instance,uint32_t oad)
 {
+    struct mbase_control_block_t* mbase_cb  = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t i;
     uint8_t comm_chn[4] = { chl_ir_698, chl_RS485_1_698,  chl_PLC_698,  chl_RS485_2_698 };
 
@@ -719,7 +720,7 @@ void report_3320list_add(struct instance_t* instance,uint32_t oad)
     if (get_OAD_OI(oad) == 0x3013)
     {
         //测试秘钥状态0-私钥 1-公钥
-        //if (dl698_esam_key_status_get() != 0) //待调整
+        if ( mbase_cb->key_state == true ) 
         {
             return;
         }
@@ -842,7 +843,7 @@ uint8_t report_3320list_confirmed_All_channel(struct instance_t* instance, uint3
 
 
 
-//2015上报状态字更新                调用地方      待调整
+//2015上报状态字更新                调用地方  
 uint8_t report_2015state_update(struct instance_t* instance, uint32_t mask)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);

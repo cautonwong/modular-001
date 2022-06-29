@@ -290,8 +290,10 @@ void send_event_mesg_pro(struct instance_t* instance, struct pipeline_t* task, u
 //冻结或事件清零 接口    传入要清除的oad 
 int clr_record(struct instance_t* instance, uint32_t oad)
 {
+    
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t temp = 0,s_index = 0;
-    uint8_t tmpbuf[10] = {0};
+    uint8_t i, tmpbuf[10] = {0};
     struct record_storage_id_info_t info;
     int ret = get_record_id_info(instance, oad, &info);
     
@@ -346,6 +348,23 @@ int clr_record(struct instance_t* instance, uint32_t oad)
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBroadcastTimeERR);
         nd_set_index(instance, s_index, &tmpbuf[0], 3);
     }
+
+    if((get_OAD_OI(oad) == 0x301F) || (get_OAD_OI(oad) == 0x3020))//2015 拉合闸成功 状态清除
+    {
+        for(i = 0; i < 4; i++)
+        {
+            if (get_OAD_OI(oad) == 0x301F)
+            {
+                mbase_cb->report_2015state[i] &= ~RPT_2015_SWITCH_OFF_SUCCEES;
+            }
+            else
+            {
+                mbase_cb->report_2015state[i] &= ~RPT_2015_SWITCH_ON_SUCCEES;
+            }
+        }
+        //保存e2p
+    }
+    
     return 1;
 }
 
@@ -561,47 +580,6 @@ int event_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct m
       report_2015state_judge(instance);
 
       return 1;
-#if 0
-           ///////OverCurrentAS = 11,             //  0x3005    A过流发生 
-
-
-          //PowerOffS,  //  0x3011    电能表掉电事件                                               
-                                              
-          MeterWrS,  //  0x3012    电能表编程事件                                                
-          /////MeterClrS,  //  0x3013    电能表清零事件                                                        
-          /////EventClrS,  //  0x3015    电能表事件清零事件                                
-          //SetTimeS,  //  0x3016    电能表校时事件                                    
-          //DayTabWrS,  //  0x3017    电能表时段表编程事件                                        
-          //SeasonTabWrS,  //  0x3018    电能表时区表编程事件                                
-          WeekTabWrS,  //  0x3019    电能表周休日编程事件                                              
-          BillDayWrS,  //  0x301A    电能表结算日编程事件  
-          //////CoverOpenS,  //  0x301B    电能表开盖事件                                      
-
-          //SwitchOffS,  //  0x301F    电能表跳闸事件                                                                           
-          //SwitchOnS,  //  0x3020    电能表合闸事件                                          
-          HolidayWrS,  //  0x3021    电能表节假日编程事件                                                
-          ActCombWrS,  //  0x3022    电能表有功组合方式编程事件                                            
-          FeeTabWrS,  //  0x3024    电能表费率参数表编程事件                                    
-          StepTabWrS,  //  0x3025    电能表阶梯表编程事件                                           
-          //////SecretKeyWrS,  //  0x3026    电能表密钥更新事件 
-          //////ErrPlugCardS,  //  0x3027    电能表异常插卡事件                                           
-          /////RechargeS,  //  0x3028    电能表购电记录                                       
-          //RefundS,  //  0x3029    电能表退费记录  
-          SwitchErrS,  //  0x302B    电能表负荷开关误动作事件                                               
-                                      
-          PowerAbnormalS,  //  0x302C    电能表电源异常事件 
-
-          RTCErrS,  //  0x302E    电能表时钟故障事件 
-
-          EmuErrS,  //  0x302F    电能表计量芯片故障事件
-
-          BroadcastTimeS,  //  0x303C    广播校时事件 
-          ZeroLineErrS,  //  0x3040    零线电流异常事件  
- 
-#endif
-
-
-
 
 }
 

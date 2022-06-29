@@ -39,7 +39,8 @@ int ACTION_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, vo
                     return -DAR_TYPE_NOT_MATCH;
                 }   
                 p += 2;
-                mem_swap_cpy((uint8_t*)&Temp32A, p,  4); //待调整
+
+                Temp32A = buf_to_uint32_msb(p);
                 mbase_cb->report_2015state[p_ctx->channel] &= ~Temp32A;
                 EventOut_698_check(instance);
                 return (p-buf);

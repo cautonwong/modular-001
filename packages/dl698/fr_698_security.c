@@ -370,7 +370,7 @@ int fr_infrared_auth_check(struct instance_t* instance, struct pipeline_t* pipel
     if (cmd == 2)
     {
 #if 0
-        if (BATTER_SUPPLY == hfp_system_state.power_state)//待调整 
+        if (BATTER_SUPPLY == system_state.power_state)//待调整 
         {
             return false;
         }
