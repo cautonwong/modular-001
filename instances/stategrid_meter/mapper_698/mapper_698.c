@@ -2276,6 +2276,10 @@ int para_init(struct instance_t* instance )
     mbase_cb->EmuErrS_duration_para = 5;      //参数 判定延时时间  
     mbase_cb->RTCErrS_duration_para = 1;      //参数 判定延时时间  
     mbase_cb->ZeroLineErrS_duration_para = 60; //参数 判定延时时间      
+
+    mbase_cb->active_report_sec_limit = 3600; //掉电 主动上报 上电时间阈值 默认3600 
+    
+
        
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
     offsetof(struct mbase_control_block_t, OverCurrent_threshold));
@@ -2429,7 +2433,9 @@ void fr_dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t cilent_index, channel;
+    struct message_t mesg_tmp;
 
+    memset(&mesg_tmp, 0, sizeof(struct message_t));
     if(mbase_cb->irauthen_tmr > 0)              mbase_cb->irauthen_tmr--;
     if(mbase_cb->authen_tmr > 0)                mbase_cb->authen_tmr--;
     if (mbase_cb->infrared_auth_timeout > 0)    mbase_cb->infrared_auth_timeout--;
@@ -2444,7 +2450,7 @@ void fr_dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline
         if ((s->block_timeout[cilent_index] > 0) && ((req->block[cilent_index].data != 0xffff) || (res->block[cilent_index].data != 0xffff)))
         {
             para = dl698_cfg_para_get(channel);
-            tick = hfp_get_tick_diff(s->block_timeout[cilent_index]);
+            tick = get_tick_diff(s->block_timeout[cilent_index]);
     
             if (tick > ((req->do_then_get_timeout * 1000ul) + para->block_timeout))
             {
@@ -2479,6 +2485,9 @@ void fr_dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline
 
         }
     }
+
+
+    active_report_handle(instance, NULL, &mesg_tmp);
     
 }
 

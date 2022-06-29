@@ -91,7 +91,7 @@ struct mbase_control_block_t
     uint8_t EmuErrS_duration_para;      //参数 判定延时时间  
     uint8_t RTCErrS_duration_para;      //参数 判定延时时间  
     uint8_t ZeroLineErrS_duration_para; //参数 判定延时时间  
-
+    uint16_t active_report_sec_limit;   //掉电 主动上报 上电时间阈值 默认3600 
 
     uint8_t factor_mode; //工厂模式
     

@@ -20,7 +20,7 @@ extern uint32_t follow_report_3320List_Latest_oad_get(struct instance_t* instanc
 
 
 extern uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t mode);
-#if 1
+#if 0
 uint8_t rep_data[72] = {
 0x88, 0x02, 0x00, 0x01, 0x30, 0x11, 0x02, 0x01, 0x07, 0x00, 
 0x20, 0x22, 0x02, 0x00, 0x00, 0x20, 0x1e, 0x02, 0x00, 0x00, 
@@ -1375,6 +1375,30 @@ int fr_active_report_pro(struct instance_t* instance, struct pipeline_t* pipelin
     return 0;
 }
 
+//掉电后 上报处理 每秒调用
+int powerOff_report_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct mbase_control_block_t*  mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    int len = 0;
+    uint8_t start_time = 1;
+
+    start_time = 1;
+    if ((mbase_cb->power_down_sec_accum >= start_time) && (mbase_cb->power_down_sec_accum <= (start_time+2)))
+    {
+        if ((mbase_cb->power_on_sec_accum >= mbase_cb->active_report_sec_limit) && (mbase_cb->active_report_retry_cnt[R_3011_START] < 3)) // 上电超过1小时 进行掉电期间上报
+        {
+            len = active_report_3011_pro(instance, pipeline, mesg, 0);
+            if(len > 0)
+            {
+                //打开vcc 时间？
+                //配置io口 初始化模块uart 
+                mbase_cb->active_report_retry_cnt[R_3011_START]++;
+                //协议发送
+            }
+        }
+    }
+    
+}
 
 int active_report_handle(struct instance_t* instance, struct pipeline_t* p_pipeline, struct message_t* mesg)
 {
@@ -1388,9 +1412,9 @@ int active_report_handle(struct instance_t* instance, struct pipeline_t* p_pipel
         buf[3] = len;        
         mesg->len = 4;
         mesg->payload = buf;
-        mesg->to = pid_tx_698;
-        mesg->from = pid_tx_698;
-        pipeline.id = pid_rx_698;
+        mesg->to = pid_plc_tx_698;
+        mesg->from = pid_plc_tx_698;
+        pipeline.id = pid_plc_rx_698;//pid_plc_rx_698;
 
         send_mesg(instance, &pipeline, mesg);
     }

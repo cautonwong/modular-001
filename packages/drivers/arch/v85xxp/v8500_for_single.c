@@ -809,7 +809,7 @@ uint8_t ac_power_off_monitor(void)
 
 uint8_t ac_power_on_monitor(void)
 {
-#if 0 
+#if 0
     if (poweroff_test) // 鏀瑰洖鏉�
     {
         return false;

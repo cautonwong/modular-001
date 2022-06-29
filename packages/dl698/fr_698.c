@@ -1000,7 +1000,7 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
     struct fifo_t* fifo_out = (struct fifo_t*)pipeline->out_queue;
     struct fifo_t* cache = ctx->apdu;
     uint8_t payload[4];
-
+    int len = 0;
     //client  或者 主动上报 或者 延时读取发送
     if (recv_mesg_v2(instance, pipeline, mesg, payload, 4) >= MESG_V2_OK){
 
@@ -1009,16 +1009,27 @@ int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
         ctx->SA = 0x05;
         ctx->addr[0] = 0x08;
         mem_swap_cpy(ctx->addr, mbase_cb->tsa, SA_LEN(ctx->SA) + 1);
-        mesg->from = pid_tx_698;
-        mesg->len = (payload[2]<<8) + payload[3] + 2;
-        fr_pack_698_head(instance, pipeline, mesg);
+        mesg->from = pid_plc_tx_698;
+        mesg->len = (payload[2]<<8) + payload[3];
+        
         if(mesg->len){
-            if(get_report_apdu(instance, pipeline, mesg) > 0){                
+            if((len = get_report_apdu(instance, pipeline, mesg)) > 0)
+            {   
+                fr_pack_698_head(instance, pipeline, mesg);
+                ringbuffer_clear(ctx->apdu);
+                fifoBuf_putData(ctx->apdu, instance->apdu_cache, mesg->len);
+                
                 fr_pack_698_apdu(instance, pipeline, mesg);
+                /*
                 if(0 == fr_follow_report_optional(instance, pipeline, mesg)){
                     fifoBuf_putByte(cache, 0);
                 }
                 fifoBuf_putByte(cache, 0);
+                */
+            }
+            else
+            {
+                return 0;
             }
         }
         fr_pack_698_tail(instance, pipeline, mesg);

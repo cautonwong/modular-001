@@ -31,7 +31,7 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     
     if(mbase_control_block->commdisp_plc > 0)   mbase_control_block->commdisp_plc--;
 
-    fr_dl698_sec_task(instance, pipeline);
+    
     
     if( mbase_control_block->plc_baut_tick > 0)   //载波通道1小时不通讯，复位载波口 
     {
@@ -55,6 +55,7 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
         mbase_control_block->power_down_sec_accum++;
         
         event_LowPower_pro(instance, pipeline, &mesg); // 事件 低功耗下处理
+        powerOff_report_pro(instance, pipeline, &mesg); // 停电上报
         
 /*        if( (mbase_control_block->Key & F_KeyDispay) && (mbase_control_block->KeyInv == 0) )//退出键显,息屏
         {
@@ -75,7 +76,7 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     else
     {
         mbase_control_block->power_on_sec_accum++;
-        
+        fr_dl698_sec_task(instance, pipeline);
     }
     
     

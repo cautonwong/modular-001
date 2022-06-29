@@ -98,7 +98,6 @@ int fr_sw_rtc(struct instance_t* instance, struct pipeline_t* pipeline, struct m
             mesg->id = 0x0000001;
             mesg->len = 0;
             send_mesg(instance, NULL, mesg);
-            //active_report_handle(instance, NULL, mesg);
         }
     }
     return 0;
