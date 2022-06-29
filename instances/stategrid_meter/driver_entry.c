@@ -243,16 +243,14 @@ void ir_receive_timeout(void)
 }   
 
 const uint32_t baud_table[11]={300,600,1200,2400,4800,7200,9600,19200,38400,57600,115200};
-void rs485_send_timeout(void *CallBackSendPara)
+
+void baud_update(void *CallBackSendPara)
 {
     uint32_t baud=9600,i; 
     struct instance_t* instance = (struct instance_t*)CallBackSendPara;
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    
-    RS485_RCV_EN();
-    
-    //这里是发送结束最后一个字节后调用的函数，可以在这里判断是否有波特率修改，并调用修改波特率函数，注意该函数是在中断调用，因此要简洁
-    if(mbase_control_block->baud_chg & 0x01)
+
+    if(mbase_control_block->baud_chg & 0x01)    //485
     {
         for(i=0;i<11;i++)
         {
@@ -266,18 +264,8 @@ void rs485_send_timeout(void *CallBackSendPara)
         {
             mcu_uart_set_baud(baud, 0);
         }
-        mbase_control_block->baud_chg = 0;
     }
-}
-
-void plc_send_timeout(void *CallBackSendPara)
-{
-    uint32_t baud=9600,i; 
-    struct instance_t* instance = (struct instance_t*)CallBackSendPara;
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    
-    //这里是发送结束最后一个字节后调用的函数，可以在这里判断是否有波特率修改，并调用修改波特率函数，注意该函数是在中断
-    if(mbase_control_block->baud_chg & 0x02)
+    if(mbase_control_block->baud_chg & 0x02)    //plc
     {
         for(i=0;i<11;i++)
         {
@@ -291,8 +279,36 @@ void plc_send_timeout(void *CallBackSendPara)
         {
             mcu_uart_set_baud(baud, 4);
         }
-        mbase_control_block->baud_chg = 0;
     }
+    if(mbase_control_block->baud_chg & 0x04)    //plc协商
+    {
+        for(i=0;i<11;i++)
+        {
+            if(mbase_control_block->Baut_plc_neg == i)
+            {
+                baud = baud_table[i];
+                break;
+            }
+        }
+        if(i<11)
+        {
+            mcu_uart_set_baud(baud, 4);
+        }
+    }
+    mbase_control_block->baud_chg = 0; 
+}
+
+void rs485_send_timeout(void *CallBackSendPara)
+{
+    RS485_RCV_EN();
+    //这里是发送结束最后一个字节后调用的函数，可以在这里判断是否有波特率修改，并调用修改波特率函数，注意该函数是在中断调用，因此要简洁
+    baud_update(CallBackSendPara);
+}
+
+void plc_send_timeout(void *CallBackSendPara)
+{   
+    //这里是发送结束最后一个字节后调用的函数，可以在这里判断是否有波特率修改，并调用修改波特率函数，注意该函数是在中断
+    baud_update(CallBackSendPara);
 }
 
 void ir_send_timeout(void *CallBackSendPara)

@@ -507,10 +507,17 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 buffer[4] = temp[2];
                 buffer[5] = temp[1];
                 buffer[6] = temp[0];
+#ifdef TX_APDU_EN
+    uint16_t val = 0x1;
+    apdu_send(UART_MODULE_CHL, 0xDD, &val, NULL, 0);
+#endif
                 addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
                 nd_set_index(instance, addr, buffer, 7);
                 
-               
+#ifdef TX_APDU_EN
+    val = 0x2;
+    apdu_send(UART_MODULE_CHL, 0xDD, &val, NULL, 0);
+#endif
                 mem_swap_cpy((uint8_t*)&oad, p, 2);
                 year = oad - 2000;
                 p = p + 2;
@@ -522,8 +529,15 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 settimebuf[0] = BYTE_BCD(*p++);//秒
                 settimebuf[6] = GetWeek(&timer[0]);
                 write_mcu_rtc(0, settimebuf, 7);
+#ifdef TX_APDU_EN
+    val = 0x3;
+    apdu_send(UART_MODULE_CHL, 0xDD, &val, NULL, 0);
+#endif
                 read_mcu_rtc(0x00, instance);
-                
+#ifdef TX_APDU_EN
+    val = 0x4;
+    apdu_send(UART_MODULE_CHL, 0xDD, &val, NULL, 0);
+#endif
                 if(buffer[3] != instance->time.tm_mday)  //跨日，清除广播校时标志位
                 {
                     mbase_cb->boardadjtime = 0;
@@ -538,15 +552,33 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 buffer[4] = temp[2];
                 buffer[5] = temp[1];
                 buffer[6] = temp[0];
+#ifdef TX_APDU_EN
+    val = 0x5;
+    apdu_send(UART_MODULE_CHL, 0xDD, &val, NULL, 0);
+#endif
                 addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
                 nd_set_index(instance, addr, buffer, 7);
-               
+#ifdef TX_APDU_EN
+    val = 0x6;
+    apdu_send(UART_MODULE_CHL, 0xDD, &val, NULL, 0);
+#endif
                 send_event_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
-                
+#ifdef TX_APDU_EN
+    val = 0x7;
+    apdu_send(UART_MODULE_CHL, 0xDD, &val, NULL, 0);
+#endif
                 record_rollback_after_set_time(instance);
                 mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
                 mbase_cb->RTCErrS_status = 0;
+#ifdef TX_APDU_EN
+    val = 0x8;
+    apdu_send(UART_MODULE_CHL, 0xDD, &val, NULL, 0);
+#endif
                 clr_last_bill_time(instance);
+#ifdef TX_APDU_EN
+    val = 0x9;
+    apdu_send(UART_MODULE_CHL, 0xDD, &val, NULL, 0);
+#endif
                 return (p-buf);
             }
             else if(attribute == 0x05)  //广播校时参数

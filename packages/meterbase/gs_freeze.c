@@ -281,7 +281,7 @@ int record_rollback_after_set_time(struct instance_t* instance)
         for (i = 0; i < (sizeof(TabOAD) / sizeof(TabOAD[0])); i++)
         {
             //掉电退出 待调整
-            //喂狗 待调整
+            mcu_clear_watchdog();//喂狗 待调整
             ret = get_record_id_info(instance, TabOAD[i], &record_id_info);
             if (ret <= 0)
             {

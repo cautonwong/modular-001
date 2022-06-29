@@ -32,6 +32,17 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     if(mbase_control_block->commdisp_plc > 0)   mbase_control_block->commdisp_plc--;
 
     fr_dl698_sec_task(instance, pipeline);
+    
+    if( mbase_control_block->plc_baut_tick > 0)   //载波通道1小时不通讯，复位载波口 
+    {
+        mbase_control_block->plc_baut_tick--;
+        if( mbase_control_block->plc_baut_tick == 0)
+        {
+            mbase_control_block->Baut_plc_neg =0xfe;
+            mbase_control_block->Baut_plc = 6;
+            mcu_uart_set_baud(9600, 4);
+        }
+    }
 
 
 //  backlight_pro(instance, pipeline);
@@ -156,6 +167,8 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             mbase_cb->cmd_dostate = 0;  //上电清除控制命令状态字和错误状态字
             mbase_cb->cmd_errstate = 0;
             mbase_control_block->alarmmin = 0;  //上电后清零
+            mbase_control_block->Baut_plc_neg =0xfe;
+            mbase_cb->Baut_plc = 6;
             
             freeze_power_on_pro(instance, pipeline, mesg);
             //事件

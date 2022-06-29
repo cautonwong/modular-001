@@ -2516,3 +2516,13 @@ void fr_dl698_power_on(struct instance_t* instance,  struct pipeline_t* pipeline
 // 应用链接相关----------------end
 
 
+
+int update_plc_baut_tick(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+
+    if(chl_PLC_698 == ctx->channel){
+        mbase_cb->plc_baut_tick = 3600;    
+    }
+}

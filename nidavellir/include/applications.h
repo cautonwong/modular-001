@@ -7,7 +7,7 @@
 #include "cpu_surport.h"
 #endif // !WIN32
 
-#define TX_APDU_EN 1
+//#define TX_APDU_EN 1
 
 struct energy_ctx_t
 {
@@ -68,7 +68,9 @@ struct mbase_control_block_t
     uint16_t lcd_nopower_key_keep_sec;/*显示查看显示时间 */
     
     uint8_t Baut_rs485; //485波特率
-    uint8_t Baut_plc;   //载波波特率
+    uint8_t Baut_plc;   //载波波特率(EEPROM)
+    uint8_t Baut_plc_neg;   //协商波特率（RAM）
+    uint16_t plc_baut_tick; //1小时不通讯需要复位载波通道，波特率恢复9600
     
     uint8_t SafeEn; //安全模式  1：启用，0：不启用
     

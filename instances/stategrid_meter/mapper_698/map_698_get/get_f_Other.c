@@ -89,7 +89,17 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 *p++ = TYPE_COMDCB;
                 if(oad == 0xF201)   *p++ = mbase_cb->Baut_rs485;    //485波特率
                 else if(oad == 0xF202)   *p++ = 2;    //红外波特率
-                else if(oad == 0xF209)   *p++ = mbase_cb->Baut_plc;    //载波波特率
+                else if(oad == 0xF209)   
+                {   
+                    if(mbase_cb->Baut_plc_neg <= 10)
+                    {
+                        *p++ = mbase_cb->Baut_plc_neg;    //载波波特率
+                    }
+                    else
+                    {
+                        *p++ = mbase_cb->Baut_plc;    //载波波特率
+                    }
+                }
                 *p++ = 0x02;    //偶效验
                 *p++ = 0x08;    //8个数据位
                 *p++ = 0x01;    //1个停止位

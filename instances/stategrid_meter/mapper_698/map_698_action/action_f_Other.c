@@ -774,6 +774,10 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 {
                     mbase_cb->Baut_rs485 = *p;
                     mbase_cb->baud_chg = 0x01;
+                    
+                    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                    offsetof(struct mbase_control_block_t, Baut_rs485));
+                    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->Baut_rs485, 1);
                 }
                 
                 p = p + 7;
@@ -841,7 +845,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 p = p + 3;
                 mem_swap_cpy((uint8_t*)&temp, p, 4);
                 p = p + 5;
-                if(temp != 0xF2090201)
+                if((temp != 0xF2090201) && (temp != 0xF20902FD))
                 {
                     return -DAR_OBJECT_NOT_EXIST;
                 }
@@ -850,10 +854,21 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     return -DAR_BUFFER_OVERFLOW;
                 }
                 mbase_cb->baud_chg = 0;
-                if(mbase_cb->Baut_plc != *p)
+                if(temp == 0xF20902FD)  //协商
                 {
-                    mbase_cb->Baut_plc = *p;
-                    mbase_cb->baud_chg = 0x02;
+                    if(mbase_cb->Baut_plc_neg != *p)
+                    {
+                        mbase_cb->Baut_plc_neg = *p;
+                        mbase_cb->baud_chg = 0x04;
+                    }
+                }
+                else
+                {
+                    if(mbase_cb->Baut_plc != *p)
+                    {
+                        mbase_cb->Baut_plc = *p;
+                        mbase_cb->baud_chg = 0x02;
+                    }
                 }
                 p = p + 5;
             }

@@ -213,7 +213,7 @@ int fr_pack_698_head(struct instance_t* instance, struct pipeline_t* pipeline, s
     append_byte(fifo, ((len >> 8) & 0xff), update_hcs_fcs, ctx);
     ctx->ctrl |= (1 << 7);//DIR=0表示由服务器发出
     if (mesg->from != pid_rx_698){
-        ctx->ctrl &= ~(1 << 6);//PRM=0表示由服务器发起
+        //ctx->ctrl &= ~(1 << 6);//PRM=0表示由服务器发起
     }
     append_byte(fifo, ctx->ctrl, update_hcs_fcs, ctx);
     append_byte(fifo, ctx->SA, update_hcs_fcs, ctx);
@@ -756,6 +756,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
         handle_scrambler(instance, pipeline, mesg);
     }
     
+    update_plc_baut_tick(instance, pipeline, mesg);
     update_connect_timeout_cnt(instance, pipeline, mesg);
 
     ctx->service = apdu_rx[ctx->apdu_rx_offset++];
