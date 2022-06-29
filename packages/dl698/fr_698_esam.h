@@ -21,6 +21,7 @@ struct esam_698_input_t
     uint16_t RN_Data_len;
     uint16_t data_buf_len;  //临时缓冲长度
     uint16_t Dispersion_factor_len;
+    uint8_t from_type;
 };
 
 struct esam_698_output_t

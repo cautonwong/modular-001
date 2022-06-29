@@ -250,8 +250,10 @@ static int ___get_encode_and_mac(struct instance_t* instance, struct pipeline_t*
 
     input.RN_Data_len           = ctx->RN_len;
     input.RN_Data               = ctx->RN_data;
-    input.data_buf      = instance->apdu_cache; //临时缓冲区
-    input.data_buf_len  = cache_max;            //临时缓冲长度
+    input.data_buf              = instance->apdu_cache; //临时缓冲区
+    input.data_buf_len          = cache_max;            //临时缓冲长度
+    if (CA_TYPE_TER(ctx->CA))
+        input.from_type = 1;
     
     output.data     = cache->buf_ptr;
     output.data_len = Max698_apdu_rx - 5;

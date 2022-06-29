@@ -217,7 +217,7 @@ uint8_t read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t 
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;    
     esam_pro_handle(fd, request, (void *)&param);
-        
+
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     mbase_cb->esam_chip_abnormal = output.esam_chip_abnormal;
     if(output.data_len > 0)
