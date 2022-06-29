@@ -213,7 +213,7 @@ int fr_pack_698_head(struct instance_t* instance, struct pipeline_t* pipeline, s
     append_byte(fifo, ((len >> 8) & 0xff), update_hcs_fcs, ctx);
     ctx->ctrl |= (1 << 7);//DIR=0表示由服务器发出
     if (mesg->from != pid_rx_698){
-        ctx->ctrl &= ~(1 << 6);//PRM=0表示由服务器发起
+        //ctx->ctrl &= ~(1 << 6);//PRM=0表示由服务器发起
     }
     append_byte(fifo, ctx->ctrl, update_hcs_fcs, ctx);
     append_byte(fifo, ctx->SA, update_hcs_fcs, ctx);
@@ -756,6 +756,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
         handle_scrambler(instance, pipeline, mesg);
     }
     
+    update_plc_baut_tick(instance, pipeline, mesg);
     update_connect_timeout_cnt(instance, pipeline, mesg);
 
     ctx->service = apdu_rx[ctx->apdu_rx_offset++];
@@ -770,12 +771,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
 
         ctx->service = apdu_rx[ctx->apdu_rx_offset++];
     }
-    
-#ifdef TX_APDU_EN
-    fr_2_rx++;
-    apdu_send(UART_MODULE_CHL, 0x55, &fr_2_rx, ctx->apdu_d_rx, ctx->apdu_rx_len);
-#endif  
-    
+
     if (!((CONNECT_Request == ctx->service) || (RELEASE_Request == ctx->service))){
         ctx->choice = apdu_rx[ctx->apdu_rx_offset++];
     }
@@ -812,7 +808,10 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
         fifoBuf_removeData(fifo, ctx->min_len + 2);
         return -1;
     }
-
+#ifdef TX_APDU_EN
+    fr_2_rx++;
+    apdu_send(UART_MODULE_CHL, 0x55, &fr_2_rx, ctx->apdu_d_rx, ctx->apdu_rx_len);
+#endif  
     switch (ctx->service)
     {
         case CONNECT_Request:
@@ -843,16 +842,14 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
             cache->buf_ptr[2] = ctx->err_n;
             break;
     }
-
-    err_no = fr_timeTag_optional(instance, pipeline, mesg);
-    if(err_no < 0){
-        return err_no;
-    }
-
 #ifdef TX_APDU_EN
     fr_1_tx++;
     apdu_send(UART_MODULE_CHL, 0xAA, &fr_1_tx, ctx->apdu->buf_ptr, fifoBuf_getUsed(ctx->apdu));
 #endif 
+    err_no = fr_timeTag_optional(instance, pipeline, mesg);
+    if(err_no < 0){
+        return err_no;
+    }
     
     if (service == SECURITY_Request){
         err_no = fr_security_encode(instance, pipeline, mesg);
