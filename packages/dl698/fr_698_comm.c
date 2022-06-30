@@ -43,8 +43,8 @@ void apdu_send(uint8_t type, uint8_t head, uint8_t *data, uint8_t *apdu, uint16_
     }else{
         return;
     }
-    if(head == 0xBB)
-        ringbuffer_clear(tx_fifo);
+    //if(head == 0xCC)
+    //    ringbuffer_clear(tx_fifo);
     fifoBuf_putByte(tx_fifo, head);   
     fifoBuf_putByte(tx_fifo, data[1]);
     fifoBuf_putByte(tx_fifo, data[0]);
