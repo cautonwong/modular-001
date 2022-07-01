@@ -958,7 +958,8 @@ uint8_t active_report_check_3011(struct instance_t* instance, struct pipeline_t*
 int active_report_3011_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t eventtype)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint8_t *ptr_cache, *ptr = instance->apdu_cache;    // 500字节
+    uint8_t data_buf[500]={0};
+    uint8_t *ptr_cache, *ptr = data_buf;//instance->apdu_cache;    // 500字节
     uint8_t* tmp_buff = instance->apdu_cache + 500; //保证300字节空间
     uint32_t rcsd_list[(REQ_RCSD_MAXNUM + 1)];
     uint32_t oad;
@@ -1062,6 +1063,8 @@ int active_report_3011_pro(struct instance_t* instance, struct pipeline_t* pipel
         ptr_cache += data_len;
     }
 
+    
+    ndv_memcopy(instance->apdu_cache, data_buf, (ptr_cache - ptr));
     return (ptr_cache - ptr);
 
 }
@@ -1284,99 +1287,9 @@ int active_report_normal_pro(struct instance_t* instance, struct pipeline_t* pip
     return (len_apdu + encry_len + 5);
 }
 
-// 主动上报处理  每秒调用   
-// 主动上报apdu数据存instance->apdu_cache， 返回值len为上报apdu数据长度。 获取一次上报内容，相应消耗一次上报次数。
-// get_data:0 只判断是否需要上报。  其他:获取一次上报内容
-int fr_active_report_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t get_data)
-{
-    struct mbase_control_block_t*  mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    int len;
-
-    if (mbase_cb->poweron_active_report_dly < 5)
-    {
-        return -1;
-    }
-    if (mbase_cb->active_report_CMDtype & ACTIVE_REPORT_3011_END) 
-    {
-        if ((mbase_cb->active_report_retry_dly[R_3011_END] == 0) && (mbase_cb->active_report_retry_cnt[R_3011_END] < 3))//已发送，主站未确认，等待超时
-        {
-            len = active_report_3011_pro(instance, pipeline, mesg, 1);
-            
-            if (len > 0)
-            {
-                if (get_data)
-                {
-                    mbase_cb->active_report_retry_dly[R_3011_END] = 10;//  若无响应 10秒后重发       
-                    mbase_cb->active_report_retry_cnt[R_3011_END]++;
-
-                    if (3 == mbase_cb->active_report_retry_cnt[R_3011_END])
-                        mbase_cb->report_piid++;
-                }
-                return len;
-
-            }
-            else
-            {
-                if (get_data)
-                {
-                    mbase_cb->active_report_CMDtype &= ~ACTIVE_REPORT_3011_END;
-                }
-            }
-
-        }
-    }
-    //不完全掉电时 掉电发生上报
-    else if (mbase_cb->active_report_CMDtype & ACTIVE_REPORT_3011_START)
-    {
-        len = active_report_3011_pro(instance, pipeline, mesg, 0);
-
-        if (len > 0)
-        {
-            if (get_data)
-            {
-                mbase_cb->active_report_retry_cnt[R_3011_START]++;
-                if (3 == mbase_cb->active_report_retry_cnt[R_3011_START])
-                {
-                    mbase_cb->report_piid++;
-                    mbase_cb->active_report_CMDtype &= ~ACTIVE_REPORT_3011_START;
-                }
-            }
-            return len;
-        }
-        else
-        {
-            if (get_data)
-            {
-                mbase_cb->active_report_CMDtype &= ~ACTIVE_REPORT_3011_START;
-            }
-        }
-    }
-    
-    if ((mbase_cb->active_report_CMDtype & ACTIVE_REPORT_3011_END) && (mbase_cb->active_report_retry_cnt[R_3011_END] < 3))
-    {
-        return 0;
-    }
-    if (mbase_cb->active_report_retry_dly[R_3011_END])
-        return 0;
-    if (mbase_cb->active_report_CMDtype & (ACTIVE_REPORT_3320 | ACTIVE_REPORT_2015))//有上报请求
-    {
-        len = active_report_normal_pro(instance, pipeline, mesg, get_data);
-        
-        if (len > 0)
-        {
-            if (get_data)
-            {
-                mbase_cb->active_report_retry_dly[R_3320] = 10;//  10秒无响应重发     
-                mbase_cb->active_report_retry_dly[R_2015] = 10;//  10秒无响应重发   
-            }
-            return len;
-        }
-    }
-    return 0;
-}
 
 //掉电后 上报处理 每秒调用
-int powerOff_report_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int powerOff_report_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t get_data)
 {
     struct mbase_control_block_t*  mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     int len = 0;
@@ -1392,12 +1305,117 @@ int powerOff_report_pro(struct instance_t* instance, struct pipeline_t* pipeline
             {
                 //打开vcc 时间？
                 //配置io口 初始化模块uart 
-                mbase_cb->active_report_retry_cnt[R_3011_START]++;
+                if(get_data)
+                {
+                    mbase_cb->active_report_retry_cnt[R_3011_START]++;
+                }
                 //协议发送
             }
         }
     }
+    return len;
     
+}
+
+// 主动上报处理  每秒调用   
+// 主动上报apdu数据存instance->apdu_cache， 返回值len为上报apdu数据长度。 获取一次上报内容，相应消耗一次上报次数。
+// get_data:0 只判断是否需要上报。  其他:获取一次上报内容
+int fr_active_report_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t get_data)
+{
+    struct mbase_control_block_t*  mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    int len;
+
+
+    //停电
+    if( instance->ac_power_statue != AC_POWER_ON ) 
+    {
+
+         return powerOff_report_pro(instance, pipeline, mesg, get_data);
+    }
+    else //上电
+    {    
+        if (mbase_cb->poweron_active_report_dly < 5)
+        {
+            return -1;
+        }
+        if (mbase_cb->active_report_CMDtype & ACTIVE_REPORT_3011_END) 
+        {
+            if ((mbase_cb->active_report_retry_dly[R_3011_END] == 0) && (mbase_cb->active_report_retry_cnt[R_3011_END] < 3))//已发送，主站未确认，等待超时
+            {
+                len = active_report_3011_pro(instance, pipeline, mesg, 1);
+                
+                if (len > 0)
+                {
+                    if (get_data)
+                    {
+                        mbase_cb->active_report_retry_dly[R_3011_END] = 10;//  若无响应 10秒后重发       
+                        mbase_cb->active_report_retry_cnt[R_3011_END]++;
+
+                        if (3 == mbase_cb->active_report_retry_cnt[R_3011_END])
+                            mbase_cb->report_piid++;
+                    }
+                    return len;
+
+                }
+                else
+                {
+                    if (get_data)
+                    {
+                        mbase_cb->active_report_CMDtype &= ~ACTIVE_REPORT_3011_END;
+                    }
+                }
+
+            }
+        }
+        //不完全掉电时 掉电发生上报
+        else if (mbase_cb->active_report_CMDtype & ACTIVE_REPORT_3011_START)
+        {
+            len = active_report_3011_pro(instance, pipeline, mesg, 0);
+
+            if (len > 0)
+            {
+                if (get_data)
+                {
+                    mbase_cb->active_report_retry_cnt[R_3011_START]++;
+                    if (3 == mbase_cb->active_report_retry_cnt[R_3011_START])
+                    {
+                        mbase_cb->report_piid++;
+                        mbase_cb->active_report_CMDtype &= ~ACTIVE_REPORT_3011_START;
+                    }
+                }
+                return len;
+            }
+            else
+            {
+                if (get_data)
+                {
+                    mbase_cb->active_report_CMDtype &= ~ACTIVE_REPORT_3011_START;
+                }
+            }
+        }
+        
+        if ((mbase_cb->active_report_CMDtype & ACTIVE_REPORT_3011_END) && (mbase_cb->active_report_retry_cnt[R_3011_END] < 3))
+        {
+            return 0;
+        }
+        if (mbase_cb->active_report_retry_dly[R_3011_END])
+            return 0;
+        if (mbase_cb->active_report_CMDtype & (ACTIVE_REPORT_3320 | ACTIVE_REPORT_2015))//有上报请求
+        {
+            len = active_report_normal_pro(instance, pipeline, mesg, get_data);
+            
+            if (len > 0)
+            {
+                if (get_data)
+                {
+                    mbase_cb->active_report_retry_dly[R_3320] = 10;//  10秒无响应重发     
+                    mbase_cb->active_report_retry_dly[R_2015] = 10;//  10秒无响应重发   
+                }
+                return len;
+            }
+        }
+        return 0;
+    }
 }
 
 int active_report_handle(struct instance_t* instance, struct pipeline_t* p_pipeline, struct message_t* mesg)

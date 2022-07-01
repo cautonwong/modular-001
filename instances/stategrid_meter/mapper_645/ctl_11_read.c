@@ -148,6 +148,8 @@ int rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx)
 /***********************************************************************/
 int Direct_Read( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
 	unsigned long StAddr;
     unsigned char len;
     uint8_t tmpbuf[10] = {0};
@@ -170,7 +172,10 @@ int Direct_Read( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, 
             memcpy( (unsigned char*)p_tx, tmpbuf, 4 );
             return 4;
             break;                 
-            
+ 		case 0xA8F00051://掉电主动上报的阈值时间(秒)hex  0x0E10
+            memcpy( (unsigned char*)p_tx, (uint8_t*)&mbase_cb->active_report_sec_limit, 2 );        
+            return 2; 
+            break;             
             
 		default:
 			return -1;

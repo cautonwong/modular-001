@@ -2432,15 +2432,23 @@ void update_connect_timeout_cnt(struct instance_t* instance, struct pipeline_t* 
 void fr_dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint8_t cilent_index, channel;
-    struct message_t mesg_tmp;
+    uint8_t i,cilent_index, channel;
 
-    memset(&mesg_tmp, 0, sizeof(struct message_t));
+
     if(mbase_cb->irauthen_tmr > 0)              mbase_cb->irauthen_tmr--;
     if(mbase_cb->authen_tmr > 0)                mbase_cb->authen_tmr--;
     if (mbase_cb->infrared_auth_timeout > 0)    mbase_cb->infrared_auth_timeout--;
     if (mbase_cb->term_auth_timeout > 0)        mbase_cb->term_auth_timeout--;
     if (mbase_cb->poweron_active_report_dly < 10)     mbase_cb->poweron_active_report_dly++;
+
+
+    for(i = 0; i < 4; i++)
+    {
+        if(mbase_cb->active_report_retry_dly[i] > 0)
+        {
+            mbase_cb->active_report_retry_dly[i]--;  //R_3011_END
+        }
+    }
 
 
     for(cilent_index=0; cilent_index<2; cilent_index++)
@@ -2485,9 +2493,6 @@ void fr_dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline
 
         }
     }
-
-
-    active_report_handle(instance, NULL, &mesg_tmp);
     
 }
 

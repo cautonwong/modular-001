@@ -73,14 +73,19 @@ void PowerOff_LowPower_pro(struct instance_t* instance, struct pipeline_t* task,
     uint32_t* accumulate_time = &ctrl_block->PowerOffS_acc_time;
     uint16_t RecordId = PowerOffS;
     struct message_t mesg_tmp;
-
+    uint32_t s_index;
 
      // 是否为停电下第一秒 // 待调整   //  停电下第一秒记录一次掉电事件 
     if ( ctrl_block->power_down_sec_accum == 1 )
     {
         if (false == get_activeflag(instance, RecordId)) //|| ((true == get_recordflag(instance, RecordId))  )
         {
-            set_activeflag(instance, RecordId);
+            set_activeflag(instance, RecordId); //停电下同时刷新e2p
+            
+            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        offsetof(struct mbase_control_block_t, active_flag[0]));
+            nd_set_offset(instance, s_index, (uint8_t*)&ctrl_block->active_flag[0], 50);               
+        
             mesg_tmp.id = RecordId;
             recv_record_process(instance, task, &mesg_tmp, NULL);
             //send_event_mesg_pro(instance, task,  RecordId, NULL, 1);

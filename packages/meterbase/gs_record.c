@@ -583,6 +583,17 @@ int event_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 
 }
 
+int event_poweroff_save(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint32_t s_index; 
+    
+    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+    offsetof(struct mbase_control_block_t, active_flag[0]));
+    nd_set_offset(instance, s_index, (uint8_t*)&ctrl_block->active_flag[0], 100);     
+
+}
+
 //停电下每秒调用  主要处理事件累计时间
 int event_LowPower_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -602,6 +613,9 @@ int event_PowerOn_pro(struct instance_t* instance, struct pipeline_t* pipeline, 
     struct record_storage_id_info_t info;
     struct message_t mesg_tmp;
     int ret;
+
+
+    ctrl_block->active_report_CMDtype &=~ (ACTIVE_REPORT_3011_END | ACTIVE_REPORT_3011_START);
 
     for (i = 0; i < (sizeof(power_grid_event_oad) / sizeof(power_grid_event_oad[0])); i++)
     {
@@ -1204,8 +1218,47 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
             event_scheme = 4;
         }
         report_3320list_add(instance,Oad|(event_scheme<<13));
-    }
 
+        if(PowerOffS == mesg->id)
+        {
+            if(( instance->ac_power_statue == AC_POWER_ON ) && (mbase_cb->power_on_sec_accum >= mbase_cb->active_report_sec_limit))
+            {
+                mbase_cb->active_report_CMDtype |= ACTIVE_REPORT_3011_START;
+                mbase_cb->active_report_CMDtype &=~ ACTIVE_REPORT_3011_END;
+                clear_active_report_time_count(instance, R_3011_START);
+                //不完全掉电时 特殊处理， 保存上电时间到e2p                              待调整
+                #if 0
+                if(true == read(0x2806,(uint8 *)&status_buf[0], 8, __NULL))
+                {
+                    memcopy(&status_buf[4], (uint8 *)&system_state.power_on_sencond, 4);// 不完全掉电时特殊处理
+                    write(0x2806,(uint8 *)&status_buf[0], 8, __NULL);
+                }
+                #endif
+            }
+        }
+        else if(PowerOffE == mesg->id)
+        {
+            //待调整
+            //if(true == read(0x2806,(uint8 *)&status_buf[0], 8, __NULL))
+            {
+                //memcopy((uint8 *)&data, &status_buf[4], 4);
+                mbase_cb->active_report_CMDtype &=~ ACTIVE_REPORT_3011_START;
+                
+                //if (data >= active_report_sec_limit)// 待调整 上电超过1小时才会进行掉电期间的上报
+                if (mbase_cb->power_on_sec_accum >= mbase_cb->active_report_sec_limit)
+                {
+                    mbase_cb->active_report_CMDtype |= ACTIVE_REPORT_3011_END;
+                    clear_active_report_time_count(instance, ACTIVE_REPORT_3011_END);
+                }
+            
+                //memset(&status_buf[4], 0x00, 4);
+                //write(0x2806,(uint8 *)&status_buf[0], 8, __NULL);
+                //system_state.power_on_sencond = 0;
+            }
+
+        }
+    }
+    //结算日
     if(BillFreeze == mesg->id)
     {
         if(mbase_cb->first_MbillDay_flag == 0x5A)
@@ -1213,6 +1266,10 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
             clr_MonthEC(instance);
         }
     }
+
+
+    
+
     
 
     clr_recordflag(instance, mesg->id);

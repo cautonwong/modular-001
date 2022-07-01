@@ -415,13 +415,13 @@ int day_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struc
 int month_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint8_t period[24];
+    uint8_t period[24] = {1};
     uint32_t index;
     struct tm record_time;
     uint16_t PeriodID = MonthFreeze_period;
     uint16_t FlagID = MonthFreeze;
 
-    if ((instance->time.tm_sec != 0) || (instance->time.tm_min != 0) || (instance->time.tm_hour != 0))
+    if ((instance->time.tm_sec != 0) || (instance->time.tm_min != 0) || (instance->time.tm_hour != 0) || (instance->time.tm_mday != 1))
     {
         return -1;
     }
@@ -430,10 +430,10 @@ int month_freeze_judge(struct instance_t* instance, struct pipeline_t* task, str
     //待添加
 
     // 周期
-    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
-    nd_get_index(instance, index, &period[0], sizeof(period));
+    //index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
+    //nd_get_index(instance, index, &period[0], sizeof(period));
 
-    if (1 == freeze_judge(instance, &period[0], 60 * 24, &record_time))
+    //if (1 == freeze_judge(instance, &period[0], 60 * 24, &record_time))
     {
         send_recordflag_mesg(instance, task,  FlagID, NULL);
     }

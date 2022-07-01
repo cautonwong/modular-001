@@ -652,6 +652,12 @@ void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
     }
     WDT_Disable();
     PMU_EnterSleep_LowPower(&LowPower_InitStruct);
+    
+        //待调整 开E2P
+    CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);
+    GPIOC->OEN &= ~(BIT4|BIT5|BIT6); 
+    GPIOC->IE &= ~(BIT4|BIT5|BIT6);
+    GPIOC->DAT |= (BIT6);
 }
 
 void gpio_configuration_AC(void)
