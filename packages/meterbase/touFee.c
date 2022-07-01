@@ -293,7 +293,7 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
 
 void GetTOUFee(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-    uint8_t i,Num=0;
+    uint8_t i,Num[2]={0,};
     uint32_t s_index=0;
     struct mbase_control_block_t* mbase_cb;
     
@@ -303,20 +303,20 @@ void GetTOUFee(struct instance_t* instance, struct pipeline_t* pipeline)
 	if( mbase_cb->DayTableNo > MaxTouTabNum ) mbase_cb->DayTableNo = MaxTouTabNum;
     
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 2);    //读取日时段个数
-    nd_get_index(instance, s_index, (uint8_t*)&Num, 1);
+    nd_get_index(instance, s_index, (uint8_t*)Num, 2);
     
-	if( Num == 0 )
+	if( Num[0] == 0 )
 		mbase_cb->TOUNo = 1;
 	else
 	{
-		if( Num > MaxTouNum ) Num = MaxTouNum;
+		if( Num[0] > MaxTouNum ) Num[0] = MaxTouNum;
         
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Day_Table00 + (mbase_cb->DayTableNo-1));
-        nd_get_index(instance, s_index, Buf, 3*Num);//读取当前日时段表
+        nd_get_index(instance, s_index, Buf, 3*Num[0]);//读取当前日时段表
         
-		i = FeeTable_CmpFind( instance, pipeline, Num, 1 );//比较查找日时段表
+		i = FeeTable_CmpFind( instance, pipeline, Num[0], 1 );//比较查找日时段表
 		mbase_cb->TOUNo = BCD_BYTE(Buf[3*i+2]);
-		if( (mbase_cb->TOUNo == 0) || (mbase_cb->TOUNo > MaxFeeNum) ) //若时段表中费率号超出，则按照尖费率处理
+		if( (mbase_cb->TOUNo == 0) || (mbase_cb->TOUNo > MaxFeeNum) || (mbase_cb->TOUNo > Num[1]) ) //若时段表中费率号超出，则按照尖费率处理
 			mbase_cb->TOUNo = 1;
 	}
 }
