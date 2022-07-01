@@ -22,6 +22,8 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     struct message_t mesg;
+
+    memset(&mesg, 0, sizeof(struct message_t));
     
     if(mbase_control_block->AutoInv > 0)   mbase_control_block->AutoInv--;
     
@@ -48,14 +50,24 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
 //  backlight_pro(instance, pipeline);
     Meter_Run_State(instance, pipeline);//运行状态字刷新
     
+
     
     
     if( instance->ac_power_statue != AC_POWER_ON ) //低功耗
     {
+        instance->ac_power_off_sec_cnt++;
         mbase_control_block->power_down_sec_accum++;
         
+        CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);//待调整
+        GPIOC->OEN &= ~(BIT4|BIT5|BIT6); 
+        GPIOC->IE &= ~(BIT4|BIT5|BIT6);
+        GPIOC->DAT |= (BIT6);
+        
+        
+        
+        
         event_LowPower_pro(instance, pipeline, &mesg); // 事件 低功耗下处理
-        powerOff_report_pro(instance, pipeline, &mesg); // 停电上报
+  
         
 /*        if( (mbase_control_block->Key & F_KeyDispay) && (mbase_control_block->KeyInv == 0) )//退出键显,息屏
         {
@@ -79,7 +91,7 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
         fr_dl698_sec_task(instance, pipeline);
     }
     
-    
+    active_report_handle(instance, NULL, &mesg); // 上电和下电前X秒调用
 }
 
 // !!!在此app中不做IO操作!!!
@@ -117,6 +129,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
           //controlData(instance,pipeline,mesg);
           break;
       case MSG_SECOND:
+      
             SecTick_Task(instance, pipeline);
 
             Rtc_Prossecc(instance, pipeline);
@@ -191,6 +204,11 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
             nd_set_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;      
             mbase_control_block->power_down_sec_accum = 0;
+            instance->ac_power_off_sec_cnt = 0;
+
+            event_poweroff_save(instance,pipeline,mesg);
+
+            
             //掉电清空显示相关内容
             memset((uint8_t *)&mbase_control_block->voltage_ac, 0x00, 32);
             memset((uint8_t *)&mbase_control_block->AutoPtr, 0x00, 10);

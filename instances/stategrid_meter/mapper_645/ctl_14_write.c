@@ -190,7 +190,14 @@ unsigned char CommWrite_SpecProc( struct instance_t* instance,  unsigned char* p
                 memcpy(buf, prx+12, 4);
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ResetCount);
                 nd_set_index(instance, s_index, buf, 4);         
-                break;              
+                break;    
+                
+ 		case 0xA8F00051://掉电主动上报的阈值时间(秒)hex  0x0E10
+                memcpy(&mbase_cb->active_report_sec_limit, prx+12, 2);                
+                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                            offsetof(struct mbase_control_block_t, active_report_sec_limit));
+                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_report_sec_limit, 2);//存储至EE                
+                break;          
 	}
 	return 0;
 }

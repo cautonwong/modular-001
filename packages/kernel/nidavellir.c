@@ -171,7 +171,7 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
             mesg->len = 0;
             send_mesg(instance, NULL, mesg);
             instance->ac_power_statue = AC_POWER_OFF;
-            device_power_close(instance);
+            //device_power_close(instance);//待调整
         }
     }
     else
@@ -373,8 +373,14 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     //sync_data()
     if(instance->ac_power_statue != AC_POWER_ON)
     {
-        cpu_io_lowpower_cfg_chk(instance);
-        cpu_sleep_manage(instance, pipeline);
+        if(instance->ac_power_off_sec_cnt >= 5)//待调整
+        {
+            cpu_io_lowpower_cfg_chk(instance);
+            
+            cpu_sleep_manage(instance, pipeline);
+        }
+
+
     }
     
     return 1;

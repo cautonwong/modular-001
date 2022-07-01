@@ -92,8 +92,10 @@ struct mbase_control_block_t
     uint8_t RTCErrS_duration_para;      //参数 判定延时时间  
     uint8_t ZeroLineErrS_duration_para; //参数 判定延时时间  
     uint16_t active_report_sec_limit;   //掉电 主动上报 上电时间阈值 默认3600 
-
     uint8_t factor_mode; //工厂模式
+    
+    uint8_t record_flag[50];  //事件或冻结记录存储标志 
+    uint8_t active_flag[50];  //事件或冻结记录存储标志    
     
     struct tm v_powerdown_tm;// 模拟停电时间  补结算测试用              待调整
     
@@ -251,8 +253,7 @@ struct mbase_control_block_t
         //需量数据
 
     //事件相关
-    uint8_t record_flag[50];  //事件或冻结记录存储标志 
-    uint8_t active_flag[50];  //事件或冻结记录存储标志 
+
     uint32_t minute_freeze_index[8]; //分钟冻结8个序号     
     uint32_t OverCurrentAS_acc_time;    //累计时间 电能表过流事件
     uint32_t PowerOffS_acc_time;        //累计时间 电能表掉电事件
