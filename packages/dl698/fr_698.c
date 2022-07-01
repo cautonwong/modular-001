@@ -436,7 +436,7 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
         return 0;
     }
     //控制域判断
-    if (!((0 == DIR(ctx->ctrl)) && (1 == PRM(ctx->ctrl)))) {
+    if ((1 == DIR(ctx->ctrl)) && (1 == PRM(ctx->ctrl))) {
         return 0;
     }
 
@@ -812,6 +812,14 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     fr_2_rx++;
     apdu_send(UART_MODULE_CHL, 0x55, &fr_2_rx, ctx->apdu_d_rx, ctx->apdu_rx_len);
 #endif  
+    
+    if ((0 == DIR(ctx->ctrl)) && (0 == PRM(ctx->ctrl))) {
+        if(REPORT_Response != ctx->service){
+            fifoBuf_removeData(fifo, ctx->min_len + 2);
+            return -1;
+        }
+    }
+    
     switch (ctx->service)
     {
         case CONNECT_Request:
