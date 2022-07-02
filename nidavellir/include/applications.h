@@ -94,9 +94,14 @@ struct mbase_control_block_t
     uint16_t active_report_sec_limit;   //掉电 主动上报 上电时间阈值 默认3600 
     uint8_t factor_mode; //工厂模式
     
-    uint8_t record_flag[50];  //事件或冻结记录存储标志 
+
+    //掉电保存
     uint8_t active_flag[50];  //事件或冻结记录存储标志    
-    
+    uint8_t record_flag[50];  //事件或冻结记录存储标志 
+    //上报相关
+    uint16_t active_report_CMDtype;             //主动上报 命令类别     需掉电保存   //待调整
+    uint8_t active_report_retry_cnt[4];         //主动上报 重试次数 //待调整            R_3320
+    uint32_t power_on_sec_accum;                //上电累计时间 sec  上电处理时清零，上电运行累加  //待调整
     struct tm v_powerdown_tm;// 模拟停电时间  补结算测试用              待调整
     
     
@@ -269,10 +274,6 @@ struct mbase_control_block_t
 
     struct tm powerdown_tm;// 停电时间      待调整
 
-    //上报相关
-    uint16_t active_report_CMDtype;             //主动上报 命令类别     需掉电保存   //待调整
-    uint8_t active_report_retry_cnt[4];         //主动上报 重试次数 //待调整            R_3320
-    uint32_t power_on_sec_accum;                //上电累计时间 sec  上电处理时清零，上电运行累加  //待调整
 
     dyn_persistent_end
 

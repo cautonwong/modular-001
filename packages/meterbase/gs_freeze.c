@@ -224,14 +224,29 @@ int rollback_sequence(struct instance_t* instance, uint32_t oad,  uint16_t rollb
 {
     uint32_t sequence = 0;
     struct record_storage_id_info_t record_id_info; 
+    struct circular_info_t circular_info = {0};
+    uint8_t tmpbuf[300];
     int ret;
     ret = get_record_id_info(instance, oad, &record_id_info);
     if (ret < 0)
     {
         return -(255);
     }
+
+    circular_info.start_mark = 0;
+    circular_info.end_mark = 0xffffffffU;
+    circular_info.mode =   0;
+
+    ret = nd_log_output(instance, record_id_info.save_index,  tmpbuf, 1, &circular_info);
     
+
     nd_get_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+
+    if ((circular_info.valid_num == 0))
+    {
+        sequence = 0;
+    }
+
     if (sequence <  rollback_num)
     {
         sequence = 0;
