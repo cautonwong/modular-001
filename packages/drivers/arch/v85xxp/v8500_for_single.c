@@ -209,6 +209,8 @@ static void RTCWriteDisable(void)
     }
 }
 
+
+
 uint8_t init_v85xxp_rtc( uint8_t power_mode )
 {
     
@@ -229,24 +231,48 @@ uint8_t init_v85xxp_rtc( uint8_t power_mode )
 
     NVIC_EnableIRQ ( RTC_IRQn );
     
-    
-    //switch(power_mode)
-    //{
-    //    case POWER_ON_MODE:
-    //          rtc_out(1 , rtc_hal->multifunction_port);
-    //          break;
-    //    case RESET_MODE:
-    //          rtc_multifunction_port.tmr_id = hfp_tick_timer.create(end_multifunction_port_driver, &rtc_multifunction_port.operate_pin, 8, true);
-              /*注意，这里没有break*/
-    //    default:
-    //          rtc_out(0 , rtc_hal->multifunction_port);
-    //          break;
-    
-    
+
     
     RTCWriteDisable();
     return true;
 }
+
+
+void opreate_second_pluse(uint8_t mode) // 1：秒脉冲，2：多功能口导通，3：多功能口高阻
+{
+    RTCWriteEnable();
+    
+    mcu_delay_us(500);
+    switch(mode)
+    {
+    case 1:
+         RTC_PLLDIVConfig(1);
+         RTC->CTL |= RTC_CTL_RTCPLLOE;
+         PMU->IOASEL |= BIT3;
+         GPIOA->OEN &= ~BIT3;
+         GPIOA->IE &= ~BIT3;         
+         break;
+    case 2:
+         RTC->CTL &= ~RTC_CTL_RTCPLLOE;
+         PMU->IOASEL &= ~BIT3;
+         GPIOA->OEN &= ~BIT3;
+         GPIOA->IE &= ~BIT3;         
+         break;
+    case 3:
+         RTC->CTL &= ~RTC_CTL_RTCPLLOE;
+         PMU->IOASEL &= ~BIT3;
+         GPIOA->OEN &= ~BIT3;
+         GPIOA->IE &= ~BIT3;
+         GPIOA->DAT |= BIT3;
+         break;
+    default:
+         break;
+    }
+    
+    RTCWriteDisable();
+}
+
+
 
 uint8_t read_mcu_rtc(uint8_t addr, struct instance_t* instance)
 {
