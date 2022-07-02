@@ -2,6 +2,7 @@
 #include "nidavellir.h"
 #include "applications.h"
 #include "fr_698.h"
+#include "time_link.h"
 //dependencies
     //1.user define
     //2.mesg[秒]
@@ -202,11 +203,9 @@ unsigned char FeeTable_CmpFind( struct instance_t* instance, struct pipeline_t* 
 		
 		if( ((Now == Int) || (mbase_cb->TouBefNo != mbase_cb->TOUNo)) && (mbase_cb->MulPortMode == F_PortTouCut) )
 		{
-			//MulPort_Set( mbase_cb->MulPortMode );
-			//Timer.MulPortCnt = 16;//80ms
-            //QF_ON;
+                     opreate_second_pluse(2);
+                     ndv_timer_start_one(MULTIFUNCTION_PORT, 8);
 		}
-
 	}
 	
 	if( Num == 1 ) return 0;
