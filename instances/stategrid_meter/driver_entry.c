@@ -543,6 +543,27 @@ void dev_init(uint8_t power_mode)
  }
 
 
+uint8_t shut_multifunction_pluse(void *ptr)
+{
+    opreate_second_pluse(3);
+
+}
+
+uint8_t multifunction_port_Init(void)
+{
+   struct tm_list_init_t tm;
+
+   tm.timeout = 8;
+   tm.tickpara = 0;
+   tm.tickfunc = shut_multifunction_pluse;
+   tm.tm_id = MULTIFUNCTION_PORT;
+   tm.stoped = true;
+   
+   ndv_timer_create(&tm);
+   
+   return true;
+}
+
 //打开串口，高速定时器，tick，初始化IO上电配置
  void device_power_open(struct instance_t* instance)
  {
@@ -553,6 +574,10 @@ void dev_init(uint8_t power_mode)
       uart_chl_open(UART_RS4851_CHL);
       uart_chl_open(UART_IR_CHL);
       uart_chl_open(UART_MODULE_CHL);
+      
+      opreate_second_pluse(1);
+      
+      multifunction_port_Init();
  }
 
 //初始化IO低功耗配置，初始化系统低功耗配置，准备进入sleep模式。
@@ -801,6 +826,7 @@ void IOStateCheck(struct instance_t* instance, struct pipeline_t* pipeline)
         mbase_control_block->meter_cover_sta = EVENT_SET;
     }
 }
+
 
 
 /*
