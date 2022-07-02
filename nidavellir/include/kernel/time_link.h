@@ -13,6 +13,7 @@ enum tick_time_id_t
     IR_TM,
     RELAY_TM,
     METER_COVER_TM,
+    MULTIFUNCTION_PORT,
     TIME_OBJ_NUM,
 };
 
