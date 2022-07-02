@@ -437,7 +437,7 @@ int fr_handle_report_response(struct instance_t* instance, struct pipeline_t* pi
          return 0;
     }
     
-    p = apdu_rx + 6;
+    p = apdu_rx ;
     num = *p++;
     ctx->apdu_rx_offset += 7;
 
@@ -965,7 +965,8 @@ int active_report_3011_pro(struct instance_t* instance, struct pipeline_t* pipel
     uint32_t oad;
     uint8_t i;
     uint16_t  data_len = 0;
-
+    uint8_t* esam_apdu_p;
+    
     struct rsd_info_t rsd_info;
     int ret;
 
@@ -990,7 +991,7 @@ int active_report_3011_pro(struct instance_t* instance, struct pipeline_t* pipel
         ptr_cache = ptr;
     }
 
-
+    esam_apdu_p = ptr_cache;
     *ptr_cache++ = 0x88;
     *ptr_cache++ = 0x02;
     *ptr_cache++ = mbase_cb->report_piid & 0x3F;
@@ -1054,7 +1055,7 @@ int active_report_3011_pro(struct instance_t* instance, struct pipeline_t* pipel
         }
         else
         {
-            get_upreport_esam_rn_mac(instance, ptr, data_len , ptr_cache);//待调整 esam交互 获取主动上报的随机数和mac
+            get_upreport_esam_rn_mac(instance, esam_apdu_p, data_len , ptr_cache);//待调整 esam交互 获取主动上报的随机数和mac
             data_len = 12 + 5;
             ndv_move_buffer(ptr_cache+12, ptr_cache+13, 4);
             *(ptr_cache+12) = 0x04;       
@@ -1149,7 +1150,8 @@ int active_report_normal_pro(struct instance_t* instance, struct pipeline_t* pip
 
 
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint8_t *ptr = instance->apdu_cache;    // 500字节
+    uint8_t data_buf[500]={0};
+    uint8_t *ptr = data_buf; //instance->apdu_cache;    // 500字节
     uint8_t* tmp_buff = instance->apdu_cache + 500; //保证300字节空间
 
     if (false == active_report_enable_check(instance, pipeline, mesg))
@@ -1273,7 +1275,7 @@ int active_report_normal_pro(struct instance_t* instance, struct pipeline_t* pip
     }
     else
     {
-        get_upreport_esam_rn_mac(instance, ptr, len_apdu , p);//待调整 esam交互 获取主动上报的随机数和mac
+        get_upreport_esam_rn_mac(instance, apdu, len_apdu , p);//待调整 esam交互 获取主动上报的随机数和mac
         encry_len = 12 + 5;
         ndv_move_buffer(p+12, p+13, 4);
         *(p+12) = 0x04;       
@@ -1284,6 +1286,8 @@ int active_report_normal_pro(struct instance_t* instance, struct pipeline_t* pip
     if (need_report_piid)
         mbase_cb->report_piid++;
 
+    ndv_memcopy(instance->apdu_cache, data_buf, (len_apdu + encry_len + 5));
+    
     return (len_apdu + encry_len + 5);
 }
 

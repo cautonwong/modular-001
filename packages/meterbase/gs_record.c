@@ -1020,8 +1020,10 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
     struct record_storage_id_info_t record_id_info; 
     uint8_t pairs_event = 0;
     uint8_t freez_scheme = 0,event_scheme = START_MODE;
+    uint32_t s_index, last_poweron_time = 0;
     int ret;
 
+    
 
     Oad = 0xFFFFFFFF;
     //if (r == 2)//payload exist
@@ -1226,36 +1228,31 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
                 mbase_cb->active_report_CMDtype |= ACTIVE_REPORT_3011_START;
                 mbase_cb->active_report_CMDtype &=~ ACTIVE_REPORT_3011_END;
                 clear_active_report_time_count(instance, R_3011_START);
-                //不完全掉电时 特殊处理， 保存上电时间到e2p                              待调整
-                #if 0
-                if(true == read(0x2806,(uint8 *)&status_buf[0], 8, __NULL))
-                {
-                    memcopy(&status_buf[4], (uint8 *)&system_state.power_on_sencond, 4);// 不完全掉电时特殊处理
-                    write(0x2806,(uint8 *)&status_buf[0], 8, __NULL);
-                }
-                #endif
+                
+                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + \
+                offsetof(struct mbase_control_block_t, power_on_sec_accum));
+                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->power_on_sec_accum, 4);
             }
         }
         else if(PowerOffE == mesg->id)
         {
-            //待调整
-            //if(true == read(0x2806,(uint8 *)&status_buf[0], 8, __NULL))
-            {
-                //memcopy((uint8 *)&data, &status_buf[4], 4);
-                mbase_cb->active_report_CMDtype &=~ ACTIVE_REPORT_3011_START;
-                
-                //if (data >= active_report_sec_limit)// 待调整 上电超过1小时才会进行掉电期间的上报
-                if (mbase_cb->power_on_sec_accum >= mbase_cb->active_report_sec_limit)
-                {
-                    mbase_cb->active_report_CMDtype |= ACTIVE_REPORT_3011_END;
-                    clear_active_report_time_count(instance, ACTIVE_REPORT_3011_END);
-                }
+            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + \
+            offsetof(struct mbase_control_block_t, power_on_sec_accum));
+            nd_get_offset(instance, s_index, (uint8_t*)&last_poweron_time, 4);
+        
+            mbase_cb->active_report_CMDtype &=~ ACTIVE_REPORT_3011_START;
             
-                //memset(&status_buf[4], 0x00, 4);
-                //write(0x2806,(uint8 *)&status_buf[0], 8, __NULL);
-                //system_state.power_on_sencond = 0;
+            if (last_poweron_time >= mbase_cb->active_report_sec_limit)
+            {
+                mbase_cb->active_report_CMDtype |= ACTIVE_REPORT_3011_END;
+                clear_active_report_time_count(instance, ACTIVE_REPORT_3011_END);
             }
 
+            //mbase_cb->power_on_sec_accum = 0;//待调整
+            last_poweron_time = 0;
+            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + \
+            offsetof(struct mbase_control_block_t, power_on_sec_accum));
+            nd_set_offset(instance, s_index, (uint8_t*)&last_poweron_time, 4);
         }
     }
     //结算日

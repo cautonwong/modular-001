@@ -1135,7 +1135,12 @@ uint16_t nd_log_append_rollback(struct instance_t* instance, uint32_t index, uin
             {
                 manager.w_ptr = info.read_ptr + curr_num;
             }
-            manager.num = curr_num;   
+            manager.num = curr_num;  
+            if(manager.num == 0)//无有效数据
+            {
+                manager.r_ptr = 0;
+                manager.w_ptr = 0;
+            }
             //更新管理区
             res_conditions_true(0x00 > update_verify(block02->first_addr + addr02, 0x00, (uint8_t*)&manager, 
                 sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02, device02->dev), 0);        

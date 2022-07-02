@@ -326,6 +326,9 @@ uint8_t get_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *apdu, uin
     struct esam_698_data_t param;
     struct esam_698_input_t  input = {0};
     struct esam_698_output_t output= {0};
+ 
+    input.data_buf      = instance->apdu_cache; //临时缓冲区
+    input.data_buf_len  = cache_max;            //临时缓冲长度
     
     input.data = apdu;
     input.data_len = apdu_len;

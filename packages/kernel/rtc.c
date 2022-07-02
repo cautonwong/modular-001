@@ -230,9 +230,9 @@ bool rtc_tm_valid(const struct tm *t)
         return false;
     }
 
-    if (t->tm_year < 1900) {
-        return false;
-    }
+    //if (t->tm_year < 1900) {
+        //return false;
+    //}
 
     struct tm norm = *t;
     rtc_tm_normalize(&norm);

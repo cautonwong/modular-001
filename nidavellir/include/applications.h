@@ -176,15 +176,17 @@ struct mbase_control_block_t
 
     //主动上报相关  active_report
     uint8_t poweron_active_report_dly;      //主动上报上电延迟时间 (秒)
-    uint16_t active_report_CMDtype;         //主动上报 命令类别     需掉电保存   //待调整
-
+    //uint16_t active_report_CMDtype;         //主动上报 命令类别     需掉电保存   //待调整//uint16_t active_report_CMDtype;         //主动上报 命令类别     需掉电保存   //待调整
+    
     uint8_t active_report_retry_dly[4];        //主动上报 重试等待时间 //待调整
-    uint8_t active_report_retry_cnt[4];        //主动上报 重试次数 //待调整            R_3320
+    //uint8_t active_report_retry_cnt[4];        //主动上报 重试次数 //待调整            R_3320
+
     uint8_t report_piid;                       //主动上报帧的PIID缓存 挪到协议  //待调整
     uint8_t report_random_data[12];            //主动上报 随机数 缓存 //待调整
 
-    uint8_t power_on_sec_accum;                 //上电累计时间 sec  上电处理时清零，上电运行累加  //待调整
-    uint8_t power_down_sec_accum;               //停电累计时间 sec  停电处理时清零，停电运行累加
+    //uint32_t power_on_sec_accum;                 //上电累计时间 sec  上电处理时清零，上电运行累加  //待调整//uint32_t power_on_sec_accum;                 //上电累计时间 sec  上电处理时清零，上电运行累加  //待调整
+
+    uint32_t power_down_sec_accum;               //停电累计时间 sec  停电处理时清零，停电运行累加
     
     //跟随上报2015状态字
     uint32_t report_2015state[4];           //跟随上报状态字  chl_NUM
@@ -267,7 +269,11 @@ struct mbase_control_block_t
 
     struct tm powerdown_tm;// 停电时间      待调整
 
-    
+    //上报相关
+    uint16_t active_report_CMDtype;             //主动上报 命令类别     需掉电保存   //待调整
+    uint8_t active_report_retry_cnt[4];         //主动上报 重试次数 //待调整            R_3320
+    uint32_t power_on_sec_accum;                //上电累计时间 sec  上电处理时清零，上电运行累加  //待调整
+
     dyn_persistent_end
 
     int id;
