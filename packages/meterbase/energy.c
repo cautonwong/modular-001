@@ -243,7 +243,7 @@ void Energy_clr(struct instance_t* instance)
     uint32_t s_index;
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
-    for(fee_index = 0; fee_index < MAX_FEE_NO ; fee_index++)
+    for(fee_index = 0; fee_index < (MAX_FEE_NO+1) ; fee_index++)
     {
         mbase_control_block->active_n[fee_index] = 0x00;
         mbase_control_block->active_n_dec[fee_index] = 0x00;
