@@ -189,7 +189,7 @@ int __matcher_698(void* pctx, uint8_t* b)
         return 1;//接收到完整的一帧
     }
 
-    assert(0);
+    //assert(0);
     return -1;
 }
 
