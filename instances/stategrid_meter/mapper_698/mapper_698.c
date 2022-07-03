@@ -206,8 +206,8 @@ const struct record_item_t  record_item[] =
     { WeekTabWrS    ,       0,                          260,       10 },//  0x3019    电能表周休日编程事件       
     { BillDayWrS    ,       0,                          490,       10 },//  0x301A    电能表结算日编程事件  
     { CoverOpenS    ,       CoverOpenE,                 490,       10 },//  0x301B    电能表开盖事件             
-    { SwitchOffS    ,       0,                          360,       10 },//  0x301F    电能表跳闸事件             
-    { SwitchOnS     ,       0,                          360,       10 },//  0x3020    电能表合闸事件             
+    { SwitchOffS    ,       0,                          400/*360*/,       10 },//  0x301F    电能表跳闸事件             
+    { SwitchOnS     ,       0,                          400/*360*/,       10 },//  0x3020    电能表合闸事件             
     { HolidayWrS    ,       0,                          430,       10 },//  0x3021    电能表节假日编程事件       
     { ActCombWrS    ,       0,                          270,       10 },//  0x3022    电能表有功组合方式编程事件 
 //    { FeeTabWrS     ,       0,                            0,        0 },//  0x3024    电能表费率参数表编程事件   
