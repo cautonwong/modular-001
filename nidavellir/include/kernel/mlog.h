@@ -4,11 +4,12 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdbool.h>
-
+#include "time.h"
 #ifdef LOG_DEBUG_EN
 
 enum { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL };
 void log_print(int level, const char *file, int line, const char *func, const char* fmt, ...);
+int log_set_time(struct tm *time);
 
 #define log_debug(...)      log_print(LOG_DEBUG, __FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
 #define log_info(...)       log_print(LOG_INFO,  __FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)

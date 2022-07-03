@@ -1,18 +1,23 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "nidavellir.h"
-#include "log.h"
+#include "mlog.h"
 
 #ifdef LOG_DEBUG_EN
 
 struct tm logtime;//
+
+int log_set_time(struct tm *time)
+{
+    memcpy(&logtime, time, sizeof(struct tm));
+}
 
 struct fifo_t* log_get_fifo(void)
 {
     extern struct pipeline_t pl_plc_tx_698;
     struct fifo_t *tx_fifo = (struct fifo_t*)pl_plc_tx_698.out_queue;
     //extern struct pipeline_t pl_tx_698;
-    //tx_fifo = (struct fifo_t*)pl_tx_698.out_queue;
+    //struct fifo_t *tx_fifo = (struct fifo_t*)pl_tx_698.out_queue;
     return  tx_fifo;
 }
 int log_print_buf(char *buf, int size, const char* fmt, ...)
