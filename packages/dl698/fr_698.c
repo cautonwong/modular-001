@@ -725,10 +725,8 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     int err_no = 0;
     uint8_t service = 0;
 
-#ifdef TX_APDU_EN
-    fr_1_rx++;
-    apdu_send(UART_MODULE_CHL, 0xBB, &fr_1_rx, NULL, 0);
-#endif 
+    log_info(" OK.\n");
+    
     //协议一致性判断和apdu合法判断
     if(0 == fr_pack_698_check(instance, pipeline, mesg)){
         fifoBuf_removeData(fifo, ctx->min_len + 2);
@@ -808,11 +806,9 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
         fifoBuf_removeData(fifo, ctx->min_len + 2);
         return -1;
     }
-#ifdef TX_APDU_EN
-    fr_2_rx++;
-    apdu_send(UART_MODULE_CHL, 0x55, &fr_2_rx, ctx->apdu_d_rx, ctx->apdu_rx_len);
-#endif  
-    
+    log_info("security_request: service=%02x.\n", ctx->service);
+    log_hex(ctx->apdu_d_rx, ctx->apdu_rx_len);
+        
     if ((0 == DIR(ctx->ctrl)) && (0 == PRM(ctx->ctrl))) {
         if(REPORT_Response != ctx->service){
             fifoBuf_removeData(fifo, ctx->min_len + 2);
@@ -850,10 +846,10 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
             cache->buf_ptr[2] = ctx->err_n;
             break;
     }
-#ifdef TX_APDU_EN
-    fr_1_tx++;
-    apdu_send(UART_MODULE_CHL, 0xAA, &fr_1_tx, ctx->apdu->buf_ptr, fifoBuf_getUsed(ctx->apdu));
-#endif 
+    
+    log_info("security_encode:\n");
+    log_hex(ctx->apdu->buf_ptr, fifoBuf_getUsed(ctx->apdu));
+    
     err_no = fr_timeTag_optional(instance, pipeline, mesg);
     if(err_no < 0){
         return err_no;
@@ -989,7 +985,7 @@ int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     ctx->step = 0;
-#ifdef TX_APDU_EN
+#ifdef LOG_DEBUG_EN
     uint16_t val_rd = fifo->rd;
     uint16_t val_wr = fifo->wr;
 #endif 
@@ -1001,12 +997,9 @@ int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
 #endif
         return 1;
     }
-#ifdef TX_APDU_EN
-    apdu_send(UART_MODULE_CHL, 0xCC, &val_rd, NULL, 0);
-    apdu_send(UART_MODULE_CHL, 0xC0, &val_wr, NULL, 0);
-    apdu_send(UART_MODULE_CHL, 0xC1, &r, NULL, 0);
-    apdu_send(UART_MODULE_CHL, 0xC2, &ctx->step, NULL, 0);
-#endif 
+#ifdef LOG_DEBUG_EN
+    log_err("rd:%d, wr:%d, step=%d, r=%d.\n", val_rd, val_wr, ctx->step, r);
+#endif
     return r;
 }
 

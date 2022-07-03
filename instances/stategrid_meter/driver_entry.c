@@ -229,11 +229,6 @@ void timing_ftr(void *para)
 void rs485_receive_timeout(void)
 {
     fifoBuf_putByte(&irq_fifo, IRQ_RS485_RX_TM_OUT);
-#ifdef TX_APDU_EN
-    static uint16_t val_rd = 0;
-    apdu_send(UART_MODULE_CHL, 0xC5, &val_rd, NULL, 0);
-    val_rd++;
-#endif
 }
 
 void plc_receive_timeout(void)

@@ -3054,6 +3054,9 @@
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\list.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\..\packages\kernel\mlog.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\nidavellir.c</name>
             </file>
             <file>

@@ -16,6 +16,8 @@
 #include "log.h"
 #endif
 
+#include "mlog.h"
+
 #define  DEBUG
 
 #include <stdlib.h>

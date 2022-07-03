@@ -33,27 +33,6 @@ int16_t nd_set_index(struct instance_t* instance, uint32_t index, uint8_t* buf, 
 
 #endif
 
-#ifdef TX_APDU_EN
-void apdu_send(uint8_t type, uint8_t head, uint8_t *data, uint8_t *apdu, uint16_t len)
-{
-    struct fifo_t* tx_fifo ;
-    if(type == UART_MODULE_CHL){
-        extern struct pipeline_t pl_plc_tx_698;
-        tx_fifo = (struct fifo_t*)pl_plc_tx_698.out_queue;
-    }else{
-        return;
-    }
-    //if(head == 0xCC)
-    //    ringbuffer_clear(tx_fifo);
-    fifoBuf_putByte(tx_fifo, head);   
-    fifoBuf_putByte(tx_fifo, data[1]);
-    fifoBuf_putByte(tx_fifo, data[0]);
-    fifoBuf_putByte(tx_fifo, head);
-    if(apdu){
-        fifoBuf_putData(tx_fifo, apdu, len);
-    }
-}
-#endif
 
 
 const uint8_t month_tab[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };

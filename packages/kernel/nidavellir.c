@@ -387,13 +387,13 @@ int nidavellir_run_baremetal(struct instance_t* instance)
 }
 
 int baremetal_instance_entry(struct instance_t *instance)
-{   
-#ifdef TX_APDU_EN
-    struct fifo_t* tx_fifo ;
-    extern struct pipeline_t pl_plc_tx_698;
-    tx_fifo = (struct fifo_t*)pl_plc_tx_698.out_queue;
-    ringbuffer_clear(tx_fifo);
-#endif
+{     
+    log_info("meter go.\n");
+    log_warn("meter go.\n");
+    log_err("meter go.\n");
+    uint8_t buf[8] = {0x55,0xAF,0xEE,0x67};
+    log_hex(buf, sizeof(buf));    
+
     while (1)
     {
         nidavellir_run_baremetal(instance);
