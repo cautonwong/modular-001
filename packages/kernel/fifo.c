@@ -237,16 +237,13 @@ int ringbuffer_filter(struct fifo_t *buf, int (*callback)(void* ctx, uint8_t *b)
             if (wr < rd)
             {
                 num_bytes = (buf_size - rd) + wr;
-            }
+            }            
             buf->rd = rd;
             i = 0;
             if (num_bytes < 1)
             {
                 return ret;//-1迭代结束  没找到
             }
-            
-           
-
             continue;
         }
         else if(ret == 1)
