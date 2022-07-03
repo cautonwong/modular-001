@@ -78,7 +78,7 @@ int __matcher_698(void* pctx, uint8_t* b)
         //bit14：帧数据长度单位，0 表示帧数据长度单位为字节，1 表示帧数据长度单位为千字节；
         ctx->len_unit = (byte & 0x40) >> 6;
         if (ctx->min_len < 11){
-            ctx->step = 3;
+            ctx->step = 0;
             ctx->err_n++;
             return FRM_LEN_ERR1;
         }
@@ -89,7 +89,7 @@ int __matcher_698(void* pctx, uint8_t* b)
         ctx->hcs = update_crc16(ctx->hcs, byte);
         ctx->fcs = update_crc16(ctx->fcs, byte);
         if ( (FC_CODE(byte) != 1) && (FC_CODE(byte) != 3)){
-            ctx->step = 4;
+            ctx->step = 0;
             return -1;
         }
         ctx->ctrl = byte;//控制域
@@ -131,7 +131,7 @@ int __matcher_698(void* pctx, uint8_t* b)
         ctx->hcs = get_crc16(ctx->hcs);
         ctx->fcs = update_crc16(ctx->fcs, byte);
         if (byte != (ctx->hcs & 0xff)){
-            ctx->step = 8;
+            ctx->step = 0;
             ctx->err_n++;
             return -1;
         }
@@ -140,7 +140,7 @@ int __matcher_698(void* pctx, uint8_t* b)
     case 8:
         ctx->fcs = update_crc16(ctx->fcs, byte);
         if (byte != ((ctx->hcs >> 8) & 0xff)){
-            ctx->step = 9;
+            ctx->step = 0;
             ctx->err_n++;
             return -1;
         }
@@ -151,7 +151,7 @@ int __matcher_698(void* pctx, uint8_t* b)
         ctx->fcs = update_crc16(ctx->fcs, byte);
         if (ctx->min_len > 2048)// 长度大于2048 暂时删除一个字节  为了台体能跑下去。  注意： 还需要超时删除报文！
         {
-            ctx->step = 10;
+            ctx->step = 0;
             ctx->err_n++;
             return -1;
         }
@@ -166,7 +166,7 @@ int __matcher_698(void* pctx, uint8_t* b)
     case 10:
         ctx->fcs = get_crc16(ctx->fcs);
         if (byte != (ctx->fcs & 0xff)){
-            ctx->step = 11;
+            ctx->step = 0;
             ctx->err_n++;
             return -1;
         }
@@ -175,7 +175,7 @@ int __matcher_698(void* pctx, uint8_t* b)
      
     case 11:
         if (byte != ((ctx->fcs >> 8) & 0xff)){
-            ctx->step = 12;
+            ctx->step = 0;
             ctx->err_n++;
             return -1;
         }
@@ -183,7 +183,7 @@ int __matcher_698(void* pctx, uint8_t* b)
         return FRM_OK;
     case 12:
         if (byte != 0x16){
-            ctx->step = 13;
+            ctx->step = 0;
             return -1;
         }
         return 1;//接收到完整的一帧
