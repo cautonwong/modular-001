@@ -494,7 +494,7 @@ void dev_init(uint8_t power_mode)
     GPIO_InitStruct.GPIO_Pin  = GPIO_Pin_All;
     //GPIOA_Init(GPIOA, &GPIO_InitStruct);
     GPIOBToF_Init(GPIOB, &GPIO_InitStruct);
-/*    if (hfp_system_state.power_off_sencond > 5)
+/*    if (system_state.power_off_sencond > 5)
     {
         GPIOBToF_Init(GPIOC, &GPIO_InitStruct);
     }*/
@@ -568,7 +568,7 @@ void dev_init(uint8_t power_mode)
     //GPIO_InitStruct.GPIO_Pin  = GPIO_Pin_All;
     //GPIOA_Init(GPIOA, &GPIO_InitStruct);
     //GPIOBToF_Init(GPIOB, &GPIO_InitStruct);
-/*    if (hfp_system_state.power_off_sencond > 5)
+/*    if (system_state.power_off_sencond > 5)
     {
         GPIOBToF_Init(GPIOC, &GPIO_InitStruct);
     }*/
@@ -694,7 +694,7 @@ void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
         GPIO_InitStruct.GPIO_Pin  = GPIO_Pin_All;
         //GPIOA_Init(GPIOA, &GPIO_InitStruct);
         GPIOBToF_Init(GPIOB, &GPIO_InitStruct);
-    //    if (hfp_system_state.power_off_sencond > 5)
+    //    if (system_state.power_off_sencond > 5)
         {
             GPIOBToF_Init(GPIOC, &GPIO_InitStruct);
         }

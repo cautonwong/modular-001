@@ -921,7 +921,7 @@ void mcu_enter_lowpower_then_sleep(void)
     GPIO_InitStruct.GPIO_Pin = GPIO_Pin_All;
     //GPIOA_Init(GPIOA, &GPIO_InitStruct);
     GPIOBToF_Init(GPIOB, &GPIO_InitStruct);
-    /*if (hfp_system_state.power_off_sencond > 5)
+    /*if (system_state.power_off_sencond > 5)
     {
         GPIOBToF_Init(GPIOC, &GPIO_InitStruct);
     }*/

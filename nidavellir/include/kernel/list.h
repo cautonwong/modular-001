@@ -1,7 +1,7 @@
 /**
 * @defgroup    list List Util
 * @ingroup     win32
-* @brief       hfp 双向链表实现
+* @brief       双向链表实现
 *
 * @{
 * @file

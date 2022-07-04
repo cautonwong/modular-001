@@ -49,9 +49,9 @@ const uint8_t  init_BillFreeze_period[]     = { 0x04, 0x00, 0x01 };
 const uint8_t  init_MonthFreeze_period[]    = { 0x03, 0x00, 0x01 };
 const uint8_t  init_SeasonTabCutFreeze_period[] = { 0x03, 0x00, 0x01 };
 const uint8_t  init_DayTabCutFreeze_period[] = { 0x03, 0x00, 0x01 };
-const uint8_t  init_FeePriceCutFreeze_period[] = { 0x03, 0x00, 0x01 };//待调整
-const uint8_t  init_StepCutFreeze_period[]  = { 0x03, 0x00, 0x01 };//待调整
-const uint8_t  init_StepBillFreeze_period[] = { 0x03, 0x00, 0x01 };//待调整
+const uint8_t  init_FeePriceCutFreeze_period[] = { 0x03, 0x00, 0x01 };
+const uint8_t  init_StepCutFreeze_period[]  = { 0x03, 0x00, 0x01 };
+const uint8_t  init_StepBillFreeze_period[] = { 0x03, 0x00, 0x01 };
 const uint8_t  init_InstantFreeze_period[]  = { 0x03, 0x00, 0x00 };                                           
                                                                                          
 const uint8_t  init_MinuteFreeze_depth[] = { 0x88, 0xE0,    0x00, 0x00,     0x00, 0x00,     0x00, 0x00,     0x00, 0x00,     0x00, 0x00,     0x00, 0x00,     0x00, 0x00, };
@@ -61,11 +61,11 @@ const uint8_t  init_BillFreeze_depth[] = { 0x00,0x0C };
 const uint8_t  init_MonthFreeze_depth[] = { 0x00,0x18};
 const uint8_t  init_SeasonTabCutFreeze_depth[] = { 0x00,0x02 };
 const uint8_t  init_DayTabCutFreeze_depth[] = { 0x00,0x02 };
-const uint8_t  init_FeePriceCutFreeze_depth[] = { 0x00,0x02 };//待调整                                                       
-//const uint8_t  init_StepCutFreeze_depth[] = { 0x00,0x02 };//待调整   
-const uint8_t  init_StepCutFreeze_depth[] = { 0x00,0x05 };//复位记录  测试 
+const uint8_t  init_FeePriceCutFreeze_depth[] = { 0x00,0x02 };                                                     
+//const uint8_t  init_StepCutFreeze_depth[] = { 0x00,0x02 };   
+const uint8_t  init_StepCutFreeze_depth[] = { 0x00,0x05 };//复位记录  测试  //待调整
 
-const uint8_t  init_StepBillFreeze_depth[] = { 0x00,0x02 };//待调整                                                         
+const uint8_t  init_StepBillFreeze_depth[] = { 0x00,0x02 };                                                        
 const uint8_t  init_InstantFreeze_depth[] = { 0x00,0x03 };
 
 const uint8_t  init_BeforSet_SeasonT [] = { 0x01,0x01,0x02,0x03,0x11,0x01,0x11,0x01,0x11,0x11};
@@ -91,12 +91,12 @@ const uint8_t  init_SwitchOffS_oad[]    = { 0x02, U32toBufMSB(0x00102201), U32to
 const uint8_t  init_SwitchOnS_oad[]     = { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201) };
 const uint8_t  init_HolidayWrS_oad[]    = { 0x00 };
 const uint8_t  init_ActCombWrS_oad[]    = { 0x01, U32toBufMSB(0x41122200) };
-const uint8_t  init_FeeTabWrS_oad[]     = { 0x00 };  //待调整
-const uint8_t  init_StepTabWrS_oad[]    = { 0x00 };  //待调整
+const uint8_t  init_FeeTabWrS_oad[]     = { 0x00 };  
+const uint8_t  init_StepTabWrS_oad[]    = { 0x00 };  
 const uint8_t  init_SecretKeyWrS_oad[]  = { 0x01, U32toBufMSB(0xF1002400) };
-const uint8_t  init_ErrPlugCardS_oad[]  = { 0x00 };  //待调整
-const uint8_t  init_RechargeS_oad[]     = { 0x00 };  //待调整
-const uint8_t  init_RefundS_oad[]       = { 0x00 };  //待调整
+const uint8_t  init_ErrPlugCardS_oad[]  = { 0x00 };  
+const uint8_t  init_RechargeS_oad[]     = { 0x00 };  
+const uint8_t  init_RefundS_oad[]       = { 0x00 };  
 const uint8_t  init_SwitchErrS_oad[]    = { 0x05, U32toBufMSB(0xF2052201), U32toBufMSB(0x00102201), U32toBufMSB(0x00202201), U32toBufMSB(0x00108201), U32toBufMSB(0x00208201) };
 const uint8_t  init_PowerAbnormalS_oad[]= { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201) };
 const uint8_t  init_RTCErrS_oad[]       = { 0x04, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201), U32toBufMSB(0x00108201), U32toBufMSB(0x00208201) };
@@ -804,7 +804,7 @@ uint32_t record_capture_change(struct instance_t* instance, uint32_t obj, uint16
     }
 
 
-    if((obj & 0xF0000F00) == 0x00000200) // 普通电能oad  转高精度 存储  // 事件 冻结？ 待调整
+    if((obj & 0xF0000F00) == 0x00000200) // 普通电能oad  转高精度 存储  // 事件 冻结
     {
         obj += 0x00000200;
     }
@@ -884,7 +884,7 @@ uint8_t check_scheme(enum scheme_mode mode, uint32_t obj, uint16_t record_id)
         break;
     }
 
-    if((record_id == SetTimeS) || (record_id == BroadcastTimeS)) //待调整 
+    if((record_id == SetTimeS) || (record_id == BroadcastTimeS)) 
     {
         scheme_valid = true;
     }

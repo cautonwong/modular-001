@@ -236,7 +236,7 @@ uint8 init_v85xxp_rtc( uint8 power_mode )
     //          rtc_out(1 , rtc_hal->multifunction_port);
     //          break;
     //    case RESET_MODE:
-    //          rtc_multifunction_port.tmr_id = hfp_tick_timer.create(end_multifunction_port_driver, &rtc_multifunction_port.operate_pin, 8, true);
+    //          rtc_multifunction_port.tmr_id = tick_timer.create(end_multifunction_port_driver, &rtc_multifunction_port.operate_pin, 8, true);
               /*注意，这里没有break*/
     //    default:
     //          rtc_out(0 , rtc_hal->multifunction_port);
@@ -925,7 +925,7 @@ void mcu_enter_lowpower_then_sleep(void)
     GPIO_InitStruct.GPIO_Pin = GPIO_Pin_All;
     //GPIOA_Init(GPIOA, &GPIO_InitStruct);
     GPIOBToF_Init(GPIOB, &GPIO_InitStruct);
-    /*if (hfp_system_state.power_off_sencond > 5)
+    /*if (system_state.power_off_sencond > 5)
     {
         GPIOBToF_Init(GPIOC, &GPIO_InitStruct);
     }*/

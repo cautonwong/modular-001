@@ -296,7 +296,7 @@ int record_rollback_after_set_time(struct instance_t* instance)
         for (i = 0; i < (sizeof(TabOAD) / sizeof(TabOAD[0])); i++)
         {
             //掉电退出 待调整
-            mcu_clear_watchdog();//喂狗 待调整
+            mcu_clear_watchdog();
             ret = get_record_id_info(instance, TabOAD[i], &record_id_info);
             if (ret <= 0)
             {
@@ -693,7 +693,7 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
             }
         }    
 
-        //CLEAR_WATCH_DOG();  清看门狗  待调整
+        //CLEAR_WATCH_DOG();  清看门狗  
         v85xxp_clear_watchdog();
         if (pd_tm.tm_mon < 11)
         {
@@ -786,7 +786,7 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
             if ((cur_hour == bill_hour)&&(last_hour != bill_hour))
             {
                 
-                //第二、第三结算日时需量需要清成FF                 待调整
+                //第二、第三结算日时需量需要清成FF       
                 if (i == 0x00)
                 {
                     ctrl_block->first_MbillDay_flag = 0x5A;
