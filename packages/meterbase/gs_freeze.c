@@ -822,7 +822,16 @@ uint8_t test_freeze = 0;
 // 每秒调用
 int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
-    //freeze_rollback(instance, task, mesg);
+
+#if RESET_INFO    
+        //复位记录测试代码
+        if (instance->reset_flag == 0x5A)
+        {
+            instance->reset_flag = 0x00;
+            send_event_mesg_pro(instance, NULL, StepCutFreeze, NULL, 1);
+        }
+#endif   
+
 
 
 #if 0    

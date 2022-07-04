@@ -7,6 +7,12 @@
 
 #define U32toBufLSB(x)  ((uint8_t)(x)), ((uint8_t)(x>>8)), ((uint8_t)(x>>16)), ((uint8_t)(x>>24))
 #define U32toBufMSB(x)  ((uint8_t)(x>>24)),((uint8_t)(x>>16)), ((uint8_t)(x>>8)), ((uint8_t)(x))
+
+#if RESET_INFO   
+__no_init uint32_t resetinfo_file;  //复位信息
+__no_init uint32_t resetinfo_line;  //复位信息   扩展 OAD 0xFFFF02
+#endif
+
 // 初始化默认数据
 // 过流事件关联对象
 const uint8_t init_30050200[] = { 0x01,0x08, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201), U32toBufMSB(0x20002200), U32toBufMSB(0x20012200), U32toBufMSB(0x20042200), U32toBufMSB(0x200A2200), U32toBufMSB(0x00108201), U32toBufMSB(0x00208201) };
@@ -22,7 +28,10 @@ const uint8_t  init_MonthFreeze_oad[]       = { 0x03, U32toBufMSB(0x00000400), U
 const uint8_t  init_SeasonTabCutFreeze_oad[]= { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
 const uint8_t  init_DayTabCutFreeze_oad[]   = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
 const uint8_t  init_FeePriceCutFreeze_oad[] = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
-const uint8_t  init_StepCutFreeze_oad[]     = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
+//const uint8_t  init_StepCutFreeze_oad[]     = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
+const uint8_t  init_StepCutFreeze_oad[]      = { 0x02, U32toBufMSB(0xFFFF0201), U32toBufMSB(0xFFFF0202), }; //复位次数      测试代码
+
+
 const uint8_t  init_StepBillFreeze_oad[]    = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
 const uint8_t  init_InstantFreeze_oad[]     = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
 
@@ -53,7 +62,9 @@ const uint8_t  init_MonthFreeze_depth[] = { 0x00,0x18};
 const uint8_t  init_SeasonTabCutFreeze_depth[] = { 0x00,0x02 };
 const uint8_t  init_DayTabCutFreeze_depth[] = { 0x00,0x02 };
 const uint8_t  init_FeePriceCutFreeze_depth[] = { 0x00,0x02 };//待调整                                                       
-const uint8_t  init_StepCutFreeze_depth[] = { 0x00,0x02 };//待调整                                                           
+//const uint8_t  init_StepCutFreeze_depth[] = { 0x00,0x02 };//待调整   
+const uint8_t  init_StepCutFreeze_depth[] = { 0x00,0x05 };//复位记录  测试 
+
 const uint8_t  init_StepBillFreeze_depth[] = { 0x00,0x02 };//待调整                                                         
 const uint8_t  init_InstantFreeze_depth[] = { 0x00,0x03 };
 
@@ -428,7 +439,7 @@ const uint32_t freeze_oad[] =
     0x50080200,   //时区表切换冻结
     0x50090200,   //日时段表切换冻结
     //0x500A0200,   //费率电价切换冻结
-    //0x500B0200,   //阶梯切换冻结
+    0x500B0200,   //阶梯切换冻结
     //0x50110200,   //阶梯结算冻结
     0x50000200,   //瞬时冻结
 };
@@ -515,6 +526,11 @@ int meter_clr(struct instance_t* instance)
 
     //其他清零  待添加
     mbase_cb->sta &= ~F_RemoteRelayOn;  //清除控制命令状态,保留保电状态
+
+#if RESET_INFO    
+    resetinfo_file = 0;
+    resetinfo_line = 0;
+#endif        
     return 1;
 }
 

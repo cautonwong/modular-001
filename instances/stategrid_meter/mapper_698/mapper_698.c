@@ -230,8 +230,10 @@ const struct record_item_t  record_item[] =
 //    { StepCutFreeze     ,   0,                            0,        2 },//  0x500B      阶梯切换冻结
 //    { StepBillFreeze    ,   0,                            0,        2 },//  0x5011      阶梯结算冻结
     { InstantFreeze     ,   0,                          570,        3 },//  0x5000      瞬时冻结
-
-
+    
+#if RESET_INFO   
+    { StepCutFreeze     ,   0,                          200,        5 },//  0x500B     复位次数 阶梯切换冻结
+#endif
 
 };
 

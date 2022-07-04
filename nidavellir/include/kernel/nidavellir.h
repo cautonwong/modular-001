@@ -559,6 +559,7 @@ struct instance_t
     int event_group_size;
     uint8_t *event_flags;
     uint8_t ac_power_statue;
+    uint8_t reset_flag;         //0x5A  复位标志 
     uint32_t ac_power_off_sec_cnt;
     //user extended control block
     void* user_setting;//application_setting

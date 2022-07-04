@@ -8,6 +8,8 @@
 #endif // !WIN32
 
 //#define LOG_DEBUG_EN 1
+#define RESET_INFO    1 // 记录 复位信息
+ 
 
 struct energy_ctx_t
 {
@@ -324,6 +326,8 @@ struct mbase_control_block_t
     
     
     uint32_t battery_used_time; //电池使用时间
+
+ 
 };
 
 enum resourenc_block_name
@@ -562,4 +566,9 @@ extern void ndv_timer_init(void);
 extern void MComp1Init(void);
 extern void esam_698_init(uint8_t power_mode);
 extern void  v85xxp_clear_watchdog(void);
+
+#if RESET_INFO
+extern  __no_init uint32_t resetinfo_file; //复位信息 文件名   待调整
+extern  __no_init uint32_t resetinfo_line; //复位信息 行数     待调整
+#endif 
 #endif

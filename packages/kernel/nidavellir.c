@@ -171,7 +171,7 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
             mesg->len = 0;
             send_mesg(instance, NULL, mesg);
             instance->ac_power_statue = AC_POWER_OFF;
-            //device_power_close(instance);//待调整
+            device_power_close1(instance);//待调整
         }
     }
     else

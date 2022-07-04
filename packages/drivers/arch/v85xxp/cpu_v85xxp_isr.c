@@ -43,6 +43,10 @@ uint8_t Isr_handle_regsit(struct isr_reg_ctx_t *isrRegctx , uint8_t irq)
   */
 void SVC_Handler(void)
 {
+#if RESET_INFO    
+    resetinfo_file = 4;
+    //resetinfo_line = 4;
+#endif       
 }
 
 /**
@@ -52,6 +56,10 @@ void SVC_Handler(void)
   */
 void PendSV_Handler(void)
 {
+#if RESET_INFO    
+    resetinfo_file = 3;
+    //resetinfo_line = 3;
+#endif      
 }
 
 
@@ -68,6 +76,10 @@ void HardFault_Handler(void)
     __asm("MOV R0, LR");
     __asm("MOVS R1, #0x04");
     /* »ñÈ¡SP´úÂëÎ´Íê³É,µ÷ÊÔÊ±ÇëÊÖ¶¯²é¿´MSP»òPSPµÄÄÚÈÝ.*/
+#if RESET_INFO    
+    resetinfo_file = 1;
+    //resetinfo_line = 1;
+#endif    
     
     NVIC_SystemReset();  /* Ö±½Ó¸´Î»CM3¼°ÍâÎ§µçÂ· */
 }
@@ -81,6 +93,11 @@ void HardFault_Handler(void)
 *******************************************************************************/
 void NMI_Handler(void)
 {
+#if RESET_INFO    
+    resetinfo_file = 2;
+    //resetinfo_line = 2;
+#endif    
+    
     __asm("B HardFault_Handler");
 }
 /*******************************************************************************
@@ -249,6 +266,8 @@ void RTC_IRQHandler(void)
 {
     if(RTC->INTSTS & BIT(0))
     {
+        //v85xxp_clear_watchdog();//待调整  重要
+        
         if((Isr_Function[IRQ_RTC].IsrFunctionRegister)&&(Isr_Function[IRQ_RTC].irq_index==IRQ_RTC))
         {
             Isr_Function[IRQ_RTC].IsrFunctionRegister(Isr_Function[IRQ_RTC].para);

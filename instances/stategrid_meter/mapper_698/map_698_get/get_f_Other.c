@@ -554,6 +554,26 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     break;    
             }
             break;
+        case 0xFFFF://内扩
+        switch (attribute)
+        {
+#if RESET_INFO              
+            case 0x02://复位信息
+                *p++ = TYPE_double_long_unsigned;
+                if(index == 1)
+                {
+                    mem_swap_cpy(p, (unsigned char*)&resetinfo_file, 4);
+                }
+                else if(index == 2)
+                {
+                    mem_swap_cpy(p, (unsigned char*)&resetinfo_line, 4);
+                }
+                p += 4;
+                return (p-buf);
+                break; 
+#endif                     
+        }
+        break;
     }
 #endif
     return -DAR_OBJECT_NOT_EXIST;

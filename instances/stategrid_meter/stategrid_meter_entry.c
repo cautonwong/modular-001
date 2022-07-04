@@ -275,6 +275,8 @@ int baremetal_instance_entry_main(int argc, char** argv)
     memset(instance->event_flags, 0, event_flags_group_size);
     instance->event_group_size = event_flags_group_size;//初始化软时钟
 
+    instance->reset_flag = 0x5A; //复位标志
+    
     uint8_t* buf = nd_malloc(instance, control_block_cache, 4);
     fifoBuf_init(&instance->pipe_rtc, buf, 4);
 
