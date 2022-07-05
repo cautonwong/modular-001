@@ -543,8 +543,8 @@ void dev_init(uint8_t power_mode)
  {
     uint32_t lcd_tmp[20] = {0,};
     
-    GPIO_InitType GPIO_InitStruct;
-    PMU_LowPWRTypeDef LowPower_InitStruct;
+    //GPIO_InitType GPIO_InitStruct;
+    //PMU_LowPWRTypeDef LowPower_InitStruct;
     
     //cm0_systick_init(0);
 
@@ -614,7 +614,7 @@ void dev_init(uint8_t power_mode)
 uint8_t shut_multifunction_pluse(void *ptr)
 {
     opreate_second_pluse(3);
-
+    return 1;
 }
 
 uint8_t multifunction_port_Init(void)

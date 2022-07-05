@@ -1,7 +1,7 @@
 #include "nidavellir.h"
 #include "fr_698.h"
 #include "port.h"
-
+#include "gs_record.h"
 
 
 typedef struct 
@@ -64,17 +64,6 @@ const general_set4  general_set4_talble[] =
 };
 #define		set4num			sizeof(general_set4_talble)/sizeof(general_set4)
 
-uint8_t BCD_Check( uint8_t* Addr, uint8_t Len )
-{
-	while( Len > 0 )
-    {
-	    if( (*Addr&0x0F) > 0x09 ) return 1;
-	    if( (*Addr&0xF0) > 0x90 ) return 1;
-	    Addr++;
-	    Len--;
-    }
-	return 0;
-}
 
 int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {

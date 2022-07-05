@@ -33,7 +33,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
       {
       case 0x00:
         *p++ = TYPE_Scaler_Unit;
-        *p++ = -2;
+        *p++ = 0xFE;//-2;
         *p++ = unit_kWh;
         return (p-buf);
       case 0x01:  // T L 的信息
@@ -48,7 +48,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
       {
       case 0x00:
         *p++ = TYPE_Scaler_Unit;
-        *p++ = -4;
+        *p++ = 0xFC;//-4;
         *p++ = unit_kWh;
         return (p-buf);   
       case 0x01:

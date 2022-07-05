@@ -2541,4 +2541,5 @@ int update_plc_baut_tick(struct instance_t* instance, struct pipeline_t* pipelin
     if(chl_PLC_698 == ctx->channel){
         mbase_cb->plc_baut_tick = 3600;    
     }
+    return 1;
 }
