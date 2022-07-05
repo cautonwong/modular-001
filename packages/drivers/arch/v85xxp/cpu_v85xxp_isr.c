@@ -266,7 +266,7 @@ void RTC_IRQHandler(void)
 {
     if(RTC->INTSTS & BIT(0))
     {
-        //v85xxp_clear_watchdog();//待调整  重要
+        v85xxp_clear_watchdog();//待调整  重要
         
         if((Isr_Function[IRQ_RTC].IsrFunctionRegister)&&(Isr_Function[IRQ_RTC].irq_index==IRQ_RTC))
         {

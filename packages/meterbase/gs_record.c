@@ -1268,7 +1268,7 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
             if (last_poweron_time >= mbase_cb->active_report_sec_limit)
             {
                 mbase_cb->active_report_CMDtype |= ACTIVE_REPORT_3011_END;
-                clear_active_report_time_count(instance, ACTIVE_REPORT_3011_END);
+                clear_active_report_time_count(instance, R_3011_END);
             }
 
             //mbase_cb->power_on_sec_accum = 0;//待调整
