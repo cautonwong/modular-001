@@ -430,10 +430,6 @@ int day_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struc
 int month_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint8_t period[24] = {1};
-    uint32_t index;
-    struct tm record_time;
-    uint16_t PeriodID = MonthFreeze_period;
     uint16_t FlagID = MonthFreeze;
 
     if ((instance->time.tm_sec != 0) || (instance->time.tm_min != 0) || (instance->time.tm_hour != 0) || (instance->time.tm_mday != 1))
@@ -658,7 +654,7 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
                 {
                     if(i == 0)
                     {
-                        ctrl_block->first_MbillDay_flag == 0x5A;
+                        ctrl_block->first_MbillDay_flag = 0x5A;
                     }
                 
                     // 刷新最近一次结算时间

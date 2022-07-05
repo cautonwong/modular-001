@@ -545,7 +545,7 @@ int clr_MonthEC(struct instance_t* instance)
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + \
     offsetof(struct mbase_control_block_t, MonthEnegery));
     nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->MonthEnegery, 4);
-
+    return 1;
 }
 
 //清最近一次结算时间
@@ -558,7 +558,7 @@ int clr_last_bill_time(struct instance_t* instance)
     memset(tmpbuf, 0, sizeof(tmpbuf));
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillingTime);
     nd_set_index(instance, s_index, &tmpbuf[0], 5);
-
+    return 1;
 }
 
 
@@ -608,13 +608,11 @@ int event_poweroff_save(struct instance_t* instance, struct pipeline_t* pipeline
     offsetof(struct mbase_control_block_t, active_flag[0]));
     nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_flag[0], 100);     
 
-
-
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
     offsetof(struct mbase_control_block_t, active_flag[0]));
     s_len = offsetof(struct mbase_control_block_t, v_powerdown_tm) - offsetof(struct mbase_control_block_t, active_flag[0]);
     nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_flag[0], s_len);  
-
+    return 1;
 }
 
 //停电下每秒调用  主要处理事件累计时间

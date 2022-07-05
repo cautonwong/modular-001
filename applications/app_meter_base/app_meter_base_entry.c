@@ -4,6 +4,8 @@
 #include "target.h"
 #include "lib_clk.h"
 #include "lib_conf.h"
+#include "fr_698.h"
+#include "gs_record.h"
 
 //#define     P_BACKLIGHT_ON      GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT |= 0x10; //推挽输出高
 //#define     P_BACKLIGHT_OFF     GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT &=~0x10; //推挽输出低
@@ -91,7 +93,7 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
         fr_dl698_sec_task(instance, pipeline);
     }
     
-    active_report_handle(instance, NULL, &mesg); // 上电和下电前X秒调用
+    active_report_handle(instance, NULL, &mesg); // 上电每秒调用  下电前X秒调用
 }
 
 // !!!在此app中不做IO操作!!!

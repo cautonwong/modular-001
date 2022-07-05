@@ -490,7 +490,7 @@ int fr_handle_report_response(struct instance_t* instance, struct pipeline_t* pi
 //主动上报相关
 
 //清主动上报 重发次数 和 间隔时间
-void clear_active_report_time_count(struct instance_t* instance, enum active_report_type_t type) //调用待调整
+void clear_active_report_time_count(struct instance_t* instance, enum active_report_type_t type) 
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     

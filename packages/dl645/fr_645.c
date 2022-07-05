@@ -156,7 +156,7 @@ int fr_encode_645_11(struct instance_t* instance, struct pipeline_t* pipeline, s
 //    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
 //    struct fifo_t* fifo = pipeline->in_queue;
     //memcpy(instance->cache, mesg, sizeof(struct message_t));
-    uint8_t* p;// = instance->cache + sizeof(struct message_t);//���������ʼ
+    uint8_t* p= instance->apdu_cache + sizeof(struct message_t);//���������ʼ
     uint32_to_buf_lsb(mesg->id, p);
     if (mesg->len > 4)
     {
@@ -603,7 +603,7 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
             
     tx_len = tx_len;
     ctx->apdu.wr = tx_len;
-    if (fifoBuf_getUsed(&ctx->apdu)  >= 0){
+    if (fifoBuf_getUsed(&ctx->apdu)  > 0){
         mesg->len = fifoBuf_getUsed(&ctx->apdu);
         if (mesg->len > 512){
             mesg->len = 512;

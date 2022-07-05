@@ -14,6 +14,7 @@ extern int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* p
 extern int get_SET_and_ACTION_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
 extern int fr_follow_report_optional(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int update_plc_baut_tick(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
 uint16_t get_crc16(uint16_t cs)
 {

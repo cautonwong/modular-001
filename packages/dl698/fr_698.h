@@ -406,8 +406,12 @@ extern uint8_t report_3320list_confirmed_All_channel(struct instance_t* instance
 extern int fr_handle_report_response(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern void EventOut_698_check(struct instance_t* instance);
 extern void report_3320list_2015state_clear(struct instance_t* instance);
+extern void clear_active_report_time_count(struct instance_t* instance, enum active_report_type_t type);
+extern int active_report_handle(struct instance_t* instance, struct pipeline_t* p_pipeline, struct message_t* mesg);
 
+extern int get_report_apdu(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
+extern void update_connect_timeout_cnt(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
 extern int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_para_pack_t *para_pack);
 

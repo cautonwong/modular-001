@@ -13,7 +13,7 @@ static uint8_t shut_pluse_driver(void *ptr)
     REALY_ON_DIS_ACTIVE();
     REALY_OFF_DIS_ACTIVE();
     
-    (void*)ptr;
+    //(void*)ptr;
     
     return 0;
 }

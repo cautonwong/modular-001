@@ -75,6 +75,7 @@ void ndv_memcopy(void *tb, void *sb, uint16_t length);
 uint8_t mem_compare(void* data1, void* data2, uint16_t length);
 void mem_swap_cpy(void* dest, void* src, unsigned short length);
 void ndv_move_buffer(uint8_t *sbuff, uint8_t *tbuff, uint16_t length);
+uint8_t BCD_Check( uint8_t* Addr, uint8_t Len );
 
 #ifdef WIN32
 int hex2bin(char* dst, const char* src, uint16_t count);

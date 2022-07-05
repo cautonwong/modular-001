@@ -324,6 +324,17 @@ uint8_t mem_compare(void* data1, void* data2, uint16_t length)
 	return 0;
 }
 
+uint8_t BCD_Check( uint8_t* Addr, uint8_t Len )
+{
+	while( Len > 0 )
+    {
+	    if( (*Addr&0x0F) > 0x09 ) return 1;
+	    if( (*Addr&0xF0) > 0x90 ) return 1;
+	    Addr++;
+	    Len--;
+    }
+	return 0;
+}
 
 static const uint16_t crc16_tab[256] =
 {

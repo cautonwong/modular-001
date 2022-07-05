@@ -61,7 +61,7 @@ extern void device_power_close(struct instance_t* instance);
 extern void device_power_open(struct instance_t* instance);
 extern void cpu_io_lowpower_cfg_chk(struct instance_t *instance);
 extern void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline);
-
+extern  void device_power_close1(struct instance_t* instance);
 
 #define  DISABLE_ALL_INT()     __disable_irq();
 #define  ENABLE_ALL_INT()      __enable_irq();

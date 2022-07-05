@@ -493,6 +493,7 @@ extern uint8_t read_esam_data(struct instance_t* instance,uint32_t addr, uint8_t
 extern uint16_t write_esam(struct instance_t* instance, uint32_t addr, uint8_t*buf, uint16_t len);
 extern uint8_t read_esam_no(struct instance_t* instance, uint8_t *esam_info);
 extern uint8_t read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t index);
+extern uint8_t esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p);
 
 extern int backlight_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
 
