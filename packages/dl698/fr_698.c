@@ -552,9 +552,21 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
             ctx->apdu_rx_len = 0;
             ctx->segment_no = 1;
             fifoBuf_getData(fifo, apdu_rx + ctx->apdu_rx_len,  data_len);
-            ctx->apdu_rx_len = data_len;   
-        }else if((get_segment_no(s) == ctx->segment_no)){
+            ctx->apdu_rx_len = data_len;  
+            log_info("segments0: first.\n");
+        }else if((get_segment_no(s) == ctx->segment_no) || (get_segment_no(s) == ctx->last_segment)){
             if((is_middle_segment(s) || is_last_segment(s))){
+                if(get_segment_no(s) == ctx->last_segment){
+                    ctx->segment_no = ctx->last_segment;
+                    ctx->apdu_rx_len = ctx->apdu_l_len;
+                    log_info("segments1: %d.\n", ctx->segment_no);
+                }
+                if(get_segment_no(s) == ctx->segment_no){
+                    ctx->last_segment = ctx->segment_no;
+                    ctx->apdu_l_len = ctx->apdu_rx_len;
+                    log_info("segments2: %d.\n", ctx->last_segment);
+                }
+                log_info("segments3: %d.\n", ctx->segment_no);
                 ctx->segment_no++;
                 if(is_last_segment(s)){
                     ctx->segment_no = 0;
@@ -562,13 +574,20 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
                 fifoBuf_getData(fifo, apdu_rx + ctx->apdu_rx_len,  data_len);
                 ctx->apdu_rx_len += data_len;
                 if(ctx->apdu_rx_len > Max698_apdu_rx){
-                     return -1;
+                    log_info("segments4: %d.\n", ctx->segment_no);
+                    return -1;
                 }
             }
+        }else{
+            fifoBuf_getData(fifo, apdu_rx + ctx->apdu_rx_len,  data_len);
+            ctx->apdu_rx_len = 0;
+            ctx->segment_no = 0;
+            log_info("segments5: %d.\n", ctx->segment_no);
         }
         
         if (is_last_segment(ctx->segment_rx)) {
             clr_segment(ctx->ctrl);
+            log_info("segments6: %d.\n", ctx->segment_no);
             return 1;
         }else{
             ctx->segment_rx = ctx->segment_rx & 0x3fff;
@@ -582,6 +601,7 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
             mesg->qos   = ctx->choice;
             mesg->id    = 0x00;
             fr_rx_698_end(instance, pipeline, mesg);
+            log_info("segments7: %d.\n", ctx->segment_no);
             return 0;
         }
     }
@@ -743,6 +763,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
         ctx->segment_rx = 0;
         err_no = fr_segments_handle(instance, pipeline,  mesg);
         if (err_no <= 0) {
+            log_info("fr_segments_handle: err_no=%02x.\n", err_no);
             return err_no;
         }
     }else{

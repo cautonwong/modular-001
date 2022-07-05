@@ -278,6 +278,7 @@ struct context_698_t
     int32_t fr_err;
     uint16_t segment_rx; 
     uint16_t segment;
+    uint16_t last_segment;
     uint16_t segment_no;
     
     uint8_t timeTag_valid;
@@ -309,6 +310,7 @@ struct context_698_t
     
     uint8_t apdu_d_rx[Max698_apdu_rx]; 
     uint16_t apdu_rx_len;
+    uint16_t apdu_l_len;
     uint16_t apdu_rx_offset;
    
     //接收和发送都要用的状态

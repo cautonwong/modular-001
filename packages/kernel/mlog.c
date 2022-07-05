@@ -31,7 +31,7 @@ int log_print_buf(char *buf, int size, const char* fmt, ...)
 
 void log_print(int level, const char *file, int line, const char *func, const char* fmt, ...)
 {
-    char buf[512] = {0};
+    char buf[512+64] = {0};
     long long time = 0;
 
     struct fifo_t* tx_fifo = log_get_fifo();
@@ -67,10 +67,11 @@ void log_print(int level, const char *file, int line, const char *func, const ch
 
 void log_print_hex(int level, const char *file, int line, const char *func, uint8_t* data, int data_len)
 {
-    char buf[512] = {0};
+    char buf[512+64] = {0};
     struct fifo_t* tx_fifo = log_get_fifo();
 
     int len = 0;
+
 #ifdef LOG_USE_COLOR
     len = log_print_buf(buf, 512, "\033[0m\033[1;32m%s:[%d]\033[0m", func, line);
 #else
@@ -79,6 +80,10 @@ void log_print_hex(int level, const char *file, int line, const char *func, uint
                         logtime.tm_hour,logtime.tm_min,logtime.tm_sec,\
                         func, line);
 #endif
+    if(data_len > 256){
+       data_len = 256;
+    }
+    
     for(int i = 0; i < data_len; i++){
         log_print_buf(buf+len, 512-len,"%02x", data[i]);
         len+=2;
