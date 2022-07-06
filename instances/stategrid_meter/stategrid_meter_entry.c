@@ -5,6 +5,12 @@
 
 
 extern int baremetal_instance_entry(struct instance_t* instance);
+
+
+struct mbase_control_block_t* mbase_cb_do_not_operation;//只用于仿真调试监控
+
+
+
 #ifdef WIN32
 extern const struct driver_ops_t  eeprom_driver;
 const struct dev_info_t eeprom_dev = 
@@ -184,6 +190,8 @@ struct pipeline_t* pipelines[] =
 
 //cautonwong  以上的内容  应该放在instance的入口函数里面去分配和初始化
 
+
+
 int update_instance_rtc(struct instance_t* instance)
 {
     uint32_t ts;
@@ -296,7 +304,8 @@ int baremetal_instance_entry_main(int argc, char** argv)
     communication_channel_init(instance, &pl_ir_rx_698, &pl_ir_tx_698, UART_IR_CHL);
 
     ////////////////////////////申请一个mbase应用的BLOCK = 04/////////////////////////////////////////////
-    if (NULL == add_block(instance, RES_DEV_RAM, mbase_control_block_name, 4 * 1024)) //剩余4k
+    mbase_cb_do_not_operation = (struct mbase_control_block_t*)add_block(instance, RES_DEV_RAM, mbase_control_block_name, 4 * 1024);
+    if (NULL == mbase_cb_do_not_operation) //剩余4k
     {
         return -1;
     }

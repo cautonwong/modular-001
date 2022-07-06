@@ -5,6 +5,9 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include "time.h"
+
+//#define LOG_DEBUG_EN 1
+
 #ifdef LOG_DEBUG_EN
 
 enum { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL };
