@@ -543,8 +543,8 @@ void dev_init(uint8_t power_mode)
  {
     uint32_t lcd_tmp[20] = {0,};
     
-    //GPIO_InitType GPIO_InitStruct;
-    //PMU_LowPWRTypeDef LowPower_InitStruct;
+    GPIO_InitType GPIO_InitStruct;
+    PMU_LowPWRTypeDef LowPower_InitStruct;
     
     //cm0_systick_init(0);
 
@@ -564,34 +564,36 @@ void dev_init(uint8_t power_mode)
     lcd_init(AC_POWER_OFF);
 
     /*------------------ Forbidden all GPIOs ------------------*/
-    //GPIO_InitStruct.GPIO_Mode = GPIO_Mode_FORBIDDEN;
-    //GPIO_InitStruct.GPIO_Pin  = GPIO_Pin_All;
-    //GPIOA_Init(GPIOA, &GPIO_InitStruct);
+    GPIO_InitStruct.GPIO_Mode = GPIO_Mode_FORBIDDEN;
+    GPIO_InitStruct.GPIO_Pin  = GPIO_Pin_All;
+    GPIOA_Init(GPIOA, &GPIO_InitStruct);
     //GPIOBToF_Init(GPIOB, &GPIO_InitStruct);
 /*    if (system_state.power_off_sencond > 5)
     {
         GPIOBToF_Init(GPIOC, &GPIO_InitStruct);
     }*/
-    //GPIOBToF_Init(GPIOD, &GPIO_InitStruct);
-    //GPIOBToF_Init(GPIOE, &GPIO_InitStruct);
-    //GPIOBToF_Init(GPIOF, &GPIO_InitStruct);
+    GPIOBToF_Init(GPIOD, &GPIO_InitStruct);
+    GPIOBToF_Init(GPIOE, &GPIO_InitStruct);
+    GPIOBToF_Init(GPIOF, &GPIO_InitStruct);
+    GPIOB->OEN |= (BIT4);//背光
+    GPIOB->IE &= ~(BIT4);
     
 /*       GPIOA->DAT &= ~(BIT0|BIT1|BIT3|BIT4|BIT5|BIT6|BIT7|
                 BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);*/
-    //GPIOA->OEN |= (BIT0|BIT1|BIT2|BIT3|BIT4|BIT5|BIT6|BIT7|
-    //            BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
-    //GPIOA->IE &= ~(BIT0|BIT1|BIT3|BIT4|BIT5|BIT6|BIT7|
-    //            BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
+    GPIOA->OEN |= (BIT0|BIT1|BIT2|BIT3|BIT4|BIT5|BIT6|BIT7|
+                BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
+    GPIOA->IE &= ~(BIT0|BIT1|BIT3|BIT4|BIT5|BIT6|BIT7|
+                BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
   
   
-    //GPIOA->OEN |=BIT14; 
-    //GPIOA->IE |=BIT14;
-    //GPIOA->DAT |= BIT2;
-    //PMU_WakeUpPinConfig(GPIO_Pin_2, IOA_EDGEBOTH);   //使能外部IO口唤醒
-    //PMU_ClearIOAINTStatus(GPIO_Pin_2);
-    //PMU_INTConfig(PMU_INT_IOAEN, ENABLE);
-    //PMU_WakeUpPinConfig(GPIO_Pin_8, IOA_DISABLE);
-    //CORTEX_SetPriority_ClearPending_EnableIRQ(PMU_IRQn, 0); //优先级高
+    GPIOA->OEN |=BIT14; 
+    GPIOA->IE |=BIT14;
+    GPIOA->DAT |= BIT2;
+    PMU_WakeUpPinConfig(GPIO_Pin_2, IOA_EDGEBOTH);   //使能外部IO口唤醒
+    PMU_ClearIOAINTStatus(GPIO_Pin_2);
+    PMU_INTConfig(PMU_INT_IOAEN, ENABLE);
+    PMU_WakeUpPinConfig(GPIO_Pin_8, IOA_DISABLE);
+    CORTEX_SetPriority_ClearPending_EnableIRQ(PMU_IRQn, 0); //优先级高
 
     /*------------------ Low power configuration ------------------*/
     //LowPower_InitStruct.AHBPeriphralDisable = PMU_AHB_ALL;
@@ -606,11 +608,82 @@ void dev_init(uint8_t power_mode)
     //LowPower_InitStruct.VDCINDetector       = PMU_VDCINDET_ENABLE;
     //LowPower_InitStruct.VDDDetector         = PMU_VDDDET_DISABLE;
     //RTC_PLLDIVOutputCmd(DISABLE);
-    //MComp1Init();//电池状态监测初始化
+    MComp1Init();//电池状态监测初始化
     //WDT_Disable();
     //PMU_EnterSleep_LowPower(&LowPower_InitStruct);
  }
+//上报完之后调用，关闭除液晶以外的 用电大户外设的电源，比如背光，LED，串口，高速定时器，tick
+ void device_power_close_after_report(struct instance_t* instance)
+ {
+    uint32_t lcd_tmp[20] = {0,};
+    
+    GPIO_InitType GPIO_InitStruct;
+    PMU_LowPWRTypeDef LowPower_InitStruct;
+    
+    cm0_systick_init(0);
 
+    MISC_IRCmd(MISC_IREN_TX5, DISABLE);
+    TMR_INTConfig(TMR0, DISABLE);
+    TMR_INTConfig(TMR3, DISABLE);
+    TMR_Cmd(TMR0, DISABLE);
+    TMR_Cmd(TMR3, DISABLE);
+    UART_INTConfig(UART0, UART_INT_RX | UART_INT_TXDONE, DISABLE);
+    UART_INTConfig(UART3, UART_INT_RX | UART_INT_TXDONE, DISABLE);
+    UART_INTConfig(UART4, UART_INT_RX | UART_INT_TXDONE, DISABLE);
+    UART_INTConfig(UART5, UART_INT_RX | UART_INT_TXDONE, DISABLE);
+    
+    //LCD->CTRL |= LCD_CTRL_EN;
+    //MISC2->HCLKEN |= (uint32_t)BIT6;
+    //memcpy((uint8_t*)(&LCD->FB[0]), (uint8_t *)&lcd_tmp[0], sizeof(lcd_tmp));
+    //lcd_init(AC_POWER_OFF);
+
+    /*------------------ Forbidden all GPIOs ------------------*/
+    GPIO_InitStruct.GPIO_Mode = GPIO_Mode_FORBIDDEN;
+    GPIO_InitStruct.GPIO_Pin  = GPIO_Pin_All;
+    //GPIOA_Init(GPIOA, &GPIO_InitStruct);
+    GPIOBToF_Init(GPIOB, &GPIO_InitStruct);
+/*    if (system_state.power_off_sencond > 5)
+    {
+        GPIOBToF_Init(GPIOC, &GPIO_InitStruct);
+    }*/
+    GPIOBToF_Init(GPIOD, &GPIO_InitStruct);
+    GPIOBToF_Init(GPIOE, &GPIO_InitStruct);
+    GPIOBToF_Init(GPIOF, &GPIO_InitStruct);
+    
+/*       GPIOA->DAT &= ~(BIT0|BIT1|BIT3|BIT4|BIT5|BIT6|BIT7|
+                BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);*/
+    GPIOA->OEN |= (BIT0|BIT1|BIT2|BIT3|BIT4|BIT5|BIT6|BIT7|
+                BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
+    GPIOA->IE &= ~(BIT0|BIT1|BIT3|BIT4|BIT5|BIT6|BIT7|
+                BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
+  
+  
+    GPIOA->OEN |=BIT14; 
+    GPIOA->IE |=BIT14;
+    GPIOA->DAT |= BIT2;
+    PMU_WakeUpPinConfig(GPIO_Pin_2, IOA_EDGEBOTH);   //使能外部IO口唤醒
+    PMU_ClearIOAINTStatus(GPIO_Pin_2);
+    PMU_INTConfig(PMU_INT_IOAEN, ENABLE);
+    PMU_WakeUpPinConfig(GPIO_Pin_8, IOA_DISABLE);
+    CORTEX_SetPriority_ClearPending_EnableIRQ(PMU_IRQn, 0); //优先级高
+
+    /*------------------ Low power configuration ------------------*/
+    LowPower_InitStruct.AHBPeriphralDisable = PMU_AHB_ALL;
+    LowPower_InitStruct.LCDPower            = PMU_LCDPWER_OFF;
+    
+    LowPower_InitStruct.APBPeriphralDisable = PMU_APB_ALL;
+    LowPower_InitStruct.BGPPower            = PMU_BGPPWR_OFF;
+    LowPower_InitStruct.COMP1Power          = PMU_COMP1PWR_ON;//PMU_COMP1PWR_OFF;
+    LowPower_InitStruct.COMP2Power          = PMU_COMP2PWR_OFF;
+    LowPower_InitStruct.AVCCPower           = PMU_AVCCPWR_OFF;
+    LowPower_InitStruct.TADCPower           = PMU_TADCPWR_OFF;
+    LowPower_InitStruct.VDCINDetector       = PMU_VDCINDET_ENABLE;
+    LowPower_InitStruct.VDDDetector         = PMU_VDDDET_DISABLE;
+    RTC_PLLDIVOutputCmd(DISABLE);
+    MComp1Init();//电池状态监测初始化
+    WDT_Disable();
+    PMU_EnterSleep_LowPower(&LowPower_InitStruct);
+ }
 uint8_t shut_multifunction_pluse(void *ptr)
 {
     opreate_second_pluse(3);
@@ -663,11 +736,16 @@ void cpu_io_lowpower_cfg_chk(struct instance_t* instance)
 //此处放sleep函数，以及唤醒后的系统基本处理
 void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)pipeline->ctx;
     PMU_LowPWRTypeDef LowPower_InitStruct;
     GPIO_InitType GPIO_InitStruct;
     
-    if((mbase_control_block->Key & F_KeyAwake) == 0)
+    if((instance->ac_power_off_sec_cnt == 5)|| (instance->ac_power_off_sec_cnt == 6)) //上报完成后，关闭除液晶以外的电源
+    {
+        device_power_close_after_report(instance);
+    }
+    
+    if(((mbase_cb->Key & F_KeyAwake) == 0))
     {
         //LCD_InitType lcd_init_para;
         //LCD_IOInitType lcd_io_para;
