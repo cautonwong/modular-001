@@ -84,7 +84,7 @@ int __matcher_645(void* pctx, uint8_t* b)
             return 0;
         }
         ctx->cs += byte;
-        *b = byte - 0x33;
+        
         ctx->addr_n++;
         return 0;
     case 6:
@@ -509,10 +509,12 @@ int fr_pack_645_tail(struct instance_t* instance, struct pipeline_t* pipeline, s
 
 int fr_rx_645_end(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-//    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
+    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
-//    struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
- 
+
+    uint8_t cs = fifoBuf_getByte(ififo);
+    assert(ctx->cs == cs);
+    
     uint8_t tail = fifoBuf_getByte(ififo);
     assert(tail == 0x16);
 
@@ -537,7 +539,6 @@ int fr_pack_645_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     return 1;
 }
 
-
 int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
@@ -556,10 +557,14 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     }
     
     ctx->apdu_rx_offset = 0;
-    ctx->apdu_rx_len = ctx->min_len - 1;
-    fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len);
+    ctx->apdu_rx_len = ctx->len;
+    fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len+10);
     fifoBuf_init(&ctx->apdu, ctx->apdu_tx, 256);
        
+    for(int i = 0; i < ctx->apdu_rx_len; i++){
+        apdu_rx[i+10] = apdu_rx[i+10] - 0x33;
+    }
+        
     switch (ctx->ctrl)
     {
         case 0X11:

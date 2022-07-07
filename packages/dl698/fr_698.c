@@ -61,6 +61,7 @@ int __matcher_698(void* pctx, uint8_t* b)
     case 0://帧头68判断
         if (byte != 0x68){
             ctx->err_n++;
+            ctx->err_type = 1;
             return FRM_HEADER_ERR;
         }
         ctx->step = 1;
@@ -81,6 +82,7 @@ int __matcher_698(void* pctx, uint8_t* b)
         if (ctx->min_len < 11){
             ctx->step = 0;
             ctx->err_n++;
+            ctx->err_type = 2;
             return FRM_LEN_ERR1;
         }
         //if ((len < 11) || (len + 2 > *bytes) || (0x16 != p[len + 1]))
@@ -91,6 +93,7 @@ int __matcher_698(void* pctx, uint8_t* b)
         ctx->fcs = update_crc16(ctx->fcs, byte);
         if ( (FC_CODE(byte) != 1) && (FC_CODE(byte) != 3)){
             ctx->step = 0;
+            ctx->err_type = 3;
             return -1;
         }
         ctx->ctrl = byte;//控制域
@@ -134,6 +137,7 @@ int __matcher_698(void* pctx, uint8_t* b)
         if (byte != (ctx->hcs & 0xff)){
             ctx->step = 0;
             ctx->err_n++;
+            ctx->err_type = 4;
             return -1;
         }
         ctx->step = 8;
@@ -143,6 +147,7 @@ int __matcher_698(void* pctx, uint8_t* b)
         if (byte != ((ctx->hcs >> 8) & 0xff)){
             ctx->step = 0;
             ctx->err_n++;
+            ctx->err_type = 5;
             return -1;
         }
         ctx->index = 0;
@@ -154,6 +159,7 @@ int __matcher_698(void* pctx, uint8_t* b)
         {
             ctx->step = 0;
             ctx->err_n++;
+            ctx->err_type = 6;
             return -1;
         }
         
@@ -169,6 +175,7 @@ int __matcher_698(void* pctx, uint8_t* b)
         if (byte != (ctx->fcs & 0xff)){
             ctx->step = 0;
             ctx->err_n++;
+            ctx->err_type = 7;
             return -1;
         }
         ctx->step = 11;
@@ -178,6 +185,7 @@ int __matcher_698(void* pctx, uint8_t* b)
         if (byte != ((ctx->fcs >> 8) & 0xff)){
             ctx->step = 0;
             ctx->err_n++;
+            ctx->err_type = 8;
             return -1;
         }
         ctx->step = 12;
@@ -185,11 +193,12 @@ int __matcher_698(void* pctx, uint8_t* b)
     case 12:
         if (byte != 0x16){
             ctx->step = 0;
+            ctx->err_type = 9;
             return -1;
         }
         return 1;//接收到完整的一帧
     }
-
+    ctx->err_type = 10;
     //assert(0);
     return -1;
 }
@@ -1020,7 +1029,11 @@ int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
         return 1;
     }
 #ifdef LOG_DEBUG_EN
-    log_err("rd:%d, wr:%d, step=%d, r=%d.\n", val_rd, val_wr, ctx->step, r);
+    log_err("rd:%d, wr:%d, step=%d, err_type=%d, r=%d.\n", val_rd, val_wr, ctx->step, ctx->err_type, r);
+    for(uint8_t i =0; i<4; i++){
+        log_hex(fifo->buf_ptr+128*i, 128);
+    }
+    log_hex(fifo->buf_ptr+128*i, 32);
 #endif
     return r;
 }

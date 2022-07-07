@@ -272,9 +272,12 @@ struct context_698_t
     uint16_t fcs;
     uint16_t hcs;
     uint16_t min_len;//发送时和接收时的报文总长度
+    uint8_t err_type;
+    uint8_t CA;
+      
     uint32_t err_n;
     uint8_t addr[16];
-    uint8_t CA;
+  
     int32_t fr_err;
     uint16_t segment_rx; 
     uint16_t segment;
