@@ -543,7 +543,7 @@ int clr_MonthEC(struct instance_t* instance)
     mbase_cb->MonthEnegery = 0;
     
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
-    offsetof(struct mbase_control_block_t, MonthEnegery)  -  offsetof(struct mbase_control_block_t, persistent_section_start)));
+    offsetof(struct mbase_control_block_t, MonthEnegery)  -  offsetof(struct mbase_control_block_t, persistent_section_start));
     nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->MonthEnegery, 4);
     return 1;
 }

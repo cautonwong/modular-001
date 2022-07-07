@@ -771,6 +771,11 @@ uint8_t fr_698_current_connect_status_get(struct instance_t* instance, struct pi
     uint8_t rlt = 0, i;
     uint8_t comm_chn[4] = { chl_ir_698, chl_RS485_1_698,  chl_PLC_698,  chl_RS485_2_698 };
 
+    if(ctrl_block == NULL)
+    {
+        return 0;
+    }
+
     for (i = 0; i < (sizeof(comm_chn) / sizeof(comm_chn[0])); i++)
     {
         if (ctrl_block->current_connect_channel[client_index] == comm_chn[i]) // 应用连接时 current_connect_channel置位 待调整

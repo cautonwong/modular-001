@@ -55,7 +55,7 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
         mbase_control_block->active_p_dec[0] -= mbase_control_block->meter_const;
         
         s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
-        offsetof(struct mbase_control_block_t, active_p) -  offsetof(struct mbase_control_block_t, persistent_section_start)));
+        offsetof(struct mbase_control_block_t, active_p) -  offsetof(struct mbase_control_block_t, persistent_section_start));
         nd_set_offset(instance, s_index, (uint8_t*)&mbase_control_block->active_p, 52);
     }
 
@@ -85,7 +85,7 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
         mbase_control_block->active_n_dec[0] -= mbase_control_block->meter_const;
         
        s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
-       offsetof(struct mbase_control_block_t, active_n) -  offsetof(struct mbase_control_block_t, persistent_section_start)));
+       offsetof(struct mbase_control_block_t, active_n) -  offsetof(struct mbase_control_block_t, persistent_section_start));
        nd_set_offset(instance, s_index, (uint8_t*)&mbase_control_block->active_n, 52);
     }
     
@@ -97,7 +97,7 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
         if((mbase_control_block->MonthEnegery % 100)==0)
         {
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
-            offsetof(struct mbase_control_block_t, MonthEnegery)  -  offsetof(struct mbase_control_block_t, persistent_section_start)));
+            offsetof(struct mbase_control_block_t, MonthEnegery)  -  offsetof(struct mbase_control_block_t, persistent_section_start));
             nd_set_offset(instance, s_index, (uint8_t*)&mbase_control_block->MonthEnegery, 4);
         }
     }
@@ -254,11 +254,11 @@ void Energy_clr(struct instance_t* instance)
     }
     
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
-    offsetof(struct mbase_control_block_t, active_p) -  offsetof(struct mbase_control_block_t, persistent_section_start)));
+    offsetof(struct mbase_control_block_t, active_p) -  offsetof(struct mbase_control_block_t, persistent_section_start));
     nd_set_offset(instance, s_index, (uint8_t*)&mbase_control_block->active_p, (MAX_FEE_NO+1)<<2);
     
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
-    offsetof(struct mbase_control_block_t, active_n) -  offsetof(struct mbase_control_block_t, persistent_section_start)));
+    offsetof(struct mbase_control_block_t, active_n) -  offsetof(struct mbase_control_block_t, persistent_section_start));
     nd_set_offset(instance, s_index, (uint8_t*)&mbase_control_block->active_n, (MAX_FEE_NO+1)<<2);
 
 
@@ -266,7 +266,7 @@ void Energy_clr(struct instance_t* instance)
     mbase_control_block->MonthEnegery = 0;
     
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
-    offsetof(struct mbase_control_block_t, MonthEnegery) -  offsetof(struct mbase_control_block_t, persistent_section_start)));
+    offsetof(struct mbase_control_block_t, MonthEnegery) -  offsetof(struct mbase_control_block_t, persistent_section_start));
     nd_set_offset(instance, s_index, (uint8_t*)&mbase_control_block->MonthEnegery, 4);
 
 

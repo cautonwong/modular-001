@@ -7,9 +7,20 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
     
     struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
-    uint8_t method,relayon_type=0,password[8]={0},password_des[8]={0};
+    uint8_t method,relayon_type=0,password[8]={0},password_des[8]={0},client_index = 0;
     uint16_t oad,Prot_time=0;
     uint32_t OI,addr,I_Prot=0;
+
+
+    if (CA_TYPE_TER(ctx->CA))//终端
+    {
+        client_index = 1;
+    }
+    else
+    {
+        client_index = 0;
+    }
+
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
     method = (unsigned char)((id & 0x0000FF00) >> 8);    //方法
@@ -32,7 +43,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     return  -DAR_METER_SUSPEND;
                 }
             }
-            if((mbase_cb->authen_tmr == 0) && (mbase_cb->factor_mode != true))   //安全认证超时
+            if((fr_698_current_connect_status_get(instance, NULL, client_index)== false) && (mbase_cb->factor_mode != true))   //安全认证超时
             {
                 mbase_cb->cmd_errstate = 0x1000;    //安全认证超时
                 return  -DAR_SECURITY_AUTH_FAILED;
