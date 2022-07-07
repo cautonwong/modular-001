@@ -97,14 +97,6 @@ struct mbase_control_block_t
     uint8_t factor_mode; //工厂模式
     
 
-    //掉电保存
-    uint8_t active_flag[50];  //事件或冻结记录存储标志    
-    uint8_t record_flag[50];  //事件或冻结记录存储标志 
-    //上报相关
-    uint16_t active_report_CMDtype;             //主动上报 命令类别     需掉电保存   //待调整
-    uint8_t active_report_retry_cnt[4];         //主动上报 重试次数 //待调整            R_3320
-    uint32_t power_on_sec_accum;                //上电累计时间 sec  上电处理时清零，上电运行累加  //待调整
-    struct tm v_powerdown_tm;// 模拟停电时间  补结算测试用              待调整
     
     
     static_end     
@@ -262,7 +254,11 @@ struct mbase_control_block_t
         //需量数据
 
     //事件相关
+    //掉电保存
+    uint8_t active_flag[50];  //事件或冻结记录存储标志    
+    uint8_t record_flag[50];  //事件或冻结记录存储标志 
 
+    
     uint32_t minute_freeze_index[8]; //分钟冻结8个序号     
     uint32_t OverCurrentAS_acc_time;    //累计时间 电能表过流事件
     uint32_t PowerOffS_acc_time;        //累计时间 电能表掉电事件
@@ -273,7 +269,13 @@ struct mbase_control_block_t
     //uint32_t RTCErrS_acc_time;          //累计时间 时钟故障事件
     uint32_t ZeroLineErrS_acc_time;     //累计时间 零线电流异常事件  
 
-
+    //上报相关
+    uint16_t active_report_CMDtype;             //主动上报 命令类别     需掉电保存   //待调整
+    uint8_t active_report_retry_cnt[4];         //主动上报 重试次数 //待调整            R_3320
+    uint32_t power_on_sec_accum;                //上电累计时间 sec  上电处理时清零，上电运行累加  //待调整
+    struct tm v_powerdown_tm;// 模拟停电时间  补结算测试用              待调整
+    
+    
     struct tm powerdown_tm;// 停电时间      待调整
 
 

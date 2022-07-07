@@ -82,8 +82,8 @@ void PowerOff_LowPower_pro(struct instance_t* instance, struct pipeline_t* task,
         {
             set_activeflag(instance, RecordId); //停电下同时刷新e2p
             
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, active_flag[0]));
+            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + 
+                        (offsetof(struct mbase_control_block_t, active_flag[0]) -  offsetof(struct mbase_control_block_t, persistent_section_start)) );
             nd_set_offset(instance, s_index, (uint8_t*)&ctrl_block->active_flag[0], 50);               
         
             mesg_tmp.id = RecordId;

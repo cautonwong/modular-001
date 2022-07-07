@@ -603,7 +603,7 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
             
     tx_len = tx_len;
     ctx->apdu.wr = tx_len;
-    if (fifoBuf_getUsed(&ctx->apdu)  > 0){
+    if (fifoBuf_getUsed(&ctx->apdu)  >= 0){
         mesg->len = fifoBuf_getUsed(&ctx->apdu);
         if (mesg->len > 512){
             mesg->len = 512;

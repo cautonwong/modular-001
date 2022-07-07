@@ -542,8 +542,8 @@ int clr_MonthEC(struct instance_t* instance)
     
     mbase_cb->MonthEnegery = 0;
     
-    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + \
-    offsetof(struct mbase_control_block_t, MonthEnegery));
+    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+    offsetof(struct mbase_control_block_t, MonthEnegery)  -  offsetof(struct mbase_control_block_t, persistent_section_start)));
     nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->MonthEnegery, 4);
     return 1;
 }
@@ -604,14 +604,14 @@ int event_poweroff_save(struct instance_t* instance, struct pipeline_t* pipeline
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t s_index, s_len; 
     
-    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    offsetof(struct mbase_control_block_t, active_flag[0]));
-    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_flag[0], 100);     
+    //s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+    //offsetof(struct mbase_control_block_t, active_flag[0]));
+    //nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_flag[0], 100);     
 
-    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    offsetof(struct mbase_control_block_t, active_flag[0]));
-    s_len = offsetof(struct mbase_control_block_t, v_powerdown_tm) - offsetof(struct mbase_control_block_t, active_flag[0]);
-    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_flag[0], s_len);  
+    //s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+    //offsetof(struct mbase_control_block_t, active_flag[0]));
+    //s_len = offsetof(struct mbase_control_block_t, v_powerdown_tm) - offsetof(struct mbase_control_block_t, active_flag[0]);
+    //nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_flag[0], s_len);  
     return 1;
 }
 
@@ -1250,15 +1250,15 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
                 mbase_cb->active_report_CMDtype &=~ ACTIVE_REPORT_3011_END;
                 clear_active_report_time_count(instance, R_3011_START);
                 
-                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + \
-                offsetof(struct mbase_control_block_t, power_on_sec_accum));
+                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+                offsetof(struct mbase_control_block_t, power_on_sec_accum)) -  offsetof(struct mbase_control_block_t, persistent_section_start);
                 nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->power_on_sec_accum, 4);
             }
         }
         else if(PowerOffE == mesg->id)
         {
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + \
-            offsetof(struct mbase_control_block_t, power_on_sec_accum));
+            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+            offsetof(struct mbase_control_block_t, power_on_sec_accum))  -  offsetof(struct mbase_control_block_t, persistent_section_start);
             nd_get_offset(instance, s_index, (uint8_t*)&last_poweron_time, 4);
         
             mbase_cb->active_report_CMDtype &=~ ACTIVE_REPORT_3011_START;
@@ -1271,8 +1271,8 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
 
             //mbase_cb->power_on_sec_accum = 0;//待调整
             last_poweron_time = 0;
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + \
-            offsetof(struct mbase_control_block_t, power_on_sec_accum));
+            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+            offsetof(struct mbase_control_block_t, power_on_sec_accum))  -  offsetof(struct mbase_control_block_t, persistent_section_start);
             nd_set_offset(instance, s_index, (uint8_t*)&last_poweron_time, 4);
         }
     }
