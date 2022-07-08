@@ -166,32 +166,24 @@ struct mbase_control_block_t
     uint32_t esam_connect_timeout[4][2]; //ESAM 会话剩余时间[主站或终端]，
     uint32_t connect_timeout[4][2];      // 应用连接超时时间
     uint32_t connect_timeout_cnt[4][2]; // 应用连接超时时间 计数器
-    uint32_t irauthen_tmr;  //红外认证有效时间
-    uint32_t authen_tmr;    //应用连接有效时间
 
-    uint32_t term_auth_timeout;//终端身份认证剩余时间   待调整
-    uint32_t infrared_auth_timeout;//红外身份认证剩余时间  待调整
+    uint32_t term_auth_timeout;//终端身份认证剩余时间
+    uint32_t infrared_auth_timeout;//红外身份认证剩余时间
     uint8_t esam_auth_enable;  //身份认证启用标志
 
     //主动上报相关  active_report
     uint8_t poweron_active_report_dly;      //主动上报上电延迟时间 (秒)
-    //uint16_t active_report_CMDtype;         //主动上报 命令类别     需掉电保存   //待调整//uint16_t active_report_CMDtype;         //主动上报 命令类别     需掉电保存   //待调整
+
     
-    uint8_t active_report_retry_dly[4];        //主动上报 重试等待时间 //待调整
-    //uint8_t active_report_retry_cnt[4];        //主动上报 重试次数 //待调整            R_3320
+    uint8_t active_report_retry_dly[4];        //主动上报 重试等待时间 
 
-    uint8_t report_piid;                       //主动上报帧的PIID缓存 挪到协议  //待调整
-    uint8_t report_random_data[12];            //主动上报 随机数 缓存 //待调整
-
-    //uint32_t power_on_sec_accum;                 //上电累计时间 sec  上电处理时清零，上电运行累加  //待调整//uint32_t power_on_sec_accum;                 //上电累计时间 sec  上电处理时清零，上电运行累加  //待调整
-
-    uint32_t power_down_sec_accum;               //停电累计时间 sec  停电处理时清零，停电运行累加
+    uint8_t report_piid;                       //主动上报帧的PIID缓存 挪到协议  
+    uint8_t report_random_data[12];            //主动上报 随机数 缓存 
     
     //跟随上报2015状态字
     uint32_t report_2015state[4];           //跟随上报状态字  chl_NUM
     uint32_t report_2015mode;               //跟随上报模式字
     uint32_t report_2015state_cache;        //跟随上报状态字缓存
-
 
     //显示相关
     uint8_t commdisp_plc;    //通讯符号显示
@@ -270,13 +262,13 @@ struct mbase_control_block_t
     uint32_t ZeroLineErrS_acc_time;     //累计时间 零线电流异常事件  
 
     //上报相关
-    uint16_t active_report_CMDtype;             //主动上报 命令类别     需掉电保存   //待调整
-    uint8_t active_report_retry_cnt[4];         //主动上报 重试次数 //待调整            R_3320
-    uint32_t power_on_sec_accum;                //上电累计时间 sec  上电处理时清零，上电运行累加  //待调整
-    struct tm v_powerdown_tm;// 模拟停电时间  补结算测试用              待调整
+    uint16_t active_report_CMDtype;             //主动上报 命令类别     需掉电保存   
+    uint8_t active_report_retry_cnt[4];         //主动上报 重试次数 //R_3320
+    uint32_t power_on_sec_accum;                //上电累计时间 sec  上电处理时清零，上电运行累加  
+    struct tm v_powerdown_tm;                   // 模拟停电时间  补结算测试用 
     
     
-    struct tm powerdown_tm;// 停电时间      待调整
+    struct tm powerdown_tm;                     // 停电时间      待调整
 
 
     dyn_persistent_end

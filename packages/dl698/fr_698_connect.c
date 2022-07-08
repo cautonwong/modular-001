@@ -240,8 +240,6 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
         esam_session_timeout = buf_to_uint32_msb(&buf[0]);
         esam_session_timeout = 60 * esam_session_timeout;
         
-        mem_swap_cpy((uint8_t*)&mbase_cb->authen_tmr, (uint8_t*)&buf[0], 4);
-        mbase_cb->authen_tmr = mbase_cb->authen_tmr * 60;
 
         if (esam_session_timeout == 0)
         {
@@ -339,10 +337,7 @@ int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipelin
         cilent_index = 0;
     }
     
-    
-    mbase_cb->authen_tmr = 0;
-    mbase_cb->irauthen_tmr = 0;
-    
+        
     mbase_cb->connect_timeout[ctx->channel][cilent_index] = 0;  
     mbase_cb->esam_connect_timeout[ctx->channel][cilent_index] = 0;
     mbase_cb->connect_status[ctx->channel][cilent_index] = false;
@@ -481,10 +476,7 @@ int fr_handle_disconnect2(struct instance_t* instance,  struct pipeline_t* pipel
         return -1;
     }
 
- 
-    mbase_cb->authen_tmr = 0;
-    mbase_cb->irauthen_tmr = 0;
-    
+     
     mbase_cb->connect_timeout[channel][cilent_index] = 0;  
     mbase_cb->esam_connect_timeout[channel][cilent_index] = 0;
     mbase_cb->connect_status[channel][cilent_index] = false;

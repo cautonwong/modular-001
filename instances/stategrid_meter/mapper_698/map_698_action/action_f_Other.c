@@ -392,8 +392,6 @@ int connect_failture(struct instance_t* instance, uint8_t* req_buf, struct conte
 
     mbase_cb->connect_timeout[ctx->channel][cilent_index] = 0;
     mbase_cb->esam_connect_timeout[ctx->channel][cilent_index] = 0;
-    mbase_cb->authen_tmr = 0; // 待调整
-    mbase_cb->irauthen_tmr = 0;
 
     p_res = p_res + 2;
     *p_res++ = TYPE_date_time_s;
@@ -701,8 +699,6 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     nd_get_index(instance, addr, buffer, 4); 
                     
                     mem_swap_cpy((uint8_t*)&temp, buffer, 4);
-                    mem_swap_cpy((uint8_t*)&mbase_cb->irauthen_tmr, buffer, 4);
-                    mbase_cb->irauthen_tmr = mbase_cb->irauthen_tmr * 60;
                    
                     if(cilent_index )
                     {

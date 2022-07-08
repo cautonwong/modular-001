@@ -925,7 +925,7 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 	
 	if( instance->ac_power_statue == AC_POWER_ON )
 	{
-		if( mbase_control_block->irauthen_tmr > 0 )//红外认证有效
+		if( mbase_control_block->infrared_auth_timeout > 0 )//红外认证有效
             Lcdcon[17] |= DS_Chr_KeyProgram;
 		//通讯指示
 		if( mbase_control_block->commdisp_ir485 > 0 ) 

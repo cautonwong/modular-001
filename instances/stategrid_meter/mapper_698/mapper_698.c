@@ -2437,8 +2437,6 @@ void fr_dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline
     uint8_t i,cilent_index, channel;
 
 
-    if(mbase_cb->irauthen_tmr > 0)              mbase_cb->irauthen_tmr--;
-    if(mbase_cb->authen_tmr > 0)                mbase_cb->authen_tmr--;
     if (mbase_cb->infrared_auth_timeout > 0)    mbase_cb->infrared_auth_timeout--;
     if (mbase_cb->term_auth_timeout > 0)        mbase_cb->term_auth_timeout--;
     if (mbase_cb->poweron_active_report_dly < 10)     mbase_cb->poweron_active_report_dly++;

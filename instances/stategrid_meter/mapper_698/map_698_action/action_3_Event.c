@@ -88,7 +88,7 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
 
 
 
-    //待调整 判断表型无关的oad
+    //判断表型无关的oad
 #if 0
     if (true == oad_valid_check(capture_oad))
     {
@@ -97,7 +97,7 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     }
 #endif
 
-#if 0 // vs 要求
+#if 1 // vs 要求
     if ((Schem < 1) || (Schem > 4))
     {
         *dar = DAR_OTHERS_ERROR;

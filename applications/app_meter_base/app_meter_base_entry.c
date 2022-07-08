@@ -58,7 +58,7 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     if( instance->ac_power_statue != AC_POWER_ON ) //低功耗
     {
         instance->ac_power_off_sec_cnt++;
-        mbase_control_block->power_down_sec_accum++;
+
         
         CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);//待调整
         GPIOC->OEN &= ~(BIT4|BIT5|BIT6); 
@@ -205,7 +205,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             //获取对应的RAM地址
             get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
             nd_set_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;      
-            mbase_control_block->power_down_sec_accum = 0;
+            
             instance->ac_power_off_sec_cnt = 0;
 
             event_poweroff_save(instance,pipeline,mesg);

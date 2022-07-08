@@ -85,12 +85,12 @@ void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
 		mbase_cb->run_state[4] &= ~Status_ImaxOver;  
     
     /***************** 运行状态字3 *****************/
-	if( mbase_cb->irauthen_tmr > 0 )    //红外认证
+	if( mbase_cb->infrared_auth_timeout > 0 )    //红外认证
 		mbase_cb->run_state[3] |= Status_IrAuthen;
 	else
 		mbase_cb->run_state[3] &= ~Status_IrAuthen;
     
-    if( mbase_cb->authen_tmr > 0 )    //应用链接
+    if((fr_698_current_connect_status_get(instance, NULL, 0)== false) )    //应用链接
 		mbase_cb->run_state[3] |= Status_Authen;
 	else
 		mbase_cb->run_state[3] &= ~Status_Authen;
