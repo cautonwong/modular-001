@@ -268,7 +268,7 @@ struct mbase_control_block_t
     struct tm v_powerdown_tm;                   // 模拟停电时间  补结算测试用 
     
     
-    struct tm powerdown_tm;                     // 停电时间      待调整
+    struct tm powerdown_tm;                     // 停电时间
 
 
     dyn_persistent_end
@@ -298,7 +298,7 @@ struct mbase_control_block_t
     uint8_t PowerAbnormalS_status;      //当前状态标志 电能表电源异常事件
     uint8_t EmuErrS_status;             //当前状态标志 计量芯片故障事件
     uint8_t RTCErrS_status;             //当前状态标志 时钟故障事件
-    uint16_t Un_60;                     //当前状态标志 60%Un值  xxx.xV // 待调整
+
     uint8_t MeterWr_SetTime_flag;       //当前状态标志 5A: 编程事件由校时产生
 
     uint8_t OverCurrentAS_duration;     //当前状态持续时间 电能表过流事件

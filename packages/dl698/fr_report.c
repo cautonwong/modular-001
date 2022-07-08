@@ -1300,7 +1300,7 @@ int powerOff_report_pro(struct instance_t* instance, struct pipeline_t* pipeline
     uint8_t start_time = 1;
 
     start_time = 1;
-    if ((mbase_cb->power_down_sec_accum >= start_time) && (mbase_cb->power_down_sec_accum <= (start_time+2)))
+    if ((instance->ac_power_off_sec_cnt >= start_time) && (instance->ac_power_off_sec_cnt <= (start_time+2)))
     {
         if ((mbase_cb->power_on_sec_accum >= mbase_cb->active_report_sec_limit) && (mbase_cb->active_report_retry_cnt[R_3011_START] < 3)) // 上电超过1小时 进行掉电期间上报
         {

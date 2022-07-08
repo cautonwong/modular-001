@@ -650,10 +650,7 @@ int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t*
 
     return (1);
 }
-int selector_2_seq(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t* rsd_info)
-{
-    return 1;//待调整
-}
+
 int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;

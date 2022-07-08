@@ -1015,7 +1015,7 @@ uint8_t fr_698_current_channel_num_get(struct instance_t* instance, struct pipel
     
     for (i = 0; i < (sizeof(comm_chn) / sizeof(comm_chn[0])); i++)
     {
-        if (ctrl_block->current_connect_channel[client_index] == comm_chn[i]) // 应用连接时 current_connect_channel置位 待调整
+        if (ctrl_block->current_connect_channel[client_index] == comm_chn[i]) // 应用连接时 
         {
             break;
         }
