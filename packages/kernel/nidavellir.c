@@ -389,10 +389,10 @@ int nidavellir_run_baremetal(struct instance_t* instance)
 int baremetal_instance_entry(struct instance_t *instance)
 {     
     log_info("meter go.\n");
-    log_warn("meter go.\n");
-    log_err("meter go.\n");
-    uint8_t buf[8] = {0x55,0xAF,0xEE,0x67};
-    log_hex(buf, sizeof(buf));    
+    //log_warn("meter go.\n");
+    //log_err("meter go.\n");
+    //uint8_t buf[8] = {0x55,0xAF,0xEE,0x67};
+    //log_hex(buf, sizeof(buf));    
 
     while (1)
     {

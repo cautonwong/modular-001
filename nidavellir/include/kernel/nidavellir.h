@@ -1,7 +1,7 @@
 #ifndef __INCLUDE_nidavellir__
 #define __INCLUDE_nidavellir__
 #include "types.h"
-#include <assert.h>
+
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -35,6 +35,13 @@
 #include "resource_tool.h"
 #endif
 
+#ifdef __DEBUG_ASSERT__
+#include <assert.h>
+    #define n_assert(test) ((test) ? (void) 0 : (__CALL(test), _STEPPOINT))
+#else
+    #define n_assert(test)     
+#endif
+      
 //to-be-deleted
 extern struct fifo_t pipe_msta_rx_from_meter;//rx fifo
 extern struct fifo_t pipe_msta_tx_to_meter;//tx fifo
@@ -251,6 +258,7 @@ struct context_645_t
 
 struct context_698_t
 {
+    int magic_num;
     int rx_count;//暂时用下to-be-deleted
     //配置信息
     struct connect_cfg_info_t *connect_info;

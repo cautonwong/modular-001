@@ -110,7 +110,7 @@ int16_t fifoBuf_patchByteB(struct fifo_t *buf,uint8_t b, uint16_t offset)
     if (num_bytes < 1)
         return -1;                         // nothing to remove
 
-    //assert(num_bytes >= offset);
+    //n_assert(num_bytes >= offset);
     if (num_bytes > offset)
         num_bytes = offset;
 
@@ -165,7 +165,7 @@ int16_t fifo_pop(struct fifo_t* buf, int (*callback)(void* ctx, uint8_t *b), voi
     uint8_t* buff = buf->buf_ptr;
 
     uint16_t num_bytes = fifoBuf_getUsed(buf);
-    //assert(num_bytes >= 1);
+    //n_assert(num_bytes >= 1);
     if (num_bytes < 1)
         return -1;                      // no byte returned
 
@@ -190,7 +190,7 @@ uint16_t append_byte(struct fifo_t* buf, uint8_t b, int (*callback)(void* ctx, u
     uint8_t* buff = buf->buf_ptr;
 
     uint16_t num_bytes = fifoBuf_getFree(buf);
-    //assert(num_bytes >= 1);//overflow
+    //n_assert(num_bytes >= 1);//overflow
     if (num_bytes < 1)
         return 0;
 
@@ -259,6 +259,7 @@ int ringbuffer_filter(struct fifo_t *buf, int (*callback)(void* ctx, uint8_t *b)
             ++i;//已符合迭代器要求的字节数
         }
     }
+    buf->rd = buf->wr;
     return -1;            
 }
 
@@ -273,7 +274,7 @@ int16_t fifoBuf_peekByteB(struct fifo_t *buf, uint16_t offset)
     if (num_bytes < 1)
         return -1;                         // nothing to remove
 
-    //assert(num_bytes >= offset);
+    //n_assert(num_bytes >= offset);
     if (num_bytes > offset)
         num_bytes = offset;
 
@@ -305,7 +306,7 @@ int16_t fifoBuf_getBytePeek(struct fifo_t *buf)
 
     // get number of bytes available
     uint16_t num_bytes = fifoBuf_getUsed(buf);
-    //assert(num_bytes >= 1);
+    //n_assert(num_bytes >= 1);
     if (num_bytes < 1)
         return -1;                      // no byte retuened
 
@@ -321,7 +322,7 @@ uint8_t fifoBuf_getByte(struct fifo_t *buf)
 
     // get number of bytes available
     uint16_t num_bytes = fifoBuf_getUsed(buf);
-    //assert(num_bytes >= 1);
+    //n_assert(num_bytes >= 1);
     if (num_bytes < 1)
         return 0;                      // no byte returned
 
@@ -342,7 +343,7 @@ int16_t fifoBuf_getByteCount(struct fifo_t* buf,uint16_t *count)
 
     // get number of bytes available
     uint16_t num_bytes = fifoBuf_getUsed(buf);
-    //assert(num_bytes >= 1);
+    //n_assert(num_bytes >= 1);
     if (num_bytes < 1)
         return -1;                      // no byte returned
 
@@ -469,7 +470,7 @@ int ringbuffer_putU32(struct fifo_t* buf, uint32_t data)
     uint16_t num_bytes = fifoBuf_getFree(buf);
     if (num_bytes > 4)
         num_bytes = 4;
-    //assert(num_bytes >= len);//overflow
+    //n_assert(num_bytes >= len);//overflow
     if (num_bytes < 4)
     {
         wr = buf->wr;
@@ -531,7 +532,7 @@ int ringbuffer_putU16(struct fifo_t* buf, uint16_t data)
     uint16_t num_bytes = fifoBuf_getFree(buf);
     if (num_bytes > 2)
         num_bytes = 2;
-    //assert(num_bytes >= len);//overflow
+    //n_assert(num_bytes >= len);//overflow
     if (num_bytes < 2)
     {
         wr = buf->wr;
@@ -580,7 +581,7 @@ int fifoBuf_pushU8(struct fifo_t* buf, uint8_t b)
     uint8_t* buff = buf->buf_ptr;
 
     uint16_t num_bytes = fifoBuf_getFree(buf);
-    //assert(num_bytes >= 1);//overflow
+    //n_assert(num_bytes >= 1);//overflow
     if (num_bytes < 1)
         return -1;
 
@@ -601,9 +602,9 @@ uint16_t fifoBuf_putByte(struct fifo_t *buf, const uint8_t b)
     uint8_t *buff = buf->buf_ptr;
 
     uint16_t num_bytes = fifoBuf_getFree(buf);
-    //assert(num_bytes >= 1);//overflow
-    if (num_bytes < 1)
-        return 0;
+    //n_assert(num_bytes >= 1);//overflow
+    //if (num_bytes < 1)
+    //    return 0;
 
     buff[wr] = b;
     if (++wr >= buf_size)
@@ -624,7 +625,7 @@ uint16_t fifoBuf_putData(struct fifo_t *buf, const void *data, uint16_t len)
     uint16_t num_bytes = fifoBuf_getFree(buf);
     if (num_bytes > len)
         num_bytes = len;
-    //assert(num_bytes >= len);//overflow
+    //n_assert(num_bytes >= len);//overflow
     if (num_bytes < len)
     {
         wr = buf->wr;
@@ -664,7 +665,7 @@ uint16_t append_data(struct fifo_t* buf, const void* data, uint16_t len, int (*c
     uint16_t num_bytes = fifoBuf_getFree(buf);
     if (num_bytes > len)
         num_bytes = len;
-    //assert(num_bytes >= len);//overflow
+    //n_assert(num_bytes >= len);//overflow
     if (num_bytes < len)
     {
         wr = buf->wr;
@@ -722,7 +723,7 @@ int append_byte_to_cache(struct cache_t* cache, uint8_t b, int (*callback)(void*
         return 1;
     }
 
-    //assert(0);
+    //n_assert(0);
     return 0;
 }
 

@@ -224,7 +224,9 @@
                 </option>
                 <option>
                     <name>CCDefines</name>
-                    <state></state>
+                    <state>__DEBUG_ASSERT__</state>
+                    <state>__DEBUG_LOG__</state>
+                    <state>__DEBUG_ESAM__</state>
                 </option>
                 <option>
                     <name>CCPreprocFile</name>
@@ -1127,7 +1129,7 @@
                 </option>
                 <option>
                     <name>OGLastSavedByProductVersion</name>
-                    <state>7.60.1.11206</state>
+                    <state>8.40.2.22864</state>
                 </option>
                 <option>
                     <name>GeneralEnableMisra</name>
@@ -1173,7 +1175,7 @@
                 </option>
                 <option>
                     <name>RTConfigPath2</name>
-                    <state>$TOOLKIT_DIR$\INC\c\DLib_Config_Normal.h</state>
+                    <state>$TOOLKIT_DIR$\inc\c\DLib_Config_Normal.h</state>
                 </option>
                 <option>
                     <name>GBECoreSlave</name>
@@ -1285,7 +1287,7 @@
                 </option>
                 <option>
                     <name>CCDefines</name>
-                    <state>NDEBUG</state>
+                    <state></state>
                 </option>
                 <option>
                     <name>CCPreprocFile</name>
@@ -1410,7 +1412,17 @@
                 </option>
                 <option>
                     <name>CCIncludePath2</name>
-                    <state></state>
+                    <state>$PROJ_DIR$\..\..\..\nidavellir\include\kernel</state>
+                    <state>$PROJ_DIR$\..\..\..\nidavellir\include</state>
+                    <state>$PROJ_DIR$\..\..\..\instances\stategrid_meter\</state>
+                    <state>$PROJ_DIR$\..\..\..\packages\dl698</state>
+                    <state>$PROJ_DIR$\..\..\..\packages\drivers</state>
+                    <state>$PROJ_DIR$\..\..\..\packages\drivers\arch</state>
+                    <state>$PROJ_DIR$\..\..\..\packages\drivers\arch\cm0</state>
+                    <state>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc</state>
+                    <state>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\inc</state>
+                    <state>$PROJ_DIR$\..\..\..\applications\app_resource_tool</state>
+                    <state>$PROJ_DIR$\..\..\..\packages\meterbase</state>
                 </option>
                 <option>
                     <name>CCStdIncCheck</name>
@@ -1829,7 +1841,7 @@
                 </option>
                 <option>
                     <name>IlinkIcfFile</name>
-                    <state></state>
+                    <state>$TOOLKIT_DIR$\CONFIG\generic_cortex.icf</state>
                 </option>
                 <option>
                     <name>IlinkIcfFileSlave</name>
@@ -1889,7 +1901,7 @@
                 </option>
                 <option>
                     <name>IlinkProgramEntryLabel</name>
-                    <state></state>
+                    <state>__iar_program_start</state>
                 </option>
                 <option>
                     <name>DoFill</name>
@@ -2062,7 +2074,7 @@
                 </option>
                 <option>
                     <name>IlinkTrustzoneImportLibraryOut</name>
-                    <state>###Unitialized###</state>
+                    <state>VG_DTZY_import_lib.o</state>
                 </option>
                 <option>
                     <name>OILinkExtraOption</name>

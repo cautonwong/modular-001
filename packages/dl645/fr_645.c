@@ -238,7 +238,7 @@ int fr_decode_645_86(struct instance_t* instance, struct pipeline_t* pipeline, s
     mesg->len = 4;
     mesg->id = id;
 
-    __write(id, p + mesg->len, len - 4);
+    //__write(id, p + mesg->len, len - 4);
     p[mesg->len++] = 0x00;
 #endif
     return 1;
@@ -308,7 +308,7 @@ int fr_decode_645_14(struct instance_t* instance, struct pipeline_t* pipeline, s
             return 0;
         }
 
-        __write(id, p + 12, len - 12);//���δ�����ļ�����
+        //__write(id, p + 12, len - 12);//���δ�����ļ�����
 
         bit_set(seq, instance->upgrade_info.bits);
         instance->upgrade_info.info |= 1 << 7;//������
@@ -316,15 +316,15 @@ int fr_decode_645_14(struct instance_t* instance, struct pipeline_t* pipeline, s
     }
     else if (id == 0x07fb0201)//�·�֤��
     {
-        __write(id, p + 12, len - 12);
+        //__write(id, p + 12, len - 12);
     }
     else if (id == 0x07fb0202)//�·��������򼤻�ʱ��
     {
-        __write(id, p + mesg->len, len - 4);
+        //__write(id, p + mesg->len, len - 4);
     }
     else
     {
-        __write(id, p + mesg->len, len - 4);
+        //__write(id, p + mesg->len, len - 4);
     }
 
     mesg->ctrl = 0x94;
@@ -381,7 +381,7 @@ int fr_decode_645_13(struct instance_t* instance, struct pipeline_t* pipeline, s
     mesg->len = 0;//
     memcpy(instance->cache, mesg, sizeof(struct message_t));
     uint8_t len = ctx->min_len - 12;//�յ���������ĳ���
-    assert(len == 0);
+    n_assert(len == 0);
     uint8_t* p = instance->cache + sizeof(struct message_t);
 
     r = __read(mesg->id, p, 6);
@@ -401,7 +401,7 @@ int fr_msta_decode_645_13(struct instance_t* instance, struct pipeline_t* pipeli
     mesg->len = 0;//
     memcpy(instance->cache, mesg, sizeof(struct message_t));
     uint8_t len = ctx->min_len - 12;//�յ���������ĳ���
-    assert(len == 0);
+    n_assert(len == 0);
     uint8_t* p = instance->cache + sizeof(struct message_t);
     extern struct rtc_context_t msta_context;
     memcpy(p, &msta_context.addr, 6); //msta_context.addr  ���ϵ�ʱ�����Ļ�����ַ
@@ -443,7 +443,7 @@ int fr_645_decode_91(struct instance_t* instance, struct pipeline_t* pipeline, s
     mesg->len = 4;
 
     fifoBuf_getByte(fifo); fifoBuf_getByte(fifo);
-    __write(id, p + mesg->len, len - 4);
+    //__write(id, p + mesg->len, len - 4);
 
     return 0;
 }
@@ -513,10 +513,10 @@ int fr_rx_645_end(struct instance_t* instance, struct pipeline_t* pipeline, stru
     struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
 
     uint8_t cs = fifoBuf_getByte(ififo);
-    assert(ctx->cs == cs);
+    n_assert(ctx->cs == cs);
     
     uint8_t tail = fifoBuf_getByte(ififo);
-    assert(tail == 0x16);
+    n_assert(tail == 0x16);
 
     fr_pack_645_head(instance, pipeline, mesg);
     fr_pack_645_data(instance, pipeline, mesg);
@@ -628,7 +628,7 @@ int fr_rx_645_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
     uint16_t rd = fifo->rd;
     int r = ringbuffer_filter(fifo, __matcher_645, ctx);
     if (r > 0){
-        assert(r == ctx->min_len);
+        n_assert(r == ctx->min_len);
 #ifdef WIN32
         log_hex(fifo->buf_ptr + fifo->rd, fifo->wr - fifo->rd);
 #endif

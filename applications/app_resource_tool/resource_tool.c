@@ -240,7 +240,7 @@ void* nd_malloc(struct instance_t *instance, uint8_t block_name, uint32_t size)
     res_conditions_true(block == NULL, NULL)
 
     void* p =  __nd_malloc(block->first_addr, &block->used, size, block->size);
-    assert(p != NULL);
+    n_assert(p != NULL);
     return p;
 }
 

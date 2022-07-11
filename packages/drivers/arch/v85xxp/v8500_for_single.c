@@ -320,8 +320,8 @@ uint8_t read_mcu_rtc(uint8_t addr, struct instance_t* instance)
     instance->time.tm_mday = BCD_BYTE(time_data[3]);
     instance->time.tm_mon = BCD_BYTE(time_data[4]) - 1;
     instance->time.tm_year = BCD_BYTE(time_data[5]) + 2000 - 1900;
-#ifdef LOG_DEBUG_EN
-    extern int log_set_time(struct tm *time);
+#ifdef __DEBUG_LOG__
+    extern void log_set_time(struct tm *time);
     log_set_time((struct tm*)&instance->time.tm_sec);
 #endif
     return true;
