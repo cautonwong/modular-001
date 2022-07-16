@@ -421,7 +421,8 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
     uint8_t *apdu_rx = p_ctx->apdu_d_rx + p_ctx->apdu_rx_offset;
     uint8_t esam_inf[45] = {0}; 
     uint8_t  method,buffer[16],keybuf[128],len1=0,len2=0, cilent_index = 0,len=0;
-    uint16_t oad,pageid=0,txlen=0,rxlen=0;
+    uint16_t oad,pageid=0,txlen=0;
+    int rxlen=0;
     int16_t complen;
     uint8_t *p = buf,disp_sequ=0;
     uint32_t temp = 0,s_index=0,addr=0,displayid=0,displayoad1=0,displayoad2=0;
@@ -561,12 +562,13 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
 
                 uint8_t *pdata = apdu_rx + 3;
                 rxlen = esam_key_updata(instance, pdata, txlen);
-                p = p + 1692;
+                if(rxlen > 0){
+                    p = p + rxlen + 3;
 
-                mbase_cb->key_state = get_key_status(instance);//获取秘钥状态
-                
+                    mbase_cb->key_state = get_key_status(instance);//获取秘钥状态
+                }
                 //成功后 再触发 密钥更新事件
-                if(rxlen != 0xff)// 
+                else// 
                 {
                     send_event_mesg_pro(instance, NULL, SecretKeyWrS, NULL, 1);
                 }

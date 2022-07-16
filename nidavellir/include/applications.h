@@ -526,7 +526,7 @@ extern signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_
 extern signed char Comm_Other(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
 
 extern uint16_t software_esam_check(struct instance_t* instance, uint8_t *key, uint8_t *rn, uint8_t *data, uint8_t p2, uint16_t datalen, uint8_t *outbuf);
-extern uint16_t esam_key_updata(struct instance_t* instance, uint8_t *buf, uint16_t len);
+extern int esam_key_updata(struct instance_t* instance, uint8_t *buf, uint16_t len);
 extern uint32_t fr_698_current_esam_timeout_get(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index);
 
 extern int record_rollback_after_set_time(struct instance_t* instance);
