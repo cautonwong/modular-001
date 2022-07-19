@@ -2279,6 +2279,7 @@ int para_init(struct instance_t* instance )
     mbase_cb->RTCErrS_duration_para = 1;      //参数 判定延时时间  
     mbase_cb->ZeroLineErrS_duration_para = 60; //参数 判定延时时间      
 
+    mbase_cb->report_2015mode = 0;
     mbase_cb->active_report_sec_limit = 3600; //掉电 主动上报 上电时间阈值 默认3600 
     
 

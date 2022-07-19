@@ -296,14 +296,34 @@ void send_event_mesg_pro(struct instance_t* instance, struct pipeline_t* task, u
     }
 }
 
+void clr_sequence(struct instance_t* instance, uint32_t sequence_index)
+{
 
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint32_t sequence = 0, s_index = 0;
+    uint16_t SeqId = (uint16_t)sequence_index;
+
+
+    if ((SeqId >= MinuteFreeze1_seq) && (SeqId <= MinuteFreeze8_seq))
+    {
+        mbase_cb->minute_freeze_seq[SeqId - MinuteFreeze1_seq] = 0;
+
+        s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+        offsetof(struct mbase_control_block_t, minute_freeze_seq[0])) + ((SeqId - MinuteFreeze1_seq) * 4) -  offsetof(struct mbase_control_block_t, persistent_section_start);
+        nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->minute_freeze_seq[SeqId - MinuteFreeze1_seq], 4);
+    }
+    else
+    {
+        nd_set_index(instance, sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+    }
+}
 
 //冻结或事件清零 接口    传入要清除的oad 
 int clr_record(struct instance_t* instance, uint32_t oad)
 {
     
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint32_t temp = 0,s_index = 0;
+    uint32_t s_index = 0;
     uint8_t i, tmpbuf[10] = {0};
     struct record_storage_id_info_t info;
     int ret = get_record_id_info(instance, oad, &info);
@@ -316,7 +336,7 @@ int clr_record(struct instance_t* instance, uint32_t oad)
     //清记录
     nd_log_clean(instance, info.save_index);
     //清序号
-    nd_set_index(instance, info.sequence_index, (uint8_t*)&temp, 4);
+    clr_sequence(instance, info.sequence_index);
 
     //累计时间清零
     if (info.acc_time)
@@ -890,6 +910,28 @@ uint8_t check_scheme(enum scheme_mode mode, uint32_t obj, uint16_t record_id)
     return scheme_valid;
 
 }
+
+//获取当前序号值 序号累加 分钟冻结序号 存ram，掉电存e2p
+void get_record_sequence_add(struct instance_t* instance, uint32_t sequence_index, uint8_t *dst)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint32_t sequence = 0;
+    uint16_t SeqId = (uint16_t)sequence_index;
+
+    if ((SeqId >= MinuteFreeze1_seq) && (SeqId <= MinuteFreeze8_seq))
+    {
+        mem_swap_cpy(dst, (uint8_t*)&mbase_cb->minute_freeze_seq[SeqId - MinuteFreeze1_seq], 4);
+        mbase_cb->minute_freeze_seq[SeqId - MinuteFreeze1_seq]++;
+    }
+    else
+    {
+        nd_get_index(instance, sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+        mem_swap_cpy(dst, (uint8_t*)&sequence, 4);
+        sequence++;
+        nd_set_index(instance, sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+    }
+}
+
 //capturelist  关联对象列表  首字节为个数，后续为OAD，  
 //mode 0-7 为冻结方案， 10为 事件发生 11为 结束
 int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t* CaptureList, enum scheme_mode mode, uint16_t* remain_size,  struct record_storage_id_info_t *record_id_info, uint8_t* payload)
@@ -1211,12 +1253,9 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
     pdata += read_record_capture(instance, pdata, CaptureList, (enum scheme_mode)mode, &remain_size, &record_id_info, payload);
 
     // 读取序号 ++
-    if ((pairs_event != 1) || (mode != END_MODE)) 
+    if ((mode != END_MODE))  // 结束 不需要加序号
     {
-        nd_get_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
-        mem_swap_cpy(data_buff + 1, (uint8_t*)&sequence, 4);
-        sequence++;
-        nd_set_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+        get_record_sequence_add(instance, record_id_info.sequence_index, (data_buff+1));
     }
 
     //调用ND_SET保存数据
@@ -1241,7 +1280,6 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
             event_scheme = 4;
         }
         report_3320list_add(instance,Oad|(event_scheme<<13));
-
         if(PowerOffS == mesg->id)
         {
             if(( instance->ac_power_statue == AC_POWER_ON ) && (mbase_cb->power_on_sec_accum >= mbase_cb->active_report_sec_limit))
@@ -1284,11 +1322,6 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
             clr_MonthEC(instance);
         }
     }
-
-
-    
-
-    
 
     clr_recordflag(instance, mesg->id);
     return 1;

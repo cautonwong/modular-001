@@ -46,7 +46,7 @@ struct demand_info_t
 struct mbase_control_block_t
 {
     //上电需要发起IO请求的参数区  运行期不更改
-    static_start  
+    static_start            //------------------------------------------------------
     uint8_t tsa[6];  
 
     float k_u; 
@@ -99,12 +99,14 @@ struct mbase_control_block_t
 
     uint8_t factor_mode; //工厂模式
     
+    uint32_t backlight_control_word;//背光报警配置字 
 
     
     
-    static_end     
+    static_end          //------------------------------------------------------
+        
     //运行期更改 && 掉电不保存 && 上电不需要IO请求的区域 && 初始化时直接清零
-    dyn_cache_start   
+    dyn_cache_start     //------------------------------------------------------   
     I_data_fields   
     U_data_fields
     uint8_t   DayTableNo;//日表序号
@@ -202,8 +204,37 @@ struct mbase_control_block_t
 //    uint16_t recv_frm_size;             //客户机接收帧最大尺寸 long-unsigned
 //    uint32_t connect_time;              //期望的应用连接超时时间 double-long-unsigned，
     uint8_t  connect_mode;              //认证模式enum connect_mode_e
-        
-    dyn_cache_end
+
+    //事件相关
+     uint8_t CoverOpenS_status;          //当前状态标志 电能表开盖事件
+    uint8_t SwitchErrS_status;          //当前状态标志 电能表负荷开关误动作事件
+    uint8_t SwitchErrS_Record_En;       //当前状态标志 负荷开关 误动作 使能记录 标志 
+    uint8_t PowerAbnormalS_status;      //当前状态标志 电能表电源异常事件
+    uint8_t EmuErrS_status;             //当前状态标志 计量芯片故障事件
+    uint8_t RTCErrS_status;             //当前状态标志 时钟故障事件
+
+    uint8_t MeterWr_SetTime_flag;       //当前状态标志 5A: 编程事件由校时产生
+
+    uint8_t OverCurrentAS_duration;     //当前状态持续时间 电能表过流事件
+    uint8_t PowerOffS_duration;         //当前状态持续时间 电能表掉电事件
+    uint8_t CoverOpenS_duration;        //当前状态持续时间 电能表开盖事件
+    uint8_t SwitchErrS_duration;        //当前状态持续时间 电能表负荷开关误动作事件
+    uint8_t PowerAbnormalS_duration;    //当前状态持续时间 电能表电源异常事件 
+    uint8_t EmuErrS_duration;           //当前状态持续时间 计量芯片故障事件
+    uint8_t RTCErrS_duration;           //当前状态持续时间 时钟故障事件
+    uint8_t ZeroLineErrS_duration;      //当前状态持续时间 零线电流异常事件  
+
+    uint8_t first_MbillDay_flag;
+
+    uint8_t mac_err_cnt; // 当日mac错误次数
+    uint8_t mac_suspend_date[3];// mac错误 挂起日期 yymmdd
+
+    uint8_t meterclr_event_recordflag; //记录标识*/ // 通过fifo传递
+    uint8_t meterclr_event_resetflag; //复位标识
+    
+    uint32_t battery_used_time; //电池使用时间   
+    
+    dyn_cache_end  //------------------------------------------------------
     //运行期更改&&掉电或定时保存&&上电需要IO请求的数据分区
     dyn_persistent_start
         //电能数据
@@ -251,8 +282,7 @@ struct mbase_control_block_t
     uint8_t active_flag[50];  //事件或冻结记录存储标志    
     uint8_t record_flag[50];  //事件或冻结记录存储标志 
 
-    
-    uint32_t minute_freeze_index[8]; //分钟冻结8个序号     
+    uint32_t minute_freeze_seq[8]; //分钟冻结8个序号     
     uint32_t OverCurrentAS_acc_time;    //累计时间 电能表过流事件
     uint32_t PowerOffS_acc_time;        //累计时间 电能表掉电事件
     uint32_t CoverOpenS_acc_time;       //累计时间 电能表开盖事件
@@ -280,51 +310,6 @@ struct mbase_control_block_t
     //os相关的字段
     os_fields
 
-    struct energy_ctx_t* energy_ctx;
-    struct demand_list_t* demand_list;
-
-    uint32_t backlight_switchOn_Hpriority_sec;//上电或插卡等高优先级 背光持续打开时间,          赋值后每秒递减           */
-    uint32_t backlight_switchOn_Lpriority_sec;//背光打开持续时间          赋值后每秒递减 */
-    uint32_t backlight_control_word;//背光报警配置字 
-    
-    //uint8_t remote_alarm_flag; //远程告警命令true-触发告警
-    //uint8_t battery1_under2v8; //时钟电池欠压
-    //uint8_t battery2_under4v8; //停抄电池欠压
-
-
-
-  
-    
-    uint8_t CoverOpenS_status;          //当前状态标志 电能表开盖事件
-    uint8_t SwitchErrS_status;          //当前状态标志 电能表负荷开关误动作事件
-    uint8_t SwitchErrS_Record_En;       //当前状态标志 负荷开关 误动作 使能记录 标志 
-    uint8_t PowerAbnormalS_status;      //当前状态标志 电能表电源异常事件
-    uint8_t EmuErrS_status;             //当前状态标志 计量芯片故障事件
-    uint8_t RTCErrS_status;             //当前状态标志 时钟故障事件
-
-    uint8_t MeterWr_SetTime_flag;       //当前状态标志 5A: 编程事件由校时产生
-
-    uint8_t OverCurrentAS_duration;     //当前状态持续时间 电能表过流事件
-    uint8_t PowerOffS_duration;         //当前状态持续时间 电能表掉电事件
-    uint8_t CoverOpenS_duration;        //当前状态持续时间 电能表开盖事件
-    uint8_t SwitchErrS_duration;        //当前状态持续时间 电能表负荷开关误动作事件
-    uint8_t PowerAbnormalS_duration;    //当前状态持续时间 电能表电源异常事件 
-    uint8_t EmuErrS_duration;           //当前状态持续时间 计量芯片故障事件
-    uint8_t RTCErrS_duration;           //当前状态持续时间 时钟故障事件
-    uint8_t ZeroLineErrS_duration;      //当前状态持续时间 零线电流异常事件  
-
-    uint8_t first_MbillDay_flag;
-
-    uint8_t mac_err_cnt; // 当日mac错误次数
-    uint8_t mac_suspend_date[3];// mac错误 挂起日期 yymmdd
-
-    uint8_t meterclr_event_recordflag; //记录标识*/ // 通过fifo传递
-    uint8_t meterclr_event_resetflag; //复位标识
-    
-    
-    uint32_t battery_used_time; //电池使用时间
-
- 
 };
 
 enum resourenc_block_name

@@ -222,9 +222,12 @@ void rtc_normal_to_tm(struct tm* time, uint8_t* p)
 
 int rollback_sequence(struct instance_t* instance, uint32_t oad,  uint16_t rollback_num)
 {
-    uint32_t sequence = 0;
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    uint32_t sequence = 0, s_index = 0;
     struct record_storage_id_info_t record_id_info; 
     struct circular_info_t circular_info = {0};
+    uint16_t SeqId = 0;
     uint8_t tmpbuf[300];
     int ret;
     ret = get_record_id_info(instance, oad, &record_id_info);
@@ -233,14 +236,21 @@ int rollback_sequence(struct instance_t* instance, uint32_t oad,  uint16_t rollb
         return -(255);
     }
 
+    SeqId = (uint16_t)record_id_info.save_index;
+
+    if ((SeqId >= MinuteFreeze1_seq) && (SeqId <= MinuteFreeze8_seq))
+    {
+        sequence = mbase_cb->minute_freeze_seq[SeqId - MinuteFreeze1_seq];
+    }
+    else
+    {
+        nd_get_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+    }
+
     circular_info.start_mark = 0;
     circular_info.end_mark = 0xffffffffU;
     circular_info.mode =   0;
-
     ret = nd_log_output(instance, record_id_info.save_index,  tmpbuf, 1, &circular_info);
-    
-
-    nd_get_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
 
     if ((circular_info.valid_num == 0))
     {
@@ -255,8 +265,20 @@ int rollback_sequence(struct instance_t* instance, uint32_t oad,  uint16_t rollb
     {
         sequence -= rollback_num;
     }
-    
-    nd_set_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+
+    if ((SeqId >= MinuteFreeze1_seq) && (SeqId <= MinuteFreeze8_seq))
+    {
+        mbase_cb->minute_freeze_seq[SeqId - MinuteFreeze1_seq] = sequence;
+
+        s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+        offsetof(struct mbase_control_block_t, minute_freeze_seq[0])) + ((SeqId - MinuteFreeze1_seq) * 4) -  offsetof(struct mbase_control_block_t, persistent_section_start);
+        nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->minute_freeze_seq[SeqId - MinuteFreeze1_seq], 4);
+    }
+    else
+    {
+        nd_set_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+    }
+
     return 1;
 }
 
