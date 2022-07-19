@@ -93,7 +93,10 @@ struct mbase_control_block_t
     uint8_t EmuErrS_duration_para;      //参数 判定延时时间  
     uint8_t RTCErrS_duration_para;      //参数 判定延时时间  
     uint8_t ZeroLineErrS_duration_para; //参数 判定延时时间  
+    
+    uint32_t report_2015mode;               //跟随上报模式字   
     uint16_t active_report_sec_limit;   //掉电 主动上报 上电时间阈值 默认3600 
+
     uint8_t factor_mode; //工厂模式
     
 
@@ -180,9 +183,7 @@ struct mbase_control_block_t
     uint8_t report_piid;                       //主动上报帧的PIID缓存 挪到协议  
     uint8_t report_random_data[12];            //主动上报 随机数 缓存 
     
-    //跟随上报2015状态字
-    uint32_t report_2015state[4];           //跟随上报状态字  chl_NUM
-    uint32_t report_2015mode;               //跟随上报模式字
+
     uint32_t report_2015state_cache;        //跟随上报状态字缓存
 
     //显示相关
@@ -265,10 +266,12 @@ struct mbase_control_block_t
     uint16_t active_report_CMDtype;             //主动上报 命令类别     需掉电保存   
     uint8_t active_report_retry_cnt[4];         //主动上报 重试次数 //R_3320
     uint32_t power_on_sec_accum;                //上电累计时间 sec  上电处理时清零，上电运行累加  
-    struct tm v_powerdown_tm;                   // 模拟停电时间  补结算测试用 
-    
+    //跟随上报2015状态字
+    uint32_t report_2015state[4];           //跟随上报状态字  chl_NUM
+ 
     
     struct tm powerdown_tm;                     // 停电时间
+    struct tm v_powerdown_tm;                   // 模拟停电时间  补结算测试用 
 
 
     dyn_persistent_end
@@ -563,7 +566,7 @@ extern void esam_698_init(uint8_t power_mode);
 extern void  v85xxp_clear_watchdog(void);
 
 #if RESET_INFO
-extern  __no_init uint32_t resetinfo_file; //复位信息 文件名   待调整
-extern  __no_init uint32_t resetinfo_line; //复位信息 行数     待调整
+extern  __no_init uint32_t resetinfo_file; //复位信息 
+extern  __no_init uint32_t resetinfo_line; //复位信息
 #endif 
 #endif

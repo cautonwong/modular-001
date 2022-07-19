@@ -573,7 +573,7 @@ int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pi
 
     memcpy(p, apdu_rx + ctx->apdu_rx_offset, 15);
       
-    rcsd_num = *(p+0); //待调整
+    rcsd_num = *(p+0); 
     if (rcsd_num)
     {
         rcsd = buf_to_uint32_msb(p + 2);//暂取第一个rcsd

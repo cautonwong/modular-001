@@ -602,8 +602,8 @@ uint16_t fifoBuf_putByte(struct fifo_t *buf, const uint8_t b)
 
     uint16_t num_bytes = fifoBuf_getFree(buf);
     //assert(num_bytes >= 1);//overflow
-    if (num_bytes < 1)
-        return 0;
+    //if (num_bytes < 1)
+      //  return 0;
 
     buff[wr] = b;
     if (++wr >= buf_size)

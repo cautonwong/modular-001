@@ -8,7 +8,7 @@ int SET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
     uint16_t oad;
     uint8_t attribute;
     uint8_t* p = buf;
-
+    uint32_t s_index = 0;
 
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -33,6 +33,11 @@ int SET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
                 p += 2;
                 mem_swap_cpy((uint8_t*)&mbase_cb->report_2015mode, p,  4); //待调整
                 p += 4;
+
+                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                offsetof(struct mbase_control_block_t, report_2015mode));
+                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->report_2015mode, 4);
+
                 EventOut_698_check(instance);
                 return (p-buf);
             }

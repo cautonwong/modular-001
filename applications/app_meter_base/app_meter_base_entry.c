@@ -60,12 +60,10 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
         instance->ac_power_off_sec_cnt++;
 
         
-        CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);//待调整
-        GPIOC->OEN &= ~(BIT4|BIT5|BIT6); 
-        GPIOC->IE &= ~(BIT4|BIT5|BIT6);
-        GPIOC->DAT |= (BIT6);
-        
-        
+        //CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);//待调整
+        //GPIOC->OEN &= ~(BIT4|BIT5|BIT6); 
+        //GPIOC->IE &= ~(BIT4|BIT5|BIT6);
+        //GPIOC->DAT |= (BIT6);
         
         
         event_LowPower_pro(instance, pipeline, &mesg); // 事件 低功耗下处理

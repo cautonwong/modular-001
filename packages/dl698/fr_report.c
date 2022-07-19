@@ -659,19 +659,9 @@ uint8_t report_3320list_update(struct instance_t* instance, uint8_t chn, uint8_t
 
         if(rptmode == 0)//上报方式为主动上报
         {
-            if(oad == 0x30110200)//    待调整
+            if(oad == 0x30110200)//
             {
-                #if 0  //    待调整 不打开
-                if(true == read(0x2806, (uint8_t *)&status_buf, 8, __NULL))
-                {
-                    memcopy((uint8_t *)&data, &status_buf[4], 4);
-                    if(data >= 3600)//上电超过1小时才会进行掉电期间的上报
-                    {
-                        active_report_status |= ACTIVE_REPORT_POWEROFF;
-                        clear_report_time_count_3011();
-                    }
-                }
-                #endif
+
             }
             else
             {
@@ -823,7 +813,7 @@ uint8_t report_3320list_confirmed_All_channel(struct instance_t* instance, uint3
 
         if (oadClass == 24)
         {
-            oad += 0x00000600;  //待调整
+            oad += 0x00000600;  // 三相 修改
 
             for (j=0; j < 4; j++)
             {
@@ -1042,12 +1032,12 @@ int active_report_3011_pro(struct instance_t* instance, struct pipeline_t* pipel
         data_len = ptr_cache - ptr - 3;
         ptr[0] = 0x10;
         ptr[1] = 0x00;
-        ptr[2] = data_len; //待调整  
+        ptr[2] = data_len;   
 
         *ptr_cache++ = 0x02;//RN+MAC
         *ptr_cache++ = 0x0c;//RN长度
 
-        if (mbase_cb->esam_chip_abnormal == EVENT_SET)//待调整 ESAM故障标志  mbase_cb-> ？
+        if (mbase_cb->esam_chip_abnormal == EVENT_SET)
         {
             data_len = 12 + 5;
             memset(ptr_cache, 0xFF, data_len);
@@ -1055,12 +1045,12 @@ int active_report_3011_pro(struct instance_t* instance, struct pipeline_t* pipel
         }
         else
         {
-            get_upreport_esam_rn_mac(instance, esam_apdu_p, data_len , ptr_cache);//待调整 esam交互 获取主动上报的随机数和mac
+            get_upreport_esam_rn_mac(instance, esam_apdu_p, data_len , ptr_cache);
             data_len = 12 + 5;
             ndv_move_buffer(ptr_cache+12, ptr_cache+13, 4);
             *(ptr_cache+12) = 0x04;       
         }
-        ndv_memcopy(mbase_cb->report_random_data, ptr_cache, 12); //拷贝随机数
+        ndv_memcopy(mbase_cb->report_random_data, ptr_cache, 12); 
         ptr_cache += data_len;
     }
 
@@ -1083,7 +1073,7 @@ uint8_t active_report_3320list_get(struct instance_t* instance, struct pipeline_
     uint32_t addr;
     uint8_t rptmode = 0;
 
-    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Report3320_OADList3); //待调整  读取模块通道的 上报列表
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Report3320_OADList3); //读取模块通道的 上报列表
     ret = nd_get_index(instance, addr, tmp_buf, 241);
 
     if (ret < 0)
@@ -1267,7 +1257,7 @@ int active_report_normal_pro(struct instance_t* instance, struct pipeline_t* pip
     *p++ = 0x02;//RN+MAC
     *p++ = 0x0c;//RN长度
 
-    if (mbase_cb->esam_chip_abnormal == EVENT_SET)//待调整 ESAM故障标志  mbase_cb-> ？
+    if (mbase_cb->esam_chip_abnormal == EVENT_SET)
     {
         encry_len = 12 + 5;
         memset(p, 0xFF, encry_len);
@@ -1275,7 +1265,7 @@ int active_report_normal_pro(struct instance_t* instance, struct pipeline_t* pip
     }
     else
     {
-        get_upreport_esam_rn_mac(instance, apdu, len_apdu , p);//待调整 esam交互 获取主动上报的随机数和mac
+        get_upreport_esam_rn_mac(instance, apdu, len_apdu , p);
         encry_len = 12 + 5;
         ndv_move_buffer(p+12, p+13, 4);
         *(p+12) = 0x04;       

@@ -371,12 +371,12 @@ int fr_infrared_auth_check(struct instance_t* instance, struct pipeline_t* pipel
 
     if (cmd == 2)
     {
-#if 0
-        if (BATTER_SUPPLY == system_state.power_state)//待调整 
+
+        if( instance->ac_power_statue != AC_POWER_ON ) //停电下不支持红外认证
         {
-            return false;
+            return -DAR_SECURITY_AUTH_FAILED;
         }
-#endif 
+
         if ((oad == 0xf1000b00) || (oad == 0xf1000c00))
         {
             return 1;
@@ -601,14 +601,14 @@ static int __security_mode_word_check(struct instance_t* instance, struct pipeli
         return 1;
     }
 
-#if 1// 待调整
-    if (ctx->channel == chl_ir_698)//红外    待调整
+
+    if (ctx->channel == chl_ir_698)//红外    
     {
         if (client_index == 1)//拒绝终端通过红外访问
         {
             return -DAR_RW_REJECT;
         }
-        if (ctrl_block->infrared_auth_timeout == 0) // 待调整
+        if (ctrl_block->infrared_auth_timeout == 0) 
         {
             return 1;
         }
@@ -618,7 +618,7 @@ static int __security_mode_word_check(struct instance_t* instance, struct pipeli
             return 1;
         }
     }
-#endif     
+  
     // 明文合闸特殊处理 
     if (oad == 0x80008300)
     {
@@ -778,7 +778,7 @@ uint8_t fr_698_current_connect_status_get(struct instance_t* instance, struct pi
 
     for (i = 0; i < (sizeof(comm_chn) / sizeof(comm_chn[0])); i++)
     {
-        if (ctrl_block->current_connect_channel[client_index] == comm_chn[i]) // 应用连接时 current_connect_channel置位 待调整
+        if (ctrl_block->current_connect_channel[client_index] == comm_chn[i]) 
         {
             break;
         }
@@ -956,7 +956,7 @@ static int fr_698_security_request_check(struct instance_t* instance, struct pip
 
 
 
-#if 1 // 挪地儿  待调整
+#if 1 // 挪地儿  
 //上电初始化
 int fr698_inital(struct instance_t* instance, struct pipeline_t* pipeline)
 {
@@ -980,7 +980,7 @@ uint32_t fr_698_current_esam_timeout_get(struct instance_t* instance, struct pip
     
     for (i = 0; i < (sizeof(comm_chn) / sizeof(comm_chn[0])); i++)
     {
-        if (ctrl_block->current_connect_channel[client_index] == comm_chn[i]) // 应用连接时 current_connect_channel置位 待调整
+        if (ctrl_block->current_connect_channel[client_index] == comm_chn[i]) 
         {
             break;
         }

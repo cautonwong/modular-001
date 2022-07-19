@@ -661,7 +661,7 @@ int get_time_status_record(struct instance_t* instance, uint32_t oad, uint8_t* b
         return -DAR_OBJECT_NOT_EXIST;
     }
 
-    if (OI == 0x3023)// 待调整
+    if (OI == 0x3023)// 三相 无功组合编程事件
     {
  
     }
@@ -684,7 +684,15 @@ int get_time_status_record(struct instance_t* instance, uint32_t oad, uint8_t* b
         *p++ = 2;
 
         //事件发生源  除特殊事件外
-        *p++ = 0; //待调整 if else
+        if(0) //有发生源的事件 // 三相
+        {
+
+        }
+        else
+        {
+            *p++ = 0;
+        }
+
        
         *p++ = TYPE_structure;
         *p++ = 2;
@@ -1213,7 +1221,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 }
                 break;
                 case 5: // 配置参数 
-                case 13:// 待调整
+                //case 13:// 三相 待调整
                 {
                     return get_struct_event_para_t(instance, id, p, &dar);
                 }
