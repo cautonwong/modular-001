@@ -5,14 +5,12 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include "time.h"
-
-//#define LOG_DEBUG_EN 1
-
-#ifdef LOG_DEBUG_EN
+#ifdef __DEBUG_LOG__
 
 enum { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL };
 void log_print(int level, const char *file, int line, const char *func, const char* fmt, ...);
-int log_set_time(struct tm *time);
+void log_print_hex(int level, const char *file, int line, const char *func, uint8_t* data, int data_len);
+void log_set_time(struct tm *time);
 
 #define log_debug(...)      log_print(LOG_DEBUG, __FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
 #define log_info(...)       log_print(LOG_INFO,  __FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)

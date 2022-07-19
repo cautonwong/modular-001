@@ -255,7 +255,7 @@ int tm_diff(struct tm* a, struct tm* b)
 
 int time_to_array_0(struct tm *time, uint8_t* buf, size_t len)
 {
-    assert(len >= 6);
+    n_assert(len >= 6);
     buf[0] = time->tm_year-100;
     buf[1] = time->tm_mon+1;
     buf[2] = time->tm_mday;
@@ -267,7 +267,7 @@ int time_to_array_0(struct tm *time, uint8_t* buf, size_t len)
 
 int array_0_to_time(struct tm* time, uint8_t* buf, size_t len)
 {
-    assert(len >= 6);
+    n_assert(len >= 6);
     time->tm_year = buf[0] + 100;
     time->tm_mon = buf[1] - 1;
     time->tm_mday = buf[2];
@@ -278,7 +278,7 @@ int array_0_to_time(struct tm* time, uint8_t* buf, size_t len)
 }
 int time_to_array_1(struct tm* time, uint8_t* buf, size_t len)
 {
-    assert(len >= 6);
+    n_assert(len >= 6);
     buf[5] = time->tm_year - 100;
     buf[4] = time->tm_mon + 1;
     buf[3] = time->tm_mday;
@@ -290,7 +290,7 @@ int time_to_array_1(struct tm* time, uint8_t* buf, size_t len)
 
 int time_to_array_2(struct tm* time, uint8_t* buf, size_t len)
 {
-    assert(len >= 7);
+    n_assert(len >= 7);
     buf[0] = time->tm_year - 100;
     buf[1] = time->tm_mon + 1;
     buf[2] = time->tm_mday;
@@ -303,7 +303,7 @@ int time_to_array_2(struct tm* time, uint8_t* buf, size_t len)
 
 int time_to_array_3(struct tm* time, uint8_t* buf, size_t len)
 {
-    assert(len >= 7);
+    n_assert(len >= 7);
     buf[6] = time->tm_year - 100;
     buf[5] = time->tm_mon + 1;
     buf[4] = time->tm_mday;

@@ -70,7 +70,7 @@ uint16_t write_esam(struct instance_t* instance, uint32_t addr, uint8_t *buf, ui
     return 0xff;
 }
 
-uint16_t esam_key_updata(struct instance_t* instance, uint8_t *buf, uint16_t len)
+int esam_key_updata(struct instance_t* instance, uint8_t *buf, uint16_t len)
 {
     int fd = 0;
     int request = esam_type_write_cmd;

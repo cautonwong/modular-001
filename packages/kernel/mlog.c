@@ -4,11 +4,11 @@
 #include "applications.h"
 #include "mlog.h"
 
-#ifdef LOG_DEBUG_EN
+#ifdef __DEBUG_LOG__
 
 struct tm logtime;//
 
-int log_set_time(struct tm *time)
+void log_set_time(struct tm *time)
 {
     memcpy(&logtime, time, sizeof(struct tm));
 }

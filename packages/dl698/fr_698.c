@@ -291,10 +291,10 @@ static void __fr_rx_698_check(struct instance_t* instance, struct pipeline_t* pi
     uint8_t tail = 0;
 
     uint16_t crc = fifoBuf_getByte(ififo) + (fifoBuf_getByte(ififo) << 8);//fcs-0
-    assert(ctx->fcs == crc);
+    n_assert(ctx->fcs == crc);
     tail = fifoBuf_getByte(ififo);
     //请排查消耗数据map长度是否正确
-    assert(tail == 0x16);
+    n_assert(tail == 0x16);
 }
 
 int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -1016,21 +1016,22 @@ int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, st
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     ctx->step = 0;
-#ifdef LOG_DEBUG_EN
+#ifdef __DEBUG_LOG__
     uint16_t val_rd = fifo->rd;
     uint16_t val_wr = fifo->wr;
 #endif 
     int r = ringbuffer_filter(fifo, __matcher_698, ctx);
     if (r > 0){
-        assert(r == ctx->min_len + 2);
+        n_assert(r == ctx->min_len + 2);
 #ifdef WIN32
         log_hex(fifo->buf_ptr + fifo->rd, fifo->wr - fifo->rd);
 #endif
         return 1;
     }
-#ifdef LOG_DEBUG_EN
+#ifdef __DEBUG_LOG__
+    uint8_t i = 0;
     log_err("rd:%d, wr:%d, step=%d, err_type=%d, r=%d.\n", val_rd, val_wr, ctx->step, ctx->err_type, r);
-    for(uint8_t i =0; i<4; i++){
+    for(i =0; i<4; i++){
         log_hex(fifo->buf_ptr+128*i, 128);
     }
     log_hex(fifo->buf_ptr+128*i, 32);

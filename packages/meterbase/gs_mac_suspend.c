@@ -12,7 +12,7 @@ uint8_t mac_suspend_pro(struct tm* time,struct instance_t* instance, struct pipe
     switch (mesg->id)
     {
         case 0xAAAA:// 待调整 //收到mac错误消息
-            assert(mesg->len == 8);
+            n_assert(mesg->len == 8);
             //ringbuffer_getU32(task->std_in, &err_flag);
         break;
     }

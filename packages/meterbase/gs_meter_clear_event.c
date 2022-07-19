@@ -15,7 +15,7 @@ int meterclr_event_judge(struct instance_t* instance, struct pipeline_t* task, s
     switch (mesg->id)
     {
         case 0xAAAA:// 待调整 //获取事件记录标识             标识需由通信触发，记录写完后清零？？？
-            assert(mesg->len == 8);
+            n_assert(mesg->len == 8);
             //ringbuffer_getU32(task->std_in, &ctrl_block->meterclr_event_recordflag);
             break;
     }
@@ -39,7 +39,7 @@ int meterclr_event_reset(struct instance_t* instance, struct pipeline_t* task, s
     switch (mesg->id)
     {
 	    case 0xAAAA:// 待调整 //获取事件复位标识             标识需由通信触发，记录写完后清零？？？
-	        assert(mesg->len == 8);
+	        n_assert(mesg->len == 8);
 	        //ringbuffer_getU32(task->std_in, &reset_flag);
 	        break;
     }

@@ -33,7 +33,7 @@ int set_pipeline_context(struct instance_t* instance, struct pipeline_t *pipelin
     pipeline->ctx = ctx;
     return 0;
 }
-
+#if 0
 struct pipeline_t* pipeline_create(struct instance_t* instance, pid_t pid, char *name,
     void (*entry)(void *ctx), void* ctx)
 {
@@ -43,3 +43,4 @@ struct pipeline_t* pipeline_create(struct instance_t* instance, pid_t pid, char 
     pipeline->name = name;
     return pipeline;
 }
+#endif
