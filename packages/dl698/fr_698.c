@@ -719,7 +719,8 @@ int fr_check_service_and_choice(struct instance_t* instance, struct pipeline_t* 
              ((ACTION_Request == ctx->service) && (ctx->choice == 1)))
     {
         mesg->oad_n = 1;
-    }else if((CONNECT_Request == ctx->service) || (RELEASE_Request == ctx->service) ||
+    }else if(((GET_Request == ctx->service) && (ctx->choice ==5))||
+             (CONNECT_Request == ctx->service) || (RELEASE_Request == ctx->service) ||
              (REPORT_Response == ctx->service) || (SECURITY_Request == ctx->service)) {
         mesg->oad_n = 0;
     }else{

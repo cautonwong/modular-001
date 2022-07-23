@@ -121,17 +121,24 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
 
     while (oad_n-- > 0)
     {
-        mesg->id = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
-        memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, 4);
-        cache->wr += 4;
-        ctx->apdu_rx_offset += 4;
+        if (fifoBuf_getFree(cache) > 2){
+            mesg->id = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
+            memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, 4);
+            cache->wr += 4;
+            ctx->apdu_rx_offset += 4;
 
-        if (fr_get_one_object(instance, pipeline, mesg) < 0)
-        {
-            return DAR_OTHERS_ERROR;
+            if (fr_get_one_object(instance, pipeline, mesg) < 0)
+            {
+                return DAR_OTHERS_ERROR;
+            }
+            cache->wr += n;
+#if 0
+            cache->wr += 1200;            
+            ctx->next_index = 0;
+#endif
         }
-        cache->wr += n;
     }
+
 
     return 1;
 }
@@ -145,20 +152,16 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
     struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t* p = cache->buf_ptr;
-//    uint16_t n = 0;
     uint16_t offset = 0;
     uint8_t Selector = 0;
-//    uint8_t last_no = 0;
     uint8_t oad_n = mesg->oad_n;
     uint32_t rcsd_list[(REQ_RCSD_MAXNUM+1)]; //个数 + n个OAD  //[0][]协议筛选  [1][]事件全关联对象
     struct rsd_info_t rsd_info;
-    
     int ret, rsd_ret, rcsd_ret;
-//    uint32_t i;
         
     while (oad_n-- > 0)
     {
-        //if (fifoBuf_getFree(cache) < 2)
+        if (fifoBuf_getFree(cache) > 2)
         {
             //OAD
             mesg->id = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
@@ -251,6 +254,10 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
                 {
                     p[offset] = 1;// 有记录
                     cache->wr += ret;
+                    #if 0
+                    cache->wr += 1200;                   
+                    ctx->next_index = 1;
+                    #endif
                 }
             }            
         }
@@ -259,8 +266,29 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
     return 1;
 }
 
+uint8_t cnt = 0;
+
 static int __fr_handle_get_next_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
+    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct fifo_t* cache = ctx->apdu;
+    
+    // 恢复上一个读取上下文信息
+    
+    //调用api获取内容
+    //    return record_data_package(instance, oad, buf, rsd_info, rcsd_info,  ctx);
+    //  ctx->next_que = 1; 几条
+    //判断是否大于1800
+  
+#if 0
+    cnt++;
+    ctx->next_index = 1;
+    if(cnt>10){
+        ctx->next_last_frm = 1;
+    }
+    
+    cache->wr = 600;
+#endif
     return 1;
 }
 
@@ -277,7 +305,10 @@ static int __fr_handle_get_simplify_record_request(struct instance_t* instance, 
 int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t data[16] = {0};
+    uint8_t next_choice = 0; 
+    
     if(GET_Request != ctx->service){
         return 0;
     }
@@ -287,13 +318,23 @@ int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeli
         case GetRequestNormal:
         case GetRequestNormalList:
             __fr_handle_get_normal_request(instance, pipeline, mesg);
+            next_choice = 1;
+            ctx->next_last_frm = 0;
+            ctx->next_index2_frm = 0;
+            cnt = 0;
             break;   
         case GetRequestRecord:  
         case GetRequestRecordList:
             __fr_handle_get_record_request(instance, pipeline, mesg);
+            next_choice = 2;
+            ctx->next_last_frm = 0;
+            ctx->next_index2_frm = 0;
+            cnt = 0;
             break;
         case GetRequestNext:
             __fr_handle_get_next_request(instance, pipeline, mesg);
+            ctx->next_index2_frm++;
+            next_choice = ctx->next_choice;
             break;
         case GetRequestMD5:
             __fr_handle_get_md5_request(instance, pipeline, mesg);
@@ -305,6 +346,21 @@ int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeli
             return -2;
             break;
     }
-
+        
+    if(ctx->next_index){
+        ctx->next_index1_frm=0;
+        ctx->next_choice = next_choice;
+        ctx->next_que = 1;
+        if(0 == ctx->next_choice){
+            ctx->next_que = 0;
+        }        
+        data[0] = 0x85;
+        data[1] = 0x05;
+        data[2] = cache->buf_ptr[2];
+        memcpy(data + 3, &ctx->next_last_frm, 5);
+        memcpy(ctx->apdu->buf_ptr, data+5, 3);
+        fifoBuf_update_rd(ctx->apdu, 5, 0);
+        memcpy(ctx->apdu->buf_ptr + ctx->apdu->rd, data, 5);
+    }
     return 1;
 }

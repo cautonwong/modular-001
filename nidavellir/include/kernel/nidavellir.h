@@ -213,14 +213,15 @@ struct context_serial_t
 struct context_645_t
 {
     //作为从站方用的临时状态
-    uint8_t addr_n;
+    uint16_t addr_n;
     uint8_t addr[6];
     uint8_t SA;
     uint8_t ctrl;//接收到的控制字
     uint8_t step;
     uint8_t cs;
+    uint8_t ver;
     uint16_t len;//to-be-deleted
-    uint8_t min_len;//发送时和接收时的报文总长度
+    uint16_t min_len;//发送时和接收时的报文总长度
     uint32_t err_n;
     int32_t fr_err;
     //作为主站方时用的临时状态
@@ -233,7 +234,7 @@ struct context_645_t
     
     struct fifo_t apdu;
     
-    uint8_t apdu_tx[256]; 
+    uint8_t apdu_tx[1200]; 
     
     uint8_t apdu_d_rx[128]; 
     uint16_t apdu_rx_len;
@@ -291,6 +292,14 @@ struct context_698_t
     uint16_t segment;
     uint16_t last_segment;
     uint16_t segment_no;
+      
+    uint8_t next_index; 
+    uint8_t next_last_frm;
+    uint8_t next_index1_frm;
+    uint8_t next_index2_frm;
+    uint8_t next_choice; 
+    uint8_t next_que; 
+    
     
     uint8_t timeTag_valid;
     uint8_t timeTag[11]; //date_time_s + TI
@@ -348,7 +357,7 @@ struct tasklet_t
     struct tm start;
 };
 
-#define upgrade_setsize    16
+#define upgrade_setsize    40
 #define tasklet_setsize    1
 #define bit_set(n, p)  ((p)[(n)>>3] |=  (1 << ((n) & 7)))
 #define bit_clr(n, p)  ((p)[(n)>>3] &= ~(1 << ((n) & 7)))
@@ -531,11 +540,21 @@ struct log_item_t
 
 struct upgrade_info_t
 {
-    pid_t pid;//在升级的是哪个pl
-    //证书信息  0x07fb02ff
-    uint8_t info;//升级状态字  0x07fb0301
-    uint16_t tm_remained;//升级使能剩余时间 0x07fb0302
-    uint8_t bits[upgrade_setsize];//升级程序位图信息 0x07fb0303
+    uint16_t magic_num;
+    uint16_t file_verification;
+    uint16_t frm_size;
+    uint16_t frm_num;    
+    uint32_t file_size; 
+   
+    uint16_t cur_verification;    
+    uint16_t frm_no_last;    
+    uint32_t flash_addr;
+    uint8_t type; 
+    uint8_t status;            //升级状态字    
+    uint8_t remained_1;
+    uint8_t remained_2;
+
+    uint8_t  bits[upgrade_setsize];//升级程序位图信息 0x07fb0303
 };
 
 #pragma pack(4)

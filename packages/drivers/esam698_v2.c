@@ -7,8 +7,6 @@
 #include "io_type.h"
 
 
-#if 0
-
 
 #define   ESAM698_MAX_BUF_SIZE    2000
 
@@ -217,5 +215,3 @@ int openM_ioctl(int fd, int request, void *param)
     }
     return -1;
 }
-
-#endif

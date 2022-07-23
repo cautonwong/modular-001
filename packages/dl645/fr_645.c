@@ -53,10 +53,36 @@ int __matcher_645(void* pctx, uint8_t* b)
     case 2:
         ctx->ctrl = byte;
         ctx->cs += byte;
-        //todo  ���˿�����
-        ctx->step = 3;
+        if(ctx->ctrl == 0xfa){
+            ctx->step = 3;
+            ctx->ver = 1;
+        }
+        else {
+            ctx->step = 5;    
+            ctx->ver = 0;
+        }
         return 0;
     case 3:
+        ctx->min_len = 13;
+        ctx->len = byte;
+        ctx->cs += byte;
+        ctx->step = 4;
+        return 0;
+    case 4:
+        if(ctx->ctrl == 0xfa){
+            ctx->len += (byte<<8);
+            ctx->min_len = ctx->len + 13;          
+            if (ctx->len > 1024)
+            {
+                ctx->step = 0;
+                return -1;
+            }
+        }
+        ctx->cs += byte;
+        ctx->addr_n = 0;
+        ctx->step = 6;
+        return 0;
+    case 5:
         if (byte > data_max_len)
         {
             ctx->step = 0;
@@ -66,28 +92,28 @@ int __matcher_645(void* pctx, uint8_t* b)
         ctx->min_len = byte + 12;
         //if (ctx->min_len > fifoBuf_getUsed(pipeline->in_queue))
         {
-//            return 2;//���Ȳ���  �´�����
+    //            return 2;//���Ȳ���  �´�����
         }
         ctx->cs += byte;
         ctx->addr_n = 0;
-        ctx->step = 4;
+        ctx->step = 6;
         return 0;
-    case 4:
-        if (ctx->addr_n == ctx->min_len - 12)
+    case 6:
+        if (ctx->addr_n == ctx->len)
         {
             if (ctx->cs != byte)
             {
                 ctx->step = 0;
                 return -1;
             }
-            ctx->step = 6;
+            ctx->step = 7;
             return 0;
         }
         ctx->cs += byte;
         
         ctx->addr_n++;
         return 0;
-    case 6:
+    case 7:
         if (0x16 != byte)
         {
             ctx->step = 0;
@@ -558,8 +584,12 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     
     ctx->apdu_rx_offset = 0;
     ctx->apdu_rx_len = ctx->len;
-    fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len+10);
-    fifoBuf_init(&ctx->apdu, ctx->apdu_tx, 256);
+    if(ctx->ver)    
+        fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len+11);
+    else
+        fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len+10);
+    
+    fifoBuf_init(&ctx->apdu, ctx->apdu_tx, 1200);
        
     for(int i = 0; i < ctx->apdu_rx_len; i++){
         apdu_rx[i+10] = apdu_rx[i+10] - 0x33;
@@ -592,6 +622,9 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
             break;
         case 0x1F:
             ERRBYTE = Comm_Other(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
+            break;
+        case 0xfa:
+            ERRBYTE = upgrade_file_handle(instance, apdu_rx+11,  ctx->apdu_rx_len, ctx->apdu_tx, (uint8_t*)&tx_len);
             break;
         default:
             break;

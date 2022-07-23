@@ -1564,7 +1564,8 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
 
         if((judge_size) > 1800) //待调整
         {
-            return -DAR_BUFFER_OVERFLOW;
+            p_ctx->next_index = 1;
+            return len;//-DAR_BUFFER_OVERFLOW;
         }
         //-----------
 
