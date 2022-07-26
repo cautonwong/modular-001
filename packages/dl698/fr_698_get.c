@@ -286,7 +286,7 @@ static int __fr_handle_get_next_request(struct instance_t* instance, struct pipe
     if(cnt>10){
         ctx->next_last_frm = 1;
     }
-    
+    //剩余记录为0，清 ctx->next_index = 0;
     cache->wr = 600;
 #endif
     return 1;
@@ -317,6 +317,7 @@ int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeli
     {
         case GetRequestNormal:
         case GetRequestNormalList:
+            ctx->next_index = 0;
             __fr_handle_get_normal_request(instance, pipeline, mesg);
             next_choice = 1;
             ctx->next_last_frm = 0;
@@ -325,6 +326,7 @@ int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeli
             break;   
         case GetRequestRecord:  
         case GetRequestRecordList:
+            ctx->next_index = 0;
             __fr_handle_get_record_request(instance, pipeline, mesg);
             next_choice = 2;
             ctx->next_last_frm = 0;
@@ -337,9 +339,11 @@ int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeli
             next_choice = ctx->next_choice;
             break;
         case GetRequestMD5:
+            ctx->next_index = 0;
             __fr_handle_get_md5_request(instance, pipeline, mesg);
             break;
         case GetRequestSimplifyRecord:
+            ctx->next_index = 0;
             __fr_handle_get_simplify_record_request(instance, pipeline, mesg);
             break;
         default:
@@ -347,7 +351,7 @@ int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeli
             break;
     }
         
-    if(ctx->next_index){
+    if(1 == ctx->next_index){
         ctx->next_index1_frm=0;
         ctx->next_choice = next_choice;
         ctx->next_que = 1;
