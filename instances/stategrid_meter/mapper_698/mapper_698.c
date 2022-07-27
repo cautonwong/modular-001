@@ -243,14 +243,14 @@ const struct record_item_t  record_item[] =
 // 计算冻结空间大小处同步修改
 const struct record_item_t  record_item_1[] =
 {
-    { MinuteFreeze1, 0,    830 * 4096,    35040 },// 待调整
-    { MinuteFreeze2, 0,    830 * 4096,    35040 },// 待调整
-    { MinuteFreeze3, 0,    830 * 4096,    35040 },// 待调整
-    { MinuteFreeze4, 0,    830 * 4096,    35040 },// 待调整
-    { MinuteFreeze5, 0,    830 * 4096,    35040 },// 待调整
-    { MinuteFreeze6, 0,    830 * 4096,    35040 },// 待调整
-    { MinuteFreeze7, 0,    830 * 4096,    35040 },// 待调整
-    { MinuteFreeze8, 0,    830 * 4096,    35040 },// 待调整
+    { MinuteFreeze1, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 待调整
+    { MinuteFreeze2, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 待调整
+    { MinuteFreeze3, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 待调整
+    { MinuteFreeze4, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 待调整
+    { MinuteFreeze5, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 待调整
+    { MinuteFreeze6, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 待调整
+    { MinuteFreeze7, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 待调整
+    { MinuteFreeze8, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 待调整
 };
 
 
@@ -258,11 +258,9 @@ const struct record_item_t  record_item_1[] =
 // 计算冻结空间大小处同步修改
 const struct record_item_t  record_item_2[] =
 {
-    { HourFreeze ,          0,                         4 * 4096,        254 },//小时冻结
-
-    { DayFreeze  ,          0,                      27 * 4096,          365 },//日冻结
-    
-    { MonthFreeze,          0,                         4 * 4096,         24 },//月冻结
+    { HourFreeze ,          0,                          HourFreeze_SECTION_SIZE * 4096,         254 },//小时冻结
+    { DayFreeze  ,          0,                          DayFreeze_SECTION_SIZE * 4096,          365 },//日冻结
+    { MonthFreeze,          0,                          MonthFreeze_SECTION_SIZE * 4096,         24 },//月冻结
 
 };
 

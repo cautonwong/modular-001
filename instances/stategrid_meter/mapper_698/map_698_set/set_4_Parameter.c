@@ -536,7 +536,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
 
                 send_event_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
 
-                record_rollback_after_set_time(instance);
+                record_rollback_after_set_time(instance, 0);
                 mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
                 mbase_cb->RTCErrS_status = 0;
 

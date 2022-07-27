@@ -1221,7 +1221,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 }
                 break;
                 case 5: // 配置参数 
-                //case 13:// 三相 待调整
+                //case 13:// 三相 
                 {
                     return get_struct_event_para_t(instance, id, p, &dar);
                 }

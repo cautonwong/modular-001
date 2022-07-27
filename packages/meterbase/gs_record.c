@@ -533,8 +533,7 @@ int meter_clr(struct instance_t* instance)
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
-    //电量清零 待添加
-    Energy_clr(instance);
+    Energy_clr(instance);  
     freeze_clr(instance); //冻结清零
     event_clr(instance);  // 事件清零
     clr_record(instance, 0x30150200); //事件清零事件 清零
@@ -544,7 +543,7 @@ int meter_clr(struct instance_t* instance)
         clr_record(instance, 0x30130200);
     }
 
-    //其他清零  待添加
+    //其他清零    待添加
     mbase_cb->sta &= ~F_RemoteRelayOn;  //清除控制命令状态,保留保电状态
 
 #if RESET_INFO    
@@ -939,7 +938,7 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
     uint8_t* p, i, scheme_valid = true;
     int16_t single_len = 0;
     uint32_t obj;
-    uint8_t tmpbuf[200];//单个关联对象 最大长度
+    uint8_t tmpbuf[200];//单个关联对象 最大长度 //待调整
     uint16_t RecordID =  (uint16_t)record_id_info->save_index;
     struct circular_info_t circular_info = {0};
     uint8_t scheme_invalid_wr_flag = true;

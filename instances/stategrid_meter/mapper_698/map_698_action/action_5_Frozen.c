@@ -126,7 +126,7 @@ int freeze_add_one_capture(struct instance_t* instance, uint32_t oad, uint8_t* b
     uint16_to_buf_msb(depth, depth_buf + offset);
 
 #if 1
-    ret = cal_freeze_size_sectors(instance,tempbuf, depth_buf, oad);
+    ret = cal_record_size_sectors(instance,tempbuf, depth_buf, oad);
     if (ret <= 0)
     {
         return -DAR_BUFFER_OVERFLOW;
@@ -247,7 +247,7 @@ int freeze_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t
     tempbuf[0] -= 1;
 
 #if 1
-    ret = cal_freeze_size_sectors(instance,tempbuf, depth_buf, oad);
+    ret = cal_record_size_sectors(instance,tempbuf, depth_buf, oad);
     if (ret <= 0)
     {
         return -DAR_BUFFER_OVERFLOW;
@@ -402,7 +402,7 @@ int freeze_add_multi_capture(struct instance_t* instance, uint32_t oad, uint8_t*
     }
 
 #if 1
-    ret = cal_freeze_size_sectors(instance,tempbuf, depth_buf, oad);
+    ret = cal_record_size_sectors(instance,tempbuf, depth_buf, oad);
     if (ret <= 0)
     {
         return -DAR_BUFFER_OVERFLOW;

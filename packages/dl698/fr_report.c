@@ -403,11 +403,17 @@ void report_3320list_2015state_clear(struct instance_t* instance)
     
     for (i = 0; i< 4; i++)
     {
-        mbase_cb->report_2015state[i] = 0;      //待调整    //调用存e2p
+        mbase_cb->report_2015state[i] = 0;      
+
         buf[0] = 0;
         addr = get_3320_save_addr(instance, i);
         nd_set_index(instance, addr, buf, 1);
     }
+    //跟随上报状态字 存e2p
+    addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+    offsetof(struct mbase_control_block_t, report_2015state[0])) -  offsetof(struct mbase_control_block_t, persistent_section_start);
+    nd_set_offset(instance, addr, (uint8_t*)&mbase_cb->report_2015state[0], 4*4);
+
 
     EventOut_698_check(instance);
 }

@@ -1,18 +1,19 @@
 #include "nidavellir.h"
 #include "applications.h"
 #include "gs_record.h"
+#include "fr_698.h"
 
-//extern void set_recordflag(struct pipeline_t* task, uint16_t RecordId);
-
-//计算分钟、小时、日、月冻结 总长度是否超预留空间， 修改的关联对象时调用，  入参关联对象、深度，  
-//并且计算保存分钟冻结0-7  8个方案中每个方案的空间大小偏移(扇区)
-int cal_freeze_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, uint8_t *depth_ptr, uint32_t oad)
+//计算记录型配置关联对象时  总长度是否超预留空间，  入参关联对象、深度，  事件无深度，需传Null.
+//并且计算保存分钟冻结8个方案中每个方案的空间大小偏移(扇区)
+int cal_record_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, uint8_t *depth_ptr, uint32_t oad)
 {
     uint8_t scheme = 0,obj_num, scheme_num, tmpbuf[220] = {0};
-    uint16_t i, k, depth, sector = 0, sectorMax = 0, t_num = 0;
+    uint16_t i, k,  t_num = 0 , recordID = 0;
     uint16_t sector_size[9];
     int16_t single_len = 0;
-    uint32_t offset = 0, obj , addr_index;
+    uint32_t offset = 0, obj , addr_index = 0, sectorMax = 0, sector = 0,  depth = 0;
+    struct record_storage_id_info_t record_id_info; 
+    uint8_t device_type=0; // 0: e2p,    1: flash 
     int ret;
     
     obj_num = capture_ptr[0];
@@ -20,26 +21,71 @@ int cal_freeze_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, u
 
     scheme_num = 1;
     sectorMax = 0;
-    switch (oad & 0xFFFF0000)
+    device_type=0;
+
+    ret = get_record_id_info(instance, oad, &record_id_info);
+    if (ret < 0)
     {
-        case 0x50000000: //  瞬时
-            sectorMax = 2; //待调整
-            break;
-        case 0x50020000:// 分钟
-            sectorMax = 830; //待调整
-            scheme_num = 8;
-            break;
-        case 0x50030000: // 小时
-        case 0x50060000: // 月
-            sectorMax = 5;  //待调整
-            break;
-        case 0x50040000: // 日
-            sectorMax = 27; //待调整
-            break;
-    default:
-        return 1;  //其他
-        break;
+        return -1;
     }
+
+    recordID = (uint16_t)record_id_info.save_index;
+
+
+    
+    //获取冻结或事件的记录空间sectorMax  
+    if (get_OAD_Class(oad) == 3) // event   
+    {
+        ret = supply_event_info(instance, recordID, &addr_index, &sectorMax, &depth);
+        if (ret < 0)
+        {
+            return -1;
+        }
+        
+    }
+    else if (get_OAD_Class(oad) == 5)//freeze
+    {
+        switch (oad & 0xFFFF0000)
+        {
+            case 0x50020000:// 分钟  
+                //supply_event_flash_1_info(instance, recordID, &addr_index, &sectorMax, &depth);
+                //if (ret < 0)
+                //{
+                //    return -1;
+                //}
+                sectorMax = MinuteFreeze_SECTION_SIZE * 4096; 
+                scheme_num = 8;
+                device_type=1;
+                break;
+            case 0x50030000: // 小时
+            case 0x50060000: // 月
+            case 0x50040000: // 日
+                supply_event_flash_2_info(instance, recordID, &addr_index, &sectorMax, &depth);
+                if (ret < 0)
+                {
+                    return -1;
+                }
+                device_type=1;
+                break;
+        default:
+            ret = supply_event_info(instance, recordID, &addr_index, &sectorMax, &depth);
+            if (ret < 0)
+            {
+                return -1;
+            }
+            break;
+        }
+    }
+    else
+    {
+        return -1;
+    }
+
+    if (device_type == 1)
+    {
+        sectorMax /= 4096; //扇区数
+    }
+    
 
     for (i = 0; i < scheme_num; i++)
     {
@@ -47,7 +93,7 @@ int cal_freeze_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, u
 
         for (k = 0; k < obj_num; k++)
         {
-            obj = buf_to_uint32_msb(&capture_ptr[4*k+1]);//待调整 
+            obj = buf_to_uint32_msb(&capture_ptr[4*k+1]);
 
             scheme = (uint8_t)((obj >> 13) & 0x07); //方案号
 
@@ -69,17 +115,31 @@ int cal_freeze_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, u
                 offset += single_len;
             }
         }
-        
-        sector_size[i] = sector;
 
-        depth = buf_to_uint16_msb(&depth_ptr[2 * i]);
-        if (depth != 0)
+
+        if (depth_ptr) //深度  有入参  用入参，无入参用
         {
-            t_num = 0x1000 / offset; //一个扇区多少条
-            t_num = (depth % t_num) ? (depth / t_num + 1) : (depth / t_num);
-            sector += 0x01 + t_num; //预留1个扇区
+            depth = buf_to_uint16_msb(&depth_ptr[2 * i]);
         }
 
+        if (device_type == 1) // 存flash
+        {
+            sector_size[i] = sector;
+            if (depth != 0)
+            {
+                t_num = 0x1000 / offset; //一个扇区多少条
+                t_num = (depth % t_num) ? (depth / t_num + 1) : (depth / t_num);
+                sector += 0x01 + t_num; //预留1个扇区
+                
+            }
+        }
+        else // 存e2p   byte num
+        {
+            if (depth != 0)
+            {
+                sector = offset * depth + 1; //预留1个字节
+            }
+        }
     }
     
     sector_size[i] = sector;
@@ -134,7 +194,7 @@ int freez_size_sectors_init(struct instance_t* instance, uint32_t oad)
         return -1;
     }
 
-    ret = cal_freeze_size_sectors(instance, tempbuf, depth, oad);
+    ret = cal_record_size_sectors(instance, tempbuf, depth, oad);
     if (ret < 0)
     {
         return -1;
@@ -236,7 +296,7 @@ int rollback_sequence(struct instance_t* instance, uint32_t oad,  uint16_t rollb
         return -(255);
     }
 
-    SeqId = (uint16_t)record_id_info.save_index;
+    SeqId = (uint16_t)record_id_info.sequence_index;
 
     if ((SeqId >= MinuteFreeze1_seq) && (SeqId <= MinuteFreeze8_seq))
     {
@@ -284,8 +344,12 @@ int rollback_sequence(struct instance_t* instance, uint32_t oad,  uint16_t rollb
 
 
 //设置或修改时间后调用  冻结回退处理
-int record_rollback_after_set_time(struct instance_t* instance)
+//finish_check: 5A - 检查是否有未完成的回滚操作。 
+//              其他- 回滚操作
+int record_rollback_after_set_time(struct instance_t* instance, uint8_t finish_check)
 {
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
     struct record_storage_id_info_t record_id_info; 
     uint8_t i, num = 0, buffer[10] = { 0xFF };
 
@@ -296,28 +360,56 @@ int record_rollback_after_set_time(struct instance_t* instance)
     uint32_t TabOAD[11] = { 0x50020200, 0x50022200, 0x50024200, 0x50026200, 0x50028200, 0x5002A200, 0x5002C200, 0x5002E200, 0x50030200, 0x50040200, 0x50060200, };
 
 
+    if (finish_check == 0x5A)
+    {
+        if (mbase_cb->record_rollback_flag != 0x5A)
+        {
+            return 1;
+        }
+    }
+
     //时间合法性判断 待调整
     addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
-    nd_get_index(instance, addr, buffer, 7);
+    ret = nd_get_index(instance, addr, buffer, 7);
+    if (ret < 0)
+    {
+        return -1;
+    }
     //rtc_normal_to_tm(&t_before, buffer);
     //last_timesec = rtc_mktime(&t_before);
     last_timesec = dt_buf_to_second(buffer);
 
     //时间合法性判断 待调整
     addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
-    nd_get_index(instance, addr, buffer, 7);
+    ret = nd_get_index(instance, addr, buffer, 7);
+    if (ret < 0)
+    {
+        return -1;
+    }
     //rtc_normal_to_tm(&t_after, buffer);
     //curr_timesec = rtc_mktime(&t_after);
     curr_timesec = dt_buf_to_second(buffer);
 
     if (curr_timesec < last_timesec)
     {
-        // 保存回退相关数据和标识  待调整
-
+        // 非检查 情况下 保存回退标志 
+        if (finish_check != 0x5A)
+        {
+            mbase_cb->record_rollback_flag = 0x5A;
+            
+            addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+            offsetof(struct mbase_control_block_t, record_rollback_flag)) -  offsetof(struct mbase_control_block_t, persistent_section_start);
+            nd_set_offset(instance, addr, (uint8_t*)&mbase_cb->record_rollback_flag, 4);
+        }
+        
         num = 0;
         for (i = 0; i < (sizeof(TabOAD) / sizeof(TabOAD[0])); i++)
         {
-            //掉电退出 待调整
+            //掉电退出
+            if(true == ac_power_off_monitor())
+            {
+                return 1;
+            }
             mcu_clear_watchdog();
             ret = get_record_id_info(instance, TabOAD[i], &record_id_info);
             if (ret <= 0)
@@ -330,31 +422,23 @@ int record_rollback_after_set_time(struct instance_t* instance)
             {
                 rollback_sequence(instance, TabOAD[i], rollback_seq_num[i]);
                 num++;
-                //需要分每个id单独记录
             }
         }
 
-        if (num == (sizeof(TabOAD) / sizeof(TabOAD[0])))
+        if (i >= (sizeof(TabOAD) / sizeof(TabOAD[0])))
         {
-            //清除回退相关数据和标识  待调整
+            //清除回退标志
+            mbase_cb->record_rollback_flag = 0;
+            
+            addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+            offsetof(struct mbase_control_block_t, record_rollback_flag)) -  offsetof(struct mbase_control_block_t, persistent_section_start);
+            nd_set_offset(instance, addr, (uint8_t*)&mbase_cb->record_rollback_flag, 4);
         }
     }
 
     return 1;
 }
-//设置或修改时间后 因停电或其他情况导致 回退未完成，需要补处理    待调整 未调用
-int record_rollback_finish_check(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
-{
-    //struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
-    int ret = 1;
-    //uint32_t TabOAD[] = { 0x50020200, 0x50022200, 0x50024200, 0x50026200, 0x50028200, 0x5002A200, 0x5002C200, 0x5002E200, 0x50030200, 0x50040200, 0x50060200, };
-
-    //读取回退是否完成标志
-  
-
-    return ret;
-}
 
 int minute_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
@@ -364,11 +448,14 @@ int minute_freeze_judge(struct instance_t* instance, struct pipeline_t* task, st
     struct tm record_time;
     uint16_t PeriodID = MinuteFreeze_period;
     uint16_t FlagID = MinuteFreeze1;
+    struct message_t mesg_tmp;
 
     if (instance->time.tm_sec != 0)
     {
         return -1;
     }
+    memset((uint8_t *)&mesg_tmp, 0, sizeof(struct message_t));
+    
     // 周期
     index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
     nd_get_index(instance, index, &period[0], sizeof(period));
@@ -377,7 +464,9 @@ int minute_freeze_judge(struct instance_t* instance, struct pipeline_t* task, st
     {
         if (1 == freeze_judge(instance, &period[3 * i], 1, &record_time))
         {
-            send_recordflag_mesg(instance, task,  (FlagID + i), NULL);
+            //send_recordflag_mesg(instance, task,  (FlagID + i), NULL);
+            mesg_tmp.id = FlagID + i;
+            recv_record_process(instance, NULL, &mesg_tmp, NULL);
         }
     }
     return 1;
@@ -391,18 +480,24 @@ int hour_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
     struct tm record_time;
     uint16_t PeriodID = HourFreeze_period;
     uint16_t FlagID = HourFreeze;
+    struct message_t mesg_tmp;
+
+
 
     if ((instance->time.tm_sec != 0) || (instance->time.tm_min != 0))
     {
         return -1;
     }
+    memset((uint8_t *)&mesg_tmp, 0, sizeof(struct message_t));
     // 周期
     index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
     nd_get_index(instance, index, &period[0], sizeof(period));
 
     if (1 == freeze_judge(instance, &period[0], 60, &record_time))
     {
-        send_recordflag_mesg(instance, task,  FlagID, NULL);
+        //send_recordflag_mesg(instance, task,  FlagID, NULL);
+        mesg_tmp.id = FlagID;
+        recv_record_process(instance, NULL, &mesg_tmp, NULL);
     }
 
     return 1;
@@ -416,11 +511,13 @@ int day_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struc
     struct tm record_time;
     uint16_t PeriodID = DayFreeze_period;
     uint16_t FlagID = DayFreeze;
+    struct message_t mesg_tmp;
 
     if ((instance->time.tm_sec != 0) || (instance->time.tm_min != 0) || (instance->time.tm_hour != 0))
     {
         return -1;
     }
+    memset((uint8_t *)&mesg_tmp, 0, sizeof(struct message_t));
 
     //读最近一次冻结时间 比较当前时间记录是否已存在   待添加
     //待添加
@@ -441,8 +538,10 @@ int day_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struc
 
         index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastDayFreezTime);
         nd_set_index(instance, index, &tmp[0], 5);
-        
-        send_recordflag_mesg(instance, task,  FlagID, NULL);
+
+        //send_recordflag_mesg(instance, task,  FlagID, NULL);
+        mesg_tmp.id = FlagID;
+        recv_record_process(instance, NULL, &mesg_tmp, NULL);
     }
 
     return 1;
@@ -453,11 +552,13 @@ int month_freeze_judge(struct instance_t* instance, struct pipeline_t* task, str
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint16_t FlagID = MonthFreeze;
+    struct message_t mesg_tmp;
 
     if ((instance->time.tm_sec != 0) || (instance->time.tm_min != 0) || (instance->time.tm_hour != 0) || (instance->time.tm_mday != 1))
     {
         return -1;
     }
+    memset((uint8_t *)&mesg_tmp, 0, sizeof(struct message_t));
 
     //读最近一次冻结时间 比较当前时间记录是否已存在   待添加
     //待添加
@@ -468,7 +569,9 @@ int month_freeze_judge(struct instance_t* instance, struct pipeline_t* task, str
 
     //if (1 == freeze_judge(instance, &period[0], 60 * 24, &record_time))
     {
-        send_recordflag_mesg(instance, task,  FlagID, NULL);
+        //send_recordflag_mesg(instance, task,  FlagID, NULL);
+        mesg_tmp.id = FlagID;
+        recv_record_process(instance, NULL, &mesg_tmp, NULL);
     }
 
     return 1;
@@ -564,7 +667,7 @@ int day_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task
             last_time.tm_sec = 0;
 
 
-            //日冻结数据补数据 相关处理               待调整
+            //日冻结数据补数据 相关处理 
 
 
             // 刷新最近一次时间
@@ -747,23 +850,24 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
         uint16_t FlagID = BillFreeze;   
         uint8_t  i;
         uint32_t cur_hour, last_hour, bill_hour;
-
+        int ret;
+        struct message_t mesg_tmp;
     
         if ((instance->time.tm_sec != 0) || (instance->time.tm_min != 0))
         {
             return -1;
         }
+        memset((uint8_t *)&mesg_tmp, 0, sizeof(struct message_t));
 
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillTimeID);
-        nd_get_index(instance, s_index, &tmp[0], 5);
+        ret = nd_get_index(instance, s_index, &tmp[0], 5);
+
         last_time.tm_sec  = tmp[0];
         last_time.tm_min  = tmp[1];
         last_time.tm_hour = tmp[2];
         last_time.tm_mday = tmp[3];
         last_time.tm_mon  = tmp[4] - 1;
         last_time.tm_year = tmp[5] + 2000 - 1900;
-        
-        //上次结算时间错，不结算 待调整
         
         cur_hour = rtc_mktime(&instance->time);
         cur_hour = cur_hour / 60 /60;
@@ -822,8 +926,9 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
                 nd_set_index(instance, s_index, &tmp[0], 5);
    
                 ndv_memcopy((uint8_t *)&record_time, (uint8_t *)&instance->time, sizeof(struct tm));   
-                send_recordflag_mesg(instance, task,  FlagID, NULL);
-                
+                //send_recordflag_mesg(instance, task,  FlagID, NULL);
+                mesg_tmp.id = FlagID;
+                recv_record_process(instance, NULL, &mesg_tmp, NULL);
                 last_hour = bill_hour;
             }
         }
@@ -865,13 +970,15 @@ int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct mess
     else
 #endif    
     {
+    
+        record_rollback_after_set_time(instance, 0x5A);//冻结回滚检查
    
-        minute_freeze_judge(instance, task, mesg);
-        hour_freeze_judge(instance, task, mesg);
-        day_freeze_judge(instance, task, mesg);
-        month_freeze_judge(instance, task, mesg);  
+        minute_freeze_judge(instance, task, mesg); //分钟冻结
+        hour_freeze_judge(instance, task, mesg);   //小时冻结
+        day_freeze_judge(instance, task, mesg);    //日冻结
+        month_freeze_judge(instance, task, mesg);  //月冻结
         instant_freeze_judge(instance, task, mesg); //瞬时冻结
-        bill_freeze_judge(instance, task, mesg);
+        bill_freeze_judge(instance, task, mesg);   //结算冻结
 
     }
 
@@ -882,7 +989,7 @@ int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct mess
 // 上电调用
 int freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
-
+    record_rollback_after_set_time(instance, 0x5A);
     day_freeze_power_on_pro(instance, task, mesg);
     bill_freeze_power_on_pro(instance, task, mesg);
     return 1;

@@ -110,6 +110,15 @@
 #define  event_flags_xxx_start  0
                                     
 
+                                    
+                               
+//存flash的记录 最大扇区数定义
+#define MinuteFreeze_SECTION_SIZE   830
+#define HourFreeze_SECTION_SIZE     4
+#define DayFreeze_SECTION_SIZE      27
+#define MonthFreeze_SECTION_SIZE    4                                    
+                                    
+                                    
 //------------------------事件ID 新定义
 enum record_flag_id_t
 {

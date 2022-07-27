@@ -47,7 +47,7 @@ int event_clr(struct instance_t* instance);
 int freeze_clr(struct instance_t* instance);
 int meter_clr(struct instance_t* instance);
 int freez_size_sectors_init(struct instance_t* instance, uint32_t oad);
-int record_rollback_after_set_time(struct instance_t* instance);
+int record_rollback_after_set_time(struct instance_t* instance, uint8_t finish_check);
 int modify_capture_clr_pro(struct instance_t* instance, uint32_t oad);
 
 int MeterWr_obj_list_clear(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
