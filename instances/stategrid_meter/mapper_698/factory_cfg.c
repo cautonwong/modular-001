@@ -12,6 +12,8 @@ const  uint8_t FirmWareVersion[20] =
   'X','D','W','G'   //10
 };
 
+#pragma default_variable_attributes = @ "Pd"
+
 const uint8_t  init_4007[] = { 0x02, 0x01, 0x00, 0x93, 0x01, 0x10, 0x93,}; /**< 电能表掉电事件 */
 const uint8_t  init_4008[] = { 0x00 }; /**< 电能表编程事件 */
 /**< 电能表清零事件 */
@@ -528,7 +530,7 @@ const uint8_t  init_5FE7[] = {0x00};
 // 恢复出厂标志
 const uint8_t  init_3090[] = {0x55,0x55,0xaa,0xaa,};
 
-
+#pragma default_variable_attributes =
 
 
 /**@}*/
