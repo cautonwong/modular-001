@@ -299,6 +299,7 @@ struct mbase_control_block_t
     //跟随上报2015状态字
     uint32_t report_2015state[4];           //跟随上报状态字  chl_NUM
  
+    uint8_t  record_rollback_flag;          //记录回滚标志 0x5A 存在未完成的回滚
     
     struct tm powerdown_tm;                     // 停电时间
     struct tm v_powerdown_tm;                   // 模拟停电时间  补结算测试用 
@@ -517,8 +518,8 @@ extern uint16_t software_esam_check(struct instance_t* instance, uint8_t *key, u
 extern int esam_key_updata(struct instance_t* instance, uint8_t *buf, uint16_t len);
 extern uint32_t fr_698_current_esam_timeout_get(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index);
 
-extern int record_rollback_after_set_time(struct instance_t* instance);
-extern int cal_freeze_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, uint8_t *depth_ptr, uint32_t oad);
+extern int record_rollback_after_set_time(struct instance_t* instance, uint8_t finish_check);
+extern int cal_record_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, uint8_t *depth_ptr, uint32_t oad);
 extern int modify_capture_clr_pro(struct instance_t* instance, uint32_t oad);
 extern int set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t mode);
 extern uint8_t get_activeflag(struct instance_t* instance, uint16_t RecordId);

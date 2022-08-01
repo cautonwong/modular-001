@@ -109,6 +109,12 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
         p += 4;
     }
 
+    ret = cal_record_size_sectors(instance,tempbuf, __NULL, oad);
+    if (ret <= 0)
+    {
+        return -DAR_BUFFER_OVERFLOW;
+    }
+
     nd_set_index(instance, info.capture_index, &tempbuf[0], (1 + num * 4));
 
     //修改关联对象后 清零处理

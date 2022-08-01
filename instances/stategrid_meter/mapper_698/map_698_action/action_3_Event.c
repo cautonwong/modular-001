@@ -139,6 +139,12 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
 
     tempbuf[0] = num + 1;
 
+    ret = cal_record_size_sectors(instance,tempbuf, __NULL, oad);
+    if (ret <= 0)
+    {
+        return -DAR_BUFFER_OVERFLOW;
+    }
+
     ret = nd_set_index(instance, CaptureId, &tempbuf[0], CaptureLen);
     if (ret < 0)
     {
