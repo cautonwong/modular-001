@@ -6,7 +6,7 @@
 #include "lib_conf.h"
 #include "fr_698.h"
 #include "gs_record.h"
-
+extern void Check_para_Pro(struct instance_t* instance, struct pipeline_t* pipeline);
 //#define     P_BACKLIGHT_ON      GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT |= 0x10; //推挽输出高
 //#define     P_BACKLIGHT_OFF     GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT &=~0x10; //推挽输出低
 
@@ -149,6 +149,8 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             IOStateCheck(instance, pipeline);
 
             TouFeePro(instance, pipeline);
+            
+            Check_para_Pro(instance, pipeline);
 
             break;
       case MSG_PAGE_KEY_UP:

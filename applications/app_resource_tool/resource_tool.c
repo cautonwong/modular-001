@@ -1262,12 +1262,32 @@ int16_t nd_get_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf
     return len;
 }
 
+int16_t do_block_checksum(struct instance_t* instance)
+{
+    uint16_t checksum = 0xA5A5;
+    uint8_t *buff;
+    struct mbase_control_block_t* mbase_cb;
+    
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
+    buff = &mbase_cb->static_section_start + 1;
+    
+    
+    while (buff < &mbase_cb->chksum)
+    {
+        checksum += *buff++;
+    }
+    return checksum;
+}
+
 int16_t nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf, uint16_t len)
 {
     struct block_device_t* device = NULL;
     const struct driver_ops_t* driver = NULL;
     struct resource_block_t* block = NULL;
-    uint32_t addr = 0x00;
+    uint32_t addr = 0x00,end_addr=0;
+    uint16_t checksum = 0;
+    
 
     device = look_up_device(instance, (uint8_t)(offset >> 24));//查找设备
     res_conditions_true(device == NULL, -1);
@@ -1280,6 +1300,19 @@ int16_t nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf
     res_conditions_true((driver == NULL) || (driver->dev_write == NULL), -1);
     //update_verify(buf, len);
     res_conditions_true(0x00 > driver->dev_write(device->dev, addr, len, buf), -1);
+    
+    end_addr = offsetof(struct mbase_control_block_t, chksum);  //计算效验
+    offset = offset & 0x000000FF;
+    if(offset < end_addr)
+    {
+        mbase_cb->chksum = do_block_checksum(instance);
+        
+        addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                offsetof(struct mbase_control_block_t, chksum));
+        nd_set_offset(instance, addr, (uint8_t*)&mbase_cb->chksum, 2);  //刷新主区效验和
+        
+        //刷新备份区数据和效验和
+    }
 
     return len;
 }

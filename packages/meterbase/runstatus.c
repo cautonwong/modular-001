@@ -3,6 +3,8 @@
 #include "fr_698.h"
 #include "pin_function_def.h"
 
+extern int16_t do_block_checksum(struct instance_t* instance);
+
 //bit0~bit15
 //MeterRun1
 #define		Status_BatLow		0x0020  //bit2		
@@ -132,4 +134,34 @@ void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
 		mbase_cb->run_state[7] |= Status_Poweroff;
 	else
 		mbase_cb->run_state[7] &= ~Status_Poweroff;
+}
+
+void Check_para_Pro(struct instance_t* instance, struct pipeline_t* pipeline)
+{
+    struct mbase_control_block_t* mbase_cb;
+    uint16_t check_sum[2] = {0,};
+    uint32_t addr = 0x00;
+    
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
+    if(instance->time.tm_sec != 33)     return;
+    
+    /******************* mbase_control_block_t *******************/
+    check_sum[0] = do_block_checksum(instance);
+    
+    if(mbase_cb->chksum != check_sum[0]) //RAM异常
+    {
+        //从EE主区获取，覆盖至RAM
+        check_sum[0] = do_block_checksum(instance);
+        if(mbase_cb->chksum != check_sum[0])
+        {
+            //从EE备份区获取，覆盖至RAM
+            check_sum[0] = do_block_checksum(instance);
+            if(mbase_cb->chksum == check_sum[0])
+            {
+                //备份区覆盖主区
+            }
+        }
+    }
+    
 }
