@@ -90,7 +90,7 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
         }  
 
         if(2 != ctx->timeTag_valid){
-            r = fr_698_get(instance, oad, p + cache->wr, len, (void*)ctx);
+            r = fr_698_get(instance, oad, instance->apdu_cache, len, (void*)ctx); // p + cache->wr   改为协议临时缓存
         }else{
             r = -DAR_TIME_TAG_INVALID;
         }
@@ -102,7 +102,17 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
         }
         else
         {
-            cache->wr += r;//DAR
+
+            if (apdu_cache_getFree(cache) < r)
+            {
+                p[offset] = 0x00;//DAR
+                p[cache->wr++] = DAR_BUFFER_OVERFLOW; //越界
+            }
+            else
+            {
+                ndv_memcopy((p + cache->wr), instance->apdu_cache, r);            
+                cache->wr += r;//DAR
+            }
         }
     }
 
@@ -121,7 +131,7 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
 
     while (oad_n-- > 0)
     {
-        if (fifoBuf_getFree(cache) > 2){
+        if (apdu_cache_getFree(cache) > 6){  // 此处跳出后,如何消耗剩余报文？？ 待调整
             mesg->id = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
             memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, 4);
             cache->wr += 4;
@@ -140,7 +150,7 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
     }
 
 
-    return 1;
+    return 1;   
 }
 
 
@@ -161,7 +171,7 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
         
     while (oad_n-- > 0)
     {
-        if (fifoBuf_getFree(cache) > 2)
+        if (apdu_cache_getFree(cache) > 8) //待调整
         {
             //OAD
             mesg->id = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);

@@ -748,3 +748,27 @@ int append_data_to_cache(struct cache_t* cache, uint8_t* data, size_t len, fifo_
     cache->used = used;
     return len;
 }
+
+
+
+//用于协议apdu 2k缓存计算  剩余大小
+uint16_t apdu_cache_getFree(struct fifo_t *buf)
+{       // return the free space size in the buffer
+
+    uint16_t buf_size = buf->buf_size;
+    uint16_t rd = buf->rd;
+    uint16_t wr = buf->wr;
+    uint16_t num_bytes = wr - rd;
+
+    if(num_bytes >= (buf_size - 1))   
+    {
+        num_bytes = 0;
+    }
+    else
+    {
+        num_bytes = buf_size - num_bytes - 1;
+    }
+
+    return num_bytes;
+}
+

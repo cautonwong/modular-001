@@ -147,11 +147,13 @@ int fr_follow_report_optional(struct instance_t* instance, struct pipeline_t* pi
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = cache->buf_ptr + cache->wr;  
+    uint8_t* dst = cache->buf_ptr + cache->wr; 
+    uint8_t* p = instance->apdu_cache; //临时缓冲区 
+    uint8_t* p_tmp = instance->apdu_cache; //临时缓冲区 
     uint32_t oad = 0, mask = 0;
-    uint16_t offset = 0;
+    uint16_t offset = 0, len = 0;
     uint8_t num = 0, flag = 0, rptmode = 0;
-    uint8_t* p_tmp = p;
+
 
     if((ctx == NULL) || (mbase_cb == NULL))
     {
@@ -221,15 +223,19 @@ int fr_follow_report_optional(struct instance_t* instance, struct pipeline_t* pi
          p += uint32_to_buf_msb(mask, p);
     }
 
-    cache->wr += (p - p_tmp);
+    len = (p - p_tmp);
+    
+    if (apdu_cache_getFree(cache) < len)
+    {
+        return 0;
+    }
 
-    return (uint16_t)(p - p_tmp);
+    ndv_memcopy(dst, p_tmp, len);
 
+    cache->wr += len;
 
-    //读取3320 判断是否跟随上报
-    //{
-    //    p[cache->wr++] = 0x01;//follow_report
-    //}
+    return (uint16_t)len;
+
 }
 uint32_t get_3320_save_addr(struct instance_t* instance, uint16_t chn)
 {

@@ -195,44 +195,42 @@ typedef struct
 //一个表格只能放在一个存储器上，注册的时候绑定设备
 const struct record_item_t  record_item[] =
 {
-    { OverCurrentAS ,       OverCurrentAE,              630,       10 },// 过流 预留空间待调整
-    { PowerOffS     ,       PowerOffE,                 3560,      100 },//  0x3011    电能表掉电事件             
-    { MeterWrS      ,       0,                          910,       10 },//  0x3012    电能表编程事件             
-    { MeterClrS     ,       0,                          360,       10 },//  0x3013    电能表清零事件             
-    { EventClrS     ,       0,                          320,       10 },//  0x3015    电能表事件清零事件         
-    { SetTimeS      ,       0,                          360,       10 },//  0x3016    电能表校时事件             
-    { DayTabWrS     ,       0,                         1780,       10 },//  0x3017    电能表时段表编程事件       
-    { SeasonTabWrS  ,       0,                         1710,       10 },//  0x3018    电能表时区表编程事件       
-    { WeekTabWrS    ,       0,                          260,       10 },//  0x3019    电能表周休日编程事件       
-    { BillDayWrS    ,       0,                          490,       10 },//  0x301A    电能表结算日编程事件  
-    { CoverOpenS    ,       CoverOpenE,                 490,       10 },//  0x301B    电能表开盖事件             
-    { SwitchOffS    ,       0,                          400/*360*/,       10 },//  0x301F    电能表跳闸事件             
-    { SwitchOnS     ,       0,                          400/*360*/,       10 },//  0x3020    电能表合闸事件             
-    { HolidayWrS    ,       0,                          430,       10 },//  0x3021    电能表节假日编程事件       
-    { ActCombWrS    ,       0,                          270,       10 },//  0x3022    电能表有功组合方式编程事件 
-//    { FeeTabWrS     ,       0,                            0,        0 },//  0x3024    电能表费率参数表编程事件   
-//    { StepTabWrS    ,       0,                            0,        0 },//  0x3025    电能表阶梯表编程事件       
-    { SecretKeyWrS  ,       0,                          100,        2 },//  0x3026    电能表密钥更新事件 
-//    { ErrPlugCardS  ,       0,                            0,        0 },//  0x3027    电能表异常插卡事件         
-//    { RechargeS     ,       0,                            0,        0 },//  0x3028    电能表购电记录             
-//    { RefundS       ,       0,                            0,        0 },//  0x3029    电能表退费记录  
-    { SwitchErrS    ,       SwitchErrE,                 710,       10 },//  0x302B    电能表负荷开关误动作事件   
-    { PowerAbnormalS,       PowerAbnormalE,             360,       10 },//  0x302C    电能表电源异常事件 
-    { RTCErrS       ,       RTCErrE,                    490,       10 },//  0x302E    电能表时钟故障事件 
-    { EmuErrS       ,       EmuErrE,                    360,       10 },//  0x302F    电能表计量芯片故障事件
-    { BroadcastTimeS,       0,                         3560,      100 },//  0x303C    广播校时事件 
-    { ZeroLineErrS  ,       ZeroLineErrE,               330,       10 },//  0x3040    零线电流异常事件 
-
-    { BillFreeze,           0,                         3280,       12 },//  0x5005      结算日冻结 //待调整
-    { SeasonTabCutFreeze,   0,                          380,        2 },//  0x5008      时区表切换冻结 
-    { DayTabCutFreeze   ,   0,                          380,        2 },//  0x5009      日时段表切换冻结    
-//    { FeePriceCutFreeze ,   0,                          100,        2 },//  0x500A      费率电价切换冻结  
-//    { StepCutFreeze     ,   0,                            0,        2 },//  0x500B      阶梯切换冻结
-//    { StepBillFreeze    ,   0,                            0,        2 },//  0x5011      阶梯结算冻结
-    { InstantFreeze     ,   0,                          570,        3 },//  0x5000      瞬时冻结
-    
-#if RESET_INFO   
-    { StepCutFreeze     ,   0,                          200,        5 },//  0x500B     复位次数 阶梯切换冻结
+    { OverCurrentAS     ,   OverCurrentAE   ,               630 ,       10   },//  0x3005  电能表过流事件
+    { PowerOffS         ,   PowerOffE       ,               3560,       100  },//  0x3011  电能表掉电事件             
+    { MeterWrS          ,   0               ,               910 ,       10   },//  0x3012  电能表编程事件             
+    { MeterClrS         ,   0               ,               360 ,       10   },//  0x3013  电能表清零事件             
+    { EventClrS         ,   0               ,               320 ,       10   },//  0x3015  电能表事件清零事件         
+    { SetTimeS          ,   0               ,               360 ,       10   },//  0x3016  电能表校时事件             
+    { DayTabWrS         ,   0               ,               1780,       10   },//  0x3017  电能表时段表编程事件       
+    { SeasonTabWrS      ,   0               ,               1710,       10   },//  0x3018  电能表时区表编程事件       
+    { WeekTabWrS        ,   0               ,               260 ,       10   },//  0x3019  电能表周休日编程事件       
+    { BillDayWrS        ,   0               ,               490 ,       10   },//  0x301A  电能表结算日编程事件  
+    { CoverOpenS        ,   CoverOpenE      ,               490 ,       10   },//  0x301B  电能表开盖事件             
+    { SwitchOffS        ,   0               ,               400 ,       10   },//  0x301F  电能表跳闸事件 （需要预留比1.3倍多）            
+    { SwitchOnS         ,   0               ,               400 ,       10   },//  0x3020  电能表合闸事件 （需要预留比1.3倍多）          
+    { HolidayWrS        ,   0               ,               430 ,       10   },//  0x3021  电能表节假日编程事件       
+    { ActCombWrS        ,   0               ,               270 ,       10   },//  0x3022  电能表有功组合方式编程事件 
+//  { FeeTabWrS         ,   0               ,               0   ,       0    },//  0x3024  电能表费率参数表编程事件   
+//  { StepTabWrS        ,   0               ,               0   ,       0    },//  0x3025  电能表阶梯表编程事件       
+    { SecretKeyWrS      ,   0               ,               100 ,       2    },//  0x3026  电能表密钥更新事件 
+//  { ErrPlugCardS      ,   0               ,               0   ,       0    },//  0x3027  电能表异常插卡事件         
+//  { RechargeS         ,   0               ,               0   ,       0    },//  0x3028  电能表购电记录             
+//  { RefundS           ,   0               ,               0   ,       0    },//  0x3029  电能表退费记录  
+    { SwitchErrS        ,   SwitchErrE      ,               710 ,       10   },//  0x302B  电能表负荷开关误动作事件   
+    { PowerAbnormalS    ,   PowerAbnormalE  ,               360 ,       10   },//  0x302C  电能表电源异常事件 
+    { RTCErrS           ,   RTCErrE         ,               490 ,       10   },//  0x302E  电能表时钟故障事件 
+    { EmuErrS           ,   EmuErrE         ,               360 ,       10   },//  0x302F  电能表计量芯片故障事件
+    { BroadcastTimeS    ,   0               ,               3560,       100  },//  0x303C  广播校时事件 
+    { ZeroLineErrS      ,   ZeroLineErrE    ,               330 ,       10   },//  0x3040  零线电流异常事件 
+    { BillFreeze        ,   0               ,               3280,       12   },//  0x5005  结算日冻结 
+    { SeasonTabCutFreeze,   0               ,               380 ,       2    },//  0x5008  时区表切换冻结 
+    { DayTabCutFreeze   ,   0               ,               380 ,       2    },//  0x5009  日时段表切换冻结    
+//  { FeePriceCutFreeze ,   0               ,               100 ,       2    },//  0x500A  费率电价切换冻结  
+//  { StepCutFreeze     ,   0               ,               0   ,       2    },//  0x500B  阶梯切换冻结
+//  { StepBillFreeze    ,   0               ,               0   ,       2    },//  0x5011  阶梯结算冻结
+    { InstantFreeze     ,   0               ,               570 ,       3    },//  0x5000  瞬时冻结
+#if RESET_INFO                         
+    { StepCutFreeze     ,   0               ,               200 ,       5    },//  0x500B   复位次数 阶梯切换冻结
 #endif
 
 };
@@ -243,16 +241,15 @@ const struct record_item_t  record_item[] =
 // 计算冻结空间大小处同步修改
 const struct record_item_t  record_item_1[] =
 {
-    { MinuteFreeze1, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 待调整
-    { MinuteFreeze2, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 待调整
-    { MinuteFreeze3, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 待调整
-    { MinuteFreeze4, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 待调整
-    { MinuteFreeze5, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 待调整
-    { MinuteFreeze6, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 待调整
-    { MinuteFreeze7, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 待调整
-    { MinuteFreeze8, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 待调整
+    { MinuteFreeze1, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 分钟冻结1
+    { MinuteFreeze2, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 分钟冻结2
+    { MinuteFreeze3, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 分钟冻结3
+    { MinuteFreeze4, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 分钟冻结4
+    { MinuteFreeze5, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 分钟冻结5
+    { MinuteFreeze6, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 分钟冻结6
+    { MinuteFreeze7, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 分钟冻结7
+    { MinuteFreeze8, 0,    MinuteFreeze_SECTION_SIZE * 4096,    35040 },// 分钟冻结8
 };
-
 
 //一个表格只能放在一个存储器上，注册的时候绑定设备   FLASH  其他
 // 计算冻结空间大小处同步修改
@@ -261,7 +258,6 @@ const struct record_item_t  record_item_2[] =
     { HourFreeze ,          0,                          HourFreeze_SECTION_SIZE * 4096,         254 },//小时冻结
     { DayFreeze  ,          0,                          DayFreeze_SECTION_SIZE * 4096,          365 },//日冻结
     { MonthFreeze,          0,                          MonthFreeze_SECTION_SIZE * 4096,         24 },//月冻结
-
 };
 
 const  parameter_item_t  parameter_item[] =
@@ -269,14 +265,14 @@ const  parameter_item_t  parameter_item[] =
     // 管理区
 #ifndef WIN32
     //冻结管理区
-    { MinuteFreeze1                 , 0x01,   sizeof(struct log_manager_t),0},// 分冻结8个方案，管理区申请8个？
-    { MinuteFreeze2                 , 0x01,   sizeof(struct log_manager_t),0},
-    { MinuteFreeze3                 , 0x01,   sizeof(struct log_manager_t),0},
-    { MinuteFreeze4                 , 0x01,   sizeof(struct log_manager_t),0},
-    { MinuteFreeze5                 , 0x01,   sizeof(struct log_manager_t),0},
-    { MinuteFreeze6                 , 0x01,   sizeof(struct log_manager_t),0},
-    { MinuteFreeze7                 , 0x01,   sizeof(struct log_manager_t),0},
-    { MinuteFreeze8                 , 0x01,   sizeof(struct log_manager_t),0},
+    { MinuteFreeze1                 , 0x01,   sizeof(struct log_manager_t),0},  // 分冻结1 管理区
+    { MinuteFreeze2                 , 0x01,   sizeof(struct log_manager_t),0},  // 分冻结2 管理区
+    { MinuteFreeze3                 , 0x01,   sizeof(struct log_manager_t),0},  // 分冻结3 管理区
+    { MinuteFreeze4                 , 0x01,   sizeof(struct log_manager_t),0},  // 分冻结4 管理区
+    { MinuteFreeze5                 , 0x01,   sizeof(struct log_manager_t),0},  // 分冻结5 管理区
+    { MinuteFreeze6                 , 0x01,   sizeof(struct log_manager_t),0},  // 分冻结6 管理区
+    { MinuteFreeze7                 , 0x01,   sizeof(struct log_manager_t),0},  // 分冻结7 管理区
+    { MinuteFreeze8                 , 0x01,   sizeof(struct log_manager_t),0},  // 分冻结8 管理区
 
     { HourFreeze                    , 0x01,   sizeof(struct log_manager_t),0},  //小时冻结  管理区
     { DayFreeze                     , 0x01,   sizeof(struct log_manager_t),0},  //日冻结    管理区
@@ -290,33 +286,33 @@ const  parameter_item_t  parameter_item[] =
     { InstantFreeze                 , 0x01,   sizeof(struct log_manager_t),0},  //瞬时冻结 管理区
                                                          
     //事件管理区
-    { OverCurrentAS                  , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { PowerOffS                      , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { MeterWrS                       , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { MeterClrS                      , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { EventClrS                      , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { SetTimeS                       , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { DayTabWrS                      , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { SeasonTabWrS                   , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { WeekTabWrS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { BillDayWrS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { CoverOpenS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { SwitchOffS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { SwitchOnS                      , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { HolidayWrS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { ActCombWrS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { FeeTabWrS                      , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { StepTabWrS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { SecretKeyWrS                   , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { ErrPlugCardS                   , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { RechargeS                      , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { RefundS                        , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { SwitchErrS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { PowerAbnormalS                 , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { RTCErrS                        , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { EmuErrS                        , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { BroadcastTimeS                 , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { ZeroLineErrS                   , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { OverCurrentAS                 , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { PowerOffS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { MeterWrS                      , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { MeterClrS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { EventClrS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { SetTimeS                      , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { DayTabWrS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { SeasonTabWrS                  , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { WeekTabWrS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { BillDayWrS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { CoverOpenS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { SwitchOffS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { SwitchOnS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { HolidayWrS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { ActCombWrS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { FeeTabWrS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { StepTabWrS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { SecretKeyWrS                  , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { ErrPlugCardS                  , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { RechargeS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { RefundS                       , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { SwitchErrS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { PowerAbnormalS                , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { RTCErrS                       , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { EmuErrS                       , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { BroadcastTimeS                , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { ZeroLineErrS                  , 0x01,   sizeof(struct log_manager_t),0},// 管理区
 
 
     //事件关联对象
@@ -537,7 +533,7 @@ const  parameter_item_t  parameter_item[] =
     { KeyDisplayList,      0x64,   2,       init_KeyDisplayList },//100屏*2字节
     
     //4XXX
-//    { Comm_Number,         0x01,   6,       init_Comm_Number },//表地址
+//  { Comm_Number,         0x01,   6,       init_Comm_Number },//表地址
     { Meter_Number,        0x01,   6,       init_Meter_Number },//表号
     { User_Number,         0x01,   6,       init_User_Number },//客户编号
     { Meter_Num,           0x01,   1,       init_Meter_Num },//计量元件数
@@ -607,6 +603,7 @@ const  parameter_item_t  parameter_item[] =
     { ADJ_Other,           0x01,    4,      0 },    //计量其他参数（启动阀值、HFconst）1 + 2 = 3
     { ADJ_K,               0x01,    16,     0 },    //Kp Ku Ki 零线K系数 4*4 = 16
      
+     //
 #else
     {0}
 #endif

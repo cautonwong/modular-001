@@ -68,7 +68,7 @@ int ringbuffer_getU16(struct fifo_t* buf, uint16_t* data);
 int ringbuffer_getU32(struct fifo_t* buf, uint32_t* data);
 int ringbuffer_popU8(struct fifo_t* buf, uint8_t* data);
 int ringbuffer_pushU8(struct fifo_t* buf, uint8_t data);
-
+uint16_t apdu_cache_getFree(struct fifo_t *buf);
 #endif /* _FIFO_BUFFER_H_ */
 
 /**

@@ -17,7 +17,8 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
     uint16_t oad,displayid;
     uint8_t index,attribute,i,len,maxnum, count = 0;
     uint8_t* p = buf;
-    uint8_t *ptr_tmp = instance->apdu_cache;
+    uint8_t tmpbuf[200] = {0};
+    uint8_t *ptr_tmp = tmpbuf;
     uint32_t addr=0,s_index=0, tmp32=0;
     uint8_t esam_inf[45] = {0}; 
     uint8_t cilent_index = 0;

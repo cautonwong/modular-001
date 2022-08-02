@@ -122,10 +122,13 @@ uint8_t read_esam_no(struct instance_t* instance, uint8_t *esam_info)
     struct esam_698_input_t  input = {0};
     struct esam_698_output_t output= {0};
     struct mbase_control_block_t* mbase_cb;
-    
-    input.data_buf      = instance->apdu_cache; //临时缓冲区
-    input.data_buf_len  = cache_max;            //临时缓冲长度
-    
+    uint8_t tmpbuf[64] = {0};
+
+    input.data_buf      = tmpbuf; //临时缓冲区
+    input.data_buf_len  = 64;            //临时缓冲长度
+    //input.data_buf      = instance->apdu_cache; //临时缓冲区
+    //input.data_buf_len  = cache_max;            //临时缓冲长度
+
     output.data  = esam_info;
     
     param.input  = (struct esam_698_input_t *)&input;
@@ -146,12 +149,16 @@ uint8_t read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf,
     struct esam_698_input_t  input = {0};
     struct esam_698_output_t output= {0};
     struct mbase_control_block_t* mbase_cb;
+    uint8_t tmpbuf[64] = {0};
     
     input.data      = buf;
     input.data_len  = len;
     input.sid_id    = addr;
-    input.data_buf      = instance->apdu_cache; //临时缓冲区
-    input.data_buf_len  = cache_max;            //临时缓冲长度
+
+    input.data_buf      = tmpbuf; //临时缓冲区
+    input.data_buf_len  = 64;            //临时缓冲长度
+    //input.data_buf      = instance->apdu_cache; //临时缓冲区
+    //input.data_buf_len  = cache_max;            //临时缓冲长度
     
     output.data = buf;
     
@@ -208,11 +215,15 @@ uint8_t read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t 
     struct esam_698_input_t  input = {0};
     struct esam_698_output_t output= {0};
     struct mbase_control_block_t* mbase_cb;
+    uint8_t tmpbuf[64] = {0};
     
     input.cmd_type = index;
     output.data    = esam_info;
-    input.data_buf      = instance->apdu_cache; //临时缓冲区
-    input.data_buf_len  = cache_max;            //临时缓冲长度
+
+    input.data_buf      = tmpbuf; //临时缓冲区
+    input.data_buf_len  = 64;            //临时缓冲长度
+    //input.data_buf      = instance->apdu_cache; //临时缓冲区
+    //input.data_buf_len  = cache_max;            //临时缓冲长度
 
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;    

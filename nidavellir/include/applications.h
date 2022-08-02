@@ -325,7 +325,9 @@ enum resourenc_block_name
     mbase_block_persistent,
     mbase_block_persistent_eprom,
     mbase_block_event,
-    mbase_block_parameter,
+    mbase_block_parameter,                  //不带备份区
+    //mbase_block_parameter_1,                //带备份区
+    //mbase_block_parameter_1_backup,         //带备份区的备份
     mbase_block_event_flash1,
     mbase_block_event_flash2,
     public_block_flash,
