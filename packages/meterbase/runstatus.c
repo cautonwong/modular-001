@@ -136,32 +136,45 @@ void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
 		mbase_cb->run_state[7] &= ~Status_Poweroff;
 }
 
-void Check_para_Pro(struct instance_t* instance, struct pipeline_t* pipeline)
+int16_t Check_para_Pro(struct instance_t* instance)
 {
     struct mbase_control_block_t* mbase_cb;
     uint16_t check_sum[2] = {0,};
-    uint32_t addr = 0x00;
+    uint32_t addr = 0x00,s_index;
+    size_t mbase_block_static_size = offsetof(struct mbase_control_block_t, static_section_end) - offsetof(struct mbase_control_block_t, static_section_start) + 1;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    
-    if(instance->time.tm_sec != 33)     return;
     
     /******************* mbase_control_block_t *******************/
     check_sum[0] = do_block_checksum(instance);
     
     if(mbase_cb->chksum != check_sum[0]) //RAM异常
     {
-        //从EE主区获取，覆盖至RAM
+        get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_static, &addr);//RAM对应的地址
+        nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, (uint8_t*)addr, mbase_block_static_size); //从EE主区获取，覆盖至RAM
         check_sum[0] = do_block_checksum(instance);
-        if(mbase_cb->chksum != check_sum[0])
+        if(mbase_cb->chksum != check_sum[0])    //主区效验错误
         {
-            //从EE备份区获取，覆盖至RAM
+            nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom_bp, (uint8_t*)addr, mbase_block_static_size);//从EE备份区获取，覆盖至RAM
             check_sum[0] = do_block_checksum(instance);
-            if(mbase_cb->chksum == check_sum[0])
+            if(mbase_cb->chksum == check_sum[0])    //备份正确
             {
-                //备份区覆盖主区
+                //备份区覆盖主区          
+                nd_set_block(instance,RES_DEV_EEPROM, mbase_block_static_eprom,(uint8_t *)addr,mbase_block_static_size); //将RAM中的数据保存到EPROM;
+            }
+            return -1;
+        }
+        else    //主区正确，获取备份数据
+        {
+            nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom_bp, (uint8_t*)addr, mbase_block_static_size);//从EE备份区获取，覆盖至RAM
+            check_sum[0] = do_block_checksum(instance);
+            if(mbase_cb->chksum != check_sum[0])    //备份错误
+            {
+                //主区覆盖备份区
+                nd_set_block(instance,RES_DEV_EEPROM, mbase_block_static_eprom_bp,(uint8_t *)addr,mbase_block_static_size); //将RAM中的数据保存到EPROM;
+                return -1;
             }
         }
     }
-    
+    return 1;
 }

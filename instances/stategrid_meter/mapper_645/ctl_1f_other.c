@@ -12,6 +12,7 @@ signed char Comm_Other(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx
 	unsigned char Err_Byte=0, rx_len=0;
     uint32_t s_index=0;
 	struct mbase_control_block_t* mbase_cb;
+    int16_t err=0;
 	
 	mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
@@ -19,6 +20,8 @@ signed char Comm_Other(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx
         *p_tx = RS_ERR_OTHERS;
         return 1;
     }
+    
+    err = Check_para_Pro(instance);
 
 	rx_len = *(p_rx-1);
 	

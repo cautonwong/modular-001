@@ -6,7 +6,7 @@
 #include "lib_conf.h"
 #include "fr_698.h"
 #include "gs_record.h"
-extern void Check_para_Pro(struct instance_t* instance, struct pipeline_t* pipeline);
+extern int16_t Check_para_Pro(struct instance_t* instance);
 //#define     P_BACKLIGHT_ON      GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT |= 0x10; //推挽输出高
 //#define     P_BACKLIGHT_OFF     GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT &=~0x10; //推挽输出低
 
@@ -83,6 +83,11 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     {
         mbase_control_block->power_on_sec_accum++;
         fr_dl698_sec_task(instance, pipeline);
+        
+        if(instance->time.tm_sec == 33)     //效验
+        {
+            Check_para_Pro(instance);
+        }
     }
     
     active_report_handle(instance, NULL, &mesg); // 上电每秒调用  下电前X秒调用
@@ -149,8 +154,6 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             IOStateCheck(instance, pipeline);
 
             TouFeePro(instance, pipeline);
-            
-            Check_para_Pro(instance, pipeline);
 
             break;
       case MSG_PAGE_KEY_UP:
@@ -162,6 +165,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             read_mcu_rtc(0x00, instance);
             get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_static, &addr);//RAM对应的地址
             nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, (uint8_t*)addr, mbase_block_static_size); //将EPROM中的数据恢复到RAM;  
+            Check_para_Pro(instance);     //数据效验
             //上电需要恢复数据
             //获取对应的RAM地址
             get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址

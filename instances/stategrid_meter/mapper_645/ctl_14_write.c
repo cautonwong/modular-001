@@ -247,6 +247,7 @@ signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx
 	unsigned long ID;
     uint32_t s_index=0;
 	struct mbase_control_block_t* mbase_cb;
+    int16_t err = 0;
 	
 	mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
@@ -254,6 +255,8 @@ signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx
         Err_Byte = RS_ERR_OTHERS;
         return Err_Byte;
     }
+    
+    err = Check_para_Pro(instance);
 
     rx_len = *(p_rx-1);
 	memcpy((unsigned char*)&ID, p_rx, 4);

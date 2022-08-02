@@ -1972,6 +1972,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
     uint8_t OIA1 = get_OAD_OIA1(id);
     uint8_t h_mode = (uint8_t) (mode >> 8);
     uint8_t l_mode = (uint8_t) mode;
+    int16_t err = 0;
     struct context_698_t* pctx = (struct context_698_t*)ctx;
     
     switch (l_mode)
@@ -2018,6 +2019,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
         }
         break;
     case RESOURCE_MAP_SET:
+        err = Check_para_Pro(instance);
       	switch (OIA1)
         {
         case 0x2:// 变量
@@ -2039,6 +2041,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
         break;
     case RESOURCE_MAP_ACTION:
         if((1 != pctx->timeTag_valid) && (pctx->timeTag[0] == 1)) return -DAR_TIME_TAG_INVALID;
+        err = Check_para_Pro(instance);
         switch (OIA1)
         {
         case 0x2://变量
@@ -2261,12 +2264,15 @@ int para_init(struct instance_t* instance )
     uint32_t s_index=0;
     struct mbase_control_block_t* mbase_cb;
     int ret;
+    int16_t err=0;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     num = sizeof(parameter_item)/sizeof(parameter_item_t);
     
     v85xxp_clear_watchdog();
+    
+    err = Check_para_Pro(instance);
     
     //RAM部分更新
     mbase_cb->lcd_poweron_all_dis_time = 5;            //上电全显时间
