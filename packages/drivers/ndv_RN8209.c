@@ -144,7 +144,7 @@ unsigned char Rn8209InitConfig(const struct dev_info_t* dev)
     unsigned char regIE = 0x01;
     unsigned long s_index=0;
     unsigned char buf[4]={0,};
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Other);//写入脉冲速率
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Other);//写入脉冲速率
     //nd_get_index(instance, s_index, buf, 4);
     memcpy((unsigned char*)&Pstart, buf, 2);
     memcpy((unsigned char*)&Hfconst, buf+2, 2);

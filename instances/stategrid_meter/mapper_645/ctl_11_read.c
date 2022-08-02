@@ -72,7 +72,7 @@ int rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx)
     {
         if(addr >= 0xAF)	return false;
         
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Heat_Value_05L);
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Value_05L);
         nd_get_index(instance, s_index, (uint8_t*)&tmp[0], 30); //读取EE中的补偿值
         memcpy( (p_tx+1), (uint8_t*)&tmp[addr-0x90], 2);
         return 2;
@@ -81,14 +81,14 @@ int rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx)
     {
         if(addr >= 0x9F)	return false;
 
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Heat_Value_10L);
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Value_10L);
         nd_get_index(instance, s_index, (uint8_t*)&tmp[0], 30); //读取EE中的补偿值
         memcpy( (p_tx+1), (uint8_t*)&tmp[addr-0x90], 2);
         return 2;
     }
     else if(addr >= 0x80)//电压影响量
     {
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Un_Cmp_Value);
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Un_Cmp_Value);
         nd_get_index(instance, s_index, (uint8_t *)&tmp[0], 8); //读取EE中的补偿值
         switch(addr)
         {
@@ -191,10 +191,10 @@ void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx)
     uint8_t buf[40]={0,};
     
     memset(buf, 0x00, 8);
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Pgain0);    //火线增益、相位
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);    //火线增益、相位
     nd_set_index(instance, s_index, buf, 8); 
     
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Pgain1);    //零线增益、相位
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain1);    //零线增益、相位
     nd_set_index(instance, s_index, buf, 8); 
     
     pstart = 0x0049;
@@ -207,14 +207,14 @@ void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx)
     else
         memcpy((uint8_t*)&buf[2], p_rx+3, 2);//写入脉冲速率
         
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Other);
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Other);
     nd_set_index(instance, s_index, buf, 4); 
     
     memset((uint8_t*)&mbase_control_block->k_u, 0x00, 16);
     mbase_control_block->k_u = 0.0137414116;
     mbase_control_block->k_il = 0.016;
     mbase_control_block->k_p = 0.0023294272;
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_K);
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_K);
     nd_set_index(instance, s_index, (uint8_t*)&mbase_control_block->k_u, 16);//存储至EE
 }
 
@@ -297,12 +297,17 @@ signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx,
 		
 	*len = (unsigned char)(Info & CommDataLen);
 	MemType = (unsigned char)((Info>>6) & MEMVALUE);
-	if(MemType == Mem_E2PROM)
+	if(MemType == Mem_E2PROM)  
 	{
 		addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Addr);
 		nd_get_index(instance, addr1, p_tx, *len);
 	}
-	else 
+	else if(MemType == Mem_E2PROM_BP)  
+	{
+		addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Addr);
+		nd_get_index(instance, addr1, p_tx, *len);        
+	}
+	else
 	{
 		memcpy( p_tx, (unsigned char*)Addr, *len );
 	}

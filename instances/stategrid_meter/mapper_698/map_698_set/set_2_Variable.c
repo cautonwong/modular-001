@@ -4,14 +4,13 @@
 
 int SET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
-    struct mbase_control_block_t* mbase_cb;
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint16_t oad;
     uint8_t attribute;
     uint8_t* p = buf;
     uint32_t s_index = 0;
 
     
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
         return -1;

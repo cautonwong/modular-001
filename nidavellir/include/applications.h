@@ -101,7 +101,7 @@ struct mbase_control_block_t
     
     uint32_t backlight_control_word;//背光报警配置字 
 
-    
+    uint16_t chksum;
     
     static_end          //------------------------------------------------------
         
@@ -320,14 +320,15 @@ enum resourenc_block_name
     control_block_698_name,
     mbase_control_block_name,
     mbase_block_static,
-    mbase_block_static_eprom,
+    mbase_block_static_eprom,           //带备份区             枚举顺序不能变
+    mbase_block_static_eprom_bp,        //带备份区的备份          枚举顺序不能变
     mbase_block_cache,
     mbase_block_persistent,
     mbase_block_persistent_eprom,
     mbase_block_event,
-    mbase_block_parameter,                  //不带备份区
-    //mbase_block_parameter_1,                //带备份区
-    //mbase_block_parameter_1_backup,         //带备份区的备份
+    mbase_block_parameter,              //不带备份区
+    mbase_block_parameter_1,            //带备份区             枚举顺序不能变
+    mbase_block_parameter_1_bp,         //带备份区的备份          枚举顺序不能变
     mbase_block_event_flash1,
     mbase_block_event_flash2,
     public_block_flash,
@@ -357,6 +358,7 @@ int32_t Get_Month_Active_Energy(struct mbase_control_block_t* mbase_control_bloc
 void Energy_clr(struct instance_t* instance);
 
 int16_t supply_parameter_info(struct instance_t* instance, uint16_t id, uint32_t* addr, uint16_t* size,uint16_t *offset);
+int16_t supply_parameter_1_info(struct instance_t* instance, uint16_t id, uint32_t* addr, uint16_t* size,uint16_t *offset);
 int16_t supply_event_info(struct instance_t* instance, uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth);
 int16_t supply_event_flash_1_info(struct instance_t* instance, uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth);
 int16_t supply_event_flash_2_info(struct instance_t* instance, uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth);

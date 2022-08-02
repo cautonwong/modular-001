@@ -42,7 +42,7 @@ int rn8209c_set( struct instance_t* instance, uint8_t *p_rx )
         memcpy((uint8_t*)&tmp, (uint8_t*)&data, lenth);
         CmdRn8209(CMD_WR_DIS , &rn8209_dev);
         
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Pgain0);    //火线增益、相位
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);    //火线增益、相位
         nd_get_index(instance, s_index, temp_buffer, 8); 
         switch(addr)//存入EEPROM
         {
@@ -63,7 +63,7 @@ int rn8209c_set( struct instance_t* instance, uint8_t *p_rx )
         }
         nd_set_index(instance, s_index, temp_buffer, 8); 
         
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Other);    
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Other);    
         nd_get_index(instance, s_index, temp_buffer, 4);
         switch(addr)
         {
@@ -80,21 +80,21 @@ int rn8209c_set( struct instance_t* instance, uint8_t *p_rx )
     }
     else if(addr >= 0xA0)//0.5L 自热影响量
     {
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Heat_Value_05L);    
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Value_05L);    
         nd_get_index(instance, s_index, (uint8_t*)&temp[0], 30);
         memcpy((uint8_t*)&temp[addr-0xA0], (uint8_t*)(buf), 2);
         nd_set_index(instance, s_index, (uint8_t*)&temp[0], 30);
     }
     else if(addr>=0x90)//自热影响
     {
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Heat_Value_10L);    
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Value_10L);    
         nd_get_index(instance, s_index, (uint8_t*)&temp[0], 30);
         memcpy((uint8_t*)&temp[addr-0x90], (uint8_t*)(buf), 2);
         nd_set_index(instance, s_index, (uint8_t*)&temp[0], 30);
     }
     else if(addr>=0x80)//电压影响量
     {
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Un_Cmp_Value);    
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Un_Cmp_Value);    
         nd_get_index(instance, s_index, (uint8_t*)&temp[0], 8);
         switch(addr)
         {
@@ -166,7 +166,7 @@ unsigned char CommWrite_SpecProc( struct instance_t* instance,  unsigned char* p
                 break;
 		case 0xA6000305://启动阈值和脉冲速率
                 memcpy(buf, prx+12, 4);
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Other);//写入脉冲速率
+                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Other);//写入脉冲速率
                 nd_set_index(instance, s_index, buf, 4);
 				break;
         case 0xA8000208://单点校表

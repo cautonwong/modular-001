@@ -61,7 +61,7 @@ void heat_compensate(struct instance_t* instance, struct pipeline_t* pipeline)
 			if(adj_std_source.countstart >= nowtime)    //3600sec,60min，15个点，4分钟1个点
 			{
                 rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , GPQA , 2 , &value);   //读取计量芯片寄存器增益值
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Heat_Value_10L);
+                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Value_10L);
                 nd_get_index(instance, s_index, (uint8_t*)&tmp, 30); //读取EE中的补偿值
 
                 if(tmp[14-i] != value)
@@ -84,7 +84,7 @@ void heat_compensate(struct instance_t* instance, struct pipeline_t* pipeline)
 			adj_std_source.countend++;
 			if(adj_std_source.countend>30)
 			{
-				s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Pgain0);
+				s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);
                 nd_get_index(instance, s_index, (uint8_t*)&value, 2); //读取EE中的增益值
                 
                 rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, GPQA, 2, &value);
@@ -106,7 +106,7 @@ void voltage_compensate(struct instance_t* instance, struct pipeline_t* pipeline
 	
 	if(mode == compensate_start)    //开始
 	{
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Un_Cmp_Value);
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Un_Cmp_Value);
         nd_get_index(instance, s_index, (uint8_t *)&emu_voltage_adj.un80_offset, 8); //读取EE中的补偿值
 
 		if(mbase_control_block->voltage_ac > 17500)
@@ -137,7 +137,7 @@ void voltage_compensate(struct instance_t* instance, struct pipeline_t* pipeline
 	{
 		if((adj_std_source.lock & lock_voltage_compensate) == lock_voltage_compensate)
 		{
-			s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Pgain0);
+			s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);
             nd_get_index(instance, s_index, (uint8_t *)&buf[0], 8); //读取EE中的补偿值
 
             memcpy(&tmp, (uint8_t *)&buf[2], 2);//功率偏移
@@ -260,12 +260,12 @@ void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t 
                 Pgain = (signed short)(65535 + err * 32768);
             }
 
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Pgain0);
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);
             nd_get_index(instance, addr, (uint8_t*)&adj_buf[0], 8);
             memcpy((uint8_t*)&adj_buf[0], (uint8_t*)&Pgain, 2);
             nd_set_index(instance, addr, (uint8_t*)&Pgain, 8);
             
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_K);
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_K);
             nd_set_index(instance, addr, (uint8_t*)&mbase_control_block->k_u, 16);
             
             rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, GPQA, 2, &Pgain);
@@ -283,7 +283,7 @@ void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t 
         	}
             rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, PHSA, 1, &Tofst);
             
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Pgain0);
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);
             adj_buf[6] = Tofst;
             nd_set_index(instance, addr, (uint8_t*)adj_buf, 8);
             
@@ -297,7 +297,7 @@ void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t 
             rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , IBRMS , 3 , &I2_value);
             mbase_control_block->k_in = (float)Factory3.Ian/10/I2_value;
             
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_K);
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_K);
             nd_set_index(instance, addr, (uint8_t*)&mbase_control_block->k_u, 16); 
         }
     }
@@ -480,10 +480,10 @@ void Electrical_measurement_poweron(struct instance_t* instance, struct pipeline
     mbase_control_block->n_pluse = 0;
     
     
-    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_K);
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_K);
     nd_get_index(instance, addr, (uint8_t*)&mbase_control_block->k_u, 16);
 
-    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ADJ_Pgain0);
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);
     nd_get_index(instance, addr, (uint8_t*)adj_buf, 8);
     memcpy((uint8_t*)&adj_set, (uint8_t*)adj_buf, 7);
     

@@ -1,6 +1,7 @@
 
 #define	Mem_RAM				1
 #define	Mem_FLASH			2
+#define	Mem_E2PROM_BP		Mem_FLASH
 #define	Mem_E2PROM			3
 #define MEMVALUE            0x03
 
@@ -21,6 +22,7 @@
 // 2 bits	Êı¾İ´æ´¢ÀàĞÍ
 #define 	CommData_RAM			0x0040*Mem_RAM
 #define 	CommData_FLASH			0x0040*Mem_FLASH
+#define 	CommData_E2PROM_BP		0x0040*Mem_FLASH   //e2p å¤‡ä»½åŒº
 #define 	CommData_E2PROM			0x0040*Mem_E2PROM
 
 // 1 bits	Êı¾İ´æ´¢¸ñÊ½×ª»»
@@ -37,6 +39,8 @@
 #define		CommData_PROGRAM		0x4000//±à³Ì×´Ì¬ÏÂ²ÅÔÊĞíÖ´ĞĞ
 #define		CommData_FACTORY		0x8000//¹¤³§Ä£Ê½ÏÂ²ÅÔÊĞíÖ´ĞĞ
 #define		CommData_SECONDLY		0xC000//µÚ¶şÀàÊı¾İ
+
+
 
 typedef struct
 {

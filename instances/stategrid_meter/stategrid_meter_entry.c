@@ -333,12 +333,20 @@ int baremetal_instance_entry_main(int argc, char** argv)
     add_device(instance, RES_DEV_EEPROM, &eeprom_dev,0x00);
     //注册FLASH
     add_device(instance, RES_DEV_FLASH, &nor_flash_dev,4096);
-    //申请一块参数保存区的EPROM区域
+    
+    //申请一块参数保存区的EPROM区域 及备份区
     add_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, mbase_block_static_size);
+    add_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom_bp, mbase_block_static_size);
+    
     //申请一块掉电保存的EPROM区域
     add_block(instance, RES_DEV_EEPROM, mbase_block_persistent_eprom, mbase_block_persistent_size);
-    //注册事件的管理区
+    //注册事件的管理区/参数区
     register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter, 20 * 1024, supply_parameter_info);
+
+    //注册参数区1 及其备份区
+    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter_1, 1 * 1024, supply_parameter_1_info);
+    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter_1_bp, 1 * 1024, supply_parameter_1_info);
+
     //注册事件
     register_log(instance, RES_DEV_EEPROM, mbase_block_event, RES_DEV_EEPROM, mbase_block_parameter, 43 * 1024, supply_event_info);
 

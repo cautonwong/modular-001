@@ -592,7 +592,7 @@ const  parameter_item_t  parameter_item[] =
     { AuthMeth,            0x01,    1,      0}, //连接认证机制
     
     
-    
+#if 0    
     /***************** 计量相关 *****************/
     { Heat_Value_10L,      15,      2,      0 },    //1.0L自热补偿
     { Heat_Value_05L,      15,      2,      0 },    //0.5L自热补偿
@@ -602,13 +602,26 @@ const  parameter_item_t  parameter_item[] =
     { ADJ_Pgain1,          0x01,    8,      0 },    //零线校表参数（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
     { ADJ_Other,           0x01,    4,      0 },    //计量其他参数（启动阀值、HFconst）1 + 2 = 3
     { ADJ_K,               0x01,    16,     0 },    //Kp Ku Ki 零线K系数 4*4 = 16
-     
+#endif     
      //
 #else
     {0}
 #endif
 };
 
+//带备份区
+const  parameter_item_t  parameter_item_1[] =
+{
+    /***************** 计量相关 *****************/
+    { Heat_Value_10L,      15,      2,      0 },    //1.0L自热补偿
+    { Heat_Value_05L,      15,      2,      0 },    //0.5L自热补偿
+
+    { Un_Cmp_Value,        0x01,    8,      0 },   //80%Un 90%Un 110%Un 115%Un补偿
+    { ADJ_Pgain0,          0x01,    8,      0 },    //火线校表参数（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
+    { ADJ_Pgain1,          0x01,    8,      0 },    //零线校表参数（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
+    { ADJ_Other,           0x01,    4,      0 },    //计量其他参数（启动阀值、HFconst）1 + 2 = 3
+    { ADJ_K,               0x01,    16,     0 },    //Kp Ku Ki 零线K系数 4*4 = 16    
+};
 
 
 int16_t supply_parameter_info(struct instance_t* instance, uint16_t id, uint32_t* addr, uint16_t* size,uint16_t *offset)
@@ -637,6 +650,31 @@ int16_t supply_parameter_info(struct instance_t* instance, uint16_t id, uint32_t
     return -1;
 }
 
+int16_t supply_parameter_1_info(struct instance_t* instance, uint16_t id, uint32_t* addr, uint16_t* size,uint16_t *offset)
+{
+    uint16_t i;
+
+    POINTER_EMPTY(addr);
+    *addr = 0x00;
+
+    for (i = 0; i < sizeof(parameter_item_1) / sizeof(parameter_item_1[0]); i++)
+    {        
+        if ((parameter_item_1[i].paramerer_index + (parameter_item_1[i].same - 0x01) >= id) && 
+            (parameter_item_1[i].paramerer_index <= id))
+        {
+            POINTER_EMPTY(size);
+            *size = parameter_item_1[i].same * parameter_item_1[i].len + 0x02;
+            
+            POINTER_EMPTY(offset);
+            *offset = (id - parameter_item_1[i].paramerer_index) * parameter_item_1[i].len;
+
+            return 1;
+        }
+        *addr += parameter_item_1[i].len * parameter_item_1[i].same + 0x02;  //加两个字节的校验码；
+    }
+    *addr = 0x00;
+    return -1;
+}
 
 int16_t supply_event_info(struct instance_t* instance, uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
 {
