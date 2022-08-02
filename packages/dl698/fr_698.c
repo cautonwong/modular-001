@@ -522,7 +522,7 @@ int fr_timeTag_optional(struct instance_t* instance, struct pipeline_t* pipeline
         p[cache->wr++] = 0x00;
     }
     
-    if (ctx->timeTag_valid >= 1){
+    if ((ctx->timeTag_valid >= 1) && (apdu_cache_getFree(cache) > 11)){    
         memcpy(p+cache->wr, ctx->timeTag, 11);
         cache->wr += 11;
     }else{
