@@ -1,6 +1,8 @@
 #include "nidavellir.h"
 #include "645id_table.h"
 
+extern int16_t Check_para_Pro(struct instance_t* instance);
+
 /***********************************************************************/
 /*  函数名称：Comm_Other                                               */
 /*  函数功能：扩展命令                                              */

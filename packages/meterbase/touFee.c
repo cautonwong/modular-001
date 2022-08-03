@@ -7,8 +7,6 @@
     //1.user define
     //2.mesg[秒]
 
-uint8_t Buf[60];
-
 const unsigned char  MonTab[13] = {	0,31,28,31,30,31,30,31,31,30,31,30,31};
 /*
 const unsigned int  DayTab[13] = { 0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
@@ -83,6 +81,7 @@ void FeeTable_Change(struct instance_t* instance, struct pipeline_t* pipeline)
 	unsigned long CurrentTime,ChangeTime,addr=0,s_index;
     unsigned int year;
     struct mbase_control_block_t* mbase_cb;
+    uint8_t Buf[50];
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
@@ -161,6 +160,7 @@ unsigned char FeeTable_CmpFind( struct instance_t* instance, struct pipeline_t* 
 	unsigned char i;
 	unsigned int Now,Int,Int1;
     struct mbase_control_block_t* mbase_cb;
+    uint8_t Buf[50];
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
@@ -220,6 +220,7 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
     uint32_t s_index= 0;
     uint16_t year=0;
     struct mbase_control_block_t* mbase_cb;
+    uint8_t Buf[200];
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
@@ -295,6 +296,7 @@ void GetTOUFee(struct instance_t* instance, struct pipeline_t* pipeline)
     uint8_t i,Num[2]={0,};
     uint32_t s_index=0;
     struct mbase_control_block_t* mbase_cb;
+    uint8_t Buf[50];
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     

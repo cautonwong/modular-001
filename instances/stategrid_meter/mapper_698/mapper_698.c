@@ -174,6 +174,7 @@ extern int SET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf,
 extern int GET_e_Monitor(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
 extern int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
 extern int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
+extern int16_t Check_para_Pro(struct instance_t* instance);
 
 #define POINTER_EMPTY(a)  if(a == NULL) { return -1; }
 struct record_item_t

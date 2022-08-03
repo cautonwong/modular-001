@@ -7,6 +7,7 @@ struct factor_adj_meter_t factory3;
 extern void emu_calibration_clear(struct instance_t* instance);
 extern void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t *adj_data);
 extern const struct dev_info_t rn8209_dev;
+extern int16_t Check_para_Pro(struct instance_t* instance);
 
 int rn8209c_set( struct instance_t* instance, uint8_t *p_rx )
 {
