@@ -3,7 +3,7 @@
 #include "fr_698.h"
 #include "pin_function_def.h"
 
-extern int16_t do_block_checksum(struct instance_t* instance);
+extern uint16_t do_block_static_checksum(struct instance_t* instance);
 
 //bit0~bit15
 //MeterRun1
@@ -139,25 +139,25 @@ void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
 int16_t Check_para_Pro(struct instance_t* instance)
 {
     struct mbase_control_block_t* mbase_cb;
-    uint16_t check_sum[2] = {0,};
+    uint32_t check_sum[2] = {0,};
     uint32_t addr = 0x00,s_index;
     size_t mbase_block_static_size = offsetof(struct mbase_control_block_t, static_section_end) - offsetof(struct mbase_control_block_t, static_section_start) + 1;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     /******************* mbase_control_block_t *******************/
-    check_sum[0] = do_block_checksum(instance);
+    check_sum[0] = do_block_static_checksum(instance);
     
-    if(mbase_cb->chksum != check_sum[0]) //RAM异常
+    if(mbase_cb->static_chksum != check_sum[0]) //RAM异常
     {
         get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_static, &addr);//RAM对应的地址
         nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, (uint8_t*)addr, mbase_block_static_size); //从EE主区获取，覆盖至RAM
-        check_sum[0] = do_block_checksum(instance);
-        if(mbase_cb->chksum != check_sum[0])    //主区效验错误
+        check_sum[0] = do_block_static_checksum(instance);
+        if(mbase_cb->static_chksum != check_sum[0])    //主区效验错误
         {
             nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom_bp, (uint8_t*)addr, mbase_block_static_size);//从EE备份区获取，覆盖至RAM
-            check_sum[0] = do_block_checksum(instance);
-            if(mbase_cb->chksum == check_sum[0])    //备份正确
+            check_sum[0] = do_block_static_checksum(instance);
+            if(mbase_cb->static_chksum == check_sum[0])    //备份正确
             {
                 //备份区覆盖主区          
                 nd_set_block(instance,RES_DEV_EEPROM, mbase_block_static_eprom,(uint8_t *)addr,mbase_block_static_size); //将RAM中的数据保存到EPROM;
@@ -167,8 +167,8 @@ int16_t Check_para_Pro(struct instance_t* instance)
         else    //主区正确，获取备份数据
         {
             nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom_bp, (uint8_t*)addr, mbase_block_static_size);//从EE备份区获取，覆盖至RAM
-            check_sum[0] = do_block_checksum(instance);
-            if(mbase_cb->chksum != check_sum[0])    //备份错误
+            check_sum[0] = do_block_static_checksum(instance);
+            if(mbase_cb->static_chksum != check_sum[0])    //备份错误
             {
                 //主区覆盖备份区
                 nd_set_block(instance,RES_DEV_EEPROM, mbase_block_static_eprom_bp,(uint8_t *)addr,mbase_block_static_size); //将RAM中的数据保存到EPROM;

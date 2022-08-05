@@ -127,6 +127,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     size_t mbase_block_persistent_size = offsetof(struct mbase_control_block_t, persistent_section_end) - offsetof(struct mbase_control_block_t, persistent_section_start) + 1;
     size_t mbase_block_static_size = offsetof(struct mbase_control_block_t, static_section_end) - offsetof(struct mbase_control_block_t, static_section_start) + 1;
+    size_t persitent_ec_size = offsetof(struct mbase_control_block_t, persistent_energy_EC_label) - offsetof(struct mbase_control_block_t, persistent_section_start);
     uint32_t addr = 0;
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -200,11 +201,15 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, (uint8_t*)addr, mbase_block_static_size); //将EPROM中的数据恢复到RAM;  
             Check_para_Pro(instance);     //数据效验
             //上电需要恢复数据
+            //跳过电能恢复 由电能模块处理        
+            addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+                offsetof(struct mbase_control_block_t, persistent_energy_EC_label)  -  offsetof(struct mbase_control_block_t, persistent_section_start));
+            nd_get_offset(instance, addr, (uint8_t*)&mbase_cb->persistent_energy_EC_label, (mbase_block_persistent_size - persitent_ec_size));           
             //获取对应的RAM地址
-            get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
-            nd_get_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)addr,mbase_block_persistent_size); //将EPROM中的数据恢复到RAM;        
-            Electrical_measurement_poweron(instance, pipeline);
+            //get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
+            //nd_get_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)(addr + persitent_ec_size),(mbase_block_persistent_size - persitent_ec_size)); //将EPROM中的数据恢复到RAM;        
             Energy_Meter_PowerON(instance, pipeline);
+            Electrical_measurement_poweron(instance, pipeline);
             AllDisplayLCD(instance, pipeline);
             mbase_control_block->key_state = get_key_status(instance);//获取秘钥状态
             Magnetic_hold_relay_Init();
@@ -231,12 +236,13 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             GPIOC->DAT |= (BIT6);
           
             //掉电需要保存数据
-            //先刷新停电时间ram
+            //刷新停电时间ram
             ndv_memcopy((uint8_t *)(&mbase_control_block->powerdown_tm),  (uint8_t *)&instance->time,  sizeof(mbase_control_block->powerdown_tm));
-            //获取对应的RAM地址
+
+            mbase_cb->ec_save_success = 0x5AA5;  //保存前 置 标志   
             get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
             nd_set_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;      
-            
+            mbase_cb->ec_save_success = 0;       //保存后 清 标志
             instance->ac_power_off_sec_cnt = 0;
 
             event_poweroff_save(instance,pipeline,mesg);

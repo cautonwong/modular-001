@@ -614,14 +614,22 @@ const  parameter_item_t  parameter_item[] =
 const  parameter_item_t  parameter_item_1[] =
 {
     /***************** 计量相关 *****************/
-    { Heat_Value_10L,      15,      2,      0 },    //1.0L自热补偿
-    { Heat_Value_05L,      15,      2,      0 },    //0.5L自热补偿
+    { Heat_Value_10L    ,       15  ,       2   ,   0 },    //1.0L自热补偿
+    { Heat_Value_05L    ,       15  ,       2   ,   0 },    //0.5L自热补偿
 
-    { Un_Cmp_Value,        0x01,    8,      0 },   //80%Un 90%Un 110%Un 115%Un补偿
-    { ADJ_Pgain0,          0x01,    8,      0 },    //火线校表参数（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
-    { ADJ_Pgain1,          0x01,    8,      0 },    //零线校表参数（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
-    { ADJ_Other,           0x01,    4,      0 },    //计量其他参数（启动阀值、HFconst）1 + 2 = 3
-    { ADJ_K,               0x01,    16,     0 },    //Kp Ku Ki 零线K系数 4*4 = 16    
+    { Un_Cmp_Value      ,       1   ,       8   ,   0 },    //80%Un 90%Un 110%Un 115%Un补偿
+    { ADJ_Pgain0        ,       1   ,       8   ,   0 },    //火线校表参数（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
+    { ADJ_Pgain1        ,       1   ,       8   ,   0 },    //零线校表参数（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
+    { ADJ_Other         ,       1   ,       4   ,   0 },    //计量其他参数（启动阀值、HFconst）1 + 2 = 3
+    { ADJ_K             ,       1   ,       16  ,   0 },    //Kp Ku Ki 零线K系数 4*4 = 16 
+
+    
+    { Energy_block      ,       1   ,       160 ,   0 },    //电能块 保存区 (含ram中的校验)
+    { UseEnergy_block   ,       1   ,       12  ,   0 },    //电能块 保存区 (含ram中的校验)
+
+
+
+    
 };
 
 
@@ -2276,6 +2284,9 @@ int para_init(struct instance_t* instance )
     err = Check_para_Pro(instance);
     
     //RAM部分更新
+    mbase_cb->meter_const = 2000;
+    mbase_cb->active_energy_cal_word = 0x05;
+    
     mbase_cb->lcd_poweron_all_dis_time = 5;            //上电全显时间
     mbase_cb->backlight_key_time = 60;                  //背光点亮时间
     mbase_cb->lcd_checkdis_keep_sec = 10;               //显示查看背光点亮时间
@@ -2298,9 +2309,9 @@ int para_init(struct instance_t* instance )
     mbase_cb->Limit_T_Min = 60;   //广播校时最小允许时间
     
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    offsetof(struct mbase_control_block_t, backlight_key_time));
+    offsetof(struct mbase_control_block_t, meter_const));
     s_len = offsetof(struct mbase_control_block_t, OverCurrent_threshold) - offsetof(struct mbase_control_block_t, backlight_key_time);
-    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->backlight_key_time, s_len);
+    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->meter_const, s_len);
     
     memset(mbase_cb->tsa, 0x11, 6);//表地址
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 

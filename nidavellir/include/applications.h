@@ -45,7 +45,7 @@ struct demand_info_t
 
 struct mbase_control_block_t
 {
-    //上电需要发起IO请求的参数区  运行期不更改
+    //上电需要发起IO请求的参数区  运行期不更改   //带备份校验
     static_start            //------------------------------------------------------
     uint8_t tsa[6];  
 
@@ -101,7 +101,7 @@ struct mbase_control_block_t
     
     uint32_t backlight_control_word;//背光报警配置字 
 
-    uint16_t chksum;
+    uint32_t static_chksum; //以上带备份校验
     
     static_end          //------------------------------------------------------
         
@@ -237,15 +237,24 @@ struct mbase_control_block_t
     dyn_cache_end  //------------------------------------------------------
     //运行期更改&&掉电或定时保存&&上电需要IO请求的数据分区
     dyn_persistent_start
-        //电能数据
+    //电能数据块       排序不应随意改变
     uint32_t active_p[MAX_FEE_NO+1];
     uint32_t active_n[MAX_FEE_NO+1];
     //uint32_t month_active_p[MAX_FEE_NO+1];
     //uint32_t month_active_n[MAX_FEE_NO+1];
+    //uint32_t month_active_cs;
     uint16_t active_p_dec[MAX_FEE_NO+1];
     uint16_t active_n_dec[MAX_FEE_NO+1];
-    uint16_t MonthEnegery_dec;
-    uint32_t  MonthEnegery;   //当前月度用电量    
+    uint32_t Energy_chksum;     //电量 累加和
+
+    uint16_t MonthEnegery_dec; //用电量
+    uint32_t MonthEnegery;     //当前月度用电量 
+    uint32_t UseEnergy_chksum;     //用电量 累加和
+
+    dyn_persistent_EC_label     // 电能数据 末尾标签
+
+    uint16_t ec_save_success;   // 电能掉电存储成功标志  0x5AA5
+    
     //RELAY
     uint8_t cmd;	    //控制命令  0x1A , 0x1B....
     uint8_t mode;     //拉合闸方式（直接、允许）
@@ -320,15 +329,15 @@ enum resourenc_block_name
     control_block_698_name,
     mbase_control_block_name,
     mbase_block_static,
-    mbase_block_static_eprom,           //带备份区             枚举顺序不能变
-    mbase_block_static_eprom_bp,        //带备份区的备份          枚举顺序不能变
+    mbase_block_static_eprom,           //主区  
+    mbase_block_static_eprom_bp,        //备份 需跟在主区后面 
     mbase_block_cache,
     mbase_block_persistent,
     mbase_block_persistent_eprom,
     mbase_block_event,
-    mbase_block_parameter,              //不带备份区
-    mbase_block_parameter_1,            //带备份区             枚举顺序不能变
-    mbase_block_parameter_1_bp,         //带备份区的备份          枚举顺序不能变
+    mbase_block_parameter,              //不带备份 
+    mbase_block_parameter_1,            //主区 
+    mbase_block_parameter_1_bp,         //备份 需跟在主区后面
     mbase_block_event_flash1,
     mbase_block_event_flash2,
     public_block_flash,

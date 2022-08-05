@@ -100,6 +100,8 @@
 #define dyn_cache_end                uint8_t cache_section_end;
 
 #define dyn_persistent_start         uint8_t persistent_section_start;
+#define dyn_persistent_EC_label      uint8_t persistent_energy_EC_label;
+
 #define dyn_persistent_end           uint8_t persistent_section_end;
 
 //event_flag_id  event_chain
@@ -504,6 +506,19 @@ enum block_parameter_item_id_t
 #define     ActReport_Info              1526 // 主动上报 停电下缓存信息   //待调整  现是否存两份？
 
 #define     __INITFLAG2_End             ActReport_Info //初始化 特殊处理标记  
+
+
+
+//EC  ---- 2000开始
+#define      Energy_block                    2000 // 电能保存区域          长度由dyn_persistent_EC_label位置确定
+#define      UseEnergy_block                 2001 // 电能保存区域          长度由dyn_persistent_EC_label位置确定
+
+
+
+
+
+
+
 
 
 #define     MAX_FEE_NO                  12                                  

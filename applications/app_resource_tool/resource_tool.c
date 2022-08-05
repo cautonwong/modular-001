@@ -1299,23 +1299,33 @@ int16_t nd_get_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf
     return len;
 }
 
-int16_t do_block_checksum(struct instance_t* instance)
+uint32_t do_checksum(uint8_t *buf, uint16_t len)
 {
-    uint16_t checksum = 0xA5A5;
+    uint16_t i, checksum = 0xA5A5;
+ 
+    for (i = 0; i < len; i++)
+    {
+        checksum += *(buf+i);
+    }
+    return checksum;   
+}
+
+
+uint32_t do_block_static_checksum(struct instance_t* instance)
+{
     uint8_t *buff;
+    uint16_t len;
     struct mbase_control_block_t* mbase_cb;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
-    buff = &mbase_cb->static_section_start + 1;
+    buff = &mbase_cb->static_section_start + 1; // 是否有字节对齐的问题？  待调整 
+
+    len = (uint16_t)((uint8_t *)(&mbase_cb->static_chksum) - buff);
     
-    
-    while (buff < (uint8_t *)(&mbase_cb->chksum))
-    {
-        checksum += *buff++;
-    }
-    return checksum;
+    return do_checksum(buff, len);
 }
+
 
 
 int16_t __nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf, uint16_t len)
@@ -1351,29 +1361,39 @@ int16_t nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf
     int ret = 0;
     
     ret = __nd_set_offset(instance,offset,buf, len);
+    res_conditions_true(0x00 > ret, -1);
 
-    //备份校验区
-    if ((block_name == mbase_block_static_eprom) && (ret >= 0))
+    //备份及校验处理
+    switch(block_name)
     {
-        end_addr = offsetof(struct mbase_control_block_t, chksum);  //计算效验偏移
-        if((offset & 0x000000FF) < end_addr)
-        {
-            mbase_cb->chksum = do_block_checksum(instance);
-            chkaddr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                    offsetof(struct mbase_control_block_t, chksum));
-            ret = __nd_set_offset(instance, chkaddr, (uint8_t*)&mbase_cb->chksum, 2);  //刷新主区效验和
-            res_conditions_true(0x00 > ret, -1);
-            
-            ret = __nd_set_offset(instance,(offset + (1<<16)),buf, len); //刷新备份区数据和效验和
-            res_conditions_true(0x00 > ret, -1);
-            
-            chkaddr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom_bp << 16) + 
-                    offsetof(struct mbase_control_block_t, chksum));
-            ret = __nd_set_offset(instance, chkaddr, (uint8_t*)&mbase_cb->chksum, 2);                        
-        }
+        case mbase_block_static_eprom:  //整段带备份和校验
+            end_addr = offsetof(struct mbase_control_block_t, static_chksum);  //计算效验偏移
+            if((offset & 0x000000FF) < end_addr)
+            {
+                mbase_cb->static_chksum = do_block_static_checksum(instance);
+                chkaddr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        offsetof(struct mbase_control_block_t, static_chksum));
+                ret = __nd_set_offset(instance, chkaddr, (uint8_t*)&mbase_cb->static_chksum, 4);  //刷新主区效验和
+                res_conditions_true(0x00 > ret, -1);
+                
+                ret = __nd_set_offset(instance,(offset + (1<<16)),buf, len); //刷新备份区数据和效验和
+                res_conditions_true(0x00 > ret, -1);
+                
+                chkaddr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom_bp << 16) + 
+                        offsetof(struct mbase_control_block_t, static_chksum));
+                ret = __nd_set_offset(instance, chkaddr, (uint8_t*)&mbase_cb->static_chksum, 4);                        
+            }
+            break;
+        case mbase_block_persistent_eprom:  
+
+            break;
+
+        default:
+            break;
     }
 
     return ret;
+
 }
 
 //目前resource manger 数据操作介绍
