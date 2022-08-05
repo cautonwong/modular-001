@@ -1,4 +1,5 @@
 #include "nidavellir.h"
+#include "lib_ana.h"
 
 int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);

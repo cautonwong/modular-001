@@ -2,6 +2,7 @@
 #include "applications.h"
 #include "gs_record.h"
 #include "fr_698.h"
+#include "lib_ana.h"
 
 //计算记录型配置关联对象时  总长度是否超预留空间，  入参关联对象、深度，  事件无深度，需传Null.
 //并且计算保存分钟冻结8个方案中每个方案的空间大小偏移(扇区)
@@ -406,7 +407,7 @@ int record_rollback_after_set_time(struct instance_t* instance, uint8_t finish_c
         for (i = 0; i < (sizeof(TabOAD) / sizeof(TabOAD[0])); i++)
         {
             //掉电退出
-            if(true == ac_power_off_monitor())
+            if (ANA_GetStatus(ANA_STATUS_VDCINDROP))    
             {
                 return 1;
             }

@@ -804,6 +804,7 @@ void  mcu_clear_watchdog(void)
 uint8_t poweroff_test = 1;//鏀瑰洖鏉�
 uint8_t ac_power_off_monitor(void)
 {
+    uint8_t i;
 #if 0 
     if (poweroff_test) // 鏀瑰洖鏉�
     {
@@ -825,20 +826,19 @@ uint8_t ac_power_off_monitor(void)
         return true;
     }
 #endif    
-
-    if (ANA_GetStatus(ANA_STATUS_VDCINDROP))     //鎺夌數
+    for(i=0;i<20;i++)
     {
-        return true;
+        if (ANA_GetStatus(ANA_STATUS_VDCINDROP) == 0)     //鎺夌數
+        {
+            return false;
+        }
     }
-    return false;
-
-
-
-
+    return true;
 }
 
 uint8_t ac_power_on_monitor(void)
 {
+    uint8_t i;
 #if 0
     if (poweroff_test) // 鏀瑰洖鏉�
     {
@@ -861,13 +861,14 @@ uint8_t ac_power_on_monitor(void)
         return true;
     }
 #endif
-    if (ANA_GetStatus(ANA_STATUS_VDCINDROP) == 0)
+    for(i=0;i<20;i++)
     {
-        return true;
-    }
-    return false;
-
-
+        if (ANA_GetStatus(ANA_STATUS_VDCINDROP) != 0)
+        {
+            return false;
+        }
+    }    
+    return true;
 }
 
 void fnINTTC3_Init(uint8_t cmd)//2ms

@@ -19,6 +19,40 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 
 #endif
 
+int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    size_t mbase_block_persistent_size = offsetof(struct mbase_control_block_t, persistent_section_end) - offsetof(struct mbase_control_block_t, persistent_section_start) + 1;
+    uint32_t addr = 0;
+    
+    __disable_irq();
+    
+    CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);
+    GPIOC->OEN &= ~(BIT4|BIT5|BIT6); 
+    GPIOC->IE &= ~(BIT4|BIT5|BIT6);
+    GPIOC->DAT |= (BIT6);
+    
+    //掉电需要保存数据
+    //先刷新停电时间ram
+    ndv_memcopy((uint8_t *)(&mbase_control_block->powerdown_tm),  (uint8_t *)&instance->time,  sizeof(mbase_control_block->powerdown_tm));
+    //获取对应的RAM地址
+    get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
+    nd_set_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;      
+    
+    instance->ac_power_off_sec_cnt = 0;
+
+    event_poweroff_save(instance,pipeline,mesg);
+    
+    //掉电清空显示相关内容
+    memset((uint8_t *)&mbase_control_block->voltage_ac, 0x00, 32);
+    memset((uint8_t *)&mbase_control_block->AutoPtr, 0x00, 10);
+    //读取电池使用时间
+    
+    __enable_irq();
+    
+    return true;
+}
+
 
 void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
 {
@@ -30,31 +64,7 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     if(mbase_control_block->AutoInv > 0)   mbase_control_block->AutoInv--;
     
     if(mbase_control_block->KeyInv > 0)    mbase_control_block->KeyInv--;
-       
-    if(mbase_control_block->commdisp_ir485 > 0) mbase_control_block->commdisp_ir485--;
-    
-    if(mbase_control_block->commdisp_plc > 0)   mbase_control_block->commdisp_plc--;
 
-    
-    
-    if( mbase_control_block->plc_baut_tick > 0)   //载波通道1小时不通讯，复位载波口 
-    {
-        mbase_control_block->plc_baut_tick--;
-        if( mbase_control_block->plc_baut_tick == 0)
-        {
-            mbase_control_block->Baut_plc_neg =0xfe;
-            mbase_control_block->Baut_plc = 6;
-            mcu_uart_set_baud(9600, 4);
-        }
-    }
-
-
-//  backlight_pro(instance, pipeline);
-    Meter_Run_State(instance, pipeline);//运行状态字刷新
-    
-
-    
-    
     if( instance->ac_power_statue != AC_POWER_ON ) //低功耗
     {
         instance->ac_power_off_sec_cnt++;
@@ -81,6 +91,24 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     }
     else
     {
+        if(mbase_control_block->commdisp_ir485 > 0) mbase_control_block->commdisp_ir485--;
+    
+        if(mbase_control_block->commdisp_plc > 0)   mbase_control_block->commdisp_plc--;   
+        
+        if( mbase_control_block->plc_baut_tick > 0)   //载波通道1小时不通讯，复位载波口 
+        {
+            mbase_control_block->plc_baut_tick--;
+            if( mbase_control_block->plc_baut_tick == 0)
+            {
+                mbase_control_block->Baut_plc_neg =0xfe;
+                mbase_control_block->Baut_plc = 6;
+                mcu_uart_set_baud(9600, 4);
+            }
+        }
+
+    //  backlight_pro(instance, pipeline);
+        Meter_Run_State(instance, pipeline);//运行状态字刷新
+    
         mbase_control_block->power_on_sec_accum++;
         fr_dl698_sec_task(instance, pipeline);
         
@@ -102,6 +130,11 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
     uint32_t addr = 0;
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
+    if (ANA_GetStatus(ANA_STATUS_VDCINDROP))
+    {
+        return 0;
+    }
     
     //cmd len data cmd 接入校验
     //调用领域层完成业务  要反映用例场景
@@ -192,7 +225,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             break;
       case MSG_POWEROFF:
             //开启EE电源和IO口时钟 //
-            CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);
+/*            CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);
             GPIOC->OEN &= ~(BIT4|BIT5|BIT6); 
             GPIOC->IE &= ~(BIT4|BIT5|BIT6);
             GPIOC->DAT |= (BIT6);
@@ -213,6 +246,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             memset((uint8_t *)&mbase_control_block->voltage_ac, 0x00, 32);
             memset((uint8_t *)&mbase_control_block->AutoPtr, 0x00, 10);
             //读取电池使用时间
+*/
             break;
       default:
             break;

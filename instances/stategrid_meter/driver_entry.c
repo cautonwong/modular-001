@@ -464,6 +464,32 @@ void dev_init(uint8_t power_mode)
     esam_698_init(power_mode);
 }
 
+void report_port_open(struct instance_t* instance)
+{
+    CLK_InitTypeDef CLK_Struct;
+    uint32_t Periphral = 0;
+
+    CLK_Struct.ClockType = CLK_TYPE_AHBSRC \
+        | CLK_TYPE_PLLL   \
+        | CLK_TYPE_HCLK   \
+        | CLK_TYPE_PCLK;
+    CLK_Struct.AHBSource = CLK_AHBSEL_LSPLL;
+    CLK_Struct.PLLL.Frequency = CLK_PLLL_26_2144MHz;
+    CLK_Struct.PLLL.Source = CLK_PLLLSRC_XTALL;
+    CLK_Struct.PLLL.State = CLK_PLLL_ON;
+    CLK_Struct.HCLK.Divider = 1;
+    CLK_Struct.PCLK.Divider = 1;
+    CLK_ClockConfig(&CLK_Struct);
+    Periphral = CLK_APBPERIPHRAL_UART4;
+    CLK_AHBPeriphralCmd(( CLK_AHBPERIPHRAL_GPIO), ENABLE);
+    CLK_APBPeriphralCmd(Periphral, ENABLE);
+
+    GPIOB->ATT |= BIT0;//plcrx
+    GPIOB->ATT |= BIT6;//plctx
+    cm0_systick_init(1);
+    uart_chl_open(UART_MODULE_CHL);
+}
+
 //关闭用电大户外设的电源，比如背光，LED，串口，高速定时器，tick
  void device_power_close(struct instance_t* instance)
  {
@@ -520,7 +546,7 @@ void dev_init(uint8_t power_mode)
     CORTEX_SetPriority_ClearPending_EnableIRQ(PMU_IRQn, 0); //优先级高
 
     /*------------------ Low power configuration ------------------*/
-    LowPower_InitStruct.AHBPeriphralDisable = PMU_AHB_ALL;
+/*    LowPower_InitStruct.AHBPeriphralDisable = PMU_AHB_ALL;
     LowPower_InitStruct.LCDPower            = PMU_LCDPWER_OFF;
     
     LowPower_InitStruct.APBPeriphralDisable = PMU_APB_ALL;
@@ -530,12 +556,13 @@ void dev_init(uint8_t power_mode)
     LowPower_InitStruct.AVCCPower           = PMU_AVCCPWR_OFF;
     LowPower_InitStruct.TADCPower           = PMU_TADCPWR_OFF;
     LowPower_InitStruct.VDCINDetector       = PMU_VDCINDET_ENABLE;
-    LowPower_InitStruct.VDDDetector         = PMU_VDDDET_DISABLE;
+    LowPower_InitStruct.VDDDetector         = PMU_VDDDET_DISABLE;*/
     RTC_PLLDIVOutputCmd(DISABLE);
     MComp1Init();//电池状态监测初始化
-    WDT_Disable();
-    PMU_EnterSleep_LowPower(&LowPower_InitStruct);
- }
+//    WDT_Disable();
+//    PMU_EnterSleep_LowPower(&LowPower_InitStruct);
+    
+}
 
 
 //关闭用电大户外设的电源，比如背光，LED，串口，高速定时器，tick
@@ -764,8 +791,8 @@ void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
         
         LCD->CTRL |= LCD_CTRL_EN;
         MISC2->HCLKEN |= (uint32_t)BIT6;
-        memcpy((uint8_t*)(&LCD->FB[0]), (uint8_t *)&lcd_tmp[0], sizeof(lcd_tmp));
-    //    lcd_init(__NULL , POWER_OFF_MODE);
+        memcpy((uint8_t *)(&LCD->FB[0]), (uint8_t *)&lcd_tmp[0], sizeof(lcd_tmp));
+        lcd_init(AC_POWER_OFF);
 
         /*------------------ Forbidden all GPIOs ------------------*/
         GPIO_InitStruct.GPIO_Mode = GPIO_Mode_FORBIDDEN;
@@ -800,11 +827,10 @@ void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
         LowPower_InitStruct.BGPPower            = PMU_BGPPWR_OFF;
         LowPower_InitStruct.COMP1Power          = PMU_COMP1PWR_ON;//PMU_COMP1PWR_OFF;
         LowPower_InitStruct.COMP2Power          = PMU_COMP2PWR_OFF;
-        LowPower_InitStruct.AVCCPower           = PMU_AVCCPWR_OFF;
+        LowPower_InitStruct.AVCCPower           = PMU_AVCCPWR_ON;
         LowPower_InitStruct.TADCPower           = PMU_TADCPWR_OFF;
         LowPower_InitStruct.VDCINDetector       = PMU_VDCINDET_ENABLE;
         LowPower_InitStruct.VDDDetector         = PMU_VDDDET_DISABLE;
-        RTC_PLLDIVOutputCmd(DISABLE);
     }
     else 
     {
@@ -817,14 +843,13 @@ void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
         LowPower_InitStruct.BGPPower            = PMU_BGPPWR_OFF;
         LowPower_InitStruct.COMP1Power          = PMU_COMP1PWR_ON;//PMU_COMP1PWR_OFF;
         LowPower_InitStruct.COMP2Power          = PMU_COMP2PWR_OFF;
-        LowPower_InitStruct.AVCCPower           = PMU_AVCCPWR_OFF;
+        LowPower_InitStruct.AVCCPower           = PMU_AVCCPWR_ON;
         LowPower_InitStruct.TADCPower           = PMU_TADCPWR_OFF;
         LowPower_InitStruct.VDCINDetector       = PMU_VDCINDET_ENABLE;
         LowPower_InitStruct.VDDDetector         = PMU_VDDDET_DISABLE;
-
-        RTC_PLLDIVOutputCmd(DISABLE);
-        MComp1Init();//电池状态监测初始化
     }
+    RTC_PLLDIVOutputCmd(DISABLE);
+    MComp1Init();//电池状态监测初始化
     WDT_Disable();
     PMU_EnterSleep_LowPower(&LowPower_InitStruct);
     

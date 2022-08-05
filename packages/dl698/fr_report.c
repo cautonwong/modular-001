@@ -2,6 +2,8 @@
 #include "fr_698.h"
 #include "pin_function_def.h"
 #include "cpu_surport.h"
+#include "lib_clk.h"
+#include "lib_uart.h"
 
 
 extern uint8_t DEVICE_ERR;
@@ -16,7 +18,7 @@ extern void report_3320list_2015state_clear(struct instance_t* instance);
 
 extern uint8_t report_channel_check(struct instance_t* instance, uint16_t channel);
 extern uint32_t follow_report_3320List_Latest_oad_get(struct instance_t* instance, uint8_t chn);
-
+extern void report_port_open(struct instance_t* instance);
 
 
 extern uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t mode);
@@ -1293,13 +1295,15 @@ int active_report_normal_pro(struct instance_t* instance, struct pipeline_t* pip
     return (len_apdu + encry_len + 5);
 }
 
-
+uint16_t report_flag = 0;
 //掉电后 上报处理 每秒调用
 int powerOff_report_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t get_data)
 {
     struct mbase_control_block_t*  mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     int len = 0;
     uint8_t start_time = 1;
+    CLK_InitTypeDef CLK_Struct;
+    uint32_t Periphral = 0;
 
     start_time = 1;
     if ((instance->ac_power_off_sec_cnt >= start_time) && (instance->ac_power_off_sec_cnt <= (start_time+2)))
@@ -1313,7 +1317,9 @@ int powerOff_report_pro(struct instance_t* instance, struct pipeline_t* pipeline
                 //配置io口 初始化模块uart 
                 if(get_data)
                 {
+                    report_port_open(instance);
                     mbase_cb->active_report_retry_cnt[R_3011_START]++;
+                    report_flag = 0xa55a;
                 }
                 //协议发送
             }

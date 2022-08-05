@@ -2,7 +2,7 @@
 #include "nidavellir.h"
 #include "cpu_surport.h"
 #include "ndvh_rn8209.h"
-
+#include "lib_ana.h"
 
 
 unsigned char ReadRn8209WithChk(unsigned char ChipAddr, unsigned char* Buf, unsigned char length, const struct dev_info_t* dev)
@@ -24,6 +24,8 @@ unsigned char ReadRn8209WithChk(unsigned char ChipAddr, unsigned char* Buf, unsi
 
         while ((false == bus_ops->tx_statue(index)) && (timeout > 1))
         {
+            if (ANA_GetStatus(ANA_STATUS_VDCINDROP))    return false;
+            
             timeout--;
         }
         bus_ops->rx_enable(2 , index);
@@ -33,6 +35,8 @@ unsigned char ReadRn8209WithChk(unsigned char ChipAddr, unsigned char* Buf, unsi
             timeout = 5000;
             while ((false == bus_ops->rx_statue(index)) && (timeout > 1))
             {
+                if (ANA_GetStatus(ANA_STATUS_VDCINDROP))    return false;
+
                 timeout--;
             }
             if (timeout <= 1)
@@ -89,6 +93,8 @@ unsigned char WriteRn8209(unsigned char ChipAddr, unsigned char* Buf, unsigned c
             dev_bus_ops->tx(tx_buffer[i] , index);
             while ((false == dev_bus_ops->tx_statue(index)) && (timeout > 1))
             {
+                if (ANA_GetStatus(ANA_STATUS_VDCINDROP))    return false;
+                
                 timeout--;
             }
         }

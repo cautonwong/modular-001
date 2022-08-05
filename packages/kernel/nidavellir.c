@@ -171,7 +171,9 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
             mesg->len = 0;
             send_mesg(instance, NULL, mesg);
             instance->ac_power_statue = AC_POWER_OFF;
-            device_power_close1(instance);//待调整
+            
+            device_power_close(instance);//关闭大功率外设
+            PowerOff_Save_data(instance, pipeline); //数据保存
         }
     }
     else
@@ -295,7 +297,7 @@ int fr_uart_timeout(struct instance_t* instance, struct pipeline_t* pipeline, st
        
     return ret;
 }
-
+extern uint16_t report_flag;
 int nidavellir_run_baremetal(struct instance_t* instance)
 {
     struct message_t mesg;
@@ -305,6 +307,7 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     int ret = 0;
     uint8_t pipeline_n = recipe->pipeline_n;
     struct pipeline_t* pipeline = NULL;
+    uint32_t tick_report = 0;
 
 #ifndef WIN32
     mcu_clear_watchdog();
@@ -369,18 +372,18 @@ int nidavellir_run_baremetal(struct instance_t* instance)
         }
     }
 
+    if(report_flag == 0xa55a)
+    {
+        tick_report = 0x3FFFF;
+        while (tick_report)
+        {tick_report--;}
+        report_flag = 0;
+    }
     //处理持久化事务  如掉电保存和记录保存等  每圈保存一次
     //sync_data()
     if(instance->ac_power_statue != AC_POWER_ON)
     {
-        if(instance->ac_power_off_sec_cnt >= 5)//待调整
-        {
-            cpu_io_lowpower_cfg_chk(instance);
-            
-            cpu_sleep_manage(instance, pipeline);
-        }
-
-
+        cpu_sleep_manage(instance, pipeline);
     }
     
     return 1;

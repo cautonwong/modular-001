@@ -379,20 +379,23 @@ void Rtc_Prossecc(struct instance_t* instance, struct pipeline_t* pipeline)
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
-    if(instance->time.tm_sec != 20)//每分鐘的20秒對時
+    if( instance->ac_power_statue == AC_POWER_ON )
     {
-        instance->time.tm_sec++;
+        if(instance->time.tm_sec != 20)//每分鐘的20秒對時
+        {
+            instance->time.tm_sec++;
+            
+            rtc_tm_normalize((struct tm*)&instance->time.tm_sec);
+        }
+        else
+        {
+            read_mcu_rtc(0x00, instance);
+        }
         
-        rtc_tm_normalize((struct tm*)&instance->time.tm_sec);
-    }
-    else
-    {
-        read_mcu_rtc(0x00, instance);
-    }
-    
-    if(instance->time.tm_sec == 0)
-    {
-        mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+        if(instance->time.tm_sec == 0)
+        {
+            mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+        }
     }
     
     if((instance->time.tm_hour == 0) && (instance->time.tm_min == 0) && (instance->time.tm_sec == 0))
