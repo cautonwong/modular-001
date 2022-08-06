@@ -8,7 +8,23 @@
 #endif // !WIN32
 
 
+
+//
+//是否开启仿真终端打印 模式
+#define _NDV_PRINT_DEBUG_ 0    //不开启
+//#define _NDV_PRINT_DEBUG_ 1    //开启
+#if _NDV_PRINT_DEBUG_
+#include "stdio.h"
+#define NDV_PRINTF(...) printf(__VA_ARGS__)
+#else
+#define NDV_PRINTF(...)
+#endif
+
+
+
 #define RESET_INFO    1 // 记录 复位信息
+
+
  
 
 struct energy_ctx_t
@@ -101,6 +117,8 @@ struct mbase_control_block_t
     
     uint32_t backlight_control_word;//背光报警配置字 
 
+    uint8_t static_blank_space[4*10];   //  空白区
+    
     uint32_t static_chksum; //以上带备份校验
     
     static_end          //------------------------------------------------------
@@ -312,7 +330,8 @@ struct mbase_control_block_t
     
     struct tm powerdown_tm;                     // 停电时间
     struct tm v_powerdown_tm;                   // 模拟停电时间  补结算测试用 
-
+    
+    uint8_t persistent_blank_space[4*10];   //  空白区
 
     dyn_persistent_end
 

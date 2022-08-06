@@ -3,6 +3,11 @@
 #include "resource_tool.h"
 
 
+extern int CSTACK$$Base;            /* symbol created by the IAR linker */
+extern int CSTACK$$Limit;           /* symbol created by the IAR linker */
+
+
+
 
 extern int baremetal_instance_entry(struct instance_t* instance);
 
@@ -191,6 +196,16 @@ struct pipeline_t* pipelines[] =
 //cautonwong  以上的内容  应该放在instance的入口函数里面去分配和初始化
 
 
+void csstack_base_init(void)
+{
+    uint8_t *p = (uint8_t *)&CSTACK$$Base;
+    
+    char *stack_check = "stack overflow\n";
+    
+    ndv_memcopy(p,stack_check,15);
+}
+
+
 
 int update_instance_rtc(struct instance_t* instance)
 {
@@ -233,14 +248,16 @@ int communication_channel_init(struct instance_t* p_instance, struct pipeline_t 
 
 
 
-uint8_t nd_memory[24 * 1024]; //26
+__no_init uint8_t nd_memory[22 * 1024]; //26
 
 int baremetal_instance_entry_main(int argc, char** argv)
 {
     struct instance_t* instance = NULL;
     struct recipe_t *recipe = NULL;
 
-    instance = create_instance(RES_DEV_RAM, (uint32_t)&nd_memory, 24 * 1024, 2 * 1024, resource_block_name);//用资源描述创建instance
+
+    csstack_base_init();
+    instance = create_instance(RES_DEV_RAM, (uint32_t)&nd_memory, 22 * 1024, 2 * 1024, resource_block_name);//用资源描述创建instance
     if (instance == NULL)
     {
         return -1;
@@ -279,9 +296,6 @@ int baremetal_instance_entry_main(int argc, char** argv)
         return -1;
     }
     
-    instance->event_flags = nd_malloc(instance,control_block_cache,event_flags_group_size);
-    memset(instance->event_flags, 0, event_flags_group_size);
-    instance->event_group_size = event_flags_group_size;//初始化软时钟
 
     instance->reset_flag = 0x5A; //复位标志
     
@@ -304,13 +318,13 @@ int baremetal_instance_entry_main(int argc, char** argv)
     communication_channel_init(instance, &pl_ir_rx_698, &pl_ir_tx_698, UART_IR_CHL);
 
     ////////////////////////////申请一个mbase应用的BLOCK = 04/////////////////////////////////////////////
-    mbase_cb_do_not_operation = (struct mbase_control_block_t*)add_block(instance, RES_DEV_RAM, mbase_control_block_name, 4 * 1024);
-    if (NULL == mbase_cb_do_not_operation) //剩余4k
+    mbase_cb_do_not_operation = (struct mbase_control_block_t*)add_block(instance, RES_DEV_RAM, mbase_control_block_name, 2 * 1024);
+    if (NULL == mbase_cb_do_not_operation) 
     {
         return -1;
     }
     //初始化pl_meter_base初始化
-    pl_meter_base.ctx = nd_malloc(instance, mbase_control_block_name, sizeof(struct mbase_control_block_t));
+    pl_meter_base.ctx = nd_calloc(instance, mbase_control_block_name, sizeof(struct mbase_control_block_t));
     pl_meter_base.in_queue = nd_malloc(instance, mbase_control_block_name, sizeof(struct fifo_t));
     fifoBuf_init(pl_meter_base.in_queue, nd_malloc(instance, mbase_control_block_name, 256), 256);
     pl_meter_base.out_queue = NULL;
@@ -322,9 +336,11 @@ int baremetal_instance_entry_main(int argc, char** argv)
     //mbase_block_static
     size_t mbase_block_static_size = offsetof(struct mbase_control_block_t, static_section_end) - offsetof(struct mbase_control_block_t, static_section_start) + 1;
     uint32_t static_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_static, mbase_block_static_size, 0x00);
+    memset((uint8_t*)static_block, 0x00, mbase_block_static_size);
     //mbase_block_cache
     size_t mbase_block_cache_size = offsetof(struct mbase_control_block_t, cache_section_end) -  offsetof(struct mbase_control_block_t, cache_section_start) + 1;
     uint32_t cache_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_cache, mbase_block_cache_size, mbase_block_static_size);
+    memset((uint8_t*)cache_block, 0x00, mbase_block_cache_size);
     //mbase_block_persistent
     size_t mbase_block_persistent_size = offsetof(struct mbase_control_block_t, persistent_section_end) - offsetof(struct mbase_control_block_t, persistent_section_start) + 1;
     uint32_t persistent_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_persistent, mbase_block_persistent_size, mbase_block_static_size + mbase_block_cache_size);
@@ -333,19 +349,23 @@ int baremetal_instance_entry_main(int argc, char** argv)
     add_device(instance, RES_DEV_EEPROM, &eeprom_dev,0x00);
     //注册FLASH
     add_device(instance, RES_DEV_FLASH, &nor_flash_dev,4096);
-    
+
+
+    //注册参数区1 及其备份区  
+    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter_1, 1 * 1024, supply_parameter_1_info);
+    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter_1_bp, 1 * 1024, supply_parameter_1_info);
+
+    //注册事件的管理区/参数区
+    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter, 20 * 1024, supply_parameter_info);
+
+
     //申请一块参数保存区的EPROM区域 及备份区
     add_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, mbase_block_static_size);
     add_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom_bp, mbase_block_static_size);
     
     //申请一块掉电保存的EPROM区域
     add_block(instance, RES_DEV_EEPROM, mbase_block_persistent_eprom, mbase_block_persistent_size);
-    //注册事件的管理区/参数区
-    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter, 20 * 1024, supply_parameter_info);
-
-    //注册参数区1 及其备份区
-    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter_1, 1 * 1024, supply_parameter_1_info);
-    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter_1_bp, 1 * 1024, supply_parameter_1_info);
+    
 
     //注册事件
     register_log(instance, RES_DEV_EEPROM, mbase_block_event, RES_DEV_EEPROM, mbase_block_parameter, 43 * 1024, supply_event_info);

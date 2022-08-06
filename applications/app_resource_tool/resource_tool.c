@@ -181,12 +181,15 @@ int16_t update_verify(uint32_t addr, uint16_t offset, uint8_t* buf, uint16_t siz
     return 1;
 }
 
+//初始化为0
 void *__nd_malloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_size)
 {
     uint32_t free = block_size - *used;
     uint32_t start = addr + *used;
 
+
     size = (((size + (sizeof(RES_ALIGN_TYPE))) - ((RES_ALIGN_TYPE)1)) / (sizeof(RES_ALIGN_TYPE))) * (sizeof(RES_ALIGN_TYPE));
+    NDV_PRINTF("malloc_size = %d\n", size);
     if (free >= size)
     {
         *used += size;
@@ -196,7 +199,23 @@ void *__nd_malloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_si
 
     return NULL;
 }
+//不初始化
+void *__nd_calloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_size)
+{
+    uint32_t free = block_size - *used;
+    uint32_t start = addr + *used;
 
+
+    size = (((size + (sizeof(RES_ALIGN_TYPE))) - ((RES_ALIGN_TYPE)1)) / (sizeof(RES_ALIGN_TYPE))) * (sizeof(RES_ALIGN_TYPE));
+    NDV_PRINTF("malloc_size = %d\n", size);
+    if (free >= size)
+    {
+        *used += size;
+        return (void *)start;
+    }
+
+    return NULL;
+}
 struct block_device_t* look_up_device(struct instance_t* instance, uint8_t device_name)
 {
     struct block_device_t* device = NULL;
@@ -228,6 +247,7 @@ struct resource_block_t* look_up_block(struct instance_t* instance, struct block
     return NULL;
 }
 
+//初始化为0
 void* nd_malloc(struct instance_t *instance, uint8_t block_name, uint32_t size)
 {
     struct block_device_t* device = NULL;
@@ -240,9 +260,28 @@ void* nd_malloc(struct instance_t *instance, uint8_t block_name, uint32_t size)
     res_conditions_true(block == NULL, NULL)
 
     void* p =  __nd_malloc(block->first_addr, &block->used, size, block->size);
+
     n_assert(p != NULL);
     return p;
 }
+//不初始化
+void* nd_calloc(struct instance_t *instance, uint8_t block_name, uint32_t size)
+{
+    struct block_device_t* device = NULL;
+    struct resource_block_t* block = NULL;
+
+    device = look_up_device(instance, instance->ram_device);
+    res_conditions_true(device == NULL, NULL)
+
+    block = look_up_block(instance, device, block_name);
+    res_conditions_true(block == NULL, NULL)
+
+    void* p =  __nd_calloc(block->first_addr, &block->used, size, block->size);
+
+    n_assert(p != NULL);
+    return p;
+}
+
 
 //注册API
 uint32_t *add_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size)
@@ -294,8 +333,9 @@ uint32_t *add_inside_block(struct instance_t* instance, uint8_t device_name,uint
 
     resource_block = look_up_block(instance, ram_device, instance->resource_block);
     res_conditions_true(resource_block == NULL, NULL);
-
+ 
     inside_block = __nd_malloc(resource_block->first_addr, &resource_block->used, sizeof(struct resource_block_t), resource_block->size);
+
     res_conditions_true(inside_block == NULL, NULL);
 
     inside_block->first_addr = block->first_addr + offset;

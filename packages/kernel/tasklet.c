@@ -1,5 +1,5 @@
 #include "nidavellir.h"
-
+#if 0
 int start_tasklet(struct instance_t* instance, int tid)
 {
     struct tasklet_t* tasklet = &instance->tasklet_pool.tasklets[tid];
@@ -80,3 +80,4 @@ int event_flags_clr(struct instance_t* instance, int event_flag_id)
     bit_clr(event_flag_id, instance->event_flags);
     return 0;
 }
+#endif 

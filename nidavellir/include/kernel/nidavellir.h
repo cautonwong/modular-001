@@ -582,21 +582,16 @@ struct instance_t
     uint8_t *apdu_cache;  // 协议 map中 get中不允许使用
     struct recipe_t *recipe;
     struct tm time;//
-    struct tasklet_pool_t tasklet_pool;
     struct upgrade_info_t upgrade_info;
 
     struct fifo_t pipe_rtc;//只能在定时器函数或时钟秒中断函数里写
     struct fifo_t pipe_key;//用于按键类中断缓存
     struct fifo_t pipe_uart[4];//用于串口回调消息缓存
-    int event_group_size;
-    uint8_t *event_flags;
+
     uint8_t ac_power_statue;
     uint8_t reset_flag;         //0x5A  复位标志 
     uint32_t ac_power_off_sec_cnt;
-    //user extended control block
-    void* user_setting;//application_setting
-    void* user_data;//application_control_block
-    int (*after_poweron)(struct instance_t *instance);
+
 };
 
 struct kernel_context_t

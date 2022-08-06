@@ -139,15 +139,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
     
     //cmd len data cmd 接入校验
     //调用领域层完成业务  要反映用例场景
-    for (int i = 0; i < max_event_flag; i++)
-    {
-        if (event_flags_get(instance,i) ==  1)
-        {
-            //call event_handler(instance,pipeline,mesg);
 
-            event_flags_clr(instance, i);
-        }
-    }
     uint8_t buf[20] = {0};
     int r = recv_mesg_v2(instance,pipeline,mesg, buf, 20);
     if(r > 0 )
