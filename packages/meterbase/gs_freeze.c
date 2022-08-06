@@ -12,7 +12,8 @@ int cal_record_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, u
     uint16_t i, k,  t_num = 0 , recordID = 0;
     uint16_t sector_size[9];
     int16_t single_len = 0;
-    uint32_t offset = 0, obj , addr_index = 0, sectorMax = 0, sector = 0,  depth = 0;
+    uint32_t offset = 0, obj , addr_index = 0, sectorMax = 0, sector = 0;
+    uint32_t depth = 0;
     struct record_storage_id_info_t record_id_info; 
     uint8_t device_type=0; // 0: e2p,    1: flash 
     int ret;

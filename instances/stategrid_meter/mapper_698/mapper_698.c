@@ -629,7 +629,7 @@ const  parameter_item_t  parameter_item_1[] =
 };
 
 
-int16_t supply_parameter_info(struct instance_t* instance, uint16_t id, uint32_t* addr, uint16_t* size,uint16_t *offset)
+int16_t supply_parameter_info(struct instance_t* instance, uint16_t id, uint32_t* addr, uint32_t* size,uint32_t *offset)
 {
     uint16_t i;
 
@@ -655,7 +655,7 @@ int16_t supply_parameter_info(struct instance_t* instance, uint16_t id, uint32_t
     return -1;
 }
 
-int16_t supply_parameter_1_info(struct instance_t* instance, uint16_t id, uint32_t* addr, uint16_t* size,uint16_t *offset)
+int16_t supply_parameter_1_info(struct instance_t* instance, uint16_t id, uint32_t* addr, uint32_t* size,uint32_t *offset)
 {
     uint16_t i;
 

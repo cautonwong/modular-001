@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include "time.h"
+
 #ifdef __DEBUG_LOG__
 
 enum { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL };
@@ -25,6 +26,16 @@ void log_set_time(struct tm *time);
 #define log_err(...)
 #define log_hex(buf,len)
 
+#endif
+
+//是否开启仿真终端打印 模式
+#define __PRINT_DEBUG   0    //不开启
+//#define __PRINT_DEBUG 1    //开启
+#if __PRINT_DEBUG
+#include "stdio.h"
+#define log_printf(...) printf(__VA_ARGS__)
+#else
+#define log_printf(...)
 #endif
 
 

@@ -735,4 +735,9 @@ int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
 #define     F_RemoteRelayOnAllow    0x20    //合闸允许
 #define     F_RemoteRelayOnDirect   0x40    //直接允许
 
+#define     chl_no_empty    0
+#define     chl_rx_empty    1
+#define     chl_tx_empty    2
+#define     chl_empty       3
+      
 #endif

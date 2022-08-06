@@ -1,7 +1,6 @@
 #include "nidavellir.h"
 #include "resource_tool.h"
 
-
 #define res_conditions_true(a,b) if(a) { return b; } //a的调整满足返回b
 
 struct search_tempinfo_t
@@ -187,9 +186,8 @@ void *__nd_malloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_si
     uint32_t free = block_size - *used;
     uint32_t start = addr + *used;
 
-
     size = (((size + (sizeof(RES_ALIGN_TYPE))) - ((RES_ALIGN_TYPE)1)) / (sizeof(RES_ALIGN_TYPE))) * (sizeof(RES_ALIGN_TYPE));
-    NDV_PRINTF("malloc_size = %d\n", size);
+    log_printf("malloc_size = %d\n", size);
     if (free >= size)
     {
         *used += size;
@@ -207,7 +205,7 @@ void *__nd_calloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_si
 
 
     size = (((size + (sizeof(RES_ALIGN_TYPE))) - ((RES_ALIGN_TYPE)1)) / (sizeof(RES_ALIGN_TYPE))) * (sizeof(RES_ALIGN_TYPE));
-    NDV_PRINTF("malloc_size = %d\n", size);
+    log_printf("malloc_size = %d\n", size);
     if (free >= size)
     {
         *used += size;
@@ -565,9 +563,9 @@ uint32_t* register_log(struct instance_t* instance, uint8_t device_name, uint8_t
 }
 
 uint32_t* register_parameter(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint32_t block_size,
-    int16_t(*fun)(struct instance_t* instance, uint16_t id, uint32_t *addr, uint16_t* len, uint16_t *offset))
+    int16_t(*fun)(struct instance_t* instance, uint16_t id, uint32_t *addr, uint32_t* len, uint32_t *offset))
 {
-    return __register(instance, device_name, block_name, 0x00, 0x00, block_size, (int16_t(*)(struct instance_t* instance, uint16_t id, uint32_t * addr, uint32_t * len, uint32_t * depth))fun);
+    return __register(instance, device_name, block_name, 0x00, 0x00, block_size, fun);
 }
 //
 int16_t nd_size(struct instance_t* instance, uint8_t *buf, uint32_t id)

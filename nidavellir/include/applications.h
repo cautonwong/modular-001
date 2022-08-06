@@ -8,20 +8,6 @@
 #endif // !WIN32
 
 
-
-//
-//是否开启仿真终端打印 模式
-#define _NDV_PRINT_DEBUG_ 0    //不开启
-//#define _NDV_PRINT_DEBUG_ 1    //开启
-#if _NDV_PRINT_DEBUG_
-#include "stdio.h"
-#define NDV_PRINTF(...) printf(__VA_ARGS__)
-#else
-#define NDV_PRINTF(...)
-#endif
-
-
-
 #define RESET_INFO    1 // 记录 复位信息
 
 
@@ -385,8 +371,8 @@ int32_t Get_Active_Energy(struct mbase_control_block_t* mbase_control_block, uin
 int32_t Get_Month_Active_Energy(struct mbase_control_block_t* mbase_control_block, uint8_t index , uint8_t pn);
 void Energy_clr(struct instance_t* instance);
 
-int16_t supply_parameter_info(struct instance_t* instance, uint16_t id, uint32_t* addr, uint16_t* size,uint16_t *offset);
-int16_t supply_parameter_1_info(struct instance_t* instance, uint16_t id, uint32_t* addr, uint16_t* size,uint16_t *offset);
+int16_t supply_parameter_info(struct instance_t* instance, uint16_t id, uint32_t* addr, uint32_t* size,uint32_t *offset);
+int16_t supply_parameter_1_info(struct instance_t* instance, uint16_t id, uint32_t* addr, uint32_t* size,uint32_t *offset);
 int16_t supply_event_info(struct instance_t* instance, uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth);
 int16_t supply_event_flash_1_info(struct instance_t* instance, uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth);
 int16_t supply_event_flash_2_info(struct instance_t* instance, uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth);
@@ -492,10 +478,6 @@ extern int clr_record(struct instance_t* instance, uint32_t oad);
 extern int para_init(struct instance_t* instance );
 extern int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 //GS----end
-
-extern int16_t nd_set_index(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t size);
-extern int16_t nd_get_index(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t size);
-extern int16_t nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf, uint16_t len);
 
 
 

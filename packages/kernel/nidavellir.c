@@ -297,6 +297,52 @@ int fr_uart_timeout(struct instance_t* instance, struct pipeline_t* pipeline, st
        
     return ret;
 }
+
+
+int fr_uart_empty(struct instance_t* instance, uint8_t chl)
+{
+    uint8_t channel = 0xff;
+    uint8_t rx_used = 0xff, tx_used = 0xff;
+    struct fifo_t* fifo = NULL;
+    const struct recipe_t *recipe = instance->recipe;
+    struct pipeline_t* pipeline = NULL;
+    for (size_t i = 0; i < recipe->pipeline_n; i++)
+    {
+        pipeline = recipe->pipelines[i];
+        switch(pipeline->id)
+        {
+        case pid_ir_rx_698: 
+            channel = chl_ir_698;
+            break;
+        case pid_rx_698: 
+            channel = chl_RS485_1_698;
+            break;
+        case pid_plc_rx_698: 
+            channel = chl_PLC_698;
+            break;
+        case pid_4852_rx_698: 
+            channel = chl_RS485_2_698;
+            break;
+        default:
+            break;
+        }
+        if(channel == chl){
+            fifo = (struct fifo_t*)pipeline->in_queue;
+            rx_used = fifoBuf_getUsed(fifo);
+            fifo = (struct fifo_t*)pipeline->out_queue;
+            tx_used = fifoBuf_getUsed(fifo);
+            if((rx_used == 0)&&(tx_used == 0))
+                return  chl_empty;
+            if(tx_used == 0)
+                return  chl_tx_empty;
+            if(rx_used==0)
+                return  chl_rx_empty;
+            return  chl_no_empty;
+        }
+    }
+    return -1;
+}
+
 extern uint16_t report_flag;
 int nidavellir_run_baremetal(struct instance_t* instance)
 {
