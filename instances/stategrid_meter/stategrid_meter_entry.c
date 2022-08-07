@@ -384,7 +384,8 @@ int baremetal_instance_entry_main(int argc, char** argv)
 #endif
     uint32_t addr = 0;  
     get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_static, &addr);//RAM对应的地址
-    nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, (uint8_t*)addr, mbase_block_static_size); //将EPROM中的数据恢复到RAM;  
+    uint32_t res = get_res(RES_DEV_EEPROM, mbase_block_static_eprom);
+    nd_get_block(instance, res, (uint8_t*)addr, mbase_block_static_size); //将EPROM中的数据恢复到RAM;  
     
     //复位次数
     uint32_t count = 0;

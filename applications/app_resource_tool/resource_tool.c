@@ -479,21 +479,22 @@ int16_t nd_get_info(struct instance_t* instance, uint32_t id, uint8_t* buf, uint
     uint16_t mode = 0x0100;
     return look_up_map(instance, id, buf, buf_size, ctx, mode);
 }
-int16_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size)
+
+int16_t nd_get_block(struct instance_t* instance, uint32_t res, uint8_t* buf,uint32_t buf_size)
 {
     struct block_device_t* device = NULL;
     struct resource_block_t* block = NULL;
     const struct driver_ops_t* driver = NULL;
 
     //查找设备
-    device = look_up_device(instance, device_name);
+    device = look_up_device(instance, (uint8_t)(res >> 24));
     res_conditions_true(device == NULL, -1);
     driver = device->dev->dev_driver_ops;
 
     res_conditions_true(driver == NULL, -1);
     res_conditions_true(driver->dev_read == NULL, -1);
 
-    block = look_up_block(instance, device, block_name);
+    block = look_up_block(instance, device, (uint8_t)(res >> 16));
 
     res_conditions_true((block != NULL) && (buf_size <= block->size),
         driver->dev_read(device->dev, block->first_addr, block->size, buf));
@@ -501,21 +502,21 @@ int16_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t b
     return 1;
 }
 
-int16_t nd_set_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf, uint32_t buf_size)
+int16_t nd_set_block(struct instance_t* instance, uint32_t res, uint8_t* buf, uint32_t buf_size)
 {
     struct block_device_t* device = NULL;
     struct resource_block_t* block = NULL;
     const struct driver_ops_t* driver = NULL;
 
     //查找设备
-    device = look_up_device(instance, device_name);
+    device = look_up_device(instance, (uint8_t)(res >> 24));
     res_conditions_true(device == NULL, -1);
     driver = device->dev->dev_driver_ops;
 
     res_conditions_true(driver == NULL, -1);
     res_conditions_true(driver->dev_write == NULL, -1);
 
-    block = look_up_block(instance, device, block_name);
+    block = look_up_block(instance, device, (uint8_t)(res >> 16));
     res_conditions_true((block != NULL) && (buf_size <= block->size), 
         driver->dev_write(device->dev, block->first_addr, block->size, buf));
 

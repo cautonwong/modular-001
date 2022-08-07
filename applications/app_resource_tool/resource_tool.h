@@ -3,6 +3,9 @@
 
 //内存管理的对齐
 #define RES_ALIGN_TYPE  uint32_t
+
+#define get_res(device_name, block_name)   (uint32_t)(((device_name) << 24) + ((block_name) << 16))
+
 //单一设备的块链表
 #pragma pack(4)
 struct resource_block_t
@@ -53,8 +56,10 @@ struct circular_info_t
     uint16_t valid_num;                       //符合的条数
 };
 struct instance_t* create_instance(uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t resource_blok_size, uint8_t resource_block_name);
-int16_t nd_get_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size);
-int16_t nd_set_block(struct instance_t* instance, uint8_t device_name, uint8_t block_name, uint8_t* buf,uint32_t buf_size);
+
+int16_t nd_get_block(struct instance_t* instance, uint32_t res, uint8_t* buf,uint32_t buf_size);
+int16_t nd_set_block(struct instance_t* instance, uint32_t res, uint8_t* buf,uint32_t buf_size);
+
 int16_t get_block_frist_addr(struct instance_t *instance, uint8_t device_name, uint8_t block_name, uint32_t *addr);
 
 

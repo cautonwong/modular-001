@@ -28,9 +28,9 @@ void log_set_time(struct tm *time);
 
 #endif
 
-//ÊÇ·ñ¿ªÆô·ÂÕæÖÕ¶Ë´òÓ¡ Ä£Ê½
-#define __PRINT_DEBUG   0    //²»¿ªÆô
-//#define __PRINT_DEBUG 1    //¿ªÆô
+//æ˜¯å¦å¼€å¯ä»¿çœŸç»ˆç«¯æ‰“å° æ¨¡å¼
+#define __PRINT_DEBUG   0    //ä¸å¼€å¯
+//#define __PRINT_DEBUG 1    //å¼€å¯
 #if __PRINT_DEBUG
 #include "stdio.h"
 #define log_printf(...) printf(__VA_ARGS__)

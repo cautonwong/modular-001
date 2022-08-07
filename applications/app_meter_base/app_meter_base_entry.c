@@ -24,6 +24,7 @@ int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     size_t mbase_block_persistent_size = offsetof(struct mbase_control_block_t, persistent_section_end) - offsetof(struct mbase_control_block_t, persistent_section_start) + 1;
     uint32_t addr = 0;
+    uint32_t res = 0;
     
     __disable_irq();
     
@@ -37,7 +38,9 @@ int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline
     ndv_memcopy((uint8_t *)(&mbase_control_block->powerdown_tm),  (uint8_t *)&instance->time,  sizeof(mbase_control_block->powerdown_tm));
     //获取对应的RAM地址
     get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
-    nd_set_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;      
+    
+    res = get_res(RES_DEV_EEPROM, mbase_block_persistent_eprom);
+    nd_set_block(instance, res, (uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;      
     
     instance->ac_power_off_sec_cnt = 0;
 
@@ -129,6 +132,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
     size_t mbase_block_static_size = offsetof(struct mbase_control_block_t, static_section_end) - offsetof(struct mbase_control_block_t, static_section_start) + 1;
     size_t persitent_ec_size = offsetof(struct mbase_control_block_t, persistent_energy_EC_label) - offsetof(struct mbase_control_block_t, persistent_section_start);
     uint32_t addr = 0;
+    uint32_t res = 0;
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
@@ -190,7 +194,8 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             //上电恢复参数
             read_mcu_rtc(0x00, instance);
             get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_static, &addr);//RAM对应的地址
-            nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, (uint8_t*)addr, mbase_block_static_size); //将EPROM中的数据恢复到RAM;  
+            res = get_res(RES_DEV_EEPROM, mbase_block_static_eprom);
+            nd_get_block(instance, res, (uint8_t*)addr, mbase_block_static_size); //将EPROM中的数据恢复到RAM;  
             Check_para_Pro(instance);     //数据效验
             //上电需要恢复数据
             //跳过电能恢复 由电能模块处理        

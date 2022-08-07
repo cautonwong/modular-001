@@ -151,27 +151,32 @@ int16_t Check_para_Pro(struct instance_t* instance)
     if(mbase_cb->static_chksum != check_sum[0]) //RAM异常
     {
         get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_static, &addr);//RAM对应的地址
-        nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, (uint8_t*)addr, mbase_block_static_size); //从EE主区获取，覆盖至RAM
+        uint32_t res = get_res(RES_DEV_EEPROM, mbase_block_static_eprom);
+        nd_get_block(instance, res, (uint8_t*)addr, mbase_block_static_size); //从EE主区获取，覆盖至RAM
         check_sum[0] = do_block_static_checksum(instance);
         if(mbase_cb->static_chksum != check_sum[0])    //主区效验错误
         {
-            nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom_bp, (uint8_t*)addr, mbase_block_static_size);//从EE备份区获取，覆盖至RAM
+            res = get_res(RES_DEV_EEPROM, mbase_block_static_eprom_bp);
+            nd_get_block(instance, res, (uint8_t*)addr, mbase_block_static_size);//从EE备份区获取，覆盖至RAM
             check_sum[0] = do_block_static_checksum(instance);
             if(mbase_cb->static_chksum == check_sum[0])    //备份正确
             {
-                //备份区覆盖主区          
-                nd_set_block(instance,RES_DEV_EEPROM, mbase_block_static_eprom,(uint8_t *)addr,mbase_block_static_size); //将RAM中的数据保存到EPROM;
+                //备份区覆盖主区   
+                res = get_res(RES_DEV_EEPROM, mbase_block_static_eprom);
+                nd_set_block(instance, res,(uint8_t *)addr,mbase_block_static_size); //将RAM中的数据保存到EPROM;
             }
             return -1;
         }
         else    //主区正确，获取备份数据
         {
-            nd_get_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom_bp, (uint8_t*)addr, mbase_block_static_size);//从EE备份区获取，覆盖至RAM
+            res = get_res(RES_DEV_EEPROM, mbase_block_static_eprom_bp);
+            nd_get_block(instance, res, (uint8_t*)addr, mbase_block_static_size);//从EE备份区获取，覆盖至RAM
             check_sum[0] = do_block_static_checksum(instance);
             if(mbase_cb->static_chksum != check_sum[0])    //备份错误
             {
                 //主区覆盖备份区
-                nd_set_block(instance,RES_DEV_EEPROM, mbase_block_static_eprom_bp,(uint8_t *)addr,mbase_block_static_size); //将RAM中的数据保存到EPROM;
+                res = get_res(RES_DEV_EEPROM, mbase_block_static_eprom_bp);
+                nd_set_block(instance, res,(uint8_t *)addr,mbase_block_static_size); //将RAM中的数据保存到EPROM;
                 return -1;
             }
         }
