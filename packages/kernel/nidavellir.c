@@ -420,9 +420,15 @@ int nidavellir_run_baremetal(struct instance_t* instance)
 
     if(report_flag == 0xa55a)
     {
-        tick_report = 0x3FFFF;
+        tick_report = 0x1FFFF;
         while (tick_report)
-        {tick_report--;}
+        {
+          if(fr_uart_empty(instance, 2) == chl_tx_empty)
+          {
+                tick_report = 1;
+          }
+          tick_report--;
+        }
         report_flag = 0;
     }
     //处理持久化事务  如掉电保存和记录保存等  每圈保存一次
