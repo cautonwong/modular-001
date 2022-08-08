@@ -489,13 +489,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 
                 //保存校时前时间 
                 rtc_get_from_tm(instance,temp);
-                buffer[0] = temp[6];
-                buffer[1] = temp[5];
-                buffer[2] = temp[4];
-                buffer[3] = temp[3];
-                buffer[4] = temp[2];
-                buffer[5] = temp[1];
-                buffer[6] = temp[0];
+                mem_swap_cpy( &buffer[0], &temp[0], 7);
 
     log_info("%02x-%02x-%02x-%02x-%02x-%02x\n", buffer[0],buffer[1],buffer[2],buffer[3],buffer[4],buffer[5]);
 
@@ -523,14 +517,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 
                 //保存校时后时间 
                 rtc_get_from_tm(instance,temp);
-                buffer[0] = temp[6];
-                buffer[1] = temp[5];
-                buffer[2] = temp[4];
-                buffer[3] = temp[3];
-                buffer[4] = temp[2];
-                buffer[5] = temp[1];
-                buffer[6] = temp[0];
-
+                mem_swap_cpy( &buffer[0], &temp[0], 7);
                 addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
                 nd_set_index(instance, addr, buffer, 7);
 

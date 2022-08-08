@@ -205,6 +205,8 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             //获取对应的RAM地址
             //get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
             //nd_get_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)(addr + persitent_ec_size),(mbase_block_persistent_size - persitent_ec_size)); //将EPROM中的数据恢复到RAM;        
+
+            rtc_check_poweron(instance);
             Energy_Meter_PowerON(instance, pipeline);
             Electrical_measurement_poweron(instance, pipeline);
             AllDisplayLCD(instance, pipeline);
