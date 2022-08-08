@@ -77,7 +77,6 @@ int MeterWr_obj_list_add(struct instance_t* instance, struct pipeline_t* task, s
     else
     {
         send_event_mesg_pro(instance, task, MeterWrS, payload, -1);
-        //programing_event_pro(buf);  //编程对象如何改写上一条记录
     }
 
     return 1;

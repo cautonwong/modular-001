@@ -2521,9 +2521,6 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\fifo.c</name>
-                <configuration>
-                    <name>Debug</name>
-                </configuration>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\list.c</name>
@@ -2695,9 +2692,6 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_mac_suspend.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_meter_clear_event.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_meter_program_event.c</name>

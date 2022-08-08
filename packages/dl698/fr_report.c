@@ -172,7 +172,7 @@ int fr_follow_report_optional(struct instance_t* instance, struct pipeline_t* pi
         return 0;
     }
 
-    //判断 协议apdu 缓存是否足够   // 待调整
+    
     oad = follow_report_3320List_Latest_oad_get(instance, ctx->channel);
     if (oad != 0)
     {
