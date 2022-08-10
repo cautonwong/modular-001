@@ -43,9 +43,7 @@ int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline
     nd_set_block(instance, res, (uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;      
     
     instance->ac_power_off_sec_cnt = 0;
-
-    event_poweroff_save(instance,pipeline,mesg);
-    
+   
     //掉电清空显示相关内容
     memset((uint8_t *)&mbase_control_block->voltage_ac, 0x00, 32);
     memset((uint8_t *)&mbase_control_block->AutoPtr, 0x00, 10);
@@ -119,6 +117,8 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
         {
             Check_para_Pro(instance);
         }
+        
+        updata_powerdown_time(instance);
     }
     
     active_report_handle(instance, NULL, &mesg); // 上电每秒调用  下电前X秒调用

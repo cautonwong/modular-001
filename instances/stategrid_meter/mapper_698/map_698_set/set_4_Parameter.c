@@ -49,12 +49,12 @@ const general_set4  general_set4_talble[] =
      Meter_PT,                  0x401D,     0x02,   0x01,   4,//PT
      Pulse_Width,               0x4102,     0x02,   0x01,   1,//脉冲宽度
      ASCII_AssetsMan,           0x4103,     0x02,   0x02,   32,//资产管理编码
-     ASCII_Un,                  0x4104,     0x02,   0x01,   6,//额定电压
-     ASCII_Ib,                  0x4105,     0x02,   0x01,   6,//额定电流
-     ASCII_Imax,                0x4106,     0x02,   0x01,   6,//最大电流
-     ASCII_Imin,                0x4106,     0x03,   0x01,   6,//最小电流
-     ASCII_Itr,                 0x4106,     0x04,   0x01,   6,//转折电流
-     ASCII_AccuracyClass1,      0x4107,     0x02,   0x01,   4,//有功准确度等级
+     ASCII_Un,                  0x4104,     0x02,   0x02,   6,//额定电压
+     ASCII_Ib,                  0x4105,     0x02,   0x02,   6,//额定电流
+     ASCII_Imax,                0x4106,     0x02,   0x02,   6,//最大电流
+     ASCII_Imin,                0x4106,     0x03,   0x02,   6,//最小电流
+     ASCII_Itr,                 0x4106,     0x04,   0x02,   6,//转折电流
+     ASCII_AccuracyClass1,      0x4107,     0x02,   0x02,   4,//有功准确度等级
      Meter_Const1,              0x4109,     0x02,   0x01,   4,//有功脉冲常数
      ASCII_MeterType,           0x410B,     0x02,   0x02,   32,//电能表型号
 //   MeterRunWord,              0x4110,     0x02,   0x01,   1,//电能表运行特征字
@@ -105,23 +105,26 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         mbase_cb->Fee |= F_DAYTABChange;
                         break;
                     case 0x400F://秘钥总条数
-                    case 0x401C://变比
-                    case 0x401D:
+                    case 0x401C://电流变比
+                    case 0x401D://电压变比
+                    case 0x4102:    //脉冲宽度
                         return -DAR_RW_REJECT;
                         break;
-                    case 0x4102:    //脉冲宽度
+                    
                     case 0x4104:    //额定电压
                     case 0x4105:    //额定电流
                     case 0x4106:    //最大电流
                     case 0x4107:    //有功准确度等级
                     case 0x4109:    //有功脉冲常数
-                        return -DAR_RW_REJECT;
+                        if(mbase_cb->factor_mode == false)  
+                            return -DAR_RW_REJECT; //工厂模式外，禁止写入
+                        break;
                     case 0x410B:    //电表型号
+                    case 0x4111:    //软件备案号
                         if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
                         if(*p != 0X0A) return -DAR_RW_REJECT;
-                    case 0x4103:    //资产管理编码
-                    case 0x4111:    //软件备案号
-                        if((mbase_cb->factor_mode == false) && (0x4111 == oad))  return -DAR_RW_REJECT; //工厂模式外，禁止写入
+                        break;
+                    case 0x4103:    //资产管理编码  厂外可设置
                         if(*p != 0x0A)    return -DAR_TYPE_NOT_MATCH;
 						break;
                     case 0x4008://切换时间
@@ -152,7 +155,6 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         nd_set_index(instance, addr, timer, 3);
                         send_event_mesg_pro(instance, NULL, ActCombWrS, NULL, 1);// 
                         break;
-						
                 }
               
                 addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + general_set4_talble[i].s_index);
@@ -529,6 +531,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
 
                 clr_last_bill_time(instance);
 
+                write_powerdown_time(instance);
                 return (p-buf);
             }
             else if(attribute == 0x05)  //广播校时参数

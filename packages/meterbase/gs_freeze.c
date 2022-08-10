@@ -401,7 +401,7 @@ int record_rollback_after_set_time(struct instance_t* instance, uint8_t finish_c
             
             addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
             offsetof(struct mbase_control_block_t, record_rollback_flag)) -  offsetof(struct mbase_control_block_t, persistent_section_start);
-            nd_set_offset(instance, addr, (uint8_t*)&mbase_cb->record_rollback_flag, 4);
+            nd_set_offset(instance, addr, (uint8_t*)&mbase_cb->record_rollback_flag, sizeof(mbase_cb->record_rollback_flag));
         }
         
         num = 0;
@@ -434,7 +434,7 @@ int record_rollback_after_set_time(struct instance_t* instance, uint8_t finish_c
             
             addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
             offsetof(struct mbase_control_block_t, record_rollback_flag)) -  offsetof(struct mbase_control_block_t, persistent_section_start);
-            nd_set_offset(instance, addr, (uint8_t*)&mbase_cb->record_rollback_flag, 4);
+            nd_set_offset(instance, addr, (uint8_t*)&mbase_cb->record_rollback_flag, sizeof(mbase_cb->record_rollback_flag));
         }
     }
 

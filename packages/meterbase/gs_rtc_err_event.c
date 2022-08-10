@@ -3,20 +3,17 @@
 #include "gs_record.h"
 
 
-
+//22年8月8日，8时8分8秒
 void set_default_rtc(struct tm *t)
 {
 
-    t->tm_sec = 0;
-    t->tm_min = 0;
-    t->tm_hour = 0;
-    t->tm_mday  = 1;
-    t->tm_mon = 0;
-    t->tm_year = 2022 - 1900;
+    t->tm_sec = 8;
+    t->tm_min = 8;
+    t->tm_hour = 8;
+    t->tm_mday  = 8;
+    t->tm_mon = 8;
+    t->tm_year = 2022 - 1900;  
 }
-
-
-
 
 
 
@@ -39,6 +36,8 @@ void tm_to_mcu_rtc_bcd(struct tm t, uint8_t *des)
     des[1] = BYTE_BCD(t.tm_min);//分
     des[0] = BYTE_BCD(t.tm_sec);//秒
 }
+
+
 
 
 //上电时钟检查
@@ -107,8 +106,28 @@ int rtc_check_poweron(struct instance_t* instance)
     return 1;
 }
 
+//写当前时间到停电时间
+void write_powerdown_time(struct instance_t* instance)
+{
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint32_t addr;
+    
+    ndv_memcopy((uint8_t *)(&ctrl_block->powerdown_tm),  (uint8_t *)&instance->time,  sizeof(ctrl_block->powerdown_tm));
+
+    addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+        offsetof(struct mbase_control_block_t, powerdown_tm)) -  offsetof(struct mbase_control_block_t, persistent_section_start);
+    nd_set_offset(instance, addr, (uint8_t*)&ctrl_block->powerdown_tm, sizeof(ctrl_block->powerdown_tm));
+}
 
 
+//上电运行 期间 定时保存停电时间  每日12点1分35秒 保存停电时间  --每秒调用，
+void updata_powerdown_time(struct instance_t* instance)
+{
+    if ((instance->time.tm_sec == 35) && (instance->time.tm_min == 1) && (instance->time.tm_hour == 12)) 
+    {
+        write_powerdown_time(instance);
+    }
+}
 
 
 // 上电运行期间 每秒调用 

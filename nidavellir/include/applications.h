@@ -253,8 +253,11 @@ struct mbase_control_block_t
 
     dyn_persistent_EC_label     // 电能数据 末尾标签
 
-    uint16_t ec_save_success;   // 电能掉电存储成功标志  0x5AA5
+    uint16_t ec_save_success;   // 电能掉电存储成功标志  0x5AA
     
+    uint8_t  record_rollback_flag;          //记录回滚标志 0x5A 存在未完成的回滚
+    struct tm powerdown_tm;                     // 停电时间
+
     //RELAY
     uint8_t cmd;	    //控制命令  0x1A , 0x1B....
     uint8_t mode;     //拉合闸方式（直接、允许）
@@ -272,8 +275,6 @@ struct mbase_control_block_t
     
     uint8_t switch_on_succees;          //0x5A 表示成功      由2015上报清零
     uint8_t switch_off_succees;         //0x5A 表示成功       由2015上报清零
-
-
     
 //    uint8_t   SeasonTable;//时区表主副表序号
 //    uint8_t   DayTable;//日表主副表序号
@@ -281,10 +282,7 @@ struct mbase_control_block_t
 //    uint8_t   StepTable;//阶梯表主副表序号
     uint8_t   Disp12;   //
     
-
     uint16_t  trigger_insfreeze_delay_sec; //触发瞬时冻结 延时时间 sec  FFFF无效
-
-        //需量数据
 
     //事件相关
     //掉电保存
@@ -307,10 +305,7 @@ struct mbase_control_block_t
     uint32_t power_on_sec_accum;                //上电累计时间 sec  上电处理时清零，上电运行累加  
     //跟随上报2015状态字
     uint32_t report_2015state[4];           //跟随上报状态字  chl_NUM
- 
-    uint8_t  record_rollback_flag;          //记录回滚标志 0x5A 存在未完成的回滚
-    
-    struct tm powerdown_tm;                     // 停电时间
+
     struct tm v_powerdown_tm;                   // 模拟停电时间  补结算测试用 
     
     uint8_t persistent_blank_space[4*10];   //  空白区
