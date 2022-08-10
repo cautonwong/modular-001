@@ -1,5 +1,6 @@
 #include "nidavellir.h"
 #include "645id_table.h"
+#include "ndvh_rn8209.h"
 
 extern const struct dev_info_t rn8209_dev;
 
@@ -210,12 +211,12 @@ void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx)
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Other);
     nd_set_index(instance, s_index, buf, 4); 
     
-    memset((uint8_t*)&mbase_control_block->k_u, 0x00, 16);
-    mbase_control_block->k_u = 0.0137414116;
-    mbase_control_block->k_il = 0.016;
-    mbase_control_block->k_p = 0.0023294272;
+    memset((uint8_t*)&Rn8209Adj_K.u, 0x00, 16);
+    Rn8209Adj_K.u = 0.0137414116;
+    Rn8209Adj_K.il = 0.016;
+    Rn8209Adj_K.p = 0.0023294272;
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_K);
-    nd_set_index(instance, s_index, (uint8_t*)&mbase_control_block->k_u, 16);//存储至EE
+    nd_set_index(instance, s_index, (uint8_t*)&Rn8209Adj_K.u, 16);//存储至EE
 }
 
 

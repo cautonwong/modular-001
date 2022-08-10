@@ -159,9 +159,9 @@ void emu_calibration_clear(struct instance_t* instance)
     signed short Pgain = 0;
     unsigned char Tofst = 0;
     
-    mbase_control_block->k_u = REAL_K_U_INIT;
-    mbase_control_block->k_il = REAL_K_I_INIT;
-    mbase_control_block->k_p = REAL_K_P_INIT;
+    Rn8209Adj_K.u = REAL_K_U_INIT;
+    Rn8209Adj_K.il = REAL_K_I_INIT;
+    Rn8209Adj_K.p = REAL_K_P_INIT;
     
     rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, GPQA, 2, &Pgain);
     rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, PHSA, 1, &Tofst);
@@ -242,11 +242,11 @@ void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t 
 
         if (mem_compare( &Factory3.Ua, Buffer, 12 ) != 0)
         {
-            Corretion_Pw = (unsigned long)(((float)Factory3.Ua*(float)Factory3.Ia/100000)/mbase_control_block->k_p);//台体视在功率
+            Corretion_Pw = (unsigned long)(((float)Factory3.Ua*(float)Factory3.Ia/100000)/Rn8209Adj_K.p);//台体视在功率
             CalcPw = (unsigned long)(((float)TempUrms * (float)TempIrms)/32768); //表视在功率
 
-            mbase_control_block->k_u = (float)Factory3.Ua/TempUrms;
-            mbase_control_block->k_il = (float)Factory3.Ia/TempIrms;
+            Rn8209Adj_K.u = (float)Factory3.Ua/TempUrms;
+            Rn8209Adj_K.il = (float)Factory3.Ia/TempIrms;
 
             err = (CalcPw - (float)Corretion_Pw)/(float)Corretion_Pw;
             err = err + BaseErr*0.01;
@@ -266,11 +266,11 @@ void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t 
             nd_set_index(instance, addr, (uint8_t*)&Pgain, 8);
             
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_K);
-            nd_set_index(instance, addr, (uint8_t*)&mbase_control_block->k_u, 16);
+            nd_set_index(instance, addr, (uint8_t*)&Rn8209Adj_K.u, 16);
             
             rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, GPQA, 2, &Pgain);
             CalcPw = (unsigned long)((float)TempPw*(1+err));
-            Corretion_Pw = (unsigned long)(((float)Factory3.Pa/100)/mbase_control_block->k_p);
+            Corretion_Pw = (unsigned long)(((float)Factory3.Pa/100)/Rn8209Adj_K.p);
             err = ((float)CalcPw - Corretion_Pw)/(Corretion_Pw);
             err = (asin(-err/1.732))*100*57.29578;
             if (err >= 0)
@@ -295,12 +295,14 @@ void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t 
         if (mem_compare( &Factory3.Ian, Buffer, 4 ) != 0)
         {
             rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , IBRMS , 3 , &I2_value);
-            mbase_control_block->k_in = (float)Factory3.Ian/10/I2_value;
+            Rn8209Adj_K.in = (float)Factory3.Ian/10/I2_value;
             
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_K);
-            nd_set_index(instance, addr, (uint8_t*)&mbase_control_block->k_u, 16); 
+            nd_set_index(instance, addr, (uint8_t*)&Rn8209Adj_K.u, 16); 
         }
     }
+    
+    
 }
 
             
@@ -315,7 +317,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     //读计量芯片电压
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , URMS , 3 , &temp);
     
-    mbase_control_block->voltage_ac = (uint32_t)(mbase_control_block->k_u * temp)/10;
+    mbase_control_block->voltage_ac = (uint32_t)(Rn8209Adj_K.u * temp)/10;
     if(mbase_control_block->voltage_ac > MAX_VOLTAGE)
     {
         mbase_control_block->voltage_ac = UN_VOLTAGE;
@@ -331,7 +333,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     //读计量芯片电流
     temp = 0;
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , IARMS , 3 , &temp);
-    mbase_control_block->current_l = (int32_t)(mbase_control_block->k_il * temp)/10;
+    mbase_control_block->current_l = (int32_t)(Rn8209Adj_K.il * temp)/10;
     
     //视在功率
     mbase_control_block->apparent_power = mbase_control_block->current_l * mbase_control_block->voltage_ac/1000;
@@ -339,7 +341,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     //读计量芯片功率
     temp = 0;
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , POWERPA , 4 , &temp);
-    mbase_control_block->active_power = (int32_t)(mbase_control_block->k_p * temp);
+    mbase_control_block->active_power = (int32_t)(Rn8209Adj_K.p * temp);
     
     if(abs(mbase_control_block->current_l) < mbase_control_block->curt_33)
     {
@@ -398,7 +400,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     //读计量芯片零线电流
     temp = 0;
     rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , IBRMS , 3 , &temp);
-    mbase_control_block->current_n = (int32_t)(mbase_control_block->k_in * temp);
+    mbase_control_block->current_n = (int32_t)(Rn8209Adj_K.in * temp);
     if(abs(mbase_control_block->current_n) < MIN_CURRENT)
     {
         mbase_control_block->current_n = 0;
@@ -481,7 +483,7 @@ void Electrical_measurement_poweron(struct instance_t* instance, struct pipeline
     
     
     addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_K);
-    nd_get_index(instance, addr, (uint8_t*)&mbase_control_block->k_u, 16);
+    nd_get_index(instance, addr, (uint8_t*)&Rn8209Adj_K.u, 16);
 
     addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);
     nd_get_index(instance, addr, (uint8_t*)adj_buf, 8);

@@ -82,7 +82,15 @@ struct McuUartConfig_t
     unsigned char Stop;
 };
 
+struct Rn8209AdjK_t
+{
+    float u; 
+    float il;
+    float in;
+    float p;
+};
 
+extern struct Rn8209AdjK_t Rn8209Adj_K;
 
 struct CalMesaureValue_t
 {

@@ -4,6 +4,7 @@
 #include "ndvh_rn8209.h"
 #include "lib_ana.h"
 
+struct Rn8209AdjK_t Rn8209Adj_K;
 
 unsigned char ReadRn8209WithChk(unsigned char ChipAddr, unsigned char* Buf, unsigned char length, const struct dev_info_t* dev)
 {

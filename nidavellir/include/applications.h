@@ -51,10 +51,6 @@ struct mbase_control_block_t
     static_start            //------------------------------------------------------
     uint8_t tsa[6];  
 
-    float k_u; 
-    float k_il;
-    float k_in;
-    float k_p;    
     uint32_t meter_const;
     uint8_t  active_energy_cal_word;
     
