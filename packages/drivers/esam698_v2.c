@@ -172,6 +172,9 @@ static int _esam_power_ctrl_on(struct esam_data_t *para, void *esam_hal)
     ESAM_POWER_CTRL_ON();
     mcu_spi_ops.ctrl(START , 0);
     mcu_spi_ops.init(0);
+    //补充 esam电源打开后的 100ms延时
+    mcu_delay_ms_power_down_quit(100);
+    
     return 1;
 }
 

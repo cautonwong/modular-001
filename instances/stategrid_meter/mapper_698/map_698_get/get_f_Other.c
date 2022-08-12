@@ -1,7 +1,7 @@
 #include "nidavellir.h"
 #include "fr_698.h"
 
-extern uint8_t read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t index);
+extern int read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t index);
 
 const uint8_t name_rs485[5] = {'R', 'S', '4', '8', '5'};
 const uint8_t name_ir[5] = {'I', 'N', 'F', 'R', 'A'};

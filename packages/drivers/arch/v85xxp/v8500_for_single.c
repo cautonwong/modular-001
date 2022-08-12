@@ -181,6 +181,25 @@ uint8_t mcu_delay_us(volatile uint16_t count)
     return true;
 }
 
+//延时 掉电退出
+int mcu_delay_ms_power_down_quit(volatile uint16_t count)
+{
+    uint16_t i;
+    
+    for(i = 0; i < count; i++)
+    {
+        mcu_delay_us(1000);
+        
+        mcu_clear_watchdog();
+        
+        if (ANA_GetStatus(ANA_STATUS_VDCINDROP))    
+        {
+            return -1;
+        }
+    }
+    return 1;
+}
+
 static void RTCWriteEnable(void)
 {
     while(RTC->CE & RTC_CE_BSY)            /* 当wr_busy=1时，RTC寄存器写操作忙 */

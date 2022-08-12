@@ -799,13 +799,14 @@ void Get_DisplayPage(struct instance_t* instance, struct pipeline_t* pipeline)
 				mbase_control_block->AutoInv = 5;
             
 			//获取轮显显示屏数
-			if( mbase_control_block->lcd_autodis_list_num == 0 )
-				mbase_control_block->lcd_autodis_list_num = 1;
-            
-			if( mbase_control_block->AutoPtr >= (mbase_control_block->lcd_autodis_list_num-1) )
-				mbase_control_block->AutoPtr = 0;
-            else
-				mbase_control_block->AutoPtr++;
+            mbase_control_block->AutoPtr = 0;
+			if( mbase_control_block->lcd_autodis_list_num > 0 )
+            {            
+                if( mbase_control_block->AutoPtr >= (mbase_control_block->lcd_autodis_list_num-1) )
+                    mbase_control_block->AutoPtr = 0;
+                else
+                    mbase_control_block->AutoPtr++;
+            }
             
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AutoDisplayList + mbase_control_block->AutoPtr);
             nd_get_index(instance, s_index, (uint8_t*)&pageid, 2);

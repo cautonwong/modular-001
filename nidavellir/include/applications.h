@@ -69,8 +69,7 @@ struct mbase_control_block_t
     uint16_t lcd_nopower_key_keep_sec;/*显示查看显示时间 */
     
     uint8_t Baut_rs485; //485波特率
-    uint8_t Baut_plc;   //载波波特率(EEPROM)
-    uint8_t Baut_plc_neg;   //协商波特率（RAM）
+
     
     uint8_t SafeEn; //安全模式  1：启用，0：不启用
     
@@ -164,7 +163,9 @@ struct mbase_control_block_t
     uint8_t auxiliary_power;//辅助电源供电标志
     
     uint8_t baud_chg;   //波特率改变，BIT0(485),BIT1(PLC)
-uint16_t plc_baut_tick; //1小时不通讯需要复位载波通道，波特率恢复9600
+    uint16_t plc_baut_tick; //1小时不通讯需要复位载波通道，波特率恢复9600
+    uint8_t Baut_plc;   //载波波特率(EEPROM)
+    uint8_t Baut_plc_neg;   //协商波特率（RAM）
 
     // ESAM 部分
     //认证相关
@@ -233,6 +234,7 @@ uint16_t plc_baut_tick; //1小时不通讯需要复位载波通道，波特率�
     uint8_t meterclr_event_resetflag; //复位标识
     
     uint32_t battery_used_time; //电池使用时间   
+    uint8_t mac_suspend_state;  // mac挂起状态 协议或显示模块可调用。 true为挂起 
     
     dyn_cache_end  //------------------------------------------------------
     //运行期更改&&掉电或定时保存&&上电需要IO请求的数据分区
@@ -268,7 +270,7 @@ uint16_t plc_baut_tick; //1小时不通讯需要复位载波通道，波特率�
     uint16_t cmd_dostate;  //控制命令执行状态字
     uint16_t cmd_errstate;  //控制命令错误状态字
     
-    uint8_t mac_suspend_state;  // mac挂起状态 协议或显示模块可调用。 true为挂起
+
     uint8_t key_state;  //秘钥状态，显示调用，true为公钥
     
     uint8_t boardadjtime;   //广播校时标志位

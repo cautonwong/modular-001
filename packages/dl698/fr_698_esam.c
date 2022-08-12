@@ -345,16 +345,19 @@ void esam_698_power_supply_ctrl(struct instance_t* instance, struct pipeline_t* 
         return;
     }
 
+
     //关闭电源
     request = esam_type_poweroff_cmd;
     esam_pro_handle(instance, fd, request, (void *)&param);
     mbase_cb->esam_power_status = 0;
+    //mbase_cb->esam_power_close_dly = 0;
 }
 
 int esam_self_check(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     uint8_t result = 0, temp[42] = {0};
-    
+
+
     result = read_esam_no(instance, temp);
     
     if (result > 0)
@@ -487,6 +490,7 @@ void esam_sec_pro(struct instance_t* instance, struct pipeline_t* pipeline)
     {
         esam_self_check(instance, pipeline);
     }
+
 }
 
 

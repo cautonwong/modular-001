@@ -7,6 +7,7 @@
 #include "io_type.h"
 
 extern int openM_ioctl(int fd, int request, void *param);
+extern void mac_err_cnt_add(struct instance_t* instance);
 
 enum verification_choice_e
 {
@@ -440,11 +441,38 @@ static const struct Func_esam_698_t Func_esam[] =
 };
 
 
-int esam_pro_handle(int fd, int request, void *param)
+int esam_pro_handle(struct instance_t* instance, int fd, int request, void *param)
 {
-    if((request < esam_type_max_cmd) && (request >= esam_type_base)){
-        return Func_esam[request - esam_type_base].pFunc((struct esam_698_data_t *)param, 0);
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct esam_698_data_t *para = (struct esam_698_data_t *)param;
+    int ret = 0;
+    
+    //打开电源
+    if (mbase_cb->esam_power_status == 0)
+    {
+        ret = f_esam_698_power_ctrl_on((struct esam_698_data_t *)param, 0);
+        mbase_cb->esam_power_status = 1;
+        mbase_cb->esam_power_close_dly = 2;
+        if (ret < 0) //停电 退出
+        {
+            return ret;
+        }
     }
-    return -1;
+    
+    if((request < esam_type_max_cmd) && (request >= esam_type_base)){
+
+        ret = Func_esam[request - esam_type_base].pFunc((struct esam_698_data_t *)param, 0);
+
+        if (( request != esam_type_poweroff_cmd ) && ( request != esam_type_poweron_cmd ))
+        {
+            if ((ret < 0) && (para->output->esam_err_no))
+            {
+                mac_err_cnt_add(instance);
+            }   
+        }
+        
+        return ret; 
+    }
+    return -1;  
 }
 

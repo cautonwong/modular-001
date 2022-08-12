@@ -707,12 +707,14 @@ int fr_check_service_and_choice(struct instance_t* instance, struct pipeline_t* 
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
-    
+    uint16_t len = 0;
     if (((GET_Request == ctx->service) &&((ctx->choice ==2)|| (ctx->choice == 4)))||
         ((SET_Request == ctx->service) && ((ctx->choice == 2) || (ctx->choice == 3)))||
         ((ACTION_Request == ctx->service) && ((ctx->choice == 2) || (ctx->choice == 3))))
     {
-        mesg->oad_n = apdu_rx[ctx->apdu_rx_offset++];
+        //mesg->oad_n = apdu_rx[ctx->apdu_rx_offset++]; //
+        ctx->apdu_rx_offset += axdr_decode(TYPE_octet_string, &apdu_rx[ctx->apdu_rx_offset], &len);
+        mesg->oad_n = len;
         fifoBuf_putByte(cache, mesg->oad_n);
     }else if (((GET_Request == ctx->service) &&((ctx->choice ==1) || (ctx->choice ==3)))||
              ((SET_Request == ctx->service) && (ctx->choice == 1))||
@@ -748,6 +750,7 @@ int fr_ctx_clear(struct instance_t* instance, struct pipeline_t* pipeline, struc
     uint16_t fr_2_tx = 0;
 int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -801,6 +804,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
 
         ctx->service = apdu_rx[ctx->apdu_rx_offset++];
     }
+    
 
     if (!((CONNECT_Request == ctx->service) || (RELEASE_Request == ctx->service))){
         ctx->choice = apdu_rx[ctx->apdu_rx_offset++];
@@ -829,6 +833,15 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
         ctx->service = ERROR_S_Response;
         ctx->err_n = 2;
     }
+
+    //mac挂起判断
+    if((mbase_cb->mac_suspend_state == true) && (service == SECURITY_Request) && (ctx->service == SET_Request) && (ctx->service == ACTION_Request)) 
+    {
+        //ctx->service = SECURITY_Response;
+        //service = SECURITY_Response;
+        err_no = -DAR_METER_SUSPEND;
+    }
+    
     if((service == SECURITY_Request) && (err_no < 0)){
         ctx->service = SECURITY_Response;
         service = SECURITY_Response;

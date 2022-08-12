@@ -138,9 +138,10 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
 
     uint8_t *p_apdu = cache->buf_ptr;
 	uint8_t buf[70];
-    uint8_t len_len = 0, rn_len = 0;
+    uint8_t  rn_len = 0;
     uint8_t cilent_index = 0;
     uint32_t esam_session_timeout = 0xffffffffU;
+    int len_len = 0;
     
     if (CA_TYPE_TER(ctx->CA))//from 终端
     {
@@ -203,7 +204,7 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     apdu_rx += 4;
 
 
-    if(len_len != 0xFF)
+    if(len_len > 0)
     {
         *(p_apdu+cache->wr) = 0;//允许建立应用连接
         cache->wr++;

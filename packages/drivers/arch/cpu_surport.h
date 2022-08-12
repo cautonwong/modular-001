@@ -36,6 +36,7 @@ extern uint8_t mcu_spi_recive_byte(uint8_t *byte, uint8_t spi_index);
 
 extern void  mcu_clear_watchdog(void);
 extern uint8_t mcu_delay_us(volatile uint16_t count);
+extern int mcu_delay_ms_power_down_quit(volatile uint16_t count);
 extern uint8_t ac_power_off_monitor(void);
 extern uint8_t ac_power_on_monitor(void);
 
