@@ -244,7 +244,12 @@
 #define	    Mem_E2PROM               3
 #define     MEMVALUE                 0x03
 
-
+typedef struct
+{
+    uint8_t en;
+    uint8_t dot;
+}BORROW;
+BORROW Borrow;
 
 typedef struct
 {
@@ -830,6 +835,68 @@ void DispNum( unsigned char* Addr, unsigned char Lenth )
 		Lenth--;
 	}
 }
+
+//电能小数尾数及借位处理
+void display_energy_pro(struct pipeline_t* pipeline, uint8_t *data, uint8_t id)
+{
+    uint8_t EnergyDot,i;
+    unsigned long long energy_p=0,p_max=9999999999999999;//正向，反向
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    
+    Borrow.en = 0;
+    Borrow.dot = 0;
+            
+    EnergyDot = mbase_control_block->energy_point;
+    
+    mem_swap_cpy((uint8_t*)&energy_p, data, 8);
+
+    switch(EnergyDot)
+    {
+        case 0:
+            energy_p = energy_p/10000;
+            break;
+        case 1:
+            energy_p = energy_p/1000;
+            break;
+        case 2:
+            energy_p = energy_p/100;
+            break;
+        case 3:
+            energy_p = energy_p/10;
+            break;
+        case 4:
+            break;
+        default:
+            energy_p = energy_p/100;
+            break;
+    }
+    
+/*    if(id == 0xE0)  //组合
+    {
+        p_max = 79999999;
+    }
+    else*/
+    {
+        p_max = 99999999;
+    }
+    
+    for(i=0; i<12; i++)
+    {
+        if(energy_p > p_max)
+        {
+            energy_p = energy_p / 10;
+            Borrow.en = 0xaa;
+            Borrow.dot++;
+        }
+        else
+        {
+            break;
+        }
+    }
+    
+    mem_swap_cpy(data, (uint8_t*)&energy_p, 4);
+}
+
 /***********************************************************************/
 /*  函数名称：GetDispAddrInfo                                          */
 /*  函数功能：根据给定的ID，找出其对应的数据地址和信息                 */
@@ -838,7 +905,7 @@ void DispNum( unsigned char* Addr, unsigned char Lenth )
 /*            Info：数据信息                                           */
 /*  输出参数：0为ID存在，1为ID不存在                                   */
 /***********************************************************************/
-unsigned long GetDispAddrInfo( struct instance_t* instance, unsigned short ID, unsigned char* data, unsigned long Info, unsigned char* SignBuf )
+unsigned long GetDispAddrInfo( struct instance_t* instance, struct pipeline_t* pipeline, unsigned short ID, unsigned char* data, unsigned long Info, unsigned char* SignBuf )
 {
 	unsigned char D1,D2,D3;
     unsigned long oad,temp=0;
@@ -895,13 +962,15 @@ unsigned long GetDispAddrInfo( struct instance_t* instance, unsigned short ID, u
     if(D2 == 0x00)//当前
     {
         nd_get(instance, oad + D3, data, 9, NULL);
-        ndv_move_buffer(data+4, data, 5);
+        ndv_move_buffer(data+1, data, 8);
     }
     else
     {   
         nd_get(instance, oad + D3, data, 9, NULL);
-        ndv_move_buffer(data+4, data, 5);
+        ndv_move_buffer(data+1, data, 8);
     }
+    
+    display_energy_pro(pipeline, data, D1); //电能小数尾数处理，借位处理
     
     *(SignBuf+6) = Sign_FeiLvNum;//T1~T12
     Info = temp;
@@ -1129,6 +1198,12 @@ void Disp_Char( struct instance_t* instance, struct pipeline_t* pipeline, unsign
     EnergyDot = mbase_control_block->energy_point;
     PowerDot = mbase_control_block->power_point;
     
+    if(Borrow.en == 0xaa)   //借位
+    {
+        if(EnergyDot >= Borrow.dot)
+            EnergyDot = EnergyDot - Borrow.dot;
+    }
+    
 	ID1L = (unsigned char)(mbase_control_block->Page_ID & 0x000F);
     if(ID1L >= 1)    ID1L = ID1L - 1;
     
@@ -1148,10 +1223,10 @@ void Disp_Char( struct instance_t* instance, struct pipeline_t* pipeline, unsign
                     case 4:
                         //memset( Buffer, NumSeg[0], 8 );
 						//memcpy( (unsigned char*)&Buffer[0], (unsigned char*)&Lcdcon[0], 8 );
-                        for(i=0;i<8;i++)
+/*                        for(i=0;i<8;i++)
                         {
                             Lcdcon[7-i] = Lcdcon[7-(4-EnergyDot)-i];
-                        }
+                        }*/
 						if( EnergyDot == 0 )
 						{
 							*(SignBuf+1) = 0;
@@ -1351,7 +1426,7 @@ void Disp_Char( struct instance_t* instance, struct pipeline_t* pipeline, unsign
 void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
-    unsigned char i,buf[10]={0,},Len=0,temp[7];
+    unsigned char i,buf[20]={0,},Len=0,temp[7];
 	unsigned long oad,Info=0,Info1;
 	unsigned char SignBuf[9]={0,};
     signed long value=0;
@@ -1377,7 +1452,7 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
     //mbase_control_block->Page_ID = 0xA002;
     
 	if( mbase_control_block->Page_ID == 0xFFFF ) return;//当前全屏显,则返回
-    Info1 = GetDispAddrInfo( instance, mbase_control_block->Page_ID, buf, Info, SignBuf );
+    Info1 = GetDispAddrInfo( instance, pipeline, mbase_control_block->Page_ID, buf, Info, SignBuf);
     if(Info1 == 1)
     {
         for( i=0;i<DisplayTabNum;i++ )

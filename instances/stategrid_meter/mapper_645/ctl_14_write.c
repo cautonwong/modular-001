@@ -8,6 +8,7 @@ extern void emu_calibration_clear(struct instance_t* instance);
 extern void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t *adj_data);
 extern const struct dev_info_t rn8209_dev;
 extern int16_t Check_para_Pro(struct instance_t* instance);
+extern void Energy_Set(struct instance_t* instance, uint32_t basedata, uint8_t dir);
 
 int rn8209c_set( struct instance_t* instance, uint8_t *p_rx )
 {
@@ -129,7 +130,7 @@ int rn8209c_set( struct instance_t* instance, uint8_t *p_rx )
 unsigned char CommWrite_SpecProc( struct instance_t* instance,  unsigned char* prx, unsigned long ID )
 {
     unsigned char buf[10] = {0,};
-    unsigned long s_index = 0;
+    unsigned long s_index = 0,temp=0;
     signed char ret = 0;
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -198,7 +199,16 @@ unsigned char CommWrite_SpecProc( struct instance_t* instance,  unsigned char* p
                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                             offsetof(struct mbase_control_block_t, active_report_sec_limit));
                 nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_report_sec_limit, 2);//存储至EE                
-                break;          
+                break;  
+        case 0xA8FFFFF0:    //设置正向电能底度
+                memcpy((uint8_t*)&temp, prx+12, 4);
+                Energy_Set(instance, temp, 0);
+                break;
+        case 0xA8FFFFF1:    //设置反向电能底度
+                memcpy((uint8_t*)&temp, prx+12, 4);
+                Energy_Set(instance, temp, 1);
+                break;
+      
 	}
 	return 0;
 }

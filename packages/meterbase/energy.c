@@ -537,3 +537,49 @@ void Energy_clr(struct instance_t* instance)
     offsetof(struct mbase_control_block_t, active_p) -  offsetof(struct mbase_control_block_t, persistent_section_start));
     nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_p, block_len);
 }
+
+void Energy_Set(struct instance_t* instance, uint32_t basedata, uint8_t dir)
+{
+    uint8_t fee_index = 0;
+    uint32_t s_index;
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint16_t block_len = (offsetof(struct mbase_control_block_t, persistent_energy_EC_label) - offsetof(struct mbase_control_block_t, active_p[0]));
+
+    if(mbase_cb->factor_mode == false)  return;
+      
+    if(dir == 0) //正向
+    {
+        for(fee_index = 0; fee_index < (MAX_FEE_NO+1) ; fee_index++)
+        {
+            mbase_cb->active_p[fee_index] = 0x00;
+            mbase_cb->active_p_dec[fee_index] = 0x00;
+        }
+        mbase_cb->active_p[0] = basedata;
+        mbase_cb->active_p[1] = basedata;
+    }
+    else    //反向
+    {
+        for(fee_index = 0; fee_index < (MAX_FEE_NO+1) ; fee_index++)
+        {
+            mbase_cb->active_n[fee_index] = 0x00;
+            mbase_cb->active_n_dec[fee_index] = 0x00;
+        }
+        mbase_cb->active_n[0] = basedata;
+        mbase_cb->active_n[1] = basedata;
+    }
+
+    mbase_cb->MonthEnegery = 0;
+    mbase_cb->MonthEnegery_dec = 0;
+
+    updata_EC_checksum(instance, 0);
+    updata_EC_checksum(instance, 1);
+    
+    Save_EC2(instance, 0);
+    Save_EC2(instance, 1);
+
+    //清 EC1 
+    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+    offsetof(struct mbase_control_block_t, active_p) -  offsetof(struct mbase_control_block_t, persistent_section_start));
+    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_p, block_len);
+}
+

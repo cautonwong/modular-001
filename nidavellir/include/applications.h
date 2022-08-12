@@ -71,7 +71,6 @@ struct mbase_control_block_t
     uint8_t Baut_rs485; //485波特率
     uint8_t Baut_plc;   //载波波特率(EEPROM)
     uint8_t Baut_plc_neg;   //协商波特率（RAM）
-    uint16_t plc_baut_tick; //1小时不通讯需要复位载波通道，波特率恢复9600
     
     uint8_t SafeEn; //安全模式  1：启用，0：不启用
     
@@ -165,7 +164,7 @@ struct mbase_control_block_t
     uint8_t auxiliary_power;//辅助电源供电标志
     
     uint8_t baud_chg;   //波特率改变，BIT0(485),BIT1(PLC)
-
+uint16_t plc_baut_tick; //1小时不通讯需要复位载波通道，波特率恢复9600
 
     // ESAM 部分
     //认证相关
