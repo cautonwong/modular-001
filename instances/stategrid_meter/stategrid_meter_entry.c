@@ -250,18 +250,12 @@ int communication_channel_init(struct instance_t* p_instance, struct pipeline_t 
 
 __no_init uint8_t nd_memory[22 * 1024]; //26
 
-int baremetal_instance_entry_main(int argc, char** argv)
+int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** argv)
 {
-    struct instance_t* instance = NULL;
     struct recipe_t *recipe = NULL;
 
 
     csstack_base_init();
-    instance = create_instance(RES_DEV_RAM, (uint32_t)&nd_memory, 22 * 1024, 2 * 1024, resource_block_name);//用资源描述创建instance
-    if (instance == NULL)
-    {
-        return -1;
-    }
 
     instance->recipe = nd_malloc(instance, instance->resource_block, sizeof(struct recipe_t));
     recipe = instance->recipe;
@@ -402,17 +396,25 @@ int baremetal_instance_entry_main(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
+    struct instance_t* instance = NULL;
+    
 #ifndef WIN32
     mcu_init(NULL);
     
     ndv_timer_init();
+    
+    instance = create_instance(RES_DEV_RAM, (uint32_t)&nd_memory, 22 * 1024, 2 * 1024, resource_block_name);//用资源描述创建instance
+    if (instance == NULL)
+    {
+        return -1;
+    }
     //初始化硬件
-    dev_init(AC_POWER_OFF);
+    dev_init(instance, AC_POWER_OFF);
 
     //初始化固件
     irq_system_init(); 
 #endif // !WIN32
 
-    baremetal_instance_entry_main(argc, argv);
+    baremetal_instance_entry_main(instance, argc, argv);
 }
 

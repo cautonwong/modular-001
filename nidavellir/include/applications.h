@@ -49,7 +49,8 @@ struct mbase_control_block_t
 {
     //上电需要发起IO请求的参数区  运行期不更改   //带备份校验
     static_start            //------------------------------------------------------
-    uint8_t tsa[6];  
+    uint8_t tsa[6];         //表地址
+    uint8_t meterNo[6];     //表号
 
     uint32_t meter_const;
     uint8_t  active_energy_cal_word;
@@ -75,7 +76,7 @@ struct mbase_control_block_t
     uint8_t SafeEn; //安全模式  1：启用，0：不启用
     
     uint8_t relay_ctl_mode; //继电器控制方式（0：脉冲式，1：保持式）
-    uint8_t AuthOn; //身份认证启用标志，1启用
+
     
     uint16_t Limit_T_Max;   //广播校时最大允许范围
     uint16_t Limit_T_Min;   //广播校时最小允许范围
@@ -164,7 +165,9 @@ struct mbase_control_block_t
     uint8_t auxiliary_power;//辅助电源供电标志
     
     uint8_t baud_chg;   //波特率改变，BIT0(485),BIT1(PLC)
-    
+
+
+    // ESAM 部分
     //认证相关
     uint8_t current_connect_channel[2]; //最近一次应用连接通道 0 主站， 1终端
     uint8_t connect_status[4][2];        //应用连接状态 [通道][主站或终端]，   通道顺序 :红外、485-1，载波，485-2；
@@ -174,8 +177,9 @@ struct mbase_control_block_t
 
     uint32_t term_auth_timeout;//终端身份认证剩余时间
     uint32_t infrared_auth_timeout;//红外身份认证剩余时间
-    uint8_t esam_auth_enable;  //身份认证启用标志
-
+    uint8_t AuthOn; //身份认证启用标志，1启用
+    uint8_t esam_power_status;      // esam电源状态   1: on  0：off
+    uint8_t esam_power_close_dly;    //esam电源关闭延时 (秒)
     //主动上报相关  active_report
     uint8_t poweron_active_report_dly;      //主动上报上电延迟时间 (秒)
 
@@ -225,9 +229,6 @@ struct mbase_control_block_t
     uint8_t ZeroLineErrS_duration;      //当前状态持续时间 零线电流异常事件  
 
     uint8_t first_MbillDay_flag;
-
-    uint8_t mac_err_cnt; // 当日mac错误次数
-    uint8_t mac_suspend_date[3];// mac错误 挂起日期 yymmdd
 
     uint8_t meterclr_event_recordflag; //记录标识*/ // 通过fifo传递
     uint8_t meterclr_event_resetflag; //复位标识
@@ -306,6 +307,10 @@ struct mbase_control_block_t
     //跟随上报2015状态字
     uint32_t report_2015state[4];           //跟随上报状态字  chl_NUM
 
+    uint8_t mac_err_cnt; // 当日mac错误次数
+    uint8_t mac_suspend_date[3];// mac错误 挂起日期 yymmdd
+
+
     struct tm v_powerdown_tm;                   // 模拟停电时间  补结算测试用 
     
     uint8_t persistent_blank_space[4*10];   //  空白区
@@ -379,7 +384,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
 int app_meter_lowpower_wakeup_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 
-void dev_init(uint8_t power_mode);
+void dev_init(struct instance_t* instance, uint8_t power_mode);
 void irq_system_init(void);
 void irq_transform_to_instance(struct instance_t* instance);
 void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uint8_t chl_type , struct instance_t* p_instance);
@@ -477,11 +482,11 @@ extern int period_check1(uint16_t oi, uint16_t* capture_period);
 extern int period_check2(uint8_t scheme, uint16_t period, uint8_t* period_buf);
 extern uint8_t capture_check(uint32_t oad, uint8_t* oad_buf);
 
-extern uint8_t read_esam_data(struct instance_t* instance,uint32_t addr, uint8_t *buf, uint16_t len);
-extern uint16_t write_esam(struct instance_t* instance, uint32_t addr, uint8_t*buf, uint16_t len);
-extern uint8_t read_esam_no(struct instance_t* instance, uint8_t *esam_info);
-extern uint8_t read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t index);
-extern uint8_t esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p);
+extern int read_esam_data(struct instance_t* instance,uint32_t addr, uint8_t *buf, uint16_t len);
+extern int write_esam(struct instance_t* instance, uint32_t addr, uint8_t*buf, uint16_t len);
+extern int read_esam_no(struct instance_t* instance, uint8_t *esam_info);
+extern int read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t index);
+extern int esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p);
 
 extern int backlight_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
 
@@ -553,7 +558,7 @@ extern int check_oad(uint32_t oad);
 extern void ndv_timer_init(void);
 
 extern void MComp1Init(void);
-extern void esam_698_init(uint8_t power_mode);
+extern void esam_698_init(struct instance_t* instance, uint8_t power_mode);
 extern void  v85xxp_clear_watchdog(void);
 
 #if RESET_INFO

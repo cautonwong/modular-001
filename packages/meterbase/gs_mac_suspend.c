@@ -57,4 +57,45 @@ uint8_t mac_suspend_pro(struct tm* time,struct instance_t* instance, struct pipe
 }
 
 
+void mac_err_cnt_add(struct instance_t* instance)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    if(mbase_cb->mac_err_cnt < 200)
+    {
+        mbase_cb->mac_err_cnt++;
+        if (mbase_cb->mac_err_cnt == 200)  // 每日超200次
+        {
+            mbase_cb->mac_suspend_state = true; // 挂起
+            mbase_cb->mac_suspend_date[0] = (uint8_t)instance->time.tm_mday;
+            mbase_cb->mac_suspend_date[1] = (uint8_t)instance->time.tm_mon;
+            mbase_cb->mac_suspend_date[2] = (uint8_t)instance->time.tm_year;
+        }
+    }    
+}
+
+
+void mac_suspend_reset(struct instance_t* instance)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
+    mbase_cb->mac_suspend_state = false; 
+    mbase_cb->mac_suspend_date[0] = 0;
+    mbase_cb->mac_suspend_date[1] = 0;
+    mbase_cb->mac_suspend_date[2] = 0;
+    mbase_cb->mac_err_cnt = 0;
+}
+
+
+void mac_suspend_sec_pro(struct instance_t* instance, struct pipeline_t* task)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    if (mbase_cb->mac_suspend_state == true) 
+    {
+        if (((mbase_cb->mac_suspend_date[0] != (uint8_t)instance->time.tm_mday) || (mbase_cb->mac_suspend_date[1] != (uint8_t)instance->time.tm_mon)  || (mbase_cb->mac_suspend_date[2] != (uint8_t)instance->time.tm_year)))
+        {
+            mac_suspend_reset(instance);
+        }
+    }
+}
 

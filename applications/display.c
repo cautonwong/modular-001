@@ -819,13 +819,13 @@ void DispNum( unsigned char* Addr, unsigned char Lenth )
 {
 	unsigned char i=7;
 
-	if( Lenth >5 ) return;
+	if( Lenth >= 5 ) return;
 	while( Lenth > 0 )
 	{
 		Lcdcon[i] = NumSeg[*Addr & 0x0F];
-		i--;
+		if(i>0) i--;
 		Lcdcon[i] = NumSeg[((*Addr)>>4) & 0x0F];
-		i--;
+		if(i>0) i--;
 		Addr++;
 		Lenth--;
 	}
@@ -851,7 +851,7 @@ unsigned long GetDispAddrInfo( struct instance_t* instance, unsigned short ID, u
     D1 = (ID & 0xF000)>>8;
 	memcpy( SignBuf, SIGN_NULL, 8 );
     
-    temp = DispData_BCD + 5;
+    temp = DispData_BCD + 4;
     if(D2 == 0x00)    //当前
         *SignBuf = Sign_dangqian;//当前
     else

@@ -422,7 +422,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
     uint8_t esam_inf[45] = {0}; 
     uint8_t  method,buffer[16],keybuf[128],len1=0,len2=0, cilent_index = 0,len=0;
     uint16_t oad,pageid=0,txlen=0;
-    int rxlen=0;
+    int rxlen=0, ret =0;
     int16_t complen;
     uint8_t *p = buf,disp_sequ=0;
     uint32_t temp = 0,s_index=0,addr=0,displayid=0,displayoad1=0,displayoad2=0;
@@ -498,7 +498,10 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 p = p + txlen;
                 txlen = ((uint16_t)keybuf[0]<<8) + keybuf[1];
                 rxlen = read_esam_data(instance, addr , (uint8_t*)&keybuf[2] , txlen);
-                
+                if(rxlen < 0)
+                {
+                    return -DAR_OTHERS_ERROR;
+                }
                 //cache->buf_ptr[cache->wr++] = 0;  //成功
                 //cache->buf_ptr[cache->wr++] = 1;  //有数据
                 cache->wr = cache->wr+2;
@@ -523,9 +526,16 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 len1 = *p++;
                 memcpy(buffer, p, len1);//oad+data
                 mem_swap_cpy((uint8_t*)&displayoad2, buffer, 4);
-                if(displayoad2 == 0x40020200)   //表号需要判断BCD
+                if(displayoad2 == 0x40020200)   //表号需要判断BCD                //待调整 数据更新只有表号？
                 {
                     if(BCD_Check((uint8_t*)&buffer[5], 8) == 1)    return -DAR_TYPE_NOT_MATCH;
+
+                    if(mbase_cb->key_state == 0)    return -DAR_OTHERS_ERROR; // 私钥不允许改表号
+
+                    ndv_memcopy(&mbase_cb->meterNo, (p - 23), 6);  
+                    addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                    offsetof(struct mbase_control_block_t, meterNo));
+                    nd_set_offset(instance, addr, mbase_cb->meterNo, 6);     
                 }
                 displayoad2 = 0;
                 p = p + len1;
@@ -542,8 +552,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 memcpy((uint8_t*)&keybuf[len2-2+len1], p, 4);//MAC
                 p = p + 4;
                 write_esam(instance, addr , keybuf , txlen);
-                addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Number);
-                nd_set_index(instance, addr, (p - 23), 6); 
+
                 return (p-buf);
             }
             else if(method == 0x05) //协商失效
@@ -596,12 +605,12 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 
                 if(((addr & 0x00000700) == 0x00000700)) // sid
                 {
-                    if(0 != read_esam_info(instance, keybuf, 0x08))
+                    if(0 < (read_esam_info(instance, keybuf, 0x08)))
                     {
-                        mbase_cb->esam_auth_enable = keybuf[0];
+                        mbase_cb->AuthOn = keybuf[0];
                     }
                     else      
-                        mbase_cb->esam_auth_enable = 0;
+                        mbase_cb->AuthOn = 0;
                 }
                 return (p-buf);
             }
@@ -616,13 +625,13 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     return -DAR_OTHERS_ERROR;
                 }
                 
-                read_esam_no(instance, buffer);
+                ret = read_esam_no(instance, buffer);
                 memcpy(keybuf, (uint8_t*)&buffer[5], 8);//表号, 8bytes
 
                 //addr = 0x02003680;
                 addr = 0x80360002;
                 txlen = 0;
-                write_esam(instance, addr , buffer , txlen);
+                ret = write_esam(instance, addr , buffer , txlen);
                 memcpy((uint8_t*)&keybuf[16], buffer, 8);   //ESAM序列号, 8bytes
                 
                 p = p + 2;
@@ -643,7 +652,10 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     txlen = 0x0008;
                     rxlen = write_esam(instance, addr , buffer , txlen);  //0x80, 0x08, 0x00, 0x04, 0x00, 0x08 + ，随机数，返回密文
                 }
-             
+                if (rxlen < 0)
+                {
+                    return -DAR_OTHERS_ERROR;
+                }
                 addr = 0x80040008;
                 txlen = 0;
                 rxlen = write_esam(instance, addr , (uint8_t*)&keybuf[24] , txlen);  //返回随机数2
@@ -691,7 +703,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 addr = 0x80060001;
                 txlen = 8;
                 rxlen = write_esam(instance, addr , buffer , txlen);
-                if(rxlen == 0xff)
+                if(rxlen < 0)
                 {
                     return -DAR_OTHERS_ERROR;
                 }

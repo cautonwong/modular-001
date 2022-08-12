@@ -60,6 +60,6 @@ struct esam_data_t
     uint16_t sw;
 };
 
-int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_t *p_output);
+int fr_698_handle_esam(struct instance_t* instance, struct esam_698_input_t *p_input, struct esam_698_output_t *p_output);
 
 #endif //__FR_698_ESAM_H__

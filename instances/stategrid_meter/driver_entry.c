@@ -443,7 +443,7 @@ void mcu_main_frequency_mode(uint8_t clk_mode)
 }
 
 
-void dev_init(uint8_t power_mode)
+void dev_init(struct instance_t* instance, uint8_t power_mode)
 {
     mcu_main_power_on_config(power_mode);
     
@@ -461,7 +461,7 @@ void dev_init(uint8_t power_mode)
     
     rn8209_dev.dev_driver_ops->dev_control(&rn8209_dev , power_mode , 0);
     
-    esam_698_init(power_mode);
+    esam_698_init(instance, power_mode);
 }
 
 void report_port_open(struct instance_t* instance)
@@ -737,7 +737,7 @@ uint8_t multifunction_port_Init(void)
  {
       mcu_main_frequency_mode(1);
       gpio_configuration_AC();
-      dev_init(AC_POWER_ON);
+      dev_init(instance, AC_POWER_ON);
 	 
       uart_chl_open(UART_RS4851_CHL);
       uart_chl_open(UART_IR_CHL);

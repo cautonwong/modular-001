@@ -51,9 +51,9 @@ static int ___get_sid(struct context_698_t* ctx, struct esam_698_input_t *input)
     return 1;
 }
 
-static int ___verification_handle(struct esam_698_input_t *p_input, struct esam_698_output_t *p_output, uint8_t type)
+static int ___verification_handle(struct instance_t* instance, struct esam_698_input_t *p_input, struct esam_698_output_t *p_output, uint8_t type)
 {
-    int ret = fr_698_handle_esam(p_input, p_output);
+    int ret = fr_698_handle_esam(instance, p_input, p_output);
 
     if((0 == type)&&(0x9000 == p_output->esam_err_no)){
         return 1;
@@ -98,7 +98,7 @@ static int __verification_SID_MAC(struct instance_t* instance, struct pipeline_t
     
     ctx->apdu_len_valid += len + input.MAC_len;
     
-    return ___verification_handle(&input, &output, 0);
+    return ___verification_handle(instance, &input, &output, 0);
 }
 
 static int __verification_RN(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -125,7 +125,7 @@ static int __verification_RN(struct instance_t* instance, struct pipeline_t* pip
         ctx->RN_len = 64;
     memcpy(ctx->RN_data, input.RN_Data, ctx->RN_len);
     if(ctx->service == SECURITY_Response){
-        ___verification_handle(&input, &output, 1);//ESAM错误的情况下  不验证MAC 直接返回成功   //ESAM错误的情况，不验证MAC  //MAC验证不过，不能确认，也不需要响应
+        ___verification_handle(instance, &input, &output, 1);//ESAM错误的情况下  不验证MAC 直接返回成功   //ESAM错误的情况，不验证MAC  //MAC验证不过，不能确认，也不需要响应
     }
     ctx->apdu_len_valid += len + input.RN_Data_len;
     return 1;
@@ -166,7 +166,7 @@ static int __verification_RN_MAC(struct instance_t* instance, struct pipeline_t*
     output.MAC_data = cache->buf_ptr + ctx->security_data_len + 3;
     output.MAC_len = 0;
 
-    return ___verification_handle(&input, &output, 1);
+    return ___verification_handle(instance, &input, &output, 1);
 }
 
 static int __verification_SID(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -192,7 +192,7 @@ static int __verification_SID(struct instance_t* instance, struct pipeline_t* pi
     output.MAC_data = cache->buf_ptr + ctx->security_data_len + 3;
     output.MAC_len  = 0;
 
-    return ___verification_handle(&input, &output, 0);
+    return ___verification_handle(instance, &input, &output, 0);
 }
 
 
@@ -260,7 +260,7 @@ static int ___get_encode_and_mac(struct instance_t* instance, struct pipeline_t*
     output.MAC_data = data_mac;
     output.MAC_len  = 16;
     
-    fr_698_handle_esam(&input, &output);
+    fr_698_handle_esam(instance, &input, &output);
     if(output.esam_err_no == 0x9000){
         if(output.MAC_len == 4){
             if(ctx->security_data_len < output.data_len)
@@ -320,7 +320,7 @@ int fr_698_esam_plain_read_check(struct instance_t* instance, struct pipeline_t*
     uint16_t oi;
 
 
-    if ((0 == ctrl_block->esam_auth_enable) || (true == fr_698_current_connect_status_get(instance, pipeline, client_index))) //身份认证未启用或当前客户机应用链接状态
+    if ((0 == ctrl_block->AuthOn) || (true == fr_698_current_connect_status_get(instance, pipeline, client_index))) //身份认证未启用或当前客户机应用链接状态
     {
         return 1;
     }
@@ -849,7 +849,6 @@ static int fr_698_security_request_check(struct instance_t* instance, struct pip
         ret = fr_698_esam_plain_read_check(instance, pipeline, client_index, oad);
         if (ret > 0)
         {
-            // 避免esam电源未关闭   应该两个连接都不在的时候应该关闭esam电源  暂时先打补丁
             if ((fr_698_current_connect_status_get(instance, pipeline, 0)== true) 
                 || (fr_698_current_connect_status_get(instance, pipeline, 1)== true) 
                 || (ctrl_block->term_auth_timeout != 0))
@@ -874,7 +873,7 @@ static int fr_698_security_request_check(struct instance_t* instance, struct pip
         {
             if(client_index == 0)//主站
             {
-                if( ctrl_block->esam_auth_enable && (fr_698_current_connect_status_get(instance, pipeline, client_index)== false))
+                if( ctrl_block->AuthOn && (fr_698_current_connect_status_get(instance, pipeline, client_index)== false))
                 {
                     if (ctx->channel == chl_ir_698) //红外情况下，有红外认证，不判断身份认证开启和关闭
                     {
@@ -895,7 +894,7 @@ static int fr_698_security_request_check(struct instance_t* instance, struct pip
             }
             else//终端
             {
-                if( ctrl_block->esam_auth_enable && (fr_698_current_connect_status_get(instance, pipeline, client_index)== false) && (ctrl_block->term_auth_timeout == 0))
+                if( ctrl_block->AuthOn && (fr_698_current_connect_status_get(instance, pipeline, client_index)== false) && (ctrl_block->term_auth_timeout == 0))
                 {
                     //待调整 直接报错
                     //*length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明

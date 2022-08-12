@@ -545,6 +545,7 @@ int meter_clr(struct instance_t* instance)
 
     //其他清零    待添加
     mbase_cb->sta &= F_RemoteRelayOn;  //清除控制命令状态,保留保电状态
+    mac_suspend_reset(instance);
 
 
 

@@ -65,9 +65,13 @@ uint16_t fifoBuf_getUsed(struct fifo_t *buf)
 
     return num_bytes;
 }
+volatile uint32_t test_save_addr2; //测试代码 待调整
+volatile uint32_t test_save_addr1; //测试代码 待调整
 
 uint16_t fifoBuf_getFree(struct fifo_t *buf)
 {       // return the free space size in the buffer
+    test_save_addr2 = (uint32_t)buf;
+
 
     uint16_t buf_size = buf->buf_size;
 
@@ -593,8 +597,11 @@ int fifoBuf_pushU8(struct fifo_t* buf, uint8_t b)
     return 1;                   
 }
 
+
 uint16_t fifoBuf_putByte(struct fifo_t *buf, const uint8_t b)
 {       // add a data byte to the buffer
+
+    test_save_addr1 = (uint32_t)buf;
 
     uint16_t wr = buf->wr;
     uint16_t buf_size = buf->buf_size;

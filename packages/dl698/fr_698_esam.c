@@ -11,7 +11,7 @@ enum verification_choice_e
    verification_choice_SID,
 };
 
-extern int esam_pro_handle(int fd, int request, void *param);
+extern int esam_pro_handle(struct instance_t* instance, int fd, int request, void *param);
 
 
 uint16_t software_esam_check(struct instance_t* instance, uint8_t *key, uint8_t *rn, uint8_t *data, uint8_t p2, uint16_t datalen, uint8_t *outbuf)
@@ -35,7 +35,7 @@ uint16_t software_esam_check(struct instance_t* instance, uint8_t *key, uint8_t 
     
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;    
-    esam_pro_handle(fd, request, (void *)&param);
+    esam_pro_handle(instance, fd, request, (void *)&param);
     
     if(output.esam_err_no == 0x9000){
         return output.data_len;
@@ -44,10 +44,11 @@ uint16_t software_esam_check(struct instance_t* instance, uint8_t *key, uint8_t 
     return 0;
 }
 
-uint16_t write_esam(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_t len)
+int write_esam(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_t len)
 {
     int fd = 0;
     int request = esam_type_write_cmd;
+    int ret;
     struct esam_698_data_t param;
     struct esam_698_input_t  input = {0};
     struct esam_698_output_t output= {0};
@@ -62,12 +63,17 @@ uint16_t write_esam(struct instance_t* instance, uint32_t addr, uint8_t *buf, ui
     
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;
-    esam_pro_handle(fd, request, (void *)&param);
+    ret = esam_pro_handle(instance, fd, request, (void *)&param);
+
+    if(ret < 0)
+    {
+        return ret;
+    }
 
     if(output.esam_err_no == 0x9000){
         return output.data_len;
     }
-    return 0xff;
+    return -1;
 }
 
 int esam_key_updata(struct instance_t* instance, uint8_t *buf, uint16_t len)
@@ -106,15 +112,15 @@ int esam_key_updata(struct instance_t* instance, uint8_t *buf, uint16_t len)
     
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;
-    esam_pro_handle(fd, request, (void *)&param);
+    esam_pro_handle(instance, fd, request, (void *)&param);
 
     if(output.esam_err_no == 0x9000){
         return offset;
     }
-    return 0xff;
+    return -1;
 }
 
-uint8_t read_esam_no(struct instance_t* instance, uint8_t *esam_info)
+int read_esam_no(struct instance_t* instance, uint8_t *esam_info)
 {
     int fd = 0;
     int request = esam_type_read_esam_no_cmd;
@@ -123,6 +129,7 @@ uint8_t read_esam_no(struct instance_t* instance, uint8_t *esam_info)
     struct esam_698_output_t output= {0};
     struct mbase_control_block_t* mbase_cb;
     uint8_t tmpbuf[64] = {0};
+    int ret;
 
     input.data_buf      = tmpbuf; //临时缓冲区
     input.data_buf_len  = 64;            //临时缓冲长度
@@ -133,15 +140,20 @@ uint8_t read_esam_no(struct instance_t* instance, uint8_t *esam_info)
     
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;
-    esam_pro_handle(fd, request, (void *)&param);
+    ret = esam_pro_handle(instance, fd, request, (void *)&param);
+
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     mbase_cb->esam_chip_abnormal = output.esam_chip_abnormal;
-    
+
+    if (ret < 0)
+    {
+        return ret;
+    }
     return output.data_len;
 }
 
-uint8_t read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_t len)
+int read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_t len)
 {
     int fd = 0;
     int request = esam_type_read_esam_data_cmd;
@@ -150,6 +162,7 @@ uint8_t read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf,
     struct esam_698_output_t output= {0};
     struct mbase_control_block_t* mbase_cb;
     uint8_t tmpbuf[64] = {0};
+    int ret = 0;
     
     input.data      = buf;
     input.data_len  = len;
@@ -164,13 +177,19 @@ uint8_t read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf,
     
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;
-    esam_pro_handle(fd, request, (void *)&param);
+    ret = esam_pro_handle(instance, fd, request, (void *)&param);
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     mbase_cb->esam_chip_abnormal = output.esam_chip_abnormal;
+
+    if (ret < 0)
+    {
+        return ret;
+    }
+    
     return output.data_len;
 }
 
-uint8_t esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
+int esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
 {
     int fd = 0;
     int request = 0;
@@ -197,17 +216,17 @@ uint8_t esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
     
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;
-    ret = esam_pro_handle(fd, request, (void *)&param);
+    ret = esam_pro_handle(instance, fd, request, (void *)&param);
     if (ret < 0) //错误
     {
-        return 0xFF;
+        return ret;
     }
     
     return (output.data_len + output.MAC_len) ;
 }
 
 
-uint8_t read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t index)
+int read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t index)
 {
     int fd = 0;
     int request = esam_type_get_esam_p2_info_cmd;
@@ -216,6 +235,7 @@ uint8_t read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t 
     struct esam_698_output_t output= {0};
     struct mbase_control_block_t* mbase_cb;
     uint8_t tmpbuf[64] = {0};
+    int ret;
     
     input.cmd_type = index;
     output.data    = esam_info;
@@ -227,14 +247,18 @@ uint8_t read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t 
 
     param.input  = (struct esam_698_input_t *)&input;
     param.output = (struct esam_698_output_t *)&output;    
-    esam_pro_handle(fd, request, (void *)&param);
+    ret = esam_pro_handle(instance, fd, request, (void *)&param);
 
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     mbase_cb->esam_chip_abnormal = output.esam_chip_abnormal;
-    if(output.data_len > 0)
-        return output.data_len;
-    
-    return 0;
+
+    if(ret < 0)
+    {
+        return ret;
+    }
+
+    return output.data_len;
+   
 }
 
 uint8_t get_key_status(struct instance_t* instance)
@@ -252,7 +276,7 @@ uint8_t get_key_status(struct instance_t* instance)
 }
 
 
-void esam_698_init(uint8_t power_mode)
+void esam_698_init(struct instance_t* instance, uint8_t power_mode)
 {
     int fd = 0;
     int request = 0;
@@ -261,12 +285,91 @@ void esam_698_init(uint8_t power_mode)
     if(power_mode == AC_POWER_ON)
     {
         request = esam_type_poweron_cmd;
-        esam_pro_handle(fd, request, (void *)&param);
+        esam_pro_handle(instance, fd, request, (void *)&param);
     }
 }
 
 
-int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_t *p_output)
+
+void esam_698_power_on(struct instance_t* instance)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t esam_inf[45] = {0}; 
+    uint32_t addr = 0;
+    int ret = 0;
+
+    mbase_cb->key_state = get_key_status(instance);//获取秘钥状态   
+
+    ret = read_esam_info(instance, esam_inf,8); 
+    if (ret < 0)
+    {
+        esam_inf[0] = 0;
+    }
+    mbase_cb->AuthOn = esam_inf[0];
+
+    
+    memset(esam_inf, 0, sizeof(esam_inf)); 
+    ret = read_esam_no(instance, esam_inf);   // 获取表号   //ndv_memcopy(p, esam_inf+7, 6);
+    if (ret > 0)
+    {        
+        if (mem_compare(&mbase_cb->meterNo, &esam_inf[7], 6)) //优先使用 esam内部表号  
+        {
+            ndv_memcopy(&mbase_cb->meterNo, &esam_inf[7], 6);  
+            addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+            offsetof(struct mbase_control_block_t, meterNo));
+            nd_set_offset(instance, addr, mbase_cb->meterNo, 6);     
+        }
+    }
+}
+
+//esam 电源控制(关闭)   秒调用 
+void esam_698_power_supply_ctrl(struct instance_t* instance, struct pipeline_t* pipeline)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    int fd = 0;
+    int request = 0;
+    struct esam_698_data_t param;
+
+
+    if (mbase_cb->esam_power_status == 0) //电源未开启
+    {
+        return;
+    }
+    
+    if ((fr_698_current_connect_status_get(instance, pipeline, 0)== true) 
+        || (fr_698_current_connect_status_get(instance, pipeline, 1)== true) 
+        || (mbase_cb->term_auth_timeout != 0) || (mbase_cb->infrared_auth_timeout != 0)
+        || (mbase_cb->esam_power_close_dly != 0))
+    {
+        return;
+    }
+
+    //关闭电源
+    request = esam_type_poweroff_cmd;
+    esam_pro_handle(instance, fd, request, (void *)&param);
+    mbase_cb->esam_power_status = 0;
+}
+
+int esam_self_check(struct instance_t* instance, struct pipeline_t* pipeline)
+{
+    uint8_t result = 0, temp[42] = {0};
+    
+    result = read_esam_no(instance, temp);
+    
+    if (result > 0)
+    {
+        return 1;
+    }
+    else
+    {
+        return -1;
+    }
+    
+}
+
+
+int fr_698_handle_esam(struct instance_t* instance, struct esam_698_input_t *p_input, struct esam_698_output_t *p_output)
 {
     int fd = 0;
     int request = 0;
@@ -326,7 +429,7 @@ int fr_698_handle_esam(struct esam_698_input_t *p_input, struct esam_698_output_
     }
     param.input = p_input;
     param.output = p_output;
-    return esam_pro_handle(fd, request, (void *)&param);
+    return esam_pro_handle(instance, fd, request, (void *)&param);
 }
 
 //主动上报  
@@ -348,7 +451,7 @@ uint8_t get_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *apdu, uin
     output.data = dst;
     param.output = &output;
     
-    return esam_pro_handle(fd, request, (void *)&param);
+    return esam_pro_handle(instance, fd, request, (void *)&param);
 }
 //主动上报验证
 uint8_t check_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *apdu, uint8_t apdu_len)
@@ -357,12 +460,33 @@ uint8_t check_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *apdu, u
     int request = esam_type_upreportcheck_cmd;
     struct esam_698_data_t param;
     struct esam_698_input_t  input = {0};
-//    struct esam_698_output_t output= {0};
+    struct esam_698_output_t output= {0};
     
     input.data = apdu;
     input.data_len = apdu_len;
     param.input = &input;
+    param.output = &output;
 
-    return esam_pro_handle(fd, request, (void *)&param);
+    return esam_pro_handle(instance, fd, request, (void *)&param);
 }
+
+
+//esam模块上电期间 秒处理. 电源控制 和  esam自检(间隔15分，每02、17、32、47分的第35秒 )。
+void esam_sec_pro(struct instance_t* instance, struct pipeline_t* pipeline)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    if (mbase_cb->esam_power_close_dly > 0)   
+    {
+        mbase_cb->esam_power_close_dly--;
+    }
+
+    esam_698_power_supply_ctrl(instance, pipeline);
+    
+    if ((instance->time.tm_sec == 35) && ((instance->time.tm_min%15) == 2)) 
+    {
+        esam_self_check(instance, pipeline);
+    }
+}
+
 

@@ -98,7 +98,7 @@ static uint8_t tx_esam(uint8_t *tx_apdu , uint8_t *tx_data , uint16_t len , cons
 
 
 
-static uint16_t rx_esam(uint8_t *rx_data , uint16_t *len , const struct esam_hal_t *esam_hal , uint16_t *sw)
+static int16_t rx_esam(uint8_t *rx_data , uint16_t *len , const struct esam_hal_t *esam_hal , uint16_t *sw)
 {
     uint8_t  busy = 0,lrc1 = 0;
     uint8_t  err,ret[4] = {0},cnt = 0;
@@ -171,12 +171,12 @@ static uint16_t rx_esam(uint8_t *rx_data , uint16_t *len , const struct esam_hal
     if(cnt < 3)
     {
         esam_chip_abnormal = EVENT_RESET;
-        return true;
+        return 1;
     }
     else
     {
         esam_chip_abnormal = EVENT_SET;
-        return false;
+        return -1;
     }
 }
 
@@ -187,7 +187,7 @@ static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8
     struct esam_698_input_t *esam_in = para->input;
     
     uint16_t len = 0 , sw = 0;
-    uint16_t err_no = 0;
+    int16_t err_no = 0;
 	
     if(esam_in->Dispersion_factor_len){
         memcpy(esam_in->data_buf , esam_in->Dispersion_factor , esam_in->Dispersion_factor_len);
@@ -228,7 +228,7 @@ static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8
         }
         esam_out->data_len = len;
         esam_out->esam_err_no = 0x9000;
-        return 0;
+        return 1;
     }else{
         esam_out->esam_err_no = sw;
         return -1;
@@ -626,10 +626,34 @@ static const struct Func_esam_698_t Func_esam[] =
 };
 
 
-int esam_pro_handle(int fd, int request, void *param)
+int esam_pro_handle(struct instance_t* instance, int fd, int request, void *param)
 {
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct esam_698_data_t *para = (struct esam_698_data_t *)param;
+    int ret = 0;
+    
+    //打开电源
+    if (mbase_cb->esam_power_status == 0)
+    {
+        f_esam_698_power_ctrl_on((struct esam_698_data_t *)param, 0);
+        mbase_cb->esam_power_status = 1;
+        mbase_cb->esam_power_close_dly = 2;
+    }
+
+
     if((request < esam_type_max_cmd) && (request >= esam_type_base)){
-        return Func_esam[request - esam_type_base].pFunc((struct esam_698_data_t *)param, 0);
+
+        ret = Func_esam[request - esam_type_base].pFunc((struct esam_698_data_t *)param, 0);
+
+        if (( request != esam_type_poweroff_cmd ) && ( request != esam_type_poweron_cmd ))
+        {
+            if ((ret < 0) && (para->output->esam_err_no))
+            {
+                mac_err_cnt_add(instance);
+            }   
+        }
+        
+        return ret; 
     }
     return -1;
 }

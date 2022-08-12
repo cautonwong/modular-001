@@ -84,7 +84,7 @@ extern const uint8_t  init_AutoDisplayList[];
 extern const uint8_t  init_KeyDisplayList[];
 
 extern const uint8_t   init_Comm_Number[];//表地址
-extern const uint8_t   init_Meter_Number[];//表号
+//extern const uint8_t   init_Meter_Number[];//表号
 extern const uint8_t   init_User_Number[];//客户编号
 extern const uint8_t   init_Meter_Num[];//计量元件数
 extern const uint8_t   init_SeasonTable_Changetime[];//两套时区切换时间
@@ -535,7 +535,7 @@ const  parameter_item_t  parameter_item[] =
     
     //4XXX
 //  { Comm_Number,         0x01,   6,       init_Comm_Number },//表地址
-    { Meter_Number,        0x01,   6,       init_Meter_Number },//表号
+//  { Meter_Number,        0x01,   6,       init_Meter_Number },//表号
     { User_Number,         0x01,   6,       init_User_Number },//客户编号
     { Meter_Num,           0x01,   1,       init_Meter_Num },//计量元件数
     { SeasonTable_Changetime,   0x01,   7,  init_SeasonTable_Changetime },//两套时区切换时间
@@ -2280,6 +2280,9 @@ int para_init(struct instance_t* instance )
     err = Check_para_Pro(instance);
     
     //RAM部分更新
+
+    memset(mbase_cb->meterNo, 0x00, 6);//表地址
+    
     mbase_cb->meter_const = 2000;
     mbase_cb->active_energy_cal_word = 0x05;
     
@@ -2300,14 +2303,13 @@ int para_init(struct instance_t* instance )
     mbase_cb->Baut_plc = 6;
     mbase_cb->SafeEn = 1;       //安全模式启用
     mbase_cb->relay_ctl_mode = 0; //脉冲式控制方式
-    mbase_cb->AuthOn = 0;       //身份认证启用默认不启用
     mbase_cb->Limit_T_Max = 300;  //广播校时最大允许时间
     mbase_cb->Limit_T_Min = 60;   //广播校时最小允许时间
     
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    offsetof(struct mbase_control_block_t, meter_const));
-    s_len = offsetof(struct mbase_control_block_t, OverCurrent_threshold) - offsetof(struct mbase_control_block_t, backlight_key_time);
-    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->meter_const, s_len);
+    offsetof(struct mbase_control_block_t, meterNo));
+    s_len = offsetof(struct mbase_control_block_t, OverCurrent_threshold) - offsetof(struct mbase_control_block_t, meterNo);
+    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->meterNo, s_len);
     
     memset(mbase_cb->tsa, 0x11, 6);//表地址
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 

@@ -119,6 +119,8 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
         }
         
         updata_powerdown_time(instance);
+        esam_sec_pro(instance, pipeline);   //esam电源关闭 和esam自检
+        mac_suspend_sec_pro(instance, pipeline);//mac挂起处理
     }
     
     active_report_handle(instance, NULL, &mesg); // 上电每秒调用  下电前X秒调用
@@ -210,7 +212,8 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             Energy_Meter_PowerON(instance, pipeline);
             Electrical_measurement_poweron(instance, pipeline);
             AllDisplayLCD(instance, pipeline);
-            mbase_control_block->key_state = get_key_status(instance);//获取秘钥状态
+            esam_698_power_on(instance);
+           
             Magnetic_hold_relay_Init();
             fr_dl698_power_on(instance, pipeline);
             mbase_control_block->power_on_sec_accum = 0;

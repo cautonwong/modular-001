@@ -180,12 +180,12 @@ static uint16 rx_esam(uint8 *rx_data , uint16 *len , const struct esam_hal_t *es
 
 
 
-uint8_t f_esam_type_get_esam_all_info1(struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
+int16_t f_esam_type_get_esam_all_info1(struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
 {
     uint8_t head[4] = {0x80, 0x36, 0x00, 0xff};
     uint8_t tx_data;
     uint16_t len , sw;
-    uint8_t ret;
+    int16_t ret;
     
     tx_esam(head , &tx_data , 0 , esam_hal);
 
@@ -195,12 +195,12 @@ uint8_t f_esam_type_get_esam_all_info1(struct esam_698_output_t *esam_out , cons
     return ret;
 }
 
-uint8_t f_esam_type_get_esam_all_info2(struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
+int16_t f_esam_type_get_esam_all_info2(struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
 {
     uint8_t head[4] = {0x80, 0x36, 0x00, 0xfe};
     uint8_t tx_data;
     uint16_t len , sw;
-    uint8_t ret;
+    int16_t ret;
     
     tx_esam(head , &tx_data , 0 , esam_hal);
 
@@ -210,12 +210,12 @@ uint8_t f_esam_type_get_esam_all_info2(struct esam_698_output_t *esam_out , cons
     return ret;
 }
 
-uint8_t f_esam_type_get_esam_p2_info2(struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
+int16_t f_esam_type_get_esam_p2_info2(struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
 {
     uint8_t head[4] = {0x80, 0x36, 0x00, 0x00};
     uint8_t tx_data;
     uint16_t len , sw;
-    uint8_t ret;
+    int16_t ret;
     
     head[3] = esam_in->cmd_type;
     tx_esam(head , &tx_data , 0 , esam_hal);
@@ -226,12 +226,12 @@ uint8_t f_esam_type_get_esam_p2_info2(struct esam_698_input_t *esam_in , struct 
     return ret;
 }
 
-uint8_t f_esam_type_meet_consult(uint8_t type , struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
+int16_t f_esam_type_meet_consult(uint8_t type , struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
 {
     uint8_t head[4] = {0x81, 0x02, 0x00, 0x00};
     uint8_t com_data[68];
     uint16_t len , sw;
-    uint8_t ret;
+    int16_t ret;
     
     if(type == 1)//�ն˻Ự
     {
@@ -265,11 +265,11 @@ uint8_t f_esam_type_meet_consult(uint8_t type , struct esam_698_input_t *esam_in
 
 
 
-uint8_t f_esam_type_read_meter(uint8_t type , struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
+int16_t f_esam_type_read_meter(uint8_t type , struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
 {
     uint8_t head[4] = {0x80, 0x0E, 0x40, 0x02};
     uint16_t len , sw;
-    uint8_t ret;
+    int16_t ret;
     uint16_t offset = 0;
     if(type == 0)
     {
@@ -319,11 +319,11 @@ uint8_t f_esam_type_read_meter(uint8_t type , struct esam_698_input_t *esam_in ,
     return ret;
 }
 
-uint8_t f_esam_type_broadcast(struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
+int16_t f_esam_type_broadcast(struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
 {
     uint8_t head[4];
     uint16_t len = 0 , sw = 0;
-    uint8_t ret = 0;
+    int16_t ret = 0;
 	
     memcpy(head , (uint8_t *)&esam_in->sid_id , 4);
     memcpy(esam_in->data_buf , (uint8_t *)esam_in->AttachData , esam_in->AttachData_len);
@@ -344,11 +344,11 @@ uint8_t f_esam_type_broadcast(struct esam_698_input_t *esam_in , struct esam_698
 }
 
 
-uint8_t f_esam_type_point_get_data2(uint8_t type , struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
+int16_t f_esam_type_point_get_data2(uint8_t type , struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
 {
     uint8_t head[4];
     uint16_t len = 0 , sw = 0;
-    uint8_t ret = 0;
+    int16_t ret = 0;
 	
     mem_swap_cpy(head, (uint8_t *)&esam_in->sid_id , 4);
     memcpy(esam_in->data_buf , esam_in->AttachData , esam_in->AttachData_len);
@@ -375,11 +375,11 @@ uint8_t f_esam_type_point_get_data2(uint8_t type , struct esam_698_input_t *esam
 #define HES_CIPHERTEXT        0xA6
 #define HES_CIPHERTEXT_MAC    0xA7
 
-uint8_t f_esam_hes_point_get_data4(struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
+int16_t f_esam_hes_point_get_data4(struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
 {
     uint8_t head[4] = {0x81,0x1c,0x00,0x00};
     uint16_t len = 0 , sw = 0;
-    uint8_t ret = 0;
+    int16_t ret = 0;
 
 	
     head[3] = esam_in->cmd_type;
@@ -397,11 +397,11 @@ uint8_t f_esam_hes_point_get_data4(struct esam_698_input_t *esam_in , struct esa
 }
 
 
-uint8_t f_esam_type_read_esam_data(struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
+int16_t f_esam_type_read_esam_data(struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
 {
     uint8_t head[4];
     uint16_t len = 0 , sw = 0;
-    uint8_t ret = 0;
+    int16_t ret = 0;
     
     memcpy(head , (uint8_t *)&esam_in->sid_id , 4);
     memcpy(esam_in->data_buf , (uint8_t *)esam_in->AttachData , esam_in->AttachData_len);
@@ -417,19 +417,19 @@ uint8_t f_esam_type_read_esam_data(struct esam_698_input_t *esam_in , struct esa
     return ret;
 }
 
-uint8_t f_esam_type_read_esam_no(struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
+int16_t f_esam_type_read_esam_no(struct esam_698_input_t *esam_in , struct esam_698_output_t *esam_out , const struct esam_hal_t *esam_hal)
 {
     uint8_t head[4] = {0x80, 0x2C, 0x00, 0x01};
     uint8_t tx_data[7] = { 0, 5, 0, 0, 0, 0, 0x0D };
     
-    uint16_t len , sw;
-    uint8_t ret;
+    uint16_t len = 0 , sw = 0;
+    int16_t ret = 0;
     
     tx_esam(head , tx_data , 7 , esam_hal);
 
     ret = rx_esam(esam_out->data , &len , esam_hal , &sw);
 
-	esam_out->data_len = len;	
+    esam_out->data_len = len;
     return ret;
 }
 
