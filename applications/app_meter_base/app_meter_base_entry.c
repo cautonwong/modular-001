@@ -214,6 +214,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             mbase_control_block->alarmmin = 0;  //上电后清零
             mbase_control_block->Baut_plc_neg =0xfe;
             mbase_cb->Baut_plc = 6;
+            mbase_cb->disp_borrow = 0; //借位
             
             freeze_power_on_pro(instance, pipeline, mesg);
             //事件

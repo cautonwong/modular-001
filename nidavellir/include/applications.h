@@ -162,6 +162,8 @@ struct mbase_control_block_t
     uint8_t under_un68; //所有相电压均低于68%   
     uint8_t auxiliary_power;//辅助电源供电标志
     
+    uint8_t disp_borrow;    //显示借位
+    
     uint8_t baud_chg;   //波特率改变，BIT0(485),BIT1(PLC)
     uint16_t plc_baut_tick; //1小时不通讯需要复位载波通道，波特率恢复9600
     uint8_t Baut_plc;   //载波波特率(EEPROM)
