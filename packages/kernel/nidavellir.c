@@ -9,6 +9,7 @@
 #endif 
 
 #include "pin_function_def.h"
+extern int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline, struct message_t* mesg);
 
 char* get_pipeline_name(struct instance_t* instance, pid_t pipeline_id)
 {
@@ -173,7 +174,7 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
             instance->ac_power_statue = AC_POWER_OFF;
             
             device_power_close(instance);//关闭大功率外设
-            PowerOff_Save_data(instance, pipeline); //数据保存
+            PowerOff_Save_data(instance, pipeline, mesg); //数据保存
         }
     }
     else
@@ -331,12 +332,12 @@ int fr_uart_empty(struct instance_t* instance, uint8_t chl)
             rx_used = fifoBuf_getUsed(fifo);
             fifo = (struct fifo_t*)pipeline->out_queue;
             tx_used = fifoBuf_getUsed(fifo);
-            if((rx_used == 0)&&(tx_used == 0))
-                return  chl_empty;
+            //if((rx_used == 0)&&(tx_used == 0))
+            //    return  chl_empty;
             if(tx_used == 0)
-                return  chl_tx_empty;
-            if(rx_used==0)
-                return  chl_rx_empty;
+                return  chl_tx_empty;//;
+            //if(rx_used==0)
+            //    return  chl_rx_empty;//;
             return  chl_no_empty;
         }
     }
@@ -420,12 +421,19 @@ int nidavellir_run_baremetal(struct instance_t* instance)
 
     if(report_flag == 0xa55a)
     {
-        tick_report = 0x1FFFF;
+        uint16_t dly=0;
+        tick_report = 0x4FFFF;
         while (tick_report)
         {
+          mcu_clear_watchdog();
           if(fr_uart_empty(instance, 2) == chl_tx_empty)
           {
                 tick_report = 1;
+                dly = 10000;
+                while(dly)  //延时，等待最后一个字节16发送完毕
+                {
+                    dly--;
+                }
           }
           tick_report--;
         }

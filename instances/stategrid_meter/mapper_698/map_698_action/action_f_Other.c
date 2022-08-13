@@ -896,10 +896,17 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     if(0 != p[0]){
                         return -DAR_TYPE_NOT_MATCH;
                     }
-                    if( mbase_cb->KeyPtr >= (mbase_cb->lcd_keydis_list_num-1) )
-                        mbase_cb->KeyPtr = 0;
+                    if(mbase_cb->lcd_keydis_list_num > 0)
+                    {
+                        if( mbase_cb->KeyPtr >= (mbase_cb->lcd_keydis_list_num-1) )
+                            mbase_cb->KeyPtr = 0;
+                        else
+                            mbase_cb->KeyPtr++;
+                    }
                     else
-                        mbase_cb->KeyPtr++;
+                    {
+                        mbase_cb->KeyPtr = 0;
+                    }
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + mbase_cb->KeyPtr);
                     nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
                     mbase_cb->Page_ID = pageid;
@@ -911,10 +918,17 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     if(0 != p[0]){
                         return -DAR_TYPE_NOT_MATCH;
                     }
-                    if( mbase_cb->KeyPtr == 0 )
-                        mbase_cb->KeyPtr = mbase_cb->lcd_keydis_list_num-1;
+                    if(mbase_cb->lcd_keydis_list_num > 0)
+                    {
+                        if( mbase_cb->KeyPtr == 0 )
+                            mbase_cb->KeyPtr = mbase_cb->lcd_keydis_list_num-1;
+                        else
+                            mbase_cb->KeyPtr--;
+                    }
                     else
-                        mbase_cb->KeyPtr--;
+                    {
+                        mbase_cb->KeyPtr = 0;
+                    }
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + mbase_cb->KeyPtr);
                     nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
                     mbase_cb->Page_ID = pageid;

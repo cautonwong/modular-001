@@ -244,12 +244,6 @@
 #define	    Mem_E2PROM               3
 #define     MEMVALUE                 0x03
 
-typedef struct
-{
-    uint8_t en;
-    uint8_t dot;
-}BORROW;
-BORROW Borrow;
 
 typedef struct
 {
@@ -731,16 +725,18 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline, uint8
             mbase_control_block->Key |= F_KeyDispay;
             mbase_control_block->KeyPtr = 0xFF;
         }
+
+        if(mbase_control_block->lcd_keydis_list_num > 0)
+        {
+            if( mbase_control_block->KeyPtr >= (mbase_control_block->lcd_keydis_list_num-1) )
+                mbase_control_block->KeyPtr = 0;
+            else
+                mbase_control_block->KeyPtr++;
+        }
         else
         {
-            if(mbase_control_block->lcd_keydis_list_num == 0)
-                mbase_control_block->lcd_keydis_list_num = 1;
-        }
-
-        if( mbase_control_block->KeyPtr >= (mbase_control_block->lcd_keydis_list_num-1) )
             mbase_control_block->KeyPtr = 0;
-        else
-            mbase_control_block->KeyPtr++;
+        }
         
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + mbase_control_block->KeyPtr);
         nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
@@ -749,11 +745,10 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline, uint8
         if( instance->ac_power_statue == AC_POWER_ON )
         {
             if( mbase_control_block->lcd_keydis_keep_sec == 0 )
-                mbase_control_block->lcd_keydis_keep_sec = 5;
+                mbase_control_block->KeyInv = 5;
         }
         else
-            mbase_control_block->lcd_keydis_keep_sec = 30;
-        
+            mbase_control_block->KeyInv = 30;
         mbase_control_block->KeyInv = mbase_control_block->lcd_keydis_keep_sec;
     }
     
@@ -761,7 +756,6 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline, uint8
 	{
 		mbase_control_block->Key &= ~F_KeyDispay;
 		mbase_control_block->AutoPtr = 0xFF;
-		mbase_control_block->lcd_keydis_keep_sec = 0;
 		if( instance->ac_power_statue != AC_POWER_ON )//按键显示结束后,进入掉电暂显
 		{
             lcd_init(AC_POWER_OFF);
@@ -840,13 +834,10 @@ void DispNum( unsigned char* Addr, unsigned char Lenth )
 //电能小数尾数及借位处理
 void display_energy_pro(struct pipeline_t* pipeline, uint8_t *data, uint8_t id)
 {
-    uint8_t EnergyDot,i;
-    unsigned long long energy_p=0,p_max=9999999999999999;//正向，反向
+    uint8_t EnergyDot,i,borrownum=0;
+    unsigned long long energy_p=0,p_max=0;//正向，反向
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     
-    Borrow.en = 0;
-    Borrow.dot = 0;
-            
     EnergyDot = mbase_control_block->energy_point;
     
     mem_swap_cpy((uint8_t*)&energy_p, data, 8);
@@ -872,27 +863,25 @@ void display_energy_pro(struct pipeline_t* pipeline, uint8_t *data, uint8_t id)
             break;
     }
     
-/*    if(id == 0xE0)  //组合
-    {
-        p_max = 79999999;
-    }
-    else*/
-    {
-        p_max = 99999999;
-    }
+
+    p_max = 99999999;
     
-    for(i=0; i<12; i++)
+    for(i=0; i<EnergyDot; i++)
     {
         if(energy_p > p_max)
         {
             energy_p = energy_p / 10;
-            Borrow.en = 0xaa;
-            Borrow.dot++;
+            borrownum++;
         }
         else
         {
             break;
         }
+    }
+    
+    if(borrownum > mbase_control_block->disp_borrow)
+    {
+        mbase_control_block->disp_borrow = borrownum;
     }
     
     mem_swap_cpy(data, (uint8_t*)&energy_p, 4);
@@ -1199,10 +1188,10 @@ void Disp_Char( struct instance_t* instance, struct pipeline_t* pipeline, unsign
     EnergyDot = mbase_control_block->energy_point;
     PowerDot = mbase_control_block->power_point;
     
-    if(Borrow.en == 0xaa)   //借位
+    if(mbase_control_block->disp_borrow != 0)   //借位
     {
-        if(EnergyDot >= Borrow.dot)
-            EnergyDot = EnergyDot - Borrow.dot;
+        if(EnergyDot >= mbase_control_block->disp_borrow)
+            EnergyDot = EnergyDot - mbase_control_block->disp_borrow;
     }
     
 	ID1L = (unsigned char)(mbase_control_block->Page_ID & 0x000F);
