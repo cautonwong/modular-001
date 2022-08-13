@@ -73,15 +73,6 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
         
         event_LowPower_pro(instance, pipeline, &mesg); // 事件 低功耗下处理
   
-        
-/*        if( (mbase_control_block->Key & F_KeyDispay) && (mbase_control_block->KeyInv == 0) )//退出键显,息屏
-        {
-            mbase_control_block->Key &= ~F_KeyDispay;
-            mbase_control_block->AutoPtr = 0xFF;
-            mbase_control_block->lcd_keydis_keep_sec = 0;
-            //Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
-            mbase_control_block->Key &= ~F_KeyAwake;
-        }*/
         if(instance->time.tm_sec == 0)
         {
             if(ANA_GetStatus(ANA_STATUS_COMP1))//判断电池是否存在

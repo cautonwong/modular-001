@@ -731,16 +731,18 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline, uint8
             mbase_control_block->Key |= F_KeyDispay;
             mbase_control_block->KeyPtr = 0xFF;
         }
+
+        if(mbase_control_block->lcd_keydis_list_num > 0)
+        {
+            if( mbase_control_block->KeyPtr >= (mbase_control_block->lcd_keydis_list_num-1) )
+                mbase_control_block->KeyPtr = 0;
+            else
+                mbase_control_block->KeyPtr++;
+        }
         else
         {
-            if(mbase_control_block->lcd_keydis_list_num == 0)
-                mbase_control_block->lcd_keydis_list_num = 1;
-        }
-
-        if( mbase_control_block->KeyPtr >= (mbase_control_block->lcd_keydis_list_num-1) )
             mbase_control_block->KeyPtr = 0;
-        else
-            mbase_control_block->KeyPtr++;
+        }
         
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + mbase_control_block->KeyPtr);
         nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
@@ -749,19 +751,16 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline, uint8
         if( instance->ac_power_statue == AC_POWER_ON )
         {
             if( mbase_control_block->lcd_keydis_keep_sec == 0 )
-                mbase_control_block->lcd_keydis_keep_sec = 5;
+                mbase_control_block->KeyInv = 5;
         }
         else
-            mbase_control_block->lcd_keydis_keep_sec = 30;
-        
-        mbase_control_block->KeyInv = mbase_control_block->lcd_keydis_keep_sec;
+            mbase_control_block->KeyInv = mbase_control_block->lcd_keydis_keep_sec;
     }
     
     if( (mbase_control_block->Key & F_KeyDispay) && (mbase_control_block->KeyInv == 0) )//退出键显
 	{
 		mbase_control_block->Key &= ~F_KeyDispay;
 		mbase_control_block->AutoPtr = 0xFF;
-		mbase_control_block->lcd_keydis_keep_sec = 0;
 		if( instance->ac_power_statue != AC_POWER_ON )//按键显示结束后,进入掉电暂显
 		{
             lcd_init(AC_POWER_OFF);
