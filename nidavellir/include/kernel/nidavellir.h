@@ -465,10 +465,10 @@ struct bus_ops_t
 struct dev_info_t;
 struct driver_ops_t
 {
-    int (*dev_initialize)(const struct dev_info_t *dev);
-    int (*dev_control)(const struct dev_info_t* dev , uint8_t ctrl , void* ctrl_parameter);
-    int (*dev_read)(const struct dev_info_t* dev , uint32_t addr , uint16_t len , void* src);
-    int (*dev_write)(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src);
+    int (*dev_initialize)(struct instance_t* instance, const struct dev_info_t *dev);
+    int (*dev_control)(struct instance_t* instance, const struct dev_info_t* dev , uint8_t ctrl , void* ctrl_parameter);
+    int (*dev_read)(struct instance_t* instance, const struct dev_info_t* dev , uint32_t addr , uint16_t len , void* src);
+    int (*dev_write)(struct instance_t* instance, const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src);
 };
 
 

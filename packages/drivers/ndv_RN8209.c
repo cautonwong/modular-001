@@ -226,9 +226,11 @@ unsigned char Rn8209DeviceIDCheck(const struct dev_info_t* dev)
 
 
 
-unsigned char Rn8209AdjParaSet(struct Rn8209AdjSet_t* Set , const struct dev_info_t* dev)
+unsigned char Rn8209AdjParaSet(struct instance_t* instance, struct Rn8209AdjSet_t* Set , const struct dev_info_t* dev)
 {
-    uint16_t temp=0;
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint32_t addr = 0;
+    uint16_t temp=0,metertype=0;
     CmdRn8209(CMD_WR_EN , dev );
     mcu_delay_us(5000);
     mcu_delay_us(5000);
@@ -270,13 +272,29 @@ unsigned char Rn8209AdjParaSet(struct Rn8209AdjSet_t* Set , const struct dev_inf
     {
         return false;
     }
+    
+    if((mbase_cb->metertype & 0x0800) == 0x0800)    //开启自热补偿功能
+    {
+        temp = 0;
+        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Cmp_Value);
+        nd_get_index(instance, addr, (uint8_t*)&temp, 2);//读取自热补偿值
+        CmdRn8209(0x02, dev);
+        CmdRn8209(0xBA, dev);
+        CmdRn8209(0x7F, dev);
+        CmdRn8209(0x5C, dev);
+        
+        if (true == WriteRn8209( 0x51, (uint8_t*)&temp, 2 , dev))
+        {
+            return false;
+        }
+    }
 
     CmdRn8209(CMD_WR_DIS, dev);
 
     return true;
 }
 
-int Rn8209_initialize(const struct dev_info_t* dev)
+int Rn8209_initialize(struct instance_t* instance, const struct dev_info_t* dev)
 {
     const struct bus_ops_t *bus_ops = dev->dev_bus_ops;
 
@@ -284,7 +302,7 @@ int Rn8209_initialize(const struct dev_info_t* dev)
     return 0;
 }
 
-int Rn8209_control(const struct dev_info_t* dev , uint8_t ctrl , void* ctrl_parameter)
+int Rn8209_control(struct instance_t* instance, const struct dev_info_t* dev , uint8_t ctrl , void* ctrl_parameter)
 {
     const struct bus_ops_t *bus_ops = dev->dev_bus_ops;
     
@@ -304,7 +322,7 @@ int Rn8209_control(const struct dev_info_t* dev , uint8_t ctrl , void* ctrl_para
                 Rn8209InitConfig(dev);
             }
             
-            Rn8209AdjParaSet(set_test , dev);
+            Rn8209AdjParaSet(instance, set_test , dev);
             break;
         case AC_POWER_OFF:
             ResetRn8209();
@@ -317,7 +335,7 @@ int Rn8209_control(const struct dev_info_t* dev , uint8_t ctrl , void* ctrl_para
     return 0;
 }
 
-int Rn8209_read(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void *src)
+int Rn8209_read(struct instance_t* instance, const struct dev_info_t* dev, uint32_t addr, uint16_t len, void *src)
 {
     uint8_t* buf = src;
 
@@ -325,7 +343,7 @@ int Rn8209_read(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void 
 }
 
 
-int Rn8209_write(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void *src)
+int Rn8209_write(struct instance_t* instance, const struct dev_info_t* dev, uint32_t addr, uint16_t len, void *src)
 {
     uint8_t* buf = src;
     

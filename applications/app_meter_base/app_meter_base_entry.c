@@ -22,10 +22,12 @@ int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 
 int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+//    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     size_t mbase_block_persistent_size = offsetof(struct mbase_control_block_t, persistent_section_end) - offsetof(struct mbase_control_block_t, persistent_section_start) + 1;
     uint32_t addr = 0;
     uint32_t res = 0;
+    struct mbase_control_block_t* mbase_cb;
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     __disable_irq();
     
@@ -36,22 +38,22 @@ int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline
     
     //掉电需要保存数据
     //先刷新停电时间ram
-    ndv_memcopy((uint8_t *)(&mbase_control_block->powerdown_tm),  (uint8_t *)&instance->time,  sizeof(mbase_control_block->powerdown_tm));
+    ndv_memcopy((uint8_t *)(&mbase_cb->powerdown_tm),  (uint8_t *)&instance->time,  sizeof(mbase_cb->powerdown_tm));
     //获取对应的RAM地址
     get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
     
-    mbase_control_block->ec_save_success = 0x5AA5;  //保存前 置 标志  
+    mbase_cb->ec_save_success = 0x5AA5;  //保存前 置 标志  
     
     res = get_res(RES_DEV_EEPROM, mbase_block_persistent_eprom);
     nd_set_block(instance, res, (uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;   
     
-    mbase_control_block->ec_save_success = 0;       //保存后 清 标志
+    mbase_cb->ec_save_success = 0;       //保存后 清 标志
     
     instance->ac_power_off_sec_cnt = 0;
    
     //掉电清空显示相关内容
-    memset((uint8_t *)&mbase_control_block->voltage_ac, 0x00, 32);
-    memset((uint8_t *)&mbase_control_block->AutoPtr, 0x00, 10);
+    memset((uint8_t *)&mbase_cb->voltage_ac, 0x00, 32);
+    memset((uint8_t *)&mbase_cb->AutoPtr, 0x00, 10);
     //读取电池使用时间
    
     __enable_irq();
@@ -62,14 +64,16 @@ int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline
 
 void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
 {
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+//    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     struct message_t mesg;
+    struct mbase_control_block_t* mbase_cb;
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     memset(&mesg, 0, sizeof(struct message_t));
     
-    if(mbase_control_block->AutoInv > 0)   mbase_control_block->AutoInv--;
+    if(mbase_cb->AutoInv > 0)   mbase_cb->AutoInv--;
     
-    if(mbase_control_block->KeyInv > 0)    mbase_control_block->KeyInv--;
+    if(mbase_cb->KeyInv > 0)    mbase_cb->KeyInv--;
 
     if( instance->ac_power_statue != AC_POWER_ON ) //低功耗
     {
@@ -82,23 +86,23 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
         {
             if(ANA_GetStatus(ANA_STATUS_COMP1))//判断电池是否存在
             {
-                mbase_control_block->battery_used_time++;   //电池使用时间
+                mbase_cb->battery_used_time++;   //电池使用时间
             }
         }
     }
     else
     {
-        if(mbase_control_block->commdisp_ir485 > 0) mbase_control_block->commdisp_ir485--;
+        if(mbase_cb->commdisp_ir485 > 0) mbase_cb->commdisp_ir485--;
     
-        if(mbase_control_block->commdisp_plc > 0)   mbase_control_block->commdisp_plc--;   
+        if(mbase_cb->commdisp_plc > 0)   mbase_cb->commdisp_plc--;   
         
-        if( mbase_control_block->plc_baut_tick > 0)   //载波通道1小时不通讯，复位载波口 
+        if( mbase_cb->plc_baut_tick > 0)   //载波通道1小时不通讯，复位载波口 
         {
-            mbase_control_block->plc_baut_tick--;
-            if( mbase_control_block->plc_baut_tick == 0)
+            mbase_cb->plc_baut_tick--;
+            if( mbase_cb->plc_baut_tick == 0)
             {
-                mbase_control_block->Baut_plc_neg =0xfe;
-                mbase_control_block->Baut_plc = 6;
+                mbase_cb->Baut_plc_neg =0xfe;
+                mbase_cb->Baut_plc = 6;
                 mcu_uart_set_baud(9600, 4);
             }
         }
@@ -106,7 +110,7 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     //  backlight_pro(instance, pipeline);
         Meter_Run_State(instance, pipeline);//运行状态字刷新
     
-        mbase_control_block->power_on_sec_accum++;
+        mbase_cb->power_on_sec_accum++;
         fr_dl698_sec_task(instance, pipeline);
         
         if(instance->time.tm_sec == 33)     //效验
@@ -118,7 +122,7 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
         esam_sec_pro(instance, pipeline);   //esam电源关闭 和esam自检
         mac_suspend_sec_pro(instance, pipeline);//mac挂起处理
         
-        if(mbase_control_block->factor_mode == true) 
+        if(mbase_cb->factor_mode == true) 
         {
             Poffset_adj_oneself(instance);//小信号修正
         }
@@ -130,7 +134,7 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
 // !!!在此app中不做IO操作!!!
 int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+//    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     size_t mbase_block_persistent_size = offsetof(struct mbase_control_block_t, persistent_section_end) - offsetof(struct mbase_control_block_t, persistent_section_start) + 1;
     size_t mbase_block_static_size = offsetof(struct mbase_control_block_t, static_section_end) - offsetof(struct mbase_control_block_t, static_section_start) + 1;
     size_t persitent_ec_size = offsetof(struct mbase_control_block_t, persistent_energy_EC_label) - offsetof(struct mbase_control_block_t, persistent_section_start);
@@ -217,14 +221,22 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
            
             Magnetic_hold_relay_Init();
             fr_dl698_power_on(instance, pipeline);
-            mbase_control_block->power_on_sec_accum = 0;
+            mbase_cb->power_on_sec_accum = 0;
             mbase_cb->Fee |= (F_TOUChange+F_ChangeTmOn+F_DAYTABChange);;    //获取当前时区时段费率
             mbase_cb->cmd_dostate = 0;  //上电清除控制命令状态字和错误状态字
             mbase_cb->cmd_errstate = 0;
-            mbase_control_block->alarmmin = 0;  //上电后清零
-            mbase_control_block->Baut_plc_neg =0xfe;
+            mbase_cb->alarmmin = 0;  //上电后清零
+            mbase_cb->Baut_plc_neg =0xfe;
             mbase_cb->Baut_plc = 6;
             mbase_cb->disp_borrow = 0; //借位
+            
+            //获取电表类型
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Meter_Type);
+            nd_get_index(instance, addr, (uint8_t*)&mbase_cb->metertype, 2);
+            if((mbase_cb->metertype == 0 ) || (mbase_cb->metertype == 0xFFFF ))
+            {
+                mbase_cb->metertype = 0x0001;    //远程内置表
+            }
             
             freeze_power_on_pro(instance, pipeline, mesg);
             //事件

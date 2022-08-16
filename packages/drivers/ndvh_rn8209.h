@@ -139,7 +139,7 @@ extern struct ADJ_POFFSET_T adj_poffset;
 //æä¾›ç»™ä¸»ç¨‹åºè°ƒç”¨çš„å‡½æ•°ç”³æ˜Ž
 extern void ResetRn8209(void);                  //RN8209èŠ¯ç‰‡ç¡¬ä»¶å¤ä½
 extern unsigned char Rn8209cCommInit(void);     //RN8209èŠ¯ç‰‡ä¸²å£é€šè®¯é…ç½®
-extern unsigned char Rn8209AdjParaSet(struct Rn8209AdjSet_t* Set , const struct dev_info_t* dev); //RN8209èŠ¯ç‰‡æ ¡è¡¨å‚æ•°è®¾ç½®
+extern unsigned char Rn8209AdjParaSet(struct instance_t* instance, struct Rn8209AdjSet_t* Set , const struct dev_info_t* dev); //RN8209èŠ¯ç‰‡æ ¡è¡¨å‚æ•°è®¾ç½®
 extern unsigned char Rn8209DeviceIDCheck();     //RN8209èŠ¯ç‰‡IDæ£€æŸ¥
 extern unsigned char Rn8209InitConfig();        //RN8209èŠ¯ç‰‡åŸºæœ¬å‚æ•°è®¾ç½®æ ¡è¡¨
 extern void MeasureValue(struct dev_info_t* dev);//ä¸»ç¨‹åºè°ƒç”¨å®žæ—¶æ•°æ®è®¡ç®—

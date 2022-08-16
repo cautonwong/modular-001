@@ -588,6 +588,8 @@ const  parameter_item_t  parameter_item_1[] =
     { ADJ_Pgain1        ,       1   ,       8   ,   0 },    //零线校表参数（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
     { ADJ_Other         ,       1   ,       4   ,   0 },    //计量其他参数（启动阀值、HFconst）1 + 2 = 3
     { ADJ_K             ,       1   ,       16  ,   0 },    //Kp Ku Ki 零线K系数 4*4 = 16 
+    { Heat_Cmp_Value    ,       1   ,       2   ,   0 },    //自热补偿（硬件）
+    { Meter_Type        ,       1   ,       2   ,   0 },    //电表型号
 
     { Energy_block      ,       1   ,       160 ,   0 },    //电能块 保存区 (含ram中的校验)
     { UseEnergy_block   ,       1   ,       12  ,   0 },    //电能块 保存区 (含ram中的校验)

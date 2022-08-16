@@ -22,7 +22,7 @@ const COMMTAB  CommTab[] =
 	0xA8001001,	(unsigned int)FirmWareVersion,                  CommData_R + CommData_RAM + 20,//厂家内部软件版本号    
 	0xA8F00001,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + 4,	//继电器报警控制字
 	0xA8F00002,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + 4,	//背光报警控制字
-	0xA8F00003,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + 2,	//电能表类型、功能配置字
+	0xA8F00003,	Meter_Type,										CommData_WR + CommData_HEX + CommData_E2PROM_BP + 2,	//电能表类型、功能配置字
 	0xA8F00050,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + 4,	//上电持续时间
 	0xA8F00051,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + 2,	//掉电主动上报的阈值时间
 	0xA8F00052,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + 1,	//小电流不滤除 AA开启

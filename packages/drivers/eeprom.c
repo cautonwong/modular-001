@@ -287,7 +287,7 @@ uint32_t get_physics_addr(uint32_t addr, uint8_t* buf, uint16_t len , const stru
 
 
 
-int eeprom_initialize(const struct dev_info_t* dev)
+int eeprom_initialize(struct instance_t* instance, const struct dev_info_t* dev)
 {
     const struct bus_ops_t *iic_ops = dev->dev_bus_ops;
 
@@ -295,7 +295,7 @@ int eeprom_initialize(const struct dev_info_t* dev)
 }
 
 
-int eeprom_read_chk(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src) 
+int eeprom_read_chk(struct instance_t* instance, const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src) 
 {
     uint32_t physics_addr = 0;
     uint8_t  errcnt;
@@ -327,7 +327,7 @@ int eeprom_read_chk(const struct dev_info_t* dev, uint32_t addr, uint16_t len, v
     return true;
 
 }
-int eeprom_write_chk(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
+int eeprom_write_chk(struct instance_t* instance, const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
 {
     uint8_t  errcnt;
     uint32_t physics_addr = 0;
@@ -369,7 +369,7 @@ int eeprom_write_chk(const struct dev_info_t* dev, uint32_t addr, uint16_t len, 
 }
 
 
-int eeprom_control(const struct dev_info_t* dev, uint8_t ctrl , void *ctrl_parameter)
+int eeprom_control(struct instance_t* instance, const struct dev_info_t* dev, uint8_t ctrl , void *ctrl_parameter)
 {
     uint32_t addr = 0;
     uint32_t len = 1;
@@ -386,13 +386,13 @@ int eeprom_control(const struct dev_info_t* dev, uint8_t ctrl , void *ctrl_param
         }
         
         mcu_clear_watchdog();
-        if(true == eeprom_write_chk(dev, addr, len, test_wr))
+        if(true == eeprom_write_chk(instance, dev, addr, len, test_wr))
         {
             for(i=0;i<300;i++)
             {
                test_rd[i] = 0;
             }            
-            eeprom_read_chk(dev , addr, len , test_rd); 
+            eeprom_read_chk(instance, dev , addr, len , test_rd); 
             if(mem_compare(test_wr , test_rd , len)!=0)
             {
                 Err = 0x55;

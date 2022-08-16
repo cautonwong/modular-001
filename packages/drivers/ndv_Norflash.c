@@ -244,7 +244,7 @@ uint8_t flash_erase(uint32_t address, const struct dev_info_t* dev, uint8_t eras
 
 
 
-int flash_read(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
+int flash_read(struct instance_t* instance, const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
 {    
     struct spi_io_t spi_io;
     
@@ -270,7 +270,7 @@ int flash_read(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* 
     return true;
 }
 
-int flash_write(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
+int flash_write(struct instance_t* instance, const struct dev_info_t* dev, uint32_t addr, uint16_t len, void* src)
 {
     struct spi_io_t spi_io;
     uint8_t ret;
@@ -351,7 +351,7 @@ int flash_write(const struct dev_info_t* dev, uint32_t addr, uint16_t len, void*
 
 
 
-uint8_t test_flash(const struct dev_info_t* dev)
+uint8_t test_flash(struct instance_t* instance, const struct dev_info_t* dev)
 {
     uint8_t i;
     
@@ -363,14 +363,14 @@ uint8_t test_flash(const struct dev_info_t* dev)
        test_data[i] = i;
     }
 
-    flash_write(dev, 0x00000000, 128, test_data);
+    flash_write(instance, dev, 0x00000000, 128, test_data);
     
     for(i=0;i<128;i++)
     {
        test_data[i] = 0;
     }
     
-    flash_read(dev, 0x00000000, 128, test_data);
+    flash_read(instance, dev, 0x00000000, 128, test_data);
     
     for(i=0;i<128;i++)
     {
@@ -383,7 +383,7 @@ uint8_t test_flash(const struct dev_info_t* dev)
 
 
 
-int flash_ioctrl(const struct dev_info_t* dev , uint8_t ctrl , void* ctrl_parameter)
+int flash_ioctrl(struct instance_t* instance, const struct dev_info_t* dev , uint8_t ctrl , void* ctrl_parameter)
 {
     uint32_t *addr = (uint32_t *)ctrl_parameter;
 
@@ -404,7 +404,7 @@ int flash_ioctrl(const struct dev_info_t* dev , uint8_t ctrl , void* ctrl_parame
         case CTRL_FLS_TEST:
               if(true == flash_erase(*addr, dev , ctrl))
               {
-                  test_flash(dev);
+                  test_flash(instance, dev);
               }
               break;
         default:
@@ -415,7 +415,7 @@ int flash_ioctrl(const struct dev_info_t* dev , uint8_t ctrl , void* ctrl_parame
 
 
 
-int flash_init(const struct dev_info_t *dev)
+int flash_init(struct instance_t* instance, const struct dev_info_t *dev)
 {
     const struct bus_ops_t *bus_ops = dev->dev_bus_ops;
     

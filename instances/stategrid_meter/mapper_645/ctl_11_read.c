@@ -117,7 +117,7 @@ int rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx)
             lenth = 1;
         else
             lenth = 2;
-        rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , addr , lenth , &data);
+        rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , addr , lenth , &data);
         
         if(addr == 0x17)
         {
@@ -133,7 +133,7 @@ int rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx)
         {
             if(addr == Mtable[i].address)
             {
-                rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , addr , Mtable[i].len , &data);
+                rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , addr , Mtable[i].len , &data);
                 memcpy( p_tx+1, (uint8_t*)&data, lenth);
                 return lenth;
             }

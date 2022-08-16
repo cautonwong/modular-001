@@ -451,15 +451,15 @@ void dev_init(struct instance_t* instance, uint8_t power_mode)
 	
     IOStateCheckInit();
     
-    eeprom_dev.dev_driver_ops->dev_initialize(&eeprom_dev);
+    eeprom_dev.dev_driver_ops->dev_initialize(instance, &eeprom_dev);
     
     DISPLAY_KEY_INPUT();
     
-    rn8209_dev.dev_driver_ops->dev_initialize(&rn8209_dev);
+    rn8209_dev.dev_driver_ops->dev_initialize(instance,&rn8209_dev);
     
-    nor_flash_dev.dev_driver_ops->dev_initialize(&nor_flash_dev);
+    nor_flash_dev.dev_driver_ops->dev_initialize(instance,&nor_flash_dev);
     
-    rn8209_dev.dev_driver_ops->dev_control(&rn8209_dev , power_mode , 0);
+    rn8209_dev.dev_driver_ops->dev_control(instance, &rn8209_dev , power_mode , 0);
     
     esam_698_init(instance, power_mode);
 }

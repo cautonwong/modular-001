@@ -89,14 +89,16 @@ unsigned char CommWrite_SpecProc( struct instance_t* instance,  unsigned char* p
  		case 0xA800020F://复位次数
                 memcpy(buf, prx+12, 4);
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ResetCount);
-                nd_set_index(instance, s_index, buf, 4);         
+                nd_set_index(instance, s_index, buf, 4);    
                 break;    
-                
+        case 0xA8F00003://电表型号
+                memcpy((uint8_t*)&mbase_cb->metertype, prx+12, 4);
+                break;
  		case 0xA8F00051://掉电主动上报的阈值时间(秒)hex  0x0E10
                 memcpy(&mbase_cb->active_report_sec_limit, prx+12, 2);                
                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                             offsetof(struct mbase_control_block_t, active_report_sec_limit));
-                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_report_sec_limit, 2);//存储至EE                
+                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_report_sec_limit, 2);//存储至EE  
                 break;  
         case 0xA8FFFFF0:    //设置正向电能底度
                 memcpy((uint8_t*)&temp, prx+12, 4);
@@ -106,6 +108,8 @@ unsigned char CommWrite_SpecProc( struct instance_t* instance,  unsigned char* p
                 memcpy((uint8_t*)&temp, prx+12, 4);
                 Energy_Set(instance, temp, 1);
                 break;
+        default:
+                return 1;
       
 	}
 	return 0;
@@ -152,8 +156,7 @@ signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx
     signed char ret=0;
 	unsigned char Err_Byte=0,Ptr;
 	unsigned char rx_len=0;
-	unsigned long Addr,Info,addr1;
-	unsigned long ID;
+	unsigned long Addr,Info,addr1,block=0,ID;
     uint32_t s_index=0;
 	struct mbase_control_block_t* mbase_cb;
     int16_t err = 0;
@@ -217,7 +220,7 @@ signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx
         {
             return Err_Byte;
         }
-		*len = rx_len;
+		*len = rx_len-12;
 
 		Err_Byte = CommWrite_DataCheck( ID, len );//特殊判断
 		if( Err_Byte != 0 )
@@ -228,8 +231,20 @@ signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx
         ret = CommWrite_SpecProc( instance, p_rx, ID );
 		if( ret == 1 )//特殊写操作
 		{
-			addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Addr);
-			nd_set_index(instance, addr1, p_rx, *len); 
+            if((Info & CommData_E2PROM_BP) == CommData_E2PROM_BP)
+            {
+                block = mbase_block_parameter_1;
+            }
+            else if((Info & CommData_E2PROM_BP) == CommData_E2PROM)
+            {
+                block = mbase_block_parameter;
+            }
+            else
+            {
+                return RS_ERR_OTHERS;
+            }
+			addr1 = ((RES_DEV_EEPROM << 24) + (block << 16) + Addr);
+			nd_set_index(instance, addr1, p_rx+12, *len); 
             return 0;
 		}
         else if(ret == 0)

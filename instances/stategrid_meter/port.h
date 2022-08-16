@@ -446,6 +446,7 @@ enum block_parameter_item_id_t
 #define     AuthMeth                    1007 //连接认证机制
 #define     HoliDay_Table               1008 //公共假日表，20张，每张6字节
 
+#define     Meter_Type                  1010 //电表类型
 /***************** 计量相关 *****************/
 #define     Heat_Value_10L              1100    //1.0L自热补偿  15*2=30
 #define     Heat_Value_05L              1101    //0.5L自热补偿  15*2=30
@@ -455,6 +456,7 @@ enum block_parameter_item_id_t
 #define 	ADJ_Pgain1                  1104    //零线功率增益（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
 #define     ADJ_Other                   1105    //计量其他参数（启动阀值、HFconst）2 + 2 = 4
 #define     ADJ_K                       1106    //Ku Kil Kin零线K系数 Kp 4*4 = 16
+#define     Heat_Cmp_Value              1107    //自热补偿（硬件）
 
 /*
 #define     KeyDisp_Num                 695 //按键显示屏数

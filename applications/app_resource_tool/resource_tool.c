@@ -24,7 +24,7 @@ int do_sum(uint8_t* buff, uint16_t length)
     return result;
 }
 
-int16_t verify_data(uint32_t addr, uint16_t offset, uint8_t* buf, uint16_t size, uint16_t len, const struct dev_info_t* dev)
+int16_t verify_data(struct instance_t* instance, uint32_t addr, uint16_t offset, uint8_t* buf, uint16_t size, uint16_t len, const struct dev_info_t* dev)
 {
     const struct driver_ops_t* driver = NULL;
     uint16_t row[] = { offset, offset + size, len - 0x02, len - 0x01 };
@@ -36,7 +36,7 @@ int16_t verify_data(uint32_t addr, uint16_t offset, uint8_t* buf, uint16_t size,
     driver = dev->dev_driver_ops;
     if (len <= 128)  //小于128字节
     {
-        res_conditions_true(0x00 > driver->dev_read(dev, addr, len, s_buf), -1);
+        res_conditions_true(0x00 > driver->dev_read(instance, dev, addr, len, s_buf), -1);
         memcpy(buf, s_buf + offset, size);
         checksum += do_sum(s_buf, len - 0x02);
         rchecksum = ((uint16_t)s_buf[len - 0x02] << 8);
@@ -57,7 +57,7 @@ int16_t verify_data(uint32_t addr, uint16_t offset, uint8_t* buf, uint16_t size,
     for (k = 0x00; k < cnt + 1; k++)
     {
         u_len = (k == cnt) ? (len % 128) : 128;
-        res_conditions_true(0x00 > driver->dev_read(dev, addr + k * 128, u_len, s_buf), -1);
+        res_conditions_true(0x00 > driver->dev_read(instance, dev, addr + k * 128, u_len, s_buf), -1);
         //更新数据类容
         if ((k >= coordinate[0][0]) && (k <= coordinate[1][0]))
         {
@@ -100,7 +100,7 @@ int16_t verify_data(uint32_t addr, uint16_t offset, uint8_t* buf, uint16_t size,
     return 1;
 }
 
-int16_t update_verify(uint32_t addr, uint16_t offset, uint8_t* buf, uint16_t size, uint16_t len, const struct dev_info_t* dev)
+int16_t update_verify(struct instance_t* instance, uint32_t addr, uint16_t offset, uint8_t* buf, uint16_t size, uint16_t len, const struct dev_info_t* dev)
 {
     const struct driver_ops_t* driver = NULL;
     uint16_t row[] = { offset, offset + size, len - 0x02, len - 0x01 };
@@ -112,12 +112,12 @@ int16_t update_verify(uint32_t addr, uint16_t offset, uint8_t* buf, uint16_t siz
     driver = dev->dev_driver_ops;
     if (len <= 128)  //小于128字节
     {
-        res_conditions_true(0x00 > driver->dev_read(dev,addr,len,s_buf), -1);
+        res_conditions_true(0x00 > driver->dev_read(instance, dev,addr,len,s_buf), -1);
         memcpy(s_buf + offset, buf, size);
         checksum += do_sum(s_buf, len - 0x02);
         s_buf[len - 0x02] = (uint8_t)(checksum >> 8);
         s_buf[len - 0x01] = (uint8_t)checksum;
-        res_conditions_true(0x00 > driver->dev_write(dev, addr, len, s_buf), -1);
+        res_conditions_true(0x00 > driver->dev_write(instance, dev, addr, len, s_buf), -1);
 
         return 1;
     }
@@ -134,7 +134,7 @@ int16_t update_verify(uint32_t addr, uint16_t offset, uint8_t* buf, uint16_t siz
     for (k = 0x00; k < cnt + 1; k++)
     {
         u_len = (k == cnt) ? (len % 128) : 128;
-        res_conditions_true(0x00 > driver->dev_read(dev, addr + k * 128, u_len, s_buf), -1);
+        res_conditions_true(0x00 > driver->dev_read(instance, dev, addr + k * 128, u_len, s_buf), -1);
         //更新数据类容
         if ((k >= coordinate[0][0]) && (k <= coordinate[1][0]))
         {            
@@ -173,7 +173,7 @@ int16_t update_verify(uint32_t addr, uint16_t offset, uint8_t* buf, uint16_t siz
             }
         }
         //保存数据
-        res_conditions_true(0x00 > driver->dev_write(dev, addr + k * 128, u_len, s_buf), -1);
+        res_conditions_true(0x00 > driver->dev_write(instance, dev, addr + k * 128, u_len, s_buf), -1);
     }
 
 
@@ -497,7 +497,7 @@ int16_t nd_get_block(struct instance_t* instance, uint32_t res, uint8_t* buf,uin
     block = look_up_block(instance, device, (uint8_t)(res >> 16));
 
     res_conditions_true((block != NULL) && (buf_size <= block->size),
-        driver->dev_read(device->dev, block->first_addr, block->size, buf));
+        driver->dev_read(instance, device->dev, block->first_addr, block->size, buf));
 
     return 1;
 }
@@ -518,7 +518,7 @@ int16_t nd_set_block(struct instance_t* instance, uint32_t res, uint8_t* buf, ui
 
     block = look_up_block(instance, device, (uint8_t)(res >> 16));
     res_conditions_true((block != NULL) && (buf_size <= block->size), 
-        driver->dev_write(device->dev, block->first_addr, block->size, buf));
+        driver->dev_write(instance, device->dev, block->first_addr, block->size, buf));
 
     return 1;
 }
@@ -589,7 +589,7 @@ int16_t get_block_frist_addr(struct instance_t *instance, uint8_t device_name, u
     return 1;
 }
 
-uint32_t get_curr_mark(const struct dev_info_t* dev, uint32_t addr)
+uint32_t get_curr_mark(struct instance_t* instance, const struct dev_info_t* dev, uint32_t addr)
 {
     const struct driver_ops_t* driver = NULL;
     uint8_t buf[10] = { 0 };
@@ -597,22 +597,22 @@ uint32_t get_curr_mark(const struct dev_info_t* dev, uint32_t addr)
     driver = dev->dev_driver_ops;
     res_conditions_true((driver == NULL) || (driver->dev_read == NULL), 0xFFFFFFFF);
 
-    driver->dev_read(dev, addr, 0x04, buf);
+    driver->dev_read(instance, dev, addr, 0x04, buf);
     //return buf_to_uint32_lsb(buf);
     return buf_to_uint32_msb(buf);
 }
 
-uint16_t search_enum_way(uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t *info, uint8_t direct)
+uint16_t search_enum_way(struct instance_t* instance, uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t *info, uint8_t direct)
 {
     uint16_t ptr, next_ptr;
     uint32_t cmp, next_cmp;
 
     ptr = end;
     next_ptr = ((start + 1) > end) ? start : (end - 1);
-    cmp = get_curr_mark(info->dev,info->addr + info->offset + ptr * info->unit_size);
+    cmp = get_curr_mark(instance, info->dev,info->addr + info->offset + ptr * info->unit_size);
     while (next_ptr >= start)
     {
-        next_cmp = get_curr_mark(info->dev, info->addr + info->offset + next_ptr * info->unit_size);
+        next_cmp = get_curr_mark(instance,info->dev, info->addr + info->offset + next_ptr * info->unit_size);
         res_conditions_true(cmp == key, ptr);
 
         if ((key >= next_cmp) && (key < cmp))
@@ -631,7 +631,7 @@ uint16_t search_enum_way(uint32_t key, uint16_t start, uint16_t end, struct sear
     return 0xFFFF;
 }
 
-uint16_t search_mid_way(uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t* info, uint8_t direct)
+uint16_t search_mid_way(struct instance_t* instance, uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t* info, uint8_t direct)
 {
     uint16_t min_ptr, max_ptr, mid_ptr = 0xFFFF;
     uint32_t mid_cmp, temp_cmp;
@@ -640,14 +640,14 @@ uint16_t search_mid_way(uint32_t key, uint16_t start, uint16_t end, struct searc
     while ((direct < 0x02) && (max_ptr >= min_ptr))
     {
         mid_ptr = (min_ptr + max_ptr) / 2;
-        mid_cmp = get_curr_mark(info->dev, info->addr + info->offset + mid_ptr * info->unit_size);
+        mid_cmp = get_curr_mark(instance,info->dev, info->addr + info->offset + mid_ptr * info->unit_size);
         res_conditions_true(mid_cmp == key, mid_ptr);
 
         if (key > mid_cmp)
         {
             res_conditions_true(mid_ptr == max_ptr, 0xFFFF);
             min_ptr = mid_ptr + 1;
-            temp_cmp = get_curr_mark(info->dev, info->addr + info->offset + min_ptr * info->unit_size);
+            temp_cmp = get_curr_mark(instance,info->dev, info->addr + info->offset + min_ptr * info->unit_size);
             res_conditions_true(key == temp_cmp, min_ptr);
             res_conditions_true(key < temp_cmp, (min_ptr - direct));
         }
@@ -655,7 +655,7 @@ uint16_t search_mid_way(uint32_t key, uint16_t start, uint16_t end, struct searc
         {
             res_conditions_true(mid_ptr == min_ptr, 0xFFFF);
             max_ptr = mid_ptr - 0x01;
-            temp_cmp = get_curr_mark(info->dev, info->addr + info->offset + max_ptr * info->unit_size);
+            temp_cmp = get_curr_mark(instance, info->dev, info->addr + info->offset + max_ptr * info->unit_size);
             res_conditions_true(key == temp_cmp, max_ptr);
             res_conditions_true(key > temp_cmp, (mid_ptr - direct));
         }
@@ -663,10 +663,10 @@ uint16_t search_mid_way(uint32_t key, uint16_t start, uint16_t end, struct searc
     return mid_ptr;
 }
 
-int __search_smoke(struct circular_info_t* info, struct search_tempinfo_t* tempinfo, uint16_t *sptr,uint8_t mode)
+int __search_smoke(struct instance_t* instance, struct circular_info_t* info, struct search_tempinfo_t* tempinfo, uint16_t *sptr,uint8_t mode)
 {
-    uint32_t temp1 = get_curr_mark(tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[0] * tempinfo->unit_size);
-    uint32_t temp2 = get_curr_mark(tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[1] * tempinfo->unit_size);
+    uint32_t temp1 = get_curr_mark(instance, tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[0] * tempinfo->unit_size);
+    uint32_t temp2 = get_curr_mark(instance, tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[1] * tempinfo->unit_size);
 
     res_conditions_true(info->end_mark < info->start_mark, -1);
     switch (mode)
@@ -686,8 +686,8 @@ int __search_smoke(struct circular_info_t* info, struct search_tempinfo_t* tempi
         break;
     case 0x02:  //有反转
     {
-        uint32_t temp3 = get_curr_mark(tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[2] * tempinfo->unit_size);
-        uint32_t temp4 = get_curr_mark(tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[3] * tempinfo->unit_size);
+        uint32_t temp3 = get_curr_mark(instance, tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[2] * tempinfo->unit_size);
+        uint32_t temp4 = get_curr_mark(instance, tempinfo->dev, tempinfo->addr + tempinfo->offset + sptr[3] * tempinfo->unit_size);
 
         if (info->start_mark <= temp3)
         {
@@ -716,8 +716,8 @@ int __search_smoke(struct circular_info_t* info, struct search_tempinfo_t* tempi
     return 1;
 }
 
-int16_t __search_circular(struct circular_info_t* info, struct log_manager_t* manager, struct search_tempinfo_t *tempinfo,
-    uint16_t (*fun)(uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t* info, uint8_t direct))
+int16_t __search_circular(struct instance_t* instance, struct circular_info_t* info, struct log_manager_t* manager, struct search_tempinfo_t *tempinfo,
+    uint16_t (*fun)(struct instance_t* instance, uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t* info, uint8_t direct))
 {
     uint16_t ptr[4] = { manager->r_ptr, 0x00, 0x00, 0x00 };
     uint16_t start_ptr = 0x00, end_ptr = 0x00;
@@ -741,7 +741,7 @@ int16_t __search_circular(struct circular_info_t* info, struct log_manager_t* ma
         cnt = 0x02;  //需要找两次；
     }
 
-    if (0x00 > __search_smoke(info, tempinfo, ptr, cnt))
+    if (0x00 > __search_smoke(instance, info, tempinfo, ptr, cnt))
     {
         info->read_ptr = 0x00;
         info->valid_num = 0x00;
@@ -749,16 +749,16 @@ int16_t __search_circular(struct circular_info_t* info, struct log_manager_t* ma
         return 0x00;
     }
 
-    start_ptr = fun(info->start_mark, ptr[0], ptr[1], tempinfo, 0x00);
+    start_ptr = fun(instance, info->start_mark, ptr[0], ptr[1], tempinfo, 0x00);
     if ((start_ptr == 0xFFFF) && (cnt == 0x02))
     {
-        start_ptr = fun(info->start_mark, ptr[2], ptr[3], tempinfo, 0x00);
+        start_ptr = fun(instance, info->start_mark, ptr[2], ptr[3], tempinfo, 0x00);
     }
 
-    end_ptr = fun(info->end_mark, ptr[0], ptr[1], tempinfo, 0x01);
+    end_ptr = fun(instance, info->end_mark, ptr[0], ptr[1], tempinfo, 0x01);
     if ((end_ptr == 0xFFFF) && (cnt == 0x02))
     {
-        end_ptr = fun(info->end_mark, ptr[2], ptr[3], tempinfo, 0x01);
+        end_ptr = fun(instance, info->end_mark, ptr[2], ptr[3], tempinfo, 0x01);
     }
 
     if ((start_ptr != 0xFFFF) && (end_ptr != 0xFFFF))
@@ -802,14 +802,14 @@ int16_t search_circular(struct instance_t* instance, const struct dev_info_t* de
         case 0x01:  //序号二分查找
             tempinfo.offset = 0x01;
             //tempinfo.offset = 0x00;
-            return __search_circular(info, manager, &tempinfo, search_mid_way);
+            return __search_circular(instance, info, manager, &tempinfo, search_mid_way);
         case 0x02: //时间二分查找
             tempinfo.offset = 0x06;
             //tempinfo.offset = 0x04;
-            return __search_circular(info, manager, &tempinfo, search_mid_way);
+            return __search_circular(instance, info, manager, &tempinfo, search_mid_way);
         case 0x03: //时间枚举法查找
             tempinfo.offset = 0x04;
-            return __search_circular(info, manager, &tempinfo, search_enum_way);
+            return __search_circular(instance, info, manager, &tempinfo, search_enum_way);
         default:
             break;
         }
@@ -817,7 +817,7 @@ int16_t search_circular(struct instance_t* instance, const struct dev_info_t* de
     return -1;
 }
 #ifndef WIN32
-int application_norflash_erase(uint32_t addr, uint32_t len, const struct driver_ops_t* driver, const struct dev_info_t* dev)
+int application_norflash_erase(struct instance_t* instance, uint32_t addr, uint32_t len, const struct driver_ops_t* driver, const struct dev_info_t* dev)
 {
     uint32_t temp;
     int ret = 1;
@@ -825,7 +825,7 @@ int application_norflash_erase(uint32_t addr, uint32_t len, const struct driver_
     temp = ((addr + len) / 4096) * 4096;
     if ((addr <= temp) && (addr + len > temp) && (driver->dev_control != NULL))
     {
-        ret = driver->dev_control(dev, 0x01, &temp);
+        ret = driver->dev_control(instance, dev, 0x01, &temp);
     }
     return ret;
 }
@@ -862,7 +862,7 @@ int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf,
     //读管理区
     driver02 = device02->dev->dev_driver_ops;
     res_conditions_true((driver02 == NULL) || (driver02->dev_read == NULL) || (driver02->dev_write == NULL), -1);
-    if (0x00 > verify_data(block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
+    if (0x00 > verify_data(instance, block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
         sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02, device02->dev))
     {
         manager.max_num = depth;
@@ -881,11 +881,11 @@ int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf,
     //判断是否需要察扇区
     if (device01->dev->dev_type == DEV_FLASH)//FLASH才会擦除
     {
-        res_conditions_true(0x00 > application_norflash_erase(block01->first_addr + addr01, 
+        res_conditions_true(0x00 > application_norflash_erase(instance, block01->first_addr + addr01, 
             unit_size, driver01, device01->dev), -1);
     }
 #endif // WIN32
-    res_conditions_true(0x00 > driver01->dev_write(device01->dev, block01->first_addr + addr01, 
+    res_conditions_true(0x00 > driver01->dev_write(instance, device01->dev, block01->first_addr + addr01, 
         unit_size, buf), -1);
     
     //保存管理区
@@ -911,7 +911,7 @@ int16_t nd_log_append(struct instance_t* instance, uint32_t index, uint8_t* buf,
         manager.w_ptr = 0x00;
     }
         
-    res_conditions_true(0x00 > update_verify(block02->first_addr + addr02, 0x00, (uint8_t*)&manager, 
+    res_conditions_true(0x00 > update_verify(instance, block02->first_addr + addr02, 0x00, (uint8_t*)&manager, 
         sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02, device02->dev), -1);
 
 
@@ -949,7 +949,7 @@ int16_t nd_log_append_revise(struct instance_t* instance, uint32_t index, uint8_
     //读管理区
     driver02 = device02->dev->dev_driver_ops;
     res_conditions_true((driver02 == NULL) || (driver02->dev_read == NULL) || (driver02->dev_write == NULL), -1);
-    if (0x00 > verify_data(block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
+    if (0x00 > verify_data(instance, block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
         sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02, device02->dev))
     {
         manager.max_num = depth;
@@ -975,7 +975,7 @@ int16_t nd_log_append_revise(struct instance_t* instance, uint32_t index, uint8_
     }
     
     addr01 += manager.w_ptr * manager.unit_size + offset;    
-    res_conditions_true(0x00 > driver01->dev_write(device01->dev, block01->first_addr + addr01, 
+    res_conditions_true(0x00 > driver01->dev_write(instance, device01->dev, block01->first_addr + addr01, 
         unit_size, buf), -1);
 
     return unit_size;
@@ -1014,7 +1014,7 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
 
         driver02 = device02->dev->dev_driver_ops;
         res_conditions_true((driver02 == NULL) || (driver02->dev_read == NULL), -1);
-        res_conditions_true(0x00 > verify_data(block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
+        res_conditions_true(0x00 > verify_data(instance, block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
             sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02, device02->dev), -1);
         info->unit_size = manager.unit_size;
         info->valid_num = manager.num;
@@ -1038,13 +1038,13 @@ int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf,
     }
 
     addr01 += ut_ptr * info->unit_size;
-    res_conditions_true(0x00 > driver01->dev_read(device01->dev, block01->first_addr + addr01, info->unit_size, buf), -1);
+    res_conditions_true(0x00 > driver01->dev_read(instance, device01->dev, block01->first_addr + addr01, info->unit_size, buf), -1);
     info->curr_num++;
 
     return info->unit_size;
 }
 
-int16_t _Data_handling(uint32_t addr_a, uint32_t addr_b, int32_t len, struct block_device_t* device)
+int16_t _Data_handling(struct instance_t* instance,uint32_t addr_a, uint32_t addr_b, int32_t len, struct block_device_t* device)
 {
     const struct driver_ops_t* driver = NULL;
     uint8_t buf[256];
@@ -1053,25 +1053,25 @@ int16_t _Data_handling(uint32_t addr_a, uint32_t addr_b, int32_t len, struct blo
     uint64_t step;
 
     driver = device->dev->dev_driver_ops;
-    res_conditions_true(0x00 > driver->dev_read(device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);    
+    res_conditions_true(0x00 > driver->dev_read(instance, device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);    
     if((step != 0xFCFCFCFCFCFCFCFC) && (step != 0xF8F8F8F8F8F8F8F8) && (step != 0xFFFFFFFFFFFFFFFF) &&
        (step != 0xF0F0F0F0F0F0F0F0) && (step != 0xE0E0E0E0E0E0E0E0))
     {
         uint32_t t_addr = addr_b + 4096;
-        res_conditions_true(0x00 > driver->dev_control(device->dev, 0x01, &t_addr), -1);  
+        res_conditions_true(0x00 > driver->dev_control(instance, device->dev, 0x01, &t_addr), -1);  
         step = 0xFCFCFCFCFCFCFCFC;
-        res_conditions_true(0x00 > driver->dev_write(device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);
+        res_conditions_true(0x00 > driver->dev_write(instance, device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);
     }
 
     switch(step)
     {
     case 0xFFFFFFFFFFFFFFFF:
       step = 0xFCFCFCFCFCFCFCFC;
-      res_conditions_true(0x00 > driver->dev_write(device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);
+      res_conditions_true(0x00 > driver->dev_write(instance, device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);
     case 0xFCFCFCFCFCFCFCFC:  //公共擦除  FC
-      res_conditions_true(0x00 > driver->dev_control(device->dev, 0x01, &addr_b), -1);
+      res_conditions_true(0x00 > driver->dev_control(instance, device->dev, 0x01, &addr_b), -1);
       step = 0xF8F8F8F8F8F8F8F8;
-      res_conditions_true(0x00 > driver->dev_write(device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);
+      res_conditions_true(0x00 > driver->dev_write(instance, device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);
     case 0xF8F8F8F8F8F8F8F8:  //数据拷贝 F8
       offset = 0;
       while(s_len > 0)
@@ -1079,17 +1079,17 @@ int16_t _Data_handling(uint32_t addr_a, uint32_t addr_b, int32_t len, struct blo
           if(s_len > 256) { size = 256; }
           else{ size = s_len; }
           
-          res_conditions_true(0x00 > driver->dev_read(device->dev, addr_a + offset, size, buf), -1);
-          res_conditions_true(0x00 > driver->dev_write(device->dev, addr_b + offset, size, buf), -1);
+          res_conditions_true(0x00 > driver->dev_read(instance, device->dev, addr_a + offset, size, buf), -1);
+          res_conditions_true(0x00 > driver->dev_write(instance, device->dev, addr_b + offset, size, buf), -1);
           offset += size;
           s_len -= size;
       }
       step = 0xF0F0F0F0F0F0F0F0;
-      res_conditions_true(0x00 > driver->dev_write(device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);      
+      res_conditions_true(0x00 > driver->dev_write(instance, device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);      
     case 0xF0F0F0F0F0F0F0F0:  //目标区擦除 F0
-      res_conditions_true(0x00 > driver->dev_control(device->dev, 0x01, &addr_a), -1);
+      res_conditions_true(0x00 > driver->dev_control(instance, device->dev, 0x01, &addr_a), -1);
       step = 0xE0E0E0E0E0E0E0E0;
-      res_conditions_true(0x00 > driver->dev_write(device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);      
+      res_conditions_true(0x00 > driver->dev_write(instance, device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1);      
     case 0xE0E0E0E0E0E0E0E0:  //目标区数据拷贝 E0
       s_len = len;
       offset = 0;
@@ -1098,13 +1098,13 @@ int16_t _Data_handling(uint32_t addr_a, uint32_t addr_b, int32_t len, struct blo
           if(s_len > 256) { size = 256; }
           else{ size = s_len; }
           
-          res_conditions_true(0x00 > driver->dev_read(device->dev, addr_b + offset, size, buf), -1);
-          res_conditions_true(0x00 > driver->dev_write(device->dev, addr_a + offset, size, buf), -1);
+          res_conditions_true(0x00 > driver->dev_read(instance, device->dev, addr_b + offset, size, buf), -1);
+          res_conditions_true(0x00 > driver->dev_write(instance, device->dev, addr_a + offset, size, buf), -1);
           offset += size;
           s_len -= size;
       }
       step = 0x0000000000000000;
-      res_conditions_true(0x00 > driver->dev_write(device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1); 
+      res_conditions_true(0x00 > driver->dev_write(instance, device->dev, addr_b + 4096, 8, (uint8_t *)&step), -1); 
     }
     return 1;
 }
@@ -1143,7 +1143,7 @@ uint16_t nd_log_append_rollback(struct instance_t* instance, uint32_t index, uin
 
     driver02 = device02->dev->dev_driver_ops;
     res_conditions_true((driver02 == NULL) || (driver02->dev_read == NULL), 0);
-    res_conditions_true(0x00 > verify_data(block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
+    res_conditions_true(0x00 > verify_data(instance, block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
         sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02, device02->dev), 0);
     res_conditions_true((manager.num == 0x00) || (manager.unit_size == 0x00), 0x00);
     over_num = len01 / manager.unit_size;
@@ -1181,7 +1181,7 @@ uint16_t nd_log_append_rollback(struct instance_t* instance, uint32_t index, uin
                 manager.w_ptr = 0;
             }
             //更新管理区
-            res_conditions_true(0x00 > update_verify(block02->first_addr + addr02, 0x00, (uint8_t*)&manager, 
+            res_conditions_true(0x00 > update_verify(instance, block02->first_addr + addr02, 0x00, (uint8_t*)&manager, 
                 sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02, device02->dev), 0);        
         }
         //搬运数据
@@ -1193,7 +1193,7 @@ uint16_t nd_log_append_rollback(struct instance_t* instance, uint32_t index, uin
         
         if(s_len > 0)
         {
-            res_conditions_true(0x00 > _Data_handling(block01->first_addr + addr01, block03->first_addr, s_len, device01), 0);
+            res_conditions_true(0x00 > _Data_handling(instance, block01->first_addr + addr01, block03->first_addr, s_len, device01), 0);
         }   
         
     }
@@ -1228,7 +1228,7 @@ int nd_log_clean(struct instance_t* instance, uint32_t index)
     memset(buf, 0x00, 20);
     driver02 = device02->dev->dev_driver_ops;
     res_conditions_true((driver02 == NULL) || (driver02->dev_write == NULL), -1);
-    res_conditions_true(0x00 > driver02->dev_write(device02->dev, block02->first_addr + addr02, len02, buf), -1);
+    res_conditions_true(0x00 > driver02->dev_write(instance, device02->dev, block02->first_addr + addr02, len02, buf), -1);
 
     return 1;
 }
@@ -1252,7 +1252,7 @@ int16_t __nd_get_index(struct instance_t* instance, uint32_t index, uint8_t* buf
     //获取数据
     driver = device->dev->dev_driver_ops;
     res_conditions_true((driver == NULL) || (driver->dev_read == NULL), -1);  
-    res_conditions_true(0x00 > verify_data(addr, offset, buf, size, len, device->dev), -1);
+    res_conditions_true(0x00 > verify_data(instance, addr, offset, buf, size, len, device->dev), -1);
 
     return size;
 }
@@ -1294,7 +1294,7 @@ int16_t __nd_set_index(struct instance_t* instance, uint32_t index, uint8_t* buf
 
     driver = device->dev->dev_driver_ops;
     res_conditions_true((driver == NULL) || (driver->dev_write == NULL) || (driver->dev_read == NULL), -1);
-    res_conditions_true(0x00 > update_verify(addr, offset, buf, size, len, device->dev), -1);
+    res_conditions_true(0x00 > update_verify(instance, addr, offset, buf, size, len, device->dev), -1);
 
     return size;
 }
@@ -1332,7 +1332,7 @@ int16_t nd_get_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf
 
     driver = device->dev->dev_driver_ops;
     res_conditions_true((driver == NULL) || (driver->dev_read == NULL), -1);
-    res_conditions_true(0x00 > driver->dev_read(device->dev, addr, len, buf), -1);
+    res_conditions_true(0x00 > driver->dev_read(instance, device->dev, addr, len, buf), -1);
     //res_conditions_true(0x00 > verify_data(buf, len), -1);
 
     return len;
@@ -1384,7 +1384,7 @@ int16_t __nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* b
     driver = device->dev->dev_driver_ops;
     res_conditions_true((driver == NULL) || (driver->dev_write == NULL), -1);
     //update_verify(buf, len);
-    res_conditions_true(0x00 > driver->dev_write(device->dev, addr, len, buf), -1);
+    res_conditions_true(0x00 > driver->dev_write(instance,device->dev, addr, len, buf), -1);
 
     return len;
 }
