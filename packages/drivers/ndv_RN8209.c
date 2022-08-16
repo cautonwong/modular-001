@@ -135,8 +135,12 @@ unsigned char WriteRn8209Check(unsigned char ChipAddr, unsigned char* Buf, unsig
 unsigned char CmdRn8209(unsigned char cmd  , const struct dev_info_t* dev)
 {
     unsigned long temp32 = cmd;
-
-    return WriteRn8209(0xEA, (unsigned char*)&temp32, 1 , dev);
+    unsigned char err=0;
+    
+    mcu_delay_us(5000);
+    err = WriteRn8209(0xEA, (unsigned char*)&temp32, 1 , dev);
+    mcu_delay_us(5000);
+    return err;
 }
 
 
@@ -158,9 +162,8 @@ unsigned char Rn8209InitConfig(const struct dev_info_t* dev)
     
     if((Pstart == 0) || (Pstart == 0xFFFF))   Pstart = 0x0049;
     if((Hfconst == 0) || (Hfconst == 0xFFFF))   Hfconst = 0x064a;
-    mcu_delay_us(5000);
+    
     CmdRn8209(CMD_WR_EN , dev);
-    mcu_delay_us(5000);
 
     if (false == WriteRn8209Check(SYSCON, (unsigned char*)&SysCon, 2 , dev))
     {
@@ -182,9 +185,8 @@ unsigned char Rn8209InitConfig(const struct dev_info_t* dev)
     {
         return false;
     }
-    mcu_delay_us(5000);
+
     CmdRn8209(CMD_WR_DIS , dev);
-    mcu_delay_us(5000);
     
     return true;
 }
@@ -226,7 +228,7 @@ unsigned char Rn8209DeviceIDCheck(const struct dev_info_t* dev)
 
 unsigned char Rn8209AdjParaSet(struct Rn8209AdjSet_t* Set , const struct dev_info_t* dev)
 {
-
+    uint16_t temp=0;
     CmdRn8209(CMD_WR_EN , dev );
     mcu_delay_us(5000);
     mcu_delay_us(5000);
@@ -244,6 +246,27 @@ unsigned char Rn8209AdjParaSet(struct Rn8209AdjSet_t* Set , const struct dev_inf
         return false;
     }
     if (false == WriteRn8209Check(IARMSOS, (unsigned char*)&Set->Irmsos, 2, dev))
+    {
+        return false;
+    }
+    
+    if (true == ReadRn8209WithChk(EMUCON2, (unsigned char*)&temp, 2 , dev))//相位微调
+    {
+        if((Set->Phs & 0x0100) == 0x0100)
+        {
+            temp |= 0x0100;
+        }
+        else
+        {
+            temp &= ~0x0100;
+        }
+        
+        if (false == WriteRn8209Check(EMUCON2, (unsigned char*)&temp, 2, dev))
+        {
+            return false;
+        }
+    }
+    else
     {
         return false;
     }

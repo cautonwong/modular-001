@@ -7,6 +7,7 @@
 #include "fr_698.h"
 #include "gs_record.h"
 extern int16_t Check_para_Pro(struct instance_t* instance);
+extern void Poffset_adj_oneself(struct instance_t* instance);
 //#define     P_BACKLIGHT_ON      GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT |= 0x10; //推挽输出高
 //#define     P_BACKLIGHT_OFF     GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT &=~0x10; //推挽输出低
 
@@ -116,6 +117,11 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
         updata_powerdown_time(instance);
         esam_sec_pro(instance, pipeline);   //esam电源关闭 和esam自检
         mac_suspend_sec_pro(instance, pipeline);//mac挂起处理
+        
+        if(mbase_control_block->factor_mode == true) 
+        {
+            Poffset_adj_oneself(instance);//小信号修正
+        }
     }
     
     active_report_handle(instance, NULL, &mesg); // 上电每秒调用  下电前X秒调用

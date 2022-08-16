@@ -614,8 +614,8 @@ const  parameter_item_t  parameter_item[] =
 const  parameter_item_t  parameter_item_1[] =
 {
     /***************** 计量相关 *****************/
-    { Heat_Value_10L    ,       15  ,       2   ,   0 },    //1.0L自热补偿
-    { Heat_Value_05L    ,       15  ,       2   ,   0 },    //0.5L自热补偿
+    { Heat_Value_10L    ,       1  ,       30   ,   0 },    //1.0L自热补偿
+    { Heat_Value_05L    ,       1  ,       30   ,   0 },    //0.5L自热补偿
 
     { Un_Cmp_Value      ,       1   ,       8   ,   0 },    //80%Un 90%Un 110%Un 115%Un补偿
     { ADJ_Pgain0        ,       1   ,       8   ,   0 },    //火线校表参数（功率增益、功率偏移、电流偏移、相位补偿）4*2=8

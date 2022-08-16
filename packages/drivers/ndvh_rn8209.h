@@ -68,10 +68,10 @@
 
 struct Rn8209AdjSet_t
 {
-    unsigned short Gpq;
-    unsigned short Apos;
-    unsigned short Irmsos;
-    unsigned char  Phs;
+    unsigned short Gpq;     //增益
+    unsigned short Apos;    //功率偏移
+    unsigned short Irmsos;  //电流偏移
+    unsigned short Phs;     //相位
 };
 
 struct McuUartConfig_t
@@ -122,6 +122,16 @@ struct factor_adj_meter_t
     unsigned long   Ian;
     unsigned char   null[2];
 };
+
+struct ADJ_POFFSET_T
+{
+    int32_t ps;         //标准源功率
+    int32_t power_avg;  //平均功率
+    uint8_t tick;
+    uint32_t flag;
+};
+ 
+extern struct ADJ_POFFSET_T adj_poffset;
 
 #define F_ALadj   0x01
 #define F_ANadj   0x10

@@ -9,117 +9,9 @@ extern void meterchip_adj_self(struct instance_t* instance , struct factor_adj_m
 extern const struct dev_info_t rn8209_dev;
 extern int16_t Check_para_Pro(struct instance_t* instance);
 extern void Energy_Set(struct instance_t* instance, uint32_t basedata, uint8_t dir);
+extern int rn8209c_set( struct instance_t* instance, uint8_t *p_rx );
 
-int rn8209c_set( struct instance_t* instance, uint8_t *p_rx )
-{
-    uint8_t addr=0,lenth=0,temp_buffer[8]={0};
-    int16_t tmp,temp[30]={0,};
-    uint32_t s_index=0,data=0;
-    uint8_t* buf = p_rx;
-    
-    addr = *(buf+16);//地址
-    memcpy((uint8_t*)&data, (uint8_t*)(buf+12), 2);//数据
-    
-    if((addr==0x07)||(addr==0x08))//相位寄存器
-        lenth = 1;
-    else
-        lenth = 2;
-    
-    if(addr<=0x17)//00~17H,需要效验
-    {
-        CmdRn8209(CMD_WR_EN , &rn8209_dev);
-        if(addr == 0x17)
-        {
-            rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , EMUCON2 , 2 , &tmp);
-            if(data == 0x01)
-            {
-                data = tmp | 0x0100;
-            }
-            else
-            {
-                data = tmp & 0xFEFF;
-            }
-        }
-        rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, addr, lenth, (uint8_t*)&data);
-        memcpy((uint8_t*)&tmp, (uint8_t*)&data, lenth);
-        CmdRn8209(CMD_WR_DIS , &rn8209_dev);
-        
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);    //火线增益、相位
-        nd_get_index(instance, s_index, temp_buffer, 8); 
-        switch(addr)//存入EEPROM
-        {
-            case 0x05://增益
-                temp_buffer[0] = (uint8_t)data;
-                temp_buffer[1] = (uint8_t)(data>>8);
-                break;
-            case 0x07://相位
-                temp_buffer[2] = (uint8_t)data;
-                break;
-            case 0x0A://功率偏置
-                temp_buffer[4] = (uint8_t)data;
-                temp_buffer[5] = (uint8_t)(data>>8);
-                break;
-            case 0x17://相位微调
-                temp_buffer[3] = (uint8_t)(data>>8);
-                break;
-        }
-        nd_set_index(instance, s_index, temp_buffer, 8); 
-        
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Other);    
-        nd_get_index(instance, s_index, temp_buffer, 4);
-        switch(addr)
-        {
-            case 0x03:  //启动阀值
-                temp_buffer[0] = (uint8_t)data;
-                temp_buffer[1] = (uint8_t)(data>>8);
-                break;
-            case 0x02:  //hfconst
-                temp_buffer[2] = (uint8_t)data;
-                temp_buffer[3] = (uint8_t)(data>>8);
-                break;
-        }
-        nd_set_index(instance, s_index, temp_buffer, 4);
-    }
-    else if(addr >= 0xA0)//0.5L 自热影响量
-    {
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Value_05L);    
-        nd_get_index(instance, s_index, (uint8_t*)&temp[0], 30);
-        memcpy((uint8_t*)&temp[addr-0xA0], (uint8_t*)(buf), 2);
-        nd_set_index(instance, s_index, (uint8_t*)&temp[0], 30);
-    }
-    else if(addr>=0x90)//自热影响
-    {
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Value_10L);    
-        nd_get_index(instance, s_index, (uint8_t*)&temp[0], 30);
-        memcpy((uint8_t*)&temp[addr-0x90], (uint8_t*)(buf), 2);
-        nd_set_index(instance, s_index, (uint8_t*)&temp[0], 30);
-    }
-    else if(addr>=0x80)//电压影响量
-    {
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Un_Cmp_Value);    
-        nd_get_index(instance, s_index, (uint8_t*)&temp[0], 8);
-        switch(addr)
-        {
-            case 0x80:
-                memcpy((uint8_t*)&temp[0], (uint8_t*)&data, 2);
-                break;
-            case 0x81:
-                memcpy((uint8_t*)&temp[1], (uint8_t*)&data, 2);
-                break;
-            case 0x82:
-                memcpy((uint8_t*)&temp[2], (uint8_t*)&data, 2);
-                break;
-            case 0x83:
-                memcpy((uint8_t*)&temp[3], (uint8_t*)&data, 2);
-                break;
-            default:
-                return false;
-                break;
-        }
-        nd_set_index(instance, s_index, (uint8_t*)&temp[0], 8);
-    }
-    return true;
-}
+struct ADJ_POFFSET_T adj_poffset;
 
 /***********************************************************************/
 /*  函数名称：CommWrite_SpecProc                                       */
@@ -187,6 +79,12 @@ unsigned char CommWrite_SpecProc( struct instance_t* instance,  unsigned char* p
                 else
                     factory3.adjflag &= ~F_ANadj;
                 meterchip_adj_self(instance, &factory3);
+                break;
+        case 0xA800020B:    //小信号修正
+                adj_poffset.tick = 0;
+                adj_poffset.flag = 0xA55AA55A;
+                adj_poffset.power_avg = 0;
+                memcpy((uint8_t*)&adj_poffset.ps, prx+12, 4);
                 break;
  		case 0xA800020F://复位次数
                 memcpy(buf, prx+12, 4);

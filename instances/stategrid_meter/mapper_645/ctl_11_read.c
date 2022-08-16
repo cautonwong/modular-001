@@ -30,7 +30,7 @@ unsigned char GetCommTable( unsigned long ID )
 /***********************************************************************/
 unsigned long SoftwareCHK(void)
 {
-	unsigned long FFFFCHK;
+	unsigned long FFFFCHK=0x00;
 	unsigned long i;
 	
 	for (i=0; i<0x1FFFF; i++)
@@ -158,9 +158,9 @@ int Direct_Read( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, 
 
 	switch( ID )
 	{
-		case 0xA8000104:
+		case 0xA601100F:
 			StAddr = SoftwareCHK();
-			memcpy( (unsigned char*)&p_tx, (unsigned char*)&StAddr, 4 );
+			memcpy( (unsigned char*)p_tx, (unsigned char*)&StAddr, 4 );
 			return 4;
 			break;
         case 0xA800020C://微调与补偿
@@ -177,7 +177,6 @@ int Direct_Read( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, 
             memcpy( (unsigned char*)p_tx, (uint8_t*)&mbase_cb->active_report_sec_limit, 2 );        
             return 2; 
             break;             
-            
 		default:
 			return -1;
 			break;
@@ -217,6 +216,10 @@ void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx)
     Rn8209Adj_K.p = 0.0023294272;
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_K);
     nd_set_index(instance, s_index, (uint8_t*)&Rn8209Adj_K.u, 16);//存储至EE
+    
+    memset(buf, 0x00, 8);
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Un_Cmp_Value);
+    nd_set_index(instance, s_index, (uint8_t*)&buf[0], 8);//清空电压影响量
 }
 
 
@@ -261,7 +264,7 @@ signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx,
     {
         return -1;
     }
-
+    
     if((*(p_rx-1) != 0x04) && (*(p_rx-1) != 0x05))   //扩展命令——校表
     {
         Err_Byte = adj_meter(instance, p_rx);
@@ -282,7 +285,14 @@ signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx,
 	Err_Byte = Direct_Read( instance, ID, p_rx, p_tx);//根据ID,直接读取数据
 	if( Err_Byte != -1)
     {
-        *len = 9;
+        if(0xA800020C == ID)    //计量万能读
+        {
+            *len = 9;
+        }
+        else
+        {
+            *len = Err_Byte + 4;
+        }
         return 0;
     }
     

@@ -109,19 +109,19 @@ void voltage_compensate(struct instance_t* instance, struct pipeline_t* pipeline
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Un_Cmp_Value);
         nd_get_index(instance, s_index, (uint8_t *)&emu_voltage_adj.un80_offset, 8); //读取EE中的补偿值
 
-		if(mbase_control_block->voltage_ac > 17500)
+		if(mbase_control_block->voltage_ac > 1750)
 		{
 			tmp = emu_voltage_adj.un80_offset;
 		}
-		if(mbase_control_block->voltage_ac > 19700)
+		if(mbase_control_block->voltage_ac > 1970)
 		{
 			tmp = emu_voltage_adj.un90_offset;
 		}
-		if(mbase_control_block->voltage_ac > 24100)
+		if(mbase_control_block->voltage_ac > 2410)
 		{
 			tmp = emu_voltage_adj.un110_offset;
 		}
-		if(mbase_control_block->voltage_ac > 25200)
+		if(mbase_control_block->voltage_ac > 2520)
 		{
 			tmp = emu_voltage_adj.un115_offset;
 		}
@@ -129,20 +129,24 @@ void voltage_compensate(struct instance_t* instance, struct pipeline_t* pipeline
         
         if(tmp != value)
         {
+            CmdRn8209(CMD_WR_EN , &rn8209_dev);
             rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, APOSA, 2, &tmp);
             adj_std_source.lock |= lock_voltage_compensate;
+            CmdRn8209(CMD_WR_DIS , &rn8209_dev);
         }
 	}
 	else//结束
 	{
 		if((adj_std_source.lock & lock_voltage_compensate) == lock_voltage_compensate)
 		{
+            CmdRn8209(CMD_WR_EN , &rn8209_dev);
 			s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);
             nd_get_index(instance, s_index, (uint8_t *)&buf[0], 8); //读取EE中的补偿值
 
             memcpy(&tmp, (uint8_t *)&buf[2], 2);//功率偏移
             rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, APOSA, 2, &tmp);
             adj_std_source.lock &= ~lock_voltage_compensate;
+            CmdRn8209(CMD_WR_DIS , &rn8209_dev);
 		}
 	}
 }
@@ -163,11 +167,14 @@ void emu_calibration_clear(struct instance_t* instance)
     Rn8209Adj_K.il = REAL_K_I_INIT;
     Rn8209Adj_K.p = REAL_K_P_INIT;
     
+    CmdRn8209(CMD_WR_EN , &rn8209_dev);
     rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, GPQA, 2, &Pgain);
     rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, PHSA, 1, &Tofst);
+    CmdRn8209(CMD_WR_DIS , &rn8209_dev);
+    
 }
 
-
+/***************************** 0.5L 100%Ib 增益，相位修正 *********************************/
 void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t *adj_data)
 {
     unsigned char i=0, Tofst , j=0, adj_buf[8];
@@ -242,6 +249,8 @@ void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t 
 
         if (mem_compare( &Factory3.Ua, Buffer, 12 ) != 0)
         {
+            CmdRn8209(CMD_WR_EN , &rn8209_dev);
+            
             Corretion_Pw = (unsigned long)(((float)Factory3.Ua*(float)Factory3.Ia/100000)/Rn8209Adj_K.p);//台体视在功率
             CalcPw = (unsigned long)(((float)TempUrms * (float)TempIrms)/32768); //表视在功率
 
@@ -263,16 +272,16 @@ void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t 
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);
             nd_get_index(instance, addr, (uint8_t*)&adj_buf[0], 8);
             memcpy((uint8_t*)&adj_buf[0], (uint8_t*)&Pgain, 2);
-            nd_set_index(instance, addr, (uint8_t*)&adj_buf, 8);
+            nd_set_index(instance, addr, (uint8_t*)&adj_buf[0], 8);
             
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_K);
             nd_set_index(instance, addr, (uint8_t*)&Rn8209Adj_K.u, 16);
             
             rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, GPQA, 2, &Pgain);
             CalcPw = (unsigned long)((float)TempPw*(1+err));
-            Corretion_Pw = (unsigned long)(((float)Factory3.Pa/100)/Rn8209Adj_K.p);
-            err = ((float)CalcPw - Corretion_Pw)/(Corretion_Pw);
-            err = (asin(-err/1.732))*100*57.29578;
+            Corretion_Pw = (unsigned long)(((float)Factory3.Pa/10)/Rn8209Adj_K.p);
+            err = (float)(CalcPw - Corretion_Pw)/(Corretion_Pw);
+            err = (float)(asin(-err/1.732))*100*57.29578;
             if (err >= 0)
         	{
         		Tofst = (unsigned char)((unsigned int)(err)>>1);
@@ -286,6 +295,8 @@ void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t 
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);
             adj_buf[6] = Tofst;
             nd_set_index(instance, addr, (uint8_t*)adj_buf, 8);
+            
+            CmdRn8209(CMD_WR_DIS , &rn8209_dev);
             
             rn8209_dev.dev_driver_ops->dev_initialize(&rn8209_dev);
         }
@@ -301,8 +312,186 @@ void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t 
             nd_set_index(instance, addr, (uint8_t*)&Rn8209Adj_K.u, 16); 
         }
     }
+}
+
+/************************************ 5%Ib 功率偏移修正 *******************************/
+void Poffset_adj_oneself(struct instance_t* instance)
+{
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    int32_t Gpqa, Aposa;
+    uint32_t s_index = 0;
+    float temp2=0;
+    uint8_t buffer[8],i,tmp[8]={0,};
     
+    if(adj_poffset.flag != 0xA55AA55A)  return;
     
+    if(adj_poffset.tick < 10)
+    {
+        adj_poffset.tick ++;
+        adj_poffset.power_avg += mbase_control_block->active_power;//获取功率
+        if(adj_poffset.tick == 10)
+        {
+            adj_poffset.power_avg = adj_poffset.power_avg/10;//留1位小数
+            adj_poffset.ps = adj_poffset.ps/10; //留1位小数
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);    
+            nd_get_index(instance, s_index, buffer, 8);
+            memcpy(&Gpqa, &buffer[0], 2);   //取增益
+            
+            if(Gpqa&0x8000)
+            {
+                temp2 = (float)(Gpqa - 65536)/32768;
+            }
+            else
+            {
+                temp2 = (float)Gpqa / 32768;
+            }
+            Aposa = (int32_t)((adj_poffset.ps/Rn8209Adj_K.p - adj_poffset.power_avg/Rn8209Adj_K.p)/(1 + temp2));
+                
+            if(Aposa <0)
+            {
+                Aposa += 65535;
+            }
+            CmdRn8209(CMD_WR_EN , &rn8209_dev);
+            rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, APOSA, 2, (uint8_t*)&Aposa);
+            CmdRn8209(CMD_WR_DIS , &rn8209_dev);
+             
+            memcpy(&buffer[2] , &Aposa , 2);
+            nd_set_index(instance, s_index, buffer, 8); //写功率偏移
+
+            //写电压影响量补偿
+            for(i=0;i<4;i++)  
+            {
+                memcpy((uint8_t *)&tmp[i*2], &Aposa , 2);
+            }
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Un_Cmp_Value);
+            nd_set_index(instance, s_index, (uint8_t *)tmp, 8); 
+        }
+    }
+}
+
+int rn8209c_set( struct instance_t* instance, uint8_t *p_rx )
+{
+    uint8_t addr=0,lenth=0,temp_buffer[8]={0};
+    int16_t tmp,temp[30]={0,};
+    uint32_t s_index=0,data=0;
+    uint8_t* buf = p_rx;
+    
+    addr = *(buf+16);//地址
+    memcpy((uint8_t*)&data, (uint8_t*)(buf+12), 2);//数据
+    
+    if((addr==0x07)||(addr==0x08))//相位寄存器
+        lenth = 1;
+    else
+        lenth = 2;
+    
+    if(addr<=0x17)//00~17H,需要效验
+    {
+        CmdRn8209(CMD_WR_EN , &rn8209_dev);
+        if(addr == 0x17)
+        {
+            rn8209_dev.dev_driver_ops->dev_read(&rn8209_dev , EMUCON2 , 2 , &tmp);
+            if(data == 0x01)
+            {
+                data = tmp | 0x0100;
+            }
+            else
+            {
+                data = tmp & 0xFEFF;
+            }
+        }
+        rn8209_dev.dev_driver_ops->dev_write(&rn8209_dev, addr, lenth, (uint8_t*)&data);
+        memcpy((uint8_t*)&tmp, (uint8_t*)&data, lenth);
+        CmdRn8209(CMD_WR_DIS , &rn8209_dev);
+        
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);    //火线增益、相位
+        nd_get_index(instance, s_index, temp_buffer, 8); 
+        switch(addr)//存入EEPROM
+        {
+            case 0x05://增益
+                temp_buffer[0] = (uint8_t)data;
+                temp_buffer[1] = (uint8_t)(data>>8);
+                break;
+            case 0x0A://功率偏置
+                temp_buffer[2] = (uint8_t)data;
+                temp_buffer[3] = (uint8_t)(data>>8);
+                break;
+            case 0x0E://A相电流偏移
+                temp_buffer[4] = (uint8_t)data;
+                temp_buffer[5] = (uint8_t)(data>>8);
+                break;    
+            case 0x07://相位
+                temp_buffer[6] = (uint8_t)data;
+                break;
+            case 0x17://相位微调
+                temp_buffer[7] = (uint8_t)(data>>8);
+                break;
+        }
+        nd_set_index(instance, s_index, temp_buffer, 8); 
+        if(addr == 0x0A)    //功率偏置设置时刷新电压影响量参数
+        {
+            memset(temp_buffer, 0x00, 8);
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Un_Cmp_Value);
+            nd_get_index(instance, s_index, (uint8_t *)&temp_buffer, 8);
+            temp_buffer[2] = (uint8_t)data;
+            temp_buffer[3] = (uint8_t)(data>>8);
+            nd_set_index(instance, s_index, (uint8_t *)&temp_buffer, 8); 
+        }
+          
+        memset(temp_buffer, 0x00, 8);
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Other);    
+        nd_get_index(instance, s_index, temp_buffer, 4);
+        switch(addr)
+        {
+            case 0x03:  //启动阀值
+                temp_buffer[0] = (uint8_t)data;
+                temp_buffer[1] = (uint8_t)(data>>8);
+                break;
+            case 0x02:  //hfconst
+                temp_buffer[2] = (uint8_t)data;
+                temp_buffer[3] = (uint8_t)(data>>8);
+                break;
+        }
+        nd_set_index(instance, s_index, temp_buffer, 4);
+    }
+    else if(addr >= 0xA0)//0.5L 自热影响量
+    {
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Value_05L);    
+        nd_get_index(instance, s_index, (uint8_t*)&temp[0], 30);
+        memcpy((uint8_t*)&temp[addr-0xA0], (uint8_t*)(buf), 2);
+        nd_set_index(instance, s_index, (uint8_t*)&temp[0], 30);
+    }
+    else if(addr>=0x90)//自热影响
+    {
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Value_10L);    
+        nd_get_index(instance, s_index, (uint8_t*)&temp[0], 30);
+        memcpy((uint8_t*)&temp[addr-0x90], (uint8_t*)(buf), 2);
+        nd_set_index(instance, s_index, (uint8_t*)&temp[0], 30);
+    }
+    else if(addr>=0x80)//电压影响量
+    {
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Un_Cmp_Value);    
+        nd_get_index(instance, s_index, (uint8_t*)&temp[0], 8);
+        switch(addr)
+        {
+            case 0x80:
+                memcpy((uint8_t*)&temp[0], (uint8_t*)&data, 2);
+                break;
+            case 0x81:
+                memcpy((uint8_t*)&temp[1], (uint8_t*)&data, 2);
+                break;
+            case 0x82:
+                memcpy((uint8_t*)&temp[2], (uint8_t*)&data, 2);
+                break;
+            case 0x83:
+                memcpy((uint8_t*)&temp[3], (uint8_t*)&data, 2);
+                break;
+            default:
+                return false;
+                break;
+        }
+        nd_set_index(instance, s_index, (uint8_t*)&temp[0], 8);
+    }
+    return true;
 }
 
             
@@ -326,9 +515,6 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     {
         mbase_control_block->voltage_ac = 0;
     }
-    
-
-    
     
     //读计量芯片电流
     temp = 0;
@@ -427,7 +613,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     }
     
     /****************** 补偿功能 ******************/
-    heat_compensate(instance, pipeline);    //自热补偿
+//    heat_compensate(instance, pipeline);    //自热补偿
     
     if((mbase_control_block->voltage_ac < 19900) || (mbase_control_block->voltage_ac > 23900))
     {
@@ -487,7 +673,7 @@ void Electrical_measurement_poweron(struct instance_t* instance, struct pipeline
 
     addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);
     nd_get_index(instance, addr, (uint8_t*)adj_buf, 8);
-    memcpy((uint8_t*)&adj_set, (uint8_t*)adj_buf, 7);
+    memcpy((uint8_t*)&adj_set, (uint8_t*)adj_buf, 8);
     
     rn8209_dev.dev_driver_ops->dev_control(&rn8209_dev , AC_POWER_ON , &adj_set);
     
