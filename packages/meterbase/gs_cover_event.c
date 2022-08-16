@@ -21,7 +21,7 @@ int CoverOpen_event_judge(struct instance_t* instance, struct pipeline_t* task, 
 
     uint16_t RecordId           = CoverOpenS;
 
-    if (ctrl_block->meter_cover_sta == EVENT_SET)
+    if (ctrl_block->CoverOpenS_status == EVENT_SET)
     {
         state = 1;
     }

@@ -29,7 +29,6 @@ int get_3320_attr2(struct instance_t* instance, uint32_t oad, uint8_t* buf,void 
         return -DAR_OTHERS_ERROR;
     }
 
-    //apdu剩余长度是否足够？ 协议里待调整
     if (index == 0)
     {
         *p++ = TYPE_array;

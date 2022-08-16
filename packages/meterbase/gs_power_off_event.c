@@ -84,7 +84,7 @@ void PowerOff_LowPower_pro(struct instance_t* instance, struct pipeline_t* task,
             
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + 
                         (offsetof(struct mbase_control_block_t, active_flag[0]) -  offsetof(struct mbase_control_block_t, persistent_section_start)) );
-            nd_set_offset(instance, s_index, (uint8_t*)&ctrl_block->active_flag[0], 50);               
+            nd_set_offset(instance, s_index, (uint8_t*)&ctrl_block->active_flag[0], sizeof(ctrl_block->active_flag));               
         
             mesg_tmp.id = RecordId;
             recv_record_process(instance, task, &mesg_tmp, NULL);

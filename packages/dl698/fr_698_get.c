@@ -134,7 +134,7 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
 
     while (oad_n-- > 0)
     {
-        if (apdu_cache_getFree(cache) > 6){  // 此处跳出后,如何消耗剩余报文？？ 待调整
+        if (apdu_cache_getFree(cache) > 6){   
             mesg->id = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
             memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, 4);
             cache->wr += 4;

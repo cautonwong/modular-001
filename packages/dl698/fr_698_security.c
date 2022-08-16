@@ -864,8 +864,6 @@ static int fr_698_security_request_check(struct instance_t* instance, struct pip
         if (((ctx->security_choice == 1) || (ctx->verification_choice == AUTH_SID_MAC) || (ctx->verification_choice == AUTH_RN_MAC) || (ctx->verification_choice == AUTH_SID))
         && (fr_698_current_connect_status_get(instance, pipeline, client_index)== false))
         {
-            //待调整 直接报错
-            //*length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);
             return -DAR_UNAUTHORIZED;
         }
 
@@ -879,15 +877,13 @@ static int fr_698_security_request_check(struct instance_t* instance, struct pip
                     {
                         if(ctrl_block->infrared_auth_timeout == 0)//红外认证失效，明文失败
                         {
-                            //待调整 直接报错
-                            //*length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明
+                            //要求回复密码未授权，2020补充说明
                             return -DAR_UNAUTHORIZED;
                         }
                     }
                     else//其他通道，开启了身份认证，无链接情况下，明文失败
                     {
-                        //待调整 直接报错
-                        //*length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明
+                        //要求回复密码未授权，2020补充说明
                         return -DAR_UNAUTHORIZED;
                     }
                 }
@@ -896,8 +892,7 @@ static int fr_698_security_request_check(struct instance_t* instance, struct pip
             {
                 if( ctrl_block->AuthOn && (fr_698_current_connect_status_get(instance, pipeline, client_index)== false) && (ctrl_block->term_auth_timeout == 0))
                 {
-                    //待调整 直接报错
-                    //*length = dl698_al_security_error(tx_apdu, DAR_UNAUTHORIZED);//要求回复密码未授权，2020补充说明
+                    //要求回复密码未授权，2020补充说明
                     return -DAR_UNAUTHORIZED;
                 }
             }    
@@ -921,8 +916,6 @@ static int fr_698_security_request_check(struct instance_t* instance, struct pip
             // 广播校时 安全传输时 应判断应用连接状态,且为密文+SID_MAC, 其他情况都返回拒绝。
             if ((fr_698_current_connect_status_get(instance, pipeline, client_index)== false) || (cipher_sidmac == 0 ))
             {
-                //待调整
-                //*length = dl698_al_security_error(tx_apdu, DAR_RW_REJECT);
                 return -DAR_RW_REJECT;
             }
         }
@@ -931,8 +924,6 @@ static int fr_698_security_request_check(struct instance_t* instance, struct pip
             //广播校时 安全传输时,应为密文+SID_MAC,其他安全方式不处理，不应答
             if (cipher_sidmac == 0 )
             {
-                //待调整
-                //*length = 0;
                 return 0;
             }
         }

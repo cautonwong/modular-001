@@ -306,7 +306,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 {
                     tempbuf[0] = *p++;
                     
-                    if( ((tempbuf[0] == 0xAA) && (mbase_cb->meter_cover_sta == EVENT_SET)) || (tempbuf[0] == 0xFB) )
+                    if( ((tempbuf[0] == 0xAA) && (mbase_cb->CoverOpenS_status == EVENT_SET)) || (tempbuf[0] == 0xFB) )
                     {
                         mbase_cb->factor_mode = true;
                     }

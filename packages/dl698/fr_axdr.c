@@ -1426,7 +1426,7 @@ uint32_t get_interval_basic_value(uint8_t *src, struct rsd_info_t *rsd_info)
        
         if ((rsd_info->interval_special) > 0)
         {
-            //value = dl698_api_dt_buf_to_month(buf + 1);  //转月间隔 待调整
+            //value = api_dt_buf_to_month(buf + 1);  //转月间隔 待调整
             //value = buf_to_uint32_msb(p + 1); 
         }
         else
@@ -1640,7 +1640,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     //读取事件时 确认上报
     if (p_ctx) // 协议进来
     {
-        if ((oad & 0xF0000000) == 0x30000000) //待调整  首次读取？
+        if ((oad & 0xF0000000) == 0x30000000) 
         {
             report_3320list_confirmed(instance, p_ctx->channel, oad);
         }

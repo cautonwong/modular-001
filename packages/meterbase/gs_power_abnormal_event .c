@@ -43,7 +43,7 @@ int PowerAbnormal_event_judge(struct instance_t* instance, struct pipeline_t* ta
 //  下电状态 每秒调用 
 void PowerAbnormal_LowPower_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t* accumulate_time = &ctrl_block->PowerAbnormalS_acc_time;
     uint16_t RecordId = PowerAbnormalS;
 

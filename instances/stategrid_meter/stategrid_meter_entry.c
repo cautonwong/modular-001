@@ -350,7 +350,7 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
     register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter_1_bp, 1 * 1024, supply_parameter_1_info);
 
     //注册事件的管理区/参数区
-    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter, 20 * 1024, supply_parameter_info);
+    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter, 15 * 1024, supply_parameter_info);
 
 
     //申请一块参数保存区的EPROM区域 及备份区
@@ -362,14 +362,14 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
     
 
     //注册事件
-    register_log(instance, RES_DEV_EEPROM, mbase_block_event, RES_DEV_EEPROM, mbase_block_parameter, 30 * 1024, supply_event_info);
+    register_log(instance, RES_DEV_EEPROM, mbase_block_event, RES_DEV_EEPROM, mbase_block_parameter, 26 * 1024, supply_event_info);
 
-    //注册冻结1
-    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash1, RES_DEV_EEPROM, mbase_block_parameter, (830+5) * 4 * 1024, supply_event_flash_1_info);
+    //注册冻结1-flash
+    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash1, RES_DEV_EEPROM, mbase_block_parameter, (MinuteFreeze_SECTION_SIZE) * 4 * 1024, supply_event_flash_1_info);
 
-    //注册冻结2
-    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash2, RES_DEV_EEPROM, mbase_block_parameter, (37+5 ) * 4 * 1024, supply_event_flash_2_info); //待调整
-    //申请一块参数保存区的EPROM区域
+    //注册冻结2-flash
+    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash2, RES_DEV_EEPROM, mbase_block_parameter, (HourFreeze_SECTION_SIZE + DayFreeze_SECTION_SIZE + MonthFreeze_SECTION_SIZE) * 4 * 1024, supply_event_flash_2_info); //待调整
+    //申请一块-flash
     add_block(instance, RES_DEV_FLASH, public_block_flash, 4096*2);
     //注册一个698的MAP
     register_map(instance, res_map_698, resource_map_698);

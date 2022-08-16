@@ -276,7 +276,15 @@ void rtc_normal_to_tm(struct tm* time, uint8_t* p)
     time->tm_min = p[5];
     time->tm_hour = p[4];
     time->tm_mday = p[3];
-    time->tm_mon = p[2] - 1;    // 待调整  后续增加时间合法性判断
+    if(p[2])
+    {
+        time->tm_mon = p[2] - 1;   
+    }
+    else
+    {
+        time->tm_mon = 0;    
+    }
+    
     mem_swap_cpy((uint8_t*)&temp, (uint8_t*)(p), 2);
     time->tm_year = temp - 1900;
 }
@@ -377,8 +385,7 @@ int record_rollback_after_set_time(struct instance_t* instance, uint8_t finish_c
     {
         return -1;
     }
-    //rtc_normal_to_tm(&t_before, buffer);
-    //last_timesec = rtc_mktime(&t_before);
+
     last_timesec = dt_buf_to_second(buffer);
 
     //时间合法性判断 待调整
@@ -388,8 +395,7 @@ int record_rollback_after_set_time(struct instance_t* instance, uint8_t finish_c
     {
         return -1;
     }
-    //rtc_normal_to_tm(&t_after, buffer);
-    //curr_timesec = rtc_mktime(&t_after);
+
     curr_timesec = dt_buf_to_second(buffer);
 
     if (curr_timesec < last_timesec)

@@ -397,14 +397,18 @@ enum report_mode_t {
 
 
 // 2015跟随上报状态字 // 
-#define RPT_2015_ESAM_ERR           (1<<(31 -1 ))//(BIT1) //ESAM错误    //待添加
-#define RPT_2015_RTC_BATTERY_LOW    (1<<(31 -3 ))//(BIT3) //时钟电池欠压    //待添加
-#define RPT_2015_MEMORIZER_ERR      (1<<(31 -5 ))//(BIT5) //存储器故障或损坏    //待添加
-#define RPT_2015_READ_BATTERY_LOW   (1<<(31 -8 ))//(BIT8) //停电抄表电池欠压    //待添加
+#define RPT_2015_ESAM_ERR           (1<<(31 -1 ))//(BIT1) //ESAM错误    
+#define RPT_2015_RTC_BATTERY_LOW    (1<<(31 -3 ))//(BIT3) //时钟电池欠压    
+#define RPT_2015_MEMORIZER_ERR      (1<<(31 -5 ))//(BIT5) //存储器故障或损
+#define RPT_2015_READ_BATTERY_LOW   (1<<(31 -8 ))//(BIT8) //停电抄表电池欠压   
 #define RPT_2015_OVERDRAFT          (1<<(31 -9 ))//(BIT9) //透支状态    //待添加
-#define RPT_2015_SWITCH_OFF_SUCCEES  (1<<(31 -14 ))//(BIT14) //跳闸成功    //待添加
-#define RPT_2015_SWITCH_ON_SUCCEES  (1<<(31 -15 ))//(BIT15) //合闸成功    //待添加
-extern uint8_t report_2015state_update(struct instance_t* instance, uint32_t mask);
+#define RPT_2015_SWITCH_OFF_SUCCEES  (1<<(31 -14 ))//(BIT14) //跳闸成功   
+#define RPT_2015_SWITCH_ON_SUCCEES  (1<<(31 -15 ))//(BIT15) //合闸成功  
+
+
+#define REQ_RCSD_MAXNUM 30 //待调整
+#define SecurityMode_EXData_LEN 101 
+
 
 
 
@@ -434,9 +438,6 @@ extern uint8_t get_event_oad_class(uint32_t oad);
 
 
 
-#define REQ_RCSD_MAXNUM 30 //待调整
-#define SecurityMode_EXData_LEN 101 
-
 extern struct connect_request_t cfg_connect;
 extern const struct connect_request_t default_connect;
 extern int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
@@ -445,7 +446,7 @@ extern int second_to_dt_buf(uint32_t timesec, uint8_t* dt);
 extern uint8_t fr_698_current_connect_status_get(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index);
 
 
-// 待调整
+
 extern uint32_t get_3320_save_addr(struct instance_t* instance, uint16_t chn);
 extern int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_list, uint8_t mode);
 extern uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t mode);

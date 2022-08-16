@@ -959,7 +959,22 @@ static uint8_t IOState(void *ptr)
             meter_cover_cnt--;
         }
     }
-    
+/*
+    if(POWER_ABNORMAL_GET_DIN() == POWER_ABNORMAL_LEVE)
+    {
+        if(power_abnormal_cnt < 50)
+        {
+            power_abnormal_cnt++;
+        }
+    }
+    else
+    {
+        if(power_abnormal_cnt > 0)
+        {
+            power_abnormal_cnt--;
+        }
+    }
+*/    
     return 1;
 }
 
@@ -990,12 +1005,16 @@ void IOStateCheck(struct instance_t* instance, struct pipeline_t* pipeline)
     METER_COVER_INPUT();
     if(meter_cover_cnt==50)
     {
-        mbase_control_block->meter_cover_sta = EVENT_RESET;
+        mbase_control_block->CoverOpenS_status = EVENT_RESET;
     }
     else if(meter_cover_cnt==0)
     {
-        mbase_control_block->meter_cover_sta = EVENT_SET;
+        mbase_control_block->CoverOpenS_status = EVENT_SET;
     }
+
+
+
+    
 }
 
 

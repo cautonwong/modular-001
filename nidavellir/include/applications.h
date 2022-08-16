@@ -143,12 +143,7 @@ struct mbase_control_block_t
     uint8_t  power_dir;
     uint8_t  power_qn;
     
-    uint8_t  meter_cover_sta;
-    uint8_t  realy_err_move;
-    uint8_t  power_abnormal;
-    uint8_t  rtc_chip_abnormal;
-    uint8_t  meter_chip_abnormal;
-    uint8_t  esam_chip_abnormal;    
+
     
     uint16_t lcd_checkdis_keep_sec;/*显示查看显示时间 */
     uint16_t lcd_checkdis_all_keep_sec;/*显示查看全屏显示时间 */
@@ -215,7 +210,15 @@ struct mbase_control_block_t
     
 
     //事件相关
-     uint8_t CoverOpenS_status;          //当前状态标志 电能表开盖事件
+
+    uint8_t  power_abnormal;        //电源异常状态
+    uint8_t  rtc_chip_abnormal;
+    uint8_t  meter_chip_abnormal;
+    uint8_t  esam_chip_abnormal;    //esam故障状态
+
+
+
+    uint8_t CoverOpenS_status;          //当前状态标志 电能表开盖事件
     uint8_t SwitchErrS_status;          //当前状态标志 电能表负荷开关误动作事件
     uint8_t SwitchErrS_Record_En;       //当前状态标志 负荷开关 误动作 使能记录 标志 
     uint8_t PowerAbnormalS_status;      //当前状态标志 电能表电源异常事件

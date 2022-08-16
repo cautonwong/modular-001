@@ -274,7 +274,6 @@ const  parameter_item_t  parameter_item[] =
     { MinuteFreeze6                 , 0x01,   sizeof(struct log_manager_t),0},  //管理区 分冻结6 
     { MinuteFreeze7                 , 0x01,   sizeof(struct log_manager_t),0},  //管理区 分冻结7 
     { MinuteFreeze8                 , 0x01,   sizeof(struct log_manager_t),0},  //管理区 分冻结8 
-
     { HourFreeze                    , 0x01,   sizeof(struct log_manager_t),0},  //管理区 小时冻结  
     { DayFreeze                     , 0x01,   sizeof(struct log_manager_t),0},  //管理区 日冻结    
     { BillFreeze                    , 0x01,   sizeof(struct log_manager_t),0},  //管理区 结算日冻结 
@@ -284,8 +283,7 @@ const  parameter_item_t  parameter_item[] =
     { FeePriceCutFreeze             , 0x01,   sizeof(struct log_manager_t),0},  //管理区 费率电价切换冻结 
     { StepCutFreeze                 , 0x01,   sizeof(struct log_manager_t),0},  //管理区 阶梯切换冻结 
     { StepBillFreeze                , 0x01,   sizeof(struct log_manager_t),0},  //管理区 阶梯结算冻结 
-    { InstantFreeze                 , 0x01,   sizeof(struct log_manager_t),0},  //管理区 瞬时冻结 
-                                                         
+    { InstantFreeze                 , 0x01,   sizeof(struct log_manager_t),0},  //管理区 瞬时冻结                                                      
     //事件管理区
     { OverCurrentAS                 , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3005  电能表过流事件
     { PowerOffS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3011  电能表掉电事件             
@@ -314,8 +312,6 @@ const  parameter_item_t  parameter_item[] =
     { EmuErrS                       , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x302F  电能表计量芯片故障事件
     { BroadcastTimeS                , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x303C  广播校时事件 
     { ZeroLineErrS                  , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3040  零线电流异常事件 
-
-
     //事件关联对象
     { OverCurrentAS_oad             , 0x01,  61, init_OverCurrentAS_oad   }, //oad列表 1+ 4*15     默认8个   电能表A相过流事件
     { PowerOffS_oad                 , 0x01,  61, init_PowerOffS_oad       }, //oad列表 1+ 4*15     默认8个   电能表掉电事件            
@@ -344,8 +340,6 @@ const  parameter_item_t  parameter_item[] =
     { EmuErrS_oad                   , 0x01,  61, init_EmuErrS_oad         }, //oad列表 1+ 4*15     默认8个   电能表计量芯片故障事件
     { BroadcastTimeS_oad            , 0x01,  61, init_BroadcastTimeS_oad  }, //oad列表 1+ 4*15     默认8个   广播校时事件 
     { ZeroLineErrS_oad              , 0x01,  61, init_ZeroLineErrS_oad    }, //oad列表 1+ 4*15     默认8个   零线电流异常事件 
-     
-
     //冻结关联对象
     { MinuteFreeze_oad              , 0x01,  61, init_MinuteFreeze_oad       }, //oad列表 1+ 4*15     默认7个
     { HourFreeze_oad                , 0x01,  61, init_HourFreeze_oad         }, //oad列表 1+ 4*15     
@@ -358,7 +352,6 @@ const  parameter_item_t  parameter_item[] =
     { StepCutFreeze_oad             , 0x01,  61, init_StepCutFreeze_oad      }, //oad列表 1+ 4*15   
     { StepBillFreeze_oad            , 0x01,  61, init_StepBillFreeze_oad     }, //oad列表 1+ 4*15   
     { InstantFreeze_oad             , 0x01,  61, init_InstantFreeze_oad      }, //oad列表 1+ 4*15   
-
     //上报标识
     { OverCurrentAS_RptFlag         , 0x01,   0x01,  init_Event_ReportFlag_1 },// 上报标识   电能表A相过流事件
     { PowerOffS_RptFlag             , 0x01,   0x01,  init_Event_ReportFlag_3 },// 上报标识   电能表掉电事件            
@@ -387,7 +380,6 @@ const  parameter_item_t  parameter_item[] =
     { EmuErrS_RptFlag               , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   电能表计量芯片故障事件
     { BroadcastTimeS_RptFlag        , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   广播校时事件 
     { ZeroLineErrS_RptFlag          , 0x01,   0x01,  init_Event_ReportFlag_0 },// 上报标识   零线电流异常事件 
-
      //上报方式
     { OverCurrentAS_RptMode         , 0x01,   0x01,  init_Event_ReportMode_0 },// 上报方式   电能表A相过流事件
     { PowerOffS_RptMode             , 0x01,   0x01,  init_Event_ReportMode_0 },// 上报方式   电能表掉电事件            
@@ -416,8 +408,7 @@ const  parameter_item_t  parameter_item[] =
     { EmuErrS_RptMode               , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   电能表计量芯片故障事件
     { BroadcastTimeS_RptMode        , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   广播校时事件 
     { ZeroLineErrS_RptMode          , 0x01,   0x01,  init_Event_ReportMode_1 },// 上报方式   零线电流异常事件 
-    { Follow2015_RptMode            , 0x01,   0x01,  init_Event_ReportMode_1 }, //上报方式   2015跟随上报状态字  
-        
+    { Follow2015_RptMode            , 0x01,   0x01,  init_Event_ReportMode_1 }, //上报方式   2015跟随上报状态字        
     //事件记录序号
     { OverCurrentAS_seq             , 0x01,  4,     0  },//记录序号  电能表A相过流
     { PowerOffS_seq                 , 0x01,  4,     0  },//记录序号  电能表掉电事件            
@@ -445,8 +436,7 @@ const  parameter_item_t  parameter_item[] =
     { RTCErrS_seq                   , 0x01,  4,     0  },//记录序号  电能表时钟故障事件 
     { EmuErrS_seq                   , 0x01,  4,     0  },//记录序号  电能表计量芯片故障事件
     { BroadcastTimeS_seq            , 0x01,  4,     0  },//记录序号  广播校时事件 
-    { ZeroLineErrS_seq              , 0x01,  4,     0  },//记录序号  零线电流异常事件 
-       
+    { ZeroLineErrS_seq              , 0x01,  4,     0  },//记录序号  零线电流异常事件   
      //冻结记录序号                                                                 
     { MinuteFreeze1_seq             , 0x01,  4,0   },//分钟冻结记录方案1 记录序号
     { MinuteFreeze2_seq             , 0x01,  4,0   },//分钟冻结记录方案2 记录序号
@@ -465,8 +455,7 @@ const  parameter_item_t  parameter_item[] =
     { FeePriceCutFreeze_seq         , 0x01,  4,0   },//费率电价切换冻结冻结    记录序号
     { StepCutFreeze_seq             , 0x01,  4,0   },//阶梯切换冻结冻结    记录序号
     { StepBillFreeze_seq            , 0x01,  4,0   },//阶梯结算冻结冻结    记录序号
-    { InstantFreeze_seq             , 0x01,  4,0   },//瞬时冻结冻结    记录序号
-                                             
+    { InstantFreeze_seq             , 0x01,  4,0   },//瞬时冻结冻结    记录序号                                            
     //冻结周期                       
     { MinuteFreeze_period           , 0x01, 24, init_MinuteFreeze_period       }, //分钟冻结 周期   3*8  
     { HourFreeze_period             , 0x01,  3, init_HourFreeze_period         }, //小时冻结冻结 周期   3 
@@ -478,8 +467,7 @@ const  parameter_item_t  parameter_item[] =
     { FeePriceCutFreeze_period      , 0x01,  3, init_FeePriceCutFreeze_period  }, //费率电价切换冻结冻结 周期   3 
     { StepCutFreeze_period          , 0x01,  3, init_StepCutFreeze_period      }, //阶梯切换冻结冻结 周期   3 
     { StepBillFreeze_period         , 0x01,  3, init_StepBillFreeze_period     }, //阶梯结算冻结冻结 周期   3 
-    { InstantFreeze_period          , 0x01,  3, init_InstantFreeze_period      }, //瞬时冻结冻结 周期   3 
-                                     
+    { InstantFreeze_period          , 0x01,  3, init_InstantFreeze_period      }, //瞬时冻结冻结 周期   3                                      
     //冻结深度                    
     { MinuteFreeze_depth            , 0x01, 30, init_MinuteFreeze_depth       }, //分钟冻结 深度     2*15  
     { HourFreeze_depth              , 0x01,  2, init_HourFreeze_depth         }, //分钟冻结 深度     2   
@@ -492,7 +480,6 @@ const  parameter_item_t  parameter_item[] =
     { StepCutFreeze_depth           , 0x01,  2, init_StepCutFreeze_depth      }, //分钟冻结 深度     2   
     { StepBillFreeze_depth          , 0x01,  2, init_StepBillFreeze_depth     }, //分钟冻结 深度     2   
     { InstantFreeze_depth           , 0x01,  2, init_InstantFreeze_depth      }, //分钟冻结 深度     2   
-
     //记录数据中间缓存
     { EventClr_List                 , 0x01,  7, 0 }, //事件清零列表  array OMD   事件清零事件记录用 
     { SwitchErr_State               , 0x01, 10, 0 }, //负荷开关误动作状态040A0130160?16001600 
@@ -511,100 +498,79 @@ const  parameter_item_t  parameter_item[] =
     { LastDayFreezTime              , 0x01,  5, 0 }, //最近一次日冻结时间 YYMMDDhhmm           
     { LastBroadcastTimeERR          , 0x01,  3, 0 }, //最近一次广播校时引起时钟故障 年月日       
     { BeforSet_KeyVer               , 0x01, 18, 0 }, //最近一次广播校时引起时钟故障 年月日       
-
-        
-    
     { ResetCount                    , 0x01,  4, 0 }, //复位次数   
-   
-        //待调整
-    { Report3320_EnableList         , 0x01, 161, 0 }, // 3320 上报使能列表  1 + 2*80         
-    { Report3320_OADList1           , 0x01, 241, 0 }, // 3320 oad上报列表   1 + 4*60     //红外
-    { Report3320_OADList2           , 0x01, 241, 0 }, // 3320 oad上报列表   1 + 4*60     //rs485-1
-    { Report3320_OADList3           , 0x01, 241, 0 }, // 3320 oad上报列表   1 + 4*60     //PLC  
-    { Report3320_OADList4           , 0x01, 241, 0 }, // 3320 oad上报列表   1 + 4*60     //rs485-2
-    { ActReport_Info                , 0x01,   4, 0 }, // 主动上报 停电下缓存信息  2 + 1 + 1   主动上报标志（2） + 3320上报次数（1）+2015上报次数（1） 
-        
+    { Report3320_EnableList         , 0x01 ,     161  , 0                           }, // 3320 上报使能列表  1 + 2*80         
+    { Report3320_OADList1           , 0x01 ,     241  , 0                           }, // 3320 oad上报列表   1 + 4*60     //红外
+    { Report3320_OADList2           , 0x01 ,     241  , 0                           }, // 3320 oad上报列表   1 + 4*60     //rs485-1
+    { Report3320_OADList3           , 0x01 ,     241  , 0                           }, // 3320 oad上报列表   1 + 4*60     //PLC  
+    { Report3320_OADList4           , 0x01 ,     241  , 0                           }, // 3320 oad上报列表   1 + 4*60     //rs485-2
+    { ActReport_Info                , 0x01 ,     4    , 0                           }, // 主动上报 停电下缓存信息  2 + 1 + 1   主动上报标志（2） + 3320上报次数（1）+2015上报次数（1）                                                                                      
+    { MinFrez_Sectors               , 0x01 ,     18   , 0                           }, //分钟冻结各方案的扇区偏移 9*2                                                
+    { SecurityMode_En               , 0x01 ,     1    , init_SecurityMode_En        }, //安全模式参数使能0-dis   1-en
+    { SecurityMode_EXData           , 0x01 ,     101  , init_SecurityMode_EXData    }, //显式安全模式参数缓存                                               
+    { AutoDisplayList               , 0x64 ,     2    , init_AutoDisplayList        }, //100屏*2字节
+    { KeyDisplayList                , 0x64 ,     2    , init_KeyDisplayList         }, //100屏*2字节
 
-    { MinFrez_Sectors               , 0x01, 18, 0 }, //分钟冻结各方案的扇区偏移 9*2 
+    //4XXX                                  
+//  { Comm_Number                   , 0x01 ,     6,     init_Comm_Number            }, //表地址
+//  { Meter_Number                  , 0x01 ,     6,     init_Meter_Number           }, //表号
+    { User_Number                   , 0x01 ,     6    , init_User_Number            }, //客户编号
+    { Meter_Num                     , 0x01 ,     1    , init_Meter_Num              }, //计量元件数
+    { SeasonTable_Changetime        , 0x01 ,     7    , init_SeasonTable_Changetime }, //两套时区切换时间
+    { DayTable_Changetime           , 0x01 ,     7    , init_SeasonTable_Changetime }, //两套时段切换时间
+    { SeasonDay_Para                , 0x05 ,     1    , init_SeasonDay_Para         }, //时区时段参数（年时区数、日时段表数、日时段数、费率数、公共假日数）
+    { SecretKey_Num                 , 0x01 ,     1    , init_SecretKey_Num          }, //秘钥总条数
+    { HoliDay_Table                 , 0x14 ,     6    , init_HoliDay_Table          }, //公共假日表，20张，每张6字节
+    { Weekend                       , 0x01 ,     1    , init_Weekend                }, //周休日特征字
+    { WeekendFee                    , 0x01 ,     1    , init_WeekendFee             }, //周休日采用费率号
+    { Season_Table0                 , 0x0E ,     3    , init_Season_Table0          }, //当前套时区表，≤14
+    { Season_Table1                 , 0x0E ,     3    , init_Season_Table0          }, //备用套时区表，≤14
+    { Day_Table00                   , 0x08 ,     42   , init_Day_Table00            }, //当前套日时段表数据
+    { Day_Table10                   , 0x08 ,     42   , init_Day_Table00            }, //备用套日时段表数据
+    { Meter_CT                      , 0x01 ,     4    , init_Meter_CT               }, //CT
+    { Meter_PT                      , 0x01 ,     4    , init_Meter_PT               }, //PT
+    { Pulse_Width                   , 0x01 ,     1    , init_Pulse_Width            }, //脉冲宽度
+    { ASCII_AssetsMan               , 0x01 ,     32   , init_ASCII_AssetsMan        }, //资产管理编码
+    { ASCII_Un                      , 0x01 ,     6    , init_ASCII_Un               }, //额定电压
+    { ASCII_Imin                    , 0x01 ,     6    , init_ASCII_Imin             }, //最小电流
+    { ASCII_Itr                     , 0x01 ,     6    , init_ASCII_Itr              }, //转折电流
+    { ASCII_Ib                      , 0x01 ,     6    , init_ASCII_Ib               }, //额定电流
+    { ASCII_Imax                    , 0x01 ,     6    , init_ASCII_Imax             }, //最大电流
+    { ASCII_AccuracyClass1          , 0x01 ,     4    , init_ASCII_AccuracyClass1   }, //有功准确度等级
+    { Meter_Const1                  , 0x01 ,     4    , init_Meter_Const1           }, //有功脉冲常数
+    { ASCII_MeterType               , 0x01 ,     32   , init_ASCII_MeterType        }, //电能表型号
+    { MeterRunWord                  , 0x01 ,     1    , init_MeterRunWord           }, //电能表运行特征字
+    { SoftWareNo                    , 0x01 ,     16   , init_SoftWareNo             }, //软件备案号
+    { Measure_Mode                  , 0x01 ,     1    , init_Measure_Mode           }, //有功组合特征字
+    { Balance_Time                  , 0x03 ,     2    , init_Balance_Time           }, //结算日
+    { Meter_Password                , 0x01 ,     8    , init_Meter_Password         }, //应用连接密码
+    { Meter_Location1               , 0x01 ,     10   , init_Meter_Location1        }, //设备地理位置经度
+    { Meter_Location2               , 0x01 ,     10   , init_Meter_Location2        }, //设备地理位置纬度
+    { Meter_Location3               , 0x01 ,     5    , init_Meter_Location3        }, //设备地理位置高度
+	
+    { Device_descriptor             , 0x01 ,     32   , init_Device_descriptor      }, //设备描述符
+                                                
+    { Factory_No                    , 0x01 ,     4    , init_Factory_No             }, //厂家代码
+    { Version_SoftWare              , 0x01 ,     4    , init_Version_SoftWare       }, //软件版本
+    { Date_SoftWare                 , 0x01 ,     6    , init_Date_SoftWare          }, //软件版本日期
+    { Version_HardWare              , 0x01 ,     4    , init_Version_HardWare       }, //硬件版本
+    { Date_HardWare                 , 0x01 ,     6    , init_Date_HardWare          }, //硬件版本日期
+    { Extend_Info                   , 0x01 ,     8    , init_Extend_Info            }, //扩展信息
+                                                
+    { Produced_Date                 , 0x01 ,     7    , init_Produced_Date          }, //生产日期
+    { Subset_List                   , 0x01 ,     1    , init_Subset_List            }, //子设备列表(num+2*oi)
+    { Protocol_List                 , 0x01 ,   	 76   , init_Protocol_List          }, //协议列表
+    { FollowReport_en               , 0x01 ,     1    , init_FollowReport_en        }, //允许跟随上报
+    { ActiveReport_en               , 0x01 ,     1    , init_ActiveReport_en        }, //允许主动上报
+    { Comm_Master_en                , 0x01 ,     1    , init_Comm_Master_en         }, //允许与主站通讯
+    { Report_channel                , 0x01 ,     13   , init_Report_channel         }, //上报通道
+                                                
+    { ImaxProtectValue              , 0x01 ,     4    , init_ImaxProtectValue       }, //继电器拉闸电流门限值
+    { ImaxProtectTime               , 0x01 ,     2    , init_ImaxProtectTime        }, //超电流门限保护延时时间
+    { IrAuthenTime                  , 0x01 ,     4    , init_IrAuthenTime           }, //红外认证时效
+    { AuthMeth                      , 0x01 ,     1    , 0                           }, //连接认证机制
 
-    { SecurityMode_En               , 0x01,  1, init_SecurityMode_En }, //安全模式参数使能0-dis   1-en
-    { SecurityMode_EXData           , 0x01,101, init_SecurityMode_EXData }, //显式安全模式参数缓存
-    
-    { AutoDisplayList,     0x64,   2,       init_AutoDisplayList },//100屏*2字节
-    { KeyDisplayList,      0x64,   2,       init_KeyDisplayList },//100屏*2字节
-    
-    //4XXX
-//  { Comm_Number,         0x01,   6,       init_Comm_Number },//表地址
-//  { Meter_Number,        0x01,   6,       init_Meter_Number },//表号
-    { User_Number,         0x01,   6,       init_User_Number },//客户编号
-    { Meter_Num,           0x01,   1,       init_Meter_Num },//计量元件数
-    { SeasonTable_Changetime,   0x01,   7,  init_SeasonTable_Changetime },//两套时区切换时间
-    { DayTable_Changetime,      0x01,   7,  init_SeasonTable_Changetime },//两套时段切换时间
-    { SeasonDay_Para,      0x05,   1,       init_SeasonDay_Para },//时区时段参数（年时区数、日时段表数、日时段数、费率数、公共假日数）
-    { SecretKey_Num,       0x01,   1,       init_SecretKey_Num },//秘钥总条数
-    { HoliDay_Table,       0x14,   6,       init_HoliDay_Table },//公共假日表，20张，每张6字节
-    { Weekend,             0x01,   1,       init_Weekend },//周休日特征字
-    { WeekendFee,          0x01,   1,       init_WeekendFee },//周休日采用费率号
-    { Season_Table0,       0x0E,   3,       init_Season_Table0 },//当前套时区表，≤14
-    { Season_Table1,       0x0E,   3,       init_Season_Table0 },//备用套时区表，≤14
-    { Day_Table00,         0x08,   42,      init_Day_Table00 },//当前套日时段表数据
-    { Day_Table10,         0x08,   42,      init_Day_Table00 },//备用套日时段表数据
-    { Meter_CT,            0x01,   4,       init_Meter_CT },//CT
-    { Meter_PT,            0x01,   4,       init_Meter_PT },//PT
-    { Pulse_Width,         0x01,   1,       init_Pulse_Width},//脉冲宽度
-    { ASCII_AssetsMan,     0x01,   32,      init_ASCII_AssetsMan},//资产管理编码
-    { ASCII_Un,            0x01,   6,       init_ASCII_Un },//额定电压
-    { ASCII_Imin,          0x01,   6,       init_ASCII_Imin },  //最小电流
-    { ASCII_Itr,           0x01,   6,       init_ASCII_Itr },   //转折电流
-    { ASCII_Ib,            0x01,   6,       init_ASCII_Ib },//额定电流
-    { ASCII_Imax,          0x01,   6,       init_ASCII_Imax },//最大电流
-    { ASCII_AccuracyClass1,0x01,   4,       init_ASCII_AccuracyClass1 },//有功准确度等级
-    { Meter_Const1,        0x01,   4,       init_Meter_Const1 },//有功脉冲常数
-    { ASCII_MeterType,     0x01,   32,      init_ASCII_MeterType },//电能表型号
-    { MeterRunWord,        0x01,   1,       init_MeterRunWord },//电能表运行特征字
-    { SoftWareNo,          0x01,   16,      init_SoftWareNo },//软件备案号
-    { Measure_Mode,        0x01,   1,       init_Measure_Mode },//有功组合特征字
-    { Balance_Time,        0x03,   2,       init_Balance_Time },//结算日
-    { Meter_Password,      0x01,   8,       init_Meter_Password },//应用连接密码
-    { Meter_Location1,     0x01,   10,      init_Meter_Location1},//设备地理位置经度
-    { Meter_Location2,     0x01,   10,      init_Meter_Location2},//设备地理位置纬度
-    { Meter_Location3,     0x01,   5,       init_Meter_Location3},//设备地理位置高度
-    
-    { Device_descriptor,   0x01,   32,      init_Device_descriptor},//设备描述符
-    
-    { Factory_No,          0x01,    4,      init_Factory_No }, //厂家代码
-    { Version_SoftWare,    0x01,    4,      init_Version_SoftWare }, //软件版本
-    { Date_SoftWare,       0x01,    6,      init_Date_SoftWare }, //软件版本日期
-    { Version_HardWare,    0x01,    4,      init_Version_HardWare }, //硬件版本
-    { Date_HardWare,       0x01,    6,      init_Date_HardWare }, //硬件版本日期
-    { Extend_Info,         0x01,    8,      init_Extend_Info }, //扩展信息
-    
-    { Produced_Date,       0x01,    7,      init_Produced_Date }, //生产日期
-    { Subset_List,         0x01,    1,      init_Subset_List }, //子设备列表(num+2*oi)
-    { Protocol_List,       0x01,   76,      init_Protocol_List }, //协议列表
-    { FollowReport_en,     0x01,    1,      init_FollowReport_en }, //允许跟随上报
-    { ActiveReport_en,     0x01,    1,      init_ActiveReport_en }, //允许主动上报
-    { Comm_Master_en,      0x01,    1,      init_Comm_Master_en }, //允许与主站通讯
-    { Report_channel,      0x01,    13,     init_Report_channel }, //上报通道
-    
-    { ImaxProtectValue,    0x01,    4,      init_ImaxProtectValue }, //继电器拉闸电流门限值
-    { ImaxProtectTime,     0x01,    2,      init_ImaxProtectTime }, //超电流门限保护延时时间
-    { IrAuthenTime,        0x01,    4,      init_IrAuthenTime }, //红外认证时效
-    { AuthMeth,            0x01,    1,      0}, //连接认证机制
-    
-    
-#if 0    
-    /***************** 计量相关 *****************/
-    { Heat_Value_10L,      15,      2,      0 },    //1.0L自热补偿
-    { Heat_Value_05L,      15,      2,      0 },    //0.5L自热补偿
 
-    { Un_Cmp_Value,        0x01,    8,      0 },   //80%Un 90%Un 110%Un 115%Un补偿
-    { ADJ_Pgain0,          0x01,    8,      0 },    //火线校表参数（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
-    { ADJ_Pgain1,          0x01,    8,      0 },    //零线校表参数（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
-    { ADJ_Other,           0x01,    4,      0 },    //计量其他参数（启动阀值、HFconst）1 + 2 = 3
-    { ADJ_K,               0x01,    16,     0 },    //Kp Ku Ki 零线K系数 4*4 = 16
-#endif     
-     //
 #else
     {0}
 #endif
@@ -614,8 +580,8 @@ const  parameter_item_t  parameter_item[] =
 const  parameter_item_t  parameter_item_1[] =
 {
     /***************** 计量相关 *****************/
-    { Heat_Value_10L    ,       1  ,       30   ,   0 },    //1.0L自热补偿
-    { Heat_Value_05L    ,       1  ,       30   ,   0 },    //0.5L自热补偿
+    { Heat_Value_10L    ,       1  ,        30   ,   0 },    //1.0L自热补偿
+    { Heat_Value_05L    ,       1  ,        30   ,   0 },    //0.5L自热补偿
 
     { Un_Cmp_Value      ,       1   ,       8   ,   0 },    //80%Un 90%Un 110%Un 115%Un补偿
     { ADJ_Pgain0        ,       1   ,       8   ,   0 },    //火线校表参数（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
