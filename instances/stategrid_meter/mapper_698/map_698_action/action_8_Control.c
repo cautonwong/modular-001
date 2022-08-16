@@ -52,7 +52,8 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
             {
                 case 0x7F://告警
                     if((1 != ctx->timeTag_valid) || (ctx->timeTag[0] == 0)){
-                        return -DAR_TIME_TAG_INVALID;
+                        if(mbase_cb->factor_mode == false)
+                            return -DAR_TIME_TAG_INVALID;
                     }
                     mbase_cb->sta |= F_RemoteAlarm;
                     mbase_cb->cmd_dostate = 0x0020;  //bit10;
@@ -60,7 +61,9 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     break;
                 case 0x80://解除告警
                     if((1 != ctx->timeTag_valid) || (ctx->timeTag[0] == 0)){
-                        return -DAR_TIME_TAG_INVALID;
+                        if(mbase_cb->factor_mode == false)
+                            return -DAR_TIME_TAG_INVALID;
+
                     }
                     mbase_cb->sta &= ~F_RemoteAlarm;
                     mbase_cb->cmd_dostate = 0x0010;  //bit11;
@@ -68,7 +71,9 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     break;
                 case 0x81://拉闸
                     if((1 != ctx->timeTag_valid) || (ctx->timeTag[0] == 0)){
-                        return -DAR_TIME_TAG_INVALID;
+                        if(mbase_cb->factor_mode == false)
+                            return -DAR_TIME_TAG_INVALID;
+
                     }
                     p = p + 5;
                     mem_swap_cpy((uint8_t*)&OI, p, 4);
@@ -132,7 +137,9 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                 case 0x82://合闸
                 case 0x83://明文合闸
                     if((1 != ctx->timeTag_valid) || (ctx->timeTag[0] == 0)){
-                        return -DAR_TIME_TAG_INVALID;
+                        if(mbase_cb->factor_mode == false)
+                            return -DAR_TIME_TAG_INVALID;
+
                     }
                     
                     p = p + 5;
@@ -183,7 +190,9 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
             {
                 case 0x7F://投入保电
                     if((1 != ctx->timeTag_valid) || (ctx->timeTag[0] == 0)){
-                        return -DAR_TIME_TAG_INVALID;
+                        if(mbase_cb->factor_mode == false)
+                            return -DAR_TIME_TAG_INVALID;
+
                     }
                     mbase_cb->sta |= F_RemoteRelayOn;
                     mbase_cb->cmd_dostate = 0x0080;  //bit8;
@@ -191,19 +200,21 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     break;
                 case 0x80://解除保电
                     if((1 != ctx->timeTag_valid) || (ctx->timeTag[0] == 0)){
-                        return -DAR_TIME_TAG_INVALID;
+                        if(mbase_cb->factor_mode == false)
+                            return -DAR_TIME_TAG_INVALID;
+
                     }
                     mbase_cb->sta &= ~F_RemoteRelayOn;
                     mbase_cb->cmd_dostate = 0x0040;  //bit9;
                     return 1;
                     break;
                 default:
-                    return -DAR_OBJECT_NOT_EXIST;
+                    return -DAR_RW_REJECT;
                     break;
             }
             break;
         default:
             break;
     }
-    return -DAR_OBJECT_NOT_EXIST;
+    return -DAR_RW_REJECT;
 }

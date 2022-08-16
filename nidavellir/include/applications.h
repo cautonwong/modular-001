@@ -169,6 +169,15 @@ struct mbase_control_block_t
     uint8_t Baut_plc;   //载波波特率(EEPROM)
     uint8_t Baut_plc_neg;   //协商波特率（RAM）
 
+
+    uint8_t clientaddr[4]; //客户机地址
+    
+//    uint16_t send_frm_size;             //客户机发送帧最大尺寸 long-unsigned
+//    uint16_t recv_frm_size;             //客户机接收帧最大尺寸 long-unsigned
+//    uint32_t connect_time;              //期望的应用连接超时时间 double-long-unsigned，
+//    uint8_t  connect_mode[4];              //认证模式enum connect_mode_e
+
+
     // ESAM 部分
     //认证相关
     uint8_t current_connect_channel[2]; //最近一次应用连接通道 0 主站， 1终端
@@ -204,12 +213,6 @@ struct mbase_control_block_t
    
     uint8_t relay_true_sta;//继电器实际状态
     
-    uint8_t clientaddr; //客户机地址
-    
-//    uint16_t send_frm_size;             //客户机发送帧最大尺寸 long-unsigned
-//    uint16_t recv_frm_size;             //客户机接收帧最大尺寸 long-unsigned
-//    uint32_t connect_time;              //期望的应用连接超时时间 double-long-unsigned，
-    uint8_t  connect_mode;              //认证模式enum connect_mode_e
 
     //事件相关
      uint8_t CoverOpenS_status;          //当前状态标志 电能表开盖事件

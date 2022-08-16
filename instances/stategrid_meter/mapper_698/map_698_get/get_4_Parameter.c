@@ -293,18 +293,67 @@ int general_get_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
     return -1;
 }
 
+//读取应用语境 44000300
+int apply_context_element_get(struct instance_t* instance, uint8_t index, uint8_t* buf, struct connect_request_t *connect)
+{
+    uint8_t *p = buf;
+	uint32_t data;
+
+	switch (index)
+	{
+	case 0:
+        *p++ = TYPE_long_unsigned;
+        mem_swap_cpy(p, (uint8_t*)&connect->pro_ver, 2);//版本号
+        p += 2;
+		break;
+	case 1:
+    case 2:
+    case 3:
+        *p++ = TYPE_long_unsigned;   //最大 接收 apdu 尺寸
+        mem_swap_cpy(p, (uint8_t*)&connect->client_apdu_size, 2);    
+        p += 2;
+		break;
+
+	case 4:
+        *p++ = TYPE_bit_string;
+        *p++ = 0x40;
+        //memcpy(p, messagebuf1, 8);
+        ndv_memcopy(p, (uint8_t*)&connect->protocal_conformance, 8);//期望协议一致性块
+        p = p + 8;
+		break;
+	case 5:
+        *p++ = TYPE_bit_string;
+        *p++ = 0x81;
+        *p++ = 0x80;
+        //memcpy(p, messagebuf2, 16);
+        ndv_memcopy(p, (uint8_t*)&connect->function_conformance, 16);  //期望的功能一致性块 
+        p = p + 16;
+		break;
+	case 6:
+        *p++ = TYPE_double_long_unsigned;
+        mem_swap_cpy(p, (uint8_t*)&connect->connect_time, 4);    //期望的应用连接超时时间 
+        p += 4;
+		break;
+	default:
+		break;
+	}
+
+	return (uint16_t)(p - buf);
+
+}
+
 int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
-    struct mbase_control_block_t* mbase_cb;
+    struct mbase_control_block_t* mbase_cb  = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     struct context_698_t* p_ctx = (struct context_698_t*)ctx;
     uint32_t addr = 0,s_index=0;
     uint16_t oad;
     uint8_t index,attribute,i,j,temp[42]={0},num=0,num_hourtab = 0, cilent_index = 0;
     uint8_t* p = buf;
     int len = 0;
+    struct connect_request_t connect = {0};
     int ret;
 
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
     {
         return -DAR_OTHERS_ERROR;
@@ -733,54 +782,105 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             switch(attribute)
             {
                 case 0x03:
+                    if(0 != mbase_cb->connect_timeout[p_ctx->channel][cilent_index])
+                    {
+                        ndv_memcopy(&connect, &cfg_connect, sizeof(cfg_connect));
+                    }
+                    else
+                    {
+                        ndv_memcopy(&connect, (uint8_t*)&default_connect, sizeof(cfg_connect));
+                    }
+                    
+                    switch(index)
+                    {
+                        case 0:
+                            *p++ = TYPE_structure;
+                            *p++ = 7;
+                            for (i = 0; i < 7; i++)
+                            {
+                                len = apply_context_element_get(instance, i, p, &connect);
+                                p += len;
+                            }
+                            break;
+
+                        case 1:
+                        case 2:
+                        case 3:
+                        case 4:
+                        case 5:
+                        case 6:
+                        case 7:   
+                            len = apply_context_element_get(instance, index - 1, p, &connect);
+                            p += len;
+                            break;
+
+                        default:
+                            return -DAR_OBJECT_UNDEF;
+
+                    }
+#if 0
                     *p++ = TYPE_structure;
                     *p++ = 7;
                     *p++ = TYPE_long_unsigned;
-                    *p++ = 0x00;
-                    *p++ = 0x16;
+                    mem_swap_cpy(p, (uint8_t*)&connect.pro_ver, 2);//版本号
+                    p += 2;
+                    //*p++ = 0x00;
+                    //*p++ = 0x16;
+                    *p++ = TYPE_long_unsigned;   //最大 接收 apdu 尺寸
+                    mem_swap_cpy(p, (uint8_t*)&connect.client_apdu_size, 2);    
+                    p += 2;
+                    
+                    *p++ = TYPE_long_unsigned;   //最大 发送 apdu 尺寸
+                    mem_swap_cpy(p, (uint8_t*)&connect.client_apdu_size, 2);    
+                    p += 2;
+
                     *p++ = TYPE_long_unsigned;
-                    *p++ = 0x02;
-                    *p++ = 0x00;
-                    *p++ = TYPE_long_unsigned;
-                    *p++ = 0x02;
-                    *p++ = 0x00;
-                    *p++ = TYPE_long_unsigned;
-                    *p++ = 0x07;
-                    *p++ = 0xd0;
+                    mem_swap_cpy(p, (uint8_t*)&connect.client_apdu_size, 2);    //最大可处理apdu尺寸
+                    p += 2;
+
                     *p++ = TYPE_bit_string;
                     *p++ = 0x40;
-                    memcpy(p, messagebuf1, 8);
+                    //memcpy(p, messagebuf1, 8);
+                    ndv_memcopy(p, (uint8_t*)&connect.protocal_conformance, 8);//期望协议一致性块
                     p = p + 8;
                     *p++ = TYPE_bit_string;
                     *p++ = 0x81;
                     *p++ = 0x80;
-                    memcpy(p, messagebuf2, 16);
+                    //memcpy(p, messagebuf2, 16);
+                    ndv_memcopy(p, (uint8_t*)&connect.function_conformance, 16);  //期望的功能一致性块 
                     p = p + 16;
                     *p++ = TYPE_double_long_unsigned;
-                    *p++ = 0x00;
-                    *p++ = 0x00;
-                    
-                    if (0 != mbase_cb->connect_timeout[p_ctx->channel][cilent_index])
-                    {
-                        mem_swap_cpy(p, &mbase_cb->connect_timeout[p_ctx->channel][cilent_index], 2);
-                        p += 2;
-                    }
-                    else
-                    {  
-                        *p++ = 0x07;
-                        *p++ = 0x08;
-                    }
+                    mem_swap_cpy(p, (uint8_t*)&connect.connect_time, 2);    //期望的应用连接超时时间 double-long-unsigned，
+                    p += 4;
+#endif
 
                     return (p-buf);
                 case 0x04://当前连接的客户机地址
                     *p++ = TYPE_unsigned;
-                    *p++ = mbase_cb->clientaddr;
+                    if(0 != mbase_cb->connect_timeout[p_ctx->channel][cilent_index])
+                    {
+                        *p++ = mbase_cb->clientaddr[p_ctx->channel];
+                    }
+                    else
+                    {
+                        *p++ = 0;
+                    }
+
                     return (p-buf);
                     break;
                 case 0x05:
                     *p++ = TYPE_enum;
-                    if(mbase_cb->connect_mode > 3)  mbase_cb->connect_mode = 0;
-                    *p++ = mbase_cb->connect_mode;
+                    if(0 != mbase_cb->connect_timeout[p_ctx->channel][cilent_index])
+                    {
+                        ndv_memcopy(&connect, &cfg_connect, sizeof(cfg_connect));
+                    }
+                    else
+                    {
+                        ndv_memcopy(&connect, (uint8_t*)&default_connect, sizeof(cfg_connect));
+                    }
+
+                    if(connect.connect_mode > 3)  connect.connect_mode = 0;
+                    *p++ = connect.connect_mode;
                     return (p-buf);
                     break;
             }

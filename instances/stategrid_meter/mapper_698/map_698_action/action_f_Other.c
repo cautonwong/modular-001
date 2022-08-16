@@ -763,7 +763,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 return _f101_m129_action(instance, id, buf, buf_size, ctx);
             }
             else
-                return -DAR_OBJECT_NOT_EXIST;
+                return -DAR_RW_REJECT;
         }
         case 0xF201://RS485
             if(method == 127)
@@ -794,7 +794,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             }
             else
             {
-                return -DAR_OBJECT_NOT_EXIST;
+                return -DAR_RW_REJECT;
             }
             return (p-buf);
             break;
@@ -805,7 +805,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 return -DAR_COMM_SPEED_CANNOT_CHANGE;
             }
             else
-                return -DAR_OBJECT_NOT_EXIST;
+                return -DAR_RW_REJECT;
             break;
         case 0xF205://继电器输出
             if(method == 127)
@@ -825,7 +825,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             }
             else
             {
-                return -DAR_OBJECT_NOT_EXIST;
+                return -DAR_RW_REJECT;
             }
             return (p-buf);
         case 0xF207://多功能端子
@@ -846,7 +846,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             }
             else
             {
-                return -DAR_OBJECT_NOT_EXIST;
+                return -DAR_RW_REJECT;
             }
             return (p-buf);
         case 0xF209://载波模块
@@ -884,7 +884,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             }
             else
             {
-                return -DAR_OBJECT_NOT_EXIST;
+                return -DAR_RW_REJECT;
             }
             return (p-buf);
         case 0xF300://自动循显
@@ -892,7 +892,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             switch(method)
             {
             case 0x03://下翻
-                    if(oad == 0xF300)   return -DAR_OBJECT_NOT_EXIST;;
+                    if(oad == 0xF300)   return -DAR_RW_REJECT;;
                     if(0 != p[0]){
                         return -DAR_TYPE_NOT_MATCH;
                     }
@@ -914,7 +914,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     mbase_cb->BackLightTmr = 60;
                     return 1;
             case 0x04://上翻
-                    if(oad == 0xF300)   return -DAR_OBJECT_NOT_EXIST;;
+                    if(oad == 0xF300)   return -DAR_RW_REJECT;;
                     if(0 != p[0]){
                         return -DAR_TYPE_NOT_MATCH;
                     }
@@ -987,12 +987,12 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                         mbase_cb->BackLightTmr = mbase_cb->AutoInv;
                     return (p-buf);
                 default:
-                    return -DAR_OBJECT_NOT_EXIST;
+                    return -DAR_RW_REJECT;
                     break;
             }
         default:
-            return -DAR_OBJECT_NOT_EXIST;
+            return -DAR_RW_REJECT;
             break;
     }
-    return -DAR_OBJECT_NOT_EXIST;
+    return -DAR_RW_REJECT;
 }

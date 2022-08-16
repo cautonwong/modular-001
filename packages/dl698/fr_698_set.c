@@ -18,7 +18,7 @@ int get_SET_and_ACTION_Request_len(struct instance_t* instance, struct pipeline_
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     int len = 0;
     int i = 0;
-    uint16_t axdr_len = 0;
+    uint16_t tmp_num = 1, axdr_len = 0;
     uint8_t list = 0;
     uint8_t *apdu = ctx->apdu_d_rx + ctx->apdu_rx_offset;
 
@@ -30,8 +30,10 @@ int get_SET_and_ACTION_Request_len(struct instance_t* instance, struct pipeline_
     list = 1;
     if ((ctx->choice == 0x02) || (ctx->choice == 0x03))
     {
-        list = apdu[0];
-        len = 1;
+        len += axdr_decode(TYPE_octet_string, apdu, &tmp_num);  
+        list = tmp_num;
+        //list = apdu[0];
+        //len = 1;
     }
     for (i = 0; i < list; i++)
     {

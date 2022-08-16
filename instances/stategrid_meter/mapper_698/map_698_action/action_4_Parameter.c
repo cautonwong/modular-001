@@ -232,10 +232,12 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     return 8;
                 }
             }
+            /*
             else 
             {
                 return -DAR_OBJECT_NOT_EXIST;  //对象不存在
             }
+            */
             break;
         case 0x4300:
             switch(method)

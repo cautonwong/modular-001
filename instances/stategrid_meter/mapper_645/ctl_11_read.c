@@ -261,7 +261,7 @@ signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx,
     {
         return -1;
     }
-    
+
     if((*(p_rx-1) != 0x04) && (*(p_rx-1) != 0x05))   //扩展命令——校表
     {
         Err_Byte = adj_meter(instance, p_rx);

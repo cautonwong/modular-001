@@ -106,9 +106,11 @@ int get_frozen_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, stru
 
 int GET_5_Frozen(struct instance_t* instance, uint32_t oad, uint8_t* buf, void *ctx)
 {    
-    struct mbase_control_block_t* mbase_cb;
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t dar = DAR_SUCCESS;
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    int ret;
+
+   
     if(mbase_cb == NULL)
     {
         return -DAR_OTHERS_ERROR;
@@ -116,6 +118,18 @@ int GET_5_Frozen(struct instance_t* instance, uint32_t oad, uint8_t* buf, void *
 
     switch (oad & 0x00001F00)
     {
+        case 0x00000200:// 
+        {
+            ret = check_record_oad_support(instance, oad);
+            if(ret < 0)
+            {
+                return ret;
+            }
+            return DAR_RW_REJECT;
+        }
+        break;
+
+    
     //case 0x50020300://关联对象属性表
     //case 0x50030300://关联对象属性表
     //case 0x50040300://关联对象属性表

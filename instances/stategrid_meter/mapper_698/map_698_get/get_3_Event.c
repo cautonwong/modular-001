@@ -986,6 +986,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
         return -DAR_OTHERS_ERROR;
     }
 
+
     OI = get_OAD_OI(id);
     attr = get_OAD_Attribute(id);
 
@@ -1079,8 +1080,8 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
             break;
     }
     //记录过程数据 ---end
-    
-    
+
+
     switch (OadClass)
     {
         //非事件类
@@ -1112,15 +1113,21 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
         
         case 7://class7
         {
+            ret = check_record_oad_support(instance, id);
+            if(ret < 0)
+            {
+                return ret; // 返回对象不存在
+            }
+            
             switch (attr) //属性
             {
                 case 2: //返回拒绝读写
                 {
-                    ret = check_record_oad_support(instance, id);
-                    if(ret < 0)
-                    {
-                        return ret;
-                    }
+                    //ret = check_record_oad_support(instance, id);
+                    ////if(ret < 0)
+                    ///{
+                    //    return ret;
+                    ///}
                     return -DAR_RW_REJECT;
                 }
                 break;
@@ -1169,16 +1176,11 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 case 29: // 非法插卡总次数  //待添加
                 {   //return dl698_normal_data_get(element, req, res);
 
-
+                    return -DAR_OBJECT_NOT_EXIST;
                 }
                 break;
                 case 9: // 有效标识 固定为1
                 {
-                    ret = check_record_oad_support(instance, id);
-                    if(ret < 0)
-                    {
-                        return ret;
-                    }
                     *p++ = TYPE_bool;
                     *p++ = 1;
                     return (p - buf);
@@ -1198,6 +1200,12 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
         break;
         case 24://类24
         {
+            ret = check_record_oad_support(instance, id);
+            if(ret < 0)
+            {
+                return ret; // 返回对象不存在
+            }
+            
             switch (attr) //属性
             {
                 case 2: // 关联对象属性表 
@@ -1226,6 +1234,10 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                     return get_struct_event_para_t(instance, id, p, &dar);
                 }
                 break;
+                
+                case 7:  // 事件记录表2
+                    return -DAR_RW_REJECT;
+                break;
 
                 case 10: // 当前值记录表 
                 {
@@ -1239,11 +1251,6 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 break; 
                 case 12: // 有效标识 固定1
                 {
-                    ret = check_record_oad_support(instance, id);
-                    if(ret < 0)
-                    {
-                        return ret;
-                    }
                     *p++ = TYPE_bool;
                     *p++ = 1;
                     return (p - buf);

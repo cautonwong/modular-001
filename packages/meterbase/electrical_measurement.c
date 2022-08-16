@@ -263,7 +263,7 @@ void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t 
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);
             nd_get_index(instance, addr, (uint8_t*)&adj_buf[0], 8);
             memcpy((uint8_t*)&adj_buf[0], (uint8_t*)&Pgain, 2);
-            nd_set_index(instance, addr, (uint8_t*)&Pgain, 8);
+            nd_set_index(instance, addr, (uint8_t*)&adj_buf, 8);
             
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_K);
             nd_set_index(instance, addr, (uint8_t*)&Rn8209Adj_K.u, 16);

@@ -39,8 +39,12 @@ int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline
     //获取对应的RAM地址
     get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
     
+    mbase_control_block->ec_save_success = 0x5AA5;  //保存前 置 标志  
+    
     res = get_res(RES_DEV_EEPROM, mbase_block_persistent_eprom);
-    nd_set_block(instance, res, (uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;      
+    nd_set_block(instance, res, (uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;   
+    
+    mbase_control_block->ec_save_success = 0;       //保存后 清 标志
     
     instance->ac_power_off_sec_cnt = 0;
    
@@ -48,7 +52,7 @@ int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline
     memset((uint8_t *)&mbase_control_block->voltage_ac, 0x00, 32);
     memset((uint8_t *)&mbase_control_block->AutoPtr, 0x00, 10);
     //读取电池使用时间
-    
+   
     __enable_irq();
     
     return true;

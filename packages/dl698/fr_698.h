@@ -271,6 +271,21 @@ struct para_698_tag_t
     uint8_t datalen;  //数据长度 不包含tag
 };
 
+
+#pragma pack(1)
+struct connect_request_t
+{
+    uint16_t pro_ver;
+    uint8_t  protocal_conformance[8];   //期望的协议一致性块 ∷=bit-string(SIZE(64))
+    uint8_t  function_conformance[16];  //期望的功能一致性块 ∷=bit-string(SIZE(128))
+    uint16_t send_frm_size;             //客户机发送帧最大尺寸 long-unsigned
+    uint16_t recv_frm_size;             //客户机接收帧最大尺寸 long-unsigned
+    uint8_t  client_win_size;           //客户机接收帧最大窗口尺寸 unsigned
+    uint16_t client_apdu_size;          //客户机最大可处理帧尺寸 long-unsigned
+    uint32_t connect_time;              //期望的应用连接超时时间 double-long-unsigned，
+    uint8_t  connect_mode;              //认证模式enum connect_mode_e
+};
+
 ///////////////////////////////////
 
 enum dl698_unit_e
@@ -422,6 +437,8 @@ extern uint8_t get_event_oad_class(uint32_t oad);
 #define REQ_RCSD_MAXNUM 30 //待调整
 #define SecurityMode_EXData_LEN 101 
 
+extern struct connect_request_t cfg_connect;
+extern const struct connect_request_t default_connect;
 extern int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern uint32_t dt_buf_to_second(uint8_t* dt);
 extern int second_to_dt_buf(uint32_t timesec, uint8_t* dt);

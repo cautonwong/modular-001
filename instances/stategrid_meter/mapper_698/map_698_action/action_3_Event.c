@@ -366,5 +366,5 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
 
 
 
-    return -DAR_OBJECT_UNDEF;
+    return -DAR_RW_REJECT;
 }

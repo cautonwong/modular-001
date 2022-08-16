@@ -61,6 +61,11 @@ extern int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t 
 extern uint16_t nd_log_append_rollback(struct instance_t* instance, uint32_t index, uint8_t public_flash_name, uint32_t last_time,uint32_t curr_time);
 
 extern uint32_t dt_buf_to_second(uint8_t* dt);
-void mac_suspend_reset(struct instance_t* instance);
-
+extern void mac_suspend_reset(struct instance_t* instance);
+extern void mac_suspend_sec_pro(struct instance_t* instance, struct pipeline_t* task);
+extern void esam_698_power_on(struct instance_t* instance);
+extern int rtc_check_poweron(struct instance_t* instance);
+extern void esam_sec_pro(struct instance_t* instance, struct pipeline_t* pipeline);
+extern void updata_powerdown_time(struct instance_t* instance);
+extern int check_record_oad_support(struct instance_t* instance, uint32_t oad);
 #endif //__GS_RECORD_H__

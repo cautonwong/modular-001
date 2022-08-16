@@ -17,7 +17,7 @@ extern int GET_record_sel_9(struct instance_t* instance, uint32_t oad, uint8_t* 
 int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    uint16_t rsd_len = 0, rcsd_len = 0;
+    uint16_t tmp_num = 1, rsd_len = 0, rcsd_len = 0;
     int len = 0;
     int i = 0;
     uint8_t list = 0;
@@ -32,8 +32,11 @@ int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline
     }else{
         list = 1;
         if ((ctx->choice == 0x02) || (ctx->choice == 0x04)){
-            list = apdu[0];
-            len++;
+
+            len += axdr_decode(TYPE_octet_string, apdu, &tmp_num);  
+            list = tmp_num;     
+            //list = apdu[0];
+            //len++;
         }
 
         for (i = 0; i < list; i++){

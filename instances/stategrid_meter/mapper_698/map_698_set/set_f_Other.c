@@ -111,6 +111,11 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 p = p + 4;
                 return (p-buf);
             }
+            else if ((( attribute >= 2 )&&( attribute <= 8 )) || (( attribute >= 15 ) && ( attribute <= 21 )) )
+            {
+                return -DAR_RW_REJECT;
+            }
+
             break;
         case 0xF101://
             if(attribute == 0x02)   //安全模式参数
@@ -326,5 +331,5 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
         default:
             break;
     }
-    return -DAR_OBJECT_NOT_EXIST;
+    return -DAR_RW_REJECT;
 }

@@ -266,54 +266,54 @@ const  parameter_item_t  parameter_item[] =
     // 管理区
 #ifndef WIN32
     //冻结管理区
-    { MinuteFreeze1                 , 0x01,   sizeof(struct log_manager_t),0},  // 分冻结1 管理区
-    { MinuteFreeze2                 , 0x01,   sizeof(struct log_manager_t),0},  // 分冻结2 管理区
-    { MinuteFreeze3                 , 0x01,   sizeof(struct log_manager_t),0},  // 分冻结3 管理区
-    { MinuteFreeze4                 , 0x01,   sizeof(struct log_manager_t),0},  // 分冻结4 管理区
-    { MinuteFreeze5                 , 0x01,   sizeof(struct log_manager_t),0},  // 分冻结5 管理区
-    { MinuteFreeze6                 , 0x01,   sizeof(struct log_manager_t),0},  // 分冻结6 管理区
-    { MinuteFreeze7                 , 0x01,   sizeof(struct log_manager_t),0},  // 分冻结7 管理区
-    { MinuteFreeze8                 , 0x01,   sizeof(struct log_manager_t),0},  // 分冻结8 管理区
+    { MinuteFreeze1                 , 0x01,   sizeof(struct log_manager_t),0},  //管理区 分冻结1 
+    { MinuteFreeze2                 , 0x01,   sizeof(struct log_manager_t),0},  //管理区 分冻结2 
+    { MinuteFreeze3                 , 0x01,   sizeof(struct log_manager_t),0},  //管理区 分冻结3 
+    { MinuteFreeze4                 , 0x01,   sizeof(struct log_manager_t),0},  //管理区 分冻结4 
+    { MinuteFreeze5                 , 0x01,   sizeof(struct log_manager_t),0},  //管理区 分冻结5 
+    { MinuteFreeze6                 , 0x01,   sizeof(struct log_manager_t),0},  //管理区 分冻结6 
+    { MinuteFreeze7                 , 0x01,   sizeof(struct log_manager_t),0},  //管理区 分冻结7 
+    { MinuteFreeze8                 , 0x01,   sizeof(struct log_manager_t),0},  //管理区 分冻结8 
 
-    { HourFreeze                    , 0x01,   sizeof(struct log_manager_t),0},  //小时冻结  管理区
-    { DayFreeze                     , 0x01,   sizeof(struct log_manager_t),0},  //日冻结    管理区
-    { BillFreeze                    , 0x01,   sizeof(struct log_manager_t),0},  //结算日冻结 管理区
-    { MonthFreeze                   , 0x01,   sizeof(struct log_manager_t),0},  //月冻结 管理区 
-    { SeasonTabCutFreeze            , 0x01,   sizeof(struct log_manager_t),0},  //时区表切换冻结 管理区
-    { DayTabCutFreeze               , 0x01,   sizeof(struct log_manager_t),0},  //日时段表切换冻结 管理区
-    { FeePriceCutFreeze             , 0x01,   sizeof(struct log_manager_t),0},  //费率电价切换冻结 管理区
-    { StepCutFreeze                 , 0x01,   sizeof(struct log_manager_t),0},  //阶梯切换冻结 管理区
-    { StepBillFreeze                , 0x01,   sizeof(struct log_manager_t),0},  //阶梯结算冻结 管理区
-    { InstantFreeze                 , 0x01,   sizeof(struct log_manager_t),0},  //瞬时冻结 管理区
+    { HourFreeze                    , 0x01,   sizeof(struct log_manager_t),0},  //管理区 小时冻结  
+    { DayFreeze                     , 0x01,   sizeof(struct log_manager_t),0},  //管理区 日冻结    
+    { BillFreeze                    , 0x01,   sizeof(struct log_manager_t),0},  //管理区 结算日冻结 
+    { MonthFreeze                   , 0x01,   sizeof(struct log_manager_t),0},  //管理区 月冻结 
+    { SeasonTabCutFreeze            , 0x01,   sizeof(struct log_manager_t),0},  //管理区 时区表切换冻结 
+    { DayTabCutFreeze               , 0x01,   sizeof(struct log_manager_t),0},  //管理区 日时段表切换冻结 
+    { FeePriceCutFreeze             , 0x01,   sizeof(struct log_manager_t),0},  //管理区 费率电价切换冻结 
+    { StepCutFreeze                 , 0x01,   sizeof(struct log_manager_t),0},  //管理区 阶梯切换冻结 
+    { StepBillFreeze                , 0x01,   sizeof(struct log_manager_t),0},  //管理区 阶梯结算冻结 
+    { InstantFreeze                 , 0x01,   sizeof(struct log_manager_t),0},  //管理区 瞬时冻结 
                                                          
     //事件管理区
-    { OverCurrentAS                 , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { PowerOffS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { MeterWrS                      , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { MeterClrS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { EventClrS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { SetTimeS                      , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { DayTabWrS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { SeasonTabWrS                  , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { WeekTabWrS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { BillDayWrS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { CoverOpenS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { SwitchOffS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { SwitchOnS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { HolidayWrS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { ActCombWrS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { FeeTabWrS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { StepTabWrS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { SecretKeyWrS                  , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { ErrPlugCardS                  , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { RechargeS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { RefundS                       , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { SwitchErrS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { PowerAbnormalS                , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { RTCErrS                       , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { EmuErrS                       , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { BroadcastTimeS                , 0x01,   sizeof(struct log_manager_t),0},// 管理区
-    { ZeroLineErrS                  , 0x01,   sizeof(struct log_manager_t),0},// 管理区
+    { OverCurrentAS                 , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3005  电能表过流事件
+    { PowerOffS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3011  电能表掉电事件             
+    { MeterWrS                      , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3012  电能表编程事件             
+    { MeterClrS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3013  电能表清零事件             
+    { EventClrS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3015  电能表事件清零事件         
+    { SetTimeS                      , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3016  电能表校时事件             
+    { DayTabWrS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3017  电能表时段表编程事件       
+    { SeasonTabWrS                  , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3018  电能表时区表编程事件       
+    { WeekTabWrS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3019  电能表周休日编程事件       
+    { BillDayWrS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x301A  电能表结算日编程事件  
+    { CoverOpenS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x301B  电能表开盖事件             
+    { SwitchOffS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x301F  电能表跳闸事件 （需要预留比1.3倍多）
+    { SwitchOnS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3020  电能表合闸事件 （需要预留比1.3倍多）
+    { HolidayWrS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3021  电能表节假日编程事件       
+    { ActCombWrS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3022  电能表有功组合方式编程事件 
+    { FeeTabWrS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3024  电能表费率参数表编程事件   
+    { StepTabWrS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3025  电能表阶梯表编程事件       
+    { SecretKeyWrS                  , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3026  电能表密钥更新事件 
+    { ErrPlugCardS                  , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3027  电能表异常插卡事件         
+    { RechargeS                     , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3028  电能表购电记录             
+    { RefundS                       , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3029  电能表退费记录  
+    { SwitchErrS                    , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x302B  电能表负荷开关误动作事件   
+    { PowerAbnormalS                , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x302C  电能表电源异常事件 
+    { RTCErrS                       , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x302E  电能表时钟故障事件 
+    { EmuErrS                       , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x302F  电能表计量芯片故障事件
+    { BroadcastTimeS                , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x303C  广播校时事件 
+    { ZeroLineErrS                  , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3040  零线电流异常事件 
 
 
     //事件关联对象
@@ -2040,7 +2040,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
         case 0xf://其他
             return SET_f_Other(instance, id, buf, ctx);
         default:
-            return -DAR_OBJECT_NOT_EXIST;
+            return -DAR_RW_REJECT;
             break;
         }
         break;
@@ -2062,7 +2062,7 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
         case 0xf://其他
             return ACTION_F_Other(instance, id, buf, buf_size, ctx);
         default:
-            return -DAR_OBJECT_NOT_EXIST;
+            return -DAR_RW_REJECT;
             break;
         }
         break;

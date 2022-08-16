@@ -71,6 +71,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
     uint16_t oad,i,year2;
     uint8_t attribute,timer[6];
     uint8_t* p = buf;
+    uint8_t* ptr_tmp = instance->apdu_cache;
     uint32_t addr=0;
     struct mbase_control_block_t* mbase_cb;
     
@@ -156,6 +157,8 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         send_event_mesg_pro(instance, NULL, ActCombWrS, NULL, 1);// 
                         break;
                 }
+                memset(ptr_tmp, 0, general_set4_talble[i].len);
+                ndv_memcopy(ptr_tmp, p, general_set4_talble[i].len);
               
                 addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + general_set4_talble[i].s_index);
                 nd_set_index(instance, addr, (p + general_set4_talble[i].offset), general_set4_talble[i].len); 
@@ -397,7 +400,7 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
             break;
     }
     
-    return -DAR_OBJECT_NOT_EXIST;
+    return -DAR_RW_REJECT;
 }
 
 uint8_t lcd_data_chk(uint8_t *p)
@@ -980,11 +983,12 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 return (p-buf);
             }
             else
-                return -DAR_OBJECT_NOT_EXIST;
+                return -DAR_RW_REJECT;
             break;
         case 0x4300://设备信息
             return set4300(instance, id, buf);
-            
+
+        /*            
         case 0x4400:
             switch(attribute)
             {
@@ -995,12 +999,14 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     return -DAR_RW_REJECT;
                     break;
                 default:
-                    return -DAR_OBJECT_NOT_EXIST;
+                    return -DAR_RW_REJECT;
+                    //return -DAR_OBJECT_NOT_EXIST;
                     break;
             }
             break;
+         */
         default:
-            return -DAR_OBJECT_NOT_EXIST;
+            return -DAR_RW_REJECT;
             break;
     }
     if(len != 0)

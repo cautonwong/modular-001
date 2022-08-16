@@ -458,7 +458,6 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
         return 0;
     }
     
-    mbase_cb->clientaddr = ctx->CA;
 
     switch(pipeline->id)
     {

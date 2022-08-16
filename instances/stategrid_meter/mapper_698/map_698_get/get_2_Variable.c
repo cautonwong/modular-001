@@ -209,40 +209,46 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
         default:
             break;
     }
-    
-     switch (id & 0xFFFF1FFF)
+
+
+    if (ctx == NULL)//record部分
     {
-        case 0x20220200://事件记录序号
-        case 0x20230200://冻结记录序号
-            *p++ = TYPE_double_long_unsigned;
-            memset(p, 0xFF, 4);
-            p = p + 4;
-            return (p-buf);
-            break;
-        case 0x201E0200://事件发生时间
-        case 0x20200200://事件结束时间  
-        case 0x20210200://数据冻结时间 
-            *p++ = TYPE_date_time_s;
-            rtc_get_from_tm(instance,temp);
-            *p++ = temp[6];
-            *p++ = temp[5];
-            *p++ = temp[4];
-            *p++ = temp[3];
-            *p++ = temp[2];
-            *p++ = temp[1];
-            *p++ = temp[0];
-            return (p-buf);
-            break;
-        case 0x20240200:// 时间发生源  
-        case 0x33000200:// 事件上报状态   
-            *p++ = TYPE_null;
-            return (p-buf);
-            break;    
-        case 0x20000000:  //测试代码
-            break;
-        default:
-            break;
+        switch (id & 0xFFFF1FFF)
+        {
+            case 0x20220200://事件记录序号
+            case 0x20230200://冻结记录序号
+                *p++ = TYPE_double_long_unsigned;
+                memset(p, 0xFF, 4);
+                p = p + 4;
+                return (p-buf);
+                break;
+            case 0x201E0200://事件发生时间
+            case 0x20200200://事件结束时间  
+            case 0x20210200://数据冻结时间 
+                *p++ = TYPE_date_time_s;
+                rtc_get_from_tm(instance,temp);
+                *p++ = temp[6];
+                *p++ = temp[5];
+                *p++ = temp[4];
+                *p++ = temp[3];
+                *p++ = temp[2];
+                *p++ = temp[1];
+                *p++ = temp[0];
+                return (p-buf);
+                break;
+            case 0x20240200:// 时间发生源  
+            case 0x33000200:// 事件上报状态   
+                *p++ = TYPE_null;
+                return (p-buf);
+                break;    
+            case 0x20000000:  //测试代码
+                break;
+            default:
+                break;
+        }
+
     }
+    
    
     
     return -DAR_OBJECT_NOT_EXIST;
