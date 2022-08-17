@@ -530,9 +530,10 @@ int freeze_clr(struct instance_t* instance)
 // 电表清零
 int meter_clr(struct instance_t* instance)
 {
-    struct mbase_control_block_t* mbase_cb;
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    const uint8_t tmpbuf[30] = {0};
+    uint32_t s_addr = 0;
+    
     Energy_clr(instance);  
     freeze_clr(instance); //冻结清零
     event_clr(instance);  // 事件清零
@@ -541,10 +542,14 @@ int meter_clr(struct instance_t* instance)
     if ((mbase_cb->factor_mode == true)) //电表清零事件 清零
     {
         clr_record(instance, 0x30130200);
+
+        s_addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Bat_UseTime);// 电池使用时间
+        nd_set_index(instance, s_addr, (uint8_t*)tmpbuf, 4);
     }
 
     //其他清零    待添加
     mbase_cb->sta &= F_RemoteRelayOn;  //清除控制命令状态,保留保电状态
+    mbase_cb->cmd_errstate = 0;        //错误信息字
     mac_suspend_reset(instance);
 
 

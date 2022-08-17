@@ -500,6 +500,8 @@ enum block_parameter_item_id_t
 #define     LastBroadcastTimeERR        1515 //最近一次广播校时引起时钟故障 年月日
 #define     BeforSet_KeyVer             1516 //秘钥更新前对称秘钥版本
 #define     ResetCount                  1517 //复位次数
+#define     Bat_UseTime                 1518 //电池使用时间sec
+
 
 
 #define     Report3320_EnableList       1521 // 3320 上报使能列表  1 + 2*80

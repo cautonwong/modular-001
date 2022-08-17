@@ -35,7 +35,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
     uint16_t oad;
     uint8_t index,attribute, temp[10] = {0};
     struct context_698_t* p_ctx = (struct context_698_t*)ctx;
-
+    uint32_t tmp_u32 = 0, s_addr;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
@@ -64,6 +64,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
         0x20040202,     0x00,   TYPE_double_long,           (uint8_t*)&mbase_cb->active_power,      4,  //有功功率
         0x20060200,     0x02,   TYPE_double_long,           (uint8_t*)&mbase_cb->apparent_power,    4,  //视在功率
         0x20060201,     0x00,   TYPE_double_long,           (uint8_t*)&mbase_cb->apparent_power,    4,  //视在功率
+        0x20060202,     0x00,   TYPE_double_long,           (uint8_t*)&mbase_cb->apparent_power,    4,  //视在功率
         0x20070200,     0x02,   TYPE_double_long,           (uint8_t*)&mbase_cb->active_avg_power,  4,  //1分钟平均功率
         0x20070201,     0x00,   TYPE_double_long,           (uint8_t*)&mbase_cb->active_avg_power,  4,  //1分钟平均功率
         0x200A0200,     0x02,   TYPE_long,                  (uint8_t*)&mbase_cb->power_factor,      2,  //功率因数
@@ -72,7 +73,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
         0x200F0200,     0x00,   TYPE_long_unsigned,         (uint8_t*)&mbase_cb->frequency,         2,  //频率
         0x20100200,     0x00,   TYPE_long,                  (uint8_t*)&mbase_cb->temperature,       2,  //温度
         0x20110200,     0x00,   TYPE_long_unsigned,         (uint8_t*)&mbase_cb->voltage_battery,   2,  //电池电压
-        0x20130200,     0x00,   TYPE_double_long_unsigned,  (uint8_t*)&mbase_cb->battery_used_time, 4,  //电池工作时间     
+        //0x20130200,     0x00,   TYPE_double_long_unsigned,  (uint8_t*)&mbase_cb->battery_used_time, 4,  //电池工作时间     
         0x20310200,     0x00,   TYPE_double_long_unsigned,  (uint8_t*)&mbase_cb->MonthEnegery,      4,  //月度用电量
         //0x20150400,     0x00,   TYPE_bit_string,            (uint8_t*)&mbase_cb->report_2015state[0], 4,  //跟随上报状态字
         0x20400200,     0x00,   TYPE_bit_string,            (uint8_t*)&mbase_cb->cmd_dostate,       2,  //控制命令执行状态字
@@ -152,6 +153,23 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
     
     switch (oad)
     {
+        case 0x2013://电池工作时间 
+            if(attribute == 0x02)
+            {
+                if(index == 0)
+                {
+
+                    *p++ = TYPE_double_long_unsigned;
+                    s_addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Bat_UseTime);
+                    nd_get_index(instance, s_addr, (uint8_t*)&tmp_u32, 4); 
+                    tmp_u32 = tmp_u32 / 60;
+                    mem_swap_cpy(p, (unsigned char*)&tmp_u32, 4);
+                    p = p + 4;
+                    return (p-buf);
+                }
+            }
+
+            break;
         case 0x2014://电能表运行状态字
             if(index > 7)  return -DAR_OBJECT_NOT_EXIST;
             if(attribute == 0x02)
@@ -184,6 +202,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
             }
             else
                 return -DAR_OTHERS_ERROR;
+            break;
         case 0x2015://跟随上报状态字
             if(attribute == 0x02)
             {
@@ -206,6 +225,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
             }
             else
                 return -DAR_OTHERS_ERROR;
+            break;
         default:
             break;
     }

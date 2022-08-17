@@ -41,7 +41,7 @@ const general_set4  general_set4_talble[] =
 //   Meter_Location,            0x4004,     0x02,   0x01,   27,//设备地理位置
      SeasonTable_Changetime,    0x4008,     0x02,   0x01,   7,//两套时区切换时间
      DayTable_Changetime,       0x4009,     0x02,   0x01,   7,//两套时段切换时间
-     SecretKey_Num,             0x400F,     0x02,   0x01,   1,//秘钥总条数
+     //SecretKey_Num,             0x400F,     0x02,   0x01,   1,//秘钥总条数
      Meter_Num,                 0x4010,     0x02,   0x01,   1,//计量元件个数
      Weekend,                   0x4012,     0x02,   0x02,   1,//周休日特征字
      WeekendFee,                0x4013,     0x02,   0x01,   1,//周休日采用费率号
@@ -553,6 +553,9 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 p = p + 2;
                 return (p-buf);
             }
+            break;
+        case 0x4002://表号
+            return -DAR_RW_REJECT;
             break;
         case 0x4001://表地址
         case 0x4003://客户编号

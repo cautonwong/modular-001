@@ -15,6 +15,8 @@ extern int get_SET_and_ACTION_Request_len(struct instance_t* instance, struct pi
 
 extern int fr_follow_report_optional(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern int update_plc_baut_tick(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern void app_handle_mac_suspend(struct instance_t* instance, uint32_t oad);
+
 
 uint16_t get_crc16(uint16_t cs)
 {
@@ -762,6 +764,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     struct fifo_t* cache = ctx->apdu;
     int err_no = 0;
     uint8_t service = 0;
+    uint32_t tmp_u32 = 0;
 
     log_info(" OK.\n");
     //s_fifo = (struct fifo_t*)pipeline->in_queue;
@@ -844,6 +847,8 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     {
         //ctx->service = SECURITY_Response;
         //service = SECURITY_Response;
+        tmp_u32 = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
+        app_handle_mac_suspend(instance, tmp_u32);
         err_no = -DAR_METER_SUSPEND;
     }
     

@@ -39,7 +39,7 @@ const general_get4  general_get4_talble[] =
      User_Number,               0x4003,     0x02,   TYPE_octet_string,      6,//客户编号
      SeasonTable_Changetime,    0x4008,     0x02,   TYPE_date_time_s,       7,//两套时区切换时间
      DayTable_Changetime,       0x4009,     0x02,   TYPE_date_time_s,       7,//两套时段切换时间
-     SecretKey_Num,             0x400F,     0x02,   TYPE_unsigned,          1,//秘钥总条数
+     //SecretKey_Num,             0x400F,     0x02,   TYPE_unsigned,          1,//秘钥总条数
      Meter_Num,                 0x4010,     0x02,   TYPE_unsigned,          1,//计量元件个数
      Weekend,                   0x4012,     0x02,   TYPE_bit_string,        1,//周休日特征字
      WeekendFee,                0x4013,     0x02,   TYPE_unsigned,          1,//周休日采用费率号

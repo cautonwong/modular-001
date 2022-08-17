@@ -241,13 +241,15 @@ struct mbase_control_block_t
     uint8_t meterclr_event_recordflag; //记录标识*/ // 通过fifo传递
     uint8_t meterclr_event_resetflag; //复位标识
     
-    uint32_t battery_used_time; //电池使用时间   
+
     uint8_t mac_suspend_state;  // mac挂起状态 协议或显示模块可调用。 true为挂起 
     
     uint16_t metertype; //表多功能配置字
     uint8_t no_filt;    //启动值过滤开关
     uint32_t blt_alarm; //背光报警配置字
-    
+
+    uint32_t battery_used_time_cnt; //电池使用时间   累加器   sec     停电或复位后清零，低功耗下累加，上电后保存
+       
     dyn_cache_end  //------------------------------------------------------
     //运行期更改&&掉电或定时保存&&上电需要IO请求的数据分区
     dyn_persistent_start
@@ -276,9 +278,9 @@ struct mbase_control_block_t
     uint8_t cmd;	    //控制命令  0x1A , 0x1B....
     uint8_t mode;     //拉合闸方式（直接、允许）
 	uint8_t sta;      //命令状态
-    uint32_t alarmmin; //跳闸延时(min)
-    uint32_t limitmin; //限电时间(min)
-    uint32_t imaxmin;  //大电流延时跳闸（min）
+    uint32_t alarmmin; //跳闸延时(min)     SEC？  没必要存e2p？
+    uint32_t limitmin; //限电时间(min)      SEC？  没必要存e2p？ 
+    uint32_t imaxmin;  //大电流延时跳闸（min）SEC？  没必要存e2p？
     uint16_t cmd_dostate;  //控制命令执行状态字
     uint16_t cmd_errstate;  //控制命令错误状态字
     
@@ -323,9 +325,7 @@ struct mbase_control_block_t
     uint8_t mac_err_cnt; // 当日mac错误次数
     uint8_t mac_suspend_date[3];// mac错误 挂起日期 yymmdd
 
-
     struct tm v_powerdown_tm;                   // 模拟停电时间  补结算测试用 
-    
     uint8_t persistent_blank_space[4*10];   //  空白区
 
     dyn_persistent_end

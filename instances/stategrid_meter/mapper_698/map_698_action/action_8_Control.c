@@ -1,6 +1,43 @@
 #include "nidavellir.h"
 #include "fr_698.h"
 
+
+//设置、操作 时间标签错误时，置位相关状态字
+void app_handle_timeTag_invalid(struct instance_t* instance, uint32_t oad)
+{
+    uint16_t oi = get_OAD_OI(oad);
+
+    switch (oi)
+    {
+        case 0x8000://遥控
+        case 0x8001://保电
+
+            break;
+        
+    }
+
+}
+
+//挂起时，置位相关状态字
+void app_handle_mac_suspend(struct instance_t* instance, uint32_t oad)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    uint16_t oi = get_OAD_OI(oad);
+
+    switch (oi)
+    {
+        case 0x8000://遥控
+        case 0x8001://保电
+            mbase_cb->cmd_errstate = 0x8000;    //挂起 2041 错误信息字
+            break;
+        default:
+        break;
+    }
+
+}
+
+
 int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *pctx)
 {   
     struct context_698_t* ctx = (struct context_698_t*)pctx;
@@ -43,11 +80,13 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     return  -DAR_METER_SUSPEND;
                 }
             }
+            /*  如果开启 需要判断 安全模式字
             if((fr_698_current_connect_status_get(instance, NULL, client_index)== false) && (mbase_cb->factor_mode != true))   //安全认证超时
             {
                 mbase_cb->cmd_errstate = 0x1000;    //安全认证超时
                 return  -DAR_SECURITY_AUTH_FAILED;
             }
+            */
             switch(method)//方法
             {
                 case 0x7F://告警
@@ -105,7 +144,9 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     }
                     else
                     {
-                        if(mbase_cb->sta & F_RemoteRelayOff)     
+                        mbase_cb->alarmmin = 0; //预调闸命令 清延时
+                        if((mbase_cb->sta & F_RemoteRelayOff) //本地跳闸 待添加
+                        ||(mbase_cb->sta & F_RemoteRelayOnAllow))    
                         {
                             mbase_cb->cmd_errstate = 0x0080;  //bit8;
                             return -DAR_UNAUTHORIZED;    //跳闸后，下发预跳闸失败

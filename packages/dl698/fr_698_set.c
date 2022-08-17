@@ -105,6 +105,7 @@ static int __fr_handle_one_object(struct instance_t* instance, struct pipeline_t
                 r = fr_698_set(instance, oad, apdu_rx + ctx->apdu_rx_offset, len, (void*)ctx);
             }
         }else{
+            //app_handle_timeTag_invalid(instance, oad);
             r = -DAR_TIME_TAG_INVALID;
         }
         

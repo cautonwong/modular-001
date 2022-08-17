@@ -68,7 +68,7 @@ int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *
                 case 0x05://命令状态
                     *p++ = TYPE_bit_string;
                     *p++ = 8;
-                    if((mbase_cb->sta & F_RemoteRelayOff) == F_RemoteRelayOff)
+                    if((mbase_cb->sta & REMOTE_CMD_REALAY_OFF_STA) != 0)
                         *p++ = 0x80;
                     else
                         *p++ = 0;

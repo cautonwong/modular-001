@@ -25,8 +25,11 @@ extern uint16_t do_block_static_checksum(struct instance_t* instance);
 #define		Status_RelayOff	    0x0008  //bit4
 #define		Status_RelayCmd     0x0002  //bit6
 #define		Status_RelayAlm     0x0001  //bit7
+
+#define		Status_TermIdentityAuthen   0x2000  //bit10//终端身份认证状态
+#define		Status_TermAuthen		    0x1000  //bit11//终端安全认证状态
 #define		Status_BaoDian		0x0800  //bit12
-#define		Status_Authen		0x0400  //bit13
+#define		Status_Authen		0x0400  //bit13 //主站安全认证
 #define		Status_KaiHuBen	    0x0200  //bit14
 #define		Status_KaiHuYuan	0x0100  //bit15
 //MeterRun7
@@ -91,8 +94,18 @@ void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
 		mbase_cb->run_state[3] |= Status_IrAuthen;
 	else
 		mbase_cb->run_state[3] &= ~Status_IrAuthen;
+
+    if( mbase_cb->term_auth_timeout > 0 )    //终端身份认证
+		mbase_cb->run_state[3] |= Status_TermIdentityAuthen;
+	else
+		mbase_cb->run_state[3] &= ~Status_TermIdentityAuthen;
     
-    if((fr_698_current_connect_status_get(instance, NULL, 0)== false) )    //应用链接
+    if((fr_698_current_connect_status_get(instance, NULL, 1)== true) )    //终端安全认证
+		mbase_cb->run_state[3] |= Status_TermAuthen;
+	else
+		mbase_cb->run_state[3] &= ~Status_TermAuthen;
+    
+    if((fr_698_current_connect_status_get(instance, NULL, 0)== true) )    //主站安全认证 应用链接
 		mbase_cb->run_state[3] |= Status_Authen;
 	else
 		mbase_cb->run_state[3] &= ~Status_Authen;
@@ -103,7 +116,7 @@ void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
 	else
 		mbase_cb->run_state[3] &= ~Status_RelayAlm;	
     
-	if( mbase_cb->sta & 0x02 )  //继电器命令状态
+	if( mbase_cb->sta & REMOTE_CMD_REALAY_OFF_STA )  //继电器命令状态
 		mbase_cb->run_state[3] |= Status_RelayCmd;
 	else
 	   	mbase_cb->run_state[3] &= ~Status_RelayCmd;

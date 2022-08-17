@@ -189,11 +189,18 @@ static int _esam_power_ctrl_off(struct esam_data_t *para, void *esam_hal)
 static int _esam_comm_handle(struct esam_data_t *para, void *esam_hal)
 {
     struct esam_698_input_t *esam_in = para->input;
-
+    struct esam_698_output_t *esam_out = para->output;
+    
     tx_esam(para->head , esam_in->data_buf , para->len , NULL);
     rx_esam(esam_in->data_buf , &para->len , NULL , &para->sw);
+    
     if(para->sw == 0x9000){
         return 1;
+    }
+    
+    if(esam_out)
+    {
+        esam_out->esam_chip_abnormal = esam_chip_abnormal;
     }
     return -1;
 }

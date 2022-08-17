@@ -72,6 +72,7 @@ static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8
     sw = esam_data.sw;
     len = esam_data.len; 
    
+
     if(sw == 0x9000){
         if(type){
             memcpy(esam_out->data , esam_in->data_buf , len);

@@ -155,12 +155,11 @@ void FeeTable_Change(struct instance_t* instance, struct pipeline_t* pipeline)
 }
 
 
-unsigned char FeeTable_CmpFind( struct instance_t* instance, struct pipeline_t* pipeline, unsigned char Num, unsigned char Table )
+unsigned char FeeTable_CmpFind( struct instance_t* instance, struct pipeline_t* pipeline, unsigned char Num, unsigned char Table ,uint8_t * Buf)
 {
 	unsigned char i;
 	unsigned int Now,Int,Int1;
     struct mbase_control_block_t* mbase_cb;
-    uint8_t Buf[50];
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
@@ -285,7 +284,7 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
             nd_get_index(instance, s_index, (uint8_t*)&Buf[i*3], 3);
         }
         
-		i = FeeTable_CmpFind( instance, pipeline, (unsigned char)Num, 0 );//比较查找时区表
+		i = FeeTable_CmpFind( instance, pipeline, (unsigned char)Num, 0 ,&Buf[0]);//比较查找时区表
 		mbase_cb->DayTableNo = Buf[3*i+2];
 	}
 }
@@ -296,7 +295,7 @@ void GetTOUFee(struct instance_t* instance, struct pipeline_t* pipeline)
     uint8_t i,Num[2]={0,};
     uint32_t s_index=0;
     struct mbase_control_block_t* mbase_cb;
-    uint8_t Buf[50];
+    uint8_t Buf[50]={0};
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
@@ -315,7 +314,7 @@ void GetTOUFee(struct instance_t* instance, struct pipeline_t* pipeline)
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Day_Table00 + (mbase_cb->DayTableNo-1));
         nd_get_index(instance, s_index, Buf, 3*Num[0]);//读取当前日时段表
         
-		i = FeeTable_CmpFind( instance, pipeline, Num[0], 1 );//比较查找日时段表
+		i = FeeTable_CmpFind( instance, pipeline, Num[0], 1, &Buf[0] );//比较查找日时段表
 		mbase_cb->TOUNo = BCD_BYTE(Buf[3*i+2]);
 		if( (mbase_cb->TOUNo == 0) || (mbase_cb->TOUNo > MaxFeeNum) || (mbase_cb->TOUNo > Num[1]) ) //若时段表中费率号超出，则按照尖费率处理
 			mbase_cb->TOUNo = 1;

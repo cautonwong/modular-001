@@ -1,6 +1,6 @@
 #include "nidavellir.h"
 #include "fr_698.h"
-
+#include "gs_record.h"
 
 // 获取冻结关联对象
 int get_frozen_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct frozen_obj_t frozen_obj, uint8_t* dar)
