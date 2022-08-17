@@ -369,7 +369,7 @@ const  DISPLAYLIST   Display_List[] =
 
 #define displaytablenum     sizeof(Display_List)/sizeof(DISPLAYLIST)
 
-void HEX_BCD( unsigned char* BCD, unsigned long long HEX )
+void HEX64_BCD( unsigned char* BCD, unsigned long long HEX )
 {
 	unsigned char i;
 
@@ -569,7 +569,7 @@ void Send_DisplayData(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     unsigned long bf[4];
     uint8_t i;
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     if(mbase_control_block->Page_ID == 0xFFFF)
     {
@@ -664,7 +664,7 @@ void Send_DisplayData(struct instance_t* instance, struct pipeline_t* pipeline)
 /***********************************************************************/
 void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 	
     LCD_BACK_LIGHT_OPEN();
 	if((mbase_control_block->lcd_poweron_all_dis_time > 30) || (mbase_control_block->lcd_poweron_all_dis_time == 0))
@@ -691,7 +691,7 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline, uint8
 {
     uint16_t pageid=0;
     uint32_t    s_index = 0;
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     if(ctr == MSG_PAGE_KEY_UP)    //按键
     {
@@ -702,7 +702,6 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline, uint8
         {
             if(ANA_GetStatus(ANA_STATUS_COMP1) == 0)
             {
-                lcd_init(AC_POWER_OFF);
                 mbase_control_block->Key &= ~F_KeyAwake;
                 Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
                 return;
@@ -746,10 +745,11 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline, uint8
         {
             if( mbase_control_block->lcd_keydis_keep_sec == 0 )
                 mbase_control_block->KeyInv = 5;
+            else
+                mbase_control_block->KeyInv = mbase_control_block->lcd_keydis_keep_sec;
         }
         else
             mbase_control_block->KeyInv = 30;
-        mbase_control_block->KeyInv = mbase_control_block->lcd_keydis_keep_sec;
     }
     
     if( (mbase_control_block->Key & F_KeyDispay) && (mbase_control_block->KeyInv == 0) )//退出键显
@@ -758,7 +758,6 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline, uint8
 		mbase_control_block->AutoPtr = 0xFF;
 		if( instance->ac_power_statue != AC_POWER_ON )//按键显示结束后,进入掉电暂显
 		{
-            lcd_init(AC_POWER_OFF);
 			Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
             mbase_control_block->Key &= ~F_KeyAwake;
 		}
@@ -773,7 +772,7 @@ void Get_DisplayPage(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     uint16_t pageid;
     uint32_t s_index = 0;
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
       
 	if( (mbase_control_block->Key & F_KeyDispay) == 0 )//轮显
 	{
@@ -781,7 +780,6 @@ void Get_DisplayPage(struct instance_t* instance, struct pipeline_t* pipeline)
 		{
             if( (instance->ac_power_statue != AC_POWER_ON) && ((mbase_control_block->AutoPtr == (mbase_control_block->lcd_autodis_list_num-1))) )//自动循环显示一遍后，进入掉电暂显
 			{
-                lcd_init(AC_POWER_OFF);
                 memset((uint8_t *)&mbase_control_block->AutoPtr, 0x00, 10);
                 mbase_control_block->Key &= ~F_KeyAwake;
 				Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
@@ -793,13 +791,16 @@ void Get_DisplayPage(struct instance_t* instance, struct pipeline_t* pipeline)
 				mbase_control_block->AutoInv = 5;
             
 			//获取轮显显示屏数
-            mbase_control_block->AutoPtr = 0;
 			if( mbase_control_block->lcd_autodis_list_num > 0 )
             {            
                 if( mbase_control_block->AutoPtr >= (mbase_control_block->lcd_autodis_list_num-1) )
                     mbase_control_block->AutoPtr = 0;
                 else
                     mbase_control_block->AutoPtr++;
+            }
+            else
+            {
+                mbase_control_block->AutoPtr = 0;
             }
             
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AutoDisplayList + mbase_control_block->AutoPtr);
@@ -836,7 +837,7 @@ void display_energy_pro(struct pipeline_t* pipeline, uint8_t *data, uint8_t id)
 {
     uint8_t EnergyDot,i,borrownum=0;
     unsigned long long energy_p=0,p_max=0;//正向，反向
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     EnergyDot = mbase_control_block->energy_point;
     
@@ -973,7 +974,7 @@ unsigned long GetDispAddrInfo( struct instance_t* instance, struct pipeline_t* p
 /***********************************************************************/
 void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
 	if( mbase_control_block->Page_ID == 0xFFFF ) return;//当前全屏显，则返回
 	
@@ -1005,7 +1006,7 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
                 Lcdcon[19] |= DS_Chr_Fu;
         }       
                 
-		if( mbase_control_block->voltage_battery < 300 )//电池欠压指示
+		if( mbase_control_block->voltage_battery < Bat_Low_Level )//电池欠压指示
             Lcdcon[18] |= DS_Chr_Bat;
 		//密码验证闭锁指示
 		//Lcdcon[17] |= DS_Chr_Lock;
@@ -1128,7 +1129,7 @@ void Disp_Value( unsigned short id, unsigned char *data, unsigned int Info )
     if( Info & DispData_HEX )
 	{
         mem_swap_cpy( (unsigned char*)&Tmp, (unsigned char*)Buffer, Len );
-        HEX_BCD( Buffer, Tmp );
+        HEX64_BCD( Buffer, Tmp );
 	}
 	else
 	{
@@ -1183,7 +1184,7 @@ void Disp_Char( struct instance_t* instance, struct pipeline_t* pipeline, unsign
 {
 	unsigned char j,EnergyDot = 2, PowerDot = 4,i=0;
 	unsigned char ID1L;
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     EnergyDot = mbase_control_block->energy_point;
     PowerDot = mbase_control_block->power_point;
@@ -1415,7 +1416,7 @@ void Disp_Char( struct instance_t* instance, struct pipeline_t* pipeline, unsign
 /***********************************************************************/
 void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     unsigned char i,buf[20]={0,},Len=0,temp[7];
 	unsigned long oad,Info=0,Info1;
 	unsigned char SignBuf[9]={0,};
@@ -1510,13 +1511,13 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
 void Display(struct instance_t* instance, struct pipeline_t* pipeline)
 {
   
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_control_block;
+    mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     if(instance->ac_power_statue != AC_POWER_ON)
     {
         if(ANA_GetStatus(ANA_STATUS_COMP1)==0)
         {
-            lcd_init(AC_POWER_OFF);
             memset((uint8_t *)&mbase_control_block->AutoPtr, 0x00, 10);
             mbase_control_block->Key &= ~F_KeyAwake;
             Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);

@@ -32,11 +32,21 @@ int event_alarm_control(struct instance_t* instance, struct pipeline_t* task, st
 int backlight_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
     
     if(ctrl_block->sta & F_RemoteAlarm)   //远程告警
     {
         LCD_BACK_LIGHT_OPEN(); // 打开背光
         return 1;
+    }
+    
+    if((mbase_cb->blt_alarm & 0x00400000) == 0x00400000)    //电池欠压，开启背光
+    {
+        if(mbase_cb->voltage_battery < Bat_Low_Level)
+        {
+            ctrl_block->BackLightTmr = 3;
+        }
     }
     
     if(ctrl_block->BackLightTmr > 0)    ctrl_block->BackLightTmr--;

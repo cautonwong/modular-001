@@ -10,7 +10,7 @@
 
 #define RESET_INFO    1 // 记录 复位信息
 
-
+#define Bat_Low_Level   300     //电池欠压阈值
  
 
 struct energy_ctx_t
@@ -244,7 +244,9 @@ struct mbase_control_block_t
     uint32_t battery_used_time; //电池使用时间   
     uint8_t mac_suspend_state;  // mac挂起状态 协议或显示模块可调用。 true为挂起 
     
-    uint16_t metertype; //表类型
+    uint16_t metertype; //表多功能配置字
+    uint8_t no_filt;    //启动值过滤开关
+    uint32_t blt_alarm; //背光报警配置字
     
     dyn_cache_end  //------------------------------------------------------
     //运行期更改&&掉电或定时保存&&上电需要IO请求的数据分区

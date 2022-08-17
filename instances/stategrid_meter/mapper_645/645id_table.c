@@ -20,12 +20,11 @@ const COMMTAB  CommTab[] =
 	0xA8000105, 0xFFFF,											CommData_W + CommData_FACTORY + 0,					//默认参数初始化
 	
 	0xA8001001,	(unsigned int)FirmWareVersion,                  CommData_R + CommData_RAM + 20,//厂家内部软件版本号    
-	0xA8F00001,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + 4,	//继电器报警控制字
-	0xA8F00002,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + 4,	//背光报警控制字
+	0xA8F00002,	Blt_Alarm_Byte,									CommData_WR + CommData_HEX + CommData_E2PROM + 4,	//背光报警控制字
 	0xA8F00003,	Meter_Type,										CommData_WR + CommData_HEX + CommData_E2PROM_BP + 2,	//电能表类型、功能配置字
 	0xA8F00050,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + 4,	//上电持续时间
-	0xA8F00051,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + 2,	//掉电主动上报的阈值时间
-	0xA8F00052,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + 1,	//小电流不滤除 AA开启
+	0xA8F00051,	0xFFFF,											CommData_WR + CommData_HEX + 2,	//掉电主动上报的阈值时间
+	0xA8F00052,	Pstart_En,										CommData_WR + CommData_HEX + CommData_E2PROM + 1,	//小电流不滤除 AA开启
 	0xA8F000FF,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + 0xFF,//万能读写
 
     0xA8000200, 0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + CommData_FACTORY + 8,
@@ -41,8 +40,8 @@ const COMMTAB  CommTab[] =
 	0xA8000103,	0xFFFF,											CommData_R + CommData_RAM + 6,//自检状态字
 	0xA8000106,	0xFFFF,											CommData_W + CommData_FACTORY + 0,//初始化电表
 	0xA8000107,	0xFFFF,											CommData_R + CommData_RAM + 20,//厂家内部软件版本号
-	0xA800020F,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + CommData_FACTORY + 4,//复位命令
+	0xA800020F,	0xFFFF,											CommData_WR + CommData_HEX + CommData_FACTORY + 4,//复位命令
     
-    0xA8FFFFF0,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + CommData_FACTORY + 4,//正向电能设置底度
-    0xA8FFFFF1,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + CommData_FACTORY + 4,//反向电能设置底度
+    0xA8FFFFF0,	0xFFFF,											CommData_WR + CommData_HEX + CommData_FACTORY + 4,//正向电能设置底度
+    0xA8FFFFF1,	0xFFFF,											CommData_WR + CommData_HEX + CommData_FACTORY + 4,//反向电能设置底度
 };

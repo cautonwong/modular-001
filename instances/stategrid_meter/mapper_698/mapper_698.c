@@ -137,9 +137,9 @@ extern const uint8_t  init_Comm_Master_en[]; //允许与主站通讯
 extern const uint8_t  init_Report_channel[]; //上报通道
 extern const uint8_t  init_ImaxProtectValue[]; //继电器拉闸电流门限值
 extern const uint8_t  init_ImaxProtectTime[]; //超电流门限保护延时时间
-
+extern const uint8_t  init_Blt_Alarm_Byte[];
 extern const uint8_t  init_IrAuthenTime[];//红外认证时效
-
+extern const uint8_t  init_Pstart_En[];
 
 extern const uint32_t record_head_t1[];
 extern const uint32_t record_head_t0[];
@@ -569,8 +569,8 @@ const  parameter_item_t  parameter_item[] =
     { ImaxProtectTime               , 0x01 ,     2    , init_ImaxProtectTime        }, //超电流门限保护延时时间
     { IrAuthenTime                  , 0x01 ,     4    , init_IrAuthenTime           }, //红外认证时效
     { AuthMeth                      , 0x01 ,     1    , 0                           }, //连接认证机制
-
-
+    { Pstart_En                     , 0x01 ,     1    , init_Pstart_En              }, //防潜功能开关，AA关闭防潜功能，其他值打开防潜功能
+    { Blt_Alarm_Byte                , 0x01 ,     4    , init_Blt_Alarm_Byte         }, //背光报警配置字
 #else
     {0}
 #endif

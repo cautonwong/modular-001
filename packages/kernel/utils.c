@@ -87,6 +87,44 @@ unsigned char BYTE_BCD( unsigned char HEX )
 	return( (HEX/10)*0x10 + HEX%10 );
 }
 
+void WORD_BCD2( unsigned char *BCD, unsigned int WORD )
+{
+	if( WORD > 9999 )
+	{
+		*BCD = 0x00;
+		*(BCD+1) = 0x00;
+		return;
+	}
+
+	*(BCD+1) = BYTE_BCD( (unsigned char)(WORD/100) );
+	*BCD = BYTE_BCD( (unsigned char)(WORD%100) );
+}
+
+
+void HEX_BCD( unsigned char* BCD, unsigned long HEX )
+{
+	unsigned char i;
+
+	if( HEX > 99999999 )
+	{
+		*BCD = 0x00;
+		*(BCD+1) = 0x00;
+		*(BCD+2) = 0x00;
+		*(BCD+3) = 0x00;
+	}
+	else
+	{
+		for( i=0;i<4;i++ )
+		{
+			*BCD = (unsigned char)(HEX%10);
+	        	HEX = HEX/10;
+	        	*BCD += (unsigned char)((HEX%10)<<4) & 0xF0;
+	        	HEX = HEX/10;
+	        	BCD++;
+		}
+	}
+}
+
 uint16_t randomize_int(uint16_t interval)
 {
 	static uint32_t seed = 1;

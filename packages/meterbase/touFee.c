@@ -397,6 +397,12 @@ void Rtc_Prossecc(struct instance_t* instance, struct pipeline_t* pipeline)
             mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
         }
     }
+    else
+    {
+        instance->time.tm_sec++;
+            
+        rtc_tm_normalize((struct tm*)&instance->time.tm_sec);
+    }
     
     if((instance->time.tm_hour == 0) && (instance->time.tm_min == 0) && (instance->time.tm_sec == 0))
     {

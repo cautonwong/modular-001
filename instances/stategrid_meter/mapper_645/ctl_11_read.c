@@ -41,106 +41,6 @@ unsigned long SoftwareCHK(void)
 	return FFFFCHK;
 
 }
-typedef struct 
-{
-    uint8_t address;
-    uint8_t len;
-}meterchip;
-const  meterchip  Mtable[8]=
-{
-    0x20,   2,  //快速有功脉冲计数器
-    0x22,   3,  //通道A电流的有效值
-    0x23,   3,  //通道B电流的有效值
-    0x24,   3,  //电压有效值
-    0x26,   4,  //有功功率A
-    0x27,   4,  //有功功率B
-    0x28,   4,  //无功功率
-    0x2d,   3,  //计量状态及校验和寄存器
-};
-
-
-int rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx)
-{
-    uint8_t addr=0,lenth=0,i;
-    int16_t tmp[15]={0,};
-    uint32_t s_index=0,data=0;
-    //uint8_t* buf = p_tx;
-    
-    addr = *(p_rx+4);
-    *p_tx = addr;
-    memset( p_tx+1,0x00,4);
-    if(addr >= 0xA0)    //自热影响量 0.5L
-    {
-        if(addr >= 0xAF)	return false;
-        
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Value_05L);
-        nd_get_index(instance, s_index, (uint8_t*)&tmp[0], 30); //读取EE中的补偿值
-        memcpy( (p_tx+1), (uint8_t*)&tmp[addr-0x90], 2);
-        return 2;
-    }
-    else if(addr >= 0x90)//自热影响量 1.0L
-    {
-        if(addr >= 0x9F)	return false;
-
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Value_10L);
-        nd_get_index(instance, s_index, (uint8_t*)&tmp[0], 30); //读取EE中的补偿值
-        memcpy( (p_tx+1), (uint8_t*)&tmp[addr-0x90], 2);
-        return 2;
-    }
-    else if(addr >= 0x80)//电压影响量
-    {
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Un_Cmp_Value);
-        nd_get_index(instance, s_index, (uint8_t *)&tmp[0], 8); //读取EE中的补偿值
-        switch(addr)
-        {
-            case 0x80://80%
-                memcpy( p_tx+1, (uint8_t*)&tmp[0], 2);
-                break;
-            case 0x81://90%
-                memcpy( p_tx+1, (uint8_t*)&tmp[1], 2);
-                break;
-            case 0x82://110%
-                memcpy( p_tx+1, (uint8_t*)&tmp[2], 2);
-                break;
-            case 0x83://115%
-                memcpy( p_tx+1, (uint8_t*)&tmp[3], 2);
-                break;
-            default:
-                return false;
-                break;
-        }
-        return 2;
-    }
-    else if(addr <= 0x17)
-    {
-        if((addr==0x07)||(addr == 0x08))
-            lenth = 1;
-        else
-            lenth = 2;
-        rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , addr , lenth , &data);
-        
-        if(addr == 0x17)
-        {
-            data = data>>8;
-        }
-        memcpy( p_tx+1, (uint8_t*)&data, lenth);
-        
-        return lenth;
-    }
-    else
-    {
-        for(i=0; i<8; i++)
-        {
-            if(addr == Mtable[i].address)
-            {
-                rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , addr , Mtable[i].len , &data);
-                memcpy( p_tx+1, (uint8_t*)&data, lenth);
-                return lenth;
-            }
-        }
-    }
-    return -1;
-}
 /***********************************************************************/
 /*  函数名称：Direct_Read                                          		*/
 /*  函数功能：特殊数据,直接读取                                       */
@@ -150,14 +50,124 @@ int rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx)
 int Direct_Read( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    
 	unsigned long StAddr;
     unsigned char len;
     uint8_t tmpbuf[10] = {0};
-    uint32_t s_index;
+    uint32_t s_index,temp=0;
 
 	switch( ID )
-	{
+	{   
+        case 0x02010100:    //电压
+            WORD_BCD2(p_tx, (uint16_t)mbase_cb->voltage_ac);
+            return 2;
+        case 0x0201FF00:    //电压数据块
+            WORD_BCD2(p_tx, (uint16_t)mbase_cb->voltage_ac);
+            memset(p_tx+2, 0xFF, 4);
+            return 6;
+            
+        case 0x02020100:    //电流
+        case 0x0202FF00:    //电流数据块
+            if(mbase_cb->current_l < 0)
+            {
+                temp = ~mbase_cb->current_l + 1;
+                HEX_BCD(p_tx, temp);
+                *(p_tx+2) |= 0x80;
+            }
+            else
+            {
+                HEX_BCD(p_tx, mbase_cb->current_l);
+            }
+            if(ID == 0x0202FF00)
+            {
+                memset(p_tx+3, 0xFF, 6);
+                return 9;
+            }
+            else
+                return 3;
+            break;
+            
+        case 0x02030000:    //总有功功率 
+        case 0x02030100:   
+        case 0x0203FF00:    //有功功率数据块
+            if(mbase_cb->active_power < 0)
+            {
+                temp = ~mbase_cb->active_power + 1;
+                HEX_BCD(p_tx, temp);
+                *(p_tx+2) |= 0x80;
+            }
+            else
+            {
+                HEX_BCD(p_tx, mbase_cb->active_power);
+            }
+            if(ID == 0x0203FF00)
+            {
+                memcpy(p_tx+3, p_tx, 3);
+                memset(p_tx+6, 0xFF, 6);
+                return 12;
+            }
+            else
+                return 3;
+            break;
+            
+        case 0x02050000:    //总视在功率 
+        case 0x02050100:   
+        case 0x0205FF00:    //视在功率数据块
+            HEX_BCD(p_tx, mbase_cb->apparent_power);
+            if(ID == 0x0205FF00)
+            {
+                memcpy(p_tx+3, p_tx, 3);
+                memset(p_tx+6, 0xFF, 6);
+                return 12;
+            }
+            else
+                return 3;
+            break; 
+            
+        case 0x02060000:    //功率因数
+        case 0x02060100:   
+        case 0x0206FF00:    //功率因数数据块
+            if(mbase_cb->power_factor < 0)
+            {
+                temp = ~mbase_cb->power_factor + 1;
+                WORD_BCD2(p_tx, temp);
+                *(p_tx+1) |= 0x80;
+            }
+            else
+            {
+                WORD_BCD2(p_tx, mbase_cb->power_factor);
+            }
+            if(ID == 0x0206FF00)
+            {
+                memcpy(p_tx+2, p_tx, 2);
+                memset(p_tx+4, 0xFF, 4);
+                return 8;
+            }
+            else
+                return 2;
+            break;
+        case 0x02800001:    //零线电流
+            if(mbase_cb->current_n < 0)
+            {
+                temp = ~mbase_cb->current_n + 1;
+                HEX_BCD(p_tx, temp);
+                *(p_tx+2) |= 0x80;
+            }
+            else
+            {
+                HEX_BCD(p_tx, mbase_cb->current_n);
+            }
+            return 3;
+        case 0x02800002:  //频率
+            HEX_BCD(p_tx, mbase_cb->frequency);
+            return 2;
+            
+            
+        case 0xA8000100:
+            if(mbase_cb->factor_mode == true)
+                *p_tx = 0xaa;
+            else
+                *p_tx = 0;
+            return 1;
 		case 0xA601100F:
 			StAddr = SoftwareCHK();
 			memcpy( (unsigned char*)p_tx, (unsigned char*)&StAddr, 4 );

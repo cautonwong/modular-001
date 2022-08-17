@@ -9,7 +9,7 @@
 
 extern const struct dev_info_t rn8209_dev;
     
-
+extern unsigned char WriteRn8209(unsigned char ChipAddr, unsigned char* Buf, unsigned char length , const struct dev_info_t* dev);
 extern void  mcu_clear_watchdog(void);
 extern uint8_t mcu_delay_us(volatile uint16_t count);
 uint32_t over_Imax;
@@ -369,6 +369,109 @@ void Poffset_adj_oneself(struct instance_t* instance)
     }
 }
 
+typedef struct 
+{
+    uint8_t address;
+    uint8_t len;
+}meterchip;
+
+const  meterchip  Mtable[9]=
+{
+    0x20,   2,  //快速有功脉冲计数器
+    0x22,   3,  //通道A电流的有效值
+    0x23,   3,  //通道B电流的有效值
+    0x24,   3,  //电压有效值
+    0x26,   4,  //有功功率A
+    0x27,   4,  //有功功率B
+    0x28,   4,  //无功功率
+    0x2d,   3,  //计量状态及校验和寄存器
+    0x50,   2,  //自热补偿寄存器
+};
+
+
+int rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx)
+{
+    uint8_t addr=0,lenth=0,i;
+    int16_t tmp[15]={0,};
+    uint32_t s_index=0,data=0;
+    //uint8_t* buf = p_tx;
+    
+    addr = *(p_rx+4);
+    *p_tx = addr;
+    memset( p_tx+1,0x00,4);
+    if(addr >= 0xA0)    //自热影响量 0.5L
+    {
+        if(addr >= 0xAF)	return false;
+        
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Value_05L);
+        nd_get_index(instance, s_index, (uint8_t*)&tmp[0], 30); //读取EE中的补偿值
+        memcpy( (p_tx+1), (uint8_t*)&tmp[addr-0x90], 2);
+        return 2;
+    }
+    else if(addr >= 0x90)//自热影响量 1.0L
+    {
+        if(addr >= 0x9F)	return false;
+
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Value_10L);
+        nd_get_index(instance, s_index, (uint8_t*)&tmp[0], 30); //读取EE中的补偿值
+        memcpy( (p_tx+1), (uint8_t*)&tmp[addr-0x90], 2);
+        return 2;
+    }
+    else if(addr >= 0x80)//电压影响量
+    {
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Un_Cmp_Value);
+        nd_get_index(instance, s_index, (uint8_t *)&tmp[0], 8); //读取EE中的补偿值
+        switch(addr)
+        {
+            case 0x80://80%
+                memcpy( p_tx+1, (uint8_t*)&tmp[0], 2);
+                break;
+            case 0x81://90%
+                memcpy( p_tx+1, (uint8_t*)&tmp[1], 2);
+                break;
+            case 0x82://110%
+                memcpy( p_tx+1, (uint8_t*)&tmp[2], 2);
+                break;
+            case 0x83://115%
+                memcpy( p_tx+1, (uint8_t*)&tmp[3], 2);
+                break;
+            default:
+                return false;
+                break;
+        }
+        return 2;
+    }
+    else if(addr <= 0x17)
+    {
+        if((addr==0x07)||(addr == 0x08))
+            lenth = 1;
+        else
+            lenth = 2;
+        rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , addr , lenth , &data);
+        
+        if(addr == 0x17)
+        {
+            data = data>>8;
+        }
+        memcpy( p_tx+1, (uint8_t*)&data, lenth);
+        
+        return lenth;
+    }
+    else
+    {
+        for(i=0; i<9; i++)
+        {
+            if(addr == Mtable[i].address)
+            {
+                rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , addr , Mtable[i].len , &data);
+                memcpy( p_tx+1, (uint8_t*)&data, Mtable[i].len);
+                return Mtable[i].len;
+            }
+        }
+    }
+    return -1;
+}
+
 int rn8209c_set( struct instance_t* instance, uint8_t *p_rx )
 {
     uint8_t addr=0,lenth=0,temp_buffer[8]={0};
@@ -491,6 +594,19 @@ int rn8209c_set( struct instance_t* instance, uint8_t *p_rx )
         }
         nd_set_index(instance, s_index, (uint8_t*)&temp[0], 8);
     }
+    else if(addr == 0x51)   //自热补偿（硬件）
+    {
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Cmp_Value);
+        nd_set_index(instance, s_index, (uint8_t*)&data, 2);//读取自热补偿值
+        
+        CmdRn8209(CMD_WR_EN, &rn8209_dev);
+        CmdRn8209(0x02, &rn8209_dev);
+        CmdRn8209(0xBA, &rn8209_dev);
+        CmdRn8209(0x7F, &rn8209_dev);
+        CmdRn8209(0x5C, &rn8209_dev);
+        WriteRn8209( 0x51, (uint8_t*)&data, 2 , &rn8209_dev);
+        CmdRn8209(CMD_WR_DIS, &rn8209_dev);
+    }
     return true;
 }
 
@@ -529,15 +645,18 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , POWERPA , 4 , &temp);
     mbase_control_block->active_power = (int32_t)(Rn8209Adj_K.p * temp);
     
-    if(abs(mbase_control_block->current_l) < mbase_control_block->curt_33)
+    if( mbase_control_block->no_filt != 0xAA)   //0xAA关闭启动一下过滤功能，用于调试工频
     {
-        mbase_control_block->current_l = 0;
-        mbase_control_block->active_power = 0;
-    }
-    
-    if(abs(mbase_control_block->active_power) < mbase_control_block->power_33)
-    {
-        mbase_control_block->active_power = 0;
+        if(abs(mbase_control_block->current_l) < mbase_control_block->curt_33)
+        {
+            mbase_control_block->current_l = 0;
+            mbase_control_block->active_power = 0;
+        }
+        
+        if(abs(mbase_control_block->active_power) < mbase_control_block->power_33)
+        {
+            mbase_control_block->active_power = 0;
+        }
     }
     
     if(mbase_control_block->active_avg_power == 0)
@@ -613,15 +732,18 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     }
     
     /****************** 补偿功能 ******************/
-//    heat_compensate(instance, pipeline);    //自热补偿
-    
-    if((mbase_control_block->voltage_ac < 19900) || (mbase_control_block->voltage_ac > 23900))
+    if((mbase_control_block->metertype & 0x0800) == 0x0800)
     {
-        voltage_compensate(instance, pipeline, compensate_start);
-    }
-    else
-    {
-        voltage_compensate(instance, pipeline, compensate_end);
+        heat_compensate(instance, pipeline);    //自热补偿
+        
+        if((mbase_control_block->voltage_ac < 19900) || (mbase_control_block->voltage_ac > 23900))
+        {
+            voltage_compensate(instance, pipeline, compensate_start);
+        }
+        else
+        {
+            voltage_compensate(instance, pipeline, compensate_end);
+        }
     }
     
     /****************** 温度采样 ******************/

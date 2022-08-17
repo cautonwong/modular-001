@@ -230,13 +230,13 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             mbase_cb->Baut_plc = 6;
             mbase_cb->disp_borrow = 0; //借位
             
-            //获取电表类型
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Meter_Type);
-            nd_get_index(instance, addr, (uint8_t*)&mbase_cb->metertype, 2);
-            if((mbase_cb->metertype == 0 ) || (mbase_cb->metertype == 0xFFFF ))
-            {
-                mbase_cb->metertype = 0x0001;    //远程内置表
-            }
+            //获取防潜开关
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Pstart_En);
+            nd_get_index(instance, addr, (uint8_t*)&mbase_cb->no_filt, 1);
+            
+            //背光配置字
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Blt_Alarm_Byte);
+            nd_get_index(instance, addr, (uint8_t*)&mbase_cb->blt_alarm, 4);
             
             freeze_power_on_pro(instance, pipeline, mesg);
             //事件

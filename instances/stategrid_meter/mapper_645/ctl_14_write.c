@@ -90,9 +90,14 @@ unsigned char CommWrite_SpecProc( struct instance_t* instance,  unsigned char* p
                 memcpy(buf, prx+12, 4);
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ResetCount);
                 nd_set_index(instance, s_index, buf, 4);    
-                break;    
-        case 0xA8F00003://电表型号
-                memcpy((uint8_t*)&mbase_cb->metertype, prx+12, 4);
+                break; 
+        case 0xA8F00002:    //背光告警配置字
+                memcpy((uint8_t*)&mbase_cb->blt_alarm, prx+12, 4);
+                return 1;
+                break;
+        case 0xA8F00003:    //表多功能配置字
+                memcpy((uint8_t*)&mbase_cb->metertype, prx+12, 2);
+                return 1;
                 break;
  		case 0xA8F00051://掉电主动上报的阈值时间(秒)hex  0x0E10
                 memcpy(&mbase_cb->active_report_sec_limit, prx+12, 2);                
@@ -100,6 +105,11 @@ unsigned char CommWrite_SpecProc( struct instance_t* instance,  unsigned char* p
                             offsetof(struct mbase_control_block_t, active_report_sec_limit));
                 nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_report_sec_limit, 2);//存储至EE  
                 break;  
+                
+        case 0xA8F00052://工频防潜开关
+                mbase_cb->no_filt = *(prx+12);
+                return 1;
+                break;
         case 0xA8FFFFF0:    //设置正向电能底度
                 memcpy((uint8_t*)&temp, prx+12, 4);
                 Energy_Set(instance, temp, 0);
@@ -235,7 +245,7 @@ signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx
             {
                 block = mbase_block_parameter_1;
             }
-            else if((Info & CommData_E2PROM_BP) == CommData_E2PROM)
+            else if((Info & CommData_E2PROM) == CommData_E2PROM)
             {
                 block = mbase_block_parameter;
             }

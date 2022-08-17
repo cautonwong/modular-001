@@ -154,6 +154,9 @@ int fr_sw_key(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
 #ifndef WIN32
+    uint32_t addr = 0;
+    struct mbase_control_block_t* mbase_cb;
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     if (instance->ac_power_statue == AC_POWER_ON)
     {
@@ -181,6 +184,14 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
     {
         if(true == ac_power_on_monitor())
         {
+            //获取电表类型
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Meter_Type);
+            nd_get_index(instance, addr, (uint8_t*)&mbase_cb->metertype, 2);
+            if((mbase_cb->metertype == 0 ) || (mbase_cb->metertype == 0xFFFF ))
+            {
+                mbase_cb->metertype = 0x0001;    //远程内置表
+            }
+                  
             device_power_open(instance);
             mesg->from = kernel;
             mesg->to = pid_meter_base;
