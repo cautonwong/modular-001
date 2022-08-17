@@ -654,9 +654,9 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     }
                     
                     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                    offsetof(struct mbase_control_block_t, backlight_key_time));
-                    uint16_t s_len = offsetof(struct mbase_control_block_t, Baut_plc) - offsetof(struct mbase_control_block_t, backlight_key_time);
-                    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->backlight_key_time, s_len);
+                    offsetof(struct mbase_control_block_t, lcd_poweron_all_dis_time));
+                    uint16_t s_len = offsetof(struct mbase_control_block_t, lcd_autodis_list_num) - offsetof(struct mbase_control_block_t, lcd_poweron_all_dis_time);
+                    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_poweron_all_dis_time, s_len);
                     
                     return (p-buf);
                 }
@@ -681,7 +681,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     
                     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                     offsetof(struct mbase_control_block_t, lcd_poweron_all_dis_time) + offset[index-1]);
-                    nd_set_offset(instance, s_index, p, lens[index-1]);
+                    nd_set_offset(instance, s_index, (uint8_t*)idbuf[index-1], lens[index-1]);
                     
                     p = p + lens[index-1];
                     return (p-buf);
