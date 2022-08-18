@@ -216,50 +216,33 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                                     mbase_cb->lcd_autodis_list_maxnum = 99;
                                 else
                                     mbase_cb->lcd_keydis_list_maxnum = 99;
-                                //len = 2;
-                                //s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_cb << 16) + 
-                                //offsetof(struct mbase_control_block_t, lcd_autodis_list_num));
                                 
                                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                                offsetof(struct mbase_control_block_t, backlight_key_time));
-                                len = offsetof(struct mbase_control_block_t, Baut_plc) - offsetof(struct mbase_control_block_t, backlight_key_time);
-                                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->backlight_key_time, len);
+                                offsetof(struct mbase_control_block_t, lcd_autodis_list_num));
+                                len = offsetof(struct mbase_control_block_t, Baut_rs485) - offsetof(struct mbase_control_block_t, lcd_keydis_keep_sec);
+                                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_autodis_list_num, len);
                                 return (p-buf);
                                 break;
                             case 0x01://当前总对象数
                                 p = p + 1;
                                 if(oad == 0xF300)
+                                {
                                     mbase_cb->lcd_autodis_list_num = *p++;
+                                    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                                                offsetof(struct mbase_control_block_t, lcd_autodis_list_num));
+                                    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_autodis_list_num, 1);
+                                }
                                 else
+                                {
                                     mbase_cb->lcd_keydis_list_num = *p++;
-
-                                //s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                                //offsetof(struct mbase_control_block_t, lcd_autodis_list_num));
-                                //len = offsetof(struct mbase_control_block_t, lcd_autodis_list_maxnum) - offsetof(struct mbase_control_block_t, lcd_autodis_list_num);
-                                //nd_set_offset(instance, s_index, p, len);
-                                
-                                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                                offsetof(struct mbase_control_block_t, backlight_key_time));
-                                len = offsetof(struct mbase_control_block_t, Baut_plc) - offsetof(struct mbase_control_block_t, backlight_key_time);
-                                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->backlight_key_time, len);
+                                    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                                                offsetof(struct mbase_control_block_t, lcd_keydis_list_num));
+                                    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_keydis_list_num, 1);
+                                }
                                 return (p-buf);
                                 break;
                             case 0x02://允许最大对象数
                                 return -DAR_RW_REJECT;
-                                /*p = p + 1;
-                                if(oad == 0xF300)
-                                    mbase_cb->lcd_autodis_list_maxnum = *p++;
-                                else
-                                    mbase_cb->lcd_keydis_list_maxnum = *p++;
-                                //len = 1;
-                                //s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_cb << 16) + 
-                                //offsetof(struct mbase_control_block_t, lcd_autodis_list_maxnum));
-                                
-                                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                                offsetof(struct mbase_control_block_t, backlight_key_time));
-                                len = offsetof(struct mbase_control_block_t, Baut_plc) - offsetof(struct mbase_control_block_t, backlight_key_time);
-                                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->backlight_key_time, len);
-                                return (p-buf);*/
                                 break;
                             default:
                                 return -DAR_OTHERS_ERROR;
@@ -276,16 +259,18 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                                 mem_swap_cpy((unsigned char*)&displayid, p, 2);
                                 if((displayid < 5) || (displayid > 20))   return -DAR_BUFFER_OVERFLOW;
                                 mem_swap_cpy((unsigned char*)&mbase_cb->lcd_autodis_keep_sec, p, 2);
+                                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                                            offsetof(struct mbase_control_block_t, lcd_autodis_keep_sec));
+                                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_autodis_keep_sec, 2);
                             }
                             else
+                            {
                                 mem_swap_cpy((unsigned char*)&mbase_cb->lcd_keydis_keep_sec, p, 2);
-                            //index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + DisplayPara);
-                            //nd_set_index(instance, index, (unsigned char*)&mbase_cb->backlight_key_time, 22);
+                                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                                            offsetof(struct mbase_control_block_t, lcd_keydis_keep_sec));
+                                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_keydis_keep_sec, 2);
+                            }
                             p = p + 2;
-                            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                            offsetof(struct mbase_control_block_t, backlight_key_time));
-                            len = offsetof(struct mbase_control_block_t, Baut_plc) - offsetof(struct mbase_control_block_t, backlight_key_time);
-                            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->backlight_key_time, len);
                             return (p-buf);
                         }
                         else
