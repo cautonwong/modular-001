@@ -246,6 +246,11 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             //保存电池使用时间
             break;
       case MSG_POWEROFF:
+            mbase_cb->voltage_ac = 0;
+            mbase_cb->current_l = 0;
+            mbase_cb->active_power = 0;
+            mbase_cb->current_n = 0;
+            mbase_cb->power_factor = 0;
             //开启EE电源和IO口时钟 //
 /*            CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);
             GPIOC->OEN &= ~(BIT4|BIT5|BIT6); 
