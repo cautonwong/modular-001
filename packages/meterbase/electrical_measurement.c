@@ -314,6 +314,85 @@ void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t 
     }
 }
 
+//取6次平均值
+unsigned long Get_Aver(struct instance_t* instance, unsigned char Reg_Addr)
+{
+    unsigned long Temp_B32, SPIOpData=0;
+	unsigned char i, Cnt, Num = 6,j;
+	
+	Temp_B32 = 0;
+	Cnt = 0;
+	for(i=0; i<Num; i++)
+	{
+        rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , Reg_Addr , 3 , &SPIOpData);
+        if(SPIOpData & 0x00800000) //最高位为1做零处理(电流非法)
+        {
+            SPIOpData = 0;
+        }
+        else
+        {
+            SPIOpData = SPIOpData & 0x00FFFFFF;
+            Cnt++;
+        }
+            
+        Temp_B32 += SPIOpData;
+		
+		for(j=0;j<10;j++)
+        {
+            mcu_delay_us(5000);	//等待500ms
+            mcu_clear_watchdog();
+        }
+	}
+	if( Cnt == 0 ) Cnt = 1;
+	SPIOpData = Temp_B32/Cnt;
+	
+	return (SPIOpData);
+}
+
+//电流A/B有效值偏置修正(220V,I=0,1.0)
+unsigned char IxRMSOS_Adjust(struct instance_t* instance, unsigned char CH)
+{
+	unsigned long SPIOpData,s_index=0,index=0;
+    unsigned char temp_buffer[8]={0,};
+    int32_t offset = 0;
+    
+    if(CH == 1)
+    {
+        index = ADJ_Pgain0;
+    }
+    else if(CH == 2)
+    {
+        index = ADJ_Pgain1;
+    }
+	
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + index);    
+    nd_get_index(instance, s_index, temp_buffer, 8);
+    
+	if(CH == 1) SPIOpData = Get_Aver(instance, 0X22);
+	else SPIOpData = Get_Aver(instance, 0X23);
+
+	SPIOpData = SPIOpData * SPIOpData;		//平方
+
+	SPIOpData = ~SPIOpData+1;
+	SPIOpData = (SPIOpData & 0x00FFFF00);					//取中间4位
+
+    temp_buffer[4] = (unsigned char)(SPIOpData>>8);
+    temp_buffer[5] = (unsigned char)(SPIOpData>>16);
+    
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + index);    
+    nd_set_index(instance, s_index, temp_buffer, 8);
+
+    memcpy((uint8_t*)&offset, (uint8_t*)&temp_buffer[4], 2);
+    
+    CmdRn8209(CMD_WR_EN , &rn8209_dev);
+    if(CH == 1)
+        rn8209_dev.dev_driver_ops->dev_write(instance, &rn8209_dev, IARMSOS, 2, (uint8_t*)&offset);
+    else if(CH == 2)
+        rn8209_dev.dev_driver_ops->dev_write(instance, &rn8209_dev, IBRMSOS, 2, (uint8_t*)&offset);
+    CmdRn8209(CMD_WR_DIS , &rn8209_dev);
+	return 0;
+}
+
 /************************************ 5%Ib 功率偏移修正 *******************************/
 void Poffset_adj_oneself(struct instance_t* instance)
 {
@@ -651,6 +730,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
         {
             mbase_control_block->current_l = 0;
             mbase_control_block->active_power = 0;
+            mbase_control_block->apparent_power = 0;
         }
         
         if(abs(mbase_control_block->active_power) < mbase_control_block->power_33)
@@ -814,7 +894,7 @@ void Electrical_measurement_poweron(struct instance_t* instance, struct pipeline
     /********* 各类门限 *********/
     mbase_control_block->volt_60 = AS_Un*0.6;   //60%电压
     mbase_control_block->volt_78 = AS_Un*0.78;   //78%电压
-    mbase_control_block->volt_125 = AS_Un*1.25;  //125%电压
+    mbase_control_block->volt_120 = AS_Un*1.20;  //120%电压
     
     mbase_control_block->curt_33 = (uint32_t)(AS_Ib*0.0033);  //0.3%电流
     mbase_control_block->power_33 = (uint32_t)(AS_P*0.0033);  //启动功率0.33%*P

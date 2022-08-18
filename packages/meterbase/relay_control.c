@@ -24,9 +24,19 @@ void Relay_Sec_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     
-    if(mbase_control_block->alarmmin > 0)  mbase_control_block->alarmmin--;
-    if(mbase_control_block->limitmin > 0)  mbase_control_block->limitmin--;
-    if(mbase_control_block->imaxmin > 0)   mbase_control_block->imaxmin--;
+    if(mbase_control_block->imaxmin > 0)   
+    {
+        mbase_control_block->imaxmin--;
+        if(abs(mbase_control_block->current_l) < (mbase_control_block->I_Prot/10))
+        {
+            mbase_control_block->imaxmin = 0;
+        }
+    }
+    else    //大电流拉闸延时和拉闸延时时间需要依次递减
+    {
+        if(mbase_control_block->alarmmin > 0)  mbase_control_block->alarmmin--;
+        if(mbase_control_block->limitmin > 0)  mbase_control_block->limitmin--;
+    }
 }
 
 static unsigned char switchon = 1;
@@ -40,7 +50,8 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
     
     Relay_Sec_Task(instance, pipeline);
     
-//    if(mbase_control_block->voltage_ac > )    return; //电压过高过低不执行
+    if((mbase_control_block->voltage_ac < mbase_control_block->volt_78) 
+      || (mbase_control_block->voltage_ac > mbase_control_block->volt_120)) return; //电压过高过低不执行
     
     if((mbase_control_block->sta & F_RemoteRelayOn) || (mbase_control_block->sta == F_RemoteNull))    //保电或正常用电
     {
@@ -66,23 +77,6 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
             switchon = 1;
         }
     }
-    else if(mbase_control_block->sta & F_RemoteRelayOnAllow)   //合闸允许
-    {
-        if(KeyPortCheck == 0)    //按键3秒
-        {
-            if(key_relay_on_tick < 3)   key_relay_on_tick++;
-            if(key_relay_on_tick >= 3)
-            {
-                switchon = 1;
-                mbase_control_block->sta &= ~F_RemoteRelayOnAllow;
-                key_relay_on_tick = 0;
-            }
-        }
-        else
-        {
-            key_relay_on_tick = 0;
-        }
-    }
     else if(mbase_control_block->sta & F_RemoteRelayOff)   //拉闸
     {
         if((mbase_control_block->alarmmin == 0) && (mbase_control_block->imaxmin == 0))   switchon = 0;
@@ -105,6 +99,29 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
                     mbase_control_block->sta |= F_RemoteRelayOnAllow;
                 }
             }
+        }
+    }
+    else if(mbase_control_block->sta & F_RemoteRelayOnAllow)   //合闸允许
+    {
+        if(KeyPortCheck == 0)    //按键3秒
+        {
+            if(key_relay_on_tick < 3)   key_relay_on_tick++;
+            if(key_relay_on_tick >= 3)
+            {
+                switchon = 1;
+                mbase_control_block->sta &= ~F_RemoteRelayOnAllow;
+                key_relay_on_tick = 0;
+            }
+        }
+        else
+        {
+            key_relay_on_tick = 0;
+        }
+        
+        if(mbase_control_block->relay_true_sta == 0)    //检测到合闸
+        {
+            mbase_control_block->sta &= ~F_RemoteRelayOnAllow;
+            key_relay_on_tick = 0;
         }
     }
     else
@@ -156,7 +173,7 @@ void relay_led_ctl(struct instance_t* instance,  struct pipeline_t* pipeline)
         mbase_control_block->relay_true_sta = 0;
     }
 
-    if((mbase_control_block->sta & F_RemoteRelayOnAllow) 
+    if(((mbase_control_block->sta & F_RemoteRelayOnAllow) && (mbase_control_block->relay_true_sta == 1))
       || ((mbase_control_block->sta & F_RemoteRelayOn) && (mbase_control_block->sta & F_RemoteRelayOff)))//合闸允许状态，闪烁
     {
         if(instance->time.tm_sec & 0x01)

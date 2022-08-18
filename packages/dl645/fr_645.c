@@ -1,6 +1,8 @@
 #include "nidavellir.h"
 #define data_max_len 222
 
+extern signed char ft_adj_set_meter(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
+
 int __update_cs(void* pctx, uint8_t* byte)
 {
     struct context_645_t* ctx = pctx;
@@ -625,6 +627,9 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
             break;
         case 0xfa:
             ERRBYTE = upgrade_file_handle(instance, apdu_rx+11,  ctx->apdu_rx_len, ctx->apdu_tx, (uint8_t*)&tx_len);
+            break;
+        case 0x61:  //ft校表命令
+            ERRBYTE = ft_adj_set_meter(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
             break;
         default:
             break;

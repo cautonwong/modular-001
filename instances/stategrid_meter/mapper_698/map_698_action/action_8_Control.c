@@ -45,8 +45,8 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
     struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
     uint8_t method,relayon_type=0,password[8]={0},password_des[8]={0},client_index = 0;
-    uint16_t oad,Prot_time=0;
-    uint32_t OI,addr,I_Prot=0;
+    uint16_t oad;
+    uint32_t OI,addr=0,Alarm_min=0;
 
 
     if (CA_TYPE_TER(ctx->CA))//终端
@@ -118,8 +118,8 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     mem_swap_cpy((uint8_t*)&OI, p, 4);
                     if(OI != 0xF2050201)    return -DAR_OTHERS_ERROR;
                     p = p + 5;
-                    mbase_cb->alarmmin = (uint32_t)(*p);       //拉闸延时时间
-                    mbase_cb->alarmmin = mbase_cb->alarmmin*60;
+                    Alarm_min = (uint32_t)(*p);       //拉闸延时时间  mbase_cb->alarmmin
+                    Alarm_min = Alarm_min*60;
                     mbase_cb->limitmin = 0;
                     p = p + 2;
                     mem_swap_cpy((uint8_t*)&mbase_cb->limitmin, p, 2);//预跳闸时间
@@ -132,40 +132,45 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                             mbase_cb->cmd_errstate = 0x0400;//bit5 跳闸失败（保电）
                         else
                             mbase_cb->cmd_errstate = 0x0200;//bit6 跳闸自动恢复失败（保电）
-                        return -DAR_UNAUTHORIZED;//保电   
+                        return -DAR_OTHERS_ERROR;//保电   
                     }
                     if(mbase_cb->limitmin == 0)//拉闸
                     {
                         mbase_cb->sta |= F_RemoteRelayOff;
-                        if(mbase_cb->alarmmin == 0) //直接跳闸
+                        if(mbase_cb->sta & F_RemoteRelayOnAllow)    //合闸允许状态下发拉闸命令，取消合闸允许状态
+                        {
+                            mbase_cb->sta &= ~F_RemoteRelayOnAllow;
+                            Alarm_min = 0;
+                        }
+                        if(Alarm_min == 0) //直接跳闸
                             mbase_cb->cmd_dostate = 0x2000;  //bit2;
                         else    //延时跳闸
                             mbase_cb->cmd_dostate = 0x1000;  //bit3;
                     }
                     else
                     {
-                        mbase_cb->alarmmin = 0; //预调闸命令 清延时
                         if((mbase_cb->sta & F_RemoteRelayOff) //本地跳闸 待添加
                         ||(mbase_cb->sta & F_RemoteRelayOnAllow))    
                         {
                             mbase_cb->cmd_errstate = 0x0080;  //bit8;
-                            return -DAR_UNAUTHORIZED;    //跳闸后，下发预跳闸失败
+                            return -DAR_OTHERS_ERROR;   //跳闸后，下发预跳闸失败
                         }
+                        Alarm_min = 0; //预调闸命令 清延时
                         if(relayon_type == 0)   mbase_cb->sta |= F_RemoteGaoJing1;
                         else if(relayon_type == 1)   mbase_cb->sta |= F_RemoteGaoJing0;
                         mbase_cb->cmd_dostate = 0x0800;  //bit4;
                     }
+                    mbase_cb->alarmmin = Alarm_min;
                     //大电流延时时间赋值
                     addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectValue);
                     nd_get_index(instance, addr, password, 4); 
-                    mem_swap_cpy((uint8_t*)&I_Prot, password, 4);
-                    I_Prot = I_Prot / 10;
+                    mem_swap_cpy((uint8_t*)&mbase_cb->I_Prot, password, 4);
                     addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectTime);
                     nd_get_index(instance, addr, (uint8_t*)&password, 2); 
-                    mem_swap_cpy((uint8_t*)&Prot_time, password, 2);
-                    if((abs(mbase_cb->current_l) > I_Prot) && (I_Prot != 0))
+                    mem_swap_cpy((uint8_t*)&mbase_cb->Prot_time, password, 2);
+                    if((abs(mbase_cb->current_l) > (mbase_cb->I_Prot / 10)) && (mbase_cb->I_Prot != 0))
                     {
-                        mbase_cb->imaxmin = Prot_time;   
+                        mbase_cb->imaxmin = mbase_cb->Prot_time;   
                         mbase_cb->imaxmin = mbase_cb->imaxmin*60;
                         mbase_cb->cmd_dostate = 0x0400;  //bit5;
                     }
@@ -196,8 +201,9 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Password);
                         nd_get_index(instance, addr, password_des, 8); 
                         
-                        if(mem_compare(password_des, password, 8)!=0)
+                        if((mem_compare(password_des, password, 8)!=0) || (mbase_cb->password_err_cnt >= 3))
                         {
+                            if(mbase_cb->password_err_cnt < 3)  mbase_cb->password_err_cnt++;
                             mbase_cb->cmd_errstate = 0x2000;//bit2 密码错未授权
                             return -DAR_UNAUTHORIZED;
                         }
@@ -234,6 +240,11 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         if(mbase_cb->factor_mode == false)
                             return -DAR_TIME_TAG_INVALID;
 
+                    }
+                    if((mbase_cb->sta & F_RemoteRelayOff) && (mbase_cb->alarmmin > 0))//拉闸延时过程中，保电后拉闸字符消失，灯灭
+                    {
+                        mbase_cb->alarmmin = 0;
+                        mbase_cb->sta &= ~F_RemoteRelayOff;
                     }
                     mbase_cb->sta |= F_RemoteRelayOn;
                     mbase_cb->cmd_dostate = 0x0080;  //bit8;

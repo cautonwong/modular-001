@@ -833,7 +833,7 @@ void DispNum( unsigned char* Addr, unsigned char Lenth )
 }
 
 //电能小数尾数及借位处理
-void display_energy_pro(struct pipeline_t* pipeline, uint8_t *data, uint8_t id)
+void display_energy_pro(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t *data, uint8_t id)
 {
     uint8_t EnergyDot,i,borrownum=0;
     unsigned long long energy_p=0,p_max=0;//正向，反向
@@ -961,7 +961,7 @@ unsigned long GetDispAddrInfo( struct instance_t* instance, struct pipeline_t* p
         ndv_move_buffer(data+1, data, 8);
     }
     
-    display_energy_pro(pipeline, data, D1); //电能小数尾数处理，借位处理
+    display_energy_pro(instance, pipeline, data, D1); //电能小数尾数处理，借位处理
     
     *(SignBuf+6) = Sign_FeiLvNum;//T1~T12
     Info = temp;
@@ -980,7 +980,7 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 	
     if( mbase_control_block->key_state == true )   //秘钥状态，小房子显示	
         Lcdcon[18] |= DS_Chr_Lab;  
-    if( mbase_control_block->mac_suspend_state == true )   //MAC锁
+    if(( mbase_control_block->mac_suspend_state == true ) || (mbase_control_block->password_err_cnt >= 3))   //MAC锁
         Lcdcon[17] |= DS_Chr_Lock;      
 	
 	if( instance->ac_power_statue == AC_POWER_ON )
@@ -1069,7 +1069,8 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 		//继电器状态指示
 //		if( (Flag.Relay & F_StateOff) && (Flag.Relay & F_RelayOff) 
 //		&& (((Credit_Block.Credit.Amount+MeterPara_Block.MeterPara.OverdraftCredit) <= 0) || ( (Credit_Block.Credit.Amount <= MeterPara_Block.MeterPara.RelayOnCredit)&&(Flag.MeterState & F_RelayOffed) ) || (Flag.RemoteCmd & F_RemoteRelayOff))) 
-		if((mbase_control_block->sta & F_RemoteRelayOff) || (mbase_control_block->sta & F_RemoteGaoJing0) || (mbase_control_block->sta & F_RemoteGaoJing1))//拉闸
+		if(((mbase_control_block->sta & F_RemoteRelayOff) || (mbase_control_block->sta & F_RemoteGaoJing0) || (mbase_control_block->sta & F_RemoteGaoJing1))
+           && ((mbase_control_block->sta & F_RemoteRelayOn) != F_RemoteRelayOn))    //拉闸
         {
             if((mbase_control_block->alarmmin == 0) && (mbase_control_block->imaxmin == 0))   Lcdcon[13] |= DS_Chr_LaZha;
         }

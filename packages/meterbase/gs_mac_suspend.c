@@ -27,6 +27,9 @@ void mac_suspend_reset(struct instance_t* instance)
     mbase_cb->mac_suspend_date[1] = 0;
     mbase_cb->mac_suspend_date[2] = 0;
     mbase_cb->mac_err_cnt = 0;
+    
+    
+    mbase_cb->password_err_cnt = 0;     //密码锁清零
 }
 
 

@@ -3,6 +3,8 @@
 #include "ndvh_rn8209.h"
 
 extern const struct dev_info_t rn8209_dev;
+extern int rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx);
+extern unsigned char IxRMSOS_Adjust(struct instance_t* instance, unsigned char CH);
 
 /***********************************************************************/
 /*  函数名称：GetCommTable                                             */
@@ -233,11 +235,12 @@ void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx)
 }
 
 
-unsigned char adj_meter(struct instance_t* instance, uint8_t *p_rx)
+unsigned char ft_adj_meter(struct instance_t* instance, uint8_t *p_rx)
 {
     uint32_t id=0;
+    uint8_t cmd = 0;
     
-    
+    cmd = *p_rx;
     switch(*(p_rx-1))
     {
         case 0x07://校表初始化
@@ -248,6 +251,13 @@ unsigned char adj_meter(struct instance_t* instance, uint8_t *p_rx)
             }
             break;
         case 0x11://校表
+            switch(cmd)
+            {
+                case 0xC0://有效值偏移修正
+                  IxRMSOS_Adjust(instance, 1);
+                  IxRMSOS_Adjust(instance, 2);
+                  break;
+            }
             break;
         default:
             break;
@@ -275,9 +285,9 @@ signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx,
         return -1;
     }
     
-    if((*(p_rx-1) != 0x04) && (*(p_rx-1) != 0x05))   //扩展命令——校表
+    if((*(p_rx-1) == 0x07) || (*(p_rx-1) == 0x11))   //扩展命令——校表
     {
-        Err_Byte = adj_meter(instance, p_rx);
+        Err_Byte = ft_adj_meter(instance, p_rx);
         if(Err_Byte != 0)
         {
             *p_tx = Err_Byte;

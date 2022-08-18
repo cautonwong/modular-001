@@ -18,6 +18,8 @@ unsigned int GetTotalDay( unsigned char* Addr );
 unsigned char GetWeek( unsigned char* Addr );
 
 unsigned char BYTE_BCD( unsigned char HEX );
+void WORD_BCD2( unsigned char *BCD, unsigned int WORD );
+void HEX_BCD( unsigned char* BCD, unsigned long HEX );
 
 uint16_t randomize_int(uint16_t interval);
 float bound_min_max(float val, float min, float max);

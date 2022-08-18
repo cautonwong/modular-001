@@ -128,7 +128,7 @@ struct mbase_control_block_t
           
     uint32_t volt_60;   //60%电压
     uint32_t volt_78;   //78%电压
-    uint32_t volt_125;  //125%电压
+    uint32_t volt_120;  //120%电压
     uint32_t curt_33;  //0.3%电流
     uint32_t power_33;  //启动功率0.33%*P
     
@@ -142,6 +142,9 @@ struct mbase_control_block_t
     int32_t power_factor;
     uint32_t temperature;
     uint32_t voltage_battery;
+    
+    uint32_t I_Prot;    //拉闸最大电流限制
+    uint16_t Prot_time; //拉闸最大电流限制时间
     
     uint8_t  p_pluse;          
     uint8_t  n_pluse;
@@ -329,7 +332,8 @@ struct mbase_control_block_t
 
     uint8_t mac_err_cnt; // 当日mac错误次数
     uint8_t mac_suspend_date[3];// mac错误 挂起日期 yymmdd
-
+    uint8_t password_err_cnt;   //密码锁错误次数
+    
     struct tm v_powerdown_tm;                   // 模拟停电时间  补结算测试用 
     uint8_t persistent_blank_space[4*10];   //  空白区
 
