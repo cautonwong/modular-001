@@ -567,6 +567,41 @@ int fr_pack_645_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     return 1;
 }
 
+unsigned char Addr_A_A( unsigned char* Addr ) 
+{
+	unsigned char i;
+    
+	for( i=0;i<6;i++ )
+	{
+		if( *(Addr+i) != 0xAA ) return 1;
+	}
+	return 0;
+}
+
+unsigned char Cmp_MeterAddr( struct instance_t* instance, unsigned char* Addr, unsigned char mode )
+{
+	unsigned char i;
+    struct mbase_control_block_t* mbase_cb;
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    if( mode == 1 )
+	{
+		for( i=0;i<6;i++ )
+		{
+	    	if( *(Addr+5-i) == 0xAA )
+	    		*(Addr+5-i) = mbase_cb->tsa[5-i];
+			else
+				break;
+		}
+	}
+	if( memcmp( Addr, mbase_cb->tsa, 6 ) == 0 )
+	{
+		return 0;
+	}
+	else
+		return 1;
+}
+
 int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
@@ -599,37 +634,64 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
         
     switch (ctx->ctrl)
     {
-        case 0X11:
-            ERRBYTE = Comm_Read(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
+        case 0X11:  //读
+            if( Cmp_MeterAddr( instance, (unsigned char*)&apdu_rx[1], 1 ) == 0 )
+            {
+                ERRBYTE = Comm_Read(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
+            }
+            else
+                return -1;
             break;
         case 0x13://读地址
-            if(*(apdu_rx+9) == 0)
+            if((Addr_A_A( (unsigned char*)&apdu_rx[1] ) == 0) && (apdu_rx[9] == 0))
             {
                 memcpy(ctx->apdu_tx, mbase_cb->tsa, 6);
                 tx_len = 6;
                 ERRBYTE = 0;
             }
+            else
+                return -1;
             break;
-        case 0X14:
-            ERRBYTE = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
-            if(ERRBYTE == 0)
+        case 0X14:  //写数据
+            if( Cmp_MeterAddr( instance, (unsigned char*)&apdu_rx[1], 0 ) == 0 )
             {
-                tx_len = 0;
+                ERRBYTE = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
+                if(ERRBYTE == 0)
+                {
+                    tx_len = 0;
+                }
+                else
+                {
+                    tx_len = 1;
+                    *ctx->apdu_tx = ERRBYTE;
+                }
             }
             else
-            {
-                tx_len = 1;
-                *ctx->apdu_tx = ERRBYTE;
-            }
+                return -1;
             break;
         case 0x1F:
-            ERRBYTE = Comm_Other(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
+            if( Cmp_MeterAddr( instance, (unsigned char*)&apdu_rx[1], 0 ) == 0 )
+            {
+                ERRBYTE = Comm_Other(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
+            }
+            else
+                return -1;
             break;
         case 0xfa:
-            ERRBYTE = upgrade_file_handle(instance, apdu_rx+11,  ctx->apdu_rx_len, ctx->apdu_tx, (uint8_t*)&tx_len);
+            if( Cmp_MeterAddr( instance, (unsigned char*)&apdu_rx[1], 0 ) == 0 )
+            {
+                ERRBYTE = upgrade_file_handle(instance, apdu_rx+11,  ctx->apdu_rx_len, ctx->apdu_tx, (uint8_t*)&tx_len);
+            }
+            else
+                return -1;
             break;
         case 0x61:  //ft校表命令
-            ERRBYTE = ft_adj_set_meter(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
+            if( Cmp_MeterAddr( instance, (unsigned char*)&apdu_rx[1], 1 ) == 0 )
+            {
+                ERRBYTE = ft_adj_set_meter(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
+            }
+            else
+                return -1;
             break;
         default:
             break;

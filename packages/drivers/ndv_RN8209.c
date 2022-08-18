@@ -229,8 +229,10 @@ unsigned char Rn8209DeviceIDCheck(const struct dev_info_t* dev)
 unsigned char Rn8209AdjParaSet(struct instance_t* instance, struct Rn8209AdjSet_t* Set , const struct dev_info_t* dev)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint32_t addr = 0, data=0;
+    uint32_t addr = 0, data=0, i;
     uint16_t temp=0,metertype=0;
+    uint16_t defaultdata[9]={0x3E40, 0x3F41, 0x4042, 0x4143, 0x4244, 0x4345, 0x4446, 0x4547, 0x4648};
+    
     CmdRn8209(CMD_WR_EN , dev );
     mcu_delay_us(5000);
     mcu_delay_us(5000);
@@ -278,6 +280,16 @@ unsigned char Rn8209AdjParaSet(struct instance_t* instance, struct Rn8209AdjSet_
         data = 0;
         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Cmp_Value);
         nd_get_index(instance, addr, (uint8_t*)&data, 2);//读取自热补偿值
+        
+        for(i=0; i<9; i++)
+        {
+            if(data == defaultdata[i])
+                break;
+        }
+        if(i >= 9)  //防止参数非法
+        {
+            data = 0x4244;
+        }
         CmdRn8209(0x02, dev);
         CmdRn8209(0xBA, dev);
         CmdRn8209(0x7F, dev);
