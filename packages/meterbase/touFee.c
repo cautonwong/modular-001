@@ -271,7 +271,7 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para);//读取时区表个数
     nd_get_index(instance, s_index, (uint8_t*)&Num, 1);
     
-    if(Num>14) Num = 14;
+    if(Num>MaxSeasonNum) Num = MaxSeasonNum;
 	if( Num == 0 )
 		mbase_cb->DayTableNo = 1;
 	else
@@ -286,6 +286,10 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
         
 		i = FeeTable_CmpFind( instance, pipeline, (unsigned char)Num, 0 ,&Buf[0]);//比较查找时区表
 		mbase_cb->DayTableNo = Buf[3*i+2];
+        if ((mbase_cb->DayTableNo == 0) || (mbase_cb->DayTableNo > MaxTouTabNum))
+        {
+            mbase_cb->DayTableNo = 1;
+        } 	
 	}
 }
 

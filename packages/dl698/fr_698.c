@@ -215,7 +215,7 @@ int fr_pack_698_head(struct instance_t* instance, struct pipeline_t* pipeline, s
     ctx->fcs = 0xffff;
     ctx->tx_len = 0;
 
-    for(int i = 0; i < 3; i ++){
+    for(int i = 0; i < 4; i ++){
         fifoBuf_putByte(fifo, 0xfe);
     }
     fifoBuf_putByte(fifo, 0x68);

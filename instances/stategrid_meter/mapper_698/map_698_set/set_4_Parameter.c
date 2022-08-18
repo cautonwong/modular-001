@@ -42,7 +42,7 @@ const general_set4  general_set4_talble[] =
      SeasonTable_Changetime,    0x4008,     0x02,   0x01,   7,//两套时区切换时间
      DayTable_Changetime,       0x4009,     0x02,   0x01,   7,//两套时段切换时间
      //SecretKey_Num,             0x400F,     0x02,   0x01,   1,//秘钥总条数
-     Meter_Num,                 0x4010,     0x02,   0x01,   1,//计量元件个数
+//     Meter_Num,                 0x4010,     0x02,   0x01,   1,//计量元件个数
      Weekend,                   0x4012,     0x02,   0x02,   1,//周休日特征字
      WeekendFee,                0x4013,     0x02,   0x01,   1,//周休日采用费率号
      Meter_CT,                  0x401C,     0x02,   0x01,   4,//CT
@@ -74,6 +74,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
     uint8_t* ptr_tmp = instance->apdu_cache;
     uint32_t addr=0;
     struct mbase_control_block_t* mbase_cb;
+    uint16_t tag_datalen = 0, datalen = 0;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
@@ -88,16 +89,13 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
             {
                 switch(oad)
                 {
-                    case 0x4010://元器件个数
-                        if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
-                        if(*(p+1) != 1)   return -DAR_TYPE_NOT_MATCH;
-                        break;
                     case 0x4012://周休日
                         if(*p != 4) return -DAR_TYPE_NOT_MATCH;
                         mbase_cb->Fee |= F_DAYTABChange;
                         break;
                     case 0x4013://周休日日时段表号
                         if(*p != 17) return -DAR_TYPE_NOT_MATCH;
+                        if ( p[1] >  MaxTouTabNum ) return -DAR_RW_REJECT;
                         //保存编程前
                         nd_get(instance, id, timer, 2, NULL);
                         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_WeekTab);
@@ -108,15 +106,16 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     case 0x400F://秘钥总条数
                     case 0x401C://电流变比
                     case 0x401D://电压变比
-                    case 0x4102:    //脉冲宽度
                         return -DAR_RW_REJECT;
                         break;
-                    
+
+                    //case 0x4010:    //元器件个数
                     case 0x4104:    //额定电压
                     case 0x4105:    //额定电流
                     case 0x4106:    //最大电流
                     case 0x4107:    //有功准确度等级
                     case 0x4109:    //有功脉冲常数
+                    case 0x4102:    //脉冲宽度
                         if(mbase_cb->factor_mode == false)  
                             return -DAR_RW_REJECT; //工厂模式外，禁止写入
                         break;
@@ -157,12 +156,23 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         send_event_mesg_pro(instance, NULL, ActCombWrS, NULL, 1);// 
                         break;
                 }
-                memset(ptr_tmp, 0, general_set4_talble[i].len);
-                ndv_memcopy(ptr_tmp, p, general_set4_talble[i].len);
+                tag_datalen = axdr_get_len(p);
+                 
+                memset(ptr_tmp, 0, (general_set4_talble[i].offset + general_set4_talble[i].len)); //补空
+                if (general_set4_talble[i].offset > tag_datalen)
+                {
+                    return -DAR_OTHERS_ERROR;
+                }
+                datalen = (tag_datalen - general_set4_talble[i].offset);
+                if(datalen > general_set4_talble[i].len)
+                {
+                    return -DAR_BUFFER_OVERFLOW;
+                }
+                ndv_memcopy(ptr_tmp, (p + general_set4_talble[i].offset), datalen);
               
                 addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + general_set4_talble[i].s_index);
-                nd_set_index(instance, addr, (p + general_set4_talble[i].offset), general_set4_talble[i].len); 
-                return (general_set4_talble[i].offset + general_set4_talble[i].len);
+                nd_set_index(instance, addr, ptr_tmp, general_set4_talble[i].len); 
+                return tag_datalen;//(general_set4_talble[i].offset + general_set4_talble[i].len);
             }
             else
             {
@@ -257,10 +267,12 @@ int set_support_protocol_list(struct instance_t* instance, uint32_t id, uint8_t*
 int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
 {
     struct mbase_control_block_t* mbase_cb;
-    uint8_t j, i,timer[6], num, Tnum,tmpbuf[32]={0};
+    uint8_t j, i,timer[6], num, Tnum, tmpbuf[60] ={0};
+    uint8_t* ptr_tmp = instance->apdu_cache;
     uint8_t* p = buf;
     uint32_t addr=0, chn;
     uint16_t idl = 0,year2, tmpid1;
+    uint16_t tag_datalen = 0, datalen = 0;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
@@ -302,14 +314,28 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     break;
 
             }
-            memset(tmpbuf, 0x00, set4300_table[i].len);
-            p = p + set4300_table[i].offset;
-            memcpy(tmpbuf, p, set4300_table[i].len);
+            tag_datalen = axdr_get_len(p);
+             
+            memset(ptr_tmp, 0, (set4300_table[i].offset + set4300_table[i].len)); //补空
+            if (set4300_table[i].offset > tag_datalen)
+            {
+                return -DAR_OTHERS_ERROR;
+            }
+            datalen = (tag_datalen - set4300_table[i].offset);
+            if(datalen > set4300_table[i].len)
+            {
+                return -DAR_BUFFER_OVERFLOW;
+            }
+            
+            ndv_memcopy(ptr_tmp, (p + set4300_table[i].offset), datalen);
+
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + set4300_table[i].s_index);
-            nd_set_index(instance, addr, tmpbuf, set4300_table[i].len); 
-            p = p + set4300_table[i].len; 
+            nd_set_index(instance, addr, ptr_tmp, set4300_table[i].len); 
+
             EventOut_698_check(instance);  
-            return (p-buf);
+            
+            return tag_datalen;
+
         }
     }
     
@@ -381,7 +407,7 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 chn = buf_to_uint32_msb(p);
                 p += 4;
             
-                if ((chn == 0xf2020201) || ((chn != 0xf2010201)&&(chn != 0xf2010202) && chn != 0xf2090201))
+                if ((chn == 0xf2020201) || ((chn != 0xf2010201) /*&&(chn != 0xf2010202)*/ && chn != 0xf2090201))
                 {
                     return -DAR_OTHERS_ERROR;
                 }
@@ -448,6 +474,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
     int8_t dar =0;
     uint8_t* p = buf;
     uint32_t s_index = 0x00,addr=0;
+    uint16_t cur_v = 0, last_v = 0xFFFF, first_v = 0,max_v = 0, period = 15, last_fee=1; //时段检查
     int len=0;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -764,17 +791,18 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             break;
         case 0x4014://当前套时区表
         case 0x4015://备用套时区表
-            if(index > 14)    return -DAR_OTHERS_ERROR;
+            if(index > MaxSeasonNum)    return -DAR_TIME_ZONE_EXCEED;
             if((oad == 0x4014) && (mbase_cb->factor_mode == false))    return    -DAR_RW_REJECT;
             if(index == 0)
             {
                 num = *(p+1);
-                if(num>14) num = 14;
+                if(num>MaxSeasonNum) return -DAR_TIME_ZONE_EXCEED;
                 for(i=0; i<num; i++)
                 {
                     if((*(p+2+8*i+3) > 12) || (*(p+2+8*i+3) == 0)) return -DAR_RW_REJECT;
                     if((*(p+2+8*i+5) > 31) || (*(p+2+8*i+5) == 0)) return -DAR_RW_REJECT;
                     if(*(p+2+8*i+5) > MonTab[*(p+2+8*i+3)]) return -DAR_RW_REJECT;
+                    if((*(p+2+8*i+7)) > MaxTouTabNum) return -DAR_RW_REJECT;
                 }
             }
             else
@@ -782,6 +810,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 if((*(p+3) > 12) || (*(p+3) == 0))  return -DAR_RW_REJECT;
                 if((*(p+5) > 31) || (*(p+5) == 0))  return -DAR_RW_REJECT;
                 if(*(p+5) > MonTab[*(p+3)])     return -DAR_RW_REJECT;
+                if((*(p+7)) > MaxTouTabNum) return -DAR_RW_REJECT;
             }
             
             if(oad == 0x4014)   
@@ -800,7 +829,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             if(index == 0)
             {
                 num = *(p+1);
-                if(num>14) num = 14;
+                if(num>MaxSeasonNum) num = MaxSeasonNum;
                 p = p + 2;
                 for(i=0; i<num; i++)
                 {
@@ -813,9 +842,9 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
                     nd_set_index(instance, s_index, buffer, 3);
                 }
-                if(num < 14)
+                if(num < MaxSeasonNum)
                 {
-                    for(i=num; i<14; i++)
+                    for(i=num; i<MaxSeasonNum; i++)
                     {
                         buffer[0+i*3] = buffer[0+(num-1)*3];
                         buffer[1+i*3] = buffer[1+(num-1)*3];
@@ -842,30 +871,17 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             break;
         case 0x4016://当前套日时段表
         case 0x4017://备用套日时段表
-            if((index > 0x08) || (index == 0))    return -DAR_RW_REJECT;
+            if((index > MaxTouTabNum) || (index == 0))    return -DAR_RW_REJECT;
             if((oad == 0x4016) && (mbase_cb->factor_mode == false))    return    -DAR_RW_REJECT;
-            
-            if(*(p+5) > 23)  return -DAR_RW_REJECT;
-            if(*(p+7) > 59)  return -DAR_RW_REJECT;
             
             if(oad == 0x4016)
                 addr = Day_Table00;
             else
                 addr = Day_Table10;
 
-            // 编程事件-保存编程前
-            if (oad == 0x4017)
-            {
-                nd_get(instance, id, temp, 114, NULL);
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_DayTab);
-                nd_set_index(instance, s_index, temp, 114);
-
-                temp[0] = TYPE_OAD;
-                uint32_to_buf_msb(id, &temp[1]);
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Set_DayTab_Oad);
-                nd_set_index(instance, s_index, temp, 5);
-            }
-
+            max_v = 0;
+            last_v = 0xFFFF;
+            period = 15;
 /*            if(index == 0)
             {
                 p++;
@@ -900,24 +916,94 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             {
                 p++;
                 num_hourtab = *p++; //日时段数，每日切换数
+                if(num_hourtab > MaxTouNum)  
+                {
+                    return -DAR_DAY_INTERVAL_EXCEED;
+                }
                 for(i=0; i<num_hourtab; i++)
                 {
+                    if ((p[0] != TYPE_structure) || (p[1] != 3) || (p[2] != TYPE_unsigned)  || (p[4] != TYPE_unsigned) || (p[6] != TYPE_unsigned)
+                        || (p[3] > 23) || (p[5] > 59) || (p[7] > MaxFeeNum)|| (p[7] == 0)) 
+                    
+                    {
+                        if (p[7] > MaxFeeNum) 
+                        {
+                            return -DAR_TARIFF_NUM_EXCEED;
+                        }
+                        
+                        return -DAR_RW_REJECT;
+                    }
+                    
                     p = p + 3;
                     buffer[0+i*3] = *p++;
                     p++;
                     buffer[1+i*3] = *p++;
                     p++;
                     buffer[2+i*3] = *p++;
-                }
-                if(num_hourtab < 14)
-                {
-                    for(i=num_hourtab; i<14; i++)
+
+                    
+                    //时段顺序 检查
+                    cur_v = (buffer[0+i*3] * 60) + buffer[1+i*3] + max_v;
+                    if (last_v == 0xFFFF)
                     {
-                        buffer[0+i*3] = buffer[0+(num_hourtab-1)*3];
-                        buffer[1+i*3] = buffer[1+(num_hourtab-1)*3];
-                        buffer[2+i*3] = buffer[2+(num_hourtab-1)*3];
+                        first_v = cur_v;
+                        last_fee = buffer[2+i*3];
+                        
                     }
+                    else
+                    {
+                        if (cur_v < last_v) //翻转
+                        {
+                            if (max_v == 0) //翻转一次
+                            {
+                                max_v = 1440;
+                                cur_v += max_v;
+                            }
+                            else
+                            {
+                                return -DAR_RW_REJECT;
+                            }
+                        }
+                        else
+                        {
+                            if ((max_v) && ((cur_v - max_v + period) > first_v))
+                            {
+                                return -DAR_RW_REJECT;
+                            }
+                        } 
+
+                        if ((buffer[2+i*3] != last_fee) && (cur_v < (last_v + period)))
+                        {
+                            return -DAR_RW_REJECT;
+                        }
+                        
+                    }
+                    last_v = cur_v;
+                    last_fee = buffer[2+i*3];
                 }
+                
+
+                for(i=num_hourtab; i < MaxTouNum; i++)
+                {
+                    buffer[0+i*3] = buffer[0+(num_hourtab-1)*3];
+                    buffer[1+i*3] = buffer[1+(num_hourtab-1)*3];
+                    buffer[2+i*3] = buffer[2+(num_hourtab-1)*3];
+                }
+
+                // 编程事件-保存编程前
+                if (oad == 0x4017)
+                {
+                    nd_get(instance, id, temp, 114, NULL);
+                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_DayTab);
+                    nd_set_index(instance, s_index, temp, 114);
+
+                    temp[0] = TYPE_OAD;
+                    uint32_to_buf_msb(id, &temp[1]);
+                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Set_DayTab_Oad);
+                    nd_set_index(instance, s_index, temp, 5);
+                }            
+                
+                
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index - 1));
                 nd_set_index(instance, s_index, buffer, 42);
                 

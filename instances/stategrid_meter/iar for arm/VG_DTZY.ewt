@@ -2663,6 +2663,9 @@
             <file>
                 <name>$PROJ_DIR$\..\mapper_645\ctl_1f_other.c</name>
             </file>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_645\ctl_61_ft.c</name>
+            </file>
         </group>
         <group>
             <name>meterbase</name>

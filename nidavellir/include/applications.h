@@ -11,7 +11,6 @@
 #define RESET_INFO    1 // 记录 复位信息
 
 #define Bat_Low_Level   300     //电池欠压阈值
- 
 
 struct energy_ctx_t
 {
@@ -464,7 +463,7 @@ struct format_conversion_t
 #define     MaxSeasonNum    		14
 #define 	MaxTouNum     			14
 #define 	MaxFeeNum     			12
-#define     MaxHolidayNum   		10
+#define     MaxHolidayNum   		20
 #define		MaxTouTabNum			8
 
 //Fee
