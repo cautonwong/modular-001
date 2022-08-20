@@ -986,8 +986,8 @@ int decode_rsd_selector_9(struct instance_t* instance, struct pipeline_t* pipeli
 //检查搜索的关联对象是否存在
 uint8_t check_capture_exist(uint32_t rcsd_req, uint32_t rcsd_src)
 {
-    uint8_t type, attr_req, attr_src, index_req,index_src, schem_req, schem_src;
-    uint16_t oi_req, oi_src;
+    uint8_t type = 0, attr_req = 0, attr_src = 0, index_req = 0,index_src = 0, schem_req = 0, schem_src = 0, index_limit = 0;
+    uint16_t oi_req = 0, oi_src = 0;
 
     //常规
     if (rcsd_req == rcsd_src)
@@ -1030,7 +1030,55 @@ uint8_t check_capture_exist(uint32_t rcsd_req, uint32_t rcsd_src)
             }
         }
     }
+    else if ((type) == 2) //变量
+    {
+        switch(oi_req)
+        {
+            case 0x2000://电压    
+            case 0x2001://电流
+            case 0x2002://电压相角
+            case 0x2003://电压电流相角
+            case 0x2004://有功功率    
+            case 0x2005://无功功率     
+            case 0x2006://视在功率 
+            case 0x200A://功率因素
+                if((oi_req == oi_src) && (schem_req == schem_src))
+                {
+                    if (((attr_req == 2)) && ((attr_src == 2)))
+                    {
+                        if((oi_req >= 0x2000) && (oi_req <= 0x2003))
+                        {
+                            index_limit = 1;
+                        }
+                        else
+                        {
+                            index_limit = 2;
+                        }
+                        
+                        if( index_req > index_limit ) // 不存在的费率  // 或者改为 fee num 
+                        {
+                            return false;
+                        }
+                        
+                        if(index_req != index_src)
+                        {
+                            if(index_src != 0)
+                            {
+                                return false;
+                            }
+                        }
 
+                        return true;
+                    }
+                }
+            
+            break;
+            default:
+                break;
+        }
+
+    }
+    
     return false;
 }
 

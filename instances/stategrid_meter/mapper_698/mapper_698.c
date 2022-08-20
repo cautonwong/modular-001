@@ -1336,7 +1336,18 @@ int fc_fun_03(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, u
     uint16_t decode_len = 0;
     uint8_t *p = des;
     //uint8_t num = 0;
-    
+
+
+    if (mode == RFC_GET_ORIGINAL_LEN) 
+    {
+        return axdr_get_len(src); 
+    }
+    /*    
+        else if (mode == RFC_GET_STORE_LEN) 
+        {
+            
+        }
+    */
     if (mode == RFC_WRITE)
     {
         if (fc->store_len != 0xFFFF)
@@ -1362,20 +1373,55 @@ int fc_fun_03(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, u
 //电压块 支持单个电压读取
 int fc_fun_04(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
-    uint16_t decode_len = 0;
+    uint16_t decode_len = 0, len = 0;
     uint8_t *p = des;
     //uint8_t num = 0;
     uint8_t index;
     
     index = get_OAD_Index(oad_req);
 
-    if (mode == RFC_WRITE)
+    if (mode == RFC_GET_ORIGINAL_LEN) 
     {
-        src++;//array
-        src++;
-        src++;
-        ndv_memcopy(des, src, 2);
-        p += 2;
+        if (index == 0)
+        {
+            len = 5;
+        }
+        else
+        {
+            len = 3;
+        }
+        return len;
+    }
+    /*    
+        else if (mode == RFC_GET_STORE_LEN) //单相
+        {
+            
+        }
+    */
+
+    else if (mode == RFC_WRITE)
+    {
+        if (index == 0)
+        {
+            src++;//array
+            src++;
+            src++;
+            ndv_memcopy(des, src, 2);
+            p += 2;
+
+        }
+        else if (index == 1)
+        {
+            src++;
+            ndv_memcopy(des, src, 2);
+            p += 2;
+
+        }
+        else
+        {
+        
+        }
+
     }
     else if (mode == RFC_READ)
     {
@@ -1406,20 +1452,53 @@ int fc_fun_04(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, u
 //电流块 支持单个读取
 int fc_fun_05(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
-    uint16_t decode_len = 0;
+    uint16_t decode_len = 0, len;
     uint8_t *p = des;
     //uint8_t num = 0;
     uint8_t index;
     
     index = get_OAD_Index(oad_req);
 
+    
+    if (mode == RFC_GET_ORIGINAL_LEN) 
+    {
+        if (index == 0)
+        {
+            len = 7;
+        }
+        else
+        {
+            len = 5;
+        }
+        return len;
+    }
+    /*    
+        else if (mode == RFC_GET_STORE_LEN) //单相
+        {
+            
+        }
+    */
+
     if (mode == RFC_WRITE)
     {
-        src++;//array
-        src++;
-        src++;
-        ndv_memcopy(des, src, 4);
-        p += 4;
+        if (index == 0)
+        {
+            src++;//array
+            src++;
+            src++;
+            ndv_memcopy(des, src, 4);
+            p += 4;
+        }
+        else if (index == 1)
+        {
+            src++;
+            ndv_memcopy(des, src, 4);
+            p += 4;
+        }
+        else//三相 
+        {
+        
+        }
     }
     else if (mode == RFC_READ)
     {
@@ -1450,20 +1529,49 @@ int fc_fun_05(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, u
 //功率块 支持单个读取
 int fc_fun_06(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
-    uint16_t decode_len = 0;
+    uint16_t decode_len = 0, len;
     uint8_t *p = des;
     //uint8_t num = 0;
     uint8_t index;
     
     index = get_OAD_Index(oad_req);
 
+
+    if (mode == RFC_GET_ORIGINAL_LEN) 
+    {
+        if (index == 0)
+        {
+            len = 12;
+        }
+        else if ((index == 1)|| (index == 2))
+        {
+            len = 5;
+        }
+        return len;
+    }
+    /*    
+        else if (mode == RFC_GET_STORE_LEN) //单相
+        {
+            
+        }
+    */
+
     if (mode == RFC_WRITE)
     {
-        src++;//array
-        src++;
-        src++;
-        ndv_memcopy(des, src, 4);
-        p += 4;
+        if (index == 0)
+        {
+            src++;//array
+            src++;
+            src++;
+            ndv_memcopy(des, src, 4);
+            p += 4;
+        }
+        else if ((index == 1)||(index == 2))
+        {
+            src++;
+            ndv_memcopy(des, src, 4);
+            p += 4;
+        }
     }
     else if (mode == RFC_READ)
     {
@@ -1479,7 +1587,7 @@ int fc_fun_06(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, u
             p += 4;
             src += 4;
         }
-        else if (index == 1)
+        else if ((index == 1)|| (index == 2))
         {
             *p++ = TYPE_double_long;
             ndv_memcopy(p, src, 4);
@@ -1496,20 +1604,52 @@ int fc_fun_06(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, u
 //功率因数块 支持单个读取
 int fc_fun_07(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
-    uint16_t decode_len = 0;
+    uint16_t decode_len = 0, len;
     uint8_t *p = des;
     //uint8_t num = 0;
     uint8_t index;
     
     index = get_OAD_Index(oad_req);
+    
+    if (mode == RFC_GET_ORIGINAL_LEN) 
+    {
+        if (index == 0)
+        {
+            len = 8;
+        }
+        else
+        {
+            len = 3;
+        }
+        return len;
+    }
+    /*    
+        else if (mode == RFC_GET_STORE_LEN) //单相
+        {
+            
+        }
+    */
 
     if (mode == RFC_WRITE)
     {
-        src++;//array
-        src++;
-        src++;
-        ndv_memcopy(des, src, 2);
-        p += 2;
+        if (index == 0)
+        {
+            src++;//array
+            src++;
+            src++;
+            ndv_memcopy(des, src, 2);
+            p += 2;
+        }
+        else if ((index == 1)|| (index == 2))
+        {
+            src++;
+            ndv_memcopy(des, src, 2);
+            p += 2;
+        }
+        else//三相 
+        {
+        
+        }
     }
     else if (mode == RFC_READ)
     {
@@ -1525,7 +1665,7 @@ int fc_fun_07(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, u
             p += 2;
             src += 2;
         }
-        else if (index == 1)
+        else if ((index == 1)|| (index == 2))
         {
             *p++ = TYPE_long;
             ndv_memcopy(p, src, 2);
@@ -1777,10 +1917,10 @@ const struct format_conversion_t format_conversion_tab[] =
     {   0x20210200,     8,      5,      fc_fun_01   },
     {   0x40000200,     8,      5,      fc_fun_01   },
     
-    {   0x20000200,     5,      2,      fc_fun_04   },//电压
-    {   0x20010200,     7,      4,      fc_fun_05   },//电流
-    {   0x20040200,     12,     4,      fc_fun_06   },//功率  
-    {   0x200A0200,     8,      2,      fc_fun_07   },//功率因数
+    {   0x200002FF,     0xFFFF/*5*/,      2,      fc_fun_04   },//电压
+    {   0x200102FF,     0xFFFF/*7*/,      4,      fc_fun_05   },//电流
+    {   0x200402FF,     0xFFFF/*12*/,     4,      fc_fun_06   },//功率  
+    {   0x200A02FF,     0xFFFF/*8*/,      2,      fc_fun_07   },//功率因数
    
     {   0x33020206,   0xFFFF,  52,      fc_fun_02   },  
     {   0x33140207,   0xFFFF,  114,     fc_fun_03   },  
@@ -1804,7 +1944,7 @@ int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* sr
 {
     uint16_t i;
     uint8_t type, attr, index, len, block_num = (4+1);
-    uint32_t addr;
+    uint32_t addr, cmp_oad = 0;
 
     type = get_OAD_Class(oad_req);
     attr = get_OAD_Attribute(oad_req);
@@ -1813,7 +1953,6 @@ int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* sr
     {
         case 0: //电能
         {
-            
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3); //读取费率数
             nd_get_index(instance, addr, &block_num, 1); 
             
@@ -1884,20 +2023,40 @@ int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* sr
             }
         }
             break;
+
+        
         default:
         {
             for (i = 0; i < (sizeof(format_conversion_tab) / sizeof(format_conversion_tab[0])); i++)
             {
+                cmp_oad = oad_req;
+                if (0xFF == (uint8_t)(format_conversion_tab[i].oad)) //支持块/索引
+                {
+                    cmp_oad |= 0xFF;
+                }
+                if (0xFF == (uint8_t)(format_conversion_tab[i].oad >> 8))
+                {
+                    cmp_oad |= 0xFF<<8;
+                }
+                if (0xFF == (uint8_t)(format_conversion_tab[i].oad >> 16)) 
+                {
+                    cmp_oad |= 0xFF<<16;
+                }
+                if (0xFF == (uint8_t)(format_conversion_tab[i].oad >> 24)) 
+                {
+                    cmp_oad |= 0xFF<<24;
+                }
+
                 if ((format_conversion_tab[i].oad & (0x0000F000)) != 0 ) //指定方案  全字比对
                 {
-                    if ((oad_req ) == format_conversion_tab[i].oad)
+                    if ((cmp_oad ) == format_conversion_tab[i].oad)
                     {
                         break;
                     }
                 }
                 else
                 {
-                    if ((oad_req & (0xFFFF1FFF)) == format_conversion_tab[i].oad)
+                    if ((cmp_oad & (0xFFFF1FFF)) == format_conversion_tab[i].oad)
                     {
                         break;
                     }
@@ -1914,7 +2073,8 @@ int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* sr
             {
                 if(format_conversion_tab[i].original_len == 0xFFFF) 
                 {
-                    return axdr_get_len(src); // 待调整  目前解析长度 只有数据域 不带tag
+                    return format_conversion_tab[i].format_fun(instance, oad_req, oad_src, des, src, mode, (struct format_conversion_t *)&format_conversion_tab[i]);
+
                 }
                 else
                 {
@@ -1924,7 +2084,15 @@ int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* sr
             }
             else if (mode == RFC_GET_STORE_LEN)
             {
-                return format_conversion_tab[i].store_len;
+                if(format_conversion_tab[i].store_len == 0xFFFF) 
+                {
+                    return format_conversion_tab[i].format_fun(instance, oad_req, oad_src, des, src, mode, (struct format_conversion_t *)&format_conversion_tab[i]);
+
+                }
+                else
+                {
+                    return format_conversion_tab[i].store_len;
+                }
             }
             else
             {

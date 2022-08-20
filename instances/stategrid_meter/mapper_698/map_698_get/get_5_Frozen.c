@@ -125,7 +125,7 @@ int GET_5_Frozen(struct instance_t* instance, uint32_t oad, uint8_t* buf, void *
             {
                 return ret;
             }
-            return DAR_RW_REJECT;
+            return -DAR_RW_REJECT;
         }
         break;
 
