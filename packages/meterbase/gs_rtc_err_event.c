@@ -59,7 +59,7 @@ int rtc_check_poweron(struct instance_t* instance)
     //------------------
 
     //检查系统时间是否合法
-    if (false == rtc_tm_valid(&instance->time))   
+    if (false == rtc_tm_valid(&instance->time))   //可能时间不对，但合法
     {
         mark = 0x5A;       
     }
@@ -68,7 +68,7 @@ int rtc_check_poweron(struct instance_t* instance)
     ndv_memcopy(&temp_tm, &ctrl_block->powerdown_tm, sizeof(struct tm));
     if (false == rtc_tm_valid(&temp_tm))   
     {
-        set_default_rtc(&temp_tm);
+        set_default_rtc(&temp_tm);//优化 可取上一次分钟冻结的时间 待调整
     }
 
     t_now = rtc_mktime(&instance->time);

@@ -124,6 +124,9 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     timer_set[4] = *(p+2);  //month
                     temp = *p;
                     temp = (temp << 8) + *(p+1);
+
+                    if(temp >= 2100) return -DAR_OTHERS_ERROR;  //年   不支持2100以上
+                    if(temp < 2000) return -DAR_OTHERS_ERROR;   //年   不支持2000以下
                     timer_set[5] = (uint8_t)(temp - 2000);
                     Temp32B = GetTotalSec(timer_set);	//设置时间
                             

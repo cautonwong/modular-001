@@ -507,6 +507,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 p++;
                 
                 mem_swap_cpy((uint8_t*)&year2, p, 2);
+                if(year2 >= 2100) return -DAR_OTHERS_ERROR;
                 if(year2 < 2000) return -DAR_OTHERS_ERROR;
                 year2 = year2 - 2000;
                 timer[0] = *(p+3); //day
