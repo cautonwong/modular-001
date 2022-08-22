@@ -215,7 +215,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             rtc_check_poweron(instance);
             Energy_Meter_PowerON(instance, pipeline);
             Electrical_measurement_poweron(instance, pipeline);
-            AllDisplayLCD(instance, pipeline);
+            //AllDisplayLCD(instance, pipeline);
             esam_698_power_on(instance);
            
             Magnetic_hold_relay_Init();

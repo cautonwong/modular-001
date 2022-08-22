@@ -840,9 +840,17 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 }
                 if((*p != F_PortSec) && (*p != F_PortTouCut))
                 {
-                    return -DAR_BUFFER_OVERFLOW;
+                    return -DAR_OTHERS_ERROR;//return -DAR_BUFFER_OVERFLOW;
                 }
                 mbase_cb->MulPortMode = *p++;
+                if(F_PortTouCut == mbase_cb->MulPortMode)    
+                {
+                    opreate_second_pluse(3);    //切换至多功能口
+                }
+                else
+                {
+                    opreate_second_pluse(1);    //秒脉冲
+                }
             }
             else
             {

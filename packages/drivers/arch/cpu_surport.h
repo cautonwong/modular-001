@@ -59,7 +59,7 @@ extern uint8_t mcu_adc_start_once(uint8_t chl_type);
 extern uint32_t read_mcu_adc_measure_value(uint8_t chl_type , int32_t *adc_measure);
 extern void opreate_second_pluse(uint8_t mode);
 extern void device_power_close(struct instance_t* instance);
-extern void device_power_open(struct instance_t* instance);
+extern void device_power_open(struct instance_t* instance, struct pipeline_t* pipeline);
 extern void cpu_io_lowpower_cfg_chk(struct instance_t *instance);
 extern void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline);
 extern  void device_power_close1(struct instance_t* instance);

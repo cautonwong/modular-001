@@ -681,6 +681,8 @@ void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
     mbase_control_block->KeyInv = 0;
     mbase_control_block->Key = 0;
     
+    Send_DisplayData(instance, pipeline);
+    
 }
 
 /***********************************************************************/

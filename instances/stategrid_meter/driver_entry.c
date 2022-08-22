@@ -510,17 +510,12 @@ void report_port_open(struct instance_t* instance)
     UART_INTConfig(UART4, UART_INT_RX | UART_INT_TXDONE, DISABLE);
     UART_INTConfig(UART5, UART_INT_RX | UART_INT_TXDONE, DISABLE);
     
-    LCD->CTRL |= LCD_CTRL_EN;
-    MISC2->HCLKEN |= (uint32_t)BIT6;
-    memcpy((uint8_t*)(&LCD->FB[0]), (uint8_t *)&lcd_tmp[0], sizeof(lcd_tmp));
-    lcd_init(AC_POWER_OFF);
-
     /*------------------ Forbidden all GPIOs ------------------*/
     GPIO_InitStruct.GPIO_Mode = GPIO_Mode_FORBIDDEN;
     GPIO_InitStruct.GPIO_Pin  = GPIO_Pin_All;
     //GPIOA_Init(GPIOA, &GPIO_InitStruct);
     GPIOBToF_Init(GPIOB, &GPIO_InitStruct);
-/*    if (system_state.power_off_sencond > 5)
+/*  if (system_state.power_off_sencond > 5)
     {
         GPIOBToF_Init(GPIOC, &GPIO_InitStruct);
     }*/
@@ -528,7 +523,7 @@ void report_port_open(struct instance_t* instance)
     GPIOBToF_Init(GPIOE, &GPIO_InitStruct);
     GPIOBToF_Init(GPIOF, &GPIO_InitStruct);
     
-/*       GPIOA->DAT &= ~(BIT0|BIT1|BIT3|BIT4|BIT5|BIT6|BIT7|
+/*  GPIOA->DAT &= ~(BIT0|BIT1|BIT3|BIT4|BIT5|BIT6|BIT7|
                 BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);*/
     GPIOA->OEN |= (BIT0|BIT1|BIT2|BIT3|BIT4|BIT5|BIT6|BIT7|
                 BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
@@ -544,24 +539,14 @@ void report_port_open(struct instance_t* instance)
     PMU_INTConfig(PMU_INT_IOAEN, ENABLE);
     PMU_WakeUpPinConfig(GPIO_Pin_8, IOA_DISABLE);
     CORTEX_SetPriority_ClearPending_EnableIRQ(PMU_IRQn, 0); //优先级高
+    
+    LCD->CTRL |= LCD_CTRL_EN;
+    MISC2->HCLKEN |= (uint32_t)BIT6;
+    memcpy((uint8_t*)(&LCD->FB[0]), (uint8_t *)&lcd_tmp[0], sizeof(lcd_tmp));
+    lcd_init(AC_POWER_OFF);
 
-    /*------------------ Low power configuration ------------------*/
-/*    LowPower_InitStruct.AHBPeriphralDisable = PMU_AHB_ALL;
-    LowPower_InitStruct.LCDPower            = PMU_LCDPWER_OFF;
-    
-    LowPower_InitStruct.APBPeriphralDisable = PMU_APB_ALL;
-    LowPower_InitStruct.BGPPower            = PMU_BGPPWR_OFF;
-    LowPower_InitStruct.COMP1Power          = PMU_COMP1PWR_ON;//PMU_COMP1PWR_OFF;
-    LowPower_InitStruct.COMP2Power          = PMU_COMP2PWR_OFF;
-    LowPower_InitStruct.AVCCPower           = PMU_AVCCPWR_OFF;
-    LowPower_InitStruct.TADCPower           = PMU_TADCPWR_OFF;
-    LowPower_InitStruct.VDCINDetector       = PMU_VDCINDET_ENABLE;
-    LowPower_InitStruct.VDDDetector         = PMU_VDDDET_DISABLE;*/
     RTC_PLLDIVOutputCmd(DISABLE);
-    MComp1Init();//电池状态监测初始化
-//    WDT_Disable();
-//    PMU_EnterSleep_LowPower(&LowPower_InitStruct);
-    
+    MComp1Init();//电池状态监测初始化   
 }
 
 //上报完之后调用，关闭除液晶以外的 用电大户外设的电源，比如背光，LED，串口，高速定时器，tick
@@ -658,19 +643,42 @@ uint8_t multifunction_port_Init(void)
 }
 
 //打开串口，高速定时器，tick，初始化IO上电配置
- void device_power_open(struct instance_t* instance)
+ void device_power_open(struct instance_t* instance, struct pipeline_t* pipeline)
  {
-      mcu_main_frequency_mode(1);
-      gpio_configuration_AC();
-      dev_init(instance, AC_POWER_ON);
-	 
-      uart_chl_open(UART_RS4851_CHL);
-      uart_chl_open(UART_IR_CHL);
-      uart_chl_open(UART_MODULE_CHL);
-      
-      opreate_second_pluse(1);
-      
-      multifunction_port_Init();
+    uint32_t baud = 115200;
+    uint8_t i;
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
+    mcu_main_frequency_mode(1);
+    gpio_configuration_AC();
+    
+    RELAY_LED_OPEN();                   //拉闸灯
+    lcd_init(AC_POWER_ON);
+    AllDisplayLCD(instance, pipeline);
+    
+    dev_init(instance, AC_POWER_ON);
+
+    uart_chl_open(UART_RS4851_CHL);
+
+    for(i=0;i<11;i++)
+    {
+        if(mbase_cb->Baut_rs485 == i)
+        {
+            baud = baud_table[i];
+            break;
+        }
+    }
+    if(i<11)
+    {
+        mcu_uart_set_baud(baud, 0);     //485波特率切换至EEPROM设置要求
+    }
+
+    uart_chl_open(UART_IR_CHL);
+    uart_chl_open(UART_MODULE_CHL);
+
+    opreate_second_pluse(1);
+
+    multifunction_port_Init();
  }
 
 //初始化IO低功耗配置，初始化系统低功耗配置，准备进入sleep模式。
@@ -692,10 +700,6 @@ void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
     PMU_LowPWRTypeDef LowPower_InitStruct;
     GPIO_InitType GPIO_InitStruct;
     
-/*    if((instance->ac_power_off_sec_cnt == 5)|| (instance->ac_power_off_sec_cnt == 6)) //上报完成后，关闭除液晶以外的电源
-    {
-        device_power_close_after_report(instance);
-    }*/
     if(((mbase_cb->Key & F_KeyAwake) == 0))
     {
         //LCD_InitType lcd_init_para;

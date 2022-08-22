@@ -6,7 +6,7 @@
 extern int CSTACK$$Base;            /* symbol created by the IAR linker */
 extern int CSTACK$$Limit;           /* symbol created by the IAR linker */
 
-
+extern const uint32_t baud_table[11];
 
 
 extern int baremetal_instance_entry(struct instance_t* instance);

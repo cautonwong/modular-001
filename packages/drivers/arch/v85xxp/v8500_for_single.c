@@ -275,7 +275,8 @@ void opreate_second_pluse(uint8_t mode) // 1：秒脉冲，2：多功能口导�
          RTC->CTL &= ~RTC_CTL_RTCPLLOE;
          PMU->IOASEL &= ~BIT3;
          GPIOA->OEN &= ~BIT3;
-         GPIOA->IE &= ~BIT3;         
+         GPIOA->IE &= ~BIT3; 
+         GPIOA->DAT &= ~BIT3;
          break;
     case 3:
          RTC->CTL &= ~RTC_CTL_RTCPLLOE;

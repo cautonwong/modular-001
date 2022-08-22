@@ -192,7 +192,7 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
                 mbase_cb->metertype = 0x0001;    //远程内置表
             }
                   
-            device_power_open(instance);
+            device_power_open(instance, pipeline);
             mesg->from = kernel;
             mesg->to = pid_meter_base;
             mesg->ctrl = MSG_POWERON;
