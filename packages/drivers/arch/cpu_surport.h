@@ -74,6 +74,7 @@ extern  void device_power_close1(struct instance_t* instance);
 
 #define AC_POWER_ON 0xAA
 #define AC_POWER_OFF 0x55
+#define METERCHIP_CHK 0x5A
 
 #define  CTRL_FLS_SECTOR_ERASE  0x01
 #define  CTRL_FLS_BLOCK_ERASE   0x02

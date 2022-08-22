@@ -9,6 +9,7 @@
 
 extern const struct dev_info_t rn8209_dev;
     
+extern void start_emu_signal_pro(void);
 extern unsigned char WriteRn8209(unsigned char ChipAddr, unsigned char* Buf, unsigned char length , const struct dev_info_t* dev);
 extern void  mcu_clear_watchdog(void);
 extern uint8_t mcu_delay_us(volatile uint16_t count);
@@ -689,14 +690,22 @@ int rn8209c_set( struct instance_t* instance, uint8_t *p_rx )
     return true;
 }
 
-            
 void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-    
     //struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)&ctx;
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     int32_t temp = 0;
     float pf , pa , u , i ;
+    
+    if(mbase_control_block->meter_start_cnt > 0)
+    {
+        mbase_control_block->meter_start_cnt--;
+    }
+    
+    if(mbase_control_block->meter_start_cnt == 1)
+    {
+       start_emu_signal_pro();
+    }
    
     //读计量芯片电压
     rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , URMS , 3 , &temp);
@@ -878,6 +887,8 @@ void Electrical_measurement_poweron(struct instance_t* instance, struct pipeline
     memcpy((uint8_t*)&adj_set, (uint8_t*)adj_buf, 8);
     
     rn8209_dev.dev_driver_ops->dev_control(instance, &rn8209_dev , AC_POWER_ON , &adj_set);
+    
+    mbase_control_block->meter_start_cnt = 3;
     
     /********* 自热 *********/
     adj_std_source.countstart = 0;

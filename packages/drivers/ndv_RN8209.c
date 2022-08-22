@@ -6,6 +6,21 @@
 
 struct Rn8209AdjK_t Rn8209Adj_K;
 
+struct emu_parameter_default_t
+{
+	uint16_t parameter_default;
+	uint8_t  emu_reg_addr;
+	uint8_t  len;	
+};
+
+const struct emu_parameter_default_t CODE emu_parameter_default_list[]=
+{
+	{ 0x1643, SYSCON, 2, },
+	{ 0x0001, EMUCON, 2, },
+	{ 0x064A, HFCONST, 2, },
+	{ 0x0000, GPQA, 2, },
+};
+
 unsigned char ReadRn8209WithChk(unsigned char ChipAddr, unsigned char* Buf, unsigned char length, const struct dev_info_t* dev)
 {
 
@@ -145,7 +160,7 @@ unsigned char CmdRn8209(unsigned char cmd  , const struct dev_info_t* dev)
 
 
 
-unsigned char Rn8209InitConfig(const struct dev_info_t* dev)
+unsigned char Rn8209InitConfig(struct instance_t* instance, const struct dev_info_t* dev)
 {
     //RN8209初始化配置的参数，直接在这里修改配置。
     unsigned short SysCon = 0x1643;
@@ -155,8 +170,9 @@ unsigned char Rn8209InitConfig(const struct dev_info_t* dev)
     unsigned char regIE = 0x01;
     unsigned long s_index=0;
     unsigned char buf[4]={0,};
+    
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Other);//写入脉冲速率
-    //nd_get_index(instance, s_index, buf, 4);
+    nd_get_index(instance, s_index, buf, 4);
     memcpy((unsigned char*)&Pstart, buf, 2);
     memcpy((unsigned char*)&Hfconst, buf+2, 2);
     
@@ -310,9 +326,76 @@ int Rn8209_initialize(struct instance_t* instance, const struct dev_info_t* dev)
     return 0;
 }
 
+
+
+int Rn8209c_Para_Chk(struct instance_t* instance, const struct dev_info_t* dev)
+{
+    uint8_t i, para=0;
+	Word32 val , test;
+	uint32_t temp = 0, addr= 0;
+	uint16_t pstart=0,hfconst=0;
+    struct Rn8209AdjSet_t adj_set;
+    uint8_t adj_buf[8] = {0,};
+        
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Other);
+    nd_get_index(instance, addr, (uint8_t*)&temp, 4);
+    
+    hfconst = (uint16_t)(temp>>16);
+
+    if((hfconst  == 0) || (hfconst == 0xFFFF))
+    {
+        hfconst = 0x064A;
+    }
+    
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);
+    nd_get_index(instance, addr, (uint8_t*)adj_buf, 8);
+    memcpy((uint8_t*)&adj_set, (uint8_t*)adj_buf, 8);
+	
+	for(i=0;i<sizeof(emu_parameter_default_list)/sizeof(emu_parameter_default_list[0]);i++)
+	{
+		if(ANA_GetStatus(ANA_STATUS_VDCINDROP))     return true;    //掉电及时退出
+
+		val.lword = 0;
+		
+		if(i == 2) 
+		{
+			val.word[0] = hfconst;
+		}
+        else if(i == 3)
+        {
+            val.word[0] = adj_set.Gpq;
+        }
+		else
+		{
+			val.word[0] = emu_parameter_default_list[i].parameter_default;
+		}
+		
+		test.lword = 0;
+		
+        if (true == ReadRn8209WithChk(emu_parameter_default_list[i].emu_reg_addr, (uint8_t *)&test.byte[0], emu_parameter_default_list[0].len , dev))
+        {
+            if(val.lword == test.lword)
+            {
+                test.lword++;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+	}
+	return true;
+}
+
+
 int Rn8209_control(struct instance_t* instance, const struct dev_info_t* dev , uint8_t ctrl , void* ctrl_parameter)
 {
     const struct bus_ops_t *bus_ops = dev->dev_bus_ops;
+    int err=0;
     
     struct Rn8209AdjSet_t *set_test= (struct Rn8209AdjSet_t*)ctrl_parameter;
 
@@ -327,13 +410,17 @@ int Rn8209_control(struct instance_t* instance, const struct dev_info_t* dev , u
             bus_ops->init((size_t)dev->cfg);
             if (true == Rn8209DeviceIDCheck(dev))
             {
-                Rn8209InitConfig(dev);
+                Rn8209InitConfig(instance, dev);
             }
             
             Rn8209AdjParaSet(instance, set_test , dev);
             break;
         case AC_POWER_OFF:
             ResetRn8209();
+            break;
+        case METERCHIP_CHK: //芯片监测
+            err = Rn8209c_Para_Chk(instance, dev);
+            return err;
             break;
         default:
             break;

@@ -11,6 +11,8 @@ extern void Poffset_adj_oneself(struct instance_t* instance);
 //#define     P_BACKLIGHT_ON      GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT |= 0x10; //推挽输出高
 //#define     P_BACKLIGHT_OFF     GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT &=~0x10; //推挽输出低
 
+extern const struct dev_info_t rn8209_dev;
+
 #if 1  //  GS
 
 int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -117,6 +119,14 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
             Check_para_Pro(instance);
         }
         
+        if(((instance->time.tm_sec == 44) || (instance->time.tm_sec == 14)) && (mbase_cb->meter_start_cnt == 0))//每半分钟做计量监测，发现故障立即复位计量芯片
+        {
+            if(false == rn8209_dev.dev_driver_ops->dev_control(instance, &rn8209_dev , METERCHIP_CHK , 0))
+            {
+                Electrical_measurement_poweron(instance, pipeline);
+            }
+        }
+        
         updata_powerdown_time(instance);
         esam_sec_pro(instance, pipeline);   //esam电源关闭 和esam自检
         mac_suspend_sec_pro(instance, pipeline);//mac挂起处理
@@ -179,6 +189,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
 
             event_pro(instance, pipeline, mesg);
 
+            Key_Display(instance, pipeline, 0);
             Display(instance, pipeline);
 
             backlight_pro(instance, pipeline, mesg);

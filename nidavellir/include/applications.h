@@ -150,8 +150,7 @@ struct mbase_control_block_t
     uint8_t  power_dir;
     uint8_t  power_qn;
     
-
-    
+    uint8_t  meter_start_cnt;   //上电计量延时时间3秒    
     
     uint16_t lcd_checkdis_all_keep_sec;/*显示查看全屏显示时间 */
     uint8_t AutoPtr;    //轮显指针

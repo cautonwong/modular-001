@@ -1230,10 +1230,10 @@ void mcu_main_power_on_config(uint8_t power_mode)
     
     lcd_init(power_mode);
     
-    if(power_mode == AC_POWER_ON)
+/*    if(power_mode == AC_POWER_ON)
     {
         start_emu_signal_pro();
-    }
+    }*/
     
     GPIOA->OEN |=BIT2; 
     GPIOA->IE |=BIT2;
