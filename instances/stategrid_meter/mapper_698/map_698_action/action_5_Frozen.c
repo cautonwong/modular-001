@@ -87,11 +87,13 @@ int freeze_add_one_capture(struct instance_t* instance, uint32_t oad, uint8_t* b
         *dar = DAR_OTHERS_ERROR;
         return -DAR_OTHERS_ERROR;
     }
-#if 0
-    if (false == capture_check(capture_oad, tempbuf))
+#if 1
+    if (false == capture_check(capture_oad, tempbuf)) //重复关联对象
     {
-        *dar = DAR_OTHERS_ERROR;
-        return -DAR_OTHERS_ERROR;
+        //return (int)(p - buf);   //重复关联对象 返回成功
+        //return DAR_SUCCESS;
+        *dar = DAR_RW_REJECT;
+        return -DAR_RW_REJECT; //重复关联对象 返回拒绝
     }
 #endif
     //周期
@@ -164,6 +166,7 @@ int freeze_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t
     uint16_t  OI, CaptureLen, PeriodLen,DepthLen;//period, depth,
     uint32_t CaptureId, PeriodId, DepthId;
     uint32_t capture_oad, temp_oad;
+    uint8_t modify_capture = 1;
 
     struct record_storage_id_info_t  record_id_info;
     int ret;
@@ -232,39 +235,39 @@ int freeze_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t
         }
         oadlist += 4;
     }
-#if 0
+
     if (i >= num)
     {
         *dar = DAR_OTHERS_ERROR;
         return -DAR_OTHERS_ERROR;
     }
-#endif
-    offset = scheme * 3;//对应周期
-    period_buf[offset]--;
-
-
-    memcpy(oadlist, oadlist + 4, CaptureLen + tempbuf - oadlist);//关联对象
-    tempbuf[0] -= 1;
-
+    else
+    {
+        offset = scheme * 3;//对应周期
+        period_buf[offset]--;
+    
+        memcpy(oadlist, oadlist + 4, CaptureLen + tempbuf - oadlist);//关联对象
+        tempbuf[0] -= 1;
+    
 #if 1
-    ret = cal_record_size_sectors(instance,tempbuf, depth_buf, oad);
-    if (ret <= 0)
-    {
-        return -DAR_BUFFER_OVERFLOW;
-    }
+        ret = cal_record_size_sectors(instance,tempbuf, depth_buf, oad);
+        if (ret <= 0)
+        {
+            return -DAR_BUFFER_OVERFLOW;
+        }
 #endif     
-    // write  period
-    nd_set_index(instance, PeriodId, &period_buf[0], PeriodLen);
-
-    // write  Capture
-    nd_set_index(instance, CaptureId, &tempbuf[0], CaptureLen);
-
-    //修改关联对象后 清零处理
-    ret = modify_capture_clr_pro(instance, oad);
-    if (ret < 0)
-    {
-        *dar = DAR_OTHERS_ERROR;
-        return -DAR_OTHERS_ERROR;
+        // write  period
+        nd_set_index(instance, PeriodId, &period_buf[0], PeriodLen);
+    
+        // write  Capture
+        nd_set_index(instance, CaptureId, &tempbuf[0], CaptureLen);
+        //修改关联对象后 清零处理
+        ret = modify_capture_clr_pro(instance, oad);
+        if (ret < 0)
+        {
+            *dar = DAR_OTHERS_ERROR;
+            return -DAR_OTHERS_ERROR;
+        }
     }
 
     return (int)(p - buf);
@@ -362,7 +365,7 @@ int freeze_add_multi_capture(struct instance_t* instance, uint32_t oad, uint8_t*
             *dar = DAR_OTHERS_ERROR;
             return -DAR_OTHERS_ERROR;
         }
-#if 0
+#if 1
         if (false == capture_check(capture_oad, tempbuf))
         {
             *dar = DAR_OTHERS_ERROR;
@@ -515,7 +518,12 @@ int ACTION_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, void
     switch (methond)
     {
     case 3: // 触发一次冻结 
-        if ((0x5000 != oi) || (p[0] != TYPE_long_unsigned))
+        if ((0x5000 != oi))
+        {
+            dar = DAR_OBJECT_UNDEF;
+            return -DAR_OBJECT_UNDEF;
+        }
+        if ((p[0] != TYPE_long_unsigned))
         {
             dar = DAR_TYPE_NOT_MATCH;
             return -DAR_TYPE_NOT_MATCH;

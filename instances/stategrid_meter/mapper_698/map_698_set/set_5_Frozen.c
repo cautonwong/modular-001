@@ -240,8 +240,8 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
 
         if (false == capture_check(oad, tempbuf))
         {
-            *dar = DAR_OTHERS_ERROR;
-            return -DAR_OTHERS_ERROR;
+            *dar = DAR_RW_REJECT;
+            return -DAR_RW_REJECT;
         }
 
         tempbuf[0]++;
@@ -298,9 +298,9 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
 
 int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
-    struct mbase_control_block_t* mbase_cb;
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
     if(mbase_cb == NULL)
     {
         return -DAR_OTHERS_ERROR;

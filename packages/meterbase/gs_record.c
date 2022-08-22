@@ -362,15 +362,13 @@ int clr_record(struct instance_t* instance, uint32_t oad)
     {
         memset(tmpbuf, 0, sizeof(tmpbuf));
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastDayFreezTime);
-        nd_set_index(instance, s_index, &tmpbuf[0], 5);
+        nd_set_index(instance, s_index, &tmpbuf[0], 6);
     }
 
     //清最近一次结算冻结时间
     if (oad == 0x50050200)
     {
-        memset(tmpbuf, 0, sizeof(tmpbuf));
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillingTime);
-        nd_set_index(instance, s_index, &tmpbuf[0], 5);
+        clr_last_bill_time(instance);
     }
     //清最近一次广播导致时钟异常时间
     if(oad == 0x302E0200)
@@ -568,11 +566,13 @@ int clr_MonthEC(struct instance_t* instance)
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t s_index;
     
+    mbase_cb->MonthEnegery_dec = 0;
     mbase_cb->MonthEnegery = 0;
-    
-    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
-    offsetof(struct mbase_control_block_t, MonthEnegery)  -  offsetof(struct mbase_control_block_t, persistent_section_start));
-    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->MonthEnegery, 4);
+
+    updata_EC_checksum(instance, 1);
+
+    Save_EC2(instance, 1);
+
     return 1;
 }
 
@@ -585,7 +585,7 @@ int clr_last_bill_time(struct instance_t* instance)
     
     memset(tmpbuf, 0, sizeof(tmpbuf));
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillingTime);
-    nd_set_index(instance, s_index, &tmpbuf[0], 5);
+    nd_set_index(instance, s_index, &tmpbuf[0], 6);
     return 1;
 }
 

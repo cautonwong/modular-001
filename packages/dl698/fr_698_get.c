@@ -194,14 +194,14 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
             }
             else
             {
-                //cache->wr += ret;
+                
             }  
 
             Selector = rsd_info.select;
 
             //RCSD
             rcsd_ret = rcsd_decode(instance, pipeline,mesg->id, rcsd_list);
-            //if ((rsd_ret < 0) || (rcsd_ret < 0))
+
             if(rsd_ret == 0)
             {
                 //ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);

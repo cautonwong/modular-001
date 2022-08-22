@@ -1212,7 +1212,7 @@ int rsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = instance->apdu_cache; //当临时缓存
-    int ret = 0;
+    int ret = -DAR_RW_REJECT; //0;
     uint8_t dar;
     uint8_t oad_type = (uint8_t)(oad>>28);
 

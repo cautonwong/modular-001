@@ -545,7 +545,7 @@ int day_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struc
         tmp[5] = (uint8_t)((instance->time.tm_year + 1900)-2000);
 
         index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastDayFreezTime);
-        nd_set_index(instance, index, &tmp[0], 5);
+        nd_set_index(instance, index, &tmp[0], 6);
 
         //send_recordflag_mesg(instance, task,  FlagID, NULL);
         mesg_tmp.id = FlagID;
@@ -632,7 +632,7 @@ int day_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task
 
 
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastDayFreezTime);
-    nd_get_index(instance, s_index, &tmp[0], 5);
+    nd_get_index(instance, s_index, &tmp[0], 6);
     last_time.tm_sec  = tmp[0];
     last_time.tm_min  = tmp[1];
     last_time.tm_hour = tmp[2];
@@ -687,7 +687,7 @@ int day_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task
             tmp[5] = (uint8_t)((last_time.tm_year + 1900)-2000);
             
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastDayFreezTime);
-            nd_set_index(instance, s_index, &tmp[0], 5);
+            nd_set_index(instance, s_index, &tmp[0], 6);
             
             // 本条记录存储的时间
             mesg_tmp.id = DayFreeze;
@@ -739,7 +739,7 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
 
 
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillingTime);
-    nd_get_index(instance, s_index, &tmp[0], 5);
+    nd_get_index(instance, s_index, &tmp[0], 6);
     last_time.tm_sec  = tmp[0];
     last_time.tm_min  = tmp[1];
     last_time.tm_hour = tmp[2];
@@ -799,7 +799,7 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
                     tmp[5] = (uint8_t)((pd_tm.tm_year + 1900)-2000);
                     
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillingTime);
-                    nd_set_index(instance, s_index, &tmp[0], 5);
+                    nd_set_index(instance, s_index, &tmp[0], 6);
                     
                     // 本条记录存储的时间
                     mesg_tmp.id = BillFreeze;
@@ -868,7 +868,7 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
         memset((uint8_t *)&mesg_tmp, 0, sizeof(struct message_t));
 
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillTimeID);
-        ret = nd_get_index(instance, s_index, &tmp[0], 5);
+        ret = nd_get_index(instance, s_index, &tmp[0], 6);
 
         last_time.tm_sec  = tmp[0];
         last_time.tm_min  = tmp[1];
@@ -997,9 +997,13 @@ int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct mess
 // 上电调用
 int freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
     record_rollback_after_set_time(instance, 0x5A);
     day_freeze_power_on_pro(instance, task, mesg);
     bill_freeze_power_on_pro(instance, task, mesg);
+    
+    memset((uint8_t *)(&ctrl_block->v_powerdown_tm), 0 , sizeof(ctrl_block->v_powerdown_tm));
     return 1;
 }
 

@@ -188,7 +188,17 @@ int Direct_Read( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, 
  		case 0xA8F00051://掉电主动上报的阈值时间(秒)hex  0x0E10
             memcpy( (unsigned char*)p_tx, (uint8_t*)&mbase_cb->active_report_sec_limit, 2 );        
             return 2; 
-            break;             
+            break;   
+    case 0xA8F00053://模拟停电时间（补冻结用）
+            (*(p_tx+5)) = BYTE_BCD(mbase_cb->v_powerdown_tm.tm_year + 1900 - 2000);
+            (*(p_tx+4)) = BYTE_BCD(mbase_cb->v_powerdown_tm.tm_mon + 1);
+            (*(p_tx+3)) = BYTE_BCD(mbase_cb->v_powerdown_tm.tm_mday);
+            (*(p_tx+2)) = BYTE_BCD(mbase_cb->v_powerdown_tm.tm_hour);
+            (*(p_tx+1)) = BYTE_BCD(mbase_cb->v_powerdown_tm.tm_min);
+            (*(p_tx+0)) = BYTE_BCD(mbase_cb->v_powerdown_tm.tm_sec);
+            return 6;
+            break;  
+
 		default:
 			return -1;
 			break;

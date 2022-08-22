@@ -3,6 +3,7 @@
 #include "applications.h"
 #include "fr_698.h"
 #include "time_link.h"
+#include "gs_record.h"
 //dependencies
     //1.user define
     //2.mesg[秒]
@@ -75,6 +76,30 @@ unsigned char Time_Format_Check( unsigned char* Addr )
 	return 0;
 }
 
+void rtc_get_from_tm(struct instance_t* instance, uint8_t* p)
+{
+    unsigned long temp = 0;
+    *p = instance->time.tm_sec;
+    *(p+1) = instance->time.tm_min;
+    *(p+2) = instance->time.tm_hour;
+    *(p+3) = instance->time.tm_mday;
+    *(p+4)= instance->time.tm_mon + 1;
+    temp = instance->time.tm_year + 1900;
+    memcpy((uint8_t*)(p+5), (uint8_t*)&temp, 2);
+}
+
+void rtc_format_change_from_tm(struct tm *time, uint8_t* p)
+{
+    unsigned long temp = 0;
+    *p = time->tm_sec;
+    *(p+1) = time->tm_min;
+    *(p+2) = time->tm_hour;
+    *(p+3) = time->tm_mday;
+    *(p+4)= time->tm_mon + 1;
+    temp = time->tm_year + 1900;
+    memcpy((uint8_t*)(p+5), (uint8_t*)&temp, 2);
+}
+
 void FeeTable_Change(struct instance_t* instance, struct pipeline_t* pipeline)
 {
 	unsigned char i,j;
@@ -82,6 +107,9 @@ void FeeTable_Change(struct instance_t* instance, struct pipeline_t* pipeline)
     unsigned int year;
     struct mbase_control_block_t* mbase_cb;
     uint8_t Buf[50];
+    uint8_t tmp[10] = {0}; 
+    uint8_t payload[20] = {0};
+    struct message_t mesg_tmp;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
@@ -111,8 +139,18 @@ void FeeTable_Change(struct instance_t* instance, struct pipeline_t* pipeline)
 		{
 			switch( i )
 			{
-				case 0:
-					send_event_mesg_pro(instance, NULL, SeasonTabCutFreeze, NULL, 1);//时区表切换冻结
+				case 0:					
+                    //记录 时区表切换冻结  
+                    mesg_tmp.id = SeasonTabCutFreeze;
+                    uint32_to_buf_msb(0x20210200, &payload[0]);
+                    payload[4] = 8; //data len
+                    payload[5] = 0x1C;//TYPE_date_time_s;
+                    rtc_format_change_from_tm(&instance->time,tmp);
+                    tmp[0] = 0; //sec = 0;
+                    mem_swap_cpy(&payload[6], &tmp[0], 7);
+                    recv_record_process(instance, NULL, &mesg_tmp, payload);  
+                    //send_event_mesg_pro(instance, NULL, SeasonTabCutFreeze, NULL, 1);
+					
 					mbase_cb->Fee |= (F_TOUChange+F_DAYTABChange);
                     for(j=0; j<14; j++)
                     {
@@ -124,7 +162,17 @@ void FeeTable_Change(struct instance_t* instance, struct pipeline_t* pipeline)
                     }
 					break;
 				case 1:
-					send_event_mesg_pro(instance, NULL, DayTabCutFreeze, NULL, 1);//日时段表切换冻结
+				    //记录 日时段表切换冻结
+                    mesg_tmp.id = DayTabCutFreeze;
+                    uint32_to_buf_msb(0x20210200, &payload[0]);
+                    payload[4] = 8; //data len
+                    payload[5] = 0x1C;//TYPE_date_time_s;
+                    rtc_format_change_from_tm(&instance->time,tmp);
+                    tmp[0] = 0; //sec = 0;
+                    mem_swap_cpy(&payload[6], &tmp[0], 7);
+                    recv_record_process(instance, NULL, &mesg_tmp, payload);  
+					//send_event_mesg_pro(instance, NULL, , NULL, 1);
+					
 					mbase_cb->Fee |= F_TOUChange;
                     for(j=0; j<8; j++)
                     {
@@ -350,30 +398,6 @@ void TouFeePro(struct instance_t* instance, struct pipeline_t* pipeline)
         GetTOUFee(instance, pipeline);
     }
 
-}
-
-void rtc_get_from_tm(struct instance_t* instance, uint8_t* p)
-{
-    unsigned long temp = 0;
-    *p = instance->time.tm_sec;
-    *(p+1) = instance->time.tm_min;
-    *(p+2) = instance->time.tm_hour;
-    *(p+3) = instance->time.tm_mday;
-    *(p+4)= instance->time.tm_mon + 1;
-    temp = instance->time.tm_year + 1900;
-    memcpy((uint8_t*)(p+5), (uint8_t*)&temp, 2);
-}
-
-void rtc_format_change_from_tm(struct tm *time, uint8_t* p)
-{
-    unsigned long temp = 0;
-    *p = time->tm_sec;
-    *(p+1) = time->tm_min;
-    *(p+2) = time->tm_hour;
-    *(p+3) = time->tm_mday;
-    *(p+4)= time->tm_mon + 1;
-    temp = time->tm_year + 1900;
-    memcpy((uint8_t*)(p+5), (uint8_t*)&temp, 2);
 }
 
 void Rtc_Prossecc(struct instance_t* instance, struct pipeline_t* pipeline)

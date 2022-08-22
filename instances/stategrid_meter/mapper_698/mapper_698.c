@@ -494,8 +494,8 @@ const  parameter_item_t  parameter_item[] =
     { BeforSet_Holiday              , 0x01, 10, 0 }, //编程前节假日
     { BeforSet_Balance              , 0x01, 20, 0 }, //编程前结算日
     { BeforSet_ActCom               , 0x01,  3, 0 }, //编程前有功组合特征字
-    { LastBillingTime               , 0x01,  5, 0 }, //最近一次结算时间 YYMMDDhhmm   
-    { LastDayFreezTime              , 0x01,  5, 0 }, //最近一次日冻结时间 YYMMDDhhmm           
+    { LastBillingTime               , 0x01,  6, 0 }, //最近一次结算时间 YYMMDDhhmm   
+    { LastDayFreezTime              , 0x01,  6, 0 }, //最近一次日冻结时间 YYMMDDhhmm           
     { LastBroadcastTimeERR          , 0x01,  3, 0 }, //最近一次广播校时引起时钟故障 年月日       
     { BeforSet_KeyVer               , 0x01, 18, 0 }, //最近一次广播校时引起时钟故障 年月日       
     { ResetCount                    , 0x01,  4, 0 }, //复位次数   

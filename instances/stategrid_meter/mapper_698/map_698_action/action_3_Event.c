@@ -124,13 +124,14 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     {
         temp_oad = buf_to_uint32_msb(oadlist);
         oadlist += 4;
-#if 0
+#if 1
         if (capture_oad == temp_oad)
         {
+            //return (int)(p - buf);   //重复关联对象 返回成功
             //return DAR_SUCCESS;
             *dar = DAR_RW_REJECT;
-            return -DAR_RW_REJECT;
-            //重复关联对象 返回拒绝
+            return -DAR_RW_REJECT; //重复关联对象 返回拒绝
+            
         }
 #endif        
     }
@@ -259,25 +260,30 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
         *dar = DAR_OTHERS_ERROR;
         return -DAR_OTHERS_ERROR;
     }
-
-    memcpy(oadlist, oadlist + 4, CaptureLen + tempbuf - oadlist);
-    tempbuf[0] -= 1;
-
-    ret = nd_set_index(instance, CaptureId, &tempbuf[0], CaptureLen);
-    if (ret < 0)
+    else
     {
-        *dar = DAR_OTHERS_ERROR;
-        return -DAR_OTHERS_ERROR;
+        memcpy(oadlist, oadlist + 4, CaptureLen + tempbuf - oadlist);
+        tempbuf[0] -= 1;
+
+        ret = nd_set_index(instance, CaptureId, &tempbuf[0], CaptureLen);
+        if (ret < 0)
+        {
+            *dar = DAR_OTHERS_ERROR;
+            return -DAR_OTHERS_ERROR;
+        }
+
+
+        //修改关联对象后 清零处理
+        ret = modify_capture_clr_pro(instance, oad);
+        if (ret < 0)
+        {
+            *dar = DAR_OTHERS_ERROR;
+            return -DAR_OTHERS_ERROR;
+        }
+
     }
 
 
-    //修改关联对象后 清零处理
-    ret = modify_capture_clr_pro(instance, oad);
-    if (ret < 0)
-    {
-        *dar = DAR_OTHERS_ERROR;
-        return -DAR_OTHERS_ERROR;
-    }
 
     report_3320list_confirmed_All_channel(instance, oad);
     

@@ -110,6 +110,15 @@ unsigned char CommWrite_SpecProc( struct instance_t* instance,  unsigned char* p
                 mbase_cb->no_filt = *(prx+12);
                 return 1;
                 break;
+        case 0xA8F00053://模拟停电时间（补冻结用）
+                mbase_cb->v_powerdown_tm.tm_year = BCD_BYTE((*(prx+17))) + 2000 - 1900;
+                mbase_cb->v_powerdown_tm.tm_mon = BCD_BYTE((*(prx+16))) - 1;
+                mbase_cb->v_powerdown_tm.tm_mday = BCD_BYTE((*(prx+15)));
+                mbase_cb->v_powerdown_tm.tm_hour = BCD_BYTE((*(prx+14)));
+                mbase_cb->v_powerdown_tm.tm_min = BCD_BYTE((*(prx+13)));
+                mbase_cb->v_powerdown_tm.tm_sec = BCD_BYTE((*(prx+12)));
+                return 0;
+                break;                
         case 0xA8FFFFF0:    //设置正向电能底度
                 memcpy((uint8_t*)&temp, prx+12, 4);
                 Energy_Set(instance, temp, 0);

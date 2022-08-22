@@ -25,6 +25,8 @@ const COMMTAB  CommTab[] =
 	0xA8F00050,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + 4,	//上电持续时间
 	0xA8F00051,	0xFFFF,											CommData_WR + CommData_HEX + 2,	//掉电主动上报的阈值时间
 	0xA8F00052,	Pstart_En,										CommData_WR + CommData_HEX + CommData_E2PROM + 1,	//小电流不滤除 AA开启
+    0xA8F00053, 0xFFFF,                                         CommData_WR + CommData_HEX + 6, //停电时间（测试补冻结用）
+
 	0xA8F000FF,	0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + 0xFF,//万能读写
 
     0xA8000200, 0xFFFF,											CommData_WR + CommData_HEX + CommData_E2PROM + CommData_FACTORY + 8,
