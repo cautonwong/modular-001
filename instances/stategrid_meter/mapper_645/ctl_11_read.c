@@ -5,6 +5,7 @@
 extern const struct dev_info_t rn8209_dev;
 extern int rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx);
 extern unsigned char IxRMSOS_Adjust(struct instance_t* instance, unsigned char CH);
+extern unsigned char ft_adj_meter(struct instance_t* instance, uint8_t *p_rx);
 
 /***********************************************************************/
 /*  函数名称：GetCommTable                                             */
@@ -205,76 +206,6 @@ int Direct_Read( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, 
 	}
 }
 
-void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx)
-{
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint32_t s_index=0;
-    uint16_t pstart=0;
-    uint8_t buf[40]={0,};
-    
-    memset(buf, 0x00, 8);
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);    //火线增益、相位
-    nd_set_index(instance, s_index, buf, 8); 
-    
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain1);    //零线增益、相位
-    nd_set_index(instance, s_index, buf, 8); 
-    
-    pstart = 0x0049;
-    memcpy(buf, (uint8_t*)&pstart, 2);
-    if(p_rx==0)
-    {
-        buf[2] = 0x6F;
-        buf[3] = 0x09;
-    }
-    else
-        memcpy((uint8_t*)&buf[2], p_rx+3, 2);//写入脉冲速率
-        
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Other);
-    nd_set_index(instance, s_index, buf, 4); 
-    
-    memset((uint8_t*)&Rn8209Adj_K.u, 0x00, 16);
-    Rn8209Adj_K.u = 0.0137414116;
-    Rn8209Adj_K.il = 0.016;
-    Rn8209Adj_K.p = 0.0023294272;
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_K);
-    nd_set_index(instance, s_index, (uint8_t*)&Rn8209Adj_K.u, 16);//存储至EE
-    
-    memset(buf, 0x00, 8);
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Un_Cmp_Value);
-    nd_set_index(instance, s_index, (uint8_t*)&buf[0], 8);//清空电压影响量
-}
-
-
-unsigned char ft_adj_meter(struct instance_t* instance, uint8_t *p_rx)
-{
-    uint32_t id=0;
-    uint8_t cmd = 0;
-    
-    cmd = *p_rx;
-    switch(*(p_rx-1))
-    {
-        case 0x07://校表初始化
-            memcpy((uint8_t*)&id, p_rx, 3);
-            if(id == 0x02FC01)
-            {
-                meteric_para_clr(instance, p_rx);
-            }
-            break;
-        case 0x11://校表
-            switch(cmd)
-            {
-                case 0xC0://有效值偏移修正
-                  IxRMSOS_Adjust(instance, 1);
-                  IxRMSOS_Adjust(instance, 2);
-                  break;
-            }
-            break;
-        default:
-            break;
-    }
-    return 0;
-    
-}
 
 /***********************************************************************/
 /*  函数名称：Comm_Read                                                */

@@ -80,7 +80,6 @@ static void sysclk_at_3m2768(uint16_t flag)
     }
 }
 
-
 void  v85xxp_clear_watchdog(void)
 {
   PMU->WDTCLR = WDTCLR_KEY;
@@ -913,7 +912,7 @@ void start_emu_signal_pro(void)
     PMU_WakeUpPinConfig(GPIO_Pin_8, IOA_RISING);
     GPIOA->OEN |=BIT8;
     GPIOA->IE |=BIT8;
-    fnINTTC3_Init(1);
+//    fnINTTC3_Init(1);
 }
 
 void mcu_enter_lowpower_then_sleep(void)

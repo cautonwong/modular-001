@@ -150,6 +150,8 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         break;
                     case 0x4112://有功组合特征字
                         if(*p != 4) return -DAR_TYPE_NOT_MATCH;
+                        if(*(p+2) & 0x0F) return -DAR_BUFFER_OVERFLOW;
+                        mbase_cb->active_energy_cal_word = *(p+2);
                         nd_get(instance, id, timer, 3, NULL);
                         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
                         nd_set_index(instance, addr, timer, 3);

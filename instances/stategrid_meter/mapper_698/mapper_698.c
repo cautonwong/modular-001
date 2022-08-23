@@ -2421,7 +2421,7 @@ int para_init(struct instance_t* instance )
     memset(mbase_cb->meterNo, 0x00, 6);//表地址
     
     mbase_cb->meter_const = 2000;
-    mbase_cb->active_energy_cal_word = 0x05;
+    mbase_cb->active_energy_cal_word = 0xA0;
     
     mbase_cb->lcd_poweron_all_dis_time = 5;            //上电全显时间
     mbase_cb->backlight_key_time = 60;                  //背光点亮时间

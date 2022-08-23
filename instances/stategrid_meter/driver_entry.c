@@ -14,6 +14,7 @@ extern const struct driver_ops_t rn8209_drv;
 extern const struct driver_ops_t nor_flash_driver;
 extern const struct bus_ops_t mcu_uart_bus_ops;
 extern void gpio_configuration_AC(void);
+extern void fnINTTC3_Init(uint8_t cmd);
 
 static uint8_t fifo_buf[32];
 static struct fifo_t irq_fifo;
@@ -121,12 +122,13 @@ void IO_Interrupt(void *para)
     if( PMU_GetIOAINTStatus(GPIO_Pin_8))   //有功脉冲
     {
         PMU_ClearIOAINTStatus(GPIO_Pin_8);
-        GPIOF->OEN &=~BIT1;
-        GPIOF->IE &=~BIT1; 
-        GPIOF->ATT &=~BIT1; 
-        IO_DAT( GPIOF_DAT, 1) = 1;
+        //GPIOF->OEN &=~BIT1;
+        //GPIOF->IE &=~BIT1; 
+        //GPIOF->ATT &=~BIT1; 
+        //IO_DAT( GPIOF_DAT, 1) = 1;
         wpulse_light_open = 0x5a;
-        wpulse_light_flag = 0;
+        //wpulse_light_flag = 0;
+        fnINTTC3_Init(1);
     }
 
     if(GPIOA->INT & BIT2)  // 按键
@@ -171,34 +173,37 @@ void timing_ftr(void *para)
       
       if(over_Imax == 0x55)
       {
-              dly1 = 6;
-              dly2 = 14;
+          dly1 = 6;
+          dly2 = 14;
       }
       else
       {
-              dly1 = 10;
-              dly2 = 30;
+          dly1 = 10;
+          dly2 = 30;
       }
       /******************** 消抖 ********************/ 
       if(wpulse_light_open == 0x5a)
       {
-              if((GPIOA->STS & BIT8) == BIT8)//消抖    
-              {
-                      wpulse_light_open_flag++;
-              }
-              else
-              {
-                      wpulse_light_open_flag=0;
-              }
-              if(wpulse_light_open_flag >= dly1)//20ms
-              {
+          if((GPIOA->STS & BIT8) == BIT8)//消抖    
+          {
+                wpulse_light_open_flag++;
+          }
+          else
+          {
+                wpulse_light_open_flag=0;
+          }
+          if(wpulse_light_open_flag >= dly1)//20ms
+          {
 
-                      wpulse_light_open = 0;
-                      wpulse_light_open_flag = 0;
-                      wpulse_light_flag = 0x5A;
-                      wplse_light_width = 0;
-                      
-              }
+                wpulse_light_open = 0;
+                wpulse_light_open_flag = 0;
+                wpulse_light_flag = 0x5A;
+                wplse_light_width = 0;
+                GPIOF->OEN &=~BIT1;
+                GPIOF->IE &=~BIT1; 
+                GPIOF->ATT &=~BIT1; 
+                IO_DAT( GPIOF_DAT, 1) = 1;
+          }
       }
       
       /******************** 脉宽80ms ********************/ 
@@ -214,14 +219,16 @@ void timing_ftr(void *para)
                wplse_light_width = 0;
                wpulse_light_flag = 0;
                Energy_Pluse_Add();
+               TMR_INTConfig(TMR3, DISABLE);  //Enable Timer0 interrupt
+               TMR_Cmd(TMR3, DISABLE);  //Enable Timer0
           }
-          else
+/*          else
           {
               GPIOF->OEN &=~BIT1;
               GPIOF->IE &=~BIT1;
               GPIOF->ATT &=~BIT1; 
               IO_DAT( GPIOF_DAT, 1) = 1;
-          }
+          }*/
       }
 
 }

@@ -5,10 +5,10 @@
 
 #define Max_tou_fee 12
 
-#define  ADD_POS    0x01
-#define  DEC_POS    0x02
-#define  ADD_NEG    0x04
-#define  DEC_NEG    0x08
+#define  ADD_POS    0x80
+#define  DEC_POS    0x40
+#define  ADD_NEG    0x20
+#define  DEC_NEG    0x10
 
 static uint32_t ec_pluse_cnt = 0;
 

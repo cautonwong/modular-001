@@ -6,6 +6,10 @@
 #include "cpu_surport.h"
 #include "pin_function_def.h"
 
+#define REAL_K_U_INIT     0.0137414116
+#define REAL_K_I_INIT     0.016
+#define REAL_K_P_INIT     0.0017918671
+
 
 extern const struct dev_info_t rn8209_dev;
     
@@ -152,11 +156,6 @@ void voltage_compensate(struct instance_t* instance, struct pipeline_t* pipeline
 	}
 }
 
-#define REAL_K_U_INIT     0.0137414116
-#define REAL_K_I_INIT     0.016
-#define REAL_K_P_INIT     0.0023294272
-
-
 void emu_calibration_clear(struct instance_t* instance)
 {
 
@@ -212,7 +211,7 @@ void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t 
         Factory3.Ian = 0xC34A;   //5A
     }
     BaseErr = 0;
-    hfconst = 0x064a;
+    hfconst = 0x082D;
     if (Factory3.adjflag & F_ALadj)
     {
         for (i = 0; i < 3; i++)
@@ -688,6 +687,79 @@ int rn8209c_set( struct instance_t* instance, uint8_t *p_rx )
         CmdRn8209(CMD_WR_DIS, &rn8209_dev);
     }
     return true;
+}
+
+
+void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx)
+{
+    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint32_t s_index=0;
+    uint16_t pstart=0;
+    uint8_t buf[40]={0,};
+    
+    memset(buf, 0x00, 8);
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);    //火线增益、相位
+    nd_set_index(instance, s_index, buf, 8); 
+    
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain1);    //零线增益、相位
+    nd_set_index(instance, s_index, buf, 8); 
+    
+    pstart = 0x0049;
+    memcpy(buf, (uint8_t*)&pstart, 2);
+    if(p_rx==0)
+    {
+        buf[2] = 0x2D;
+        buf[3] = 0x08;
+    }
+    else
+        memcpy((uint8_t*)&buf[2], p_rx+3, 2);//写入脉冲速率
+        
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Other);
+    nd_set_index(instance, s_index, buf, 4); 
+    
+    memset((uint8_t*)&Rn8209Adj_K.u, 0x00, 16);
+    Rn8209Adj_K.u = REAL_K_U_INIT;
+    Rn8209Adj_K.il = REAL_K_I_INIT;
+    Rn8209Adj_K.p = REAL_K_P_INIT;//0.0023294272;
+    
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_K);
+    nd_set_index(instance, s_index, (uint8_t*)&Rn8209Adj_K.u, 16);//存储至EE
+    
+    memset(buf, 0x00, 8);
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Un_Cmp_Value);
+    nd_set_index(instance, s_index, (uint8_t*)&buf[0], 8);//清空电压影响量
+}
+
+
+unsigned char ft_adj_meter(struct instance_t* instance, uint8_t *p_rx)
+{
+    uint32_t id=0;
+    uint8_t cmd = 0;
+    
+    cmd = *p_rx;
+    switch(*(p_rx-1))
+    {
+        case 0x07://校表初始化
+            memcpy((uint8_t*)&id, p_rx, 3);
+            if(id == 0x02FC01)
+            {
+                meteric_para_clr(instance, p_rx);
+            }
+            break;
+        case 0x11://校表
+            switch(cmd)
+            {
+                case 0xC0://有效值偏移修正
+                  IxRMSOS_Adjust(instance, 1);
+                  IxRMSOS_Adjust(instance, 2);
+                  break;
+            }
+            break;
+        default:
+            break;
+    }
+    return 0;
+    
 }
 
 void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipeline)
