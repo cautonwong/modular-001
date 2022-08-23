@@ -3,7 +3,7 @@
 #define MEA_RN8209_H_
 
 #include "target.h"
-#include "lib_gpio.h"
+//#include "lib_gpio.h"
 
 #define	SYSCON		0x00
 #define	EMUCON		0x01
@@ -27,10 +27,10 @@
 #define	UFREQ		0x25
 #define	POWERPA		0x26
 #define	POWERPB		0x27
-#define POWERQA         0x28
+#define POWERQA     0x28
 #define	ENERGYP		0x29
 #define	EMUSTATUS	0x2D
-#define	IE		0x40
+#define	RN8209CIE	0x40
 #define	SYSSTATUS	0x43
 #define	DEVICEID	0x7F
 
@@ -39,6 +39,15 @@
 #define	CMD_RESET		0xFA
 
 
+#define Fr_K            1   //1.676191    //6M晶振
+
+#define REAL_K_U_INIT     0.0137414116
+#define REAL_K_I_INIT     0.016
+#define REAL_K_P_INIT     0.0017918671
+
+#define Hfconst_default   (uint16_t)(0x082D*Fr_K)
+#define Pstart_default    (uint16_t)(0x004C*Fr_K)
+
 #ifndef true
 #define true 1
 #endif
@@ -46,18 +55,6 @@
 #ifndef false
 #define false 0
 #endif
-
-
-/*--------------------------单相RN8209计量芯片控制-------------------------------*/ 
-#define  BITBAND_ADDR(addr, bitnum)   ((((uint32_t)addr) & 0xF0000000) + \
-                                        0x2000000 + ((((uint32_t)addr) & 0xFFFFF) << 5) + (bitnum << 2))
-
-#define  PIN_RN8209_RX_OUT_MODE()   {*((uint32_t*)GPIOA_OEN) &= ~BIT(15); *((uint32_t*)GPIOA_IE) &= ~BIT(15);}
-#define  PIN_RN8209_RX_IN_MODE()    {*((uint32_t*)GPIOA_IE) |= BIT(15);  *((uint32_t*)GPIOA_OEN) |= BIT(15);}
-#define  PIN_RN8209_RX_OUT_HIGH()   {*((uint32_t*)BITBAND_ADDR(GPIOA_DAT,15)) = 1;}
-#define  PIN_RN8209_RX_OUT_LOW()    {*((uint32_t*)BITBAND_ADDR(GPIOA_DAT,15)) = 0;}
-#define  PIN_RN8209_TX_OUT_MODE()   {*((uint32_t*)GPIOB_OEN) &= ~BIT(5); *((uint32_t*)GPIOB_IE) &= ~BIT(5);}
-#define  PIN_RN8209_TX_OUT_HIGH()   {*((uint32_t*)BITBAND_ADDR(GPIOB_DAT,5)) = 1;}
 
 
 

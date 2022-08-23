@@ -3,6 +3,7 @@
 #include "cpu_surport.h"
 #include "ndvh_rn8209.h"
 #include "lib_ana.h"
+#include "pin_function_def.h"
 
 struct Rn8209AdjK_t Rn8209Adj_K;
 
@@ -17,7 +18,7 @@ const struct emu_parameter_default_t CODE emu_parameter_default_list[]=
 {
 	{ 0x1643, SYSCON, 2, },
 	{ 0x0001, EMUCON, 2, },
-	{ 0x082D, HFCONST, 2, },
+	{ Hfconst_default, HFCONST, 2, },
 	{ 0x0000, GPQA, 2, },
 };
 
@@ -165,8 +166,8 @@ unsigned char Rn8209InitConfig(struct instance_t* instance, const struct dev_inf
     //RN8209初始化配置的参数，直接在这里修改配置。
     unsigned short SysCon = 0x1643;
     unsigned short EmuCon = 0x0001;
-    unsigned short Hfconst = 0x082D;
-    unsigned short Pstart = 0x0049;
+    unsigned short Hfconst = Hfconst_default;
+    unsigned short Pstart = Pstart_default;
     unsigned char regIE = 0x01;
     unsigned long s_index=0;
     unsigned char buf[4]={0,};
@@ -176,8 +177,8 @@ unsigned char Rn8209InitConfig(struct instance_t* instance, const struct dev_inf
     memcpy((unsigned char*)&Pstart, buf, 2);
     memcpy((unsigned char*)&Hfconst, buf+2, 2);
     
-    if((Pstart == 0) || (Pstart == 0xFFFF))   Pstart = 0x0049;
-    if((Hfconst == 0) || (Hfconst == 0xFFFF))   Hfconst = 0x082D;
+    if((Pstart == 0) || (Pstart == 0xFFFF))   Pstart = Pstart_default;
+    if((Hfconst == 0) || (Hfconst == 0xFFFF))   Hfconst = Hfconst_default;
     
     CmdRn8209(CMD_WR_EN , dev);
 
@@ -197,7 +198,7 @@ unsigned char Rn8209InitConfig(struct instance_t* instance, const struct dev_inf
     {
         return false;
     }
-    if (false == WriteRn8209Check(IE, (unsigned char*)&regIE, 1 , dev))
+    if (false == WriteRn8209Check(RN8209CIE, (unsigned char*)&regIE, 1 , dev))
     {
         return false;
     }
@@ -344,7 +345,7 @@ int Rn8209c_Para_Chk(struct instance_t* instance, const struct dev_info_t* dev)
 
     if((hfconst  == 0) || (hfconst == 0xFFFF))
     {
-        hfconst = 0x082D;
+        hfconst = Hfconst_default;
     }
     
     addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);

@@ -6,10 +6,6 @@
 #include "cpu_surport.h"
 #include "pin_function_def.h"
 
-#define REAL_K_U_INIT     0.0137414116
-#define REAL_K_I_INIT     0.016
-#define REAL_K_P_INIT     0.0017918671
-
 
 extern const struct dev_info_t rn8209_dev;
     
@@ -180,7 +176,7 @@ void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t 
     unsigned char i=0, Tofst , j=0, adj_buf[8];
     signed short Pgain;
     unsigned long TempUrms=0, TempIrms=0, TempPw=0, CalcPw=0, Corretion_Pw=0, U_value=0, I1_value=0, I2_value=0, P_value=0;
-    unsigned long BaseErr,hfconst,addr=0;
+    unsigned long BaseErr,addr=0;
     float err=0;
     struct factor_adj_meter_t Factory3;
     //struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)&ctx;
@@ -211,7 +207,7 @@ void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t 
         Factory3.Ian = 0xC34A;   //5A
     }
     BaseErr = 0;
-    hfconst = 0x082D;
+
     if (Factory3.adjflag & F_ALadj)
     {
         for (i = 0; i < 3; i++)
@@ -704,12 +700,12 @@ void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx)
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain1);    //零线增益、相位
     nd_set_index(instance, s_index, buf, 8); 
     
-    pstart = 0x0049;
+    pstart = Pstart_default;
     memcpy(buf, (uint8_t*)&pstart, 2);
     if(p_rx==0)
     {
-        buf[2] = 0x2D;
-        buf[3] = 0x08;
+        buf[2] = (uint8_t)Hfconst_default;
+        buf[3] = (uint8_t)(Hfconst_default>>8);
     }
     else
         memcpy((uint8_t*)&buf[2], p_rx+3, 2);//写入脉冲速率
@@ -720,7 +716,7 @@ void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx)
     memset((uint8_t*)&Rn8209Adj_K.u, 0x00, 16);
     Rn8209Adj_K.u = REAL_K_U_INIT;
     Rn8209Adj_K.il = REAL_K_I_INIT;
-    Rn8209Adj_K.p = REAL_K_P_INIT;//0.0023294272;
+    Rn8209Adj_K.p = REAL_K_P_INIT;
     
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_K);
     nd_set_index(instance, s_index, (uint8_t*)&Rn8209Adj_K.u, 16);//存储至EE
@@ -861,7 +857,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     //读计量芯片频率 
     temp = 0;
     rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , UFREQ , 2 , &temp);
-    mbase_control_block->frequency = (uint32_t)(44744312.5/temp);
+    mbase_control_block->frequency = (uint32_t)((44744312.5/temp)*Fr_K);
     
     //读计量芯片零线电流
     temp = 0;

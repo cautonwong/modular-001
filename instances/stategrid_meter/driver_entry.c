@@ -3,8 +3,10 @@
 #include "lib_conf.h"
 #include "time_link.h"
 #include "uart_driver.h"
+#include "ndvh_rn8209.h"
 #include "pin_function_def.h"
 #include "applications.h"
+
 
 extern const struct driver_ops_t  eeprom_driver;
 extern const struct bus_ops_t iic_bus;
@@ -66,7 +68,7 @@ const UART_InitType  Rn8209_Uart_InitType =
     UART_PARITY_EVEN_LIB,
     UART_WORDLEN_9B,
     UART_FIRSTBIT_LSB,
-    4800,
+    4800*Fr_K,
 };
 
 
