@@ -609,6 +609,7 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t ERRBYTE=0;//data[8]={0}, 
     uint16_t tx_len = 0;
+    uint32_t ID=0;
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
@@ -665,6 +666,25 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
                     tx_len = 1;
                     *ctx->apdu_tx = ERRBYTE;
                 }
+            }
+            else if( Cmp_MeterAddr( instance, (unsigned char*)&apdu_rx[1], 1 ) == 0 )   //支持全A进厂内
+            {
+                memcpy((unsigned char*)&ID, apdu_rx+10, 4);
+                if(ID == 0xA8000100)
+                {
+                    ERRBYTE = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
+                    if(ERRBYTE == 0)
+                    {
+                        tx_len = 0;
+                    }
+                    else
+                    {
+                        tx_len = 1;
+                        *ctx->apdu_tx = ERRBYTE;
+                    }
+                }
+                else
+                    return -1;
             }
             else
                 return -1;

@@ -217,9 +217,9 @@ struct mbase_control_block_t
 
     //事件相关
 
-    uint8_t  power_abnormal;        //电源异常状态
-    uint8_t  rtc_chip_abnormal;
-    uint8_t  meter_chip_abnormal;
+//    uint8_t  power_abnormal;        //电源异常状态
+//    uint8_t  rtc_chip_abnormal;
+//    uint8_t  meter_chip_abnormal;
     uint8_t  esam_chip_abnormal;    //esam故障状态
 
 

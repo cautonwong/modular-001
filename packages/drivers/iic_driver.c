@@ -19,6 +19,8 @@ __NOP();__NOP();__NOP();__NOP();__NOP();\
 __NOP();__NOP();__NOP();__NOP();__NOP();\
 __NOP();__NOP();__NOP();__NOP();__NOP();\
 __NOP();__NOP();__NOP();__NOP();__NOP();\
+__NOP();__NOP();__NOP();__NOP();__NOP();\
+__NOP();__NOP();__NOP();__NOP();__NOP();\
 __NOP();__NOP();__NOP();__NOP();__NOP();}
 
 
@@ -109,10 +111,11 @@ int iic_send_byte(uint8_t Data , size_t index)
         IIC_DELAY();
         SCL_DOUT_1();
         Data=Data<<1;
-        SCL_DOUT_0();
         IIC_DELAY();
+        SCL_DOUT_0();
+        
     }
-    
+    IIC_DELAY();
     SDA_INPUT();
     IIC_DELAY();
     SCL_DOUT_1();

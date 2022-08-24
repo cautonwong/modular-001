@@ -46,6 +46,28 @@ struct emu_voltage_adj_t
 static struct adj_std_source_t	adj_std_source;
 static struct emu_voltage_adj_t	emu_voltage_adj;
 
+unsigned int cal_pstart(float k)
+{
+    unsigned int p_start=0;
+
+    //p_start = (unsigned int)(0.8 * 220 * 5 * 0.4 / k / 256);
+
+    p_start = (unsigned int)(1.375 / k);
+    
+    return p_start;
+}
+
+float cal_kp(unsigned int hfcst)
+{
+    float K=0;
+    
+    //kp = (float)(3221550000000/(4294967296*IMP*hfcst))*100;
+
+    K = 75007.556/((float)hfcst*IMP);
+    
+    return K;
+}
+
 /*自热补偿函数*/
 void heat_compensate(struct instance_t* instance, struct pipeline_t* pipeline)
 {
@@ -690,8 +712,9 @@ void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t s_index=0;
-    uint16_t pstart=0;
+    uint16_t pstart=0,hfconst=0;
     uint8_t buf[40]={0,};
+    float kp=0;
     
     memset(buf, 0x00, 8);
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);    //火线增益、相位
@@ -708,7 +731,13 @@ void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx)
         buf[3] = (uint8_t)(Hfconst_default>>8);
     }
     else
+    {
+        memcpy((uint8_t*)&hfconst, p_rx+3, 2);
         memcpy((uint8_t*)&buf[2], p_rx+3, 2);//写入脉冲速率
+        kp = cal_kp(hfconst);           //计算功率K系数
+        //pstart = cal_pstart(kp);        //计算启动阈值
+        //memcpy(buf, (uint8_t*)&pstart, 2);
+    }
         
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Other);
     nd_set_index(instance, s_index, buf, 4); 
@@ -716,14 +745,27 @@ void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx)
     memset((uint8_t*)&Rn8209Adj_K.u, 0x00, 16);
     Rn8209Adj_K.u = REAL_K_U_INIT;
     Rn8209Adj_K.il = REAL_K_I_INIT;
-    Rn8209Adj_K.p = REAL_K_P_INIT;
+    if(p_rx == 0)
+    {
+        Rn8209Adj_K.p = REAL_K_P_INIT;
+    }
+    else
+    {
+        Rn8209Adj_K.p = kp;
+    }
     
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_K);
     nd_set_index(instance, s_index, (uint8_t*)&Rn8209Adj_K.u, 16);//存储至EE
     
-    memset(buf, 0x00, 8);
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Un_Cmp_Value);
-    nd_set_index(instance, s_index, (uint8_t*)&buf[0], 8);//清空电压影响量
+    if((mbase_control_block->metertype & 0x0800) == 0x0800)    //开启补偿功能
+    {
+        memset(buf, 0x00, 8);
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Un_Cmp_Value);
+        nd_set_index(instance, s_index, (uint8_t*)&buf[0], 8);//清空电压影响量
+        
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Cmp_Value);
+        nd_set_index(instance, s_index, (uint8_t*)&buf[0], 2);   //清空自热补偿值
+    }
 }
 
 
@@ -745,9 +787,25 @@ unsigned char ft_adj_meter(struct instance_t* instance, uint8_t *p_rx)
         case 0x11://校表
             switch(cmd)
             {
+                case 0x11://1.0L增益，A相电流
+                  break;
+                  
+                case 0x15://0.5L相位
+                  break;
+                  
+                case 0x31://小信号修正
+                  break;
+                  
                 case 0xC0://有效值偏移修正
                   IxRMSOS_Adjust(instance, 1);
                   IxRMSOS_Adjust(instance, 2);
+                  break;
+                case 0x51://零线电流系数
+                  
+                  break;
+                  
+                default:
+                  return 1;
                   break;
             }
             break;
@@ -774,8 +832,18 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     {
        start_emu_signal_pro();
     }
+    
+    rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , DEVICEID , 3 , &temp);
+    if(temp != 0x00820900)
+    {
+        mbase_control_block->EmuErrS_status = EVENT_SET;
+        return;
+    }
+    mbase_control_block->EmuErrS_status = EVENT_RESET;
    
+    
     //读计量芯片电压
+    temp = 0;
     rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , URMS , 3 , &temp);
     
     mbase_control_block->voltage_ac = (uint32_t)(Rn8209Adj_K.u * temp)/10;
@@ -904,6 +972,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     }
     
     /****************** 温度采样 ******************/
+    temp = 0;
     if(true == mcu_adc_start_once(ADC_CHL_TEMP))
     {
         if(true == read_mcu_adc_measure_value(ADC_CHL_TEMP , (int32_t *)&temp))
@@ -913,6 +982,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     }
     
     /****************** 电池采样 ******************/
+    temp = 0;
     if(true == mcu_adc_start_once(ADC_CHL_BATTER))
     {
         if(true == read_mcu_adc_measure_value(ADC_CHL_BATTER , (int32_t *)&temp))
@@ -930,7 +1000,9 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
 
 void Electrical_measurement_poweron(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_control_block;
+    mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
     struct Rn8209AdjSet_t adj_set;
     unsigned long addr=0;
     uint8_t adj_buf[8];

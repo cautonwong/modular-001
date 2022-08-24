@@ -397,6 +397,8 @@ int Rn8209_control(struct instance_t* instance, const struct dev_info_t* dev , u
 {
     const struct bus_ops_t *bus_ops = dev->dev_bus_ops;
     int err=0;
+    struct mbase_control_block_t* mbase_cb;
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     struct Rn8209AdjSet_t *set_test= (struct Rn8209AdjSet_t*)ctrl_parameter;
 
@@ -412,9 +414,13 @@ int Rn8209_control(struct instance_t* instance, const struct dev_info_t* dev , u
             if (true == Rn8209DeviceIDCheck(dev))
             {
                 Rn8209InitConfig(instance, dev);
+                Rn8209AdjParaSet(instance, set_test , dev);
+                mbase_cb->EmuErrS_status = EVENT_RESET;
             }
-            
-            Rn8209AdjParaSet(instance, set_test , dev);
+            else
+            {
+                mbase_cb->EmuErrS_status = EVENT_SET;
+            }
             break;
         case AC_POWER_OFF:
             ResetRn8209();

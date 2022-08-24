@@ -45,8 +45,10 @@
 #define REAL_K_I_INIT     0.016
 #define REAL_K_P_INIT     0.0017918671
 
+#define IMP             2000
+
 #define Hfconst_default   (uint16_t)(0x082D*Fr_K)
-#define Pstart_default    (uint16_t)(0x004C*Fr_K)
+#define Pstart_default    (uint16_t)0x004C
 
 #ifndef true
 #define true 1

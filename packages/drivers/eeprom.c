@@ -29,13 +29,18 @@ static uint8_t send_device_addr(uint32_t device_addr , const struct bus_ops_t *i
     if ((eeprom_operate_cnts++) > EEPROM_OPERATE_CNTS)
     {
         eeprom_operate_cnts = 0;
+        DEVICE_ERR &= ~BIT1;
     }
 
+    if((DEVICE_ERR & BIT1) == BIT1)
+    {
+        return false;
+    }
 
     while (iic_ops->tx((uint8_t)(device_addr), index) == false)
     {
         cnt++;
-
+        mcu_clear_watchdog();
         if (cnt >= 80)
         {
             iic_ops->ctrl(STOP, index);
@@ -45,6 +50,7 @@ static uint8_t send_device_addr(uint32_t device_addr , const struct bus_ops_t *i
                 if (EEPROM_ERR_JUDGE == eeprom_err_cnts)
                 {
                     eeprom_err_cnts = 0;
+                    DEVICE_ERR |= BIT1;
                 }
             }
             return false;
@@ -55,7 +61,7 @@ static uint8_t send_device_addr(uint32_t device_addr , const struct bus_ops_t *i
         iic_ops->ctrl(START, index);
     }
     eeprom_err_cnts = 0;
-
+    DEVICE_ERR &= ~BIT1;
     return true;
 }
 
@@ -306,7 +312,7 @@ int eeprom_read_chk(struct instance_t* instance, const struct dev_info_t* dev, u
         return false;
     }
 
-    DEVICE_ERR &= ~BIT1;
+    //DEVICE_ERR &= ~BIT1;
     for (errcnt = 0; errcnt < 8; errcnt++)
     {
         if (eeprom_read(physics_addr, src, len, dev) == false)
@@ -321,7 +327,7 @@ int eeprom_read_chk(struct instance_t* instance, const struct dev_info_t* dev, u
 
     if (errcnt >= 8)
     {
-        DEVICE_ERR |= BIT1;
+        //DEVICE_ERR |= BIT1;
         return false;
     }
     return true;
@@ -338,7 +344,7 @@ int eeprom_write_chk(struct instance_t* instance, const struct dev_info_t* dev, 
     {
         return false;
     }
-    DEVICE_ERR &= ~BIT1;
+    //DEVICE_ERR &= ~BIT1;
     for (errcnt = 0; errcnt < 8; errcnt++)
     {
         if (errcnt != 0)
@@ -358,7 +364,7 @@ int eeprom_write_chk(struct instance_t* instance, const struct dev_info_t* dev, 
 
     if (errcnt == 8)
     {
-        DEVICE_ERR |= BIT1;
+        //DEVICE_ERR |= BIT1;
         return false;
     }
 
