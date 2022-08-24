@@ -255,7 +255,8 @@ struct mbase_control_block_t
     uint32_t blt_alarm; //背光报警配置字
 
     uint32_t battery_used_time_cnt; //电池使用时间   累加器   sec     停电或复位后清零，低功耗下累加，上电后保存
-    struct tm v_powerdown_tm;                   // 模拟停电时间  补结算测试用    
+    
+    struct tm v_powerdown_tm;                   // 模拟停电时间  补结算测试用     不存e2p
     dyn_cache_end  //------------------------------------------------------
     //运行期更改&&掉电或定时保存&&上电需要IO请求的数据分区
     dyn_persistent_start

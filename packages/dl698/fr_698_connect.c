@@ -141,6 +141,7 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     uint8_t cilent_index = 0;
     uint32_t esam_session_timeout = 0xffffffffU;
     int len_len = 0;
+    uint8_t *p_connect_timeout = cache->buf_ptr;
     
     if (CA_TYPE_TER(ctx->CA))//from 终端
     {
@@ -196,8 +197,9 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     {
         mbase_cb->connect_timeout[ctx->channel][cilent_index] = cfg_connect.connect_time;
     }
-    
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&mbase_cb->connect_timeout[ctx->channel][cilent_index], 4);     //期望的应用连接超时时间    
+
+    p_connect_timeout = (p_apdu+cache->wr);
+    mem_swap_cpy(p_connect_timeout, (uint8_t*)&mbase_cb->connect_timeout[ctx->channel][cilent_index], 4);     //期望的应用连接超时时间    
     cache->wr = cache->wr + 4;
     apdu_rx += 4;
 
@@ -248,8 +250,11 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
         if (mbase_cb->connect_timeout[ctx->channel][cilent_index] > esam_session_timeout)
         {
             mbase_cb->connect_timeout[ctx->channel][cilent_index] = esam_session_timeout;
+            mem_swap_cpy(p_connect_timeout, (uint8_t*)&mbase_cb->connect_timeout[ctx->channel][cilent_index], 4);     //期望的应用连接超时时间    
         }
         
+
+
     
         mbase_cb->esam_connect_timeout[ctx->channel][cilent_index] = esam_session_timeout;
         
@@ -271,7 +276,7 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     }
     else
     {
-        *(p_apdu+cache->wr) = 1;//允许建立应用连接
+        *(p_apdu+cache->wr) = 2;//对称解密错误
         cache->wr++;
         *(p_apdu+cache->wr) = 0;//认证附加信息
         cache->wr++;
@@ -305,11 +310,11 @@ static void __consistency_block(uint8_t *data,  uint8_t* cfg_data, const uint8_t
 static void ___get_consult_info(struct connect_request_t *connect, struct connect_request_t *connect_cache, const struct connect_request_t *default_connect)
 {
     __consistency_block(connect->protocal_conformance, connect_cache->protocal_conformance, default_connect->protocal_conformance, 8);
-    __consistency_block(connect->function_conformance, connect_cache->protocal_conformance, default_connect->function_conformance, 16);
+    __consistency_block(connect->function_conformance, connect_cache->function_conformance, default_connect->function_conformance, 16);
 
-    connect->send_frm_size      = __get_connect_info(connect_cache->send_frm_size, default_connect->recv_frm_size);
-    connect->recv_frm_size      = __get_connect_info(connect_cache->recv_frm_size, default_connect->send_frm_size);
-    connect->client_win_size    = __get_connect_info(connect_cache->client_win_size, default_connect->client_apdu_size);
+    connect->send_frm_size      = __get_connect_info(connect_cache->send_frm_size, default_connect->send_frm_size);
+    connect->recv_frm_size      = __get_connect_info(connect_cache->recv_frm_size, default_connect->recv_frm_size);
+    connect->client_win_size    = __get_connect_info(connect_cache->client_win_size, default_connect->client_win_size);
     connect->client_apdu_size   = __get_connect_info(connect_cache->client_apdu_size, default_connect->client_apdu_size);
     connect->connect_time       = __get_connect_info(connect_cache->connect_time, default_connect->connect_time);
 }

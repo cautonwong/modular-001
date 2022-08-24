@@ -120,7 +120,7 @@ int GET_5_Frozen(struct instance_t* instance, uint32_t oad, uint8_t* buf, void *
     {
         case 0x00000200:// 
         {
-            ret = check_record_oad_support(instance, oad);
+            ret = check_record_item_support(instance, oad);
             if(ret < 0)
             {
                 return ret;

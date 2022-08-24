@@ -1612,7 +1612,10 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
 
         if((judge_size) > 1800) //待调整
         {
-            p_ctx->next_index = 1;
+            if(p_ctx)
+            {
+                p_ctx->next_index = 1;
+            }
             return len;//-DAR_BUFFER_OVERFLOW;
         }
         //-----------
@@ -1697,6 +1700,40 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     return (int)len;
 #endif
 }
+
+
+// 用于其他模块获取 记录内某一个关联对象的数据内容， 
+// buf内读取数据          698格式带tag
+// 函数返回 长度   698格式带tag，  返回0时，无数据。
+// Record_oad 记录种类，  capture_oad 关联对象， last_no，上n次
+// 举例：获取上一条日冻结 正向有功总电能 :Record_oad = 0x50040200, capture_oad = 0x00100200， last_no = 1;
+int read_record_data_form_698_protocol(struct instance_t* instance, uint8_t* buf, uint32_t Record_oad, uint32_t capture_oad, uint8_t last_no)
+{
+    int ret = 0;
+    struct rsd_info_t rsd_info;
+    uint32_t rcsd_info[2] = {0};
+
+    memset(&rsd_info, 0,sizeof(rsd_info));
+
+    rsd_info.last_no = last_no;
+    rsd_info.start_mark = 0;
+    rsd_info.end_mark = 0xffffffffU;
+    rsd_info.mode = 0;
+
+    rcsd_info[0] = 1;
+    rcsd_info[1] = capture_oad;
+    
+    ret = record_data_package(instance, Record_oad, buf, &rsd_info, &rcsd_info[0],  NULL);
+
+    if ((ret <= 1)) //  1 为读不到数据
+    {
+        ret = 0;
+    }
+
+    return ret;
+}
+
+
 //GS   暂存
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////

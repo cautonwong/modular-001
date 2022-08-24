@@ -182,6 +182,16 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
             cache->wr += 4;
             ctx->apdu_rx_offset += 4;
             
+            //检查 读取的记录型oad合法性
+            ret = check_record_table_oad__support(instance, mesg->id);
+            if (ret < 0)
+            {
+                ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+                p[cache->wr++] = 0x00; //rcsd
+                p[cache->wr++] = 0x00;//DAR
+                p[cache->wr++] = -ret;
+                return ret;  
+            }
             //RSD
             rsd_ret = rsd_decode(instance, pipeline, mesg->id, &rsd_info);
             if (rsd_ret < 0)
@@ -190,7 +200,7 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
                 p[cache->wr++] = 0x00; //rcsd
                 p[cache->wr++] = 0x00;//DAR
                 p[cache->wr++] = -rsd_ret;
-                return rsd_ret;  // 想返回dar  如何处理 ？？
+                return rsd_ret;  
             }
             else
             {
@@ -211,7 +221,7 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
                 }
                 p[cache->wr++] = 0x00;//DAR
                 p[cache->wr++] = DAR_TYPE_NOT_MATCH;
-                return 1;  // 想返回dar  如何处理 ？？
+                return -DAR_TYPE_NOT_MATCH;  
             }
             
             if ((rcsd_ret < 0 ))
@@ -221,7 +231,7 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
                 //p[cache->wr++] = 0x00; //rcsd
                 p[cache->wr++] = 0x00;//DAR
                 p[cache->wr++] = -rcsd_ret;
-                return 1;  // 想返回dar  如何处理 ？？
+                return rcsd_ret;  // 想返回dar  如何处理 ？？
             }
 
 

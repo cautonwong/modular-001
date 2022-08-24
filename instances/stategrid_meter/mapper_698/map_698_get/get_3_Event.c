@@ -952,7 +952,8 @@ int get_time_status_record_ic_24(struct instance_t* instance, uint32_t oad, uint
     return (p - buf);
 }
 
-int check_record_oad_support(struct instance_t* instance, uint32_t oad)
+//检查 表计是否支持 该记录，不关心属性，索引等
+int check_record_item_support(struct instance_t* instance, uint32_t oad)
 {
     struct record_storage_id_info_t  record_id_info;
     int ret;
@@ -964,6 +965,66 @@ int check_record_oad_support(struct instance_t* instance, uint32_t oad)
     }
     return 1;
 }
+
+//检查 读取的记录型oad合法性  涉及oi,属性,索引等
+int check_record_table_oad__support(struct instance_t* instance, uint32_t oad)
+{
+    struct record_storage_id_info_t  record_id_info;
+    int ret;
+    uint16_t OI;
+    uint8_t index, attr, OadClass = 7, ndv_class, Schem = 0;
+    
+    ret = get_record_id_info(instance, oad, &record_id_info);
+    if (ret <= 0)
+    {
+        return -DAR_OBJECT_NOT_EXIST;
+    }
+
+    OI = get_OAD_OI(oad);
+    attr = get_OAD_Attribute(oad);
+    ndv_class = get_OAD_Class(oad);
+    index = get_OAD_Index(oad);
+    Schem = get_OAD_Schem(oad);
+    
+    if (ndv_class == 5)
+    {
+        OadClass = 9;
+    }
+    else if(ndv_class == 3)
+    {
+        OadClass = 7;
+        if (((OI >= 0x3000) && (OI <= 0x3008)) || (OI == 0x300B))
+        {
+            OadClass = 24;
+        }
+    }
+
+    if((index != 0)||(Schem != 0))
+    {
+        return -DAR_OTHERS_ERROR;
+    }
+
+    if ((OadClass == 9) || (OadClass == 7))
+    {
+        if ((attr != 2))
+        {
+            return -DAR_OTHERS_ERROR;
+        }
+    }
+    else if(OadClass == 24)
+    {
+        if ((attr != 7) /*&&(attr != 6)&&(attr != 8)&&(attr != 9)*/) //单相
+        {
+            return -DAR_OTHERS_ERROR;
+        }
+    }
+
+    
+    return 1;
+}
+
+
+
 
 int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
@@ -1112,7 +1173,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
         
         case 7://class7
         {
-            ret = check_record_oad_support(instance, id);
+            ret = check_record_item_support(instance, id);
             if(ret < 0)
             {
                 return ret; // 返回对象不存在
@@ -1143,7 +1204,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 break;
                 case 5: // 最大记录数
                 {    
-                    ret = check_record_oad_support(instance, id);
+                    ret = check_record_item_support(instance, id);
                     if(ret < 0)
                     {
                         return ret;
@@ -1199,7 +1260,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
         break;
         case 24://类24
         {
-            ret = check_record_oad_support(instance, id);
+            ret = check_record_item_support(instance, id);
             if(ret < 0)
             {
                 return ret; // 返回对象不存在
@@ -1219,7 +1280,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 break;
                 case 4: // 最大记录数 
                 {
-                    ret = check_record_oad_support(instance, id);
+                    ret = check_record_item_support(instance, id);
                     if(ret < 0)
                     {
                         return ret;

@@ -575,11 +575,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     p = p + rxlen + 3;
 
                     mbase_cb->key_state = get_key_status(instance);//获取秘钥状态
-                }
-                //成功后 再触发 密钥更新事件
-                else// 
-                {
-                    send_event_mesg_pro(instance, NULL, SecretKeyWrS, NULL, 1);
+                    send_event_mesg_pro(instance, NULL, SecretKeyWrS, NULL, 1);//成功后 再触发 密钥更新事件
                 }
                 return (p-buf);
             }

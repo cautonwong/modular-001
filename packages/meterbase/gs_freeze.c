@@ -783,7 +783,7 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
             recently =  rtc_mktime(&pd_tm); 
             if (recently <= now)
             {
-                if (/*(recently > last)&&*/(recently >= pd))
+                if ((recently > last)&&(recently >= pd))
                 {
                     if(i == 0)
                     {
@@ -797,6 +797,8 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
                     tmp[3] = pd_tm.tm_mday;
                     tmp[4] = pd_tm.tm_mon + 1;
                     tmp[5] = (uint8_t)((pd_tm.tm_year + 1900)-2000);
+    
+                    ndv_memcopy((uint8_t *)&last_time,(uint8_t *)(&pd_tm), sizeof(pd_tm));
                     
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillingTime);
                     nd_set_index(instance, s_index, &tmp[0], 6);

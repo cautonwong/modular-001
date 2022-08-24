@@ -2474,6 +2474,9 @@ int para_init(struct instance_t* instance )
     offsetof(struct mbase_control_block_t, OverCurrent_threshold));
     s_len = offsetof(struct mbase_control_block_t, factor_mode) - offsetof(struct mbase_control_block_t, OverCurrent_threshold);
     nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->OverCurrent_threshold, s_len);  
+
+    // 波特率更新标志
+    mbase_cb->baud_chg = (BIT0|BIT1);
      
     v85xxp_clear_watchdog();
     //EE部分更新

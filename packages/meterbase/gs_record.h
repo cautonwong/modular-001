@@ -67,5 +67,6 @@ extern void esam_698_power_on(struct instance_t* instance);
 extern int rtc_check_poweron(struct instance_t* instance);
 extern void esam_sec_pro(struct instance_t* instance, struct pipeline_t* pipeline);
 extern void updata_powerdown_time(struct instance_t* instance);
-extern int check_record_oad_support(struct instance_t* instance, uint32_t oad);
+extern int check_record_item_support(struct instance_t* instance, uint32_t oad);
+extern int check_record_table_oad__support(struct instance_t* instance, uint32_t oad);
 #endif //__GS_RECORD_H__
