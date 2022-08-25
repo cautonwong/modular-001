@@ -1440,7 +1440,7 @@ void Disp_Char( struct instance_t* instance, struct pipeline_t* pipeline, unsign
 void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    unsigned char i,buf[20]={0,},Len=0,temp[7];
+    unsigned char i,buf[40]={0,},Len=0,temp[7];
 	unsigned long oad,Info=0,Info1;
 	unsigned char SignBuf[9]={0,};
     signed long value=0;
