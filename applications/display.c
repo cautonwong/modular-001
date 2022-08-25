@@ -4,6 +4,9 @@
 #include "applications.h"
 #include "pin_function_def.h"
 #include "lib_conf.h"
+
+extern int read_record_data_form_698_protocol(struct instance_t* instance, uint8_t* buf, uint32_t Record_oad, uint32_t capture_oad, uint8_t last_no);
+
 /**********************************************************************/
 /*  液晶显示程序                                                       */
 /***********************************************************************/
@@ -900,8 +903,9 @@ void display_energy_pro(struct instance_t* instance, struct pipeline_t* pipeline
 /***********************************************************************/
 unsigned long GetDispAddrInfo( struct instance_t* instance, struct pipeline_t* pipeline, unsigned short ID, unsigned char* data, unsigned long Info, unsigned char* SignBuf )
 {
-	unsigned char D1,D2,D3;
+	unsigned char D1,D2,D3,len=0;
     unsigned long oad,temp=0;
+    uint32_t Record_oad=0;
 
     D2 = (ID & 0x0FF0)>>4;
     if(D2 > 0x18)   return 1;
@@ -930,23 +934,32 @@ unsigned long GetDispAddrInfo( struct instance_t* instance, struct pipeline_t* p
             if(D2 == 0x00)  
                 oad = 0x00100400;
             else 
-                oad = 0x50050400;
+            {
+                Record_oad = 0x50050200;
+                oad = 0x00100400;
+            }
             break;
         case 0xD0://反向
             temp |= DispData_HEX;
             *(SignBuf+5) = Sign_Fanxiang;//反向
             if(D2 == 0x00)  
                 oad = 0x00200400;
-            else 
-                oad = 0x50050400;
+            else
+            {
+                Record_oad = 0x50050200;
+                oad = 0x00200400;
+            }
             break;
         case 0xE0://组合
             temp |= DispData_Sign+DispData_HEX;//组合有功电量最高位是符号位
             *(SignBuf+5) = Sign_Zuhe;//组合
             if(D2 == 0x00)  
                 oad = 0x00000400;
-            else 
-                oad = 0x50050400;
+            else
+            {
+                Record_oad = 0x50050200;
+                oad = 0x00000400;
+            }
             break;
         default:
             return 1;
@@ -959,8 +972,15 @@ unsigned long GetDispAddrInfo( struct instance_t* instance, struct pipeline_t* p
     }
     else
     {   
-        nd_get(instance, oad + D3, data, 9, NULL);
-        ndv_move_buffer(data+1, data, 8);
+        len = read_record_data_form_698_protocol(instance, data, Record_oad, oad + D3, D2);
+        if(len == 10)   //电量10字节
+        {
+            ndv_move_buffer(data+2, data, 8);   //历史电量返回成功01+TAG+8字节数据
+        }
+        else
+        {
+            memset(data, 0x00, 8);
+        }
     }
     
     display_energy_pro(instance, pipeline, data, D1); //电能小数尾数处理，借位处理

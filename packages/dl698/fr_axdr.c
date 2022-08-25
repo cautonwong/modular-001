@@ -1715,6 +1715,7 @@ int read_record_data_form_698_protocol(struct instance_t* instance, uint8_t* buf
 
     memset(&rsd_info, 0,sizeof(rsd_info));
 
+    rsd_info.select = 9;
     rsd_info.last_no = last_no;
     rsd_info.start_mark = 0;
     rsd_info.end_mark = 0xffffffffU;
