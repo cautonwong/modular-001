@@ -499,6 +499,8 @@ const  parameter_item_t  parameter_item[] =
     { LastBroadcastTimeERR          , 0x01,  3, 0 }, //最近一次广播校时引起时钟故障 年月日       
     { BeforSet_KeyVer               , 0x01, 18, 0 }, //最近一次广播校时引起时钟故障 年月日       
     { ResetCount                    , 0x01,  4, 0 }, //复位次数   
+    { PDTime_Frez                   , 0x01,  4, 0 }, //最近一次未补冻结的停电时间              待调整
+    
     { Report3320_EnableList         , 0x01 ,     161  , 0                           }, // 3320 上报使能列表  1 + 2*80         
     { Report3320_OADList1           , 0x01 ,     241  , 0                           }, // 3320 oad上报列表   1 + 4*60     //红外
     { Report3320_OADList2           , 0x01 ,     241  , 0                           }, // 3320 oad上报列表   1 + 4*60     //rs485-1

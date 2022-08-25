@@ -191,7 +191,8 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
             {
                 mbase_cb->metertype = 0x0001;    //远程内置表
             }
-                  
+            mbase_cb->frz_replenish_end = 0;      
+            
             device_power_open(instance, pipeline);
             mesg->from = kernel;
             mesg->to = pid_meter_base;
@@ -206,6 +207,7 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
             mesg->len = 0;
             send_mesg(instance, NULL, mesg);
             instance->ac_power_statue = AC_POWER_ON;
+            
         }
     }
 #endif // !WIN32

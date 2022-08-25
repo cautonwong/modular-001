@@ -1029,7 +1029,7 @@ int active_report_3011_pro(struct instance_t* instance, struct pipeline_t* pipel
     rsd_info.end_mark = 0xffffffffU;
     rsd_info.mode = 0;
 
-    ret = record_data_package(instance, oad, tmp_buff, &rsd_info, rcsd_list, NULL);
+    ret = record_data_package(instance, oad, tmp_buff, &rsd_info, rcsd_list,  300,  NULL);
     if (ret < 0)
     {
         return 0;

@@ -244,10 +244,8 @@ struct mbase_control_block_t
 
     uint8_t first_MbillDay_flag;
 
-    uint8_t meterclr_event_recordflag; //记录标识*/ // 通过fifo传递
-    uint8_t meterclr_event_resetflag; //复位标识
-    
-
+    uint8_t frz_replenish_end;      //补冻结 完成标志  ,上电清零 补冻结完成置 0x5A
+   
     uint8_t mac_suspend_state;  // mac挂起状态 协议或显示模块可调用。 true为挂起 
     
     uint16_t metertype; //表多功能配置字

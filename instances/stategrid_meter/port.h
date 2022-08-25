@@ -501,8 +501,7 @@ enum block_parameter_item_id_t
 #define     BeforSet_KeyVer             1516 //秘钥更新前对称秘钥版本
 #define     ResetCount                  1517 //复位次数
 #define     Bat_UseTime                 1518 //电池使用时间sec
-
-
+#define     PDTime_Frez                 1519 // 最近一次未补冻结的停电时间 (sec)
 
 #define     Report3320_EnableList       1521 // 3320 上报使能列表  1 + 2*80
 #define     Report3320_OADList1         1522 // 3320 oad上报列表   1 + 4*60     //红外

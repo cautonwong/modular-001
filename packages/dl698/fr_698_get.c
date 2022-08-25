@@ -10,9 +10,9 @@
 #define GetRequestSimplifyRecord    23
 
 extern uint16_t axdr_record_len_get(uint8_t* data, uint16_t* rsdLen, uint16_t* rcsdLen);
-extern int GET_record_sel_1(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info,  void *ctx);
-extern int GET_record_sel_2(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info,  void *ctx);
-extern int GET_record_sel_9(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info,  void *ctx);
+extern int GET_record_sel_1(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t buf_size,  void *ctx);
+extern int GET_record_sel_2(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t buf_size,  void *ctx);
+extern int GET_record_sel_9(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t buf_size,  void *ctx);
 
 int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -253,13 +253,13 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
                         //ret = GET_record_sel_0(instance, pipeline, mesg);
                         break;
                     case 1:
-                        ret = GET_record_sel_1(instance, mesg->id, p + cache->wr, &rsd_info, rcsd_list, ctx); //指定时间或序号
+                        ret = GET_record_sel_1(instance, mesg->id, p + cache->wr, &rsd_info, rcsd_list, apdu_cache_getFree(cache), ctx); //指定时间或序号
                         break;
                     case 2:
-                        ret = GET_record_sel_2(instance, mesg->id, p + cache->wr, &rsd_info, rcsd_list, ctx);// 按序号、时间范围搜索，带间隔
+                        ret = GET_record_sel_2(instance, mesg->id, p + cache->wr, &rsd_info, rcsd_list, apdu_cache_getFree(cache), ctx);// 按序号、时间范围搜索，带间隔
                         break;
                     case 9:
-                        ret = GET_record_sel_9(instance, mesg->id, p + cache->wr, &rsd_info, rcsd_list, ctx);// 上X次
+                        ret = GET_record_sel_9(instance, mesg->id, p + cache->wr, &rsd_info, rcsd_list, apdu_cache_getFree(cache), ctx);// 上X次
                         break;
                     default:
                         break;

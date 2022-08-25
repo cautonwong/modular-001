@@ -141,6 +141,45 @@ static int __fr_handle_one_object(struct instance_t* instance, struct pipeline_t
     return r;
 }
 
+
+const uint32_t support_broadcast_action_cmd_tab[] =
+{
+    0x40007f00, //广播校时
+    0xf2077f00, //多功能端子投切
+    0x50000300, //瞬时冻结触发
+};
+
+
+int support_broadcast_addr_cmd_check(uint8_t cmd, uint32_t oad)
+{
+    uint8_t i, number;
+    const uint32_t *p;
+
+    if (cmd == ACTION_Request)
+    {
+        p = support_broadcast_action_cmd_tab;
+        number = (sizeof(support_broadcast_action_cmd_tab) / sizeof(support_broadcast_action_cmd_tab[0]));
+    }
+    else
+    {
+        return -1;
+    }
+
+    for (i = 0; i < number; i++)
+    {
+        if (oad == *p)
+        {
+            return 1;
+        }
+
+        p++;
+    }
+
+    return -1;
+}
+
+
+
 int fr_handle_set_action_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
@@ -164,6 +203,16 @@ int fr_handle_set_action_request(struct instance_t* instance, struct pipeline_t*
             memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, 4);
             cache->wr += 4;
             ctx->apdu_rx_offset += 4;
+
+
+            if (3 == get_addr_type(ctx->SA)) 
+            {
+                r = support_broadcast_addr_cmd_check(ctx->service, mesg->id);
+                if (r < 0)
+                {
+                    return -DAR_RW_REJECT;
+                }
+            }
 
             r = __fr_handle_one_object(instance, pipeline, mesg);
             ctx->apdu_rx_offset += r;

@@ -597,12 +597,12 @@ int day_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task
     uint8_t tmp[10]; 
     uint32_t  now,pd,last,recently;
     struct tm now_tm,pd_tm, last_time;
-    uint32_t s_index;
+    uint32_t s_index, tmp_u32;
     uint8_t payload[20] = {0};
     //uint8_t *p = payload;
     struct message_t mesg_tmp;
     uint16_t    period;
-
+    int ret;
 
     //获取周期 天
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + DayFreeze_period);
@@ -614,16 +614,22 @@ int day_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task
         period = 1;
     }
 
-
     ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->v_powerdown_tm), sizeof(ctrl_block->v_powerdown_tm));
 
     if (false == rtc_tm_valid(&ctrl_block->v_powerdown_tm))    // 模拟停电时间无效          取上次停电时间
     {
-        if (false == rtc_tm_valid(&ctrl_block->powerdown_tm))   // 停电时间无效       退出
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PDTime_Frez); // 冻结停电时间
+        ret = nd_get_index(instance, s_index, (uint8_t *)&tmp_u32, 4);
+        rtc_localtime(tmp_u32, &pd_tm);
+
+        if ((ret < 0) || (tmp_u32 == 0) || (false == rtc_tm_valid(&pd_tm)))   // 冻结停电时间无效  则使用电表停电时间
         {
-            return 0;
+            if (false == rtc_tm_valid(&ctrl_block->powerdown_tm))   // 电表停电时间无效       退出
+            {
+                return 0;
+            }
+            ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->powerdown_tm), sizeof(ctrl_block->powerdown_tm));
         }
-        ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->powerdown_tm), sizeof(ctrl_block->powerdown_tm));
     }
 
     ndv_memcopy((uint8_t *)&now_tm,(uint8_t *)&instance->time, sizeof(now_tm));
@@ -716,21 +722,28 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
     uint8_t cnt, i, tmp[10]; 
     uint32_t  now,pd,last,recently;
     struct tm now_tm,pd_tm, last_time;
-    uint32_t s_index;
+    uint32_t s_index, tmp_u32;
     uint8_t billdate[3][2];
     uint8_t payload[20] = {0};
     //uint8_t *p = payload;
     struct message_t mesg_tmp;
+    int ret = 0;
 
     ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->v_powerdown_tm), sizeof(ctrl_block->v_powerdown_tm));
 
     if (false == rtc_tm_valid(&ctrl_block->v_powerdown_tm))    // 模拟停电时间无效          取上次停电时间
     {
-        if (false == rtc_tm_valid(&ctrl_block->powerdown_tm))   // 停电时间无效       退出
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PDTime_Frez); // 冻结停电时间
+        ret = nd_get_index(instance, s_index, (uint8_t *)&tmp_u32, 4);
+        rtc_localtime(tmp_u32, &pd_tm);
+        if ((ret < 0) || (tmp_u32 == 0)  || (false == rtc_tm_valid(&pd_tm)))   // 冻结停电时间无效  则使用电表停电时间
         {
-            return 0;
+            if (false == rtc_tm_valid(&ctrl_block->powerdown_tm))   // 电表停电时间无效       退出
+            {
+                return 0;
+            }
+            ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->powerdown_tm), sizeof(ctrl_block->powerdown_tm));
         }
-        ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->powerdown_tm), sizeof(ctrl_block->powerdown_tm));
     }
 
     ndv_memcopy((uint8_t *)&now_tm,(uint8_t *)&instance->time, sizeof(now_tm));
@@ -949,7 +962,7 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
 
 
 
-#if 0
+#if 1
 uint8_t test_freeze = 0;
 #endif
 // 每秒调用
@@ -967,7 +980,7 @@ int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct mess
 
 
 
-#if 0    
+#if 1    
     if (test_freeze)
     {
     
@@ -1000,10 +1013,16 @@ int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct mess
 int freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint32_t tmp_u32 = 0, s_index;
     
     record_rollback_after_set_time(instance, 0x5A);
     day_freeze_power_on_pro(instance, task, mesg);
     bill_freeze_power_on_pro(instance, task, mesg);
+    ctrl_block->frz_replenish_end = 0x5A; //完成补冻结
+    
+    tmp_u32 = 0;
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PDTime_Frez); // 清冻结停电时间
+    nd_set_index(instance, s_index, (uint8_t *)&tmp_u32, 4);
     
     memset((uint8_t *)(&ctrl_block->v_powerdown_tm), 0 , sizeof(ctrl_block->v_powerdown_tm));
     return 1;

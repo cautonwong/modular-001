@@ -27,7 +27,7 @@ int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline
 //    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     size_t mbase_block_persistent_size = offsetof(struct mbase_control_block_t, persistent_section_end) - offsetof(struct mbase_control_block_t, persistent_section_start) + 1;
     uint32_t addr = 0;
-    uint32_t res = 0;
+    uint32_t res = 0, tmp_u32;
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
@@ -48,7 +48,15 @@ int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline
     
     res = get_res(RES_DEV_EEPROM, mbase_block_persistent_eprom);
     nd_set_block(instance, res, (uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;   
-    
+
+    //保存 冻结停电时间
+    if (mbase_cb->frz_replenish_end == 0x5A)
+    {
+        tmp_u32 = rtc_mktime((&mbase_cb->powerdown_tm));
+        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PDTime_Frez); // 冻结停电时间
+        nd_set_index(instance, addr, (uint8_t *)(&tmp_u32), 4);
+    }
+
     mbase_cb->ec_save_success = 0;       //保存后 清 标志
     
     instance->ac_power_off_sec_cnt = 0;

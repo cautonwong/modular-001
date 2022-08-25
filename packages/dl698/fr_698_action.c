@@ -114,6 +114,15 @@ int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pip
             memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, 4);
             cache->wr += 4;
             ctx->apdu_rx_offset += 4;
+            
+            if (3 == get_addr_type(ctx->SA)) 
+            {
+                r = support_broadcast_addr_cmd_check(ctx->service, mesg->id);
+                if (r < 0)
+                {
+                    return -DAR_RW_REJECT;
+                }
+            }
 
             r = __fr_handle_one_object(instance, pipeline, mesg);
             if(r >= 0)
