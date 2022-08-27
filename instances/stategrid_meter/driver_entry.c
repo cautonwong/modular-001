@@ -936,8 +936,10 @@ void IOStateCheckInit(void)
 
 void IOStateCheck(struct instance_t* instance, struct pipeline_t* pipeline)
 {
+    struct mbase_control_block_t* mbase_control_block;
+    mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    GPIO_InitType GPIO_InitStruct;
     
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     
     METER_COVER_INPUT();
     if(meter_cover_cnt==50)
@@ -949,8 +951,48 @@ void IOStateCheck(struct instance_t* instance, struct pipeline_t* pipeline)
         mbase_control_block->CoverOpenS_status = EVENT_SET;
     }
 
-
-
+    if( instance->ac_power_statue == AC_POWER_OFF )
+    {
+        if(mbase_control_block->power_abnormal_tick < 5)
+        {
+            mbase_control_block->power_abnormal_tick++;
+            
+            //开启电源异常检测
+            CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);
+            GPIOC->OEN &= ~BIT6; 
+            GPIOC->IE &= ~BIT6;
+            GPIOC->DAT |= BIT6;
+            
+            GPIOC->OEN |= BIT8; 
+            GPIOC->IE |= BIT8;
+            
+            if((GPIOC->STS & BIT8) == 0)    //检测到信号
+            {
+                if(mbase_control_block->power_abnormal_tick1 < 3)   
+                {
+                    mbase_control_block->power_abnormal_tick1++;
+                    if(mbase_control_block->power_abnormal_tick1 >= 3)
+                    {
+                        mbase_control_block->PowerAbnormalS_status = EVENT_SET;  //电源异常发生
+                    }
+                }
+            }
+            else
+            {
+                mbase_control_block->power_abnormal_tick1 = 0;
+                mbase_control_block->PowerAbnormalS_status = EVENT_RESET;
+            }
+            
+            if(mbase_control_block->power_abnormal_tick >= 5)
+            {
+//                GPIOC->DAT &= ~BIT6;
+                GPIO_InitStruct.GPIO_Mode = GPIO_Mode_FORBIDDEN;
+                GPIO_InitStruct.GPIO_Pin  = GPIO_Pin_All;
+                GPIOBToF_Init(GPIOC, &GPIO_InitStruct);
+                CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), DISABLE);
+            }
+        }
+    }
     
 }
 

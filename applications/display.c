@@ -257,9 +257,7 @@ typedef struct
 	unsigned int    Sign;//显示内容信息
 } DISPLAYTAB;
 
- const  DISPLAYTAB DisplayTab[28];
  
-#define 	DisplayTabNum		sizeof(DisplayTab)/sizeof(DISPLAYTAB)
 
 typedef struct
 {
@@ -334,6 +332,8 @@ const  DISPLAYTAB DisplayTab[] =
     //0xE0FF,     0xE000~0xE00C:总，费率1~12;   0xE000~0xE180:当前~上24月组合总电能  
 #endif
 };
+
+#define 	DisplayTabNum		sizeof(DisplayTab)/sizeof(DISPLAYTAB)
 
 typedef struct
 {

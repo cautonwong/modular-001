@@ -270,6 +270,8 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             mbase_cb->active_power = 0;
             mbase_cb->current_n = 0;
             mbase_cb->power_factor = 0;
+            mbase_cb->power_abnormal_tick1 = 0;
+            mbase_cb->power_abnormal_tick = 0;
             //开启EE电源和IO口时钟 //
 /*            CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);
             GPIOC->OEN &= ~(BIT4|BIT5|BIT6); 
