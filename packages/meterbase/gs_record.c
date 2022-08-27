@@ -462,13 +462,14 @@ const uint32_t freeze_oad[] =
     0x50000200,   //瞬时冻结
 };
 
-//电网类事件 
+//停电结束或上电结束的事件           --- 上电结束表示：xxxxxxAA            停电结束表示：xxxxxx00
 const uint32_t power_grid_event_oad[] = 
 {
-    0x30050700,   //A过流                              
-    0x302B0200,   //电能表负荷开关误动作事件  
-    0x302F0200,   //电能表计量芯片故障事件
-    0x30400200,   //零线电流异常事件
+    0x30050700,   //A过流      -停电结束                           
+    0x302B0200,   //电能表负荷开关误动作事件    -停电结束 
+    0x302F0200,   //电能表计量芯片故障事件   -停电结束
+    0x30400200,   //零线电流异常事件   -停电结束 
+    0x302C02AA,   //电能表电源异常事件  -上电结束  
 };
 
 
@@ -657,10 +658,11 @@ int event_PowerOn_pro(struct instance_t* instance, struct pipeline_t* pipeline, 
 {
 
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint8_t payload[20] ={0}, tmp[15]={0};
+    uint8_t payload[20] ={0}, tmp[15]={0}, judeFlag = 0;
     uint16_t i, RecordId;
     struct record_storage_id_info_t info;
     struct message_t mesg_tmp;
+    struct tm tmpTM;
     int ret;
 
 
@@ -668,11 +670,24 @@ int event_PowerOn_pro(struct instance_t* instance, struct pipeline_t* pipeline, 
 
     for (i = 0; i < (sizeof(power_grid_event_oad) / sizeof(power_grid_event_oad[0])); i++)
     {
-        ret = get_record_id_info(instance, power_grid_event_oad[i], &info);
+
+        ret = get_record_id_info(instance, (power_grid_event_oad[i] & 0xFFFFFF00), &info);
         if(ret < 0)
         {
             continue;
         }
+
+        judeFlag = (uint8_t)(power_grid_event_oad[i]&0x000000FF);
+        
+        if (judeFlag == 0xAA)
+        {
+            ndv_memcopy((uint8_t *)&tmpTM, (uint8_t *)&instance->time, sizeof(struct tm));
+        }
+        else
+        {
+            ndv_memcopy((uint8_t *)&tmpTM, (uint8_t *)&ctrl_block->powerdown_tm, sizeof(struct tm));
+        }
+        
         RecordId = (uint16_t)info.save_index;
         if (true == get_activeflag(instance, RecordId))
         {
@@ -681,12 +696,19 @@ int event_PowerOn_pro(struct instance_t* instance, struct pipeline_t* pipeline, 
             uint32_to_buf_msb(0x20200200, &payload[0]);
             payload[4] = 8; //data len
             payload[5] = 0x1C;//TYPE_date_time_s;
-            rtc_format_change_from_tm(&ctrl_block->powerdown_tm,  tmp);
+            rtc_format_change_from_tm(&tmpTM,  tmp);
             mem_swap_cpy(&payload[6], &tmp[0], 7);
             clr_activeflag(instance, RecordId);
             recv_record_process(instance, pipeline, &mesg_tmp, payload);    
         }
     }
+
+
+    //上电结束电源异常事件
+    
+
+
+    
     return true;
 }
 

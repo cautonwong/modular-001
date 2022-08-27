@@ -1277,7 +1277,7 @@ int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32
 
     if (rcsd_list[0] > REQ_RCSD_MAXNUM) // 请求的rcsd个数超出，返回错误 
     {
-        // 待添加
+        p[cache->wr++] = 0x00; //rcsd 补0 
         return -DAR_RW_REJECT;
     }
     else // 赋值rcsd  

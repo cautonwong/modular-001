@@ -794,6 +794,9 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             break;
         case 0x4014://当前套时区表
         case 0x4015://备用套时区表
+            max_v = 0;
+            last_v = 0xFFFF;
+            period = 1;
             if(index > MaxSeasonNum)    return -DAR_TIME_ZONE_EXCEED;
             if((oad == 0x4014) && (mbase_cb->factor_mode == false))    return    -DAR_RW_REJECT;
             if(index == 0)
@@ -805,7 +808,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     if((*(p+2+8*i+3) > 12) || (*(p+2+8*i+3) == 0)) return -DAR_RW_REJECT;
                     if((*(p+2+8*i+5) > 31) || (*(p+2+8*i+5) == 0)) return -DAR_RW_REJECT;
                     if(*(p+2+8*i+5) > MonTab[*(p+2+8*i+3)]) return -DAR_RW_REJECT;
-                    if((*(p+2+8*i+7)) > MaxTouTabNum) return -DAR_RW_REJECT;
+                    if(((*(p+2+8*i+7)) == 0)||((*(p+2+8*i+7)) > MaxTouTabNum))  return -DAR_RW_REJECT;
                 }
             }
             else
@@ -813,7 +816,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 if((*(p+3) > 12) || (*(p+3) == 0))  return -DAR_RW_REJECT;
                 if((*(p+5) > 31) || (*(p+5) == 0))  return -DAR_RW_REJECT;
                 if(*(p+5) > MonTab[*(p+3)])     return -DAR_RW_REJECT;
-                if((*(p+7)) > MaxTouTabNum) return -DAR_RW_REJECT;
+                if(((*(p+7)) == 0)||((*(p+7)) > MaxTouTabNum)) return -DAR_RW_REJECT;
             }
             
             if(oad == 0x4014)   
@@ -837,14 +840,53 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 for(i=0; i<num; i++)
                 {
                     p = p + 3;
-                    buffer[0] = *p++;
+                    buffer[0+i*3] = *p++;
                     p++;
-                    buffer[1] = *p++;
+                    buffer[1+i*3] = *p++;
                     p++;
-                    buffer[2] = *p++;
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
-                    nd_set_index(instance, s_index, buffer, 3);
+                    buffer[2+i*3] = *p++;
+
+
+                    //时区顺序 检查
+                    cur_v = (buffer[0+i*3]<<8) + buffer[1+i*3] + max_v;
+                    if (last_v == 0xFFFF)
+                    {
+                        first_v = cur_v;
+                        last_fee = buffer[2+i*3];
+                        
+                    }
+                    else
+                    {
+                        if (cur_v < last_v) //翻转
+                        {
+                            if (max_v == 0) //翻转一次
+                            {
+                                max_v = 0x1200;
+                                cur_v += max_v;
+                            }
+                            else
+                            {
+                                return -DAR_RW_REJECT;
+                            }
+                        }
+                        else
+                        {
+                            if ((max_v) && ((cur_v - max_v + period) > first_v))
+                            {
+                                return -DAR_RW_REJECT;
+                            }
+                        } 
+
+                        if ((buffer[2+i*3] != last_fee) && (cur_v < (last_v + period)))
+                        {
+                            return -DAR_RW_REJECT;
+                        }
+                        
+                    }
+                    last_v = cur_v;
+                    last_fee = buffer[2+i*3];
                 }
+
                 if(num < MaxSeasonNum)
                 {
                     for(i=num; i<MaxSeasonNum; i++)
@@ -852,10 +894,10 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                         buffer[0+i*3] = buffer[0+(num-1)*3];
                         buffer[1+i*3] = buffer[1+(num-1)*3];
                         buffer[2+i*3] = buffer[2+(num-1)*3];
-                        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
-                        nd_set_index(instance, s_index, buffer, 3);
                     }
                 }
+                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
+                nd_set_index(instance, s_index, buffer, 3*MaxSeasonNum);
             }
             else
             {

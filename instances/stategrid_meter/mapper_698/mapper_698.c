@@ -1965,22 +1965,22 @@ int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* sr
                 {
                     if(index)
                     {
-                        len = (4+1); //待调整
+                        len = (4+1); 
                     }
                     else
                     {
-                        len = (4+1)*block_num + 2; //待调整
+                        len = (4+1)*block_num + 2; 
                     }
                 }
                 else if(attr == 4) // 高精度
                 {
                     if(index)
                     {
-                        len = (8+1);//待调整
+                        len = (8+1);
                     }
                     else
                     {
-                        len = (8+1)*block_num + 2;//待调整
+                        len = (8+1)*block_num + 2;
                     }
                 }
                 else  //不支持
@@ -1995,22 +1995,22 @@ int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* sr
                 {
                     if(index)
                     {
-                        len = (5);//待调整
+                        len = (5);
                     }
                     else
                     {
-                        len = (5)*13;//待调整
+                        len = (5)*13;
                     }
                 }
                 else if(attr == 4) // 高精度
                 {
                     if(index)
                     {
-                        len = (5);//待调整
+                        len = (5);
                     }
                     else
                     {
-                        len = (5)*13;//待调整
+                        len = (5)*13;
                     }
                 }
                 else  //不支持
@@ -2645,24 +2645,7 @@ void fr_dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline
 
     for(cilent_index=0; cilent_index<2; cilent_index++)
     {
-        //待调整
-#if 0
-        if ((s->block_timeout[cilent_index] > 0) && ((req->block[cilent_index].data != 0xffff) || (res->block[cilent_index].data != 0xffff)))
-        {
-            para = dl698_cfg_para_get(channel);
-            tick = get_tick_diff(s->block_timeout[cilent_index]);
-    
-            if (tick > ((req->do_then_get_timeout * 1000ul) + para->block_timeout))
-            {
-                aprint("block timeout\r\n");
-                sprint("warning: block timer is timeout\r\n");
-                s->block_timeout[cilent_index] = 0;
-                s->block_error_count[cilent_index] = 0;
-                req->block[cilent_index].data = 0xffff;
-                res->block[cilent_index].data = 0xffff;
-            }
-        }
-#endif
+        //待调整  块抄读 超时复位
         for(channel=0; channel<4; channel++)
         {
             if (mbase_cb->connect_status[channel][cilent_index])
