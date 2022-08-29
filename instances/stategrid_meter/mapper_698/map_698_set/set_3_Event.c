@@ -74,6 +74,13 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
     struct record_storage_id_info_t  info;
     int ret;
 
+    
+    if (get_OAD_Index(oad) != 0)
+    {
+        return -DAR_RW_REJECT;
+    }
+
+
     ret = get_record_id_info(instance, oad, &info);
     if (ret < 0)
     {

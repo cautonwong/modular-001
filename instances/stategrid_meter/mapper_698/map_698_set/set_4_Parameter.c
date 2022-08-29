@@ -562,8 +562,8 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
                 mbase_cb->RTCErrS_status = 0;
 
-                clr_last_bill_time(instance);
-
+                clr_last_bill_time(instance, LastBillingTime);
+                clr_last_bill_time(instance, LastDayFreezTime);
                 write_powerdown_time(instance);
                 return (p-buf);
             }
@@ -869,14 +869,12 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                                 return -DAR_RW_REJECT;
                             }
                         }
-                        else
-                        {
-                            if ((max_v) && ((cur_v - max_v + period) > first_v))
-                            {
-                                return -DAR_RW_REJECT;
-                            }
-                        } 
 
+                        if ((max_v) && ((cur_v - max_v + period) > first_v))
+                        {
+                            return -DAR_RW_REJECT;
+                        }
+                 
                         if ((buffer[2+i*3] != last_fee) && (cur_v < (last_v + period)))
                         {
                             return -DAR_RW_REJECT;
@@ -1009,13 +1007,11 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                                 return -DAR_RW_REJECT;
                             }
                         }
-                        else
+
+                        if ((max_v) && ((cur_v - max_v + period) > first_v))
                         {
-                            if ((max_v) && ((cur_v - max_v + period) > first_v))
-                            {
-                                return -DAR_RW_REJECT;
-                            }
-                        } 
+                            return -DAR_RW_REJECT;
+                        }
 
                         if ((buffer[2+i*3] != last_fee) && (cur_v < (last_v + period)))
                         {

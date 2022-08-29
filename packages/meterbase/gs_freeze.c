@@ -3,7 +3,7 @@
 #include "gs_record.h"
 #include "fr_698.h"
 #include "lib_ana.h"
-
+#define CONVERT_TM_MONTH(x)  ((x<1)?0:(x-1))
 //计算记录型配置关联对象时  总长度是否超预留空间，  入参关联对象、深度，  事件无深度，需传Null.
 //并且计算保存分钟冻结8个方案中每个方案的空间大小偏移(扇区)
 int cal_record_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, uint8_t *depth_ptr, uint32_t oad)
@@ -643,7 +643,7 @@ int day_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task
     last_time.tm_min  = tmp[1];
     last_time.tm_hour = tmp[2];
     last_time.tm_mday = tmp[3];
-    last_time.tm_mon  = tmp[4] - 1;
+    last_time.tm_mon  = CONVERT_TM_MONTH(tmp[4]);
     last_time.tm_year = tmp[5] + 2000 - 1900;
 
 
@@ -751,13 +751,14 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
     pd_tm.tm_sec = 0;
 
 
+    
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillingTime);
     nd_get_index(instance, s_index, &tmp[0], 6);
     last_time.tm_sec  = tmp[0];
     last_time.tm_min  = tmp[1];
     last_time.tm_hour = tmp[2];
     last_time.tm_mday = tmp[3];
-    last_time.tm_mon  = tmp[4] - 1;
+    last_time.tm_mon  = CONVERT_TM_MONTH(tmp[4]);
     last_time.tm_year = tmp[5] + 2000 - 1900;
 
 
@@ -889,7 +890,7 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
         last_time.tm_min  = tmp[1];
         last_time.tm_hour = tmp[2];
         last_time.tm_mday = tmp[3];
-        last_time.tm_mon  = tmp[4] - 1;
+        last_time.tm_mon  = CONVERT_TM_MONTH(tmp[4]);
         last_time.tm_year = tmp[5] + 2000 - 1900;
         
         cur_hour = rtc_mktime(&instance->time);
@@ -946,7 +947,7 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
                 tmp[5] = (uint8_t)((bill_time.tm_year + 1900)-2000);
 
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillTimeID);
-                nd_set_index(instance, s_index, &tmp[0], 5);
+                nd_set_index(instance, s_index, &tmp[0], 6);
    
                 ndv_memcopy((uint8_t *)&record_time, (uint8_t *)&instance->time, sizeof(struct tm));   
                 //send_recordflag_mesg(instance, task,  FlagID, NULL);
@@ -980,7 +981,7 @@ int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct mess
 
 
 
-#if 1    
+#if 0    
     if (test_freeze)
     {
     

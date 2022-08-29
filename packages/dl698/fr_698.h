@@ -286,7 +286,25 @@ struct connect_request_t
     uint8_t  connect_mode;              //认证模式enum connect_mode_e
 };
 
+
+
+enum security_result_t
+{
+    DL698_SEC_SUCCESS               = 0,     // 允许建立应用连接 
+    DL698_SEC_PASSWORD_ERR          = 1,     // 密码错误 
+    DL698_SEC_SYMMETRIC_DECODE_ERR  = 2,     // 对称解密错误 
+    DL698_SEC_ASYMMETRIC_DECODE_ERR = 3,     // 非对称解密错误
+    DL698_SEC_SIGNATURE_ERR         = 4,     // 签名错误 
+    DL698_SEC_VERSION_NOT_MATCH     = 5,     // 协议版本不匹配 
+    DL698_SEC_ESM_ERR               = 6,     // ESAM 
+    DL698_SEC_OTHERS_ERR            = 255,   // 其他错误 
+};
+
+
 ///////////////////////////////////
+
+
+
 
 enum dl698_unit_e
 {

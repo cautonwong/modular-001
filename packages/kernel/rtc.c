@@ -107,7 +107,35 @@ static int _yday(int day, int month, int year)
        2019-01-01 will be be day 0 in year 2019 */
     return d[month] + day - 1;
 }
+static int _yday_1(int day, int month, int year)
+{
+    /* Cumulative number of days since start of the year. In order to squeeze this into
+       8 bits, we wrap around at 255 and handle this later. */
+    static const uint8_t d[] = { 0,  31,  59, 90, 120, 151,
+                               181, 212, 243, 17,  48,  78};
 
+    /* If year is a leap year, February (1) has an extra day. */
+    if (month > 1) {
+        day += _is_leap_year(year);
+    }
+
+    /* For months October (9), November (10), and December (11) number in d was wrapped
+       around to fit into 8 bits. We undo this now. */
+    if (month > 8) {
+        day |= 0x100;
+    }
+
+    /* subtract 1 as counting starts at zero, e.g.
+       2019-01-01 will be be day 0 in year 2019 */
+    if(d[month] + day > 1)
+    {
+        return d[month] + day - 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
 void rtc_tm_normalize(struct tm *t)
 {
     div_t d;
@@ -160,7 +188,7 @@ uint32_t rtc_mktime(struct tm *t)
     uint32_t time = t->tm_sec
                   + t->tm_min * MINUTE
                   + t->tm_hour * HOUR
-                  + _yday(t->tm_mday, t->tm_mon, year) * DAY;
+                  + _yday_1(t->tm_mday, t->tm_mon, year) * DAY;
 
     unsigned leap_years = _leap_years_since_epoch(year);
     unsigned common_years = (year - NIDAVELLIR_EPOCH) - leap_years;

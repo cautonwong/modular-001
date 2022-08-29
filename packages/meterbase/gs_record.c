@@ -360,15 +360,13 @@ int clr_record(struct instance_t* instance, uint32_t oad)
     //清最近一次日冻结时间
     if (oad == 0x50040200)
     {
-        memset(tmpbuf, 0, sizeof(tmpbuf));
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastDayFreezTime);
-        nd_set_index(instance, s_index, &tmpbuf[0], 6);
+        clr_last_bill_time(instance, LastDayFreezTime);
     }
 
     //清最近一次结算冻结时间
     if (oad == 0x50050200)
     {
-        clr_last_bill_time(instance);
+        clr_last_bill_time(instance, LastBillingTime);
     }
     //清最近一次广播导致时钟异常时间
     if(oad == 0x302E0200)
@@ -537,7 +535,8 @@ int meter_clr(struct instance_t* instance)
     freeze_clr(instance); //冻结清零
     event_clr(instance);  // 事件清零
     clr_record(instance, 0x30150200); //事件清零事件 清零
-    clr_last_bill_time(instance);
+    clr_last_bill_time(instance, LastBillingTime);
+    clr_last_bill_time(instance, LastDayFreezTime);
     if ((mbase_cb->factor_mode == true)) //电表清零事件 清零
     {
         clr_record(instance, 0x30130200);
@@ -577,19 +576,18 @@ int clr_MonthEC(struct instance_t* instance)
     return 1;
 }
 
-//清最近一次结算时间
-int clr_last_bill_time(struct instance_t* instance)
+//清最近一次结算时间   //清最近一次日冻结时间 // LastBillingTime +  LastDayFreezTime
+int clr_last_bill_time(struct instance_t* instance, uint32_t ID)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t s_index;
     uint8_t tmpbuf[10] = {0};
     
     memset(tmpbuf, 0, sizeof(tmpbuf));
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillingTime);
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ID);
     nd_set_index(instance, s_index, &tmpbuf[0], 6);
     return 1;
 }
-
 
 
 //修改关联对象时 调用 清零

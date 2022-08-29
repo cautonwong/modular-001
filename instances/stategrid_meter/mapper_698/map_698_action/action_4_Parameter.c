@@ -231,7 +231,9 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     send_event_mesg_pro(instance, NULL, BroadcastTimeS, NULL, 1);// 广播校时记录
 
                     record_rollback_after_set_time(instance, 0);
-                    clr_last_bill_time(instance);
+                    clr_last_bill_time(instance, LastBillingTime);
+                    clr_last_bill_time(instance, LastDayFreezTime);
+                    write_powerdown_time(instance);
                     return 8;
                 }
             }
