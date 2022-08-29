@@ -576,12 +576,12 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             break;
             break;
         case 0x4011://公共假日表
-            if(index > 20)    return -DAR_OBJECT_NOT_EXIST;
+            if(index > MaxHolidayNum)    return -DAR_OBJECT_NOT_EXIST;
             if(index == 0)
             {
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 4);
                 nd_get_index(instance, s_index, &num, 1);
-                if(num>10) num = 10;
+                if(num > MaxHolidayNum ) num = MaxHolidayNum;
                 *p++ = TYPE_array;
                 *p++ = num;
                 for(i=0;i<num;i++)
@@ -640,7 +640,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             {
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para);
                 nd_get_index(instance, s_index, &num, 1);
-                if(num>14) num = 14;
+                if(num > MaxSeasonNum) num = MaxSeasonNum;
                 *p++ = TYPE_array;
                 *p++ = num;
                 for(i=0; i<num; i++)
@@ -686,6 +686,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 1);//日时段表数
                 nd_get_index(instance, s_index, p, 1);
                 num = *p++;
+                if(num > MaxTouTabNum)     num = MaxTouTabNum;
                 for(j=0;j<num;j++)//日时段表数
                 {
                     *p++ = TYPE_array;
@@ -693,8 +694,11 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     nd_get_index(instance, s_index, p, 1);
                     num_hourtab = *p++; 
                     
+                    if(num_hourtab > MaxTouNum)     num_hourtab = MaxTouNum;
+                    
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + j);
                     nd_get_index(instance, s_index, temp, 3*num_hourtab);
+                    
                     for(i=0; i<num_hourtab; i++)
                     {
                         *p++ = TYPE_structure;
@@ -715,6 +719,8 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 2);//日时段数，每日切换数
                 nd_get_index(instance, s_index, p, 1);
                 num_hourtab = *p++; 
+                
+                if(num_hourtab > MaxTouNum)     num_hourtab = MaxTouNum;
                 
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
                 nd_get_index(instance, s_index, temp, 3*num_hourtab);

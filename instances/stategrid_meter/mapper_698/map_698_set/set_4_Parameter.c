@@ -95,7 +95,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         break;
                     case 0x4013://周休日日时段表号
                         if(*p != 17) return -DAR_TYPE_NOT_MATCH;
-                        if ( p[1] >  MaxTouTabNum ) return -DAR_RW_REJECT;
+                        if ( p[1] >  MaxTouTabNum ) return -DAR_OTHERS_ERROR;
                         //保存编程前
                         nd_get(instance, id, timer, 2, NULL);
                         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_WeekTab);
@@ -453,7 +453,7 @@ uint8_t CheckData400C(uint8_t *p,uint8_t index)
           if(*(p+1) > 14)   return DAR_DAY_INTERVAL_EXCEED;
           break;
         case 1:
-          if(*(p+1) > 8)   return DAR_BUFFER_OVERFLOW;
+          if(*(p+1) > 8)   return DAR_OTHERS_ERROR;
           break;
         case 3:
           if(*(p+1) > 12)   return DAR_TARIFF_NUM_EXCEED;

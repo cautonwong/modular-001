@@ -233,6 +233,11 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
         case 0x8001://保电
             mbase_cb->cmd_errstate = 0;
             mbase_cb->cmd_dostate = 0;
+            if( mbase_cb->mac_suspend_state == true )   //挂起
+            {
+                mbase_cb->cmd_errstate = 0x8000;    //挂起
+                return  -DAR_METER_SUSPEND;
+            }
             switch(method)
             {
                 case 0x7F://投入保电

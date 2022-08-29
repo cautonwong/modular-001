@@ -849,7 +849,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     }
 
     //mac挂起判断
-    if((mbase_cb->mac_suspend_state == true) && (service == SECURITY_Request) && (ctx->service == SET_Request) && (ctx->service == ACTION_Request)) 
+    if((mbase_cb->mac_suspend_state == true) && ((service == SECURITY_Request) || (ctx->service == SET_Request) || (ctx->service == ACTION_Request))) 
     {
         //ctx->service = SECURITY_Response;
         //service = SECURITY_Response;

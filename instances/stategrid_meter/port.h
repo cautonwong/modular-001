@@ -446,9 +446,9 @@ enum block_parameter_item_id_t
 #define     AuthMeth                    1007 //连接认证机制
 #define     HoliDay_Table               1008 //公共假日表，20张，每张6字节
 
-#define     Meter_Type                  1010 //电表类型
-#define     Pstart_En                   1011 //启动防潜开关
-#define     Blt_Alarm_Byte              1012 //背光报警配置字
+#define     Meter_Type                  1030 //电表类型
+#define     Pstart_En                   1031 //启动防潜开关
+#define     Blt_Alarm_Byte              1032 //背光报警配置字
 /***************** 计量相关 *****************/
 #define     Heat_Value_10L              1100    //1.0L自热补偿  15*2=30
 #define     Heat_Value_05L              1101    //0.5L自热补偿  15*2=30
