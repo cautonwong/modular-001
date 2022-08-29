@@ -301,6 +301,12 @@ int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, void *c
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
 
+    if (get_OAD_Index(id) != 0)
+    {
+        return -DAR_RW_REJECT;
+    }
+
+
     if(mbase_cb == NULL)
     {
         return -DAR_OTHERS_ERROR;
