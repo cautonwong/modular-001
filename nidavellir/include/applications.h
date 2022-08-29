@@ -473,7 +473,7 @@ struct format_conversion_t
 #define		F_ChangeTmOn        0x08
 
 //relay
-#define     Relay_Ck_Time       100    //1秒
+#define     Relay_Ck_Time       200    //2秒
 
 //key
 #define     keydlymax           100     

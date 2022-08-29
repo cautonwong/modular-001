@@ -13,7 +13,7 @@ int SwitchErr_event_judge(struct instance_t* instance, struct pipeline_t* task, 
     uint8_t state = false;
     int result = 0;
 
-    uint8_t duration_para = 5;//ctrl_block->SwitchErrS_duration_para;
+    uint8_t duration_para = 3;//ctrl_block->SwitchErrS_duration_para;
     uint8_t *duration = &ctrl_block->SwitchErrS_duration;
 
     uint8_t err_flag = ctrl_block->SwitchErrS_status;
