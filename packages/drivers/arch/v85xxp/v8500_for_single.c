@@ -1154,8 +1154,8 @@ uint8_t lcd_init(uint8_t power_mode)
           lcd_port_config(AC_POWER_ON);
 
           lcd_init_para.Type   = LCD_TYPE_6COM;
-          lcd_init_para.Drv    = LCD_DRV_600;
-          lcd_init_para.FRQ    = LCD_FRQ_256H;
+          lcd_init_para.Drv    = LCD_DRV_150;
+          lcd_init_para.FRQ    = LCD_FRQ_512H;
           lcd_init_para.SWPR   = 0x00;
           lcd_init_para.FBMODE = LCD_FBMODE_BUFA;
           lcd_init_para.BKFILL = LCD_BKFILL_0;
@@ -1167,6 +1167,7 @@ uint8_t lcd_init(uint8_t power_mode)
           
           LCD_Init(&lcd_init_para);
           LCD_BiasModeConfig(LCD_BMODE_DIV4);
+          LCD_VoltageConfig(LCD_VOL_DEC180MV);
           LCD_Cmd(&lcd_io_para, ENABLE);
             break;
         default:
