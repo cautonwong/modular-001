@@ -68,13 +68,16 @@ static void sysclk_at_3m2768(uint16_t flag)
       CLK_Struct.ClockType = CLK_TYPE_AHBSRC \
                             |CLK_TYPE_PLLL   \
                             |CLK_TYPE_HCLK   \
-                            |CLK_TYPE_PCLK;
+                            |CLK_TYPE_PCLK  \
+                            |CLK_TYPE_RTCCLK;
       CLK_Struct.AHBSource      = CLK_AHBSEL_LSPLL;
       CLK_Struct.PLLL.Frequency = CLK_PLLL_3_2768MHz;
       CLK_Struct.PLLL.Source    = CLK_PLLLSRC_XTALL;
       CLK_Struct.PLLL.State     = CLK_PLLL_ON;
       CLK_Struct.HCLK.Divider   = 1;
       CLK_Struct.PCLK.Divider   = 1;
+      CLK_Struct.RTCCLK.Source = 0;
+      CLK_Struct.RTCCLK.Divider = 0;
       CLK_ClockConfig(&CLK_Struct);
       
     }
@@ -118,13 +121,16 @@ void sys_clock_normal(void)
     CLK_Struct.ClockType = CLK_TYPE_AHBSRC \
                         |CLK_TYPE_PLLL   \
                         |CLK_TYPE_HCLK   \
-                        |CLK_TYPE_PCLK;
+                        |CLK_TYPE_PCLK  \
+                        |CLK_TYPE_RTCCLK;
     CLK_Struct.AHBSource      = CLK_AHBSEL_LSPLL;
     CLK_Struct.PLLL.Frequency = CLK_PLLL_26_2144MHz;
     CLK_Struct.PLLL.Source    = CLK_PLLLSRC_XTALL;
     CLK_Struct.PLLL.State     = CLK_PLLL_ON;
     CLK_Struct.HCLK.Divider   = 1;
     CLK_Struct.PCLK.Divider   = 1;
+    CLK_Struct.RTCCLK.Source = 0;
+    CLK_Struct.RTCCLK.Divider = 0;
     CLK_ClockConfig(&CLK_Struct);
     
     Periphral = CLK_APBPERIPHRAL_PMU | CLK_APBPERIPHRAL_RTC | CLK_APBPERIPHRAL_ANA \
