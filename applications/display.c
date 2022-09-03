@@ -322,7 +322,7 @@ const  DISPLAYTAB DisplayTab[] =
     0xB004,		0x40020200,     0x02,   DispData_E2PROM + DispData_BCD +4,						(unsigned int)SIGN_BIAOHAO,//表号低8位
     0xB005,		0x40030200,     0x01,   DispData_E2PROM + DispData_BCD +2,						(unsigned int)SIGN_HUHAO,//客户编号高4位
     0xB006,		0x40030200,     0x02,   DispData_E2PROM + DispData_BCD +4,						(unsigned int)SIGN_HUHAO,//客户编号低8位
-    0xB007,		0x41090200,     0x00,   DispData_E2PROM + DispData_BCD +3,						(unsigned int)SIGN_CHANGSHU,//电表有功常数  
+    0xB007,		0x41090200,     0x00,   DispData_E2PROM + DispData_HEX +4,						(unsigned int)SIGN_CHANGSHU,//电表有功常数  
 #if 0    
     //正向电能量
     //0xC0FF,     0xC000~0xC00C:总，费率1~12;   0xC000~0xC180:当前~上24月正向总电能
@@ -1026,7 +1026,14 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
             if((mbase_control_block->Page_ID == 0xA006) || (mbase_control_block->Page_ID == 0xA00A) || (mbase_control_block->Page_ID == 0xA00B) 
               || (mbase_control_block->Page_ID == 0xA012) || (mbase_control_block->Page_ID == 0xA013)) 
                 Lcdcon[19] |= DS_Chr_Fu;
-        }       
+        }
+        if(mbase_control_block->current_n < 0)
+        {
+            if(mbase_control_block->Page_ID == 0xA009)
+            {
+                Lcdcon[19] |= DS_Chr_Fu;
+            }
+        }
                 
 		if( mbase_control_block->voltage_battery < Bat_Low_Level )//电池欠压指示
             Lcdcon[18] |= DS_Chr_Bat;
@@ -1134,6 +1141,9 @@ void Disp_Value( unsigned short id, unsigned char *data, unsigned int Info )
         case 0xB004://表号低8位
         case 0xB006://客户号低8位
             memcpy( (unsigned char*)&Buffer, (unsigned char*)(data+2), 4 );
+            break;
+        case 0xB007://脉冲常数
+            memcpy( (unsigned char*)&Buffer, (unsigned char*)(data+1), 4 );
             break;
         case 0xA012:
         case 0xA013:
@@ -1355,6 +1365,7 @@ void Disp_Char( struct instance_t* instance, struct pipeline_t* pipeline, unsign
 				break;
 			case Sign_changshu://常数
 				Lcdcon[14] |= DS_Chr_ChangShu;
+                ZeroDark(4);
 				break;
 			case Sign_yong: //用
 				Lcdcon[17] |= DS_Chr_Yong;

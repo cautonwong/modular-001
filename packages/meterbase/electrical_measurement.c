@@ -931,6 +931,13 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     temp = 0;
     rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , IBRMS , 3 , &temp);
     mbase_control_block->current_n = (int32_t)(Rn8209Adj_K.in * temp);
+    //读计量芯片零线电流功率
+    temp = 0;
+    rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , POWERPB , 4 , &temp);
+    if(temp < 0)
+    {
+        mbase_control_block->current_n = -mbase_control_block->current_n;
+    }
     if(abs(mbase_control_block->current_n) < MIN_CURRENT)
     {
         mbase_control_block->current_n = 0;

@@ -180,7 +180,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                             p++;
                             Sequ = *p++;
                             displayid = display_oad_to_id((uint8_t*)&displayoad1, (uint8_t*)&displayoad2, Sequ, len);
-                            if(displayid == 0)  return -DAR_BUFFER_OVERFLOW;
+                            if(displayid == 0)  return -DAR_OTHERS_ERROR;
                             if(oad == 0xF300)
                             {
                                 if(index > 0)
