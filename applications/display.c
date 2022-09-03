@@ -310,11 +310,11 @@ const  DISPLAYTAB DisplayTab[] =
     0xA002,     0x40000200,     0x00,   DispData_RAM + 3,					                    (unsigned int)SIGN_SHIJIAN,//时间
     0xA003,     0x20000201,     0x00,   DispData_RAM + DispData_HEX + 2,						(unsigned int)SIGN_DIANYA,//电压
     0xA006,     0x20010201,     0x00,   DispData_RAM + DispData_Sign + DispData_HEX + 3,		(unsigned int)SIGN_DIANLIU,//火线电流
-    0xA009,     0x20010401,     0x00,   DispData_RAM + DispData_Sign + DispData_HEX + 3,		(unsigned int)SIGN_LINGXIANDIANLIU,//零线电流
+    0xA009,     0x20010400,     0x00,   DispData_RAM + DispData_Sign + DispData_HEX + 3,		(unsigned int)SIGN_LINGXIANDIANLIU,//零线电流
     0xA00A,     0x20040201,     0x00,   DispData_RAM + DispData_Sign + DispData_HEX + 3,		(unsigned int)SIGN_GONGLV,//A相功率
-    0xA00B,     0x20040201,     0x00,   DispData_RAM + DispData_Sign + DispData_HEX +3,		    (unsigned int)SIGN_GONGLV,//A相功率
+    0xA00B,     0x20040202,     0x00,   DispData_RAM + DispData_Sign + DispData_HEX +3,		    (unsigned int)SIGN_GONGLV,//A相功率
     0xA012,     0x200A0201,     0x00,   DispData_RAM + DispData_Sign + DispData_HEX +2,		    (unsigned int)SIGN_GONGLVYINSU,//A相功率因数
-    0xA013,     0x200A0201,     0x00,   DispData_RAM + DispData_Sign + DispData_HEX + 2,		(unsigned int)SIGN_GONGLVYINSU,//A相功率因数
+    0xA013,     0x200A0202,     0x00,   DispData_RAM + DispData_Sign + DispData_HEX + 2,		(unsigned int)SIGN_GONGLVYINSU,//A相功率因数
     
     0xB001,		0x40010200,     0x01,   DispData_E2PROM + DispData_BCD +2,						(unsigned int)SIGN_NULL,//表地址高4位
     0xB002,		0x40010200,     0x02,   DispData_E2PROM + DispData_BCD +4,						(unsigned int)SIGN_NULL,//表地址低8位
@@ -348,11 +348,11 @@ const  DISPLAYLIST   Display_List[] =
     0xA002,     0x40,0x00,0x02,0x00,        0x02,   //时间
     0xA003,     0x20,0x00,0x02,0x01,        0x00,   //电压
     0xA006,     0x20,0x01,0x02,0x01,        0x00,   //火线电流
-    0xA009,     0x20,0x01,0x04,0x01,        0x00,   //零线电流
+    0xA009,     0x20,0x01,0x04,0x00,        0x00,   //零线电流
     0xA00A,     0x20,0x04,0x02,0x01,        0x00,   //A相功率
-    0xA00B,     0x20,0x04,0x02,0x01,        0x00,   //A相功率
+    0xA00B,     0x20,0x04,0x02,0x02,        0x00,   //A相功率
     0xA012,     0x20,0x0A,0x02,0x01,        0x00,   //A相功率因数
-    0xA013,     0x20,0x0A,0x02,0x01,        0x00,   //A相功率因数
+    0xA013,     0x20,0x0A,0x02,0x02,        0x00,   //A相功率因数
     
     0xB001,		0x40,0x01,0x02,0x00,        0x01,   //表地址高4位
     0xB002,		0x40,0x01,0x02,0x00,        0x02,   //表地址低8位
@@ -907,7 +907,7 @@ unsigned long GetDispAddrInfo( struct instance_t* instance, struct pipeline_t* p
     unsigned long oad,temp=0;
     uint32_t Record_oad=0;
 
-    D2 = (ID & 0x0FF0)>>4;
+    D2 = (ID & 0x07F0)>>4;
     if(D2 > 0x18)   return 1;
     D3 = (ID & 0x000F);
     if(D3 > 0x0D)   return 1;    

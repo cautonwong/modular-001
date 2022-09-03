@@ -5,7 +5,7 @@
 #include "pin_function_def.h"
 #include "fr_698_esam.h"
 #include "io_type.h"
-
+#include "lib_ana.h"
 
 
 #define   ESAM698_MAX_BUF_SIZE    2000
@@ -102,7 +102,11 @@ static uint16_t rx_esam(uint8_t *rx_data , uint16_t *len , const struct esam_hal
         //需要循环检查掉电                       int (*rx)(uint8_t* byte , size_t index )
         while((busy != 0x55)&&(timeout--))
         {
-            //需要循环检查掉电
+            if (ANA_GetStatus(ANA_STATUS_VDCINDROP))    
+            {
+                return false;   //需要循环检查掉电
+            }
+                
             mcu_clear_watchdog();
             mcu_spi_ops.rx(&busy , 0);
             

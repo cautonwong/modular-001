@@ -167,6 +167,7 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
             mesg->ctrl = MSG_POWEROFF;
             mesg->id = 0x0000001;
             mesg->len = 0;
+            clear_mesg(instance, NULL, mesg);
             send_mesg(instance, NULL, mesg);
             mesg->from = kernel;
             mesg->to = pid_resource_manager;
@@ -199,6 +200,7 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
             mesg->ctrl = MSG_POWERON;
             mesg->id = 0x0000001;
             mesg->len = 0;
+            clear_mesg(instance, NULL, mesg);
             send_mesg(instance, NULL, mesg);
             mesg->from = kernel;
             mesg->to = pid_resource_manager;
@@ -492,6 +494,15 @@ int baremetal_loop(struct instance_t* instance)
     }
 }
 
+int clear_mesg(struct instance_t *instance,struct pipeline_t *pipeline,struct message_t *mesg)
+{
+    struct  fifo_t* fifo = get_pipeline_stdin(instance,mesg->to);
+    if(fifo){
+        ringbuffer_clear(fifo);
+    }
+    return 0;
+}
+
 
 int send_mesg(struct instance_t *instance,struct pipeline_t *pipeline,struct message_t *mesg)
 {
@@ -503,7 +514,10 @@ int send_mesg(struct instance_t *instance,struct pipeline_t *pipeline,struct mes
     }   
     mesg->magic = MSG_MAGIC;
     mesg->check = nd_get_crc16((uint8_t*)mesg, sizeof(struct message_t) - 2);
-  
+#if 0
+    log_info(": Free=%d.from=%d.to=%d.ctrl=%d.\n", fifoBuf_getFree(fifo), mesg->from, mesg->to, mesg->ctrl);
+#endif
+
     fifoBuf_putData(fifo, mesg, sizeof(struct message_t));
     if ((mesg->len > 0)&&(mesg->payload)){
 #ifdef WIN32
@@ -521,6 +535,10 @@ int recv_mesg_v2(struct instance_t* instance, struct pipeline_t* pipeline, struc
     uint16_t len = 0;
     uint16_t check = 0;
     int ret = MESG_V2_OK;
+    struct fifo_t *buf = pipeline->in_queue;
+    uint8_t *p = buf->buf_ptr + buf->rd;
+    uint16_t rd = buf->rd;
+    uint16_t wr = buf->wr;
     if (fifoBuf_getUsed(pipeline->in_queue) >= sizeof(struct message_t)){
         len = fifoBuf_getData(pipeline->in_queue, mesg, sizeof(struct message_t));
         ret = MESG_V2_ERR_LEN;
@@ -543,6 +561,29 @@ int recv_mesg_v2(struct instance_t* instance, struct pipeline_t* pipeline, struc
                 }
             }
         }
+#if 0
+        if(ret < 0){
+          //while(1)
+          {
+            log_info(": ret=%d.\n", ret);
+            log_info(": rd=%d.\n", rd);
+            log_info(": wr=%d.\n", wr);
+            log_info(": buf_size=%d.\n", buf->buf_size);
+            log_hex(p, 32);
+            mcu_delay_us(50000);
+            mcu_delay_us(50000);
+            v85xxp_clear_watchdog();
+            mcu_delay_us(50000);
+            mcu_delay_us(50000);
+            v85xxp_clear_watchdog();
+          }
+        }
+#endif
     }
+    //if(ret < MESG_V2_OK){
+        //uint8_t data = 0;
+        //fifoBuf_getData(pipeline->in_queue, &data, 1);
+    //}
+    
     return ret;
 }

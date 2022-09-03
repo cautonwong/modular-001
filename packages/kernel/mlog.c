@@ -15,10 +15,10 @@ void log_set_time(struct tm *time)
 
 struct fifo_t* log_get_fifo(void)
 {
-    extern struct pipeline_t pl_plc_tx_698;
-    struct fifo_t *tx_fifo = (struct fifo_t*)pl_plc_tx_698.out_queue;
-    //extern struct pipeline_t pl_tx_698;
-    //struct fifo_t *tx_fifo = (struct fifo_t*)pl_tx_698.out_queue;
+    //extern struct pipeline_t pl_plc_tx_698;
+    //struct fifo_t *tx_fifo = (struct fifo_t*)pl_plc_tx_698.out_queue;
+    extern struct pipeline_t pl_tx_698;
+    struct fifo_t *tx_fifo = (struct fifo_t*)pl_tx_698.out_queue;
     return  tx_fifo;
 }
 int log_print_buf(char *buf, int size, const char* fmt, ...)
@@ -50,10 +50,9 @@ void log_print(int level, const char *file, int line, const char *func, const ch
         len = log_print_buf(buf, 512, "%s:[%d]:", func, line);
     }
 #else
-    len = log_print_buf(buf, 512, "[%d-%d-%d %d:%d:%d]%s:[%d]:", 
+    len = log_print_buf(buf, 512, "[%d-%d-%d %d:%d:%d]:", 
                         logtime.tm_year, logtime.tm_mon,logtime.tm_mday,\
-                        logtime.tm_hour,logtime.tm_min,logtime.tm_sec,\
-                        func, line);
+                        logtime.tm_hour,logtime.tm_min,logtime.tm_sec);
 #endif
 
     va_list ap;
