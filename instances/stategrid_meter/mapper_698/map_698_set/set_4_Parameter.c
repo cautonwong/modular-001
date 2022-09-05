@@ -150,7 +150,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         break;
                     case 0x4112://有功组合特征字
                         if(*p != 4) return -DAR_TYPE_NOT_MATCH;
-                        if(*(p+2) & 0x0F) return -DAR_BUFFER_OVERFLOW;
+                      
                         mbase_cb->active_energy_cal_word = *(p+2);
                         nd_get(instance, id, timer, 3, NULL);
                         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
@@ -442,7 +442,7 @@ uint8_t lcd_data_chk(uint8_t *p)
     return 0;
 }
 
-uint8_t CheckData400C(uint8_t *p,uint8_t index)
+int CheckData400C(uint8_t *p,uint8_t index)
 {
     switch(index)
     {
@@ -473,10 +473,10 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
     struct mbase_control_block_t* mbase_cb;
     uint16_t oad,year2;
     uint8_t index,attribute,i,num,buffer[42]={0},temp[114]={0},num_hourtab=0,year,timer[6];
-    int8_t dar =0;
+    int dar =0;
     uint8_t* p = buf;
     uint32_t s_index = 0x00,addr=0;
-    uint16_t cur_v = 0, last_v = 0xFFFF, first_v = 0,max_v = 0, period = 15, last_fee=1; //时段检查
+    uint16_t cur_v = 0, last_v = 0xFFFF, first_v = 0,max_v = 0, period = 15, last_fee=1, first_fee=1; //时段检查
     int len=0;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -557,6 +557,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 nd_set_index(instance, addr, buffer, 7);
 
                 send_event_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
+
 
                 record_rollback_after_set_time(instance, 0);
                 mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
@@ -743,7 +744,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     nd_set_index(instance, s_index, p, 1); 
                     p++;
                 }
-                mbase_cb->Fee |= F_DAYTABChange;
+                mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
                 return (p-buf);
             }
             else
@@ -754,7 +755,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + (index - 1));
                 nd_set_index(instance, s_index, p, 1); 
                 p++;
-                mbase_cb->Fee |= F_DAYTABChange;
+                mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
                 return (p-buf);
             }
             break;
@@ -789,7 +790,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             nd_set_index(instance, s_index, buffer, 6); 
 
             send_event_mesg_pro(instance, NULL, HolidayWrS, NULL, 1);// 公共假日编程事件
-            mbase_cb->Fee |= F_DAYTABChange;
+            mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
             return (p-buf);
             break;
         case 0x4014://当前套时区表
@@ -852,6 +853,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     if (last_v == 0xFFFF)
                     {
                         first_v = cur_v;
+                        first_fee = buffer[2+i*3];
                         last_fee = buffer[2+i*3];
                         
                     }
@@ -872,7 +874,10 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
 
                         if ((max_v) && ((cur_v - max_v + period) > first_v))
                         {
-                            return -DAR_RW_REJECT;
+                            if ((first_v != (cur_v - max_v)) || (first_fee != buffer[2+i*3])) //第一个
+                            {
+                                return -DAR_RW_REJECT;
+                            }
                         }
                  
                         if ((buffer[2+i*3] != last_fee) && (cur_v < (last_v + period)))
@@ -884,7 +889,8 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     last_v = cur_v;
                     last_fee = buffer[2+i*3];
                 }
-
+                
+                
                 if(num < MaxSeasonNum)
                 {
                     for(i=num; i<MaxSeasonNum; i++)
@@ -909,7 +915,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 nd_set_index(instance, s_index, buffer, 3);
             }
             send_event_mesg_pro(instance, NULL, SeasonTabWrS, NULL, 1);// 
-            mbase_cb->Fee |= F_DAYTABChange;
+            mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
             return (p - buf);
             break;
         case 0x4016://当前套日时段表
@@ -990,6 +996,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     if (last_v == 0xFFFF)
                     {
                         first_v = cur_v;
+                        first_fee != buffer[2+i*3];
                         last_fee = buffer[2+i*3];
                         
                     }
@@ -1010,7 +1017,10 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
 
                         if ((max_v) && ((cur_v - max_v + period) > first_v))
                         {
-                            return -DAR_RW_REJECT;
+                            if ((first_v != (cur_v - max_v)) || (first_fee != buffer[2+i*3])) //第一个
+                            {
+                                return -DAR_RW_REJECT;
+                            }                            
                         }
 
                         if ((buffer[2+i*3] != last_fee) && (cur_v < (last_v + period)))
@@ -1052,7 +1062,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
 
             send_event_mesg_pro(instance, NULL, DayTabWrS, NULL, 1);// 时段表编程事件
                 
-            mbase_cb->Fee |= F_TOUChange;
+            mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
             return (p - buf);
             break;
         

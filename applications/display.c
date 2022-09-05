@@ -1135,12 +1135,12 @@ void Disp_Value( unsigned short id, unsigned char *data, unsigned int Info )
         case 0xB001://表地址高4位
         case 0xB003://表号高4位
         case 0xB005://客户号高4位
-            memcpy( (unsigned char*)&Buffer, (unsigned char*)(data+4+2), 2 );
+            mem_swap_cpy( (unsigned char*)&Buffer, (unsigned char*)(data+2), 2 );
             break;
         case 0xB002://表地址低8位
         case 0xB004://表号低8位
         case 0xB006://客户号低8位
-            memcpy( (unsigned char*)&Buffer, (unsigned char*)(data+2), 4 );
+            mem_swap_cpy( (unsigned char*)&Buffer, (unsigned char*)(data+2+2), 4 );
             break;
         case 0xB007://脉冲常数
             memcpy( (unsigned char*)&Buffer, (unsigned char*)(data+1), 4 );

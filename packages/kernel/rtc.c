@@ -184,11 +184,13 @@ void rtc_tm_normalize(struct tm *t)
 
 uint32_t rtc_mktime(struct tm *t)
 {
+    rtc_tm_normalize(t);//规整时间
+    
     unsigned year = t->tm_year + 1900;
     uint32_t time = t->tm_sec
                   + t->tm_min * MINUTE
                   + t->tm_hour * HOUR
-                  + _yday_1(t->tm_mday, t->tm_mon, year) * DAY;
+                  + _yday(t->tm_mday, t->tm_mon, year) * DAY;
 
     unsigned leap_years = _leap_years_since_epoch(year);
     unsigned common_years = (year - NIDAVELLIR_EPOCH) - leap_years;

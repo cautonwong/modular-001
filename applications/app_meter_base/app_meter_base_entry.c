@@ -249,7 +249,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             mbase_cb->Baut_plc_neg =0xfe;
             mbase_cb->Baut_plc = 6;
             mbase_cb->disp_borrow = 0; //借位
-            
+            mbase_cb->baud_chg = (BIT0|BIT1);               // 上电 更新波特率标志
             //获取防潜开关
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Pstart_En);
             nd_get_index(instance, addr, (uint8_t*)&mbase_cb->no_filt, 1);

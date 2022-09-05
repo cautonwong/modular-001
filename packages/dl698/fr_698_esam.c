@@ -312,9 +312,9 @@ void esam_698_power_on(struct instance_t* instance)
     ret = read_esam_no(instance, esam_inf);   // 获取表号   //ndv_memcopy(p, esam_inf+7, 6);
     if (ret > 0)
     {        
-        if (mem_compare(&mbase_cb->meterNo, &esam_inf[7], 6)) //优先使用 esam内部表号  
+        if (mem_compare(mbase_cb->meterNo, &esam_inf[7], 6)) //优先使用 esam内部表号  
         {
-            ndv_memcopy(&mbase_cb->meterNo, &esam_inf[7], 6);  
+            ndv_memcopy(mbase_cb->meterNo, &esam_inf[7], 6);  
             addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
             offsetof(struct mbase_control_block_t, meterNo));
             nd_set_offset(instance, addr, mbase_cb->meterNo, 6);     

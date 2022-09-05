@@ -254,7 +254,7 @@ const uint32_t baud_table[11]={300,600,1200,2400,4800,7200,9600,19200,38400,5760
 
 void baud_update(void *CallBackSendPara)
 {
-    uint32_t baud=9600,i; 
+    uint32_t baud=115200,i; 
     struct instance_t* instance = (struct instance_t*)CallBackSendPara;
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
@@ -268,10 +268,9 @@ void baud_update(void *CallBackSendPara)
                 break;
             }
         }
-        if(i<11)
-        {
-            mcu_uart_set_baud(baud, 0);
-        }
+        
+
+        mcu_uart_set_baud(baud, 0);
     }
     if(mbase_control_block->baud_chg & 0x02)    //plc
     {
@@ -283,10 +282,8 @@ void baud_update(void *CallBackSendPara)
                 break;
             }
         }
-        if(i<11)
-        {
-            mcu_uart_set_baud(baud, 4);
-        }
+
+        mcu_uart_set_baud(baud, 4);
     }
     if(mbase_control_block->baud_chg & 0x04)    //plc协商
     {
@@ -298,10 +295,8 @@ void baud_update(void *CallBackSendPara)
                 break;
             }
         }
-        if(i<11)
-        {
-            mcu_uart_set_baud(baud, 4);
-        }
+
+        mcu_uart_set_baud(baud, 4);
     }
     mbase_control_block->baud_chg = 0; 
 }
@@ -680,10 +675,9 @@ uint8_t multifunction_port_Init(void)
             break;
         }
     }
-    if(i<11)
-    {
-        mcu_uart_set_baud(baud, 0);     //485波特率切换至EEPROM设置要求
-    }
+
+    mcu_uart_set_baud(baud, 0);     //485波特率切换至EEPROM设置要求
+
 
     uart_chl_open(UART_IR_CHL);
     uart_chl_open(UART_MODULE_CHL);

@@ -169,12 +169,12 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
             mesg->len = 0;
             clear_mesg(instance, NULL, mesg);
             send_mesg(instance, NULL, mesg);
-            mesg->from = kernel;
-            mesg->to = pid_resource_manager;
-            mesg->ctrl = MSG_POWEROFF;
-            mesg->id = 0x0000001;
-            mesg->len = 0;
-            send_mesg(instance, NULL, mesg);
+            //mesg->from = kernel;
+            //mesg->to = pid_resource_manager;
+            //mesg->ctrl = MSG_POWEROFF;
+            //mesg->id = 0x0000001;
+            //mesg->len = 0;
+            //send_mesg(instance, NULL, mesg);
             instance->ac_power_statue = AC_POWER_OFF;
             
             device_power_close(instance);//关闭大功率外设
@@ -202,12 +202,12 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
             mesg->len = 0;
             clear_mesg(instance, NULL, mesg);
             send_mesg(instance, NULL, mesg);
-            mesg->from = kernel;
-            mesg->to = pid_resource_manager;
-            mesg->ctrl = MSG_POWERON;
-            mesg->id = 0x0000001;
-            mesg->len = 0;
-            send_mesg(instance, NULL, mesg);
+            //mesg->from = kernel;
+            //mesg->to = pid_resource_manager;
+            //mesg->ctrl = MSG_POWERON;
+            //mesg->id = 0x0000001;
+            //mesg->len = 0;
+            //send_mesg(instance, NULL, mesg);
             instance->ac_power_statue = AC_POWER_ON;
             
         }

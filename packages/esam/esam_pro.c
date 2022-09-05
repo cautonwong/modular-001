@@ -301,18 +301,45 @@ static int f_esam_type_sid_mac(struct esam_698_data_t *para, void *esam_hal)
     struct esam_698_input_t *esam_in = para->input; 
     struct esam_698_output_t *esam_out = para->output;
     uint8_t head[4] = {0x81,0x1c,0x00,0x00};
+    uint16_t len = 0;
     
-    if(1 == esam_in->cmd_type){
-        head[3] = 0x11;
-    }
-    else if(2 == esam_in->cmd_type){
-        head[3] = 0xA6;
-    }
-    else if(3 == esam_in->cmd_type){
-        head[3] = 0xA7;
+    if(1 ==esam_in->from_type){
+        head[0] = 0x82; head[1] = 0x24; head[2] = 0x00;
+        if((1 == esam_in->cmd_type) || (3 == esam_in->cmd_type)){
+            head[3] = 0x13;
+            if(1 == esam_in->cmd_type)
+                head[3] = 0x11;
+            uint16_t len = esam_in->data_len;
+            esam_in->data_buf[esam_in->data_len++] = 0x80;
+            esam_in->data_buf[esam_in->data_len++] = 0x24;
+            esam_in->data_buf[esam_in->data_len++] = head[3];
+            esam_in->data_buf[esam_in->data_len++] = 0x00;
+            if(1 == esam_in->cmd_type)
+                len = len + 4;
+            else
+                len = 16*(len+18)/16 + 4;
+            esam_in->data_buf[esam_in->data_len++] = len>>8;
+            esam_in->data_buf[esam_in->data_len++] = len;
+        }
+        else if(2 == esam_in->cmd_type){
+            head[3] = 0x12;
+        }else{
+            return -1;
+        }
     }else{
-        return -1;
+        if(1 == esam_in->cmd_type){
+            head[3] = 0x11;
+        }
+        else if(2 == esam_in->cmd_type){
+            head[3] = 0xA6;
+        }
+        else if(3 == esam_in->cmd_type){
+            head[3] = 0xA7;
+        }else{
+            return -1;
+        }
     }
+
     
     esam_in->RN_Data_len = 0;
     esam_in->AttachData_len = 0;

@@ -458,8 +458,8 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             {
                 *p++ = TYPE_octet_string;
                 *p++ = 6;
-                read_esam_no(instance, temp);
-                memcpy(p, temp+7, 6);
+                //read_esam_no(instance, temp);
+                memcpy(p, mbase_cb->meterNo, 6);
                 p = p + 6;
                 return (p - buf);
             }

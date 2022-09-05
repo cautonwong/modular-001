@@ -427,7 +427,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
     uint8_t *p = buf,disp_sequ=0;
     uint32_t temp = 0,s_index=0,addr=0,displayid=0,displayoad1=0,displayoad2=0;
     uint8_t* ptr_tmp = instance->apdu_cache;
-    
+    uint8_t tmp_len = 0;
     //struct fifo_t* cache_t = p_ctx->apdu;
     uint8_t* p_tx = cache->buf_ptr;
 
@@ -532,7 +532,12 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
 
                     if(mbase_cb->key_state == 0)    return -DAR_OTHERS_ERROR; // 私钥不允许改表号
 
-                    ndv_memcopy(&mbase_cb->meterNo, (p - 23), 6);  
+                    tmp_len = buffer[4];
+                    if ((tmp_len < 6))
+                    {
+                        tmp_len = 6;
+                    }
+                    ndv_memcopy(mbase_cb->meterNo, &buffer[5+ tmp_len - 6], 6);  
                     addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                     offsetof(struct mbase_control_block_t, meterNo));
                     nd_set_offset(instance, addr, mbase_cb->meterNo, 6);     
@@ -551,7 +556,11 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 memcpy((uint8_t*)&keybuf[len2-2], buffer, len1);
                 memcpy((uint8_t*)&keybuf[len2-2+len1], p, 4);//MAC
                 p = p + 4;
-                write_esam(instance, addr , keybuf , txlen);
+                ret = write_esam(instance, addr , keybuf , txlen);
+                if (ret < 0)
+                {
+                    return -DAR_OTHERS_ERROR; 
+                }
 
                 return (p-buf);
             }
@@ -582,10 +591,10 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             else if(method == 0x09) //ESAM参数设置  待验证，在方法4的基础上改的
             {
                 p = p + 3;
-                len1 = *p++;
+                len1 = *p++; //待调整 长度 128以上?
                 memcpy(buffer, p, len1);//oad+data
                 p = p + len1;
-                p++;
+                p++; //SID
                 mem_swap_cpy((uint8_t*)&addr, p, 4);//sid
                 p = p + 4;
                 len2 = *p++;
@@ -597,7 +606,12 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 memcpy((uint8_t*)&keybuf[len2-2], buffer, len1);
                 memcpy((uint8_t*)&keybuf[len2-2+len1], p, 4);//MAC
                 p = p + 4;
-                write_esam(instance, addr , keybuf , txlen);
+                ret = write_esam(instance, addr , keybuf , txlen);
+                if (ret < 0)
+                {
+                    return -DAR_OTHERS_ERROR; 
+                }
+
                 
                 if(((addr & 0x00000700) == 0x00000700)) // sid
                 {

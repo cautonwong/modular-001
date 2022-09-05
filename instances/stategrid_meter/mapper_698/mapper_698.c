@@ -2448,7 +2448,7 @@ int para_init(struct instance_t* instance )
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
     offsetof(struct mbase_control_block_t, meterNo));
     s_len = offsetof(struct mbase_control_block_t, OverCurrent_threshold) - offsetof(struct mbase_control_block_t, meterNo);
-    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->meterNo, s_len);
+    nd_set_offset(instance, s_index, (uint8_t*)mbase_cb->meterNo, s_len);
     
     memset(mbase_cb->tsa, 0x11, 6);//表地址
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 

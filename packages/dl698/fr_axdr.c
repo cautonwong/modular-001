@@ -986,7 +986,7 @@ int decode_rsd_selector_9(struct instance_t* instance, struct pipeline_t* pipeli
 //检查搜索的关联对象是否存在
 uint8_t check_capture_exist(uint32_t rcsd_req, uint32_t rcsd_src)
 {
-    uint8_t type = 0, attr_req = 0, attr_src = 0, index_req = 0,index_src = 0, schem_req = 0, schem_src = 0, index_limit = 0;
+    volatile   uint8_t type = 0, attr_req = 0, attr_src = 0, index_req = 0,index_src = 0, schem_req = 0, schem_src = 0, index_limit = 0;
     uint16_t oi_req = 0, oi_src = 0;
 
     //常规
@@ -1009,24 +1009,15 @@ uint8_t check_capture_exist(uint32_t rcsd_req, uint32_t rcsd_src)
 
     if ((type) == 0) //电能
     {
+        if( index_req > 13 )  return false; // 不存在的费率  // 或者改为 fee num
         if((oi_req == oi_src) && (schem_req == schem_src))
         {
             if (((attr_req == 2) || (attr_req == 4)) && ((attr_src == 2) || (attr_src == 4)))
             {
-                if( index_req > 13 ) // 不存在的费率  // 或者改为 fee num 
+                if((index_req == index_src) || (index_src == 0))
                 {
-                    return false;
+                    return true;
                 }
-                
-                if(index_req != index_src)
-                {
-                    if(index_src != 0)
-                    {
-                        return false;
-                    }
-                }
-
-                return true;
             }
         }
     }
@@ -1055,20 +1046,15 @@ uint8_t check_capture_exist(uint32_t rcsd_req, uint32_t rcsd_src)
                             index_limit = 2;
                         }
                         
-                        if( index_req > index_limit ) // 不存在的费率  // 或者改为 fee num 
+                        if( index_req > index_limit ) // 不存在
                         {
                             return false;
                         }
                         
-                        if(index_req != index_src)
+                        if((index_req == index_src) || (index_src == 0))
                         {
-                            if(index_src != 0)
-                            {
-                                return false;
-                            }
-                        }
-
-                        return true;
+                            return true;
+                        }                  
                     }
                 }
             
@@ -1520,6 +1506,15 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     uint16_t oi = get_OAD_OI(oad);
     int ret = 0;
 
+    
+      //检查 读取的记录型oad合法性
+    ret = check_record_table_oad__support(instance, oad);
+    if (ret < 0)
+    {
+        return -DAR_OBJECT_NOT_EXIST;
+    }  
+    
+    
     if((0x3005 == oi ) && (attr != 7))
     {
         return record_response_null(buf);
