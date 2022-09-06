@@ -157,6 +157,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
     size_t persitent_ec_size = offsetof(struct mbase_control_block_t, persistent_energy_EC_label) - offsetof(struct mbase_control_block_t, persistent_section_start);
     uint32_t addr = 0;
     uint32_t res = 0;
+    int ret;
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
@@ -221,7 +222,12 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_static, &addr);//RAM对应的地址
             res = get_res(RES_DEV_EEPROM, mbase_block_static_eprom);
             nd_get_block(instance, res, (uint8_t*)addr, mbase_block_static_size); //将EPROM中的数据恢复到RAM;  
-            Check_para_Pro(instance);     //数据效验
+            ret = Check_para_Pro(instance);     //数据效验
+            if (ret < 0) //参数区异常时，恢复485波特率
+            {
+                init_rs485_baud();
+                //para_init( instance );
+            }
             //上电需要恢复数据
             //跳过电能恢复 由电能模块处理        
             addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
