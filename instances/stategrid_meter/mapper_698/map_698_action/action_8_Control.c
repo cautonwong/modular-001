@@ -224,6 +224,10 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     if(method == 0x83) p = p+10;
                     mbase_cb->sta &= ~F_RemoteRelayOff;
                     
+                    if(mbase_cb->imaxmin > 0)   mbase_cb->imaxmin = 0;   //大电流延时，清除大电流延时时间
+                    
+                    if(mbase_cb->alarmmin > 0)  mbase_cb->alarmmin = 0;     //跳闸延时，清零
+                    
                     return (p-buf);
                     break;
                 default:
@@ -252,6 +256,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         mbase_cb->sta &= ~F_RemoteRelayOff;
                     }
                     mbase_cb->sta |= F_RemoteRelayOn;
+                    mbase_cb->sta &= ~(F_RemoteGaoJing1 + F_RemoteGaoJing0);
                     mbase_cb->cmd_dostate = 0x0080;  //bit8;
                     return 1;
                     break;

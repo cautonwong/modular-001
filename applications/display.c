@@ -1079,7 +1079,7 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 		{
 			if( mbase_control_block->sta & F_RemoteAlarm )
 				Lcdcon[12] |=  (DS_Chr_GouDian);
-			if((mbase_control_block->alarmmin == 0) || (mbase_control_block->imaxmin == 0))//跳闸延时过程中指示(闪烁"拉闸)
+			if((mbase_control_block->alarmmin > 0) || (mbase_control_block->imaxmin > 0))//跳闸延时过程中指示(闪烁"拉闸)
 				Lcdcon[13] |= DS_Chr_LaZha;
             if(mbase_control_block->factor_mode == true)//工厂模式
                 Lcdcon[17] |= DS_Chr_KeyProgram;
@@ -1089,7 +1089,7 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 		{
 			if( mbase_control_block->sta & F_RemoteAlarm )
 				Lcdcon[12] &= ~(DS_Chr_GouDian);
-			if((mbase_control_block->alarmmin == 0) || (mbase_control_block->imaxmin == 0))
+			if((mbase_control_block->alarmmin > 0) || (mbase_control_block->imaxmin > 0))
 				Lcdcon[13] &= ~DS_Chr_LaZha;
             if(mbase_control_block->factor_mode == true)
                 Lcdcon[17] &= ~DS_Chr_KeyProgram;
