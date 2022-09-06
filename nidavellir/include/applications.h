@@ -8,6 +8,22 @@
 #endif // !WIN32
 
 
+#define _DEBUG_TEST  0
+
+#if (_DEBUG_TEST == 1)
+
+    #define PWD_TEST_ON 0
+    #define FREEZ_TEST_VOERTURN 0
+
+#else
+
+    #define PWD_TEST_ON 0
+    #define FREEZ_TEST_VOERTURN 0
+
+#endif
+
+
+
 #define RESET_INFO    1 // 记录 复位信息
 
 #define Bat_Low_Level   300     //电池欠压阈值

@@ -996,7 +996,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     if (last_v == 0xFFFF)
                     {
                         first_v = cur_v;
-                        first_fee != buffer[2+i*3];
+                        first_fee = buffer[2+i*3];
                         last_fee = buffer[2+i*3];
                         
                     }

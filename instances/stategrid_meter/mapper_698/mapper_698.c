@@ -2034,19 +2034,19 @@ int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* sr
                 cmp_oad = oad_req;
                 if (0xFF == (uint8_t)(format_conversion_tab[i].oad)) //支持块/索引
                 {
-                    cmp_oad |= 0xFF;
+                    cmp_oad |= (uint32_t)0x000000FF;
                 }
                 if (0xFF == (uint8_t)(format_conversion_tab[i].oad >> 8))
                 {
-                    cmp_oad |= 0xFF<<8;
+                    cmp_oad |= (uint32_t)0x000000FF<<8;
                 }
                 if (0xFF == (uint8_t)(format_conversion_tab[i].oad >> 16)) 
                 {
-                    cmp_oad |= 0xFF<<16;
+                    cmp_oad |= (uint32_t)0x000000FF<<16;
                 }
                 if (0xFF == (uint8_t)(format_conversion_tab[i].oad >> 24)) 
                 {
-                    cmp_oad |= 0xFF<<24;
+                    cmp_oad |= (uint32_t)0x000000FF<<24;
                 }
 
                 if ((format_conversion_tab[i].oad & (0x0000F000)) != 0 ) //指定方案  全字比对

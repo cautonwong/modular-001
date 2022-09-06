@@ -826,11 +826,12 @@ void  mcu_clear_watchdog(void)
 
 
 
+
 uint8_t poweroff_test = 1;//鏀瑰洖鏉�
 uint8_t ac_power_off_monitor(void)
 {
     uint8_t i;
-#if 0 
+#if (PWD_TEST_ON == 1) 
     if (poweroff_test) // 鏀瑰洖鏉�
     {
         return true;
@@ -864,7 +865,7 @@ uint8_t ac_power_off_monitor(void)
 uint8_t ac_power_on_monitor(void)
 {
     uint8_t i;
-#if 0
+#if (PWD_TEST_ON == 1) 
     if (poweroff_test) // 鏀瑰洖鏉�
     {
         return false;

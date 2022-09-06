@@ -687,6 +687,11 @@ uint8_t multifunction_port_Init(void)
     multifunction_port_Init();
  }
 
+void init_rs485_baud()
+{
+    mcu_uart_set_baud(115200, 0);
+}
+
 //初始化IO低功耗配置，初始化系统低功耗配置，准备进入sleep模式。
 void cpu_io_lowpower_cfg_chk(struct instance_t* instance)
 {
