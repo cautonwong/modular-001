@@ -155,7 +155,7 @@ struct mbase_control_block_t
     int32_t current_n;
     uint32_t frequency;
     int32_t power_factor;
-    uint32_t temperature;
+    int32_t temperature;
     uint32_t voltage_battery;
     
     uint32_t I_Prot;    //拉闸最大电流限制
