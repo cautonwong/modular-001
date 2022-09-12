@@ -251,7 +251,7 @@ struct mbase_control_block_t
 
     uint8_t MeterWr_SetTime_flag;       //当前状态标志 5A: 编程事件由校时产生
 
-    uint8_t OverCurrentAS_duration;     //当前状态持续时间 电能表过流事件
+    uint8_t OverCurrentAS_duration;     //当前状态持续时间 电能表过流事件    //手动结束时要清零
     uint8_t PowerOffS_duration;         //当前状态持续时间 电能表掉电事件
     uint8_t CoverOpenS_duration;        //当前状态持续时间 电能表开盖事件
     uint8_t SwitchErrS_duration;        //当前状态持续时间 电能表负荷开关误动作事件
@@ -260,11 +260,17 @@ struct mbase_control_block_t
     uint8_t RTCErrS_duration;           //当前状态持续时间 时钟故障事件
     uint8_t ZeroLineErrS_duration;      //当前状态持续时间 零线电流异常事件  
 
+    uint8_t pd_cover_EndRecord_flag;   //停电下 开盖已执行过结束标志           ：5A
+    uint8_t pd_active_flag_update;     //停电下 保存事件 active_flag   ：5A
+
+
     uint8_t first_MbillDay_flag;
 
     uint8_t frz_replenish_end;      //补冻结 完成标志  ,上电清零 补冻结完成置 0x5A
    
-    uint8_t mac_suspend_state;  // mac挂起状态 协议或显示模块可调用。 true为挂起 
+    uint8_t mac_suspend_state;      // mac挂起状态 协议或显示模块可调用。 true为挂起 
+
+    
     
     uint16_t metertype; //表多功能配置字
     uint8_t no_filt;    //启动值过滤开关

@@ -81,10 +81,12 @@ void PowerOff_LowPower_pro(struct instance_t* instance, struct pipeline_t* task,
         if (false == get_activeflag(instance, RecordId)) //|| ((true == get_recordflag(instance, RecordId))  )
         {
             set_activeflag(instance, RecordId); //停电下同时刷新e2p
+
+            ctrl_block->pd_active_flag_update = 0x5A;   //停电下 保存标志
             
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + 
-                        (offsetof(struct mbase_control_block_t, active_flag[0]) -  offsetof(struct mbase_control_block_t, persistent_section_start)) );
-            nd_set_offset(instance, s_index, (uint8_t*)&ctrl_block->active_flag[0], sizeof(ctrl_block->active_flag));               
+            //s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + 
+            //            (offsetof(struct mbase_control_block_t, active_flag[0]) -  offsetof(struct mbase_control_block_t, persistent_section_start)) );
+            //nd_set_offset(instance, s_index, (uint8_t*)&ctrl_block->active_flag[0], sizeof(ctrl_block->active_flag));               
         
             mesg_tmp.id = RecordId;
             recv_record_process(instance, task, &mesg_tmp, NULL);

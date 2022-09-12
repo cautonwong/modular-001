@@ -107,7 +107,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     
                     if((pctx->security_choice != 0x01) && (mbase_cb->boardadjtime == 0xAA))//当日已校时且是明文校时
                     {
-                        return -DAR_UNAUTHORIZED;
+                        return -DAR_OTHERS_ERROR;
                     }
                     
                     rtc_get_from_tm(instance,timer);
@@ -136,11 +136,11 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     if(pctx->security_choice != 0x01)	//明文广播校时
                     {
                         //------ 广播校时不允许在跨天 -------
-                        if(timer_set[3] != timer[3])    return -DAR_UNAUTHORIZED;
+                        if(timer_set[3] != timer[3])    return -DAR_OTHERS_ERROR;
                         
                         //最小校时偏差：小于此范围所有校时均不响应，包括明文广播校时、密文广播校时，默认60秒；
                         //最大校时偏差：超过此范围的明文广播校时不响应，密文广播校时响应，默认300秒。
-                        if(Temp32C < mbase_cb->Limit_T_Min)  return -DAR_UNAUTHORIZED;
+                        if(Temp32C < mbase_cb->Limit_T_Min)  return -DAR_OTHERS_ERROR;
                         
                         if(Temp32C > mbase_cb->Limit_T_Max)  
                         {
@@ -158,7 +158,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                                 nd_get_index(instance, s_index, (uint8_t*)&tmpbuf[0], 3);
                                 mbase_cb->RTCErrS_status = 1;
                             }
-                            return -DAR_UNAUTHORIZED;
+                            return -DAR_OTHERS_ERROR;
                         }
                         //------ 不允许在结算日的±5min内广播校时 -------
                         for(i=0; i<3; i++)
@@ -178,13 +178,13 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                                 break;
                             }
                         }
-                        if(timeout == 1)    return -DAR_UNAUTHORIZED;
+                        if(timeout == 1)    return -DAR_OTHERS_ERROR;
                         
                     }
                     else    //密文广播校时
                     {
                         //最小校时偏差：小于此范围所有校时均不响应，包括明文广播校时、密文广播校时，默认60秒；
-                        if(Temp32C < mbase_cb->Limit_T_Min)  return -DAR_UNAUTHORIZED;
+                        if(Temp32C < mbase_cb->Limit_T_Min)  return -DAR_OTHERS_ERROR;
                     }
 
 

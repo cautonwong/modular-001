@@ -23,7 +23,7 @@ void clr_activeflag(struct instance_t* instance, uint16_t RecordId);
 void set_recordflag(struct instance_t* instance, uint16_t RecordId);
 
 void clr_recordflag(struct instance_t* instance, uint16_t RecordId);
-
+void clr_event_duration(struct instance_t* instance, uint16_t RecordId);
 int event_duration_pro(uint8_t duration_para,uint8_t *duration,uint8_t state, struct instance_t* instance, uint16_t RecordId);
 void send_recordflag_mesg(struct instance_t* instance, struct pipeline_t* task, uint16_t RecordId, uint8_t* payload);
 void send_event_mesg_pro(struct instance_t* instance, struct pipeline_t* task, uint16_t RecordId, uint8_t* payload, int mode);

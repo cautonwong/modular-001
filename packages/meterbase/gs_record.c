@@ -174,7 +174,6 @@ int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_
 
 uint8_t get_activeflag(struct instance_t* instance, uint16_t RecordId)
 {
-    //struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     if (ctrl_block->active_flag[RecordId / 8] & (1 << (RecordId % 8)))
@@ -186,7 +185,6 @@ uint8_t get_activeflag(struct instance_t* instance, uint16_t RecordId)
 }
 void set_activeflag(struct instance_t* instance, uint16_t RecordId)
 {
-    //struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     ctrl_block->active_flag[RecordId / 8] |= (1 << (RecordId % 8));
@@ -194,11 +192,50 @@ void set_activeflag(struct instance_t* instance, uint16_t RecordId)
 
 void clr_activeflag(struct instance_t* instance, uint16_t RecordId)
 {
-    //struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     ctrl_block->active_flag[RecordId / 8] &= ~(1 << (RecordId % 8));
 }
+
+//手动结束事件时 需要调用 清 事件延时
+void clr_event_duration(struct instance_t* instance, uint16_t RecordId)
+{
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    switch(RecordId)
+    {
+        case OverCurrentAS:
+            ctrl_block->OverCurrentAS_duration = 0;
+            break;
+        case PowerOffS:
+            ctrl_block->PowerOffS_duration = 0;
+            break;
+        case CoverOpenS:
+            ctrl_block->CoverOpenS_duration = 0;
+            break;
+        case SwitchErrS:
+            ctrl_block->SwitchErrS_duration = 0;
+            break;
+        case PowerAbnormalS:
+            ctrl_block->PowerAbnormalS_duration = 0;
+            break;
+        case EmuErrS:
+            ctrl_block->EmuErrS_duration = 0;
+            break;
+        case RTCErrS:
+            ctrl_block->RTCErrS_duration = 0;
+            break;
+        case ZeroLineErrS:
+            ctrl_block->ZeroLineErrS_duration = 0;
+            break;
+        default:
+            break;
+
+    }
+   
+}
+
+
 
 void set_recordflag(struct instance_t* instance, uint16_t RecordId)
 {
@@ -379,6 +416,7 @@ int clr_record(struct instance_t* instance, uint32_t oad)
     if((oad & 0xF0000000) == 0x30000000)
     {
         clr_activeflag(instance, (uint16_t)info.save_index);
+        clr_event_duration(instance, (uint16_t)info.save_index);
     }
 
     if (oad == 0x30120200) // 编程记录
@@ -675,8 +713,26 @@ int event_poweroff_save(struct instance_t* instance, struct pipeline_t* pipeline
 //停电下每秒调用  主要处理事件累计时间
 int event_LowPower_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
+    
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint32_t s_index;
+
+    ctrl_block->pd_active_flag_update = 0;
+
+
     PowerOff_LowPower_pro(instance, pipeline, mesg);
     PowerAbnormal_LowPower_pro(instance, pipeline, mesg);
+    CoverOpen_event_LowPower_pro(instance, pipeline, mesg);
+
+
+    if (ctrl_block->pd_active_flag_update == 0x5A)
+    {
+        s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + 
+                    (offsetof(struct mbase_control_block_t, active_flag[0]) -  offsetof(struct mbase_control_block_t, persistent_section_start)) );
+        nd_set_offset(instance, s_index, (uint8_t*)&ctrl_block->active_flag[0], sizeof(ctrl_block->active_flag));               
+    }
+
+    
     return true;
 }
 
@@ -727,6 +783,7 @@ int event_PowerOn_pro(struct instance_t* instance, struct pipeline_t* pipeline, 
             rtc_format_change_from_tm(&tmpTM,  tmp);
             mem_swap_cpy(&payload[6], &tmp[0], 7);
             clr_activeflag(instance, RecordId);
+            clr_event_duration(instance, RecordId);
             recv_record_process(instance, pipeline, &mesg_tmp, payload);    
         }
     }
