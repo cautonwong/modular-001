@@ -631,7 +631,7 @@ void report_port_open(struct instance_t* instance)
 uint8_t shut_multifunction_pluse(void *ptr)
 {
     opreate_second_pluse(3);
-    return 1;
+    return 0;
 }
 
 uint8_t multifunction_port_Init(void)
