@@ -1,6 +1,8 @@
 #include "nidavellir.h"
 #include "applications.h"
 #include "gs_record.h"
+
+
 uint8_t test_record_ = 0;
 // 上电运行期间 每秒的调用 
 // 掉电事件 判断:  返回1:记录发生                0:不记录        -1:记录结束
@@ -21,6 +23,7 @@ int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, st
     uint16_t RecordId           = OverCurrentAS;
 
     int32_t* I                  = &ctrl_block->current_l;
+    int32_t Ia_abs = (ctrl_block->current_l);
     uint32_t threshold          = ctrl_block->OverCurrent_threshold / 10;
     uint8_t invalid = 0; 
     
@@ -29,8 +32,9 @@ int ia_over_event_judge(struct instance_t* instance, struct pipeline_t* task, st
         invalid = 1;
     }
 
+    _value(Ia_abs);
     // 所有相均低于60%un
-    if((*I) > threshold)
+    if(Ia_abs > threshold)
     {
         state = true;
     }

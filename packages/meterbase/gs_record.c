@@ -282,7 +282,7 @@ void send_recordflag_mesg(struct instance_t* instance, struct pipeline_t* task, 
     send_mesg(instance, NULL, &mesg);
 }
 
-//事件记录接口
+//事件记录接口-发消息
 // mode 1：记录发生   0 不记录。 -1 记录结束
 void send_event_mesg_pro(struct instance_t* instance, struct pipeline_t* task, uint16_t RecordId, uint8_t* payload, int mode)
 {
@@ -295,6 +295,36 @@ void send_event_mesg_pro(struct instance_t* instance, struct pipeline_t* task, u
         send_recordflag_mesg(instance, task, RecordId + 1, NULL);
     }
 }
+
+
+//事件记录接口-直接写存储
+// mode 1：记录发生   0 不记录。 -1 记录结束
+void record_event_no_mesg_pro(struct instance_t* instance, struct pipeline_t* task, uint16_t RecordId, uint8_t* payload, int mode)
+{
+    struct message_t mesg_tmp;
+    
+    memset((uint8_t*)&mesg_tmp, 0, sizeof(mesg_tmp));
+
+    
+    if (mode == 1) // 发生
+    {
+        //set_activeflag(instance, RecordId); //外部处理
+        mesg_tmp.id = RecordId;
+        set_recordflag(instance, mesg_tmp.id);
+        recv_record_process(instance, NULL, &mesg_tmp, NULL);
+        
+
+    }
+    else if (mode == -1) //结束
+    {
+        //clr_activeflag(instance, RecordId);//外部处理
+        mesg_tmp.id = RecordId + 1;
+        set_recordflag(instance, mesg_tmp.id);
+        recv_record_process(instance, NULL, &mesg_tmp, NULL);
+    }
+}
+
+
 
 void clr_sequence(struct instance_t* instance, uint32_t sequence_index)
 {

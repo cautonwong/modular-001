@@ -72,11 +72,11 @@ int MeterWr_obj_list_add(struct instance_t* instance, struct pipeline_t* task, s
         {
             ctrl_block->MeterWr_SetTime_flag = 0x5A; 
         }
-        send_event_mesg_pro(instance, task, MeterWrS, payload, 1);
+        record_event_no_mesg_pro(instance, task, MeterWrS, payload, 1);
     }
     else
     {
-        send_event_mesg_pro(instance, task, MeterWrS, payload, -1);
+        record_event_no_mesg_pro(instance, task, MeterWrS, payload, -1);
     }
 
     return 1;

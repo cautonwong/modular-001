@@ -100,7 +100,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         nd_get(instance, id, timer, 2, NULL);
                         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_WeekTab);
                         nd_set_index(instance, addr, timer, 2);
-                        send_event_mesg_pro(instance, NULL, WeekTabWrS, NULL, 1);// 周休日编程事件
+                        record_event_no_mesg_pro(instance, NULL, WeekTabWrS, NULL, 1);// 周休日编程事件
                         mbase_cb->Fee |= F_DAYTABChange;
                         break;
                     case 0x400F://秘钥总条数
@@ -155,7 +155,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         nd_get(instance, id, timer, 3, NULL);
                         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
                         nd_set_index(instance, addr, timer, 3);
-                        send_event_mesg_pro(instance, NULL, ActCombWrS, NULL, 1);// 
+                        record_event_no_mesg_pro(instance, NULL, ActCombWrS, NULL, 1);// 
                         break;
                 }
                 tag_datalen = axdr_get_len(p);
@@ -556,7 +556,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
                 nd_set_index(instance, addr, buffer, 7);
 
-                send_event_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
+                record_event_no_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
 
 
                 record_rollback_after_set_time(instance, 0);
@@ -789,7 +789,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + HoliDay_Table + (index-1));
             nd_set_index(instance, s_index, buffer, 6); 
 
-            send_event_mesg_pro(instance, NULL, HolidayWrS, NULL, 1);// 公共假日编程事件
+            record_event_no_mesg_pro(instance, NULL, HolidayWrS, NULL, 1);// 公共假日编程事件
             mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
             return (p-buf);
             break;
@@ -914,7 +914,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
                 nd_set_index(instance, s_index, buffer, 3);
             }
-            send_event_mesg_pro(instance, NULL, SeasonTabWrS, NULL, 1);// 
+            record_event_no_mesg_pro(instance, NULL, SeasonTabWrS, NULL, 1);// 
             mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
             return (p - buf);
             break;
@@ -1060,7 +1060,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 
             }
 
-            send_event_mesg_pro(instance, NULL, DayTabWrS, NULL, 1);// 时段表编程事件
+            record_event_no_mesg_pro(instance, NULL, DayTabWrS, NULL, 1);// 时段表编程事件
                 
             mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
             return (p - buf);
@@ -1095,11 +1095,11 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     nd_get_index(instance, s_index, buffer, 2);
                     if(i == 0)
                     {
-                        send_event_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
+                        record_event_no_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
                     }
                 }
 
-                send_event_mesg_pro(instance, NULL, BillDayWrS, NULL, 1);//
+                record_event_no_mesg_pro(instance, NULL, BillDayWrS, NULL, 1);//
                 return (p-buf);
             }
             else if(index < 4)
@@ -1116,10 +1116,10 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 nd_set_index(instance, s_index, buffer, 2);
                 if(index == 1)
                 {
-                    send_event_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
+                    record_event_no_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
                 }
                 
-                send_event_mesg_pro(instance, NULL, BillDayWrS, NULL, 1);//
+                record_event_no_mesg_pro(instance, NULL, BillDayWrS, NULL, 1);//
                 return (p-buf);
             }
             else

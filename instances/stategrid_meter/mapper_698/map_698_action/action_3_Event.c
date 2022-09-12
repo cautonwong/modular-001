@@ -356,7 +356,7 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
 
         report_3320list_confirmed_All_channel(instance, id);
         
-        send_event_mesg_pro(instance, NULL, EventClrS, NULL, 1);
+        record_event_no_mesg_pro(instance, NULL, EventClrS, NULL, 1);
 
         return (p - buf);
 

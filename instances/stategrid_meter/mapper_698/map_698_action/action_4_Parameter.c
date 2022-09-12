@@ -228,7 +228,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
                     nd_set_index(instance, s_index, timer_set, 7);
 
-                    send_event_mesg_pro(instance, NULL, BroadcastTimeS, NULL, 1);// 广播校时记录
+                    record_event_no_mesg_pro(instance, NULL, BroadcastTimeS, NULL, 1);// 广播校时记录
 
                     record_rollback_after_set_time(instance, 0);
                     clr_last_bill_time(instance, LastBillingTime);
@@ -292,7 +292,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     event_clear_omd_add(instance, id, 0 ); 
                     event_clr(instance);// 事件清零
                     p++;                     
-                    send_event_mesg_pro(instance, NULL, EventClrS, NULL, 1);
+                    record_event_no_mesg_pro(instance, NULL, EventClrS, NULL, 1);
                     return (p-buf);
                     break;
                 default:

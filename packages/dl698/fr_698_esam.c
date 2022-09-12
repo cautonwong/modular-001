@@ -189,6 +189,7 @@ int read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf, uin
     return output.data_len;
 }
 
+
 int esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
 {
     int fd = 0;

@@ -558,6 +558,7 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint16_t data_len = 0;
     uint16_t s = 0;
+    uint32_t offset=0;
     
     if(ctx->segment_rx == 0xffff){
         ctx->segment_rx = fifoBuf_getByte(fifo);
@@ -591,12 +592,14 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
                 if(is_last_segment(s)){
                     ctx->segment_no = 0;
                 }
-                fifoBuf_getData(fifo, apdu_rx + ctx->apdu_rx_len,  data_len);
+                offset =  ctx->apdu_rx_len;
                 ctx->apdu_rx_len += data_len;
                 if(ctx->apdu_rx_len > Max698_apdu_rx){
                     log_info("segments4: %d.\n", ctx->segment_no);
+                    fifoBuf_update_rd(fifo, data_len, 1);
                     return -1;
-                }
+                }           
+                fifoBuf_getData(fifo, apdu_rx + offset,  data_len);
             }
         }else{
             fifoBuf_getData(fifo, apdu_rx + ctx->apdu_rx_len,  data_len);
@@ -771,6 +774,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     int err_no = 0;
     uint8_t service = 0;
     uint32_t tmp_u32 = 0;
+    //uint8_t err_s_response_flag = 0;
 
     log_info(" OK.\n");
     //s_fifo = (struct fifo_t*)pipeline->in_queue;
@@ -791,6 +795,9 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     if(is_segment_set(ctx->ctrl)){
         err_no = fr_segments_handle(instance, pipeline,  mesg);
         if (err_no <= 0) {
+            //err_s_response_flag = 1;
+            //ctx->service = ERROR_S_Response;
+            //ctx->err_n = 1;
             log_info("fr_segments_handle: err_no=%02x.\n", err_no);
             return err_no;
         }
@@ -848,6 +855,13 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
         ctx->err_n = 2;
     }
 
+    //if (err_s_response_flag != 0)
+    //{
+    //   ctx->service = ERROR_S_Response;
+    //    ctx->err_n = err_s_response_flag;  
+    //}
+
+    
     //mac挂起判断
     if((mbase_cb->mac_suspend_state == true) && ((service == SECURITY_Request) || (ctx->service == SET_Request) || (ctx->service == ACTION_Request))) 
     {

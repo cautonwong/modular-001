@@ -1,7 +1,7 @@
 #ifndef __GS_RECORD_H__
 #define __GS_RECORD_H__
 
-
+#define _value(a) a = ((int32_t)a < 0)? (int32_t)(-a) : (int32_t)a
 
 
 struct event_duration_t
@@ -14,7 +14,7 @@ struct event_duration_t
 extern const uint32_t event_oad[];
 extern const uint8_t event_oad_num;
 
-
+void record_event_no_mesg_pro(struct instance_t* instance, struct pipeline_t* task, uint16_t RecordId, uint8_t* payload, int mode);
 uint8_t get_activeflag(struct instance_t* instance, uint16_t RecordId);
 
 void set_activeflag(struct instance_t* instance, uint16_t RecordId);

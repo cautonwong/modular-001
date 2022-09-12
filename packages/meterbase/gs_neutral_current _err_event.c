@@ -2,7 +2,7 @@
 #include "applications.h"
 #include "gs_record.h"
 
-#define _value(a) a = ((int32_t)a < 0)? (int32_t)(-a) : (int32_t)a
+
 
 
 

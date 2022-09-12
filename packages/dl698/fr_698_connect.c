@@ -526,8 +526,8 @@ static void ___get_consult_info(struct connect_request_t *connect, struct connec
     __consistency_block(connect->protocal_conformance, connect_cache->protocal_conformance, default_connect->protocal_conformance, 8);
     __consistency_block(connect->function_conformance, connect_cache->function_conformance, default_connect->function_conformance, 16);
 
-    connect->send_frm_size      = __get_connect_info(connect_cache->send_frm_size, default_connect->send_frm_size);
-    connect->recv_frm_size      = __get_connect_info(connect_cache->recv_frm_size, default_connect->recv_frm_size);
+    connect->send_frm_size      = __get_connect_info(connect_cache->recv_frm_size, default_connect->send_frm_size);
+    connect->recv_frm_size      = __get_connect_info(connect_cache->send_frm_size, default_connect->recv_frm_size);
     connect->client_win_size    = __get_connect_info(connect_cache->client_win_size, default_connect->client_win_size);
     connect->client_apdu_size   = __get_connect_info(connect_cache->client_apdu_size, default_connect->client_apdu_size);
     connect->connect_time       = __get_connect_info(connect_cache->connect_time, default_connect->connect_time);
