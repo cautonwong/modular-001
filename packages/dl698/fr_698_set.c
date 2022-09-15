@@ -87,13 +87,14 @@ static int __fr_handle_one_object(struct instance_t* instance, struct pipeline_t
         r = security_mode_word_check(instance, pipeline, req_type, oad);
         if(r < 0)
         {
-            ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+            //ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
             p[cache->wr++] = -r;
             if(ACTION_Request == ctx->service)
             {
                 p[cache->wr++] = 0;
             }
-            return r;
+            r = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+            return r; 
         }  
         
         if(2 != ctx->timeTag_valid){
@@ -215,8 +216,9 @@ int fr_handle_set_action_request(struct instance_t* instance, struct pipeline_t*
             }
 
             r = __fr_handle_one_object(instance, pipeline, mesg);
-            ctx->apdu_rx_offset += r;
-            
+            if(r >= 0)
+                ctx->apdu_rx_offset += r;
+
             if(SetActionThenGetRequestNormalList == ctx->choice)
             {
                 get_oad = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);

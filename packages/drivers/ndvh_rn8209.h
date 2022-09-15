@@ -39,7 +39,8 @@
 #define	CMD_RESET		0xFA
 
 
-#define Fr_K            1   //1.676191    //6M晶振
+#define Fr_K          1          //3M晶振
+//#define Fr_K          1.676191  //6M晶振
 
 #define REAL_K_U_INIT     0.0137414116
 #define REAL_K_I_INIT     0.016

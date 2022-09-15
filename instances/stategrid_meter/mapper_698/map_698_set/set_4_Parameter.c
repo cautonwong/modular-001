@@ -786,6 +786,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             memcpy(buffer, p, 5);
             p = p + 6;
             buffer[5] = *p++;
+            if (buffer[5] > MaxTouTabNum) return -DAR_RW_REJECT;
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + HoliDay_Table + (index-1));
             nd_set_index(instance, s_index, buffer, 6); 
 
@@ -1071,7 +1072,9 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             nd_get(instance, 0x41160200, temp, 20, NULL);
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Balance);
             nd_set_index(instance, s_index, temp, 20);
-
+            temp[0] = temp[5]; // 第一结算日 
+            temp[1] = temp[7];
+            
             if(index == 0)
             {
                 if(*(p+1) > 0x03)    return -DAR_RW_REJECT;
@@ -1095,7 +1098,10 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     nd_get_index(instance, s_index, buffer, 2);
                     if(i == 0)
                     {
-                        record_event_no_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
+                        if ( (buffer[0] != temp[0]) || (buffer[1] != temp[1]) ) //第一结算日改变
+                        {
+                            record_event_no_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
+                        }
                     }
                 }
 

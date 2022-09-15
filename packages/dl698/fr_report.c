@@ -10,7 +10,7 @@ extern uint8_t DEVICE_ERR;
 extern uint8_t report_2015state_update(struct instance_t* instance, uint32_t mask);
 extern void report_3320list_add(struct instance_t* instance,uint32_t oad);
 extern uint8_t active_report_3320list_confirmed(struct instance_t* instance);
-extern uint8_t report_3320list_confirmed(struct instance_t* instance, uint8_t cnl, uint32_t oad);
+extern uint8_t report_3320list_confirmed(struct instance_t* instance, uint8_t cnl, uint32_t oad, uint8_t confirm_SUB_event);
 extern uint8_t report_3320list_confirmed_All_channel(struct instance_t* instance, uint32_t oad);
 extern int fr_handle_report_response(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern void EventOut_698_check(struct instance_t* instance);
@@ -472,7 +472,7 @@ int fr_handle_report_response(struct instance_t* instance, struct pipeline_t* pi
         else if(oad == 0x30110201)
         {           
             
-            if(report_3320list_confirmed(instance, chl_PLC_698, oad&0xFFFFFF00))
+            if(report_3320list_confirmed(instance, chl_PLC_698, oad&0xFFFFFF00, 0))
             {
                 //mbase_cb->active_report_CMDtype &=~ ACTIVE_REPORT_3011_END; //挪report_3320list_confirmed里面
                 //mbase_cb->active_report_retry_cnt[R_3011_END] = 0;
@@ -605,55 +605,65 @@ int report_flag_schem_check(uint8_t rptflag, uint8_t Schem)
 
 
 //更新 3320列表，   
-//add_or_del: 0 删除  1新增
+//add_or_del: 0 删除  1新增,          0xFF: 传入属性6，自动删除属性6/7/8/9 [针对分项事件清零]
 //chn通道
 uint8_t report_3320list_update(struct instance_t* instance, uint8_t chn, uint8_t add_or_del, uint32_t oad)
 {
-    uint8_t  rptmode = 0, i, wflag,  count, maxnum, *p, buf[300];
+    uint8_t  rptmode = 0, i, wflag = 0,  count, maxnum, *p, buf[300];
     uint16_t id, len, len2;
     uint32_t data;
-
-
+    uint8_t cnt = 1, k = 0;
     uint32_t addr;
     int ret;
 
     addr = get_3320_save_addr(instance, chn);
     ret = nd_get_index(instance, addr, buf, 241);
-    
-    p = buf;
 
-    wflag = 0;
-    count = *p++;
-    len = 1 + count * 4;
 
-    maxnum = 60;  //固定60个
-    if (count > maxnum)
+    cnt = 1;
+    if(add_or_del == 0xFF) //针对分项事件清零           删除
     {
-        return false;
+        cnt = 4;
     }
-
-    oad &= 0xffff1fff;
-
-    for (i = 0; i < count; i++)
+   
+    for(k = 0; k < cnt; k++)
     {
-        //delete the same oad
-        data = buf_to_uint32_lsb(p);
+        p = buf;
 
-        if (oad == data)
+        count = *p++;
+        len = 1 + count * 4;
+
+        maxnum = 60;  //固定60个
+        if (count > maxnum)
         {
-            len2 = len - ((p - buf) + 4);
-            ndv_memcopy(p, p + 4, len2);
-            len -= 4;
-            count--;
-            wflag = 1;
-            break;
+            return false;
         }
 
-        p += 4;
+        oad += (0x00000100 * k);
+        oad &= 0xffff1fff;
+
+        for (i = 0; i < count; i++)
+        {
+            //delete the same oad
+            data = buf_to_uint32_lsb(p);
+
+            if (oad == data)
+            {
+                len2 = len - ((p - buf) + 4);
+                ndv_memcopy(p, p + 4, len2);
+                len -= 4;
+                count--;
+                buf[0] = count;
+                wflag = 1;
+                break;
+            }
+
+            p += 4;
+        }
     }
 
 
-    if (add_or_del)
+    if (add_or_del == 1)
     {
         //add new oad
         if (count > 0)
@@ -788,14 +798,20 @@ uint8_t active_report_3320list_confirmed(struct instance_t* instance)//确认掉
 }
 
 
-//上报列表确认 
-uint8_t report_3320list_confirmed(struct instance_t* instance, uint8_t chn, uint32_t oad)
+//上报列表确认   
+//confirm_SUB_event:0,  只确认单个oad               0xFF:确认分项事件所有6/7/8/9属性
+uint8_t report_3320list_confirmed(struct instance_t* instance, uint8_t chn, uint32_t oad, uint8_t confirm_SUB_event)
 {
     struct mbase_control_block_t*  mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t add_or_del = 0;
 
     //新增事件列表
-
-    if (false == report_3320list_update(instance, chn, 0, oad))
+    if(confirm_SUB_event != 0xFF) // 非 ff 即0 
+    {
+        confirm_SUB_event = 0;
+    }
+    
+    if (false == report_3320list_update(instance, chn, confirm_SUB_event, oad))
     {
         return false;
     }
@@ -827,18 +843,13 @@ uint8_t report_3320list_confirmed_All_channel(struct instance_t* instance, uint3
 
         if (oadClass == 24)
         {
-            oad += 0x00000600;  // 三相 修改
-
-            for (j=0; j < 4; j++)
-            {
-                report_3320list_confirmed(instance, comm_chn[i], oad); 
-                oad += 0x00000100;
-            }
+            oad += 0x00000600;  
+            report_3320list_confirmed(instance, comm_chn[i], oad, 0xFF); 
         }
         else
         {
             oad += 0x00000200;
-            report_3320list_confirmed(instance, comm_chn[i], oad); 
+            report_3320list_confirmed(instance, comm_chn[i], oad, 0); 
         }
     }
 

@@ -30,7 +30,7 @@ int event_clear_omd_add(struct instance_t* instance, uint32_t omd, uint16_t chn)
     uint32_to_buf_msb(omd, tempbuf + 3);
 
 
-    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + EventClr_List);;
+    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + EventClr_List);
     ret = nd_set_index(instance, index, &tempbuf[0], 7);
     return ret;
 }
@@ -354,7 +354,7 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
             return -DAR_OBJECT_NOT_EXIST;
         }
 
-        report_3320list_confirmed_All_channel(instance, id);
+        report_3320list_confirmed_All_channel(instance, id); //   77个 action  共 20秒  占用 17秒    测试 待调整
         
         record_event_no_mesg_pro(instance, NULL, EventClrS, NULL, 1);
 

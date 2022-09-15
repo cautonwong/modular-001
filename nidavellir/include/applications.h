@@ -8,12 +8,12 @@
 #endif // !WIN32
 
 
-#define _DEBUG_TEST  0
+#define _DEBUG_TEST 0
 
 #if (_DEBUG_TEST == 1)
 
-    #define PWD_TEST_ON 0
-    #define FREEZ_TEST_VOERTURN 0
+    #define PWD_TEST_ON 1
+    #define FREEZ_TEST_VOERTURN 1
 
 #else
 
@@ -260,7 +260,7 @@ struct mbase_control_block_t
     uint8_t RTCErrS_duration;           //当前状态持续时间 时钟故障事件
     uint8_t ZeroLineErrS_duration;      //当前状态持续时间 零线电流异常事件  
 
-    uint8_t pd_cover_EndRecord_flag;   //停电下 开盖已执行过结束标志           ：5A
+    uint8_t pd_cover_EndRecord_flag;   //停电下 开盖已执行过结束标志           ：5A       掉电时清零
     uint8_t pd_active_flag_update;     //停电下 保存事件 active_flag   ：5A
 
 

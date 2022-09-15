@@ -699,6 +699,10 @@ int event_poweroff_save(struct instance_t* instance, struct pipeline_t* pipeline
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t s_index, s_len; 
     
+    mbase_cb->pd_cover_EndRecord_flag = 0;
+    
+    
+    
     //s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
     //offsetof(struct mbase_control_block_t, active_flag[0]));
     //nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_flag[0], 100);     

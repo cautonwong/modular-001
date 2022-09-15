@@ -551,6 +551,9 @@ int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pi
         return -DAR_TYPE_NOT_MATCH;
     }
 
+    rsd_info->end_mark = 0xFFFFFFFF;
+    return 1;
+#if 0   
     //根据冻结 获取冻结周期
     for (i = 0; i < sizeof(frz_period_tab) / sizeof(frz_period_tab[0]); i++)
     {
@@ -587,13 +590,13 @@ int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pi
 
     if (period_buf[scheme * 3] != 0)
     {
-        period = period_buf[scheme * 3 + 1];
+        period = period_buf[scheme * 3 + 2];
     }
-    range_sec = range_sec * period;
+    range_sec = range_sec * period ;
     // 结束时间  增加 周期s的时间
     rsd_info->end_mark += (range_sec);
-
     return 1;
+#endif    
 }
 
 int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad,  struct rsd_info_t* rsd_info)
@@ -1552,6 +1555,14 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
             }
             ret = nd_log_output(instance, record_id_info.save_index,  ptr_tmp, 1, &circular_info);
             circular_info.mode =   rsd_info->mode; 
+            
+            if ((rsd_info->select == 1) && ((rsd_info->mode == 2) || (rsd_info->mode == 3))) //方法1  周期性冻结 按时间搜索 返回最近一条
+            {
+                if(circular_info.valid_num > 1)
+                {
+                    circular_info.valid_num = 1;
+                }
+            }
             break;
             
         case 9: //上n次
@@ -1689,7 +1700,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     {
         if ((oad & 0xF0000000) == 0x30000000) 
         {
-            report_3320list_confirmed(instance, p_ctx->channel, oad);
+            report_3320list_confirmed(instance, p_ctx->channel, oad, 0);
         }
     }
 

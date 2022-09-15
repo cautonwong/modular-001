@@ -964,7 +964,7 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
 
 
 #if (FREEZ_TEST_VOERTURN)
-uint8_t test_freeze = 1;
+uint8_t test_freeze = 0;
 #endif
 // 每秒调用
 int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
@@ -991,9 +991,9 @@ int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct mess
         send_recordflag_mesg(instance, task,  MonthFreeze, NULL);           
         send_recordflag_mesg(instance, task,  BillFreeze, NULL);   
         
-        send_recordflag_mesg(instance, task,  SeasonTabCutFreeze, NULL);   
-        send_recordflag_mesg(instance, task,  DayTabCutFreeze, NULL);   
-        send_recordflag_mesg(instance, task,  InstantFreeze, NULL);   
+        //send_recordflag_mesg(instance, task,  SeasonTabCutFreeze, NULL);   
+        //send_recordflag_mesg(instance, task,  DayTabCutFreeze, NULL);   
+        //send_recordflag_mesg(instance, task,  InstantFreeze, NULL);   
     }
     else
 #endif    

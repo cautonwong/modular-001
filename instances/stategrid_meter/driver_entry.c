@@ -944,17 +944,20 @@ void IOStateCheck(struct instance_t* instance, struct pipeline_t* pipeline)
     
     
     METER_COVER_INPUT();
-    if(meter_cover_cnt==50)
-    {
-        mbase_control_block->CoverOpenS_status = EVENT_RESET;
-    }
-    else if(meter_cover_cnt==0)
-    {
-        mbase_control_block->CoverOpenS_status = EVENT_SET;
-    }
 
-    if( instance->ac_power_statue == AC_POWER_OFF )
+
+    if( instance->ac_power_statue == AC_POWER_OFF ) 
     {
+        //开盖
+        if(METER_COVER_GET_DIN() == METER_COVER_OPEN_LEVE)
+        {
+            mbase_control_block->CoverOpenS_status = EVENT_RESET;
+        }
+        else
+        {
+            mbase_control_block->CoverOpenS_status = EVENT_SET;
+        }
+        
         if(mbase_control_block->power_abnormal_tick < 5)
         {
             mbase_control_block->power_abnormal_tick++;
@@ -993,6 +996,17 @@ void IOStateCheck(struct instance_t* instance, struct pipeline_t* pipeline)
                 GPIOBToF_Init(GPIOC, &GPIO_InitStruct);
                 CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), DISABLE);
             }
+        }
+    }
+    else
+    {
+        if(meter_cover_cnt==50)
+        {
+            mbase_control_block->CoverOpenS_status = EVENT_RESET;
+        }
+        else if(meter_cover_cnt==0)
+        {
+            mbase_control_block->CoverOpenS_status = EVENT_SET;
         }
     }
     

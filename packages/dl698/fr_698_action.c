@@ -48,12 +48,13 @@ static int __fr_handle_one_object(struct instance_t* instance, struct pipeline_t
         r = security_mode_word_check(instance, pipeline, req_type, oad);    //安全模式
         if (r < 0)
         {
-            ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+            //ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
             p[cache->wr++] = -r;
             if(ACTION_Request == ctx->service)
             {
                 p[cache->wr++] = 0;
             }
+            r = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
             return r;
         }
         

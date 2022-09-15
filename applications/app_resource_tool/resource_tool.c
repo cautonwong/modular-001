@@ -721,7 +721,7 @@ int16_t __search_circular(struct instance_t* instance, struct circular_info_t* i
 {
     uint16_t ptr[4] = { manager->r_ptr, 0x00, 0x00, 0x00 };
     uint16_t start_ptr = 0x00, end_ptr = 0x00;
-    uint8_t cnt = 0x00;
+    uint8_t cnt = 0x00, start_mark = 0, end_mark = 0;
 
     if (manager->w_ptr > 0x00)
     {
@@ -748,30 +748,42 @@ int16_t __search_circular(struct instance_t* instance, struct circular_info_t* i
 
         return 0x00;
     }
-
+    
     start_ptr = fun(instance, info->start_mark, ptr[0], ptr[1], tempinfo, 0x00);
     if ((start_ptr == 0xFFFF) && (cnt == 0x02))
     {
         start_ptr = fun(instance, info->start_mark, ptr[2], ptr[3], tempinfo, 0x00);
+        start_mark = 1;
     }
 
     end_ptr = fun(instance, info->end_mark, ptr[0], ptr[1], tempinfo, 0x01);
     if ((end_ptr == 0xFFFF) && (cnt == 0x02))
     {
         end_ptr = fun(instance, info->end_mark, ptr[2], ptr[3], tempinfo, 0x01);
+        end_mark = 1;
     }
 
     if ((start_ptr != 0xFFFF) && (end_ptr != 0xFFFF))
     {
         info->read_ptr = start_ptr;
-
+ 
         if (end_ptr >= start_ptr)
         {
             info->valid_num = end_ptr - start_ptr + 0x01;
         }
         else
         {
-            info->valid_num = end_ptr + tempinfo->max_num - start_ptr + 0x01;
+
+            if ((cnt == 0x02) && (start_mark == 1) && (end_mark == 0))             //  gs  2022 09 12  // 待调整  搜索两条记录间隔中间且搜不到时  会异常
+            {
+                info->valid_num = end_ptr + tempinfo->max_num - start_ptr + 0x01;
+            }
+            else  
+            {
+                info->read_ptr = 0x00;
+                info->valid_num = 0x00;
+            }
+
         }
     }
     else

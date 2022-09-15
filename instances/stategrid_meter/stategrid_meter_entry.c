@@ -388,6 +388,9 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
     count++;
     nd_set_index(instance, addr, (uint8_t*)&count, sizeof(count));   
 
+    instance->ac_power_statue = AC_POWER_OFF; // 初始化为停电模式
+    
+    
     return baremetal_instance_entry(instance);
 }
 

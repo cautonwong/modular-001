@@ -507,7 +507,7 @@ const  parameter_item_t  parameter_item[] =
     { Report3320_OADList3           , 0x01 ,     241  , 0                           }, // 3320 oad上报列表   1 + 4*60     //PLC  
     { Report3320_OADList4           , 0x01 ,     241  , 0                           }, // 3320 oad上报列表   1 + 4*60     //rs485-2
     { ActReport_Info                , 0x01 ,     4    , 0                           }, // 主动上报 停电下缓存信息  2 + 1 + 1   主动上报标志（2） + 3320上报次数（1）+2015上报次数（1）                                                                                      
-    { MinFrez_Sectors               , 0x01 ,     18   , 0                           }, //分钟冻结各方案的扇区偏移 9*2                                                
+    { MinFrez_Sectors               , 0x01 ,     18   , 0                           }, //分钟冻结各方案的扇区偏移 9*2     ram也存一份                                              
     { SecurityMode_En               , 0x01 ,     1    , init_SecurityMode_En        }, //安全模式参数使能0-dis   1-en
     { SecurityMode_EXData           , 0x01 ,     101  , init_SecurityMode_EXData    }, //显式安全模式参数缓存                                               
     { AutoDisplayList               , 0x64 ,     2    , init_AutoDisplayList        }, //100屏*2字节
@@ -685,14 +685,14 @@ int16_t supply_event_flash_1_info(struct instance_t* instance, uint16_t event_fl
     uint16_t sector_size[9] = { 0 };
     uint8_t tempbuf[2*8] = { 0 };
     int ret;
-    addr_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MinFrez_Sectors);
+    addr_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MinFrez_Sectors); //待调整  可优化到ram
     ret = nd_get_index(instance, addr_index, (uint8_t*)&sector_size[0], 18);
     if (ret < 0)
     {
         memset(&sector_size[0], 0, sizeof(sector_size));
     }
 
-    addr_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MinuteFreeze_depth);
+    addr_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MinuteFreeze_depth);//待调整  可优化到ram
     ret = nd_get_index(instance, addr_index, (uint8_t*)&tempbuf[0], 16);
     if (ret < 0)
     {

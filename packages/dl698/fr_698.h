@@ -438,7 +438,7 @@ enum report_mode_t {
 extern uint8_t report_2015state_update(struct instance_t* instance, uint32_t mask);
 extern void report_3320list_add(struct instance_t* instance,uint32_t oad);
 extern uint8_t active_report_3320list_confirmed(struct instance_t* instance);
-extern uint8_t report_3320list_confirmed(struct instance_t* instance, uint8_t cnl, uint32_t oad);
+extern uint8_t report_3320list_confirmed(struct instance_t* instance, uint8_t cnl, uint32_t oad, uint8_t confirm_SUB_event);
 extern uint8_t report_3320list_confirmed_All_channel(struct instance_t* instance, uint32_t oad);
 extern int fr_handle_report_response(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern void EventOut_698_check(struct instance_t* instance);
