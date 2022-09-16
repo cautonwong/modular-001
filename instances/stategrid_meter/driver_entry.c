@@ -619,7 +619,7 @@ void report_port_open(struct instance_t* instance)
     LowPower_InitStruct.BGPPower            = PMU_BGPPWR_OFF;
     LowPower_InitStruct.COMP1Power          = PMU_COMP1PWR_ON;//PMU_COMP1PWR_OFF;
     LowPower_InitStruct.COMP2Power          = PMU_COMP2PWR_OFF;
-    LowPower_InitStruct.AVCCPower           = PMU_AVCCPWR_OFF;
+    LowPower_InitStruct.AVCCPower           = PMU_AVCCPWR_ON;
     LowPower_InitStruct.TADCPower           = PMU_TADCPWR_OFF;
     LowPower_InitStruct.VDCINDetector       = PMU_VDCINDET_ENABLE;
     LowPower_InitStruct.VDDDetector         = PMU_VDDDET_DISABLE;
