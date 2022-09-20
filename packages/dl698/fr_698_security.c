@@ -103,6 +103,7 @@ static int __verification_SID_MAC(struct instance_t* instance, struct pipeline_t
 
 static int __verification_RN(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -110,6 +111,10 @@ static int __verification_RN(struct instance_t* instance, struct pipeline_t* pip
     uint16_t len = 0;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
+    uint8_t rn_buf[12+4] = {0};  // ndv_memcopy(mbase_cb->report_random_data, ptr_cache, 12); 
+    uint8_t mac_buf[5] = {0};
+    int32_t  ret = 0;
+
     
     input.cmd_type              = 2;
     input.security_choice       = ctx->security_choice;
@@ -120,12 +125,35 @@ static int __verification_RN(struct instance_t* instance, struct pipeline_t* pip
     input.RN_Data_len   = get_octet_string(ctx, &offset, &len);
     input.RN_Data       = apdu_rx + offset;
 
+    ndv_memcopy(rn_buf, mbase_cb->report_random_data, 12);
+    ndv_memcopy(mac_buf, apdu_rx + offset + 1, 4);
+
     ctx->RN_len = input.RN_Data_len;
     if(ctx->RN_len > 64)
         ctx->RN_len = 64;
-    memcpy(ctx->RN_data, input.RN_Data, ctx->RN_len);
+    ndv_memcopy(ctx->RN_data, input.RN_Data, ctx->RN_len);
     if(ctx->service == SECURITY_Response){
-        ___verification_handle(instance, &input, &output, 1);//ESAM错误的情况下  不验证MAC 直接返回成功   //ESAM错误的情况，不验证MAC  //MAC验证不过，不能确认，也不需要响应
+        if ((*ctx->security_data) == REPORT_Response) // 上报确认
+        {
+            
+            input.RN_Data_len = 12+4; // rn + 00000000
+            input.RN_Data = rn_buf;
+            input.MAC_len = 4;
+            input.MAC_data = mac_buf;
+            ret = check_upreport_esam_rn_mac(instance, &input, &output);
+            if (mbase_cb->esam_chip_abnormal == EVENT_SET)   //ESAM错误的情况下  不验证MAC 直接返回成功
+            {
+                ret = 1;
+            }
+            if (ret < 0)//MAC验证不过，不能确认，也不需要响应
+            {
+                return 0;
+            }
+        }
+        else
+        {
+            ___verification_handle(instance, &input, &output, 1);//ESAM错误的情况下  不验证MAC 直接返回成功   
+        }
     }
     ctx->apdu_len_valid += len + input.RN_Data_len;
     return 1;
@@ -399,7 +427,7 @@ int fr_infrared_auth_check(struct instance_t* instance, struct pipeline_t* pipel
     }
 
 
-    return -DAR_SECURITY_AUTH_FAILED;
+    return -DAR_RW_REJECT;
 }
 
 #if 1   //----698安全模式字-----------------------------开始

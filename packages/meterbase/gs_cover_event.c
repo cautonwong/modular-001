@@ -60,7 +60,7 @@ int CoverOpen_event_LowPower_pro(struct instance_t* instance, struct pipeline_t*
 
     uint8_t duration_para       =  COVEROPEN_DELAY_PARA;//ctrl_block->CoverOpenS_duration_para;
     uint8_t *duration           = &ctrl_block->CoverOpenS_duration;
-    uint32_t* accumulate_time   = &ctrl_block->CoverOpenS_acc_time;
+    uint32_t* accumulate_time   = &ctrl_block->CoverOpenS_time_low_power_cnt;//&ctrl_block->CoverOpenS_acc_time;
     uint8_t state               /*=  ctrl_block->CoverOpenS_status*/;
 
     uint16_t RecordId           = CoverOpenS;

@@ -66,6 +66,10 @@ int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline
     memset((uint8_t *)&mbase_cb->AutoPtr, 0x00, 10);
     //清空电池工作时间累加器
     mbase_cb->battery_used_time_cnt = 0;
+    mbase_cb->PowerOffS_time_low_power_cnt = 0;  
+    mbase_cb->CoverOpenS_time_low_power_cnt = 0;        
+    mbase_cb->PowerAbnormalS_time_low_power_cnt = 0; 
+    
     __enable_irq();
     
     return true;

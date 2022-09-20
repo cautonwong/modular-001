@@ -867,9 +867,13 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     {
         //ctx->service = SECURITY_Response;
         //service = SECURITY_Response;
-        tmp_u32 = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
-        app_handle_mac_suspend(instance, tmp_u32);
-        err_no = -DAR_METER_SUSPEND;
+        if (GET_Request != ctx->service) //挂起后 允许读
+        {
+            tmp_u32 = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
+            app_handle_mac_suspend(instance, tmp_u32);
+            err_no = -DAR_METER_SUSPEND;
+        }
+
     }
     
     if((service == SECURITY_Request) && (err_no < 0)){
@@ -908,6 +912,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
             break;
         case REPORT_Response://8上报应答 client
             err_no = fr_handle_report_response(instance, pipeline, mesg);
+            return -1;  //上报确认不响应
             break;
         case SECURITY_Response:
             cache->buf_ptr[0] = SECURITY_Response;

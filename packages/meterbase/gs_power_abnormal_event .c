@@ -47,7 +47,7 @@ void PowerAbnormal_LowPower_pro(struct instance_t* instance, struct pipeline_t* 
     uint16_t RecordId = PowerAbnormalS;
     uint8_t duration_para       =  1;//ctrl_block->CoverOpenS_duration_para;
     uint8_t *duration           = &ctrl_block->PowerAbnormalS_duration;
-    uint32_t* accumulate_time   = &ctrl_block->PowerAbnormalS_acc_time;
+    uint32_t* accumulate_time   = &ctrl_block->PowerAbnormalS_time_low_power_cnt;//&ctrl_block->PowerAbnormalS_acc_time;
     struct message_t mesg_tmp;
     uint32_t s_index;
 

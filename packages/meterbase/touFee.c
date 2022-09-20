@@ -208,6 +208,7 @@ unsigned char FeeTable_CmpFind( struct instance_t* instance, struct pipeline_t* 
 	unsigned char i;
 	unsigned int Now,Int,Int1;
     struct mbase_control_block_t* mbase_cb;
+    static uint8_t LastDayTouNum = 0;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
@@ -247,12 +248,12 @@ unsigned char FeeTable_CmpFind( struct instance_t* instance, struct pipeline_t* 
 			mbase_cb->TouBefNo = Buf[2];
 		else
 			mbase_cb->TouBefNo = Buf[3*i+2];
-		
-		if( ((Now == Int) || (mbase_cb->TouBefNo != mbase_cb->TOUNo)) && (mbase_cb->MulPortMode == F_PortTouCut) )
+		//时段发生变化
+		if( ((LastDayTouNum != i) || (Now == Int) || (mbase_cb->TouBefNo != mbase_cb->TOUNo)) && (mbase_cb->MulPortMode == F_PortTouCut))
 		{
-                     opreate_second_pluse(2);
-                     ndv_timer_start_one(MULTIFUNCTION_PORT, 8);
+            mbase_cb->PortTouCut = 1;
 		}
+		LastDayTouNum = i;
 	}
 	
 	if( Num == 1 ) return 0;
@@ -398,6 +399,13 @@ void TouFeePro(struct instance_t* instance, struct pipeline_t* pipeline)
         GetTOUFee(instance, pipeline);
     }
 
+   
+    if( (mbase_cb->PortTouCut) && (mbase_cb->MulPortMode == F_PortTouCut) )
+    {
+        opreate_second_pluse(2);
+        ndv_timer_start_one(MULTIFUNCTION_PORT, 8);
+    }
+    mbase_cb->PortTouCut = 0;
 }
 
 void Rtc_Prossecc(struct instance_t* instance, struct pipeline_t* pipeline)

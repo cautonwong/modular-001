@@ -70,7 +70,8 @@ int PowerOff_event_judge(struct instance_t* instance, struct pipeline_t* task, s
 void PowerOff_LowPower_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint32_t* accumulate_time = &ctrl_block->PowerOffS_acc_time;
+    //uint32_t* accumulate_time = &ctrl_block->PowerOffS_acc_time;
+    uint32_t* accumulate_time = &ctrl_block->PowerOffS_time_low_power_cnt;
     uint16_t RecordId = PowerOffS;
     struct message_t mesg_tmp;
     uint32_t s_index;
@@ -97,6 +98,7 @@ void PowerOff_LowPower_pro(struct instance_t* instance, struct pipeline_t* task,
     if (true == get_activeflag(instance, RecordId))
     {
         (*accumulate_time)++;//  累计时间累加 
+        
     }
 }
 

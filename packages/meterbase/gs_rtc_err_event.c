@@ -108,6 +108,10 @@ int rtc_check_poweron(struct instance_t* instance)
         write_mcu_rtc(0, settimebuf, 7);
  
         ctrl_block->RTCErrS_status = 1;
+
+
+        clr_last_bill_time(instance, LastBillingTime);
+        clr_last_bill_time(instance, LastDayFreezTime);
         
         return -1;
     }

@@ -138,7 +138,7 @@ struct mbase_control_block_t
     uint8_t   StepNum;//阶梯数
     uint8_t    Fee;
     uint8_t TouBefNo;
-    
+    uint8_t PortTouCut;     // 时段改变需投切
     uint8_t MulPortMode;    //多功能口模式
           
     uint32_t volt_60;   //60%电压
@@ -277,6 +277,10 @@ struct mbase_control_block_t
     uint32_t blt_alarm; //背光报警配置字
 
     uint32_t battery_used_time_cnt; //电池使用时间   累加器   sec     停电或复位后清零，低功耗下累加，上电后保存
+    uint32_t PowerOffS_time_low_power_cnt;      //停电事件累计时间   累加器     sec        停电或复位后清零，低功耗下累加，上电保存
+    uint32_t CoverOpenS_time_low_power_cnt;     //开盖事件累计时间   累加器     sec        停电或复位后清零，低功耗下累加，上电保存
+    uint32_t PowerAbnormalS_time_low_power_cnt; //电源异常事件累计时间   累加器     sec        停电或复位后清零，低功耗下累加，上电保存
+
     
     struct tm v_powerdown_tm;                   // 模拟停电时间  补结算测试用     不存e2p
     dyn_cache_end  //------------------------------------------------------
@@ -341,7 +345,7 @@ struct mbase_control_block_t
     uint32_t SwitchErrS_acc_time;       //累计时间 电能表负荷开关误动作事件
     uint32_t PowerAbnormalS_acc_time;   //累计时间 电能表电源异常事件 
     uint32_t EmuErrS_acc_time;          //累计时间 计量芯片故障事件
-    //uint32_t RTCErrS_acc_time;          //累计时间 时钟故障事件
+    //uint32_t RTCErrS_acc_time;        //累计时间 时钟故障事件
     uint32_t ZeroLineErrS_acc_time;     //累计时间 零线电流异常事件  
 
     //上报相关
@@ -349,7 +353,7 @@ struct mbase_control_block_t
     uint8_t active_report_retry_cnt[4];         //主动上报 重试次数 //R_3320
     uint32_t power_on_sec_accum;                //上电累计时间 sec  上电处理时清零，上电运行累加  
     //跟随上报2015状态字
-    uint32_t report_2015state[4];           //跟随上报状态字  chl_NUM
+    uint32_t report_2015state[4];           //跟随上报状态字  chl_NUM   // uint32_to_buf_msb
 
     uint8_t mac_err_cnt; // 当日mac错误次数
     uint8_t mac_suspend_date[3];// mac错误 挂起日期 yymmdd

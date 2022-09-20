@@ -1556,7 +1556,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
             ret = nd_log_output(instance, record_id_info.save_index,  ptr_tmp, 1, &circular_info);
             circular_info.mode =   rsd_info->mode; 
             
-            if ((rsd_info->select == 1) && ((rsd_info->mode == 2) || (rsd_info->mode == 3))) //方法1  周期性冻结 按时间搜索 返回最近一条
+            if ((0 == non_period) && (rsd_info->select == 1) && ((rsd_info->mode == 2) || (rsd_info->mode == 3))) //方法1  周期性冻结 按时间搜索 返回最近一条
             {
                 if(circular_info.valid_num > 1)
                 {

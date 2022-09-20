@@ -147,7 +147,18 @@ int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_
             para_pack->para_num = sizeof(PowerOffS_para) / sizeof(PowerOffS_para[0]);
             return 1;
         }
-        break;        
+        break;   
+        case 0x302F:// 计量芯片故障
+        {
+            struct para_698_tag_t EmuErrS__para[1] =
+            {
+                {TYPE_unsigned,         (uint8_t*)&mbase_cb->EmuErrS_duration_para,        1},
+            };
+            memcpy((uint8_t*)para_pack->event_para, (uint8_t*)EmuErrS__para, sizeof(EmuErrS__para));
+            para_pack->para_num = sizeof(EmuErrS__para) / sizeof(EmuErrS__para[0]);
+            return 1;
+        }
+        break;         
         case 0x3040:// 零线电流异常
         {
             struct para_698_tag_t ZeroLineErrS_para[3] =
@@ -796,6 +807,14 @@ int event_PowerOn_pro(struct instance_t* instance, struct pipeline_t* pipeline, 
     //上电结束电源异常事件
     
 
+    //停电下的累计时间 保存。
+    ctrl_block->PowerOffS_acc_time += ctrl_block->PowerOffS_time_low_power_cnt;
+    ctrl_block->CoverOpenS_acc_time += ctrl_block->CoverOpenS_time_low_power_cnt;
+    ctrl_block->PowerAbnormalS_acc_time += ctrl_block->PowerAbnormalS_time_low_power_cnt;
+
+    ctrl_block->PowerOffS_time_low_power_cnt = 0;  
+    ctrl_block->CoverOpenS_time_low_power_cnt = 0;        
+    ctrl_block->PowerAbnormalS_time_low_power_cnt = 0; 
 
     
     return true;

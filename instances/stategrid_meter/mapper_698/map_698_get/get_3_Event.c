@@ -357,6 +357,14 @@ int get_max_record_number(struct instance_t* instance, uint32_t oad, uint8_t* bu
     {
         max_num = 100;
     }
+    else if (OI == 0x3026) //密钥更新
+    {
+        max_num = 2;
+    }
+    else
+    {
+        max_num = 10;
+    }
 
     *p++ = TYPE_long_unsigned;
     p += uint16_to_buf_msb(max_num, p);

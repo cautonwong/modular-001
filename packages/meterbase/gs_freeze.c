@@ -209,15 +209,29 @@ int freeze_judge(struct instance_t* instance, uint8_t* pperiod, uint16_t unit, s
 {
     uint8_t valid;
     uint16_t timeinv = 0;
-    uint32_t min, value;
-    
+    uint32_t min, value, ref_min;
+    struct tm ref_time;//
 
     if (instance->time.tm_sec != 0)
     {
         return -1;
     }
 
+    //2000年1月1日0时0分
+    ref_time.tm_year = 0 + 2000 - 1900;;
+    ref_time.tm_mon = 1 - 1;
+    ref_time.tm_mday = 1;
+    ref_time.tm_hour = 0;
+    ref_time.tm_min = 0;
+    ref_time.tm_sec = 0;
+
+    ref_min = rtc_mktime(&ref_time);
     min = rtc_mktime(&instance->time);
+    if (min >= ref_min)
+    {
+        min -= ref_min;
+    }
+    
     min = min / 60;
     valid = pperiod[0];
     mem_swap_cpy((uint8_t*)&timeinv, (pperiod+1), 0x02);

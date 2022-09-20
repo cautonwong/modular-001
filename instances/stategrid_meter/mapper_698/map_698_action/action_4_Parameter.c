@@ -155,7 +155,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                                 tmpbuf[2] = instance->time.tm_mday;
                                 
                                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBroadcastTimeERR);
-                                nd_get_index(instance, s_index, (uint8_t*)&tmpbuf[0], 3);
+                                nd_set_index(instance, s_index, (uint8_t*)&tmpbuf[0], 3);
                                 mbase_cb->RTCErrS_status = 1;
                             }
                             return -DAR_OTHERS_ERROR;

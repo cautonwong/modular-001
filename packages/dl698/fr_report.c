@@ -1273,7 +1273,7 @@ int active_report_normal_pro(struct instance_t* instance, struct pipeline_t* pip
         *p++ = 1;
         *p++ = TYPE_bit_string;
         *p++ = 0x20;
-        p += uint32_to_buf_lsb(value, p);//是lsb还是msb，待验证
+        p += uint32_to_buf_msb(value, p);
     }
     *p++ = 0;
     *p++ = 0;

@@ -431,9 +431,9 @@ static  int f_esam_type_upreport_check(struct esam_698_data_t *para, void *esam_
     uint8_t head[4] = {0x80,0x0e,0x40,0x81};
 
     esam_in->Dispersion_factor_len = 0;
-    esam_in->RN_Data_len = 0;
+    //esam_in->RN_Data_len = 0;
     esam_in->AttachData_len = 0;
-    esam_in->MAC_len = 0;
+    //esam_in->MAC_len = 0;
     
     if(0 == __comm_esam_handle(head, para, 0, esam_hal)){
         return 0;

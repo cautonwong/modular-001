@@ -14,9 +14,19 @@ int EmuErr_event_judge(struct instance_t* instance, struct pipeline_t* task, str
     uint8_t duration_para       =  ctrl_block->EmuErrS_duration_para;
     uint8_t *duration           = &ctrl_block->EmuErrS_duration;
     uint32_t* accumulate_time   = &ctrl_block->EmuErrS_acc_time;
-    uint8_t state               =  ctrl_block->EmuErrS_status;
+    uint8_t state               = 0;// ctrl_block->EmuErrS_status;
 
     uint16_t RecordId           = EmuErrS;
+
+
+    if (ctrl_block->EmuErrS_status == EVENT_SET)
+    {
+        state = 1;
+    }
+    else
+    {
+        state = 0;
+    }
 
     result = event_duration_pro(duration_para, duration, state, instance, RecordId);
 

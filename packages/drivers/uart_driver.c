@@ -26,8 +26,8 @@
 #define UART_DEVICE_TIME_OUT1     5
 #define UART_DEVICE_TIME_OUT2	  1
 
-#define UART_RX_TIME_OUT   10
-#define UART_TX_TIME_OUT   2
+#define UART_RX_TIME_OUT   5
+#define UART_TX_TIME_OUT   3
 
 
 
@@ -90,23 +90,24 @@ uint8_t uart_time_process(void *tickpara)
     struct uart_chl_init_t *chl = (struct uart_chl_init_t *)tickpara;
     uint8_t send_data;
     
-    if(chl->rx_time_out != 0xFFFFFFFF){
+    //if(chl->rx_time_out != 0xFFFFFFFF){
         if(chl->rx_time_out > 0)
         {
             chl->rx_time_out--;
         }
-        else
+        
+        if(chl->rx_time_out == 1)
         {
             chl->CallBackReceiveTimeOut();
-            chl->rx_time_out = 0xFFFFFFFF;
+            //chl->rx_time_out = 0xFFFFFFFF;
         }  
-    }
+    //}
     if(chl->tx_time_out > 0)
     {
         chl->tx_time_out--;
     }
     
-    if((chl->tx_time_out == 0) && (chl->rx_time_out == 0))
+    if(chl->tx_time_out == 1)
     {
         mcu_uart_recive_enable(1 , chl->mcu_uart_index);
         if(chl->chl_type == UART_RS4851_CHL)
@@ -114,6 +115,11 @@ uint8_t uart_time_process(void *tickpara)
             RS485_RCV_EN();
         }
     }
+    
+    //if((chl->tx_time_out == 0) && (chl->rx_time_out == 0))
+    //{
+
+    //}
     
     if((fifoBuf_getUsed(chl->tx_fifo) > 0 ) && (chl->tx_time_out == 0))
     {
@@ -123,6 +129,11 @@ uint8_t uart_time_process(void *tickpara)
         }
         chl->tx_time_out = UART_TX_TIME_OUT;
         send_data = fifoBuf_getByte(chl->tx_fifo);
+        if(chl->chl_type == UART_IR_CHL) //禁止红外自发自收
+        {
+            mcu_uart_recive_enable(0 , chl->mcu_uart_index);
+        }
+        
         mcu_uart_send_enable(1, chl->mcu_uart_index);
         mcu_uart_send_byte(send_data , chl->mcu_uart_index);
     }
