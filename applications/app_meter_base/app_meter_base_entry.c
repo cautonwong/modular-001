@@ -250,14 +250,14 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             Magnetic_hold_relay_Init();
             fr_dl698_power_on(instance, pipeline);
             mbase_cb->power_on_sec_accum = 0;
-            mbase_cb->Fee |= (F_TOUChange+F_ChangeTmOn+F_DAYTABChange);;    //获取当前时区时段费率
+            mbase_cb->Fee |= (F_TOUChange+F_ChangeTmOn+F_DAYTABChange);    //获取当前时区时段费率
             mbase_cb->cmd_dostate = 0;  //上电清除控制命令状态字和错误状态字
             mbase_cb->cmd_errstate = 0;
             mbase_cb->alarmmin = 0;     //上电后清零
             mbase_cb->limitmin = 0;     //上电后清零
             mbase_cb->imaxmin = 0;     //上电后清零
-            mbase_cb->Baut_plc_neg =0xfe;
-            mbase_cb->Baut_plc = 6;
+            mbase_cb->Baut_plc_neg = 10;//0xfe;
+            mbase_cb->Baut_plc = 10;//6;
             mbase_cb->disp_borrow = 0; //借位
             mbase_cb->baud_chg = (BIT0|BIT1);               // 上电 更新波特率标志
             //获取防潜开关

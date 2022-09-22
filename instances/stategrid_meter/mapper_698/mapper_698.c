@@ -2438,8 +2438,8 @@ int para_init(struct instance_t* instance )
     mbase_cb->lcd_keydis_list_maxnum = 99;      //键显最大屏数
     mbase_cb->lcd_autodis_keep_sec = 5;                           /*轮显持续时间 */
     mbase_cb->lcd_keydis_keep_sec = 60;                           /*按键轮显持续时间 */
-    mbase_cb->Baut_rs485 = 6;
-    mbase_cb->Baut_plc = 6;
+    mbase_cb->Baut_rs485 = 10;//6;
+    mbase_cb->Baut_plc = 10;//6;
     mbase_cb->SafeEn = 1;       //安全模式启用
     mbase_cb->relay_ctl_mode = 0; //脉冲式控制方式
     mbase_cb->Limit_T_Max = 300;  //广播校时最大允许时间
