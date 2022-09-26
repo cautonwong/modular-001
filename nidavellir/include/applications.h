@@ -138,7 +138,7 @@ struct mbase_control_block_t
     uint8_t   StepNum;//阶梯数
     uint8_t    Fee;
     uint8_t TouBefNo;
-    uint8_t PortTouCut;     // 时段改变需投切
+    uint8_t PortTouCut;     // 时段投切信息
     uint8_t MulPortMode;    //多功能口模式
           
     uint32_t volt_60;   //60%电压

@@ -50,8 +50,9 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
     
     Relay_Sec_Task(instance, pipeline);
     
-    if((mbase_control_block->voltage_ac < mbase_control_block->volt_78) 
-      || (mbase_control_block->voltage_ac > mbase_control_block->volt_120)) return; //电压过高过低不执行
+    if((false == mbase_control_block->factor_mode) && 
+       ((mbase_control_block->voltage_ac < mbase_control_block->volt_78) 
+      || (mbase_control_block->voltage_ac > mbase_control_block->volt_120))) return; //电压过高过低不执行
     
     if((mbase_control_block->sta & F_RemoteRelayOn) || (mbase_control_block->sta == F_RemoteNull))    //保电或正常用电
     {
@@ -120,8 +121,8 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
         
         if(mbase_control_block->relay_true_sta == 0)    //检测到合闸
         {
-            mbase_control_block->sta &= ~F_RemoteRelayOnAllow;
-            key_relay_on_tick = 0;
+            //mbase_control_block->sta &= ~F_RemoteRelayOnAllow;
+            //key_relay_on_tick = 0;
         }
     }
     else

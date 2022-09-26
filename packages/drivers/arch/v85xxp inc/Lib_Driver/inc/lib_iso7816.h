@@ -80,7 +80,7 @@ typedef struct
 void ISO7816_DeInit(ISO7816_TypeDef *ISO7816x);
 void ISO7816_StructInit(ISO7816_InitType *InitStruct);
 void ISO7816_Init(ISO7816_TypeDef *ISO7816x, ISO7816_InitType *Init_Struct);
-void ISO7816_Cmd(ISO7816_TypeDef *ISO7816x, uint32_t NewState);
+//void ISO7816_Cmd(ISO7816_TypeDef *ISO7816x, uint32_t NewState);
 void ISO7816_BaudrateConfig(ISO7816_TypeDef *ISO7816x, uint32_t BaudRate);
 void ISO7816_CLKDIVConfig(ISO7816_TypeDef *ISO7816x, uint32_t Prescaler);
 void ISO7816_CLKOutputCmd(ISO7816_TypeDef *ISO7816x, uint32_t NewState);

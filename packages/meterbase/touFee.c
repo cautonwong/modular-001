@@ -88,6 +88,7 @@ void rtc_get_from_tm(struct instance_t* instance, uint8_t* p)
     memcpy((uint8_t*)(p+5), (uint8_t*)&temp, 2);
 }
 
+//tm 转 698 rtc  (hex)   ssmmhhDDMMYYYY 7字节  hex
 void rtc_format_change_from_tm(struct tm *time, uint8_t* p)
 {
     unsigned long temp = 0;
@@ -98,6 +99,27 @@ void rtc_format_change_from_tm(struct tm *time, uint8_t* p)
     *(p+4)= time->tm_mon + 1;
     temp = time->tm_year + 1900;
     memcpy((uint8_t*)(p+5), (uint8_t*)&temp, 2);
+}
+
+//ss mm hh DD MM YY    6 字节BCD
+void rtc_format_change_from_tm_BCD(struct tm *time, uint8_t* p)
+{
+    unsigned long temp = 0;
+    *p = BYTE_BCD((uint8_t)time->tm_sec);
+    *(p+1) = BYTE_BCD((uint8_t)time->tm_min);
+    *(p+2) = BYTE_BCD((uint8_t)time->tm_hour);
+    *(p+3) = BYTE_BCD((uint8_t)time->tm_mday);
+    *(p+4)= BYTE_BCD((uint8_t)time->tm_mon + 1);
+    temp = time->tm_year + 1900;
+    if (temp > 2000)
+    {
+        temp -= 2000;
+    }
+    else
+    {
+        temp = 0;
+    }
+    *(p+5)= BYTE_BCD((uint8_t)temp);
 }
 
 void FeeTable_Change(struct instance_t* instance, struct pipeline_t* pipeline)
@@ -160,6 +182,7 @@ void FeeTable_Change(struct instance_t* instance, struct pipeline_t* pipeline)
                         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Season_Table0+j);  //覆盖当前时区表
                         nd_set_index(instance, s_index, (uint8_t*)&Buf[j*3], 3);
                     }
+                    mbase_cb->PortTouCut = 1;
 					break;
 				case 1:
 				    //记录 日时段表切换冻结
@@ -294,6 +317,10 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
             mem_swap_cpy((uint8_t*)&year, (uint8_t*)&Buf[6*i+0], 2);
 			if( (year == (instance->time.tm_year+1900)) && (Buf[6*i+2] == (instance->time.tm_mon+1)) && (Buf[6*i+3] == instance->time.tm_mday) )
 			{
+			    if(mbase_cb->DayTableNo != Buf[6*i+5])
+			    {
+                    mbase_cb->PortTouCut = 1;
+			    }
 				mbase_cb->DayTableNo = Buf[6*i+5];//年月日相同，获取日时段表号
                 mbase_cb->Fee |= F_TOUChange;
 				return;
@@ -312,6 +339,12 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
 	{
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + WeekendFee);//周休日表
         nd_get_index(instance, s_index, (uint8_t*)&Buf[1], 1);
+
+        if(mbase_cb->DayTableNo != Buf[1])
+        {
+            mbase_cb->PortTouCut = 1;
+        }
+
 	  	mbase_cb->DayTableNo = Buf[1];
         mbase_cb->Fee |= F_TOUChange;
 	    return;
@@ -333,12 +366,20 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
             nd_get_index(instance, s_index, (uint8_t*)&Buf[i*3], 3);
         }
         
-		i = FeeTable_CmpFind( instance, pipeline, (unsigned char)Num, 0 ,&Buf[0]);//比较查找时区表
-		mbase_cb->DayTableNo = Buf[3*i+2];
-        if ((mbase_cb->DayTableNo == 0) || (mbase_cb->DayTableNo > MaxTouTabNum))
+		i = FeeTable_CmpFind( instance, pipeline, (unsigned char)Num, 0 ,&Buf[0]);//比较查找时区表		
+
+        if ((Buf[3*i+2] == 0) || (Buf[3*i+2] > MaxTouTabNum))
         {
-            mbase_cb->DayTableNo = 1;
+            Buf[3*i+2] = 1;
         } 	
+
+        if(mbase_cb->DayTableNo != Buf[3*i+2])
+        {
+            mbase_cb->PortTouCut = 1;
+        }
+
+		mbase_cb->DayTableNo = Buf[3*i+2];
+		
 	}
 }
 
@@ -348,7 +389,7 @@ void GetTOUFee(struct instance_t* instance, struct pipeline_t* pipeline)
     uint8_t i,Num[2]={0,};
     uint32_t s_index=0;
     struct mbase_control_block_t* mbase_cb;
-    uint8_t Buf[50]={0};
+    uint8_t Buf[50]={0}, temp = 1;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
@@ -368,9 +409,18 @@ void GetTOUFee(struct instance_t* instance, struct pipeline_t* pipeline)
         nd_get_index(instance, s_index, Buf, 3*Num[0]);//读取当前日时段表
         
 		i = FeeTable_CmpFind( instance, pipeline, Num[0], 1, &Buf[0] );//比较查找日时段表
-		mbase_cb->TOUNo = BCD_BYTE(Buf[3*i+2]);
-		if( (mbase_cb->TOUNo == 0) || (mbase_cb->TOUNo > MaxFeeNum) || (mbase_cb->TOUNo > Num[1]) ) //若时段表中费率号超出，则按照尖费率处理
-			mbase_cb->TOUNo = 1;
+
+        temp = BCD_BYTE(Buf[3*i+2]);
+		if( (temp == 0) || (temp > MaxFeeNum) || (temp > Num[1]) ) //若时段表中费率号超出，则按照尖费率处理
+			temp = 1;    
+			
+        if(mbase_cb->TOUNo != temp)
+        {
+            mbase_cb->PortTouCut = 1;
+        }
+
+        mbase_cb->TOUNo = temp;
+
 	}
 }
 
@@ -380,6 +430,7 @@ void TouFeePro(struct instance_t* instance, struct pipeline_t* pipeline)
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
+    mbase_cb->PortTouCut = 0;
     
     if( mbase_cb->Fee & F_ChangeTmOn )
 	{
@@ -405,7 +456,6 @@ void TouFeePro(struct instance_t* instance, struct pipeline_t* pipeline)
         opreate_second_pluse(2);
         ndv_timer_start_one(MULTIFUNCTION_PORT, 8);
     }
-    mbase_cb->PortTouCut = 0;
 }
 
 void Rtc_Prossecc(struct instance_t* instance, struct pipeline_t* pipeline)

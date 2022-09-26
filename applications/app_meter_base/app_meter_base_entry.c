@@ -256,7 +256,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             mbase_cb->alarmmin = 0;     //上电后清零
             mbase_cb->limitmin = 0;     //上电后清零
             mbase_cb->imaxmin = 0;     //上电后清零
-            mbase_cb->Baut_plc_neg = 10;//0xfe;
+            mbase_cb->Baut_plc_neg = 0xfe;
             mbase_cb->Baut_plc = 10;//6;
             mbase_cb->disp_borrow = 0; //借位
             mbase_cb->baud_chg = (BIT0|BIT1);               // 上电 更新波特率标志

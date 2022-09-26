@@ -2479,7 +2479,16 @@ int para_init(struct instance_t* instance )
 
     // 波特率更新标志
     mbase_cb->baud_chg = (BIT0|BIT1);
-     
+
+
+    //掉电保存区
+    mbase_cb->sta = 0; //继电器命令状态
+    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+        offsetof(struct mbase_control_block_t, sta)) -  offsetof(struct mbase_control_block_t, persistent_section_start);
+    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->sta, sizeof(mbase_cb->sta));
+
+
+
     v85xxp_clear_watchdog();
     //EE部分更新
     for(i=0; i<num; i++)

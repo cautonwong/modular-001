@@ -26,6 +26,12 @@ int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *
         case 0x8000://遥控
             switch(attribute)
             {
+                case 1:
+                {
+                    p += fr_698_get_logic_name(p, oad);
+                    return (p-buf);
+                }
+                break;
                 case 0x02://配置参数
                     switch(index)
                     {
@@ -78,6 +84,12 @@ int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *
                     break;
             }
         case 0x8001://保电
+            if(attribute == 1)
+            {
+                p += fr_698_get_logic_name(p, oad);
+                return (p-buf);
+            }
+
             if((attribute != 0x02) || (index != 0x00))  return -DAR_OBJECT_NOT_EXIST;
             *p++ = TYPE_enum;
             if(mbase_cb->sta & F_RemoteRelayOn)//保电

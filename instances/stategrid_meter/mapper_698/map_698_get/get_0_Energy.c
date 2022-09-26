@@ -26,7 +26,13 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
     {
         return -DAR_OBJECT_NOT_EXIST;
     }
-    
+
+    if(attribute == 1)
+    {
+        p += fr_698_get_logic_name(p, OI);
+        return (p-buf);
+    }
+
     if(attribute == 0x03)
     {
       switch(mode)

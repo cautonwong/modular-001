@@ -693,6 +693,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 cache->buf_ptr[cache->wr++] = 8;
                 memcpy((uint8_t*)&cache->buf_ptr[cache->wr], (uint8_t*)&keybuf[24], 8);//随机数2
                 cache->wr = cache->wr + 8;
+                mbase_cb->esam_power_close_dly = 60;
                 return (p-buf);
             }
             else if(method == 0x0C) //红外认证
@@ -785,7 +786,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 {
                     return -DAR_OBJECT_NOT_EXIST;
                 }
-                if((*p > 10) || (*(p+1) != 2) || (*(p+2) != 8) || (*(p+3) != 1) || (*(p+4) != 0) || (*(p+6) != 0))
+                if((*p > 10) || (*(p+1) != 2) || (*(p+2) != 8) || (*(p+3) != 1) || (*(p+4) != 0))
                 {
                     return -DAR_BUFFER_OVERFLOW;
                 }

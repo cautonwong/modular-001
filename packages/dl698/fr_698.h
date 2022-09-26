@@ -472,4 +472,5 @@ extern int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t 
 extern uint8_t get_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *apdu, uint8_t apdu_len , uint8_t *dst);
 extern uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t mode);
 extern int MeterWr_obj_list_clear(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
+extern uint8_t fr_698_get_logic_name(uint8_t *buf, uint16_t OI);
 #endif //__FR_698_H__

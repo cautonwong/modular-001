@@ -40,11 +40,10 @@ int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline
         }
 
         for (i = 0; i < list; i++){
-            len += 4;
             if ((ctx->choice == 0x03) || (ctx->choice == 0x04)){
                 rsd_len = 0;
                 rcsd_len = 0;
-                len = axdr_record_len_get(apdu, &rsd_len, &rcsd_len);
+                len += axdr_record_len_get(apdu, &rsd_len, &rcsd_len);
                 if (rsd_len == 0 || rcsd_len == 0){
                     return -1;
                 }

@@ -1160,7 +1160,11 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 case 0x3320: //新增事件单元 
                 {
                     switch(attr)
-                    {
+                    {                
+                        case 1://
+                            p += fr_698_get_logic_name(p, OI);
+                            return (p-buf);
+                            break;
                         case 2://新增事件列表
                             return get_3320_attr2(instance, id, buf, pctx);
                         
@@ -1189,6 +1193,10 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
             
             switch (attr) //属性
             {
+                case 1://
+                    p += fr_698_get_logic_name(p, OI);
+                    return (p-buf);
+                    break;
                 case 2: //返回拒绝读写
                 {
                     //ret = check_record_oad_support(instance, id);
@@ -1267,7 +1275,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
         }
         break;
         case 24://类24
-        {
+        {        
             ret = check_record_item_support(instance, id);
             if(ret < 0)
             {
@@ -1276,6 +1284,10 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
             
             switch (attr) //属性
             {
+                case 1://
+                    p += fr_698_get_logic_name(p, OI);
+                    return (p-buf);
+                    break;
                 case 2: // 关联对象属性表 
                 {
                     return get_event_obj(instance, id, p, &dar);

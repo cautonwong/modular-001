@@ -118,6 +118,7 @@ void ISO7816_DeInit(ISO7816_TypeDef *ISO7816x)
                 DISABLE
   * @retval None.
   */
+#if 0
 void ISO7816_Cmd(ISO7816_TypeDef *ISO7816x, uint32_t NewState)
 {
   /* Check parameters */
@@ -133,7 +134,7 @@ void ISO7816_Cmd(ISO7816_TypeDef *ISO7816x, uint32_t NewState)
     ISO7816x->CFG &= ~ISO7816_CFG_EN;
   }
 }
-
+#endif
 /**
   * @brief  ISO7816 Baudrate control.
   * @param  ISO7816x: ISO78160~ISO78161

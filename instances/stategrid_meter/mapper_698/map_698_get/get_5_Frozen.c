@@ -108,6 +108,7 @@ int GET_5_Frozen(struct instance_t* instance, uint32_t oad, uint8_t* buf, void *
 {    
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t dar = DAR_SUCCESS;
+    uint8_t* p = buf;
     int ret;
 
    
@@ -118,6 +119,17 @@ int GET_5_Frozen(struct instance_t* instance, uint32_t oad, uint8_t* buf, void *
 
     switch (oad & 0x00001F00)
     {
+        case 0x00000100:
+        {   
+            ret = check_record_item_support(instance, oad);
+            if(ret < 0)
+            {
+                return ret;
+            }
+            p += fr_698_get_logic_name(p, get_OAD_OI(oad));
+            return (p-buf);
+        }
+        break;
         case 0x00000200:// 
         {
             ret = check_record_item_support(instance, oad);
@@ -130,27 +142,27 @@ int GET_5_Frozen(struct instance_t* instance, uint32_t oad, uint8_t* buf, void *
         break;
 
     
-    //case 0x50020300://关联对象属性表
-    //case 0x50030300://关联对象属性表
-    //case 0x50040300://关联对象属性表
-    //case 0x50050300://关联对象属性表
-    case 0x00000300://关联对象属性表
-    {
+        //case 0x50020300://关联对象属性表
+        //case 0x50030300://关联对象属性表
+        //case 0x50040300://关联对象属性表
+        //case 0x50050300://关联对象属性表
+        case 0x00000300://关联对象属性表
+        {
 
-        struct frozen_obj_t frozen_obj = {0};
+            struct frozen_obj_t frozen_obj = {0};
 #if 0
-        frozen_obj.CaptureId = MinuteFreeze_oad;
-        frozen_obj.PeriodId = MinuteFreeze_period;
-        frozen_obj.DepthId = MinuteFreeze_depth;
-        frozen_obj.CaptureLen = 1 + 4 * 15;  
-        frozen_obj.PeriodLen = 24;
-        frozen_obj.DepthLen = 31;
+            frozen_obj.CaptureId = MinuteFreeze_oad;
+            frozen_obj.PeriodId = MinuteFreeze_period;
+            frozen_obj.DepthId = MinuteFreeze_depth;
+            frozen_obj.CaptureLen = 1 + 4 * 15;  
+            frozen_obj.PeriodLen = 24;
+            frozen_obj.DepthLen = 31;
 #endif
-        return get_frozen_obj(instance, oad, buf, frozen_obj, &dar);
-    }
-    break;
-    default:
+            return get_frozen_obj(instance, oad, buf, frozen_obj, &dar);
+        }
         break;
+        default:
+            break;
     }
     return -DAR_OBJECT_NOT_EXIST;
 }

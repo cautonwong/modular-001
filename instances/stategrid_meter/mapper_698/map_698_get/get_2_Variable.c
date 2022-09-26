@@ -103,6 +103,12 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
     maxnum = sizeof(idbuf)/sizeof(idmatch);
     for(i=0; i<maxnum; i++)
     {
+        if((attribute == 1) && (id & 0xFFFF0000) == (idbuf[i].id & 0xFFFF0000))
+        {
+            p += fr_698_get_logic_name(p, oad);
+            return (p-buf);
+        }
+        
         if((id & 0xFFFF1FFF) == idbuf[i].id)
         {
             switch(mode)
@@ -154,6 +160,12 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
     switch (oad)
     {
         case 0x2013://电池工作时间 
+            if(attribute == 1)
+            {
+                p += fr_698_get_logic_name(p, oad);
+                return (p-buf);
+            }
+
             if(attribute == 0x02)
             {
                 if(index == 0)
@@ -171,6 +183,11 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
 
             break;
         case 0x2014://电能表运行状态字
+            if(attribute == 1)
+            {
+                p += fr_698_get_logic_name(p, oad);
+                return (p-buf);
+            }
             if(index > 7)  return -DAR_OBJECT_NOT_EXIST;
             if(attribute == 0x02)
             {
@@ -204,6 +221,11 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
                 return -DAR_OTHERS_ERROR;
             break;
         case 0x2015://跟随上报状态字
+            if(attribute == 1)
+            {
+                p += fr_698_get_logic_name(p, oad);
+                return (p-buf);
+            }
             if(attribute == 0x02)
             {
                 *p++ = TYPE_bit_string;

@@ -79,7 +79,8 @@ uint16_t axdr_get_len(const uint8_t *data)
     uint16_t len = 0;
     uint8_t num = 0;
     uint8_t type = data[0];
-
+    uint8_t tmp = 0;
+        
     switch (type)
     {
     case TYPE_null:
@@ -148,7 +149,7 @@ uint16_t axdr_get_len(const uint8_t *data)
         break;
     case TYPE_time:
     case TYPE_TI:
-        return 3;
+        return 3+1;
         break;
     case TYPE_date_time_s:
         return 7+1;
@@ -165,6 +166,7 @@ uint16_t axdr_get_len(const uint8_t *data)
         break;
 
     case TYPE_RSD:
+        data++;
         type = data[0];
         len = 1;
         if (0 == type)
@@ -179,8 +181,8 @@ uint16_t axdr_get_len(const uint8_t *data)
                 //return 0;
             }
 
-            type_len = axdr_decode(data[len], data+len, &data_len);
-            len += type_len + data_len;
+            data_len = axdr_get_len(&data[len]);
+            len += data_len;
         }
         else if (2 == type)
         {
@@ -190,24 +192,25 @@ uint16_t axdr_get_len(const uint8_t *data)
                 //return 0;
             }
 
-            type_len = axdr_decode(data[len], data+len, &data_len);
-            len += type_len + data_len;
+            //type_len = axdr_get_len(data[len], data+len, &data_len);
+            data_len = axdr_get_len(&data[len]);
+            len += data_len;
 
             if ((TYPE_date_time_s != data[len]) && (TYPE_double_long_unsigned != data[len] ))
             {
                 //return 0;
             }
 
-
-            type_len = axdr_decode(data[len], data+len, &data_len);
-            len += type_len + data_len;
+            data_len = axdr_get_len(&data[len]);
+            len += data_len;
+            
             if ((TYPE_TI != data[len]) && (TYPE_double_long_unsigned != data[len]) && (TYPE_null != data[len]))
             {
                 //return 0;
             }
             
-            type_len = axdr_decode(data[len], data+len, &data_len);
-            len += type_len + data_len;
+            data_len = axdr_get_len(&data[len]);
+            len += data_len;
         }
         else if ( 9 == type)
         {
@@ -251,15 +254,16 @@ uint16_t axdr_get_len(const uint8_t *data)
         break;
 
     case TYPE_RCSD:
+        data++;
         len = 1;
         num = data[0];
         while (num--)
         {
             type = data[len];
-            len +=1+4;
+            len += (1+4);
             if (1 == type){
-                num  = data[len];
-                len += num * 4;
+                tmp  = data[len];
+                len += tmp * 4;
             }
         }
         return len;
@@ -278,15 +282,17 @@ uint16_t axdr_record_len_get(uint8_t* data, uint16_t* rsdLen, uint16_t* rcsdLen)
     uint8_t  tmpData, * p = data;
     uint16_t len;
 
+    p += 4; //oad
     /* rsd */
     tmpData = *(p - 1);
     *(p - 1) = TYPE_RSD;
     len = axdr_get_len(p - 1);
     if (len == 0)
     {
+        *(p - 1) = tmpData;
         return 0;
     }
-    len -= 1;
+    //len -= 1;
     *(p - 1) = tmpData;
     p += len;
 
@@ -301,9 +307,10 @@ uint16_t axdr_record_len_get(uint8_t* data, uint16_t* rsdLen, uint16_t* rcsdLen)
     len = axdr_get_len(p - 1);
     if (len == 0)
     {
+        *(p - 1) = tmpData;
         return 0;
     }
-    len -= 1;
+    //len -= 1;
     *(p - 1) = tmpData;
     p += len;
 

@@ -18,11 +18,11 @@ extern const struct dev_info_t rn8209_dev;
 struct mbase_control_block_t ctx;
 
 extern void  mcu_clear_watchdog(void);
-extern uint8 mcu_delay_us(volatile uint16 count);
+extern uint8_t mcu_delay_us(volatile uint16 count);
 uint32 over_Imax;
-static uint8 Buffer[50];
+static uint8_t Buffer[50];
 static struct factor_adj_meter_t Factory3;
-static uint8 key_cnt;
+static uint8_t key_cnt;
 void meterchip_adj_self(void)
 {
     unsigned char i=0, Tofst , j=0;

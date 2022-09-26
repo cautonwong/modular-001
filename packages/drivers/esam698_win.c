@@ -637,7 +637,10 @@ int esam_pro_handle(struct instance_t* instance, int fd, int request, void *para
     {
         f_esam_698_power_ctrl_on((struct esam_698_data_t *)param, 0);
         mbase_cb->esam_power_status = 1;
-        mbase_cb->esam_power_close_dly = 2;
+        if (mbase_cb->esam_power_close_dly < 2)
+        {
+            mbase_cb->esam_power_close_dly = 2;
+        }
     }
 
 

@@ -793,7 +793,7 @@ int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pip
 
 uint8_t fr_698_current_connect_status_get(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    //struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     uint8_t rlt = 0, i;

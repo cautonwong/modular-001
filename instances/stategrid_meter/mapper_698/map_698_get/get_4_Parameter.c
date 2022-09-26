@@ -358,6 +358,11 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
     {
         return -DAR_OTHERS_ERROR;
     }
+
+    oad = (unsigned short)((id & 0xFFFF0000) >> 16);
+    index = (unsigned char)(id & 0x000000FF);
+    attribute = (unsigned char)((id & 0x0000FF00) >> 8); 
+
     
     len = general_get_4_para(instance, id, buf);
     if( len != -1)
@@ -375,16 +380,18 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
     }
     
 
-    oad = (unsigned short)((id & 0xFFFF0000) >> 16);
-    index = (unsigned char)(id & 0x000000FF);
-    attribute = (unsigned char)((id & 0x0000FF00) >> 8); 
-    
     switch (oad)
     {
         case 0x4000://时间
         {
             switch (attribute)
             {
+                case 1:
+                {
+                    p += fr_698_get_logic_name(p, oad);
+                    return (p-buf);
+                }
+                break;
                 case 0x02:
                 {
                     *p++ = TYPE_date_time_s;
@@ -440,6 +447,11 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
         }
             break;
         case 0x4001://地址
+            if(attribute == 1)
+            {
+                p += fr_698_get_logic_name(p, oad);
+                return (p-buf);
+            }
             if(attribute == 0x02)
             {
                 *p++ = TYPE_octet_string;
@@ -454,6 +466,11 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             break;
         case 0x4002://表号
+            if(attribute == 1)
+            {
+                p += fr_698_get_logic_name(p, oad);
+                return (p-buf);
+            }
             if(attribute == 0x02)
             {
                 *p++ = TYPE_octet_string;
@@ -469,6 +486,11 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             break;
         case 0x4004://设备地理位置
+            if(attribute == 1)
+            {
+                p += fr_698_get_logic_name(p, oad);
+                return (p-buf);
+            }
             if(index == 0x00)
             {
                 *p++ = TYPE_structure;
@@ -508,6 +530,11 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             return (p-buf);
             break;
         case 0x4007://LCD参数
+            if(attribute == 1)
+            {
+                p += fr_698_get_logic_name(p, oad);
+                return (p-buf);
+            }
             if(attribute == 0x02)
             {
                 uint32_t idbuf[] = {
@@ -551,6 +578,12 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             break;
         case 0x400C://时区时段表数
+            if(attribute == 1)
+            {
+                p += fr_698_get_logic_name(p, oad);
+                return (p-buf);
+            }
+            
             if(index > 5)   return -DAR_OBJECT_NOT_EXIST;
             if(index == 0)
             {
@@ -576,6 +609,11 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             break;
             break;
         case 0x4011://公共假日表
+            if(attribute == 1)
+            {
+                p += fr_698_get_logic_name(p, oad);
+                return (p-buf);
+            }
             if(index > MaxHolidayNum)    return -DAR_OBJECT_NOT_EXIST;
             if(index == 0)
             {
@@ -616,6 +654,11 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             break;
         case 0x4014://当前套时区表
         case 0x4015://备用套时区表
+            if(attribute == 1)
+            {
+                p += fr_698_get_logic_name(p, oad);
+                return (p-buf);
+            }
             if (id == 0x40152200) // 编程事件用
             {
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_SeasonT);
@@ -675,6 +718,11 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             break;
         case 0x4016://当前套日时段表
         case 0x4017://备用套日时段表
+            if(attribute == 1)
+            {
+                p += fr_698_get_logic_name(p, oad);
+                return (p-buf);
+            }        
             if(index > 0x08)    return -DAR_OBJECT_NOT_EXIST;
             if(oad == 0x4016)
                 addr = Day_Table00;
@@ -739,6 +787,11 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             break;
         case 0x4116://结算日
+            if(attribute == 1)
+            {
+                p += fr_698_get_logic_name(p, oad);
+                return (p-buf);
+            }
             if (id == 0x41162200) // 编程事件用
             {
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Balance);
@@ -782,11 +835,22 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 return -DAR_OBJECT_NOT_EXIST;
             break;
         case 0x4300:
+            if(attribute == 1)
+            {
+                p += fr_698_get_logic_name(p, oad);
+                return (p-buf);
+            }
             return get4300_para(instance,  id,  buf);
             break;
         case 0x4400:
             switch(attribute)
             {
+                case 1:
+                {
+                    p += fr_698_get_logic_name(p, oad);
+                    return (p-buf);
+                }
+                break;
                 case 0x03:
                     if(0 != mbase_cb->connect_timeout[p_ctx->channel][cilent_index])
                     {

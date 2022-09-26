@@ -56,7 +56,7 @@ static uint8_t sort_step_bill_day(uint8_t *mode, uint8_t *ptr, struct pipeline_t
                 *mode = STAIR_MONTH_MODE;
             }
         }
-        memcopy(ptr + i * 3, (uint8 *)&bill, 0x03);
+        memcopy(ptr + i * 3, (uint8_t *)&bill, 0x03);
     }
     
     return flag;

@@ -17,6 +17,16 @@ extern int fr_follow_report_optional(struct instance_t* instance, struct pipelin
 extern int update_plc_baut_tick(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern void app_handle_mac_suspend(struct instance_t* instance, uint32_t oad);
 
+uint8_t fr_698_get_logic_name(uint8_t *buf, uint16_t OI)
+{
+    uint8_t *p=buf;
+
+    *p++ = TYPE_octet_string;
+    *p++ = 2;
+    *p++ = (uint8_t)(OI >> 8);
+    *p++ =  (uint8_t)OI;
+    return (p-buf);
+}
 
 uint16_t get_crc16(uint16_t cs)
 {

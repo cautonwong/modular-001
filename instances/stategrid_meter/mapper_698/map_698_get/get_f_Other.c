@@ -57,6 +57,11 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
         case 0xF201://rs485
         case 0xF202://红外 
         case 0xF209://载波模块
+            if(attribute == 1)
+            {
+                p += fr_698_get_logic_name(p, oad);
+                return (p-buf);
+            }
             if(attribute == 0x02)
             {
                 if(index >1 )   return -DAR_OTHERS_ERROR;
@@ -119,6 +124,11 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 return -DAR_OTHERS_ERROR;
             return (p-buf);
         case 0xF205://继电器输出
+            if(attribute == 1)
+            {
+                p += fr_698_get_logic_name(p, oad);
+                return (p-buf);
+            }
             if(attribute == 0x02)
             {
                 *p++ = TYPE_array;
@@ -141,6 +151,11 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
             return (p-buf);
             break;
         case 0xF207://多功能端子
+            if(attribute == 1)
+            {
+                p += fr_698_get_logic_name(p, oad);
+                return (p-buf);
+            }
             if(attribute == 0x02)
             {
                 *p++ = TYPE_array;
@@ -155,6 +170,12 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
         case 0xF301://按键显示
             switch (attribute)
             {
+                case 1:
+                {
+                    p += fr_698_get_logic_name(p, oad);
+                    return (p-buf);
+                }
+                break;
                 case 0x02://显示对象列表
                     if(oad == 0xF300)
                     {
@@ -294,6 +315,12 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
         case 0xF100://ESAM信息
             switch (attribute)
             {
+                case 1:
+                {
+                    p += fr_698_get_logic_name(p, oad);
+                    return (p-buf);
+                }
+                break;
                 case 0x02://ESAM序列号
                     *p++ = TYPE_octet_string;
                     *p++ = 8;
@@ -504,6 +531,12 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
         case 0xF101://
             switch (attribute)
             {
+                case 1:
+                {
+                    p += fr_698_get_logic_name(p, oad);
+                    return (p-buf);
+                }
+                break;
                 case 0x02://安全模式参数
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_En);
                     nd_get_index(instance, s_index, ptr_tmp, 1);
