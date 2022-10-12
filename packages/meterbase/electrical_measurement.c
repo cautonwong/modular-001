@@ -428,6 +428,7 @@ void Poffset_adj_oneself(struct instance_t* instance)
         adj_poffset.power_avg += mbase_control_block->active_power;//获取功率
         if(adj_poffset.tick == 10)
         {
+            if(adj_poffset.power_avg < 0)   adj_poffset.power_avg = ~adj_poffset.power_avg+1;
             adj_poffset.power_avg = adj_poffset.power_avg/10;//留1位小数
             adj_poffset.ps = adj_poffset.ps/10; //留1位小数
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);    
@@ -493,7 +494,7 @@ int rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx)
     uint32_t s_index=0,data=0;
     //uint8_t* buf = p_tx;
     
-    addr = *(p_rx+4);
+    addr = *p_rx;
     *p_tx = addr;
     memset( p_tx+1,0x00,4);
     if(addr >= 0xA0)    //自热影响量 0.5L
@@ -576,8 +577,8 @@ int rn8209c_set( struct instance_t* instance, uint8_t *p_rx )
     uint32_t s_index=0,data=0;
     uint8_t* buf = p_rx;
     
-    addr = *(buf+16);//地址
-    memcpy((uint8_t*)&data, (uint8_t*)(buf+12), 2);//数据
+    addr = *(buf+4);//地址
+    memcpy((uint8_t*)&data, buf, 2);//数据
     
     if((addr==0x07)||(addr==0x08))//相位寄存器
         lenth = 1;
@@ -757,7 +758,7 @@ void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx)
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_K);
     nd_set_index(instance, s_index, (uint8_t*)&Rn8209Adj_K.u, 16);//存储至EE
     
-    if((mbase_control_block->metertype & 0x0800) == 0x0800)    //开启补偿功能
+    if((mbase_control_block->metertype & F_Compen_En) == F_Compen_En)    //开启补偿功能
     {
         memset(buf, 0x00, 8);
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Un_Cmp_Value);
@@ -964,7 +965,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     }
     
     /****************** 补偿功能 ******************/
-    if((mbase_control_block->metertype & 0x0800) == 0x0800)
+    if((mbase_control_block->metertype & F_Compen_En) == F_Compen_En)
     {
         heat_compensate(instance, pipeline);    //自热补偿
         

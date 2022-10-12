@@ -6,6 +6,7 @@
 extern const uint8_t  init_MinuteFreeze_oad[];
 extern const uint8_t  init_HourFreeze_oad[];
 extern const uint8_t  init_DayFreeze_oad[];
+extern const uint8_t  init_DayFreeze_oad_local[];
 extern const uint8_t  init_BillFreeze_oad[];
 extern const uint8_t  init_MonthFreeze_oad[];
 extern const uint8_t  init_SeasonTabCutFreeze_oad[];
@@ -22,7 +23,8 @@ extern const uint8_t  init_Event_ReportMode_0[];
 
 extern const uint8_t  init_MinuteFreeze_period[];        
 extern const uint8_t  init_HourFreeze_period[];          
-extern const uint8_t  init_DayFreeze_period[];           
+extern const uint8_t  init_DayFreeze_period[];  
+extern const uint8_t  init_DayFreeze_period_local[]; 
 extern const uint8_t  init_BillFreeze_period[];          
 extern const uint8_t  init_MonthFreeze_period[];         
 extern const uint8_t  init_SeasonTabCutFreeze_period[];  
@@ -98,6 +100,9 @@ extern const uint8_t   init_Season_Table0[];//当前套时区表，≤14
 extern const uint8_t   init_Season_Table0[];//备用套时区表，≤14
 extern const uint8_t   init_Day_Table00[];//当前套日时段表数据
 extern const uint8_t   init_Day_Table00[];//备用套日时段表数据
+
+extern const uint8_t  init_Alarm_Credit1[];   //报警金额限值1 
+extern const uint8_t  init_Alarm_Credit2[];   //报警金额限值2   
 extern const uint8_t   init_Meter_CT[];//CT
 extern const uint8_t   init_Meter_PT[];//PT
 extern const uint8_t   init_Pulse_Width[];//脉冲宽度
@@ -115,6 +120,8 @@ extern const uint8_t  init_SoftWareNo[];//软件备案号
 extern const uint8_t  init_Measure_Mode[];//有功组合特征字
 extern const uint8_t  init_Balance_Time[];//结算日
 extern const uint8_t  init_Meter_Password[];//应用连接密码
+extern const uint8_t  init_Meter_02Password[];
+extern const uint8_t  init_Meter_04Password[];
 extern const uint8_t  init_Meter_Location1[];//设备地理位置经度
 extern const uint8_t  init_Meter_Location2[];//设备地理位置纬度
 extern const uint8_t  init_Meter_Location3[];//设备地理位置高度
@@ -144,6 +151,28 @@ extern const uint8_t  init_Pstart_En[];
 extern const uint32_t record_head_t1[];
 extern const uint32_t record_head_t0[];
 
+extern const uint8_t init_Remote_RelayOffTime[];    //拉闸延时时间
+extern const uint8_t init_HourFroze_StartTime[];  //整点冻结起始时间
+extern const uint8_t init_DayFroze_Time[];
+extern const uint8_t init_ReportRstTime[];
+extern const uint8_t init_HourFroze_Inv[];  //整点冻结间隔时间
+extern const uint8_t init_Step_Num[];
+extern const uint8_t init_ASCII_ptl645_Version[];
+extern const uint8_t init_ASCII_SoftWareNo[];
+extern const uint8_t init_ASCII_HardWareNo[];
+extern const uint8_t init_SoftWareNo_645[];
+extern const uint8_t init_LoadRec_Mode[];
+extern const uint8_t init_TimeFroze_Mode[];
+extern const uint8_t init_InsFroze_Mode[];
+extern const uint8_t init_AppointFroze_Mode[];
+extern const uint8_t init_HourFroze_Mode[];
+extern const uint8_t init_DayFroze_Mode[];
+extern const uint8_t init_LoadRec_Time[];
+extern const uint8_t init_LoadRec_Inv1[];
+extern const uint8_t init_LoadRec_Inv2[];
+extern const uint8_t init_LoadRec_Inv3[];
+extern const uint8_t init_LoadRec_Inv4[];
+extern const uint8_t init_ASCII_Factor[];
 
 extern void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id);
 
@@ -233,6 +262,7 @@ const struct record_item_t  record_item[] =
 #if RESET_INFO                         
     { StepCutFreeze     ,   0               ,               200 ,       5    },//  0x500B   复位次数 阶梯切换冻结
 #endif
+    { MeterWr645S       ,   0               ,               910 ,       10   },//  0x3012  电能表编程事件     
 
 };
 
@@ -312,6 +342,10 @@ const  parameter_item_t  parameter_item[] =
     { EmuErrS                       , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x302F  电能表计量芯片故障事件
     { BroadcastTimeS                , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x303C  广播校时事件 
     { ZeroLineErrS                  , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0x3040  零线电流异常事件 
+    { MeterWr645S                   , 0x01,   sizeof(struct log_manager_t),0},// 管理区 0xFF31  电能表编程事件  645           
+
+
+    
     //事件关联对象
     { OverCurrentAS_oad             , 0x01,  61, init_OverCurrentAS_oad   }, //oad列表 1+ 4*15     默认8个   电能表A相过流事件
     { PowerOffS_oad                 , 0x01,  61, init_PowerOffS_oad       }, //oad列表 1+ 4*15     默认8个   电能表掉电事件            
@@ -436,7 +470,10 @@ const  parameter_item_t  parameter_item[] =
     { RTCErrS_seq                   , 0x01,  4,     0  },//记录序号  电能表时钟故障事件 
     { EmuErrS_seq                   , 0x01,  4,     0  },//记录序号  电能表计量芯片故障事件
     { BroadcastTimeS_seq            , 0x01,  4,     0  },//记录序号  广播校时事件 
-    { ZeroLineErrS_seq              , 0x01,  4,     0  },//记录序号  零线电流异常事件   
+    { ZeroLineErrS_seq              , 0x01,  4,     0  },//记录序号  零线电流异常事件  
+    { MeterWr645S_seq               , 0x01,  4,     0  },//记录序号  电能表编程事件645            
+
+    
      //冻结记录序号                                                                 
     { MinuteFreeze1_seq             , 0x01,  4,0   },//分钟冻结记录方案1 记录序号
     { MinuteFreeze2_seq             , 0x01,  4,0   },//分钟冻结记录方案2 记录序号
@@ -494,8 +531,8 @@ const  parameter_item_t  parameter_item[] =
     { BeforSet_Holiday              , 0x01, 10, 0 }, //编程前节假日
     { BeforSet_Balance              , 0x01, 20, 0 }, //编程前结算日
     { BeforSet_ActCom               , 0x01,  3, 0 }, //编程前有功组合特征字
-    { LastBillingTime               , 0x01,  6, 0 }, //最近一次结算时间 YYMMDDhhmm   
-    { LastDayFreezTime              , 0x01,  6, 0 }, //最近一次日冻结时间 YYMMDDhhmm           
+    { LastBillingTime               , 0x01,  6, 0 }, //最近一次结算时间 YYMMDDhhmmss   
+    { LastDayFreezTime              , 0x01,  6, 0 }, //最近一次日冻结时间 YYMMDDhhmmss           
     { LastBroadcastTimeERR          , 0x01,  3, 0 }, //最近一次广播校时引起时钟故障 年月日       
     { BeforSet_KeyVer               , 0x01, 18, 0 }, //最近一次广播校时引起时钟故障 年月日       
     { ResetCount                    , 0x01,  4, 0 }, //复位次数   
@@ -543,7 +580,7 @@ const  parameter_item_t  parameter_item[] =
     { ASCII_MeterType               , 0x01 ,     32   , init_ASCII_MeterType        }, //电能表型号
     { MeterRunWord                  , 0x01 ,     1    , init_MeterRunWord           }, //电能表运行特征字
     { SoftWareNo                    , 0x01 ,     16   , init_SoftWareNo             }, //软件备案号
-    { Measure_Mode                  , 0x01 ,     1    , init_Measure_Mode           }, //有功组合特征字
+//    { Measure_Mode                  , 0x01 ,     1    , init_Measure_Mode           }, //有功组合特征字
     { Balance_Time                  , 0x03 ,     2    , init_Balance_Time           }, //结算日
     { Meter_Password                , 0x01 ,     8    , init_Meter_Password         }, //应用连接密码
     { Meter_Location1               , 0x01 ,     10   , init_Meter_Location1        }, //设备地理位置经度
@@ -559,7 +596,7 @@ const  parameter_item_t  parameter_item[] =
     { Date_HardWare                 , 0x01 ,     6    , init_Date_HardWare          }, //硬件版本日期
     { Extend_Info                   , 0x01 ,     8    , init_Extend_Info            }, //扩展信息
                                                 
-    { Produced_Date                 , 0x01 ,     7    , init_Produced_Date          }, //生产日期
+    { Produced_Date                 , 0x01 ,     10   , init_Produced_Date          }, //生产日期
     { Subset_List                   , 0x01 ,     1    , init_Subset_List            }, //子设备列表(num+2*oi)
     { Protocol_List                 , 0x01 ,   	 76   , init_Protocol_List          }, //协议列表
     { FollowReport_en               , 0x01 ,     1    , init_FollowReport_en        }, //允许跟随上报
@@ -574,6 +611,38 @@ const  parameter_item_t  parameter_item[] =
     { Bat_UseTime                   , 0x01 ,     4    , 0                           }, //电池使用时间
     { Pstart_En                     , 0x01 ,     1    , init_Pstart_En              }, //防潜功能开关，AA关闭防潜功能，其他值打开防潜功能
     { Blt_Alarm_Byte                , 0x01 ,     4    , init_Blt_Alarm_Byte         }, //背光报警配置字
+
+    { ToupriceTable_Changetime      , 0x01 ,     7    , init_SeasonTable_Changetime }, //两套分时费率切换时间
+    { StepZone_Changetime           , 0x01 ,     7    , init_SeasonTable_Changetime }, //两套阶梯切换时间
+    { Alarm_Credit1                 , 0x01 ,     4    , init_Alarm_Credit1          }, //报警金额1
+    { Alarm_Credit2                 , 0x01 ,     4    , init_Alarm_Credit2          }, //报警金额2
+    { HourFroze_StartTime           , 0x01 ,     5    , init_HourFroze_StartTime    }, //整点冻结起始时间
+    { HourFroze_Inv                 , 0x01 ,     1    , init_HourFroze_Inv          }, //整点冻结间隔时间
+    { DayFroze_Time                 , 0x01 ,     2    , init_DayFroze_Time          }, //日冻结时间
+    { Remote_RelayOffTime           , 0x01 ,     2    , init_Remote_RelayOffTime    }, //跳闸延时时间
+    { ReportRstTime                 , 0x01 ,     1    , init_ReportRstTime          }, //主动上报状态字自动复位延时时间
+    { Step_Num                      , 0x01 ,     1    , init_Step_Num               }, //阶梯数
+    { ASCII_ptl645_Version          , 0x01 ,     16   , init_ASCII_ptl645_Version   }, //645协议版本号
+    { ASCII_SoftWareNo              , 0x01 ,     32   , init_ASCII_SoftWareNo       }, //软件版本号
+    { ASCII_HardWareNo              , 0x01 ,     32   , init_ASCII_HardWareNo       }, //硬件版本号
+    { ASCII_Factor                  , 0x01 ,     32   , init_ASCII_Factor           }, //
+    { SoftWareNo_645                , 0x01 ,     8    , init_SoftWareNo_645         }, //软件备案号
+    { LoadRec_Mode                  , 0x01 ,     1    , init_LoadRec_Mode           }, //负荷记录模式字
+    { TimeFroze_Mode                , 0x01 ,     1    , init_TimeFroze_Mode         }, //定时冻结模式字
+    { InsFroze_Mode                 , 0x01 ,     1    , init_InsFroze_Mode          }, //瞬时冻结模式字
+    { AppointFroze_Mode             , 0x01 ,     1    , init_AppointFroze_Mode      }, //约定冻结模式字
+    { HourFroze_Mode                , 0x01 ,     1    , init_HourFroze_Mode         }, //整点冻结模式字
+    { DayFroze_Mode                 , 0x01 ,     1    , init_DayFroze_Mode          }, //日冻结模式字
+    { LoadRec_Time                  , 0x01 ,     4    , init_LoadRec_Time           }, //负荷记录起始时间
+    { LoadRec_Inv1                  , 0x01 ,     2    , init_LoadRec_Inv1           }, //第1类负荷记录间隔时间
+    { LoadRec_Inv2                  , 0x01 ,     2    , init_LoadRec_Inv2           }, //第2类负荷记录间隔时间
+    { LoadRec_Inv3                  , 0x01 ,     2    , init_LoadRec_Inv3           }, //第3类负荷记录间隔时间
+    { LoadRec_Inv4                  , 0x01 ,     2    , init_LoadRec_Inv4           }, //第4类负荷记录间隔时间
+	
+    { Meter_02Password              , 0x01 ,     4    , init_Meter_02Password       }, //02级密码
+    { Meter_04Password              , 0x01 ,     4    , init_Meter_04Password       }, //04级密码
+
+    { MeterWr645_List               , 0x01,      52   , 0                           }, //编程对象列表  645  (格式同698array OAD)    
 #else
     {0}
 #endif
@@ -781,6 +850,105 @@ const uint32_t record_head_t5[] = { 7, 0x20220200, 0x201E0200, 0x20200200, 0x202
 
 // 节假日编程事件记录头  事件记录序号、事件发生时间、事件结束时间、时间发生源、事件上报状态 、编程节假日对象、编程前节假日内容
 const uint32_t record_head_t6[] = { 7, 0x20220200, 0x201E0200, 0x20200200, 0x20240200, 0x33000200, 0x33150206, 0x33150207 };
+
+// 异常插卡事件记录单元    事件记录序号、事件发生时间、事件结束时间、时间发生源、事件上报状态 、卡序列号	octet-string、插卡错误信息字	unsigned、插卡操作命令头	octet-string、插卡错误响应状态  long-unsigned
+const uint32_t record_head_t7[] = { 9, 0x20220200, 0x201E0200, 0x20200200, 0x20240200, 0x33000200,    0x33100206, 0x33100207, 0x33100208, 0x33100209 };
+
+// 退费事件记录记录头  事件记录序号、事件发生时间、事件结束时间、时间发生源、事件上报状态 、退费金额
+const uint32_t record_head_t8[] = { 6, 0x20220200, 0x201E0200, 0x20200200, 0x20240200, 0x33000200, 0x33110206 };
+
+
+// 645编程记录事件记录头  事件记录序号、事件发生时间、事件结束时间、时间发生源、事件上报状态 、编程对象列表645
+const uint32_t record_head_t9[] = { 6, 0x20220200, 0x201E0200, 0x20200200, 0x20240200, 0x33000200, 0xFFFE0000 };
+
+
+
+
+//远程OI 
+const uint16_t fr698_remote_oi[] = 
+{
+    0x301F,	
+    0x3020,	
+    0x302B,	
+    0x8000,	
+    0x8001,	
+    0x8002,	
+    0xF205,	
+};
+
+//本地OI
+const uint16_t fr698_prepay_oi[] = 
+{
+    0x201A,	
+    0x201B,	
+    0x201C,	
+    0x202C,	
+    0x202D,	
+    0x202E,	
+
+    0x2032,
+    
+    0x3024,	
+    0x3025,	
+    0x3027,	
+    0x3028,	
+    0x3029,	
+    0x400A,	
+    0x400B,	
+    0x400D,	
+    0x4018,	
+    0x4019,	
+    0x401A,	
+    0x401B,	
+    //0x401C,
+    //0x401D,
+    0x401E,	
+    0x401F,	
+    0x4020,	
+    0x4021,	
+    0x4022,	
+    0x500A, 
+    0x500B, 
+    0x5011, 
+
+    // esam里的数据更新内容  本地相关暂未限制  //待调整
+};
+
+
+
+
+//1 有效，-DAR_OBJECT_UNDEF 无效
+int check_metertype_OI_valid(struct instance_t* instance, uint16_t OI)
+{
+        struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+        uint8_t i;
+
+    if ((mbase_cb->metertype & F_Crad_En) == 0)  //非本地表
+    {   
+#if 0 //三相
+        if (0) //智能表
+        {
+            for (i=0; i < eleof(fr698_remote_oi); i++)
+            {
+                if(OI == fr698_remote_oi[i])
+                {
+                    return true;
+                }
+            }
+        }
+#endif        
+        for (i=0; i < eleof(fr698_prepay_oi); i++)
+        {
+            if(OI == fr698_prepay_oi[i])
+            {
+                return -DAR_OBJECT_UNDEF;
+            }
+        }
+    }
+
+    return 1;
+}
+
 
 
 
@@ -992,6 +1160,17 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     ReportFlagId = FeeTabWrS_RptFlag + temp;   //上报标识
                     ReportModeId = FeeTabWrS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
+
+                    if (0x30270000 == (oad&0xFFFF0000) ) // 异常插卡事件
+                    {
+                        info->record_head = record_head_t7;     // 记录单元
+                    }
+                    else if (0x30290000 == (oad&0xFFFF0000) ) // 退费事件
+                    {
+                        info->record_head = record_head_t8;     // 记录单元
+                    }
+                    
+              
                 }
                 break;
                 case 0x302B0000:
@@ -1165,8 +1344,8 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 case 0x50110000://阶梯结算冻结
                 {
                     SaveId = StepBillFreeze;                    // 记录存储地址信息
-                    SaveDevice = RES_DEV_FLASH;
-                    SaveBlock = mbase_block_event_flash2;
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
                     CaptureId = StepBillFreeze_oad;             // 关联对象存储地址信息
                     SeqId = StepBillFreeze_seq;                 // 序号存储地址信息
                     PeriodId = StepBillFreeze_period;           // 周期存储地址信息
@@ -1181,6 +1360,34 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
             
         }
         break;
+        case 0xF0000000: //厂家扩展
+        {
+            info->capture_len = 61;
+            info->record_head = record_head_t0;     // 记录单元
+            info->acc_time = NULL;
+            switch (oad&0xFFFF0000)// OI
+            {
+
+                case 0xFF310000: //编程事件645 //
+                {
+                    SaveId = MeterWr645S;               // 记录存储地址信息
+                    SaveDevice = RES_DEV_EEPROM;
+                    SaveBlock = mbase_block_event;
+                    CaptureId = MeterWrS_oad;           // 关联对象存储地址信息
+                    SeqId = MeterWr645S_seq;            // 序号存储地址信息
+                    ReportFlagId = MeterWrS_RptFlag;   //上报标识
+                    ReportModeId = MeterWrS_RptMode;   //上报方式  
+                    info->record_head = record_head_t9;     // 记录单元
+                }
+                break;
+
+                default:
+                    return -1;
+                    break;
+            } 
+            
+        }
+        break;        
         default:
             return -1;
             break;
@@ -1262,6 +1469,7 @@ int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_l
         num = tempbuf[0];
         if (num > REQ_RCSD_MAXNUM)
         {
+            *rcsd_list =  rcsd_num; // 记录头
             return -1;
         }
 
@@ -1549,6 +1757,10 @@ int fc_fun_06(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, u
         {
             len = 5;
         }
+        else //三相
+        {
+            len = 5;
+        }
         return len;
     }
     /*    
@@ -1689,7 +1901,7 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
     uint8_t i, /*type,*/ attr, index, index_src,  /*len, */block_num = (4+1);
     uint16_t oi;
     uint8_t *p = des;
-    uint8_t energy_tag;
+    uint8_t energy_tag = 0,sign_flag = 0;;
     uint32_t addr;
     int64_t tmp_64 = 0;
     
@@ -1776,6 +1988,7 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
     {
         if (((oi&0x0FF0) == 0x0000) || ((oi&0x0FF0) == 0x0030) || ((oi&0x0FF0) == 0x0040))
         {
+            sign_flag = 1;
             energy_tag = TYPE_double_long;
             if(attr == 4) //
             {
@@ -1784,6 +1997,7 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
         }
         else
         {
+            sign_flag = 0;
             energy_tag = TYPE_double_long_unsigned;
             if(attr == 4) //
             {
@@ -1803,7 +2017,7 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
                 *p++ = energy_tag;
 
                 tmp_64 = (int64_t)((int64_t)src[0]<<32)+ ((int64_t)src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
-                if(src[0] & 0x80)
+                if((sign_flag)&&(src[0] & 0x80))
                 {
                     tmp_64 += 0xFFFFFF0000000000;
                 }
@@ -1827,7 +2041,7 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
                     *p++ = energy_tag;
 
                     tmp_64 = (int64_t)((int64_t)src[0]<<32)+ ((int64_t)src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
-                    if(src[0] & 0x80)
+                    if((sign_flag)&&(src[0] & 0x80))
                     {
                         tmp_64 += 0xFFFFFF0000000000;
                     }
@@ -1855,7 +2069,7 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
                 *p++ = energy_tag;
                 tmp_64 = (int64_t)((int64_t)src[0]<<32)+ ((int64_t)src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
                 
-                if(src[0] & 0x80)
+                if((sign_flag)&&(src[0] & 0x80))
                 {
                     tmp_64 += 0xFFFFFF0000000000;
                 }
@@ -1881,7 +2095,7 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
                     *p++ = energy_tag;
                     tmp_64 = (int64_t)((int64_t)src[0]<<32)+ ((int64_t)src[1]<<24) + (src[2]<<16) + (src[3]<<8) + (src[4]);
                     
-                    if(src[0] & 0x80)
+                    if((sign_flag)&&(src[0] & 0x80))
                     {
                         tmp_64 += 0xFFFFFF0000000000;
                     }
@@ -2117,7 +2331,13 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
     uint8_t h_mode = (uint8_t) (mode >> 8);
     uint8_t l_mode = (uint8_t) mode;
     int16_t err = 0;
+    int ret = 0;
     struct context_698_t* pctx = (struct context_698_t*)ctx;
+
+    if ((ctx)&&(0 > check_metertype_OI_valid(instance, get_OAD_OI(id))))
+    {
+        return -DAR_OBJECT_UNDEF;
+    }
     
     switch (l_mode)
 	{
@@ -2409,6 +2629,7 @@ int para_init(struct instance_t* instance )
     struct mbase_control_block_t* mbase_cb;
     int ret;
     int16_t err=0;
+    const uint8_t *p_data;
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
@@ -2496,6 +2717,8 @@ int para_init(struct instance_t* instance )
         v85xxp_clear_watchdog();
         if( parameter_item[i].data != 0 )
         {
+            p_data = parameter_item[i].data;
+            
 #if 0     // test        
             if (parameter_item[i].paramerer_index == Follow2015_RptMode)
             {
@@ -2507,7 +2730,7 @@ int para_init(struct instance_t* instance )
             {
 
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + parameter_item[i].paramerer_index);
-                nd_set_index(instance, s_index, (uint8_t*)(parameter_item[i].data), parameter_item[i].len); 
+                nd_set_index(instance, s_index, (uint8_t*)(p_data), parameter_item[i].len); 
             }
             else
             {
@@ -2522,7 +2745,7 @@ int para_init(struct instance_t* instance )
                 for(j=0; j<sm; j++)
                 {
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + parameter_item[i].paramerer_index + j);
-                    nd_set_index(instance, s_index, (uint8_t*)(parameter_item[i].data+1), (*parameter_item[i].data)); 
+                    nd_set_index(instance, s_index, (uint8_t*)(p_data+1), (*p_data)); 
                 }
             }
         }

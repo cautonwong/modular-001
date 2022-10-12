@@ -6,7 +6,7 @@
 const  uint8_t FirmWareVersion[20] = 
 {
   '1','0','-',
-  '6','2','9','0','2','2','-', // 7 年月日
+  '2','1','0','1','2','2','-', // 7 年月日
   'Y','T',  //通用 省份
   'X','X','X','X',  //公司名称
   'X','D','W','G'   //10
@@ -367,11 +367,8 @@ const uint8_t  init_5F60[] =
 #define init_4EC0  init_5F60
 
 /**< 报警金额限值 */
-const uint8_t  init_21E0[] =
-{
-    0xF4, 0x01, 0x00, 0x00, /*报警金额限值1*/
-    0x64, 0x00, 0x00, 0x00, /*报警金额限值2*/
-};
+const uint8_t  init_Alarm_Credit1[] = { 4, 0x00, 0x00, 0x01, 0xF4, };   /*报警金额限值1*/
+const uint8_t  init_Alarm_Credit2[] = { 4, 0x00, 0x00, 0x00, 0x64, };   /*报警金额限值2*/
 /**< 其它金额限值 */
 const uint8_t  init_21F0[] =
 {
@@ -407,6 +404,8 @@ const uint8_t  init_SoftWareNo[] = { 16, 'A', 'A', 'A', 'A', 'A', 'A',  'A', 'A'
 const uint8_t  init_Measure_Mode[] = {1, 0xA0 }; /**< 有功组合方式特征字 */
 const uint8_t  init_Balance_Time[] = { 6,  1, 0, 0x63, 0x63, 0x63, 0x63 }; /**< 结算日 */
 const uint8_t  init_Meter_Password[] = {8, '0', '0', '0', '0', '0', '0', '0', '0' }; /**< 认证密码 */
+const uint8_t  init_Meter_02Password[] ={4, 0x02, 0x56, 0x34, 0x12};    //02级密码
+const uint8_t  init_Meter_04Password[] ={4, 0x04, 0x78, 0x56, 0x34};    //02级密码
 const uint8_t  init_MeterRunWord[] = { 1,0 };//运行特征字
 const uint8_t  init_4580[] = { 0 /*0x03*/ }; /**< 上报标识*/
 const uint8_t  init_4585[] = { 1 };/**< 上报标识*/
@@ -432,7 +431,7 @@ const uint8_t  init_Date_SoftWare[] = {  6,'X', 'X', 'X', 'X', 'X', 'X' }; /**< 
 const uint8_t  init_Version_HardWare[] = { 4, 'X', 'X', 'X', 'X' }; /**< 硬件版本号     visible-string(SIZE (4)) */
 const uint8_t  init_Date_HardWare[] = { 6, 'X', 'X', 'X', 'X', 'X', 'X' }; /**< 硬件版本日期   visible-string(SIZE (6)) */
 const uint8_t  init_Extend_Info[] = { 8, 'X', 'X', 'X', 'X','X', 'X', 'X', 'X' }; /**< 厂家扩展信息   visible-string(SIZE (8)) */
-const uint8_t  init_Produced_Date[] = { 7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; /**< 生产日期 - 设备的出厂日期，数据格式date_time_s */
+const uint8_t  init_Produced_Date[] = { 10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; /**< 生产日期 - 设备的出厂日期，数据格式date_time_s */
 const uint8_t  init_Subset_List[] = { 1,0x00 }; /**< 子设备列表 1+2*3  */
 const uint8_t  init_Protocol_List[] = { 32, 1, 20, 'D', 'L', '/', 'T', '6', '9', '8', '.', '4', '5' ,'-', '2' , '0', '1', '7', '-', '2', '0', '2', '0' }; /**< 支持规约列表1+16*3 */
 const uint8_t  init_FollowReport_en[] = { 1,0x00 }; /**< 允许跟随上报 */
@@ -526,6 +525,45 @@ const uint8_t  init_5FE5[] = {0x10,0x0E}; // 3600秒 掉电事件主动上报的
 const uint8_t  init_5FE6[] = {0x00};
 /* DL/T 698.45 事件记录 - 当前值-事件发生源NULL  多个事件占用 */
 const uint8_t  init_5FE7[] = {0x00};
+
+/************************* 645相关 *************************/
+const uint8_t   init_Remote_RelayOffTime[] = {0x02, 0x00, 0x01};
+const uint8_t   init_HourFroze_StartTime[] = {0x05, 0x00, 0x01, 0x01, 0x00, 0x00};
+const uint8_t   init_HourFroze_Inv[] = {0x01, 0x60};
+const uint8_t   init_DayFroze_Time[] = {0x02, 0x00, 0x00};
+const uint8_t   init_ReportRstTime[] = {0x01, 0x30};
+const uint8_t   init_Step_Num[] = {0x01, 0x00};
+const uint8_t   init_ASCII_ptl645_Version[] = {16, 'D', 'L', '/', 'T', '6', '4', '5', '-', '2', '0', '0', '7', '-', '1', '4', ' '};
+const uint8_t   init_ASCII_SoftWareNo[] = 
+{
+    32,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+};
+const uint8_t   init_ASCII_HardWareNo[] =
+{
+    32,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+};
+const uint8_t   init_ASCII_Factor[] =
+{
+    32,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+};
+const uint8_t   init_SoftWareNo_645[] = {8, 0xAA,0xAA,0xAA,0xAA,0xAA,0xAA,0xAA,0xAA};
+const uint8_t   init_LoadRec_Mode[] = {1, 0x0F};
+const uint8_t   init_TimeFroze_Mode[] = {1, 0x83};
+const uint8_t   init_InsFroze_Mode[] = {1, 0x83};
+const uint8_t   init_AppointFroze_Mode[] = {1, 0x83};
+const uint8_t   init_HourFroze_Mode[] = {1, 0x03};
+const uint8_t   init_DayFroze_Mode[] = {1, 0x83};
+const uint8_t   init_LoadRec_Time[] = {4,0x01,0x01,0x00,0x00};
+const uint8_t   init_LoadRec_Inv1[] = {2, 0x00, 0x15};
+const uint8_t   init_LoadRec_Inv2[] = {2, 0x00, 0x15};
+const uint8_t   init_LoadRec_Inv3[] = {2, 0x00, 0x15};
+const uint8_t   init_LoadRec_Inv4[] = {2, 0x00, 0x15};
 
 // 恢复出厂标志
 const uint8_t  init_3090[] = {0x55,0x55,0xaa,0xaa,};

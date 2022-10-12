@@ -162,7 +162,10 @@ enum record_flag_id_t
     EmuErrE                      ,  //  0x302F    电能表计量芯片故障事件
     BroadcastTimeS               ,  //  0x303C    广播校时事件 
     ZeroLineErrS                 ,  //  0x3040    零线电流异常事件  
-    ZeroLineErrE                 ,  //  0x3040    零线电流异常事件   
+    ZeroLineErrE                 ,  //  0x3040    零线电流异常事件
+    
+    MeterWr645S                  ,  //  0xFF31    电能表编程事件645       
+    MeterWr645R                  ,  //  0xFF31    电能表编程事件645 特殊 用于更新编程列表   
 };
 
 //冻结     需连续
@@ -374,6 +377,8 @@ enum block_parameter_item_id_t
     EmuErrS_seq                         ,   //记录序号  电能表计量芯片故障事件
     BroadcastTimeS_seq                  ,   //记录序号  广播校时事件 
     ZeroLineErrS_seq                    ,   //记录序号  零线电流异常事件              // 初始化特殊处理结束
+
+    MeterWr645S_seq                     ,   //记录序号  电能表编程事件645  
     //以上不能改变顺序
 
 
@@ -394,8 +399,13 @@ enum block_parameter_item_id_t
 #define     Meter_Num                   903 //计量元件数
 #define     SeasonTable_Changetime      904 //两套时区切换时间
 #define     DayTable_Changetime         905 //两套时段切换时间
-#define     SeasonDay_Para              906 //时区时段参数（年时区数、日时段表数、日时段数、费率数、公共假日数）
-#define     SecretKey_Num               911 //秘钥总条数
+#define     ToupriceTable_Changetime    906 //两套分时费率切换时间
+#define     StepZone_Changetime         907 //两套阶梯切换时间
+#define     Alarm_Credit1               908 //报警金额1
+#define     Alarm_Credit2               909 //报警金额2
+
+#define     SeasonDay_Para              916 //时区时段参数（年时区数、日时段表数、日时段数、费率数、公共假日数）
+#define     SecretKey_Num               921 //秘钥总条数
 
 #define     Weekend                     922 //周休日特征字
 #define     WeekendFee                  923 //周休日采用费率号
@@ -449,6 +459,35 @@ enum block_parameter_item_id_t
 #define     Meter_Type                  1030 //电表类型
 #define     Pstart_En                   1031 //启动防潜开关
 #define     Blt_Alarm_Byte              1032 //背光报警配置字
+
+#define     HourFroze_StartTime         1033 //整点冻结起始时间
+#define     HourFroze_Inv               1034 //整点冻结间隔时间
+#define     DayFroze_Time               1035 //日冻结时间
+#define     Remote_RelayOffTime         1036 //跳闸延时时间
+#define     ReportRstTime               1037 //主动上报状态字复位时间
+#define     Step_Num                    1038 //阶梯数
+#define     ASCII_ptl645_Version        1039 //645协议版本号
+#define     ASCII_HardWareNo            1040 //硬件版本号
+#define     ASCII_SoftWareNo            1041 //软件版本号
+#define     ASCII_Factor                1042 //厂家代码
+#define     SoftWareNo_645              1043 //软件备案号
+#define     LoadRec_Mode                1044 //负荷记录模式字
+#define     TimeFroze_Mode              1045 //定时冻结模式字
+#define     InsFroze_Mode               1046 //瞬时冻结模式字
+#define     AppointFroze_Mode           1047 //约定冻结模式字
+#define     HourFroze_Mode              1048 //整点冻结模式字
+#define     DayFroze_Mode               1049 //日冻结模式字
+#define     LoadRec_Time                1050 //负荷记录起始时间
+#define     LoadRec_Inv1                1051 //第1类负荷记录间隔时间
+#define     LoadRec_Inv2                1052 //第2类负荷记录间隔时间
+#define     LoadRec_Inv3                1053 //第3类负荷记录间隔时间
+#define     LoadRec_Inv4                1054 //第4类负荷记录间隔时间
+
+#define     Meter_02Password            1060 //02级密码
+#define     Meter_04Password            1061 //04级密码
+
+
+
 /***************** 计量相关 *****************/
 #define     Heat_Value_10L              1100    //1.0L自热补偿  15*2=30
 #define     Heat_Value_05L              1101    //0.5L自热补偿  15*2=30
@@ -502,6 +541,8 @@ enum block_parameter_item_id_t
 #define     ResetCount                  1517 //复位次数
 #define     Bat_UseTime                 1518 //电池使用时间sec
 #define     PDTime_Frez                 1519 // 最近一次未补冻结的停电时间 (sec)
+#define     MeterWr645_List             1520 //编程对象列表645            扩展OAD:0xFFFE0000        
+
 
 #define     Report3320_EnableList       1521 // 3320 上报使能列表  1 + 2*80
 #define     Report3320_OADList1         1522 // 3320 oad上报列表   1 + 4*60     //红外

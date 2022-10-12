@@ -419,13 +419,34 @@ enum report_mode_t {
 #define RPT_2015_RTC_BATTERY_LOW    (1<<(31 -3 ))//(BIT3) //时钟电池欠压    
 #define RPT_2015_MEMORIZER_ERR      (1<<(31 -5 ))//(BIT5) //存储器故障或损
 #define RPT_2015_READ_BATTERY_LOW   (1<<(31 -8 ))//(BIT8) //停电抄表电池欠压   
-#define RPT_2015_OVERDRAFT          (1<<(31 -9 ))//(BIT9) //透支状态    //待添加
+#define RPT_2015_OVERDRAFT          (1<<(31 -9 ))//(BIT9) //透支状态    
 #define RPT_2015_SWITCH_OFF_SUCCEES  (1<<(31 -14 ))//(BIT14) //跳闸成功   
 #define RPT_2015_SWITCH_ON_SUCCEES  (1<<(31 -15 ))//(BIT15) //合闸成功  
 
 
 #define REQ_RCSD_MAXNUM 30 //待调整
 #define SecurityMode_EXData_LEN 101 
+
+
+
+
+
+//厂家扩展 OI  
+#if 0
+0xFF310000   //电能表编程事件645 
+
+0xFFFE0000   //电能表编程列表645
+
+#endif
+
+
+
+
+
+
+
+
+
 
 
 

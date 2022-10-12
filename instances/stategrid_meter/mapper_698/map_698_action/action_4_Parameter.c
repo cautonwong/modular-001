@@ -79,8 +79,6 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
             if(method == 127)//广播校时
             {
                 uint8_t timer_set[7],timer[7],time_js[7],timeout=0,year;
-
-
                 pctx->resp_choice = 1;  //不做回复
 
                 if(SA_TYPE_GENERAL == SA_TYPE(pctx->SA)) {  //通配地址 不执行广播

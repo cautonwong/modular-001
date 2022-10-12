@@ -2411,6 +2411,21 @@
                 <name>$PROJ_DIR$\..\mapper_645\ctl_11_read.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\mapper_645\ctl_11_read00.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_645\ctl_11_read02.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_645\ctl_11_read04.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_645\ctl_11_read05.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_645\ctl_14_check.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\mapper_645\ctl_14_write.c</name>
             </file>
             <file>
@@ -2418,6 +2433,9 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\mapper_645\ctl_61_ft.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\mapper_645\ctl_other.c</name>
             </file>
         </group>
         <group>

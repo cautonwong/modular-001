@@ -212,6 +212,7 @@ struct context_serial_t
 
 struct context_645_t
 {
+    uint8_t channel;
     //作为从站方用的临时状态
     uint16_t addr_n;
     uint8_t addr[6];
@@ -323,7 +324,7 @@ struct context_698_t
     uint16_t segment_tx; 
     uint16_t segment_tx_no;
     
-    struct fifo_t* apdu;
+
 
     uint16_t apdu_len_valid;
     uint16_t apdu_offset;
@@ -332,6 +333,9 @@ struct context_698_t
     uint16_t apdu_rx_len;
     uint16_t apdu_l_len;
     uint16_t apdu_rx_offset;
+
+    struct fifo_t* apdu;
+
    
     //接收和发送都要用的状态
     struct object_t object;//对象标识
@@ -690,6 +694,9 @@ enum resource_map_698_e
 #define  MSG_RS485_BYTE_TIMEOUT   0x0005
 #define  MSG_PLC_BYTE_TIMEOUT     0x0006
 #define  MSG_IR_BYTE_TIMEOUT      0x0007
+#define  MSG_CARD_INSERT          0x0008
+#define  MSG_CARD_PULLOUT         0x0009
+
 
 int nidavellir_loop(struct instance_t *instance);
 int nidavellir_n_loop(struct instance_t **instances,size_t n);
@@ -725,7 +732,7 @@ int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
 //Flag.Run
 #define		F_Disp              0x01
 
-
+//mbase_cb->sta //继电器命令状态
 #define     F_RemoteNull            0x00    //合闸
 #define		F_RemoteRelayOn  	    0x01	//保电
 #define		F_RemoteRelayOff 	    0x02    //拉闸
@@ -735,6 +742,13 @@ int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
 #define     F_RemoteRelayOnAllow    0x20    //合闸允许
 #define     F_RemoteRelayOnDirect   0x40    //直接允许
 
+//mbase_cb->metertype   多功能配置字
+#define     F_Plc_En                0x0001  //带模块
+#define     F_Password_En           0x0002  //645明文模式
+#define     F_RelayonAuto_En        0x0004  //自动合闸
+#define     F_Crad_En               0x0008  //带CPU卡
+#define     F_ExternRelay_En        0x0020  //外置继电器
+#define     F_Compen_En             0x0800  //送检补偿
 
 //继电器命令状态
 #define REMOTE_CMD_REALAY_OFF_STA   (F_RemoteRelayOff|F_RemoteGaoJing0|F_RemoteGaoJing1)

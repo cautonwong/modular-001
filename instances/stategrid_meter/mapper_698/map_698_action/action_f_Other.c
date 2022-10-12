@@ -493,7 +493,8 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 p++;
                 memcpy((uint8_t*)&addr, p, 4);//sid
                 p = p + 4;
-                txlen = *p++;
+                p += axdr_decode(TYPE_octet_string, p, &txlen);
+                //txlen = *p++;
                 memcpy(keybuf, p, txlen);
                 p = p + txlen;
                 txlen = ((uint16_t)keybuf[0]<<8) + keybuf[1];
@@ -523,7 +524,9 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             else if(method == 0x04) //ESAM数据更新
             {
                 p = p + 3;
-                len1 = *p++;
+                p += axdr_decode(TYPE_octet_string, p, &txlen);
+                len1 = (uint8_t)txlen;
+                //len1 = *p++;
                 memcpy(buffer, p, len1);//oad+data
                 mem_swap_cpy((uint8_t*)&displayoad2, buffer, 4);
                 if(displayoad2 == 0x40020200)   //表号需要判断BCD                //待调整 数据更新只有表号？

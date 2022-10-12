@@ -51,12 +51,6 @@ int set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_
 }
 
 
-//  关联对象检查  待添加
-uint8_t oad_valid_check(uint32_t oad)
-{
-    return true;
-}
-
 
 // 设置事件关联对象
 int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
@@ -106,11 +100,12 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
     {
         p++; // DTC_OAD
         oad_tmp = buf_to_uint32_msb(p);
-        if (false == oad_valid_check(oad_tmp))  //无效关联对象
-        {
-            *dar = DAR_OTHERS_ERROR;
+
+        ret = check_metertype_OI_valid(instance, get_OAD_OI(oad_tmp));
+        if(ret < 0){
             return -DAR_OTHERS_ERROR;
         }
+
         memcpy(oadlist, p, 4);
         oadlist += 4;
         p += 4;

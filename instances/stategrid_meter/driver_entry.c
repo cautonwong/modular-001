@@ -649,6 +649,27 @@ uint8_t multifunction_port_Init(void)
    return true;
 }
 
+void rs485_init(struct instance_t* instance, struct pipeline_t* pipeline)
+{
+    uint32_t baud = 115200;
+    uint8_t i;
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
+    uart_chl_open(UART_RS4851_CHL);
+
+    for(i=0;i<11;i++)
+    {
+        if(mbase_cb->Baut_rs485 == i)
+        {
+            baud = baud_table[i];
+            break;
+        }
+    }
+
+    mcu_uart_set_baud(baud, 0);     //485波特率切换至EEPROM设置要求
+    
+}
+
 //打开串口，高速定时器，tick，初始化IO上电配置
  void device_power_open(struct instance_t* instance, struct pipeline_t* pipeline)
  {
@@ -664,20 +685,8 @@ uint8_t multifunction_port_Init(void)
     AllDisplayLCD(instance, pipeline);
     
     dev_init(instance, AC_POWER_ON);
-
-    uart_chl_open(UART_RS4851_CHL);
-
-    for(i=0;i<11;i++)
-    {
-        if(mbase_cb->Baut_rs485 == i)
-        {
-            baud = baud_table[i];
-            break;
-        }
-    }
-
-    mcu_uart_set_baud(baud, 0);     //485波特率切换至EEPROM设置要求
-
+    
+    rs485_init(instance, pipeline);
 
     uart_chl_open(UART_IR_CHL);
     uart_chl_open(UART_MODULE_CHL);

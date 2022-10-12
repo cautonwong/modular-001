@@ -477,7 +477,8 @@ int check_upreport_esam_rn_mac(struct instance_t* instance, struct esam_698_inpu
 void esam_sec_pro(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-
+    uint32_t s_addr;
+    
     if (mbase_cb->esam_power_close_dly > 0)   
     {
         mbase_cb->esam_power_close_dly--;

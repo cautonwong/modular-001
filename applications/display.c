@@ -5,7 +5,7 @@
 #include "pin_function_def.h"
 #include "lib_conf.h"
 
-extern int read_record_data_form_698_protocol(struct instance_t* instance, uint8_t* buf, uint32_t Record_oad, uint32_t capture_oad, uint8_t last_no);
+extern int read_record_data_form_698_protocol(struct instance_t* instance, uint8_t* buf, uint32_t Record_oad, uint32_t capture_oad, uint8_t last_no, uint16_t bufsize);
 
 /**********************************************************************/
 /*  液晶显示程序                                                       */
@@ -979,7 +979,7 @@ unsigned long GetDispAddrInfo( struct instance_t* instance, struct pipeline_t* p
     }
     else
     {   
-        len = read_record_data_form_698_protocol(instance, data, Record_oad, oad + D3, D2);
+        len = read_record_data_form_698_protocol(instance, data, Record_oad, oad + D3, D2, 20);
         if(len == 10)   //电量10字节
         {
             ndv_move_buffer(data+2, data, 8);   //历史电量返回成功01+TAG+8字节数据

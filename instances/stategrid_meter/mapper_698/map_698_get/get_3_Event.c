@@ -1132,6 +1132,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
         }
         break;
         case 0x33150207: //编程前节假日内容 事件记录用  
+        {
             index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Holiday);
             ret = nd_get_index(instance, index, p, 10);
             if ((ret < 0) || (p[0] != TYPE_structure))// 错误
@@ -1143,6 +1144,8 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 p += 10;
             }
             return 10;//(p - buf);
+		}
+        break;
 
         default:
             break;

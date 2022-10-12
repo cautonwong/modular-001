@@ -6,7 +6,7 @@ extern const struct dev_info_t rn8209_dev;
 extern int rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx);
 extern unsigned char IxRMSOS_Adjust(struct instance_t* instance, unsigned char CH);
 extern unsigned char ft_adj_meter(struct instance_t* instance, uint8_t *p_rx);
-
+extern int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, uint8_t *tx_len);
 /***********************************************************************/
 /*  函数名称：GetCommTable                                             */
 /*  函数功能：根据给定的ID,找出其在CommTab里的位置                    */
@@ -53,129 +53,12 @@ unsigned long SoftwareCHK(void)
 int Direct_Read( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-	unsigned long StAddr;
     unsigned char len;
     uint8_t tmpbuf[10] = {0};
     uint32_t s_index,temp=0;
 
 	switch( ID )
 	{   
-        case 0x02010100:    //电压
-            WORD_BCD2(p_tx, (uint16_t)mbase_cb->voltage_ac);
-            return 2;
-        case 0x0201FF00:    //电压数据块
-            WORD_BCD2(p_tx, (uint16_t)mbase_cb->voltage_ac);
-            memset(p_tx+2, 0xFF, 4);
-            return 6;
-            
-        case 0x02020100:    //电流
-        case 0x0202FF00:    //电流数据块
-            if(mbase_cb->current_l < 0)
-            {
-                temp = ~mbase_cb->current_l + 1;
-                HEX_BCD(p_tx, temp);
-                *(p_tx+2) |= 0x80;
-            }
-            else
-            {
-                HEX_BCD(p_tx, mbase_cb->current_l);
-            }
-            if(ID == 0x0202FF00)
-            {
-                memset(p_tx+3, 0xFF, 6);
-                return 9;
-            }
-            else
-                return 3;
-            break;
-            
-        case 0x02030000:    //总有功功率 
-        case 0x02030100:   
-        case 0x0203FF00:    //有功功率数据块
-            if(mbase_cb->active_power < 0)
-            {
-                temp = ~mbase_cb->active_power + 1;
-                HEX_BCD(p_tx, temp);
-                *(p_tx+2) |= 0x80;
-            }
-            else
-            {
-                HEX_BCD(p_tx, mbase_cb->active_power);
-            }
-            if(ID == 0x0203FF00)
-            {
-                memcpy(p_tx+3, p_tx, 3);
-                memset(p_tx+6, 0xFF, 6);
-                return 12;
-            }
-            else
-                return 3;
-            break;
-            
-        case 0x02050000:    //总视在功率 
-        case 0x02050100:   
-        case 0x0205FF00:    //视在功率数据块
-            HEX_BCD(p_tx, mbase_cb->apparent_power);
-            if(ID == 0x0205FF00)
-            {
-                memcpy(p_tx+3, p_tx, 3);
-                memset(p_tx+6, 0xFF, 6);
-                return 12;
-            }
-            else
-                return 3;
-            break; 
-            
-        case 0x02060000:    //功率因数
-        case 0x02060100:   
-        case 0x0206FF00:    //功率因数数据块
-            if(mbase_cb->power_factor < 0)
-            {
-                temp = ~mbase_cb->power_factor + 1;
-                WORD_BCD2(p_tx, temp);
-                *(p_tx+1) |= 0x80;
-            }
-            else
-            {
-                WORD_BCD2(p_tx, mbase_cb->power_factor);
-            }
-            if(ID == 0x0206FF00)
-            {
-                memcpy(p_tx+2, p_tx, 2);
-                memset(p_tx+4, 0xFF, 4);
-                return 8;
-            }
-            else
-                return 2;
-            break;
-        case 0x02800001:    //零线电流
-            if(mbase_cb->current_n < 0)
-            {
-                temp = ~mbase_cb->current_n + 1;
-                HEX_BCD(p_tx, temp);
-                *(p_tx+2) |= 0x80;
-            }
-            else
-            {
-                HEX_BCD(p_tx, mbase_cb->current_n);
-            }
-            return 3;
-        case 0x02800002:  //频率
-            HEX_BCD(p_tx, mbase_cb->frequency);
-            return 2;
-            
-            
-        case 0xA8000100:
-            if(mbase_cb->factor_mode == true)
-                *p_tx = 0xaa;
-            else
-                *p_tx = 0;
-            return 1;
-		case 0xA601100F:
-			StAddr = SoftwareCHK();
-			memcpy( (unsigned char*)p_tx, (unsigned char*)&StAddr, 4 );
-			return 4;
-			break;
         case 0xA800020C://微调与补偿
             len = rn8209c_get(instance, p_rx, p_tx);
             return len;
@@ -186,11 +69,7 @@ int Direct_Read( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, 
             memcpy( (unsigned char*)p_tx, tmpbuf, 4 );
             return 4;
             break;                 
- 		case 0xA8F00051://掉电主动上报的阈值时间(秒)hex  0x0E10
-            memcpy( (unsigned char*)p_tx, (uint8_t*)&mbase_cb->active_report_sec_limit, 2 );        
-            return 2; 
-            break;   
-    case 0xA8F00053://模拟停电时间（补冻结用）
+        case 0xA8F00053://模拟停电时间（补冻结用）
             (*(p_tx+5)) = BYTE_BCD(mbase_cb->v_powerdown_tm.tm_year + 1900 - 2000);
             (*(p_tx+4)) = BYTE_BCD(mbase_cb->v_powerdown_tm.tm_mon + 1);
             (*(p_tx+3)) = BYTE_BCD(mbase_cb->v_powerdown_tm.tm_mday);
@@ -214,10 +93,9 @@ int Direct_Read( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, 
 /***********************************************************************/
 signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len)
 {
-	unsigned char Ptr,MemType;
-    int Err_Byte;
-	unsigned long Addr,Info;
-	unsigned long ID,addr1;
+    unsigned char IDH1=0, IDL0 = 0;
+    int Err_Byte = 0;
+	unsigned long ID;
     struct mbase_control_block_t* mbase_cb;
 	
 	mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -241,49 +119,65 @@ signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx,
     memcpy(p_tx, p_rx, 4);
     p_tx = p_tx+4;
 	memcpy((unsigned char*)&ID, p_rx, 4);
-    
-
-	Err_Byte = Direct_Read( instance, ID, p_rx, p_tx);//根据ID,直接读取数据
-	if( Err_Byte != -1)
+    IDH1 = (ID & 0xFF000000) >> 24;
+    IDL0 = (uint8_t)(ID & 0x000000FF);
+    switch(IDH1)
     {
-        if(0xA800020C == ID)    //计量万能读
-        {
-            *len = 9;
-        }
-        else
-        {
-            *len = Err_Byte + 4;
-        }
-        return 0;
+        case 0x00:  //电能
+            if (IDL0 == 0)
+            {
+                Err_Byte = read_00(instance, ID, p_rx, p_tx);
+            }
+            else  //历史电能
+            {
+                Err_Byte = read_05(instance, ID, p_rx, p_tx, len);
+    			if( Err_Byte < 0) //异常应答
+    		    {
+    		        return 1;
+    		    }
+    			else
+    				return 0;
+            }
+            break;
+            
+        case 0x02:  //瞬时量
+            Err_Byte = read_02(instance, ID, p_rx, p_tx);
+            break;
+            
+            
+        case 0x04:  //参数
+        case 0xA8:
+        case 0xA6:
+            Err_Byte = read_04(instance, ID, p_rx, p_tx);
+            break;
+
+        case 0x03:
+        case 0x1D: 
+        case 0x1E: 
+        case 0x19:  //过流           
+        case 0x05:  //冻结
+            Err_Byte = read_05(instance, ID, p_rx, p_tx, len);
+			if( Err_Byte < 0) //异常应答
+		    {
+		        return 1;
+		    }
+			else
+				return 0;
+            break;            
+        default:
+            break;
+    }
+    if( Err_Byte < 0) //异常应答
+    {
+        *len = 1; 
+        return 1;
     }
     
-
-	Ptr = GetCommTable( ID );//查表
-	if( Ptr == 0xFF )
-		return -1;
-	Addr = CommTab[Ptr].Addr;
-	Info = CommTab[Ptr].Info;
-
-	if( (Info & CommData_R) == 0 ) //数据不可读
-		return -1;
-		
-	*len = (unsigned char)(Info & CommDataLen);
-	MemType = (unsigned char)((Info>>6) & MEMVALUE);
-	if(MemType == Mem_E2PROM)  
-	{
-		addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Addr);
-		nd_get_index(instance, addr1, p_tx, *len);
-	}
-	else if(MemType == Mem_E2PROM_BP)  
-	{
-		addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Addr);
-		nd_get_index(instance, addr1, p_tx, *len);        
-	}
-	else
-	{
-		memcpy( p_tx, (unsigned char*)Addr, *len );
-	}
-    *len = *len+4;
+    if(0xA800020C == ID)    //计量万能读
+        *len = 9;
+    else
+        *len = Err_Byte + 4;
     
     return 0;
+    
 }

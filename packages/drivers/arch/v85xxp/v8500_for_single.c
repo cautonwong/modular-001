@@ -352,6 +352,46 @@ uint8_t read_mcu_rtc(uint8_t addr, struct instance_t* instance)
     return true;
 }
 
+uint8_t write_mcu_rtc_date(uint8_t addr, uint8_t *buf, uint16_t len)
+{
+    uint8_t time_data[4];
+    
+    RTCWriteEnable();
+    
+    memcpy(time_data , buf , 4);
+
+    RTC->WEEK = time_data[3];
+    mcu_delay_us(1000);
+    RTC->YEAR = time_data[2];
+    mcu_delay_us(1000);
+    RTC->MON = time_data[1];
+    mcu_delay_us(1000);
+    RTC->DAY = time_data[0];
+    mcu_delay_us(1000);
+    
+    RTCWriteDisable();
+    return true;
+}
+
+uint8_t write_mcu_rtc_time(uint8_t addr, uint8_t *buf, uint16_t len)
+{
+    uint8_t time_data[3];
+    
+    RTCWriteEnable();
+    
+    memcpy(time_data , buf , 3);
+
+    RTC->HOUR = time_data[2];
+    mcu_delay_us(1000);
+    RTC->MIN = time_data[1];
+    mcu_delay_us(1000);
+    RTC->SEC = time_data[0];
+    mcu_delay_us(1000);
+    
+    RTCWriteDisable();
+    return true;
+}
+
 uint8_t write_mcu_rtc(uint8_t addr, uint8_t *buf, uint16_t len)
 {
     uint8_t time_data[7];
@@ -622,6 +662,7 @@ uint8_t mcu_uart_set_baud(uint32_t baud, uint8_t uart_index)
     uint32_t	ClkDiv, pclk;
     UART_TypeDef* UARTx;
 
+    
     if (uart_index < 6)
     {
         UARTx = UART_list[uart_index];
@@ -1401,6 +1442,9 @@ const struct bus_ops_t mcu_spi_ops =
    __NULL,
    v85xxp_spi_ctrl,
 };
+
+
+
 
 
 #ifndef  ASSERT_NDEBUG

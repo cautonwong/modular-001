@@ -292,7 +292,7 @@ unsigned char Rn8209AdjParaSet(struct instance_t* instance, struct Rn8209AdjSet_
         return false;
     }
     
-    if((mbase_cb->metertype & 0x0800) == 0x0800)    //开启自热补偿功能
+    if((mbase_cb->metertype & F_Compen_En) == F_Compen_En)    //开启自热补偿功能
     {
         data = 0;
         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Cmp_Value);

@@ -177,8 +177,12 @@ int16_t Check_para_Pro(struct instance_t* instance)
                 //备份区覆盖主区   
                 res = get_res(RES_DEV_EEPROM, mbase_block_static_eprom);
                 nd_set_block(instance, res,(uint8_t *)addr,mbase_block_static_size); //将RAM中的数据保存到EPROM;
+                return 0;
             }
-            return -1;
+            else
+            {
+                return -1;
+            }
         }
         else    //主区正确，获取备份数据
         {
@@ -190,7 +194,7 @@ int16_t Check_para_Pro(struct instance_t* instance)
                 //主区覆盖备份区
                 res = get_res(RES_DEV_EEPROM, mbase_block_static_eprom_bp);
                 nd_set_block(instance, res,(uint8_t *)addr,mbase_block_static_size); //将RAM中的数据保存到EPROM;
-                return -1;
+                return 0;
             }
         }
     }

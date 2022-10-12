@@ -9,36 +9,6 @@
     //2.mesg[秒]
 
 const unsigned char  MonTab[13] = {	0,31,28,31,30,31,30,31,31,30,31,30,31};
-/*
-const unsigned int  DayTab[13] = { 0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
-
-unsigned char BYTE_BCD( unsigned char HEX )
-{
-	if( HEX > 99 )
-		return 0x00;
-
-	return( (HEX/10)*0x10 + HEX%10 );
-}
-
-
-unsigned char BCD_BYTE( unsigned char BCD )
-{
-     return( ((BCD>>4) & 0x0F)*10 + (BCD & 0x0F) );
-}
-
-unsigned int GetTotalDay( unsigned char* Addr )
-{
-  	unsigned int Day,Mon,Year;
-
-	Year= BCD_BYTE( *(Addr+2) );
-	Mon = BCD_BYTE( *(Addr+1) );
-	Day = BCD_BYTE( *Addr );
-	Day = Day + DayTab[Mon] + Year*365 + (Year>>2) + 1;
-	if( ((Year&0x03) == 0) && (Mon <= 2) )
-		Day--;
-   	return Day;
-}*/
-
 
 unsigned long GetTotalMin( unsigned char* Addr )
 {

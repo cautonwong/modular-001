@@ -94,5 +94,10 @@ int16_t nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf
 
 int16_t nd_size(struct instance_t* instance, uint8_t *buf, uint32_t id);
 
+
+int16_t nd_get_index_e2p(struct instance_t* instance, uint8_t* buf, uint8_t block_name,  uint16_t id, uint16_t len);
+int16_t nd_set_index_e2p(struct instance_t* instance, uint8_t* buf, uint8_t block_name,  uint16_t id, uint16_t len);
+
+
 uint32_t do_checksum(uint8_t *buf, uint16_t len);
 #endif

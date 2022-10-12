@@ -1,6 +1,10 @@
 #ifndef __INCLUDE_UTILS_H__
 #define __INCLUDE_UTILS_H__
 
+#define eleof(x)                    (sizeof(x) / sizeof(x[0]))
+
+
+
 typedef struct {
 	uint8_t sec;  // seconds after the minute - [0, 60]
 	uint8_t min;  // minutes after the hour - [0, 59]
@@ -10,8 +14,22 @@ typedef struct {
 	uint8_t wday; // days since Sunday - [0, 6]
 	uint8_t year; // years since 1900
 } DateTimeT;
+typedef union
+{
+    uint16_t word;
+    uint8_t  byte[2];
+} Word16;
+
+
+typedef union
+{
+    uint32_t lword;
+    uint16_t word[2];
+    uint8_t  byte[4];
+} Word32;
 
 int check_date(int year, int month, int day, int hour, int min, int sec);
+uint8_t swap_byte_bit(uint8_t hex);
 
 unsigned char BCD_BYTE( unsigned char BCD );
 unsigned int GetTotalDay( unsigned char* Addr );
@@ -76,6 +94,7 @@ uint32_t buf_to_uint32_lsb(uint8_t* buf);
 void ndv_memcopy(void *tb, void *sb, uint16_t length);
 uint8_t mem_compare(void* data1, void* data2, uint16_t length);
 void mem_swap_cpy(void* dest, void* src, unsigned short length);
+void swap_buffer(uint8_t *buff, uint16_t length);
 void ndv_move_buffer(uint8_t *sbuff, uint8_t *tbuff, uint16_t length);
 uint8_t BCD_Check( uint8_t* Addr, uint8_t Len );
 

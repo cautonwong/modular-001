@@ -113,6 +113,37 @@
 #define  ESAM_POWER_CTRL_ON()      {*((uint32_t*)GPIOC_OEN) &= ~BIT(7); *((uint32_t*)GPIOC_IE) |= BIT(7);  *((uint32_t*)BITBAND_ADDR(GPIOC_DAT,7)) = 0;}
 #define  ESAM_POWER_CTRL_OFF()     {*((uint32_t*)GPIOC_OEN) &= ~BIT(7); *((uint32_t*)GPIOC_IE) |= BIT(7);  *((uint32_t*)BITBAND_ADDR(GPIOC_DAT,7)) = 1;}
 
+
+
+/*---------------------------------CPU CARD IO----------------------------------*/ 
+#if (CPU_CARD_EN)      
+#define CARD_DATA_INPUT()           {*((uint32_t*)GPIOA_IE) |= BIT(13); *((uint32_t*)GPIOA_OEN) |= BIT(13);}
+#define CARD_DATA_OUTPUT()      {*((uint32_t*)GPIOA_OEN) &= ~BIT(13); *((uint32_t*)GPIOA_IE) &= ~BIT(13);}
+#define CARD_DATA_OUT_H()      {*((uint32_t*)BITBAND_ADDR(GPIOA_DAT,13)) = 1; }
+#define CARD_DATA_OUT_L()      {*((uint32_t*)BITBAND_ADDR(GPIOA_DAT,13)) = 0; }
+#define CARD_DATA_GET_DIN()    *((uint32_t*)BITBAND_ADDR(GPIOA_STS,13))
+
+
+
+#define CARD_STATE_INPUT()      {*((uint32_t*)GPIOE_IE) |= BIT(8); *((uint32_t*)GPIOE_OEN) |= BIT(8);}
+#define CARD_STATE_GET_DIN()    *((uint32_t*)BITBAND_ADDR(GPIOE_STS,8))
+
+
+
+#define CARD_RESET_H()     {*((uint32_t*)BITBAND_ADDR(GPIOE_DAT,4)) = 1;}
+
+#define CARD_RESET_L() {*((uint32_t*)BITBAND_ADDR(GPIOE_DAT,4)) = 0; }
+
+#define CARD_RESET_OUTPUT()     {*((uint32_t*)GPIOE_OEN) &= ~BIT(4); *((uint32_t*)GPIOE_IE) &= ~BIT(4);}
+
+
+#define CARD_CLK_OUTPUT()       {*((uint32_t*)GPIOB_OEN) &= ~BIT(3); *((uint32_t*)GPIOB_IE) &= ~BIT(3);}
+#define CARD_CLK_ACTIVE()       {*((uint32_t*)BITBAND_ADDR(GPIOB_DAT,3)) = 1; }
+#endif
+
+
+
+
 /*--------------------------单相RN8209计量芯片控制-------------------------------*/ 
 #define  BITBAND_ADDR(addr, bitnum)   ((((uint32_t)addr) & 0xF0000000) + \
                                         0x2000000 + ((((uint32_t)addr) & 0xFFFFF) << 5) + (bitnum << 2))

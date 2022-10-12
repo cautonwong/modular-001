@@ -285,7 +285,7 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
     memcpy(&instance->time, &time, sizeof(struct tm));*/
     read_mcu_rtc(0x00, instance);
     ///////////////////////////////申请一个cache的BLOCK = 02/////////////////////////////////////////////
-    if (NULL == add_block(instance, RES_DEV_RAM, control_block_cache, (2100)))
+    if (NULL == add_block(instance, RES_DEV_RAM, control_block_cache, (2108)))
     {
         return -1;
     }
@@ -312,7 +312,7 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
     communication_channel_init(instance, &pl_ir_rx_698, &pl_ir_tx_698, UART_IR_CHL);
 
     ////////////////////////////申请一个mbase应用的BLOCK = 04/////////////////////////////////////////////
-    mbase_cb_do_not_operation = (struct mbase_control_block_t*)add_block(instance, RES_DEV_RAM, mbase_control_block_name, 2 * 1024);
+    mbase_cb_do_not_operation = (struct mbase_control_block_t*)add_block(instance, RES_DEV_RAM, mbase_control_block_name, 3 * 1024);
     if (NULL == mbase_cb_do_not_operation) 
     {
         return -1;
@@ -354,8 +354,8 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
 
 
     //申请一块参数保存区的EPROM区域 及备份区
-    add_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, mbase_block_static_size);
-    add_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom_bp, mbase_block_static_size);
+    add_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, mbase_block_static_size);//主区
+    add_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom_bp, mbase_block_static_size);//备份
     
     //申请一块掉电保存的EPROM区域
     add_block(instance, RES_DEV_EEPROM, mbase_block_persistent_eprom, mbase_block_persistent_size);
@@ -397,6 +397,7 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
 #include "log.h"
 
 
+
 int main(int argc, char** argv)
 {
     struct instance_t* instance = NULL;
@@ -406,7 +407,7 @@ int main(int argc, char** argv)
     
     ndv_timer_init();
     
-    instance = create_instance(RES_DEV_RAM, (uint32_t)&nd_memory, 22 * 1024, 2 * 1024, resource_block_name);//用资源描述创建instance
+    instance = create_instance(RES_DEV_RAM, (uint32_t)&nd_memory, 24 * 1024, 2 * 1024, resource_block_name);//用资源描述创建instance
     if (instance == NULL)
     {
         return -1;

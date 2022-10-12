@@ -5,48 +5,89 @@
 #define	Mem_E2PROM			8
 #define MEMVALUE            0x0F
 
-//´íÎóĞÅÏ¢×Ö¶¨Òå
-#define 	RS_ERR_LEN		        	0x01//Êı¾İÓò³¤¶È´íÎó,ÆäËü´íÎó
-#define 	RS_ERR_OTHERS		       	0x01//ÆäËü´íÎó
-#define 	RS_ERR_ID		        	0x02//ID´íÎó
-#define 	RS_ERR_PASS		        	0x04//ÃÜÂë´í/Î´ÊÚÈ¨
-#define 	RS_ERR_WR		        	0x04//¶ÁĞ´È¨ÏŞ
-#define 	RS_ERR_BAUT		        	0x08//²¨ÌØÂÊ²»ÄÜ¸ü¸Ä
-#define     RS_ERR_SEAOV                0x10//ÄêÊ±ÇøÊı³¬
-#define     RS_ERR_TOUOV                0x20//ÈÕÊ±¶ÎÊı³¬
-#define     RS_ERR_FEEOV                0x40//·ÑÂÊÊı³¬
+//é”™è¯¯ä¿¡æ¯å­—å®šä¹‰
+#define 	RS_ERR_LEN		        	0x01//æ•°æ®åŸŸé•¿åº¦é”™è¯¯,å…¶å®ƒé”™è¯¯
+#define 	RS_ERR_OTHERS		       	0x01//å…¶å®ƒé”™è¯¯
+#define 	RS_ERR_ID		        	0x02//IDé”™è¯¯
+#define 	RS_ERR_PASS		        	0x04//å¯†ç é”™/æœªæˆæƒ
+#define 	RS_ERR_WR		        	0x04//è¯»å†™æƒé™
+#define 	RS_ERR_BAUT		        	0x08//æ³¢ç‰¹ç‡ä¸èƒ½æ›´æ”¹
+#define     RS_ERR_SEAOV                0x10//å¹´æ—¶åŒºæ•°è¶…
+#define     RS_ERR_TOUOV                0x20//æ—¥æ—¶æ®µæ•°è¶…
+#define     RS_ERR_FEEOV                0x40//è´¹ç‡æ•°è¶…
 
-//Info32bit¶¨Òå
-// 6 bits	Êı¾İ³¤¶È
+//æ–°è¡¨å‡†è¿œç¨‹æ§åˆ¶å¼‚å¸¸åº”ç­”çŠ¶æ€å­—
+#define		ERR_HALT			        0x0001
+#define		ERR_ERRMAC			        0x0002
+#define		ERR_OTHERR			        0x0004
+#define		ERR_AUTHENTM_OVER           0x0008
+#define		ERR_CMDTM_INVALID		    0x0010
+#define		ERR_RELAYOFF_BAODIAN		0x0020
+#define		ERR_RELAYOFF_ALARM_BAODIAN	0x0040
+#define		ERR_RELAYOFF_ALARM_INVALID 	0x0080
+#define		ERR_RELAYOFF_ALARM_RELAYOFF	0x0100
+
+//æ–°æ ‡å‡†è¿œç¨‹æ§åˆ¶åº”ç­”çŠ¶æ€å­—
+#define		CTRL_STATUE_RELAYON		    0x0001
+#define		CTRL_STATUE_RELAYON_EN		0x0002
+#define		CTRL_STATUE_RELAYOFF		0x0004
+#define		CTRL_STATUE_RELAYOFF_DT		0x0008
+#define		CTRL_STATUE_RELAYOFF_ALARM	0x0010
+#define		CTRL_STATUE_RELAYOFF_IMAX	0x0020
+#define		CTRL_STATUE_BAODIAN_ON		0x0100
+#define		CTRL_STATUE_BAODIAN_OFF		0x0200
+#define		CTRL_STATUE_ALARM_ON		0x0400
+#define		CTRL_STATUE_ALARM_OFF		0x0800
+
+//Info32bitå®šä¹‰
+// 6 bits	æ•°æ®é•¿åº¦
 #define		CommDataLen				0x0000003F
-// 2 bits	Êı¾İ´æ´¢ÀàĞÍ
+// 2 bits	æ•°æ®å­˜å‚¨ç±»å‹
 #define 	CommData_RAM			0x0040*Mem_RAM      //0x00000040
 #define 	CommData_FLASH			0x0040*Mem_FLASH    //0x00000080
-#define 	CommData_E2PROM_BP		0x0040*Mem_E2PROM_BP//0x00000100   //e2p å¤‡ä»½åŒº
+#define 	CommData_E2PROM_BP		0x0040*Mem_E2PROM_BP//0x00000100   //e2p backup
 #define 	CommData_E2PROM			0x0040*Mem_E2PROM   //0x00000200
 
-// 1 bits	Êı¾İ´æ´¢¸ñÊ½×ª»»
+// 1 bits	æ•°æ®å­˜å‚¨æ ¼å¼è½¬æ¢
 #define 	CommData_BCDTOHEX		0x00000400
-// 1 bits	Êı¾İÍ¨Ñ¶¸ñÊ½
+// 1 bits	æ•°æ®é€šè®¯æ ¼å¼
 #define 	CommData_HEX			0x00000800
-// 1 bits	Êı¾İ´æ´¢Î»ÖÃ(°´ÀúÊ·¼ÇÂ¼)
+// 1 bits	æ•°æ®å­˜å‚¨ä½ç½®(æŒ‰å†å²è®°å½•)
 #define		CommData_His			0x00001000
-// 2 bits	¶ÁĞ´¿ØÖÆ
+// 2 bits	è¯»å†™æ§åˆ¶
 #define		CommData_R				0x00002000
 #define		CommData_W				0x00004000
 #define		CommData_WR				0x00006000
-// 2 bits	°²È«È¨ÏŞÀàĞÍ
-#define		CommData_PROGRAM		0x00010000//±à³Ì×´Ì¬ÏÂ²ÅÔÊĞíÖ´ĞĞ
-#define		CommData_FACTORY		0x00020000//¹¤³§Ä£Ê½ÏÂ²ÅÔÊĞíÖ´ĞĞ
-#define		CommData_SECONDLY		0x00040000//µÚ¶şÀàÊı¾İ
+// 2 bits	å®‰å…¨æƒé™ç±»å‹
+#define		CommData_PROGRAM		0x00010000//ç¼–ç¨‹çŠ¶æ€ä¸‹æ‰å…è®¸æ‰§è¡Œ
+#define		CommData_FACTORY		0x00020000//å·¥å‚æ¨¡å¼ä¸‹æ‰å…è®¸æ‰§è¡Œ
+#define		CommData_SECONDLY		0x00040000//ç¬¬äºŒç±»æ•°æ®
+
+
+#define     FORMAT_00        0x00    //æ— ç‰¹æ®Šå¤„ç†
+#define     FORMAT_01        0x01    
+#define     FORMAT_02        0x02    
+#define     FORMAT_03        0x03    
+#define     FORMAT_04        0x04    
+#define     FORMAT_05        0x05    
+#define     FORMAT_06        0x06    
+#define     FORMAT_07        0x07    
+#define     FORMAT_08        0x08    
+#define     FORMAT_09        0x09    
+#define     FORMAT_0A        0x0A    
+#define     FORMAT_0B        0x0B    
+#define     FORMAT_0C        0x0C    
+#define     FORMAT_0D        0x0D    
+#define     FORMAT_0E        0x0E    
 
 
 
 typedef struct
 {
-	const unsigned long	ID;//Í¨Ñ¶ID
-	unsigned int	Addr;//Êı¾İµØÖ·
-	const unsigned long    Info;//Êı¾İĞÅÏ¢
+	const unsigned long	ID;//é€šè®¯ID
+	unsigned int	Addr;//æ•°æ®åœ°å€
+    unsigned short format;   //æ ¼å¼
+	const unsigned long    Info;//æ•°æ®ä¿¡æ¯
 } COMMTAB;
 
 extern const  COMMTAB  CommTab[242];

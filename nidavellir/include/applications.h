@@ -13,7 +13,8 @@
 #if (_DEBUG_TEST == 1)
 
     #define PWD_TEST_ON 1
-    #define FREEZ_TEST_VOERTURN 1
+    #define FREEZ_TEST_OVERTURN 1
+    #define RESET_INFO    0 // 记录 复位信息
 
 #else
 
@@ -24,7 +25,7 @@
 
 
 
-#define RESET_INFO    1 // 记录 复位信息
+
 
 #define Bat_Low_Level   300     //电池欠压阈值
 
@@ -135,10 +136,10 @@ struct mbase_control_block_t
     uint32_t   Price;//当前电价
     uint32_t   TOUPrice;//费率电价
     uint32_t   STEPPrice;//阶梯电价
-    uint8_t   StepNum;//阶梯数
+    uint8_t   StepNum;//阶梯数    // uint8_t stairnum;   // 400D 阶梯数
     uint8_t    Fee;
     uint8_t TouBefNo;
-    uint8_t PortTouCut;     // 时段投切信息
+    uint8_t PortTouCut;     // 时段改变需投切
     uint8_t MulPortMode;    //多功能口模式
           
     uint32_t volt_60;   //60%电压
@@ -358,6 +359,10 @@ struct mbase_control_block_t
     uint8_t mac_err_cnt; // 当日mac错误次数
     uint8_t mac_suspend_date[3];// mac错误 挂起日期 yymmdd
     uint8_t password_err_cnt;   //密码锁错误次数
+    uint8_t Pass02Err_Cnt;//通讯02级密码错误计数器
+	uint8_t Pass04Err_Cnt;//通讯04级密码错误计数器
+	uint8_t Pass02Lock_Tmr;//通讯02级密码闭锁时间
+	uint8_t Pass04Lock_Tmr;//通讯04级密码闭锁时间
     
     
     uint8_t persistent_blank_space[4*10];   //  空白区
@@ -469,6 +474,21 @@ struct record_storage_id_info_t
     const uint32_t *record_head;  // 记录头
 };
 
+
+struct record_storage_645_id_info_t
+{
+    struct record_storage_id_info_t id_info;
+    uint32_t oad698;
+    uint8_t packageAA;
+    //const uint8_t *di1_index;  
+    const uint32_t *rd_645obj;  //关联对象 //首字节个数
+    const uint16_t *rd_645obj_len;     //第一个字节总长
+    const uint16_t *rd_645obj_package_len; 
+    uint8_t package_num; // packageAA为0时，package_num用作事件是否支持块内单个数据项抄读的标志，  0，不支持，1:支持 (id1子项从1开始)。 
+    
+};
+
+
 enum format_conversion_mode // record_change_format
 {
     RFC_WRITE,           //存储写入转换
@@ -491,6 +511,7 @@ struct format_conversion_t
 #define 	MaxFeeNum     			12
 #define     MaxHolidayNum   		20
 #define		MaxTouTabNum			8
+#define     MaxStepNum              6
 
 //Fee
 #define		F_TOUChange			0x01
@@ -528,6 +549,8 @@ extern int sync_data_record(struct instance_t* instance, struct pipeline_t* pipe
 extern int period_check1(uint16_t oi, uint16_t* capture_period);
 extern int period_check2(uint8_t scheme, uint16_t period, uint8_t* period_buf);
 extern uint8_t capture_check(uint32_t oad, uint8_t* oad_buf);
+
+extern int check_metertype_OI_valid(struct instance_t* instance, uint16_t OI);
 
 extern int read_esam_data(struct instance_t* instance,uint32_t addr, uint8_t *buf, uint16_t len);
 extern int write_esam(struct instance_t* instance, uint32_t addr, uint8_t*buf, uint16_t len);
@@ -607,6 +630,8 @@ extern void ndv_timer_init(void);
 extern void MComp1Init(void);
 extern void esam_698_init(struct instance_t* instance, uint8_t power_mode);
 extern void  v85xxp_clear_watchdog(void);
+
+
 
 #if RESET_INFO
 extern  __no_init uint32_t resetinfo_file; //复位信息 

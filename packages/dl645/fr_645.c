@@ -2,6 +2,11 @@
 #define data_max_len 222
 
 extern signed char ft_adj_set_meter(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
+extern signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t* p_rx);
+extern signed char MulPort_set(struct instance_t* instance, uint8_t chl, uint8_t* p_rx);
+extern signed char meteraddr_write(struct instance_t* instance, uint8_t* p_rx);
+extern signed char event_clear(struct instance_t* instance, uint8_t* p_rx);
+extern signed char meter_clear(struct instance_t* instance, uint8_t* p_rx);
 
 int __update_cs(void* pctx, uint8_t* byte)
 {
@@ -567,6 +572,18 @@ int fr_pack_645_check(struct instance_t* instance, struct pipeline_t* pipeline, 
     return 1;
 }
 
+unsigned char Addr_9_9( unsigned char* Addr )
+{
+	unsigned char i;
+
+	for( i=0;i<6;i++ )
+	{
+		if( *(Addr+i) != 0x99 ) return 1;
+	}
+	
+	return 0;
+}
+
 unsigned char Addr_A_A( unsigned char* Addr ) 
 {
 	unsigned char i;
@@ -602,14 +619,67 @@ unsigned char Cmp_MeterAddr( struct instance_t* instance, unsigned char* Addr, u
 		return 1;
 }
 
+
+unsigned char Password_Check(struct instance_t* instance, unsigned char* Pass )
+{
+    uint32_t s_index = 0;
+    uint8_t Buf[4]={0,};
+	
+    if(*Pass == 0x02)
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_02Password);
+    else if(*Pass == 0x04)
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_04Password);
+    
+    nd_get_index(instance, s_index, (uint8_t*)&Buf[0], 4);
+    if( memcmp( Pass+1, Buf+1, 3 ) == 0 )
+        return 0;
+    else
+        return 1;
+}
+
+unsigned char Cmp_Password(struct instance_t* instance, unsigned char* Addr )
+{
+    struct mbase_control_block_t* mbase_cb;
+    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
+	if( (*Addr == 0x02) && (mbase_cb->Pass02Err_Cnt < 3) )
+	{
+		if( Password_Check( instance, Addr ) == 1 )
+		{
+			mbase_cb->Pass02Err_Cnt++;
+			return 1;
+		}
+		else
+		{
+			mbase_cb->Pass02Err_Cnt = 0;
+			return 0;
+		}
+	}
+	else if( (*Addr == 0x04) && (mbase_cb->Pass04Err_Cnt < 3) )
+	{
+		if( Password_Check( instance, Addr ) == 1 )
+		{
+			mbase_cb->Pass04Err_Cnt++;
+			return 1;
+		}
+		else
+		{
+			mbase_cb->Pass04Err_Cnt = 0;
+			return 0;
+		}
+	}
+	else
+		return 1;
+}
+
 int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
-    uint8_t ERRBYTE=0;//data[8]={0}, 
-    uint16_t tx_len = 0;
-    uint32_t ID=0;
+    int8_t ERRBYTE=0;//data[8]={0}, 
+    uint16_t tx_len = 0, RemotCtrResult=0;
+    uint32_t ID=0,s_index=0;
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
@@ -618,6 +688,34 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     if(0 == fr_pack_645_check(instance, pipeline, mesg)){
         fifoBuf_removeData(fifo, ctx->min_len + 2);
         return -1;
+    }
+    
+    switch(pipeline->id)
+    {
+        case pid_ir_rx_698: 
+            ctx->channel = chl_ir_698;
+            break;
+        case pid_rx_698: 
+            ctx->channel = chl_RS485_1_698;
+            break;
+        case pid_plc_rx_698: 
+            ctx->channel = chl_PLC_698;
+            break;
+        case pid_4852_rx_698: 
+            ctx->channel = chl_RS485_2_698;
+            break;
+        default:
+            ctx->channel = chl_ir_698;
+    }
+    
+    if((ctx->channel == chl_ir_698) || (ctx->channel == chl_RS485_1_698))
+    {
+        if(ctx->channel == chl_ir_698)  mbase_cb->BackLightTmr = 2* (mbase_cb->lcd_autodis_list_num) * (mbase_cb->lcd_autodis_keep_sec);
+        mbase_cb->commdisp_ir485 = 2;
+    }
+    else if(ctx->channel == chl_PLC_698)
+    {
+        mbase_cb->commdisp_plc = 2;
     }
     
     ctx->apdu_rx_offset = 0;
@@ -632,10 +730,17 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     for(int i = 0; i < ctx->apdu_rx_len; i++){
         apdu_rx[i+10] = apdu_rx[i+10] - 0x33;
     }
-        
+
+    memcpy((unsigned char*)&ID, apdu_rx+10, 4);
+    
     switch (ctx->ctrl)
     {
-        case 0X11:  //读
+        case 0x03:  //安全认证
+            break;
+        case 0x08:  //广播校时
+            ERRBYTE = Broadcast_timeadj(instance, ctx->channel, apdu_rx);//无需应答
+            break;
+        case 0x11:  //读数据
             if( Cmp_MeterAddr( instance, (unsigned char*)&apdu_rx[1], 1 ) == 0 )
             {
                 ERRBYTE = Comm_Read(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
@@ -653,12 +758,13 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
             else
                 return -1;
             break;
-        case 0X14:  //写数据
+        case 0x14:  //写数据
             if( Cmp_MeterAddr( instance, (unsigned char*)&apdu_rx[1], 0 ) == 0 )
             {
                 ERRBYTE = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
                 if(ERRBYTE == 0)
                 {
+                    trigger_MeterWr645_record(instance,   ID, 0);
                     tx_len = 0;
                 }
                 else
@@ -669,12 +775,13 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
             }
             else if( Cmp_MeterAddr( instance, (unsigned char*)&apdu_rx[1], 1 ) == 0 )   //支持全A进厂内
             {
-                memcpy((unsigned char*)&ID, apdu_rx+10, 4);
+                
                 if(ID == 0xA8000100)
                 {
                     ERRBYTE = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
                     if(ERRBYTE == 0)
                     {
+                        trigger_MeterWr645_record(instance,   ID, 0);
                         tx_len = 0;
                     }
                     else
@@ -689,7 +796,28 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
             else
                 return -1;
             break;
-        case 0x1F:
+        case 0x15:  //写通信地址
+            ERRBYTE = meteraddr_write(instance, apdu_rx);
+            break;
+        case 0x16:  //冻结
+            ERRBYTE = ctl_freeze(instance, ctx->channel, apdu_rx);
+            break;
+        case 0x17:  //修改波特率
+            ERRBYTE = chg_baut(instance, apdu_rx);
+            break;
+        case 0x1A:  //电表清零
+            ERRBYTE = meter_clear(instance, apdu_rx);
+            break;
+        case 0x1B:  //事件清零
+            ERRBYTE = event_clear(instance, apdu_rx);
+            break;
+        case 0x1C:  //远程控制
+            ERRBYTE = CommRemoteCtl_Process(instance, ctx->channel, apdu_rx, RemotCtrResult);
+            break;
+        case 0x1D:  //多功能口控制
+            ERRBYTE = MulPort_set(instance, ctx->channel, apdu_rx);
+            break;
+        case 0x1F:  //飞腾扩展
             if( Cmp_MeterAddr( instance, (unsigned char*)&apdu_rx[1], 0 ) == 0 )
             {
                 ERRBYTE = Comm_Other(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
@@ -721,9 +849,25 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     {
         mesg->ctrl = ctx->ctrl | 0x80;
     }
+    else if(ERRBYTE == -1)  //不应答
+    {
+        return -1;
+    }
     else
     {
-        mesg->ctrl = ctx->ctrl | 0xC0;
+        if((ctx->ctrl == 0x1C) && (*(apdu_rx+10) == 0x01) && (*(apdu_rx+10) == 0x98))   //增加新标准应答方式
+        {
+            mesg->ctrl = ctx->ctrl | 0xC0;
+            tx_len = 2;
+            *ctx->apdu_tx = (uint8_t)RemotCtrResult;
+            *(ctx->apdu_tx+1) = (uint8_t)((RemotCtrResult & 0xFF00)>>8);
+        }
+        else
+        {
+            mesg->ctrl = ctx->ctrl | 0xC0;
+            tx_len = 1;
+            *ctx->apdu_tx = ERRBYTE;
+        }
     }
             
     tx_len = tx_len;

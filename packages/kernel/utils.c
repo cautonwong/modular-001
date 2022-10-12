@@ -35,6 +35,23 @@ int check_date(int year, int month, int day, int hour, int min, int sec)
 
 const unsigned int  DayTab[13] = { 0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
 
+
+uint8_t swap_byte_bit(uint8_t hex)
+{
+    uint8_t i, value = 0;
+
+    for(i=0; i<8;i++)
+    {
+        if(hex & (1<<i))
+        {
+            value |= (1<<(7-i));
+        }
+    }
+    return value;
+    
+}
+
+
 /***********************************************************************/
 /*  函数名称：BCD_BYTE                                                 */
 /*  函数功能：将单字节BCD码转换为单字节HEX码                           */
@@ -44,6 +61,86 @@ const unsigned int  DayTab[13] = { 0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 27
 unsigned char BCD_BYTE( unsigned char BCD )
 {
      return( ((BCD>>4) & 0x0F)*10 + (BCD & 0x0F) );
+}
+
+
+
+unsigned char BYTE_BCD( unsigned char HEX )
+{
+	if( HEX > 99 )
+		return 0x00;
+
+	return( (HEX/10)*0x10 + HEX%10 );
+}
+
+uint8_t bcd_to_hex(uint8_t bcd)
+{
+    uint8_t result;
+
+    result  = bcd & 0x0F;                   /**< 个位 */
+    bcd   >>= 4;
+    result += bcd * 10;                     /**< 十位 */
+    return result;                          /**< 返回结果 */
+}
+
+
+void bcd_to_hex_array(uint8_t *hexary, uint8_t *bcdary, uint32_t len)
+{
+    uint32_t i;
+
+    for (i = 0; i < len; i++)
+    {
+        hexary[i] = bcd_to_hex(bcdary[i]);
+    }
+}
+
+
+void hex_to_bcd_array(uint8_t *hexary, uint8_t *bcdary, uint32_t len)
+{
+    uint32_t i;
+
+    for (i = 0; i < len; i++)
+    {
+        bcdary[i] = BYTE_BCD(hexary[i]);
+    }
+}
+
+
+uint16_t word_bcd_to_hex(uint16_t bcd)
+{
+    Word16 *wd = (Word16 *)&bcd;            /**< 将要转化的内容分成两个字节 */
+    uint16_t result;
+
+    result = bcd_to_hex(wd->byte[0]);     /**< 个位和十位 */
+    /*百位和千位 */
+    result += ((uint16_t)bcd_to_hex(wd->byte[1])) * 100;
+    return result;
+}
+
+
+uint32_t long_bcd_tohex(uint32_t bcd)
+{
+    Word32 *wd = (Word32 *)&bcd;            /* 将要转换的内容分成2个字 */
+    uint32_t result;
+
+    result = word_bcd_to_hex(wd->word[0]);      /* 个十百千万十万百万千万 */   
+    result += word_bcd_to_hex(wd->word[1]) * 10000;
+    return result;
+}
+
+bool Isbcddataarray(uint8_t *src, uint8_t len)
+{
+    uint8_t i;
+
+    for (i = 0; i < len; i++)
+    {
+        if (((src[i] & 0x0F) > 0x09) || ((src[i] & 0xF0) > 0x90))
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /***********************************************************************/
@@ -77,14 +174,6 @@ unsigned char GetWeek( unsigned char* Addr )
 
 	Week = (unsigned char)(( GetTotalDay( Addr ) + 5 ) % 7);
 	return Week;
-}
-
-unsigned char BYTE_BCD( unsigned char HEX )
-{
-	if( HEX > 99 )
-		return 0x00;
-
-	return( (HEX/10)*0x10 + HEX%10 );
 }
 
 void WORD_BCD2( unsigned char *BCD, unsigned int WORD )
@@ -123,6 +212,25 @@ void HEX_BCD( unsigned char* BCD, unsigned long HEX )
 	        	BCD++;
 		}
 	}
+}
+
+
+void HEX_BCD_Signed(int32_t hex , uint8_t *dest , uint8_t len)
+{
+    uint32_t ret=0; 
+    uint32_t bit_space[3] = {0x00008000,0x00800000,0x80000000};
+    uint32_t tmp = 0;
+    if(hex < 0)
+    {
+        hex = ~hex + 1;
+        if((len>1)&&(len<5))
+        {
+            ret = bit_space[len-2];
+        }
+    }
+    HEX_BCD( (uint8_t *)&tmp, hex );
+    ret |= tmp;
+    ndv_memcopy(dest , (uint8_t*)&ret , len);
 }
 
 uint16_t randomize_int(uint16_t interval)
@@ -272,6 +380,21 @@ uint32_t buf_to_uint32_lsb(uint8_t* buf)
 		((uint32_t)buf[1] << 8) +
 		buf[0];
 	return data;
+}
+
+void swap_buffer(uint8_t *buff, uint16_t length)
+{
+    uint8_t  uc_temp;
+    uint16_t ui_len;
+
+    // 交换的长度应该是所有数据的一半 
+    for (ui_len = 0; ui_len < (length >> 1); ui_len++)
+    {
+        uc_temp = buff[ui_len];             
+
+        buff[ui_len] = buff[length - ui_len - 1];
+        buff[length - ui_len - 1] = uc_temp;
+    }
 }
 
 void mem_swap_cpy(void* dest, void* src, unsigned short length)

@@ -221,6 +221,12 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
         
         // oad check 
 
+        ret = check_metertype_OI_valid(instance, get_OAD_OI(oad));
+        if(ret < 0){
+            return -DAR_OTHERS_ERROR;
+        }
+
+
         // period check
         if (true != period_check1(OI, &period))
         {

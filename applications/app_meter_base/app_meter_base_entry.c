@@ -229,8 +229,8 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             ret = Check_para_Pro(instance);     //数据效验
             if (ret < 0) //参数区异常时，恢复485波特率
             {
-                init_rs485_baud();
-                //para_init( instance );
+                para_init( instance );
+                rs485_init(instance, pipeline);
             }
             //上电需要恢复数据
             //跳过电能恢复 由电能模块处理        

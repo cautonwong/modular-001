@@ -1447,6 +1447,28 @@ int16_t nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf
 
 }
 
+
+
+
+int16_t nd_get_index_e2p(struct instance_t* instance, uint8_t* buf, uint8_t block_name,  uint16_t id, uint16_t len)
+{
+    uint32_t s_index = 0;
+    
+    s_index = ((RES_DEV_EEPROM << 24) + (block_name << 16) + id);
+    return nd_get_index(instance, s_index, buf, len); 
+}
+
+int16_t nd_set_index_e2p(struct instance_t* instance, uint8_t* buf, uint8_t block_name,  uint16_t id, uint16_t len)
+{
+    uint32_t s_index = 0;
+    
+    s_index = ((RES_DEV_EEPROM << 24) + (block_name << 16) + id);
+    return nd_set_index(instance, s_index, buf, len); 
+}
+
+
+
+
 //目前resource manger 数据操作介绍
 //全部为数据块的操作，不是单个数据的操作
 //需要操作数据块的单个数据，目前有两种情况：

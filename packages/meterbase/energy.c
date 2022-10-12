@@ -180,7 +180,7 @@ int16_t Check_EC_recover(struct instance_t* instance, uint8_t type, uint8_t mode
         case 1:
             ID = UseEnergy_block;
             p_tmp = (uint8_t*)&mbase_cb->MonthEnegery_dec;
-            len_tmp = use_energy_len + sizeof(mbase_cb->Energy_chksum);
+            len_tmp = use_energy_len + sizeof(mbase_cb->UseEnergy_chksum);
             break;
 
         default:

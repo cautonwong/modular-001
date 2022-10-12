@@ -15,9 +15,9 @@ __no_init uint32_t resetinfo_line;  //复位信息   扩展 OAD 0xFFFF02
 
 // 初始化默认数据
 // 过流事件关联对象
-const uint8_t init_30050200[] = { 0x01,0x08, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201), U32toBufMSB(0x20002200), U32toBufMSB(0x20012200), U32toBufMSB(0x20042200), U32toBufMSB(0x200A2200), U32toBufMSB(0x00108201), U32toBufMSB(0x00208201) };
-const uint8_t init_302B0200[] = { 0x01,0x05, U32toBufMSB(0xf2052201), U32toBufMSB(0x00102201), U32toBufMSB(0x00202201), U32toBufMSB(0x00108201), U32toBufMSB(0x00208201) };
-const uint8_t init_50020300[] = { 0x01,0x07, U32toBufMSB(0x00100401), U32toBufMSB(0x00200401), U32toBufMSB(0x20000200), U32toBufMSB(0x20010200), U32toBufMSB(0x20010400), U32toBufMSB(0x20040200), U32toBufMSB(0x200A0200) };
+//const uint8_t init_30050200[] = { 0x01,0x08, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201), U32toBufMSB(0x20002200), U32toBufMSB(0x20012200), U32toBufMSB(0x20042200), U32toBufMSB(0x200A2200), U32toBufMSB(0x00108201), U32toBufMSB(0x00208201) };
+//const uint8_t init_302B0200[] = { 0x01,0x05, U32toBufMSB(0xf2052201), U32toBufMSB(0x00102201), U32toBufMSB(0x00202201), U32toBufMSB(0x00108201), U32toBufMSB(0x00208201) };
+//const uint8_t init_50020300[] = { 0x01,0x07, U32toBufMSB(0x00100401), U32toBufMSB(0x00200401), U32toBufMSB(0x20000200), U32toBufMSB(0x20010200), U32toBufMSB(0x20010400), U32toBufMSB(0x20040200), U32toBufMSB(0x200A0200) };
 
 
 const uint8_t  init_MinuteFreeze_oad[]      = { 0x07, U32toBufMSB(0x00100401), U32toBufMSB(0x00200401), U32toBufMSB(0x20000200), U32toBufMSB(0x20010200), U32toBufMSB(0x20010400), U32toBufMSB(0x20040200), U32toBufMSB(0x200A0200) };
@@ -28,11 +28,12 @@ const uint8_t  init_MonthFreeze_oad[]       = { 0x03, U32toBufMSB(0x00000400), U
 const uint8_t  init_SeasonTabCutFreeze_oad[]= { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
 const uint8_t  init_DayTabCutFreeze_oad[]   = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
 const uint8_t  init_FeePriceCutFreeze_oad[] = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
-//const uint8_t  init_StepCutFreeze_oad[]     = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
-const uint8_t  init_StepCutFreeze_oad[]      = { 0x02, U32toBufMSB(0xFFFF0201), U32toBufMSB(0xFFFF0202), }; //复位次数      测试代码
-
-
-const uint8_t  init_StepBillFreeze_oad[]    = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
+#if RESET_INFO  
+const uint8_t  init_StepCutFreeze_oad[]     = { 0x02, U32toBufMSB(0xFFFF0201), U32toBufMSB(0xFFFF0202), }; //复位次数      测试代码
+#else
+const uint8_t  init_StepCutFreeze_oad[]     = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
+#endif
+const uint8_t  init_StepBillFreeze_oad[]    = { 0x01, U32toBufMSB(0x20320200)};
 const uint8_t  init_InstantFreeze_oad[]     = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
 
 const uint8_t  init_Event_ReportFlag_3[]    = { 0x03 };
@@ -62,8 +63,12 @@ const uint8_t  init_MonthFreeze_depth[] = { 0x00,0x18};
 const uint8_t  init_SeasonTabCutFreeze_depth[] = { 0x00,0x02 };
 const uint8_t  init_DayTabCutFreeze_depth[] = { 0x00,0x02 };
 const uint8_t  init_FeePriceCutFreeze_depth[] = { 0x00,0x02 };                                                     
-//const uint8_t  init_StepCutFreeze_depth[] = { 0x00,0x02 };   
+
+#if RESET_INFO  
 const uint8_t  init_StepCutFreeze_depth[] = { 0x00,0x05 };//复位记录  测试  //待调整
+#else
+const uint8_t  init_StepCutFreeze_depth[] = { 0x00,0x02 };
+#endif
 
 const uint8_t  init_StepBillFreeze_depth[] = { 0x00,0x02 };                                                        
 const uint8_t  init_InstantFreeze_depth[] = { 0x00,0x03 };
@@ -435,7 +440,12 @@ int clr_record(struct instance_t* instance, uint32_t oad)
         MeterWr_obj_list_clear(instance, NULL, NULL);
     }
 
+    if (oad == 0xFF310000) // 编程记录645
+    {
+        MeterWr645_obj_list_clear(instance, NULL, NULL);
+    }
 
+    
     //清最近一次日冻结时间
     if (oad == 0x50040200)
     {
@@ -581,6 +591,8 @@ const uint32_t event_oad[] =
     0x302F0200,   //电能表计量芯片故障事件
     0x303C0200,   //广播校时事件 
     0x30400200,   //零线电流异常事件  
+
+    0xFF310000,   //电能表编程事件645 
 };
 const uint8_t event_oad_num = sizeof(event_oad) / sizeof(event_oad[0]);
 
@@ -942,6 +954,7 @@ uint32_t record_capture_change(struct instance_t* instance, uint32_t obj, uint16
             obj = 0x40008200;
         }
         break;
+    case MeterWr645S: 
     case MeterWrS: //若第一个编程为校时,则编程开始时间取校时前时间
         if ((obj == 0x201E0200)&&(mbase_cb->MeterWr_SetTime_flag == 0x5A))
         {
@@ -985,12 +998,18 @@ uint8_t check_scheme(enum scheme_mode mode, uint32_t obj, uint16_t record_id)
     case 0x33020206: //事件编程    //特殊处理 结束时更新
         break;
 
+    case 0x33110206: //退费金额 事件记录用  
+    case 0x33100206: //卡序列号    octet-string 事件记录用  
+    case 0x33100207: //插卡错误信息字    unsigned 事件记录用  
+    case 0x33100208: //插卡操作命令头    octet-string 事件记录用  
+    case 0x33100209: //插卡错误响应状态  long-unsigned 事件记录用  
     case 0x33150206: //编程节假日对象  事件记录用
     case 0x33150207: //编程前节假日内容 事件记录用
     case 0x33140206: //编程时段表对象  事件记录用
     case 0x33140207: //编程前时段表 事件记录用
     case 0x330C0206: //事件清零
     case 0x20220200: //事件记录序号
+    case 0xFFFE0000: //编程列表 645   
         if (mode == END_MODE)
         {
             scheme_valid = false;
@@ -1009,7 +1028,7 @@ uint8_t check_scheme(enum scheme_mode mode, uint32_t obj, uint16_t record_id)
         {
             scheme_valid = false;
         }
-        if (record_id == MeterWrS) 
+        if ((record_id == MeterWrS) || (record_id == MeterWr645S)  )
         {
             scheme_valid = false;
         }
@@ -1237,7 +1256,7 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
         case OverCurrentAE:         //过流事件结束
         case OverCurrentAS:         //过流事件发生
             Oad = 0x30050700;
-            mode = START_MODE + (mesg->id - OverCurrentAS);
+            mode = START_MODE + (mesg->id - OverCurrentAS); 
             pairs_event = 1;
             break;
         case PowerOffE:             //电能表掉电事件结束
@@ -1252,6 +1271,12 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
             mode = START_MODE + (mesg->id - MeterWrS);
             pairs_event = 1;
             break;
+        case MeterWr645S:             //电能表编程事件645  
+        case MeterWr645R:
+            Oad = 0xFF310000;
+            mode = START_MODE + (mesg->id - MeterWr645S);
+            pairs_event = 1;
+            break;            
         case MeterClrS:      
             Oad = 0x30130200;
             mode = START_MODE;

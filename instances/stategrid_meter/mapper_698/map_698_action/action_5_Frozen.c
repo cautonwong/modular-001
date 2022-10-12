@@ -47,6 +47,12 @@ int freeze_add_one_capture(struct instance_t* instance, uint32_t oad, uint8_t* b
     period = buf_to_uint16_msb(p);
     p += 3;
     capture_oad = buf_to_uint32_msb(p);
+
+    ret = check_metertype_OI_valid(instance, get_OAD_OI(capture_oad));
+    if(ret < 0){
+        return -DAR_RW_REJECT;
+    }
+    
     ret = check_oad(capture_oad);
     if(ret < 0){
         return -DAR_RW_REJECT;

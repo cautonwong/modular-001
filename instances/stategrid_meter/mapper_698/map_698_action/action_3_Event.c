@@ -86,16 +86,10 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
         return -DAR_RW_REJECT;
     }
 
-
-
-    //判断表型无关的oad
-#if 0
-    if (true == oad_valid_check(capture_oad))
-    {
-        *dar = DAR_OTHERS_ERROR;
+    ret = check_metertype_OI_valid(instance, get_OAD_OI(capture_oad));
+    if(ret < 0){
         return -DAR_OTHERS_ERROR;
     }
-#endif
 
 #if 1 // vs 要求
     if ((Schem < 1) || (Schem > 4))

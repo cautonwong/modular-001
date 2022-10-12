@@ -1125,21 +1125,19 @@ int _record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t 
                     }
                     else
                     {
-                        orig_len = single_len;
-                        if (mode)
+                        orig_len = record_change_format(instance, tmpbuf, p_src, rcsd_req[i], rcsd_src[k], RFC_READ);
+                        if (orig_len >= 0)
                         {
-                            orig_len = record_change_format(instance, tmpbuf, p_src, rcsd_req[i], rcsd_src[k], RFC_READ);
-                            if (orig_len >= 0)
-                            {
+                            if (mode)
                                 memcpy(p_des, tmpbuf, orig_len);
-                            }
-                            else
-                            {
-                                orig_len = single_len;
-                                memcpy(p_des, p_src, single_len);
-                            }
-
                         }
+                        else
+                        {
+                            orig_len = single_len;
+                            if (mode)
+                                memcpy(p_des, p_src, single_len);
+                        }
+                        
                         p_des += orig_len;
                         p_src += single_len;
                     }
@@ -1505,7 +1503,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     struct record_storage_id_info_t record_id_info; 
     struct circular_info_t circular_info = {0};
     uint32_t *rcsd_req = (uint32_t *)rcsd_info; // 待定
-    uint8_t *ptr_tmp = instance->apdu_cache; 
+    uint8_t *ptr_tmp = instance->apdu_cache;   // 698中单条记录也需要 判断 可能导致溢出   待调整
     uint32_t rcsd_src[REQ_RCSD_MAXNUM];//设置的关联对象，用于与请求的关联对象作比对筛选
     uint16_t i, read_num, number = 0;
     uint16_t judge_size, one_len = 0,len = 0;
@@ -1722,7 +1720,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
 // 函数返回 长度   698格式带tag，  返回0时，无数据。
 // Record_oad 记录种类，  capture_oad 关联对象， last_no，上n次
 // 举例：获取上一条日冻结 正向有功总电能 :Record_oad = 0x50040200, capture_oad = 0x00100200， last_no = 1;
-int read_record_data_form_698_protocol(struct instance_t* instance, uint8_t* buf, uint32_t Record_oad, uint32_t capture_oad, uint8_t last_no)
+int read_record_data_form_698_protocol(struct instance_t* instance, uint8_t* buf, uint32_t Record_oad, uint32_t capture_oad, uint8_t last_no, uint16_t bufsize)
 {
     int ret = 0;
     struct rsd_info_t rsd_info;
@@ -1739,7 +1737,7 @@ int read_record_data_form_698_protocol(struct instance_t* instance, uint8_t* buf
     rcsd_info[0] = 1;
     rcsd_info[1] = capture_oad;
     
-    ret = record_data_package(instance, Record_oad, buf, &rsd_info, &rcsd_info[0], 20,  NULL);
+    ret = record_data_package(instance, Record_oad, buf, &rsd_info, &rcsd_info[0], bufsize,  NULL);
 
     if ((ret <= 1)) //  1 为读不到数据
     {

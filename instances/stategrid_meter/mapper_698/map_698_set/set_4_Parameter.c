@@ -578,11 +578,11 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 return (p-buf);
             }
             break;
+        case 0x4003://客户编号
         case 0x4002://表号
             return -DAR_RW_REJECT;
             break;
         case 0x4001://表地址
-        case 0x4003://客户编号
             if(attribute == 0x02)
             {
                 len = *(p+1);
