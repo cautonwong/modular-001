@@ -59,7 +59,7 @@ const general_set4  general_set4_talble[] =
      ASCII_MeterType,           0x410B,     0x02,   0x02,   32,//电能表型号
 //   MeterRunWord,              0x4110,     0x02,   0x01,   1,//电能表运行特征字
      SoftWareNo,                0x4111,     0x02,   0x02,   16,//软件备案号
-     Measure_Mode,              0x4112,     0x02,   0x02,   1,//有功组合特征字
+//     Measure_Mode,              0x4112,     0x02,   0x02,   1,//有功组合特征字
      Meter_Password,            0x4401,     0x02,   0x02,   8,//应用连接密码
 };
 #define		set4num			sizeof(general_set4_talble)/sizeof(general_set4)
@@ -91,7 +91,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 {
                     case 0x4012://周休日
                         if(*p != 4) return -DAR_TYPE_NOT_MATCH;
-                        mbase_cb->Fee |= F_DAYTABChange;
+                        mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
                         break;
                     case 0x4013://周休日日时段表号
                         if(*p != 17) return -DAR_TYPE_NOT_MATCH;
@@ -101,7 +101,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_WeekTab);
                         nd_set_index(instance, addr, timer, 2);
                         record_event_no_mesg_pro(instance, NULL, WeekTabWrS, NULL, 1);// 周休日编程事件
-                        mbase_cb->Fee |= F_DAYTABChange;
+                        mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
                         break;
                     case 0x400F://秘钥总条数
                     case 0x401C://电流变比
@@ -147,15 +147,6 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         }
                         *(p+7) = 0xFF;
                         mbase_cb->Fee |= F_ChangeTmOn;
-                        break;
-                    case 0x4112://有功组合特征字
-                        if(*p != 4) return -DAR_TYPE_NOT_MATCH;
-                      
-                        mbase_cb->active_energy_cal_word = *(p+2);
-                        nd_get(instance, id, timer, 3, NULL);
-                        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
-                        nd_set_index(instance, addr, timer, 3);
-                        record_event_no_mesg_pro(instance, NULL, ActCombWrS, NULL, 1);// 
                         break;
                 }
                 tag_datalen = axdr_get_len(p);
@@ -471,7 +462,7 @@ extern const uint8_t  MonTab[13];// = {	0,31,28,31,30,31,30,31,31,30,31,30,31};
 int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
     struct mbase_control_block_t* mbase_cb;
-    uint16_t oad,year2;
+    uint16_t oad,year2,year1;
     uint8_t index,attribute,i,num,buffer[42]={0},temp[114]={0},num_hourtab=0,year,timer[6];
     int dar =0;
     uint8_t* p = buf;
@@ -544,8 +535,10 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 write_mcu_rtc(0, settimebuf, 7);
 
                 read_mcu_rtc(0x00, instance);
-
-                if(buffer[3] != instance->time.tm_mday)  //跨日，清除广播校时标志位
+                
+                mem_swap_cpy((uint8_t*)&year2, buffer, 2);
+                year1 = instance->time.tm_year + 1900;
+                if((buffer[3] != instance->time.tm_mday) || (buffer[2] != (instance->time.tm_mon+1)) || (year2 != year1))  //跨日，清除广播校时标志位
                 {
                     mbase_cb->boardadjtime = 0;
                 }
@@ -1066,7 +1059,22 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
             return (p - buf);
             break;
-        
+            
+        case 0x4112://有功组合特征字
+            if(*p != 4) return -DAR_TYPE_NOT_MATCH;
+          
+            mbase_cb->active_energy_cal_word = *(p+2);
+            
+            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        offsetof(struct mbase_control_block_t, active_energy_cal_word));
+            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_energy_cal_word, 1);
+            
+            nd_get(instance, id, timer, 3, NULL);
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
+            nd_set_index(instance, addr, timer, 3);
+            record_event_no_mesg_pro(instance, NULL, ActCombWrS, NULL, 1);// 
+            break;
+                        
         case 0x4116://结算日
             //-保存编程前
             nd_get(instance, 0x41160200, temp, 20, NULL);

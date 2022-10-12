@@ -57,7 +57,7 @@ const general_get4  general_get4_talble[] =
      ASCII_MeterType,           0x410B,     0x02,   TYPE_visible_string,    32,//电能表型号
 //     MeterRunWord,              0x4110,     TYPE_bit_string,        1,//电能表运行特征字
      SoftWareNo,                0x4111,     0x02,   TYPE_visible_string,    16,//软件备案号
-     Measure_Mode,              0x4112,     0x02,   TYPE_bit_string,        1,//有功组合特征字
+//     Measure_Mode,              0x4112,     0x02,   TYPE_bit_string,        1,//有功组合特征字
      Meter_Password,            0x4401,     0x02,   TYPE_visible_string,    8,//应用连接密码
 };
 #define		get4num			sizeof(general_get4_talble)/sizeof(general_get4)
@@ -785,6 +785,17 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 }
                 return (p-buf);
             }
+            break;
+        case 0x4112:    //组合特征字
+            if((attribute == 0x02) && (index == 0))
+            {
+                *p++ = 0x04;
+                *p++ = 0x08;
+                *p++ = mbase_cb->active_energy_cal_word;
+                return (p-buf);
+            }
+            else
+                return -DAR_OBJECT_NOT_EXIST;
             break;
         case 0x4116://结算日
             if(attribute == 1)

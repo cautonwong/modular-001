@@ -402,7 +402,6 @@ int32_t Get_Cal_Active_Energy(struct mbase_control_block_t* mbase_cb, uint8_t in
 {
     int32_t energy_kwh = 0;
     int32_t energy_pulse = 0;
-    
     uint8_t word = mbase_cb->active_energy_cal_word;
     
     if((mbase_cb->meter_const==0) || (index>Max_tou_fee))
@@ -430,16 +429,23 @@ int32_t Get_Cal_Active_Energy(struct mbase_control_block_t* mbase_cb, uint8_t in
         energy_pulse -= mbase_cb->active_n_dec[index];
     }
     
-    
     if(type == 1)
     {
-        energy_kwh = energy_pulse*10000 / mbase_cb->meter_const;//0.0001kwh
+        if(energy_pulse < 0)    
+        {   
+            energy_pulse = ~energy_pulse+1;
+            energy_kwh = energy_pulse*10000/mbase_cb->meter_const;
+            energy_kwh = -energy_kwh;
+        }
+        else
+        {
+            energy_kwh = energy_pulse*10000/mbase_cb->meter_const;//0.0001kwh
+        }
     }
     else
     {
         energy_kwh = energy_kwh*100;//0.01kwh
     }
-    
     return energy_kwh;
 }
 

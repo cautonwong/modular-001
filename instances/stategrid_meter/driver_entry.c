@@ -683,6 +683,8 @@ uint8_t multifunction_port_Init(void)
     uart_chl_open(UART_MODULE_CHL);
 
     opreate_second_pluse(1);
+    
+    mbase_cb->MulPortMode = 0;  //上电默认为秒信号
 
     multifunction_port_Init();
  }
