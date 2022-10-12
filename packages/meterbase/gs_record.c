@@ -625,6 +625,7 @@ int meter_clr(struct instance_t* instance)
     }
 
     //其他清零    待添加
+    mbase_cb->disp_borrow = 0;   //显示借位清零
     mbase_cb->sta &= F_RemoteRelayOn;  //清除控制命令状态,保留保电状态
     mbase_cb->cmd_errstate = 0;        //错误信息字
     mac_suspend_reset(instance);

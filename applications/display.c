@@ -869,7 +869,14 @@ void display_energy_pro(struct instance_t* instance, struct pipeline_t* pipeline
             break;
     }
     
-
+    if(mbase_control_block->disp_borrow != 0)
+    {
+        for(i=0; i<mbase_control_block->disp_borrow; i++)
+        {
+            energy_p = energy_p / 10;
+        }
+    }
+    
     p_max = 99999999;
     
     for(i=0; i<EnergyDot; i++)
