@@ -106,7 +106,7 @@ int rtc_check_poweron(struct instance_t* instance)
         // 上一次停电时间 写 rtc
         tm_to_mcu_rtc_bcd(temp_tm, settimebuf);
         write_mcu_rtc(0, settimebuf, 7);
- 
+        read_mcu_rtc(0x00, instance);
         ctrl_block->RTCErrS_status = 1;
 
 

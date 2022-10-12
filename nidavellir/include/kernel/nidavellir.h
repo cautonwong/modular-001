@@ -268,7 +268,7 @@ struct context_698_t
     
     uint8_t channel;
     uint16_t index;//临时计数器
-    uint8_t SA;
+    uint8_t SA; //0-单地址 1-通配地址 2-组地址 3-广播地址
     uint8_t LA;
     uint8_t ctrl;//接收到的控制字
     uint8_t step;

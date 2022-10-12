@@ -590,7 +590,7 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
     uint32_t temp=0;
     uint16_t offset = 0;
     
-    // 通配地址 拒绝服务
+    // 通配地址 拒绝服务   //此代码是否有问题？？？  待调整
     if(SA_TYPE_GENERAL == SA_TYPE(ctx->SA)) {
         result = DAR_OTHERS_ERROR;
     }
@@ -638,7 +638,7 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
     if (Security_MAX > connect.connect_mode){
         if(Func_security[connect.connect_mode]){
             result = Func_security[connect.connect_mode](instance, pipeline, mesg);
-            if (result == DAR_SUCCESS)
+            if (result == DL698_SEC_SUCCESS)
             {
                 mbase_cb->clientaddr[ctx->channel] = ctx->CA;
                 //mbase_cb->connect_mode[ctx->channel] = cfg_connect.connect_mode;
