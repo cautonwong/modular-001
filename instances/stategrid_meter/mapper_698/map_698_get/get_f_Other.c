@@ -589,26 +589,50 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
             }
             break;
         case 0xFFFF://内扩
-        switch (attribute)
-        {
+            switch (attribute)
+            {
 #if RESET_INFO              
-            case 0x02://复位信息
-                *p++ = TYPE_double_long_unsigned;
-                if(index == 1)
-                {
-                    mem_swap_cpy(p, (unsigned char*)&resetinfo_file, 4);
-                }
-                else if(index == 2)
-                {
-                    mem_swap_cpy(p, (unsigned char*)&resetinfo_line, 4);
-                }
-                p += 4;
-                return (p-buf);
-                break; 
-#endif                     
-        }
+                case 0x02://复位信息
+                    *p++ = TYPE_double_long_unsigned;
+                    if(index == 1)
+                    {
+                        mem_swap_cpy(p, (unsigned char*)&resetinfo_file, 4);
+                    }
+                    else if(index == 2)
+                    {
+                        mem_swap_cpy(p, (unsigned char*)&resetinfo_line, 4);
+                    }
+                    p += 4;
+                    return (p-buf);
+                    break; 
+#endif              
+                break;
+                default:
+                    break;
+
+            }
         break;
     }
 #endif
+
+    switch (id)
+    {
+        case 0xFFFE0000: //事件编程        //电能表编程列表645  
+        {
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr645_List);
+            len = 52;
+            nd_get_index(instance, s_index, p, len);
+            p += len;
+            return (p-buf);
+        }
+        break;
+
+        default:
+            break;
+
+    }
+
+
+
     return -DAR_OBJECT_NOT_EXIST;
 }

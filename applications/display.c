@@ -247,7 +247,6 @@ extern int read_record_data_form_698_protocol(struct instance_t* instance, uint8
 #define	    Mem_E2PROM               3
 #define     MEMVALUE                 0x03
 
-
 typedef struct
 {
     unsigned short  Id; //显示项ID

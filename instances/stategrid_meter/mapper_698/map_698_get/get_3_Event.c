@@ -1045,7 +1045,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
     uint16_t OI;
     uint8_t attr, OadClass = 7;
     uint8_t dar = DAR_SUCCESS;
-    uint32_t index;
+    uint32_t index, tmpU32;
     int ret;
 
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);

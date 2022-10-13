@@ -19,7 +19,7 @@
 #else
 
     #define PWD_TEST_ON 0
-    #define FREEZ_TEST_VOERTURN 0
+    #define FREEZ_TEST_OVERTURN 0
 
 #endif
 

@@ -977,7 +977,7 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
 
 
 
-#if (FREEZ_TEST_VOERTURN)
+#if (FREEZ_TEST_OVERTURN)
 uint8_t test_freeze = 0;
 #endif
 // 每秒调用
@@ -995,7 +995,7 @@ int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct mess
 
 
 
-#if (FREEZ_TEST_VOERTURN)   
+#if (FREEZ_TEST_OVERTURN)   
     if (test_freeze)
     {
     

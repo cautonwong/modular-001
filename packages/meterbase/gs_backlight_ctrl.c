@@ -31,17 +31,16 @@ int event_alarm_control(struct instance_t* instance, struct pipeline_t* task, st
 // 每秒调用 结合外部消息 触发背光动作            返回1:点亮                  0:关闭
 int backlight_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     
-    if (ctrl_block->sta & F_RemoteAlarm)   //远程告警
+    if (mbase_cb->sta & F_RemoteAlarm)   //远程告警
     {
         LCD_BACK_LIGHT_OPEN(); // 打开背光
         return 1;
     }
 
-    if ((ctrl_block->alarmmin > 0) || (ctrl_block->imaxmin > 0))   // 跳闸延时
+    if ((mbase_cb->alarmmin > 0) || (mbase_cb->imaxmin > 0))   // 跳闸延时
     {
         LCD_BACK_LIGHT_OPEN(); // 打开背光
         return 1;
@@ -52,13 +51,13 @@ int backlight_pro(struct instance_t* instance, struct pipeline_t* task, struct m
     {
         if(mbase_cb->voltage_battery < Bat_Low_Level)
         {
-            ctrl_block->BackLightTmr = 3;
+            mbase_cb->BackLightTmr = 3;
         }
     }
     
-    if(ctrl_block->BackLightTmr > 0)    ctrl_block->BackLightTmr--;
+    if(mbase_cb->BackLightTmr > 0)    mbase_cb->BackLightTmr--;
 
-    if(ctrl_block->BackLightTmr == 0)
+    if(mbase_cb->BackLightTmr == 0)
     {
         LCD_BACK_LIGHT_CLOSE();
     }
