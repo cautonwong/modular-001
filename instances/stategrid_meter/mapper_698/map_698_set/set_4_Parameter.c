@@ -148,6 +148,9 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         *(p+7) = 0xFF;
                         mbase_cb->Fee |= F_ChangeTmOn;
                         break;
+                    case 0x4401:    //密码
+                        mbase_cb->password_err_cnt = 0;     //修改密码，密码锁清零
+                        break;
                 }
                 tag_datalen = axdr_get_len(p);
                  

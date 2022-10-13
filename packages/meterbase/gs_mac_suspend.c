@@ -27,9 +27,6 @@ void mac_suspend_reset(struct instance_t* instance)
     mbase_cb->mac_suspend_date[1] = 0;
     mbase_cb->mac_suspend_date[2] = 0;
     mbase_cb->mac_err_cnt = 0;
-    
-    
-    mbase_cb->password_err_cnt = 0;     //密码锁清零
 }
 
 
@@ -45,6 +42,11 @@ void mac_suspend_sec_pro(struct instance_t* instance, struct pipeline_t* task)
         {
             mac_suspend_reset(instance);
         }
+    }
+    
+    if ((0 == instance->time.tm_hour) && (0 == instance->time.tm_min) && (0 == instance->time.tm_sec))
+    {
+        mbase_cb->password_err_cnt = 0;     //密码锁清零
     }
     
     mbase_cb->mac_suspend_state = false;

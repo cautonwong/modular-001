@@ -1215,7 +1215,7 @@ uint8_t lcd_init(uint8_t power_mode)
           
           LCD_Init(&lcd_init_para);
           LCD_BiasModeConfig(LCD_BMODE_DIV4);
-          LCD_VoltageConfig(LCD_VOL_DEC180MV);
+          LCD_VoltageConfig(LCD_VOL_INC60MV);
           LCD_Cmd(&lcd_io_para, ENABLE);
             break;
         default:

@@ -33,6 +33,11 @@ int backlight_pro(struct instance_t* instance, struct pipeline_t* task, struct m
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
+    if(mbase_cb->Page_ID == 0xFFFF)    //全屏
+    {
+        LCD_BACK_LIGHT_OPEN(); // 打开背光
+        return 1;
+    }
     
     if (mbase_cb->sta & F_RemoteAlarm)   //远程告警
     {

@@ -198,7 +198,7 @@ void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t 
     unsigned char i=0, Tofst , j=0, adj_buf[8];
     signed short Pgain;
     unsigned long TempUrms=0, TempIrms=0, TempPw=0, CalcPw=0, Corretion_Pw=0, U_value=0, I1_value=0, I2_value=0, P_value=0;
-    unsigned long BaseErr,addr=0;
+    unsigned long BaseErr=0,addr=0;
     float err=0;
     struct factor_adj_meter_t Factory3;
     //struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)&ctx;
@@ -210,8 +210,6 @@ void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t 
     
     //测试用，后期删除
     
-
-    
     if(adj_data != 0)
     {
         Factory3.adjflag = adj_data->adjflag;
@@ -219,16 +217,12 @@ void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t 
         Factory3.Ia = adj_data->Ia;  
         Factory3.Pa = adj_data->Pa; 
         Factory3.Ian = adj_data->Ian;  
+        BaseErr = 0;
     }
     else
     {
-        Factory3.adjflag = 0xff;
-        Factory3.Ua = 0x55F0;    //220V 
-        Factory3.Ia = 0xC34A;    //5A
-        Factory3.Pa = 0xD6FF;    //550W
-        Factory3.Ian = 0xC34A;   //5A
+        return;
     }
-    BaseErr = 0;
 
     if (Factory3.adjflag & F_ALadj)
     {
@@ -902,6 +896,11 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
             avg_activepower_cnt = 0;
             avg_activepower_sum = 0;
         }
+    }
+    
+    if(mbase_control_block->apparent_power < abs(mbase_control_block->active_power))    //视在功率小于有功功率，视在=有功
+    {
+       mbase_control_block->apparent_power = abs(mbase_control_block->active_power);
     }
 
     if(mbase_control_block->active_power < 0)

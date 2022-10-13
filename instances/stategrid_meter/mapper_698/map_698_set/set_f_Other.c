@@ -205,7 +205,10 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                   case 0x04://显示参数
                         switch(index)
                         {
-                            case 0x00:
+                            case 0x00:  //索引00和01拒绝读写
+                            case 0x02:  //允许最大对象数
+                                return -DAR_RW_REJECT;
+                                /*
                                 p = p + 3;
                                 if(oad == 0xF300)
                                     mbase_cb->lcd_autodis_list_num = *p;
@@ -222,7 +225,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                                 len = offsetof(struct mbase_control_block_t, Baut_rs485) - offsetof(struct mbase_control_block_t, lcd_keydis_keep_sec);
                                 nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_autodis_list_num, len);
                                 return (p-buf);
-                                break;
+                                break;*/
                             case 0x01://当前总对象数
                                 p = p + 1;
                                 if(oad == 0xF300)
@@ -240,9 +243,6 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                                     nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_keydis_list_num, 1);
                                 }
                                 return (p-buf);
-                                break;
-                            case 0x02://允许最大对象数
-                                return -DAR_RW_REJECT;
                                 break;
                             default:
                                 return -DAR_OTHERS_ERROR;

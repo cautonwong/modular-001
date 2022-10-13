@@ -673,9 +673,7 @@ void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
 		mbase_control_block->AutoInv = 5;
     else
         mbase_control_block->AutoInv = mbase_control_block->lcd_poweron_all_dis_time;
-
-    mbase_control_block->BackLightTmr = mbase_control_block->AutoInv;
-    
+   
 	mbase_control_block->AutoPtr = 0xFF;
 	mbase_control_block->Page_ID = 0xFFFF;
     
@@ -701,7 +699,10 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline, uint8
     {
         Flag.Run |= F_Disp;
         if( instance->ac_power_statue == AC_POWER_ON )
+        {
             mbase_control_block->BackLightTmr = mbase_control_block->backlight_key_time;//按键时,背光点亮
+            LCD_BACK_LIGHT_OPEN(); // 这里打开背光,保证显示与背光相对同步，测试提出显示与背光没有同步
+        }
         else
         {
             if(ANA_GetStatus(ANA_STATUS_COMP1) == 0)
@@ -1031,13 +1032,17 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
             Lcdcon[18] |= DS_Chr_Reverse;
             if((mbase_control_block->Page_ID == 0xA006) || (mbase_control_block->Page_ID == 0xA00A) || (mbase_control_block->Page_ID == 0xA00B) 
               || (mbase_control_block->Page_ID == 0xA012) || (mbase_control_block->Page_ID == 0xA013)) 
-                Lcdcon[19] |= DS_Chr_Fu;
+            {
+                Lcdcon[12] |= DS_Chr_Xiang;
+				Lcdcon[16] |= DS_Chr_Fan;
+            }
         }
         if(mbase_control_block->current_n < 0)
         {
             if(mbase_control_block->Page_ID == 0xA009)
             {
-                Lcdcon[19] |= DS_Chr_Fu;
+                Lcdcon[12] |= DS_Chr_Xiang;
+				Lcdcon[16] |= DS_Chr_Fan;
             }
         }
                 

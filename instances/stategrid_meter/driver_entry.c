@@ -175,8 +175,8 @@ void timing_ftr(void *para)
       
       if(over_Imax == 0x55)
       {
-          dly1 = 6;
-          dly2 = 14;
+          dly1 = 5;
+          dly2 = 16;    //32ms
       }
       else
       {
