@@ -27,7 +27,7 @@ void Relay_Sec_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     if(mbase_control_block->imaxmin > 0)   
     {
         mbase_control_block->imaxmin--;
-        if(abs(mbase_control_block->current_l) < (mbase_control_block->I_Prot/10))
+        if((abs(mbase_control_block->current_l) < (mbase_control_block->I_Prot/10)) || (mbase_control_block->I_Prot == 0))
         {
             mbase_control_block->imaxmin = 0;
         }
@@ -42,11 +42,13 @@ void Relay_Sec_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
 static unsigned char switchon = 1;
 static unsigned char lastswitchsta = 0xaa;
 static unsigned char key_relay_on_tick = 0;
+static uint8_t led_flash_goon = 0;
 
 //每秒调用
 void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
 {
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_control_block;
+    mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     Relay_Sec_Task(instance, pipeline);
     
@@ -56,7 +58,7 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
     
     if((mbase_control_block->sta & F_RemoteRelayOn) || (mbase_control_block->sta == F_RemoteNull))    //保电或正常用电
     {
-        if((mbase_control_block->sta & F_RemoteRelayOn) && (mbase_control_block->sta & F_RemoteRelayOff))   //拉闸后保电
+        if((mbase_control_block->sta & F_RemoteRelayOn) && ((mbase_control_block->sta & F_RemoteRelayOff) || (mbase_control_block->sta & F_RemoteRelayOnAllow)))   //拉闸后保电
         {
             if(KeyPortCheck == 0)    //按键3秒
             {
@@ -64,8 +66,10 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
                 if(key_relay_on_tick >= 3)
                 {
                     switchon = 1;
-                    mbase_control_block->sta &= ~F_RemoteRelayOff;
+                    if(mbase_control_block->sta & F_RemoteRelayOff)     mbase_control_block->sta &= ~F_RemoteRelayOff;
+                    if(mbase_control_block->sta & F_RemoteRelayOnAllow) mbase_control_block->sta &= ~F_RemoteRelayOnAllow;
                     key_relay_on_tick = 0;
+                    led_flash_goon = 2;
                 }
             }
             else
@@ -112,6 +116,7 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
                 switchon = 1;
                 mbase_control_block->sta &= ~F_RemoteRelayOnAllow;
                 key_relay_on_tick = 0;
+                led_flash_goon = 2;
             }
         }
         else
@@ -135,16 +140,30 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
         if(switchon == 1)
         {
             Magnetic_hold_relay_connect();//合闸
-            send_event_mesg_pro(instance, NULL, SwitchOnS, NULL, 1);
-            mbase_control_block->switch_on_succees = 0x5A;  //要挪到成功 待调整
+            if(mbase_control_block->meterclear != 0x5A)//电表清零后,不做事件记录和上报
+            {
+                send_event_mesg_pro(instance, NULL, SwitchOnS, NULL, 1);
+                mbase_control_block->switch_on_succees = 0x5A;  //要挪到成功 待调整
+            }
+            else
+            {
+                mbase_control_block->meterclear = 0;
+            }
             relay_off_chk = 0;
             relay_on_chk = 0;
         }
         else 
         {
             Magnetic_hold_relay_disconnect();//拉闸
-            send_event_mesg_pro(instance, NULL, SwitchOffS, NULL, 1);
-            mbase_control_block->switch_off_succees = 0x5A;  //要挪到成功 待调整
+            if(mbase_control_block->meterclear != 0x5A)//电表清零后,不做事件记录和上报
+            {
+                send_event_mesg_pro(instance, NULL, SwitchOffS, NULL, 1);
+                mbase_control_block->switch_off_succees = 0x5A;  //要挪到成功 待调整
+            }
+            else
+            {
+                mbase_control_block->meterclear = 0;
+            }
             relay_off_chk = 0;
             relay_on_chk = 0;
         }
@@ -175,8 +194,10 @@ void relay_led_ctl(struct instance_t* instance,  struct pipeline_t* pipeline)
     }
 
     if(((mbase_control_block->sta & F_RemoteRelayOnAllow) && (mbase_control_block->relay_true_sta == 1))
-      || ((mbase_control_block->sta & F_RemoteRelayOn) && (mbase_control_block->sta & F_RemoteRelayOff)))//合闸允许状态，闪烁
+      || ((mbase_control_block->sta & F_RemoteRelayOn) && (mbase_control_block->sta & F_RemoteRelayOff))
+        || (led_flash_goon > 0))//合闸允许状态，闪烁
     {
+        if(led_flash_goon > 0)  led_flash_goon--;
         if(instance->time.tm_sec & 0x01)
         {
             RELAY_LED_OPEN();

@@ -173,7 +173,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
     //cmd len data cmd 接入校验
     //调用领域层完成业务  要反映用例场景
 
-    uint8_t buf[20] = {0};
+    uint8_t buf[20] = {0}, tmp[4]={0,};
     int r = recv_mesg_v2(instance,pipeline,mesg, buf, 20);
     if(r > 0 )
     {
@@ -267,6 +267,14 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             //背光配置字
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Blt_Alarm_Byte);
             nd_get_index(instance, addr, (uint8_t*)&mbase_cb->blt_alarm, 4);
+            
+            //大电流延时时间赋值
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectValue);
+            nd_get_index(instance, addr, tmp, 4); 
+            mem_swap_cpy((uint8_t*)&mbase_cb->I_Prot, tmp, 4);
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectTime);
+            nd_get_index(instance, addr, tmp, 2); 
+            mem_swap_cpy((uint8_t*)&mbase_cb->Prot_time, tmp, 2);
             
             freeze_power_on_pro(instance, pipeline, mesg);
             //事件

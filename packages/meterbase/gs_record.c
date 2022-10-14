@@ -642,8 +642,8 @@ int meter_clr(struct instance_t* instance)
     mbase_cb->cmd_errstate = 0;        //错误信息字
     mac_suspend_reset(instance);
     mbase_cb->password_err_cnt = 0;     //密码锁清零
-
-
+    mbase_cb->cmd_dostate = 0;          //控制命令执行状态字清零
+    mbase_cb->meterclear = 0x5a;
 
 #if RESET_INFO    
     resetinfo_file = 0;
