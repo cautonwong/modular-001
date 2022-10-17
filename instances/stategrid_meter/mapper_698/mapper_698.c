@@ -2700,8 +2700,6 @@ int para_init(struct instance_t* instance )
     mbase_cb->report_2015mode = 0;
     mbase_cb->active_report_sec_limit = 3600; //掉电 主动上报 上电时间阈值 默认3600 
     
-
-       
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
     offsetof(struct mbase_control_block_t, OverCurrent_threshold));
     s_len = offsetof(struct mbase_control_block_t, factor_mode) - offsetof(struct mbase_control_block_t, OverCurrent_threshold);

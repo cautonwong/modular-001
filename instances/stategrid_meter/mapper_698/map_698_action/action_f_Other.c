@@ -425,7 +425,8 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
     int rxlen=0, ret =0;
     int16_t complen;
     uint8_t *p = buf,disp_sequ=0;
-    uint32_t temp = 0,s_index=0,addr=0,displayid=0,displayoad1=0,displayoad2=0;
+    uint32_t temp = 0,s_index=0,addr=0,displayoad1=0,displayoad2=0;
+    uint16_t displayid=0;
     uint8_t* ptr_tmp = instance->apdu_cache;
     uint8_t tmp_len = 0;
     //struct fifo_t* cache_t = p_ctx->apdu;
@@ -876,18 +877,22 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             {
                 p = p + 3;
                 mem_swap_cpy((uint8_t*)&temp, p, 4);
-                p = p + 5;
+                p = p + 4;
+                
+                if(*(p+1) > 10) return -DAR_COMM_SPEED_CANNOT_CHANGE;
+                p++;
                 if((temp != 0xF2090201) && (temp != 0xF20902FD))
                 {
                     return -DAR_OBJECT_NOT_EXIST;
                 }
                 if((*p > 10) || (*(p+1) != 2) || (*(p+2) != 8) || (*(p+3) != 1) || (*(p+4) != 0))
                 {
-                    return -DAR_BUFFER_OVERFLOW;
+                    return -DAR_COMM_SPEED_CANNOT_CHANGE;
                 }
                 mbase_cb->baud_chg = 0;
                 if(temp == 0xF20902FD)  //协商
                 {
+                    if(p_ctx->channel != chl_PLC_698)     return -DAR_RW_REJECT; 
                     if(mbase_cb->Baut_plc_neg != *p)
                     {
                         mbase_cb->Baut_plc_neg = *p;

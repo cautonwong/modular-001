@@ -255,8 +255,14 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         mbase_cb->alarmmin = 0;
                         mbase_cb->sta &= ~F_RemoteRelayOff;
                     }
+                    
                     mbase_cb->sta |= F_RemoteRelayOn;
-                    mbase_cb->sta &= ~(F_RemoteGaoJing1 + F_RemoteGaoJing0);
+                    if(mbase_cb->sta & (F_RemoteGaoJing1 + F_RemoteGaoJing0))
+                    {
+                        mbase_cb->sta &= ~(F_RemoteGaoJing1 + F_RemoteGaoJing0);
+                        mbase_cb->limitmin = 0;
+                        mbase_cb->sta |= F_RemoteRelayOnAllow;  //合闸允许
+                    }
                     mbase_cb->cmd_dostate = 0x0080;  //bit8;
                     return 1;
                     break;

@@ -364,6 +364,8 @@ struct mbase_control_block_t
 	uint8_t Pass02Lock_Tmr;//通讯02级密码闭锁时间
 	uint8_t Pass04Lock_Tmr;//通讯04级密码闭锁时间
     
+    uint8_t meterclear; //电表清零
+    
     
     uint8_t persistent_blank_space[4*10];   //  空白区
 

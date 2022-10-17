@@ -187,7 +187,23 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                         maxnum = mbase_cb->lcd_keydis_list_num;
                         addr = KeyDisplayList;
                     }
-                    if(index > maxnum)  return -DAR_OBJECT_NOT_EXIST;
+                    
+                    if(index > 99)  return -DAR_OBJECT_NOT_EXIST;
+                    
+                    if(index > maxnum)  //超过设定最大显示项目，固定返回日期
+                    {
+                        *p++ = TYPE_structure;
+                        *p++ = 2;
+                        *p++ = TYPE_CSD;
+                        *p++ = 0;
+                        *p++ = 0x40;    //0x40000200
+                        *p++ = 0x00;
+                        *p++ = 0x02;
+                        *p++ = 0x00;
+                        *p++ = TYPE_unsigned;
+                        *p++ = 0x00;
+                        return (p-buf);
+                    }
                     
                     if(index != 0)
                     {
