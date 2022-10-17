@@ -333,7 +333,8 @@ struct context_698_t
     uint16_t apdu_rx_len;
     uint16_t apdu_l_len;
     uint16_t apdu_rx_offset;
-
+    uint16_t apdu_len_after_decode;
+    
     struct fifo_t* apdu;
 
    

@@ -600,10 +600,12 @@ const uint8_t event_oad_num = sizeof(event_oad) / sizeof(event_oad[0]);
 int event_clr(struct instance_t* instance)
 {
     int ret;
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     ret = list_record_clr_2(instance, event_oad, (sizeof(event_oad) / sizeof(event_oad[0])));
 
     report_3320list_2015state_clear(instance); // 清事件上报列表和状态
+
 
     return ret;
 }

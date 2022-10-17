@@ -1097,6 +1097,10 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     p++;//tag
                     buffer[1] = *p++;
                     if((buffer[1] > 23) && (buffer[1] != 99))  return -DAR_OTHERS_ERROR;
+                    if(((buffer[0] == 99) || (buffer[1] == 99)) && ((buffer[0] != 99) || (buffer[1] != 99)))
+                    {
+                        return -DAR_OTHERS_ERROR;
+                    }
                     
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
                     nd_set_index(instance, s_index, buffer, 2); 
@@ -1130,7 +1134,10 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 nd_set_index(instance, s_index, buffer, 2);
                 if(index == 1)
                 {
-                    record_event_no_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
+                    if ( (buffer[0] != temp[0]) || (buffer[1] != temp[1]) ) //第一结算日改变
+                    {
+                        record_event_no_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
+                    }
                 }
                 
                 record_event_no_mesg_pro(instance, NULL, BillDayWrS, NULL, 1);//

@@ -14,7 +14,6 @@ extern uint8_t report_3320list_confirmed(struct instance_t* instance, uint8_t cn
 extern uint8_t report_3320list_confirmed_All_channel(struct instance_t* instance, uint32_t oad);
 extern int fr_handle_report_response(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 extern void EventOut_698_check(struct instance_t* instance);
-extern void report_3320list_2015state_clear(struct instance_t* instance);
 
 extern uint8_t report_channel_check(struct instance_t* instance, uint16_t channel);
 extern uint32_t follow_report_3320List_Latest_oad_get(struct instance_t* instance, uint8_t chn);
@@ -104,9 +103,9 @@ void report_2015state_judge(struct instance_t* instance)
         mbase_cb->report_2015state_cache &=~RPT_2015_MEMORIZER_ERR;
     }
 
-    //拉合闸成功    
-
-    if ( mbase_cb->switch_on_succees == 0x5A   )
+      
+#if 1  ////拉合闸成功
+    if ( mbase_cb->switch_on_succees == 0x5A   ) 
     {
         mbase_cb->switch_on_succees = 0;
         report_2015state_update(instance, RPT_2015_SWITCH_ON_SUCCEES);
@@ -117,7 +116,7 @@ void report_2015state_judge(struct instance_t* instance)
         mbase_cb->switch_off_succees = 0;
         report_2015state_update(instance, RPT_2015_SWITCH_OFF_SUCCEES);
     }
-
+#endif
 
 
 }
@@ -421,6 +420,9 @@ void report_3320list_2015state_clear(struct instance_t* instance)
     addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
     offsetof(struct mbase_control_block_t, report_2015state[0])) -  offsetof(struct mbase_control_block_t, persistent_section_start);
     nd_set_offset(instance, addr, (uint8_t*)&mbase_cb->report_2015state[0], 4*4);
+
+
+    mbase_cb->report_2015state_cache = 0;
 
 
     EventOut_698_check(instance);

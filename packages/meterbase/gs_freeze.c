@@ -1034,6 +1034,8 @@ int freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task, st
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t tmp_u32 = 0, s_index;
     
+    ctrl_block->trigger_insfreeze_delay_sec = 0xFFFF; 
+    
     record_rollback_after_set_time(instance, 0x5A);
     day_freeze_power_on_pro(instance, task, mesg);
     bill_freeze_power_on_pro(instance, task, mesg);

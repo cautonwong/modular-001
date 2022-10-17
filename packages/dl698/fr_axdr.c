@@ -141,7 +141,7 @@ uint16_t axdr_get_len(const uint8_t *data)
         break;
 
     case TYPE_date_time:
-        return 10;
+        return 10+1;
         break;
     case TYPE_date:
     case TYPE_COMDCB:
@@ -224,22 +224,26 @@ uint16_t axdr_get_len(const uint8_t *data)
         break;
 
     case TYPE_CSD:
-        len = 1+4;
+        data++;
+        len = 1;
+        len += (1+4);
         if (1 == data[0]){
-            num  = data[len];
+            num  = data[5];
+            len += 1;
             len += num * 4;
         }
+
         return len;
         break;
 
     case TYPE_SID:
-        len = 5;
+        len = 4+1;
         type_len = axdr_decode(data[len], data+len, &data_len);
         return (len + type_len + data_len);
         break;
 
     case TYPE_SID_MAC:
-        len = 4;
+        len = 1 + 4;
         type_len = axdr_decode(data[len], data+len, &data_len);
         len += type_len + data_len;
         type_len = axdr_decode(data[len], data+len, &data_len);
@@ -282,7 +286,7 @@ uint16_t axdr_record_len_get(uint8_t* data, uint16_t* rsdLen, uint16_t* rcsdLen)
     uint8_t  tmpData, * p = data;
     uint16_t len;
 
-    p += 4; //oad
+    //p += 4; //oad
     /* rsd */
     tmpData = *(p - 1);
     *(p - 1) = TYPE_RSD;
@@ -1678,9 +1682,10 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
             check_result = select_record_time_check(ptr_tmp, non_period, rsd_info);
             if ( check_result > 0 )
             {
-                if ((check_result == 1) && (number >= 1)) // 至少已搜索到一条
+                if ((check_result == 1) && (number >= 1)) // 至少已搜索到一条  方法1
                 {
                     len -= one_len; // 
+                    number = 0;     
                 }
             
                 //开始打包

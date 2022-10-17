@@ -23,34 +23,37 @@ int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline
     uint8_t list = 0;
 
     uint8_t *apdu = ctx->apdu_d_rx + ctx->apdu_rx_offset;
-
+    uint8_t  *p;
+    
+    p = apdu;
     if (ctx->choice > GetRequestNext){
         return -1;
     }
     if (ctx->choice == GetRequestNext){
-        len = 2;
+        p += 2;
     }else{
         list = 1;
         if ((ctx->choice == 0x02) || (ctx->choice == 0x04)){
 
-            len += axdr_decode(TYPE_octet_string, apdu, &tmp_num);  
+            p += axdr_decode(TYPE_octet_string, p, &tmp_num);  
             list = tmp_num;     
             //list = apdu[0];
             //len++;
         }
 
         for (i = 0; i < list; i++){
+            p += 4;
             if ((ctx->choice == 0x03) || (ctx->choice == 0x04)){
                 rsd_len = 0;
                 rcsd_len = 0;
-                len += axdr_record_len_get(apdu, &rsd_len, &rcsd_len);
+                p += axdr_record_len_get(p, &rsd_len, &rcsd_len);
                 if (rsd_len == 0 || rcsd_len == 0){
                     return -1;
                 }
             }
         }
     }
-    return len;
+    return (p - apdu);
 }
 
 

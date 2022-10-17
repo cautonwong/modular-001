@@ -380,6 +380,12 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
         ctx->timeTag_valid = 0;
         offset += 1;
     }
+
+    if((ctx->apdu_rx_offset + offset) != ctx->apdu_len_after_decode)  
+    {
+        return -1; //apdu 无法解析
+    }
+    
     if(ctx->apdu_len_valid == 0){
         ctx->apdu_len_valid = ctx->apdu_rx_offset + offset;
     }
@@ -512,7 +518,7 @@ int fr_apdu_effective_check(struct instance_t* instance, struct pipeline_t* pipe
         return 0;
     }
     
-    if((1 == get_addr_type(ctx->SA)) &&  (ctx->service == SET_Request)){
+    if((1 == get_addr_type(ctx->SA)) &&  ((ctx->service == SET_Request) || (ctx->service == ACTION_Request))){
         return 0;
     }
     if (1 == get_addr_type(ctx->SA)) {
@@ -781,9 +787,10 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t data[8]={0};
     struct fifo_t* cache = ctx->apdu;
-    int err_no = 0;
+    int err_no = 0, ret = 0;
     uint8_t service = 0;
     uint32_t tmp_u32 = 0;
+    uint32_t apdu_offset_len_cache = 0;
     //uint8_t err_s_response_flag = 0;
 
     log_info(" OK.\n");
@@ -823,10 +830,13 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     update_plc_baut_tick(instance, pipeline, mesg);
     update_connect_timeout_cnt(instance, pipeline, mesg);
 
+    
     ctx->service = apdu_rx[ctx->apdu_rx_offset++];
     ctx->security_choice = 0xff;
     ctx->verification_choice = 0xff;
+    ctx->apdu_len_after_decode = ctx->apdu_rx_len;
     if ((SECURITY_Request == ctx->service) || (SECURITY_Response == ctx->service)){
+        apdu_offset_len_cache = ctx->apdu_rx_offset;
         service = ctx->service;
         err_no = fr_security_request(instance, pipeline, mesg);
         if(err_no == 0){
@@ -834,6 +844,15 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
         }
 
         ctx->service = apdu_rx[ctx->apdu_rx_offset++];
+
+        if (SECURITY_CHOICE_1_Ciphertext == ctx->security_choice) //获取解密后apdu长度 用于帧格式解析判断  
+        {
+            if ( err_no > 1)
+            {
+                apdu_offset_len_cache = ctx->apdu_rx_offset - apdu_offset_len_cache ;  //记录 安全传输 apdu 额外偏移的长度。
+                ctx->apdu_len_after_decode = err_no + apdu_offset_len_cache;
+            }
+        }
     }
     
 
@@ -844,10 +863,19 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     ctx->PIID = apdu_rx[ctx->apdu_rx_offset++];
     ctx->PIID |= (1 << 6);//PIID-ACD
 
-    if(0 == fr_timetag_check(instance, pipeline, mesg)){
+
+    ret = fr_timetag_check(instance, pipeline, mesg);
+    
+    if(0 == ret)
+    {
         ctx->fr_err = FRM_TIME_TAG_ERR;
         fifoBuf_removeData(fifo, ctx->min_len + 2);
         return -1;
+    }
+    else if (ret < 0)
+    {
+        ctx->service = ERROR_S_Response;
+        ctx->err_n = 1; // apdu 无法解析
     }
 
     mesg->from  = pipeline->id;//从哪里来
@@ -861,8 +889,11 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     fifoBuf_putByte(cache, ctx->PIID);
 
     if(fr_check_service_and_choice(instance, pipeline, mesg)){
-        ctx->service = ERROR_S_Response;
-        ctx->err_n = 2;
+        if (ctx->service != ERROR_S_Response)
+        {
+            ctx->service = ERROR_S_Response;
+            ctx->err_n = 2; //服务不支持
+        }
     }
 
     //if (err_s_response_flag != 0)

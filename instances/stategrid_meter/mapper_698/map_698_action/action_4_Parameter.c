@@ -140,8 +140,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     
                     if(pctx->security_choice != 0x01)	//明文广播校时
                     {
-                        //------ 广播校时不允许在跨天 -------
-                        if(timer_set[3] != timer[3])    return -DAR_OTHERS_ERROR;
+
                         
                         //最小校时偏差：小于此范围所有校时均不响应，包括明文广播校时、密文广播校时，默认60秒；
                         //最大校时偏差：超过此范围的明文广播校时不响应，密文广播校时响应，默认300秒。
@@ -165,6 +164,10 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                             }
                             return -DAR_OTHERS_ERROR;
                         }
+                        
+                        //------ 广播校时不允许在跨天 -------
+                        if(timer_set[3] != timer[3])    return -DAR_OTHERS_ERROR;
+                        
                         //------ 不允许在结算日的±5min内广播校时 -------
                         for(i=0; i<3; i++)
                         {

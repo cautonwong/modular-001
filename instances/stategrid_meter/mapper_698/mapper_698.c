@@ -2158,21 +2158,30 @@ const struct format_conversion_t format_conversion_tab[] =
 //
 int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* src, uint32_t oad_req, uint32_t oad_src, enum format_conversion_mode mode)
 {
-    uint16_t i;
+    uint16_t i, OI;
     uint8_t type, attr, index, len, block_num = (4+1);
     uint32_t addr, cmp_oad = 0;
 
     type = get_OAD_Class(oad_req);
     attr = get_OAD_Attribute(oad_req);
     index = get_OAD_Index(oad_req);
+    OI = get_OAD_OI(oad_req);
     switch(type)
     {
         case 0: //电能
         {
+
+            if((OI != 0x0000) && (OI != 0x0010) && (OI != 0x0020))  // 单相
+            {
+                return -1;
+            }
+
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3); //读取费率数
             nd_get_index(instance, addr, &block_num, 1); 
             
             block_num += 1;   // 总加 费率个数
+
+
             if (mode == RFC_GET_ORIGINAL_LEN) 
             {
                 if(attr == 2)//普通

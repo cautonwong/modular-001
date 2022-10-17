@@ -115,8 +115,8 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
             if( mbase_cb->plc_baut_tick == 0)
             {
                 mbase_cb->Baut_plc_neg =0xfe;
-                mbase_cb->Baut_plc = 6;
-                mcu_uart_set_baud(9600, 4);
+                mbase_cb->Baut_plc = 10;
+                mcu_uart_set_baud(115200, 4);
             }
         }
 
