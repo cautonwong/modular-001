@@ -754,7 +754,7 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline, uint8
                 mbase_control_block->KeyInv = mbase_control_block->lcd_keydis_keep_sec;
         }
         else
-            mbase_control_block->KeyInv = 30;
+            mbase_control_block->KeyInv = mbase_control_block->lcd_nopower_key_keep_sec;
     }
     
     if( (mbase_control_block->Key & F_KeyDispay) && (mbase_control_block->KeyInv == 0) )//退出键显

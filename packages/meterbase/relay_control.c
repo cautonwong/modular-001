@@ -135,7 +135,7 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
         switchon = 1;
     }
 
-    if(lastswitchsta != switchon)   //操作继电器
+    if((lastswitchsta != switchon) || (mbase_control_block->relay_do == 0x5A))   //状态翻转、上电或定时操作继电器
     {
         if(switchon == 1)
         {
@@ -151,6 +151,7 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
             }
             relay_off_chk = 0;
             relay_on_chk = 0;
+            mbase_control_block->relayerr_record = 0x5A;
         }
         else 
         {
@@ -166,8 +167,10 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
             }
             relay_off_chk = 0;
             relay_on_chk = 0;
+            mbase_control_block->relayerr_record = 0x5A;
         }
         lastswitchsta = switchon;
+        if(mbase_control_block->relay_do == 0x5A)   mbase_control_block->relay_do = 0;
     }
 }
 

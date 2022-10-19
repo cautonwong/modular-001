@@ -70,8 +70,6 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
     switch (oad)
     {
         case 0x8000://遥控
-            mbase_cb->cmd_errstate = 0;
-            mbase_cb->cmd_dostate = 0;
             if(method != 0x83)  //明文合闸除外
             {
                 if( mbase_cb->mac_suspend_state == true )   //挂起
@@ -95,6 +93,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                             return -DAR_TIME_TAG_INVALID;
                     }
                     mbase_cb->sta |= F_RemoteAlarm;
+                    mbase_cb->cmd_errstate = 0;
                     mbase_cb->cmd_dostate = 0x0020;  //bit10;
                     return 1;
                     break;
@@ -105,6 +104,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
 
                     }
                     mbase_cb->sta &= ~F_RemoteAlarm;
+                    mbase_cb->cmd_errstate = 0;
                     mbase_cb->cmd_dostate = 0x0010;  //bit11;
                     return 1;
                     break;
@@ -146,6 +146,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                             mbase_cb->cmd_dostate = 0x2000;  //bit2;
                         else    //延时跳闸
                             mbase_cb->cmd_dostate = 0x1000;  //bit3;
+                        
                     }
                     else
                     {
@@ -178,6 +179,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     {
                         mbase_cb->imaxmin = 0;
                     }
+                    mbase_cb->cmd_errstate = 0;
                     return (p-buf);
                     break;
                 case 0x82://合闸
@@ -235,8 +237,6 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
             }
             break;
         case 0x8001://保电
-            mbase_cb->cmd_errstate = 0;
-            mbase_cb->cmd_dostate = 0;
             if( mbase_cb->mac_suspend_state == true )   //挂起
             {
                 mbase_cb->cmd_errstate = 0x8000;    //挂起
@@ -263,6 +263,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         mbase_cb->limitmin = 0;
                         mbase_cb->sta |= F_RemoteRelayOnAllow;  //合闸允许
                     }
+                    mbase_cb->cmd_errstate = 0;
                     mbase_cb->cmd_dostate = 0x0080;  //bit8;
                     return 1;
                     break;
@@ -273,6 +274,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
 
                     }
                     mbase_cb->sta &= ~F_RemoteRelayOn;
+                    mbase_cb->cmd_errstate = 0;
                     mbase_cb->cmd_dostate = 0x0040;  //bit9;
                     return 1;
                     break;

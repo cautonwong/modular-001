@@ -23,6 +23,7 @@ int SwitchErr_event_judge(struct instance_t* instance, struct pipeline_t* task, 
 
     uint16_t RecordId = SwitchErrS;
 
+    if(ctrl_block->relayerr_record != 0x5A)    return result;  //继电器未动作，不进来
 
     if((err_flag == true) /*&& (enable_flag == true)*/)
     {

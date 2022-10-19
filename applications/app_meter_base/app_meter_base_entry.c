@@ -139,6 +139,14 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
             }
         }
         
+        if(instance->time.tm_sec == 0)  //定时补拉合闸
+        {
+            if((instance->time.tm_min == 0) || (instance->time.tm_min == 15) || (instance->time.tm_min == 30) || (instance->time.tm_min == 45))
+            {
+                mbase_cb->relay_do = 0x5A;
+            }
+        }
+        
         updata_powerdown_time(instance);
         esam_sec_pro(instance, pipeline);   //esam电源关闭 和esam自检
         mac_suspend_sec_pro(instance, pipeline);//mac挂起处理
@@ -253,6 +261,8 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             mbase_cb->Fee |= (F_TOUChange+F_ChangeTmOn+F_DAYTABChange);    //获取当前时区时段费率
             mbase_cb->cmd_dostate = 0;  //上电清除控制命令状态字和错误状态字
             mbase_cb->cmd_errstate = 0;
+            mbase_cb->relayerr_record = 0;  //继电器误动作记录起始标志
+            mbase_cb->relay_do = 0x5A;
             mbase_cb->alarmmin = 0;     //上电后清零
             mbase_cb->limitmin = 0;     //上电后清零
             mbase_cb->imaxmin = 0;     //上电后清零

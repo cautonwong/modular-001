@@ -317,6 +317,8 @@ struct mbase_control_block_t
     uint32_t imaxmin;  //大电流延时跳闸（min）SEC？  没必要存e2p？
     uint16_t cmd_dostate;  //控制命令执行状态字
     uint16_t cmd_errstate;  //控制命令错误状态字
+    uint8_t relayerr_record;    //误动作记录开始
+    uint8_t relay_do;   //继电器操作
     
 
     uint8_t key_state;  //秘钥状态，显示调用，true为公钥
