@@ -744,6 +744,7 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline, uint8
         
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + mbase_control_block->KeyPtr);
         nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
+        if(pageid ==  0xFFFF)    pageid = 0xA001;
         mbase_control_block->Page_ID = pageid;
         
         if( instance->ac_power_statue == AC_POWER_ON )
@@ -810,7 +811,7 @@ void Get_DisplayPage(struct instance_t* instance, struct pipeline_t* pipeline)
             
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AutoDisplayList + mbase_control_block->AutoPtr);
             nd_get_index(instance, s_index, (uint8_t*)&pageid, 2);
-            
+            if(pageid ==  0xFFFF)    pageid = 0xA001;
             mbase_control_block->Page_ID = pageid;
 		}
 	}
