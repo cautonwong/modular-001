@@ -110,15 +110,15 @@ const COMMTAB  CommTab[] =
 	0xA6000306,	0xFFFF,							FORMAT_00,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 4,	//表内计量常数
 	0xA6000307,	0xFFFF,							FORMAT_00,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 18,	//交采规格配置
 	0xA6000309,	Un_Cmp_Value,                   FORMAT_00,      CommData_WR + CommData_E2PROM_BP + CommData_FACTORY + 8,	//电压影响量补偿
-	0xA6011054, 0xFFFF,							FORMAT_00,      CommData_R + CommData_E2PROM + 10,//复位次数
-	
+	0xA6011054, ResetCount,                     FORMAT_00,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 4,//复位次数
+	0xA601100F, 0xFFFF,							FORMAT_08,      CommData_WR + CommData_RAM + 4, //校验码
+    
 	0xA8000100,	0xFFFF,							FORMAT_08,      CommData_WR + CommData_RAM + 1,	    //工厂模式
 	0xA8000105, 0xFFFF,							FORMAT_00,      CommData_W + CommData_FACTORY + 0,  //默认参数初始化
 	
 	0xA8001001,	(unsigned int)FirmWareVersion,  FORMAT_00,      CommData_R + CommData_RAM + 20,//厂家内部软件版本号    
 	0xA8F00002,	0xFFFF,					        FORMAT_08,      CommData_WR + CommData_E2PROM + 4,	//背光报警控制字
 	0xA8F00003,	0xFFFF,						    FORMAT_08,      CommData_WR + CommData_RAM + 2,	//电能表类型、功能配置字
-//	0xA8F00050,	0xFFFF,							FORMAT_00,      CommData_WR + CommData_E2PROM + 4,	//上电持续时间
 	0xA8F00051,	0xFFFF,							FORMAT_08,      CommData_WR + 2,	//掉电主动上报的阈值时间
 	0xA8F00052,	0xFFFF,						    FORMAT_08,      CommData_WR + CommData_E2PROM + 1,	//小电流不滤除 AA开启
     0xA8F00053, 0xFFFF,                         FORMAT_00,      CommData_WR + 6, //停电时间（测试补冻结用）
@@ -135,8 +135,6 @@ const COMMTAB  CommTab[] =
 	0xA8000101,	0xFFFF,							FORMAT_00,      CommData_WR + CommData_RAM + CommData_FACTORY + 1,//生产测试模式
 	0xA8000102,	0xFFFF,							FORMAT_00,      CommData_W + CommData_RAM + CommData_FACTORY + 1,//测试命令
 	0xA8000103,	0xFFFF,							FORMAT_00,      CommData_R + CommData_RAM + 6,//自检状态字
-
-	0xA800020F,	ResetCount,                     FORMAT_00,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 4,//复位命令
     
     0xA8FFFFF0,	0xFFFF,							FORMAT_00,      CommData_WR + CommData_FACTORY + 4,//正向电能设置底度
     0xA8FFFFF1,	0xFFFF,							FORMAT_00,      CommData_WR + CommData_FACTORY + 4,//反向电能设置底度

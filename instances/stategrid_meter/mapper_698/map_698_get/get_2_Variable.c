@@ -86,6 +86,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
     
     if(attribute == 0x03)//属性3，换算及单位
     {
+        if(index != 0x00)   return -DAR_OBJECT_NOT_EXIST;
         maxnum = sizeof(Atbe3_table)/sizeof(ATBE3);
         for(i=0; i<maxnum; i++)
         {
@@ -215,7 +216,11 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
             }
             else if(attribute == 0x03)
             {
-            
+                if(index != 0x00)   return -DAR_OBJECT_NOT_EXIST;
+                *p++ = TYPE_Scaler_Unit;
+                *p++ = 0x00;
+                *p++ = 0xFF;
+                return (p-buf);
             }
             else
                 return -DAR_OTHERS_ERROR;

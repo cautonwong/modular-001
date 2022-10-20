@@ -35,6 +35,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
 
     if(attribute == 0x03)
     {
+      if(attr_index != 0x00)   return -DAR_OBJECT_NOT_EXIST;
       switch(mode)
       {
       case 0x00:

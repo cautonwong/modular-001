@@ -332,7 +332,7 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
     {
         
         mbase_cb->MonthEnegery += 1;
-        mbase_cb->MonthEnegery_dec = 0;
+        mbase_cb->MonthEnegery_dec = mbase_cb->MonthEnegery_dec - mbase_cb->meter_const/100;
 
         Updata_flag |= BIT1;
         if((mbase_cb->MonthEnegery % 100)==0)

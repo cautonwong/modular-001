@@ -609,7 +609,9 @@ signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx
     
     if(ID == 0xA8000100)
     {
-        if(*(p_rx+12) == 0xAA)
+        if((mbase_cb->CoverOpenS_status != EVENT_SET) && (*(p_rx+12) == 0xAA))  return RS_ERR_PASS;
+        
+        if((*(p_rx+12) == 0xAA) || (*(p_rx+12) == 0xFB))
             mbase_cb->factor_mode = true;
         else if(*(p_rx+12) == 0x00)
             mbase_cb->factor_mode = false;

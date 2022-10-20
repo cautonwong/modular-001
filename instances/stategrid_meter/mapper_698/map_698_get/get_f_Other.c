@@ -46,6 +46,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
     {
         if(attribute == 0x03)//设备对象数量
         {
+            if(index != 0x00)   return -DAR_OBJECT_NOT_EXIST;
             *p++ = TYPE_unsigned;
             *p++ = 1;
             return (p-buf);

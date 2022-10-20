@@ -908,6 +908,17 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 buffer[1] = *p++;
                 p++;
                 buffer[2] = *p++;
+                
+                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para);
+                nd_get_index(instance, s_index, &num, 1);
+                if(num > MaxSeasonNum) num = MaxSeasonNum;
+                for(i=0; i<num; i++)
+                {
+                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
+                    nd_get_index(instance, s_index, temp, 3);
+                    if((buffer[0] == temp[0]) && (buffer[1] == temp[1]) && (buffer[2] != temp[2]))  return -DAR_RW_REJECT;
+                }
+                
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
                 nd_set_index(instance, s_index, buffer, 3);
             }
