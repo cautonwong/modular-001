@@ -537,6 +537,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             }
             else if(method == 0x04) //ESAM数据更新
             {
+                displayoad2 = 0;
                 p = p + 3;
                 p += axdr_decode(TYPE_octet_string, p, &txlen);
                 len1 = (uint8_t)txlen;
@@ -544,8 +545,6 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 memcpy(buffer, p, len1);//oad+data
                 mem_swap_cpy((uint8_t*)&displayoad2, buffer, 4);
 
-
-                displayoad2 = 0;
                 p = p + len1;
                 p++;
                 mem_swap_cpy((uint8_t*)&addr, p, 4);//sid

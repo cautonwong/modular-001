@@ -135,6 +135,10 @@ static int __verification_RN(struct instance_t* instance, struct pipeline_t* pip
     input.RN_Data_len   = get_octet_string(ctx, &offset, &len);
     input.RN_Data       = apdu_rx + offset;
 
+    input.data_buf      = instance->apdu_cache; //临时缓冲区
+    input.data_buf_len  = cache_max;            //临时缓冲长度
+    
+    
     ndv_memcopy(rn_buf, mbase_cb->report_random_data, 12);
     ndv_memcopy(mac_buf, apdu_rx + offset + 1, 4);
 

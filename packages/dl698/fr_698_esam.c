@@ -439,12 +439,15 @@ int fr_698_handle_esam(struct instance_t* instance, struct esam_698_input_t *p_i
 //主动上报  
 uint8_t get_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *apdu, uint8_t apdu_len , uint8_t *dst)
 {
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
     int fd = 0;
     int request = esam_type_upreport_cmd;
     struct esam_698_data_t param;
     struct esam_698_input_t  input = {0};
     struct esam_698_output_t output= {0};
- 
+    int ret = 0;
+    
     input.data_buf      = instance->apdu_cache; //临时缓冲区
     input.data_buf_len  = cache_max;            //临时缓冲长度
     
@@ -455,7 +458,9 @@ uint8_t get_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *apdu, uin
     output.data = dst;
     param.output = &output;
     
-    return esam_pro_handle(instance, fd, request, (void *)&param);
+    ret = esam_pro_handle(instance, fd, request, (void *)&param);
+    mbase_cb->esam_power_close_dly = 15;
+    return ret;
 }
 //主动上报验证
 int check_upreport_esam_rn_mac(struct instance_t* instance, struct esam_698_input_t *p_input, struct esam_698_output_t *p_output)
@@ -463,13 +468,22 @@ int check_upreport_esam_rn_mac(struct instance_t* instance, struct esam_698_inpu
     int fd = 0;
     int request = esam_type_upreportcheck_cmd;
     struct esam_698_data_t param;
+    int ret = 0;
     //struct esam_698_input_t  input = {0};
     //struct esam_698_output_t output= {0};
 
     param.input = p_input;
     param.output = p_output;
 
-    return esam_pro_handle(instance, fd, request, (void *)&param);
+    esam_pro_handle(instance, fd, request, (void *)&param);
+    
+    if((0x9000 == p_output->esam_err_no)){
+        return 1;
+    }
+    else
+    {
+        return -1;   
+    }
 }
 
 

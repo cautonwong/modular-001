@@ -1501,6 +1501,7 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
         if(mbase_cb->first_MbillDay_flag == 0x5A)
         {
             clr_MonthEC(instance);
+            mbase_cb->first_MbillDay_flag = 0;
         }
     }
 

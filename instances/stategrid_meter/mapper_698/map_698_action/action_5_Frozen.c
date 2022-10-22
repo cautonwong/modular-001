@@ -231,6 +231,7 @@ int freeze_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t
     }
 
     capture_oad = buf_to_uint32_msb(p);
+    p += 4;
     scheme = (uint8_t)((capture_oad >> 13) & 0x07); //方案号
 
     if ((0x5002 != OI) && (0 != scheme)) //除分钟冻结外 不支持多方案配置
@@ -262,7 +263,7 @@ int freeze_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t
         memcpy(oadlist, oadlist + 4, CaptureLen + tempbuf - oadlist);//关联对象
         tempbuf[0] -= 1;
     
-#if 1
+#if 0
         ret = cal_record_size_sectors(instance,tempbuf, depth_buf, oad);
         if (ret <= 0)
         {

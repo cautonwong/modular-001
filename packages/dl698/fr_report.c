@@ -62,15 +62,24 @@ void report_2015state_judge(struct instance_t* instance)
 
     if( mbase_cb->voltage_battery < 300 ) //电池电压低
     {
-        if (!(mbase_cb->report_2015state_cache & RPT_2015_RTC_BATTERY_LOW))
+        
+        if(rtc_cnt > 2)
         {
-            mbase_cb->report_2015state_cache |= RPT_2015_RTC_BATTERY_LOW;
-            report_2015state_update(instance, RPT_2015_RTC_BATTERY_LOW);
+            if (!(mbase_cb->report_2015state_cache & RPT_2015_RTC_BATTERY_LOW))
+            {
+                mbase_cb->report_2015state_cache |= RPT_2015_RTC_BATTERY_LOW;
+                report_2015state_update(instance, RPT_2015_RTC_BATTERY_LOW);
+            }
+        }
+        else
+        {
+            rtc_cnt++;
         }
     }
-    else
+    else if( mbase_cb->voltage_battery > 305 ) //电池电压低
     {
-         mbase_cb->report_2015state_cache &=~RPT_2015_RTC_BATTERY_LOW;
+        rtc_cnt = 0;
+        mbase_cb->report_2015state_cache &=~RPT_2015_RTC_BATTERY_LOW;
     }
 
     //ESAM故障
@@ -1073,6 +1082,7 @@ int active_report_3011_pro(struct instance_t* instance, struct pipeline_t* pipel
         else
         {
             get_upreport_esam_rn_mac(instance, esam_apdu_p, data_len , ptr_cache);
+            
             data_len = 12 + 5;
             ndv_move_buffer(ptr_cache+12, ptr_cache+13, 4);
             *(ptr_cache+12) = 0x04;       
