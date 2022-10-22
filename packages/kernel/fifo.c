@@ -134,8 +134,10 @@ uint16_t fifo_popData(struct fifo_t* buf,uint16_t len, int (*callback)(void* ctx
     // get number of bytes available
     uint16_t num_bytes = fifoBuf_getUsed(buf);
 
-    if (num_bytes > len)
+    if (num_bytes >= len)
         num_bytes = len;
+    else
+        return 0;//发送数据不够
 
     if (num_bytes < 1)
         return 0;               // return number of bytes copied

@@ -119,7 +119,7 @@ int cal_record_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, u
         }
 
 
-        if (depth_ptr) //深度  有入参  用入参，无入参用
+        if (depth_ptr) //深度  有入参  用入参，无入参用默认
         {
             depth = buf_to_uint16_msb(&depth_ptr[2 * i]);
         }
@@ -259,6 +259,9 @@ int instant_freeze_judge(struct instance_t* instance, struct pipeline_t* task, s
     struct tm record_time;
 
     uint16_t FlagID = InstantFreeze;
+    uint8_t tmp[10] = {0}; 
+    uint8_t payload[20] = {0};
+    struct message_t mesg_tmp;
 
 
     if (ctrl_block->trigger_insfreeze_delay_sec == 0xFFFF)
@@ -274,8 +277,20 @@ int instant_freeze_judge(struct instance_t* instance, struct pipeline_t* task, s
     if (ctrl_block->trigger_insfreeze_delay_sec == 0)
     {
         ctrl_block->trigger_insfreeze_delay_sec = 0xFFFF;
-        memcpy((uint8_t*)&record_time.tm_sec, (uint8_t*)&instance->time.tm_sec, sizeof(struct tm));
-        send_recordflag_mesg(instance, task,  (FlagID), NULL);
+        
+
+        mesg_tmp.id = FlagID;
+        uint32_to_buf_msb(0x20210200, &payload[0]);
+        payload[4] = 8; //data len
+        payload[5] = 0x1C;//TYPE_date_time_s;
+        rtc_format_change_from_tm(&instance->time,tmp);
+        tmp[0] = 0; //sec = 0;
+        mem_swap_cpy(&payload[6], &tmp[0], 7);
+        recv_record_process(instance, NULL, &mesg_tmp, payload);  
+
+
+        //memcpy((uint8_t*)&record_time.tm_sec, (uint8_t*)&instance->time.tm_sec, sizeof(struct tm));
+        //send_recordflag_mesg(instance, task,  (FlagID), NULL);
         return 1;
     }
 

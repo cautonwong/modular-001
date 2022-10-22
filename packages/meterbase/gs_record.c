@@ -147,7 +147,7 @@ int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_
             {
                 {TYPE_unsigned,         (uint8_t*)&mbase_cb->PowerOffS_duration_para,        1},
             };
-            mbase_cb->PowerOffS_duration_para = 1;
+            mbase_cb->PowerOffS_duration_para = 0;
             memcpy((uint8_t*)para_pack->event_para, (uint8_t*)PowerOffS_para, sizeof(PowerOffS_para));
             para_pack->para_num = sizeof(PowerOffS_para) / sizeof(PowerOffS_para[0]);
             return 1;
@@ -997,7 +997,7 @@ uint8_t check_scheme(enum scheme_mode mode, uint32_t obj, uint16_t record_id)
     case 0x20230200: //冻结记录
         break;
         
-    case 0x33020206: //事件编程    //特殊处理 结束时更新
+    case 0x33020206: //事件编程    //特殊处理      发生和结束时都更新
         break;
 
     case 0x33110206: //退费金额 事件记录用  
@@ -1051,6 +1051,12 @@ uint8_t check_scheme(enum scheme_mode mode, uint32_t obj, uint16_t record_id)
             {
                 scheme_valid = false;
             }
+            
+            if((record_id == MeterWrR) || (record_id == MeterWr645R)) 
+            {
+                scheme_valid = false;
+            }
+                        
             break;
         default:
             if (mode != scheme)
@@ -1141,10 +1147,10 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
             scheme_valid = true;
             scheme_valid = check_scheme(mode,obj, RecordID); //方案号 & 属性特征 判断
             
-            scheme_invalid_wr_flag = true; //结束记录时 不更新不相关数据。
+            scheme_invalid_wr_flag = true; 
             if (( mode == END_MODE ) && ( scheme_valid == false ))
             {
-                scheme_invalid_wr_flag = false;
+                scheme_invalid_wr_flag = false;//结束记录时 不更新不相关数据。
             }
             
             single_len = 0;
@@ -1245,7 +1251,7 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
     uint8_t freez_scheme = 0,event_scheme = START_MODE;
     uint32_t s_index, last_poweron_time = 0;
     int ret;
-
+    uint8_t report_updata = 0;
     
 
     Oad = 0xFFFFFFFF;
@@ -1434,8 +1440,17 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
         nd_log_append(instance, record_id_info.save_index, data_buff, (pdata - data_buff));
     }
 
+
+    if((mode == START_MODE) || (mode == END_MODE))  //事件类 
+    {
+        if ((mesg->id != MeterWrR) && (mesg->id != MeterWr645S) && (mesg->id != MeterWr645R))
+        {
+            report_updata = 1;
+        }
+    }
+    
     //上报列表 新增
-    if((mode == START_MODE) || (mode == END_MODE)) //事件类
+    if(report_updata)                
     {
         if((mode == START_MODE))
         {

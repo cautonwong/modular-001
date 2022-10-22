@@ -1174,7 +1174,7 @@ uint16_t nd_log_append_rollback(struct instance_t* instance, uint32_t index, uin
     search_circular(instance, device01->dev, block01->first_addr + addr01, &info, &manager, len01 / manager.unit_size);
     curr_num = info.valid_num;
     res_conditions_true(last_num < curr_num, 0);
-    if(last_num >= curr_num)
+    if(last_num > curr_num)
     {
         if(last_num != curr_num )
         {   //计算write_ptr;

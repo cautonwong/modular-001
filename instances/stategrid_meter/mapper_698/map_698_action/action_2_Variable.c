@@ -14,6 +14,12 @@ int ACTION_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, vo
     uint16_t oad;
     uint8_t *p = buf;
     uint32_t Temp32A;
+    uint8_t channel = 0;
+    
+    if((p_ctx)&&(p_ctx->channel < chl_NUM))
+    {
+        channel = p_ctx->channel;
+    }
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
     method = (unsigned char)((id & 0x0000FF00) >> 8);    //方法
@@ -41,7 +47,7 @@ int ACTION_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, vo
                 p += 2;
 
                 Temp32A = buf_to_uint32_msb(p);
-                mbase_cb->report_2015state[p_ctx->channel] &= ~Temp32A;
+                mbase_cb->report_2015state[channel] &= ~Temp32A;
                 EventOut_698_check(instance);
                 return (p-buf);
             }                

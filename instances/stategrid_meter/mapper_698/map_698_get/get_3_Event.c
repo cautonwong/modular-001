@@ -292,13 +292,6 @@ int get_current_record_number_ic_24(struct instance_t* instance, uint32_t oad, u
     //uint16_t OI = get_OAD_OI(oad);
     uint8_t index = (uint8_t)(oad);
 
-    if (index != 0)
-    {
-        *dar = DAR_OTHERS_ERROR;
-        return -DAR_OTHERS_ERROR;
-    }
-
-
     ret = get_record_id_info(instance, oad, &record_id_info);
     if (ret <= 0)
     {
@@ -306,40 +299,70 @@ int get_current_record_number_ic_24(struct instance_t* instance, uint32_t oad, u
         return -DAR_OBJECT_NOT_EXIST;
     }
 
-
-
-    //需区分个数
-    num = 1; //单相固定为1
-    *p++ = TYPE_structure;
-    *p++ = 4;
-    if ((num == 3) || (num == 1))
+    if (index != 0)
     {
-        //p += 3;
-        *p++ = 0;
+        if (index > 4)  return -DAR_OBJECT_UNDEF;
+        if (index != 2) // 单相 A相
+        {
+            *p++ = 0;
+        }
+        else
+        {
+            tims = 0;
+            //for (i = 0; i < 1; i++)
+            {
+                circular_info.start_mark = 0;
+                circular_info.end_mark = 0xFFFFFFFF;
+                circular_info.mode = 0;
+
+                ret = nd_log_output(instance, record_id_info.save_index, tempbuf, 1, &circular_info);
+
+                *p++ = TYPE_long_unsigned;
+                tims += circular_info.valid_num;
+                p += uint16_to_buf_msb(circular_info.valid_num, p);
+            }
+        }
+    }
+    else
+    {
+
+
+        //需区分个数
+        num = 1; //单相固定为1
+        *p++ = TYPE_structure;
+        *p++ = 4;
+        if ((num == 3) || (num == 1))
+        {
+            //p += 3;
+            *p++ = 0;
+        }
+
+
+        tims = 0;
+        for (i = 0; i < num; i++)
+        {
+            circular_info.start_mark = 0;
+            circular_info.end_mark = 0xFFFFFFFF;
+            circular_info.mode = 0;
+
+            ret = nd_log_output(instance, record_id_info.save_index, tempbuf, 1, &circular_info);
+
+            *p++ = TYPE_long_unsigned;
+            tims += circular_info.valid_num;
+            p += uint16_to_buf_msb(circular_info.valid_num, p);
+            //get record_id_info.save_index
+        }
+
+        //单相
+        if (num == 1)
+        {
+            *p++ = 0;
+            *p++ = 0;
+        }   
+
     }
 
-
-    tims = 0;
-    for (i = 0; i < num; i++)
-    {
-        circular_info.start_mark = 0;
-        circular_info.end_mark = 0xFFFFFFFF;
-        circular_info.mode = 0;
-
-        ret = nd_log_output(instance, record_id_info.save_index, tempbuf, 1, &circular_info);
-
-        *p++ = TYPE_long_unsigned;
-        tims += circular_info.valid_num;
-        p += uint16_to_buf_msb(circular_info.valid_num, p);
-        //get record_id_info.save_index
-    }
-
-    //单相
-    if (num == 1)
-    {
-        *p++ = 0;
-        *p++ = 0;
-    }
+    
    
     *dar = DAR_SUCCESS;
     return (p - buf);

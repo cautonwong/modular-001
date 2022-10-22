@@ -57,13 +57,14 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
 {
 
     uint8_t i, num, maxnum;//, scheme;
-    uint8_t tempbuf[200];
+    uint8_t tempbuf[200]; //oadlist
 //    uint8_t* tmp0, * tmp1;
     uint8_t* p = buf;
     uint8_t* oadlist = tempbuf;
     uint16_t CaptureLen;
 //    uint32_t CaptureId;
     uint32_t oad_tmp;
+    uint8_t* apdu_cache = instance->apdu_cache; 
 
     struct record_storage_id_info_t  info;
     int ret;
@@ -103,7 +104,12 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
 
         ret = check_metertype_OI_valid(instance, get_OAD_OI(oad_tmp));
         if(ret < 0){
-            return -DAR_OTHERS_ERROR;
+            return -DAR_RW_REJECT;
+        }
+
+        ret = nd_size(instance, apdu_cache, ignore_OAD_Schem(oad_tmp)); 
+        if(ret < 0){
+            return -DAR_RW_REJECT;
         }
 
         memcpy(oadlist, p, 4);

@@ -187,7 +187,9 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                             }
                         }
                         if(timeout == 1)    return -DAR_OTHERS_ERROR;
+
                         
+                        mbase_cb->boardadjtime = 0xAA; //明文广播校时标志
                     }
                     else    //密文广播校时
                     {
@@ -221,7 +223,6 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     timer_set[6] = GetWeek(&timer[0]);
                     write_mcu_rtc(0, timer_set, 7);
                     read_mcu_rtc(0x00, instance);
-                    mbase_cb->boardadjtime = 0xAA;
 
 
                     //保存校时后时间 

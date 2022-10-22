@@ -161,7 +161,7 @@ int read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf, uin
     struct esam_698_input_t  input = {0};
     struct esam_698_output_t output= {0};
     struct mbase_control_block_t* mbase_cb;
-    uint8_t tmpbuf[64] = {0};
+    uint8_t tmpbuf[164] = {0};
     int ret = 0;
     
     input.data      = buf;
@@ -169,7 +169,7 @@ int read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf, uin
     input.sid_id    = addr;
 
     input.data_buf      = tmpbuf; //临时缓冲区
-    input.data_buf_len  = 64;            //临时缓冲长度
+    input.data_buf_len  = 164;            //临时缓冲长度
     //input.data_buf      = instance->apdu_cache; //临时缓冲区
     //input.data_buf_len  = cache_max;            //临时缓冲长度
     

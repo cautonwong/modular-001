@@ -665,10 +665,41 @@ int __fr_send_handle(struct instance_t* instance, struct pipeline_t* pipeline, s
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t data[2]={0};
+    uint16_t apdu_send_max = 512;
+    uint16_t apdu_len = fifoBuf_getUsed(ctx->apdu);
+    uint8_t channel = 0, cilent_index = 0;
+    struct connect_request_t connect;
+    struct mbase_control_block_t* mbase_cb  = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    if((ctx)&&(ctx->channel < chl_NUM))
+    {
+        channel = ctx->channel;
+    }
+
+    if (CA_TYPE_TER(ctx->CA)) 
+    {
+        cilent_index = 1;
+    }
+    else
+    {
+        cilent_index = 0;
+    }
+
+
+    if(0 != mbase_cb->connect_timeout[channel][cilent_index])
+    {
+        ndv_memcopy(&connect, &cfg_connect, sizeof(cfg_connect));
+    }
+    else
+    {
+        connect = get_default_connect_para(channel);
+    }
+
+    apdu_send_max = connect.send_frm_size;
+
     
-    if (fifoBuf_getUsed(ctx->apdu)  > 0){
-        mesg->len = fifoBuf_getUsed(ctx->apdu);
-        if (mesg->len > 512){
+    if (apdu_len > 0){
+        if (apdu_len > apdu_send_max){
             set_segment(ctx->ctrl);
             if(0 == ctx->segment_tx){
                 ctx->segment_tx_no = 0;
@@ -677,23 +708,24 @@ int __fr_send_handle(struct instance_t* instance, struct pipeline_t* pipeline, s
             }else{
                 set_middle_segment_no(ctx->segment_tx_no);
             }
-            mesg->len = 512;
+            mesg->len = apdu_send_max;
         } else {
             if(ctx->segment_tx){
                 set_segment(ctx->ctrl);
                 set_last_segment_no(ctx->segment_tx_no);
-  
             }
+            mesg->len = apdu_len;
         }
 
         if(ctx->segment_tx){
             data[0] = ctx->segment_tx_no;
             data[1] = ctx->segment_tx_no>>8;
-            fifoBuf_update_rd(ctx->apdu, 2, 0);
+            fifoBuf_update_rd(ctx->apdu, 2, 0);          
+            mesg->len+=2;
             memcpy(ctx->apdu->buf_ptr + ctx->apdu->rd, data, 2);
         }
         fr_rx_698_end(instance, pipeline, mesg);
-        if (mesg->len < 512){
+        if (apdu_len <= apdu_send_max){
             ringbuffer_clear(ctx->apdu);
             ctx->segment_tx_no = 0;
             ctx->segment_tx = 0;
@@ -701,7 +733,6 @@ int __fr_send_handle(struct instance_t* instance, struct pipeline_t* pipeline, s
     }
     return 0;
 }
-
 
 int __fr_segment_tx_handle(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -845,6 +876,19 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
 
         ctx->service = apdu_rx[ctx->apdu_rx_offset++];
 
+        if (SECURITY_CHOICE_0_Plaintext == ctx->security_choice)
+        {
+            if ( err_no > 0) //
+            {
+                err_no = ctx->security_data_len;//明文 apdu 长度  
+            }
+        }
+        if ( err_no > 1)
+        {
+            apdu_offset_len_cache = ctx->apdu_rx_offset - apdu_offset_len_cache ;  //记录 安全传输 apdu 额外偏移的长度。
+            ctx->apdu_len_after_decode = err_no + apdu_offset_len_cache;
+        }
+        /*
         if (SECURITY_CHOICE_1_Ciphertext == ctx->security_choice) //获取解密后apdu长度 用于帧格式解析判断  
         {
             if ( err_no > 1)
@@ -853,6 +897,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
                 ctx->apdu_len_after_decode = err_no + apdu_offset_len_cache;
             }
         }
+        */
     }
     
 

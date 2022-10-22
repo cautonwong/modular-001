@@ -36,6 +36,15 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
     uint8_t index,attribute, temp[10] = {0};
     struct context_698_t* p_ctx = (struct context_698_t*)ctx;
     uint32_t tmp_u32 = 0, s_addr;
+    uint8_t channel = 0;
+    
+    if((p_ctx)&&(p_ctx->channel < chl_NUM))
+    {
+        channel = p_ctx->channel;
+    }
+
+
+
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if(mbase_cb == NULL)
@@ -235,7 +244,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
             {
                 *p++ = TYPE_bit_string;
                 *p++ = 32;
-                p += uint32_to_buf_msb(mbase_cb->report_2015state[p_ctx->channel], p);
+                p += uint32_to_buf_msb(mbase_cb->report_2015state[channel], p);
                 return (p-buf);
             }
             else if(attribute == 0x04) //模式字

@@ -105,7 +105,7 @@ struct mbase_control_block_t
     uint16_t ZeroLineErrS_rate_threshold;   // 电能表零线电流异常事件 限值
     uint32_t ZeroLineErrS_Current_threshold;// 电能表零线电流异常事件-电流触发下限
     uint8_t OverCurrent_duration_para;  //参数 判定延时时间  
-    uint8_t PowerOffS_duration_para;    //参数 判定延时时间  
+    uint8_t PowerOffS_duration_para;    //参数 判定延时时间  //固定0
     uint8_t CoverOpenS_duration_para;   //参数 判定延时时间  
     uint8_t SwitchErrS_duration_para;   //参数 判定延时时间  
     uint8_t EmuErrS_duration_para;      //参数 判定延时时间  

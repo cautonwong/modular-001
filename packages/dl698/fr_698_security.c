@@ -153,7 +153,7 @@ static int __verification_RN(struct instance_t* instance, struct pipeline_t* pip
             ret = check_upreport_esam_rn_mac(instance, &input, &output);
             if (mbase_cb->esam_chip_abnormal == EVENT_SET)   //ESAM错误的情况下  不验证MAC 直接返回成功
             {
-                ret = 1;
+                ret = 1; 
             }
             if (ret < 0)//MAC验证不过，不能确认，也不需要响应
             {
@@ -164,6 +164,10 @@ static int __verification_RN(struct instance_t* instance, struct pipeline_t* pip
         {
             ret = ___verification_handle(instance, &input, &output, 1);//ESAM错误的情况下  不验证MAC 直接返回成功   
         }
+    }
+    else
+    {
+        ret = 1;
     }
     ctx->apdu_len_valid += len + input.RN_Data_len;
 

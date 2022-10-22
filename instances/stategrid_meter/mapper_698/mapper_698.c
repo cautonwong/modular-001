@@ -252,13 +252,13 @@ const struct record_item_t  record_item[] =
     { EmuErrS           ,   EmuErrE         ,               360 ,       10   },//  0x302F  电能表计量芯片故障事件
     { BroadcastTimeS    ,   0               ,               3560,       100  },//  0x303C  广播校时事件 
     { ZeroLineErrS      ,   ZeroLineErrE    ,               330 ,       10   },//  0x3040  零线电流异常事件 
-    { BillFreeze        ,   0               ,               3280,       12   },//  0x5005  结算日冻结 
-    { SeasonTabCutFreeze,   0               ,               380 ,       2    },//  0x5008  时区表切换冻结 
-    { DayTabCutFreeze   ,   0               ,               380 ,       2    },//  0x5009  日时段表切换冻结    
-//  { FeePriceCutFreeze ,   0               ,               100 ,       2    },//  0x500A  费率电价切换冻结  
-//  { StepCutFreeze     ,   0               ,               0   ,       2    },//  0x500B  阶梯切换冻结
+    { BillFreeze        ,   0               ,               3380,       12   },//  0x5005  结算日冻结 
+    { SeasonTabCutFreeze,   0               ,               480 ,       2    },//  0x5008  时区表切换冻结 
+    { DayTabCutFreeze   ,   0               ,               480 ,       2    },//  0x5009  日时段表切换冻结    
+//  { FeePriceCutFreeze ,   0               ,               480 ,       2    },//  0x500A  费率电价切换冻结  
+//  { StepCutFreeze     ,   0               ,               480 ,       2    },//  0x500B  阶梯切换冻结
 //  { StepBillFreeze    ,   0               ,               0   ,       2    },//  0x5011  阶梯结算冻结
-    { InstantFreeze     ,   0               ,               570 ,       3    },//  0x5000  瞬时冻结
+    { InstantFreeze     ,   0               ,               670 ,       3    },//  0x5000  瞬时冻结
 #if RESET_INFO                         
     { StepCutFreeze     ,   0               ,               200 ,       5    },//  0x500B   复位次数 阶梯切换冻结
 #endif
@@ -917,7 +917,7 @@ const uint16_t fr698_prepay_oi[] =
 
 
 
-//1 有效，-DAR_OBJECT_UNDEF 无效
+//1 有效，-DAR_OBJECT_UNDEF 无效        //此函数内部 不能调  resource map
 int check_metertype_OI_valid(struct instance_t* instance, uint16_t OI)
 {
         struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -2690,7 +2690,7 @@ int para_init(struct instance_t* instance )
     mbase_cb->ZeroLineErrS_rate_threshold = 5000;   // 电能表零线电流异常事件 限值
     mbase_cb->ZeroLineErrS_Current_threshold = 10000;// 电能表零线电流异常事件-电流触发下限
     mbase_cb->OverCurrent_duration_para = 60;  //参数 判定延时时间  
-    mbase_cb->PowerOffS_duration_para = 1;    //参数 判定延时时间  
+    mbase_cb->PowerOffS_duration_para = 0;    //参数 判定延时时间  
     mbase_cb->CoverOpenS_duration_para = 3;   //参数 判定延时时间  
     mbase_cb->SwitchErrS_duration_para = 5;   //参数 判定延时时间  
     mbase_cb->EmuErrS_duration_para = 5;      //参数 判定延时时间  
@@ -2844,6 +2844,14 @@ void update_connect_timeout_cnt(struct instance_t* instance, struct pipeline_t* 
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     uint8_t cilent_index = 0;
+    uint8_t channel = 0;
+    
+    if((ctx)&&(ctx->channel < chl_NUM))
+    {
+        channel = ctx->channel;
+    }
+
+
 
     if (CA_TYPE_TER(ctx->CA))//from 终端
     {

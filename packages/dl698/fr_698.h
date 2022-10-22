@@ -483,7 +483,7 @@ extern int fr_security_encode(struct instance_t* instance, struct pipeline_t* pi
 extern uint32_t dt_buf_to_second(uint8_t* dt);
 extern int second_to_dt_buf(uint32_t timesec, uint8_t* dt);
 extern uint8_t fr_698_current_connect_status_get(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index);
-
+extern struct connect_request_t get_default_connect_para(uint8_t channel);
 
 
 extern uint32_t get_3320_save_addr(struct instance_t* instance, uint16_t chn);

@@ -1517,6 +1517,13 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     uint8_t attr = get_OAD_Attribute(oad);
     uint16_t oi = get_OAD_OI(oad);
     int ret = 0;
+    uint8_t channel = 0;
+    
+    if((p_ctx)&&(p_ctx->channel < chl_NUM))
+    {
+        channel = p_ctx->channel;
+    }
+
 
     
       //检查 读取的记录型oad合法性
@@ -1560,6 +1567,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
         case 2:
             if((1 == non_period) && ((rsd_info->mode == 2) || (rsd_info->mode == 3))) //方法1/2 非周期性类 按时间搜索时 由协议筛选
             {
+                rsd_info->interval = 0; 
                 circular_info.mode = 0;
             }
             ret = nd_log_output(instance, record_id_info.save_index,  ptr_tmp, 1, &circular_info);
@@ -1576,7 +1584,13 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
             
         case 9: //上n次
             ret = nd_log_output(instance, record_id_info.save_index,  ptr_tmp, 1, &circular_info);
-            if ((rsd_info->last_no == 0) || (rsd_info->last_no > circular_info.valid_num))
+
+            if (rsd_info->last_no == 0) // WS测试要求 读取上0次返回越界
+            {
+                return -DAR_BUFFER_OVERFLOW;
+            }
+            
+            if (/*(rsd_info->last_no == 0) || */(rsd_info->last_no > circular_info.valid_num))
             {
                 return record_response_null(buf);
             }
@@ -1710,7 +1724,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     {
         if ((oad & 0xF0000000) == 0x30000000) 
         {
-            report_3320list_confirmed(instance, p_ctx->channel, oad, 0);
+            report_3320list_confirmed(instance, channel, oad, 0);
         }
     }
 

@@ -42,7 +42,9 @@ struct factory_version_t
     char vendor_infomation[8];  //厂商扩展信息 visible-string(SIZE(8))
 };
 
-const struct connect_request_t default_connect = {
+//通道顺序 :红外、485-1，载波，485-2；
+const struct connect_request_t default_connect = 
+{
     0x0016, 
     0xFF,0xFF,0xFF,0xff,0xc0,0x00,0x00,0x00,
     0xFF,0xFE,0xC4,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -51,9 +53,28 @@ const struct connect_request_t default_connect = {
     0x01,
     0x07d0,
     0x00001C20,
-    0x02
+    0x02,
 };
-    
+
+struct connect_request_t get_default_connect_para(uint8_t channel)
+{
+    struct connect_request_t default_connect_para;
+    ndv_memcopy((uint8_t *)&default_connect_para,  (uint8_t *)&default_connect, sizeof(struct connect_request_t));
+    if(channel == chl_ir_698)
+    {
+        default_connect_para.send_frm_size = 200;
+        default_connect_para.recv_frm_size = 200;
+    }
+    else if(channel == chl_PLC_698)
+    {
+        default_connect_para.send_frm_size = 255; //
+        default_connect_para.recv_frm_size = 255;
+    }
+
+
+    return default_connect_para;
+}
+
 
 
 struct connect_request_t cfg_connect = {
@@ -188,8 +209,15 @@ static int __password_process(struct instance_t* instance, struct pipeline_t* pi
     uint8_t *p_password = cache->buf_ptr;
     uint8_t password[33] = {0};
     uint32_t oad = 0;
-    
     int ret = DL698_SEC_SUCCESS;
+    uint8_t channel = 0;
+    
+    if((ctx)&&(ctx->channel < chl_NUM))
+    {
+        channel = ctx->channel;
+    }
+
+
 
     if (fr_698_get(instance, oad, password, sizeof(password), NULL) < 0)
     {
@@ -264,20 +292,20 @@ static int __password_process(struct instance_t* instance, struct pipeline_t* pi
 
         if (esam_session_timeout == 0)
         {
-            esam_session_timeout = mbase_cb->connect_timeout[ctx->channel][cilent_index];
+            esam_session_timeout = mbase_cb->connect_timeout[channel][cilent_index];
         }
 
-        if (mbase_cb->connect_timeout[ctx->channel][cilent_index] > esam_session_timeout)
+        if (mbase_cb->connect_timeout[channel][cilent_index] > esam_session_timeout)
         {
-            mbase_cb->connect_timeout[ctx->channel][cilent_index] = esam_session_timeout;
-            mem_swap_cpy(p_connect_timeout, (uint8_t*)&mbase_cb->connect_timeout[ctx->channel][cilent_index], 4);     //期望的应用连接超时时间    
+            mbase_cb->connect_timeout[channel][cilent_index] = esam_session_timeout;
+            mem_swap_cpy(p_connect_timeout, (uint8_t*)&mbase_cb->connect_timeout[channel][cilent_index], 4);     //期望的应用连接超时时间    
         }
         
-        mbase_cb->esam_connect_timeout[ctx->channel][cilent_index] = esam_session_timeout;
+        mbase_cb->esam_connect_timeout[channel][cilent_index] = esam_session_timeout;
         
-        mbase_cb->current_connect_channel[cilent_index] = ctx->channel;
-        mbase_cb->connect_status[ctx->channel][cilent_index] = true;
-        mbase_cb->connect_timeout_cnt[ctx->channel][cilent_index] = 0;
+        mbase_cb->current_connect_channel[cilent_index] = channel;
+        mbase_cb->connect_status[channel][cilent_index] = true;
+        mbase_cb->connect_timeout_cnt[channel][cilent_index] = 0;
 
         
         MeterWr_obj_list_clear(instance, pipeline, mesg);
@@ -314,6 +342,13 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     uint32_t esam_session_timeout = 0xffffffffU;
     int len_len = 0;
     uint8_t *p_connect_timeout = cache->buf_ptr;
+    uint8_t channel = 0;
+    
+    if((ctx)&&(ctx->channel < chl_NUM))
+    {
+        channel = ctx->channel;
+    }
+
     
     if (CA_TYPE_TER(ctx->CA))//from 终端
     {
@@ -355,7 +390,7 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     mem_swap_cpy(p_connect_timeout, (uint8_t*)&cfg_connect.connect_time, 4);     //期望的应用连接超时时间    
     cache->wr = cache->wr + 4;
 
-    mbase_cb->connect_timeout[ctx->channel][cilent_index] = cfg_connect.connect_time;
+    mbase_cb->connect_timeout[channel][cilent_index] = cfg_connect.connect_time;
 
 
     len_len = esam_consult_key(instance, CA_TYPE_TER(ctx->CA) , buf+1 );
@@ -400,20 +435,20 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
 
         if (esam_session_timeout == 0)
         {
-            esam_session_timeout = mbase_cb->connect_timeout[ctx->channel][cilent_index];
+            esam_session_timeout = mbase_cb->connect_timeout[channel][cilent_index];
         }
 
-        if (mbase_cb->connect_timeout[ctx->channel][cilent_index] > esam_session_timeout)
+        if (mbase_cb->connect_timeout[channel][cilent_index] > esam_session_timeout)
         {
-            mbase_cb->connect_timeout[ctx->channel][cilent_index] = esam_session_timeout;
-            mem_swap_cpy(p_connect_timeout, (uint8_t*)&mbase_cb->connect_timeout[ctx->channel][cilent_index], 4);     //期望的应用连接超时时间    
+            mbase_cb->connect_timeout[channel][cilent_index] = esam_session_timeout;
+            mem_swap_cpy(p_connect_timeout, (uint8_t*)&mbase_cb->connect_timeout[channel][cilent_index], 4);     //期望的应用连接超时时间    
         }
         
-        mbase_cb->esam_connect_timeout[ctx->channel][cilent_index] = esam_session_timeout;
+        mbase_cb->esam_connect_timeout[channel][cilent_index] = esam_session_timeout;
         
-        mbase_cb->current_connect_channel[cilent_index] = ctx->channel;
-        mbase_cb->connect_status[ctx->channel][cilent_index] = true;
-        mbase_cb->connect_timeout_cnt[ctx->channel][cilent_index] = 0;
+        mbase_cb->current_connect_channel[cilent_index] = channel;
+        mbase_cb->connect_status[channel][cilent_index] = true;
+        mbase_cb->connect_timeout_cnt[channel][cilent_index] = 0;
 
         
         if(1 == cilent_index)//建立终端应用链接时，要失效终端身份认证
@@ -434,8 +469,8 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
         *(p_apdu+cache->wr) = 0;//认证附加信息
         cache->wr++;
 
-        mbase_cb->connect_status[ctx->channel][cilent_index] = false;
-        mbase_cb->connect_timeout[ctx->channel][cilent_index]   = 0;
+        mbase_cb->connect_status[channel][cilent_index] = false;
+        mbase_cb->connect_timeout[channel][cilent_index]   = 0;
         return DAR_ESAM_CHECK_FAILED;
     }
 }
@@ -542,6 +577,14 @@ int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipelin
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
     uint16_t offset= 0;
+    uint8_t channel = 0;
+    
+    if((ctx)&&(ctx->channel < chl_NUM))
+    {
+        channel = ctx->channel;
+    }
+
+
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
    
@@ -586,9 +629,19 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
     //struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct connect_request_t connect = {0};
+    struct connect_request_t default_connect_para = {0};
+    struct connect_request_t cfg_connect_cache = {0};
     int result = DAR_OTHERS_ERROR;
     uint32_t temp=0;
     uint16_t offset = 0;
+    uint8_t channel = 0;
+    
+    if((ctx)&&(ctx->channel < chl_NUM))
+    {
+        channel = ctx->channel;
+    }
+
+
     
     // 通配地址 拒绝服务   //此代码是否有问题？？？  待调整
     if(SA_TYPE_GENERAL == SA_TYPE(ctx->SA)) {
@@ -632,16 +685,23 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
         result = DAR_OTHERS_ERROR;
     }
 
-    ___get_consult_info(&cfg_connect, &connect, &default_connect);
-    //memcpy((p_apdu+cache->wr), (uint8_t*)&connect, sizeof(struct connect_request_t));  
+    //先暂存
+    ndv_memcopy((uint8_t *)&cfg_connect_cache, (uint8_t *)&cfg_connect, sizeof(struct connect_request_t));
+    default_connect_para = get_default_connect_para(channel);
+    ___get_consult_info(&cfg_connect, &connect, &default_connect_para);
     
     if (Security_MAX > connect.connect_mode){
         if(Func_security[connect.connect_mode]){
             result = Func_security[connect.connect_mode](instance, pipeline, mesg);
             if (result == DL698_SEC_SUCCESS)
             {
-                mbase_cb->clientaddr[ctx->channel] = ctx->CA;
+                mbase_cb->clientaddr[channel] = ctx->CA;
                 //mbase_cb->connect_mode[ctx->channel] = cfg_connect.connect_mode;
+            }
+            else
+            {
+                //失败恢复应用链接信息
+                ndv_memcopy((uint8_t *)&cfg_connect, (uint8_t *)&cfg_connect_cache, sizeof(struct connect_request_t));
             }
         }
     }

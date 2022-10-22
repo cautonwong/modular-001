@@ -49,6 +49,9 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     uint8_t* oadlist = tempbuf;
     uint16_t CaptureLen;
     uint32_t CaptureId, capture_oad, temp_oad;
+    uint8_t* apdu_cache = instance->apdu_cache; 
+
+
 
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if (mbase_cb == NULL)
@@ -82,14 +85,20 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     
     if ((oi == 0x3013) && ( mbase_cb->key_state == false ))
     {
-        *dar = DAR_OTHERS_ERROR;
+        *dar = DAR_RW_REJECT;
         return -DAR_RW_REJECT;
     }
 
     ret = check_metertype_OI_valid(instance, get_OAD_OI(capture_oad));
     if(ret < 0){
-        return -DAR_OTHERS_ERROR;
+        return -DAR_RW_REJECT;
     }
+
+    ret = nd_size(instance, apdu_cache, ignore_OAD_Schem(capture_oad)); 
+    if(ret < 0){
+        return -DAR_RW_REJECT;
+    }
+
 
 #if 1 // vs 要求
     if ((Schem < 1) || (Schem > 4))

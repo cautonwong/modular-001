@@ -13,6 +13,8 @@ int freeze_add_one_capture(struct instance_t* instance, uint32_t oad, uint8_t* b
     uint16_t period, depth, OI, CaptureLen, PeriodLen, DepthLen;
     uint32_t CaptureId, PeriodId, DepthId;
     uint32_t capture_oad;
+    uint8_t* apdu_cache = instance->apdu_cache; 
+
 
     struct record_storage_id_info_t  record_id_info;
     int ret;
@@ -52,7 +54,12 @@ int freeze_add_one_capture(struct instance_t* instance, uint32_t oad, uint8_t* b
     if(ret < 0){
         return -DAR_RW_REJECT;
     }
-    
+
+    ret = nd_size(instance, apdu_cache, ignore_OAD_Schem(capture_oad)); 
+    if(ret < 0){
+        return -DAR_RW_REJECT;
+    }
+
     ret = check_oad(capture_oad);
     if(ret < 0){
         return -DAR_RW_REJECT;

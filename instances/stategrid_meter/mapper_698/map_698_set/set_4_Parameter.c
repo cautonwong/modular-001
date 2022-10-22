@@ -561,6 +561,11 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
 
                 clr_last_bill_time(instance, LastBillingTime);
                 clr_last_bill_time(instance, LastDayFreezTime);
+                
+                if (instance->time.tm_sec == 0)
+                {
+                    instance->time.tm_sec = 1; //规避冻结临界时间。最坏情况为时间跳1秒 ，30s后恢复
+                }
                 write_powerdown_time(instance);
                 return (p-buf);
             }
@@ -757,6 +762,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             break;
         case 0x4011://公共假日表
             if((index == 0) || (index > 20))    return -DAR_RW_REJECT;
+            if(((*(p+9)) == 0) || ((*(p+9)) > MaxTouTabNum))    return -DAR_RW_REJECT;
             
             mem_swap_cpy((uint8_t*)&year2, p+3, 2);
             if(year2 < 2000) return -DAR_OTHERS_ERROR;
