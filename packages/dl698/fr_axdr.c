@@ -1735,7 +1735,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
 
 // 用于其他模块获取 记录内某一个关联对象的数据内容，  
 // buf 入参 缓存长度 至少大于20字节。 
-// buf内读取数据          698格式带tag  
+// buf内读取数据          698格式带tag     01 (成功) + tag + data 
 // 函数返回 长度   698格式带tag，  返回0时，无数据。
 // Record_oad 记录种类，  capture_oad 关联对象， last_no，上n次
 // 举例：获取上一条日冻结 正向有功总电能 :Record_oad = 0x50040200, capture_oad = 0x00100200， last_no = 1;

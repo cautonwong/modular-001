@@ -113,7 +113,7 @@ void report_2015state_judge(struct instance_t* instance)
     }
 
       
-#if 1  ////拉合闸成功
+#if 0  ////拉合闸成功
     if ( mbase_cb->switch_on_succees == 0x5A   ) 
     {
         mbase_cb->switch_on_succees = 0;

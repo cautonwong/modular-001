@@ -6,6 +6,9 @@
 
 #define get_res(device_name, block_name)   (uint32_t)(((device_name) << 24) + ((block_name) << 16))
 
+#define CIRCULAR_OFFSET_SEQUENCE  0x01
+#define CIRCULAR_OFFSET_TIME    0x06
+
 //单一设备的块链表
 #pragma pack(4)
 struct resource_block_t

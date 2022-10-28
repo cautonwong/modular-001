@@ -8,7 +8,7 @@
 #define RECORED_FILL_NO_OBJ_645  0x00
 #define RECORED_FILL_NO_DATA_645  0x00
 
-extern int record_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,  struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t *capture_645len,  uint8_t  packageAA,   void *ctx);
+extern int record_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,  struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t *capture_645len,  uint8_t  package_type,   void *ctx);
 extern int record_data_package645_packageAA(struct instance_t* instance, uint8_t* dest, uint8_t* src, uint16_t datalen, struct record_storage_645_id_info_t  *info);
 union dl645_DI_t
 {
@@ -23,6 +23,11 @@ union dl645_DI_t
     uint32_t di;
 };
 
+struct load_rsd_info_t
+{
+    struct rsd_info_t rsd_info;
+    uint8_t read_num;
+};
 
 //645 部分
 
@@ -318,6 +323,66 @@ const uint16_t MeterWr645_645oad_len[1+4] =
 
 
 
+const uint32_t  Load_di2_01_645oad[]         = { 
+    3, 
+    (0x20000201), (0x20000202), (0x20000203), 
+};
+
+
+const uint16_t Load_di2_01_645oad_len[] = 
+{
+    6, //总长度
+    2,2,2, 
+};
+
+const uint32_t  Load_di2_02_645oad[]         = { 
+    3, 
+    (0x20010201), (0x20010202), (0x20010203), 
+};
+
+
+const uint16_t Load_di2_02_645oad_len[] = 
+{
+    9, //总长度
+    3,3,3, 
+};
+
+const uint32_t  Load_di2_03_645oad[]         = { 
+    4, 
+    (0x20040201), (0x20040202), (0x20040203), (0x20040204), 
+};
+
+
+const uint16_t Load_di2_03_645oad_len[] = 
+{
+    12, //总长度
+    4,4,4,4 
+};
+
+const uint32_t  Load_di2_05_645oad[]         = { 
+    4, 
+    (0x200A0201), (0x200A0202), (0x200A0203), (0x200A0204), 
+};
+
+
+const uint16_t Load_di2_05_645oad_len[] = 
+{
+    8, //总长度
+    2,2,2,2 
+};
+
+
+const uint32_t  Load_di2_06_645oad[]         = { 
+    4, 
+    (0x00100201), (0x00200201), ((0xEEEE0004)), ((0xEEEE0004)), 
+};
+
+
+const uint16_t Load_di2_06_645oad_len[] = 
+{
+    12, //总长度
+    4,4,4,4 
+};
 
 
 // 获取冻结中实际费率的需量或电量长度
@@ -387,6 +452,7 @@ int get_record_645_id_info(struct instance_t* instance, uint32_t ID, struct reco
     
     memset((uint8_t*)info, 0, sizeof(struct record_storage_645_id_info_t));
     info->package_num  = 1;
+    info->mark_para = 0xFF;
 
     switch (ID&0xFF000000)//XX000000
     {
@@ -589,7 +655,7 @@ int get_record_645_id_info(struct instance_t* instance, uint32_t ID, struct reco
         
         case 0x00000000: //结算类  特殊处理  645关联对象外部构造
         {
-            info->packageAA = 0;
+            info->package_type = PACKAGE645_NORMAL;
             info->package_num  = 0;
             info->oad698 = 0x50050200;
             
@@ -632,7 +698,7 @@ int get_record_645_id_info(struct instance_t* instance, uint32_t ID, struct reco
         {
             if(DI.elem.di1 == 0xFF)
             {
-                info->packageAA = 1;
+                info->package_type = PACKAGE645_FREEZE;
             }
 
             switch (ID&0xFFFF0000)// OI
@@ -708,17 +774,127 @@ int get_record_645_id_info(struct instance_t* instance, uint32_t ID, struct reco
             }
             
         }
-
         break;
+
+        case 0x06000000: //负荷曲线 06xxxxxx
+        {
+
+            info->package_type = PACKAGE645_LOAD;
+            info->package_num  = 0xFF;
+            info->oad698 = 0x50020200;
+
+            switch (ID&0xFFFF0000)// OI
+            {
+                case 0x06100000: //新负荷
+                {
+                    if(DI.elem.di0 == 0xFF) //单相 
+                    {
+                        return -1;
+                    }
+                    
+                    switch (DI.elem.di1)// 0610XX00
+                    {
+                        case 0x01: //电压
+                        {
+                            if((DI.elem.di0 == 0) || ((DI.elem.di0 > 1) && (DI.elem.di0 != 0xFF))) //三相 DI.elem.di0 > 3
+                            {
+                                return -1;
+                            }
+                            info->mark_bit = 0;
+                            info->rd_645obj = Load_di2_01_645oad;
+                            info->rd_645obj_len = Load_di2_01_645oad_len;
+                            info->package_num  = 1; //id0 从1开始
+                        }
+                        break;
+                        case 0x02: //电流
+                        {
+                            if((DI.elem.di0 == 0) || ((DI.elem.di0 > 1) && (DI.elem.di0 != 0xFF))) //三相DI.elem.di0  > 3
+                            {
+                                return -1;
+                            }
+                            info->mark_bit = 0;
+                            info->rd_645obj = Load_di2_02_645oad;
+                            info->rd_645obj_len = Load_di2_02_645oad_len;
+                            info->package_num  = 1; //id0 从1开始
+                        }
+                        break;
+                        case 0x03: //有功功率
+                        {
+                            if(((DI.elem.di0 > 1) && (DI.elem.di0 != 0xFF))) //三相 DI.elem.di0 > 3
+                            {
+                                return -1;
+                            }
+                            info->mark_bit = 1;
+                            info->rd_645obj = Load_di2_03_645oad;
+                            info->rd_645obj_len = Load_di2_03_645oad_len;
+                        }
+                        break;
+                        case 0x04: //无功功率
+                        {
+                            info->mark_bit = 1;
+                            return -1;
+                        }
+                        break;
+                        case 0x05: //功率因数
+                        {
+                            if(((DI.elem.di0 > 1) && (DI.elem.di0 != 0xFF))) //三相 DI.elem.di0 > 3
+                            {
+                                return -1;
+                            }    
+                            info->mark_bit = 2;
+                            info->rd_645obj = Load_di2_05_645oad;
+                            info->rd_645obj_len = Load_di2_05_645oad_len;
+                        }
+                        break;
+                        case 0x06: //有功无功总电能
+                        {
+                            if((DI.elem.di0 == 0) || ((DI.elem.di0 > 2) && (DI.elem.di0 != 0xFF))) //三相 DI.elem.di0 > 4
+                            {
+                                return -1;
+                            }
+                            info->mark_bit = 3;
+                            info->rd_645obj = Load_di2_06_645oad;
+                            info->rd_645obj_len = Load_di2_06_645oad_len;
+                            info->package_num  = 1; //id0 从1开始
+                        }
+                        break;
+                        case 0x07: //四象限无功 
+                        {
+                            info->mark_bit = 4;
+                            return -1;
+                        }
+                        break;
+                        case 0x08: //有功无功需量
+                        {
+                            info->mark_bit = 5;
+                            return -1;
+                        }
+                        break;                        
+                        default:
+                            return -1;
+                        break;
+                    }
+                }
+                break;
+                default:
+                    return -1;
+                    break;
+            }            
+
+        }
+        break;
+
+
+
+
         default:
             return -1;
             break;
     }
 
 
-    if((info->packageAA == 0)  && (info->package_num == 1))  //事件
+    if((info->package_type == PACKAGE645_NORMAL)  && (info->package_num == 1))  //事件
     {
-        
         if (((DI.elem.di1 > info->rd_645obj[0]) && (DI.elem.di0 != 0xFF))            //  子项
         ||((DI.elem.di0 > 10) && (DI.elem.di0 != 0xFF)))  //最多支持10条
         {
@@ -726,9 +902,6 @@ int get_record_645_id_info(struct instance_t* instance, uint32_t ID, struct reco
         }   
     }
 
-
-
-    
     ret = get_record_id_info(instance, info->oad698, &info->id_info);
     if(ret < 0)
     {
@@ -761,7 +934,7 @@ int fc_fun_01_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
     uint32_t temp;
     uint8_t *p = des;
     uint8_t tmpbuf[8] = {0};
-    uint16_t year;
+    uint16_t year, data_len = 6;
 
     //tag 处理
     src++;
@@ -781,15 +954,18 @@ int fc_fun_01_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
         p[2] = BYTE_BCD(tmpbuf[3]);
         p[3] = BYTE_BCD(tmpbuf[4]);
         p[4] = BYTE_BCD(tmpbuf[5]);
+        if(fc)
+        {
+            data_len = fc->original_len;
+        }
         
-        if (fc->original_len == 6)
+        if (data_len == 6)
         {
             p[5] = BYTE_BCD(tmpbuf[6]);
-            
         }
 
-        swap_buffer(p, fc->original_len);
-        p += fc->original_len;
+        swap_buffer(p, data_len);
+        p += data_len;
     }
     return (p - des);
 }
@@ -1734,7 +1910,7 @@ uint8_t check_capture_exist_645(uint32_t rcsd_req, uint32_t rcsd_src)
 
 //协议列选打包    rcsd_req:列选oad，   rcsd_src:原关联对象oad，   
 //mode:0，不拷贝数据，只计算长度   1，  解析数据，并返回长度 
-//packageAA,只有读块记录且需要间隔符时，才需置1。
+//package_type,只有读块记录且需要间隔符时，才需置1。
 int _record_data_package_01_645(struct instance_t* instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src, uint8_t mode, uint16_t *capture_645len,  uint32_t  ID)
 {
     
@@ -1913,7 +2089,7 @@ int record_response_null_645(struct instance_t* instance,  uint8_t *des, uint8_t
 }
 
 //645读记录型数据打包
-int record_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,  struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t *capture_645len,  uint8_t  packageAA,   void *ctx)
+int record_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,  struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t *capture_645len,  uint8_t  package_type,   void *ctx)
 {
 #ifndef WIN32
 
@@ -1990,7 +2166,7 @@ int record_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* bu
     }
 
     
-    if (circular_info.unit_size > (2000-500))
+    if (circular_info.unit_size > (cache_max-500))
     {
         return record_response_null_645(instance,  p, ptr_tmp, rcsd_req, rcsd_src, capture_645len, ID);
     }
@@ -2156,6 +2332,8 @@ int record_data_package645_packageAA(struct instance_t* instance, uint8_t* dest,
 
 }
 
+
+//冻结、结算、事件记录读取
 int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, uint8_t *tx_len)
 {
     union dl645_DI_t DI;
@@ -2183,7 +2361,7 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     ret = get_record_645_id_info(instance, ID, &info);
     if (ret <= 0)
     {
-        return response_1byte_err_645(p_err, 2, 1,  tx_len);
+        return response_1byte_err_645(p_err, RS_ERR_ID, 1,  tx_len);
 
         //return -2; //无请求数据
     }
@@ -2215,7 +2393,7 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
 
             HEX_BCD(p_tx, sequence);
             p_tx += 3;
-            total_len = 3 + 4;
+            total_len = 3;
             *tx_len = total_len;
             return total_len;
         }
@@ -2262,7 +2440,7 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     {
          if((!info.rd_645obj_len)||(!info.rd_645obj)||(info.rd_645obj[0] > 50))
         {
-            return response_1byte_err_645(p_err, 1, 1,  tx_len);
+            return response_1byte_err_645(p_err, RS_ERR_OTHERS, 1,  tx_len);
             //return -1; 
         }
         
@@ -2350,7 +2528,7 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     for(i=0; i < ten_read_cycles; i++)
     {
 
-        data_len = record_data_package645(instance, ID, ptr_tmp,  &rsd_info, rcsd_645req, rcsd_645len,  info.packageAA , __NULL);
+        data_len = record_data_package645(instance, ID, ptr_tmp,  &rsd_info, rcsd_645req, rcsd_645len,  info.package_type , __NULL);
         if (data_len < 0)
         {
             return response_1byte_err_645(p_err, (uint8_t)(-data_len), 1,  tx_len);
@@ -2358,7 +2536,7 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
         }
 
 
-        if (info.packageAA)
+        if (info.package_type == PACKAGE645_FREEZE)
         {
             data_len = record_data_package645_packageAA(instance, p_tx, ptr_tmp,  data_len, &info);
             if (data_len < 0)
@@ -2378,12 +2556,565 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
         rsd_info.last_no++;
     }
 
-    *tx_len = total_len + 4;
+    *tx_len = total_len;
 
 
-    return (total_len + 4);
+    return (total_len);
 
 }
 
+// -1 无数据
+int load_search_copy_first_time(struct instance_t* instance, uint8_t *buf, struct load_rsd_info_t *load_rsd_info, struct record_storage_645_id_info_t  *info)
+{
+    uint32_t start_sec = 0, first_sec = 0, spec_sec = 0, end_sec = 0, cur_sec = 0, tmp_sec = 0;  
+    struct circular_info_t circular_info = {0};
+    uint8_t *ptr_tmp = buf;//instance->apdu_cache;  // 698中单条记录也需要 判断 可能导致溢出   待调整
+    uint8_t tmpbuf[100];
+    int ret = 0, orig_len = 0;
+
+    memset((uint8_t *)&circular_info, 0, sizeof(circular_info));
+    circular_info.start_mark = 0;
+    circular_info.end_mark = 0xFFFFFFFF;
+    circular_info.mode =   2;
+    ret = nd_log_output(instance, info->id_info.save_index,  ptr_tmp, 1, &circular_info);
+
+    if (circular_info.valid_num == 0)
+    {
+        return -1;
+    }
+    ret = nd_log_output(instance, info->id_info.save_index,  ptr_tmp, circular_info.unit_size, &circular_info);
+    
+    first_sec = buf_to_uint32_msb((ptr_tmp + CIRCULAR_OFFSET_TIME)); //首条记录时间
+    //fc_fun_01_645(instance, uint32_t oad_req, uint32_t oad_src, uint8_t * des, uint8_t * src, enum format_conversion_mode mode, struct format_conversion_t * fc)
+
+    //获取指定的首条时间  //mmhhddMMYY   
+    orig_len = record_change_format_645(instance, tmpbuf, (ptr_tmp + 4 + CIRCULAR_OFFSET_SEQUENCE), 0x20210200, 0x20210200, RFC_READ);
+    if(orig_len > 5)
+    {
+        return -1;
+    }
+
+
+    start_sec = 0; //负荷记录起始时间         默认0
+    
+    cur_sec = rtc_mktime(&instance->time); //系统当前时间
+    
+    spec_sec = load_rsd_info->rsd_info.start_mark; //指定 
+
+    end_sec =  load_rsd_info->rsd_info.end_mark; 
+
+    if (start_sec > cur_sec) return -1; //起始时间与当前时间
+    if (start_sec > end_sec) return -1; //起始时间与指定结束时间
+    if (first_sec > end_sec) return -1; //第一条比与指定结束
+    if (spec_sec > cur_sec) return -1;  //指定起始时间与当前时间比
+    if (start_sec > first_sec)          //起始时间与第一条负荷记录时间
+    {
+        first_sec = start_sec;
+    }
+    if (first_sec > spec_sec)           //第一条负荷记录时间与指定起始时间
+    {
+        tmp_sec = first_sec;     
+    }
+    else
+    {
+        tmp_sec = spec_sec;    
+    }
+
+
+
+    if (0 == ((tmp_sec - start_sec) % load_rsd_info->rsd_info.interval))
+    {
+        load_rsd_info->rsd_info.start_mark = tmp_sec;
+    }
+    else
+    {
+        load_rsd_info->rsd_info.start_mark = tmp_sec + (load_rsd_info->rsd_info.interval - ((tmp_sec - start_sec) % load_rsd_info->rsd_info.interval));
+
+        if (load_rsd_info->rsd_info.start_mark > cur_sec)
+        {
+            return -1;
+        }               
+    }
+
+
+    if (end_sec > cur_sec)//指定结束时间与当前时间比
+    {
+        load_rsd_info->rsd_info.end_mark = cur_sec;
+    }
+    else
+    {
+        load_rsd_info->rsd_info.end_mark = end_sec;
+    }
+
+    
+
+    load_rsd_info->read_num = (load_rsd_info->rsd_info.end_mark - load_rsd_info->rsd_info.start_mark)/load_rsd_info->rsd_info.interval;
+    if (((load_rsd_info->rsd_info.end_mark - load_rsd_info->rsd_info.start_mark)%load_rsd_info->rsd_info.interval) != 0)
+    {
+        load_rsd_info->read_num += 1;
+    }
+
+    if (0 == load_rsd_info->read_num)
+    {
+        return -1;
+    }
+
+
+    memset((uint8_t *)&circular_info, 0, sizeof(circular_info));
+
+    circular_info.start_mark = load_rsd_info->rsd_info.start_mark;
+    circular_info.end_mark = load_rsd_info->rsd_info.end_mark;
+    circular_info.mode =   2;
+    ret = nd_log_output(instance, info->id_info.save_index,  ptr_tmp, 1, &circular_info);
+    if(ret < 0)
+    {
+        return -1;
+    }
+
+    
+    ndv_memcopy(ptr_tmp,  tmpbuf, orig_len);    
+
+    return orig_len;
+
+
+}
+
+//新负荷记录补数据.  src_buf 缓存长度 大于1500字节
+int load_response_fill_645(struct instance_t* instance,  uint8_t *des, uint8_t *src_buf, uint32_t *rcsd_req, uint32_t *rcsd_src, uint16_t *capture_645len,  uint32_t ID, struct rsd_info_t *rsd_info)
+{
+    union dl645_DI_t DI;
+    int one_len = 0;
+    uint8_t *p = des;
+    int ret;
+    uint8_t *ptr_tmp = src_buf;
+
+    struct circular_info_t circular_info = {0};
+    struct record_storage_645_id_info_t record_id_info;
+
+    DI.di = ID;
+    
+
+    ret = get_record_645_id_info(instance, ID, &record_id_info);
+    if(ret < 0)
+    {
+        return 0; //无请求数据
+    }
+
+
+    if ((DI.elem.di1 == 0x06) || (DI.elem.di1 == 0x07))//电能补上一条数据 
+    {
+        circular_info.start_mark = 0;
+        circular_info.end_mark = rsd_info->start_mark;
+        circular_info.mode =   2;
+        ret = nd_log_output(instance, record_id_info.id_info.save_index,  ptr_tmp, 1, &circular_info);
+
+        circular_info.curr_num = circular_info.valid_num - 1;
+        //circular_info.valid_num = circular_info.curr_num + 1;
+        ret = nd_log_output(instance, record_id_info.id_info.save_index,  ptr_tmp, circular_info.unit_size, &circular_info);
+
+        //开始打包
+        one_len = record_package_01_645(instance, p, ptr_tmp, rcsd_req, rcsd_src, capture_645len,  ID);
+        if(( one_len < 0) || ( one_len > 544))
+        {
+            return 0;
+        }        
+        p += one_len;
+        
+    }
+    else//瞬时量补FF
+    {
+        //预算打包长度
+        one_len = get_package_01_len_645(instance, p, ptr_tmp, rcsd_req, rcsd_src, capture_645len,  ID);
+        if(( one_len < 0) || ( one_len > 544))
+        {
+            return 0;
+        }        
+        memset(p, 0xFF, one_len);
+        p += one_len;
+    }
+
+
+    return (int)(p-des);
+}
+
+int search_load_scheme_No(struct instance_t* instance, uint32_t rcsd_req, uint8_t *scheme, uint32_t *period_sec, struct record_storage_645_id_info_t  *info)
+{
+    struct circular_info_t circular_info = {0};
+    uint8_t i,k,scheme_no = 0;
+    uint32_t tmpU32 = 0,rcsd_src[50] = {0};
+    uint8_t period_buf[1 + 3 * 8];
+    int ret = 0;
+
+    //方案
+    for(i = 0; i < 8; i++)
+    {
+        //获取配置关联对象
+        get_capture_list(instance, (info->oad698 +(i<<13)), rcsd_src, 2);
+        
+        for(k=1; k < (rcsd_src[0] + 1); k++)
+        {
+            if (true == check_capture_exist(rcsd_req, rcsd_src[k]))
+            {
+                scheme_no = i;
+            }
+        }
+    }
+
+    //周期
+    nd_get_index(instance, info->id_info.period_index , &period_buf[0], sizeof(period_buf));
+
+    tmpU32 = buf_to_uint16_msb(&period_buf[scheme_no * 3 + 1]);  // scheme_no * 3 + 1    and   scheme_no * 3 + 2
+    tmpU32 = tmpU32 * 60;
+    if(tmpU32 == 0)
+    {
+        tmpU32 = 15*60;
+    }
+    
+    *period_sec = tmpU32;
+    *scheme = scheme_no;
+
+    return 1;
+}
+
+
+//645读负荷数据
+int load_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,  struct load_rsd_info_t *load_rsd_info, uint32_t *rcsd_info, uint16_t *capture_645len,  uint8_t  package_type,   void *ctx)
+{
+#ifndef WIN32
+
+    union dl645_DI_t DI;
+
+    struct record_storage_645_id_info_t record_id_info;
+
+    struct circular_info_t circular_info = {0};
+    uint32_t *rcsd_req = (uint32_t *)rcsd_info; 
+    uint8_t *ptr_tmp = instance->apdu_cache + 500;    // 698中单条记录也需要 判断 可能导致溢出   待调整
+    uint32_t rcsd_src[50] = {0};
+    uint16_t i, read_num, number = 0;
+    uint16_t judge_size, one_len = 0,len = 0;
+    uint8_t count = 0, rcsd_schem = 0, non_period = 0, check_result = 0;
+    uint32_t oad_schem = 0, value = 0;
+    uint8_t *p = (buf ); // 预留3个字节条数
+    int ret = 0;
+    struct rsd_info_t *rsd_info = &load_rsd_info->rsd_info;
+    
+    //检查 读取的记录型oad合法性
+
+    DI.di = ID;
+
+    ret = get_record_645_id_info(instance, ID, &record_id_info);
+    if(ret < 0)
+    {
+        return -2; //无请求数据
+    }
+
+
+    //---获取条数
+    
+    circular_info.start_mark = rsd_info->start_mark;
+    circular_info.end_mark = rsd_info->end_mark;
+    circular_info.mode =   rsd_info->mode;
+
+    switch(rsd_info->select)
+    {
+        case 0:
+            //ret = GET_record_sel_0(instance, pipeline, mesg);
+            //circular_info.curr_num--;
+            break;
+            
+        case 1:
+        case 2:
+            if((1 == non_period) && ((rsd_info->mode == 2) || (rsd_info->mode == 3))) //方法1/2 非周期性类 按时间搜索时 由协议筛选
+            {
+                circular_info.mode = 0;
+            }
+            ret = nd_log_output(instance, record_id_info.id_info.save_index,  ptr_tmp, 1, &circular_info);
+            circular_info.mode =   rsd_info->mode; 
+            
+            if ((0 == non_period) && (rsd_info->select == 1) && ((rsd_info->mode == 2) || (rsd_info->mode == 3))) //方法1  周期性冻结 按时间搜索 返回最近一条
+            {
+                if(circular_info.valid_num > 1)
+                {
+                    circular_info.valid_num = 1;
+                }
+            }
+            break;
+            
+        case 9: //上n次
+            ret = nd_log_output(instance, record_id_info.id_info.save_index,  ptr_tmp, 1, &circular_info);
+            if ((rsd_info->last_no == 0) || (rsd_info->last_no > circular_info.valid_num))
+            {
+                return record_response_null_645(instance, p, ptr_tmp, rcsd_req, rcsd_src, capture_645len,  ID);
+            }
+            circular_info.curr_num = circular_info.valid_num - rsd_info->last_no;
+            circular_info.valid_num = circular_info.curr_num + 1;
+            break;
+        default:
+            break;
+    }
+
+    
+    if (circular_info.unit_size > (cache_max-500))
+    {
+        return -DAR_BUFFER_OVERFLOW;
+        //return record_response_null_645(instance,  p, ptr_tmp, rcsd_req, rcsd_src, capture_645len, ID);
+    }
+
+    if (circular_info.valid_num == 0)
+    {
+        //return record_response_null_645(instance, p, ptr_tmp, rcsd_req, rcsd_src, capture_645len,  ID);
+    }
+    //------------
+    
+    //获取关联对象
+    get_capture_list(instance, record_id_info.oad698, rcsd_src, 3);
+
+    check_result = 0;
+    //read_num = circular_info.valid_num;
+    read_num = load_rsd_info->read_num;
+    for (i = circular_info.curr_num; i < read_num; i++)
+    {
+        v85xxp_clear_watchdog();
+        //获取1条记录内容
+        ret = nd_log_output(instance, record_id_info.id_info.save_index,  ptr_tmp, circular_info.unit_size, &circular_info);
+        if(ret < 0)
+        {
+            return -DAR_BUFFER_OVERFLOW;
+            //return record_response_null_645(instance, p, ptr_tmp, rcsd_req, rcsd_src, capture_645len, ID);
+        }
+        
+
+        //-----长度判断
+        if (one_len == 0)
+        {   
+            //预算打包长度
+            one_len = get_package_01_len_645(instance, p+len, ptr_tmp, rcsd_req, rcsd_src, capture_645len,  ID);
+        }
+        
+        judge_size = (p - buf + len + one_len);
+        
+        if((judge_size) > (1400)) //待调整
+        {
+            return -DAR_BUFFER_OVERFLOW;
+        }
+        //-----------
+
+        //----协议筛选
+        if (rsd_info->interval_special)
+        {
+            rsd_info->interval = rsd_info->interval_special;
+        }
+        if (rsd_info->interval > 0)
+        {
+            value = get_interval_basic_value(ptr_tmp, rsd_info);
+            
+            if (number == 0)
+            {
+                circular_info.start_mark = value;
+            }
+            
+            if (value == circular_info.start_mark)
+            {
+                one_len = record_package_01_645(instance, p+len, ptr_tmp, rcsd_req, rcsd_src, capture_645len,  ID);
+            }
+            else //补数据
+            {
+                one_len = load_response_fill_645(instance, p+len, ptr_tmp, rcsd_req, rcsd_src, capture_645len, ID, rsd_info);
+            }
+            if(one_len < 0) one_len = 0;
+            len += one_len;
+            number++;
+            circular_info.start_mark += rsd_info->interval;
+        }
+        else
+        {
+            //协议判断是否符合要求
+            check_result = select_record_time_check(ptr_tmp, non_period, rsd_info);
+            if ( check_result > 0 )
+            {
+                if ((check_result == 1) && (number >= 1)) // 至少已搜索到一条
+                {
+                    len -= one_len; // 
+                }
+            
+                //开始打包
+                one_len = record_package_01_645(instance, p+len, ptr_tmp, rcsd_req, rcsd_src, capture_645len,  ID);
+                len += one_len;
+                number++;
+            }
+        }
+
+    }      
+        
+
+    return (int)len;
+#endif
+}
+
+
+//新负荷记录读取
+int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, uint8_t *tx_len)
+{
+    union dl645_DI_t DI;
+    struct record_storage_645_id_info_t  info;
+    int ret;
+    uint32_t rcsd_645req[51] = {0};
+    uint16_t rcsd_645len[51] = {0};
+    struct rsd_info_t rsd_info;
+    struct load_rsd_info_t load_rsd_info;
+    int total_len = 0, data_len = 0;
+    uint8_t *ptr_tmp = instance->apdu_cache; //至少保证 500字节
+    uint8_t di0_index = 0;
+
+    uint8_t *p_err = (p_tx - 4);
+    uint32_t sequence = 0;
+    uint8_t i,temp = 0xFF;
+    uint32_t addr = 0, oad = 0;
+
+    uint16_t ptr_offset = 0;
+    uint8_t read_num = 0, scheme = 0;
+    uint8_t *p_rx_cache = p_rx + 4; // 
+    struct tm tm_search;
+    uint32_t TSStart = 0,TSEnd = 0,TRStart = 0,TREnd = 0;
+    uint32_t period = 15*60;
+    
+    
+    memset(&load_rsd_info, 0,sizeof(load_rsd_info));
+
+    
+    DI.di = ID;
+
+    ret = get_record_645_id_info(instance, ID, &info);
+    if (ret <= 0)
+    {
+        return response_1byte_err_645(p_err, RS_ERR_ID, 1,  tx_len);
+    }
+
+    // ---------------------
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LoadRec_Mode); //读取负荷模式字
+    nd_get_index(instance, addr, &temp, 1); 
+    info.mark_para = temp;
+    if(0 == (info.mark_para & (1 << info.mark_bit)))
+    {
+        return response_1byte_err_645(p_err, RS_ERR_ID, 1,  tx_len);
+    }
+
+    // -------------------- --------------------
+    if((!info.rd_645obj_len)||(!info.rd_645obj)||(info.rd_645obj[0] > 50))
+    {
+        return response_1byte_err_645(p_err, RS_ERR_OTHERS, 1,  tx_len);
+    }
+
+    if (DI.elem.di0 == 0xFF) //块  三相
+    {
+        ndv_memcopy(rcsd_645req, (uint8_t *)info.rd_645obj, 4 * (info.rd_645obj[0]+1));
+        ndv_memcopy(rcsd_645len, (uint8_t *)info.rd_645obj_len, 2 * (info.rd_645obj[0]+1));
+    }    
+    else
+    {
+        //di0 偏移处理
+        di0_index = DI.elem.di0;
+        if((info.package_num == 1)) // 子项从1开始
+        { 
+            rcsd_645req[0] = 1;
+            rcsd_645req[1] = info.rd_645obj[di0_index];
+            //第一字节总长
+            rcsd_645len[1] = info.rd_645obj_len[di0_index];  
+
+        }
+        else if((info.package_num == 0xFF)) //常规子项 
+        {
+            rcsd_645req[0] = 1;
+            rcsd_645req[1] = info.rd_645obj[di0_index+1];
+            //第一字节总长
+            rcsd_645len[1] = info.rd_645obj_len[di0_index+1];     
+        }
+        else
+        {
+            return response_1byte_err_645(p_err, RS_ERR_OTHERS, 1,  tx_len);
+        }
+    }
+    // -------------------- --------------------
+
+
+    //搜索符合的方案及周期
+    ret = search_load_scheme_No(instance, rcsd_645req[1], &scheme, &period, &info);
+    if (ret < 0)
+    {
+        scheme = 0;
+        period = 15*60; 
+    }
+
+    //添加方案信息
+    info.oad698 |= ((uint32_t)scheme << 13);
+    get_record_id_info(instance, info.oad698, &info.id_info);
+    
+    //获取rsd_info ---------------------------
+    read_num = BCD_BYTE(*p_rx_cache++);
+    if(read_num > 99)
+    {
+        read_num = 99;
+    }
+    
+    
+    tm_search.tm_sec = 0;
+    tm_search.tm_min = BCD_BYTE(*p_rx_cache++);
+    tm_search.tm_hour = BCD_BYTE(*p_rx_cache++);
+    tm_search.tm_mday = BCD_BYTE(*p_rx_cache++);
+    tm_search.tm_mon = BCD_BYTE(*p_rx_cache++) - 1;
+    tm_search.tm_year = BCD_BYTE(*p_rx_cache++) + 2000 - 1900;
+
+    if (false == rtc_tm_valid(&tm_search))
+    {
+        return response_1byte_err_645(p_err, RS_ERR_OTHERS, 1,  tx_len);
+    }
+
+
+    TSStart = rtc_mktime(&tm_search);
+    TSEnd =  TSStart + read_num * period;
+
+    load_rsd_info.rsd_info.select = 2;
+    load_rsd_info.rsd_info.last_no = 0;
+    load_rsd_info.rsd_info.start_mark = TSStart;
+    load_rsd_info.rsd_info.end_mark = TSEnd;
+    load_rsd_info.rsd_info.interval = period;
+    load_rsd_info.rsd_info.mode = 2;   
+    //---------------------------
+
+    data_len = load_search_copy_first_time(instance, ptr_tmp, &load_rsd_info, &info);
+    if (data_len < 0)
+    {
+        *tx_len = 0; //无数据内容
+        return 0;
+    }
+    ndv_memcopy(p_tx, ptr_tmp,  data_len);
+    total_len += data_len;
+    p_tx += data_len;
+
+
+    //for(i=0; i < read_num; i++)//待调整
+    {
+        data_len = load_data_package645(instance, ID, ptr_tmp,  &load_rsd_info, rcsd_645req, rcsd_645len,  info.package_type , __NULL);
+        if (data_len < 0)
+        {
+            return response_1byte_err_645(p_err, (uint8_t)(-data_len), 1,  tx_len);
+            //return data_len;
+        }
+
+
+        ndv_memcopy(p_tx, ptr_tmp,  data_len);
+        
+        
+        total_len += data_len;
+        p_tx += data_len;
+       
+    }
+
+    *tx_len = total_len;
+
+
+    return (total_len);
+
+}
 
 

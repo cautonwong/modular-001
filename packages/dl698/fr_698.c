@@ -342,7 +342,7 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, s
         offset = get_CONNECT_Request_len(instance, pipeline, mesg);
         break;
     case RELEASE_Request:
-        offset = 1;
+        offset = 0;
         break;
     case GET_Request:
         offset = get_GET_Request_len(instance, pipeline, mesg);
@@ -906,7 +906,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
     }
 
     ctx->PIID = apdu_rx[ctx->apdu_rx_offset++];
-    ctx->PIID |= (1 << 6);//PIID-ACD
+    //ctx->PIID |= (1 << 6);//PIID-ACD
 
 
     ret = fr_timetag_check(instance, pipeline, mesg);
@@ -1077,7 +1077,7 @@ int fr_gatekeeper_698_client(struct instance_t* instance, struct pipeline_t* pip
     ctx->service = fifoBuf_getByte(fifo);
     ctx->choice = fifoBuf_getByte(fifo);
     ctx->PIID = fifoBuf_getByte(fifo);
-    ctx->PIID |= (1 << 6);//PIID-ACD
+    //ctx->PIID |= (1 << 6);//PIID-ACD
     fifoBuf_removeData(fifo, (fifo->wr - fifo->rd));
 
     return 0;

@@ -752,8 +752,13 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
             }
             else if(method == 0x09) //ESAM参数设置  待验证，在方法4的基础上改的
             {
+                //p = p + 3;
+                //len1 = *p++; 
+
                 p = p + 3;
-                len1 = *p++; //待调整 长度 128以上?
+                p += axdr_decode(TYPE_octet_string, p, &txlen);
+                len1 = (uint8_t)txlen;
+
                 memcpy(buffer, p, len1);//oad+data
                 p = p + len1;
                 p++; //SID
@@ -789,35 +794,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
 #if 0			
             else if(method == 0x0A) //钱包初始化 
             {
-#if 0               //待调整  
-                if ((req->buf[0] != DT_STRUCTURE) || (req->buf[1] != 2) || (req->buf[2] != DT_DOUBLE_LONG_UNSIGNED))
-                {
-                    return DAR_OTHERS_ERROR;
-                }
-                
-                
-                type = dl698_meter_type_get();
-                
-                /*钱包初始化只在本地下使用*/
-                if (type != 1)
-                {
-                    return DAR_RW_REJECT;
-                }
-                
-                
-                hfp_memset(&security, 0, sizeof(security));
-                security.apdu = res->tmp_buf;
-                security.apdu_len = 4;
-                hfp_memcopy(security.apdu, req->buf + 3, security.apdu_len);
-                dar = sid_mac_decode(req->buf + 7, &security);
-                
-                if (dar != DAR_SUCCESS)
-                {
-                    return dar;
-                }
-                
-                return remote_wallet_initialize(&security);
-#endif
+
             }
 #endif			
             else if(method == 0x0B) //红外请求

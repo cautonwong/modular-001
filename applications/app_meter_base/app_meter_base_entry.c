@@ -143,7 +143,10 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
         {
             if((instance->time.tm_min == 0) || (instance->time.tm_min == 15) || (instance->time.tm_min == 30) || (instance->time.tm_min == 45))
             {
-                mbase_cb->relay_do = 0x5A;
+                if(mbase_cb->relay_do == 0)
+                {
+                    mbase_cb->relay_do = 0x5A; //远程命令有动作时应先执行，再后补
+                }
             }
         }
         
@@ -222,7 +225,8 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             IOStateCheck(instance, pipeline);
 
             TouFeePro(instance, pipeline);
-
+            
+            instance->reset_flag = 0x00; //走完一圈秒任务后 复位标志清零
             break;
       case MSG_PAGE_KEY_UP:
             Key_Display(instance, pipeline, MSG_PAGE_KEY_UP);
@@ -262,7 +266,10 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             mbase_cb->cmd_dostate = 0;  //上电清除控制命令状态字和错误状态字
             mbase_cb->cmd_errstate = 0;
             mbase_cb->relayerr_record = 0;  //继电器误动作记录起始标志
-            mbase_cb->relay_do = 0x5A;
+            if(mbase_cb->relay_do == 0)
+            {
+                mbase_cb->relay_do = 0x5A; //远程命令有动作时应先执行，再后补
+            }
             mbase_cb->alarmmin = 0;     //上电后清零
             mbase_cb->limitmin = 0;     //上电后清零
             mbase_cb->imaxmin = 0;     //上电后清零

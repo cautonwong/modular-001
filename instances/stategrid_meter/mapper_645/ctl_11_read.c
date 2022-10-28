@@ -157,12 +157,29 @@ signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx,
         case 0x19:  //过流           
         case 0x05:  //冻结
             Err_Byte = read_05(instance, ID, p_rx, p_tx, len);
-			if( Err_Byte < 0) //异常应答
-		    {
-		        return 1;
-		    }
-			else
-				return 0;
+            if( Err_Byte < 0) //异常应答
+            {
+                return 1;
+            }
+            else
+            {
+                *len = (*len) +  4;
+                return 0;
+            }
+
+            break;    
+        case 0x06:  //负荷
+            Err_Byte = read_06(instance, ID, p_rx, p_tx, len);
+            if( Err_Byte < 0) //异常应答
+            {
+                return 1;
+            }
+            else
+            {
+                *len = (*len) +  4;
+                return 0;
+            }
+
             break;            
         default:
             break;

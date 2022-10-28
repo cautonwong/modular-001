@@ -43,7 +43,7 @@
 #define get_OAD_Schem(oad)      (uint8_t)(0x07 & (uint8_t)((oad) >> 13))
 #define get_OAD_OI(oad)         ((uint16_t)(((oad)&0xFFFF0000) >> 16))
 
-#define ignore_OAD_Schem(oad)   (uint32_t)((oad)&0xFFFF1FFFF)
+#define ignore_OAD_Schem(oad)   (uint32_t)((oad)&0xFFFF1FFF)
 
 
 #define TIME_WILDCARD   1
@@ -431,7 +431,7 @@ enum report_mode_t {
 
 
 
-//厂家扩展 OI  
+//厂家扩展 ------------OI  
 #if 0
 0xFF310000   //电能表编程事件645 
 
@@ -494,4 +494,5 @@ extern uint8_t get_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *ap
 extern uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t mode);
 extern int MeterWr_obj_list_clear(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
 extern uint8_t fr_698_get_logic_name(uint8_t *buf, uint16_t OI);
+extern int read_record_data_form_698_protocol(struct instance_t* instance, uint8_t* buf, uint32_t Record_oad, uint32_t capture_oad, uint8_t last_no, uint16_t bufsize);
 #endif //__FR_698_H__

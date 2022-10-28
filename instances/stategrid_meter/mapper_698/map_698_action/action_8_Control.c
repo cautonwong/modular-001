@@ -180,6 +180,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         mbase_cb->imaxmin = 0;
                     }
                     mbase_cb->cmd_errstate = 0;
+                    mbase_cb->relay_do = 0xA5; 
                     return (p-buf);
                     break;
                 case 0x82://合闸
@@ -229,7 +230,8 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     if(mbase_cb->imaxmin > 0)   mbase_cb->imaxmin = 0;   //大电流延时，清除大电流延时时间
                     
                     if(mbase_cb->alarmmin > 0)  mbase_cb->alarmmin = 0;     //跳闸延时，清零
-                    
+
+                    mbase_cb->relay_do = 0xA5; 
                     return (p-buf);
                     break;
                 default:

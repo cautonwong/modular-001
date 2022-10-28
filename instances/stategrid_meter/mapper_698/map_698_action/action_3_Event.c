@@ -357,7 +357,7 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
             return -DAR_OBJECT_NOT_EXIST;
         }
 
-        report_3320list_confirmed_All_channel(instance, id); //   77个 action  共 20秒  占用 17秒    测试 待调整
+        report_3320list_confirmed_All_channel(instance, id); //   77个 action  共 20秒  占用 17秒    测试 
         
         record_event_no_mesg_pro(instance, NULL, EventClrS, NULL, 1);
 

@@ -10,6 +10,7 @@
 #include "applications.h"
 #include "gs_record.h"
 #include "pin_function_def.h"
+#include "fr_698.h"
 
 #define     KeyPortIn           {GPIOA->OEN |=BIT2; GPIOA->IE |=BIT2;}
 #define     KeyPortCheck        (GPIOA->STS & BIT2)
@@ -135,20 +136,22 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
         switchon = 1;
     }
 
-    if((lastswitchsta != switchon) || (mbase_control_block->relay_do == 0x5A))   //状态翻转、上电或定时操作继电器
+    if(lastswitchsta == 0xaa)
+    {
+        lastswitchsta = switchon;
+    }
+
+    if((lastswitchsta != switchon) )   //状态翻转、上电或定时操作继电器
     {
         if(switchon == 1)
         {
             Magnetic_hold_relay_connect();//合闸
-            if(mbase_control_block->meterclear != 0x5A)//电表清零后,不做事件记录和上报
+            if((mbase_control_block->meterclear != 0x5A))//电表清零后,不做事件记录和上报
             {
                 send_event_mesg_pro(instance, NULL, SwitchOnS, NULL, 1);
                 mbase_control_block->switch_on_succees = 0x5A;  //要挪到成功 待调整
             }
-            else
-            {
-                mbase_control_block->meterclear = 0;
-            }
+
             relay_off_chk = 0;
             relay_on_chk = 0;
             mbase_control_block->relayerr_record = 0x5A;
@@ -156,22 +159,40 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
         else 
         {
             Magnetic_hold_relay_disconnect();//拉闸
-            if(mbase_control_block->meterclear != 0x5A)//电表清零后,不做事件记录和上报
-            {
-                send_event_mesg_pro(instance, NULL, SwitchOffS, NULL, 1);
-                mbase_control_block->switch_off_succees = 0x5A;  //要挪到成功 待调整
-            }
-            else
-            {
-                mbase_control_block->meterclear = 0;
-            }
+            
+            send_event_mesg_pro(instance, NULL, SwitchOffS, NULL, 1);
+            mbase_control_block->switch_off_succees = 0x5A;  //要挪到成功 待调整
+
             relay_off_chk = 0;
             relay_on_chk = 0;
             mbase_control_block->relayerr_record = 0x5A;
         }
         lastswitchsta = switchon;
-        if(mbase_control_block->relay_do == 0x5A)   mbase_control_block->relay_do = 0;
+        mbase_control_block->relay_do = 0; //不再重复补动作
     }
+    mbase_control_block->meterclear = 0;//执行完一轮要清掉
+    
+    if (mbase_control_block->relay_do == 0x5A)
+    {
+        if(switchon == 1)
+        {
+            Magnetic_hold_relay_connect();//合闸
+            relay_off_chk = 0;
+            relay_on_chk = 0;
+        }
+        else 
+        {
+            Magnetic_hold_relay_disconnect();//拉闸
+            relay_off_chk = 0;
+            relay_on_chk = 0;
+        }
+        
+        mbase_control_block->relay_do = 0;
+    }
+
+
+    
+
 }
 
 
@@ -220,7 +241,7 @@ void relay_led_ctl(struct instance_t* instance,  struct pipeline_t* pipeline)
     {
         RELAY_LED_CLOSE();
     }
-    
+
     /******************** 误动作检测 ***************/
     if(switchon == 0) //拉闸状态下，检测到继电器合闸或有电流，则误动作
     {
@@ -230,6 +251,11 @@ void relay_led_ctl(struct instance_t* instance,  struct pipeline_t* pipeline)
         }
         else
         {
+            if ( mbase_control_block->switch_off_succees == 0x5A   )
+            {
+                mbase_control_block->switch_off_succees = 0;
+                report_2015state_update(instance, RPT_2015_SWITCH_OFF_SUCCEES);
+            }
             mbase_control_block->SwitchErrS_status = 0; 
         }
     }
@@ -242,6 +268,11 @@ void relay_led_ctl(struct instance_t* instance,  struct pipeline_t* pipeline)
         else
         {
             mbase_control_block->SwitchErrS_status = 0; 
+            if ( mbase_control_block->switch_on_succees == 0x5A   ) 
+            {
+                mbase_control_block->switch_on_succees = 0;
+                report_2015state_update(instance, RPT_2015_SWITCH_ON_SUCCEES);
+            }
         }
     }
     

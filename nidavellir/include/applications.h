@@ -318,7 +318,7 @@ struct mbase_control_block_t
     uint16_t cmd_dostate;  //控制命令执行状态字
     uint16_t cmd_errstate;  //控制命令错误状态字
     uint8_t relayerr_record;    //误动作记录开始
-    uint8_t relay_do;   //继电器操作
+    uint8_t relay_do;   //继电器操作   5A 为补动作。   A5为远程命令
     
 
     uint8_t key_state;  //秘钥状态，显示调用，true为公钥
@@ -478,18 +478,27 @@ struct record_storage_id_info_t
     const uint32_t *record_head;  // 记录头
 };
 
+enum package_type_645 //
+{
+    PACKAGE645_NORMAL = 0,   //事件&结算&冻结  不打包的
+    PACKAGE645_FREEZE,      //冻结   //AA打包
+    PACKAGE645_LOAD,        //负荷
+};
+
+
 
 struct record_storage_645_id_info_t
 {
     struct record_storage_id_info_t id_info;
     uint32_t oad698;
-    uint8_t packageAA;
-    //const uint8_t *di1_index;  
+    uint8_t package_type;// package_type:  0  表示事件;  1   冻结;  2 负荷记录
+    uint8_t package_num; // package_type为1时,package_num表示AA打包个数。
+                         // package_type为其他时，package_num表示是否支持块内单个数据项抄读等信息，  0，不支持，1:支持 且 子项id从1开始。  0xFF:支持,子项id从0开始
+    uint8_t mark_para;  //模式字
+    uint8_t mark_bit;   //类/通道 如负荷记录   0-5类
     const uint32_t *rd_645obj;  //关联对象 //首字节个数
-    const uint16_t *rd_645obj_len;     //第一个字节总长
-    const uint16_t *rd_645obj_package_len; 
-    uint8_t package_num; // packageAA为0时，package_num用作事件是否支持块内单个数据项抄读的标志，  0，不支持，1:支持 (id1子项从1开始)。 
-    
+    const uint16_t *rd_645obj_len;     //关联对象数据内容长度，首字节总长           
+    const uint16_t *rd_645obj_package_len;   //冻结AA打包长度，   BIT15: 长度变长      BIT14:单相不支持
 };
 
 

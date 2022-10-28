@@ -795,6 +795,7 @@ int16_t __search_circular(struct instance_t* instance, struct circular_info_t* i
     return 0x00;
 }
 
+
 int16_t search_circular(struct instance_t* instance, const struct dev_info_t* dev, uint32_t addr, struct circular_info_t* info, struct log_manager_t* manager,uint32_t max_num)
 {
     struct search_tempinfo_t tempinfo;
@@ -812,11 +813,11 @@ int16_t search_circular(struct instance_t* instance, const struct dev_info_t* de
         case 0x00:  //全读
             return 0x00;  //直接返回
         case 0x01:  //序号二分查找
-            tempinfo.offset = 0x01;
+            tempinfo.offset = CIRCULAR_OFFSET_SEQUENCE;  // 01
             //tempinfo.offset = 0x00;
             return __search_circular(instance, info, manager, &tempinfo, search_mid_way);
         case 0x02: //时间二分查找
-            tempinfo.offset = 0x06;
+            tempinfo.offset = CIRCULAR_OFFSET_TIME; // 06
             //tempinfo.offset = 0x04;
             return __search_circular(instance, info, manager, &tempinfo, search_mid_way);
         case 0x03: //时间枚举法查找

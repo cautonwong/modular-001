@@ -92,7 +92,7 @@ int cal_record_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, u
     for (i = 0; i < scheme_num; i++)
     {
         offset = 5 + 5;  // 序号 + 时间
-
+        
         for (k = 0; k < obj_num; k++)
         {
             obj = buf_to_uint32_msb(&capture_ptr[4*k+1]);
@@ -1003,7 +1003,7 @@ int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct mess
         //复位记录测试代码
         if (instance->reset_flag == 0x5A)
         {
-            instance->reset_flag = 0x00;
+            
             send_event_mesg_pro(instance, NULL, StepCutFreeze, NULL, 1);
         }
 #endif   
@@ -1042,7 +1042,31 @@ int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct mess
     return 1;
 }
 
+int recover_minFreeze_sequence(struct instance_t* instance)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint32_t sequence = 0;
+    uint32_t oad = 0x50020200;
+    uint8_t buf[20] = {0};
+    int ret = 0;
+    uint8_t i;
 
+
+    for(i = 0; i < 8; i++)
+    {    
+        sequence = 0;
+        ret = read_record_data_form_698_protocol(instance, buf, (oad), (0x20230200 + (i<<13)),  1, sizeof(buf));
+        if(ret > 0)
+        {
+            sequence = buf_to_uint32_msb(buf + 1 + CIRCULAR_OFFSET_SEQUENCE);
+            if((mbase_cb->minute_freeze_seq[i] < (sequence + 1)) &&  (sequence != 0xFFFFFFFF))
+            {
+                mbase_cb->minute_freeze_seq[i] = sequence + 1;  //待调整  待测试
+            }
+        }
+    }
+
+}
 // 上电调用
 int freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
@@ -1052,6 +1076,13 @@ int freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task, st
     ctrl_block->trigger_insfreeze_delay_sec = 0xFFFF; 
     
     record_rollback_after_set_time(instance, 0x5A);
+
+    if (instance->reset_flag == 0x5A)
+    {
+        recover_minFreeze_sequence(instance); //分钟冻结序号检查
+    }
+
+
     day_freeze_power_on_pro(instance, task, mesg);
     bill_freeze_power_on_pro(instance, task, mesg);
     ctrl_block->frz_replenish_end = 0x5A; //完成补冻结
