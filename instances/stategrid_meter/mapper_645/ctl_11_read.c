@@ -3,7 +3,7 @@
 #include "ndvh_rn8209.h"
 
 extern const struct dev_info_t rn8209_dev;
-extern int rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx);
+extern unsigned char rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx);
 extern unsigned char IxRMSOS_Adjust(struct instance_t* instance, unsigned char CH);
 extern unsigned char ft_adj_meter(struct instance_t* instance, uint8_t *p_rx);
 extern int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, uint8_t *tx_len);

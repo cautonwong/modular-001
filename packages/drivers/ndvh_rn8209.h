@@ -42,8 +42,8 @@
 //#define Fr_K          1          //3M晶振
 #define Fr_K          1.676191  //6M晶振
 
-#define REAL_K_U_INIT     0.0137414116
-#define REAL_K_I_INIT     0.016
+#define REAL_K_U_INIT     0.018213639
+#define REAL_K_I_INIT     0.28802
 #define REAL_K_P_INIT     0.0017918671
 
 #define IMP             2000

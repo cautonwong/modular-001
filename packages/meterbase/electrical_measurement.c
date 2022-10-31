@@ -52,7 +52,7 @@ unsigned int cal_pstart(float k)
 
     //p_start = (unsigned int)(0.8 * 220 * 5 * 0.4 / k / 256);
 
-    p_start = (unsigned int)(1.375 / k);
+    p_start = (unsigned int)(0.1375 / k);
     
     return p_start;
 }
@@ -63,7 +63,7 @@ float cal_kp(unsigned int hfcst)
     
     //kp = (float)(3221550000000/(4294967296*IMP*hfcst))*100;
 
-    K = 75007.556/((float)hfcst*IMP);
+    K = 7500.7556/((float)hfcst*IMP);
     
     return K;
 }
@@ -192,6 +192,52 @@ void emu_calibration_clear(struct instance_t* instance)
     
 }
 
+uint8_t get_uip(struct instance_t* instance, uint8_t *Tu, uint8_t *Ti, uint8_t *Tp, uint8_t cnt )
+{
+    uint8_t i=0,j;
+    uint32_t U_value=0, I1_value=0, I2_value=0, P_value=0;
+    uint32_t TempUrms = 0, TempIrms = 0, TempPw = 0;
+    
+    
+    for (i = 0; i < cnt; i++)
+    {
+        //获取电压
+        rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , URMS , 3 , &U_value);
+        if( U_value & 0x00800000 )//电压最高位为1时，数据无效
+            U_value = 0;
+        else
+            U_value &= 0x00FFFFFF;
+        TempUrms += U_value;
+
+        //获取电流
+        rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , IARMS , 3 , &I1_value);
+        if( I1_value & 0x00800000 )//电流最高位为1时，数据无效
+            I1_value = 0;
+        else
+            I1_value &= 0x00FFFFFF;
+        TempIrms += I1_value;
+
+        //获取功率
+        rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , POWERPA , 4 , &P_value);
+        if(P_value >= 0x80000000)
+            P_value=~P_value;
+        TempPw += P_value;
+        
+        for(j=0;j<10;j++)
+        {
+            mcu_delay_us(50000);	//等待500ms
+            mcu_clear_watchdog();
+        }
+    }
+    TempUrms = TempUrms/3;
+    TempIrms = TempIrms/3;
+    TempPw   = TempPw/3;
+    memcpy(Tu, (uint8_t*)&TempUrms, 4);
+    memcpy(Ti, (uint8_t*)&TempIrms, 4);
+    memcpy(Tp, (uint8_t*)&TempPw, 4);
+    return 0;
+}
+
 /***************************** 0.5L 100%Ib 增益，相位修正 *********************************/
 void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t *adj_data)
 {
@@ -226,38 +272,7 @@ void meterchip_adj_self(struct instance_t* instance , struct factor_adj_meter_t 
 
     if (Factory3.adjflag & F_ALadj)
     {
-        for (i = 0; i < 3; i++)
-        {
-            //获取电压
-            rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , URMS , 3 , &U_value);
-            if( U_value & 0x00800000 )//电压最高位为1时，数据无效
-                U_value = 0;
-            else
-                U_value &= 0x00FFFFFF;
-            TempUrms += U_value;
-
-            //获取电流
-            rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , IARMS , 3 , &I1_value);
-            if( I1_value & 0x00800000 )//电流最高位为1时，数据无效
-                I1_value = 0;
-            else
-                I1_value &= 0x00FFFFFF;
-            TempIrms += I1_value;
-
-            //获取功率
-            rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , POWERPA , 4 , &P_value);
-            if(P_value >= 0x80000000)
-                P_value=~P_value;
-            TempPw += P_value;
-            for(j=0;j<10;j++)
-            {
-                mcu_delay_us(50000);	//等待500ms
-                mcu_clear_watchdog();
-            }
-        }
-        TempUrms = TempUrms/3;
-        TempIrms = TempIrms/3;
-        TempPw   = TempPw/3;
+        get_uip(instance, (uint8_t*)&TempUrms, (uint8_t*)&TempIrms, (uint8_t*)&TempPw, 3);
 
         if (mem_compare( &Factory3.Ua, Buffer, 12 ) != 0)
         {
@@ -481,7 +496,7 @@ const  meterchip  Mtable[9]=
 };
 
 
-int rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx)
+uint8_t rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx)
 {
     uint8_t addr=0,lenth=0,i;
     int16_t tmp[15]={0,};
@@ -561,7 +576,7 @@ int rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx)
             }
         }
     }
-    return -1;
+    return false;
 }
 
 int rn8209c_set( struct instance_t* instance, uint8_t *p_rx )
@@ -730,8 +745,8 @@ void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx)
         memcpy((uint8_t*)&hfconst, p_rx+3, 2);
         memcpy((uint8_t*)&buf[2], p_rx+3, 2);//写入脉冲速率
         kp = cal_kp(hfconst);           //计算功率K系数
-        //pstart = cal_pstart(kp);        //计算启动阈值
-        //memcpy(buf, (uint8_t*)&pstart, 2);
+        pstart = cal_pstart(kp);        //计算启动阈值
+        memcpy(buf, (uint8_t*)&pstart, 2);
     }
         
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Other);
@@ -763,6 +778,68 @@ void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx)
     }
 }
 
+uint8_t adj_10L(struct instance_t* instance , uint8_t *p_rx)
+{
+    uint32_t TempUrms=0,TempIrms=0,TempPw=0,std_u=0,std_i=0,std_p=0,Corretion_Pw=0;
+    uint64_t CalcPw=0;
+    uint32_t addr=0,temp=0;
+    uint8_t adj_buf[8];
+    float a,b,err;
+    signed short Pgain;
+    
+    get_uip(instance, (uint8_t*)&TempUrms, (uint8_t*)&TempIrms, (uint8_t*)&TempPw, 3);
+    
+    memcpy((uint8_t*)&temp, p_rx+2, 3);
+    temp = temp >> 4;
+    std_u = long_bcd_tohex(temp);
+    
+    temp = 0;
+    memcpy((uint8_t*)&temp, p_rx+6, 2);
+    std_i = long_bcd_tohex(temp);
+    std_i = std_i * 10;
+
+    temp = 0;
+    memcpy((uint8_t*)&temp, p_rx+9, 4);
+    temp = temp >> 4;
+    std_p = long_bcd_tohex(temp);
+    
+    if((std_u == 0) || (std_i == 0) || (std_p == 0))    return 0;
+    
+    CmdRn8209(CMD_WR_EN , &rn8209_dev);
+    
+    Corretion_Pw = (unsigned long)(((float)std_u*(float)std_i/100000)/Rn8209Adj_K.p);//台体视在功率
+    CalcPw = (uint64_t)TempUrms * TempIrms / 32768;//表视在功率
+
+    Rn8209Adj_K.u = (float)std_u/TempUrms;
+    Rn8209Adj_K.il = (float)std_i/TempIrms;
+    
+    err = (CalcPw - (float)Corretion_Pw)/(float)Corretion_Pw;
+    err = (-err/(1+err));
+    if (err >= 0)
+    {
+        Pgain = (signed short)(err * 32768);
+    }
+    else
+    {
+        Pgain = (signed short)(65535 + err * 32768);
+    }
+    
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);
+    nd_get_index(instance, addr, (uint8_t*)&adj_buf[0], 8);
+    memcpy((uint8_t*)&adj_buf[0], (uint8_t*)&Pgain, 2);
+    nd_set_index(instance, addr, (uint8_t*)&adj_buf[0], 8);
+    
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_K);
+    nd_set_index(instance, addr, (uint8_t*)&Rn8209Adj_K.u, 16);
+    
+    rn8209_dev.dev_driver_ops->dev_write(instance, &rn8209_dev, GPQA, 2, &Pgain);
+    
+    CmdRn8209(CMD_WR_DIS , &rn8209_dev);
+    
+    rn8209_dev.dev_driver_ops->dev_initialize(instance, &rn8209_dev);
+    
+    return 1;
+}
 
 unsigned char ft_adj_meter(struct instance_t* instance, uint8_t *p_rx)
 {
@@ -777,18 +854,22 @@ unsigned char ft_adj_meter(struct instance_t* instance, uint8_t *p_rx)
             if(id == 0x02FC01)
             {
                 meteric_para_clr(instance, p_rx);
+                rn8209_dev.dev_driver_ops->dev_control(instance, &rn8209_dev , AC_POWER_ON , 0);
             }
             break;
         case 0x11://校表
             switch(cmd)
             {
                 case 0x11://1.0L增益，A相电流
+                  adj_10L(instance , p_rx);
                   break;
                   
                 case 0x15://0.5L相位
+                  
                   break;
                   
                 case 0x31://小信号修正
+                  
                   break;
                   
                 case 0xC0://有效值偏移修正
@@ -966,7 +1047,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
     /****************** 补偿功能 ******************/
     if((mbase_control_block->metertype & F_Compen_En) == F_Compen_En)
     {
-        heat_compensate(instance, pipeline);    //自热补偿
+        //heat_compensate(instance, pipeline);    //自热补偿
         
         if((mbase_control_block->voltage_ac < 19900) || (mbase_control_block->voltage_ac > 23900))
         {

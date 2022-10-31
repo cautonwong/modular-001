@@ -30,6 +30,8 @@ signed char Comm_Other(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx
     switch(rx_len)
 	{
 		case 0x03:
+            if((mbase_cb->CoverOpenS_status != EVENT_SET) && (*(p_rx+1) == 0x55) && (mbase_cb->key_state == false))  return RS_ERR_PASS;    //开盖或公钥下允许进入
+            
 			if(*(p_rx+1) == 0x55)
                 mbase_cb->factor_mode = true;
             else if(*(p_rx+1) == 0xAA)

@@ -833,7 +833,16 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
             else
                 return -1;
             break;
-        case 0x61:  //ft校表命令
+        case 0x60:  //ft校表读命令
+            if( Cmp_MeterAddr( instance, (unsigned char*)&apdu_rx[1], 1 ) == 0 )
+            {
+                ERRBYTE = ft_adj_get_meter(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
+            }
+            else
+                return -1;
+            break;
+            break;
+        case 0x61:  //ft校表写命令
             if( Cmp_MeterAddr( instance, (unsigned char*)&apdu_rx[1], 1 ) == 0 )
             {
                 ERRBYTE = ft_adj_set_meter(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
