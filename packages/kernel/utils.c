@@ -142,7 +142,105 @@ bool Isbcddataarray(uint8_t *src, uint8_t len)
 
     return true;
 }
+/************************************************************************/
+const uint8_t  gui_HexVar[7] =
+{
+    0x00, 0x16, 0x32, 0x48, 0x64, 0x80, 0x96,
+};
 
+uint8_t bytehex_to_bcd(uint8_t hex)
+{
+    uint8_t t1, t2;
+
+    if (hex > 99)                       /* 不要超过0x99,超过的请调用函数IntHexToBcd */
+    {
+        return 0x99;
+    }
+
+    t1 = hex & 0x0F;                    /**< 取低4位进行转换 */
+
+    if (t1 > 9)                         /**< 判断低4位是否需要进位 */
+    {
+        t1 += 6;
+    }
+
+    t2 = hex >> 4;
+    t2 = gui_HexVar[t2];                /**< 获取高四位对应的BCD码的数值 */
+
+    hex = t1;
+    t1  = (hex & 0x0F) + (t2 & 0x0F);   /**< 低四位 */
+    t2  = (hex & 0xF0) + (t2 & 0xF0);   /**< 高四位 */
+
+    if (t1 > 9)                         /**< 低四位的进位判断 */
+    {
+        t1 += 6;
+    }
+
+    return t1 + t2;                     /**< 返回转换好的结果 */
+}
+
+
+uint16_t shorthex_to_bcd(uint16_t hex)
+{
+    uint16_t result = 0;
+
+    if (hex > 9999)
+    {
+        return 0x9999;
+    }
+
+    if (hex >= 8000)
+    {
+        result |= 0x8000;
+        hex    -= 8000;
+    }
+
+    if (hex >= 4000)
+    {
+        result |= 0x4000;
+        hex    -= 4000;
+    }
+
+    if (hex >= 2000)
+    {
+        result |= 0x2000;
+        hex    -= 2000;
+    }
+
+    if (hex >= 1000)
+    {
+        result |= 0x1000;
+        hex    -= 1000;
+    }
+
+    if (hex >= 800)
+    {
+        result |= 0x800;
+        hex    -= 800;
+    }
+
+    if (hex >= 400)
+    {
+        result |= 0x400;
+        hex    -= 400;
+    }
+
+    if (hex >= 200)
+    {
+        result |= 0x200;
+        hex    -= 200;
+    }
+
+    if (hex >= 100)
+    {
+        result |= 0x100;
+        hex    -= 100;
+    }
+
+    result |= (uint16_t)bytehex_to_bcd((uint8_t)hex);
+
+    return result;
+}
 /***********************************************************************/
 /*  函数名称：GetTotalDay                                              */
 /*  函数功能：根据年月日计算总天数                                     */
