@@ -99,7 +99,11 @@ void mem_swap_cpy(void* dest, void* src, unsigned short length);
 void swap_buffer(uint8_t *buff, uint16_t length);
 void ndv_move_buffer(uint8_t *sbuff, uint8_t *tbuff, uint16_t length);
 uint8_t BCD_Check( uint8_t* Addr, uint8_t Len );
-
+uint8_t bytehex_to_bcd(uint8_t hex);
+uint16_t shorthex_to_bcd(uint16_t hex);
+uint32_t long_bcd_tohex(uint32_t bcd);
+uint16_t word_bcd_to_hex(uint16_t bcd);
+void HEX_BCD_Signed(int32_t hex , uint8_t *dest , uint8_t len);
 #ifdef WIN32
 int hex2bin(char* dst, const char* src, uint16_t count);
 #endif

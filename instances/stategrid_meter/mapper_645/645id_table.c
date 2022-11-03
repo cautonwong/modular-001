@@ -1,12 +1,15 @@
 #include "nidavellir.h"
 #include "645id_table.h"
 #include "port.h"
+#include "utils.h"
 
 typedef uint8_t (*data_check_fun)(struct instance_t* instance, uint32_t addr, uint8_t *, uint8_t *);
 extern uint8_t write_mcu_rtc_time(uint8_t addr, uint8_t *buf, uint16_t len);
 extern uint8_t write_mcu_rtc_date(uint8_t addr, uint8_t *buf, uint16_t len);
 extern unsigned char GetWeek645( unsigned char* Addr );
 extern const  unsigned char FirmWareVersion[20];
+extern unsigned long SoftwareCHK(void);
+extern int rn8209c_set( struct instance_t* instance, uint8_t *p_rx );
 
 const COMMTAB  CommTab[] =
 {

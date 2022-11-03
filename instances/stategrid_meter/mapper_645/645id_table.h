@@ -96,3 +96,24 @@ extern const  COMMTAB  CommTab[242];
 
 
 
+
+
+
+
+
+
+
+
+
+
+extern int read_00( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx);
+extern int read_02( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx);
+extern int read_04( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx);
+extern int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, uint8_t *tx_len);
+extern int read_record_data_form_698_protocol(struct instance_t* instance, uint8_t* buf, uint32_t Record_oad, uint32_t capture_oad, uint8_t last_no, uint16_t bufsize);
+extern unsigned char GetCommTable( unsigned long ID );
+extern signed char ctl_freeze(struct instance_t* instance, uint8_t chl, uint8_t* p_rx);
+extern signed char chg_baut(struct instance_t* instance, uint8_t* p_rx);
+extern signed char CommRemoteCtl_Process(struct instance_t* instance, uint8_t chl, uint8_t* p_rx, uint16_t RemotCtrResult);
+extern int upgrade_file_handle(struct instance_t* instance, uint8_t *data, uint16_t len, uint8_t *data_tx, uint8_t *tx_len);
+extern signed char ft_adj_get_meter(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);

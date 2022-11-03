@@ -14,6 +14,11 @@ extern unsigned char Cmp_Password(struct instance_t* instance, unsigned char* Ad
 extern unsigned char Date_645Format_Check( unsigned char* Addr );
 extern unsigned char Time_645Format_Check( unsigned char* Addr );
 extern uint8_t dl645wt_chg_data(struct instance_t* instance, uint32_t addr, uint8_t format, uint8_t *pbuf, uint8_t *len);
+extern unsigned char Comm485Baut_Check( unsigned char Baut );
+extern unsigned char ChangeTime_Format_Check( unsigned char* Addr );
+extern unsigned char SeasonTab_Format_Check( struct instance_t* instance, unsigned char* Addr, unsigned char* Len );
+extern unsigned char GetMonMaxDay( unsigned char* Addr );
+extern unsigned char TouTab_Format_Check( struct instance_t* instance, unsigned char* Addr, unsigned char* Len );
 struct ADJ_POFFSET_T adj_poffset;
 
 typedef struct

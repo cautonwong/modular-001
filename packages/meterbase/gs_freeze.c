@@ -1065,7 +1065,7 @@ int recover_minFreeze_sequence(struct instance_t* instance)
             }
         }
     }
-
+    return 0;
 }
 // 上电调用
 int freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)

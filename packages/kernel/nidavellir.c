@@ -10,7 +10,7 @@
 
 #include "pin_function_def.h"
 extern int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline, struct message_t* mesg);
-
+extern int clear_mesg(struct instance_t *instance,struct pipeline_t *pipeline,struct message_t *mesg);
 char* get_pipeline_name(struct instance_t* instance, pid_t pipeline_id)
 {
     struct recipe_t* recipe = instance->recipe;

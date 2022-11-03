@@ -8,6 +8,9 @@
 #define RECORED_FILL_NO_OBJ_645  0x00
 #define RECORED_FILL_NO_DATA_645  0x00
 
+extern uint8_t check_capture_exist(uint32_t rcsd_req, uint32_t rcsd_src);
+extern uint32_t get_interval_basic_value(uint8_t *src, struct rsd_info_t *rsd_info);
+extern uint8_t select_record_time_check(uint8_t *src, uint8_t non_period, struct rsd_info_t *rsd_info);
 extern int record_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,  struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t *capture_645len,  uint8_t  package_type,   void *ctx);
 extern int record_data_package645_packageAA(struct instance_t* instance, uint8_t* dest, uint8_t* src, uint16_t datalen, struct record_storage_645_id_info_t  *info);
 union dl645_DI_t

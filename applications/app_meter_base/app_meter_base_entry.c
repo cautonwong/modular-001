@@ -12,6 +12,7 @@ extern void Poffset_adj_oneself(struct instance_t* instance);
 //#define     P_BACKLIGHT_OFF     GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT &=~0x10; //推挽输出低
 
 extern const struct dev_info_t rn8209_dev;
+extern void rs485_init(struct instance_t* instance, struct pipeline_t* pipeline);
 
 #if 1  //  GS
 

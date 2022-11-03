@@ -53,6 +53,7 @@ int MeterWr_obj_list_clear(struct instance_t* instance, struct pipeline_t* task,
 int clr_last_bill_time(struct instance_t* instance, uint32_t ID);
 int event_poweroff_save(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 void write_powerdown_time(struct instance_t* instance);
+int trigger_MeterWr645_record(struct instance_t* instance, uint32_t DI645, uint8_t tag);
 
 //外部接口
 extern void report_2015state_judge(struct instance_t* instance);
@@ -70,5 +71,8 @@ extern void esam_sec_pro(struct instance_t* instance, struct pipeline_t* pipelin
 extern void updata_powerdown_time(struct instance_t* instance);
 extern int check_record_item_support(struct instance_t* instance, uint32_t oad);
 extern int check_record_table_oad__support(struct instance_t* instance, uint32_t oad);
-
+extern int updata_EC_checksum(struct instance_t* instance, uint8_t type);
+extern int MeterWr645_obj_list_clear(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
+extern int16_t Save_EC2(struct instance_t* instance, uint8_t type);
+extern int CoverOpen_event_LowPower_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
 #endif //__GS_RECORD_H__
