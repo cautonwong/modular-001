@@ -13,6 +13,7 @@ extern void start_emu_signal_pro(void);
 extern unsigned char WriteRn8209(unsigned char ChipAddr, unsigned char* Buf, unsigned char length , const struct dev_info_t* dev);
 extern void  mcu_clear_watchdog(void);
 extern uint8_t mcu_delay_us(volatile uint16_t count);
+extern uint32_t long_bcd_tohex(uint32_t bcd);
 uint32_t over_Imax;
 static uint8_t Buffer[50];
 //static struct factor_adj_meter_t Factory3;
@@ -778,16 +779,9 @@ void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx)
     }
 }
 
-uint8_t adj_10L(struct instance_t* instance , uint8_t *p_rx)
+void get_std_uip(uint8_t *Tu, uint8_t *Ti, uint8_t *Tp, uint8_t *p_rx)
 {
-    uint32_t TempUrms=0,TempIrms=0,TempPw=0,std_u=0,std_i=0,std_p=0,Corretion_Pw=0;
-    uint64_t CalcPw=0;
-    uint32_t addr=0,temp=0;
-    uint8_t adj_buf[8];
-    float a,b,err;
-    signed short Pgain;
-    
-    get_uip(instance, (uint8_t*)&TempUrms, (uint8_t*)&TempIrms, (uint8_t*)&TempPw, 3);
+    uint32_t temp = 0, std_u=0,std_i=0,std_p=0;
     
     memcpy((uint8_t*)&temp, p_rx+2, 3);
     temp = temp >> 4;
@@ -803,6 +797,24 @@ uint8_t adj_10L(struct instance_t* instance , uint8_t *p_rx)
     temp = temp >> 4;
     std_p = long_bcd_tohex(temp);
     
+    memcpy(Tu, (uint8_t*)&std_u, 4);
+    memcpy(Ti, (uint8_t*)&std_i, 4);
+    memcpy(Tp, (uint8_t*)&std_p, 4);
+}
+
+uint8_t adj_10L(struct instance_t* instance , uint8_t *p_rx)
+{
+    uint32_t TempUrms=0,TempIrms=0,TempPw=0,std_u=0,std_i=0,std_p=0,Corretion_Pw=0;
+    uint64_t CalcPw=0;
+    uint32_t addr=0,temp=0;
+    uint8_t adj_buf[8];
+    float a,b,err;
+    signed short Pgain;
+    
+    get_uip(instance, (uint8_t*)&TempUrms, (uint8_t*)&TempIrms, (uint8_t*)&TempPw, 3);
+    
+    get_std_uip((uint8_t*)&std_u, (uint8_t*)&std_i, (uint8_t*)&std_p, p_rx);
+    
     if((std_u == 0) || (std_i == 0) || (std_p == 0))    return 0;
     
     CmdRn8209(CMD_WR_EN , &rn8209_dev);
@@ -813,7 +825,16 @@ uint8_t adj_10L(struct instance_t* instance , uint8_t *p_rx)
     Rn8209Adj_K.u = (float)std_u/TempUrms;
     Rn8209Adj_K.il = (float)std_i/TempIrms;
     
-    err = (CalcPw - (float)Corretion_Pw)/(float)Corretion_Pw;
+    if(CalcPw > Corretion_Pw)
+    {
+        err = (CalcPw - (float)Corretion_Pw)/(float)Corretion_Pw;
+    }
+    else 
+    {
+        err = (Corretion_Pw - (float)CalcPw)/(float)Corretion_Pw;
+        err = -err;
+    }
+    
     err = (-err/(1+err));
     if (err >= 0)
     {
@@ -841,9 +862,67 @@ uint8_t adj_10L(struct instance_t* instance , uint8_t *p_rx)
     return 1;
 }
 
+uint8_t adj_05L(struct instance_t* instance , uint8_t *p_rx)
+{
+    uint32_t TempUrms=0,TempIrms=0,TempPw=0,std_u=0,std_i=0,std_p=0,Corretion_Pw=0;
+    uint64_t CalcPw=0;
+    uint32_t addr=0,temp=0;
+    uint8_t adj_buf[8];
+    float a,b,err;
+    signed short Ph;
+    
+    get_uip(instance, (uint8_t*)&TempUrms, (uint8_t*)&TempIrms, (uint8_t*)&TempPw, 3);
+    
+    get_std_uip((uint8_t*)&std_u, (uint8_t*)&std_i, (uint8_t*)&std_p, p_rx);
+    
+    if((std_u == 0) || (std_i == 0) || (std_p == 0))    return 0;
+    
+    CmdRn8209(CMD_WR_EN , &rn8209_dev);
+    
+    TempPw = Rn8209Adj_K.p * TempPw * 10;
+    
+    Corretion_Pw = std_p;//台体功率
+    CalcPw = TempPw;//表功率
+    
+    if(CalcPw > Corretion_Pw)
+    {
+        err = (CalcPw - (float)Corretion_Pw)/(float)Corretion_Pw;
+    }
+    else 
+    {
+        err = (Corretion_Pw - (float)CalcPw)/(float)Corretion_Pw;
+        err = -err;
+    }
+    
+    err = (asin(-err/1.732))*100*57.29578;
+    
+	if(err <= 0)
+	{
+		Ph = (int16_t)err / 2;
+	}
+	else
+	{
+		Ph = (int16_t)(512+err) / 2;
+	}
+	Ph &= 0x00FF;
+    
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Pgain0);
+    nd_get_index(instance, addr, (uint8_t*)&adj_buf[0], 8);
+    memcpy((uint8_t*)&adj_buf[6], (uint8_t*)&Ph, 2);
+    nd_set_index(instance, addr, (uint8_t*)&adj_buf[0], 8);
+    
+    rn8209_dev.dev_driver_ops->dev_write(instance, &rn8209_dev, PHSA, 1, &Ph);
+    
+    CmdRn8209(CMD_WR_DIS , &rn8209_dev);
+    
+    rn8209_dev.dev_driver_ops->dev_initialize(instance, &rn8209_dev);
+    
+    return 0;
+}
+
 unsigned char ft_adj_meter(struct instance_t* instance, uint8_t *p_rx)
 {
-    uint32_t id=0;
+    uint32_t id=0,I2_value=0,in=0,addr=0;
     uint8_t cmd = 0;
     
     cmd = *p_rx;
@@ -865,11 +944,16 @@ unsigned char ft_adj_meter(struct instance_t* instance, uint8_t *p_rx)
                   break;
                   
                 case 0x15://0.5L相位
-                  
+                  adj_05L(instance , p_rx);
                   break;
                   
                 case 0x31://小信号修正
-                  
+                  adj_poffset.tick = 0;
+                  adj_poffset.flag = 0xA55AA55A;
+                  adj_poffset.power_avg = 0;
+                  memcpy((uint8_t*)&adj_poffset.power_avg, p_rx+9, 4);
+                  adj_poffset.ps = long_bcd_tohex(adj_poffset.power_avg)/10;
+                  adj_poffset.power_avg = 0;
                   break;
                   
                 case 0xC0://有效值偏移修正
@@ -877,7 +961,13 @@ unsigned char ft_adj_meter(struct instance_t* instance, uint8_t *p_rx)
                   IxRMSOS_Adjust(instance, 2);
                   break;
                 case 0x51://零线电流系数
-                  
+                  memcpy((uint8_t*)&I2_value, p_rx+6, 4);
+                  in = long_bcd_tohex(I2_value);
+                  I2_value = 0;
+                  rn8209_dev.dev_driver_ops->dev_read(instance, &rn8209_dev , IBRMS , 3 , &I2_value);
+                  Rn8209Adj_K.in = (float)in/I2_value;
+                  addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_K);
+                  nd_set_index(instance, addr, (uint8_t*)&Rn8209Adj_K.u, 16); 
                   break;
                   
                 default:
