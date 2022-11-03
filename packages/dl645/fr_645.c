@@ -1,5 +1,16 @@
 #include "nidavellir.h"
+#include "gs_record.h"
 #define data_max_len 222
+
+//后续帧相关
+#define     MAX_READ_DATAFILED_LEN     200
+#define     MAX_WRITE_DATAFILED_LEN    230
+#define     APDU_DATA_LEN              (MAX_READ_DATAFILED_LEN - 4)
+#define     APDU_PUSH_DATA_LEN         (MAX_READ_DATAFILED_LEN - 4 - 1)
+
+#define     FOLLOW_FRAM_FLAG               0x20
+
+
 
 extern signed char ft_adj_set_meter(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
 extern signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t* p_rx);
@@ -23,6 +34,22 @@ int __update_scrambler_and_cs(void* pctx, uint8_t* byte)
     *byte += 0x33;
     ctx->cs += *byte;
     return 0;
+}
+int __pack_apdu_byte_645(void* pctx, uint8_t* byte)
+{
+    struct pipeline_t* pipeline = pctx;
+    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
+
+    append_byte(fifo, *byte, __update_scrambler_and_cs, ctx);
+    return 0;
+}
+
+int fr_pack_645_apdu(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
+    fifo_popData(&ctx->apdu, mesg->len, __pack_apdu_byte_645, pipeline);
+    return 1;
 }
 
 int __matcher_645(void* pctx, uint8_t* b)
@@ -521,10 +548,26 @@ int fr_pack_645_data(struct instance_t* instance, struct pipeline_t* pipeline, s
 {
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
+    uint8_t len = mesg->len; 
+
+    if ((ctx->segment_tx)&&ctx->segment_tx_no != 0) //后续帧情况下 发帧序号
+    {
+        len = mesg->len + 1;
+    }
+
 
     append_byte(fifo, mesg->ctrl, __update_cs, ctx);
-    append_byte(fifo, mesg->len, __update_cs, ctx);
-    append_data(fifo, ctx->apdu_tx, mesg->len, __update_scrambler_and_cs, ctx);
+    append_byte(fifo, len, __update_cs, ctx);
+
+    if(mesg->len)
+        fr_pack_645_apdu(instance, pipeline, mesg);
+    
+    //append_data(fifo, ctx->apdu_tx, mesg->len, __update_scrambler_and_cs, ctx);
+    
+    if ((ctx->segment_tx)&&ctx->segment_tx_no != 0) //后续帧情况下 发帧序号
+    {
+        append_data(fifo, &ctx->segment_tx_no, 1, __update_scrambler_and_cs, ctx);
+    }
 
     return 1;
 }
@@ -671,6 +714,67 @@ unsigned char Cmp_Password(struct instance_t* instance, unsigned char* Addr )
 	else
 		return 1;
 }
+int __fr_segment_tx_645_handle(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+{
+    struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
+    struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
+    uint8_t *apdu_rx = ctx->apdu_d_rx;
+    uint8_t type = 0;
+    uint8_t segment_no = 0;
+    uint8_t segment = 0;
+    uint8_t data[10] ={0};
+    
+    if((ctx->ctrl == 0x12) && (ctx->segment_tx)){
+        //fifoBuf_getData(fifo, apdu_rx,  2);
+        //handle_scrambler(instance, pipeline, mesg);
+        memcpy((unsigned char*)&data[0], apdu_rx+10, 4);
+        segment_no = apdu_rx[10 + 4 + 1];
+        
+        if(segment_no == (ctx->segment_tx_no + 1))
+        {
+            ctx->segment_tx_no++;
+            ctx->segment_tx = 1;
+            if (fifoBuf_getUsed(&ctx->apdu)  >= 0)
+            {
+                mesg->len = fifoBuf_getUsed(&ctx->apdu);
+                if (mesg->len > MAX_READ_DATAFILED_LEN)//后续帧
+                {   
+                    mesg->len = MAX_READ_DATAFILED_LEN;
+                    mesg->ctrl = ctx->ctrl | FOLLOW_FRAM_FLAG;
+                }
+                else //结束
+                {
+                    //ctx->segment_tx_no = 0;
+                    //ctx->segment_tx = 1;
+                }
+
+                mesg->ctrl = ctx->ctrl | 0x80; 
+                
+                fifoBuf_update_rd(&ctx->apdu, 4, 0);          
+                mesg->len+=4;
+                memcpy(ctx->apdu.buf_ptr + ctx->apdu.rd, data, 4);
+                
+            
+                fr_rx_645_end(instance, pipeline, mesg);
+            }
+
+            return 1;
+        }
+        else
+        {
+            ctx->segment_tx_no = 0; //异常应答
+            ctx->segment_tx = 0;
+            mesg->ctrl = ctx->ctrl | 0xC0;
+            mesg->len = 1;
+            *ctx->apdu_tx = 1+0x33;
+            fr_rx_645_end(instance, pipeline, mesg);
+        }
+        
+    }
+    ctx->segment_tx = 0;
+    ctx->segment_tx_no = 0;
+    return 0;
+}
 
 int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -724,8 +828,16 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
         fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len+11);
     else
         fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len+10);
-    
-    fifoBuf_init(&ctx->apdu, ctx->apdu_tx, 1200);
+
+    if ((ctx->ctrl == 0x12) && (ctx->segment_tx))
+    {
+        //待调整   fifo未初始化 ？？？
+    }
+    else
+    {
+        fifoBuf_init(&ctx->apdu, ctx->apdu_tx, 1200);
+    }
+
        
     for(int i = 0; i < ctx->apdu_rx_len; i++){
         apdu_rx[i+10] = apdu_rx[i+10] - 0x33;
@@ -747,6 +859,17 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
             }
             else
                 return -1;
+            break;
+        case 0x12: //后续帧
+            if( Cmp_MeterAddr( instance, (unsigned char*)&apdu_rx[1], 0 ) == 0 )
+            {
+                if(__fr_segment_tx_645_handle(instance, pipeline, mesg))
+                {
+                    return -1; //不应答
+                }
+            }
+
+            return 0;
             break;
         case 0x13://读地址
             if((Addr_A_A( (unsigned char*)&apdu_rx[1] ) == 0) && (apdu_rx[9] == 0))
@@ -883,9 +1006,18 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     ctx->apdu.wr = tx_len;
     if (fifoBuf_getUsed(&ctx->apdu)  >= 0){
         mesg->len = fifoBuf_getUsed(&ctx->apdu);
-        if (mesg->len > 512){
-            mesg->len = 512;
+        if (mesg->len > MAX_READ_DATAFILED_LEN){   //后续帧
+            mesg->len = MAX_READ_DATAFILED_LEN;
+            mesg->ctrl |= FOLLOW_FRAM_FLAG;
+            ctx->segment_tx_no = 0;
+            ctx->segment_tx = 1;
         }
+        else
+        {
+            ctx->segment_tx_no = 0;
+            ctx->segment_tx = 0;
+        }
+        
 
         fr_rx_645_end(instance, pipeline, mesg);
     }

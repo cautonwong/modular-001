@@ -240,6 +240,9 @@ struct context_645_t
     uint8_t apdu_d_rx[128]; 
     uint16_t apdu_rx_len;
     uint16_t apdu_rx_offset;
+
+    uint8_t segment_tx; 
+    uint8_t segment_tx_no;
     
     //接收和发送都要用的状态
     struct object_t object;//对象标识
