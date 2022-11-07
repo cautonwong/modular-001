@@ -1,5 +1,7 @@
 #include "nidavellir.h"
 #include "gs_record.h"
+#include "645id_table.h"
+
 #define data_max_len 222
 
 //后续帧相关
@@ -684,6 +686,11 @@ unsigned char Cmp_Password(struct instance_t* instance, unsigned char* Addr )
 {
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    if((mbase_cb->factor_mode == true ))
+    {
+        return 0; 
+    }
     
 	if( (*Addr == 0x02) && (mbase_cb->Pass02Err_Cnt < 3) )
 	{
@@ -737,9 +744,9 @@ int __fr_segment_tx_645_handle(struct instance_t* instance, struct pipeline_t* p
             if (fifoBuf_getUsed(&ctx->apdu)  >= 0)
             {
                 mesg->len = fifoBuf_getUsed(&ctx->apdu);
-                if (mesg->len > MAX_READ_DATAFILED_LEN)//后续帧
+                if (mesg->len > (MAX_READ_DATAFILED_LEN - 1))//后续帧  // 1 字节帧序号
                 {   
-                    mesg->len = MAX_READ_DATAFILED_LEN;
+                    mesg->len = (MAX_READ_DATAFILED_LEN - 1);
                     mesg->ctrl = ctx->ctrl | FOLLOW_FRAM_FLAG;
                 }
                 else //结束

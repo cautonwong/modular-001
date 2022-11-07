@@ -3,7 +3,7 @@
 
 int read_00( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
-    uint8_t IDL0, IDL1, data[100]={0,}, len, i;
+    uint8_t IDL0, IDL1, data[100]={0,}, len = 0, i;
     uint16_t IDH=0;
     uint32_t oad698=0, temp=0;
     

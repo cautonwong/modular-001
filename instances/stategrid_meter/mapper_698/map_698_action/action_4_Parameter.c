@@ -238,13 +238,8 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     nd_set_index(instance, s_index, timer_set, 7);
 
                     record_event_no_mesg_pro(instance, NULL, BroadcastTimeS, NULL, 1);// 广播校时记录
+                    after_Time_set_hook(instance);
 
-                    record_rollback_after_set_time(instance, 0);
-                    clr_last_bill_time(instance, LastBillingTime);
-                    clr_last_bill_time(instance, LastDayFreezTime);
-                    write_powerdown_time(instance);
-                    
-                    mbase_cb->RTCErrS_status = 0; 
                     return 8;
                 }
             }

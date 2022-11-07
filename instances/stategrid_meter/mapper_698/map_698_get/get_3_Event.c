@@ -208,6 +208,14 @@ int get_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
     uint32_t CaptureId;
     struct record_storage_id_info_t  record_id_info;
     int ret;
+    uint8_t index = 0;
+
+    index = (unsigned char)(oad & 0x000000FF);
+
+    if (index != 0) //不支持索引
+    {
+        return -DAR_OBJECT_UNDEF;
+    }
 
     ret = get_record_id_info(instance, oad, &record_id_info);
     if (ret <= 0)
@@ -254,6 +262,15 @@ int get_current_record_number(struct instance_t* instance, uint32_t oad, uint8_t
 
     struct record_storage_id_info_t  record_id_info;
     int ret;
+
+    uint8_t index = 0;
+
+    index = (unsigned char)(oad & 0x000000FF);
+
+    if (index != 0) //不支持索引
+    {
+        return -DAR_OBJECT_UNDEF;
+    }
 
     ret = get_record_id_info(instance, oad, &record_id_info);
     if (ret <= 0)
@@ -375,6 +392,16 @@ int get_max_record_number(struct instance_t* instance, uint32_t oad, uint8_t* bu
     uint8_t* p = buf;
     uint16_t OI = get_OAD_OI(oad);
     uint16_t max_num = 10;
+    uint8_t index = 0;
+
+    index = (unsigned char)(oad & 0x000000FF);
+
+    if (index != 0) //不支持索引
+    {
+        return -DAR_OBJECT_UNDEF;
+    }
+
+
 
     if ((OI == 0x3011) || (OI == 0x303C))
     {
@@ -1283,6 +1310,10 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 break;
                 case 9: // 有效标识 固定为1
                 {
+                    if ((id & 0x000000FF) != 0) //不支持索引
+                    {
+                        return -DAR_OBJECT_UNDEF;
+                    }
                     *p++ = TYPE_bool;
                     *p++ = 1;
                     return (p - buf);
@@ -1357,6 +1388,10 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 break; 
                 case 12: // 有效标识 固定1
                 {
+                    if ((id & 0x000000FF) != 0) //不支持索引
+                    {
+                        return -DAR_OBJECT_UNDEF;
+                    }
                     *p++ = TYPE_bool;
                     *p++ = 1;
                     return (p - buf);

@@ -845,6 +845,8 @@ void display_energy_pro(struct instance_t* instance, struct pipeline_t* pipeline
     unsigned long long energy_p=0,p_max=0;//正向，反向
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
+    mbase_control_block->disp_borrow = 0;
+    
     EnergyDot = mbase_control_block->energy_point;
     
     mem_swap_cpy((uint8_t*)&energy_p, data, 8);
@@ -869,14 +871,14 @@ void display_energy_pro(struct instance_t* instance, struct pipeline_t* pipeline
             energy_p = energy_p/100;
             break;
     }
-    
+    /*
     if(mbase_control_block->disp_borrow != 0)
     {
         for(i=0; i<mbase_control_block->disp_borrow; i++)
         {
             energy_p = energy_p / 10;
         }
-    }
+    }*/
     
     p_max = 99999999;
     

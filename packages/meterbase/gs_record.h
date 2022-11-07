@@ -75,4 +75,5 @@ extern int updata_EC_checksum(struct instance_t* instance, uint8_t type);
 extern int MeterWr645_obj_list_clear(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
 extern int16_t Save_EC2(struct instance_t* instance, uint8_t type);
 extern int CoverOpen_event_LowPower_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
+extern int after_Time_set_hook(struct instance_t* instance);
 #endif //__GS_RECORD_H__

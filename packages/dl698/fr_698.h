@@ -192,12 +192,6 @@ enum unit_type_t
 };
 
 
-enum MultiPort
-{
-    F_PortSec       = 0,   //秒信号
-    F_PortTouCut    = 2    //时段投切
-};
-
 #if WIN32
 #define TEST_CASE_ID 0xFAFAFAFA
 #endif
@@ -495,4 +489,5 @@ extern uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t
 extern int MeterWr_obj_list_clear(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
 extern uint8_t fr_698_get_logic_name(uint8_t *buf, uint16_t OI);
 extern int read_record_data_form_698_protocol(struct instance_t* instance, uint8_t* buf, uint32_t Record_oad, uint32_t capture_oad, uint8_t last_no, uint16_t bufsize);
+extern int check_record_table_oad__support(struct instance_t* instance, uint32_t oad);
 #endif //__FR_698_H__

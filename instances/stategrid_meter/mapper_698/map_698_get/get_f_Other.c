@@ -132,20 +132,42 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
             }
             if(attribute == 0x02)
             {
-                *p++ = TYPE_array;
-                *p++ = 1;
-                *p++ = TYPE_structure;
-                *p++ = 4;
-                *p++ = TYPE_visible_string;
-                *p++ = 5;
-                memcpy(p, name_relay, 5);
-                p = p + 5;
-                *p++ = TYPE_enum;
-                *p++ = mbase_cb->relay_true_sta;
-                *p++ = TYPE_enum;
-                *p++ = mbase_cb->relay_ctl_mode;
-                *p++ = TYPE_enum;
-                *p++ = 0;
+                if(index == 0)
+                {
+                    *p++ = TYPE_array;
+                    *p++ = 1;
+                    *p++ = TYPE_structure;
+                    *p++ = 4;
+                    *p++ = TYPE_visible_string;
+                    *p++ = 5;
+                    memcpy(p, name_relay, 5);
+                    p = p + 5;
+                    *p++ = TYPE_enum;
+                    *p++ = mbase_cb->relay_true_sta;
+                    *p++ = TYPE_enum;
+                    *p++ = mbase_cb->relay_ctl_mode;
+                    *p++ = TYPE_enum;
+                    *p++ = 0;
+                }
+                else if(index == 1)
+                {
+                    *p++ = TYPE_structure;
+                    *p++ = 4;
+                    *p++ = TYPE_visible_string;
+                    *p++ = 5;
+                    memcpy(p, name_relay, 5);
+                    p = p + 5;
+                    *p++ = TYPE_enum;
+                    *p++ = mbase_cb->relay_true_sta;
+                    *p++ = TYPE_enum;
+                    *p++ = mbase_cb->relay_ctl_mode;
+                    *p++ = TYPE_enum;
+                    *p++ = 0;
+                }
+                else
+                {
+                    return -DAR_OBJECT_UNDEF;
+                }
             }
             else
                 return -DAR_OTHERS_ERROR;

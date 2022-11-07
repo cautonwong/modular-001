@@ -2,7 +2,7 @@
 #include "645id_table.h"
 
 extern int rn8209c_set( struct instance_t* instance, uint8_t *p_rx );
-
+extern uint8_t rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx);
 signed char ft_adj_set_meter(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len)
 {
     uint16_t data = 0;

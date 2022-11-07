@@ -527,7 +527,7 @@ const uint8_t  init_5FE6[] = {0x00};
 const uint8_t  init_5FE7[] = {0x00};
 
 /************************* 645相关 *************************/
-const uint8_t   init_Remote_RelayOffTime[] = {0x02, 0x00, 0x01};
+const uint8_t   init_Remote_RelayOffTime[] = {0x02, 0x00, 0x00};
 const uint8_t   init_HourFroze_StartTime[] = {0x05, 0x00, 0x01, 0x01, 0x00, 0x00};
 const uint8_t   init_HourFroze_Inv[] = {0x01, 0x60};
 const uint8_t   init_DayFroze_Time[] = {0x02, 0x00, 0x00};

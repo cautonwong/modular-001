@@ -764,5 +764,13 @@ int16_t nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t 
 #define     chl_rx_empty    1
 #define     chl_tx_empty    2
 #define     chl_empty       3
-      
+    
+
+//多功能口  
+enum MultiPort
+{
+    F_PortSec       = 0,   //秒信号
+    F_PortTouCut    = 2    //时段投切
+};
+
 #endif

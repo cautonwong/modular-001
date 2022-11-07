@@ -1,7 +1,6 @@
 #include "nidavellir.h"
 #include "fr_698.h"
 
-
 uint8_t axdr_decode(uint8_t type, const uint8_t *buf, uint16_t *len)
 {
     if (buf[0] < 128)

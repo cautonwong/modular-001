@@ -94,18 +94,6 @@ extern const  COMMTAB  CommTab[242];
 
 #define		CommTabNum			sizeof(CommTab)/sizeof(COMMTAB)
 
-
-
-
-
-
-
-
-
-
-
-
-
 extern int read_00( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx);
 extern int read_02( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx);
 extern int read_04( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx);
@@ -117,3 +105,14 @@ extern signed char chg_baut(struct instance_t* instance, uint8_t* p_rx);
 extern signed char CommRemoteCtl_Process(struct instance_t* instance, uint8_t chl, uint8_t* p_rx, uint16_t RemotCtrResult);
 extern int upgrade_file_handle(struct instance_t* instance, uint8_t *data, uint16_t len, uint8_t *data_tx, uint8_t *tx_len);
 extern signed char ft_adj_get_meter(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
+extern unsigned char Addr_9_9( unsigned char* Addr );
+extern unsigned long GetTotalSec( unsigned char* Addr );
+extern unsigned char Addr_A_A( unsigned char* Addr ) ;
+extern unsigned char Cmp_MeterAddr( struct instance_t* instance, unsigned char* Addr, unsigned char mode );
+extern unsigned char ChangeTime_Format_Check( unsigned char* Addr );
+extern unsigned char Cmp_Password(struct instance_t* instance, unsigned char* Addr );
+extern signed char ctl_freeze(struct instance_t* instance, uint8_t chl, uint8_t* p_rx);
+extern signed char chg_baut(struct instance_t* instance, uint8_t* p_rx);
+extern signed char ft_adj_get_meter(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
+extern int upgrade_file_handle(struct instance_t* instance, uint8_t *data, uint16_t len, uint8_t *data_tx, uint8_t *tx_len);
+extern unsigned char Comm485Baut_Check( unsigned char Baut );

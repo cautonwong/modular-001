@@ -461,7 +461,26 @@ int CheckData400C(uint8_t *p,uint8_t index)
 
 
 extern const uint8_t  MonTab[13];// = {	0,31,28,31,30,31,30,31,31,30,31,30,31};
-
+// 时间设置后调用  (包含广播校时)
+int after_Time_set_hook(struct instance_t* instance)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
+    record_rollback_after_set_time(instance, 0);
+    mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+    mbase_cb->RTCErrS_status = 0;
+    
+    clr_last_bill_time(instance, LastBillingTime);
+    clr_last_bill_time(instance, LastDayFreezTime);
+    
+    if (instance->time.tm_sec == 0)
+    {
+        instance->time.tm_sec = 1; //规避冻结临界时间。最坏情况为时间跳1秒 ，30s后恢复
+    }
+    write_powerdown_time(instance);
+    
+    return 1;
+}
 int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
     struct mbase_control_block_t* mbase_cb;
@@ -553,7 +572,9 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 nd_set_index(instance, addr, buffer, 7);
 
                 record_event_no_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
-
+                after_Time_set_hook(instance);
+#if 0
+                record_event_no_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
 
                 record_rollback_after_set_time(instance, 0);
                 mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
@@ -567,6 +588,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     instance->time.tm_sec = 1; //规避冻结临界时间。最坏情况为时间跳1秒 ，30s后恢复
                 }
                 write_powerdown_time(instance);
+#endif                
                 return (p-buf);
             }
             else if(attribute == 0x05)  //广播校时参数

@@ -1,7 +1,7 @@
 #include "nidavellir.h"
 #include "645id_table.h"
 #include "ndvh_rn8209.h"
-
+    
 extern const struct dev_info_t rn8209_dev;
 extern unsigned char rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx);
 extern unsigned char IxRMSOS_Adjust(struct instance_t* instance, unsigned char CH);

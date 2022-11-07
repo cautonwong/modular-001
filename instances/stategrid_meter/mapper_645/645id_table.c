@@ -2,6 +2,7 @@
 #include "645id_table.h"
 #include "port.h"
 #include "utils.h"
+#include "gs_record.h"
 
 typedef uint8_t (*data_check_fun)(struct instance_t* instance, uint32_t addr, uint8_t *, uint8_t *);
 extern uint8_t write_mcu_rtc_time(uint8_t addr, uint8_t *buf, uint16_t len);
@@ -10,6 +11,7 @@ extern unsigned char GetWeek645( unsigned char* Addr );
 extern const  unsigned char FirmWareVersion[20];
 extern unsigned long SoftwareCHK(void);
 extern int rn8209c_set( struct instance_t* instance, uint8_t *p_rx );
+extern uint8_t rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx);
 
 const COMMTAB  CommTab[] =
 {
@@ -25,7 +27,7 @@ const COMMTAB  CommTab[] =
     0x04000202, SeasonDay_Para+1,               FORMAT_06,      CommData_WR + CommData_E2PROM + CommData_SECONDLY + 1,   //日时段表数(<=8)
     0x04000203, SeasonDay_Para+2,               FORMAT_06,      CommData_WR + CommData_E2PROM + CommData_SECONDLY + 1,   //日时段数(<=14)
     0x04000204, SeasonDay_Para+3,               FORMAT_06,      CommData_WR + CommData_E2PROM + CommData_SECONDLY + 1,   //费率数(<=12)
-    0x04000205, SeasonDay_Para+4,               FORMAT_06,      CommData_WR + CommData_E2PROM + CommData_SECONDLY + 1,   //公共假日数
+    0x04000205, SeasonDay_Para+4,               FORMAT_06,      CommData_WR + CommData_E2PROM + CommData_SECONDLY + 2,   //公共假日数
     0x04000207, Step_Num,                       FORMAT_06,      CommData_WR + CommData_E2PROM + CommData_SECONDLY + 1,   //阶梯数
     
     0x04000301, 0xFFFF,	 						FORMAT_08,		CommData_WR + CommData_E2PROM + CommData_SECONDLY + 1,//自动循环显示屏数
@@ -212,17 +214,28 @@ static uint8_t dl645rd_hex_bcd(struct instance_t* instance, uint32_t addr, uint8
 {
     uint32_t addr1=0;
     uint32_t temp=0;
-    uint8_t buf[4] = {0,},len=0;
+    uint8_t buf[4] = {0,},len=0, storage_len = 0;
     
     if((addr == ImaxProtectValue) || (addr == Meter_CT) || (addr == Meter_PT) 
        || (addr == IrAuthenTime) || (addr == Meter_Const1))    //拉闸电流门限需要从4字节转成3字节
+    {
         len = 4;
+        storage_len = 4;
+    }
+    else if((addr == (SeasonDay_Para+4)))    //协议2字节 存储1字节
+    {
+        len = 2;
+        storage_len = 1;
+    }
     else
+    {
         len = *length;
+        storage_len = len;
+    }
     
     addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
-    nd_get_index(instance, addr1, buf, len);
-    mem_swap_cpy((uint8_t*)&temp, buf, len);
+    nd_get_index(instance, addr1, buf, storage_len);
+    mem_swap_cpy((uint8_t*)&temp, buf, storage_len);
     
     if(addr == ImaxProtectValue)
     {
@@ -245,7 +258,7 @@ const uint8_t baud698[8] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x06, 0x07, 0x00};
 static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint32_t id=0,StAddr=0;
+    uint32_t id=0,StAddr=0, s_index = 0;
     uint8_t i=0,j,index=0;
     uint16_t sate=0,sate1=0;
     
@@ -353,8 +366,12 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
                 *databuf = 0x00;
             }
             break;
-        case 0xA8F00003:    //多功能配置字
-            memcpy(databuf, (uint8_t *)&mbase_cb->metertype, 2);
+        case 0xA8F00003:    //多功能配置字+
+            memset(databuf, 0, 2);
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Meter_Type);
+            nd_get_index(instance, addr, (uint8_t*)databuf, 2); //区分判断 是否已经设置过表型
+
+            //memcpy(databuf, (uint8_t *)&mbase_cb->metertype, 2);
             break;
         case 0xA8F00002:    //背光配置字
             memcpy(databuf, (uint8_t *)&mbase_cb->blt_alarm, 2);
@@ -471,7 +488,15 @@ static uint8_t dl645wt_date(struct instance_t* instance, uint32_t addr, uint8_t 
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t day = 0, settimebuf[4]={0,};
-    
+    uint8_t buffer[10]={0},temp[10]={0};
+    uint32_t s_index = 0;
+
+    //保存校时前时间 
+    rtc_get_from_tm(instance,temp);
+    mem_swap_cpy( &buffer[0], &temp[0], 7);
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
+    nd_set_index(instance, s_index, buffer, 7);
+
     day = instance->time.tm_mday;
     prx++;
     settimebuf[0] = *prx++;//日
@@ -480,12 +505,20 @@ static uint8_t dl645wt_date(struct instance_t* instance, uint32_t addr, uint8_t 
     settimebuf[3] = GetWeek645(&settimebuf[0]);
     write_mcu_rtc_date(0, settimebuf, 4);
     read_mcu_rtc(0x00, instance);
+
+    //保存校时后时间 
+    rtc_get_from_tm(instance,temp);
+    mem_swap_cpy( &buffer[0], &temp[0], 7);
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
+    nd_set_index(instance, s_index, buffer, 7);
+    
     if(day != instance->time.tm_mday)  //跨日，清除广播校时标志位
     {
         mbase_cb->boardadjtime = 0;
     }
-    mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
-    mbase_cb->RTCErrS_status = 0;
+
+    record_event_no_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
+    after_Time_set_hook(instance);
     
     return 0;
 }
@@ -494,13 +527,31 @@ static uint8_t dl645wt_time(struct instance_t* instance, uint32_t addr, uint8_t 
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t settimebuf[3]={0,};
+    uint8_t buffer[10]={0},temp[10]={0};
+    uint32_t s_index = 0;
+
+    //保存校时前时间 
+    rtc_get_from_tm(instance,temp);
+    mem_swap_cpy( &buffer[0], &temp[0], 7);
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
+    nd_set_index(instance, s_index, buffer, 7);
     
     settimebuf[0] = *prx++;//日
     settimebuf[1] = *prx++;//月
     settimebuf[2] = *prx++;//年
     write_mcu_rtc_time(0, settimebuf, 3);
     read_mcu_rtc(0x00, instance);
-    
+
+    //保存校时后时间 
+    rtc_get_from_tm(instance,temp);
+    mem_swap_cpy( &buffer[0], &temp[0], 7);
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
+    nd_set_index(instance, s_index, buffer, 7);
+
+
+    record_event_no_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
+    after_Time_set_hook(instance);
+
     return 0;
 }
 
@@ -508,7 +559,15 @@ static uint8_t dl645wt_datetime(struct instance_t* instance, uint32_t addr, uint
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t day = 0, settimebuf[7]={0,};
+    uint8_t buffer[10]={0},temp[10]={0};
+    uint32_t s_index = 0;
 
+    //保存校时前时间 
+    rtc_get_from_tm(instance,temp);
+    mem_swap_cpy( &buffer[0], &temp[0], 7);
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
+    nd_set_index(instance, s_index, buffer, 7);
+    
     day = instance->time.tm_mday;
     settimebuf[0] = *prx++;//秒
     settimebuf[1] = *prx++;//分
@@ -524,9 +583,17 @@ static uint8_t dl645wt_datetime(struct instance_t* instance, uint32_t addr, uint
     {
         mbase_cb->boardadjtime = 0;
     }
-    mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
-    mbase_cb->RTCErrS_status = 0;
-    //校时记录
+
+    //保存校时后时间 
+    rtc_get_from_tm(instance,temp);
+    mem_swap_cpy( &buffer[0], &temp[0], 7);
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
+    nd_set_index(instance, s_index, buffer, 7);
+
+
+    record_event_no_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
+    after_Time_set_hook(instance);
+
     
     return 0;
 }
@@ -569,15 +636,27 @@ static uint8_t dl645wt_hex_bcd(struct instance_t* instance, uint32_t addr, uint8
 {
     uint32_t addr1=0;
     uint32_t temp=0,data=0;
-    uint8_t buf[4] = {0,},len=0;
+    uint8_t buf[4] = {0,},len=0, storage_len = 0;
     
     memcpy((uint8_t*)&temp, prx, *length);
     
     if((addr == ImaxProtectValue) || (addr == Meter_CT) || (addr == Meter_PT) 
        || (addr == IrAuthenTime) || (addr == Meter_Const1))    //拉闸电流门限需要从4字节转成3字节
+    {
         len = 4;
+        storage_len = 4;
+    }
+    else if((addr == (SeasonDay_Para+4)))    //协议2字节 存储1字节
+    {
+        len = 2;
+        storage_len = 1;
+    }
+
     else
+    {
         len = *length;
+        storage_len = len;
+    }
 
     switch(len)
     {
@@ -596,10 +675,10 @@ static uint8_t dl645wt_hex_bcd(struct instance_t* instance, uint32_t addr, uint8
     {
         data = data*10;
     }
-    mem_swap_cpy((uint8_t*)&temp, (uint8_t*)&data, len);
+    mem_swap_cpy((uint8_t*)&temp, (uint8_t*)&data, storage_len);
     
     addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
-    nd_set_index(instance, addr1, (uint8_t*)&temp, len);
+    nd_set_index(instance, addr1, (uint8_t*)&temp, storage_len);
     
     return 0;
 }
@@ -698,9 +777,8 @@ static uint8_t dl645wt_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             break;
         case 0xA8F00003:    //多功能配置字
             memcpy((uint8_t*)&mbase_cb->metertype, databuf, 2);
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, metertype));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->metertype, 2);
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Meter_Type);
+                        nd_set_index(instance, s_index, (uint8_t*)&mbase_cb->metertype, 2);
             break;
         case 0xA8F00051://掉电主动上报的阈值时间(秒)hex  0x0E10
             memcpy(&mbase_cb->active_report_sec_limit, databuf, 2);                

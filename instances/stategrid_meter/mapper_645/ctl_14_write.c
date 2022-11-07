@@ -202,7 +202,7 @@ int8_t GetCommAddrInfo(struct instance_t* instance, uint8_t *p_rx, uint32_t ID, 
         default:
             return RS_ERR_OTHERS; 
     }
-    return 0;
+    //return 0;
 }
 /***********************************************************************/
 /*  函数名称：CommWrite_SpecProc                                       */
@@ -311,9 +311,10 @@ unsigned char CommWrite_SpecProc( struct instance_t* instance,  unsigned char* p
 uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *p_rx, uint8_t * Len )
 {
 	unsigned char Err_Byte=0;
-	unsigned char IDL0,IDL1,IDH0,IDH1,Num;
-	unsigned int Tmp;
-    uint32_t s_index;
+	unsigned char IDL0,IDL1,IDH0,IDH1,Num = 0;
+	unsigned int Tmp = 0;
+    uint16_t u16_tmp = 0;
+    uint32_t s_index = 0;
     struct mbase_control_block_t* mbase_cb;
 	
 	mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -326,34 +327,46 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
 	{
 		case 0x04000101://日期及星期
                 Err_Byte = Date_645Format_Check( p_rx );
+                mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
 				break;
 		case 0x04000102://
                 Err_Byte = Time_645Format_Check( p_rx );
+                mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
 				break;
 		case 0x0400010C://日期及星期时间
 				if( Time_645Format_Check( p_rx ) == 0 )
 					Err_Byte = Date_645Format_Check( p_rx+3);
 				else
 					Err_Byte = 1;
+
+				mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
 				break;
 		case 0x04000601://组合有功特征字
 //				HisRecord_Write(MeasModeProRec,START);
 				break;
 		case 0x04000201://年时区数
-				if( BCD_BYTE(*p_rx) > MaxSeasonNum )
+		        u16_tmp = BCD_BYTE(*p_rx);
+				if(( u16_tmp > MaxSeasonNum ) || ( u16_tmp == 0))
 					Err_Byte = RS_ERR_SEAOV;
+
+			    mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
 				break;
 		case 0x04000202://日时段表数
-				if( BCD_BYTE(*p_rx) > MaxTouTabNum )
+		        u16_tmp = BCD_BYTE(*p_rx);
+				if(( u16_tmp > MaxTouTabNum ) || ( u16_tmp == 0))
 					Err_Byte = RS_ERR_OTHERS;
+				mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;	
 				break;
 		case 0x04000203://日时段数
-				if( BCD_BYTE(*p_rx) > MaxTouNum )
+				u16_tmp = BCD_BYTE(*p_rx);
+				if(( u16_tmp > MaxTouNum ) || ( u16_tmp == 0))
 					Err_Byte = RS_ERR_TOUOV;
+                mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
 				break;
 		case 0x04000204://费率数
-				if( BCD_BYTE(*p_rx) > 4 )
+				if( BCD_BYTE(*p_rx) > 12 )
 					Err_Byte = RS_ERR_FEEOV;
+                mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
 				break;
 		case 0x04000A02:
 		case 0x04000A03:
@@ -369,9 +382,11 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
 				break;
 		#endif
 		case 0x04000205://公共假日数
-				//Tmp = BCD2_WORD( (unsigned char*)&p_rx );
+                u16_tmp = buf_to_uint16_lsb(p_rx);
+				Tmp = word_bcd_to_hex( u16_tmp );
 				if( Tmp > MaxHolidayNum )
 					Err_Byte = RS_ERR_OTHERS;
+				mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;	
 				break;
 		case 0x04000802://周休日时段表号
 				//E2P_Read( (unsigned char*)&Num, Day_Table_Num, 1 );
@@ -380,6 +395,7 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
 					Err_Byte = RS_ERR_OTHERS;
                 //else
 					//HisRecord_Write(WeekendProRec,START);
+				mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;	
 				break;
 		case 0x04000106://切换时间
 		case 0x04000107:
@@ -552,6 +568,10 @@ unsigned char Cmp_CommDataLen( unsigned long ID, unsigned char DataLen, unsigned
     else if((IDH1 == 0x04) && (IDH0 == 0x03))
     {
         if(TableLen != 6)   return RS_ERR_LEN;
+    }
+    else if((IDH1 == 0x04) && (IDH0 == 0x00) && (IDL1 == 0x02) && (IDL0 == 0x05))
+    {
+        if(DataLen != 2)   return RS_ERR_LEN;
     }
 	else
 	{

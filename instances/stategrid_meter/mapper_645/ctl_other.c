@@ -1,6 +1,16 @@
 #include "nidavellir.h"
 #include "645id_table.h"
 #include "utils.h"
+#include "gs_record.h"
+
+enum meter_address_type645
+{
+
+    SA_TYPE_SINGLE645      = 0,    //0-å•åœ°å€ æˆ– é€šé…åœ°å€ 
+    SA_TYPE_GENERAL645     = 1,    //1-é€šé…åœ°å€ 
+    SA_TYPE_BROADECAST645  = 2,    //2-å¹¿æ’­åœ°å€
+
+};
 
 signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t* p_rx)
 {
@@ -10,15 +20,36 @@ signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t*
     int32_t Lng1=0,Lng2=0;
     uint32_t s_index=0;
     uint16_t TimeSec=0;
-    
-    if( (Addr_9_9( p_rx+1 ) == 0) && (*(p_rx+9) == 6) )
+    uint8_t maddr_type = 0xFF;
+    uint8_t buffer[10]={0},temp[10]={0};
+
+
+    if(( Cmp_MeterAddr( instance, p_rx+1 , 1 ) == 0 ))
+    {
+        maddr_type = SA_TYPE_SINGLE645;  //é€šé… å¾…è°ƒæ•´
+    }
+    else if((Addr_9_9( p_rx+1 ) == 0))
+    {
+        maddr_type = SA_TYPE_BROADECAST645;  //  99 å¹¿æ’­
+    }
+    else
+    {
+        return -1; //ä¸å“åº”
+    }
+
+    if((*(p_rx+9) == 6) )
     {
         if((mbase_cb->metertype & F_Password_En) == 0)   //Ã÷ÎÄÄ£Ê½²»×öÅĞ¶Ï
         {
             if(chl == chl_ir_698)    
             {
                 if((mbase_cb->infrared_auth_timeout == 0) && (mbase_cb->factor_mode == false))//ºìÍâÍ¨µÀ±ØĞëÔÚºìÍâÈÏÖ¤ÓĞĞ§ÆÚ¼ä½øĞĞ²Ù×÷¡£
-                    return -1;
+                {
+                    if(maddr_type == SA_TYPE_BROADECAST645)
+                        return -1;
+                    else
+                        return RS_ERR_OTHERS;
+                }   
             }
         }
         TimeSec = instance->time.tm_hour;
@@ -26,7 +57,12 @@ signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t*
         Lng1 = TimeSec + instance->time.tm_min;
         Lng1 = Lng1*60 + instance->time.tm_sec;
         if( ( Lng1 > 86100 ) || ( Lng1 < 301 ) )        //±ÜÃâÎçÒ¹ÁãÊ±Ç°ºó5·ÖÖÓĞ£Ê±
-            return -1;
+        {
+            if(maddr_type == SA_TYPE_BROADECAST645)
+                return -1;
+            else
+                return RS_ERR_OTHERS;
+        }  
         
         for(i=0;i<3;i++)//±ÜÃâÔÂ½áËãÊ±Ğ£Ê±¡£
         {
@@ -43,7 +79,10 @@ signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t*
                 Lng2 = Lng2 - Lng1;
                 if( ((Lng2 <= 300)&&(Lng2>=0)) || ((Lng2 >= -300)&&(Lng2<=0)) )
                 {
-                    return -1;
+                    if(maddr_type == SA_TYPE_BROADECAST645)
+                        return -1;
+                    else
+                        return RS_ERR_OTHERS;
                 }
             }
         }
@@ -108,6 +147,17 @@ signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t*
                     Lng2 = ~Lng2 + 1;
                 if( (Lng2 <= (5*60)) && (mbase_cb->boardadjtime != 0xAA) )//Ò»ÌìÖ»ÔÊĞí¹ã²¥Ğ£Ê±Ò»´Î£¬Ğ£Ê±·ù¶ÈĞ¡ÓÚ5·ÖÖÓ
                 {
+
+
+                    
+                    //ä¿å­˜æ ¡æ—¶å‰æ—¶é—´ 
+                    rtc_get_from_tm(instance,temp);
+                    mem_swap_cpy( &buffer[0], &temp[0], 7);
+                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
+                    nd_set_index(instance, s_index, buffer, 7);
+                    
+
+                
                     mbase_cb->boardadjtime = 0xAA;
                     Buf[0] = (*(p_rx+10));
                     Buf[1] = (*(p_rx+11));
@@ -118,16 +168,32 @@ signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t*
                     write_mcu_rtc(0, Buf, 7);
 
                     read_mcu_rtc(0x00, instance);
+
+
+                    //ä¿å­˜æ ¡æ—¶åæ—¶é—´ 
+                    rtc_get_from_tm(instance,temp);
+                    mem_swap_cpy( &buffer[0], &temp[0], 7);
+                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
+                    nd_set_index(instance, s_index, buffer, 7);
                     
-                    //PowOnLoadSmp();
-                    //LoadClearRec();//¸ü¸ÄÊ±¼äÇå³ıÖØµş²¿·Ö¸ººÉ¼ÇÂ¼
-                    //MulPort_Set( Flag.MulPortMode );
+                    record_event_no_mesg_pro(instance, NULL, BroadcastTimeS, NULL, 1);// å¹¿æ’­æ ¡æ—¶è®°å½•
+                    after_Time_set_hook(instance);
+
+                    if(maddr_type == SA_TYPE_BROADECAST645)
+                        return -1;
+                    else
+                        return 0;
                 }
             }
         }
         
     }
-    return -1;
+    
+    if(maddr_type == SA_TYPE_BROADECAST645)
+        return -1;
+    else
+        return RS_ERR_OTHERS;
+
 }
 
 signed char meteraddr_write(struct instance_t* instance, uint8_t* p_rx)
@@ -170,14 +236,32 @@ signed char MulPort_set(struct instance_t* instance, uint8_t chl, uint8_t* p_rx)
                     if(chl == chl_ir_698)    
                     {
                         if((mbase_cb->infrared_auth_timeout != 0) && (mbase_cb->factor_mode == false))//ºìÍâÍ¨µÀ±ØĞëÔÚºìÍâÈÏÖ¤ÓĞĞ§ÆÚ¼ä½øĞĞ²Ù×÷¡£
-                            opreate_second_pluse( *(p_rx+10)+1 );
+                        {
+                            mbase_cb->MulPortMode = (*(p_rx+10));
+                            if(F_PortSec != mbase_cb->MulPortMode)    
+                            {
+                                opreate_second_pluse(3);    //åˆ‡æ¢è‡³å¤šåŠŸèƒ½å£
+                            }
+                            else
+                            {
+                                opreate_second_pluse(1);    //ç§’è„‰å†²
+                            }
+                        }    
                         else
                             return RS_ERR_PASS;
                     }
                 }
                 else
                 {
-                    opreate_second_pluse( *(p_rx+10)+1 );
+                    mbase_cb->MulPortMode = (*(p_rx+10));
+                    if(F_PortSec != mbase_cb->MulPortMode)    
+                    {
+                        opreate_second_pluse(3);    //åˆ‡æ¢è‡³å¤šåŠŸèƒ½å£
+                    }
+                    else
+                    {
+                        opreate_second_pluse(1);    //ç§’è„‰å†²
+                    }
                 }
             }
             else
@@ -332,27 +416,30 @@ signed char CommRemoteCtl_Process(struct instance_t* instance, uint8_t chl, uint
 	}
 	else
 	{
-        if((mbase_cb->metertype & F_Password_En) == 0)   //Ã÷ÎÄÄ£Ê½²»×öÅĞ¶Ï
-        {
-            if(chl == chl_ir_698)    
+	    if(mbase_cb->factor_mode == false)
+	    {
+            if((mbase_cb->metertype & F_Password_En) == 0)   //Ã÷ÎÄÄ£Ê½²»×öÅĞ¶Ï
             {
-                if((mbase_cb->infrared_auth_timeout == 0) && (mbase_cb->factor_mode == false))//ºìÍâÍ¨µÀ±ØĞëÔÚºìÍâÈÏÖ¤ÓĞĞ§ÆÚ¼ä½øĞĞ²Ù×÷¡£
+                if(chl == chl_ir_698)    
                 {
-                    RemotCtrResult = ERR_AUTHENTM_OVER;
-                    return RS_ERR_PASS;
+                    if((mbase_cb->infrared_auth_timeout == 0))//ºìÍâÍ¨µÀ±ØĞëÔÚºìÍâÈÏÖ¤ÓĞĞ§ÆÚ¼ä½øĞĞ²Ù×÷¡£
+                    {
+                        RemotCtrResult = ERR_AUTHENTM_OVER;
+                        return RS_ERR_PASS;
+                    }
                 }
             }
-        }
 
-		if( mbase_cb->mac_suspend_state == true)
-		{
-				RemotCtrResult = ERR_HALT;
-				return RS_ERR_PASS;
-		}
-        
+    		if( mbase_cb->mac_suspend_state == true)
+    		{
+    				RemotCtrResult = ERR_HALT;
+    				return RS_ERR_PASS;
+    		}
+	    }
+
         if( *(p_rx+10) == 0x02 )
         {
-            if((mbase_cb->metertype & F_Password_En) == 0)   //Ã÷ÎÄÄ£Ê½
+            if(((mbase_cb->metertype & F_Password_En) == 0) && (mbase_cb->factor_mode == false))   //Ã÷ÎÄÄ£Ê½
             {
                 RemotCtrResult = ERR_OTHERR;
                 return RS_ERR_PASS;
@@ -677,6 +764,7 @@ signed char ctl_freeze(struct instance_t* instance, uint8_t chl, uint8_t* p_rx)
                 return Err;
         }
     }
+    return -1;
 }
 
 signed char chg_baut(struct instance_t* instance, uint8_t* p_rx)
