@@ -353,6 +353,7 @@
                     <state>$PROJ_DIR$\..\..\..\nidavellir\include\kernel</state>
                     <state>$PROJ_DIR$\..\..\..\nidavellir\include</state>
                     <state>$PROJ_DIR$\..\..\..\instances\stategrid_meter\</state>
+                    <state>$PROJ_DIR$\..\..\..\instances\stategrid_meter\mapper_645</state>
                     <state>$PROJ_DIR$\..\..\..\packages\dl698</state>
                     <state>$PROJ_DIR$\..\..\..\packages\drivers</state>
                     <state>$PROJ_DIR$\..\..\..\packages\drivers\arch</state>
