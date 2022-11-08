@@ -1,0 +1,1374 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+    <fileVersion>4</fileVersion>
+    <fileChecksum>3836530619</fileChecksum>
+    <configuration>
+        <name>Debug</name>
+        <outputs>
+            <file>$PROJ_DIR$\..\HD\HD_CLK\hd_clk.c</file>
+            <file>$PROJ_DIR$\..\HD\HD_CLK\hd_clk.h</file>
+            <file>$PROJ_DIR$\..\HD\HD_CLK\hd_clk_typedef.h</file>
+            <file>$PROJ_DIR$\..\HD\HD_GPIO\hd_gpio.c</file>
+            <file>$PROJ_DIR$\..\HD\HD_GPIO\hd_gpio.h</file>
+            <file>$PROJ_DIR$\..\HD\HD_GPIO\hd_gpio_typedef.h</file>
+            <file>$PROJ_DIR$\..\HD\HD_SPI\hd_spi_hard.c</file>
+            <file>$PROJ_DIR$\..\HD\HD_SPI\hd_spi_hard.h</file>
+            <file>$PROJ_DIR$\..\HD\HD_SPI\hd_spi_hard_typedef.h</file>
+            <file>$PROJ_DIR$\..\HD\HD_IIC\hd_iic.c</file>
+            <file>$PROJ_DIR$\..\HD\HD_IIC\hd_iic.h</file>
+            <file>$PROJ_DIR$\..\HD\HD_IIC\hd_iic_typedef.h</file>
+            <file>$PROJ_DIR$\..\HD\HD_SYSTEM\hd_system.c</file>
+            <file>$PROJ_DIR$\..\HD\HD_SYSTEM\hd_system.h</file>
+            <file>$PROJ_DIR$\..\HD\HD_SYSTEM\hd_system_typedef.h</file>
+            <file>$PROJ_DIR$\..\HD\hd_flash_map.h</file>
+            <file>$PROJ_DIR$\..\HD\hd_gpio_list.h</file>
+            <file>$PROJ_DIR$\..\Updata\boot_lib.a</file>
+            <file>$PROJ_DIR$\..\App\Source\common.c</file>
+            <file>$PROJ_DIR$\..\App\Source\config.c</file>
+            <file>$PROJ_DIR$\..\App\Source\main.c</file>
+            <file>$PROJ_DIR$\..\App\Source\target_isr.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\device\lib_CodeRAM.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\device\lib_cortex.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\device\lib_LoadNVR.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_clk.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_crypt.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_flash.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_pmu.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_spi.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_wdt.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Config\IAR\startup_target.s</file>
+            <file>$TOOLKIT_DIR$\lib\shb_l.a</file>
+            <file>$TOOLKIT_DIR$\inc\c\stdio.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_flash.o</file>
+            <file>$TOOLKIT_DIR$\CMSIS\Core\Include\core_cm0.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_flash.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\common.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_flash.xcl</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\inc\lib_flash.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\common.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\config.xcl</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\inc\lib_crypt.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_clk.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\hd_system.o</file>
+            <file>$TOOLKIT_DIR$\inc\c\DLib_Product.h</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\include\type_def.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\hd_iic.o</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_crypt.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\hd_clk.__cstat.et</file>
+            <file>$PROJ_DIR$\..\App\Inc\appdefine.h</file>
+            <file>$PROJ_DIR$\..\App\Inc\target_isr.h</file>
+            <file>$PROJ_DIR$\VG8530_645T.icf</file>
+            <file>$TOOLKIT_DIR$\inc\c\iccarm_builtin.h</file>
+            <file>$TOOLKIT_DIR$\inc\c\DLib_Defaults.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_pmu.__cstat.et</file>
+            <file>$TOOLKIT_DIR$\CMSIS\Core\Include\cmsis_version.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_CodeRAM.o</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_crypt.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_pmu.xcl</file>
+            <file>$TOOLKIT_DIR$\lib\m6M_tl.a</file>
+            <file>$PROJ_DIR$\Debug\Obj\main.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\hd_clk.xcl</file>
+            <file>$TOOLKIT_DIR$\lib\rt6M_tl.a</file>
+            <file>$TOOLKIT_DIR$\inc\c\ysizet.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_wdt.o</file>
+            <file>$PROJ_DIR$\..\HD\HD_UART\hd_uart.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_crypt.o</file>
+            <file>$TOOLKIT_DIR$\inc\c\DLib_Config_Normal.h</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\inc\lib_uart.h</file>
+            <file>$PROJ_DIR$\..\App\Inc\Includes.H</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\include\lib_LoadNVR.h</file>
+            <file>$TOOLKIT_DIR$\inc\c\string.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\startup_target.o</file>
+            <file>$PROJ_DIR$\Debug\List\VG8530_645T.map</file>
+            <file>$PROJ_DIR$\..\Updata\updata.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\hd_clk.o</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\include\target.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_CodeRAM.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\common.o</file>
+            <file>$TOOLKIT_DIR$\CMSIS\Core\Include\cmsis_iccarm.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\hd_gpio.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\config.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\hd_gpio.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_pmu.o</file>
+            <file>$PROJ_DIR$\Debug\Obj\target_isr.o</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_LoadNVR.o</file>
+            <file>$TOOLKIT_DIR$\inc\c\math.h</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\inc\lib_i2c.h</file>
+            <file>$TOOLKIT_DIR$\inc\c\stdint.h</file>
+            <file>$PROJ_DIR$\Debug\Exe\boot.bin</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\inc\lib_wdt.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_cortex.__cstat.et</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\inc\lib_gpio.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\hd_iic.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_LoadNVR.xcl</file>
+            <file>$TOOLKIT_DIR$\lib\dl6M_tln.a</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_clk.o</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_cortex.o</file>
+            <file>$PROJ_DIR$\Debug\Obj\hd_gpio.o</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_spi.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\hd_spi_hard.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\boot.pbd</file>
+            <file>$PROJ_DIR$\Debug\Obj\hd_spi_hard.o</file>
+            <file>$PROJ_DIR$\Debug\Obj\hd_spi_hard.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_spi.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_spi.o</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\inc\lib_clk.h</file>
+            <file>$TOOLKIT_DIR$\inc\c\stdlib.h</file>
+            <file>$TOOLKIT_DIR$\inc\c\yvals.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\hd_system.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\hd_iic.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_cortex.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_wdt.__cstat.et</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\inc\lib_pmu.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\main.o</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_LoadNVR.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\target_isr.xcl</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\inc\lib_spi.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\target_isr.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\config.o</file>
+            <file>$PROJ_DIR$\Debug\Exe\VG8530_645T.out</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_CodeRAM.xcl</file>
+            <file>$PROJ_DIR$\..\App\Inc\General.h</file>
+            <file>$TOOLKIT_DIR$\inc\c\ycheck.h</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\include\lib_cortex.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_wdt.xcl</file>
+            <file>$TOOLKIT_DIR$\CMSIS\Core\Include\cmsis_compiler.h</file>
+            <file>$PROJ_DIR$\..\HD\HD_Includes.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\main.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\hd_system.__cstat.et</file>
+            <file>$TOOLKIT_DIR$\inc\c\stdbool.h</file>
+            <file>$TOOLKIT_DIR$\inc\c\stddef.h</file>
+            <file>$TOOLKIT_DIR$\inc\c\DLib_Product_string.h</file>
+            <file>$TOOLKIT_DIR$\inc\c\DLib_Product_stdlib.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\lib_clk.xcl</file>
+            <file>$PROJ_DIR$\..\Drivers\lib_conf.h</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\include\lib_CodeRAM.h</file>
+            <file>$TOOLKIT_DIR$\inc\c\DLib_float_setup.h</file>
+        </outputs>
+        <file>
+            <name>[ROOT_NODE]</name>
+            <outputs>
+                <tool>
+                    <name>ILINK</name>
+                    <file> 121 74</file>
+                </tool>
+            </outputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\HD\HD_CLK\hd_clk.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 76</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 49</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 62</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 77 35 89 124 109 54 68 45 56 127 80 53 46 136 107 42 39 93 88 114 69 91 71 137 125 128 33 64 108 134 72 133 132 87 138 131 4 10 7 8 13 66 1 2</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\HD\HD_GPIO\hd_gpio.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 99</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 83</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 81</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 77 35 89 124 109 54 68 45 56 127 80 53 46 136 107 42 39 93 88 114 69 91 71 137 125 128 33 64 108 134 72 133 132 87 138 131 4 10 7 8 13 66 1 16 5</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\HD\HD_SPI\hd_spi_hard.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 103</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 101</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 104</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 77 35 89 124 109 54 68 45 56 127 80 53 46 136 107 42 39 93 88 114 69 91 71 137 125 128 33 64 108 134 72 133 132 87 138 131 4 10 7 8 13 66 1 16 118 15</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\HD\HD_IIC\hd_iic.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 47</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 94</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 111</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 77 35 89 124 109 54 68 45 56 127 80 53 46 136 107 42 39 93 88 114 69 91 71 137 125 128 33 64 108 134 72 133 132 87 138 131 4 10 7 8 13 66 1 11 16</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\HD\HD_SYSTEM\hd_system.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 44</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 130</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 110</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 77 35 89 124 109 54 68 45 56 127 80 53 46 136 107 42 39 93 88 114 69 91 71 137 125 128 33 64 108 134 72 133 132 87 138 131 4 10 7 8 13 66 1 14 16</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\App\Source\common.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 79</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 37</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 40</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 72 124 109 54 68 45 64 133 70 87 138 128 33 108 134 132 89 131 4 10 7 8 13 66 1 123 50 77 35 56 127 80 53 46 136 107 42 39 93 88 114 69 91 71 137 125 75</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\App\Source\config.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 120</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 82</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 41</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 70 72 124 109 54 68 45 64 133 87 138 128 33 108 134 132 89 131 4 10 7 8 13 66 1 123 50 77 35 56 127 80 53 46 136 107 42 39 93 88 114 69 91 71 137 125</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\App\Source\main.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 115</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 61</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 129</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 70 72 124 109 54 68 45 64 133 87 138 128 33 108 134 132 89 131 4 10 7 8 13 66 1 123 50</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\App\Source\target_isr.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 85</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 119</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 117</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 51 77 35 89 124 109 54 68 45 56 127 80 53 46 136 107 42 39 93 88 114 69 91 71 137 125 70 72 64 133 87 138 128 33 108 134 132 131 4 10 7 8 13 66 1 123 50</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\device\lib_CodeRAM.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 57</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 78</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 122</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 137 77 35 89 124 109 54 68 45 56 127 80 53 46 136 107 42 39 93 88 114 69 91 71 125</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\device\lib_cortex.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 98</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 92</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 112</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 125 77 35 89 124 109 54 68 45 56 127 80 53 46 136 107 42 39 93 88 114 69 91 71 137</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\device\lib_LoadNVR.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 86</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 116</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 95</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 71 77 35 89 124 109 54 68 45 56 127 80 53 46 136 107 42 39 93 88 114 69 91 137 125</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_clk.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 97</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 43</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 135</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 107 77 35 89 124 109 54 68 45 56 127 80 53 46 136 42 39 93 88 114 69 91 71 137 125</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_crypt.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 67</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 58</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 48</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 42 77 35 89 124 109 54 68 45 56 127 80 53 46 136 107 39 93 88 114 69 91 71 137 125</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_flash.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 34</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 36</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 38</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 39 77 35 89 124 109 54 68 45 56 127 80 53 46 136 107 42 93 88 114 69 91 71 137 125</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_pmu.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 84</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 55</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 59</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 114 77 35 89 124 109 54 68 45 56 127 80 53 46 136 107 42 39 93 88 69 91 71 137 125</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_spi.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 106</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 100</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 105</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 118 77 35 89 124 109 54 68 45 56 127 80 53 46 136 107 42 39 93 88 114 69 91 71 137 125</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_wdt.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 65</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 113</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 126</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 91 77 35 89 124 109 54 68 45 56 127 80 53 46 136 107 42 39 93 88 114 69 71 137 125</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Config\IAR\startup_target.s</name>
+            <outputs>
+                <tool>
+                    <name>AARM</name>
+                    <file> 73</file>
+                </tool>
+            </outputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\Debug\Exe\VG8530_645T.out</name>
+            <outputs>
+                <tool>
+                    <name>ILINK</name>
+                    <file> 74</file>
+                </tool>
+                <tool>
+                    <name>OBJCOPY</name>
+                    <file> 90</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ILINK</name>
+                    <file> 52 17 79 120 76 99 47 103 44 97 57 98 67 34 86 84 106 65 115 73 85 32 63 60 96</file>
+                </tool>
+            </inputs>
+        </file>
+    </configuration>
+    <configuration>
+        <name>Release</name>
+        <outputs>
+            <file>$PROJ_DIR$\..\HD\HD_CLK\hd_clk.c</file>
+            <file>$PROJ_DIR$\..\HD\HD_GPIO\hd_gpio.c</file>
+            <file>$PROJ_DIR$\..\HD\HD_SPI\hd_spi_hard.c</file>
+            <file>$PROJ_DIR$\..\HD\HD_IIC\hd_iic.c</file>
+            <file>$PROJ_DIR$\..\HD\HD_SYSTEM\hd_system.c</file>
+            <file>$PROJ_DIR$\..\App\Source\common.c</file>
+            <file>$PROJ_DIR$\..\App\Source\config.c</file>
+            <file>$PROJ_DIR$\..\App\Source\main.c</file>
+            <file>$PROJ_DIR$\..\App\Source\target_isr.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\device\lib_CodeRAM.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\device\lib_cortex.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\device\lib_LoadNVR.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_clk.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_crypt.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_flash.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_pmu.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_spi.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_wdt.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Config\IAR\startup_target.s</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\inc\lib_flash.h</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\inc\lib_crypt.h</file>
+            <file>$PROJ_DIR$\..\App\Inc\target_isr.h</file>
+            <file>$PROJ_DIR$\..\App\Inc\Includes.H</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\include\lib_LoadNVR.h</file>
+            <file>$PROJ_DIR$\..\reco\common\lzma\3rdparty\Precomp.h</file>
+            <file>$PROJ_DIR$\..\reco\common\lzma\3rdparty\Compiler.h</file>
+            <file>$PROJ_DIR$\Release\Obj\startup_target.o</file>
+            <file>$PROJ_DIR$\Release\Obj\crc8.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\ota_flash.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\LzmaDec.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\crc8.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\lzma_uncompress.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\ota_env.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\ota_info.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\ota_image.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\ota_partition.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\ota_patch.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\ota_recovery.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\lzma_uncompress.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\LzmaDec.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\ota_env.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\ota_flash.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\ota_image.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\ota_info.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\ota_partition.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\ota_patch.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\ota_recovery.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\hd_clk.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\hd_gpio.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\hd_spi_hard.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\hd_iic.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\hd_system.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\common.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\lib_pmu.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\lib_flash.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\lib_crypt.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\lib_clk.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\lib_LoadNVR.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\lib_cortex.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\lib_CodeRAM.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\target_isr.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\main.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\lib_spi.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\config.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\common.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\lib_wdt.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\hd_spi_hard.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\hd_system.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\hd_gpio.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\hd_clk.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\hd_iic.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\config.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\main.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\target_isr.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\lib_CodeRAM.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\lib_cortex.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\lib_LoadNVR.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\lib_clk.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\lib_crypt.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\lib_flash.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\lib_pmu.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\lib_spi.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\lib_wdt.xcl</file>
+            <file>$PROJ_DIR$\Release\Exe\boot.out</file>
+            <file>$PROJ_DIR$\..\reco\common\env\ota_env.h</file>
+            <file>$PROJ_DIR$\..\reco\common\info\ota_info.h</file>
+            <file>$PROJ_DIR$\..\reco\recovery\include\ota_patch.h</file>
+            <file>$PROJ_DIR$\..\reco\common\image\ota_image.h</file>
+            <file>$PROJ_DIR$\..\reco\recovery\include\ota_err.h</file>
+            <file>$PROJ_DIR$\..\reco\common\crc\crc8.h</file>
+            <file>$PROJ_DIR$\..\reco\common\crc\crc8.c</file>
+            <file>$PROJ_DIR$\..\reco\common\lzma\wrapper\lzma_uncompress.c</file>
+            <file>$PROJ_DIR$\..\reco\common\lzma\3rdparty\LzmaDec.c</file>
+            <file>$PROJ_DIR$\..\reco\common\flash\ota_flash.c</file>
+            <file>$PROJ_DIR$\..\reco\common\image\ota_image.c</file>
+            <file>$PROJ_DIR$\..\reco\common\partition\ota_partition.c</file>
+            <file>$PROJ_DIR$\..\reco\recovery\ota_patch.c</file>
+            <file>$PROJ_DIR$\..\reco\recovery\ota_recovery.c</file>
+            <file>$PROJ_DIR$\..\reco\common\lzma\wrapper\lzma_uncompress.h</file>
+            <file>$PROJ_DIR$\..\reco\common\flash\ota_flash.h</file>
+            <file>$PROJ_DIR$\..\reco\common\env\ota_env.c</file>
+            <file>$PROJ_DIR$\..\reco\common\info\ota_info.c</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\include\target.h</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\inc\lib_wdt.h</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\inc\lib_clk.h</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\inc\lib_pmu.h</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\inc\lib_spi.h</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\include\lib_cortex.h</file>
+            <file>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\include\lib_CodeRAM.h</file>
+        </outputs>
+        <file>
+            <name>[ROOT_NODE]</name>
+            <outputs>
+                <tool>
+                    <name>ILINK</name>
+                    <file> 83</file>
+                </tool>
+            </outputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\HD\HD_CLK\hd_clk.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 69</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 47</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 102</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\HD\HD_GPIO\hd_gpio.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 68</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 48</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 102</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\HD\HD_SPI\hd_spi_hard.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 66</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 49</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 102</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\HD\HD_IIC\hd_iic.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 70</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 50</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 102</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\HD\HD_SYSTEM\hd_system.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 67</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 51</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 102</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\App\Source\common.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 64</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 52</file>
+                </tool>
+            </outputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\App\Source\config.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 63</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 71</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 22</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\App\Source\main.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 61</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 72</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 22</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\App\Source\target_isr.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 60</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 73</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 21 102</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\device\lib_CodeRAM.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 59</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 74</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 108 102</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\device\lib_cortex.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 58</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 75</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 107 102</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\device\lib_LoadNVR.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 57</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 76</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 23 102</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_clk.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 56</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 77</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 104 102</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_crypt.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 55</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 78</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 20 102</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_flash.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 54</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 79</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 19 102</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_pmu.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 53</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 80</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 105 102</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_spi.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 62</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 81</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 106 102</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_wdt.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 65</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 82</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 103 102</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Config\IAR\startup_target.s</name>
+            <outputs>
+                <tool>
+                    <name>AARM</name>
+                    <file> 26</file>
+                </tool>
+            </outputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\reco\common\crc\crc8.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 30</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 27</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 89</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\reco\common\lzma\wrapper\lzma_uncompress.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 31</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 38</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 98</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\reco\common\lzma\3rdparty\LzmaDec.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 29</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 39</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 24 25</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\reco\common\flash\ota_flash.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 28</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 41</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 99</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\reco\common\image\ota_image.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 34</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 42</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 89</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\reco\common\partition\ota_partition.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 35</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 44</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 99</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\reco\recovery\ota_patch.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 36</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 45</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 86</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\reco\recovery\ota_recovery.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 37</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 46</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 89</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\reco\common\env\ota_env.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 32</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 40</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 84</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\reco\common\info\ota_info.c</name>
+            <outputs>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 33</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 43</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCARM</name>
+                    <file> 85 88 87</file>
+                </tool>
+            </inputs>
+        </file>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\HD\HD_CLK\hd_clk.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\HD\HD_GPIO\hd_gpio.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\HD\HD_SPI\hd_spi_hard.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\HD\HD_IIC\hd_iic.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\HD\HD_SYSTEM\hd_system.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\App\Source\common.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\App\Source\config.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\App\Source\main.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\App\Source\target_isr.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\device\lib_CodeRAM.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\device\lib_cortex.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\CMSIS\device\lib_LoadNVR.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_clk.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_crypt.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_flash.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_pmu.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_spi.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\Drivers\Libraries\Lib_Driver\src\lib_wdt.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\reco\common\crc\crc8.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\reco\common\lzma\wrapper\lzma_uncompress.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\reco\common\lzma\3rdparty\LzmaDec.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\reco\common\flash\ota_flash.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\reco\common\image\ota_image.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\reco\common\partition\ota_partition.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\reco\recovery\ota_patch.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\reco\recovery\ota_recovery.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\reco\common\env\ota_env.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>$PROJ_DIR$\..\reco\common\info\ota_info.c</name>
+            <tool>ICCARM</tool>
+        </forcedrebuild>
+        <forcedrebuild>
+            <name>[MULTI_TOOL]</name>
+            <tool>ILINK</tool>
+        </forcedrebuild>
+    </configuration>
+</project>
