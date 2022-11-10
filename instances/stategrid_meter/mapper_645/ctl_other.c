@@ -3,14 +3,7 @@
 #include "utils.h"
 #include "gs_record.h"
 
-enum meter_address_type645
-{
 
-    SA_TYPE_SINGLE645      = 0,    //0-单地址 或 通配地址 
-    SA_TYPE_GENERAL645     = 1,    //1-通配地址 
-    SA_TYPE_BROADECAST645  = 2,    //2-广播地址
-
-};
 
 signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t* p_rx)
 {
@@ -24,9 +17,13 @@ signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t*
     uint8_t buffer[10]={0},temp[10]={0};
 
 
-    if(( Cmp_MeterAddr( instance, p_rx+1 , 1 ) == 0 ))
+    if(( Cmp_MeterAddr( instance, p_rx+1 , 0 ) == 0 ))
     {
-        maddr_type = SA_TYPE_SINGLE645;  //通配 待调整
+        maddr_type = SA_TYPE_SINGLE645;  //实际地址
+    }
+    else if(( Cmp_MeterAddr( instance, p_rx+1 , 1 ) == 0 ))
+    {
+        maddr_type = SA_TYPE_GENERAL645;  //通配 
     }
     else if((Addr_9_9( p_rx+1 ) == 0))
     {

@@ -13,18 +13,6 @@ extern uint32_t get_interval_basic_value(uint8_t *src, struct rsd_info_t *rsd_in
 extern uint8_t select_record_time_check(uint8_t *src, uint8_t non_period, struct rsd_info_t *rsd_info);
 extern int record_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,  struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t *capture_645len,  uint8_t  package_type,   void *ctx);
 extern int record_data_package645_packageAA(struct instance_t* instance, uint8_t* dest, uint8_t* src, uint16_t datalen, struct record_storage_645_id_info_t  *info);
-union dl645_DI_t
-{
-    struct 
-    {
-        uint8_t  di0; 
-        uint8_t  di1; 
-        uint8_t  di2;
-        uint8_t  di3;
-    }elem;
-
-    uint32_t di;
-};
 
 struct load_rsd_info_t
 {
@@ -914,9 +902,13 @@ int get_record_645_id_info(struct instance_t* instance, uint32_t ID, struct reco
     return 1;
 }
 
-int response_1byte_err_645(uint8_t *p_tx, uint16_t err, uint8_t errLen, uint8_t *tx_len)
+int response_x_byte_err_645(uint8_t *p_tx, uint16_t err, uint8_t errLen, uint8_t *tx_len)
 {
-    if (errLen > 2) return -1;
+    if (errLen > 2) 
+    {
+        *tx_len = 0;
+        return -1;
+    }
 
     p_tx[0] = (uint8_t)err;
     if (errLen == 2)
@@ -927,7 +919,7 @@ int response_1byte_err_645(uint8_t *p_tx, uint16_t err, uint8_t errLen, uint8_t 
 
 
     *tx_len = errLen;
-    return (int)-1;
+    return (int)errLen;
 }
 
 
@@ -2338,6 +2330,7 @@ int record_data_package645_packageAA(struct instance_t* instance, uint8_t* dest,
 
 
 //冻结、结算、事件记录读取
+// 返回0 正常应答        返回＞0 异常应答
 int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, uint8_t *tx_len)
 {
     union dl645_DI_t DI;
@@ -2365,7 +2358,7 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     ret = get_record_645_id_info(instance, ID, &info);
     if (ret <= 0)
     {
-        return response_1byte_err_645(p_err, RS_ERR_ID, 1,  tx_len);
+        return response_x_byte_err_645(p_err, RS_ERR_ID, 1,  tx_len);
 
         //return -2; //无请求数据
     }
@@ -2398,8 +2391,11 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
             HEX_BCD(p_tx, sequence);
             p_tx += 3;
             total_len = 3;
+            total_len +=  4; //ID
             *tx_len = total_len;
-            return total_len;
+            //return (total_len);
+            return 0;
+
         }
         
     }
@@ -2444,7 +2440,7 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     {
          if((!info.rd_645obj_len)||(!info.rd_645obj)||(info.rd_645obj[0] > 50))
         {
-            return response_1byte_err_645(p_err, RS_ERR_OTHERS, 1,  tx_len);
+            return response_x_byte_err_645(p_err, RS_ERR_OTHERS, 1,  tx_len);
             //return -1; 
         }
         
@@ -2535,7 +2531,7 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
         data_len = record_data_package645(instance, ID, ptr_tmp,  &rsd_info, rcsd_645req, rcsd_645len,  info.package_type , __NULL);
         if (data_len < 0)
         {
-            return response_1byte_err_645(p_err, (uint8_t)(-data_len), 1,  tx_len);
+            return response_x_byte_err_645(p_err, (uint8_t)(-data_len), 1,  tx_len);
             //return data_len;
         }
 
@@ -2545,7 +2541,7 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
             data_len = record_data_package645_packageAA(instance, p_tx, ptr_tmp,  data_len, &info);
             if (data_len < 0)
             {
-                return response_1byte_err_645(p_err, (uint8_t)(-data_len), 1,  tx_len);
+                return response_x_byte_err_645(p_err, (uint8_t)(-data_len), 1,  tx_len);
                 //return data_len;
             }
         }
@@ -2560,10 +2556,12 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
         rsd_info.last_no++;
     }
 
+    total_len +=  4; //ID
     *tx_len = total_len;
 
 
-    return (total_len);
+    //return (total_len);
+    return 0;
 
 }
 
@@ -2970,6 +2968,8 @@ int load_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,
 
 
 //新负荷记录读取
+// 返回0 正常应答        返回＞0 异常应答
+
 int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, uint8_t *tx_len)
 {
     union dl645_DI_t DI;
@@ -3004,7 +3004,7 @@ int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     ret = get_record_645_id_info(instance, ID, &info);
     if (ret <= 0)
     {
-        return response_1byte_err_645(p_err, RS_ERR_ID, 1,  tx_len);
+        return response_x_byte_err_645(p_err, RS_ERR_ID, 1,  tx_len);
     }
 
     // ---------------------
@@ -3013,13 +3013,13 @@ int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     info.mark_para = temp;
     if(0 == (info.mark_para & (1 << info.mark_bit)))
     {
-        return response_1byte_err_645(p_err, RS_ERR_ID, 1,  tx_len);
+        return response_x_byte_err_645(p_err, RS_ERR_ID, 1,  tx_len);
     }
 
     // -------------------- --------------------
     if((!info.rd_645obj_len)||(!info.rd_645obj)||(info.rd_645obj[0] > 50))
     {
-        return response_1byte_err_645(p_err, RS_ERR_OTHERS, 1,  tx_len);
+        return response_x_byte_err_645(p_err, RS_ERR_OTHERS, 1,  tx_len);
     }
 
     if (DI.elem.di0 == 0xFF) //块  三相
@@ -3048,7 +3048,7 @@ int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
         }
         else
         {
-            return response_1byte_err_645(p_err, RS_ERR_OTHERS, 1,  tx_len);
+            return response_x_byte_err_645(p_err, RS_ERR_OTHERS, 1,  tx_len);
         }
     }
     // -------------------- --------------------
@@ -3087,7 +3087,7 @@ int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
 
     if (false == rtc_tm_valid(&tm_search))
     {
-        return response_1byte_err_645(p_err, RS_ERR_OTHERS, 1,  tx_len);
+        return response_x_byte_err_645(p_err, RS_ERR_OTHERS, 1,  tx_len);
     }
 
 
@@ -3118,7 +3118,7 @@ int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
         data_len = load_data_package645(instance, ID, ptr_tmp,  &load_rsd_info, &info, rcsd_645req, rcsd_645len,  info.package_type , __NULL);
         if (data_len < 0)
         {
-            return response_1byte_err_645(p_err, (uint8_t)(-data_len), 1,  tx_len);
+            return response_x_byte_err_645(p_err, (uint8_t)(-data_len), 1,  tx_len);
             //return data_len;
         }
 
@@ -3131,10 +3131,13 @@ int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
        
     }
 
+    total_len +=  4; //ID
     *tx_len = total_len;
 
 
-    return (total_len);
+    //return (total_len);
+    return 0;
+
 
 }
 

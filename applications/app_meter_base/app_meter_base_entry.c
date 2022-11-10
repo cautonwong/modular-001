@@ -13,7 +13,7 @@ extern void Poffset_adj_oneself(struct instance_t* instance);
 
 extern const struct dev_info_t rn8209_dev;
 extern void rs485_init(struct instance_t* instance, struct pipeline_t* pipeline);
-
+extern const uint32_t baud_table[];
 #if 1  //  GS
 
 int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
@@ -116,8 +116,8 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
             if( mbase_cb->plc_baut_tick == 0)
             {
                 mbase_cb->Baut_plc_neg =0xfe;
-                mbase_cb->Baut_plc = 10;
-                mcu_uart_set_baud(115200, 4);
+                mbase_cb->Baut_plc = DEF_BAUT_PLC;
+                mcu_uart_set_baud(baud_table[DEF_BAUT_PLC], 4);
             }
         }
 
@@ -126,6 +126,7 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     
         mbase_cb->power_on_sec_accum++;
         fr_dl698_sec_task(instance, pipeline);
+        fr_dl45_sec_task(instance, pipeline);
         
         if(instance->time.tm_sec == 33)     //效验
         {
@@ -262,6 +263,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
            
             Magnetic_hold_relay_Init();
             fr_dl698_power_on(instance, pipeline);
+            fr_dl645_power_on(instance, pipeline);
             mbase_cb->power_on_sec_accum = 0;
             mbase_cb->Fee |= (F_TOUChange+F_ChangeTmOn+F_DAYTABChange);    //获取当前时区时段费率
             mbase_cb->cmd_dostate = 0;  //上电清除控制命令状态字和错误状态字
@@ -275,7 +277,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             mbase_cb->limitmin = 0;     //上电后清零
             mbase_cb->imaxmin = 0;     //上电后清零
             mbase_cb->Baut_plc_neg = 0xfe;
-            mbase_cb->Baut_plc = 10;//6;
+            mbase_cb->Baut_plc = DEF_BAUT_PLC;//6;
             mbase_cb->disp_borrow = 0; //借位
             mbase_cb->baud_chg = (BIT0|BIT1);               // 上电 更新波特率标志  
             mbase_cb->plc_baut_tick = 1; 

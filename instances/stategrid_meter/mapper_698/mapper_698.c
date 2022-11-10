@@ -80,6 +80,8 @@ extern const uint8_t  init_BroadcastTimeS_oad[];
 extern const uint8_t  init_ZeroLineErrS_oad[];
 
 
+extern const uint8_t  init_AuthTime_DL645[];
+
 
 
 extern const uint8_t  init_AutoDisplayList[];
@@ -642,7 +644,15 @@ const  parameter_item_t  parameter_item[] =
     { Meter_02Password              , 0x01 ,     4    , init_Meter_02Password       }, //02级密码
     { Meter_04Password              , 0x01 ,     4    , init_Meter_04Password       }, //04级密码
 
-    { MeterWr645_List               , 0x01,      52   , 0                           }, //编程对象列表  645  (格式同698array OAD)    
+    { MeterWr645_List               , 0x01,      52   , 0                           }, //编程对象列表  645  (格式同698array OAD)  
+
+    { AuthTime_DL645                , 0x01 ,     2    , init_AuthTime_DL645         }, // 身份认证时效
+
+
+    
+
+
+    
 #else
     {0}
 #endif
@@ -2669,7 +2679,7 @@ int para_init(struct instance_t* instance )
     mbase_cb->lcd_autodis_keep_sec = 5;                           /*轮显持续时间 */
     mbase_cb->lcd_keydis_keep_sec = 60;                           /*按键轮显持续时间 */
     mbase_cb->Baut_rs485 = 10;//6;
-    mbase_cb->Baut_plc = 10;//6;
+    mbase_cb->Baut_plc = DEF_BAUT_PLC;//6;
     mbase_cb->SafeEn = 1;       //安全模式启用
     mbase_cb->relay_ctl_mode = 0; //脉冲式控制方式
     mbase_cb->Limit_T_Max = 300;  //广播校时最大允许时间
@@ -2869,6 +2879,24 @@ void update_connect_timeout_cnt(struct instance_t* instance, struct pipeline_t* 
     }
 }
 
+// 645协议 秒任务
+void fr_dl45_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t i,cilent_index, channel;
+
+    if (mbase_cb->auth_timeout_645 > 0)    
+    {
+        mbase_cb->auth_timeout_645--;
+        if (mbase_cb->auth_timeout_645 == 0)    
+        {
+            MeterWr645_obj_list_clear(instance, NULL, NULL);
+        }
+    }
+
+
+}
+
 // 698协议 秒任务
 void fr_dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline)
 {
@@ -2917,6 +2945,18 @@ void fr_dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline
     }
     
 }
+
+// 645协议相关的认证、上报等数据上电初始化
+void fr_dl645_power_on(struct instance_t* instance,  struct pipeline_t* pipeline)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    mbase_cb->auth_timeout_645 = 0;
+    memset(&mbase_cb->rand8_645[0], 0, sizeof(mbase_cb->rand8_645));
+
+}
+
+
 
 // 698协议相关的认证、上报等数据上电初始化
 void fr_dl698_power_on(struct instance_t* instance,  struct pipeline_t* pipeline)

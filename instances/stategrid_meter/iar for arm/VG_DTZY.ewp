@@ -2409,6 +2409,9 @@
                 <name>$PROJ_DIR$\..\mapper_645\645id_table.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\mapper_645\ctl_03_SafeAuthen.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\mapper_645\ctl_11_read.c</name>
             </file>
             <file>

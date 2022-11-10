@@ -551,7 +551,10 @@ enum block_parameter_item_id_t
 #define     Report3320_OADList4         1525 // 3320 oad上报列表   1 + 4*60     //rs485-2
 #define     ActReport_Info              1526 // 主动上报 停电下缓存信息   //待调整  现是否存两份？
 
-#define     __INITFLAG2_End             ActReport_Info //初始化 特殊处理标记  
+#define     AuthTime_DL645              1527 // 身份认证时效
+
+
+#define     __INITFLAG2_End             AuthTime_DL645 //初始化 特殊处理标记  
 
 
 

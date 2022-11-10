@@ -39,6 +39,10 @@
 #define		CTRL_STATUE_ALARM_ON		0x0400
 #define		CTRL_STATUE_ALARM_OFF		0x0800
 
+
+
+
+
 //Info32bit定义
 // 6 bits	数据长度
 #define		CommDataLen				0x0000003F
@@ -93,6 +97,29 @@ typedef struct
 extern const  COMMTAB  CommTab[242];
 
 #define		CommTabNum			sizeof(CommTab)/sizeof(COMMTAB)
+
+
+enum meter_address_type645
+{
+
+    SA_TYPE_SINGLE645      = 0,    //0-单地址
+    SA_TYPE_GENERAL645     = 1,    //1-通配地址
+    SA_TYPE_BROADECAST645  = 2,    //2-广播99
+};
+
+union dl645_DI_t
+{
+    struct 
+    {
+        uint8_t  di0; 
+        uint8_t  di1; 
+        uint8_t  di2;
+        uint8_t  di3;
+    }elem;
+
+    uint32_t di;
+};
+
 
 extern int read_00( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx);
 extern int read_02( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx);

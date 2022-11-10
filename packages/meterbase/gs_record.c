@@ -79,6 +79,9 @@ const uint8_t  init_BeforSet_SeasonT [] = { 0x01,0x01,0x02,0x03,0x11,0x01,0x11,0
 
 const uint8_t  init_SecurityMode_En[] = { 0x01 };
 const uint8_t  init_SecurityMode_EXData[] = { 0x00 };
+const uint8_t  init_AuthTime_DL645[] = {  0x1E, 0x00 };
+
+
 
 
 const uint8_t  init_OverCurrentAS_oad[] = { 0x08, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201), U32toBufMSB(0x20002200), U32toBufMSB(0x20012200), U32toBufMSB(0x20042200), U32toBufMSB(0x200A2200), U32toBufMSB(0x00108201), U32toBufMSB(0x00208201) };

@@ -189,6 +189,31 @@ int read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf, uin
     return output.data_len;
 }
 
+//读取对应长度 ESAM  随机数
+int read_esam_random(struct instance_t* instance,uint8_t read_num,  uint8_t *read_buf) //待调整
+{
+    int rxlen = 0;
+    uint16_t txlen = 0;
+    uint32_t addr = 0x80040000;
+
+    addr |= read_num;
+    rxlen = write_esam(instance, addr , read_buf , txlen);  
+    return rxlen;
+}
+
+
+//读 ESAM  序列号 8字节
+int read_esam_serial_number(struct instance_t* instance, uint8_t *read_buf) 
+{
+    int rxlen = 0;
+    uint16_t txlen = 0;
+    uint32_t addr = 0x80360002;
+
+    rxlen = write_esam(instance, addr , read_buf , txlen);  
+    return rxlen;
+}
+
+
 
 int esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
 {
@@ -321,6 +346,7 @@ void esam_698_power_on(struct instance_t* instance)
             nd_set_offset(instance, addr, mbase_cb->meterNo, 6);     
         }
     }
+    mbase_cb->esam_power_close_dly = 2; // 上电获取表号后 即可关闭电源
 }
 
 //esam 电源控制(关闭)   秒调用 
@@ -341,6 +367,7 @@ void esam_698_power_supply_ctrl(struct instance_t* instance, struct pipeline_t* 
     if ((fr_698_current_connect_status_get(instance, pipeline, 0)== true) 
         || (fr_698_current_connect_status_get(instance, pipeline, 1)== true) 
         || (mbase_cb->term_auth_timeout != 0) || (mbase_cb->infrared_auth_timeout != 0)
+        || (mbase_cb->auth_timeout_645 != 0)
         || (mbase_cb->esam_power_close_dly != 0))
     {
         return;

@@ -750,7 +750,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 }
                 return (p-buf);
             }
-            else if(method == 0x09) //ESAM参数设置  待验证，在方法4的基础上改的
+            else if(method == 0x09) //ESAM参数设置  待验证，在方法4的基础上改的                  时效设置
             {
                 //p = p + 3;
                 //len1 = *p++; 

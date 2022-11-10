@@ -143,7 +143,27 @@ int read_02( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
         case 0x02800021:  //当前费率电价
             //HEX_BCD(p_tx, mbase_cb->voltage_battery);
             return 4; 
-            
+        case 0x02800022:  //
+            temp = ((mbase_cb->auth_timeout_645 +59)/60);
+            if (temp > 9999)
+            {
+                temp = 9999;
+            }
+            temp = shorthex_to_bcd((uint16_t)temp);
+            *p_tx = (uint8_t)temp;
+            *(p_tx+1) =(uint8_t)(temp>>8);
+
+            return 2;  
+        case 0x02800023:  // 698共用
+            temp = ((mbase_cb->infrared_auth_timeout +59)/60);
+            if (temp > 99)
+            {
+                temp = 99;
+            }
+            temp = bytehex_to_bcd((uint8_t)temp);
+            *p_tx = (uint8_t)temp;
+
+            return 1;             
         default:
             *(p_tx-4) = RS_ERR_ID;
             return -1;

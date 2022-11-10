@@ -25,6 +25,12 @@
 
 
 
+//config
+//#define DEF_BAUT_PLC   6// 载波默认波特率  6:9600, 10:115200  
+#define DEF_BAUT_PLC   10//载波默认波特率    6:9600, 10:115200
+
+
+
 
 
 #define Bat_Low_Level   300     //电池欠压阈值
@@ -183,7 +189,7 @@ struct mbase_control_block_t
     uint8_t disp_borrow;    //显示借位
     
     uint8_t baud_chg;   //波特率改变，BIT0(485),BIT1(PLC)
-    uint16_t plc_baut_tick; //1小时不通讯需要复位载波通道，波特率恢复9600
+    uint16_t plc_baut_tick; //1小时不通讯需要复位载波通道，波特率恢复115200
     uint8_t Baut_plc;   //载波波特率(EEPROM)
     uint8_t Baut_plc_neg;   //协商波特率（RAM）
 
@@ -205,7 +211,7 @@ struct mbase_control_block_t
     uint32_t connect_timeout_cnt[4][2]; // 应用连接超时时间 计数器
 
     uint32_t term_auth_timeout;//终端身份认证剩余时间
-    uint32_t infrared_auth_timeout;//红外身份认证剩余时间
+    uint32_t infrared_auth_timeout;//红外身份认证剩余时间 
     uint8_t AuthOn; //身份认证启用标志，1启用
     uint8_t esam_power_status;      // esam电源状态   1: on  0：off
     uint8_t esam_power_close_dly;    //esam电源关闭延时 (秒)
@@ -218,8 +224,13 @@ struct mbase_control_block_t
     uint8_t report_piid;                       //主动上报帧的PIID缓存 挪到协议  
     uint8_t report_random_data[12];            //主动上报 随机数 缓存 
     
-
     uint32_t report_2015state_cache;        //跟随上报状态字缓存
+
+
+    //645协议相关
+    uint8_t rand8_645[8];                   //645随机数缓存 
+    uint32_t auth_timeout_645;              //645身份认证剩余时间   // 业务使用  待调整
+    
 
     //显示相关
     uint8_t commdisp_plc;    //通讯符号显示

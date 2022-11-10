@@ -210,13 +210,14 @@ struct context_serial_t
 };
 #endif
 
+#define max_apdu_cache_645  1200 
 struct context_645_t
 {
     uint8_t channel;
     //作为从站方用的临时状态
     uint16_t addr_n;
     uint8_t addr[6];
-    uint8_t SA;
+    uint8_t SA; //表地址信息
     uint8_t ctrl;//接收到的控制字
     uint8_t step;
     uint8_t cs;
@@ -235,7 +236,7 @@ struct context_645_t
     
     struct fifo_t apdu;
     
-    uint8_t apdu_tx[1200]; 
+    uint8_t apdu_tx[max_apdu_cache_645]; 
     
     uint8_t apdu_d_rx[128]; 
     uint16_t apdu_rx_len;
@@ -243,7 +244,9 @@ struct context_645_t
 
     uint8_t segment_tx; 
     uint8_t segment_tx_no;
-    
+    uint8_t handler_code[4]; //操作者代码
+    uint16_t cmd03_result; //  03安全命令 结果
+
     //接收和发送都要用的状态
     struct object_t object;//对象标识
     struct pipeline_t *pipeline;//to-be-deleted

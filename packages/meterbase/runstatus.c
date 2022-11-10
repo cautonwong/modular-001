@@ -105,7 +105,7 @@ void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
 	else
 		mbase_cb->run_state[3] &= ~Status_TermAuthen;
     
-    if((fr_698_current_connect_status_get(instance, NULL, 0)== true) )    //主站安全认证 应用链接
+    if((fr_698_current_connect_status_get(instance, NULL, 0)== true) || (mbase_cb->auth_timeout_645) )    //主站安全认证 应用链接
 		mbase_cb->run_state[3] |= Status_Authen;
 	else
 		mbase_cb->run_state[3] &= ~Status_Authen;

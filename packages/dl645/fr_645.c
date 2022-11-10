@@ -791,6 +791,7 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     int8_t ERRBYTE=0;//data[8]={0}, 
     uint16_t tx_len = 0, RemotCtrResult=0;
     uint32_t ID=0,s_index=0;
+    uint8_t buffer[10] = {0};
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
@@ -828,7 +829,8 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     {
         mbase_cb->commdisp_plc = 2;
     }
-    
+
+
     ctx->apdu_rx_offset = 0;
     ctx->apdu_rx_len = ctx->len;
     if(ctx->ver)    
@@ -836,25 +838,42 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     else
         fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len+10);
 
-    if ((ctx->ctrl == 0x12) && (ctx->segment_tx))
-    {
-        //待调整   fifo未初始化 ？？？
-    }
-    else
-    {
-        fifoBuf_init(&ctx->apdu, ctx->apdu_tx, 1200);
-    }
 
+    if ((ctx->ctrl != 0x12) || (ctx->apdu.buf_ptr == NULL))// 待调整 ？？ fifo初始化为何放此处？  暂时改为分帧情况下 不初始化
+    {
+        fifoBuf_init(&ctx->apdu, ctx->apdu_tx, max_apdu_cache_645);
+    }
        
     for(int i = 0; i < ctx->apdu_rx_len; i++){
         apdu_rx[i+10] = apdu_rx[i+10] - 0x33;
     }
+
+     ndv_memcopy(buffer, apdu_rx+1 , 6); 
+    //地址信息
+    if(( Cmp_MeterAddr( instance, buffer , 0 ) == 0 ))
+    {
+        ctx->SA = SA_TYPE_SINGLE645;  //实际地址
+    }
+    else if(( Cmp_MeterAddr( instance, buffer , 1 ) == 0 ))
+    {
+        ctx->SA = SA_TYPE_GENERAL645;  //通配 
+    }
+    else if((Addr_9_9( buffer ) == 0))
+    {
+        ctx->SA = SA_TYPE_BROADECAST645;  //  99 广播
+    }
+    else
+    {
+        return -1; //不响应
+    }
+
 
     memcpy((unsigned char*)&ID, apdu_rx+10, 4);
     
     switch (ctx->ctrl)
     {
         case 0x03:  //安全认证
+            ERRBYTE = safe_Authen03_645(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len, ctx);
             break;
         case 0x08:  //广播校时
             ERRBYTE = Broadcast_timeadj(instance, ctx->channel, apdu_rx);//无需应答
