@@ -257,7 +257,7 @@ int8_t security_decode_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *
 // <0 异常     0:未处理     >1 解密正常
 int8_t security_judge_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
-
+    int8_t err=0;
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
 	switch (ctx->password[0])
@@ -268,30 +268,38 @@ int8_t security_judge_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *p
         {
             if((mbase_cb->metertype & F_Password_En) || ((ctx->ctrl == 0x1B) || (ctx->ctrl == 0x1C)))  //明文合闸 或开启明文设参
             {
-                return 1;
+                err = 1;
             }
         }
         else
         {
-            return -RS_ERR_PASS;
+            err = (-RS_ERR_PASS);
         }
        
 		break;
 	case DL645_PA_SC_CIPHER:    //密文 二类参数
         if (mbase_cb->mac_suspend_state == true) //挂起
         {
-            return -RS_ERR_OTHERS;
+            err =  (-RS_ERR_OTHERS);
+        }
+        else
+        {
+        	err =  security_decode_645(instance, p_rx, p_tx, tx_len, ctx);
         }
 
-		return security_decode_645(instance, p_rx, p_tx, tx_len, ctx);
 		break;
     case DL645_PA_SC_PLAINMAC:  // 一类参数     
 	default:
-		return -RS_ERR_OTHERS;   
+		err =  (-RS_ERR_OTHERS);
 		break;
 	}
 
-	return -RS_ERR_OTHERS;  
+    if (mbase_cb->factor_mode == true) 
+    {
+        err = 1;
+    }
+    
+	return err;  
 }
 
 

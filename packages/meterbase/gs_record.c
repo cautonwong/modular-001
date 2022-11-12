@@ -839,8 +839,6 @@ int event_PowerOn_pro(struct instance_t* instance, struct pipeline_t* pipeline, 
 }
 
 
-
-
 enum scheme_mode
 {
     FRZ_1 = 0,  //顺序固定
