@@ -18,9 +18,9 @@ extern signed char ft_adj_set_meter(struct instance_t* instance, uint8_t *p_rx, 
 extern signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t* p_rx);
 extern signed char MulPort_set(struct instance_t* instance, uint8_t chl, uint8_t* p_rx);
 extern signed char meteraddr_write(struct instance_t* instance, uint8_t* p_rx);
-extern signed char event_clear(struct instance_t* instance, uint8_t* p_rx);
-extern signed char meter_clear(struct instance_t* instance, uint8_t* p_rx);
-
+extern signed char event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
+extern signed char meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
+extern signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len, struct context_645_t* ctx);
 int __update_cs(void* pctx, uint8_t* byte)
 {
     struct context_645_t* ctx = pctx;
@@ -908,9 +908,10 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
                 return -1;
             break;
         case 0x14:  //写数据
+            memcpy((unsigned char*)&ctx->password[0], apdu_rx + 10 + 4, 4);//拷贝密码
             if( Cmp_MeterAddr( instance, (unsigned char*)&apdu_rx[1], 0 ) == 0 )
             {
-                ERRBYTE = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
+                ERRBYTE = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len, ctx);
                 if(ERRBYTE == 0)
                 {
                     trigger_MeterWr645_record(instance,   ID, 0);
@@ -927,7 +928,7 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
                 
                 if(ID == 0xA8000100)
                 {
-                    ERRBYTE = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
+                    ERRBYTE = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len, ctx);
                     if(ERRBYTE == 0)
                     {
                         trigger_MeterWr645_record(instance,   ID, 0);
@@ -955,13 +956,17 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
             ERRBYTE = chg_baut(instance, apdu_rx);
             break;
         case 0x1A:  //电表清零
-            ERRBYTE = meter_clear(instance, apdu_rx);
+            memcpy((unsigned char*)&ctx->password[0], apdu_rx + 10, 4);//拷贝密码
+            ERRBYTE = meter_clear(instance, apdu_rx, ctx->apdu_tx, (uint8_t*)&tx_len, ctx);
             break;
         case 0x1B:  //事件清零
-            ERRBYTE = event_clear(instance, apdu_rx);
+            memcpy((unsigned char*)&ctx->password[0], apdu_rx + 10, 4);//拷贝密码
+            ERRBYTE = event_clear(instance, apdu_rx, ctx->apdu_tx, (uint8_t*)&tx_len, ctx);
             break;
         case 0x1C:  //远程控制
-            ERRBYTE = CommRemoteCtl_Process(instance, ctx->channel, apdu_rx, RemotCtrResult);
+            memcpy((unsigned char*)&ctx->password[0], apdu_rx + 10, 4);//拷贝密码
+
+            ERRBYTE = CommRemoteCtl_Process(instance,apdu_rx, ctx->apdu_tx, (uint8_t*)&tx_len, ctx,  RemotCtrResult);
             break;
         case 0x1D:  //多功能口控制
             ERRBYTE = MulPort_set(instance, ctx->channel, apdu_rx);
@@ -1013,16 +1018,19 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     }
     else
     {
+        mesg->ctrl = ctx->ctrl | 0xC0;
         if((ctx->ctrl == 0x1C) && (*(apdu_rx+10) == 0x01) && (*(apdu_rx+10) == 0x98))   //增加新标准应答方式
         {
-            mesg->ctrl = ctx->ctrl | 0xC0;
             tx_len = 2;
             *ctx->apdu_tx = (uint8_t)RemotCtrResult;
             *(ctx->apdu_tx+1) = (uint8_t)((RemotCtrResult & 0xFF00)>>8);
         }
-        else
+        else if ((ctx->ctrl == 0x03)) //长度及错误字内部已处理
         {
-            mesg->ctrl = ctx->ctrl | 0xC0;
+                
+        }
+        else 
+        {
             tx_len = 1;
             *ctx->apdu_tx = ERRBYTE;
         }

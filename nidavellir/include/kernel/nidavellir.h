@@ -245,7 +245,7 @@ struct context_645_t
     uint8_t segment_tx; 
     uint8_t segment_tx_no;
     uint8_t handler_code[4]; //操作者代码
-    uint16_t cmd03_result; //  03安全命令 结果
+    uint8_t password[4];
 
     //接收和发送都要用的状态
     struct object_t object;//对象标识

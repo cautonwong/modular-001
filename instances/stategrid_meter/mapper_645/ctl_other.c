@@ -2,8 +2,9 @@
 #include "645id_table.h"
 #include "utils.h"
 #include "gs_record.h"
+#include "ctl_03_SafeAuthen.h"
 
-
+extern unsigned char Cmp_RemoteCtlTime( struct instance_t* instance, uint8_t* Addr );
 
 signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t* p_rx)
 {
@@ -276,40 +277,71 @@ signed char MulPort_set(struct instance_t* instance, uint8_t chl, uint8_t* p_rx)
 }
 
 
-signed char meter_clear(struct instance_t* instance, uint8_t* p_rx)
+
+
+//p_rx Ϊ֡ͷ  �� apdu
+signed char meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx) 
 {
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t len=*(p_rx+9);
-    
+    int8_t ret = 0;
+    uint8_t len_judge = 8;
+    uint8_t TmpBuffer[10] ={0};
     if( Cmp_MeterAddr( instance, p_rx+1, 0 ) == 0 )
     {
-        if( *(p_rx+10) == 0x98)
+
+        //获取密码
+        memcpy((unsigned char*)&ctx->password[0], p_rx+10, 4);
+      
+        //安全验证
+        ret = security_judge_645(instance, (p_rx+10), p_tx, tx_len, ctx);
+        if(ret < 0)
         {
-          /*
-            #if FEIKONG_MODE == 1
-            Err = CommRemoteCtl_Process(0x94);
-            #elif FEIKONG_MODE == 0
-            Err = 0x04;
-            #endif
-            if( Err == 0 )
-            {
-                Rs_Ctl |= 0x80;
-                Rs_Len = 0;
-            }
-            else
-                Return_CommErr( Err );*/
+            return (uint8_t)-ret;
         }
-        else  if( mbase_cb->factor_mode == true )
+        
+        if(( ctx->password[0] != DL645_PA_SC_CIPHER) && ( ctx->password[0] != DL645_PA_PLAIN_02))  //支持厂外02级
         {
-            if( len == 8 )
-                meter_clr(instance);
+            if( mbase_cb->factor_mode != true )
+            {
+                return RS_ERR_PASS;
+            }
+        }
+        // 68 11 11 11 11 11 11 68 1a 10 98 00 00 00 44 33 22 11 1a 00 99 12 31 23 59 59
+        if(ctx->password[0] == DL645_PA_SC_CIPHER)
+        {
+            //时效判断
+            if( ctx->apdu_rx_len == 16 )
+            {
+                ndv_memcopy( TmpBuffer, p_rx+20, 6 );  //解密后数据  已经为正序
+                if( BCD_Check( TmpBuffer, 6 ) != 0 )
+                {
+                    return RS_ERR_PASS;
+                }
+                
+                if( Cmp_RemoteCtlTime( instance, TmpBuffer ) )
+                {
+                    return RS_ERR_PASS;
+                }           
+              
+              meter_clr(instance);
+            }
+                
             else
                 return RS_ERR_LEN;
-
+        }
+        else  if(ctx->password[0] == DL645_PA_PLAIN_02)
+        {
+            if( ctx->apdu_rx_len == 8 )
+                meter_clr(instance);
+            else
+                return RS_ERR_LEN;   
         }
         else
-            return RS_ERR_PASS;
+        {
+            return RS_ERR_LEN;  
+        }
         
         return 0;
     }
@@ -318,37 +350,66 @@ signed char meter_clear(struct instance_t* instance, uint8_t* p_rx)
     
 }
 
-signed char event_clear(struct instance_t* instance, uint8_t* p_rx)
+signed char event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t len = *(p_rx+9);
+    int8_t ret =0;
+    uint8_t TmpBuffer[10] = {0};
     
     if( Cmp_MeterAddr( instance, p_rx+1, 0 ) == 0 )
     {
-        if( *(p_rx+10) == 0x98)
+        //获取密码
+        memcpy((unsigned char*)&ctx->password[0], p_rx+10, 4);
+      
+        //安全验证
+        ret = security_judge_645(instance, (p_rx+10), p_tx, tx_len, ctx);
+        if(ret < 0)
         {
-            /*Err = CommRemoteCtl_Process(0x97);
-            if( Err == 0 )
-            {
-                Rs_Ctl |= 0x80;
-                Rs_Len = 0;
-            }
-            else
-                Return_CommErr( Err );*/
+            return (uint8_t)-ret;
         }
-        else if(mbase_cb->factor_mode == true)
+        
+        if(( ctx->password[0] != DL645_PA_SC_CIPHER) && ( ctx->password[0] != DL645_PA_PLAIN_02) && ( ctx->password[0] != DL645_PA_PLAIN_04))  //支持 厂外02、04级
         {
-            if( len == 12 )
+            if( mbase_cb->factor_mode != true )
             {
-                event_clr(instance);// �¼�����
+                return RS_ERR_PASS;
             }
+        }
+
+
+        if(ctx->password[0] == DL645_PA_SC_CIPHER)
+        {
+            //时效判断
+            if( ctx->apdu_rx_len == 20 )
+            {       
+                //p_rx+20//待调整 分相 清零ID    ID 倒叙 符合645帧
+                ndv_memcopy( TmpBuffer, p_rx+20+4, 6 );  //解密后数据  已经为正序
+                if( BCD_Check( TmpBuffer, 6 ) != 0 )     
+                {
+                    return RS_ERR_PASS;
+                }
+                
+                if( Cmp_RemoteCtlTime( instance, TmpBuffer ) )
+                {
+                    return RS_ERR_PASS;
+                }           
+              
+                event_clr(instance);
+            }
+                
             else
                 return RS_ERR_LEN;
         }
-        else
-            return RS_ERR_PASS;
-        
+        else 
+        {
+            if( ctx->apdu_rx_len == 12 )
+                event_clr(instance);
+            else
+                return RS_ERR_LEN;   
+        }
+
         return 0;
     }
     else    
@@ -391,19 +452,44 @@ unsigned char Cmp_RemoteCtlTime( struct instance_t* instance, uint8_t* Addr )
 		return 0;
 }
 
-signed char CommRemoteCtl_Process(struct instance_t* instance, uint8_t chl, uint8_t* p_rx, uint16_t RemotCtrResult)
+
+
+
+signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx,  uint16_t RemotCtrResult)
 {
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 	signed char Err_Byte=0;
 	unsigned long Lng1,s_index=0;
 	unsigned char DataLen, Cmd=0, TmpBuffer[20]={0,};
-	
+    uint8_t chl = 0;
+    int8_t ret = 0;
+    
+    chl =  ctx->channel;
+
+    //获取密码
+    memcpy((unsigned char*)&ctx->password[0], p_rx+10, 4);
+    
+    //安全验证
+    ret = security_judge_645(instance, (p_rx+10), p_tx, tx_len, ctx);
+    if(ret < 0)
+    {
+        return (uint8_t)-ret;
+    }
+
 	RemotCtrResult = 0;
 	
-	if(((*(p_rx+18)==0x1B) || (*(p_rx+18)==0x1C)) && ( Cmp_Password( instance, p_rx+10 ) == 0) ) //���ĺ�բ
+	if(((*(p_rx+18)==0x1B) || (*(p_rx+18)==0x1C))) //明文合闸
 	{
-		mem_swap_cpy( TmpBuffer, p_rx+20, 6 );
+	    if( *(p_rx+10) == 0x98 )
+	    {
+            ndv_memcopy( TmpBuffer, p_rx+20, 6 );  
+	    }
+	    else
+	    {
+            mem_swap_cpy( TmpBuffer, p_rx+20, 6 );
+	    }
+
 		if( Cmp_RemoteCtlTime( instance, TmpBuffer ) )    //�ж�����բ�����Ƿ���������Чʱ�����·�
 		{
 			RemotCtrResult = ERR_CMDTM_INVALID;
@@ -446,6 +532,9 @@ signed char CommRemoteCtl_Process(struct instance_t* instance, uint8_t chl, uint
         }
         else if( *(p_rx+10) == 0x98 )
         {
+            ndv_memcopy( TmpBuffer, p_rx+20, 6 );  //解密后数据  已经为正序
+            
+            Cmd = *(p_rx+18);
             /*
             if( AuthenTime_Invalid() )//������֤ʧЧ
             {

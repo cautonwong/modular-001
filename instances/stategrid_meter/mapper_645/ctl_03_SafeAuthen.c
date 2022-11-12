@@ -7,6 +7,293 @@
 
 
 
+void location_data_swap(uint8_t *pdata, uint8_t len)
+{
+    uint8_t cnt;
+
+ 
+    for (cnt = 0; cnt < 2; cnt++)
+    {
+        swap_buffer(pdata + 4*cnt, 4);
+    }
+
+    swap_buffer(pdata + 4*cnt, 3);
+}
+void fee_data_swap(uint8_t *pdata, uint8_t len, uint8_t interval)
+{
+    uint8_t cnt;
+
+    for (cnt = 0; cnt < ((len)/interval); cnt++)
+    {
+        swap_buffer(pdata + interval*cnt, interval);
+    }
+}
+
+void step_fee_swap(uint8_t *pdata, uint8_t len)
+{
+    uint8_t cnt, index;
+
+    for (cnt = 0; cnt < ((len -18)/4); cnt++)
+    {
+        swap_buffer(pdata + 4*cnt, 4);
+    }
+
+    for (index = 0; index < 6; index++) /*结算日*/
+    {
+        swap_buffer(pdata + 4*cnt + 3*index, 3);
+    }
+}
+void dis_data_swap(uint8_t *pdata, uint8_t len)
+{
+
+    swap_buffer(pdata, 4);
+}
+
+
+
+void decrypt_data_swap(uint8_t *pdata, uint8_t len, uint32_t id)
+{
+    uint8_t id_tmp[4];
+
+    id_tmp[0] = (uint8_t)(id>>24);
+    id_tmp[1] = (uint8_t)(id>>16);
+    id_tmp[2] = (uint8_t)(id>>8);
+    id_tmp[3] = (uint8_t)(id);
+
+    if (len > 4)
+    {
+        ndv_memcopy(pdata, pdata + 4, len-4);
+        len -= 4;
+    }
+
+
+    if (0x04 == id_tmp[0])
+    {
+        switch(id_tmp[1])
+        {
+            case 0x00:/*电能表位置信息*/
+                if ((0x04 == id_tmp[2]) && (0x0f == id_tmp[3]))
+                {
+                    location_data_swap(pdata, len);
+                }
+                else
+                {
+                    swap_buffer(pdata, len);
+                }
+                break;
+            case 0x01:  /*时区表*/
+            case 0x02:  /*时段表*/
+            case 0x07:  /*阶梯时区表*/
+                fee_data_swap(pdata, len, 3);
+                break;
+            case 0x05: /*费率电价*/
+                fee_data_swap(pdata, len, 4);
+                break;
+            case 0x06:  /*阶梯表*/
+                step_fee_swap(pdata, len);
+                break;
+            case 0x04:  /*显示项*/
+                if ((0x01 == id_tmp[2]) || (0x02 == id_tmp[2]))
+                {
+                    dis_data_swap(pdata, len);
+                }
+                else
+                {
+                    swap_buffer(pdata, len);
+                }
+                break;
+            default:
+                swap_buffer(pdata, len);
+                break;
+        }
+    }
+    else
+    {
+        swap_buffer(pdata, len);
+    }
+}
+
+// 密文解密
+// <0 异常     0:未处理     >1 解密正常
+int8_t security_decode_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
+{
+
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    int ret=0;
+    uint8_t *apdu = p_rx;  
+    uint8_t *p_tx_cache = p_tx;
+    uint8_t *p_err = (p_tx);
+    uint8_t buffer_1[160]={0}, buffer_2[160]={0};
+    uint32_t addr = 0;  
+    uint16_t txlen = 0;       
+    uint8_t password[4] = {0};
+    
+    union dl645_DI_t DI;
+	uint8_t tx_apdu_len = 0;   
+    uint8_t k1_offset = 0, k1_len = 0, decode_len = 0;
+
+
+	switch (ctx->ctrl)
+	{
+	case 0x1c:  //跳合闸、报警、保电
+		addr = 0x8012C082;
+		break;
+	case 0x14: //二类参数更新
+        addr = 0x8012C083;
+		break;
+	case 0x1A:  //电表清零
+		addr = 0x8012C084;		
+		break;
+    case 0x19:  //需量清零
+    case 0x1b:  //事件清零
+		addr = 0x8012C085;
+		break;
+	default:
+		return -RS_ERR_OTHERS;   
+		break;
+	}
+
+
+    if (ctx->ctrl == 0x14)
+    {
+        if(ctx->apdu_rx_len < 16)
+        {
+            return -RS_ERR_OTHERS;
+        }
+        
+        //memcpy(p_tx, apdu, 4);
+        //p_tx += 4;
+        
+        memcpy((unsigned char*)&DI.di, apdu, 4);
+        apdu += 4; 
+        k1_offset += 4;
+
+        memcpy((unsigned char*)&password[0], apdu, 4);
+        apdu += 4; 
+        k1_offset += 4;
+        
+        memcpy((unsigned char*)ctx->handler_code, apdu, 4);
+        apdu += 4; 
+        k1_offset += 4;
+        
+        k1_len = (ctx->apdu_rx_len - k1_offset - 4);
+        mem_swap_cpy(&buffer_2[0], (uint8_t*)apdu, k1_len);//密文
+        apdu += k1_len;
+        
+        mem_swap_cpy(&buffer_2[k1_len], (uint8_t*)apdu, 4);//mac
+        apdu += 4;
+
+        txlen = k1_len + 4; 
+
+    }
+    else
+    {
+        if(ctx->apdu_rx_len < 8)
+        {
+            return -RS_ERR_OTHERS;
+        }
+        
+
+        //memcpy(p_tx, apdu, 4);
+        //p_tx += 4;
+        
+        memcpy((unsigned char*)&password[0], apdu, 4);
+        apdu += 4; 
+        k1_offset += 4;
+        
+        memcpy((unsigned char*)ctx->handler_code, apdu, 4);
+        apdu += 4; 
+        k1_offset += 4;
+        
+        k1_len = (ctx->apdu_rx_len - k1_offset);
+        mem_swap_cpy(&buffer_2[0], (uint8_t*)apdu, k1_len);//密文
+        apdu += k1_len;
+        
+        txlen = k1_len; 
+
+
+    }
+
+
+    ndv_memcopy(buffer_1, buffer_2, txlen); 
+    ret = write_esam(instance, addr , buffer_1 , txlen);  
+    if (ret < 0)
+    {
+        return -SC_ERR_ESAM;
+    }
+    decode_len = (uint8_t)ret;    
+    
+    if(ctx->ctrl == 0x1b) //事件清零
+    {
+        mem_swap_cpy(&p_rx[8], buffer_1, decode_len);
+        swap_buffer(&p_rx[12], 8);
+        ctx->apdu_rx_len = 8 + decode_len;
+    }
+    else if(ctx->ctrl == 0x14) //二类参数更新
+    {
+        if((decode_len < 1) || ((buffer_1[0] + 1) != decode_len))
+        {
+            return -RS_ERR_OTHERS;
+        }
+        
+        decode_len--;
+        decrypt_data_swap(&buffer_1[1], decode_len, DI.di);
+        ndv_memcopy(&p_rx[12], &buffer_1[1], decode_len);
+        ctx->apdu_rx_len = 4 + 8 + (decode_len - 4); // -4 id
+    }
+    else
+    {
+        ndv_memcopy(&p_rx[8], buffer_1, decode_len);
+        ctx->apdu_rx_len = 8 + decode_len;
+    }
+    *(p_rx - 1) = ctx->apdu_rx_len;
+    
+	return 1;
+}
+
+
+
+// 目前不支持 1类参数设置
+// <0 异常     0:未处理     >1 解密正常
+int8_t security_judge_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
+{
+
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+	switch (ctx->password[0])
+	{
+	case DL645_PA_PLAIN_02:  
+	case DL645_PA_PLAIN_04: 
+        if((Cmp_Password(instance, ctx->password) == 0)) //开启明文设参 且密码正确
+        {
+            if((mbase_cb->metertype & F_Password_En) || ((ctx->ctrl == 0x1B) || (ctx->ctrl == 0x1C)))  //明文合闸 或开启明文设参
+            {
+                return 1;
+            }
+        }
+        else
+        {
+            return -RS_ERR_PASS;
+        }
+       
+		break;
+	case DL645_PA_SC_CIPHER:    //密文 二类参数
+        if (mbase_cb->mac_suspend_state == true) //挂起
+        {
+            return -RS_ERR_OTHERS;
+        }
+
+		return security_decode_645(instance, p_rx, p_tx, tx_len, ctx);
+		break;
+    case DL645_PA_SC_PLAINMAC:  // 一类参数     
+	default:
+		return -RS_ERR_OTHERS;   
+		break;
+	}
+
+	return -RS_ERR_OTHERS;  
+}
+
 
 /*
 身份认证指令
@@ -99,7 +386,7 @@ int dl645_remote_authenticate(struct instance_t* instance, uint8_t *p_rx, uint8_
 #endif    
     Authen_Tmr = 60 * Authen_Tmr;
 
-    mbase_cb->auth_timeout_645 = Authen_Tmr*60;
+    mbase_cb->auth_timeout_645 = Authen_Tmr;
 
     *tx_len = (uint8_t)(p_tx - p_tx_cache);  
     
@@ -163,7 +450,7 @@ int esamconnecttime(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, u
         return SC_ERR_OTHER;
     }
 #if 0  
-    memcopy((uint8*)&cmd[0],dlt645_esam_time_set,5);
+    memcopy((uint8_t*)&cmd[0],dlt645_esam_time_set,5);
     memswapcpy(cmd+5,comm_auth->linebuf+8,2);
     memswapcpy(cmd+7,comm_auth->linebuf+10,4);
     if (true != esam_ioctrl_interface(cmd, k2, &offset))

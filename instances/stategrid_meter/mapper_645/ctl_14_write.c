@@ -316,7 +316,7 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
     uint16_t u16_tmp = 0;
     uint32_t s_index = 0;
     struct mbase_control_block_t* mbase_cb;
-	
+	uint8_t buftmp[10] = {0};
 	mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
 	IDH1 = (unsigned char)((ID & 0xFF000000)>>24);
@@ -390,11 +390,18 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
 				break;
 		case 0x04000802://周休日时段表号
 				//E2P_Read( (unsigned char*)&Num, Day_Table_Num, 1 );
-				if( Num > MaxTouTabNum ) Num = MaxTouTabNum;
-				if( (*p_rx == 0) || (*p_rx > BYTE_BCD(Num)) )
+				Num = MaxTouTabNum; 
+				if( ((*p_rx) == 0) || ((*p_rx) > MaxTouTabNum ) )
 					Err_Byte = RS_ERR_OTHERS;
                 //else
 					//HisRecord_Write(WeekendProRec,START);
+					
+                nd_get(instance, 0x40130200, buftmp, 2, NULL);
+                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_WeekTab);
+                nd_set_index(instance, s_index, buftmp, 2);
+                //不一定设置成功
+                //record_event_no_mesg_pro(instance, NULL, WeekTabWrS, NULL, 1);// 周休日编程事件  待调整
+
 				mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;	
 				break;
 		case 0x04000106://切换时间
@@ -587,7 +594,7 @@ unsigned char Cmp_CommDataLen( unsigned long ID, unsigned char DataLen, unsigned
 /*  函数功能：红外通讯写                                               */
 /*  输出参数：读结果：0为正确,其余为错误                              */
 /***********************************************************************/
-signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len)
+signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len, struct context_645_t* ctx)
 {
     signed char ret=0;
 	unsigned char Err_Byte=0,Ptr,Format=0,rx_len=0,buf[32]={0,};
@@ -655,7 +662,17 @@ signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx
         }
     }
 
-	if((mbase_cb->factor_mode == true) || ((mbase_cb->metertype & BIT1) && (Cmp_Password(instance, p_rx+4) == 0)))//工厂模式或明文模式下 
+    //获取密码
+    memcpy((unsigned char*)&ctx->password[0], p_rx+4, 4);
+    
+    //安全验证
+    ret = security_judge_645(instance, p_rx, p_tx, len, ctx);
+    if(ret < 0)
+    {
+        return (uint8_t)-ret;
+    }
+    rx_len = *(p_rx-1); //重新获取长度
+	if(ret > 0)//工厂模式或明文模式下 
 	{
 		//数据长度判断
 		Err_Byte = Cmp_CommDataLen( ID, rx_len-12, *len );

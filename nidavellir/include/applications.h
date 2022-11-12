@@ -615,7 +615,7 @@ extern uint8_t Time_Format_Check( unsigned char* Addr );
 extern uint8_t display_id_to_oad(unsigned short id, unsigned char *oad);
 extern void relay_led_ctl(struct instance_t* instance,  struct pipeline_t* pipeline);
 extern signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
-extern signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
+//extern signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len, struct context_645_t* ctx);
 extern signed char Comm_Other(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
 
 extern uint16_t software_esam_check(struct instance_t* instance, uint8_t *key, uint8_t *rn, uint8_t *data, uint8_t p2, uint16_t datalen, uint8_t *outbuf);

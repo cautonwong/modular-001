@@ -129,7 +129,7 @@ extern int read_record_data_form_698_protocol(struct instance_t* instance, uint8
 extern unsigned char GetCommTable( unsigned long ID );
 extern signed char ctl_freeze(struct instance_t* instance, uint8_t chl, uint8_t* p_rx);
 extern signed char chg_baut(struct instance_t* instance, uint8_t* p_rx);
-extern signed char CommRemoteCtl_Process(struct instance_t* instance, uint8_t chl, uint8_t* p_rx, uint16_t RemotCtrResult);
+extern signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx,  uint16_t RemotCtrResult);
 extern int upgrade_file_handle(struct instance_t* instance, uint8_t *data, uint16_t len, uint8_t *data_tx, uint8_t *tx_len);
 extern signed char ft_adj_get_meter(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
 extern unsigned char Addr_9_9( unsigned char* Addr );
