@@ -473,6 +473,9 @@ void dev_init(struct instance_t* instance, uint8_t power_mode)
 
 void report_port_open(struct instance_t* instance)
 {
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t Baut = DEF_BAUT_PLC;
+    
     CLK_InitTypeDef CLK_Struct;
     uint32_t Periphral = 0;
 
@@ -495,6 +498,18 @@ void report_port_open(struct instance_t* instance)
     GPIOB->ATT |= BIT6;//plctx
     cm0_systick_init(1);
     uart_chl_open(UART_MODULE_CHL);
+
+    if(mbase_cb->Baut_plc_neg <= 10)
+    {
+        Baut = mbase_cb->Baut_plc_neg;    //载波波特率
+    }
+    else 
+    {   
+        if(mbase_cb->Baut_plc <= 10)
+            Baut = mbase_cb->Baut_plc;    //载波波特率
+    }    
+    
+    mcu_uart_set_baud(baud_table[Baut], 4);
 }
 
 //关闭用电大户外设的电源，比如背光，LED，串口，高速定时器，tick

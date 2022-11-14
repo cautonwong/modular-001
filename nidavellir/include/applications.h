@@ -12,7 +12,7 @@
 
 #if (_DEBUG_TEST == 1)
 
-    #define PWD_TEST_ON 0
+    #define PWD_TEST_ON 1
     #define FREEZ_TEST_OVERTURN 0
     #define RESET_INFO    0 // 记录 复位信息
 

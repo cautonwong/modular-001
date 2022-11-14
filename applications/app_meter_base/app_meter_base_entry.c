@@ -121,7 +121,6 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
             }
         }
 
-    //  backlight_pro(instance, pipeline);
         Meter_Run_State(instance, pipeline);//运行状态字刷新
     
         mbase_cb->power_on_sec_accum++;
