@@ -6,6 +6,8 @@
 #include "lib_conf.h"
 #include "fr_698.h"
 #include "gs_record.h"
+#include "pin_function_def.h"
+
 extern int16_t Check_para_Pro(struct instance_t* instance);
 extern void Poffset_adj_oneself(struct instance_t* instance);
 //#define     P_BACKLIGHT_ON      GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT |= 0x10; //推挽输出高
@@ -70,6 +72,19 @@ int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline
     mbase_cb->PowerOffS_time_low_power_cnt = 0;  
     mbase_cb->CoverOpenS_time_low_power_cnt = 0;        
     mbase_cb->PowerAbnormalS_time_low_power_cnt = 0; 
+
+
+    mbase_cb->voltage_ac = 0;
+    mbase_cb->current_l = 0;
+    mbase_cb->active_power = 0;
+    mbase_cb->current_n = 0;
+    mbase_cb->power_factor = 0;
+    mbase_cb->power_abnormal_tick1 = 0;
+    mbase_cb->power_abnormal_tick = 0;
+    event_poweroff_save(instance,pipeline,mesg);
+
+
+
     
     __enable_irq();
     
@@ -302,16 +317,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             
             //保存电池使用时间
             break;
-      case MSG_POWEROFF:
-            mbase_cb->voltage_ac = 0;
-            mbase_cb->current_l = 0;
-            mbase_cb->active_power = 0;
-            mbase_cb->current_n = 0;
-            mbase_cb->power_factor = 0;
-            mbase_cb->power_abnormal_tick1 = 0;
-            mbase_cb->power_abnormal_tick = 0;
-            event_poweroff_save(instance,pipeline,mesg);
-            
+      case MSG_POWEROFF: //掉电相关的操作 不在此操作
             //开启EE电源和IO口时钟 //
 /*            CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);
             GPIOC->OEN &= ~(BIT4|BIT5|BIT6); 
