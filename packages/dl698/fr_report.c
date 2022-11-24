@@ -400,7 +400,7 @@ void EventOut_698_check(struct instance_t* instance)
         mask = 0;
     }
 
-    if (count == 0 && mask == 0)
+    if ((count == 0) && (mask == 0))
     {
         PLC_EVENOUT_DIS(); //关闭
     }

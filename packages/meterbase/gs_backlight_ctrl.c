@@ -33,6 +33,8 @@ int backlight_pro(struct instance_t* instance, struct pipeline_t* task, struct m
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
+    if(mbase_cb->BackLightTmr > 0)    mbase_cb->BackLightTmr--;
+    
     if(mbase_cb->Page_ID == 0xFFFF)    //全屏
     {
         LCD_BACK_LIGHT_OPEN(); // 打开背光
@@ -51,7 +53,6 @@ int backlight_pro(struct instance_t* instance, struct pipeline_t* task, struct m
         return 1;
     }    
 
-    
     if((mbase_cb->blt_alarm & 0x00400000) == 0x00400000)    //电池欠压，开启背光
     {
         if(mbase_cb->voltage_battery < Bat_Low_Level)
@@ -60,7 +61,7 @@ int backlight_pro(struct instance_t* instance, struct pipeline_t* task, struct m
         }
     }
     
-    if(mbase_cb->BackLightTmr > 0)    mbase_cb->BackLightTmr--;
+    
 
     if(mbase_cb->BackLightTmr == 0)
     {

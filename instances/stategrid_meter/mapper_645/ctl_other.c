@@ -357,6 +357,7 @@ signed char event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_t
     uint8_t len = *(p_rx+9);
     int8_t ret =0;
     uint8_t TmpBuffer[10] = {0};
+    uint32_t id_645 = 0;
     
     if( Cmp_MeterAddr( instance, p_rx+1, 0 ) == 0 )
     {
@@ -385,6 +386,11 @@ signed char event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_t
             if( ctx->apdu_rx_len == 20 )
             {       
                 //p_rx+20//待调整 分相 清零ID    ID 倒叙 符合645帧
+                id_645 = buf_to_uint32_lsb(p_rx+20);
+                if (id_645 !=  0xFFFFFFFF) //不支持分项清零
+                {
+                    return RS_ERR_OTHERS;
+                }
                 ndv_memcopy( TmpBuffer, p_rx+20+4, 6 );  //解密后数据  已经为正序
                 if( BCD_Check( TmpBuffer, 6 ) != 0 )     
                 {
@@ -398,7 +404,6 @@ signed char event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_t
               
                 event_clr(instance);
             }
-                
             else
                 return RS_ERR_LEN;
         }

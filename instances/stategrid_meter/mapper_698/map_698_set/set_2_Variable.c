@@ -30,7 +30,7 @@ int SET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
                     return -DAR_TYPE_NOT_MATCH;
                 }   
                 p += 2;
-                mem_swap_cpy((uint8_t*)&mbase_cb->report_2015mode, p,  4); //待调整
+                mem_swap_cpy((uint8_t*)&mbase_cb->report_2015mode, p,  4); 
                 p += 4;
 
                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 

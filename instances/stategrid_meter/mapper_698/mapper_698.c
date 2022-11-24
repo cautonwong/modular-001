@@ -2880,7 +2880,7 @@ void update_connect_timeout_cnt(struct instance_t* instance, struct pipeline_t* 
 }
 
 // 645协议 秒任务
-void fr_dl45_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline)
+void fr_dl645_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t i,cilent_index, channel;
@@ -2893,6 +2893,8 @@ void fr_dl45_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline)
             MeterWr645_obj_list_clear(instance, NULL, NULL);
         }
     }
+
+    
 
 
 }

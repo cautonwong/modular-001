@@ -1396,7 +1396,7 @@ int fc_fun_11_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
 
 
 
-// 电能数据 存储和协议转换  //待调整
+// 电能数据 存储和协议转换  
 int fc_fun_Energy_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src,uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);

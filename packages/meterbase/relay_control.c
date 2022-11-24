@@ -149,7 +149,7 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
             if((mbase_control_block->meterclear != 0x5A))//电表清零后,不做事件记录和上报
             {
                 send_event_mesg_pro(instance, NULL, SwitchOnS, NULL, 1);
-                mbase_control_block->switch_on_succees = 0x5A;  //要挪到成功 待调整
+                mbase_control_block->switch_on_succees = 0x5A;  
             }
 
             relay_off_chk = 0;
@@ -161,7 +161,7 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
             Magnetic_hold_relay_disconnect();//拉闸
             
             send_event_mesg_pro(instance, NULL, SwitchOffS, NULL, 1);
-            mbase_control_block->switch_off_succees = 0x5A;  //要挪到成功 待调整
+            mbase_control_block->switch_off_succees = 0x5A;  
 
             relay_off_chk = 0;
             relay_on_chk = 0;

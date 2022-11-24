@@ -20,15 +20,36 @@
 
     #define PWD_TEST_ON 0
     #define FREEZ_TEST_OVERTURN 0
-
 #endif
 
 
 
 
-//config
-//#define DEF_BAUT_PLC   6// 载波默认波特率  6:9600, 10:115200  
-#define DEF_BAUT_PLC   10//载波默认波特率    6:9600, 10:115200
+//表型标准 枚举
+#define  CF_M_NORMAL_698    1
+#define  CF_M_FD_645        (CF_M_NORMAL_698 + 1)
+
+
+
+
+
+//类型配置
+#define CF_M_STANDARD  CF_M_NORMAL_698
+
+
+#if (CF_M_STANDARD == CF_M_NORMAL_698)  //国网698双协议------------------------------------
+    #define DEF_BAUT_PLC   10           // 载波默认波特率    10:115200
+    #define DEF_FIRST_ZONE_SET   0      // 第一套时区/时段不可设
+ 
+#elif (CF_M_STANDARD == CF_M_FD_645)    //非电645------------------------------------ 
+    #define DEF_BAUT_PLC   6            // 载波默认波特率  6:9600 
+    #define DEF_FIRST_ZONE_SET   1      // 第一套时区/时段可设
+  
+#else                                   //------------------------------------
+    #define DEF_BAUT_PLC   10           //载波默认波特率    10:115200
+    #define DEF_FIRST_ZONE_SET   0      // 第一套时区/时段不可设
+
+#endif
 
 
 
@@ -81,7 +102,7 @@ struct mbase_control_block_t
     
     uint8_t lcd_poweron_all_dis_time;  /*上电全显时间 */
     uint16_t backlight_key_time; /*按键背光点亮时间 */
-    uint16_t lcd_checkdis_keep_sec;/*显示查看显示时间 */
+    uint16_t lcd_checkdis_keep_sec;/*显示查看背光点亮时间 */
     uint16_t lcd_nopower_key_keep_sec;/*显示查看显示时间 */
     uint8_t energy_point; //电能显示小数
     uint8_t power_point;    //功率显示小数

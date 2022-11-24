@@ -340,7 +340,6 @@ int dl645_remote_authenticate(struct instance_t* instance, uint8_t *p_rx, uint8_
     }
 
 
-    //dl645_remote_connect_flag = 0; //待调整
     mbase_cb->auth_timeout_645 = 0;
     mem_swap_cpy(&mbase_cb->rand8_645[0], &apdu[16], 8); //backup rand8
 
@@ -494,7 +493,7 @@ int dl645_ir_atuh_request_step1(struct instance_t* instance, uint8_t *p_rx, uint
     //仅限红外通道
     if(ctx->channel != chl_ir_698)
     {
-        //return SC_ERR_OTHER; //待调整
+        return SC_ERR_OTHER; //待调整
     }   
     
     mbase_cb->infrared_auth_timeout = 0;
@@ -563,7 +562,7 @@ int dl645_ir_atuh_request_step2(struct instance_t* instance, uint8_t *p_rx, uint
     //仅限红外通道
     if(ctx->channel != chl_ir_698)
     {
-        //return SC_ERR_OTHER;  //待调整
+        return SC_ERR_OTHER;  //待调整
     }  
     
     mbase_cb->infrared_auth_timeout = 0;

@@ -140,7 +140,7 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
     
         mbase_cb->power_on_sec_accum++;
         fr_dl698_sec_task(instance, pipeline);
-        fr_dl45_sec_task(instance, pipeline);
+        fr_dl645_sec_task(instance, pipeline);
         
         if(instance->time.tm_sec == 33)     //效验
         {
