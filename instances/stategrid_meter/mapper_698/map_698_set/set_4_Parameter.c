@@ -1154,6 +1154,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     {
                         if ( (buffer[0] != temp[0]) || (buffer[1] != temp[1]) ) //第一结算日改变
                         {
+                            mbase_cb->first_MbillDay_flag = 0x5A;
                             record_event_no_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
                         }
                     }
@@ -1178,6 +1179,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 {
                     if ( (buffer[0] != temp[0]) || (buffer[1] != temp[1]) ) //第一结算日改变
                     {
+                        mbase_cb->first_MbillDay_flag = 0x5A;
                         record_event_no_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
                     }
                 }

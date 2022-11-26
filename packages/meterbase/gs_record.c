@@ -1461,7 +1461,7 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
         {
             event_scheme = 4;
         }
-        report_3320list_add(instance,Oad|(event_scheme<<13));
+        report_3320list_add(instance,Oad|(event_scheme<<13)); 
         if(PowerOffS == mesg->id)
         {
             if(( instance->ac_power_statue == AC_POWER_ON ) && (mbase_cb->power_on_sec_accum >= mbase_cb->active_report_sec_limit))
@@ -1495,6 +1495,7 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
             offsetof(struct mbase_control_block_t, power_on_sec_accum))  -  offsetof(struct mbase_control_block_t, persistent_section_start);
             nd_set_offset(instance, s_index, (uint8_t*)&last_poweron_time, 4);
         }
+
     }
     //结算日
     if(BillFreeze == mesg->id)

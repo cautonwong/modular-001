@@ -210,7 +210,7 @@ int set_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
     // 事件参数 全部更新// 待调整
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
     offsetof(struct mbase_control_block_t, OverCurrent_threshold));
-    s_len = offsetof(struct mbase_control_block_t, ZeroLineErrS_duration_para) - offsetof(struct mbase_control_block_t, OverCurrent_threshold);
+    s_len = offsetof(struct mbase_control_block_t, ZeroLineErrS_duration_para) - offsetof(struct mbase_control_block_t, OverCurrent_threshold) + sizeof(mbase_cb->ZeroLineErrS_duration_para);
     nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->OverCurrent_threshold, s_len);  
     
     

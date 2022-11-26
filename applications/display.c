@@ -476,6 +476,10 @@ unsigned short display_oad_to_id(unsigned char *oad, unsigned char *oad_son, uns
         memcpy((unsigned char*)&oad2, (unsigned char*)oad, 4);
         if(((oad2 & 0xFFFFFF00) != 0x00000400) && ((oad2 & 0xFFFFFF00) != 0x00100400) && ((oad2 & 0xFFFFFF00) != 0x00200400)
                && ((oad2 & 0xFFFFFF00) != 0x00000200) && ((oad2 & 0xFFFFFF00) != 0x00100200) && ((oad2 & 0xFFFFFF00) != 0x00200200))   return 0;
+        if (((oad2 & 0x000000FF) == 0) || ((oad2 & 0x000000FF) > (MaxFeeNum + 1))) //电能不支持块, 
+        {
+            return 0;
+        }
         idl = (unsigned char)(oad2 & 0x000000FF);
         if(idl > 0x0D)  return 0;
         id |= idl;
@@ -842,7 +846,7 @@ void DispNum( unsigned char* Addr, unsigned char Lenth )
 void display_energy_pro(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t *data, uint8_t id)
 {
     uint8_t EnergyDot,i,borrownum=0;
-    unsigned long long energy_p=0,p_max=0;//正向，反向
+    long long energy_p=0,p_max=0;//正向，反向
     struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     mbase_control_block->disp_borrow = 0;
@@ -884,14 +888,30 @@ void display_energy_pro(struct instance_t* instance, struct pipeline_t* pipeline
     
     for(i=0; i<EnergyDot; i++)
     {
-        if(energy_p > p_max)
+        if(energy_p >= 0)
         {
-            energy_p = energy_p / 10;
-            borrownum++;
+            if(energy_p > p_max)
+            {
+                energy_p = energy_p / 10;
+                borrownum++;
+            }
+            else
+            {
+                break;
+            }
+
         }
         else
         {
-            break;
+            if(energy_p < (-p_max))
+            {
+                energy_p = energy_p / 10;
+                borrownum++;
+            }
+            else
+            {
+                break;
+            }
         }
     }
     
@@ -1133,7 +1153,7 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 void Disp_Value( unsigned short id, unsigned char *data, unsigned int Info )
 {
 	unsigned char Len,i;
-	unsigned long long Tmp=0;
+	unsigned long long Tmp=0;  long long sign_Tmp64=0; int32_t tmp32 = 0;
 	unsigned char Sign = 0;
 	Len = (unsigned char)(Info & DispDataLen);
 //	MemType = (unsigned char)((Info>>6) & MEMVALUE);
@@ -1173,10 +1193,26 @@ void Disp_Value( unsigned short id, unsigned char *data, unsigned int Info )
             break;
         
     }
+
+
     if( Info & DispData_HEX )
 	{
-        mem_swap_cpy( (unsigned char*)&Tmp, (unsigned char*)Buffer, Len );
-        HEX64_BCD( Buffer, Tmp );
+        if(((id & 0xF000) == 0xE000) && (Info & DispData_Sign))// 组合有功电能 //三相 组合无功
+        {
+            //if(data[0]&0x80)
+            {
+                sign_Tmp64 = (int64_t)buf_to_uint32_msb(data);
+                HEX_BCD_Signed((int32_t)sign_Tmp64 , Buffer , 4);
+                Buffer[3] &=~ 0x80;
+            }
+            if(data[0]&0x80)
+                Lcdcon[19] |= DS_Chr_Fu;
+        } 
+        else
+        {
+            mem_swap_cpy( (unsigned char*)&Tmp, (unsigned char*)Buffer, Len );
+            HEX64_BCD( Buffer, Tmp );
+        }
 	}
 	else
 	{
@@ -1547,7 +1583,7 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
 	//清屏
 	ClearLCD();
 	//显示数据
-	Disp_Value( DisplayTab[i].Id, buf, Info1 );
+	Disp_Value( mbase_control_block->Page_ID, buf, Info1 );
 	//显示字符和单位
 	Disp_Char( instance, pipeline, SignBuf );
 }

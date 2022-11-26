@@ -624,8 +624,12 @@ uint8_t report_3320list_update(struct instance_t* instance, uint8_t chn, uint8_t
     uint16_t id, len, len2;
     uint32_t data;
     uint8_t cnt = 1, k = 0;
+    uint8_t Schem = 0;
     uint32_t addr;
     int ret;
+
+
+    Schem = get_OAD_Schem(oad);
 
     addr = get_3320_save_addr(instance, chn);
     ret = nd_get_index(instance, addr, buf, 241);
@@ -694,7 +698,7 @@ uint8_t report_3320list_update(struct instance_t* instance, uint8_t chn, uint8_t
 
         if(rptmode == 0)//上报方式为主动上报
         {
-            if(oad == 0x30110200)//
+            if(oad == 0x30110200)// //停电事件 主动上报时 才需要根据上电时间 判断是否加入3320。停电发生事件 主动上报不加入3320(不接受确认的)
             {
 
             }
@@ -750,6 +754,10 @@ void report_3320list_add(struct instance_t* instance,uint32_t oad)
             return;
         }
     }
+
+
+    //停电事件、主动上报 且不足1小时  不上报    也不应加入列表     //低功耗下主动上报 不加入列表
+
 
     for (i = 0; i< (sizeof(comm_chn) / sizeof(comm_chn[0])); i++)
     {
@@ -1128,7 +1136,7 @@ uint8_t active_report_3320list_get(struct instance_t* instance, struct pipeline_
     {
         oad = buf_to_uint32_lsb(p);
         rptmode = read_event_report_flag_mode(instance, oad, 1);
-        if ((rptmode == FOLLOW_RPT) || (oad == 0x30110200))//非主动上报 不放在列表中,3011也不放主动上报OAD中
+        if ((rptmode == FOLLOW_RPT) || (oad == 0x30110200))//非主动上报 不放在列表中,   3011也不放主动上报OAD中  //改为有其他上报时 再带上3011
         {
             len2 = len - ((p - tmp_buf) + 4);
             ndv_memcopy(p, p + 4, len2);
@@ -1138,6 +1146,13 @@ uint8_t active_report_3320list_get(struct instance_t* instance, struct pipeline_
         else
             p += 4;
     }
+#if 0    
+    //有其他上报时 再带上3011
+    if((count == 1)&&(oad == 0x30110200))
+    {
+        count = 0;
+    }
+#endif    
     p = buf;
     for (i = 0; i < count; i++)
     {

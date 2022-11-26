@@ -128,8 +128,10 @@ struct mbase_control_block_t
     uint16_t Limit_T_Max;   //广播校时最大允许范围
     uint16_t Limit_T_Min;   //广播校时最小允许范围
 
-        //事件参数
-    uint32_t OverCurrent_threshold;         //参数 电能表过流事件-电流触发下限 
+    //事件参数
+
+    uint32_t OverCurrent_threshold;         //参数 电能表过流事件-电流触发下限   //事件参数起始--------
+    
     uint16_t ZeroLineErrS_rate_threshold;   // 电能表零线电流异常事件 限值
     uint32_t ZeroLineErrS_Current_threshold;// 电能表零线电流异常事件-电流触发下限
     uint8_t OverCurrent_duration_para;  //参数 判定延时时间  
@@ -138,7 +140,9 @@ struct mbase_control_block_t
     uint8_t SwitchErrS_duration_para;   //参数 判定延时时间  
     uint8_t EmuErrS_duration_para;      //参数 判定延时时间  
     uint8_t RTCErrS_duration_para;      //参数 判定延时时间  
-    uint8_t ZeroLineErrS_duration_para; //参数 判定延时时间  
+    
+    uint8_t ZeroLineErrS_duration_para; //参数 判定延时时间                             //事件参数末尾------------
+
     
     uint32_t report_2015mode;               //跟随上报模式字   
     uint16_t active_report_sec_limit;   //掉电 主动上报 上电时间阈值 默认3600 
