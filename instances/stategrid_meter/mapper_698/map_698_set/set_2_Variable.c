@@ -1,6 +1,7 @@
 #include "nidavellir.h"
 #include "fr_698.h"
 #include "port.h"
+#include "fr_645_report.h"
 
 int SET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
@@ -37,12 +38,14 @@ int SET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
                 offsetof(struct mbase_control_block_t, report_2015mode));
                 nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->report_2015mode, 4);
 
+                report_2015mode_set_from_698(instance);
+
                 EventOut_698_check(instance);
                 return (p-buf);
             }
             else if(attribute == 0x05) //上报方式
             {
-                return set_event_report_flag_mode(instance, 0x20150200, p, 1);
+                return fr_set_event_report_flag_mode(instance, 0x20150200, p, 1);
             }
             break;
        

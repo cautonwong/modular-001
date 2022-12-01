@@ -349,6 +349,7 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
             //无功组合特征字特殊处理
         }
         event_clear_omd_add(instance, id, 0 /*req->channel */);
+        
         //清零
         ret = clr_record(instance, id);
         if (ret < 0)
@@ -358,7 +359,8 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
         }
 
         report_3320list_confirmed_All_channel(instance, id); //   77个 action  共 20秒  占用 17秒    测试 
-        
+
+        mbase_cb->flag_event_clear = 0;
         record_event_no_mesg_pro(instance, NULL, EventClrS, NULL, 1);
 
         return (p - buf);

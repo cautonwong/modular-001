@@ -1506,7 +1506,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     struct record_storage_id_info_t record_id_info; 
     struct circular_info_t circular_info = {0};
     uint32_t *rcsd_req = (uint32_t *)rcsd_info; // 待定
-    uint8_t *ptr_tmp = instance->apdu_cache;   // 698中单条记录也需要 判断 可能导致溢出   待调整
+    uint8_t *ptr_tmp = instance->apdu_cache;   
     uint32_t rcsd_src[REQ_RCSD_MAXNUM];//设置的关联对象，用于与请求的关联对象作比对筛选
     uint16_t i, read_num, number = 0;
     uint16_t judge_size, one_len = 0,len = 0;
@@ -1598,6 +1598,11 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
             break;
         default:
             break;
+    }
+
+    if (circular_info.unit_size > (cache_max)) // 单条记录长度 大于2000. 返回空处理
+    {
+        return record_response_null(buf);
     }
 
     if (circular_info.valid_num == 0)

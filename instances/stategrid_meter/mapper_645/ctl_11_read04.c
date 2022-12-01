@@ -193,6 +193,7 @@ int read_04( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
         case 0x04030000:    //公共假日表
             return get_645_holiyday_table(instance, ID, p_rx, p_tx);
             break;
+
     }
     
     Ptr = GetCommTable( ID );//查表

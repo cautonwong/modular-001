@@ -320,7 +320,7 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
     uint16_t u16_tmp = 0;
     uint32_t s_index = 0;
     struct mbase_control_block_t* mbase_cb;
-	uint8_t buftmp[10] = {0};
+	uint8_t buftmp[50] = {0};
 	mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
 	IDH1 = (unsigned char)((ID & 0xFF000000)>>24);
@@ -404,7 +404,7 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_WeekTab);
                 nd_set_index(instance, s_index, buftmp, 2);
                 //不一定设置成功
-                //record_event_no_mesg_pro(instance, NULL, WeekTabWrS, NULL, 1);// 周休日编程事件  待调整
+                record_event_no_mesg_pro(instance, NULL, WeekTabWrS, NULL, 1);// 周休日编程事件 
 
 				mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;	
 				break;
@@ -426,7 +426,9 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
 				if( ((*p_rx > 0x23) || (*(p_rx+1) < 0x01) || (*(p_rx+1) > 0x28)) && (*p_rx != 0x99) && (*(p_rx+1)!= 0x99))
 					Err_Byte = RS_ERR_OTHERS;
                 else
-				{	//HisRecord_Write(BalanceProRec,START);
+				{
+
+				    //HisRecord_Write(BalanceProRec,START);
 					if( ID == 0x04000B01)//设置第一结算日时，清当前月电量
 					{
 						//E2P_Read( BalancDayBuffer, Balance_Time1, 2 );
@@ -440,6 +442,8 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
 						//E2P_Write( MonthBalance_Pz0, (unsigned char*)&Energy_Pz.BalancePz0, 4 );
 						//Flag.Fee |= F_STEPChange;
 					}
+
+					
 				}
 				break;
 		case 0x04000302://自动循环显示时间

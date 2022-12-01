@@ -17,7 +17,7 @@ int SwitchErr_event_judge(struct instance_t* instance, struct pipeline_t* task, 
     uint8_t *duration = &ctrl_block->SwitchErrS_duration;
 
     uint8_t err_flag = ctrl_block->SwitchErrS_status;
-    //uint8_t enable_flag = ctrl_block->SwitchErrS_Record_En; //待调整
+    //uint8_t enable_flag = ctrl_block->SwitchErrS_Record_En; 
 
     uint32_t* accumulate_time = &ctrl_block->SwitchErrS_acc_time;
 

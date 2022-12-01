@@ -167,7 +167,7 @@ static uint16 rx_esam(uint8 *rx_data , uint16 *len )
 }
 
 
-static uint8 read_esam(uint32 addr, uint8 *buf, uint16 len)
+static uint8 read_esam(uint32_t addr, uint8 *buf, uint16 len)
 {      
     uint16 rx_len, sw = 0;
     

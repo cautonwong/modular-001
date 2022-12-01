@@ -244,6 +244,7 @@ struct context_645_t
 
     uint8_t segment_tx; 
     uint8_t segment_tx_no;
+    uint8_t report_stat_follow_flag; //主动上报状态字后续帧标志
     uint8_t handler_code[4]; //操作者代码
     uint8_t password[4];
 

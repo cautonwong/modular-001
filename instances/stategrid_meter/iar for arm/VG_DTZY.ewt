@@ -2441,6 +2441,9 @@
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\dl645\fr_645.c</name>
             </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\packages\dl645\fr_645_report.c</name>
+            </file>
         </group>
         <group>
             <name>dl698</name>

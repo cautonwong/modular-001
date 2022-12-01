@@ -4,6 +4,9 @@
 #define _value(a) a = ((int32_t)a < 0)? (int32_t)(-a) : (int32_t)a
 
 
+#define SINGLE_CAPTURE_MAXLEN 200
+
+
 struct event_duration_t
 {
     uint8_t duration_para;
@@ -11,7 +14,7 @@ struct event_duration_t
     uint8_t state;
 };
 
-extern const uint32_t event_oad[];
+extern const uint32_t event_oad_list[];
 extern const uint8_t event_oad_num;
 
 void record_event_no_mesg_pro(struct instance_t* instance, struct pipeline_t* task, uint16_t RecordId, uint8_t* payload, int mode);
@@ -76,4 +79,7 @@ extern int MeterWr645_obj_list_clear(struct instance_t* instance, struct pipelin
 extern int16_t Save_EC2(struct instance_t* instance, uint8_t type);
 extern int CoverOpen_event_LowPower_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
 extern int after_Time_set_hook(struct instance_t* instance);
+extern int set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t value, uint8_t mode);
+extern void EventOut_698_check(struct instance_t* instance);
+
 #endif //__GS_RECORD_H__

@@ -1,13 +1,56 @@
 #include "nidavellir.h"
 #include "fr_698.h"
+#include "fr_645_report.h"
 
-
-// 698设置事件上报标识或上报方式   mode  0: 上报标识      1:上报方式
-int set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t mode)
+// 设置事件上报标识或上报方式   mode  0: 上报标识      1:上报方式 (无tag)
+int set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t value, uint8_t mode)
 {
-    uint8_t tempbuf[200] = { 0 };
-    uint8_t* p = buf;
     struct record_storage_id_info_t  record_id_info;
+    int ret;
+    uint32_t AddrID = 0;
+    uint8_t index = (uint8_t)oad;
+
+    ret = get_record_id_info(instance, oad, &record_id_info);
+    if (ret <= 0)
+    {
+        return -DAR_OBJECT_NOT_EXIST;
+    }
+
+    if (mode == 0)
+    {
+        AddrID = record_id_info.rpt_flag;
+        if (value > 3)
+        {
+            return -DAR_OTHERS_ERROR;
+        }
+    }
+    else //if (mode == 1)
+    {
+        AddrID = record_id_info.rpt_mode;
+        if (value > 1)
+        {
+            return -DAR_OTHERS_ERROR;
+        }
+
+    }
+
+    ret = nd_set_index(instance, AddrID, &value, 1);
+    if(ret <= 0)
+    {
+        return -DAR_OTHERS_ERROR;
+    }
+
+    return 1;
+    
+}
+
+
+
+// 698协议 设置事件上报标识或上报方式   mode  0: 上报标识      1:上报方式
+int fr_set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t mode)
+{
+    uint8_t tempbuf[20] = { 0 };
+    uint8_t* p = buf;
     int ret;
     uint32_t AddrID = 0;
     uint8_t index = (uint8_t)oad;
@@ -19,33 +62,18 @@ int set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_
 
     tempbuf[0] = *p++;
 
-    ret = get_record_id_info(instance, oad, &record_id_info);
+    ret = set_event_report_flag_mode(instance,  oad,  tempbuf[0],  mode);
+
     if (ret <= 0)
     {
-        return -DAR_OBJECT_NOT_EXIST;
+        return ret;
     }
 
-    if (mode == 0)
-    {
-        AddrID = record_id_info.rpt_flag;
-        if (tempbuf[0] > 3)
-        {
-            return -DAR_OTHERS_ERROR;
-        }
-    }
-    else //if (mode == 1)
-    {
-        AddrID = record_id_info.rpt_mode;
-        if (tempbuf[0] > 1)
-        {
-            return -DAR_OTHERS_ERROR;
-        }
-
+    if(mode == 0) // 注意2015的上报方式调用 
+    {   
+        report_3320flag_set_from_698(instance, oad, tempbuf[0]);
     }
 
-    nd_set_index(instance, AddrID, &tempbuf[0], 1);
-
-    
     EventOut_698_check(instance);  
     return (p - buf);
 }
@@ -207,7 +235,7 @@ int set_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
     }
 
     
-    // 事件参数 全部更新// 待调整
+    // 事件参数 全部更新
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
     offsetof(struct mbase_control_block_t, OverCurrent_threshold));
     s_len = offsetof(struct mbase_control_block_t, ZeroLineErrS_duration_para) - offsetof(struct mbase_control_block_t, OverCurrent_threshold) + sizeof(mbase_cb->ZeroLineErrS_duration_para);
@@ -266,12 +294,12 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
 
             case 8:  // 上报标识  
             {
-                return set_event_report_flag_mode(instance, id, p, 0);
+                return fr_set_event_report_flag_mode(instance, id, p, 0);
             }
             break;
             case 11: // 上报方式 
             {
-                return set_event_report_flag_mode(instance, id, p, 1);
+                return fr_set_event_report_flag_mode(instance, id, p, 1);
             }
             break;
 
@@ -297,12 +325,12 @@ int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
 
             case 11: // 上报标识 
             {
-                return set_event_report_flag_mode(instance, id, p, 0);
+                return fr_set_event_report_flag_mode(instance, id, p, 0);
             }
             break;
             case 15:// 上报方式 
             {
-                return set_event_report_flag_mode(instance, id, p, 1);
+                return fr_set_event_report_flag_mode(instance, id, p, 1);
             }
             break;
             default:

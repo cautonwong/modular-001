@@ -280,10 +280,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
 
                     if(mbase_cb->factor_mode == false) 
                     {
-                        //set_activeflag(instance, RecordId);
-                        mesg_tmp.id = MeterClrS;
-                        recv_record_process(instance, NULL, &mesg_tmp, NULL);
-                        //send_event_mesg_pro(instance, NULL, MeterClrS, NULL, 1);
+                        record_event_no_mesg_pro(instance, NULL, MeterClrS, NULL, 1);
                     }
                     meter_clr(instance);
                     p++;
@@ -295,7 +292,8 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     if((1 != pctx->timeTag_valid) || (pctx->timeTag[0] == 0)){
                         return -DAR_TIME_TAG_INVALID;
                     }
-                    event_clear_omd_add(instance, id, 0 ); 
+                    event_clear_omd_add(instance, id, 0 );
+                    mbase_cb->flag_event_clear = 0x5a;
                     event_clr(instance);// 事件清零
                     p++;                     
                     record_event_no_mesg_pro(instance, NULL, EventClrS, NULL, 1);

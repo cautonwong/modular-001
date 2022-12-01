@@ -11,6 +11,7 @@
 #include "gs_record.h"
 #include "pin_function_def.h"
 #include "fr_698.h"
+#include "fr_645_report.h"
 
 #define     KeyPortIn           {GPIOA->OEN |=BIT2; GPIOA->IE |=BIT2;}
 #define     KeyPortCheck        (GPIOA->STS & BIT2)
@@ -254,6 +255,7 @@ void relay_led_ctl(struct instance_t* instance,  struct pipeline_t* pipeline)
             if ( mbase_control_block->switch_off_succees == 0x5A   )
             {
                 mbase_control_block->switch_off_succees = 0;
+                report_645state_judge(instance, RPT_2015_SWITCH_OFF_SUCCEES);
                 report_2015state_update(instance, RPT_2015_SWITCH_OFF_SUCCEES);
             }
             mbase_control_block->SwitchErrS_status = 0; 
@@ -271,6 +273,7 @@ void relay_led_ctl(struct instance_t* instance,  struct pipeline_t* pipeline)
             if ( mbase_control_block->switch_on_succees == 0x5A   ) 
             {
                 mbase_control_block->switch_on_succees = 0;
+                report_645state_judge(instance, RPT_2015_SWITCH_ON_SUCCEES);
                 report_2015state_update(instance, RPT_2015_SWITCH_ON_SUCCEES);
             }
         }

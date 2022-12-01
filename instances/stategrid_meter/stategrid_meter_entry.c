@@ -368,7 +368,7 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
     register_log(instance, RES_DEV_FLASH, mbase_block_event_flash1, RES_DEV_EEPROM, mbase_block_parameter, (MinuteFreeze_SECTION_SIZE) * 4 * 1024, supply_event_flash_1_info);
 
     //注册冻结2-flash
-    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash2, RES_DEV_EEPROM, mbase_block_parameter, (HourFreeze_SECTION_SIZE + DayFreeze_SECTION_SIZE + MonthFreeze_SECTION_SIZE) * 4 * 1024, supply_event_flash_2_info); //待调整
+    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash2, RES_DEV_EEPROM, mbase_block_parameter, (HourFreeze_SECTION_SIZE + DayFreeze_SECTION_SIZE + MonthFreeze_SECTION_SIZE) * 4 * 1024, supply_event_flash_2_info); 
     //申请一块-flash
     add_block(instance, RES_DEV_FLASH, public_block_flash, 4096*2);
     //注册一个698的MAP

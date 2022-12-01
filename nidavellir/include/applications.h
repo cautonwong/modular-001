@@ -145,8 +145,8 @@ struct mbase_control_block_t
 
     
     uint32_t report_2015mode;               //跟随上报模式字   
-    uint16_t active_report_sec_limit;   //掉电 主动上报 上电时间阈值 默认3600 
-
+    uint16_t active_report_sec_limit;       //掉电 主动上报 上电时间阈值 默认3600 
+    uint8_t report_mode_645[8];             //645主动上报模式字
     uint8_t factor_mode; //工厂模式
     
     uint32_t backlight_control_word;//背光报警配置字 
@@ -254,9 +254,11 @@ struct mbase_control_block_t
 
 
     //645协议相关
-    uint8_t rand8_645[8];                   //645随机数缓存 
-    uint32_t auth_timeout_645;              //645身份认证剩余时间   // 业务使用  待调整
-    
+    uint8_t rand8_645[8];                       //645随机数缓存 
+    uint32_t auth_timeout_645;                  //645身份认证剩余时间   
+    uint8_t flag_event_clear;                   //00分相事件清零，0x5a事件总清
+    uint8_t report_stat_already_read645;        //645上报状态字已读
+    uint8_t report_stat_read_cache645[12];      //645上报状态字
 
     //显示相关
     uint8_t commdisp_plc;    //通讯符号显示
@@ -319,7 +321,9 @@ struct mbase_control_block_t
     uint32_t CoverOpenS_time_low_power_cnt;     //开盖事件累计时间   累加器     sec        停电或复位后清零，低功耗下累加，上电保存
     uint32_t PowerAbnormalS_time_low_power_cnt; //电源异常事件累计时间   累加器     sec        停电或复位后清零，低功耗下累加，上电保存
 
-    
+
+    uint8_t report_stat_645[108];       //645上报状态字 手动保存e2p
+
     struct tm v_powerdown_tm;                   // 模拟停电时间  补结算测试用     不存e2p
     dyn_cache_end  //------------------------------------------------------
     //运行期更改&&掉电或定时保存&&上电需要IO请求的数据分区
@@ -404,7 +408,10 @@ struct mbase_control_block_t
 	uint8_t Pass04Lock_Tmr;//通讯04级密码闭锁时间
     
     uint8_t meterclear; //电表清零
+
+    uint16_t report_reset_sec_cnt_645;  //645上报状态字复位延时递减计数器
     
+
     
     uint8_t persistent_blank_space[4*10];   //  空白区
 
@@ -423,7 +430,7 @@ enum resourenc_block_name
     control_block_698_name,
     mbase_control_block_name,
     mbase_block_static,
-    mbase_block_static_eprom,           //主区  
+    mbase_block_static_eprom,           //主区   
     mbase_block_static_eprom_bp,        //备份 需跟在主区后面 
     mbase_block_cache,
     mbase_block_persistent,
@@ -651,7 +658,7 @@ extern uint32_t fr_698_current_esam_timeout_get(struct instance_t* instance, str
 extern int record_rollback_after_set_time(struct instance_t* instance, uint8_t finish_check);
 extern int cal_record_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, uint8_t *depth_ptr, uint32_t oad);
 extern int modify_capture_clr_pro(struct instance_t* instance, uint32_t oad);
-extern int set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t mode);
+extern int fr_set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t mode);
 extern uint8_t get_activeflag(struct instance_t* instance, uint16_t RecordId);
 extern int meter_clr(struct instance_t* instance);
 extern void meteric_para_clr(struct instance_t* instance, uint8_t *p_rx);

@@ -21,10 +21,10 @@ struct fee_t
 
 struct energy_t
 {
-    uint32 active_p;
-    uint32 active_n;
-    uint32 month_active_p;
-    uint32 month_active_n;
+    uint32_t active_p;
+    uint32_t active_n;
+    uint32_t month_active_p;
+    uint32_t month_active_n;
     uint16 active_p_dec;
     uint16 active_n_dec;
 };
@@ -32,10 +32,10 @@ struct energy_t
 
 struct emu_pluse_t
 {
-    uint32 last_active_p;
-    uint32 last_active_n;
-    uint32 current_active_p;
-    uint32 current_active_n;
+    uint32_t last_active_p;
+    uint32_t last_active_n;
+    uint32_t current_active_p;
+    uint32_t current_active_n;
 };
 
 
@@ -44,7 +44,7 @@ struct mbase_control_block_t
 {
     int id;
     //电量数据
-    uint32 meter_const;
+    uint32_t meter_const;
     struct energy_t energy[13];
     struct emu_pluse_t emu_pluse;
     //瞬时量数据

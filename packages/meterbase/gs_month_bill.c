@@ -79,7 +79,7 @@ uint8_t mbill_power_on_pro(struct tm* time, struct pipeline_t* task, struct mess
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->control_block;
     
     uint8_t cycle, i; 
-    uint32  now,pd,last,recently;
+    uint32_t  now,pd,last,recently;
     struct tm now_tm,pd_tm;
 
 

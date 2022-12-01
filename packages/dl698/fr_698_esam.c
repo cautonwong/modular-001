@@ -190,7 +190,7 @@ int read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf, uin
 }
 
 //读取对应长度 ESAM  随机数
-int read_esam_random(struct instance_t* instance,uint8_t read_num,  uint8_t *read_buf) //待调整
+int read_esam_random(struct instance_t* instance,uint8_t read_num,  uint8_t *read_buf) 
 {
     int rxlen = 0;
     uint16_t txlen = 0;

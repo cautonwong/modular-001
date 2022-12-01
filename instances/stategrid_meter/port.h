@@ -166,6 +166,8 @@ enum record_flag_id_t
     
     MeterWr645S                  ,  //  0xFF31    电能表编程事件645       
     MeterWr645R                  ,  //  0xFF31    电能表编程事件645 特殊 用于更新编程列表   
+
+  
 };
 
 //冻结     需连续
@@ -549,12 +551,16 @@ enum block_parameter_item_id_t
 #define     Report3320_OADList2         1523 // 3320 oad上报列表   1 + 4*60     //rs485-1
 #define     Report3320_OADList3         1524 // 3320 oad上报列表   1 + 4*60     //PLC  
 #define     Report3320_OADList4         1525 // 3320 oad上报列表   1 + 4*60     //rs485-2
-#define     ActReport_Info              1526 // 主动上报 停电下缓存信息   //待调整  现是否存两份？
+#define     ActReport_Info              1526 // 主动上报 停电下缓存信息   
 
 #define     AuthTime_DL645              1527 // 身份认证时效
+#define     report_stat_645_E           1528 // 645上报状态字
 
 
-#define     __INITFLAG2_End             AuthTime_DL645 //初始化 特殊处理标记  
+
+
+
+#define     __INITFLAG2_End             report_stat_645_E //初始化 特殊处理标记  
 
 
 

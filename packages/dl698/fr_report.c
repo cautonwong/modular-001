@@ -4,10 +4,9 @@
 #include "cpu_surport.h"
 #include "lib_clk.h"
 #include "lib_uart.h"
-
+#include "fr_645_report.h"
 
 extern uint8_t DEVICE_ERR;
-extern uint8_t report_2015state_update(struct instance_t* instance, uint32_t mask);
 extern void report_3320list_add(struct instance_t* instance,uint32_t oad);
 extern uint8_t active_report_3320list_confirmed(struct instance_t* instance);
 extern uint8_t report_3320list_confirmed(struct instance_t* instance, uint8_t cnl, uint32_t oad, uint8_t confirm_SUB_event);
@@ -68,6 +67,7 @@ void report_2015state_judge(struct instance_t* instance)
             if (!(mbase_cb->report_2015state_cache & RPT_2015_RTC_BATTERY_LOW))
             {
                 mbase_cb->report_2015state_cache |= RPT_2015_RTC_BATTERY_LOW;
+                report_645state_judge(instance, RPT_2015_RTC_BATTERY_LOW);
                 report_2015state_update(instance, RPT_2015_RTC_BATTERY_LOW);
             }
         }
@@ -88,6 +88,7 @@ void report_2015state_judge(struct instance_t* instance)
         if (!(mbase_cb->report_2015state_cache & RPT_2015_ESAM_ERR))
         {
             mbase_cb->report_2015state_cache |= RPT_2015_ESAM_ERR;
+            report_645state_judge(instance, RPT_2015_ESAM_ERR);
             report_2015state_update(instance, RPT_2015_ESAM_ERR);
         }
     }
@@ -104,6 +105,7 @@ void report_2015state_judge(struct instance_t* instance)
         if (!(mbase_cb->report_2015state_cache & RPT_2015_MEMORIZER_ERR))
         {
             mbase_cb->report_2015state_cache |= RPT_2015_MEMORIZER_ERR;
+            report_645state_judge(instance, RPT_2015_MEMORIZER_ERR);
             report_2015state_update(instance, RPT_2015_MEMORIZER_ERR);
         }
     }
@@ -117,12 +119,14 @@ void report_2015state_judge(struct instance_t* instance)
     if ( mbase_cb->switch_on_succees == 0x5A   ) 
     {
         mbase_cb->switch_on_succees = 0;
+        report_645state_judge(instance, RPT_2015_SWITCH_ON_SUCCEES);
         report_2015state_update(instance, RPT_2015_SWITCH_ON_SUCCEES);
     }
 
     if ( mbase_cb->switch_off_succees == 0x5A   )
     {
         mbase_cb->switch_off_succees = 0;
+        report_645state_judge(instance, RPT_2015_SWITCH_OFF_SUCCEES);
         report_2015state_update(instance, RPT_2015_SWITCH_OFF_SUCCEES);
     }
 #endif
@@ -445,7 +449,7 @@ int fr_handle_report_response(struct instance_t* instance, struct pipeline_t* pi
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t i,need_report_piid = false;
     uint8_t num,flag;
-    uint32_t oad;
+    uint32_t oad, State2015_reset = 0xFFFFFFFF;
     uint8_t *p;
     uint8_t *buf = instance->apdu_cache;
     uint8_t *apdu_rx = (ctx->apdu_d_rx + ctx->apdu_rx_offset);
@@ -499,12 +503,16 @@ int fr_handle_report_response(struct instance_t* instance, struct pipeline_t* pi
             mbase_cb->report_2015state[chl_PLC_698] = 0;           
             mbase_cb->active_report_CMDtype &=~ ACTIVE_REPORT_2015;
             mbase_cb->active_report_retry_cnt[R_2015] = 0;
-            need_report_piid = true;        
+            need_report_piid = true;   
+
+            State2015_reset = 0xFFFFFFFF;
+            report_stat_reset_from_698(instance,  State2015_reset);
         }
     }
     if(need_report_piid)
         mbase_cb->report_piid++;
 
+    EventOut_698_check(instance);    
     return 0;
 }
 
@@ -789,11 +797,12 @@ uint8_t active_report_3320list_confirmed(struct instance_t* instance)//确认掉
     {
         oad = buf_to_uint32_lsb(p);
         rptmode = read_event_report_flag_mode(instance, oad, 1);
-        if((rptmode == 0) && (oad != 0x30110200))//剔除主动上报的OAD
+        if((rptmode == 0) && (oad != 0x30110200))
         {
             len2 = (num - 1-i) * 4;
             ndv_memcopy(p, p + 4, len2);
             count--;
+            report_stat_reset_from_3320_698(instance, oad);
         }
         else
         {
@@ -813,6 +822,7 @@ uint8_t active_report_3320list_confirmed(struct instance_t* instance)//确认掉
         return false;
     }
 
+    
     return true ;    
 }
 
@@ -835,6 +845,8 @@ uint8_t report_3320list_confirmed(struct instance_t* instance, uint8_t chn, uint
         return false;
     }
 
+    report_stat_reset_from_3320_698(instance, oad);
+
     if (chn == chl_PLC_698)
     {
         if(0x3011 == get_OAD_OI(oad)) // 3320中确认3011，同步也要确认停电上报事件
@@ -842,9 +854,9 @@ uint8_t report_3320list_confirmed(struct instance_t* instance, uint8_t chn, uint
             mbase_cb->active_report_CMDtype &=~ ACTIVE_REPORT_3011_END;
             mbase_cb->active_report_retry_cnt[R_3011_END] = 0;
         }
-    
-        EventOut_698_check(instance);
+     
     }
+    EventOut_698_check(instance);
 
     return true;
 }

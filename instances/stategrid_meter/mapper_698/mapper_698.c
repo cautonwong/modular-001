@@ -1,6 +1,7 @@
 #include "nidavellir.h"
 #include "fr_698.h"
-
+#include "fr_645_report.h"
+#include "gs_record.h"
 
 //参数初始化  
 extern const uint8_t  init_MinuteFreeze_oad[];
@@ -538,7 +539,7 @@ const  parameter_item_t  parameter_item[] =
     { LastBroadcastTimeERR          , 0x01,  3, 0 }, //最近一次广播校时引起时钟故障 年月日       
     { BeforSet_KeyVer               , 0x01, 18, 0 }, //最近一次广播校时引起时钟故障 年月日       
     { ResetCount                    , 0x01,  4, 0 }, //复位次数   
-    { PDTime_Frez                   , 0x01,  4, 0 }, //最近一次未补冻结的停电时间              待调整
+    { PDTime_Frez                   , 0x01,  4, 0 }, //最近一次未补冻结的停电时间             
     
     { Report3320_EnableList         , 0x01 ,     161  , 0                           }, // 3320 上报使能列表  1 + 2*80         
     { Report3320_OADList1           , 0x01 ,     241  , 0                           }, // 3320 oad上报列表   1 + 4*60     //红外
@@ -647,12 +648,9 @@ const  parameter_item_t  parameter_item[] =
     { MeterWr645_List               , 0x01,      52   , 0                           }, //编程对象列表  645  (格式同698array OAD)  
 
     { AuthTime_DL645                , 0x01 ,     2    , init_AuthTime_DL645         }, // 身份认证时效
+    { report_stat_645_E             , 0x01 ,   108    , 0                           }, // 645上报状态字E2p地址
 
-
-    
-
-
-    
+     
 #else
     {0}
 #endif
@@ -921,7 +919,7 @@ const uint16_t fr698_prepay_oi[] =
     0x500B, 
     0x5011, 
 
-    // esam里的数据更新内容  本地相关暂未限制  //待调整
+    // esam里的数据更新内容  本地相关暂未限制  
 };
 
 
@@ -1286,7 +1284,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     DepthId = InstantFreeze_depth;             // 深度存储地址信息
                 }
                 break;
-                case 0x50020000://8方案 待调整
+                case 0x50020000://8方案
                 {
                     SaveId = MinuteFreeze1 + scheme;                 // + schem 记录存储地址信息
                     SaveDevice = RES_DEV_FLASH;
@@ -1438,7 +1436,7 @@ int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_l
     uint8_t i, num;
     uint32_t *p = (rcsd_list + 1);
     uint32_t rcsd_num = 0;
-    uint8_t tempbuf[200];//待调整  读取e2p关联对象缓存
+    uint8_t tempbuf[(REQ_RCSD_MAXNUM + 10)*4];//  读取e2p关联对象缓存
     uint8_t schemNo = get_OAD_Schem(oad);
     struct record_storage_id_info_t info;
     int ret = get_record_id_info(instance, (oad&0xFFFF1FFF), &info);
@@ -1536,7 +1534,6 @@ int fc_fun_02(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, u
     }
     else if (mode == RFC_READ)
     {
-        //decode_len = axdr_get_len(src); //待调整
         num = *(src+1);
         decode_len = 5*num + 2;
         
@@ -1578,7 +1575,7 @@ int fc_fun_03(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, u
     }
     else if (mode == RFC_READ)
     {
-        decode_len = axdr_get_len(src); //待调整
+        decode_len = axdr_get_len(src); 
 
         if (decode_len > fc->store_len)
         {
@@ -1903,7 +1900,7 @@ int fc_fun_07(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, u
     }
     return (p - des);
 }
-// 电能数据 存储和协议转换  //待调整
+// 电能数据 存储和协议转换  
 int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src,uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -2708,8 +2705,10 @@ int para_init(struct instance_t* instance )
     mbase_cb->ZeroLineErrS_duration_para = 60; //参数 判定延时时间      
 
     mbase_cb->report_2015mode = 0;
+
     mbase_cb->active_report_sec_limit = 3600; //掉电 主动上报 上电时间阈值 默认3600 
-    
+    memset(mbase_cb->report_mode_645, 0x00, sizeof(mbase_cb->report_mode_645));//645主动上报模式 待调整
+
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
     offsetof(struct mbase_control_block_t, OverCurrent_threshold));
     s_len = offsetof(struct mbase_control_block_t, factor_mode) - offsetof(struct mbase_control_block_t, OverCurrent_threshold);
@@ -2718,13 +2717,11 @@ int para_init(struct instance_t* instance )
     // 波特率更新标志
     mbase_cb->baud_chg = (BIT0|BIT1);
 
-
     //掉电保存区
     mbase_cb->sta = 0; //继电器命令状态
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
         offsetof(struct mbase_control_block_t, sta)) -  offsetof(struct mbase_control_block_t, persistent_section_start);
     nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->sta, sizeof(mbase_cb->sta));
-
 
 
     v85xxp_clear_watchdog();
@@ -2894,7 +2891,7 @@ void fr_dl645_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline
         }
     }
 
-    
+    report_645state_reset_sec_judge(instance);
 
 
 }
@@ -2949,12 +2946,14 @@ void fr_dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline
 }
 
 // 645协议相关的认证、上报等数据上电初始化
+
 void fr_dl645_power_on(struct instance_t* instance,  struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     mbase_cb->auth_timeout_645 = 0;
     memset(&mbase_cb->rand8_645[0], 0, sizeof(mbase_cb->rand8_645));
+    report_645stat_recover(instance);
 
 }
 
@@ -2977,7 +2976,7 @@ void fr_dl698_power_on(struct instance_t* instance,  struct pipeline_t* pipeline
     mbase_cb->active_report_retry_cnt[R_3011_END] = 0;
     mbase_cb->active_report_retry_cnt[R_3011_START] = 0;
 
-    //mbase_cb->active_report_retry_cnt[R_3320] = 0; //从 e2p中获取      待调整
+    //mbase_cb->active_report_retry_cnt[R_3320] = 0; //从 e2p中获取
     //mbase_cb->active_report_retry_cnt[R_2015] = 0;
 
     mbase_cb->report_piid = 0;

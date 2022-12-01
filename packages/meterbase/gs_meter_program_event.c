@@ -171,7 +171,7 @@ int trigger_MeterWr645_record(struct instance_t* instance, uint32_t DI645, uint8
     if ((DI645 == 0xA8000100))   return 1;  //进出工厂ID 不记录
 
     MeterWr645_obj_list_add(instance, NULL, NULL, DI645, 0);
-    //if(ctrl_block->metertype & ) //明文设参下        每条只记录1个ID                  待调整    带认证情况下编程记录   未完成。
-    MeterWr645_obj_list_clear(instance, NULL, NULL);
+    if(ctrl_block->metertype & F_Password_En) //明文设参下        每条只记录1个ID    
+        MeterWr645_obj_list_clear(instance, NULL, NULL);
     return 0;
 }

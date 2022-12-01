@@ -1,4 +1,18 @@
 
+#define data_max_len 222
+
+
+#define     MAX_READ_DATAFILED_LEN     200
+#define     MAX_WRITE_DATAFILED_LEN    230
+#define     APDU_DATA_LEN              (MAX_READ_DATAFILED_LEN - 4)
+#define     APDU_PUSH_DATA_LEN         (MAX_READ_DATAFILED_LEN - 4 - 1)
+
+#define     FOLLOW_FRAM_FLAG               0x20
+#define     ERR_RESPONSE_FLAG              0x40
+
+
+
+
 #define	Mem_RAM				1
 #define	Mem_FLASH			2
 #define	Mem_E2PROM_BP		4
@@ -83,8 +97,8 @@
 #define     FORMAT_0C        0x0C    
 #define     FORMAT_0D        0x0D    
 #define     FORMAT_0E        0x0E    
-
-
+#define     FORMAT_0F        0x0F   //645复位主动上报状态字   
+#define     FORMAT_10        0x10   //645读取主动上报状态字   
 
 typedef struct
 {
@@ -143,3 +157,4 @@ extern signed char chg_baut(struct instance_t* instance, uint8_t* p_rx);
 extern signed char ft_adj_get_meter(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
 extern int upgrade_file_handle(struct instance_t* instance, uint8_t *data, uint16_t len, uint8_t *data_tx, uint8_t *tx_len);
 extern unsigned char Comm485Baut_Check( unsigned char Baut );
+extern int response_x_byte_err_645(uint8_t *p_tx, uint16_t err, uint8_t errLen, uint8_t *tx_len);

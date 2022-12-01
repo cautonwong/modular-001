@@ -420,7 +420,7 @@ int dl645_esamcleartime(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_t
     return 0;
 }
 
-int esamconnecttime(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
+int dl645_Identity_auth_time_set(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
 
     uint32_t time = 0;
@@ -493,7 +493,7 @@ int dl645_ir_atuh_request_step1(struct instance_t* instance, uint8_t *p_rx, uint
     //仅限红外通道
     if(ctx->channel != chl_ir_698)
     {
-        return SC_ERR_OTHER; //待调整
+        return SC_ERR_OTHER; 
     }   
     
     mbase_cb->infrared_auth_timeout = 0;
@@ -562,7 +562,7 @@ int dl645_ir_atuh_request_step2(struct instance_t* instance, uint8_t *p_rx, uint
     //仅限红外通道
     if(ctx->channel != chl_ir_698)
     {
-        return SC_ERR_OTHER;  //待调整
+        return SC_ERR_OTHER;  
     }  
     
     mbase_cb->infrared_auth_timeout = 0;
@@ -644,7 +644,7 @@ int8_t safe_Authen03_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_
         break;
         case 0x070001FF:  //身份认证时效设置
         {
-            Err_Byte = esamconnecttime(instance, p_rx, p_tx, &tx_apdu_len, ctx);
+            Err_Byte = dl645_Identity_auth_time_set(instance, p_rx, p_tx, &tx_apdu_len, ctx);
         }
         break;  
         case 0x070002FF:  // 身份认证失效  待完善

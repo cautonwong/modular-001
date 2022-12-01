@@ -1104,6 +1104,10 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             
         case 0x4112://有功组合特征字
             if(*p != 4) return -DAR_TYPE_NOT_MATCH;
+
+            nd_get(instance, id, timer, 3, NULL);
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
+            nd_set_index(instance, addr, timer, 3);
           
             mbase_cb->active_energy_cal_word = *(p+2);
             
@@ -1111,9 +1115,6 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                         offsetof(struct mbase_control_block_t, active_energy_cal_word));
             nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_energy_cal_word, 1);
             
-            nd_get(instance, id, timer, 3, NULL);
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
-            nd_set_index(instance, addr, timer, 3);
             record_event_no_mesg_pro(instance, NULL, ActCombWrS, NULL, 1);// 
             break;
                         

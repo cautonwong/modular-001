@@ -104,6 +104,7 @@ uint16_t shorthex_to_bcd(uint16_t hex);
 uint32_t long_bcd_tohex(uint32_t bcd);
 uint16_t word_bcd_to_hex(uint16_t bcd);
 void HEX_BCD_Signed(int32_t hex , uint8_t *dest , uint8_t len);
+uint8_t bcd_to_hex(uint8_t bcd);
 #ifdef WIN32
 int hex2bin(char* dst, const char* src, uint16_t count);
 #endif

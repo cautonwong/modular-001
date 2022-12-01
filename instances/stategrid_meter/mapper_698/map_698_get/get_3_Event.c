@@ -79,18 +79,18 @@ int get_3320_attr3(struct instance_t* instance, uint32_t oad, uint8_t* buf,void 
     buf[1] = 0;
     p += 2;
     
-    //num = (sizeof(event_oad) / sizeof(event_oad[0]));
+    //num = (sizeof(event_oad_list) / sizeof(event_oad_list[0]));
     
     for (i = 0; i < event_oad_num; i++)
     {
         rptflag = 0;
-        rptflag = read_event_report_flag_mode(instance, event_oad[i], 0);
+        rptflag = read_event_report_flag_mode(instance, event_oad_list[i], 0);
         
         if (rptflag & 0x03)
         {
             buf[1] += 1;
             *p++ = TYPE_OI;
-            p += uint16_to_buf_msb(get_OAD_OI(event_oad[i]), p);
+            p += uint16_to_buf_msb(get_OAD_OI(event_oad_list[i]), p);
         }
     }
     
@@ -785,6 +785,7 @@ int get_time_status_record(struct instance_t* instance, uint32_t oad, uint8_t* b
                     ret = nd_log_output(instance, record_id_info.save_index, tempbuf, sizeof(tempbuf), &circular_info);
                     if (ret >= 0)
                     {
+                        end_t = buf_to_uint32_msb(&tempbuf[10+1]);
                         if (end_t != 0xFFFFFFFF)
                         {
                             second_to_dt_buf(end_t, (p + 1));
@@ -877,6 +878,7 @@ int get_time_status_record_one_element_ic_24(struct instance_t* instance, uint32
                 ret = nd_log_output(instance, record_id_info.save_index, tempbuf, sizeof(tempbuf), &circular_info);
                 if (ret >= 0)
                 {
+                    end_t = buf_to_uint32_msb(&tempbuf[10+1]);
                     if (end_t != 0xFFFFFFFF)
                     {
                         second_to_dt_buf(end_t, (p + 1));

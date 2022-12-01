@@ -3,7 +3,7 @@
 #include "gs_record.h"
 #include "fr_698.h"
 #include "resource_tool.h"
-
+#include "fr_645_report.h"
 
 #define U32toBufLSB(x)  ((uint8_t)(x)), ((uint8_t)(x>>8)), ((uint8_t)(x>>16)), ((uint8_t)(x>>24))
 #define U32toBufMSB(x)  ((uint8_t)(x>>24)),((uint8_t)(x>>16)), ((uint8_t)(x>>8)), ((uint8_t)(x))
@@ -65,7 +65,7 @@ const uint8_t  init_DayTabCutFreeze_depth[] = { 0x00,0x02 };
 const uint8_t  init_FeePriceCutFreeze_depth[] = { 0x00,0x02 };                                                     
 
 #if RESET_INFO  
-const uint8_t  init_StepCutFreeze_depth[] = { 0x00,0x05 };//复位记录  测试  //待调整
+const uint8_t  init_StepCutFreeze_depth[] = { 0x00,0x05 };//复位记录  测试 
 #else
 const uint8_t  init_StepCutFreeze_depth[] = { 0x00,0x02 };
 #endif
@@ -150,7 +150,7 @@ int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_
             {
                 {TYPE_unsigned,         (uint8_t*)&mbase_cb->PowerOffS_duration_para,        1},
             };
-            mbase_cb->PowerOffS_duration_para = 0;
+          
             memcpy((uint8_t*)para_pack->event_para, (uint8_t*)PowerOffS_para, sizeof(PowerOffS_para));
             para_pack->para_num = sizeof(PowerOffS_para) / sizeof(PowerOffS_para[0]);
             return 1;
@@ -565,7 +565,7 @@ const uint32_t power_grid_event_oad[] =
 
 
 //现存事件oad列表
-const uint32_t event_oad[] =
+const uint32_t event_oad_list[] =
 {
     0x30050700,   //A过流 
     0x30110200,   //电能表掉电事件                      
@@ -597,7 +597,7 @@ const uint32_t event_oad[] =
 
     0xFF310000,   //电能表编程事件645 
 };
-const uint8_t event_oad_num = sizeof(event_oad) / sizeof(event_oad[0]);
+const uint8_t event_oad_num = sizeof(event_oad_list) / sizeof(event_oad_list[0]);
 
 //事件清零 // 不包含事件清零事件 和电表清零事件
 int event_clr(struct instance_t* instance)
@@ -605,10 +605,10 @@ int event_clr(struct instance_t* instance)
     int ret;
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
-    ret = list_record_clr_2(instance, event_oad, (sizeof(event_oad) / sizeof(event_oad[0])));
+    ret = list_record_clr_2(instance, event_oad_list, (sizeof(event_oad_list) / sizeof(event_oad_list[0])));
 
+    report_645stat_clear(instance);
     report_3320list_2015state_clear(instance); // 清事件上报列表和状态
-
 
     return ret;
 }
@@ -1106,7 +1106,7 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
     uint8_t* p, i, scheme_valid = true;
     int16_t single_len = 0;
     uint32_t obj;
-    uint8_t tmpbuf[200];//单个关联对象 最大长度 //待调整
+    uint8_t tmpbuf[SINGLE_CAPTURE_MAXLEN];//单个关联对象 最大长度
     uint16_t RecordID =  (uint16_t)record_id_info->save_index;
     struct circular_info_t circular_info = {0};
     uint8_t scheme_invalid_wr_flag = true;
@@ -1456,6 +1456,7 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
         if((mode == START_MODE))
         {
             event_scheme = 1; 
+            report_645state_judge(instance, Oad); //事件发生
         }
         else
         {
@@ -1489,7 +1490,6 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
                 clear_active_report_time_count(instance, R_3011_END);
             }
 
-            //mbase_cb->power_on_sec_accum = 0;//待调整
             last_poweron_time = 0;
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
             offsetof(struct mbase_control_block_t, power_on_sec_accum))  -  offsetof(struct mbase_control_block_t, persistent_section_start);

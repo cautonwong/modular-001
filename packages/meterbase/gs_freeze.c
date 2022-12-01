@@ -1061,7 +1061,7 @@ int recover_minFreeze_sequence(struct instance_t* instance)
             sequence = buf_to_uint32_msb(buf + 1 + CIRCULAR_OFFSET_SEQUENCE);
             if((mbase_cb->minute_freeze_seq[i] < (sequence + 1)) &&  (sequence != 0xFFFFFFFF))
             {
-                mbase_cb->minute_freeze_seq[i] = sequence + 1;  //待调整  待测试
+                mbase_cb->minute_freeze_seq[i] = sequence + 1;  
             }
         }
     }

@@ -3,6 +3,7 @@
 #include "port.h"
 #include "utils.h"
 #include "gs_record.h"
+#include "fr_645_report.h"
 
 typedef uint8_t (*data_check_fun)(struct instance_t* instance, uint32_t addr, uint8_t *, uint8_t *);
 extern uint8_t write_mcu_rtc_time(uint8_t addr, uint8_t *buf, uint16_t len);
@@ -91,7 +92,9 @@ const COMMTAB  CommTab[] =
 	
     0x04001001, Alarm_Credit1,                  FORMAT_06,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 4,    //报警金额1
     0x04001002, Alarm_Credit2,                  FORMAT_06,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 4,    //报警金额2
-    0x04001101, MeterRunWord,					FORMAT_0B,		CommData_WR + CommData_E2PROM + CommData_SECONDLY + 1,//电表运行特征字1
+    0x04001101, MeterRunWord,					FORMAT_0B,		CommData_WR + CommData_E2PROM + CommData_SECONDLY + 1,  //电表运行特征字1
+    0x04001104, 0xFFFF,                         FORMAT_08,      CommData_WR + CommData_E2PROM + CommData_SECONDLY + 8,  //主动上报模式字
+
     0x04001201,	HourFroze_StartTime,            FORMAT_00,	    CommData_WR + CommData_E2PROM + CommData_SECONDLY + 5,  //整点冻结
     0x04001202,	HourFroze_Inv,                  FORMAT_00,	    CommData_WR + CommData_E2PROM + CommData_SECONDLY + 1,  //整点冻结间隔时间
 	0x04001203,	DayFroze_Time,                  FORMAT_00,	    CommData_WR + CommData_E2PROM + CommData_SECONDLY + 2,  //日冻结时间
@@ -99,7 +102,11 @@ const COMMTAB  CommTab[] =
     0x04001402,	ImaxProtectValue,				FORMAT_06,		CommData_WR + CommData_E2PROM + CommData_SECONDLY + 3,  //过流拉闸门限值
     0x04001403,	ImaxProtectTime,				FORMAT_06,		CommData_WR + CommData_E2PROM + CommData_SECONDLY + 2,  //过流拉闸延时时间
     0x04001404, IrAuthenTime,                   FORMAT_06,      CommData_WR + CommData_E2PROM + CommData_SECONDLY + 1,  //红外认证时间
-    0x04001405, ReportRstTime,					FORMAT_00,		CommData_WR + CommData_E2PROM + CommData_SECONDLY + 1,
+    0x04001405, ReportRstTime,					FORMAT_00,		CommData_WR + CommData_E2PROM + CommData_SECONDLY + 1,  //主动上报复位延时时间
+
+    0x04001501, 0xFFFF,					        FORMAT_10,		CommData_R  + 12,                                       //主动上报状态字
+
+    0x04001503, 0xFFFF,					        FORMAT_0F,		CommData_W  + 12,                                       //复位主动上报状态字
     
     0x04100901, 0xFFFF,							FORMAT_08,		CommData_WR + CommData_E2PROM + CommData_SECONDLY + 1,//按键循环显示每屏显示时间
     
@@ -327,6 +334,10 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
                 }
             }
             break;
+
+        case 0x04001104:  //主动上报模式字
+            ndv_memcopy(databuf, mbase_cb->report_mode_645, sizeof(mbase_cb->report_mode_645));
+            break;
         case 0x04100901:    //按键显示每屏时间
             WORD_BCD2(databuf, mbase_cb->lcd_keydis_keep_sec);
             break;
@@ -433,11 +444,21 @@ static uint8_t dl645rd_blanceday(struct instance_t* instance, uint32_t addr, uin
 static uint8_t dl645rd_runbyte(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint32_t s_index = 0;
+ 
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
+    nd_get_index(instance, s_index, databuf, 1);
     
     if(mbase_cb->relay_ctl_mode == 0)   //（0：脉冲式，1：保持式）
         *databuf |= 0x01;
     else if(mbase_cb->relay_ctl_mode == 1)
         *databuf &= ~0x01;
+
+    if((mbase_cb->metertype & F_ExternRelay_En) == 0) //内置 固定为0
+    {
+        *databuf &= ~0x01;
+    }
+
     
     if(mbase_cb->lcd_12_mean == 1)  // 0显示当前套、备用套时段; 1显示当前套、备用套费率
         *databuf |= 0x02;
@@ -483,6 +504,16 @@ static uint8_t dl645rd_meterchip(struct instance_t* instance, uint32_t addr, uin
     *length = len;
     return 0;
 }
+
+static uint8_t dl645rd_report_stat(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+{
+
+    report_state_read_pro(instance, databuf, length);
+    
+    return 0;
+}
+
+
 
 static uint8_t dl645wt_date(struct instance_t* instance, uint32_t addr, uint8_t *prx, uint8_t *length)
 {
@@ -762,6 +793,16 @@ static uint8_t dl645wt_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->Baut_rs485, 1);
             mbase_cb->baud_chg = 0x01;  //更新串口波特率
             break;
+        case 0x04001104:  //主动上报模式字
+            ndv_memcopy(mbase_cb->report_mode_645, databuf, sizeof(mbase_cb->report_mode_645));
+            //保存 645上报模式字
+            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+            offsetof(struct mbase_control_block_t, report_mode_645));
+            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->report_mode_645, sizeof(mbase_cb->report_mode_645));
+
+            report_mode_set_from_645(instance, databuf);
+            break;
+            
         case 0x04100901:    //按键显示每屏时间
             memcpy((uint8_t*)&temp, databuf, 2);
             mbase_cb->lcd_keydis_keep_sec = word_bcd_to_hex(temp);
@@ -814,35 +855,67 @@ static uint8_t dl645wt_loction(struct instance_t* instance, uint32_t addr, uint8
 
 static uint8_t dl645wt_blanceday(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
     uint32_t addr1=0;
-    uint8_t buf[2] = {0,};
-    
+    uint8_t buf[2] = {0};
+    uint8_t buftmp[30] = {0};
+    uint32_t s_index = 0;
+
+    //-保存编程前
+    nd_get(instance, 0x41160200, buftmp, 20, NULL);
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Balance);
+    nd_set_index(instance, s_index, buftmp, 20);
+    buftmp[0] = buftmp[5]; // 第一结算日 
+    buftmp[1] = buftmp[7];
+
     buf[1] = BCD_BYTE(*databuf++);
     buf[0] = BCD_BYTE(*databuf++);
-    
     addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
     nd_set_index(instance, addr1, buf, 2);
-    
+
+
+    if( addr == Balance_Time )
+    {
+        if ( (buf[0] != buftmp[0]) || (buf[1] != buftmp[1]) ) //第一结算日改变
+        {
+            mbase_cb->first_MbillDay_flag = 0x5A;
+            record_event_no_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
+        }
+    }
+
+    record_event_no_mesg_pro(instance, NULL, BillDayWrS, NULL, 1);//
+
     return 0;
 }
 
 static uint8_t dl645wt_runbyte(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint32_t addr1=0;
+    uint32_t s_index =0;
     
     if(*databuf & 0x01)
         mbase_cb->relay_ctl_mode = 0;   //（0：脉冲式，1：保持式）
     else
         mbase_cb->relay_ctl_mode = 1;
+
+    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+    offsetof(struct mbase_control_block_t, relay_ctl_mode));
+    nd_set_offset(instance, s_index, &mbase_cb->relay_ctl_mode, sizeof(mbase_cb->relay_ctl_mode));  
+
     
     if(*databuf & 0x02) 
         mbase_cb->lcd_12_mean = 1;  // 0显示当前套、备用套时段; 1显示当前套、备用套费率
     else
         mbase_cb->lcd_12_mean = 0;
+
+    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+    offsetof(struct mbase_control_block_t, lcd_12_mean));
+    nd_set_offset(instance, s_index, &mbase_cb->lcd_12_mean, sizeof(mbase_cb->lcd_12_mean));  
+
    
-    addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
-    nd_set_index(instance, addr1, databuf, 1);
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
+    nd_set_index(instance, s_index, databuf, 1);
     
     return 0;
 }
@@ -852,6 +925,7 @@ static uint8_t dl645wt_hex_string(struct instance_t* instance, uint32_t addr, ui
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t i=0,word=0;
     uint32_t s_index = 0;
+    uint8_t tmpbuf[30] = {0};
     
     for(i=0; i<8; i++)
     {
@@ -865,10 +939,17 @@ static uint8_t dl645wt_hex_string(struct instance_t* instance, uint32_t addr, ui
     switch(addr)
     {
         case Measure_Mode:  //组合特征字
+            //保存编程前
+            nd_get(instance, 0x41120200, tmpbuf, 3, NULL);
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
+            nd_set_index(instance, addr, tmpbuf, 3);
+
             mbase_cb->active_energy_cal_word = word;
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         offsetof(struct mbase_control_block_t, active_energy_cal_word));
             nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_energy_cal_word, 1);
+
+            record_event_no_mesg_pro(instance, NULL, ActCombWrS, NULL, 1);// 
             break;
         case Weekend:  //周休日特征字
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
@@ -907,7 +988,7 @@ static uint8_t dl645wt_daytable(struct instance_t* instance, uint32_t addr, uint
     }
     return 0;
 }
-
+ 
 static uint8_t dl645wt_meterchip(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
     int len;
@@ -915,6 +996,48 @@ static uint8_t dl645wt_meterchip(struct instance_t* instance, uint32_t addr, uin
      *length = (uint8_t)len;
     return 0;
 }
+
+
+static uint8_t dl645wt_reset_report_state(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t cnt, index;
+        
+    if (0 == mbase_cb->report_stat_already_read645)
+    {
+        return RS_ERR_OTHERS;
+    }
+
+    for (cnt = 0; cnt < 12; cnt++)
+    {      
+        for (index = 0; index < 8; index++) /*若复位状态字中包含已发生未读事件，返回异常应答，状态位保留*/
+        {   
+            if ((0 == (databuf[cnt] & (0x01 << index))) && (0 == (mbase_cb->report_stat_read_cache645[cnt] & (0x01 << index)))
+                && (mbase_cb->report_stat_645[cnt] & (0x01 << index)))
+            {
+                return RS_ERR_OTHERS;
+            }  
+
+            if ((0 == (databuf[cnt] & (0x01 << index))) && (mbase_cb->report_stat_read_cache645[cnt] & (0x01 << index)))
+            {
+                mbase_cb->report_stat_645[12 + 8*cnt + index] = 0; 
+                report_645stat_reset_from_645(instance, 8*cnt + index);
+            }
+        }
+
+        mbase_cb->report_stat_645[cnt] &= databuf[cnt];
+        mbase_cb->report_stat_read_cache645[cnt] &= databuf[cnt];
+    }
+
+    report_645stat_save(instance);        
+
+    mbase_cb->report_stat_already_read645 = 0; 
+
+    event_out_check(instance);
+
+    return 0;	
+}
+
 
 static const CODE data_check_fun data_645read_table[] =
 {
@@ -933,6 +1056,9 @@ static const CODE data_check_fun data_645read_table[] =
     dl645rd_hex_string,     //FORMAT_0C
     0x00,                   //FORMAT_0D 
     dl645rd_meterchip,      //FORMAT_0E
+    0x00,                   //FORMAT_0F
+    dl645rd_report_stat,    //FORMAT_10
+
 };
 
 static const CODE data_check_fun data_645write_table[] =
@@ -952,6 +1078,9 @@ static const CODE data_check_fun data_645write_table[] =
     dl645wt_hex_string,     //FORMAT_0C
     dl645wt_daytable,       //FORMAT_0D 
     dl645wt_meterchip,      //FORMAT_0E
+    dl645wt_reset_report_state,      //FORMAT_0F
+    0x00,                   //FORMAT_10
+
 };
 
 

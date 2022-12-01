@@ -886,7 +886,7 @@ int get_record_645_id_info(struct instance_t* instance, uint32_t ID, struct reco
 
     if((info->package_type == PACKAGE645_NORMAL)  && (info->package_num == 1))  //事件
     {
-        if (((DI.elem.di1 > info->rd_645obj[0]) && (DI.elem.di0 != 0xFF))            //  子项
+        if (((DI.elem.di1 > info->rd_645obj[0]) && (DI.elem.di1 != 0xFF))            //  子项
         ||((DI.elem.di0 > 10) && (DI.elem.di0 != 0xFF)))  //最多支持10条
         {
             return -1;
@@ -1305,7 +1305,9 @@ int fc_fun_08_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
             src += 1;
             p[1] = BYTE_BCD(src[0]);
             src += 1;
-            p[0] = BYTE_BCD(src[1]);
+            src += 1;//tag
+            p[0] = BYTE_BCD(src[0]);
+            src += 1;
             p += 2;
         }
     }
@@ -2095,7 +2097,7 @@ int record_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* bu
 
     struct circular_info_t circular_info = {0};
     uint32_t *rcsd_req = (uint32_t *)rcsd_info; 
-    uint8_t *ptr_tmp = instance->apdu_cache + 500;    // 698中单条记录也需要 判断 可能导致溢出   待调整
+    uint8_t *ptr_tmp = instance->apdu_cache + 500;    
     uint32_t rcsd_src[50] = {0};
     uint16_t i, read_num, number = 0;
     uint16_t judge_size, one_len = 0,len = 0;
@@ -2200,7 +2202,7 @@ int record_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* bu
         judge_size = (p - buf + len + one_len);
         
 
-        if((judge_size) > (1400)) //待调整
+        if((judge_size) > (cache_max-500))
         {
             //return -DAR_BUFFER_OVERFLOW;
         }
@@ -2266,18 +2268,6 @@ int record_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* bu
 
     }      
         
-
-#if 0 //645或698上报确认  // 待调整
-    
-    //读取事件时 确认上报
-    if (p_ctx) // 协议进来
-    {
-        if ((oad & 0xF0000000) == 0x30000000) 
-        {
-            report_3320list_confirmed(instance, p_ctx->channel, oad, 0);
-        }
-    }
-#endif
     return (int)len;
 #endif
 }
@@ -2429,7 +2419,7 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
         }
         rcsd_645req[1] = oad;
 
-        //单个数据项历史集合 当前 + 12个历史 // 待调整
+        //单个数据项历史集合 当前 + 12个历史 
         if(DI.elem.di0 == 0xFF)
         {
             ten_read_cycles = 12;    // 先读当前电能 再循环 12次
@@ -2570,7 +2560,7 @@ int load_search_copy_first_time(struct instance_t* instance, uint8_t *buf, struc
 {
     uint32_t start_sec = 0, first_sec = 0, spec_sec = 0, end_sec = 0, cur_sec = 0, tmp_sec = 0;  
     struct circular_info_t circular_info = {0};
-    uint8_t *ptr_tmp = buf;//instance->apdu_cache;  // 698中单条记录也需要 判断 可能导致溢出   待调整
+    uint8_t *ptr_tmp = buf;//instance->apdu_cache;  
     uint8_t tmpbuf[100];
     int ret = 0, orig_len = 0;
 
@@ -2623,7 +2613,6 @@ int load_search_copy_first_time(struct instance_t* instance, uint8_t *buf, struc
     }
 
 
-
     if (0 == ((tmp_sec - start_sec) % load_rsd_info->rsd_info.interval))
     {
         load_rsd_info->rsd_info.start_mark = tmp_sec;
@@ -2661,7 +2650,6 @@ int load_search_copy_first_time(struct instance_t* instance, uint8_t *buf, struc
         return -1;
     }
 
-
     memset((uint8_t *)&circular_info, 0, sizeof(circular_info));
 
     circular_info.start_mark = load_rsd_info->rsd_info.start_mark;
@@ -2672,13 +2660,10 @@ int load_search_copy_first_time(struct instance_t* instance, uint8_t *buf, struc
     {
         return -1;
     }
-
     
     ndv_memcopy(ptr_tmp,  tmpbuf, orig_len);    
 
     return orig_len;
-
-
 }
 
 //新负荷记录补数据.  src_buf 缓存长度 大于1500字节
@@ -2788,7 +2773,7 @@ int load_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,
 
     struct circular_info_t circular_info = {0};
     uint32_t *rcsd_req = (uint32_t *)rcsd_info; 
-    uint8_t *ptr_tmp = instance->apdu_cache + 500;    // 698中单条记录也需要 判断 可能导致溢出   待调整
+    uint8_t *ptr_tmp = instance->apdu_cache + 500;    
     uint32_t rcsd_src[50] = {0};
     uint16_t i, read_num, number = 0;
     uint16_t judge_size, one_len = 0,len = 0;
@@ -2905,7 +2890,7 @@ int load_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,
         
         judge_size = (p - buf + len + one_len);
         
-        if((judge_size) > (1400)) //待调整
+        if((judge_size) > (cache_max-500)) 
         {
             return -DAR_BUFFER_OVERFLOW;
         }
@@ -2933,7 +2918,7 @@ int load_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,
             {
                 one_len = load_response_fill_645(instance, p+len, ptr_tmp, rcsd_req, rcsd_src, capture_645len, ID, rsd_info);
             }
-            if(one_len < 0) one_len = 0;
+            //if(one_len < 0) one_len = 0;
             len += one_len;
             number++;
             circular_info.start_mark += rsd_info->interval;
@@ -3113,7 +3098,7 @@ int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     //p_tx += data_len;
 
 
-    //for(i=0; i < read_num; i++)//待调整
+    //for(i=0; i < read_num; i++)
     {
         data_len = load_data_package645(instance, ID, ptr_tmp,  &load_rsd_info, &info, rcsd_645req, rcsd_645len,  info.package_type , __NULL);
         if (data_len < 0)

@@ -280,7 +280,7 @@ signed char MulPort_set(struct instance_t* instance, uint8_t chl, uint8_t* p_rx)
 
 
 //p_rx Ϊ֡ͷ  �� apdu
-signed char meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx) 
+signed char dl645_meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx) 
 {
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -323,9 +323,14 @@ signed char meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_t
                 if( Cmp_RemoteCtlTime( instance, TmpBuffer ) )
                 {
                     return RS_ERR_PASS;
-                }           
-              
-              meter_clr(instance);
+                }         
+                
+                if(mbase_cb->factor_mode == false) 
+                {
+                    record_event_no_mesg_pro(instance, NULL, MeterClrS, NULL, 1);
+                }
+
+                meter_clr(instance);
             }
                 
             else
@@ -334,7 +339,13 @@ signed char meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_t
         else  if(ctx->password[0] == DL645_PA_PLAIN_02)
         {
             if( ctx->apdu_rx_len == 8 )
+            {
+                if(mbase_cb->factor_mode == false) 
+                {
+                    record_event_no_mesg_pro(instance, NULL, MeterClrS, NULL, 1);
+                }
                 meter_clr(instance);
+            }
             else
                 return RS_ERR_LEN;   
         }
@@ -350,7 +361,7 @@ signed char meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_t
     
 }
 
-signed char event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
+signed char dl645_event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -389,8 +400,14 @@ signed char event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_t
                 id_645 = buf_to_uint32_lsb(p_rx+20);
                 if (id_645 !=  0xFFFFFFFF) //不支持分项清零
                 {
+                    mbase_cb->flag_event_clear = 0; 
                     return RS_ERR_OTHERS;
                 }
+                else
+                {
+                    mbase_cb->flag_event_clear = 0x5a; //总清
+                }
+                
                 ndv_memcopy( TmpBuffer, p_rx+20+4, 6 );  //解密后数据  已经为正序
                 if( BCD_Check( TmpBuffer, 6 ) != 0 )     
                 {
@@ -401,8 +418,9 @@ signed char event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_t
                 {
                     return RS_ERR_PASS;
                 }           
-              
+                
                 event_clr(instance);
+                record_event_no_mesg_pro(instance, NULL, EventClrS, NULL, 1);
             }
             else
                 return RS_ERR_LEN;
@@ -410,7 +428,10 @@ signed char event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_t
         else 
         {
             if( ctx->apdu_rx_len == 12 )
+            {
                 event_clr(instance);
+                record_event_no_mesg_pro(instance, NULL, EventClrS, NULL, 1);
+            }    
             else
                 return RS_ERR_LEN;   
         }
