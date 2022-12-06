@@ -160,6 +160,7 @@ signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx,
             return (int8_t)Err_Byte;
             break;            
         default:
+            Err_Byte = -1;
             break;
     }
     if( Err_Byte < 0) //异常应答

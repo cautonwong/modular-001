@@ -71,7 +71,7 @@ void displayid_to_645id( struct instance_t* instance, unsigned long ID , uint8_t
     }
     
     id[2] = (displayid & 0xF000) >> 8;
-    id[1] = (displayid & 0x0FF0) >> 4;
+    id[1] = ((displayid & 0x0FF0) >> 4) & 0x7F;
     id[0] = displayid & 0x000F;
     switch(id[2])
     {

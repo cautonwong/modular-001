@@ -3,9 +3,9 @@
 
 int read_00( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
-    uint8_t IDL0, IDL1, data[100]={0,}, len = 0, i;
+    uint8_t IDL0, IDL1, data[100]={0,}, len = 0, i, fv=0;
     uint16_t IDH=0;
-    uint32_t oad698=0, temp=0;
+    uint32_t oad698=0, temp=0, s_index=0;
     
     struct mbase_control_block_t* mbase_cb;
     
@@ -26,7 +26,14 @@ int read_00( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
         case 0x0002:    //反向
             oad698 = 0x00200200;
             break;
+        case 0x000C:    //月度用电量
+            oad698 = 0x20310200;
+            break;
+        case 0x000B:    //结算周期用电量
+            oad698 = 0x20310200;
+            break;    
         default:
+            return -1;
             break;
     }
     if(IDL1 == 0xFF)    //数据块
@@ -35,7 +42,13 @@ int read_00( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     }
     else
     {
-        oad698 = oad698 | (IDL1+1); //费率
+        if((IDH == 0x0000) || (IDH == 0x0001) || (IDH == 0x0002))
+        {
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para+3);//读取费率数
+            nd_get_index(instance, s_index, (uint8_t *)&fv, 1);
+            if(IDL1 > fv) return -1;
+            oad698 = oad698 | (IDL1+1); //费率
+        }
     }
     
     if(IDL0 == 0x00)//当前

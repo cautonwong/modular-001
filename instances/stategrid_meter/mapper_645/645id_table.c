@@ -21,8 +21,8 @@ const COMMTAB  CommTab[] =
     0x0400010C,	0xFFFF,                         FORMAT_03,      CommData_WR + CommData_RAM + CommData_SECONDLY + 7,//日期、星期、时间
     0x04000106,	SeasonTable_Changetime,         FORMAT_04,      CommData_WR + CommData_E2PROM + CommData_SECONDLY + 5,//两套时区表切换时间
     0x04000107,	DayTable_Changetime,            FORMAT_04,      CommData_WR + CommData_E2PROM + CommData_SECONDLY + 5,//两套时段表切换时间
-    0x04000108, ToupriceTable_Changetime,       FORMAT_04,      CommData_WR + CommData_E2PROM + CommData_SECONDLY + 5,	//两套分时费率切换时间
-    0x04000109, StepZone_Changetime,            FORMAT_04,      CommData_WR + CommData_E2PROM + CommData_SECONDLY + 5,	//两套阶梯切换时间
+//    0x04000108, ToupriceTable_Changetime,       FORMAT_04,      CommData_WR + CommData_E2PROM + CommData_SECONDLY + 5,	//两套分时费率切换时间
+//    0x04000109, StepZone_Changetime,            FORMAT_04,      CommData_WR + CommData_E2PROM + CommData_SECONDLY + 5,	//两套阶梯切换时间
     
     0x04000201, SeasonDay_Para,                 FORMAT_06,      CommData_WR + CommData_E2PROM + CommData_SECONDLY + 1,   //年时区数(<=14)
     0x04000202, SeasonDay_Para+1,               FORMAT_06,      CommData_WR + CommData_E2PROM + CommData_SECONDLY + 1,   //日时段表数(<=8)
@@ -90,8 +90,8 @@ const COMMTAB  CommTab[] =
     0x04000C03,	Meter_02Password,				FORMAT_00,      CommData_W + CommData_E2PROM + CommData_SECONDLY + 4,//02级密码
 	0x04000C05,	Meter_04Password,				FORMAT_00,      CommData_W + CommData_E2PROM + CommData_SECONDLY + 4,//04级密码
 	
-    0x04001001, Alarm_Credit1,                  FORMAT_06,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 4,    //报警金额1
-    0x04001002, Alarm_Credit2,                  FORMAT_06,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 4,    //报警金额2
+//    0x04001001, Alarm_Credit1,                  FORMAT_06,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 4,    //报警金额1
+//    0x04001002, Alarm_Credit2,                  FORMAT_06,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 4,    //报警金额2
     0x04001101, MeterRunWord,					FORMAT_0B,		CommData_WR + CommData_E2PROM + CommData_SECONDLY + 1,  //电表运行特征字1
     0x04001104, 0xFFFF,                         FORMAT_08,      CommData_WR + CommData_E2PROM + CommData_SECONDLY + 8,  //主动上报模式字
 
@@ -109,6 +109,9 @@ const COMMTAB  CommTab[] =
     0x04001503, 0xFFFF,					        FORMAT_0F,		CommData_W  + 12,                                       //复位主动上报状态字
     
     0x04100901, 0xFFFF,							FORMAT_08,		CommData_WR + CommData_E2PROM + CommData_SECONDLY + 1,//按键循环显示每屏显示时间
+    
+    0x04090801, 0xFFFF,							FORMAT_08,      CommData_WR + CommData_E2PROM + CommData_SECONDLY + 2,//过流事件电流阈值
+    0x04090802, 0xFFFF,							FORMAT_08,      CommData_WR + CommData_E2PROM + CommData_SECONDLY + 1,//过流事件延时时间
     
     0x04800001, ASCII_SoftWareNo,				FORMAT_00,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 32,//软件版本号
 	0x04800002, ASCII_HardWareNo,				FORMAT_00,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 32,//硬件版本号
@@ -365,6 +368,13 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             break;
         case 0x04000701:    //红外波特率
             *databuf = 0x02;
+            break;
+        case 0x04090801:    //过流事件阈值
+            sate = mbase_cb->OverCurrent_threshold/1000;
+            WORD_BCD2(databuf, sate);
+            break;
+        case 0x04090802:    //过流事件阈值
+            *databuf = BYTE_BCD(mbase_cb->OverCurrent_duration_para);
             break;
         case 0xA8000100:    //工厂模式
             *databuf = mbase_cb->factor_mode;
@@ -719,7 +729,7 @@ static uint8_t dl645wt_ram(struct instance_t* instance, uint32_t addr, uint8_t *
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
-    uint32_t id=0,s_index=0;
+    uint32_t id=0,s_index=0,dt=0;
     uint16_t temp=0;
     
     memcpy((uint8_t *)&id, databuf-12, 4);
@@ -801,6 +811,20 @@ static uint8_t dl645wt_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->report_mode_645, sizeof(mbase_cb->report_mode_645));
 
             report_mode_set_from_645(instance, databuf);
+            break;
+        case 0x04090801:    //过流事件阈值
+            memcpy((uint8_t*)&dt, databuf, 2);
+            temp = word_bcd_to_hex(dt);
+            mbase_cb->OverCurrent_threshold = temp*1000;
+            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        offsetof(struct mbase_control_block_t, OverCurrent_threshold));
+            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->OverCurrent_threshold, 4);
+            break;
+        case 0x04090802:    //过流事件阈值
+            mbase_cb->OverCurrent_duration_para = BCD_BYTE(*databuf);
+            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        offsetof(struct mbase_control_block_t, OverCurrent_duration_para));
+            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->OverCurrent_duration_para, 1);
             break;
             
         case 0x04100901:    //按键显示每屏时间

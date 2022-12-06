@@ -4,7 +4,7 @@
 int read_02( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-	unsigned long StAddr;
+	unsigned long StAddr,tmp_u32=0;
     unsigned char len;
     uint8_t tmpbuf[10] = {0};
     uint32_t s_index,temp=0;
@@ -131,6 +131,14 @@ int read_02( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
         case 0x02800008:  //电池电压
             HEX_BCD(p_tx, mbase_cb->voltage_battery);
             return 2;  
+            
+        case 0x0280000A:  //电池使用时间
+            StAddr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Bat_UseTime);
+            nd_get_index(instance, StAddr, (uint8_t*)&tmp_u32, 4); 
+            tmp_u32 = tmp_u32 / 60;
+            HEX_BCD(p_tx, tmp_u32);
+            //memcpy(p_tx, (unsigned char*)&tmp_u32, 4);
+            return 4;    
             
         case 0x0280000B:  //当前阶梯电价
             //HEX_BCD(p_tx, mbase_cb->voltage_battery);
