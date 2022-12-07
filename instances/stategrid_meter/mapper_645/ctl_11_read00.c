@@ -60,7 +60,14 @@ int read_00( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
             for(i=0; i<*(data+1); i++)
             {
                 mem_swap_cpy((uint8_t*)&temp, data + 2 + 5*i + 1, 4);
-                HEX_BCD(p_tx+i*4, temp);
+                if((IDH == 0x0000) || (IDH == 0x0003) || (IDH == 0x0004))//带符号
+                {
+                    HEX_BCD_Signed((int32_t)temp , p_tx+i*4 , 4);
+                }
+                else
+                {
+                    HEX_BCD(p_tx+i*4, temp);
+                }
                 len = len + 4;
             }
         }
@@ -68,12 +75,20 @@ int read_00( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
         {
             nd_get(instance, oad698, data, 9, NULL);
             mem_swap_cpy((uint8_t*)&temp, data+1, 4);
-            HEX_BCD(p_tx, temp);
+            if ((IDH == 0x0000) || (IDH == 0x0003) || (IDH == 0x0004))//带符号
+            {
+                HEX_BCD_Signed((int32_t)temp , p_tx , 4);
+            }
+            else
+            {
+                HEX_BCD(p_tx, temp);
+            }
             len = 4;
         }
     }
     else
     {   
+#if 0//外部处理
         if(IDL1 == 0xFF)    //���ݿ�
         {
             len = read_record_data_form_698_protocol(instance, data, 0x50050200, oad698, IDL0, 100);
@@ -91,6 +106,7 @@ int read_00( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
             HEX_BCD(p_tx, temp);
             len = 4;
         }
+#endif        
     }
     
     return len;

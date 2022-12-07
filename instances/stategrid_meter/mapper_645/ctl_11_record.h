@@ -1,8 +1,8 @@
 
 
 
-#define RECORED_FILL_NO_OBJ_645     0x00     //无关联对象
-#define RECORED_FILL_UNGENERATEED_645  0x00  //关联对象存在，但未生成 对应数据全FF
+#define RECORED_FILL_NO_OBJ_645     0xFF     //无关联对象
+#define RECORED_FILL_UNGENERATEED_645  0xFF  //关联对象存在，但未生成 对应数据全FF
 #define RECORED_FILL_NO_DATA_645    0x00     //无记录数据
 
 

@@ -702,10 +702,12 @@ int get_record_645_id_info(struct instance_t* instance, uint32_t ID, struct reco
             
             if(((DI.elem.di0 == 0) || ((DI.elem.di0 >= 12)&& (DI.elem.di0 != 0xFF)))
             ||((DI.elem.di1 != 0xFF) && (DI.elem.di1 > temp))  //代表索引
-            ||((DI.elem.di2 >= 3))) //单相
+            ||(((DI.elem.di2 == 0x0B) || (DI.elem.di2 == 0x0C)) && (DI.elem.di1 != 0x00)) //月度用电量
+            ||((DI.elem.di2 >= 3) && (DI.elem.di2 != 0x0B) && (DI.elem.di2 != 0x0C))) //单相    
             {
                 return -1;
             }
+
 #if 0            
             oad = 00000200;
             oad +=   ((DI.elem.di2 << 4) << 24); // 00XX000200
@@ -1435,6 +1437,38 @@ int fc_fun_11_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
 
 }
 
+// 月度用电量 2031  
+int fc_fun_12_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+{
+    uint8_t *p = des;
+    uint8_t i,num = 0;
+    uint32_t  tmpU32 = 0;
+
+    if (mode == RFC_WRITE)
+    {
+
+    }
+    else if (mode == RFC_READ)
+    {
+        src += 1;
+
+        mem_swap_cpy((uint8_t*)&tmpU32, src, 4);
+        //if((DI.elem.di3 == 0x00) && ((DI.elem.di2 == 0x00) || (DI.elem.di2 == 0x03) || (DI.elem.di2 == 0x04) ))//带符号
+        //{
+        //    HEX_BCD_Signed((int32_t)tmpU32 , p , 4);
+        //}
+        //else
+        {
+            HEX_BCD(p, tmpU32);
+        }
+
+        p += 4;
+        src += 4;
+        
+    }
+    return (p - des);
+
+}
 
 
 
@@ -1589,16 +1623,17 @@ const struct format_conversion_t format_conversion_tab_645[] =
     {   0x200A02FF,     0xFFFF/*8*/,      2,      fc_fun_07_645   },//功率因数
 
     {   0x330C0206,     4,      7,      fc_fun_02_645   },//事件清零数据标识
-    {   0xF2050201,     1,      15,      fc_fun_03_645   },//继电器状态
+    {   0xF2050201,     1,      15,     fc_fun_03_645   },//继电器状态
 
     {   0x41160200,     6,      20,     fc_fun_08_645   },//结算日
     {   0x41120200,     1,      3,      fc_fun_09_645   },//有功组合模式字
 
     {   0x40130200,     1,      2,      fc_fun_10_645   },//1tag + 1 bcd
     {   0xFFFE0000,    40,      52,     fc_fun_11_645   },//645编程列表  
+     
+    {   0x20310200,     4,      5,      fc_fun_12_645   },//645编程列表  
     
-
-
+    
     
 };
 
@@ -1995,7 +2030,7 @@ int _record_data_package_01_645(struct instance_t* instance,  uint8_t *des, uint
                         orig_len = cap_645_len;
                         if (mode)
                         {
-                            memset(p_des, RECORED_FILL_NO_OBJ_645, orig_len);//数据补0  
+                            memset(p_des, RECORED_FILL_UNGENERATEED_645, orig_len);//数据填补
                         }
                         p_des += orig_len; 
                         p_src += single_len;
@@ -2062,7 +2097,8 @@ int _record_data_package_01_645(struct instance_t* instance,  uint8_t *des, uint
 
             if (mode)
             {
-                memset(p_des, RECORED_FILL_NO_OBJ_645 , orig_len);//数据补0
+                memset(p_des, RECORED_FILL_NO_OBJ_645 , orig_len);//数据填补
+                //操作者代码也补FF
 
                 if(DI.elem.di3 == 0x05)//冻结  //单相
                 {
@@ -2106,7 +2142,7 @@ int record_response_null_645(struct instance_t* instance,  uint8_t *des, uint8_t
         return -1;
     }
 
-    memset(des, 0,  one_len);
+    memset(des, RECORED_FILL_NO_DATA_645,  one_len);
 
 
     if(DI.elem.di3 == 0x05)//冻结  //单相
@@ -2375,9 +2411,9 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
 
     uint8_t *p_err = (p_tx - 4);
     uint32_t sequence = 0;
-    uint8_t last_no = 0, ten_read_cycles = 1; //仅有子项的事件支持
+    uint8_t last_no = 0, read_cycles = 1; //仅有子项的事件支持
     uint8_t i,temp = 12;
-    uint32_t addr = 0, oad = 0;
+    uint32_t addr = 0, oad = 0, tmpU32 = 0;
 
 
     memset(&rsd_info, 0,sizeof(rsd_info));
@@ -2443,27 +2479,37 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
             temp = 4;
         }
 
-        
-        oad = 0x00000200 + ((uint32_t)(DI.elem.di2 << 4) << 16); // 00XX000200
-
-        rcsd_645req[0] = 1;
-        if(DI.elem.di1 == 0xFF) //单个电能 块
+        if ((DI.elem.di2 == 0x0B) || (DI.elem.di2 == 0x0C)) //月度用电量
         {
-           rcsd_645len[0] = (temp + 1) * 4;
-           rcsd_645len[1] = (temp + 1) * 4;
-        }
-        else
-        {
-            oad += ((uint32_t)(DI.elem.di1) + 1); // 00XX0002YY 
+            oad = 0x20310200;
+            rcsd_645req[0] = 1;
             rcsd_645len[0] =  4;
             rcsd_645len[1] =  4;
         }
+        else
+        {
+            oad = 0x00000200 + ((uint32_t)(DI.elem.di2 << 4) << 16); // 00XX000200
+
+            rcsd_645req[0] = 1;
+            if(DI.elem.di1 == 0xFF) //单个电能 块
+            {
+               rcsd_645len[0] = (temp + 1) * 4;
+               rcsd_645len[1] = (temp + 1) * 4;
+            }
+            else
+            {
+                oad += ((uint32_t)(DI.elem.di1) + 1); // 00XX0002YY 
+                rcsd_645len[0] =  4;
+                rcsd_645len[1] =  4;
+            }
+        }
+        
         rcsd_645req[1] = oad;
 
         //单个数据项历史集合 当前 + 12个历史 
         if(DI.elem.di0 == 0xFF)
         {
-            ten_read_cycles = 12;    // 先读当前电能 再循环 12次
+            read_cycles = 12;    // 先读当前电能 再循环 12次
             last_no = 1; 
         }
     }
@@ -2518,7 +2564,7 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     
                     if(DI.elem.di0 == 0xFF)
                     {
-                        ten_read_cycles = 10;
+                        read_cycles = 10;
                         last_no = 1;
                     }
                 }
@@ -2542,25 +2588,34 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     rsd_info.mode = 0;
 
 
-    if((ten_read_cycles == 0) || (ten_read_cycles > 12))
+    if((read_cycles == 0) || (read_cycles > 12))
     {
-        ten_read_cycles = 1;
+        read_cycles = 1;
     }
     else
     {
-        if ((ten_read_cycles == 12) && (DI.elem.di3 == 0x00))
+        if ((read_cycles == 12) && (DI.elem.di3 == 0x00))
         {
             //先读取当前电能
             nd_get(instance, rcsd_645req[1], ptr_tmp, 9, __NULL); 
-            data_len = fc_fun_Energy_645(instance, rcsd_645req[1], rcsd_645req[1],p_tx, ptr_tmp+1, RFC_READ); //去掉1个tag 可适用
-            
-            total_len += data_len;
-            p_tx += data_len;            
+
+            mem_swap_cpy((uint8_t*)&tmpU32, ptr_tmp+1, 4);
+            if((DI.elem.di3 == 0x00) && ((DI.elem.di2 == 0x00) || (DI.elem.di2 == 0x03) || (DI.elem.di2 == 0x04) ))//带符号
+            {
+                HEX_BCD_Signed((int32_t)tmpU32 , p_tx , 4);
+            }
+            else
+            {
+                HEX_BCD(p_tx, tmpU32);
+            }
+
+            total_len += 4;
+            p_tx += 4;            
         }
     }
 
 
-    for(i=0; i < ten_read_cycles; i++)
+    for(i=0; i < read_cycles; i++)
     {
 
         data_len = record_data_package645(instance, ID, ptr_tmp,  &rsd_info, rcsd_645req, rcsd_645len,  info.package_type , __NULL);
@@ -2874,7 +2929,8 @@ int load_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,
             ret = nd_log_output(instance, record_id_info->id_info.save_index,  ptr_tmp, 1, &circular_info);
             if ((rsd_info->last_no == 0) || (rsd_info->last_no > circular_info.valid_num))
             {
-                return record_response_null_645(instance, p, ptr_tmp, rcsd_req, rcsd_src, capture_645len,  ID);
+                return -DAR_BUFFER_OVERFLOW; //无数据 ，外部已判断
+                //return record_response_null_645(instance, p, ptr_tmp, rcsd_req, rcsd_src, capture_645len,  ID);
             }
             circular_info.curr_num = circular_info.valid_num - rsd_info->last_no;
             circular_info.valid_num = circular_info.curr_num + 1;
