@@ -149,7 +149,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     *p++ = TYPE_enum;
                     *p++ = 0;
                 }
-                else if(index == 1)
+                else if(index == 1) //len 15  注意 长度影响645关联对象转换
                 {
                     *p++ = TYPE_structure;
                     *p++ = 4;
@@ -665,6 +665,15 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
             return (p-buf);
         }
         break;
+        case 0xFFFE0001: //操作者代码
+        {
+            len = 4;
+            ndv_memcopy(p, mbase_cb->handler_code, len);
+            p += len;
+            return (p-buf);
+        }
+        break;
+
 
         default:
             break;

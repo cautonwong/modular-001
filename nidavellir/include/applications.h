@@ -8,7 +8,7 @@
 #endif // !WIN32
 
 
-#define _DEBUG_TEST 0
+#define _DEBUG_TEST 1
 
 #if (_DEBUG_TEST == 1)
 
@@ -16,6 +16,7 @@
     #define FREEZ_TEST_OVERTURN 0
     #define RESET_INFO    0 // 记录 复位信息
     #define TEST_RELAY_LED 0
+    
 #else
 
     #define PWD_TEST_ON 0
@@ -309,6 +310,7 @@ struct mbase_control_block_t
     uint8_t frz_replenish_end;      //补冻结 完成标志  ,上电清零 补冻结完成置 0x5A
    
     uint8_t mac_suspend_state;      // mac挂起状态 协议或显示模块可调用。 true为挂起 
+    uint8_t handler_code[4];        // 645操作者代码
 
     
     

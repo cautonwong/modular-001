@@ -59,7 +59,7 @@ void PowerAbnormal_LowPower_pro(struct instance_t* instance, struct pipeline_t* 
     }
     else
     {
-        if(( instance->ac_power_off_sec_cnt == 8 ))
+        if(( ctrl_block->power_abnormal_tick == 5 ))
         {
             if (ctrl_block->PowerAbnormalS_status == EVENT_SET)
             {

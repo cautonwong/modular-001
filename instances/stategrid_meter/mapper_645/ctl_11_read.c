@@ -121,6 +121,15 @@ signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx,
 	memcpy((unsigned char*)&ID, p_rx, 4);
     IDH1 = (ID & 0xFF000000) >> 24;
     IDL0 = (uint8_t)(ID & 0x000000FF);
+
+
+    if(false == Search_DL645_Prepay_IDTab(instance, ID, 0x11))
+    {
+        *len = 1;
+        return RS_ERR_ID;
+    }
+
+    
     switch(IDH1)
     {
         case 0x00:  //电能
@@ -160,7 +169,9 @@ signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx,
             return (int8_t)Err_Byte;
             break;            
         default:
-            Err_Byte = -1;
+            Err_Byte = -RS_ERR_ID;
+            *len = 1;
+            return RS_ERR_ID;
             break;
     }
     if( Err_Byte < 0) //异常应答

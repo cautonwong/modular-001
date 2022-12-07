@@ -764,10 +764,16 @@ void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
         GPIO_InitStruct.GPIO_Pin  = GPIO_Pin_All;
         //GPIOA_Init(GPIOA, &GPIO_InitStruct);
         GPIOBToF_Init(GPIOB, &GPIO_InitStruct);
-    //    if (system_state.power_off_sencond > 5)
+
+        GPIOBToF_Init(GPIOC, &GPIO_InitStruct);
+
+        if(( instance->ac_power_off_sec_cnt <= 5 )) // 电源异常检测、上报等。   e2p电源打开，电源上升完整大约需要50ms
         {
-            GPIOBToF_Init(GPIOC, &GPIO_InitStruct);
+            GPIOC->OEN &= ~(BIT4|BIT5|BIT6);  //e2p 电源打开
+            GPIOC->IE &= ~(BIT4|BIT5|BIT6);
+            GPIOC->DAT |= (BIT6);
         }
+        
         GPIOBToF_Init(GPIOD, &GPIO_InitStruct);
         GPIOBToF_Init(GPIOE, &GPIO_InitStruct);
         GPIOBToF_Init(GPIOF, &GPIO_InitStruct);
@@ -817,12 +823,71 @@ void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
     MComp1Init();//电池状态监测初始化
     WDT_Disable();
     PMU_EnterSleep_LowPower(&LowPower_InitStruct);
-    
+
+ 
         //待调整 开E2P
     CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);
     GPIOC->OEN &= ~(BIT4|BIT5|BIT6); 
     GPIOC->IE &= ~(BIT4|BIT5|BIT6);
     GPIOC->DAT |= (BIT6);
+    
+}
+
+void gpio_configuration_batter(void)
+{   
+    GPIOA->OEN |= (BIT0|BIT1|BIT2|BIT3|BIT4|BIT5|BIT6|BIT7|
+                    BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT15);
+    GPIOA->IE &= ~(BIT0|BIT1|BIT3|BIT4|BIT5|BIT6|/*BIT7||BIT2*/
+                    BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT15);
+
+    GPIOB->OEN |= (BIT0|BIT1|BIT2|BIT3|BIT4|BIT5|BIT6|BIT7|
+                    BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
+    GPIOB->IE &= ~(BIT0|BIT1|BIT2|BIT3|BIT4|BIT5|BIT6|BIT7|
+                    BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
+
+    GPIOC->OEN |= (BIT0|BIT1|BIT2|BIT3| /*BIT4|BIT5|BIT6|*/ BIT7| // bit6 e2p电源 不关闭
+                    BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
+    GPIOC->IE &= ~(BIT0|BIT1|BIT2|BIT3| /*BIT4|BIT5|BIT6|*/ BIT7|
+                    BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);  
+
+    GPIOD->OEN |= (BIT0|BIT1|BIT2|BIT3|BIT4|BIT5|BIT6|BIT7|
+                    BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
+    GPIOD->IE &= ~(BIT0|BIT1|BIT2|BIT3|BIT4|BIT5|BIT6|BIT7|
+                    BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
+
+    GPIOE->OEN |= (BIT0|BIT1|BIT2|BIT3|BIT4|BIT5|BIT6|BIT7|
+                    BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
+    GPIOE->IE &= ~(BIT0|BIT1|BIT2|BIT3|BIT4|BIT6|BIT7|
+                    BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
+
+    GPIOF->OEN |= (BIT0|BIT1|BIT2|BIT3|BIT4|BIT5|BIT6|BIT7|
+                    BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
+    GPIOF->IE &= ~(BIT0|BIT1|BIT2|BIT3|BIT4|BIT5|BIT6|BIT7|
+                    BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
+
+    GPIOE->OEN |= (0x00000001 << 5);// powercheck
+    GPIOE->IE  |= (0x00000001 << 5);
+    
+    GPIOE->OEN |= BIT5 | BIT9;  //电源检测和电池检测口禁止输出
+    GPIOE->IE &= ~(BIT5 | BIT9);//电源检测和电池检测口禁止输入
+    
+    //卡表功能引脚不启用，做输出低状态
+    GPIOA->OEN &= ~BIT13; 
+    GPIOA->IE &= ~BIT13;
+    GPIOA->DAT &= ~BIT13;
+    
+    GPIOB->OEN &= ~BIT3; 
+    GPIOB->IE &= ~BIT3;
+    GPIOB->DAT &= ~BIT3;
+    
+    GPIOF->OEN &= ~BIT0; 
+    GPIOF->IE &= ~BIT0;
+    GPIOF->DAT &= ~BIT0;
+    
+    GPIOE->OEN &= ~(BIT4 | BIT8); 
+    GPIOE->IE &= ~(BIT4 | BIT8);
+    GPIOE->DAT &= ~(BIT4 | BIT8);
+
 }
 
 void gpio_configuration_AC(void)
@@ -960,8 +1025,6 @@ void IOStateCheckInit(void)
 
 }
 
-
-
 void IOStateCheck(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_control_block;
@@ -984,7 +1047,7 @@ void IOStateCheck(struct instance_t* instance, struct pipeline_t* pipeline)
             mbase_control_block->CoverOpenS_status = EVENT_SET;
         }
         
-        if(mbase_control_block->power_abnormal_tick < 5)
+        if(mbase_control_block->power_abnormal_tick <= 5)
         {
             mbase_control_block->power_abnormal_tick++;
             
@@ -997,13 +1060,15 @@ void IOStateCheck(struct instance_t* instance, struct pipeline_t* pipeline)
             GPIOC->OEN |= BIT8; 
             GPIOC->IE |= BIT8;
             
+            //mcu_delay_us(TEST_tmpU32);
+            
             if((GPIOC->STS & BIT8) == 0)    //检测到信号
             {
                 if(mbase_control_block->power_abnormal_tick1 < 3)   
-                {
+                {            
                     mbase_control_block->power_abnormal_tick1++;
                     if(mbase_control_block->power_abnormal_tick1 >= 3)
-                    {
+                    {                   
                         mbase_control_block->PowerAbnormalS_status = EVENT_SET;  //电源异常发生
                     }
                 }

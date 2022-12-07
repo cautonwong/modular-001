@@ -543,7 +543,6 @@ enum block_parameter_item_id_t
 #define     ResetCount                  1517 //复位次数
 #define     Bat_UseTime                 1518 //电池使用时间sec
 #define     PDTime_Frez                 1519 // 最近一次未补冻结的停电时间 (sec)
-#define     MeterWr645_List             1520 //编程对象列表645            扩展OAD:0xFFFE0000        
 
 
 #define     Report3320_EnableList       1521 // 3320 上报使能列表  1 + 2*80
@@ -557,6 +556,7 @@ enum block_parameter_item_id_t
 #define     report_stat_645_E           1528 // 645上报状态字
 
 
+#define     MeterWr645_List             1529 //编程对象列表645            扩展OAD:0xFFFE0000        
 
 
 

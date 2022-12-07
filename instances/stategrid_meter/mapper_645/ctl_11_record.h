@@ -1,26 +1,9 @@
-#include "nidavellir.h"
-#include "645id_table.h"
-#include "gs_record.h"
-#include "fr_axdr.h"
-#include "fr_698.h"
 
 
-#define RECORED_FILL_NO_OBJ_645  0x00
-#define RECORED_FILL_NO_DATA_645  0x00
 
-
-union dl645_DI_t
-{
-    struct 
-    {
-        uint8_t  di0; 
-        uint8_t  di1; 
-        uint8_t  di2;
-        uint8_t  di3;
-    }elem;
-
-    uint32_t di;
-};
+#define RECORED_FILL_NO_OBJ_645     0x00     //无关联对象
+#define RECORED_FILL_UNGENERATEED_645  0x00  //关联对象存在，但未生成 对应数据全FF
+#define RECORED_FILL_NO_DATA_645    0x00     //无记录数据
 
 
 

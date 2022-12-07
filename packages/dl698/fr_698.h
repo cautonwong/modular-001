@@ -422,31 +422,16 @@ enum report_mode_t {
 #define SecurityMode_EXData_LEN 101 
 
 
-
-
-
 //厂家扩展 ------------OI  
 #if 0
 0xFF310000   //电能表编程事件645 
 
 0xFFFE0000   //电能表编程列表645
+0xFFFE0001   //操作者代码645          4 字节
+
+
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // 上报相关

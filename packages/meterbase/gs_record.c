@@ -999,6 +999,7 @@ uint8_t check_scheme(enum scheme_mode mode, uint32_t obj, uint16_t record_id)
         break;
         
     case 0x33020206: //事件编程    //特殊处理      发生和结束时都更新
+    case 0xFFFE0000: //编程列表 645   
         break;
 
     case 0x33110206: //退费金额 事件记录用  
@@ -1012,8 +1013,8 @@ uint8_t check_scheme(enum scheme_mode mode, uint32_t obj, uint16_t record_id)
     case 0x33140207: //编程前时段表 事件记录用
     case 0x330C0206: //事件清零
     case 0x20220200: //事件记录序号
-    case 0xFFFE0000: //编程列表 645   
-        if (mode == END_MODE)
+    case 0xFFFE0001: //操作者代码 645  
+        if (mode == END_MODE)  //发生的时候更新
         {
             scheme_valid = false;
         }

@@ -172,7 +172,7 @@ int8_t security_decode_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *
         apdu += 4; 
         k1_offset += 4;
         
-        memcpy((unsigned char*)ctx->handler_code, apdu, 4);
+        memcpy((unsigned char*)mbase_cb->handler_code, apdu, 4);
         apdu += 4; 
         k1_offset += 4;
         
@@ -201,7 +201,7 @@ int8_t security_decode_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *
         apdu += 4; 
         k1_offset += 4;
         
-        memcpy((unsigned char*)ctx->handler_code, apdu, 4);
+        memcpy((unsigned char*)mbase_cb->handler_code, apdu, 4);
         apdu += 4; 
         k1_offset += 4;
         
@@ -470,8 +470,7 @@ int dl645_Identity_auth_time_set(struct instance_t* instance, uint8_t *p_rx, uin
     nd_set_index_e2p(instance, (uint8_t *) &time, mbase_block_parameter, AuthTime_DL645, 2); 
     mbase_cb->auth_timeout_645 = time * 60;
 
-
-    trigger_MeterWr645_record(instance,   0x070001FF, 0);
+    trigger_MeterWr645_record(instance, 0x070001FF, 0);
 
     *tx_len = (uint8_t)(p_tx - p_tx_cache);   
 
@@ -632,7 +631,7 @@ int8_t safe_Authen03_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_
 
 	memcpy((unsigned char*)&DI.di, p_rx, 4);
 
-    memcpy((unsigned char*)ctx->handler_code, p_rx + 4, 4);
+    memcpy((unsigned char*)mbase_cb->handler_code, p_rx + 4, 4);
 
 
     switch(DI.di)

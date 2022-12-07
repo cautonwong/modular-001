@@ -916,6 +916,7 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
             break;
         case 0x14:  //写数据
             memcpy((unsigned char*)&ctx->password[0], apdu_rx + 10 + 4, 4);//拷贝密码
+            memcpy((unsigned char*)mbase_cb->handler_code, apdu_rx + 10 + 4 + 4, 4); 
             if( Cmp_MeterAddr( instance, (unsigned char*)&apdu_rx[1], 0 ) == 0 )
             {
                 ERRBYTE = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len, ctx);
@@ -1012,6 +1013,7 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
                 return -1;
             break;
         default:
+            ERRBYTE = RS_ERR_ID;
             break;
     }
     

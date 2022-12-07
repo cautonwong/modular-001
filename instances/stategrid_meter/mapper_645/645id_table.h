@@ -106,7 +106,7 @@ typedef struct
 	unsigned int	Addr;//数据地址
     unsigned short format;   //格式
 	const unsigned long    Info;//数据信息
-} COMMTAB;
+}COMMTAB;
 
 extern const  COMMTAB  CommTab[242];
 
@@ -158,3 +158,4 @@ extern signed char ft_adj_get_meter(struct instance_t* instance, uint8_t *p_rx, 
 extern int upgrade_file_handle(struct instance_t* instance, uint8_t *data, uint16_t len, uint8_t *data_tx, uint8_t *tx_len);
 extern unsigned char Comm485Baut_Check( unsigned char Baut );
 extern int response_x_byte_err_645(uint8_t *p_tx, uint16_t err, uint8_t errLen, uint8_t *tx_len);
+extern uint8_t Search_DL645_Prepay_IDTab(struct instance_t* instance, uint32_t id,uint8_t cmd);

@@ -21,6 +21,108 @@ extern unsigned char GetMonMaxDay( unsigned char* Addr );
 extern unsigned char TouTab_Format_Check( struct instance_t* instance, unsigned char* Addr, unsigned char* Len );
 struct ADJ_POFFSET_T adj_poffset;
 
+
+
+
+/**第一类参数（明文＋MAC）**/
+const  uint32_t DL645_Prepay_ParaSetTab[] = 
+{
+	0x04000108,/**两套分时费率切换时间**/
+	0x04000109,/**阶梯表切换时间**/
+	0x0400010a,/**阶梯时区切换时间**/
+	0x04001001,/**报警金额1**/
+	0x04001002,/**报警金额2**/
+	0x04001003,
+	0x04001004,
+	0x04001005,
+	0x04001006,
+	/** 0x040501ff,当前套费率电价**/
+	0x0405ffff,/**备用套费率电价**/
+	/** 0x040606ff, 当前套阶梯**/
+	0x0406ffff,/** 备用套阶梯**/
+	0x040700ff,/** 备用套阶梯时区**/
+	0x04000306,/** 电流互感起变比**/
+	0x04000307,/** 电压互感起变比**/
+	/** 0x0400040E,客户编号**/
+	0x04000207,
+};
+
+const  uint32_t DL645_Prepay_ParaRdTab[] = 
+{
+	0x000d00ff,  /** 年结算日结算时间 **/
+	0x00900200,  /** 剩余金额                       **/
+	0x00900201,  /** 透支金额                       **/
+    0x0280000B,
+	0x02800020,	
+	0x02800021,
+	0x03300fff,
+	0x033010ff,
+	0x0333ffff,
+	0x033400ff,
+	
+	0x0505ffff,
+	0x0507ffff,
+	0x050802ff,
+	0x050affff,	
+};
+
+uint8_t Search_DL645_Prepay_IDTab(struct instance_t* instance, uint32_t id,uint8_t cmd)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t i = 0,num;
+    union dlt645id
+    {
+        uint32_t idl; 
+        uint8_t  ide[4];
+    };
+
+    union dlt645id   dlt645id1,dlt645id2;
+
+    if(((cmd != 0x11)&&(cmd != 0x14)) || (mbase_cb->factor_mode == true))
+    {
+        return true;
+    }
+
+
+
+    if(mbase_cb->metertype & F_Crad_En)
+    {
+        return true;
+    }	
+
+    dlt645id1.idl = id;	
+    num = eleof(DL645_Prepay_ParaSetTab);
+    for(i =0 ; i <num ; i++)
+    {    
+        dlt645id2.idl = DL645_Prepay_ParaSetTab[i];		
+        if((dlt645id1.ide[3] == dlt645id2.ide[3])&&(dlt645id1.ide[2] == dlt645id2.ide[2])
+	     &&((dlt645id1.ide[1] == dlt645id2.ide[1])||(dlt645id2.ide[1] == 0xff))
+	     &&((dlt645id1.ide[0] == dlt645id2.ide[0])||(dlt645id2.ide[0] == 0xff)))
+        {
+            return false;
+        }
+    }
+
+    if(cmd == 0x11)
+    {
+        num = eleof(DL645_Prepay_ParaRdTab);
+        for (i =0 ; i <num ; i++)
+        {    
+          dlt645id2.idl = DL645_Prepay_ParaRdTab[i];
+
+          if((dlt645id1.ide[3] == dlt645id2.ide[3])&&(dlt645id1.ide[2] == dlt645id2.ide[2])
+  	     &&((dlt645id1.ide[1] == dlt645id2.ide[1])||(dlt645id2.ide[1] == 0xff))
+  	     &&((dlt645id1.ide[0] == dlt645id2.ide[0])||(dlt645id2.ide[0] == 0xff)))
+          {
+              return false;
+          }
+       }    
+    }   
+    
+    return true;
+}
+
+
 typedef struct
 {
     unsigned short  Id; //显示项ID
@@ -423,8 +525,11 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
 		case 0x04000B01://结算日1
 		case 0x04000B02://结算日2
 		case 0x04000B03://结算日3
-				if( ((*p_rx > 0x23) || (*(p_rx+1) < 0x01) || (*(p_rx+1) > 0x28)) && (*p_rx != 0x99) && (*(p_rx+1)!= 0x99))
+				if(( ((*p_rx > 0x23) || (*(p_rx+1) < 0x01) || (*(p_rx+1) > 0x28)) && (*p_rx != 0x99) && (*(p_rx+1)!= 0x99))
+                   || (((p_rx[0] == 0x99) || (p_rx[1] == 0x99)) && ((p_rx[0] != 0x99) || (p_rx[1] != 0x99))))
+                {
 					Err_Byte = RS_ERR_OTHERS;
+                }
                 else
 				{
 
@@ -621,6 +726,14 @@ signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx
 
     rx_len = *(p_rx-1);
 	memcpy((unsigned char*)&ID, p_rx, 4);
+
+
+    if(false == Search_DL645_Prepay_IDTab(instance, ID, 0x14)) //表型相关
+    {
+        Err_Byte = RS_ERR_ID;
+        return Err_Byte;
+    }
+
 
 	//根据ID,获取相应的数据地址和信息
 	Ptr = GetCommTable( ID );//查表

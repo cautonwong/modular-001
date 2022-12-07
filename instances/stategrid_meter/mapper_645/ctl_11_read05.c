@@ -3,10 +3,9 @@
 #include "gs_record.h"
 #include "fr_axdr.h"
 #include "fr_698.h"
+#include "ctl_11_record.h"
 
 
-#define RECORED_FILL_NO_OBJ_645  0x00
-#define RECORED_FILL_NO_DATA_645  0x00
 
 extern uint8_t check_capture_exist(uint32_t rcsd_req, uint32_t rcsd_src);
 extern uint32_t get_interval_basic_value(uint8_t *src, struct rsd_info_t *rsd_info);
@@ -302,7 +301,7 @@ const uint16_t PowerAbnormal_645oad_len[1+4] =
 const uint32_t MeterWr645_645oad[]  = { 
     3, 
     (0x201E0200),   //发生时刻
-    (0xEEEE0004), 
+    (0xFFFE0001),   //645操作者代码
     (0xFFFE0000),   //645编程列表      
 };
 
@@ -416,8 +415,37 @@ uint16_t get_645record_rate_obj_len(struct instance_t* instance,uint16_t obj_len
     return obj_len;
 
 }
+//单相
+//过流 
+int OverCurrent_sub_index_check(uint32_t ID)
+{
+    union dl645_DI_t DI;
 
+    DI.di = ID;
+    if ((4 == DI.elem.di1) || (5 == DI.elem.di1) || (8 == DI.elem.di1) || (9 == DI.elem.di1) || (0x0D == DI.elem.di1)
+        ||(0x24 == DI.elem.di1) || (0x25 == DI.elem.di1) || (0x28 == DI.elem.di1) || (0x29 == DI.elem.di1)
+        || ((0x0F <= DI.elem.di1) && (0x20 >= DI.elem.di1))
+        || ((0x2A <= DI.elem.di1) && (0xFF != DI.elem.di1)))
+    {
+        return -1;
+    }
 
+    return 1;
+}
+
+//跳闸 不支持
+int SwitchOn_sub_index_check(uint32_t ID)
+{
+    union dl645_DI_t DI;
+
+    DI.di = ID;
+    if ((0x05 <= DI.elem.di1) && (0xFF != DI.elem.di1))
+    {
+        return -1;
+    }
+
+    return 1;
+}
 
 
 
@@ -460,6 +488,13 @@ int get_record_645_id_info(struct instance_t* instance, uint32_t ID, struct reco
                 return -1;
             }
 
+            //单相 支持的 子项判断
+            ret = OverCurrent_sub_index_check(ID);
+            if (ret < 0)
+            {
+                return -1;
+            }
+
             info->oad698 = 0x30050700 + ((DI.elem.di2 - 1)<<8);
             info->rd_645obj = OverCurrent_645oad;
             info->rd_645obj_len = OverCurrent_645oad_len;
@@ -473,6 +508,13 @@ int get_record_645_id_info(struct instance_t* instance, uint32_t ID, struct reco
                 return -1;
             }
             if ((DI.elem.di1 == 0) && (DI.elem.di0 != 1))  //  总次
+            {
+                return -1;
+            }
+
+            //单相 支持的 子项判断
+            ret = SwitchOn_sub_index_check(ID);
+            if (ret < 0)
             {
                 return -1;
             }
@@ -919,7 +961,7 @@ int response_x_byte_err_645(uint8_t *p_tx, uint16_t err, uint8_t errLen, uint8_t
 
 
     *tx_len = errLen;
-    return (int)errLen;
+    return (int)err;
 }
 
 
@@ -1253,11 +1295,9 @@ int fc_fun_07_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
     }
     else if (mode == RFC_READ)
     {
+        tmp_16 = (int16_t)(src[0]<<8) + (src[1]); //单相
         if (index == 0)
         {
-
-            tmp_16 = (int16_t)(src[2]<<8) + (src[3]);
-
             //转bcd
             HEX_BCD_Signed((int32_t)tmp_16 , p , 2);
             p += 2;
@@ -1549,7 +1589,7 @@ const struct format_conversion_t format_conversion_tab_645[] =
     {   0x200A02FF,     0xFFFF/*8*/,      2,      fc_fun_07_645   },//功率因数
 
     {   0x330C0206,     4,      7,      fc_fun_02_645   },//事件清零数据标识
-    {   0xF2050201,     1,      17,      fc_fun_03_645   },//继电器状态
+    {   0xF2050201,     1,      15,      fc_fun_03_645   },//继电器状态
 
     {   0x41160200,     6,      20,     fc_fun_08_645   },//结算日
     {   0x41120200,     1,      3,      fc_fun_09_645   },//有功组合模式字
@@ -2370,6 +2410,7 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
                 if (info.id_info.acc_time != __NULL)
                 {
                     sequence = *info.id_info.acc_time;
+                    sequence = sequence / 60; // min
                 }
             }
             
@@ -2504,16 +2545,20 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     if((ten_read_cycles == 0) || (ten_read_cycles > 12))
     {
         ten_read_cycles = 1;
+    }
+    else
+    {
         if ((ten_read_cycles == 12) && (DI.elem.di3 == 0x00))
         {
             //先读取当前电能
-            nd_get(instance, rcsd_645req[1], ptr_tmp, 9, __NULL);
-            data_len = fc_fun_Energy_645(instance, rcsd_645req[1], rcsd_645req[1],p_tx, ptr_tmp, RFC_READ);
+            nd_get(instance, rcsd_645req[1], ptr_tmp, 9, __NULL); 
+            data_len = fc_fun_Energy_645(instance, rcsd_645req[1], rcsd_645req[1],p_tx, ptr_tmp+1, RFC_READ); //去掉1个tag 可适用
             
             total_len += data_len;
             p_tx += data_len;            
         }
     }
+
 
     for(i=0; i < ten_read_cycles; i++)
     {

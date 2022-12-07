@@ -418,7 +418,7 @@ signed char dl645_event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
                 {
                     return RS_ERR_PASS;
                 }           
-                
+                event_clear_omd_add(instance, id_645, 0 );
                 event_clr(instance);
                 record_event_no_mesg_pro(instance, NULL, EventClrS, NULL, 1);
             }
@@ -429,6 +429,17 @@ signed char dl645_event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
         {
             if( ctx->apdu_rx_len == 12 )
             {
+                id_645 = buf_to_uint32_lsb(p_rx+18);
+                if (id_645 !=  0xFFFFFFFF) //不支持分项清零
+                {
+                    mbase_cb->flag_event_clear = 0; 
+                    return RS_ERR_OTHERS;
+                }
+                else
+                {
+                    mbase_cb->flag_event_clear = 0x5a; //总清
+                }
+                event_clear_omd_add(instance, id_645, 0 );
                 event_clr(instance);
                 record_event_no_mesg_pro(instance, NULL, EventClrS, NULL, 1);
             }    
