@@ -1512,18 +1512,32 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     uint16_t judge_size, one_len = 0,len = 0;
     uint8_t count = 0, rcsd_schem = 0, non_period = 0, check_result = 0;
     uint32_t oad_schem = 0, value = 0;
-    uint8_t *p = (buf + 3); // 预留3个字节条数
+    uint8_t *p = (buf + 3); // 预留3个字节条数  
     uint8_t attr = get_OAD_Attribute(oad);
     uint16_t oi = get_OAD_OI(oad);
     int ret = 0;
     uint8_t channel = 0;
-    
+
+    //协议安全传输
+    if((p_ctx))
+    {
+		if (buf_size > 3) //预留 长度数据
+        {
+            buf_size -= 3;
+        }
+        if (((SECURITY_CHOICE_1_Ciphertext == p_ctx->security_choice) ||(SECURITY_CHOICE_0_Plaintext  == p_ctx->security_choice)))
+        {
+            if (buf_size > Reserved_EsamENCode_Len) //预留 加密数据
+            {
+                buf_size -= Reserved_EsamENCode_Len;
+            }
+        }
+    }
+
     if((p_ctx)&&(p_ctx->channel < chl_NUM))
     {
         channel = p_ctx->channel;
     }
-
-
     
       //检查 读取的记录型oad合法性
     ret = check_record_table_oad__support(instance, oad);
@@ -1643,9 +1657,11 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
             judge_size = (p - buf + len + one_len);
         }
 
-        if((judge_size) > (buf_size-1)) //待调整
+       
+        if((judge_size) > (buf_size)) //待调整 // 预留esam 加密 字节数
         {
-            return -DAR_BUFFER_OVERFLOW;
+            //return -DAR_BUFFER_OVERFLOW;
+            break;           
             //if(p_ctx)
             //{
             //    p_ctx->next_index = 1;

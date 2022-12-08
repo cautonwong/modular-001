@@ -302,7 +302,7 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
     instance->apdu_cache = nd_malloc(instance, control_block_cache, cache_max);
         
     /////////////////////////////////////申请一个698应用的BLOCK = 03/////////////////////////////////////////////////
-    if (NULL == add_block(instance, RES_DEV_RAM, control_block_698_name, 15 * 1024 + 640))//16
+    if (NULL == add_block(instance, RES_DEV_RAM, control_block_698_name, 16 * 1024 + 640))//16
     {
         return -1;
     }

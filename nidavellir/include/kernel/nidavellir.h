@@ -255,7 +255,7 @@ struct context_645_t
 
 
 #define Max698len       544
-#define Max698_apdu     1800
+#define Max698_apdu     2000
 #define Max698_apdu_rx  2048
 
 
@@ -263,7 +263,7 @@ struct context_645_t
 
 #define cache_max   2048
 
-
+#define Reserved_EsamENCode_Len 64 //预留esam加密 数据变长问题
 
 struct context_698_t
 {

@@ -33,6 +33,7 @@ static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8
     
     uint16_t len = 0;
     uint16_t sw = 0;
+    uint16_t outdata_size = esam_out->data_len;
 	
     if(esam_in->Dispersion_factor_len){
         memcpy(esam_in->data_buf , esam_in->Dispersion_factor , esam_in->Dispersion_factor_len);
@@ -73,14 +74,27 @@ static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8
     len = esam_data.len; 
    
 
-    if(sw == 0x9000){
-        if(type){
-            memcpy(esam_out->data , esam_in->data_buf , len);
+    if(sw == 0x9000)
+    {
+//  
+        if (outdata_size == 0) //外部未赋值
+        {
+            esam_out->data_len = len;
         }
-        esam_out->data_len = len;
+        else
+        {
+            esam_out->data_len = MIN(outdata_size, len);
+        }
+//
+        if(type){
+            memcpy(esam_out->data , esam_in->data_buf , esam_out->data_len); //             
+        }
+
         esam_out->esam_err_no = 0x9000;
         return 0;
-    }else{
+    }
+    else
+    {
         esam_out->esam_err_no = sw;
         return -1;
     }

@@ -331,7 +331,7 @@ static int ___get_encode_and_mac(struct instance_t* instance, struct pipeline_t*
         input.from_type = 1;
     
     output.data     = cache->buf_ptr;
-    output.data_len = Max698_apdu_rx - 5;
+    output.data_len = Max698_apdu - 7 - 5; 
     output.MAC_data = data_mac;
     output.MAC_len  = 16;
     
@@ -372,7 +372,7 @@ int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline,
       ||(SECURITY_CHOICE_0_Plaintext  == ctx->security_choice)){
         return ___get_encode_and_mac(instance, pipeline, mesg);
     }else{
-        return -1;
+        return -DAR_OTHERS_ERROR;
     }
 }
 

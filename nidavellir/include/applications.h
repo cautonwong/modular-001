@@ -8,7 +8,7 @@
 #endif // !WIN32
 
 
-#define _DEBUG_TEST 1
+#define _DEBUG_TEST 0
 
 #if (_DEBUG_TEST == 1)
 
