@@ -11,6 +11,7 @@ extern signed char MulPort_set(struct instance_t* instance, uint8_t chl, uint8_t
 extern signed char meteraddr_write(struct instance_t* instance, uint8_t* p_rx);
 extern signed char dl645_event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
 extern signed char dl645_meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
+extern signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len,struct context_645_t* ctx);
 extern signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len, struct context_645_t* ctx);
 extern int8_t safe_Authen03_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
 int __update_cs(void* pctx, uint8_t* byte)
@@ -746,10 +747,11 @@ int __fr_segment_tx_645_handle(struct instance_t* instance, struct pipeline_t* p
             if (fifoBuf_getUsed(&ctx->apdu)  >= 0)
             {
                 mesg->len = fifoBuf_getUsed(&ctx->apdu);
-                if (mesg->len > (MAX_READ_DATAFILED_LEN - 1))//后续帧  // 1 字节帧序号
+                mesg->ctrl =  ctx->ctrl | 0x80;
+                if (mesg->len > ctx->follow_segment_MaxLen)//后续帧  
                 {   
-                    mesg->len = (MAX_READ_DATAFILED_LEN - 1);
-                    mesg->ctrl = ctx->ctrl | FOLLOW_FRAM_FLAG;
+                    mesg->len = ctx->follow_segment_MaxLen;
+                    mesg->ctrl |= FOLLOW_FRAM_FLAG;
                 }
                 else //结束
                 {
@@ -757,8 +759,6 @@ int __fr_segment_tx_645_handle(struct instance_t* instance, struct pipeline_t* p
                     //ctx->segment_tx = 1;
                 }
 
-                mesg->ctrl = ctx->ctrl | 0x80; 
-                
                 fifoBuf_update_rd(&ctx->apdu, 4, 0);          
                 mesg->len+=4;
                 memcpy(ctx->apdu.buf_ptr + ctx->apdu.rd, data, 4);
@@ -783,6 +783,9 @@ int __fr_segment_tx_645_handle(struct instance_t* instance, struct pipeline_t* p
     ctx->segment_tx = 0;
     ctx->segment_tx_no = 0;
     ctx->report_stat_follow_flag = 0;
+    ctx->first_segment_MaxLen = MAX_READ_DATAFILED_LEN;
+    ctx->follow_segment_MaxLen = MAX_READ_DATAFILED_LEN;    
+    
     return 0;
 }
 
@@ -843,12 +846,18 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
         fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len+10);
 
 
+    ctx->first_segment_MaxLen = MAX_READ_DATAFILED_LEN;
+    //ctx->follow_segment_MaxLen = MAX_READ_DATAFILED_LEN;
+
     if ((ctx->ctrl != 0x12) || (ctx->apdu.buf_ptr == NULL))// 待调整 ？？ fifo初始化为何放此处？  暂时改为分帧情况下 不初始化
     {
         fifoBuf_init(&ctx->apdu, ctx->apdu_tx, max_apdu_cache_645);
         ctx->segment_tx_no = 0;
         ctx->segment_tx = 0;
         ctx->report_stat_follow_flag = 0;
+        
+        ctx->first_segment_MaxLen = MAX_READ_DATAFILED_LEN;
+        ctx->follow_segment_MaxLen = MAX_READ_DATAFILED_LEN;        
     }
        
     for(int i = 0; i < ctx->apdu_rx_len; i++){
@@ -888,7 +897,7 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
         case 0x11:  //读数据
             if( Cmp_MeterAddr( instance, (unsigned char*)&apdu_rx[1], 1 ) == 0 )
             {
-                ERRBYTE = Comm_Read(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len);
+                ERRBYTE = Comm_Read(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len, ctx);
             }
             else
                 return -1;
@@ -1050,8 +1059,8 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     ctx->ctrl = mesg->ctrl;
     if (fifoBuf_getUsed(&ctx->apdu)  >= 0){
         mesg->len = fifoBuf_getUsed(&ctx->apdu);
-        if (mesg->len > MAX_READ_DATAFILED_LEN){   //后续帧
-            mesg->len = MAX_READ_DATAFILED_LEN;
+        if (mesg->len > ctx->first_segment_MaxLen){   //后续帧
+            mesg->len = ctx->first_segment_MaxLen ;
             mesg->ctrl |= FOLLOW_FRAM_FLAG;
             ctx->segment_tx_no = 0;
             ctx->segment_tx = 1;

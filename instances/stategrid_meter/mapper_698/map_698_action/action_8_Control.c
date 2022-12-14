@@ -140,7 +140,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         if(mbase_cb->sta & F_RemoteRelayOnAllow)    //合闸允许状态下发拉闸命令，取消合闸允许状态
                         {
                             mbase_cb->sta &= ~F_RemoteRelayOnAllow;
-                            Alarm_min = 0;
+                            Alarm_min = 0;   //？？？为何清零？ GS 20221214    
                         }
                         if(Alarm_min == 0) //直接跳闸
                             mbase_cb->cmd_dostate = 0x2000;  //bit2;
@@ -167,7 +167,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     nd_get_index(instance, addr, password, 4); 
                     mem_swap_cpy((uint8_t*)&mbase_cb->I_Prot, password, 4);
                     addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectTime);
-                    nd_get_index(instance, addr, (uint8_t*)&password, 2); 
+                    nd_get_index(instance, addr, (uint8_t*)password, 2); 
                     mem_swap_cpy((uint8_t*)&mbase_cb->Prot_time, password, 2);
                     if((abs(mbase_cb->current_l) > (mbase_cb->I_Prot / 10)) && (mbase_cb->I_Prot != 0))
                     {
@@ -252,9 +252,10 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                             return -DAR_TIME_TAG_INVALID;
 
                     }
-                    if((mbase_cb->sta & F_RemoteRelayOff) && (mbase_cb->alarmmin > 0))//拉闸延时过程中，保电后拉闸字符消失，灯灭
+                    //if((mbase_cb->sta & F_RemoteRelayOff) && (mbase_cb->alarmmin > 0))//拉闸延时过程中，保电后拉闸字符消失，灯灭
                     {
                         mbase_cb->alarmmin = 0;
+                        mbase_cb->imaxmin = 0;
                         mbase_cb->sta &= ~F_RemoteRelayOff;
                     }
                     

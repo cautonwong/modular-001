@@ -311,6 +311,12 @@ signed char dl645_meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
         // 68 11 11 11 11 11 11 68 1a 10 98 00 00 00 44 33 22 11 1a 00 99 12 31 23 59 59
         if(ctx->password[0] == DL645_PA_SC_CIPHER)
         {
+#if(DEF_645_PRIVATE_KEY_METERCLR_EN == 0)//ç§é’¥ä¸å…è®¸æ¸…é›¶
+            if (( mbase_cb->key_state == false ) && (mbase_cb->factor_mode == false))//0ç§é’¥ï¼Œ1å…¬é’¥ï¼Œ
+            {
+                return RS_ERR_PASS;
+            }
+#endif
             //æ—¶æ•ˆåˆ¤æ–­
             if( ctx->apdu_rx_len == 16 )
             {
@@ -625,7 +631,8 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
 				{
                         mbase_cb->sta |= F_RemoteRelayOff;
 						mbase_cb->sta &= ~(F_RemoteGaoJing0+F_RemoteGaoJing1);
-						
+						mbase_cb->sta &= ~F_RemoteRelayOnAllow; //À­Õ¢ È¡ÏûºÏÕ¢ÔÊÐí  GS 20221214
+                        
 						mbase_cb->alarmmin = 0;
                         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Remote_RelayOffTime);//ÌøÕ¢¸æ¾¯
                         nd_get_index(instance, s_index, TmpBuffer, 2);
@@ -787,9 +794,10 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
 				break;
 		case 0x3A://±£µç
           
-                if((mbase_cb->sta & F_RemoteRelayOff) && (mbase_cb->alarmmin > 0))//À­Õ¢ÑÓÊ±¹ý³ÌÖÐ£¬±£µçºóÀ­Õ¢×Ö·ûÏûÊ§£¬µÆÃð
+                //if((mbase_cb->sta & F_RemoteRelayOff) && ((mbase_cb->alarmmin > 0) || (mbase_cb->imaxmin > 0)))//À­Õ¢ÑÓÊ±¹ý³ÌÖÐ£¬±£µçºóÀ­Õ¢×Ö·ûÏûÊ§£¬µÆÃð
                 {
                     mbase_cb->alarmmin = 0;
+                    mbase_cb->imaxmin = 0;
                     mbase_cb->sta &= ~F_RemoteRelayOff;
                 }
                 mbase_cb->sta |= F_RemoteRelayOn;
@@ -850,6 +858,7 @@ unsigned char FrozeCmd_Check(struct instance_t* instance, uint8_t chl, uint8_t* 
 				if( *(p_rx+13) == 0x99 )//ss
 				{
 					//HisRecord_Write( InstantFroze, START );//Ë²Ê±¶³½á
+                    mbase_cb->trigger_insfreeze_delay_sec = 1;
 					return 0;
 				}
 				else if( *(p_rx+10) >0x59 )

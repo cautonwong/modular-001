@@ -13,7 +13,7 @@
 #if (_DEBUG_TEST == 1)
 
     #define PWD_TEST_ON 0
-    #define FREEZ_TEST_OVERTURN 0
+    #define FREEZ_TEST_OVERTURN 1
     #define RESET_INFO    0 // 记录 复位信息
     #define TEST_RELAY_LED 0
     
@@ -40,15 +40,18 @@
 
 #if (CF_M_STANDARD == CF_M_NORMAL_698)  //国网698双协议------------------------------------
     #define DEF_BAUT_PLC   10           // 载波默认波特率    10:115200
-    #define DEF_FIRST_ZONE_SET   0      // 第一套时区/时段不可设
+    #define DEF_645_FIRST_ZONE_SET_EN   0       // 645第一套时区/时段不可设
+    #define DEF_645_PRIVATE_KEY_METERCLR_EN 0   //645私钥下不支持清零
  
 #elif (CF_M_STANDARD == CF_M_FD_645)    //非电645------------------------------------ 
     #define DEF_BAUT_PLC   6            // 载波默认波特率  6:9600 
-    #define DEF_FIRST_ZONE_SET   1      // 第一套时区/时段可设
+    #define DEF_645_FIRST_ZONE_SET_EN   1      // 645第一套时区/时段可设
+    #define DEF_645_PRIVATE_KEY_METERCLR_EN 1   //645私钥下支持清零
   
 #else                                   //------------------------------------
     #define DEF_BAUT_PLC   10           //载波默认波特率    10:115200
-    #define DEF_FIRST_ZONE_SET   0      // 第一套时区/时段不可设
+    #define DEF_645_FIRST_ZONE_SET_EN   0      // 645第一套时区/时段不可设
+    #define DEF_645_PRIVATE_KEY_METERCLR_EN 0   //645私钥下不支持清零
 
 #endif
 
@@ -649,7 +652,7 @@ extern uint8_t Date_Format_Check( unsigned char* Addr );
 extern uint8_t Time_Format_Check( unsigned char* Addr );
 extern uint8_t display_id_to_oad(unsigned short id, unsigned char *oad);
 extern void relay_led_ctl(struct instance_t* instance,  struct pipeline_t* pipeline);
-extern signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
+//extern signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len,struct context_645_t* ctx);
 //extern signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len, struct context_645_t* ctx);
 extern signed char Comm_Other(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
 

@@ -91,7 +91,7 @@ int Direct_Read( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, 
 /*  函数功能：通讯读                                                   */
 /*  输出参数：读结果：0为正确,其余为错误                              */
 /***********************************************************************/
-signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len)
+signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len, struct context_645_t* ctx)
 {
     unsigned char IDH1=0, IDL0 = 0;
     int Err_Byte = 0;
@@ -165,7 +165,7 @@ signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx,
 
             break;    
         case 0x06:  //负荷
-            Err_Byte = read_06(instance, ID, p_rx, p_tx, len);
+            Err_Byte = read_06(instance, ID, p_rx, p_tx, len, ctx);
             return (int8_t)Err_Byte;
             break;            
         default:

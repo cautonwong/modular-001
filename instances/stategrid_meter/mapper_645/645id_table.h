@@ -2,7 +2,7 @@
 #define data_max_len 222
 
 
-#define     MAX_READ_DATAFILED_LEN     200
+#define     MAX_READ_DATAFILED_LEN     (200)
 #define     MAX_WRITE_DATAFILED_LEN    230
 #define     APDU_DATA_LEN              (MAX_READ_DATAFILED_LEN - 4)
 #define     APDU_PUSH_DATA_LEN         (MAX_READ_DATAFILED_LEN - 4 - 1)
@@ -138,7 +138,7 @@ union dl645_DI_t
 extern int read_00( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx);
 extern int read_02( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx);
 extern int read_04( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx);
-extern int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, uint8_t *tx_len);
+extern int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, uint8_t *tx_len, struct context_645_t* ctx);
 extern int read_record_data_form_698_protocol(struct instance_t* instance, uint8_t* buf, uint32_t Record_oad, uint32_t capture_oad, uint8_t last_no, uint16_t bufsize);
 extern unsigned char GetCommTable( unsigned long ID );
 extern signed char ctl_freeze(struct instance_t* instance, uint8_t chl, uint8_t* p_rx);

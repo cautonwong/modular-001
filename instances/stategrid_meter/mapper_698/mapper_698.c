@@ -2657,7 +2657,11 @@ int para_init(struct instance_t* instance )
     
     //RAM部分更新
 
-    memset(mbase_cb->meterNo, 0x00, 6);//表地址
+    //if (mbase_cb->metertype & F_Password_En)
+    //{
+        //memset(mbase_cb->meterNo, 0x00, 6);//表号 //由esam恢复
+    //}
+
     
     mbase_cb->meter_const = 2000;
     mbase_cb->active_energy_cal_word = 0xA0;

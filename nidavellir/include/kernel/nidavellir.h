@@ -245,7 +245,8 @@ struct context_645_t
     uint8_t segment_tx; 
     uint8_t segment_tx_no;
     uint8_t report_stat_follow_flag; //主动上报状态字后续帧标志
-    
+    uint8_t first_segment_MaxLen;       //首帧长度限制 
+    uint8_t follow_segment_MaxLen;      //除首帧外的后续帧长度限制 
     uint8_t password[4];
 
     //接收和发送都要用的状态

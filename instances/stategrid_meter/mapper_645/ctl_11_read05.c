@@ -2459,7 +2459,8 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
             p_tx += 3;
             total_len = 3;
             total_len +=  4; //ID
-            *tx_len = total_len;
+            //*tx_len = total_len;
+            ndv_memcopy(tx_len, (uint8_t*)&total_len, 2);
             //return (total_len);
             return 0;
 
@@ -2647,7 +2648,8 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     }
 
     total_len +=  4; //ID
-    *tx_len = total_len;
+    //*tx_len = total_len;
+    ndv_memcopy(tx_len, (uint8_t*)&total_len, 2);
 
 
     //return (total_len);
@@ -2767,7 +2769,7 @@ int load_search_copy_first_time(struct instance_t* instance, uint8_t *buf, struc
 }
 
 //新负荷记录补数据.  src_buf 缓存长度 大于1500字节
-int load_response_fill_645(struct instance_t* instance,  uint8_t *des, uint8_t *src_buf, uint32_t *rcsd_req, uint32_t *rcsd_src, uint16_t *capture_645len,  uint32_t ID, struct rsd_info_t *rsd_info)
+int load_response_fill_645(struct instance_t* instance,  uint8_t *des, uint8_t *src_buf, uint32_t *rcsd_req, uint32_t *rcsd_src, uint16_t *capture_645len,  uint32_t ID, struct circular_info_t fill_info)
 {
     union dl645_DI_t DI;
     int one_len = 0;
@@ -2791,7 +2793,7 @@ int load_response_fill_645(struct instance_t* instance,  uint8_t *des, uint8_t *
     if ((DI.elem.di1 == 0x06) || (DI.elem.di1 == 0x07))//电能补上一条数据 
     {
         circular_info.start_mark = 0;
-        circular_info.end_mark = rsd_info->start_mark;
+        circular_info.end_mark = fill_info.start_mark;
         circular_info.mode =   2;
         ret = nd_log_output(instance, record_id_info.id_info.save_index,  ptr_tmp, 1, &circular_info);
 
@@ -2865,7 +2867,7 @@ int search_load_scheme_No(struct instance_t* instance, uint32_t rcsd_req, uint8_
 
 
 //645读负荷数据
-int load_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,  struct load_rsd_info_t *load_rsd_info, struct record_storage_645_id_info_t *record_id_info, uint32_t *rcsd_info, uint16_t *capture_645len,  uint8_t  package_type,   void *ctx)
+int load_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,  struct load_rsd_info_t *load_rsd_info, struct record_storage_645_id_info_t *record_id_info, uint32_t *rcsd_info, uint16_t *capture_645len,  uint8_t  package_type,  struct context_645_t* ctx)
 {
 #ifndef WIN32
 
@@ -3017,7 +3019,7 @@ int load_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,
             }
             else //补数据
             {
-                one_len = load_response_fill_645(instance, p+len, ptr_tmp, rcsd_req, rcsd_src, capture_645len, ID, rsd_info);
+                one_len = load_response_fill_645(instance, p+len, ptr_tmp, rcsd_req, rcsd_src, capture_645len, ID, circular_info);
             }
             //if(one_len < 0) one_len = 0;
             len += one_len;
@@ -3047,6 +3049,18 @@ int load_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,
 
     }      
         
+    if ((ctx) && (number)) //分帧长度特殊处理
+    {
+        ctx->first_segment_MaxLen = ((MAX_READ_DATAFILED_LEN - 4 - 5) / one_len)*one_len + 4 + 5;  // id，时间
+        ctx->follow_segment_MaxLen = ((MAX_READ_DATAFILED_LEN - 4 - 1) / one_len)*one_len + 4;    
+        if((ctx->first_segment_MaxLen < 100) || (ctx->follow_segment_MaxLen < 100) 
+          || (ctx->first_segment_MaxLen > MAX_READ_DATAFILED_LEN) || (ctx->follow_segment_MaxLen > MAX_READ_DATAFILED_LEN))
+        {
+            ctx->first_segment_MaxLen = MAX_READ_DATAFILED_LEN;
+            ctx->follow_segment_MaxLen = MAX_READ_DATAFILED_LEN;
+        }
+    }
+
 
     return (int)len;
 #endif
@@ -3056,7 +3070,7 @@ int load_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,
 //新负荷记录读取
 // 返回0 正常应答        返回＞0 异常应答
 
-int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, uint8_t *tx_len)
+int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
     union dl645_DI_t DI;
     struct record_storage_645_id_info_t  info;
@@ -3201,7 +3215,7 @@ int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
 
     //for(i=0; i < read_num; i++)
     {
-        data_len = load_data_package645(instance, ID, ptr_tmp,  &load_rsd_info, &info, rcsd_645req, rcsd_645len,  info.package_type , __NULL);
+        data_len = load_data_package645(instance, ID, ptr_tmp,  &load_rsd_info, &info, rcsd_645req, rcsd_645len,  info.package_type , ctx);
         if (data_len < 0)
         {
             return response_x_byte_err_645(p_err, (uint8_t)(-data_len), 1,  tx_len);
@@ -3218,8 +3232,8 @@ int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     }
 
     total_len +=  4; //ID
-    *tx_len = total_len;
-
+    //*tx_len = total_len;
+    ndv_memcopy(tx_len, (uint8_t*)&total_len, 2);
 
     //return (total_len);
     return 0;

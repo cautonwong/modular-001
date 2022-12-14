@@ -675,6 +675,8 @@ static uint8_t dl645wt_meteraddr(struct instance_t* instance, uint32_t addr, uin
 
 static uint8_t dl645wt_hex_bcd(struct instance_t* instance, uint32_t addr, uint8_t *prx, uint8_t *length)
 {
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
     uint32_t addr1=0;
     uint32_t temp=0,data=0;
     uint8_t buf[4] = {0,},len=0, storage_len = 0;
@@ -720,6 +722,28 @@ static uint8_t dl645wt_hex_bcd(struct instance_t* instance, uint32_t addr, uint8
     
     addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
     nd_set_index(instance, addr1, (uint8_t*)&temp, storage_len);
+
+
+
+    //同步更新ram
+
+    switch(addr)
+    {
+        case ImaxProtectTime://大电流延时时间赋值
+            mem_swap_cpy((uint8_t *)&mbase_cb->Prot_time, (uint8_t*)&temp, 2);
+            if(mbase_cb->imaxmin > 0)   //过流中修改时间，刷新
+                mbase_cb->imaxmin = mbase_cb->Prot_time*60;
+
+            break;
+            
+        case ImaxProtectValue: 
+            mem_swap_cpy((uint8_t*)&mbase_cb->I_Prot, (uint8_t*)&temp, 4);
+            break;
+
+        default:
+            break;
+    }
+
     
     return 0;
 }

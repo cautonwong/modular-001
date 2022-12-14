@@ -295,7 +295,7 @@ int8_t GetCommAddrInfo(struct instance_t* instance, uint8_t *p_rx, uint32_t ID, 
             err = get_645displayid_info(instance, p_rx, ID, Addr, Format, Info);
             return err;
         case 0x0401:    //第一套时区、时段表数据
-#if(DEF_FIRST_ZONE_SET == 0) //不可设时
+#if(DEF_FIRST_ZONE_SET_EN == 0) //不可设时
             return RS_ERR_OTHERS;
             break;
 #endif

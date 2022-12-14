@@ -54,15 +54,18 @@ void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id)
     struct pipeline_t* pipeline;
     uint8_t pipeline_n = recipe->pipeline_n;
 
-    for (size_t i = 0; i < pipeline_n; i++)
+    if(recipe)
     {
-        pipeline = recipe->pipelines[i];
-#if WIN32_U_TEST
-        return pipeline->ctx;
-#endif
-        if (pipeline->id == pipeline_id)
+        for (size_t i = 0; i < pipeline_n; i++)
         {
+            pipeline = recipe->pipelines[i];
+#if WIN32_U_TEST
             return pipeline->ctx;
+#endif
+            if (pipeline->id == pipeline_id)
+            {
+                return pipeline->ctx;
+            }
         }
     }
 

@@ -166,7 +166,7 @@ int trigger_MeterWr645_record(struct instance_t* instance, uint32_t DI645, uint8
 
     if(ctrl_block->factor_mode)
     {
-        //return 1; //厂内不记录 645编程事件
+        return 1; //厂内不记录 645编程事件
     }
     if ((DI645 == 0xA8000100))   return 1;  //进出工厂ID 不记录
 
