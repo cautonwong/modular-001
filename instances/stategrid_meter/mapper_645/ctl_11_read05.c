@@ -11,7 +11,6 @@ extern uint8_t check_capture_exist(uint32_t rcsd_req, uint32_t rcsd_src);
 extern uint32_t get_interval_basic_value(uint8_t *src, struct rsd_info_t *rsd_info);
 extern uint8_t select_record_time_check(uint8_t *src, uint8_t non_period, struct rsd_info_t *rsd_info);
 extern int record_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,  struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t *capture_645len,  uint8_t  package_type,   void *ctx);
-extern int record_data_package645_packageAA(struct instance_t* instance, uint8_t* dest, uint8_t* src, uint16_t datalen, struct record_storage_645_id_info_t  *info);
 
 struct load_rsd_info_t
 {
@@ -376,6 +375,7 @@ const uint16_t Load_di2_06_645oad_len[] =
 
 
 // 获取冻结中实际费率的需量或电量长度
+
 uint16_t get_645record_rate_obj_len(struct instance_t* instance,uint16_t obj_len)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base); 
@@ -386,13 +386,14 @@ uint16_t get_645record_rate_obj_len(struct instance_t* instance,uint16_t obj_len
     uint8_t tariff_num = 4;
 
 
-    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3); //读取费率数
-    nd_get_index(instance, addr, &tariff_num, 1); 
-    
-    tariff_num += 1;   // 总加 费率个数
-    if(tariff_num > 13)  tariff_num = 13;
     if (obj_len & 0x8000)
     {
+        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3); //读取费率数
+        nd_get_index(instance, addr, &tariff_num, 1); 
+        
+        tariff_num += 1;   // 总加 费率个数
+        if(tariff_num > 13)  tariff_num = 13;
+
         obj_len &=0x3FFF;
         if (obj_len == 52) // 电能    
         {
@@ -1892,6 +1893,112 @@ int event_acc_number_times_DI_check(struct instance_t* instance, unsigned long I
 }
 
 
+
+//获取冻结模式字
+uint8_t get_freeze_mode(struct instance_t* instance,  uint8_t dlt645_id_d2)
+{
+    uint8_t mode;
+    uint32_t s_addr = 0;
+    int ret = 0;
+    
+    switch(dlt645_id_d2)
+    {
+        case 0x00:  //定时冻结模式字         
+            s_addr = TimeFroze_Mode;
+            break;
+        case 0x01:  // 瞬时冻结数据模式字      
+            s_addr = InsFroze_Mode;
+            break;
+        case 0x02:        
+        case 0x03:    
+        case 0x05:  
+        case 0x07:        
+        case 0x09:    
+        case 0x0A:     //约定冻结模式字         
+            s_addr = AppointFroze_Mode;
+            break;
+        case 0x04:     //整点冻结模式字
+            s_addr = HourFroze_Mode;
+            break;
+        case 0x06:  
+        case 0x08:    //日冻结模式字         
+            s_addr = DayFroze_Mode;
+            break;     
+        default:
+            return 0xFF;
+            break;
+    }
+
+    ret = nd_get_index_e2p(instance, &mode,  mbase_block_parameter, s_addr, 1);
+    if (ret < 0)
+    {
+        mode = 0xFF;
+    }
+
+    return mode;
+}
+
+//单相    
+//index 为冻结id1 的偏移
+uint8_t get_freeze_shift_value(uint8_t index)
+{
+    uint8_t shift_value = 0x01;
+    
+ 
+    switch(index)
+    {
+        case 0x00:        
+        case 0x0C:
+            shift_value = 0xFF;//冻结时间和剩余金额
+            break;        
+        case 0x01:
+        case 0x02:    
+        //case 0x03:
+        //case 0x04:
+            shift_value = shift_value << (index-1);
+            break;
+        //case 0x05:
+        //case 0x06:    
+        //case 0x07:
+        //case 0x08:   
+            //shift_value = shift_value << 4;
+            //break;
+        //case 0x09:
+        //case 0x0A: 
+        case 0x0B: 
+            shift_value = shift_value << (index-4);
+            break;
+        default:
+            shift_value = 0;
+            break;
+    }
+
+    return shift_value;
+}
+
+//读取单个冻结数据项时判断冻结模式字
+int freeze_mode_check_single_item(struct instance_t* instance,uint32_t ID)
+{
+    uint8_t i, mode = 0xFF, shift = 0xFF;
+    union dl645_DI_t DI;
+    
+    DI.di = ID;
+
+    mode = get_freeze_mode(instance, DI.elem.di2);
+    shift = get_freeze_shift_value(DI.elem.di1); 
+
+    if((mode & shift))
+    {
+        return 1;
+    }
+    else
+    {
+        return -1;
+    }
+
+}
+
+
 //检查搜索的关联对象是否存在
 uint8_t check_capture_exist_645(uint32_t rcsd_req, uint32_t rcsd_src)
 {
@@ -2349,12 +2456,15 @@ int record_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* bu
 }
 
 
-int record_data_package645_packageAA(struct instance_t* instance, uint8_t* dest, uint8_t* src, uint16_t datalen, struct record_storage_645_id_info_t  *info)
+int record_data_package645_packageAA(struct instance_t* instance, uint8_t* dest, uint8_t* src, uint16_t datalen, uint32_t ID,struct record_storage_645_id_info_t  *info)
 {
-    uint8_t i, index_num = info->package_num;
+    uint8_t i, mode = 0xFF, shift = 0xFF, index_num = info->package_num;
     uint16_t  dest_single_len = 0, src_single_len = 0;
     uint8_t *p = dest;
     uint8_t *p_src = src;
+    union dl645_DI_t DI;
+    
+    DI.di = ID;
 
     if((index_num == 0)||(index_num > 50))
     {
@@ -2366,12 +2476,16 @@ int record_data_package645_packageAA(struct instance_t* instance, uint8_t* dest,
         return -1;
     }
 
+    mode = get_freeze_mode(instance, DI.elem.di2);
+
     for(i = 0; i < index_num; i++)
     {
 
         src_single_len = get_645record_rate_obj_len(instance, info->rd_645obj_package_len[i]);
         dest_single_len = src_single_len;
-        if(info->rd_645obj_package_len[i] & BIT14)
+
+        shift = get_freeze_shift_value(i); 
+        if((!(mode & shift)) || (info->rd_645obj_package_len[i] & BIT14))//模式字未配置  或 单相不支持数据
         {
             dest_single_len = 0;
         }
@@ -2629,7 +2743,7 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
 
         if (info.package_type == PACKAGE645_FREEZE)
         {
-            data_len = record_data_package645_packageAA(instance, p_tx, ptr_tmp,  data_len, &info);
+            data_len = record_data_package645_packageAA(instance, p_tx, ptr_tmp,  data_len, ID, &info);
             if (data_len < 0)
             {
                 return response_x_byte_err_645(p_err, (uint8_t)(-data_len), 1,  tx_len);
@@ -2638,6 +2752,14 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
         }
         else
         {
+            if(DI.elem.di3 == 0x05) //冻结 判断模式字
+            {
+                if (0 > freeze_mode_check_single_item(instance,ID))   
+                {
+                    return response_x_byte_err_645(p_err, RS_ERR_ID, 1,  tx_len);
+                }
+            }
+            
             ndv_memcopy(p_tx, ptr_tmp,  data_len);
         }
         
