@@ -255,7 +255,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             res = get_res(RES_DEV_EEPROM, mbase_block_static_eprom);
             nd_get_block(instance, res, (uint8_t*)addr, mbase_block_static_size); //将EPROM中的数据恢复到RAM;  
             ret = Check_para_Pro(instance);     //数据效验
-            if (ret < 0) //参数区异常时，恢复485波特率
+            if (ret < 0) //参数区异常时，恢复485波特率  //待调整？
             {
                 para_init( instance );
                 rs485_init(instance, pipeline);

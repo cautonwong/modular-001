@@ -49,7 +49,7 @@ const COMMTAB  CommTab[] =
 	0x04000407, ASCII_AccuracyClass1,			FORMAT_00,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 4,//计量精度
 	0x04000409, Meter_Const1,					FORMAT_06,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 3,//脉冲常数
 	0x0400040B, ASCII_MeterType,                FORMAT_00,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 10,//电表型号
-	0x0400040C, Produced_Date,				    FORMAT_00,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 10,//生产日期
+	0x0400040C, Produced_Date645,				FORMAT_00,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 10,//生产日期
 	0x0400040D, ASCII_ptl645_Version,           FORMAT_00,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 16,//协议版本号
 	0x0400040E, User_Number,                    FORMAT_00,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 6,	//客户编号
     0x0400040F, 0xFFFF,					        FORMAT_09,		CommData_WR + CommData_E2PROM + CommData_SECONDLY + 11,//电能表位置信息

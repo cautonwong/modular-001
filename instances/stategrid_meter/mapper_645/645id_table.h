@@ -20,6 +20,7 @@
 #define MEMVALUE            0x0F
 
 //错误信息字定义
+#define     RS_SUCCESS                  0   //成功
 #define 	RS_ERR_LEN		        	0x01//数据域长度错误,其它错误
 #define 	RS_ERR_OTHERS		       	0x01//其它错误
 #define 	RS_ERR_ID		        	0x02//ID错误
@@ -159,3 +160,5 @@ extern int upgrade_file_handle(struct instance_t* instance, uint8_t *data, uint1
 extern unsigned char Comm485Baut_Check( unsigned char Baut );
 extern int response_x_byte_err_645(uint8_t *p_tx, uint16_t err, uint8_t errLen, uint8_t *tx_len);
 extern uint8_t Search_DL645_Prepay_IDTab(struct instance_t* instance, uint32_t id,uint8_t cmd);
+extern unsigned char Date_645Format_Check( unsigned char* Addr );
+extern unsigned char Time_645Format_Check( unsigned char* Addr );

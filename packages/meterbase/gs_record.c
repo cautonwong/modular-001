@@ -412,6 +412,7 @@ int clr_record(struct instance_t* instance, uint32_t oad)
     uint32_t s_index = 0;
     uint8_t i, tmpbuf[10] = {0};
     struct record_storage_id_info_t info;
+    uint16_t OI = get_OAD_OI(oad);
     int ret = get_record_id_info(instance, oad, &info);
     
     if (ret < 0)
@@ -438,51 +439,60 @@ int clr_record(struct instance_t* instance, uint32_t oad)
         clr_event_duration(instance, (uint16_t)info.save_index);
     }
 
-    if (oad == 0x30120200) // 编程记录
-    {
-        MeterWr_obj_list_clear(instance, NULL, NULL);
-    }
 
-    if (oad == 0xFF310000) // 编程记录645
+    switch(OI)
     {
-        MeterWr645_obj_list_clear(instance, NULL, NULL);
-    }
-
-    
-    //清最近一次日冻结时间
-    if (oad == 0x50040200)
-    {
-        clr_last_bill_time(instance, LastDayFreezTime);
-    }
-
-    //清最近一次结算冻结时间
-    if (oad == 0x50050200)
-    {
-        clr_last_bill_time(instance, LastBillingTime);
-    }
-    //清最近一次广播导致时钟异常时间
-    if(oad == 0x302E0200)
-    {
-        memset(tmpbuf, 0, sizeof(tmpbuf));
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBroadcastTimeERR);
-        nd_set_index(instance, s_index, &tmpbuf[0], 3);
-    }
-
-    if((get_OAD_OI(oad) == 0x301F) || (get_OAD_OI(oad) == 0x3020))//2015 拉合闸成功 状态清除
-    {
-        for(i = 0; i < 4; i++)
-        {
-            if (get_OAD_OI(oad) == 0x301F)
-            {
-                mbase_cb->report_2015state[i] &= ~RPT_2015_SWITCH_OFF_SUCCEES;
-            }
-            else
-            {
-                mbase_cb->report_2015state[i] &= ~RPT_2015_SWITCH_ON_SUCCEES;
-            }
+        case 0x3012://编程记录
+        {   //清编程列表
+            MeterWr_obj_list_clear(instance, NULL, NULL);
         }
-        //保存e2p
+            break;
+        case 0x301F: //电能表跳闸事件 
+        case 0x3020: //电能表合闸事件 
+        {   //2015 拉合闸成功 状态清除
+            for(i = 0; i < 4; i++)
+            {
+                if (get_OAD_OI(oad) == 0x301F)
+                {
+                    mbase_cb->report_2015state[i] &= ~RPT_2015_SWITCH_OFF_SUCCEES;
+                }
+                else
+                {
+                    mbase_cb->report_2015state[i] &= ~RPT_2015_SWITCH_ON_SUCCEES;
+                }
+            }
+            //保存e2p
+        }
+            break;  
+        case 0x302E://时钟故障
+        {
+            //清最近一次广播导致时钟异常时间
+            memset(tmpbuf, 0, sizeof(tmpbuf));
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBroadcastTimeERR);
+            nd_set_index(instance, s_index, &tmpbuf[0], 3);
+            mbase_cb->RTCErrS_status = 0; //清时钟故障标志   
+        }
+            break;
+        case 0xFF31://电能表编程事件645 
+        {   //清编程列表
+            MeterWr645_obj_list_clear(instance, NULL, NULL);
+        }
+            break;          
+        case 0x5004://日冻结
+        {   //清最近一次日冻结时间
+            clr_last_bill_time(instance, LastDayFreezTime);
+        }
+            break;  
+        case 0x5005://结算冻结
+        {   //清最近一次结算冻结时间
+            clr_last_bill_time(instance, LastBillingTime);
+        }
+            break;    
+        
+        default:
+            break;
     }
+    
     
     return 1;
 }

@@ -238,7 +238,7 @@ struct context_645_t
     
     uint8_t apdu_tx[max_apdu_cache_645]; 
     
-    uint8_t apdu_d_rx[128]; 
+    uint8_t apdu_d_rx[256]; 
     uint16_t apdu_rx_len;
     uint16_t apdu_rx_offset;
 

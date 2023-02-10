@@ -1469,6 +1469,63 @@ int16_t nd_set_index_e2p(struct instance_t* instance, uint8_t* buf, uint8_t bloc
 
 
 
+//addr_offset为偏移地址
+//check_erase  0,跨页不擦除，其他     跨页擦除 
+int16_t nd_set_offset_flash(struct instance_t* instance, uint8_t blockname, uint32_t addr_offset, uint8_t* buf, uint16_t len, uint8_t check_erase)
+{
+    struct block_device_t* device = NULL;
+    const struct driver_ops_t* driver = NULL;
+    struct resource_block_t* block = NULL;
+    uint32_t addr = 0x00;
+
+   
+    device = look_up_device(instance, RES_DEV_FLASH);//查找设备
+    res_conditions_true(device == NULL, -1);
+    block = look_up_block(instance, device, (uint8_t)blockname); //查找块 //mbase_block_event_flash1
+    res_conditions_true(block == NULL, -1);
+    addr = block->first_addr + addr_offset; //
+    res_conditions_true(addr + len > block->first_addr + block->size, -1);
+
+    driver = device->dev->dev_driver_ops;
+    res_conditions_true((driver == NULL) || (driver->dev_write == NULL), -1);
+
+    //跨页是否 擦除
+    if(check_erase)
+    //判断是否需要察扇区
+    if (device->dev->dev_type == DEV_FLASH)//FLASH才会擦除
+    {
+        res_conditions_true(0x00 > application_norflash_erase(instance, addr, 
+            len, driver, device->dev), -1);
+    }
+
+    res_conditions_true(0x00 > driver->dev_write(instance,device->dev, addr, len, buf), -1);
+
+    return len;
+}
+
+int16_t nd_get_offset_flash(struct instance_t* instance, uint8_t blockname, uint32_t addr_offset,  uint8_t* buf, uint16_t len)
+{
+    struct block_device_t* device = NULL;
+    const struct driver_ops_t* driver = NULL;
+    struct resource_block_t* block = NULL;
+    uint32_t addr = 0x00;
+
+    device = look_up_device(instance, RES_DEV_FLASH);//查找设备
+    res_conditions_true(device == NULL, -1);
+    block = look_up_block(instance, device, blockname);//查找块
+    res_conditions_true(block == NULL, -1);
+    addr = block->first_addr + addr_offset;
+    res_conditions_true(addr + len > block->first_addr + block->size, -1);
+
+    driver = device->dev->dev_driver_ops;
+    res_conditions_true((driver == NULL) || (driver->dev_read == NULL), -1);
+    res_conditions_true(0x00 > driver->dev_read(instance, device->dev, addr, len, buf), -1);
+    //res_conditions_true(0x00 > verify_data(buf, len), -1);
+
+    return len;
+}
+
+
 
 //目前resource manger 数据操作介绍
 //全部为数据块的操作，不是单个数据的操作

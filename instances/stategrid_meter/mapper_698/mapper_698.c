@@ -139,6 +139,8 @@ extern const uint8_t  init_Date_HardWare[]; //硬件版本日期
 extern const uint8_t  init_Extend_Info[]; //扩展信息
 
 extern const uint8_t  init_Produced_Date[]; //生产日期
+extern const uint8_t  init_Produced_Date645[]; //生产日期
+
 extern const uint8_t  init_Subset_List[]; //子设备列表(num+2*oi)
 extern const uint8_t  init_Protocol_List[]; //协议列表
 extern const uint8_t  init_FollowReport_en[]; //允许跟随上报
@@ -649,6 +651,7 @@ const  parameter_item_t  parameter_item[] =
 
     { AuthTime_DL645                , 0x01 ,     2    , init_AuthTime_DL645         }, // 身份认证时效
     { report_stat_645_E             , 0x01 ,   108    , 0                           }, // 645上报状态字E2p地址
+    { Produced_Date645              , 0x01 ,     10   , init_Produced_Date645       }, // 645生产日期
 
      
 #else
@@ -656,12 +659,16 @@ const  parameter_item_t  parameter_item[] =
 #endif
 };
 
-//带备份区
+//带备份区   mbase_block_parameter_1
 const  parameter_item_t  parameter_item_1[] =
 {
+    //升级  //绝对地址 0
+    { UPGRADE_PARA_INFO ,       1  ,        60  ,   0 },   //升级参数信息  60字节
+    { UPGRADE_RESET_FLAG,       1  ,        4   ,   0 },   //升级复位标志4字节
+    
     /***************** 计量相关 *****************/
-    { Heat_Value_10L    ,       1  ,        30   ,   0 },    //1.0L自热补偿
-    { Heat_Value_05L    ,       1  ,        30   ,   0 },    //0.5L自热补偿
+    { Heat_Value_10L    ,       1  ,        30   ,   0 },   //1.0L自热补偿
+    { Heat_Value_05L    ,       1  ,        30   ,   0 },   //0.5L自热补偿
 
     { Un_Cmp_Value      ,       1   ,       8   ,   0 },    //80%Un 90%Un 110%Un 115%Un补偿
     { ADJ_Pgain0        ,       1   ,       8   ,   0 },    //火线校表参数（功率增益、功率偏移、电流偏移、相位补偿）4*2=8
@@ -673,6 +680,12 @@ const  parameter_item_t  parameter_item_1[] =
 
     { Energy_block      ,       1   ,       160 ,   0 },    //电能块 保存区 (含ram中的校验)
     { UseEnergy_block   ,       1   ,       12  ,   0 },    //电能块 保存区 (含ram中的校验)
+
+
+
+
+
+
 
 };
 
@@ -2897,7 +2910,7 @@ void fr_dl645_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline
 
     report_645state_reset_sec_judge(instance);
 
-
+    image_update_check(instance); //升级
 }
 
 // 698协议 秒任务

@@ -365,6 +365,7 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
     register_log(instance, RES_DEV_EEPROM, mbase_block_event, RES_DEV_EEPROM, mbase_block_parameter, 26 * 1024, supply_event_info);
 
     //注册冻结1-flash
+    //必须为flash 首个块，和升级文件缓存 共用
     register_log(instance, RES_DEV_FLASH, mbase_block_event_flash1, RES_DEV_EEPROM, mbase_block_parameter, (MinuteFreeze_SECTION_SIZE) * 4 * 1024, supply_event_flash_1_info);
 
     //注册冻结2-flash

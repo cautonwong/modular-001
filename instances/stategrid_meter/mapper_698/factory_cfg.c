@@ -432,6 +432,7 @@ const uint8_t  init_Version_HardWare[] = { 4, 'X', 'X', 'X', 'X' }; /**< 硬件�
 const uint8_t  init_Date_HardWare[] = { 6, 'X', 'X', 'X', 'X', 'X', 'X' }; /**< 硬件版本日期   visible-string(SIZE (6)) */
 const uint8_t  init_Extend_Info[] = { 8, 'X', 'X', 'X', 'X','X', 'X', 'X', 'X' }; /**< 厂家扩展信息   visible-string(SIZE (8)) */
 const uint8_t  init_Produced_Date[] = { 10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; /**< 生产日期 - 设备的出厂日期，数据格式date_time_s */
+const uint8_t  init_Produced_Date645[] = { 10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; /**< 生产日期 - 设备的出厂日期，数据格式date_time_s */
 const uint8_t  init_Subset_List[] = { 1,0x00 }; /**< 子设备列表 1+2*3  */
 const uint8_t  init_Protocol_List[] = { 32, 1, 20, 'D', 'L', '/', 'T', '6', '9', '8', '.', '4', '5' ,'-', '2' , '0', '1', '7', '-', '2', '0', '2', '0' }; /**< 支持规约列表1+16*3 */
 const uint8_t  init_FollowReport_en[] = { 1,0x00 }; /**< 允许跟随上报 */

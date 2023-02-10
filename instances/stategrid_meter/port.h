@@ -487,10 +487,11 @@ enum block_parameter_item_id_t
 
 #define     Meter_02Password            1060 //02级密码
 #define     Meter_04Password            1061 //04级密码
+#define     Produced_Date645            1062 //生产日期645
 
 
 
-/***************** 计量相关 *****************/
+/***************** 计量相关 *****************/ 
 #define     Heat_Value_10L              1100    //1.0L自热补偿  15*2=30
 #define     Heat_Value_05L              1101    //0.5L自热补偿  15*2=30
 #define     Un_Cmp_Value                1102    //电压补偿 80%，90%，110%，115%    4*2=8
@@ -564,12 +565,15 @@ enum block_parameter_item_id_t
 
 
 
-//EC  ---- 2000开始
+//EC  ---- 2000开始    mbase_block_parameter_1
 #define      Energy_block                    2000 // 电能保存区域          长度由dyn_persistent_EC_label位置确定
 #define      UseEnergy_block                 2001 // 电能保存区域          长度由dyn_persistent_EC_label位置确定
 
 
 
+//升级   mbase_block_parameter_1
+#define     UPGRADE_PARA_INFO           3000    //升级参数信息  60字节          绝对地址必须 为0
+#define     UPGRADE_RESET_FLAG          3001    //升级复位标志4字节
 
 
 

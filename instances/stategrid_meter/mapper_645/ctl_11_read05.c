@@ -3230,6 +3230,7 @@ int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     }
 
     // ---------------------
+#if 0    
     addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LoadRec_Mode); //读取负荷模式字
     nd_get_index(instance, addr, &temp, 1); 
     info.mark_para = temp;
@@ -3237,7 +3238,7 @@ int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     {
         return response_x_byte_err_645(p_err, RS_ERR_ID, 1,  tx_len);
     }
-
+#endif
     // -------------------- --------------------
     if((!info.rd_645obj_len)||(!info.rd_645obj)||(info.rd_645obj[0] > 50))
     {

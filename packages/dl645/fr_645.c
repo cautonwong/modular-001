@@ -14,6 +14,8 @@ extern signed char dl645_meter_clear(struct instance_t* instance, uint8_t *p_rx,
 extern signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len,struct context_645_t* ctx);
 extern signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len, struct context_645_t* ctx);
 extern int8_t safe_Authen03_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
+extern int8_t dlt645_image_transfer(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
+extern int8_t dlt645_image_read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
 int __update_cs(void* pctx, uint8_t* byte)
 {
     struct context_645_t* ctx = pctx;
@@ -888,6 +890,13 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     
     switch (ctx->ctrl)
     {
+        case 0x01:  //97读 升级
+            ERRBYTE = dlt645_image_read(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len, ctx);
+            break;    
+        case 0x04:  //97写 升级
+            ERRBYTE = dlt645_image_transfer(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len, ctx);
+            break;
+
         case 0x03:  //安全认证
             ERRBYTE = safe_Authen03_645(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len, ctx);
             break;

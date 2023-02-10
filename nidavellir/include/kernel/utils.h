@@ -115,4 +115,7 @@ uint16_t nd_get_crc16(uint8_t* buf, size_t len);
 
 uint16_t update_crc16(uint16_t init, uint8_t byte);
 void bcd_to_hex_array(uint8_t *hexary, uint8_t *bcdary, uint32_t len);
+
+uint16_t GetCRC16_mode2( uint8_t *ucPtr, uint16_t uiLen, uint16_t uiCrc);
+
 #endif

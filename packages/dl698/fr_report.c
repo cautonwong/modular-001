@@ -997,7 +997,7 @@ uint8_t active_report_check_3011(struct instance_t* instance, struct pipeline_t*
         }
 
     }
-    return true;
+    return false;
 }
 
 // 掉电事件 发生和恢复 主动上报组帧(apdu)
@@ -1026,7 +1026,10 @@ int active_report_3011_pro(struct instance_t* instance, struct pipeline_t* pipel
         return 0;
     }
 
-    active_report_check_3011(instance, pipeline, mesg, tmp_buff, eventtype);
+    if (false == active_report_check_3011(instance, pipeline, mesg, tmp_buff, eventtype)) 
+    {
+        return 0;
+    }
 
     if (eventtype)
     {

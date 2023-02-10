@@ -752,7 +752,8 @@ signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx
         }
     }
 
-	if( (Info & CommData_W) == 0 )//不可写
+	if (( (Info & CommData_W) == 0 )    //不可写
+	|| ( (Info & CommData_FACTORY) && (mbase_cb->factor_mode == false) )) //非工厂模式
     {
         Err_Byte = RS_ERR_WR;
         return Err_Byte;

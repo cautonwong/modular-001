@@ -317,6 +317,7 @@ void plc_send_timeout(void *CallBackSendPara)
 void ir_send_timeout(void *CallBackSendPara)
 {
     //这里是发送结束最后一个字节后调用的函数，可以在这里判断是否有波特率修改，并调用修改波特率函数，注意该函数是在中断
+    baud_update(CallBackSendPara);
 }   
 
 

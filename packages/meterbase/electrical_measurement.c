@@ -1050,7 +1050,7 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
         }
     }
     
-    if(mbase_control_block->active_avg_power == 0)
+    if(mbase_control_block->active_avg_power == 0) //待调整
     {
         mbase_control_block->active_avg_power = mbase_control_block->active_power;
     }

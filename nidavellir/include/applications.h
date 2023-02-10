@@ -442,9 +442,9 @@ enum resourenc_block_name
     mbase_block_persistent_eprom,
     mbase_block_event,
     mbase_block_parameter,              //不带备份 
-    mbase_block_parameter_1,            //主区 
-    mbase_block_parameter_1_bp,         //备份 需跟在主区后面
-    mbase_block_event_flash1,
+    mbase_block_parameter_1,            //双备份-主区 
+    mbase_block_parameter_1_bp,         //双备份-备区 需跟在主区后面
+    mbase_block_event_flash1,           //和升级共用，必须为flash首个块
     mbase_block_event_flash2,
     public_block_flash,
 };
