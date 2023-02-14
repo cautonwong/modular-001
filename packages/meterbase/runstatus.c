@@ -149,6 +149,7 @@ void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline)
 		mbase_cb->run_state[7] &= ~Status_Poweroff;
 }
 
+//static 参数校验
 int16_t Check_para_Pro(struct instance_t* instance)
 {
     struct mbase_control_block_t* mbase_cb;

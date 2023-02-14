@@ -37,11 +37,11 @@ signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t*
 
     if((*(p_rx+9) == 6) )
     {
-        if((mbase_cb->metertype & F_Password_En) == 0)   //Ã÷ÎÄÄ£Ê½²»×öÅĞ¶Ï
+        if((mbase_cb->metertype & F_Password_En) == 0)   //æ˜æ–‡æ¨¡å¼ä¸åšåˆ¤æ–­
         {
             if(chl == chl_ir_698)    
             {
-                if((mbase_cb->infrared_auth_timeout == 0) && (mbase_cb->factor_mode == false))//ºìÍâÍ¨µÀ±ØĞëÔÚºìÍâÈÏÖ¤ÓĞĞ§ÆÚ¼ä½øĞĞ²Ù×÷¡£
+                if(((mbase_cb->metertype & F_Password_En) == 0) && (mbase_cb->infrared_auth_timeout == 0) && (mbase_cb->factor_mode == false))//çº¢å¤–é€šé“å¿…é¡»åœ¨çº¢å¤–è®¤è¯æœ‰æ•ˆæœŸé—´è¿›è¡Œæ“ä½œã€‚
                 {
                     if(maddr_type == SA_TYPE_BROADECAST645)
                         return -1;
@@ -54,7 +54,7 @@ signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t*
         TimeSec = TimeSec*60;
         Lng1 = TimeSec + instance->time.tm_min;
         Lng1 = Lng1*60 + instance->time.tm_sec;
-        if( ( Lng1 > 86100 ) || ( Lng1 < 301 ) )        //±ÜÃâÎçÒ¹ÁãÊ±Ç°ºó5·ÖÖÓĞ£Ê±
+        if( ( Lng1 > 86100 ) || ( Lng1 < 301 ) )        //é¿å…åˆå¤œé›¶æ—¶å‰å5åˆ†é’Ÿæ ¡æ—¶
         {
             if(maddr_type == SA_TYPE_BROADECAST645)
                 return -1;
@@ -62,7 +62,7 @@ signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t*
                 return RS_ERR_OTHERS;
         }  
         
-        for(i=0;i<3;i++)//±ÜÃâÔÂ½áËãÊ±Ğ£Ê±¡£
+        for(i=0;i<3;i++)//é¿å…æœˆç»“ç®—æ—¶æ ¡æ—¶ã€‚
         {
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
             nd_get_index(instance, s_index, (uint8_t*)&Buf[2], 2); 
@@ -85,7 +85,7 @@ signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t*
             }
         }
         #if 0//(CPU_CARD_EN) 
-        for(i=0;i<4;i++)//±ÜÃâÔÂ½áËãÊ±Ğ£Ê±¡£
+        for(i=0;i<4;i++)//é¿å…æœˆç»“ç®—æ—¶æ ¡æ—¶ã€‚
         {
             E2P_Read( Buffer, Step_Table_Balance0+3*i, 3 );
             if( Buffer[2] == Clock_Block.Clock.Mon)//
@@ -104,16 +104,16 @@ signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t*
             }
         }
         #endif
-        Buf[0] = instance->time.tm_mday;  //ÈÕ
-        Buf[1] = instance->time.tm_mon+1;  //ÔÂ
-        Buf[2] = (uint8_t)((instance->time.tm_year + 1900)-2000);  //Äê
-        Lng1 = GetTotalDay( Buf );  //µ±Ç°Ê±¼ä
+        Buf[0] = instance->time.tm_mday;  //æ—¥
+        Buf[1] = instance->time.tm_mon+1;  //æœˆ
+        Buf[2] = (uint8_t)((instance->time.tm_year + 1900)-2000);  //å¹´
+        Lng1 = GetTotalDay( Buf );  //å½“å‰æ—¶é—´
         
-        Buf[0] = BCD_BYTE(*(p_rx+13));  //ÈÕ
-        Buf[1] = BCD_BYTE(*(p_rx+14));  //ÔÂ
-        Buf[2] = BCD_BYTE(*(p_rx+15));  //Äê
-        Lng2 = GetTotalDay( Buf );  //¹ã²¥Ğ£Ê±Ê±¼ä
-        if( Lng1 == Lng2 )//Ö»ÓĞÔÚÈÕÆÚÒ»ÖÂµÄÇé¿öÏÂ£¬²ÅÔÊĞí½øĞĞ¹ã²¥Ğ£Ê±
+        Buf[0] = BCD_BYTE(*(p_rx+13));  //æ—¥
+        Buf[1] = BCD_BYTE(*(p_rx+14));  //æœˆ
+        Buf[2] = BCD_BYTE(*(p_rx+15));  //å¹´
+        Lng2 = GetTotalDay( Buf );  //å¹¿æ’­æ ¡æ—¶æ—¶é—´
+        if( Lng1 == Lng2 )//åªæœ‰åœ¨æ—¥æœŸä¸€è‡´çš„æƒ…å†µä¸‹ï¼Œæ‰å…è®¸è¿›è¡Œå¹¿æ’­æ ¡æ—¶
         {
             Buf[2] = BCD_BYTE(*(p_rx+10));
             Buf[1] = BCD_BYTE(*(p_rx+11));
@@ -129,7 +129,7 @@ signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t*
                 Buf[4] = BCD_BYTE(*(p_rx+14));
                 Buf[5] = BCD_BYTE(*(p_rx+15));
                 Buf[6] = GetWeek(&Buf[3]);
-                Lng2 = GetTotalSec( Buf );  //Ğ£Ê±Ê±¼ä
+                Lng2 = GetTotalSec( Buf );  //æ ¡æ—¶æ—¶é—´
                 
                 Buf[0] = instance->time.tm_sec;
                 Buf[1] = instance->time.tm_min;
@@ -138,24 +138,19 @@ signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t*
                 Buf[4] = instance->time.tm_mon+1;
                 Buf[5] = (uint8_t)((instance->time.tm_year + 1900)-2000);
                 
-                Lng1 = GetTotalSec( Buf );//µ±Ç°Ê±¼ä
+                Lng1 = GetTotalSec( Buf );//å½“å‰æ—¶é—´
                 
                 Lng2 = Lng2 - Lng1;
                 if( Lng2 & 0x80000000 )
                     Lng2 = ~Lng2 + 1;
-                if( (Lng2 <= (5*60)) && (mbase_cb->boardadjtime != 0xAA) )//Ò»ÌìÖ»ÔÊĞí¹ã²¥Ğ£Ê±Ò»´Î£¬Ğ£Ê±·ù¶ÈĞ¡ÓÚ5·ÖÖÓ
+                if( (Lng2 <= (5*60)) && (mbase_cb->boardadjtime != 0xAA) )//ä¸€å¤©åªå…è®¸å¹¿æ’­æ ¡æ—¶ä¸€æ¬¡ï¼Œæ ¡æ—¶å¹…åº¦å°äº5åˆ†é’Ÿ
                 {
-
-
-                    
                     //ä¿å­˜æ ¡æ—¶å‰æ—¶é—´ 
                     rtc_get_from_tm(instance,temp);
                     mem_swap_cpy( &buffer[0], &temp[0], 7);
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
                     nd_set_index(instance, s_index, buffer, 7);
                     
-
-                
                     mbase_cb->boardadjtime = 0xAA;
                     Buf[0] = (*(p_rx+10));
                     Buf[1] = (*(p_rx+11));
@@ -167,14 +162,13 @@ signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t*
 
                     read_mcu_rtc(0x00, instance);
 
-
                     //ä¿å­˜æ ¡æ—¶åæ—¶é—´ 
                     rtc_get_from_tm(instance,temp);
                     mem_swap_cpy( &buffer[0], &temp[0], 7);
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
                     nd_set_index(instance, s_index, buffer, 7);
                     
-                    record_event_no_mesg_pro(instance, NULL, BroadcastTimeS, NULL, 1);// å¹¿æ’­æ ¡æ—¶è®°å½•
+                    record_event_no_mesg_pro(instance, NULL, BroadcastTimeS, NULL, 1);// éªæŒæŒ±éâ„ƒæ¤‚ç’æ¿ç¶
                     after_Time_set_hook(instance);
 
                     if(maddr_type == SA_TYPE_BROADECAST645)
@@ -229,45 +223,31 @@ signed char MulPort_set(struct instance_t* instance, uint8_t chl, uint8_t* p_rx)
         {
             if( (*(p_rx+10) == 0) || (*(p_rx+10) == 2) )
             {
-                if((mbase_cb->metertype & F_Password_En) == 0)   //Ã÷ÎÄÄ£Ê½²»×öÅĞ¶Ï
+                if(chl == chl_ir_698)   //çº¢å¤–
                 {
-                    if(chl == chl_ir_698)    
+                    if(((mbase_cb->metertype & F_Password_En) == 0) && (mbase_cb->infrared_auth_timeout == 0) && (mbase_cb->factor_mode == false))   //æ˜æ–‡æ¨¡å¼æœªå¼€å¯
                     {
-                        if((mbase_cb->infrared_auth_timeout != 0) && (mbase_cb->factor_mode == false))//ºìÍâÍ¨µÀ±ØĞëÔÚºìÍâÈÏÖ¤ÓĞĞ§ÆÚ¼ä½øĞĞ²Ù×÷¡£
-                        {
-                            mbase_cb->MulPortMode = (*(p_rx+10));
-                            if(F_PortSec != mbase_cb->MulPortMode)    
-                            {
-                                opreate_second_pluse(3);    //åˆ‡æ¢è‡³å¤šåŠŸèƒ½å£
-                            }
-                            else
-                            {
-                                opreate_second_pluse(1);    //ç§’è„‰å†²
-                            }
-                        }    
-                        else
-                            return RS_ERR_PASS;
+                        return RS_ERR_PASS;
                     }
+                }
+
+                mbase_cb->MulPortMode = (*(p_rx+10));
+                if(F_PortSec != mbase_cb->MulPortMode)    
+                {
+                    opreate_second_pluse(3);   //åˆ‡æ¢è‡³å¤šåŠŸèƒ½å£
                 }
                 else
                 {
-                    mbase_cb->MulPortMode = (*(p_rx+10));
-                    if(F_PortSec != mbase_cb->MulPortMode)    
-                    {
-                        opreate_second_pluse(3);    //åˆ‡æ¢è‡³å¤šåŠŸèƒ½å£
-                    }
-                    else
-                    {
-                        opreate_second_pluse(1);    //ç§’è„‰å†²
-                    }
+                    opreate_second_pluse(1);    //ç§’è„‰å†²
                 }
+                
             }
             else
                 return RS_ERR_OTHERS;
         }
         else
             return RS_ERR_LEN;
-        if( Addr_9_9( p_rx+1 ) == 0 )//¹ã²¥²»ÒªÇóÓ¦´ğ
+        if( Addr_9_9( p_rx+1 ) == 0 )//å¹¿æ’­ä¸è¦æ±‚åº”ç­”
             return -1;
         else
             return 0;
@@ -279,7 +259,7 @@ signed char MulPort_set(struct instance_t* instance, uint8_t chl, uint8_t* p_rx)
 
 
 
-//p_rx ÎªÖ¡Í·  ·Ç apdu
+//p_rx ä¸ºå¸§å¤´  é apdu
 signed char dl645_meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx) 
 {
     struct mbase_control_block_t* mbase_cb;
@@ -290,7 +270,6 @@ signed char dl645_meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
     uint8_t TmpBuffer[10] ={0};
     if( Cmp_MeterAddr( instance, p_rx+1, 0 ) == 0 )
     {
-
         //è·å–å¯†ç 
         memcpy((unsigned char*)&ctx->password[0], p_rx+10, 4);
       
@@ -301,7 +280,7 @@ signed char dl645_meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
             return (uint8_t)-ret;
         }
         
-        if(( ctx->password[0] != DL645_PA_SC_CIPHER) && ( ctx->password[0] != DL645_PA_PLAIN_02))  //æ”¯æŒå‚å¤–02çº§
+        if(( ctx->password[0] != DL645_PA_SC_CIPHER) && ( ctx->password[0] != DL645_PA_PLAIN_02))  //é€îˆ›å¯”é˜å‚šî˜»02ç»¾?
         {
             if( mbase_cb->factor_mode != true )
             {
@@ -320,7 +299,7 @@ signed char dl645_meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
             //æ—¶æ•ˆåˆ¤æ–­
             if( ctx->apdu_rx_len == 16 )
             {
-                ndv_memcopy( TmpBuffer, p_rx+20, 6 );  //è§£å¯†åæ•°æ®  å·²ç»ä¸ºæ­£åº
+                ndv_memcopy( TmpBuffer, p_rx+20, 6 ); //è§£å¯†åæ•°æ®  å·²ç»ä¸ºæ­£åº
                 if( BCD_Check( TmpBuffer, 6 ) != 0 )
                 {
                     return RS_ERR_PASS;
@@ -388,7 +367,7 @@ signed char dl645_event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
             return (uint8_t)-ret;
         }
         
-        if(( ctx->password[0] != DL645_PA_SC_CIPHER) && ( ctx->password[0] != DL645_PA_PLAIN_02) && ( ctx->password[0] != DL645_PA_PLAIN_04))  //æ”¯æŒ å‚å¤–02ã€04çº§
+        if(( ctx->password[0] != DL645_PA_SC_CIPHER) && ( ctx->password[0] != DL645_PA_PLAIN_02) && ( ctx->password[0] != DL645_PA_PLAIN_04))  //é€îˆ›å¯” é˜å‚šî˜»02éŠ†?4ç»¾?
         {
             if( mbase_cb->factor_mode != true )
             {
@@ -414,7 +393,7 @@ signed char dl645_event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
                     mbase_cb->flag_event_clear = 0x5a; //æ€»æ¸…
                 }
                 
-                ndv_memcopy( TmpBuffer, p_rx+20+4, 6 );  //è§£å¯†åæ•°æ®  å·²ç»ä¸ºæ­£åº
+                ndv_memcopy( TmpBuffer, p_rx+20+4, 6 ); //è§£å¯†åæ•°æ®  å·²ç»ä¸ºæ­£åº
                 if( BCD_Check( TmpBuffer, 6 ) != 0 )     
                 {
                     return RS_ERR_PASS;
@@ -460,10 +439,10 @@ signed char dl645_event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
 }
 
 /***********************************************************************/
-/*  º¯ÊıÃû³Æ£ºCmp_RemoteCtlTime                                        */
-/*  º¯Êı¹¦ÄÜ£ºÅĞ¶ÏÔ¶³Ì¿ØÖÆÃüÁîÊÇ·ñÔÚÃüÁîÓĞĞ§Ê±¼äÄÚÏÂ·¢                 */
-/*  ÊäÈë²ÎÊı£ºAddr£ºÊı¾İµØÖ·                                           */
-/*  Êä³ö²ÎÊı£º0ÎªÕıÈ·£¬ÆäÓàÎª´íÎó                                      */
+/*  å‡½æ•°åç§°ï¼šCmp_RemoteCtlTime                                        */
+/*  å‡½æ•°åŠŸèƒ½ï¼šåˆ¤æ–­è¿œç¨‹æ§åˆ¶å‘½ä»¤æ˜¯å¦åœ¨å‘½ä»¤æœ‰æ•ˆæ—¶é—´å†…ä¸‹å‘                 */
+/*  è¾“å…¥å‚æ•°ï¼šAddrï¼šæ•°æ®åœ°å€                                           */
+/*  è¾“å‡ºå‚æ•°ï¼š0ä¸ºæ­£ç¡®ï¼Œå…¶ä½™ä¸ºé”™è¯¯                                      */
 /***********************************************************************/
 unsigned char Cmp_RemoteCtlTime( struct instance_t* instance, uint8_t* Addr )
 {
@@ -476,9 +455,9 @@ unsigned char Cmp_RemoteCtlTime( struct instance_t* instance, uint8_t* Addr )
     Buf[3] = instance->time.tm_mday;
     Buf[4] = instance->time.tm_mon+1;
     Buf[5] = (unsigned char)(instance->time.tm_year+1900 - 2000);
-	Lng1 = GetTotalSec( Buf );  //µ±Ç°Ê±¼ä
+	Lng1 = GetTotalSec( Buf );  //å½“å‰æ—¶é—´
     
-	mem_swap_cpy( Buf, Addr, 6 );    //ÃüÁîÓĞĞ§½ØÖÁÊ±¼ä
+	mem_swap_cpy( Buf, Addr, 6 );    //å‘½ä»¤æœ‰æ•ˆæˆªè‡³æ—¶é—´
 	if(Buf[0]>0x59)
 		return 1;
 
@@ -533,7 +512,7 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
             mem_swap_cpy( TmpBuffer, p_rx+20, 6 );
 	    }
 
-		if( Cmp_RemoteCtlTime( instance, TmpBuffer ) )    //ÅĞ¶ÏÀ­ºÏÕ¢ÃüÁîÊÇ·ñÔÚÃüÁîÓĞĞ§Ê±¼äÄÚÏÂ·¢
+		if( Cmp_RemoteCtlTime( instance, TmpBuffer ) )    //åˆ¤æ–­æ‹‰åˆé—¸å‘½ä»¤æ˜¯å¦åœ¨å‘½ä»¤æœ‰æ•ˆæ—¶é—´å†…ä¸‹å‘
 		{
 			RemotCtrResult = ERR_CMDTM_INVALID;
 			return RS_ERR_PASS;
@@ -544,11 +523,11 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
 	{
 	    if(mbase_cb->factor_mode == false)
 	    {
-            if((mbase_cb->metertype & F_Password_En) == 0)   //Ã÷ÎÄÄ£Ê½²»×öÅĞ¶Ï
+            if((mbase_cb->metertype & F_Password_En) == 0)   //æ˜æ–‡æ¨¡å¼ä¸åšåˆ¤æ–­
             {
                 if(chl == chl_ir_698)    
                 {
-                    if((mbase_cb->infrared_auth_timeout == 0))//ºìÍâÍ¨µÀ±ØĞëÔÚºìÍâÈÏÖ¤ÓĞĞ§ÆÚ¼ä½øĞĞ²Ù×÷¡£
+                    if((mbase_cb->infrared_auth_timeout == 0))//çº¢å¤–é€šé“å¿…é¡»åœ¨çº¢å¤–è®¤è¯æœ‰æ•ˆæœŸé—´è¿›è¡Œæ“ä½œã€‚
                     {
                         RemotCtrResult = ERR_AUTHENTM_OVER;
                         return RS_ERR_PASS;
@@ -565,7 +544,7 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
 
         if( *(p_rx+10) == 0x02 )
         {
-            if(((mbase_cb->metertype & F_Password_En) == 0) && (mbase_cb->factor_mode == false))   //Ã÷ÎÄÄ£Ê½
+            if(((mbase_cb->metertype & F_Password_En) == 0) && (mbase_cb->factor_mode == false))   //æ˜æ–‡æ¨¡å¼
             {
                 RemotCtrResult = ERR_OTHERR;
                 return RS_ERR_PASS;
@@ -579,12 +558,12 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
             
             Cmd = *(p_rx+18);
             /*
-            if( AuthenTime_Invalid() )//Éí·İÈÏÖ¤Ê§Ğ§
+            if( AuthenTime_Invalid() )//èº«ä»½è®¤è¯å¤±æ•ˆ
             {
                     RemotCtrResult = ERR_AUTHENTM_OVER;
                     return RS_ERR_PASS;
             }
-            //ÃÜÎÄ+MACĞ£Ñé
+            //å¯†æ–‡+MACæ ¡éªŒ
             HBF_LOOP_LBF( Card.Buffer, (unsigned char*)&Comm.Buff[18], 20 );
 
             if( ISO7816_WriteData_MAC( CtrFile, 0, 16, ISO7816_ESAM ) )
@@ -594,7 +573,7 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
                 return RS_ERR_PASS;
             }
             DataLen = 8;
-            //»ñÈ¡Ã÷ÎÄÊı¾İ
+            //è·å–æ˜æ–‡æ•°æ®
             if( ISO7816_ReadData( CtrFile, 0, DataLen, ISO7816_ESAM ) )
             {
                 RemotCtrResult = ERR_OTHERR;
@@ -608,14 +587,14 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
             return RS_ERR_PASS;
         }
 
-		//BCDÂëÅĞ¶Ï
+		//BCDç åˆ¤æ–­
 		if( BCD_Check( TmpBuffer, 6 ) != 0 )
 		{
 			RemotCtrResult = ERR_OTHERR;
 			return RS_ERR_PASS;
 		}
 
-		//ÅĞ¶ÏÀ­ºÏÕ¢ÃüÁîÊÇ·ñÔÚÃüÁîÓĞĞ§Ê±¼äÄÚÏÂ·¢
+		//åˆ¤æ–­æ‹‰åˆé—¸å‘½ä»¤æ˜¯å¦åœ¨å‘½ä»¤æœ‰æ•ˆæ—¶é—´å†…ä¸‹å‘
 		if( Cmp_RemoteCtlTime( instance, TmpBuffer ) )
 		{
 			RemotCtrResult = ERR_CMDTM_INVALID;
@@ -623,18 +602,18 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
 		}
 	}
 
-	//¿ØÖÆÃüÁî½âÎö
+	//æ§åˆ¶å‘½ä»¤è§£æ
 	switch( Cmd )
 	{
-		case 0x1A://ÌøÕ¢
+		case 0x1A://è·³é—¸
 				if( (mbase_cb->sta & F_RemoteRelayOn) == 0 )
 				{
                         mbase_cb->sta |= F_RemoteRelayOff;
 						mbase_cb->sta &= ~(F_RemoteGaoJing0+F_RemoteGaoJing1);
-						mbase_cb->sta &= ~F_RemoteRelayOnAllow; //À­Õ¢ È¡ÏûºÏÕ¢ÔÊĞí  GS 20221214
+						mbase_cb->sta &= ~F_RemoteRelayOnAllow; //æ‹‰é—¸ å–æ¶ˆåˆé—¸å…è®¸  GS 20221214
                         
 						mbase_cb->alarmmin = 0;
-                        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Remote_RelayOffTime);//ÌøÕ¢¸æ¾¯
+                        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Remote_RelayOffTime);//è·³é—¸å‘Šè­¦
                         nd_get_index(instance, s_index, TmpBuffer, 2);
                         mem_swap_cpy((uint8_t*)&mbase_cb->alarmmin, TmpBuffer, 2);
                         
@@ -668,56 +647,56 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
 				}
 				break;
 
-		case 0x1B://ºÏÕ¢ÔÊĞí
+		case 0x1B://åˆé—¸å…è®¸
 				mbase_cb->sta &= ~(F_RemoteGaoJing0+F_RemoteGaoJing1);
 				mbase_cb->sta &= ~F_RemoteRelayOff;
                 
-				if(mbase_cb->imaxmin > 0)   mbase_cb->imaxmin = 0;   //´óµçÁ÷ÑÓÊ±£¬Çå³ı´óµçÁ÷ÑÓÊ±Ê±¼ä
-                if(mbase_cb->alarmmin > 0)  mbase_cb->alarmmin = 0;     //ÌøÕ¢ÑÓÊ±£¬ÇåÁã
+				if(mbase_cb->imaxmin > 0)   mbase_cb->imaxmin = 0;   //å¤§ç”µæµå»¶æ—¶ï¼Œæ¸…é™¤å¤§ç”µæµå»¶æ—¶æ—¶é—´
+                if(mbase_cb->alarmmin > 0)  mbase_cb->alarmmin = 0;     //è·³é—¸å»¶æ—¶ï¼Œæ¸…é›¶
                     
 				RemotCtrResult = CTRL_STATUE_RELAYON_EN;
                 
-				if(mbase_cb->metertype & F_RelayonAuto_En)  //ºÏÕ¢ÔÊĞí×Ô¶¯ºÏÕ¢
+				if(mbase_cb->metertype & F_RelayonAuto_En)  //åˆé—¸å…è®¸è‡ªåŠ¨åˆé—¸
                 {
-					mbase_cb->sta |= F_RemoteRelayOnDirect; //Ö±½ÓºÏÕ¢
+					mbase_cb->sta |= F_RemoteRelayOnDirect; //ç›´æ¥åˆé—¸
                     mbase_cb->sta &= ~F_RemoteRelayOnAllow;
                 }
 				else
                 {
-				    mbase_cb->sta |= F_RemoteRelayOnAllow;  //ºÏÕ¢ÔÊĞí
+				    mbase_cb->sta |= F_RemoteRelayOnAllow;  //åˆé—¸å…è®¸
                 }
 				#if 0//(CPU_CARD_EN) 
-				//ÓÃ»§¿¨È¡ÏûÀ­Õ¢±¨¾¯
+				//ç”¨æˆ·å¡å–æ¶ˆæ‹‰é—¸æŠ¥è­¦
 				if( (Credit_Block.Credit.Amount <= MeterPara_Block.MeterPara.AlarmCredit2) && (MeterPara_Block.MeterPara.AlarmCredit2 != 0) && ((Flag.MeterState & F_Alarmed) == 0) )
 				{
 					Flag.MeterState |= F_Alarmed;
 					E2P_Write( MeterState_Flag, (unsigned char*)&Flag.MeterState, 1 );
 				}
-				//ÔÊĞíÓÃ»§¼ÌĞøÍ¸Ö§
+				//å…è®¸ç”¨æˆ·ç»§ç»­é€æ”¯
 				if( (Credit_Block.Credit.Amount <= 0) && ((Flag.MeterState & F_ZeroRelayOffed)==0) )
 				{
 					Flag.MeterState |= F_ZeroRelayOffed;
 					E2P_Write( MeterState_Flag, (unsigned char*)&Flag.MeterState, 1 );
 				}
 				#endif
-				if(mbase_cb->metertype & F_ExternRelay_En)  //ÍâÖÃ¼ÌµçÆ÷
+				if(mbase_cb->metertype & F_ExternRelay_En)  //å¤–ç½®ç»§ç”µå™¨
 				{
-					mbase_cb->sta |= F_RemoteRelayOnDirect; //Ö±½ÓºÏÕ¢
+					mbase_cb->sta |= F_RemoteRelayOnDirect; //ç›´æ¥åˆé—¸
                     mbase_cb->sta &= ~F_RemoteRelayOnAllow;
 				}
 				break;
-		case 0x1C://Ö±½ÓºÏÕ¢
+		case 0x1C://ç›´æ¥åˆé—¸
 				mbase_cb->sta &= ~(F_RemoteGaoJing0+F_RemoteGaoJing1);
 				mbase_cb->sta &= ~F_RemoteRelayOff;
 				
 				#if 0//(CPU_CARD_EN) 
-				//ÓÃ»§¿¨È¡ÏûÀ­Õ¢±¨¾¯
+				//ç”¨æˆ·å¡å–æ¶ˆæ‹‰é—¸æŠ¥è­¦
 				if( (Credit_Block.Credit.Amount <= MeterPara_Block.MeterPara.AlarmCredit2) && (MeterPara_Block.MeterPara.AlarmCredit2 != 0) && ((Flag.MeterState & F_Alarmed) == 0) )
 				{
 					Flag.MeterState |= F_Alarmed;
 					E2P_Write( MeterState_Flag, (unsigned char*)&Flag.MeterState, 1 );
 				}
-				//ÔÊĞíÓÃ»§¼ÌĞøÍ¸Ö§
+				//å…è®¸ç”¨æˆ·ç»§ç»­é€æ”¯
 				if( (Credit_Block.Credit.Amount <= 0) && ((Flag.MeterState & F_ZeroRelayOffed)==0) )
 				{
 					Flag.MeterState |= F_ZeroRelayOffed;
@@ -725,21 +704,21 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
 				}
 				#endif
 				
-				if(mbase_cb->imaxmin > 0)   mbase_cb->imaxmin = 0;   //´óµçÁ÷ÑÓÊ±£¬Çå³ı´óµçÁ÷ÑÓÊ±Ê±¼ä
-                if(mbase_cb->alarmmin > 0)  mbase_cb->alarmmin = 0;     //ÌøÕ¢ÑÓÊ±£¬ÇåÁã
+				if(mbase_cb->imaxmin > 0)   mbase_cb->imaxmin = 0;   //å¤§ç”µæµå»¶æ—¶ï¼Œæ¸…é™¤å¤§ç”µæµå»¶æ—¶æ—¶é—´
+                if(mbase_cb->alarmmin > 0)  mbase_cb->alarmmin = 0;     //è·³é—¸å»¶æ—¶ï¼Œæ¸…é›¶
                 
-                mbase_cb->sta |= F_RemoteRelayOnDirect; //Ö±½ÓºÏÕ¢
+                mbase_cb->sta |= F_RemoteRelayOnDirect; //ç›´æ¥åˆé—¸
                 mbase_cb->sta &= ~F_RemoteRelayOnAllow;
 				RemotCtrResult = CTRL_STATUE_RELAYON;
 				break;
-		case 0x1D://Ô¤ÌøÕ¢
+		case 0x1D://é¢„è·³é—¸
 		case 0x1E:
-				if (mbase_cb->sta & F_RemoteRelayOn)    //±£µç
+				if (mbase_cb->sta & F_RemoteRelayOn)    //ä¿ç”µ
 				{
 					RemotCtrResult = ERR_RELAYOFF_ALARM_BAODIAN;
 					return RS_ERR_PASS;
 				}
-				else if((mbase_cb->sta & F_RemoteRelayOff) || ((mbase_cb->sta & F_RemoteRelayOnAllow) && (mbase_cb->sta != (F_RemoteGaoJing0+F_RemoteGaoJing1))))   //À­Õ¢×´Ì¬ÏÂ
+				else if((mbase_cb->sta & F_RemoteRelayOff) || ((mbase_cb->sta & F_RemoteRelayOnAllow) && (mbase_cb->sta != (F_RemoteGaoJing0+F_RemoteGaoJing1))))   //æ‹‰é—¸çŠ¶æ€ä¸‹
 				{
 					RemotCtrResult = ERR_RELAYOFF_ALARM_RELAYOFF;
 					return RS_ERR_PASS;
@@ -784,17 +763,17 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
 					}
 				}
 				break;
-		case 0x2A://±¨¾¯
+		case 0x2A://æŠ¥è­¦
 				mbase_cb->sta |= F_RemoteAlarm;
 				RemotCtrResult = CTRL_STATUE_ALARM_ON;
 				break;
-		case 0x2B://±¨¾¯½â³ı
+		case 0x2B://æŠ¥è­¦è§£é™¤
 				mbase_cb->sta &= ~F_RemoteAlarm;
 				RemotCtrResult = CTRL_STATUE_ALARM_OFF;
 				break;
-		case 0x3A://±£µç
+		case 0x3A://ä¿ç”µ
           
-                //if((mbase_cb->sta & F_RemoteRelayOff) && ((mbase_cb->alarmmin > 0) || (mbase_cb->imaxmin > 0)))//À­Õ¢ÑÓÊ±¹ı³ÌÖĞ£¬±£µçºóÀ­Õ¢×Ö·ûÏûÊ§£¬µÆÃğ
+                //if((mbase_cb->sta & F_RemoteRelayOff) && ((mbase_cb->alarmmin > 0) || (mbase_cb->imaxmin > 0)))//æ‹‰é—¸å»¶æ—¶è¿‡ç¨‹ä¸­ï¼Œä¿ç”µåæ‹‰é—¸å­—ç¬¦æ¶ˆå¤±ï¼Œç¯ç­
                 {
                     mbase_cb->alarmmin = 0;
                     mbase_cb->imaxmin = 0;
@@ -802,22 +781,22 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
                 }
                 mbase_cb->sta |= F_RemoteRelayOn;
                 mbase_cb->sta &= ~(F_RemoteGaoJing1 + F_RemoteGaoJing0);
-                mbase_cb->alarmmin = 0;     //ÌøÕ¢ÑÓÊ±£¬ÇåÁã    
-                mbase_cb->imaxmin = 0;   //´óµçÁ÷ÑÓÊ±£¬Çå³ı´óµçÁ÷ÑÓÊ±Ê±¼ä
+                mbase_cb->alarmmin = 0;     //è·³é—¸å»¶æ—¶ï¼Œæ¸…é›¶    
+                mbase_cb->imaxmin = 0;   //å¤§ç”µæµå»¶æ—¶ï¼Œæ¸…é™¤å¤§ç”µæµå»¶æ—¶æ—¶é—´
 
-				if(mbase_cb->metertype & F_RelayonAuto_En)  //ºÏÕ¢ÔÊĞí×Ô¶¯ºÏÕ¢
+				if(mbase_cb->metertype & F_RelayonAuto_En)  //åˆé—¸å…è®¸è‡ªåŠ¨åˆé—¸
                 {
-					mbase_cb->sta |= F_RemoteRelayOnDirect; //Ö±½ÓºÏÕ¢
+					mbase_cb->sta |= F_RemoteRelayOnDirect; //ç›´æ¥åˆé—¸
                     mbase_cb->sta &= ~F_RemoteRelayOnAllow;
                 }
 				else
                 {
-				    mbase_cb->sta |= F_RemoteRelayOnAllow;  //ºÏÕ¢ÔÊĞí
+				    mbase_cb->sta |= F_RemoteRelayOnAllow;  //åˆé—¸å…è®¸
                 }
                 
 				RemotCtrResult = CTRL_STATUE_BAODIAN_ON;
 				break;
-		case 0x3B://±£µç½â³ı
+		case 0x3B://ä¿ç”µè§£é™¤
 				mbase_cb->sta &= ~F_RemoteRelayOn;
 				RemotCtrResult = CTRL_STATUE_BAODIAN_OFF;
 				break;
@@ -836,11 +815,11 @@ unsigned char FrozeCmd_Check(struct instance_t* instance, uint8_t chl, uint8_t* 
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t len = *(p_rx+9);
     
-    if((mbase_cb->metertype & F_Password_En) == 0)   //Ã÷ÎÄÄ£Ê½²»×öÅĞ¶Ï
+    if((mbase_cb->metertype & F_Password_En) == 0)   //æ˜æ–‡æ¨¡å¼ä¸åšåˆ¤æ–­
     {
         if(chl == chl_ir_698)    
         {
-            if((mbase_cb->infrared_auth_timeout == 0) && (mbase_cb->factor_mode == false))//ºìÍâÍ¨µÀ±ØĞëÔÚºìÍâÈÏÖ¤ÓĞĞ§ÆÚ¼ä½øĞĞ²Ù×÷¡£
+            if((mbase_cb->infrared_auth_timeout == 0) && (mbase_cb->factor_mode == false))//çº¢å¤–é€šé“å¿…é¡»åœ¨çº¢å¤–è®¤è¯æœ‰æ•ˆæœŸé—´è¿›è¡Œæ“ä½œã€‚
             {
                 return RS_ERR_PASS;
             }
@@ -857,7 +836,7 @@ unsigned char FrozeCmd_Check(struct instance_t* instance, uint8_t chl, uint8_t* 
 			{
 				if( *(p_rx+13) == 0x99 )//ss
 				{
-					//HisRecord_Write( InstantFroze, START );//Ë²Ê±¶³½á
+					//HisRecord_Write( InstantFroze, START );//ç¬æ—¶å†»ç»“
                     mbase_cb->trigger_insfreeze_delay_sec = 1;
 					return 0;
 				}
@@ -873,7 +852,7 @@ unsigned char FrozeCmd_Check(struct instance_t* instance, uint8_t chl, uint8_t* 
 	else if( (*(p_rx+13) > 0x12) || (*(p_rx+13) < 0x01) || (*(p_rx+12) > 0x31) || (*(p_rx+12) < 0x01) || (*(p_rx+11) > 0x23) || (*(p_rx+10) >0x59) )
 		return RS_ERR_OTHERS;
 
-	//¶¨Ê±¶³½á
+	//å®šæ—¶å†»ç»“
 	return 0;
 }
 
@@ -884,7 +863,7 @@ signed char ctl_freeze(struct instance_t* instance, uint8_t chl, uint8_t* p_rx)
     if( (Cmp_MeterAddr( instance, p_rx+1, 0 ) == 0) || (Addr_9_9( p_rx+1 ) == 0) )
     {
         Err = FrozeCmd_Check(instance, chl, p_rx);
-        if( Addr_9_9( p_rx+1 ) == 0 )//¹ã²¥²»ÒªÇóÓ¦´ğ
+        if( Addr_9_9( p_rx+1 ) == 0 )//å¹¿æ’­ä¸è¦æ±‚åº”ç­”
         {
             return -1;
         }
@@ -938,7 +917,7 @@ signed char chg_baut(struct instance_t* instance, uint8_t* p_rx)
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         offsetof(struct mbase_control_block_t, Baut_rs485));
             nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->Baut_rs485, 1);
-            mbase_cb->baud_chg = 0x01;  //¸üĞÂ´®¿Ú²¨ÌØÂÊ
+            mbase_cb->baud_chg = 0x01;  //æ›´æ–°ä¸²å£æ³¢ç‰¹ç‡
         }
         return Err;
     }

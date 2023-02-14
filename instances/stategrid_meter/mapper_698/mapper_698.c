@@ -2,7 +2,7 @@
 #include "fr_698.h"
 #include "fr_645_report.h"
 #include "gs_record.h"
-
+#include "pin_function_def.h"
 //参数初始化  
 extern const uint8_t  init_MinuteFreeze_oad[];
 extern const uint8_t  init_HourFreeze_oad[];
@@ -178,6 +178,9 @@ extern const uint8_t init_LoadRec_Inv2[];
 extern const uint8_t init_LoadRec_Inv3[];
 extern const uint8_t init_LoadRec_Inv4[];
 extern const uint8_t init_ASCII_Factor[];
+extern const uint8_t  init_Meter_Type[]; //表功能配置字 
+extern const uint8_t  init_ParaInitFinish_Flag[];// 恢复出厂已执行标志
+
 
 extern void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id);
 
@@ -652,6 +655,10 @@ const  parameter_item_t  parameter_item[] =
     { AuthTime_DL645                , 0x01 ,     2    , init_AuthTime_DL645         }, // 身份认证时效
     { report_stat_645_E             , 0x01 ,   108    , 0                           }, // 645上报状态字E2p地址
     { Produced_Date645              , 0x01 ,     10   , init_Produced_Date645       }, // 645生产日期
+
+
+    { ParaInitFinish_Flag           , 0x01 ,     4    , init_ParaInitFinish_Flag    }, // 参数初始化完成标志 5555AAAA
+    
 
      
 #else
@@ -2726,13 +2733,15 @@ int para_init(struct instance_t* instance )
     mbase_cb->active_report_sec_limit = 3600; //掉电 主动上报 上电时间阈值 默认3600 
     memset(mbase_cb->report_mode_645, 0x00, sizeof(mbase_cb->report_mode_645));//645主动上报模式 待调整
 
+    mbase_cb->factor_mode = true; //用于 自动初始化时  进入厂内
+
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
     offsetof(struct mbase_control_block_t, OverCurrent_threshold));
-    s_len = offsetof(struct mbase_control_block_t, factor_mode) - offsetof(struct mbase_control_block_t, OverCurrent_threshold);
+    s_len = offsetof(struct mbase_control_block_t, factor_mode) - offsetof(struct mbase_control_block_t, OverCurrent_threshold) + sizeof(mbase_cb->factor_mode);
     nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->OverCurrent_threshold, s_len);  
 
     // 波特率更新标志
-    mbase_cb->baud_chg = (BIT0|BIT1);
+    mbase_cb->baud_chg = 0xFF;
 
     //掉电保存区
     mbase_cb->sta = 0; //继电器命令状态
@@ -2787,10 +2796,60 @@ int para_init(struct instance_t* instance )
     {
         return -1;
     }
-    
+   
     return 0;
 }
 
+//首次上电 参数自动初始化
+//条件: 开盖,参数校验区异常, 表型读取异常,
+int auto_parameter_inital(struct instance_t* instance)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint32_t s_index = 0;
+    int ret = 0;
+    uint8_t* buf = instance->apdu_cache;
+    uint8_t i,meter_cover_flag = 0;
+    uint16_t check_id[3] = {KeyDisplayList, Report_channel, OverCurrentAS_oad  }; //mbase_block_parameter 区参数   按键显示项、上报通道、过流事件关联对象
+
+
+    METER_COVER_INPUT();
+    if(METER_COVER_GET_DIN() == METER_COVER_OPEN_LEVE)//开盖下
+    {
+        ret = nd_get_index_e2p(instance, buf, mbase_block_parameter, ParaInitFinish_Flag, 2);  //判断 完成标志
+        if((ret > 0) && ((buf[0] == 0x55) || (buf[1] == 0x55) || (buf[2] == 0xaa) || (buf[1] != 0xaa)) )
+        {
+            return 0;
+        }
+        
+        ret = Check_para_Pro(instance);     //判断static参数区效验
+        if(ret > 0) 
+        {
+            return 0;
+        }
+
+        for(i=0;i<(sizeof(check_id)/sizeof(check_id[0]));i++) //判断 三个 mbase_block_parameter 区参数 
+        {
+            ret = nd_get_index_e2p(instance, buf, mbase_block_parameter, check_id[i], 1); 
+            if(ret > 0)
+            {
+                break;
+            }
+        }
+        // 若存储器异常 退出
+        if (i == (sizeof(check_id)/sizeof(check_id[0])))
+        {
+            para_init( instance );
+            reset_all_channel_baud(instance); 
+            //执行完成标志
+            buf[0] = 0x55; buf[1] = 0x55; buf[2] = 0xaa; buf[3] = 0xaa;
+            nd_set_index_e2p(instance, buf, mbase_block_parameter, ParaInitFinish_Flag, 2);  //写完成标志
+            return 1;
+        } 
+    }   
+    
+    return 0;
+    
+}
 
 
 //编程记录 判断  协议set和 action 调用

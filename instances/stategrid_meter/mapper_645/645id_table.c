@@ -13,6 +13,7 @@ extern const  unsigned char FirmWareVersion[20];
 extern unsigned long SoftwareCHK(void);
 extern int rn8209c_set( struct instance_t* instance, uint8_t *p_rx );
 extern uint8_t rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx);
+extern uint8_t get_current_plc_baud(struct instance_t* instance);
 
 const COMMTAB  CommTab[] =
 {
@@ -269,7 +270,7 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t id=0,StAddr=0, s_index = 0;
-    uint8_t i=0,j,index=0;
+    uint8_t i=0,j,index=0, Baut = 0;
     uint16_t sate=0,sate1=0;
     
     memcpy((uint8_t *)&id, databuf-4, 4);
@@ -344,10 +345,11 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
         case 0x04100901:    //按键显示每屏时间
             WORD_BCD2(databuf, mbase_cb->lcd_keydis_keep_sec);
             break;
-        case 0x04000705:    //载波波特率
+        case 0x04000705:    //载波波特率 
+            Baut = get_current_plc_baud(instance);
             for(i=0;i<8;i++)
             {
-                if(mbase_cb->Baut_plc == baud698[i])
+                if(Baut == baud698[i])
                 {
                     *databuf = baud645[i];
                     return 0;
@@ -367,7 +369,7 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             *databuf = 0x80;
             break;
         case 0x04000701:    //红外波特率
-            *databuf = 0x02;
+            *databuf = 0x04;
             break;
         case 0x04090801:    //过流事件阈值
             sate = mbase_cb->OverCurrent_threshold/1000;
@@ -391,11 +393,13 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             memset(databuf, 0, 2);
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Meter_Type);
             nd_get_index(instance, addr, (uint8_t*)databuf, 2); //区分判断 是否已经设置过表型
-
             //memcpy(databuf, (uint8_t *)&mbase_cb->metertype, 2);
             break;
         case 0xA8F00002:    //背光配置字
-            memcpy(databuf, (uint8_t *)&mbase_cb->blt_alarm, 2);
+            memset(databuf, 0, 4);
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Blt_Alarm_Byte);
+            nd_get_index(instance, addr, (uint8_t*)databuf, 4); 
+            //memcpy(databuf, (uint8_t *)&mbase_cb->blt_alarm, 2);
             break;
         case 0xA8F00051://掉电主动上报的阈值时间(秒)hex  0x0E10
             memcpy(databuf, (uint8_t*)&mbase_cb->active_report_sec_limit, 2 );        
@@ -680,6 +684,7 @@ static uint8_t dl645wt_hex_bcd(struct instance_t* instance, uint32_t addr, uint8
     uint32_t addr1=0;
     uint32_t temp=0,data=0;
     uint8_t buf[4] = {0,},len=0, storage_len = 0;
+    uint16_t temp_u16 = 0;
     
     memcpy((uint8_t*)&temp, prx, *length);
     
@@ -739,7 +744,15 @@ static uint8_t dl645wt_hex_bcd(struct instance_t* instance, uint32_t addr, uint8
         case ImaxProtectValue: 
             mem_swap_cpy((uint8_t*)&mbase_cb->I_Prot, (uint8_t*)&temp, 4);
             break;
-
+        
+        case Remote_RelayOffTime: 
+            mem_swap_cpy((uint8_t *)&temp_u16, (uint8_t*)&temp, 2);
+            if(mbase_cb->alarmmin > 0)   //延时中刷新
+            {
+                mbase_cb->alarmmin = temp_u16*60;   
+            }
+            break;
+            
         default:
             break;
     }
@@ -798,7 +811,33 @@ static uint8_t dl645wt_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_poweron_all_dis_time, 1);
             break;
         case 0x04000701:    //紅外波特率設置無效
+            break;
         case 0x04000705:    //plc波特率
+            switch( *databuf )
+            {
+                case 0x02:  //600
+                    mbase_cb->Baut_plc = 1;
+                    break;
+                case 0x04:  //1200
+                    mbase_cb->Baut_plc = 2;
+                    break;
+                case 0x08:  //2400
+                    mbase_cb->Baut_plc = 3;
+                    break;
+                case 0x10:  //4800
+                    mbase_cb->Baut_plc = 4;
+                    break;
+                case 0x20:  //9600
+                    mbase_cb->Baut_plc = 6;
+                    break;
+                case 0x40:  //19200
+                    mbase_cb->Baut_plc = 7;
+                    break;
+            }
+            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        offsetof(struct mbase_control_block_t, Baut_plc));
+            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->Baut_plc, 1);
+            mbase_cb->baud_chg = 0x02;  //更新串口波特率  
             break;
         case 0x04000703:    //485波特率
             switch( *databuf )
@@ -859,15 +898,15 @@ static uint8_t dl645wt_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_keydis_keep_sec, 2);
             break;
         case 0xA8F00002:    //背光报警配置字
-            memcpy((uint8_t*)&mbase_cb->blt_alarm, databuf, 2);
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, blt_alarm));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->blt_alarm, 2);
+            memcpy((uint8_t*)&mbase_cb->blt_alarm, databuf, 4);
+
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Blt_Alarm_Byte);
+            nd_set_index(instance, s_index, (uint8_t*)&mbase_cb->blt_alarm, 4);
             break;
         case 0xA8F00003:    //多功能配置字
             memcpy((uint8_t*)&mbase_cb->metertype, databuf, 2);
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Meter_Type);
-                        nd_set_index(instance, s_index, (uint8_t*)&mbase_cb->metertype, 2);
+            nd_set_index(instance, s_index, (uint8_t*)&mbase_cb->metertype, 2);
             break;
         case 0xA8F00051://掉电主动上报的阈值时间(秒)hex  0x0E10
             memcpy(&mbase_cb->active_report_sec_limit, databuf, 2);                

@@ -555,13 +555,11 @@ enum block_parameter_item_id_t
 
 #define     AuthTime_DL645              1527 // 身份认证时效
 #define     report_stat_645_E           1528 // 645上报状态字
-
-
 #define     MeterWr645_List             1529 //编程对象列表645            扩展OAD:0xFFFE0000        
 
-
-
-#define     __INITFLAG2_End             report_stat_645_E //初始化 特殊处理标记  
+#define     ParaInitFinish_Flag         1999 //参数初始化完成标志
+#define     __INITFLAG2_End             ParaInitFinish_Flag //初始化 特殊处理标记  
+// ------------------------------------------ 
 
 
 

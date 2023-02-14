@@ -31,9 +31,6 @@
 #define  CF_M_FD_645        (CF_M_NORMAL_698 + 1)
 
 
-
-
-
 //类型配置
 #define CF_M_STANDARD  CF_M_NORMAL_698
 
@@ -54,6 +51,12 @@
     #define DEF_645_PRIVATE_KEY_METERCLR_EN 0   //645私钥下不支持清零
 
 #endif
+
+
+//参数配置
+#define METER_TYPE_CONFIG  (0x0801)  //表功能配置字
+
+
 
 
 
@@ -119,16 +122,13 @@ struct mbase_control_block_t
     uint8_t lcd_keydis_list_maxnum;    /*键显最大屏数 */
     uint16_t lcd_autodis_keep_sec;    /*轮显持续时间 */
     
-    
-    
     uint8_t Baut_rs485; //485波特率
+    uint8_t Baut_plc;   //载波波特率(EEPROM)
 
-    
     uint8_t SafeEn; //安全模式  1：启用，0：不启用
     
     uint8_t relay_ctl_mode; //继电器控制方式（0：脉冲式，1：保持式）
 
-    
     uint16_t Limit_T_Max;   //广播校时最大允许范围
     uint16_t Limit_T_Min;   //广播校时最小允许范围
 
@@ -147,7 +147,6 @@ struct mbase_control_block_t
     
     uint8_t ZeroLineErrS_duration_para; //参数 判定延时时间                             //事件参数末尾------------
 
-    
     uint32_t report_2015mode;               //跟随上报模式字   
     uint16_t active_report_sec_limit;       //掉电 主动上报 上电时间阈值 默认3600 
     uint8_t report_mode_645[8];             //645主动上报模式字
@@ -220,7 +219,7 @@ struct mbase_control_block_t
     
     uint8_t baud_chg;   //波特率改变，BIT0(485),BIT1(PLC)
     uint16_t plc_baut_tick; //1小时不通讯需要复位载波通道，波特率恢复115200
-    uint8_t Baut_plc;   //载波波特率(EEPROM)
+    
     uint8_t Baut_plc_neg;   //协商波特率（RAM）
 
 
@@ -692,7 +691,7 @@ extern void ndv_timer_init(void);
 extern void MComp1Init(void);
 extern void esam_698_init(struct instance_t* instance, uint8_t power_mode);
 extern void  v85xxp_clear_watchdog(void);
-
+extern const uint8_t  init_Meter_Type[]; //表功能配置字
 
 
 #if RESET_INFO

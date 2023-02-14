@@ -158,6 +158,7 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
 {
 #ifndef WIN32
     uint32_t addr = 0;
+    int ret = 0;
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
@@ -190,10 +191,12 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
         {
             //获取电表类型
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Meter_Type);
-            nd_get_index(instance, addr, (uint8_t*)&mbase_cb->metertype, 2);
-            if((mbase_cb->metertype == 0 ) || (mbase_cb->metertype == 0xFFFF ))
+            ret = nd_get_index(instance, addr, (uint8_t*)&mbase_cb->metertype, 2);
+            if(ret < 0) //校验错误
             {
-                mbase_cb->metertype = 0x0001;    //远程内置表
+                ndv_memcopy((uint8_t*)&mbase_cb->metertype, (uint8_t *)&init_Meter_Type[0], 2);
+                //addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + );
+                //nd_set_index(instance, s_index, (uint8_t*)&mbase_cb->metertype, 2);
             }
             mbase_cb->frz_replenish_end = 0;      
             

@@ -83,6 +83,11 @@ int get_3320_attr3(struct instance_t* instance, uint32_t oad, uint8_t* buf,void 
     
     for (i = 0; i < event_oad_num; i++)
     {
+        if(0xFF000000 == (event_oad_list[i] & 0xFF000000)) //自扩事件 不允许上报
+        {
+            continue;
+        }
+        
         rptflag = 0;
         rptflag = read_event_report_flag_mode(instance, event_oad_list[i], 0);
         

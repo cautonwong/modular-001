@@ -455,10 +455,12 @@ int clr_record(struct instance_t* instance, uint32_t oad)
                 if (get_OAD_OI(oad) == 0x301F)
                 {
                     mbase_cb->report_2015state[i] &= ~RPT_2015_SWITCH_OFF_SUCCEES;
+                    report_stat_reset_from_698(instance,  RPT_2015_SWITCH_OFF_SUCCEES);
                 }
                 else
                 {
                     mbase_cb->report_2015state[i] &= ~RPT_2015_SWITCH_ON_SUCCEES;
+                    report_stat_reset_from_698(instance,  RPT_2015_SWITCH_ON_SUCCEES);
                 }
             }
             //保存e2p
@@ -605,7 +607,7 @@ const uint32_t event_oad_list[] =
     0x303C0200,   //广播校时事件 
     0x30400200,   //零线电流异常事件  
 
-    0xFF310000,   //电能表编程事件645 
+    0xFF310000,   //电能表编程事件645  // 不允许与698上报相关联
 };
 const uint8_t event_oad_num = sizeof(event_oad_list) / sizeof(event_oad_list[0]);
 
@@ -1455,7 +1457,7 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
 
     if((mode == START_MODE) || (mode == END_MODE))  //事件类 
     {
-        if ((mesg->id != MeterWrR) && (mesg->id != MeterWr645S) && (mesg->id != MeterWr645R))
+        if ((mesg->id != MeterWrR) && (mesg->id != MeterWr645S) && (mesg->id != MeterWr645R)) //自扩
         {
             report_updata = 1;
         }

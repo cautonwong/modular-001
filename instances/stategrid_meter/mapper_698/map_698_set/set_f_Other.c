@@ -228,6 +228,10 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                                 break;*/
                             case 0x01://当前总对象数
                                 p = p + 1;
+                                if (p[0] > 99)
+                                {
+                                    return -DAR_RW_REJECT;
+                                }
                                 if(oad == 0xF300)
                                 {
                                     mbase_cb->lcd_autodis_list_num = *p++;

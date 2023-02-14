@@ -7,7 +7,7 @@
 #include "fr_698.h"
 #include "gs_record.h"
 #include "pin_function_def.h"
-
+#include "utils.h"
 extern int16_t Check_para_Pro(struct instance_t* instance);
 extern void Poffset_adj_oneself(struct instance_t* instance);
 //#define     P_BACKLIGHT_ON      GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT |= 0x10; //推挽输出高
@@ -97,8 +97,10 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
 //    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     struct message_t mesg;
     struct mbase_control_block_t* mbase_cb;
+    uint8_t baud = DEF_BAUT_PLC;
+    
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-
+   
     memset(&mesg, 0, sizeof(struct message_t));
     
     if(mbase_cb->AutoInv > 0)   mbase_cb->AutoInv--;
@@ -131,8 +133,12 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
             if( mbase_cb->plc_baut_tick == 0)
             {
                 mbase_cb->Baut_plc_neg =0xfe;
-                mbase_cb->Baut_plc = DEF_BAUT_PLC;
-                mcu_uart_set_baud(baud_table[DEF_BAUT_PLC], 4);
+                baud = mbase_cb->Baut_plc;
+                if(baud > 10)
+                {
+                    baud = DEF_BAUT_PLC; 
+                }
+                mcu_uart_set_baud(baud_table[baud], 4);
             }
         }
 
@@ -254,14 +260,8 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_static, &addr);//RAM对应的地址
             res = get_res(RES_DEV_EEPROM, mbase_block_static_eprom);
             nd_get_block(instance, res, (uint8_t*)addr, mbase_block_static_size); //将EPROM中的数据恢复到RAM;  
-            ret = Check_para_Pro(instance);     //数据效验
-            if (ret < 0) //参数区异常时，恢复485波特率  //待调整？
-            {
-                para_init( instance );
-                rs485_init(instance, pipeline);
-            }
-            //上电需要恢复数据
-            //跳过电能恢复 由电能模块处理        
+
+            //上电需要恢复数据   //跳过电能恢复 由电能模块处理  
             addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
                 offsetof(struct mbase_control_block_t, persistent_energy_EC_label)  -  offsetof(struct mbase_control_block_t, persistent_section_start));
             nd_get_offset(instance, addr, (uint8_t*)&mbase_cb->persistent_energy_EC_label, (mbase_block_persistent_size - persitent_ec_size));           
@@ -269,6 +269,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             //get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
             //nd_get_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)(addr + persitent_ec_size),(mbase_block_persistent_size - persitent_ec_size)); //将EPROM中的数据恢复到RAM;        
 
+            auto_parameter_inital(instance);
             rtc_check_poweron(instance);
             Energy_Meter_PowerON(instance, pipeline);
             Electrical_measurement_poweron(instance, pipeline);
@@ -291,7 +292,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             mbase_cb->limitmin = 0;     //上电后清零
             mbase_cb->imaxmin = 0;     //上电后清零
             mbase_cb->Baut_plc_neg = 0xfe;
-            mbase_cb->Baut_plc = DEF_BAUT_PLC;//6;
+            //mbase_cb->Baut_plc = DEF_BAUT_PLC;//6;  上电从e2p恢复
             mbase_cb->disp_borrow = 0; //借位
             mbase_cb->baud_chg = (BIT0|BIT1);               // 上电 更新波特率标志  
             mbase_cb->plc_baut_tick = 1; 

@@ -95,8 +95,11 @@ static const struct double_protocol_report_map_t  double_protocol_report_map_tab
     {0x301C0200, 11, 11},               // 电能表开端钮盒事件  
     {0x302A0200, 12, 12},               // 电能表恒定磁场干扰事件  
     {0x302C0200, 13, 13},               // 电能表电源异常事件  
-    {0x301F0200, 14, 14},               // 电能表跳闸事件   // 同为2015 的状态?  
-    {0x30200200, 15, 15},               // 电能表合闸事件   // 同为2015 的状态?
+    //{0x301F0200, 14, 14},               // 电能表跳闸事件   // 同为2015 的状态?  
+    //{0x30200200, 15, 15},               // 电能表合闸事件   // 同为2015 的状态?
+    {RPT_2015_SWITCH_OFF_SUCCEES, 14, 14| REPORT_TYPE_2015},               // 电能表跳闸成功状态   //     645关联698的2015状态 不关联事件
+    {RPT_2015_SWITCH_ON_SUCCEES , 15, 15| REPORT_TYPE_2015},               // 电能表合闸成功状态// 
+
 
 #if 0  //三相
     {0x30000700, 16, 16},               // A相电能表失压事件  
@@ -353,7 +356,7 @@ void report_3320flag_set_from_698(struct instance_t* instance, uint32_t oad, uin
         }
         mod_cnt645 = double_protocol_report_map_table[cnt].mode_index645;
 
-        if ((event_oad != 0xFFFFFFFF) && (event_oad == oad))
+        if ((event_oad != 0xFFFFFFFF) && (get_OAD_OI(event_oad) == get_OAD_OI(oad))) 
         {
             if (mod_cnt645 < 64)
             {
@@ -419,7 +422,7 @@ void report_3320mode_set_from_698(struct instance_t* instance, uint32_t oad, uin
         }
 
 
-        if ((event_oad != 0xFFFFFFFF) && (event_oad == oad))
+        if ((event_oad != 0xFFFFFFFF) && (get_OAD_OI(event_oad) == get_OAD_OI(oad)))
         {
             if (mod_cnt645 < 64)
             {                
@@ -583,7 +586,7 @@ uint8_t report_stat_reset_from_3320_698(struct instance_t* instance, uint32_t OA
 
     for (cnt = 0; cnt < double_protocol_report_map_num; cnt++)
     {
-        if (OAD_State698 == double_protocol_report_map_table[cnt].OAD_State698)
+        if (get_OAD_OI(OAD_State698) == get_OAD_OI(double_protocol_report_map_table[cnt].OAD_State698)) 
         {
             mod_cnt645 = double_protocol_report_map_table[cnt].mode_index645;
             mod_cnt645 &=~ REPORT_TYPE_2015;

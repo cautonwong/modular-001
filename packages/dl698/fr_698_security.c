@@ -110,7 +110,7 @@ static int __verification_SID_MAC(struct instance_t* instance, struct pipeline_t
 
 
 }
-
+extern int check_upreport_esam_rn_mac(struct instance_t* instance, struct esam_698_input_t *p_input, struct esam_698_output_t *p_output);
 static int __verification_RN(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -426,6 +426,7 @@ int fr_infrared_auth_check(struct instance_t* instance, struct pipeline_t* pipel
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t i;
+
 
     if (ctx->channel != chl_ir_698 || (mbase_cb->infrared_auth_timeout != 0) || (mbase_cb->factor_mode == true))
     {

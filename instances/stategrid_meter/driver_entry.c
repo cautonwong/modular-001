@@ -285,7 +285,7 @@ void baud_update(void *CallBackSendPara)
 
         mcu_uart_set_baud(baud, 4);
     }
-    if(mbase_control_block->baud_chg & 0x04)    //plc协商
+    if(mbase_control_block->baud_chg & (0x04 + 0x02))    //plc协商    只要协商存在，始终以协商为准
     {
         for(i=0;i<11;i++)
         {
@@ -684,6 +684,15 @@ void rs485_init(struct instance_t* instance, struct pipeline_t* pipeline)
 
     mcu_uart_set_baud(baud, 0);     //485波特率切换至EEPROM设置要求
     
+}
+
+//刷新所有通道   波特率配置
+void reset_all_channel_baud(struct instance_t* instance)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    mbase_cb->baud_chg = 0xFF; 
+    baud_update((void *)instance);
 }
 
 //打开串口，高速定时器，tick，初始化IO上电配置

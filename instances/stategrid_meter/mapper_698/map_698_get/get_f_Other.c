@@ -8,6 +8,24 @@ const uint8_t name_ir[5] = {'I', 'N', 'F', 'R', 'A'};
 const uint8_t name_plc[3] = {'P', 'L', 'C'};
 const uint8_t name_relay[5] = {'R', 'E', 'L', 'A', 'Y'};
 
+uint8_t get_current_plc_baud(struct instance_t* instance)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t baud = DEF_BAUT_PLC;
+    if(mbase_cb->Baut_plc_neg <= 10)
+    {
+        baud = mbase_cb->Baut_plc_neg;    //载波协商波特率
+    }
+    else
+    {
+        if(mbase_cb->Baut_plc <= 10)
+            baud = mbase_cb->Baut_plc;    //载波设置波特率
+    }
+
+    return baud;
+}
+
+
 int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *ctx)
 {    
 #ifndef WIN32
@@ -98,14 +116,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 else if(oad == 0xF202)   *p++ = 2;    //红外波特率
                 else if(oad == 0xF209)   
                 {   
-                    if(mbase_cb->Baut_plc_neg <= 10)
-                    {
-                        *p++ = mbase_cb->Baut_plc_neg;    //载波波特率
-                    }
-                    else
-                    {
-                        *p++ = mbase_cb->Baut_plc;    //载波波特率
-                    }
+                    *p++ = get_current_plc_baud(instance);
                 }
                 *p++ = 0x02;    //偶效验
                 *p++ = 0x08;    //8个数据位

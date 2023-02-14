@@ -474,12 +474,17 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
 					Err_Byte = RS_ERR_FEEOV;
                 mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
 				break;
-		case 0x04000A02:
+		case 0x04000A02://负荷间隔
 		case 0x04000A03:
 		case 0x04000A04:
 		case 0x04000A05:
-				if((*p_rx == 0x00) && (*(p_rx+1) == 0x00))
-					Err_Byte = RS_ERR_OTHERS;
+		//case 0x04000A06://三相
+		//case 0x04000A07:
+                u16_tmp = buf_to_uint16_lsb(p_rx);
+		        if((u16_tmp == 0) || (u16_tmp > 0x60) || (false == Isbcddataarray(p_rx, 2)))
+		        {
+                    Err_Byte = RS_ERR_OTHERS;
+		        }					
 				break;
 		#if FEIKONG_MODE == 0
 		case 0x04000207://梯度数

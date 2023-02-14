@@ -259,14 +259,22 @@ int8_t security_judge_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *p
 {
     int8_t err=0;
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    union dl645_DI_t DI;
 
+    DI.di = 0;
+	
 	switch (ctx->password[0])
 	{
 	case DL645_PA_PLAIN_02:  
 	case DL645_PA_PLAIN_04: 
         if((Cmp_Password(instance, ctx->password) == 0)) //开启明文设参 且密码正确
         {
-            if((mbase_cb->metertype & F_Password_En) || ((ctx->ctrl == 0x1B) || (ctx->ctrl == 0x1C)))  //明文合闸 或开启明文设参
+            if(ctx->ctrl == 0x14)
+            {
+                memcpy((unsigned char*)&DI.di, p_rx, 4);
+            }
+            if((mbase_cb->metertype & F_Password_En) || ((ctx->ctrl == 0x1B) || (ctx->ctrl == 0x1C)) //明文合闸 或开启明文设参
+               || (0x04001503 == DI.di))  //复位主动上报状态字  支持明文
             {
                 err = 1;
             }
