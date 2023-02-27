@@ -166,6 +166,9 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
     {
         if(true == ac_power_off_monitor())
         {
+            device_power_close(instance);//关闭大功率外设
+            PowerOff_Save_data(instance, pipeline, mesg); //数据保存
+
             mesg->from = kernel;
             mesg->to = pid_meter_base;
             mesg->ctrl = MSG_POWEROFF;
@@ -180,9 +183,7 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
             //mesg->len = 0;
             //send_mesg(instance, NULL, mesg);
             instance->ac_power_statue = AC_POWER_OFF;
-            
-            device_power_close(instance);//关闭大功率外设
-            PowerOff_Save_data(instance, pipeline, mesg); //数据保存
+
         }
     }
     else
@@ -198,7 +199,6 @@ int fr_sw_ac_power(struct instance_t* instance, struct pipeline_t* pipeline, str
                 //addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + );
                 //nd_set_index(instance, s_index, (uint8_t*)&mbase_cb->metertype, 2);
             }
-            mbase_cb->frz_replenish_end = 0;      
             
             device_power_open(instance, pipeline);
             mesg->from = kernel;
@@ -272,6 +272,7 @@ int nidavellir_run(struct instance_t *instance)
                 else if (ret == 0)
                 {
                     filter = NULL;
+                    
                 }
             } while (filter != NULL);
         }

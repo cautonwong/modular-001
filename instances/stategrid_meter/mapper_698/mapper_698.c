@@ -180,7 +180,7 @@ extern const uint8_t init_LoadRec_Inv4[];
 extern const uint8_t init_ASCII_Factor[];
 extern const uint8_t  init_Meter_Type[]; //表功能配置字 
 extern const uint8_t  init_ParaInitFinish_Flag[];// 恢复出厂已执行标志
-
+extern const uint8_t init_EC_SaveDiff_E[];
 
 extern void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id);
 
@@ -669,9 +669,9 @@ const  parameter_item_t  parameter_item[] =
 //带备份区   mbase_block_parameter_1
 const  parameter_item_t  parameter_item_1[] =
 {
-    //升级  //绝对地址 0
-    { UPGRADE_PARA_INFO ,       1  ,        60  ,   0 },   //升级参数信息  60字节
-    { UPGRADE_RESET_FLAG,       1  ,        4   ,   0 },   //升级复位标志4字节
+    //升级  //绝对地址 0 //待调整
+    //{ UPGRADE_PARA_INFO ,       1  ,        60  ,   0 },   //升级参数信息  60字节
+    //{ UPGRADE_RESET_FLAG,       1  ,        4   ,   0 },   //升级复位标志4字节
     
     /***************** 计量相关 *****************/
     { Heat_Value_10L    ,       1  ,        30   ,   0 },   //1.0L自热补偿
@@ -684,6 +684,7 @@ const  parameter_item_t  parameter_item_1[] =
     { ADJ_K             ,       1   ,       16  ,   0 },    //Kp Ku Ki 零线K系数 4*4 = 16 
     { Heat_Cmp_Value    ,       1   ,       2   ,   0 },    //自热补偿（硬件）
     { Meter_Type        ,       1   ,       2   ,   0 },    //电表型号
+    { EC_SaveDiff_E     ,       1   ,       2   ,   init_EC_SaveDiff_E },    //电能定量保存阈值hex       --0.01kwh  
 
     { Energy_block      ,       1   ,       160 ,   0 },    //电能块 保存区 (含ram中的校验)
     { UseEnergy_block   ,       1   ,       12  ,   0 },    //电能块 保存区 (含ram中的校验)
@@ -1039,7 +1040,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     SeqId = OverCurrentAS_seq;              // 序号存储地址信息
                     ReportFlagId = OverCurrentAS_RptFlag;   //上报标识
                     ReportModeId = OverCurrentAS_RptMode;   //上报方式   
-                    info->record_head = record_head_t0;     // 记录单元
+                    info->record_head = record_head_t1;     // 记录单元
                     info->acc_time = &mbase_cb->OverCurrentAS_acc_time;
                 }
                 break;
@@ -2724,7 +2725,7 @@ int para_init(struct instance_t* instance )
     mbase_cb->PowerOffS_duration_para = 0;    //参数 判定延时时间  
     mbase_cb->CoverOpenS_duration_para = 3;   //参数 判定延时时间  
     mbase_cb->SwitchErrS_duration_para = 5;   //参数 判定延时时间  
-    mbase_cb->EmuErrS_duration_para = 5;      //参数 判定延时时间  
+    mbase_cb->EmuErrS_duration_para = 60;      //参数 判定延时时间  
     mbase_cb->RTCErrS_duration_para = 1;      //参数 判定延时时间  
     mbase_cb->ZeroLineErrS_duration_para = 60; //参数 判定延时时间      
 
@@ -2749,6 +2750,19 @@ int para_init(struct instance_t* instance )
         offsetof(struct mbase_control_block_t, sta)) -  offsetof(struct mbase_control_block_t, persistent_section_start);
     nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->sta, sizeof(mbase_cb->sta));
 
+    //双备份区初始化
+    num = sizeof(parameter_item_1)/sizeof(parameter_item_t);
+    for(i=0; i<num; i++)
+    {
+        if( parameter_item_1[i].data != 0 )
+        {
+            v85xxp_clear_watchdog();
+            p_data = parameter_item_1[i].data;
+                    
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + parameter_item_1[i].paramerer_index);
+            nd_set_index(instance, s_index, (uint8_t*)(p_data), parameter_item_1[i].len); 
+        }
+    }
 
     v85xxp_clear_watchdog();
     //EE部分更新
@@ -2790,13 +2804,13 @@ int para_init(struct instance_t* instance )
             }
         }
     }
-    
+
     ret = freez_size_sectors_init(instance, 0x50020200);//分钟冻结 空间分配
     if(ret < 0)
     {
         return -1;
     }
-   
+
     return 0;
 }
 

@@ -16,7 +16,8 @@ extern void Poffset_adj_oneself(struct instance_t* instance);
 extern const struct dev_info_t rn8209_dev;
 extern void rs485_init(struct instance_t* instance, struct pipeline_t* pipeline);
 extern const uint32_t baud_table[];
-#if 1  //  GS
+
+#if 1 
 
 int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
@@ -44,11 +45,13 @@ int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline
     //掉电需要保存数据
     //先刷新停电时间ram
     ndv_memcopy((uint8_t *)(&mbase_cb->powerdown_tm),  (uint8_t *)&instance->time,  sizeof(mbase_cb->powerdown_tm));
+
+    Energy_Meter_PowerOFF(instance, pipeline); 
+
+    mbase_cb->ec_save_success = 0x5AA5;  //保存前 置 标志  
+
     //获取对应的RAM地址
     get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
-    
-    mbase_cb->ec_save_success = 0x5AA5;  //保存前 置 标志  
-    
     res = get_res(RES_DEV_EEPROM, mbase_block_persistent_eprom);
     nd_set_block(instance, res, (uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;   
 
@@ -58,6 +61,7 @@ int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline
         tmp_u32 = rtc_mktime((&mbase_cb->powerdown_tm));
         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PDTime_Frez); // 冻结停电时间
         nd_set_index(instance, addr, (uint8_t *)(&tmp_u32), 4);
+        mbase_cb->frz_replenish_end = 0;
     }
 
     mbase_cb->ec_save_success = 0;       //保存后 清 标志
@@ -142,9 +146,14 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
             }
         }
 
-        Meter_Run_State(instance, pipeline);//运行状态字刷新
-    
-        mbase_cb->power_on_sec_accum++;
+        Meter_Run_State(instance, pipeline);//运行状态字刷新        
+        check_RtcBat_volt(instance);
+
+        if((mbase_cb->voltage_ac) >= (mbase_cb->volt_60))  //电压＞60%Un   才累加上电时间//三相
+        {
+            mbase_cb->power_on_sec_accum++; 
+        }
+        
         fr_dl698_sec_task(instance, pipeline);
         fr_dl645_sec_task(instance, pipeline);
         
@@ -224,7 +233,8 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             SecTick_Task(instance, pipeline);
 
             Rtc_Prossecc(instance, pipeline);
-
+            TouFeePro(instance, pipeline);
+            
             Electrical_measurement(instance, pipeline);
 
             Energy_Pluse_Count(instance, pipeline);
@@ -246,8 +256,6 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
 
             IOStateCheck(instance, pipeline);
 
-            TouFeePro(instance, pipeline);
-            
             instance->reset_flag = 0x00; //走完一圈秒任务后 复位标志清零
             break;
       case MSG_PAGE_KEY_UP:
@@ -270,8 +278,10 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             //nd_get_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)(addr + persitent_ec_size),(mbase_block_persistent_size - persitent_ec_size)); //将EPROM中的数据恢复到RAM;        
 
             auto_parameter_inital(instance);
+            save_RtcBat_work_time(instance);
             rtc_check_poweron(instance);
             Energy_Meter_PowerON(instance, pipeline);
+            
             Electrical_measurement_poweron(instance, pipeline);
             //AllDisplayLCD(instance, pipeline);
             esam_698_power_on(instance);
@@ -316,7 +326,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             //事件
             event_PowerOn_pro(instance, pipeline, mesg);
             
-            //保存电池使用时间
+            instance->need_data_recovery = 0;//数据恢复完成 
             break;
       case MSG_POWEROFF: //掉电相关的操作 不在此操作
             //开启EE电源和IO口时钟 //
@@ -356,6 +366,11 @@ int app_meter_lowpower_wakeup_entry(struct instance_t* instance, struct pipeline
 {
 //    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
     struct mbase_control_block_t* mbase_control_block;
+    uint32_t addr = 0;
+    size_t mbase_block_persistent_size = offsetof(struct mbase_control_block_t, persistent_section_end) - offsetof(struct mbase_control_block_t, persistent_section_start) + 1;
+    size_t mbase_block_static_size = offsetof(struct mbase_control_block_t, static_section_end) - offsetof(struct mbase_control_block_t, static_section_start) + 1;
+    size_t persitent_ec_size = offsetof(struct mbase_control_block_t, persistent_energy_EC_label) - offsetof(struct mbase_control_block_t, persistent_section_start);
+
     mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     if (mbase_control_block == NULL)
@@ -372,9 +387,23 @@ int app_meter_lowpower_wakeup_entry(struct instance_t* instance, struct pipeline
         GPIOC->IE &= ~(BIT4|BIT5|BIT6);
         GPIOC->DAT |= (BIT6);
 
+        if(instance->need_data_recovery == 0x5A) //数据恢复
+        {
+            //上电需要恢复数据   //跳过电能恢复 由电能模块处理  
+            addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+                offsetof(struct mbase_control_block_t, persistent_energy_EC_label)  -  offsetof(struct mbase_control_block_t, persistent_section_start));
+            nd_get_offset(instance, addr, (uint8_t*)&mbase_control_block->persistent_energy_EC_label, (mbase_block_persistent_size - persitent_ec_size));           
+        
+            rtc_check_poweron(instance);
+            Energy_Meter_PowerON(instance, pipeline);
+            instance->need_data_recovery = 0x00;
+        }
+
+
         switch (mesg->ctrl)
         {
             case MSG_SECOND:
+
                 SecTick_Task(instance, pipeline);
 
                 Rtc_Prossecc(instance, pipeline);

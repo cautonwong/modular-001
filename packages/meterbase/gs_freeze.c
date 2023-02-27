@@ -1082,7 +1082,6 @@ int freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task, st
         recover_minFreeze_sequence(instance); //分钟冻结序号检查
     }
 
-
     day_freeze_power_on_pro(instance, task, mesg);
     bill_freeze_power_on_pro(instance, task, mesg);
     ctrl_block->frz_replenish_end = 0x5A; //完成补冻结

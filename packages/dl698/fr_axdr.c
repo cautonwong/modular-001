@@ -448,6 +448,26 @@ uint32_t dt_buf_to_month(uint8_t* dt)
     return month;
 }
 
+//698格式 不带tag 判断合法性 YYYY MM DD hh mm ss  7 字节
+uint8_t check_698DateTime_valid(uint8_t *p)
+{
+    uint16_t year2 = 0;
+    uint8_t timer[6] = {0};
+    
+    mem_swap_cpy((uint8_t*)&year2, p, 2);
+    year2 = year2 - 2000;
+    timer[0] = *(p+3); //day
+    timer[1] = *(p+2); //month
+    timer[2] = (uint8_t)year2;
+    timer[3] = *(p+4);  //hour
+    timer[4] = *(p+5);  //min
+    timer[5] = *(p+6);  //sec
+    
+    if(Date_Format_Check(timer))  return false;
+    if(Time_Format_Check(&timer[3])) return false;
+
+    return true;
+}
 
 
 
@@ -631,11 +651,12 @@ int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t*
     {
     case 0x20210200: // 冻结时间    
         *p = apdu_rx[ctx->apdu_rx_offset++];
-        if (*p != TYPE_date_time_s)
+        if (((*p) != TYPE_date_time_s) || (false == check_698DateTime_valid(&apdu_rx[ctx->apdu_rx_offset])))
         {
             ctx->apdu_rx_offset = rx_offset_cache;
             return 0;//DAR_TYPE_NOT_MATCH;
         }
+
         rsd_info->start_mark = dt_buf_to_second(apdu_rx + ctx->apdu_rx_offset);
         ctx->apdu_rx_offset += 7;
         rsd_info->end_mark = rsd_info->start_mark;
@@ -689,7 +710,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
     {
     case 0x20210200: // 冻结时间   
         *p = apdu_rx[ctx->apdu_rx_offset++];
-        if (*p != TYPE_date_time_s)
+        if (((*p) != TYPE_date_time_s) || (false == check_698DateTime_valid(&apdu_rx[ctx->apdu_rx_offset])))
         {
             ctx->apdu_rx_offset = rx_offset_cache;
             return 0;//DAR_TYPE_NOT_MATCH;
@@ -698,7 +719,7 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
         ctx->apdu_rx_offset += 7;
 
         *p = apdu_rx[ctx->apdu_rx_offset++];
-        if (*p != TYPE_date_time_s)
+        if (((*p) != TYPE_date_time_s) || (false == check_698DateTime_valid(&apdu_rx[ctx->apdu_rx_offset])))
         {
             ctx->apdu_rx_offset = rx_offset_cache;
             return 0;//DAR_TYPE_NOT_MATCH;
@@ -858,7 +879,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
     case 0x201e0200: // 事件发生时间
     case 0x20200200: // 事件结束时间 
         *p = apdu_rx[ctx->apdu_rx_offset++];
-        if (*p != TYPE_date_time_s)
+        if (((*p) != TYPE_date_time_s) || (false == check_698DateTime_valid(&apdu_rx[ctx->apdu_rx_offset])))
         {
             ctx->apdu_rx_offset = rx_offset_cache;
             return 0;//DAR_TYPE_NOT_MATCH;
@@ -867,7 +888,7 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
         ctx->apdu_rx_offset += 7;  
     
         *p = apdu_rx[ctx->apdu_rx_offset++];
-        if (*p != TYPE_date_time_s)
+        if (((*p) != TYPE_date_time_s) || (false == check_698DateTime_valid(&apdu_rx[ctx->apdu_rx_offset])))
         {
             ctx->apdu_rx_offset = rx_offset_cache;
             return 0;//DAR_TYPE_NOT_MATCH;
@@ -1546,7 +1567,6 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
         return -DAR_OBJECT_NOT_EXIST;
     }  
     
-    
     if((0x3005 == oi ) && (attr != 7))
     {
         return record_response_null(buf);
@@ -1569,6 +1589,16 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     circular_info.end_mark = rsd_info->end_mark;
     circular_info.mode =   rsd_info->mode;
 
+    //--------读取事件时 确认上报         - 读取失败也确认
+    if (p_ctx) // 协议进来
+    {
+        if ((oad & 0xF0000000) == 0x30000000) 
+        {
+            report_3320list_confirmed(instance, channel, oad, 0);
+        }
+    }
+    //--------
+    
     switch(rsd_info->select)
     {
         case 0:
@@ -1739,15 +1769,6 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     }
     len += count;
     
-    //读取事件时 确认上报
-    if (p_ctx) // 协议进来
-    {
-        if ((oad & 0xF0000000) == 0x30000000) 
-        {
-            report_3320list_confirmed(instance, channel, oad, 0);
-        }
-    }
-
     return (int)len;
 #endif
 }

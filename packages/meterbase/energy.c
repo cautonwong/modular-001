@@ -152,7 +152,7 @@ int16_t Check_EC_recover(struct instance_t* instance, uint8_t type, uint8_t mode
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t check_sum[2] = {0,};
     uint32_t addr = 0x00,s_index;
-    uint16_t len_tmp, energy_len =  (offsetof(struct mbase_control_block_t, Energy_chksum) - offsetof(struct mbase_control_block_t, active_p[0]));
+    uint16_t i, len_tmp, energy_len =  (offsetof(struct mbase_control_block_t, Energy_chksum) - offsetof(struct mbase_control_block_t, active_p[0]));
     uint16_t use_energy_len =  (offsetof(struct mbase_control_block_t, UseEnergy_chksum) - offsetof(struct mbase_control_block_t, MonthEnegery_dec));
     uint16_t block_len = (offsetof(struct mbase_control_block_t, persistent_energy_EC_label) - offsetof(struct mbase_control_block_t, active_p[0]));
     uint8_t *p_block = (uint8_t*)&mbase_cb->active_p;
@@ -210,6 +210,11 @@ int16_t Check_EC_recover(struct instance_t* instance, uint8_t type, uint8_t mode
 
             if (ret > 0) //EC1 有效    完成恢复退出
             {
+                for(i = 0; i < 2; i++) //保存所有至 EC2
+                {
+                    updata_EC_checksum(instance, i); 
+                    Save_EC2(instance, i);
+                }
                 return 1;
             }
         }
@@ -244,20 +249,24 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
     uint8_t Updata_flag = 0;   // BIT0:第1个电能校验   BIT1:第2个电能校验  。。。。
     
     uint8_t fee_index = 0;
-    uint32_t s_index;
+    uint32_t s_index, ec_add =0;
+    uint32_t meter_const =  mbase_cb->meter_const/100;
 
-    if (mbase_cb->meter_const == 0)
+    if (meter_const == 0)
     {
         return;
+    }
+    if ((mbase_cb->EC_SaveDiff < 30) || (mbase_cb->EC_SaveDiff > 1000))  // 0.3~10.00kwh 
+    {
+        mbase_cb->EC_SaveDiff = 200;    //单相 默认2度1存
     }
 
     Check_EC_recover(instance, 0, 1);
     Check_EC_recover(instance, 1, 1);
 
-   
     if((mbase_cb->TOUNo == 0) || (mbase_cb->TOUNo> Max_tou_fee))
     {
-        fee_index = Max_tou_fee-1;
+        fee_index = 1;
     }
     else
     {
@@ -276,26 +285,28 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
         }
         mbase_cb->p_pluse = 0;
     }
-    
+
     //费率正电能，月度费率电能
-    if(mbase_cb->active_p_dec[fee_index] >= mbase_cb->meter_const)
+    ec_add = mbase_cb->active_p_dec[fee_index] / meter_const; //0.01
+    if(ec_add > 0)  //if(mbase_cb->active_p_dec[fee_index] >= meter_const)
     {
         Updata_flag |= BIT0;
-        mbase_cb->active_p[fee_index] += 1;
-        //mbase_cb->month_active_p[fee_index] += 1;
-        mbase_cb->active_p_dec[fee_index] -= mbase_cb->meter_const; 
+        mbase_cb->active_p[fee_index] += ec_add;
+        mbase_cb->active_p_dec[fee_index] -= (meter_const*ec_add); 
     }    
     //总正电能，总月度电能
-    if(mbase_cb->active_p_dec[0] >= mbase_cb->meter_const)
+    ec_add = mbase_cb->active_p_dec[0] / meter_const;
+    if(ec_add > 0)    
     {
         Updata_flag |= BIT0;
-        mbase_cb->active_p[0] += 1;
-        //mbase_cb->month_active_p[0] += 1;
-        mbase_cb->active_p_dec[0] -= mbase_cb->meter_const;
-        SaveData_flag |= BIT0;
+        mbase_cb->active_p[0] += ec_add;
+        mbase_cb->active_p_dec[0] -= (meter_const*ec_add);
+        if((mbase_cb->active_p[0] % mbase_cb->EC_SaveDiff)==0)
+        {
+            SaveData_flag |= BIT0;
+        }
     }
-    //-------
-    
+    //-------   
     if(mbase_cb->n_pluse > 0)
     {
         Updata_flag |= BIT0;
@@ -309,36 +320,40 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
         mbase_cb->n_pluse = 0;
     }
 
-    if(mbase_cb->active_n_dec[fee_index] >= mbase_cb->meter_const)
+    ec_add = mbase_cb->active_n_dec[fee_index] / meter_const;
+    if(ec_add > 0) 
     {
         Updata_flag |= BIT0;
-        mbase_cb->active_n[fee_index] += 1;
-        //mbase_cb->month_active_n[fee_index] += 1;
-        mbase_cb->active_n_dec[fee_index] -= mbase_cb->meter_const;
+        mbase_cb->active_n[fee_index] += ec_add;
+        mbase_cb->active_n_dec[fee_index] -= (meter_const*ec_add);
     }
     
-    if(mbase_cb->active_n_dec[0] >= mbase_cb->meter_const)
+    ec_add = mbase_cb->active_n_dec[0] / meter_const;
+    if(ec_add > 0)    
     {
         
         Updata_flag |= BIT0;
-        mbase_cb->active_n[0] += 1;
-        //mbase_cb->month_active_n[0] += 1;
-        mbase_cb->active_n_dec[0] -= mbase_cb->meter_const;
-        SaveData_flag |= BIT0;
+        mbase_cb->active_n[0] += ec_add;
+        mbase_cb->active_n_dec[0] -= (meter_const*ec_add);
+        if((mbase_cb->active_n[0] % mbase_cb->EC_SaveDiff)==0)
+        {
+            SaveData_flag |= BIT0;
+        }
     }
 
     //--------
-    if(mbase_cb->MonthEnegery_dec >= mbase_cb->meter_const/100 )
+    ec_add = mbase_cb->MonthEnegery_dec / meter_const;
+    if(ec_add > 0) //if(mbase_cb->MonthEnegery_dec >= (mbase_cb->meter_const/100))
     {
-        
-        mbase_cb->MonthEnegery += 1;
-        mbase_cb->MonthEnegery_dec = mbase_cb->MonthEnegery_dec - mbase_cb->meter_const/100;
+        mbase_cb->MonthEnegery += ec_add;
+        mbase_cb->MonthEnegery_dec -= (meter_const*ec_add);
 
         Updata_flag |= BIT1;
-        if((mbase_cb->MonthEnegery % 100)==0)
+        //if((mbase_cb->MonthEnegery % 100)==0)
+        if((mbase_cb->MonthEnegery % (mbase_cb->EC_SaveDiff)==0))
         {
             SaveData_flag |= BIT1;
-        }
+        }       
     }
 
     //------
@@ -371,11 +386,11 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 void Energy_Meter_PowerON(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     uint32_t s_index;
+    int ret = 0;
+    
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     ec_pluse_cnt = 0;
-
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    
     Check_EC_recover(instance, 0, 0);
     Check_EC_recover(instance, 1, 0);
 
@@ -388,14 +403,83 @@ void Energy_Meter_PowerON(struct instance_t* instance, struct pipeline_t* pipeli
         nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->ec_save_success, sizeof(mbase_cb->ec_save_success));
     }
 
+    //电量保存阈值 读取
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + EC_SaveDiff_E);
+    ret = nd_get_index(instance, s_index, (uint8_t*)&mbase_cb->EC_SaveDiff, 2);
+    if(ret < 0)
+    {
+        mbase_cb->EC_SaveDiff = 200; //默认2度一存。
+    }
+
 }
 
 
+//停电处理 刷新脉冲尾数
 void Energy_Meter_PowerOFF(struct instance_t* instance, struct pipeline_t* pipeline)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t Updata_flag = 0;   // BIT0:第1个电能校验   BIT1:第2个电能校验  。。。。
+    uint8_t i = 0;
+    uint8_t fee_index = 0;
+    int ret = 0;
     mbase_cb->ec_save_success = 0;
+
+    //EC0 //校验异常时，不处理
+    for(i=0; i < 2; i++)
+    {
+        ret = judge_EC_checksum(instance, i);
+        if (ret < 0) 
+        {
+            return;
+        }
+    }
+
+    if((mbase_cb->TOUNo == 0) || (mbase_cb->TOUNo > Max_tou_fee))
+    {
+        fee_index = 1;
+    }
+    else
+    {
+        fee_index = mbase_cb->TOUNo;
+    }
     
+    Energy_Pluse_Count(instance, pipeline); //刷新脉冲尾数
+
+    if(mbase_cb->p_pluse > 0)
+    {
+        Updata_flag |= BIT0;
+        mbase_cb->active_p_dec[0] += mbase_cb->p_pluse;
+        mbase_cb->active_p_dec[fee_index] += mbase_cb->p_pluse;
+        if(mbase_cb->active_energy_cal_word & ADD_POS)
+        {
+            Updata_flag |= BIT1;
+            mbase_cb->MonthEnegery_dec += mbase_cb->p_pluse;
+        }
+        mbase_cb->p_pluse = 0;
+    }  
+    
+    if(mbase_cb->n_pluse > 0)
+    {
+        Updata_flag |= BIT0;
+        mbase_cb->active_n_dec[0] += mbase_cb->n_pluse;
+        mbase_cb->active_n_dec[fee_index] += mbase_cb->n_pluse;
+        if(mbase_cb->active_energy_cal_word & ADD_NEG)
+        {
+            Updata_flag |= BIT1;
+            mbase_cb->MonthEnegery_dec += mbase_cb->n_pluse;
+        }
+        mbase_cb->n_pluse = 0;
+    }    
+
+    if (Updata_flag & BIT0)
+    {
+        updata_EC_checksum(instance, 0);
+    }
+
+    if (Updata_flag & BIT1)
+    {
+        updata_EC_checksum(instance, 1);
+    }    
 }
 
 int32_t Get_Cal_Active_Energy(struct mbase_control_block_t* mbase_cb, uint8_t index , uint8_t type)
@@ -482,6 +566,105 @@ int32_t Get_Active_Energy(struct mbase_control_block_t* mbase_cb, uint8_t index 
     return energy_kwh;
 }
 
+
+
+//有功 电能获取
+//phase: 0/1/2/3 : t/a/b/c
+//FeeNo: 0:总,  1-12: F1-F12
+//type: 0:4字节hex(x.xx), 1:8字节hex(x.xxxx)
+//pn:   0:正,   1:反
+int64_t Get_Active_Energy_TABC(struct mbase_control_block_t* mbase_cb, uint8_t phase, uint8_t FeeNo , uint8_t type , uint8_t pn)
+{
+    int64_t energy_kwh = 0;
+    int64_t energy_pulse = 0;
+    
+    if((mbase_cb->meter_const==0) || (FeeNo>Max_tou_fee)
+    ||((phase != 0)))    //单相
+    {
+        return 0;
+    }
+
+    if(pn ==0)
+    {
+        energy_kwh += mbase_cb->active_p[FeeNo];
+        energy_pulse += mbase_cb->active_p_dec[FeeNo];
+    }
+    else
+    {
+        energy_kwh += mbase_cb->active_n[FeeNo];
+        energy_pulse += mbase_cb->active_n_dec[FeeNo];
+    }        
+    
+    energy_kwh = (energy_kwh*100) + (energy_pulse*10000 / mbase_cb->meter_const);  //0.0001kwh
+    
+    switch(type)
+    {
+        case 0://hex(x.xx)
+            energy_kwh /= 100;// 0.01 kwh
+            break;
+        case 1://hex(x.xxxx)
+            
+            break;
+        default:
+            break;
+    }
+    
+    return energy_kwh;
+}
+
+
+//组合有功 电能获取
+//FeeNo: 0:总,  1-12: F1-F12
+//type: 0:4字节hex(x.xx), 1:8字节hex(x.xxxx)
+int64_t Get_Cal_Active_Energy_T(struct mbase_control_block_t* mbase_cb, uint8_t FeeNo , uint8_t type)
+{
+    int64_t energy_kwh = 0;
+    int64_t energy_pulse = 0;
+    uint8_t word = mbase_cb->active_energy_cal_word;
+    
+    if((mbase_cb->meter_const==0) || (FeeNo>Max_tou_fee))
+    {
+        return 0;
+    }
+
+    if(word & ADD_POS)
+    {
+        energy_kwh += mbase_cb->active_p[FeeNo];
+        energy_pulse += mbase_cb->active_p_dec[FeeNo];
+    }
+    if(word & DEC_POS)
+    {
+        energy_kwh -= mbase_cb->active_p[FeeNo];
+        energy_pulse -= mbase_cb->active_p_dec[FeeNo];
+    }
+    if(word & ADD_NEG)
+    {
+        energy_kwh += mbase_cb->active_n[FeeNo];
+        energy_pulse += mbase_cb->active_n_dec[FeeNo];
+    }
+    if(word & DEC_NEG)
+    {
+        energy_kwh -= mbase_cb->active_n[FeeNo];
+        energy_pulse -= mbase_cb->active_n_dec[FeeNo];
+    }
+
+
+    energy_kwh = (energy_kwh*100) + (energy_pulse*10000 / mbase_cb->meter_const);  //0.0001kwh
+    
+    switch(type)
+    {
+        case 0://hex(x.xx)
+            energy_kwh /= 100;// 0.01 kwh
+            break;
+        case 1://hex(x.xxxx)
+            
+            break;
+        default:
+            break;
+    }
+    
+    return energy_kwh;
+}
 
 
 void Energy_Pluse_Count(struct instance_t* instance, struct pipeline_t* pipeline)

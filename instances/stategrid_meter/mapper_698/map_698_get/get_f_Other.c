@@ -90,9 +90,10 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     *p++ = 1;
                 }
                 *p++ = TYPE_structure;
-                *p++ = 3;
+                
                 if(oad == 0xF201)
                 {
+                    *p++ = 3;
                     *p++ = TYPE_visible_string;
                     *p++ = 5;
                     memcpy(p, name_rs485, 5);
@@ -100,6 +101,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 }
                 else if(oad == 0xF202)
                 {
+                    *p++ = 2;
                     *p++ = TYPE_visible_string;
                     *p++ = 5;
                     memcpy(p, name_ir, 5);
@@ -107,6 +109,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 }
                 else
                 {
+                    *p++ = 3;
                     *p++ = 0;
                     //memcpy(p, name_plc, 3);
                     p = p + 0;
@@ -126,7 +129,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 {
                     *p++ = 0;
                 }
-                else
+                else if(oad == 0xF201)
                 {
                     *p++ = TYPE_enum;
                     *p++ = 0;
@@ -223,7 +226,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     }
                     
                     if(index > 99)  return -DAR_OBJECT_NOT_EXIST;
-                    
+                    /*
                     if(index > maxnum)  //超过设定最大显示项目，固定返回日期
                     {
                         *p++ = TYPE_structure;
@@ -238,7 +241,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                         *p++ = 0x00;
                         return (p-buf);
                     }
-                    
+                    */
                     if(index != 0)
                     {
                         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
@@ -269,8 +272,17 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                             *p++ = TYPE_unsigned;
                             *p++ = esam_inf[8];
                         }
-                        else
-                            return -DAR_OTHERS_ERROR;
+                        else //找不到显示项补 FF                     
+                        {
+                            *p++ = TYPE_structure;
+                            *p++ = 2;
+                            *p++ = TYPE_CSD;
+                            *p++ = 0;
+                            memset(p, 0xFF, 4);
+                            p = p + 4;
+                            *p++ = TYPE_unsigned;
+                            *p++ = 0xFF;
+                        }
                     }
                     else
                     {
@@ -306,8 +318,18 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                                 *p++ = TYPE_unsigned;
                                 *p++ = esam_inf[8];
                             }
-                            else
-                                return -DAR_OTHERS_ERROR;
+                            else //找不到显示项补 FF
+                            {
+                                *p++ = TYPE_structure;
+                                *p++ = 2;
+                                *p++ = TYPE_CSD;
+                                *p++ = 0;
+                                memset(p, 0xFF, 4);
+                                p = p + 4;
+                                *p++ = TYPE_unsigned;
+                                *p++ = 0xFF;
+                            }
+                                
                         }
                     }
                     return (p-buf);

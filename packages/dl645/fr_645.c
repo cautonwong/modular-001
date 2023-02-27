@@ -585,11 +585,11 @@ int fr_rx_645_end(struct instance_t* instance, struct pipeline_t* pipeline, stru
     struct context_645_t* ctx = (struct context_645_t*)pipeline->ctx;
     struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
 
-    uint8_t cs = fifoBuf_getByte(ififo);
-    n_assert(ctx->cs == cs);
+    //uint8_t cs = fifoBuf_getByte(ififo);
+    //n_assert(ctx->cs == cs);
     
-    uint8_t tail = fifoBuf_getByte(ififo);
-    n_assert(tail == 0x16);
+    //uint8_t tail = fifoBuf_getByte(ififo);
+    //n_assert(tail == 0x16);
 
     fr_pack_645_head(instance, pipeline, mesg);
     fr_pack_645_data(instance, pipeline, mesg);
@@ -842,10 +842,12 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
 
     ctx->apdu_rx_offset = 0;
     ctx->apdu_rx_len = ctx->len;
+
+    int len_tail = fifoBuf_getUsed(fifo);
     if(ctx->ver)    
-        fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len+11);
+        fifoBuf_getData(fifo, apdu_rx,  len_tail/*ctx->apdu_rx_len+11*/);
     else
-        fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len+10);
+        fifoBuf_getData(fifo, apdu_rx,  len_tail/*ctx->apdu_rx_len+10*/);
 
 
     ctx->first_segment_MaxLen = MAX_READ_DATAFILED_LEN;

@@ -238,7 +238,7 @@ struct context_645_t
     
     uint8_t apdu_tx[max_apdu_cache_645]; 
     
-    uint8_t apdu_d_rx[256]; 
+    uint8_t apdu_d_rx[544]; 
     uint16_t apdu_rx_len;
     uint16_t apdu_rx_offset;
 
@@ -602,7 +602,8 @@ struct instance_t
     struct fifo_t pipe_uart[4];//用于串口回调消息缓存
 
     uint8_t ac_power_statue;
-    uint8_t reset_flag;         //0x5A  复位标志 
+    uint8_t reset_flag;                 //0x5A  复位标志 
+    uint8_t need_data_recovery;         //0x5A  数据恢复     
     uint32_t ac_power_off_sec_cnt;
 
 };

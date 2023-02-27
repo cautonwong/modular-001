@@ -1109,8 +1109,12 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     }
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + mbase_cb->KeyPtr);
                     nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
+                    if(pageid == 0xFFFF)
+                    {
+                        pageid = 0xFFFE; //避免上下翻出现全屏
+                    }
                     mbase_cb->Page_ID = pageid;
-                    mbase_cb->AutoInv = mbase_cb->lcd_keydis_keep_sec;
+                    mbase_cb->AutoInv = mbase_cb->lcd_keydis_keep_sec+1;
                     mbase_cb->BackLightTmr = 60;
                     return 1;
             case 0x04://上翻
@@ -1131,8 +1135,12 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     }
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + mbase_cb->KeyPtr);
                     nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
+                    if(pageid == 0xFFFF)
+                    {
+                        pageid = 0xFFFE; //避免上下翻出现全屏
+                    }
                     mbase_cb->Page_ID = pageid;
-                    mbase_cb->AutoInv = mbase_cb->lcd_keydis_keep_sec;
+                    mbase_cb->AutoInv = mbase_cb->lcd_keydis_keep_sec + 1;
                     mbase_cb->BackLightTmr = 60;
                     return 1;
                 case 0x05://显示查看
@@ -1171,7 +1179,8 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     mbase_cb->Page_ID = displayid;
                     mem_swap_cpy((uint8_t*)&mbase_cb->AutoInv, p, 2);//持续时间
                     p=p+2;  
-                    mbase_cb->BackLightTmr = mbase_cb->AutoInv;
+                    mbase_cb->AutoInv += 1; 
+                    mbase_cb->BackLightTmr = mbase_cb->lcd_checkdis_keep_sec + 1;
                     return (p-buf);
                     break;
                 case 0x06://全屏显示
@@ -1180,7 +1189,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     p++;
                     mem_swap_cpy((uint8_t*)&mbase_cb->AutoInv, p, 2);
                     p = p + 2;
-                    
+                    mbase_cb->AutoInv += 1; 
                     if((mbase_cb->AutoInv > 30) || (mbase_cb->AutoInv == 0))
                         mbase_cb->BackLightTmr = 5;
                     else

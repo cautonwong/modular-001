@@ -297,6 +297,7 @@ int freeze_add_multi_capture(struct instance_t* instance, uint32_t oad, uint8_t*
     uint16_t period, depth, OI, CaptureLen, PeriodLen, DepthLen;
     uint32_t CaptureId, PeriodId, DepthId;
     uint32_t capture_oad;
+    uint8_t* apdu_cache = instance->apdu_cache; 
 
     struct record_storage_id_info_t  record_id_info;
     int ret;
@@ -362,6 +363,11 @@ int freeze_add_multi_capture(struct instance_t* instance, uint32_t oad, uint8_t*
         p += 5;
         depth = buf_to_uint16_msb(p);
         p += 2;
+
+        ret = nd_size(instance, apdu_cache, ignore_OAD_Schem(capture_oad)); 
+        if(ret < 0){
+            return -DAR_RW_REJECT;
+        }
 
         scheme = (uint8_t)((capture_oad >> 13) & 0x07); //方案号
 

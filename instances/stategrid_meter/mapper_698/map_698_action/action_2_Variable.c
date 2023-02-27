@@ -48,6 +48,7 @@ int ACTION_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, vo
                 p += 2;
 
                 Temp32A = buf_to_uint32_msb(p);
+                p += 4;
                 mbase_cb->report_2015state[channel] &= ~Temp32A;
                 report_stat_reset_from_698(instance,  Temp32A);
                 EventOut_698_check(instance);

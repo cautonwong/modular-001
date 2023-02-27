@@ -28,10 +28,50 @@ int event_alarm_control(struct instance_t* instance, struct pipeline_t* task, st
     return 0;
 }
 
+//时钟电池欠压判断(秒调用)    -状态延时3秒
+void check_RtcBat_volt(struct instance_t* instance)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t value = 0xFF;
+    static uint8_t cnt = 0;
+
+
+    if(mbase_cb->voltage_battery <= RtcBat_Low_Level_Dwn)
+    {
+        value = 1;
+    }
+    else  if(mbase_cb->voltage_battery >= RtcBat_Low_Level_Up)
+    {
+        value = 0;
+    }
+    else
+    {
+        value = 0xFF;
+    }
+
+    if((value != 0xFF) && (mbase_cb->RtcBat_UnderV_state != value))
+    {
+        cnt++;
+    }
+    else
+    {
+        cnt = 0;
+    }
+
+    if(cnt >= 3)
+    {
+        mbase_cb->RtcBat_UnderV_state = value;
+        cnt = 0;
+    }
+
+}
+
+
 // 每秒调用 结合外部消息 触发背光动作            返回1:点亮                  0:关闭
 int backlight_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
 
     if(mbase_cb->BackLightTmr > 0)    mbase_cb->BackLightTmr--;
     
@@ -55,7 +95,7 @@ int backlight_pro(struct instance_t* instance, struct pipeline_t* task, struct m
 
     if((mbase_cb->blt_alarm & 0x00400000) == 0x00400000)    //电池欠压，开启背光
     {
-        if(mbase_cb->voltage_battery < Bat_Low_Level)
+        if(mbase_cb->RtcBat_UnderV_state == true) 
         {
             mbase_cb->BackLightTmr = 3;
         }

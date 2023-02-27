@@ -138,6 +138,7 @@ const COMMTAB  CommTab[] =
 	0xA8F00051,	0xFFFF,							FORMAT_08,      CommData_WR + 2,	//掉电主动上报的阈值时间
 	0xA8F00052,	0xFFFF,						    FORMAT_08,      CommData_WR + CommData_E2PROM + 1,	//小电流不滤除 AA开启
     0xA8F00053, 0xFFFF,                         FORMAT_00,      CommData_WR + 6, //停电时间（测试补冻结用）
+    0xA8F00055,	0xFFFF,						    FORMAT_08,      CommData_WR + CommData_RAM + 2,	//电能定量保存阈值hex     
 	0xA8F000FF,	0xFFFF,							FORMAT_00,      CommData_WR + CommData_E2PROM + 0xFF,//万能读写
 
     0xA8000200, 0xFFFF,							FORMAT_00,      CommData_WR + CommData_E2PROM + CommData_FACTORY + 8,
@@ -407,6 +408,9 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
         case 0xA8F00052://工频防潜开关
             *databuf = mbase_cb->no_filt;
             break;
+        case 0xA8F00055:    //电能定量保存阈值格式hex--0.01kwh
+            memcpy(databuf, (uint8_t *)&mbase_cb->EC_SaveDiff, 2);
+            break;  
         case 0xA601100F:
 			StAddr = SoftwareCHK();
 			memcpy( databuf, (unsigned char*)&StAddr, 4 );
@@ -920,6 +924,11 @@ static uint8_t dl645wt_ram(struct instance_t* instance, uint32_t addr, uint8_t *
                         offsetof(struct mbase_control_block_t, no_filt));
             nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->no_filt, 1);//存储至EE  
             break;
+        case 0xA8F00055: //电能定量保存阈值hex       --0.01kwh  
+            memcpy((uint8_t*)&mbase_cb->EC_SaveDiff, databuf, 2);
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + EC_SaveDiff_E);
+            nd_set_index(instance, s_index, (uint8_t*)&mbase_cb->EC_SaveDiff, 2);
+            break;  
     }
     return 0;
 }

@@ -416,14 +416,31 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 break;
                 case 0x05:
                 {
-                    *p++ = TYPE_structure;
-                    *p++ = 2;
-                    *p++ = TYPE_long_unsigned;
-                    mem_swap_cpy(p, (uint8_t*)&mbase_cb->Limit_T_Min, 2);
-                    p = p + 2;
-                    *p++ = TYPE_long_unsigned;
-                    mem_swap_cpy(p, (uint8_t*)&mbase_cb->Limit_T_Max, 2);
-                    p = p + 2;
+                    if(index <= 2)
+                    {
+                        if(index == 0)
+                        {
+                            *p++ = TYPE_structure;
+                            *p++ = 2;
+                        }
+                        if((index == 0)||(index == 1))
+                        {
+                            *p++ = TYPE_long_unsigned;
+                            mem_swap_cpy(p, (uint8_t*)&mbase_cb->Limit_T_Min, 2);
+                            p = p + 2;
+                        }
+                        if((index == 0)||(index == 2))
+                        {
+                            *p++ = TYPE_long_unsigned;
+                            mem_swap_cpy(p, (uint8_t*)&mbase_cb->Limit_T_Max, 2);
+                            p = p + 2;
+                        }
+                    }
+                    else
+                    {
+                        return -DAR_OBJECT_NOT_EXIST;
+                    }
+
                     return (p - buf);
                 }
                 break;

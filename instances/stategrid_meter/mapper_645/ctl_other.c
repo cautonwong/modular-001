@@ -651,8 +651,8 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
 				mbase_cb->sta &= ~(F_RemoteGaoJing0+F_RemoteGaoJing1);
 				mbase_cb->sta &= ~F_RemoteRelayOff;
                 
-				if(mbase_cb->imaxmin > 0)   mbase_cb->imaxmin = 0;   //大电流延时，清除大电流延时时间
-                if(mbase_cb->alarmmin > 0)  mbase_cb->alarmmin = 0;     //跳闸延时，清零
+				mbase_cb->imaxmin = 0;   //大电流延时，清除大电流延时时间
+                mbase_cb->alarmmin = 0;     //跳闸延时，清零
                     
 				RemotCtrResult = CTRL_STATUE_RELAYON_EN;
                 
@@ -773,27 +773,23 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
 				break;
 		case 0x3A://保电
           
-                //if((mbase_cb->sta & F_RemoteRelayOff) && ((mbase_cb->alarmmin > 0) || (mbase_cb->imaxmin > 0)))//拉闸延时过程中，保电后拉闸字符消失，灯灭
-                {
-                    mbase_cb->alarmmin = 0;
-                    mbase_cb->imaxmin = 0;
-                    mbase_cb->sta &= ~F_RemoteRelayOff;
-                }
                 mbase_cb->sta |= F_RemoteRelayOn;
-                mbase_cb->sta &= ~(F_RemoteGaoJing1 + F_RemoteGaoJing0);
+                
                 mbase_cb->alarmmin = 0;     //跳闸延时，清零    
                 mbase_cb->imaxmin = 0;   //大电流延时，清除大电流延时时间
-
-				if(mbase_cb->metertype & F_RelayonAuto_En)  //合闸允许自动合闸
+                mbase_cb->limitmin = 0;
+				if(mbase_cb->metertype & (F_RelayonAuto_En + F_ExternRelay_En))  //合闸允许自动合闸   、外置表自动合闸
                 {
 					mbase_cb->sta |= F_RemoteRelayOnDirect; //直接合闸
                     mbase_cb->sta &= ~F_RemoteRelayOnAllow;
                 }
 				else
                 {
-				    mbase_cb->sta |= F_RemoteRelayOnAllow;  //合闸允许
+                    if((mbase_cb->sta & (F_RemoteRelayOff + F_RemoteGaoJing1 + F_RemoteGaoJing0))) //只有在拉闸状态下才需要合闸允许
+				        mbase_cb->sta |= F_RemoteRelayOnAllow;  //合闸允许
                 }
-                
+
+                mbase_cb->sta &= ~(F_RemoteRelayOff + F_RemoteGaoJing1 + F_RemoteGaoJing0);//最后取消拉闸命令
 				RemotCtrResult = CTRL_STATUE_BAODIAN_ON;
 				break;
 		case 0x3B://保电解除

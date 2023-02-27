@@ -30,6 +30,7 @@ void app_handle_mac_suspend(struct instance_t* instance, uint32_t oad)
         case 0x8000://遥控
         case 0x8001://保电
             mbase_cb->cmd_errstate = 0x8000;    //挂起 2041 错误信息字
+            mbase_cb->cmd_dostate = 0;   
             break;
         default:
         break;
@@ -75,6 +76,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                 if( mbase_cb->mac_suspend_state == true )   //挂起
                 {
                     mbase_cb->cmd_errstate = 0x8000;    //挂起
+                    mbase_cb->cmd_dostate = 0; 
                     return  -DAR_METER_SUSPEND;
                 }
             }
@@ -114,6 +116,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                             return -DAR_TIME_TAG_INVALID;
 
                     }
+                    mbase_cb->cmd_dostate = 0; //先清零
                     p = p + 5;
                     mem_swap_cpy((uint8_t*)&OI, p, 4);
                     if(OI != 0xF2050201)    return -DAR_OTHERS_ERROR;
@@ -128,10 +131,12 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     relayon_type = *p++;//预跳闸后合闸方式
                     if(mbase_cb->sta & F_RemoteRelayOn)  
                     {
+                        mbase_cb->cmd_dostate = 0;  
                         if(mbase_cb->limitmin == 0) 
                             mbase_cb->cmd_errstate = 0x0400;//bit5 跳闸失败（保电）
                         else
                             mbase_cb->cmd_errstate = 0x0200;//bit6 跳闸自动恢复失败（保电）
+                           
                         return -DAR_OTHERS_ERROR;//保电   
                     }
                     if(mbase_cb->limitmin == 0)//拉闸
@@ -147,15 +152,17 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                             mbase_cb->cmd_dostate = 0x1000;  //bit3;
                         
                     }
-                    else
+                    else  //跳闸自动恢复
                     {
                         if((mbase_cb->sta & F_RemoteRelayOff) //本地跳闸 待添加
                         ||(mbase_cb->sta & F_RemoteRelayOnAllow))    
                         {
                             mbase_cb->cmd_errstate = 0x0080;  //bit8;
+                            mbase_cb->cmd_dostate = 0;  
                             return -DAR_OTHERS_ERROR;   //跳闸后，下发预跳闸失败
                         }
                         Alarm_min = 0; //预调闸命令 清延时
+                        mbase_cb->sta &= ~(F_RemoteGaoJing1 + F_RemoteGaoJing0);
                         if(relayon_type == 0)   mbase_cb->sta |= F_RemoteGaoJing1;
                         else if(relayon_type == 1)   mbase_cb->sta |= F_RemoteGaoJing0;
                         mbase_cb->cmd_dostate = 0x0800;  //bit4;
@@ -172,7 +179,10 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     {
                         mbase_cb->imaxmin = mbase_cb->Prot_time;   
                         mbase_cb->imaxmin = mbase_cb->imaxmin*60;
-                        mbase_cb->cmd_dostate = 0x0400;  //bit5;
+                        if(mbase_cb->cmd_dostate != 0x1000) //大电流延时和延时跳闸同时在，报延时跳闸
+                        {
+                            mbase_cb->cmd_dostate = 0x0400;  //bit5;
+                        }
                     }
                     else
                     {
@@ -207,7 +217,12 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         {
                             if(mbase_cb->password_err_cnt < 3)  mbase_cb->password_err_cnt++;
                             mbase_cb->cmd_errstate = 0x2000;//bit2 密码错未授权
+                            mbase_cb->cmd_dostate = 0;
                             return -DAR_UNAUTHORIZED;
+                        }
+                        else //成功后清0
+                        {
+                            mbase_cb->password_err_cnt = 0;
                         }
                     }
                     if(*p == 0) 
@@ -229,6 +244,8 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     if(mbase_cb->imaxmin > 0)   mbase_cb->imaxmin = 0;   //大电流延时，清除大电流延时时间
                     
                     if(mbase_cb->alarmmin > 0)  mbase_cb->alarmmin = 0;     //跳闸延时，清零
+
+                    mbase_cb->cmd_errstate = 0;
 
                     mbase_cb->relay_do = 0xA5; 
                     return (p-buf);
@@ -255,16 +272,24 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     {
                         mbase_cb->alarmmin = 0;
                         mbase_cb->imaxmin = 0;
-                        mbase_cb->sta &= ~F_RemoteRelayOff;
+                        mbase_cb->limitmin = 0;
                     }
                     
                     mbase_cb->sta |= F_RemoteRelayOn;
-                    if(mbase_cb->sta & (F_RemoteGaoJing1 + F_RemoteGaoJing0))
+
+                    if(mbase_cb->metertype & (F_RelayonAuto_En + F_ExternRelay_En))  //合闸允许自动合闸   、外置表自动合闸
                     {
-                        mbase_cb->sta &= ~(F_RemoteGaoJing1 + F_RemoteGaoJing0);
-                        mbase_cb->limitmin = 0;
-                        mbase_cb->sta |= F_RemoteRelayOnAllow;  //合闸允许
+                        mbase_cb->sta |= F_RemoteRelayOnDirect; //直接合闸
+                        mbase_cb->sta &= ~F_RemoteRelayOnAllow;
                     }
+                    else
+                    {
+                        if((mbase_cb->sta & (F_RemoteRelayOff + F_RemoteGaoJing1 + F_RemoteGaoJing0))) //只有在拉闸状态下才需要合闸允许
+                            mbase_cb->sta |= F_RemoteRelayOnAllow;  //合闸允许
+                    }
+                    
+                    mbase_cb->sta &= ~(F_RemoteRelayOff + F_RemoteGaoJing1 + F_RemoteGaoJing0);//最后取消拉闸命令
+
                     mbase_cb->cmd_errstate = 0;
                     mbase_cb->cmd_dostate = 0x0080;  //bit8;
                     return 1;

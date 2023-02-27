@@ -520,7 +520,8 @@ void report_port_open(struct instance_t* instance)
     
     GPIO_InitType GPIO_InitStruct;
     PMU_LowPWRTypeDef LowPower_InitStruct;
-    
+
+    PMU_WakeUpPinConfig(GPIO_Pin_8, IOA_DISABLE); //先关闭脉冲输出 中断
     cm0_systick_init(0);
 
     MISC_IRCmd(MISC_IREN_TX5, DISABLE);
@@ -792,6 +793,25 @@ void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
                     BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
         GPIOA->IE &= ~(BIT0|BIT1|BIT3|BIT4|BIT5|BIT6|BIT7|
                     BIT8|BIT9|BIT10|BIT11|BIT12|BIT13|BIT14|BIT15);
+ 
+        lcd_port_config(AC_POWER_OFF);// 液晶置低   mcu芯片要求   避免电荷残存
+
+        //卡表功能引脚不启用，做输出低状态
+        GPIOA->OEN &= ~BIT13; 
+        GPIOA->IE &= ~BIT13;
+        GPIOA->DAT &= ~BIT13;
+        
+        GPIOB->OEN &= ~BIT3; 
+        GPIOB->IE &= ~BIT3;
+        GPIOB->DAT &= ~BIT3;
+        
+        GPIOF->OEN &= ~BIT0; 
+        GPIOF->IE &= ~BIT0;
+        GPIOF->DAT &= ~BIT0;
+        
+        GPIOE->OEN &= ~(BIT4 | BIT8); 
+        GPIOE->IE &= ~(BIT4 | BIT8);
+        GPIOE->DAT &= ~(BIT4 | BIT8);
       
         GPIOA->OEN |=BIT14; 
         GPIOA->IE |=BIT14;

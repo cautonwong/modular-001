@@ -567,6 +567,7 @@ enum block_parameter_item_id_t
 #define      Energy_block                    2000 // 电能保存区域          长度由dyn_persistent_EC_label位置确定
 #define      UseEnergy_block                 2001 // 电能保存区域          长度由dyn_persistent_EC_label位置确定
 
+#define      EC_SaveDiff_E                   2020 // 电能定量保存阈值hex       --0.01kwh  
 
 
 //升级   mbase_block_parameter_1

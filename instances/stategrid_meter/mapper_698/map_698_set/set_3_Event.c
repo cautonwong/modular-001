@@ -83,8 +83,9 @@ int fr_set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uin
 // 设置事件关联对象
 int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
-    uint8_t i, num, maxnum;//, scheme;
+    uint8_t i, num, maxnum, Schem;
     uint8_t tempbuf[200]; //oadlist
 //    uint8_t* tmp0, * tmp1;
     uint8_t* p = buf;
@@ -103,6 +104,11 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
         return -DAR_RW_REJECT;
     }
 
+    if ((get_OAD_OI(oad) == 0x3013) && ( mbase_cb->key_state == false ))
+    {
+        *dar = DAR_RW_REJECT;
+        return -DAR_RW_REJECT;
+    }
 
     ret = get_record_id_info(instance, oad, &info);
     if (ret < 0)
@@ -129,6 +135,15 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
     {
         p++; // DTC_OAD
         oad_tmp = buf_to_uint32_msb(p);
+
+        Schem = get_OAD_Schem(oad_tmp);
+#if 1 // vs 要求
+        if ((Schem < 1) || (Schem > 4))
+        {
+            *dar = DAR_OTHERS_ERROR;
+            return -DAR_OTHERS_ERROR;
+        }
+#endif
 
         ret = check_metertype_OI_valid(instance, get_OAD_OI(oad_tmp));
         if(ret < 0){

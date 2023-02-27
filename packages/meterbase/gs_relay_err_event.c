@@ -23,20 +23,21 @@ int SwitchErr_event_judge(struct instance_t* instance, struct pipeline_t* task, 
 
     uint16_t RecordId = SwitchErrS;
 
-    if((ctrl_block->relayerr_record != 0x5A)&&(err_flag == true))    return result;  //继电器未动作，不进来  
-
-    if((err_flag == true) /*&& (enable_flag == true)*/)
+    if((ctrl_block->relayerr_record == 0x5A) || (err_flag == false))  //继电器动作 或 结束  
     {
-        state = true;
-    }
-    
-    result = event_duration_pro(duration_para, duration, state, instance, RecordId);
+        if((err_flag == true) /*&& (enable_flag == true)*/)
+        {
+            state = true;
+        }
+        
+        result = event_duration_pro(duration_para, duration, state, instance, RecordId);
 
 
-    if (result != 0)
-    {
-        send_event_mesg_pro(instance, task,  RecordId, NULL, result);
-        ctrl_block->relayerr_record = 0;
+        if (result != 0)
+        {
+            send_event_mesg_pro(instance, task,  RecordId, NULL, result);
+            ctrl_block->relayerr_record = 0;
+        }
     }
 
     if (true == get_activeflag(instance, RecordId))

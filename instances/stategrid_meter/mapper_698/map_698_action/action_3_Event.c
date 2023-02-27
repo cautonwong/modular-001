@@ -39,7 +39,7 @@ int event_clear_omd_add(struct instance_t* instance, uint32_t omd, uint16_t chn)
 int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *buf, uint8_t *dar)
 {
 
-    struct mbase_control_block_t* mbase_cb;
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t* p = buf;
     uint16_t i;
     uint8_t tempbuf[200] = {0};
@@ -52,8 +52,6 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     uint8_t* apdu_cache = instance->apdu_cache; 
 
 
-
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if (mbase_cb == NULL)
     {
         return -DAR_OTHERS_ERROR;
@@ -340,8 +338,8 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
     
         if (ret < 0)
         {
-            dar = DAR_OTHERS_ERROR;
-            return -DAR_OTHERS_ERROR;
+            dar = DAR_RW_REJECT;
+            return -DAR_RW_REJECT;
         }
 
         if (oi == 0x3023)

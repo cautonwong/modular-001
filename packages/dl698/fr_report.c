@@ -1358,6 +1358,11 @@ int powerOff_report_pro(struct instance_t* instance, struct pipeline_t* pipeline
     CLK_InitTypeDef CLK_Struct;
     uint32_t Periphral = 0;
 
+    if( instance->reset_flag == 0x5A ) //复位后 不停电上报。
+    {
+        return 0;
+    }
+    
     start_time = 1;
     if ((instance->ac_power_off_sec_cnt >= start_time) && (instance->ac_power_off_sec_cnt <= (start_time+2)))
     {
@@ -1392,9 +1397,8 @@ int fr_active_report_pro(struct instance_t* instance, struct pipeline_t* pipelin
 
 
     //停电
-    if( instance->ac_power_statue != AC_POWER_ON ) 
-    {
-
+    if(( instance->ac_power_statue != AC_POWER_ON )) // 
+    { 
          return powerOff_report_pro(instance, pipeline, mesg, get_data);
     }
     else //上电

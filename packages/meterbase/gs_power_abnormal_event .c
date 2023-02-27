@@ -73,6 +73,7 @@ void PowerAbnormal_LowPower_pro(struct instance_t* instance, struct pipeline_t* 
                 
                 mesg_tmp.id = RecordId;
                 recv_record_process(instance, task, &mesg_tmp, NULL);
+                (*accumulate_time)++;//  累计时间累加 
             }
         }
     }

@@ -81,5 +81,5 @@ extern int CoverOpen_event_LowPower_pro(struct instance_t* instance, struct pipe
 extern int after_Time_set_hook(struct instance_t* instance);
 extern int set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t value, uint8_t mode);
 extern void EventOut_698_check(struct instance_t* instance);
-
+extern int save_RtcBat_work_time(struct instance_t* instance);
 #endif //__GS_RECORD_H__

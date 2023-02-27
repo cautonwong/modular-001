@@ -292,6 +292,7 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
     
 
     instance->reset_flag = 0x5A; //复位标志
+    instance->need_data_recovery = 0x5A; 
     
     uint8_t* buf = nd_malloc(instance, control_block_cache, 4);
     fifoBuf_init(&instance->pipe_rtc, buf, 4);
@@ -381,7 +382,7 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
     get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_static, &addr);//RAM对应的地址
     uint32_t res = get_res(RES_DEV_EEPROM, mbase_block_static_eprom);
     nd_get_block(instance, res, (uint8_t*)addr, mbase_block_static_size); //将EPROM中的数据恢复到RAM;  
-    
+
     //复位次数
     uint32_t count = 0;
     addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ResetCount);

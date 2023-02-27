@@ -37,18 +37,12 @@ void tm_to_mcu_rtc_bcd(struct tm t, uint8_t *des)
     des[0] = BYTE_BCD(t.tm_sec);//秒
 }
 
-
-
-
-//上电时钟检查
-int rtc_check_poweron(struct instance_t* instance)
+//保存时钟电池工作时间
+int save_RtcBat_work_time(struct instance_t* instance)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint8_t year = 0, mark = 0, buffer[8] = {0}, temp[8] = {0}, settimebuf[8] = {0};
-    uint32_t t_now = 0, t_pd = 0, addr = 0,  batTime = 0;
-    struct tm temp_tm; 
+    uint32_t addr = 0, batTime = 0;
     int ret;
-
 
     //保存电池工作时间
     addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Bat_UseTime);
@@ -56,6 +50,19 @@ int rtc_check_poweron(struct instance_t* instance)
     batTime += ctrl_block->battery_used_time_cnt;
     ret = nd_set_index(instance, addr, (uint8_t *)&batTime, 4);
     ctrl_block->battery_used_time_cnt = 0;
+
+}
+
+
+//上电时钟检查
+int rtc_check_poweron(struct instance_t* instance)
+{
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t year = 0, mark = 0, buffer[8] = {0}, temp[8] = {0}, settimebuf[8] = {0};
+    uint32_t t_now = 0, t_pd = 0, addr = 0;
+    struct tm temp_tm; 
+    int ret;
+
     //------------------
 
     //检查系统时间是否合法

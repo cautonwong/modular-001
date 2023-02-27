@@ -12,8 +12,8 @@
 
 #if (_DEBUG_TEST == 1)
 
-    #define PWD_TEST_ON 0
-    #define FREEZ_TEST_OVERTURN 1
+    #define PWD_TEST_ON 1
+    #define FREEZ_TEST_OVERTURN 0
     #define RESET_INFO    0 // 记录 复位信息
     #define TEST_RELAY_LED 0
     
@@ -62,7 +62,9 @@
 
 
 
-#define Bat_Low_Level   300     //电池欠压阈值
+#define RtcBat_Low_Level_Dwn   290     //电池欠压阈值下限
+#define RtcBat_Low_Level_Up    300     //电池欠压阈值上限
+
 
 struct energy_ctx_t
 {
@@ -309,16 +311,18 @@ struct mbase_control_block_t
 
     uint8_t first_MbillDay_flag;
 
-    uint8_t frz_replenish_end;      //补冻结 完成标志  ,上电清零 补冻结完成置 0x5A
+    uint8_t frz_replenish_end;      //补冻结 完成标志  ,写停电时间清零 补冻结完成置 0x5A
    
     uint8_t mac_suspend_state;      // mac挂起状态 协议或显示模块可调用。 true为挂起 
     uint8_t handler_code[4];        // 645操作者代码
-
+    uint8_t RtcBat_UnderV_state;           // 时钟电池欠压状态 0：正常  1：欠压
     
     
     uint16_t metertype; //表多功能配置字
     uint8_t no_filt;    //启动值过滤开关
     uint32_t blt_alarm; //背光报警配置字
+    
+    uint16_t EC_SaveDiff;// 电能定量保存阈值hex       --0.01kwh     
 
     uint32_t battery_used_time_cnt; //电池使用时间   累加器   sec     停电或复位后清零，低功耗下累加，上电后保存
     uint32_t PowerOffS_time_low_power_cnt;      //停电事件累计时间   累加器     sec        停电或复位后清零，低功耗下累加，上电保存
@@ -466,8 +470,8 @@ void Energy_Pluse_Count(struct instance_t* instance, struct pipeline_t* pipeline
 void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline);
 void Energy_Meter_PowerON(struct instance_t* instance, struct pipeline_t* pipeline);
 void Energy_Meter_PowerOFF(struct instance_t* instance, struct pipeline_t* pipeline);
-int32_t Get_Cal_Active_Energy(struct mbase_control_block_t* mbase_control_block, uint8_t index , uint8_t type);
-int32_t Get_Active_Energy(struct mbase_control_block_t* mbase_control_block, uint8_t index , uint8_t type , uint8_t pn);
+int64_t Get_Cal_Active_Energy_T(struct mbase_control_block_t* mbase_cb, uint8_t FeeNo , uint8_t type);
+int64_t Get_Active_Energy_TABC(struct mbase_control_block_t* mbase_cb, uint8_t phase, uint8_t FeeNo , uint8_t type , uint8_t pn);
 int32_t Get_Month_Active_Energy(struct mbase_control_block_t* mbase_control_block, uint8_t index , uint8_t pn);
 void Energy_clr(struct instance_t* instance);
 
@@ -622,6 +626,7 @@ extern int esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p
 extern int backlight_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
 
 extern void Meter_Run_State(struct instance_t* instance, struct pipeline_t* pipeline);
+extern void check_RtcBat_volt(struct instance_t* instance);
 
 extern int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
 

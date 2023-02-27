@@ -701,7 +701,7 @@ int get_record_645_id_info(struct instance_t* instance, uint32_t ID, struct reco
                 temp = 4;
             }
             
-            if(((DI.elem.di0 == 0) || ((DI.elem.di0 >= 12)&& (DI.elem.di0 != 0xFF)))
+            if(((DI.elem.di0 == 0) || ((DI.elem.di0 > 12)&& (DI.elem.di0 != 0xFF)))
             ||((DI.elem.di1 != 0xFF) && (DI.elem.di1 > temp))  //代表索引
             ||(((DI.elem.di2 == 0x0B) || (DI.elem.di2 == 0x0C)) && (DI.elem.di1 != 0x00)) //月度用电量
             ||((DI.elem.di2 >= 3) && (DI.elem.di2 != 0x0B) && (DI.elem.di2 != 0x0C))) //单相    
@@ -767,9 +767,21 @@ int get_record_645_id_info(struct instance_t* instance, uint32_t ID, struct reco
                     info->oad698 = 0x50040200;
 
                     if(DI.elem.di2 == 0x06) info->oad698 = 0x50040200;
-                    else if(DI.elem.di2 == 0x01) info->oad698 = 0x50000200;
-                    else if(DI.elem.di2 == 0x02) info->oad698 = 0x50080200;
-                    else if(DI.elem.di2 == 0x03) info->oad698 = 0x50090200;
+                    else if(DI.elem.di2 == 0x01) 
+                    {
+                        if(DI.elem.di0 > 3) return -1;
+                        info->oad698 = 0x50000200;
+                    }
+                    else if(DI.elem.di2 == 0x02) 
+                    {
+                        if(DI.elem.di0 > 2) return -1;
+                        info->oad698 = 0x50080200;
+                    }
+                    else if(DI.elem.di2 == 0x03) 
+                    {
+                        if(DI.elem.di0 > 2) return -1;
+                        info->oad698 = 0x50090200;
+                    }
 
                     info->rd_645obj = DayFreeze_645oad;
                     info->rd_645obj_len = DayFreeze_645oad_len;
@@ -1938,13 +1950,11 @@ uint8_t get_freeze_mode(struct instance_t* instance,  uint8_t dlt645_id_d2)
     return mode;
 }
 
-//单相    
-//index 为冻结id1 的偏移
-uint8_t get_freeze_shift_value(uint8_t index)
+//单相     index 为 id1 的偏移
+uint8_t get_freeze_shift_value(uint8_t index )
 {
     uint8_t shift_value = 0x01;
-    
- 
+
     switch(index)
     {
         case 0x00:        
@@ -1981,11 +1991,30 @@ int freeze_mode_check_single_item(struct instance_t* instance,uint32_t ID)
 {
     uint8_t i, mode = 0xFF, shift = 0xFF;
     union dl645_DI_t DI;
+    uint8_t index = 0;
     
     DI.di = ID;
 
     mode = get_freeze_mode(instance, DI.elem.di2);
-    shift = get_freeze_shift_value(DI.elem.di1); 
+
+
+    index = DI.elem.di1;
+    if(DI.elem.di2 == 8) //剩余金额日冻结
+    {
+        if(index == 2)
+        {
+            index = 0x0C;
+        }
+    }
+    else
+    {
+        if(index == 0x10)
+        {
+            index = 0x0B;
+        }  
+    }
+    
+    shift = get_freeze_shift_value(index); 
 
     if((mode & shift))
     {

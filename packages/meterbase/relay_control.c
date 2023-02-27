@@ -24,20 +24,34 @@ extern uint8_t Magnetic_hold_relay_disconnect();
 //每秒调用，告警延时和限电时间递减
 void Relay_Sec_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
 {
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)pipeline->ctx;
     
-    if(mbase_control_block->imaxmin > 0)   
+    if(mbase_cb->alarmmin > 0)   //跳闸延时到 再判断大电流
     {
-        mbase_control_block->imaxmin--;
-        if((abs(mbase_control_block->current_l) < (mbase_control_block->I_Prot/10)) || (mbase_control_block->I_Prot == 0))
+        mbase_cb->alarmmin--;
+        if(mbase_cb->alarmmin == 0) 
         {
-            mbase_control_block->imaxmin = 0;
+            if((abs(mbase_cb->current_l) > (mbase_cb->I_Prot / 10)) && (mbase_cb->I_Prot != 0))
+            {
+                mbase_cb->imaxmin = mbase_cb->Prot_time;   
+                mbase_cb->imaxmin = mbase_cb->imaxmin*60;
+            }
+            else
+            {
+                mbase_cb->imaxmin = 0;
+            }
         }
     }
-    else    //大电流拉闸延时和拉闸延时时间需要依次递减
+    else
     {
-        if(mbase_control_block->alarmmin > 0)  mbase_control_block->alarmmin--;
-        if(mbase_control_block->limitmin > 0)  mbase_control_block->limitmin--;
+        if(mbase_cb->imaxmin > 0)   
+        {
+            mbase_cb->imaxmin--;
+            if((abs(mbase_cb->current_l) < (mbase_cb->I_Prot/10)) || (mbase_cb->I_Prot == 0))
+            {
+                mbase_cb->imaxmin = 0;
+            }
+        }
     }
 }
 
@@ -97,14 +111,15 @@ void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
             {
                 if(mbase_control_block->sta & F_RemoteGaoJing0)    //直接合闸
                 {
-                    mbase_control_block->sta &= ~F_RemoteGaoJing0;
+                    //mbase_control_block->sta &= ~F_RemoteGaoJing0;
                     switchon = 1;
                 }
                 else if(mbase_control_block->sta & F_RemoteGaoJing1)   //合闸允许
                 {
-                    mbase_control_block->sta &= ~F_RemoteGaoJing1;
+                    //mbase_control_block->sta &= ~F_RemoteGaoJing1;
                     mbase_control_block->sta |= F_RemoteRelayOnAllow;
                 }
+                mbase_control_block->sta &= ~(F_RemoteGaoJing1 + F_RemoteGaoJing0);//预调闸应都清避免误进两次的可能
             }
         }
     }

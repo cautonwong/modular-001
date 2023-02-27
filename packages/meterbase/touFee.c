@@ -256,7 +256,7 @@ unsigned char FeeTable_CmpFind( struct instance_t* instance, struct pipeline_t* 
 
 void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
 {
-	uint8_t i,Weekstate,Num0;
+	uint8_t i,Weekstate,Num0, Num_DayTable = 0;
 	uint32_t Num=0,Num1=0;
     uint32_t s_index= 0;
     uint16_t year=0;
@@ -264,6 +264,11 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
     uint8_t Buf[200];
     
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+	//时段表个数
+    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 1);
+    nd_get_index(instance, s_index, (uint8_t*)&Num_DayTable, 1); 
+
 
 	//公假日表
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 4);
@@ -287,6 +292,12 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
             mem_swap_cpy((uint8_t*)&year, (uint8_t*)&Buf[6*i+0], 2);
 			if( (year == (instance->time.tm_year+1900)) && (Buf[6*i+2] == (instance->time.tm_mon+1)) && (Buf[6*i+3] == instance->time.tm_mday) )
 			{
+
+                if ((Buf[6*i+5] == 0) || (Buf[6*i+5] > MaxTouTabNum) || (Buf[6*i+5] > Num_DayTable))
+                {
+                    Buf[6*i+5] = 1;
+                } 
+                
 			    if(mbase_cb->DayTableNo != Buf[6*i+5])
 			    {
                     mbase_cb->PortTouCut = 1;
@@ -309,6 +320,11 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
 	{
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + WeekendFee);//周休日表
         nd_get_index(instance, s_index, (uint8_t*)&Buf[1], 1);
+
+        if ((Buf[1] == 0) || (Buf[1] > MaxTouTabNum) || (Buf[1] > Num_DayTable))
+        {
+            Buf[1] = 1;
+        } 
 
         if(mbase_cb->DayTableNo != Buf[1])
         {
@@ -338,7 +354,7 @@ void GetFeeTab(struct instance_t* instance, struct pipeline_t* pipeline)
         
 		i = FeeTable_CmpFind( instance, pipeline, (unsigned char)Num, 0 ,&Buf[0]);//比较查找时区表		
 
-        if ((Buf[3*i+2] == 0) || (Buf[3*i+2] > MaxTouTabNum))
+        if ((Buf[3*i+2] == 0) || (Buf[3*i+2] > MaxTouTabNum) || (Buf[3*i+2] > Num_DayTable))
         {
             Buf[3*i+2] = 1;
         } 	
@@ -434,6 +450,7 @@ void Rtc_Prossecc(struct instance_t* instance, struct pipeline_t* pipeline)
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
+    
     if( instance->ac_power_statue == AC_POWER_ON )
     {
         if(instance->time.tm_sec != 20)//每分鐘的20秒對時
@@ -455,13 +472,16 @@ void Rtc_Prossecc(struct instance_t* instance, struct pipeline_t* pipeline)
     else
     {
         instance->time.tm_sec++;
-            
         rtc_tm_normalize((struct tm*)&instance->time.tm_sec);
     }
     
     if((instance->time.tm_hour == 0) && (instance->time.tm_min == 0) && (instance->time.tm_sec == 0))
     {
         mbase_cb->boardadjtime = 0;
+        if(instance->time.tm_year == 200) //2100年时立即归为2000年
+        {
+            instance->time.tm_year = 100;
+        }
     }
 /*    if(instance->time.tm_min == 0)
     {

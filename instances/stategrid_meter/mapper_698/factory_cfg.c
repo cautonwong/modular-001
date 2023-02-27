@@ -17,9 +17,9 @@ const  uint8_t FirmWareVersion[20] =
 //参数配置 
 #define METER_TYPE_CONFIG  (0x0801)  //表功能配置字
 
-const uint8_t  init_Meter_Type[] = { (uint8_t)(METER_TYPE_CONFIG), (uint8_t)(METER_TYPE_CONFIG>>8), }; //表功能配置字 
+const uint8_t  init_Meter_Type[]            = { (uint8_t)(METER_TYPE_CONFIG), (uint8_t)(METER_TYPE_CONFIG>>8), }; //表功能配置字 
 
-const uint8_t  init_ParaInitFinish_Flag[] = {0x55,0x55,0xaa,0xaa,};// 恢复出厂已执行标志
+const uint8_t  init_ParaInitFinish_Flag[]   = {0x55,0x55,0xaa,0xaa,};// 恢复出厂已执行标志
 
 
 
@@ -579,6 +579,9 @@ const uint8_t   init_LoadRec_Inv4[] = {2, 0x00, 0x15};
 
 // 恢复出厂标志
 const uint8_t  init_3090[] = {0x55,0x55,0xaa,0xaa,};
+
+const uint8_t init_EC_SaveDiff_E[] = { 0xC8, 0x00 };//电能定量保存阈值hex  默认--2.00kwh 
+
 
 #pragma default_variable_attributes =
 

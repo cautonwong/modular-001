@@ -762,13 +762,17 @@ int event_LowPower_pro(struct instance_t* instance, struct pipeline_t* pipeline,
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t s_index;
 
+    /*
+    if(instance->reset_flag == 0x5A) //未上过电
+    {
+        return true;
+    }
+    */
     ctrl_block->pd_active_flag_update = 0;
-
 
     PowerOff_LowPower_pro(instance, pipeline, mesg);
     PowerAbnormal_LowPower_pro(instance, pipeline, mesg);
     CoverOpen_event_LowPower_pro(instance, pipeline, mesg);
-
 
     if (ctrl_block->pd_active_flag_update == 0x5A)
     {

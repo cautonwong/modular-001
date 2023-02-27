@@ -301,7 +301,7 @@ static void __fr_rx_698_check(struct instance_t* instance, struct pipeline_t* pi
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct fifo_t* ififo = (struct fifo_t*)pipeline->in_queue;
     uint8_t tail = 0;
-
+    
     uint16_t crc = fifoBuf_getByte(ififo) + (fifoBuf_getByte(ififo) << 8);//fcs-0
     n_assert(ctx->fcs == crc);
     tail = fifoBuf_getByte(ififo);
@@ -311,7 +311,7 @@ static void __fr_rx_698_check(struct instance_t* instance, struct pipeline_t* pi
 
 int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
 {
-    __fr_rx_698_check(instance, pipeline, mesg);
+    //__fr_rx_698_check(instance, pipeline, mesg);
 
     fr_pack_698_head(instance, pipeline, mesg);
     if(mesg->len)
@@ -854,7 +854,10 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
         if(ctx->apdu_rx_len > Max698_apdu_rx){
             return -1;
         }
-        fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len);
+        int len_tail = fifoBuf_getUsed(fifo);
+        fifoBuf_getData(fifo, apdu_rx,  len_tail);
+        //fifoBuf_getData(fifo, apdu_rx,  ctx->apdu_rx_len);
+        
         handle_scrambler(instance, pipeline, mesg);
     }
     
@@ -1044,7 +1047,7 @@ int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pip
         __fr_send_handle(instance, pipeline, mesg);
         return 0;
     }
-    __fr_rx_698_check(instance, pipeline, mesg); 
+    //__fr_rx_698_check(instance, pipeline, mesg); 
     return 0;
 }
 

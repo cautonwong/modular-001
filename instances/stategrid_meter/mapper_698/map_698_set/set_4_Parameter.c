@@ -95,7 +95,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         break;
                     case 0x4013://周休日日时段表号
                         if(*p != 17) return -DAR_TYPE_NOT_MATCH;
-                        if ( p[1] >  MaxTouTabNum ) return -DAR_OTHERS_ERROR;
+                        if (( p[1] ==  0 ) || ( p[1] >  MaxTouTabNum )) return -DAR_OTHERS_ERROR;
                         //保存编程前
                         nd_get(instance, id, timer, 2, NULL);
                         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_WeekTab);
@@ -593,18 +593,37 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             else if(attribute == 0x05)  //广播校时参数
             {
-                p = p + 3;
-                mem_swap_cpy((uint8_t*)&mbase_cb->Limit_T_Min, p, 2);
-                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                offsetof(struct mbase_control_block_t, Limit_T_Min));
-                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->Limit_T_Min, 2);
-                p = p + 2;
-                p++;
-                mem_swap_cpy((uint8_t*)&mbase_cb->Limit_T_Max, p, 2);
-                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                offsetof(struct mbase_control_block_t, Limit_T_Max));
-                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->Limit_T_Max, 2);
-                p = p + 2;
+                if(index <= 2)
+                {
+                    if(index == 0)
+                    {
+                        p = p + 2;
+                    }
+                    if((index == 0)||(index == 1))
+                    {
+                        p++;
+                        mem_swap_cpy((uint8_t*)&mbase_cb->Limit_T_Min, p, 2);
+                        s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        offsetof(struct mbase_control_block_t, Limit_T_Min));
+                        nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->Limit_T_Min, 2);
+                        p = p + 2;
+                    }
+                    if((index == 0)||(index == 2))
+                    {
+                        p++;
+                        mem_swap_cpy((uint8_t*)&mbase_cb->Limit_T_Max, p, 2);
+                        s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        offsetof(struct mbase_control_block_t, Limit_T_Max));
+                        nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->Limit_T_Max, 2);
+                        p = p + 2;
+                    }
+
+                }
+                else 
+                {
+                    return -DAR_OBJECT_NOT_EXIST;
+                }
+
                 return (p-buf);
             }
             break;
@@ -784,17 +803,24 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             break;
         case 0x4011://公共假日表
             if((index == 0) || (index > 20))    return -DAR_RW_REJECT;
-            if(((*(p+9)) == 0) || ((*(p+9)) > MaxTouTabNum))    return -DAR_RW_REJECT;
+            if((p[3] == 0xFF) && (p[4] == 0xFF) && (p[5] == 0xFF) && (p[6] == 0xFF) && (p[7] == 0xFF) && (p[9] == 0xFF))
+            {
+                //支持全FF  湖北
+            }
+            else
+            {
+                if(((*(p+9)) == 0) || ((*(p+9)) > MaxTouTabNum))    return -DAR_RW_REJECT;
             
-            mem_swap_cpy((uint8_t*)&year2, p+3, 2);
-            if(year2 < 2000) return -DAR_OTHERS_ERROR;
-            year2 = year2 - 2000;
-            timer[0] = *(p+6); //day
-            timer[1] = *(p+5); //month
-            timer[2] = (uint8_t)year2;
-            
-            if(Date_Format_Check(timer))  return -DAR_OTHERS_ERROR;
-            if(*(p+7) != GetWeek(timer))    return -DAR_RW_REJECT;//周错误
+                mem_swap_cpy((uint8_t*)&year2, p+3, 2);
+                if(year2 < 2000) return -DAR_OTHERS_ERROR;
+                year2 = year2 - 2000;
+                timer[0] = *(p+6); //day
+                timer[1] = *(p+5); //month
+                timer[2] = (uint8_t)year2;
+                
+                if(Date_Format_Check(timer))  return -DAR_OTHERS_ERROR;
+                if(*(p+7) != GetWeek(timer))    return -DAR_RW_REJECT;//周错误
+            }
 
             // 编程事件-保存编程前
             nd_get(instance, id, temp, 10, NULL);
@@ -810,7 +836,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             memcpy(buffer, p, 5);
             p = p + 6;
             buffer[5] = *p++;
-            if (buffer[5] > MaxTouTabNum) return -DAR_RW_REJECT;
+ 
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + HoliDay_Table + (index-1));
             nd_set_index(instance, s_index, buffer, 6); 
 
@@ -829,6 +855,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             {
                 num = *(p+1);
                 if(num>MaxSeasonNum) return -DAR_TIME_ZONE_EXCEED;
+                if(num == 0) return -DAR_RW_REJECT;
                 for(i=0; i<num; i++)
                 {
                     if((*(p+2+8*i+3) > 12) || (*(p+2+8*i+3) == 0)) return -DAR_RW_REJECT;
@@ -839,6 +866,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             else
             {
+                if((*(p+0) != TYPE_structure) || (*(p+1) != 3))   return -DAR_RW_REJECT;
                 if((*(p+3) > 12) || (*(p+3) == 0))  return -DAR_RW_REJECT;
                 if((*(p+5) > 31) || (*(p+5) == 0))  return -DAR_RW_REJECT;
                 if(*(p+5) > MonTab[*(p+3)])     return -DAR_RW_REJECT;
@@ -1001,9 +1029,13 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             {
                 p++;
                 num_hourtab = *p++; //日时段数，每日切换数
-                if(num_hourtab > MaxTouNum)  
+                if((num_hourtab > MaxTouNum)) 
                 {
                     return -DAR_DAY_INTERVAL_EXCEED;
+                }
+                if((num_hourtab == 0)) // 0个数组 不允许设置  
+                {
+                    return -DAR_OTHERS_ERROR;
                 }
                 for(i=0; i<num_hourtab; i++)
                 {
@@ -1135,25 +1167,28 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 {
                     p = p + 2;
                     p++;//tag
-                    buffer[0] = *p++;
-                    if(((buffer[0] > 28) && (buffer[0] != 99)) || (buffer[0] == 0))  return -DAR_OTHERS_ERROR; 
+                    buffer[2*i] = *p++;
+                    if(((buffer[2*i] > 28) && (buffer[2*i] != 99)) || (buffer[2*i] == 0))  return -DAR_OTHERS_ERROR; 
                     p++;//tag
-                    buffer[1] = *p++;
-                    if((buffer[1] > 23) && (buffer[1] != 99))  return -DAR_OTHERS_ERROR;
-                    if(((buffer[0] == 99) || (buffer[1] == 99)) && ((buffer[0] != 99) || (buffer[1] != 99)))
+                    buffer[1 + (2*i)] = *p++;
+                    if((buffer[1 + (2*i)] > 23) && (buffer[1 + (2*i)] != 99))  return -DAR_OTHERS_ERROR;
+                    if(((buffer[2*i] == 99) || (buffer[1 + (2*i)] == 99)) && ((buffer[2*i] != 99) || (buffer[1 + (2*i)] != 99)))
                     {
                         return -DAR_OTHERS_ERROR;
                     }
-                    
+                }
+
+                for(i=0;i<num;i++)
+                {                   
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
-                    nd_set_index(instance, s_index, buffer, 2); 
+                    nd_set_index(instance, s_index, &buffer[2*i], 2); 
                     
-                    memset(buffer, 0xaa, 2);
+                    memset(&buffer[2*i], 0xaa, 2);
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
-                    nd_get_index(instance, s_index, buffer, 2);
+                    nd_get_index(instance, s_index, &buffer[2*i], 2);
                     if(i == 0)
                     {
-                        if ( (buffer[0] != temp[0]) || (buffer[1] != temp[1]) ) //第一结算日改变
+                        if ( (buffer[2*i] != temp[0]) || (buffer[1 + (2*i)] != temp[1]) ) //第一结算日改变
                         {
                             mbase_cb->first_MbillDay_flag = 0x5A;
                             record_event_no_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
@@ -1173,6 +1208,10 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 p++;//tag
                 buffer[1] = *p++;
                 if((buffer[1] > 23) && (buffer[1] != 99))  return -DAR_OTHERS_ERROR;
+                if(((buffer[0] == 99) || (buffer[1] == 99)) && ((buffer[0] != 99) || (buffer[1] != 99)))
+                {
+                    return -DAR_OTHERS_ERROR;
+                }
                 
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + (index - 1));
                 nd_set_index(instance, s_index, buffer, 2);

@@ -1219,9 +1219,9 @@ uint8_t lcd_init(uint8_t power_mode)
           LCD_Cmd(&lcd_io_para, ENABLE);
             break;
         default:
-          LCD->SEGCTRL0 = 0;
-          LCD->SEGCTRL1 = 0;
-          LCD->SEGCTRL2 = 0;
+          //LCD->SEGCTRL0 = 0;
+          //LCD->SEGCTRL1 = 0;
+          //LCD->SEGCTRL2 = 0;
           lcd_port_config(AC_POWER_OFF);
           lcd_io_para.COMMode  = LCD_TYPE_6COM;
           lcd_io_para.SegCtrl0 = 0x00;
