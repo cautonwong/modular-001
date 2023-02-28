@@ -1,6 +1,8 @@
 #include "nidavellir.h"
 #include "fr_698.h"
 
+extern void save_relay_state(struct instance_t* instance);
+
 
 //设置、操作 时间标签错误时，置位相关状态字
 void app_handle_timeTag_invalid(struct instance_t* instance, uint32_t oad)
@@ -141,6 +143,10 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     }
                     if(mbase_cb->limitmin == 0)//拉闸
                     {
+                        if(mbase_cb->sta & (F_RemoteRelayOff + F_RemoteRelayOnAllow + F_RemoteGaoJing0 + F_RemoteGaoJing1)) //已经在拉闸情况下，清延时，避免拉闸字符闪烁，
+                        {
+                            Alarm_min = 0;
+                        }
                         mbase_cb->sta |= F_RemoteRelayOff;
                         if(mbase_cb->sta & F_RemoteRelayOnAllow)    //合闸允许状态下发拉闸命令，取消合闸允许状态
                         {
@@ -190,6 +196,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     }
                     mbase_cb->cmd_errstate = 0;
                     mbase_cb->relay_do = 0xA5; 
+                    save_relay_state(instance);
                     return (p-buf);
                     break;
                 case 0x82://合闸
@@ -248,6 +255,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     mbase_cb->cmd_errstate = 0;
 
                     mbase_cb->relay_do = 0xA5; 
+                    save_relay_state(instance);
                     return (p-buf);
                     break;
                 default:
@@ -292,6 +300,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
 
                     mbase_cb->cmd_errstate = 0;
                     mbase_cb->cmd_dostate = 0x0080;  //bit8;
+                    save_relay_state(instance);
                     return 1;
                     break;
                 case 0x80://解除保电
@@ -303,6 +312,7 @@ int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     mbase_cb->sta &= ~F_RemoteRelayOn;
                     mbase_cb->cmd_errstate = 0;
                     mbase_cb->cmd_dostate = 0x0040;  //bit9;
+                    save_relay_state(instance);
                     return 1;
                     break;
                 default:

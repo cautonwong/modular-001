@@ -546,25 +546,14 @@ void clear_active_report_time_count(struct instance_t* instance, enum active_rep
 void active_report_normal_CMD_set(struct instance_t* instance, uint8_t chn, uint8_t setType)
 {   
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    uint8_t buf[10];
-    uint32_t addr, ret;  
+    uint8_t buf[10] = {0};
+    uint32_t s_addr = 0, len = 0, ret=0;  
 
-    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ActReport_Info);
     
     if(chn == chl_PLC_698) 
     {
         if(setType)//3320
-        {
-            if (instance->ac_power_statue == AC_POWER_OFF) 
-            {
-                ret = nd_get_index(instance, addr, buf, 4);
-                if(ret > 0)//恢复主动上报状态字和主动上报次数
-                {
-                    mbase_cb->active_report_CMDtype = buf[0] | ((uint16_t)buf[1]<<8);
-                    mbase_cb->active_report_retry_cnt[R_3320] = buf[2];
-                    mbase_cb->active_report_retry_cnt[R_2015] = buf[3];
-                }
-            }    
+        {  
             mbase_cb->active_report_CMDtype |= ACTIVE_REPORT_3320;
         }
         else//2015
@@ -578,10 +567,10 @@ void active_report_normal_CMD_set(struct instance_t* instance, uint8_t chn, uint
 
         if (instance->ac_power_statue == AC_POWER_OFF)
         {
-            ndv_memcopy(buf, (uint8_t *)&mbase_cb->active_report_CMDtype, 2);
-            ndv_memcopy(buf+2, (uint8_t *)&mbase_cb->active_report_retry_cnt[R_3320], 1);
-            ndv_memcopy(buf+3, (uint8_t *)&mbase_cb->active_report_retry_cnt[R_2015], 1);
-            ret = nd_set_index(instance, addr, buf, 4);
+            s_addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+            offsetof(struct mbase_control_block_t, active_report_CMDtype)  -  offsetof(struct mbase_control_block_t, persistent_section_start));
+            len = offsetof(struct mbase_control_block_t, active_report_retry_cnt) - offsetof(struct mbase_control_block_t, active_report_CMDtype) + sizeof(mbase_cb->active_report_retry_cnt);
+            nd_set_offset(instance, s_addr, (uint8_t*)&mbase_cb->active_report_CMDtype, len);
         }
     }
 }

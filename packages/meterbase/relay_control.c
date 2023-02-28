@@ -60,6 +60,18 @@ static unsigned char lastswitchsta = 0xaa;
 static unsigned char key_relay_on_tick = 0;
 static uint8_t led_flash_goon = 0;
 
+
+void save_relay_state(struct instance_t* instance)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint32_t s_addr = 0, len = 0;
+
+    s_addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+    offsetof(struct mbase_control_block_t, cmd)  -  offsetof(struct mbase_control_block_t, persistent_section_start));
+    len = offsetof(struct mbase_control_block_t, sta) - offsetof(struct mbase_control_block_t, cmd) + sizeof(mbase_cb->sta);
+    nd_set_offset(instance, s_addr, (uint8_t*)&mbase_cb->cmd, len);
+}
+
 //每秒调用
 void do_relay(struct instance_t* instance,  struct pipeline_t* pipeline)
 {

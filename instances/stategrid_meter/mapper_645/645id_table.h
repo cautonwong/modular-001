@@ -143,7 +143,7 @@ extern int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_r
 extern int read_record_data_form_698_protocol(struct instance_t* instance, uint8_t* buf, uint32_t Record_oad, uint32_t capture_oad, uint8_t last_no, uint16_t bufsize);
 extern unsigned char GetCommTable( unsigned long ID );
 extern signed char ctl_freeze(struct instance_t* instance, uint8_t chl, uint8_t* p_rx);
-extern signed char chg_baut(struct instance_t* instance, uint8_t* p_rx);
+extern signed char chg_baut(struct instance_t* instance, uint8_t* p_rx, struct context_645_t* ctx);
 extern signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx,  uint16_t RemotCtrResult);
 extern int upgrade_file_handle(struct instance_t* instance, uint8_t *data, uint16_t len, uint8_t *data_tx, uint8_t *tx_len);
 extern signed char ft_adj_get_meter(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
@@ -154,7 +154,6 @@ extern unsigned char Cmp_MeterAddr( struct instance_t* instance, unsigned char* 
 extern unsigned char ChangeTime_Format_Check( unsigned char* Addr );
 extern unsigned char Cmp_Password(struct instance_t* instance, unsigned char* Addr );
 extern signed char ctl_freeze(struct instance_t* instance, uint8_t chl, uint8_t* p_rx);
-extern signed char chg_baut(struct instance_t* instance, uint8_t* p_rx);
 extern signed char ft_adj_get_meter(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
 extern int upgrade_file_handle(struct instance_t* instance, uint8_t *data, uint16_t len, uint8_t *data_tx, uint8_t *tx_len);
 extern unsigned char Comm485Baut_Check( unsigned char Baut );
@@ -162,3 +161,5 @@ extern int response_x_byte_err_645(uint8_t *p_tx, uint16_t err, uint8_t errLen, 
 extern uint8_t Search_DL645_Prepay_IDTab(struct instance_t* instance, uint32_t id,uint8_t cmd);
 extern unsigned char Date_645Format_Check( unsigned char* Addr );
 extern unsigned char Time_645Format_Check( unsigned char* Addr );
+extern unsigned char Dl645_IR_chl_Check(struct instance_t* instance, uint32_t id, uint8_t chl);
+extern int8_t security_judge_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);

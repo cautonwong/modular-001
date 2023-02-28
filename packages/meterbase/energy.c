@@ -248,7 +248,7 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
     uint8_t SaveData_flag = 0; // BIT0:第1个电能校验   BIT1:第2个电能校验  。。。。
     uint8_t Updata_flag = 0;   // BIT0:第1个电能校验   BIT1:第2个电能校验  。。。。
     
-    uint8_t fee_index = 0;
+    uint8_t i,fee_index = 0;
     uint32_t s_index, ec_add =0;
     uint32_t meter_const =  mbase_cb->meter_const/100;
 
@@ -298,12 +298,15 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
     ec_add = mbase_cb->active_p_dec[0] / meter_const;
     if(ec_add > 0)    
     {
-        Updata_flag |= BIT0;
-        mbase_cb->active_p[0] += ec_add;
+        Updata_flag |= BIT0; 
         mbase_cb->active_p_dec[0] -= (meter_const*ec_add);
-        if((mbase_cb->active_p[0] % mbase_cb->EC_SaveDiff)==0)
+        for(i = 0; i < ec_add; i++)
         {
-            SaveData_flag |= BIT0;
+            mbase_cb->active_p[0] += 1;
+            if((mbase_cb->active_p[0] % mbase_cb->EC_SaveDiff)==0)
+            {
+                SaveData_flag |= BIT0;
+            }
         }
     }
     //-------   
@@ -331,13 +334,15 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
     ec_add = mbase_cb->active_n_dec[0] / meter_const;
     if(ec_add > 0)    
     {
-        
         Updata_flag |= BIT0;
-        mbase_cb->active_n[0] += ec_add;
         mbase_cb->active_n_dec[0] -= (meter_const*ec_add);
-        if((mbase_cb->active_n[0] % mbase_cb->EC_SaveDiff)==0)
+        for(i = 0; i < ec_add; i++)
         {
-            SaveData_flag |= BIT0;
+            mbase_cb->active_n[0] += 1;
+            if((mbase_cb->active_n[0] % mbase_cb->EC_SaveDiff)==0)
+            {
+                SaveData_flag |= BIT0;
+            }
         }
     }
 
@@ -345,15 +350,16 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
     ec_add = mbase_cb->MonthEnegery_dec / meter_const;
     if(ec_add > 0) //if(mbase_cb->MonthEnegery_dec >= (mbase_cb->meter_const/100))
     {
-        mbase_cb->MonthEnegery += ec_add;
-        mbase_cb->MonthEnegery_dec -= (meter_const*ec_add);
-
         Updata_flag |= BIT1;
-        //if((mbase_cb->MonthEnegery % 100)==0)
-        if((mbase_cb->MonthEnegery % (mbase_cb->EC_SaveDiff)==0))
+        mbase_cb->MonthEnegery_dec -= (meter_const*ec_add);
+        for(i = 0; i < ec_add; i++)
         {
-            SaveData_flag |= BIT1;
-        }       
+            mbase_cb->MonthEnegery += 1;
+            if((mbase_cb->MonthEnegery % (mbase_cb->EC_SaveDiff)==0))
+            {
+                SaveData_flag |= BIT1;
+            }   
+        }    
     }
 
     //------

@@ -132,6 +132,10 @@ int8_t security_decode_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *
 	uint8_t tx_apdu_len = 0;   
     uint8_t k1_offset = 0, k1_len = 0, decode_len = 0;
 
+    if(mbase_cb->auth_timeout_645 == 0)
+    {
+       return RS_ERR_PASS;
+    }
 
 	switch (ctx->ctrl)
 	{

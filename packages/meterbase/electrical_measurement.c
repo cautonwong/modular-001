@@ -1049,25 +1049,30 @@ void Electrical_measurement(struct instance_t* instance, struct pipeline_t* pipe
             mbase_control_block->active_power = 0;
         }
     }
-    
-    if(mbase_control_block->active_avg_power == 0) //待调整
+
+    if (abs(mbase_control_block->active_power) > mbase_control_block->apparent_power) //有功大于视在时   视在等于有功 为何有功会大于视在？
     {
+        mbase_control_block->apparent_power = abs(mbase_control_block->active_power);
+    }
+
+    if(mbase_control_block->avg_cal_start_flag < 60)  //前60s 赋值当前瞬时值
+    {
+        mbase_control_block->avg_cal_start_flag++;
         mbase_control_block->active_avg_power = mbase_control_block->active_power;
+    } 
+
+    if(avg_activepower_cnt < 60)
+    {
+        avg_activepower_sum += mbase_control_block->active_power;
+        avg_activepower_cnt++;
     }
     else
     {
-        if(avg_activepower_cnt < 60)
-        {
-            avg_activepower_sum += mbase_control_block->active_power;
-            avg_activepower_cnt++;
-        }
-        else
-        {
-            mbase_control_block->active_avg_power = avg_activepower_sum/avg_activepower_cnt;
-            avg_activepower_cnt = 0;
-            avg_activepower_sum = 0;
-        }
+        mbase_control_block->active_avg_power = avg_activepower_sum/avg_activepower_cnt;
+        avg_activepower_cnt = 0;
+        avg_activepower_sum = 0;
     }
+
     
     if(mbase_control_block->apparent_power < abs(mbase_control_block->active_power))    //视在功率小于有功功率，视在=有功
     {
@@ -1219,6 +1224,7 @@ void Electrical_measurement_poweron(struct instance_t* instance, struct pipeline
     avg_activepower_cnt = 0;
     avg_activepower_sum = 0;
     mbase_control_block->active_avg_power = 0;
+    mbase_control_block->avg_cal_start_flag = 0;
     
     /********* 各类门限 *********/
     mbase_control_block->volt_60 = AS_Un*0.6;   //60%电压

@@ -381,7 +381,7 @@ int rollback_sequence(struct instance_t* instance, uint32_t oad,  uint16_t rollb
     return 1;
 }
 
-
+#if 1
 //设置或修改时间后调用  冻结回退处理
 //finish_check: 5A - 检查是否有未完成的回滚操作。 
 //              其他- 回滚操作
@@ -475,8 +475,153 @@ int record_rollback_after_set_time(struct instance_t* instance, uint8_t finish_c
 
     return 1;
 }
+#endif
+#if 0
+//设置或修改时间后调用  冻结回退处理
+//finish_check: 0x5A - 检查是否有未完成的回滚操作。 
+//              0xA5 - 更新回滚参数
+int record_rollback_after_set_time(struct instance_t* instance, uint8_t finish_check)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+
+    struct record_storage_id_info_t record_id_info; 
+    uint8_t i, num = 0, buffer[10] = { 0xFF }, buffer2[10] = { 0xFF };
+
+    uint32_t addr,last_timesec, curr_timesec;
+    uint16_t rollback_seq_num[11] = { 0 };
+    int ret = 0;
+    //uint16_t FlagID[] = { MinuteFreeze1, MinuteFreeze2, MinuteFreeze3, MinuteFreeze4, MinuteFreeze5, MinuteFreeze6, MinuteFreeze7, MinuteFreeze8, HourFreeze, DayFreeze, MonthFreeze, };
+    uint32_t TabOAD[11] = { 0x50020200, 0x50022200, 0x50024200, 0x50026200, 0x50028200, 0x5002A200, 0x5002C200, 0x5002E200, 0x50030200, 0x50040200, 0x50060200, };
 
 
+    if (finish_check == 0x5A)
+    {
+        if (mbase_cb->record_rollback_flag != 0x5A)
+        {
+            return 1;
+        }
+    }
+    else if (finish_check == 0xA5) //update para
+    {
+        (mbase_cb->record_rollback_flag == 0x5A)
+        
+        //时间合法性判断 待调整
+        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
+        ret = nd_get_index(instance, addr, buffer, 7);
+        if (ret >= 0)
+        {
+            tmp1 = dt_buf_to_second(buffer);
+        }
+        else
+        {
+            tmp1 = 0;
+        }
+
+        if(mbase_cb->record_rollback_flag == 0x5A) //已有回滚未处理，需要比对时间取大值
+        {
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time_RB);
+            ret = nd_get_index(instance, addr, buffer2, 7); 
+            if (ret >= 0)
+            {
+                tmp2 = dt_buf_to_second(buffer);
+            }
+            else
+            {
+                tmp2 = 0;
+            }       
+            if(tmp1 > tmp2)
+            {
+                addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time_RB);
+                ret = nd_set_index(instance, addr, buffer, 7); 
+            }
+        }
+        else //无回滚 更新 校时前回滚时间
+        {
+            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time_RB);
+            ret = nd_set_index(instance, addr, buffer, 7); 
+        }
+
+        
+
+
+
+        return 1
+    }
+    else
+    {
+        return 1;
+    }
+
+    //时间合法性判断 待调整
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time_RB);
+    ret = nd_get_index(instance, addr, buffer, 7);
+    if (ret < 0)
+    {
+        return -1;
+    }
+
+    last_timesec = dt_buf_to_second(buffer);
+
+    //时间合法性判断 待调整
+    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time_RB);
+    ret = nd_get_index(instance, addr, buffer, 7);
+    if (ret < 0)
+    {
+        return -1;
+    }
+
+    curr_timesec = dt_buf_to_second(buffer);
+
+    if (curr_timesec < last_timesec)
+    {
+        // 非检查 情况下 保存回退标志 
+        if (finish_check != 0x5A)
+        {
+            mbase_cb->record_rollback_flag = 0x5A;
+            
+            addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+            offsetof(struct mbase_control_block_t, record_rollback_flag)) -  offsetof(struct mbase_control_block_t, persistent_section_start);
+            nd_set_offset(instance, addr, (uint8_t*)&mbase_cb->record_rollback_flag, sizeof(mbase_cb->record_rollback_flag));
+        }
+        
+        num = 0;
+        for (i = 0; i < (sizeof(TabOAD) / sizeof(TabOAD[0])); i++)
+        {
+            //掉电退出
+            if (ANA_GetStatus(ANA_STATUS_VDCINDROP))    
+            {
+                return 1;
+            }
+            mcu_clear_watchdog();
+            ret = get_record_id_info(instance, TabOAD[i], &record_id_info);
+            if (ret <= 0)
+            {
+                continue;
+            }
+            
+            rollback_seq_num[i] = nd_log_append_rollback(instance, record_id_info.save_index  , public_block_flash, last_timesec, curr_timesec);
+            if (rollback_seq_num[i] > 0)
+            {
+                rollback_sequence(instance, TabOAD[i], rollback_seq_num[i]);
+                num++;
+            }
+        }
+
+        if (i >= (sizeof(TabOAD) / sizeof(TabOAD[0])))
+        {
+            //清除回退标志
+            mbase_cb->record_rollback_flag = 0;
+            
+            addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+            offsetof(struct mbase_control_block_t, record_rollback_flag)) -  offsetof(struct mbase_control_block_t, persistent_section_start);
+            nd_set_offset(instance, addr, (uint8_t*)&mbase_cb->record_rollback_flag, sizeof(mbase_cb->record_rollback_flag));
+        }
+    }
+
+    return 1;
+}
+
+#endif
 int minute_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);

@@ -129,6 +129,11 @@ signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx,
         return RS_ERR_ID;
     }
 
+    if (false == Dl645_IR_chl_Check(instance, ID, ctx->channel))
+    {
+        *len = 1;
+        return RS_ERR_PASS;        
+    }
     
     switch(IDH1)
     {

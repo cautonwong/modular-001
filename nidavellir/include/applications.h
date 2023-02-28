@@ -223,7 +223,7 @@ struct mbase_control_block_t
     uint16_t plc_baut_tick; //1小时不通讯需要复位载波通道，波特率恢复115200
     
     uint8_t Baut_plc_neg;   //协商波特率（RAM）
-
+    uint8_t avg_cal_start_flag; //平均值开始计算标志
 
     uint8_t clientaddr[4]; //客户机地址
     

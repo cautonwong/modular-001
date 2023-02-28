@@ -551,11 +551,15 @@ enum block_parameter_item_id_t
 #define     Report3320_OADList2         1523 // 3320 oad上报列表   1 + 4*60     //rs485-1
 #define     Report3320_OADList3         1524 // 3320 oad上报列表   1 + 4*60     //PLC  
 #define     Report3320_OADList4         1525 // 3320 oad上报列表   1 + 4*60     //rs485-2
-#define     ActReport_Info              1526 // 主动上报 停电下缓存信息   
+#define     ActReport_Info              1526 // 主动上报 停电下缓存信息    ----未使用
 
 #define     AuthTime_DL645              1527 // 身份认证时效
 #define     report_stat_645_E           1528 // 645上报状态字
 #define     MeterWr645_List             1529 //编程对象列表645            扩展OAD:0xFFFE0000        
+
+#define     BeforSetT_Time_RB           1530 //校时前时间 秒 分 时 日 月 年(2字节)    -用于冻结回滚
+#define     AfterSetT_Time_RB           1531 //校时后时间 秒 分 时 日 月 年(2字节)    -用于冻结回滚
+
 
 #define     ParaInitFinish_Flag         1999 //参数初始化完成标志
 #define     __INITFLAG2_End             ParaInitFinish_Flag //初始化 特殊处理标记  

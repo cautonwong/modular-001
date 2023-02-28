@@ -236,12 +236,13 @@ int nidavellir_run(struct instance_t *instance)
 
 //    extern int fr_rx_data_from_serial(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
   //  fr_rx_data_from_serial(instance, &pl_rx_from_serial, &mesg);
+
+    fr_sw_ac_power(instance,NULL,&mesg); //挪到RTC前面
     
     fr_sw_rtc(instance,NULL,&mesg);
     
     fr_sw_key(instance,NULL,&mesg);
-    
-    fr_sw_ac_power(instance,NULL,&mesg);
+
 
     for (size_t i = 0; i < pipeline_n; i++)
     {
@@ -391,12 +392,12 @@ int nidavellir_run_baremetal(struct instance_t* instance)
     irq_transform_to_instance(instance);
 #endif // !WIN32
 
+    fr_sw_ac_power(instance,NULL,&mesg);
+    
     fr_sw_rtc(instance, NULL, &mesg);
     
     fr_sw_key(instance,NULL,&mesg);
     
-    fr_sw_ac_power(instance,NULL,&mesg);
-   
 
     //处理事件标志组  事件驱动
     //handle_event_flags()

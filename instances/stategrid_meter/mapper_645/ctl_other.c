@@ -5,6 +5,7 @@
 #include "ctl_03_SafeAuthen.h"
 
 extern unsigned char Cmp_RemoteCtlTime( struct instance_t* instance, uint8_t* Addr );
+extern void save_relay_state(struct instance_t* instance);
 
 signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t* p_rx)
 {
@@ -270,9 +271,13 @@ signed char dl645_meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
     uint8_t TmpBuffer[10] ={0};
     if( Cmp_MeterAddr( instance, p_rx+1, 0 ) == 0 )
     {
+        if (false == Dl645_IR_chl_Check(instance, 0xFFFFFFFF, ctx->channel))
+        {
+            return RS_ERR_PASS;        
+        }
         //获取密码
         memcpy((unsigned char*)&ctx->password[0], p_rx+10, 4);
-      
+
         //安全验证
         ret = security_judge_645(instance, (p_rx+10), p_tx, tx_len, ctx);
         if(ret < 0)
@@ -357,6 +362,10 @@ signed char dl645_event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
     
     if( Cmp_MeterAddr( instance, p_rx+1, 0 ) == 0 )
     {
+        if (false == Dl645_IR_chl_Check(instance, 0xFFFFFFFF, ctx->channel))
+        {
+            return RS_ERR_PASS;        
+        }
         //获取密码
         memcpy((unsigned char*)&ctx->password[0], p_rx+10, 4);
       
@@ -496,6 +505,11 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
     ret = security_judge_645(instance, (p_rx+10), p_tx, tx_len, ctx);
     if(ret < 0)
     {
+        if(mbase_cb->auth_timeout_645 == 0)
+        {
+           RemotCtrResult = ERR_AUTHENTM_OVER;
+           return RS_ERR_PASS;
+        }
         return (uint8_t)-ret;
     }
 
@@ -801,7 +815,7 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
 				return RS_ERR_PASS;
 				break;
 	}
-
+    save_relay_state(instance);
 	return Err_Byte;
 }
 
@@ -874,7 +888,7 @@ signed char ctl_freeze(struct instance_t* instance, uint8_t chl, uint8_t* p_rx)
     return -1;
 }
 
-signed char chg_baut(struct instance_t* instance, uint8_t* p_rx)
+signed char chg_baut(struct instance_t* instance, uint8_t* p_rx, struct context_645_t* ctx)
 {
     struct mbase_control_block_t* mbase_cb;
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -883,6 +897,12 @@ signed char chg_baut(struct instance_t* instance, uint8_t* p_rx)
     
     if(Cmp_MeterAddr( instance, p_rx+1, 0 ) == 0)
     {
+        if (false == Dl645_IR_chl_Check(instance, 0xFFFFFFFF, ctx->channel))
+        {
+            return RS_ERR_PASS;        
+        }
+
+        
         if( len == 1 )
             Err = Comm485Baut_Check( *(p_rx+10) );
         else

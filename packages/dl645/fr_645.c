@@ -2,7 +2,7 @@
 #include "gs_record.h"
 #include "645id_table.h"
 #include "fr_645_report.h"
-
+#include "utils.h"
 
 
 extern signed char ft_adj_set_meter(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
@@ -676,6 +676,55 @@ unsigned char Password_Check(struct instance_t* instance, unsigned char* Pass )
     else
         return 1;
 }
+const uint32_t CODE dl645_ir_readable_id[] =
+{
+    0x04000401,
+    0x04000402,
+    0x04800004,
+    0x0400010C,
+    0x04000101,
+    0x04000102, /*时间*/
+    0x00900200, /*当前剩余金额*/
+};
+
+//红外权限判断  
+unsigned char Dl645_IR_chl_Check(struct instance_t* instance, uint32_t id, uint8_t chl)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    uint8_t i;
+    if(chl != chl_ir_698)
+    {
+        return true;
+    }
+
+    if(((mbase_cb->metertype & F_Password_En) == 0) && (mbase_cb->infrared_auth_timeout == 0) && (mbase_cb->factor_mode == false))//红外通道必须在红外认证有效期间进行操作。
+    {
+        
+        if (0x00000000 == (id & 0xFF0000FF))
+        {
+            return true;
+        }
+        if(id != 0xFFFFFFFF)
+        {
+            for (i = 0; i < eleof(dl645_ir_readable_id); i++)
+            {
+                if((id) == dl645_ir_readable_id[i])
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+
+}
+
+
 
 unsigned char Cmp_Password(struct instance_t* instance, unsigned char* Addr )
 {
@@ -981,7 +1030,7 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
             ERRBYTE = ctl_freeze(instance, ctx->channel, apdu_rx);
             break;
         case 0x17:  //修改波特率
-            ERRBYTE = chg_baut(instance, apdu_rx);
+            ERRBYTE = chg_baut(instance, apdu_rx,  ctx);
             break;
         case 0x1A:  //电表清零
             memcpy((unsigned char*)&ctx->password[0], apdu_rx + 10, 4);//拷贝密码

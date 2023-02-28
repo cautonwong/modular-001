@@ -551,7 +551,7 @@ const  parameter_item_t  parameter_item[] =
     { Report3320_OADList2           , 0x01 ,     241  , 0                           }, // 3320 oad上报列表   1 + 4*60     //rs485-1
     { Report3320_OADList3           , 0x01 ,     241  , 0                           }, // 3320 oad上报列表   1 + 4*60     //PLC  
     { Report3320_OADList4           , 0x01 ,     241  , 0                           }, // 3320 oad上报列表   1 + 4*60     //rs485-2
-    { ActReport_Info                , 0x01 ,     4    , 0                           }, // 主动上报 停电下缓存信息  2 + 1 + 1   主动上报标志（2） + 3320上报次数（1）+2015上报次数（1）                                                                                      
+    { ActReport_Info                , 0x01 ,     4    , 0                           }, // ----未使用 主动上报 停电下缓存信息  2 + 1 + 1   主动上报标志（2） + 3320上报次数（1）+2015上报次数（1）                                                                                      
     { MinFrez_Sectors               , 0x01 ,     18   , 0                           }, //分钟冻结各方案的扇区偏移 9*2     ram也存一份                                              
     { SecurityMode_En               , 0x01 ,     1    , init_SecurityMode_En        }, //安全模式参数使能0-dis   1-en
     { SecurityMode_EXData           , 0x01 ,     101  , init_SecurityMode_EXData    }, //显式安全模式参数缓存                                               
@@ -2879,10 +2879,6 @@ void fr_698_MeterWr_program_judge(struct instance_t* instance, struct pipeline_t
     uint16_t oi;
     uint8_t attribute, result = 0;
    
-    if ((ctx->service == 7) && (ctx->service == 6))
-    {
-        return;
-    }
 
     oi = (unsigned short)((id & 0xFFFF0000) >> 16);
     attribute = (unsigned char)((id & 0x0000FF00) >> 8); // FF
@@ -2890,10 +2886,11 @@ void fr_698_MeterWr_program_judge(struct instance_t* instance, struct pipeline_t
     if (ctx->service == 7) //action
     {
         tag = TYPE_OMD;
-        if (((oi & 0xF000) == 0x3000) && ((attribute == 4) || (attribute == 5)) 
-         || ((oi & 0xF000) == 0x5000) && ((attribute == 4) || (attribute == 5) || (attribute == 7) || (attribute == 8))
-         || (oi == 0xF100) && ((attribute == 4) || (attribute == 7) || (attribute == 9))
-         || (oi == 0xF101) && ((attribute == 127) || (attribute == 128) || (attribute == 129)))
+        if ((((oi & 0xF000) == 0x3000) && ((attribute == 4) || (attribute == 5))) 
+         || (((oi & 0xF000) == 0x5000) && ((attribute == 4) || (attribute == 5) || (attribute == 7) || (attribute == 8)))
+         || ((oi == 0xF100) && ((attribute == 4) || (attribute == 7) || (attribute == 9)))
+         || ((oi == 0xF101) && ((attribute == 1) || (attribute == 127) || (attribute == 128) || (attribute == 129)))
+         || (((oi == 0xF201)||(oi == 0xF202)||(oi == 0xF209)||(oi == 0xF205)) && ((attribute == 127))))
         {
             if ((oi == 0xF100))
             {
