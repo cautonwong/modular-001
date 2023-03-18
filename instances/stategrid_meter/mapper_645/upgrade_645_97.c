@@ -66,8 +66,11 @@ uint8_t set_image_state(struct instance_t* instance, const uint8_t state, struct
 	return true;
 }
 
+
+
 static uint8_t process_id_0xcb50(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 	uint8_t *pdata = p_rx + 0x04;
 	struct image_transfer_state_t image_transfer_state;
 
@@ -77,7 +80,7 @@ static uint8_t process_id_0xcb50(struct instance_t* instance, uint8_t *p_rx, uin
 	}
 	memset((uint8_t*)&image_transfer_state, 0x00, sizeof(struct image_transfer_state_t));
 	image_transfer_state.transfer_enable = transfer_initiated;
-
+    mbase_cb->UpGrade_CheckFlag = 0;
     if (0 > nd_set_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
 	{
 		return false;
@@ -117,11 +120,6 @@ static uint8_t process_id_0xcb51(struct instance_t* instance, uint8_t *p_rx, uin
 		return false;
 	}
 
-	if (false == clear_image_data(instance))
-	{
-		return false;
-	}
-
 	if ( transfer_state < transfer_initiated )
 	{
 		return false;
@@ -151,9 +149,12 @@ static uint8_t process_id_0xcb51(struct instance_t* instance, uint8_t *p_rx, uin
 
 static uint8_t process_id_0xcb53(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 	uint8_t *pdata = p_rx + 0x04;
+    uint32_t second = 1;
 	struct image_transfer_state_t image_transfer_state;
 
+    mbase_cb->UpGrade_max_block_count = 0; 
     if (0 > nd_get_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
 	{
 		return false;
@@ -165,6 +166,24 @@ static uint8_t process_id_0xcb53(struct instance_t* instance, uint8_t *p_rx, uin
 	{
 		return false;
 	}
+
+#if(UPGRADE_MODE == UPGRADE_MODE_ONLINE)//在线升级
+    ndv_memcopy(image_transfer_state.datatime, (uint8_t *)&second, 0x04);
+    uint32_t value = IMAGE_ENABLE_FLAG;
+    ndv_memcopy(&image_transfer_state.image_enable,(uint8_t *)&value,0x04);
+	if (false == set_image_state(instance, activation_initiated, &image_transfer_state)) // 跳到最后步
+	{
+		return false;
+	}
+	mbase_cb->UpGrade_CheckFlag = IMAGE_ENABLE_FLAG;
+#endif
+#if(UPGRADE_MODE == UPGRADE_MODE_LOCAL)//本地升级
+    if (false == clear_image_data(instance))
+    {
+        return false;
+    }
+#endif
+
 	*tx_len = 0x00;
 	return true;
 }
@@ -172,8 +191,10 @@ static uint8_t process_id_0xcb53(struct instance_t* instance, uint8_t *p_rx, uin
 
 void reboot(struct instance_t* instance)
 {
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t value = IMAGE_ENABLE_FLAG;
 
+    mbase_cb->frz_min_start_dlysec = 0; //单相
     
     PowerOff_Save_data(instance, NULL, NULL); //数据保存
 
@@ -185,17 +206,26 @@ void reboot(struct instance_t* instance)
 uint8_t image_update_check(struct instance_t* instance)
 {
 //	uint32_t value;
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 	uint32_t now_second = 0,check_second = 0;
 
-	struct image_transfer_state_t image_transfer_state;
+	struct image_transfer_state_t image_transfer_state = {0};
+
+    
+	if(IMAGE_ENABLE_FLAG != mbase_cb->UpGrade_CheckFlag) 
+	{
+		return false;
+	}
 
     if (0 > nd_get_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
 	{
+	    mbase_cb->UpGrade_CheckFlag = 0;
 		return false;
 	}
 	
 	if(activation_initiated != image_transfer_state.transfer_enable)
 	{
+	    mbase_cb->UpGrade_CheckFlag = 0;
 		return false;
 	}
 
@@ -209,6 +239,7 @@ uint8_t image_update_check(struct instance_t* instance)
 		{
 			return false;
 		}
+		mbase_cb->UpGrade_CheckFlag = 0;
         //#endif
 		reboot(instance);
 	}
@@ -310,6 +341,10 @@ static uint8_t process_id_0xcb58(struct instance_t* instance, uint8_t *p_rx, uin
 	uint8_t *pdata = p_rx + 4;
 	struct image_transfer_state_t image_transfer_state;
 
+#if(UPGRADE_MODE == UPGRADE_MODE_ONLINE)//在线升级 不支持 激活时间设置
+        return false;
+#endif
+
     if (0 > nd_get_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))
 	{
 		return false;
@@ -319,7 +354,7 @@ static uint8_t process_id_0xcb58(struct instance_t* instance, uint8_t *p_rx, uin
 		return false;
 	}
 
-
+    
     if(( Time_645Format_Check( pdata ) != 0 ) || ( Date_645Format_Check( pdata+3) != 0 ))
     {
         return false;
@@ -342,6 +377,8 @@ static uint8_t process_id_0xcb58(struct instance_t* instance, uint8_t *p_rx, uin
 	{
 		return false;
 	}
+	mbase_cb->UpGrade_CheckFlag = IMAGE_ENABLE_FLAG;
+	
 	*tx_len = 0x00;
 	return true;
 }
@@ -382,8 +419,12 @@ static uint8_t process_id_0xcafd(struct instance_t* instance, uint8_t *p_rx, uin
 	uint32_t current_block_count = 0, bit_map_offset_addr = 0;
 	uint32_t image_data_offset_addr = 0;
 	uint8_t *pdata = p_rx + 0x04;
-	struct image_transfer_state_t image_transfer_state;
-	static uint8_t max_block_count = 0;
+	struct image_transfer_state_t image_transfer_state; 
+	uint32_t second = 1;
+
+#if(UPGRADE_MODE == UPGRADE_MODE_ONLINE)//在线升级 不支持app文件传输
+    return false;
+#endif
 
 	if (ctx->apdu_rx_len <= 14)
 	{
@@ -425,14 +466,14 @@ static uint8_t process_id_0xcafd(struct instance_t* instance, uint8_t *p_rx, uin
 		return false;
 	}
 
-    if (max_block_count > current_block_count) //补发 不擦除
+    if (mbase_cb->UpGrade_max_block_count > current_block_count) //补发 不擦除
     {
         erase_flag = 0;
     }
     else
     {
         erase_flag = 1;
-        max_block_count = current_block_count;
+        mbase_cb->UpGrade_max_block_count = current_block_count;
     }
 
 
@@ -464,6 +505,34 @@ static uint8_t process_id_0xcafd(struct instance_t* instance, uint8_t *p_rx, uin
 	}
 	ndv_memcopy(p_tx, pdata, 0x08);
 	*tx_len = 0x08;
+
+	mbase_cb->frz_min_start_dlysec = UPGRADE_FRZMIN_DLY_SEC;
+
+    if(current_block_count == 0)//第一条 清分钟冻结  -单相 
+    {
+        modify_capture_clr_pro(instance, 0x50020200);
+    }
+
+    if(((current_block_count + 1) == current_block_num))    //最后一帧 触发校验
+    {
+        if (check_successs == image_crc_check(instance, pdata))
+        {
+            ndv_memcopy(image_transfer_state.datatime, (uint8_t *)&second, 0x04);
+            uint32_t value = IMAGE_ENABLE_FLAG;
+            ndv_memcopy(&image_transfer_state.image_enable,(uint8_t *)&value,0x04);
+            if (false == set_image_state(instance, activation_initiated, &image_transfer_state)) // 跳到最后步
+            {
+                return false;
+            }
+            mbase_cb->UpGrade_CheckFlag = IMAGE_ENABLE_FLAG;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+	
 	return true;
 
 }
@@ -482,13 +551,13 @@ static const struct pro_imange_transfer_id_t CODE imange_transfer_id_list[] =
 
 //	{ 0xcb54,		0x00,	0x03,		process_id_0xcb54 },
 
-	{ 0xcb55,		0x01,	0x06,		process_id_0xcb55 },
+	//{ 0xcb55,		0x01,	0x06,		process_id_0xcb55 },
 
 //	{ 0xcb56,		0x00,	0x02,		process_id_0xcb56 },
 
 //	{ 0xcb57,		0x00,	0x02,		process_id_0xcb57 },
 
-	{ 0xcb58,		0x01,	0x0d,		process_id_0xcb58 },
+	//{ 0xcb58,		0x01,	0x0d,		process_id_0xcb58 },
 };
 
 static const uint8_t imange_transfer_id_num = sizeof(imange_transfer_id_list) / sizeof(imange_transfer_id_list[0]);
@@ -716,4 +785,38 @@ const struct image_read_id_t  *find_image_read_id_processor(uint16_t id)
 
 
 
+//
+//升级状态失效   _单相
+uint8_t disable_upgrade(struct instance_t* instance)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct image_transfer_state_t image_transfer_state;
+    memset((uint8_t*)&image_transfer_state, 0x00, sizeof(struct image_transfer_state_t));
+    image_transfer_state.transfer_enable = transfer_not_initiated;
+    mbase_cb->UpGrade_CheckFlag = 0;
+    if (0 > nd_set_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
+	{
+		return false;
+	}    
+    return true;
+}
 
+//秒处理
+uint8_t upgrade_second_pro(struct instance_t* instance)
+{
+    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    if (mbase_cb->frz_min_start_dlysec > 0)
+    {
+        if(mbase_cb->frz_min_start_dlysec > UPGRADE_FRZMIN_DLY_SEC)
+        {
+            mbase_cb->frz_min_start_dlysec = 1;
+        }
+        mbase_cb->frz_min_start_dlysec--;
+        if (mbase_cb->frz_min_start_dlysec == 0)
+        {
+            disable_upgrade(instance);//失效升级
+        }
+    }
+    
+    image_update_check(instance); //升级
+}

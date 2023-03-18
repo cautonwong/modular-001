@@ -15,10 +15,10 @@
 #define UPDATE_DONE            (0xa55aa55a)
 
 
-#define EEADDR_UpDataFlg                0x11B7                      //2 ///* 升级标志位 *///
+#define EEADDR_UpDataFlg       0                      // 升级信息地址 ///* 升级标志位 *///
 
 
-extern unsigned char DLT97Prog(unsigned char program_ch, unsigned int write_crc);
+extern unsigned char DLT97Prog(unsigned char program_ch, unsigned char block_size, unsigned int write_crc);
 extern void Uart0Init(void);
 extern void Uart4Init(void);
 extern void Uart5Init(void);
@@ -76,7 +76,7 @@ int main(void)
     image_transfer_state.block_size         = 0xC0;
     image_transfer_state.transfer_mode      = 0x02;
 #endif
-    if((image_transfer_state.transfer_enable == 0x03) && (image_transfer_state.file_type == 0xFD) && (image_transfer_state.block_size == 0xC0)
+    if((image_transfer_state.transfer_enable == 0x09) && (image_transfer_state.file_type == 0xFD) && ((image_transfer_state.block_size == 0x80) || (image_transfer_state.block_size == 0xC0))
        && ((image_transfer_state.transfer_mode == 0x03) || (image_transfer_state.transfer_mode == 0x02) || (image_transfer_state.transfer_mode == 0x01)))
     {
         /******************** 接收报文，开始升级 *****************/ 
@@ -94,7 +94,7 @@ int main(void)
 		}
         
         HBF_LOOP_LBF((unsigned char*)&write_crc, (unsigned char*)&image_transfer_state.code_crc[0], 2);
-        fsl_status = DLT97Prog(image_transfer_state.transfer_mode, write_crc);
+        fsl_status = DLT97Prog(image_transfer_state.transfer_mode, image_transfer_state.block_size, write_crc);
         
         //升级成功，清除升级使能、升级模式、升级配置文件
         if(fsl_status == 0)
@@ -109,7 +109,7 @@ int main(void)
     else
     {
         if(   (image_transfer_state.transfer_enable != 0) || (image_transfer_state.file_type != 0) 
-           || (image_transfer_state.block_size == 0xC0)   || (image_transfer_state.transfer_mode != 0) ){
+           || ((image_transfer_state.block_size == 0x80) || (image_transfer_state.block_size == 0xC0))   || (image_transfer_state.transfer_mode != 0) ){
 
             memset( (unsigned char*)&image_transfer_state, 0x00, sizeof(image_transfer_state));
             HD_Storage_Access(EEADDR_UpDataFlg, (unsigned char*)&image_transfer_state, sizeof(image_transfer_state), STORAGE_WRITE);

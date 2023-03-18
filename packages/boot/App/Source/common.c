@@ -13,7 +13,7 @@
 #define XM_PROG_FAIL		(0x08)
 
 #define FLASH_ADR           APP_CODE_START_ADDR
-#define DLT97_SIZE          158
+//#define DLT97_SIZE          158
 
 #define		Comm_MaxSize			212
 #define		Comm_MinSize			12//68 A0 A1 A2 A3 A4 A5 68 CTL LEN....CS 16
@@ -198,6 +198,23 @@ unsigned char recvice_byte(unsigned char program_ch)
     unsigned long tick=0xffFFfff;
     unsigned char ptr = 0;
     
+    if(program_ch == 2)    
+    {
+        GPIOA->DAT |= BIT7; //485数据接收
+        UART0->CTRL |= BIT1; //打开接收
+        UART0->CTRL &= ~BIT0;    //关闭发送
+    }
+    else if(program_ch == 0x01)
+    {
+        UART4->CTRL |= BIT1; //载波打开接收
+        UART4->CTRL &= ~BIT0;    //关闭发送
+    }
+	else if(program_ch == 0x03)
+	{
+		UART5->CTRL |= BIT1; 	//红外打开接收
+        UART5->CTRL &= ~BIT0;    //关闭发送
+	}
+    
     while(tick)//接收数据
     {
         g_stSystemApi.WDT_Clear();//清看门狗
@@ -293,7 +310,7 @@ unsigned char recvice_byte(unsigned char program_ch)
 
 void Erase_app()
 {
-    for(uint16_t Cnt = 0; Cnt < 400; Cnt++) //496
+    for(uint16_t Cnt = 0; Cnt < 460; Cnt++) //496
     {
         g_stSystemApi.Flash_EraseSector(APP_CODE_START_ADDR + Cnt * 512);
         g_stSystemApi.WDT_Clear();
@@ -310,7 +327,7 @@ void Erase_app()
 *
 *作    者: 
 ========================================================================*/
-unsigned char DLT97Prog(unsigned char program_ch, unsigned short write_crc)
+unsigned char DLT97Prog(unsigned char program_ch, unsigned char block_size, unsigned short write_crc)
 {
     unsigned char commom_buf[7] = {0},wTableNo=0, fota_flg = 0;
     unsigned long total_block = 0,current_block = 0,i,ProgNum=0,address=0;
@@ -366,12 +383,12 @@ unsigned char DLT97Prog(unsigned char program_ch, unsigned short write_crc)
             }
             if(fota_flg){
                 (*((uint32_t *)0x40000028)) |= 16;
-                DF_Storage_Access(0+current_block*(DLT97_SIZE - 30), (uint8_t*)&rev_buf[24], DLT97_SIZE-30, 0x30);
+                DF_Storage_Access(0+current_block*(block_size), (uint8_t*)&rev_buf[24], block_size, 0x30);
                 (*((uint32_t *)0x40000028)) &= ~16;
             }else{
                 fota_flg = 0;
                 GPIOE->DAT |= BIT12;    //拉闸灯
-                g_stSystemApi.Flash_ProgramByte(FLASH_ADR+current_block*(DLT97_SIZE - 30), (uint8_t*)&rev_buf[24], DLT97_SIZE-30);
+                g_stSystemApi.Flash_ProgramByte(FLASH_ADR+current_block*(block_size), (uint8_t*)&rev_buf[24], block_size);
                 GPIOE->DAT &= ~BIT12;    //拉闸灯
             }
             ProgNum++;
@@ -385,7 +402,7 @@ unsigned char DLT97Prog(unsigned char program_ch, unsigned short write_crc)
             
             if(fota_flg){
                 (*((uint32_t *)0x40000028)) |= 16;
-                DF_Storage_Access(0+current_block*(DLT97_SIZE - 30), (uint8_t*)&rev_buf[24], rev_buf[9]-14, 0x30);
+                DF_Storage_Access(0+current_block*(block_size), (uint8_t*)&rev_buf[24], rev_buf[9]-14, 0x30);
                 (*((uint32_t *)0x40000028)) &= ~16;
                 cal_crc = updata(NULL);
                 if (0 == cal_crc){
@@ -397,10 +414,10 @@ unsigned char DLT97Prog(unsigned char program_ch, unsigned short write_crc)
                 }
             }else{
                 GPIOE->DAT |= BIT12; 
-                g_stSystemApi.Flash_ProgramByte(FLASH_ADR+current_block*(DLT97_SIZE - 30), (uint8_t*)&rev_buf[24], rev_buf[9]-14);
+                g_stSystemApi.Flash_ProgramByte(FLASH_ADR+current_block*(block_size), (uint8_t*)&rev_buf[24], rev_buf[9]-14);
                 GPIOE->DAT &= ~BIT12; 
             
-                address = APP_CODE_START_ADDR+current_block*(DLT97_SIZE - 30) + rev_buf[9]-14;
+                address = APP_CODE_START_ADDR+current_block*(block_size) + rev_buf[9]-14;
                 for (i = APP_CODE_START_ADDR; i < address; i++)
                 {
                     tmp = *((const unsigned char   *)(i));

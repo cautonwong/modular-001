@@ -495,7 +495,8 @@ int decode_rsd_event_selector_1(struct instance_t* instance, struct pipeline_t* 
     case 0x201e0200: // 事件发生时间
     case 0x20200200: // 事件结束时间 
         *p = apdu_rx[ctx->apdu_rx_offset++];
-        if (*p != TYPE_date_time_s)
+        //(*p != TYPE_date_time_s)
+        if (((*p) != TYPE_date_time_s) || (false == check_698DateTime_valid(&apdu_rx[ctx->apdu_rx_offset])))
         {
             ctx->apdu_rx_offset = rx_offset_cache;
             return 0;//DAR_TYPE_NOT_MATCH;

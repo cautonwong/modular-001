@@ -25,7 +25,7 @@ if not "%~1" == "" goto debugFile
 
 @echo on 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.3\common\bin\cspybat" -f "J:\3-meter\1105\Blade\packages\boot\Project\settings\boot.Debug.general.xcl" --backend -f "J:\3-meter\1105\Blade\packages\boot\Project\settings\boot.Debug.driver.xcl" 
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.3\common\bin\cspybat" -f "C:\1A\01_Chasel\01_work\05_prj\01_GuoWang21BiaoZhun_20210504\SinglePhase\01_CODE\DDZYXXXC-M_remark\git\Blade\packages\boot\Project\settings\boot.Debug.general.xcl" --backend -f "C:\1A\01_Chasel\01_work\05_prj\01_GuoWang21BiaoZhun_20210504\SinglePhase\01_CODE\DDZYXXXC-M_remark\git\Blade\packages\boot\Project\settings\boot.Debug.driver.xcl" 
 
 @echo off 
 goto end 
@@ -34,7 +34,7 @@ goto end
 
 @echo on 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.3\common\bin\cspybat" -f "J:\3-meter\1105\Blade\packages\boot\Project\settings\boot.Debug.general.xcl" "--debug_file=%~1" --backend -f "J:\3-meter\1105\Blade\packages\boot\Project\settings\boot.Debug.driver.xcl" 
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.3\common\bin\cspybat" -f "C:\1A\01_Chasel\01_work\05_prj\01_GuoWang21BiaoZhun_20210504\SinglePhase\01_CODE\DDZYXXXC-M_remark\git\Blade\packages\boot\Project\settings\boot.Debug.general.xcl" "--debug_file=%~1" --backend -f "C:\1A\01_Chasel\01_work\05_prj\01_GuoWang21BiaoZhun_20210504\SinglePhase\01_CODE\DDZYXXXC-M_remark\git\Blade\packages\boot\Project\settings\boot.Debug.driver.xcl" 
 
 @echo off 
 :end

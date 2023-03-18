@@ -312,10 +312,12 @@ struct mbase_control_block_t
     uint8_t first_MbillDay_flag;
 
     uint8_t frz_replenish_end;      //补冻结 完成标志  ,写停电时间清零 补冻结完成置 0x5A
-   
+    
     uint8_t mac_suspend_state;      // mac挂起状态 协议或显示模块可调用。 true为挂起 
     uint8_t handler_code[4];        // 645操作者代码
-    uint8_t RtcBat_UnderV_state;           // 时钟电池欠压状态 0：正常  1：欠压
+    uint8_t RtcBat_UnderV_state;    // 时钟电池欠压状态 0：正常  1：欠压
+    uint32_t UpGrade_max_block_count;// 升级已接收过的最大包数
+    uint32_t UpGrade_CheckFlag;     // 需要查验升级时间           其他 无需查验
     
     
     uint16_t metertype; //表多功能配置字
@@ -418,10 +420,10 @@ struct mbase_control_block_t
     uint8_t meterclear; //电表清零
 
     uint16_t report_reset_sec_cnt_645;  //645上报状态字复位延时递减计数器
-    
+    uint32_t frz_min_start_dlysec;   // 升级过程中  分钟冻结 禁止执行时间   -单相 
 
     
-    uint8_t persistent_blank_space[4*10];   //  空白区
+    uint8_t persistent_blank_space[4*9];   //  空白区
 
     dyn_persistent_end
 

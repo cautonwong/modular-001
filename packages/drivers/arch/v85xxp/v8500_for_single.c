@@ -1278,6 +1278,8 @@ void mcu_main_power_on_config(uint8_t power_mode)
     
     lcd_init(power_mode);
     
+    SPI1->CTRL = 0x00;
+    
 /*    if(power_mode == AC_POWER_ON)
     {
         start_emu_signal_pro();

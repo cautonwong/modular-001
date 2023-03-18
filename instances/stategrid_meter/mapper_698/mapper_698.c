@@ -670,8 +670,8 @@ const  parameter_item_t  parameter_item[] =
 const  parameter_item_t  parameter_item_1[] =
 {
     //升级  //绝对地址 0 //待调整
-    //{ UPGRADE_PARA_INFO ,       1  ,        60  ,   0 },   //升级参数信息  60字节
-    //{ UPGRADE_RESET_FLAG,       1  ,        4   ,   0 },   //升级复位标志4字节
+    { UPGRADE_PARA_INFO ,       1  ,        60  ,   0 },   //升级参数信息  60字节
+    { UPGRADE_RESET_FLAG,       1  ,        4   ,   0 },   //升级复位标志4字节
     
     /***************** 计量相关 *****************/
     { Heat_Value_10L    ,       1  ,        30   ,   0 },   //1.0L自热补偿
@@ -2980,7 +2980,7 @@ void fr_dl645_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline
 
     report_645state_reset_sec_judge(instance);
 
-    image_update_check(instance); //升级
+    
 }
 
 // 698协议 秒任务

@@ -50,7 +50,7 @@
         <MultiCoreRunAll>1</MultiCoreRunAll>
     </Simulator>
     <DebugChecksum>
-        <Checksum>2308360495</Checksum>
+        <Checksum>1501663975</Checksum>
     </DebugChecksum>
     <Exceptions>
         <StopOnUncaught>_ 0</StopOnUncaught>
@@ -67,6 +67,9 @@
         <Fmt1>ota_img_hdr_t-new_size	4	0</Fmt1>
         <Fmt2>ota_img_hdr_t-old_size	4	0</Fmt2>
         <Fmt3>ota_img_hdr_t-patch_size	4	0</Fmt3>
+        <Fmt4>struct image_transfer_state_t-block_size	4	0</Fmt4>
+        <Fmt5>struct image_transfer_state_t-transfer_enable	4	0</Fmt5>
+        <Fmt6>struct image_transfer_state_t-transfer_mode	4	0</Fmt6>
     </struct_types>
     <watch_formats>
         <Fmt0>{W}1:img_hdr	4	0</Fmt0>
@@ -94,8 +97,11 @@
         <Bp1>_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\reco\recovery\ota_recovery.c}.211.5" 0 0 1 "" 0 "" 0</Bp1>
         <Bp2>_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\App\Source\common.c}.39.1" 0 0 1 "" 0 "" 0</Bp2>
         <Bp3>_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\Updata\ota_partition.c}.12.1" 0 0 1 "" 0 "" 0</Bp3>
-        <Bp4>_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\App\Source\common.c}.362.21" 0 0 1 "" 0 "" 0</Bp4>
-        <Count>5</Count>
+        <Bp4>_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\App\Source\common.c}.386.17" 0 0 1 "" 0 "" 0</Bp4>
+        <Bp5>_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\App\Source\common.c}.366.9" 0 0 1 "" 0 "" 0</Bp5>
+        <Bp6>_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\App\Source\common.c}.268.33" 0 0 1 "" 0 "" 0</Bp6>
+        <Bp7>_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\App\Source\main.c}.67.5" 0 0 1 "" 0 "" 0</Bp7>
+        <Count>8</Count>
     </Breakpoints2>
     <Aliases>
         <A0>_ "D:\WORK\QW\PROGRAM\GW-DX 2020\MP\GW20_DDZY(MP_SYJR-RTC-boot)-220331-YK\boot source\App\Source\common.c" ""</A0>

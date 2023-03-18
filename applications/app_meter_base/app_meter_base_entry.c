@@ -189,6 +189,9 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
         {
             Poffset_adj_oneself(instance);//小信号修正
         }
+
+        upgrade_second_pro(instance);
+        
     }
     
     active_report_handle(instance, NULL, &mesg); // 上电每秒调用  下电前X秒调用
@@ -325,7 +328,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             freeze_power_on_pro(instance, pipeline, mesg);
             //事件
             event_PowerOn_pro(instance, pipeline, mesg);
-            
+
             instance->need_data_recovery = 0;//数据恢复完成 
             break;
       case MSG_POWEROFF: //掉电相关的操作 不在此操作

@@ -1143,7 +1143,8 @@ uint8_t test_freeze = 0;
 // 每秒调用
 int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
-
+    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    
 #if RESET_INFO    
         //复位记录测试代码
         if (instance->reset_flag == 0x5A)
@@ -1174,8 +1175,12 @@ int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct mess
     {
     
         record_rollback_after_set_time(instance, 0x5A);//冻结回滚检查
-   
-        minute_freeze_judge(instance, task, mesg); //分钟冻结
+
+        if (ctrl_block->frz_min_start_dlysec == 0)
+        {
+            minute_freeze_judge(instance, task, mesg); //分钟冻结
+        }   
+        
         hour_freeze_judge(instance, task, mesg);   //小时冻结
         day_freeze_judge(instance, task, mesg);    //日冻结
         month_freeze_judge(instance, task, mesg);  //月冻结

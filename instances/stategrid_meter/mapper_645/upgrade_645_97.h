@@ -4,7 +4,13 @@
 #include "nidavellir.h"
 #include "645id_table.h"
 
-#define	IMAGE_MAP_LEN				1024	/*512K / 64 /8		升级包最小长度为64字节 */
+#define UPGRADE_MODE_ONLINE   0 //在线升级
+#define UPGRADE_MODE_LOCAL    1 //本地升级
+
+#define UPGRADE_MODE  (UPGRADE_MODE_ONLINE)
+
+
+#define	IMAGE_MAP_LEN				1024	                    //位图信息长度 
 #define	IMAGE_PARA_ID				UPGRADE_PARA_INFO          //升级参数e2p 绝对地址 从0开始             60字节 
 #define	IMAGE_PARA_ID2			    UPGRADE_RESET_FLAG         //升级复位标志4字节 
 #define	IMAGE_PARA_BLOCK			mbase_block_parameter_1     //参数块
@@ -13,6 +19,8 @@
 #define	FILE_TYPE					0xfd
 #define	IMAGE_ENABLE_FLAG			0x5A6B7C8D	/*处于升级模式*/
 
+
+#define UPGRADE_FRZMIN_DLY_SEC      (30*60) // 升级过程中  分钟冻结 禁止执行时间-单相
 
 enum image_transfer_step_t
 {
