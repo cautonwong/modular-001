@@ -76,7 +76,6 @@ void PowerOff_LowPower_pro(struct instance_t* instance, struct pipeline_t* task,
     struct message_t mesg_tmp;
     uint32_t s_index;
 
-     // 是否为停电下第一秒 // 待调整   //  停电下第一秒记录一次掉电事件 
     if ( instance->ac_power_off_sec_cnt == 1 )
     {
         if (false == get_activeflag(instance, RecordId)) //|| ((true == get_recordflag(instance, RecordId))  )

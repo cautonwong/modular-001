@@ -1176,7 +1176,10 @@ int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct mess
     
         record_rollback_after_set_time(instance, 0x5A);//冻结回滚检查
 
+
+#if(UPGRADE_MODE == UPGRADE_MODE_LOCAL)
         if (ctrl_block->frz_min_start_dlysec == 0)
+#endif
         {
             minute_freeze_judge(instance, task, mesg); //分钟冻结
         }   

@@ -5,7 +5,7 @@
 #include "645id_table.h"
 
 #define UPGRADE_MODE_ONLINE   0 //在线升级
-#define UPGRADE_MODE_LOCAL    1 //本地升级
+#define UPGRADE_MODE_LOCAL    1 //本地升级 //存储文件到本地
 
 #define UPGRADE_MODE  (UPGRADE_MODE_ONLINE)
 
@@ -65,8 +65,12 @@ enum image_verify_state_t
 
 enum image_transfer_mode_t
 {
-	mode_01 = 0x01,/*0x01升级模式一为针对载波、RF等通信方式，imageBlockSize固定为64字节*/
-	mode_02 = 0x02,/*0x02升级模式二为针对光电、RS485、GPRS等通信方式，imageBlockSize固定为192字节*/
+	mode_01 = 0x01,/*0x01升级模式 在线升级，imageBlockSize固定为64字节*/
+	mode_02 = 0x02,/*0x02升级模式 在线升级，imageBlockSize固定为128字节*/ 
+	mode_03 = 0x03,/*0x03升级模式     在线升级，imageBlockSize固定为196字节*/
+	mode_81 = 0x81,/*0x01升级模式 本地升级，imageBlockSize固定为64字节*/
+	mode_82 = 0x82,/*0x02升级模式 本地升级，imageBlockSize固定为128字节*/ 
+	mode_83 = 0x83,/*0x03升级模式     本地升级，imageBlockSize固定为196字节*/
 };
 
 struct image_transfer_state_t
@@ -136,7 +140,7 @@ extern const struct mode_frame_len_t CODE mode_frame[];
 
 extern uint8_t get_imange_transfer_para(struct instance_t* instance, uint8_t *buff, const uint8_t len, const uint8_t offset);
 
-extern uint8_t is_illagle_mode(const uint8_t mode);
+extern uint8_t upgrade_mode_judge(const uint8_t mode);
 
 extern uint8_t set_image_state(struct instance_t* instance, const uint8_t state, struct image_transfer_state_t *image_transfer_state);
 

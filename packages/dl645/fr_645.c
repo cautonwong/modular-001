@@ -902,7 +902,7 @@ int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pip
     ctx->first_segment_MaxLen = MAX_READ_DATAFILED_LEN;
     //ctx->follow_segment_MaxLen = MAX_READ_DATAFILED_LEN;
 
-    if ((ctx->ctrl != 0x12) || (ctx->apdu.buf_ptr == NULL))// 待调整 ？？ fifo初始化为何放此处？  暂时改为分帧情况下 不初始化
+    if ((ctx->ctrl != 0x12) || (ctx->apdu.buf_ptr == NULL))
     {
         fifoBuf_init(&ctx->apdu, ctx->apdu_tx, max_apdu_cache_645);
         ctx->segment_tx_no = 0;

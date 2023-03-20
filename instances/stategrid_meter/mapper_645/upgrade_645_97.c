@@ -9,12 +9,17 @@ extern int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* p
 const struct mode_frame_len_t CODE mode_frame[] =
 {
 	{ mode_01,		64 },
-	{ mode_02,		128 }, //为适应 上位机，暂改为128
+	{ mode_02,		128 }, 
+    { mode_03,      196 }, 
+
+    { mode_81,      64 },
+    { mode_82,      128 }, 
+    { mode_83,      196 }, 
 };
 
 static const uint8_t CODE image_transfer_mode_num = sizeof(mode_frame) / sizeof(mode_frame[0]);
 
-uint8_t is_illagle_mode(const uint8_t mode)
+uint8_t upgrade_mode_judge(const uint8_t mode)
 {
 	int count;
 
@@ -28,11 +33,11 @@ uint8_t is_illagle_mode(const uint8_t mode)
 	return 0xff;
 }
 
-static uint8_t get_mode_frame_len(const uint8_t mode, uint8_t *len)
+static uint8_t get_UPmode_len(const uint8_t mode, uint8_t *len)
 {
 	uint8_t position;
 
-	position = is_illagle_mode(mode);
+	position = upgrade_mode_judge(mode);
 	if (0xff == position)
 	{
 		return false;
@@ -129,7 +134,7 @@ static uint8_t process_id_0xcb51(struct instance_t* instance, uint8_t *p_rx, uin
 	{
 		return false;
 	}
-	position = is_illagle_mode(pdata[0]);
+	position = upgrade_mode_judge(pdata[0]);
 	if (0xff == position)
 	{
 		return false;
@@ -203,7 +208,7 @@ void reboot(struct instance_t* instance)
     NVIC_SystemReset();  /* 直接复位CM3及外围电路 */
 }
 
-uint8_t image_update_check(struct instance_t* instance)
+uint8_t meter_update_check(struct instance_t* instance)
 {
 //	uint32_t value;
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -388,7 +393,7 @@ static uint8_t is_illagle_frame_len(struct image_transfer_state_t *image_transfe
 {
 	uint8_t len;
 
-	if (false == get_mode_frame_len(image_transfer_state->transfer_mode, &len))
+	if (false == get_UPmode_len(image_transfer_state->transfer_mode, &len))
 	{
 		return false;
 	}
@@ -598,7 +603,7 @@ static uint8_t process_id_0xcb52(struct instance_t* instance, uint8_t *p_rx, uin
 	{
 		return false;
 	}
-	transfer_state = is_illagle_mode(transfer_state);
+	transfer_state = upgrade_mode_judge(transfer_state);
 	if (0xff == transfer_state)
 	{
 		return false;
@@ -818,5 +823,5 @@ uint8_t upgrade_second_pro(struct instance_t* instance)
         }
     }
     
-    image_update_check(instance); //升级
+    meter_update_check(instance); //升级
 }

@@ -418,7 +418,7 @@ enum report_mode_t {
 #define RPT_2015_SWITCH_ON_SUCCEES  (1<<(31 -15 ))//(BIT15) //合闸成功  
 
 
-#define REQ_RCSD_MAXNUM 30 //待调整
+#define REQ_RCSD_MAXNUM 30 //待调整 单相
 #define SecurityMode_EXData_LEN 101 
 
 
