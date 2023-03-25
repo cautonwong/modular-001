@@ -807,7 +807,7 @@ uint8_t disable_upgrade(struct instance_t* instance)
 }
 
 //秒处理
-uint8_t upgrade_second_pro(struct instance_t* instance)
+void upgrade_second_pro(struct instance_t* instance)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     if (mbase_cb->frz_min_start_dlysec > 0)

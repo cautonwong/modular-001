@@ -2890,7 +2890,7 @@ void fr_698_MeterWr_program_judge(struct instance_t* instance, struct pipeline_t
          || (((oi & 0xF000) == 0x5000) && ((attribute == 4) || (attribute == 5) || (attribute == 7) || (attribute == 8)))
          || ((oi == 0xF100) && ((attribute == 4) || (attribute == 7) || (attribute == 9)))
          || ((oi == 0xF101) && ((attribute == 1) || (attribute == 127) || (attribute == 128) || (attribute == 129)))
-         || (((oi == 0xF201)||(oi == 0xF202)||(oi == 0xF209)||(oi == 0xF205)) && ((attribute == 127))))
+         || (((oi == 0xF201)||(oi == 0xF202)||(oi == 0xF209)||(oi == 0xF205)) && ((attribute == 127)|| (attribute == 128))))
         {
             if ((oi == 0xF100))
             {

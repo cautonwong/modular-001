@@ -97,11 +97,9 @@
         <Bp1>_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\reco\recovery\ota_recovery.c}.211.5" 0 0 1 "" 0 "" 0</Bp1>
         <Bp2>_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\App\Source\common.c}.39.1" 0 0 1 "" 0 "" 0</Bp2>
         <Bp3>_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\Updata\ota_partition.c}.12.1" 0 0 1 "" 0 "" 0</Bp3>
-        <Bp4>_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\App\Source\common.c}.386.17" 0 0 1 "" 0 "" 0</Bp4>
-        <Bp5>_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\App\Source\common.c}.366.9" 0 0 1 "" 0 "" 0</Bp5>
-        <Bp6>_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\App\Source\common.c}.268.33" 0 0 1 "" 0 "" 0</Bp6>
-        <Bp7>_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\App\Source\main.c}.67.5" 0 0 1 "" 0 "" 0</Bp7>
-        <Count>8</Count>
+        <Bp4>_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\App\Source\common.c}.366.9" 0 0 1 "" 0 "" 0</Bp4>
+        <Bp5>_ 1 "EMUL_CODE" "{$PROJ_DIR$\..\App\Source\common.c}.268.33" 0 0 1 "" 0 "" 0</Bp5>
+        <Count>6</Count>
     </Breakpoints2>
     <Aliases>
         <A0>_ "D:\WORK\QW\PROGRAM\GW-DX 2020\MP\GW20_DDZY(MP_SYJR-RTC-boot)-220331-YK\boot source\App\Source\common.c" ""</A0>

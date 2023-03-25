@@ -50,7 +50,8 @@
 
 /* Exported macro ------------------------------------------------------------*/
 #ifndef  ASSERT_NDEBUG
-  #define assert_parameters(expr) ((expr) ? (void)0U : assert_errhandler((uint8_t *)__FILE__, __LINE__))
+  #define assert_parameters(expr) ((expr) ? (void)0U : assert_errhandler((uint8_t *)0, __LINE__))
+  //#define assert_parameters(test)    ((test) ? (void)0U : fOnAssert((uint8_t *)NULL, 'E'))
 /* Exported functions ------------------------------------------------------- */
   void assert_errhandler(uint8_t* file, uint32_t line);
 #else

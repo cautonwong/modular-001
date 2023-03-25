@@ -248,7 +248,7 @@ int communication_channel_init(struct instance_t* p_instance, struct pipeline_t 
 
 
 
-__no_init uint8_t nd_memory[22 * 1024]; //26
+__no_init uint8_t nd_memory[24 * 1024]; //26
 
 int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** argv)
 {
