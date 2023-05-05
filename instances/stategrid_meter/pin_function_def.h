@@ -103,7 +103,7 @@
 
 #define METER_COVER_GET_DIN()    *((uint32_t*)BITBAND_ADDR(GPIOA_STS,14))
 
-#define METER_COVER_OPEN_LEVE   1
+#define METER_COVER_OPEN_LEVE   1   //闭盖状态
 /*---------------------------------698 ESAM IO----------------------------------*/ 
 
 #define  ESAM_CS_LOW()    {*((uint32_t*)GPIOC_OEN) &= ~BIT(0); *((uint32_t*)GPIOC_IE) |= BIT(0); *((uint32_t*)BITBAND_ADDR(GPIOC_DAT,0)) = 0;}

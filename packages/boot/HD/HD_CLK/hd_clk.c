@@ -40,6 +40,7 @@ void HD_CLK_InitPwrOn(void)
     
     CLK_APBPeriphralCmd(CLK_APBPERIPHRAL_UART0 |\
                         CLK_APBPERIPHRAL_UART4 |\
+                        
                         CLK_APBPERIPHRAL_TIMER, ENABLE);
     
     CLK_AHBPeriphralCmd(CLK_AHBPERIPHRAL_GPIO, ENABLE);

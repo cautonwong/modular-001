@@ -248,8 +248,8 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
     uint8_t SaveData_flag = 0; // BIT0:第1个电能校验   BIT1:第2个电能校验  。。。。
     uint8_t Updata_flag = 0;   // BIT0:第1个电能校验   BIT1:第2个电能校验  。。。。
     
-    uint8_t i,fee_index = 0;
-    uint32_t s_index, ec_add =0;
+    uint8_t fee_index = 0;
+    uint32_t i,s_index, ec_add =0;
     uint32_t meter_const =  mbase_cb->meter_const/100;
 
     if (meter_const == 0)

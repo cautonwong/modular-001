@@ -280,7 +280,13 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             //get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
             //nd_get_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)(addr + persitent_ec_size),(mbase_block_persistent_size - persitent_ec_size)); //将EPROM中的数据恢复到RAM;        
 
-            auto_parameter_inital(instance);
+            ret = Check_para_Pro(instance);     //参数效验
+            if (ret < 0) //参数区异常时，恢复485波特率
+            {
+                auto_parameter_inital(instance);  //首次上电初始化
+                rs485_init(instance, pipeline);   //配置485波特率
+            }
+
             save_RtcBat_work_time(instance);
             rtc_check_poweron(instance);
             Energy_Meter_PowerON(instance, pipeline);

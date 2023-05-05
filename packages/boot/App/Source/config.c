@@ -4,6 +4,10 @@
 
 
 #define nop()		__NOP();
+// 波特率
+#define BAUD_RS485 115200
+#define BAUD_PLC 115200
+#define BAUD_IR 1200
 
 unsigned char I2C_Buffer[41];
 
@@ -63,15 +67,15 @@ void Uart5Init(void)
     GPIOB->IE |= BIT1;    //TX使能输入
         
     ClkDiv = CLK_GetPCLKFreq();
-    ClkDiv=ClkDiv/4800;
+    ClkDiv=ClkDiv/BAUD_IR;
     
     UART5->BAUDDIV = ClkDiv;
     UART5->CTRL2 = 0x00000002;
     UART5->STATE = 0x3C;
 	MISC2->PCLKEN |= MISC2_PCLKEN_MISC;
 	MISC->IREN = 0x20;
-	MISC->DUTYH = 344;
-	MISC->DUTYL = 344;
+	MISC->DUTYH = 344/2;
+	MISC->DUTYL = 344/2;
     
     UART5->CTRL |= BIT1;
 }
@@ -92,7 +96,7 @@ void Uart4Init(void)
     GPIOB->IE |= BIT0;    //TX使能输入
         
     ClkDiv = CLK_GetPCLKFreq();
-    ClkDiv=ClkDiv/19200;
+    ClkDiv=ClkDiv/BAUD_PLC;
     
     UART4->BAUDDIV = ClkDiv;
     UART4->CTRL2 = 0x00000002;
@@ -117,7 +121,7 @@ void Uart0Init(void)
     GPIOA->DAT |= BIT7;
     
     ClkDiv = CLK_GetPCLKFreq();
-    ClkDiv=ClkDiv/19200;
+    ClkDiv=ClkDiv/BAUD_RS485;
 
     //UART0用于RS485口1通讯.
     UART0->BAUDDIV = ClkDiv;

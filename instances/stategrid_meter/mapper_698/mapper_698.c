@@ -656,7 +656,6 @@ const  parameter_item_t  parameter_item[] =
     { report_stat_645_E             , 0x01 ,   108    , 0                           }, // 645上报状态字E2p地址
     { Produced_Date645              , 0x01 ,     10   , init_Produced_Date645       }, // 645生产日期
 
-
     { ParaInitFinish_Flag           , 0x01 ,     4    , init_ParaInitFinish_Flag    }, // 参数初始化完成标志 5555AAAA
     
 
@@ -2766,6 +2765,7 @@ int para_init(struct instance_t* instance )
 
     v85xxp_clear_watchdog();
     //EE部分更新
+    num = sizeof(parameter_item)/sizeof(parameter_item_t);
     for(i=0; i<num; i++)
     {
         v85xxp_clear_watchdog();
@@ -2827,7 +2827,7 @@ int auto_parameter_inital(struct instance_t* instance)
 
 
     METER_COVER_INPUT();
-    if(METER_COVER_GET_DIN() == METER_COVER_OPEN_LEVE)//开盖下
+    if(METER_COVER_GET_DIN() != METER_COVER_OPEN_LEVE)//开盖下
     {
         ret = nd_get_index_e2p(instance, buf, mbase_block_parameter, ParaInitFinish_Flag, 2);  //判断 完成标志
         if((ret > 0) && ((buf[0] == 0x55) || (buf[1] == 0x55) || (buf[2] == 0xaa) || (buf[1] != 0xaa)) )

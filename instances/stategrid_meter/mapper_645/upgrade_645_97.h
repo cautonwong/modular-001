@@ -65,12 +65,12 @@ enum image_verify_state_t
 
 enum image_transfer_mode_t
 {
-	mode_01 = 0x01,/*0x01升级模式 在线升级，imageBlockSize固定为64字节*/
-	mode_02 = 0x02,/*0x02升级模式 在线升级，imageBlockSize固定为128字节*/ 
-	mode_03 = 0x03,/*0x03升级模式     在线升级，imageBlockSize固定为196字节*/
-	mode_81 = 0x81,/*0x01升级模式 本地升级，imageBlockSize固定为64字节*/
-	mode_82 = 0x82,/*0x02升级模式 本地升级，imageBlockSize固定为128字节*/ 
-	mode_83 = 0x83,/*0x03升级模式     本地升级，imageBlockSize固定为196字节*/
+	mode_01 = 0x01,/*0x01升级模式 在线升级，plc imageBlockSize固定为128字节*/
+	mode_02 = 0x02,/*0x02升级模式 在线升级，rs485 imageBlockSize固定为196字节*/ 
+	mode_03 = 0x03,/*0x03升级模式     在线升级，IR imageBlockSize固定为128字节*/
+	mode_81 = 0x81,/*0x01升级模式 本地升级，plc imageBlockSize固定为128字节*/
+	mode_82 = 0x82,/*0x02升级模式 本地升级，rs485 imageBlockSize固定为196字节*/ 
+	mode_83 = 0x83,/*0x03升级模式     本地升级，plc imageBlockSize固定为128字节*/
 };
 
 struct image_transfer_state_t

@@ -18,6 +18,16 @@
 #define EEADDR_UpDataFlg       0                      // Éı¼¶ĞÅÏ¢µØÖ· ///* Éı¼¶±êÖ¾Î» *///
 
 
+enum image_transfer_mode_t
+{
+	mode_01 = 0x01,/*0x01å‡çº§æ¨¡å¼ åœ¨çº¿å‡çº§ï¼Œplc imageBlockSizeå›ºå®šä¸º128å­—èŠ‚*/
+	mode_02 = 0x02,/*0x02å‡çº§æ¨¡å¼ åœ¨çº¿å‡çº§ï¼Œrs485 imageBlockSizeå›ºå®šä¸º196å­—èŠ‚*/ 
+	mode_03 = 0x03,/*0x03å‡çº§æ¨¡å¼     åœ¨çº¿å‡çº§ï¼ŒIR imageBlockSizeå›ºå®šä¸º128å­—èŠ‚*/
+	mode_81 = 0x81,/*0x01å‡çº§æ¨¡å¼ æœ¬åœ°å‡çº§ï¼Œplc imageBlockSizeå›ºå®šä¸º128å­—èŠ‚*/
+	mode_82 = 0x82,/*0x02å‡çº§æ¨¡å¼ æœ¬åœ°å‡çº§ï¼Œrs485 imageBlockSizeå›ºå®šä¸º196å­—èŠ‚*/ 
+	mode_83 = 0x83,/*0x03å‡çº§æ¨¡å¼     æœ¬åœ°å‡çº§ï¼ŒIR imageBlockSizeå›ºå®šä¸º128å­—èŠ‚*/
+};
+
 extern unsigned char DLT97Prog(unsigned char program_ch, unsigned char block_size, unsigned int write_crc);
 extern void Uart0Init(void);
 extern void Uart4Init(void);
@@ -76,25 +86,25 @@ int main(void)
     image_transfer_state.block_size         = 0xC0;
     image_transfer_state.transfer_mode      = 0x02;
 #endif
-    if((image_transfer_state.transfer_enable == 0x09) && (image_transfer_state.file_type == 0xFD) && ((image_transfer_state.block_size == 0x80) || (image_transfer_state.block_size == 0xC0))
-       && ((image_transfer_state.transfer_mode == 0x03) || (image_transfer_state.transfer_mode == 0x02) || (image_transfer_state.transfer_mode == 0x01)))
+    if((image_transfer_state.transfer_enable == 0x09) && (image_transfer_state.file_type == 0xFD) && ((image_transfer_state.block_size == 128) || (image_transfer_state.block_size == 196))
+       && (((image_transfer_state.transfer_mode & 0x7F) == 0x03) || ((image_transfer_state.transfer_mode & 0x7F) == 0x02) || ((image_transfer_state.transfer_mode & 0x7F) == 0x01)))
     {
         /******************** ½ÓÊÕ±¨ÎÄ£¬¿ªÊ¼Éı¼¶ *****************/ 
-        if (0x01 == image_transfer_state.transfer_mode)
+        if (0x01 == (image_transfer_state.transfer_mode & 0x7F))
         {
             Uart4Init();    //PLC
         }
-        else if (0x02 == image_transfer_state.transfer_mode)
+        else if (0x02 == (image_transfer_state.transfer_mode & 0x7F))
         {
             Uart0Init();    //485Í¨µÀ
         }
-		else if (0x03 == image_transfer_state.transfer_mode)
+		else if (0x03 == (image_transfer_state.transfer_mode & 0x7F))
 		{
 			Uart5Init();    //ºìÍâÍ¨µÀ
 		}
         
         HBF_LOOP_LBF((unsigned char*)&write_crc, (unsigned char*)&image_transfer_state.code_crc[0], 2);
-        fsl_status = DLT97Prog(image_transfer_state.transfer_mode, image_transfer_state.block_size, write_crc);
+        fsl_status = DLT97Prog((image_transfer_state.transfer_mode & 0x7F), image_transfer_state.block_size, write_crc);
         
         //Éı¼¶³É¹¦£¬Çå³ıÉı¼¶Ê¹ÄÜ¡¢Éı¼¶Ä£Ê½¡¢Éı¼¶ÅäÖÃÎÄ¼ş
         if(fsl_status == 0)
@@ -109,7 +119,7 @@ int main(void)
     else
     {
         if(   (image_transfer_state.transfer_enable != 0) || (image_transfer_state.file_type != 0) 
-           || ((image_transfer_state.block_size == 0x80) || (image_transfer_state.block_size == 0xC0))   || (image_transfer_state.transfer_mode != 0) ){
+           || ((image_transfer_state.block_size == 128) || (image_transfer_state.block_size == 196))   || (image_transfer_state.transfer_mode != 0) ){
 
             memset( (unsigned char*)&image_transfer_state, 0x00, sizeof(image_transfer_state));
             HD_Storage_Access(EEADDR_UpDataFlg, (unsigned char*)&image_transfer_state, sizeof(image_transfer_state), STORAGE_WRITE);

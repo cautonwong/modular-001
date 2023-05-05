@@ -8,13 +8,13 @@ extern int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* p
 
 const struct mode_frame_len_t CODE mode_frame[] =
 {
-	{ mode_01,		64 },
-	{ mode_02,		128 }, 
-    { mode_03,      196 }, 
+	{ mode_01,		128 },
+	{ mode_02,		196 }, 
+    { mode_03,      128 }, 
 
-    { mode_81,      64 },
-    { mode_82,      128 }, 
-    { mode_83,      196 }, 
+    { mode_81,      128 },
+    { mode_82,      196 }, 
+    { mode_83,      128 }, 
 };
 
 static const uint8_t CODE image_transfer_mode_num = sizeof(mode_frame) / sizeof(mode_frame[0]);
@@ -173,19 +173,25 @@ static uint8_t process_id_0xcb53(struct instance_t* instance, uint8_t *p_rx, uin
 	}
 
 #if(UPGRADE_MODE == UPGRADE_MODE_ONLINE)//在线升级
-    ndv_memcopy(image_transfer_state.datatime, (uint8_t *)&second, 0x04);
-    uint32_t value = IMAGE_ENABLE_FLAG;
-    ndv_memcopy(&image_transfer_state.image_enable,(uint8_t *)&value,0x04);
-	if (false == set_image_state(instance, activation_initiated, &image_transfer_state)) // 跳到最后步
-	{
-		return false;
-	}
-	mbase_cb->UpGrade_CheckFlag = IMAGE_ENABLE_FLAG;
+    if((image_transfer_state.transfer_mode & 0x80) == 0)
+    {
+        ndv_memcopy(image_transfer_state.datatime, (uint8_t *)&second, 0x04);
+        uint32_t value = IMAGE_ENABLE_FLAG;
+        ndv_memcopy(&image_transfer_state.image_enable,(uint8_t *)&value,0x04);
+    	if (false == set_image_state(instance, activation_initiated, &image_transfer_state)) // 跳到最后步
+    	{
+    		return false;
+    	}
+    	mbase_cb->UpGrade_CheckFlag = IMAGE_ENABLE_FLAG;
+    }
 #endif
 #if(UPGRADE_MODE == UPGRADE_MODE_LOCAL)//本地升级
-    if (false == clear_image_data(instance))
+    if((image_transfer_state.transfer_mode & 0x80))
     {
-        return false;
+        if (false == clear_image_data(instance))
+        {
+            return false;
+        }
     }
 #endif
 
@@ -349,6 +355,10 @@ static uint8_t process_id_0xcb58(struct instance_t* instance, uint8_t *p_rx, uin
 #if(UPGRADE_MODE == UPGRADE_MODE_ONLINE)//在线升级 不支持 激活时间设置
         return false;
 #endif
+    if((image_transfer_state.transfer_mode & 0x80) == 0)
+    {
+        return false;
+    }
 
     if (0 > nd_get_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))
 	{
@@ -430,6 +440,10 @@ static uint8_t process_id_0xcafd(struct instance_t* instance, uint8_t *p_rx, uin
 #if(UPGRADE_MODE == UPGRADE_MODE_ONLINE)//在线升级 不支持app文件传输
     return false;
 #endif
+    if((image_transfer_state.transfer_mode & 0x80) == 0)
+    {
+        return false;
+    }
 
 	if (ctx->apdu_rx_len <= 14)
 	{

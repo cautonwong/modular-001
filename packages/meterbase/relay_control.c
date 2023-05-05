@@ -53,6 +53,12 @@ void Relay_Sec_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
             }
         }
     }
+
+    if(mbase_cb->imaxmin == 0)
+    {
+        if(mbase_cb->limitmin > 0)  mbase_cb->limitmin--;
+    }
+    
 }
 
 static unsigned char switchon = 1;

@@ -15,7 +15,7 @@
 #define FLASH_ADR           APP_CODE_START_ADDR
 //#define DLT97_SIZE          158
 
-#define		Comm_MaxSize			212
+#define		Comm_MaxSize			240//212
 #define		Comm_MinSize			12//68 A0 A1 A2 A3 A4 A5 68 CTL LEN....CS 16
 #define 	RS_ID				10
 
@@ -33,7 +33,7 @@
 #define 	RsPLC_CRC     				rev_buf[RS_ID+RsPLC_Len]
 #define 	RsPLC_End     				rev_buf[RS_ID+RsPLC_Len+1]
 
-unsigned char rev_buf[200];
+unsigned char rev_buf[240];
 unsigned char send_buf[30];
 extern uint8_t HD_Storage_Access(uint32_t Addr, uint8_t *pDataBuf, uint32_t Len, HD_IIC_Operation_e Operate);
 extern uint8_t DF_Storage_Access(uint32_t Addr, uint8_t *pDataBuf, uint32_t Len, uint8_t Operate);
@@ -100,13 +100,13 @@ void UART4_Send_Byte(unsigned char data)//BLE  发送
     
     UART4->DATA = data;
     tick=0x3ffff;
-    while(((UART1->STATE & BIT5) == 0) && (tick))
+    while(((UART4->STATE & BIT5) == 0) && (tick))
     {
         g_stSystemApi.WDT_Clear();//清看门狗
         tick--;
     }
     
-    UART1->STATE |= BIT5;
+    UART4->STATE |= BIT5;
     
 }
 
@@ -151,7 +151,7 @@ void send_response(unsigned long total_block, unsigned long current_block, unsig
     {
         GPIOA->DAT &= ~BIT7; //485数据发送
     }
-
+    
     HBF_LOOP_LBF((unsigned char*)&temp[0],(unsigned char*)&total_block,4);
     HBF_LOOP_LBF((unsigned char*)&temp[4],(unsigned char*)&current_block,4);
 
@@ -179,12 +179,12 @@ void send_response(unsigned long total_block, unsigned long current_block, unsig
     {
         GPIOA->DAT |= BIT7; //485数据接收
         UART0->CTRL |= BIT1; //打开接收
-        UART0->CTRL &= ~BIT0;    //关闭发送
+        //UART0->CTRL &= ~BIT0;    //关闭发送
     }
     else if(program_ch == 0x01)
     {
         UART4->CTRL |= BIT1; //载波打开接收
-        UART4->CTRL &= ~BIT0;    //关闭发送
+        //UART4->CTRL &= ~BIT0;    //关闭发送
     }
 	else if(program_ch == 0x03)
 	{
@@ -199,20 +199,29 @@ unsigned char recvice_byte(unsigned char program_ch)
     unsigned char ptr = 0;
     
     if(program_ch == 2)    
-    {
-        GPIOA->DAT |= BIT7; //485数据接收
-        UART0->CTRL |= BIT1; //打开接收
-        UART0->CTRL &= ~BIT0;    //关闭发送
+    {   
+        if((UART0->CTRL & BIT1) == 0)
+        {
+            GPIOA->DAT |= BIT7; //485数据接收
+            UART0->CTRL |= BIT1; //打开接收
+            UART0->CTRL &= ~BIT0;    //关闭发送
+        }
     }
     else if(program_ch == 0x01)
     {
-        UART4->CTRL |= BIT1; //载波打开接收
-        UART4->CTRL &= ~BIT0;    //关闭发送
+        if((UART4->CTRL & BIT1) == 0)
+        {
+            UART4->CTRL |= BIT1; //载波打开接收
+            UART4->CTRL &= ~BIT0;    //关闭发送
+        }
     }
 	else if(program_ch == 0x03)
 	{
-		UART5->CTRL |= BIT1; 	//红外打开接收
-        UART5->CTRL &= ~BIT0;    //关闭发送
+        if((UART4->CTRL & BIT1) == 0)
+        {
+            UART5->CTRL |= BIT1; 	//红外打开接收
+            UART5->CTRL &= ~BIT0;    //关闭发送
+        }      
 	}
     
     while(tick)//接收数据
@@ -310,7 +319,7 @@ unsigned char recvice_byte(unsigned char program_ch)
 
 void Erase_app()
 {
-    for(uint16_t Cnt = 0; Cnt < 460; Cnt++) //496
+    for(uint16_t Cnt = 0; Cnt < 464; Cnt++) //
     {
         g_stSystemApi.Flash_EraseSector(APP_CODE_START_ADDR + Cnt * 512);
         g_stSystemApi.WDT_Clear();

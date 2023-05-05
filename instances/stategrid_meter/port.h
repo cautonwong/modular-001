@@ -490,7 +490,6 @@ enum block_parameter_item_id_t
 #define     Produced_Date645            1062 //生产日期645
 
 
-
 /***************** 计量相关 *****************/ 
 #define     Heat_Value_10L              1100    //1.0L自热补偿  15*2=30
 #define     Heat_Value_05L              1101    //0.5L自热补偿  15*2=30
