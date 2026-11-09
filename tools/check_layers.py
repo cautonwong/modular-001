@@ -20,6 +20,9 @@ SYSTEM_HEADERS = {"stdint.h", "stddef.h", "stdbool.h", "string.h"}
 FORBIDDEN_ALLOC = re.compile(r"\b(malloc|calloc|realloc|free|strdup)\s*\(")
 INCLUDE = re.compile(r'^\s*#\s*include\s*[<"]([^>"]+)[>"]')
 
+# Not yet split into bounded contexts. Remove entries as each module migrates.
+STAGING = (os.path.join("domain", "meterbase"),)
+
 
 def layer_of(rel_path):
     head = rel_path.split(os.sep, 1)[0]
@@ -28,6 +31,9 @@ def layer_of(rel_path):
 
 def source_files(layer):
     for dirpath, _dirs, files in os.walk(os.path.join(ROOT, layer)):
+        rel_dir = os.path.relpath(dirpath, ROOT)
+        if any(rel_dir == stage or rel_dir.startswith(stage + os.sep) for stage in STAGING):
+            continue
         for name in files:
             if name.endswith((".c", ".h")):
                 yield os.path.join(dirpath, name)

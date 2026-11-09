@@ -19,7 +19,7 @@ includes=(
     -I "$root/infra/soc/cm0"
     -I "$root/infra/soc/v85xxp inc"
     -I "$root/infra/soc/v85xxp inc/Lib_Driver/inc"
-    -I "$root/packages/meterbase"
+    -I "$root/domain/meterbase"
     -I "$root/applications/app_resource_tool"
     -I "$root/applications/app_645_server"
     -I "$root/applications/app_698_server"

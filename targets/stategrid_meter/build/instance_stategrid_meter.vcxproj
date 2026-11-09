@@ -42,20 +42,20 @@
     <ClCompile Include="..\..\..\packages\kernel\rtc.c" />
     <ClCompile Include="..\..\..\packages\kernel\tasklet.c" />
     <ClCompile Include="..\..\..\packages\kernel\utils.c" />
-    <ClCompile Include="..\..\..\packages\meterbase\gs_backlight_ctrl.c" />
-    <ClCompile Include="..\..\..\packages\meterbase\gs_cover_event.c" />
-    <ClCompile Include="..\..\..\packages\meterbase\gs_emu_err_event.c" />
-    <ClCompile Include="..\..\..\packages\meterbase\gs_freeze.c" />
-    <ClCompile Include="..\..\..\packages\meterbase\gs_i_over_event.c" />
-    <ClCompile Include="..\..\..\packages\meterbase\gs_mac_suspend.c" />
-    <ClCompile Include="..\..\..\packages\meterbase\gs_meter_clear_event.c" />
-    <ClCompile Include="..\..\..\packages\meterbase\gs_meter_program_event.c" />
-    <ClCompile Include="..\..\..\packages\meterbase\gs_neutral_current _err_event.c" />
-    <ClCompile Include="..\..\..\packages\meterbase\gs_power_abnormal_event .c" />
-    <ClCompile Include="..\..\..\packages\meterbase\gs_power_off_event.c" />
-    <ClCompile Include="..\..\..\packages\meterbase\gs_record.c" />
-    <ClCompile Include="..\..\..\packages\meterbase\gs_relay_err_event.c" />
-    <ClCompile Include="..\..\..\packages\meterbase\gs_rtc_err_event.c" />
+    <ClCompile Include="..\..\..\domain\meterbase\gs_backlight_ctrl.c" />
+    <ClCompile Include="..\..\..\domain\meterbase\gs_cover_event.c" />
+    <ClCompile Include="..\..\..\domain\meterbase\gs_emu_err_event.c" />
+    <ClCompile Include="..\..\..\domain\meterbase\gs_freeze.c" />
+    <ClCompile Include="..\..\..\domain\meterbase\gs_i_over_event.c" />
+    <ClCompile Include="..\..\..\domain\meterbase\gs_mac_suspend.c" />
+    <ClCompile Include="..\..\..\domain\meterbase\gs_meter_clear_event.c" />
+    <ClCompile Include="..\..\..\domain\meterbase\gs_meter_program_event.c" />
+    <ClCompile Include="..\..\..\domain\meterbase\gs_neutral_current _err_event.c" />
+    <ClCompile Include="..\..\..\domain\meterbase\gs_power_abnormal_event .c" />
+    <ClCompile Include="..\..\..\domain\meterbase\gs_power_off_event.c" />
+    <ClCompile Include="..\..\..\domain\meterbase\gs_record.c" />
+    <ClCompile Include="..\..\..\domain\meterbase\gs_relay_err_event.c" />
+    <ClCompile Include="..\..\..\domain\meterbase\gs_rtc_err_event.c" />
     <ClCompile Include="..\mapper_698\mapper_698.c" />
     <ClCompile Include="..\mapper_698\map_698_action\action_3_Event.c" />
     <ClCompile Include="..\mapper_698\map_698_action\action_4_Parameter.c" />
@@ -161,7 +161,7 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(SolutionDir)\nidavellir\include\;$(SolutionDir)\nidavellir\include\kernel\;$(SolutionDir)\packages\test\cmocka\include\;$(SolutionDir)\targets\stategrid_meter\;$(SolutionDir)\application\adapters\dl698\;$(SolutionDir)applications\app_resource_tool\;$(SolutionDir)\packages\meterbase\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\nidavellir\include\;$(SolutionDir)\nidavellir\include\kernel\;$(SolutionDir)\packages\test\cmocka\include\;$(SolutionDir)\targets\stategrid_meter\;$(SolutionDir)\application\adapters\dl698\;$(SolutionDir)applications\app_resource_tool\;$(SolutionDir)\domain\meterbase\</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8</AdditionalOptions>
     </ClCompile>
     <Link>

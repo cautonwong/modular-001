@@ -364,7 +364,7 @@
                     <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc</state>
                     <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\inc</state>
                     <state>$PROJ_DIR$\..\..\..\applications\app_resource_tool</state>
-                    <state>$PROJ_DIR$\..\..\..\packages\meterbase</state>
+                    <state>$PROJ_DIR$\..\..\..\domain\meterbase</state>
                 </option>
                 <option>
                     <name>CCStdIncCheck</name>
@@ -1427,7 +1427,7 @@
                     <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc</state>
                     <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\inc</state>
                     <state>$PROJ_DIR$\..\..\..\applications\app_resource_tool</state>
-                    <state>$PROJ_DIR$\..\..\..\packages\meterbase</state>
+                    <state>$PROJ_DIR$\..\..\..\domain\meterbase</state>
                 </option>
                 <option>
                     <name>CCStdIncCheck</name>
@@ -2465,58 +2465,58 @@
                 <name>$PROJ_DIR$\..\..\..\applications\app_meter_base\app_meter_base_entry.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\electrical_measurement.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\meterbase\electrical_measurement.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\energy.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\meterbase\energy.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_backlight_ctrl.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\meterbase\gs_backlight_ctrl.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_cover_event.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\meterbase\gs_cover_event.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_emu_err_event.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\meterbase\gs_emu_err_event.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_freeze.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\meterbase\gs_freeze.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_i_over_event.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\meterbase\gs_i_over_event.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_mac_suspend.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\meterbase\gs_mac_suspend.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_meter_program_event.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\meterbase\gs_meter_program_event.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_neutral_current _err_event.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\meterbase\gs_neutral_current _err_event.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_power_abnormal_event .c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\meterbase\gs_power_abnormal_event .c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_power_off_event.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\meterbase\gs_power_off_event.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_record.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\meterbase\gs_record.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_relay_err_event.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\meterbase\gs_relay_err_event.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\gs_rtc_err_event.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\meterbase\gs_rtc_err_event.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\relay_control.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\meterbase\relay_control.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\runstatus.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\meterbase\runstatus.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\meterbase\touFee.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\meterbase\touFee.c</name>
             </file>
         </group>
         <group>

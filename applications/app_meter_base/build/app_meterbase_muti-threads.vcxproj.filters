@@ -21,22 +21,22 @@
       <Filter>kernel</Filter>
     </ClCompile>
     <ClCompile Include="..\test_app_meter_base_entry.c" />
-    <ClCompile Include="..\..\..\packages\meterbase\gs_backlight_ctrl.c">
+    <ClCompile Include="..\..\..\domain\meterbase\gs_backlight_ctrl.c">
       <Filter>meterbase</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\meterbase\gs_cover_event.c">
+    <ClCompile Include="..\..\..\domain\meterbase\gs_cover_event.c">
       <Filter>meterbase</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\meterbase\gs_emu_err_event.c">
+    <ClCompile Include="..\..\..\domain\meterbase\gs_emu_err_event.c">
       <Filter>meterbase</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\meterbase\gs_i_over_event.c">
+    <ClCompile Include="..\..\..\domain\meterbase\gs_i_over_event.c">
       <Filter>meterbase</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\meterbase\gs_mac_suspend.c">
+    <ClCompile Include="..\..\..\domain\meterbase\gs_mac_suspend.c">
       <Filter>meterbase</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\meterbase\gs_meter_clear_event.c">
+    <ClCompile Include="..\..\..\domain\meterbase\gs_meter_clear_event.c">
       <Filter>meterbase</Filter>
     </ClCompile>
   </ItemGroup>
