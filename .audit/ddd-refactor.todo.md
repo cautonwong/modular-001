@@ -72,7 +72,8 @@ Cross-cutting:
 - [x] Unit 3b: `domain/tariff` interval lookup, holiday, rest day, day table, fee + tests
 - [x] Unit 3c: `domain/common/parameter_store` port, infra RAM table, legacy tariff parser + tests
 - [ ] Unit 4: `domain/events` + `domain/freeze`
-- [ ] Unit 5: `domain/load_control`
+- [x] Unit 5: `domain/load_control` relay command state machine + tests
+- [ ] Unit 5b: relay feedback and LED / misoperation detection (deferred, needs GPIO feedback)
 - [ ] Unit 6: `application/adapters` protocol migration
 - [x] Unit 7a: `infra/memory/arena` implements the allocator port + host composition test
 - [x] Unit 7b: `domain/common/store` port, `infra/memory/byte_store`, legacy energy store adapter
