@@ -51,6 +51,48 @@ infra/         SOCes / boards / interrupt / RTOSes / HALes。实现上层定义�
 6. target 关注点散在 `driver_entry.c`、`os_entry.c`、`port.h`、`pin_function_def.h`
    和 v85xxp arch 头里，没有单一组合根。
 
+## 2.1 兼容复刻约束（硬约束）
+
+存量电表的持久化字节布局必须逐字节兼容。
+
+- 新 domain 聚合的结构体不与旧布局绑定。旧布局作为 target 侧的
+  `persistence/legacy_<context>_record.h` 保留，字段顺序、宽度、对齐和 `port.h`
+  注入的扩展字段都按原样复刻。
+- domain 只提供字段读取与写入的语义接口。target 的序列化器把 domain 值写入旧偏移。
+- 每个持久化记录带独立版本号。版本号变化时，读路径必须能做旧版本迁移。
+- 验证方式是对同一组输入分别跑旧结构体和新序列化器，比较字节数组完全相等。
+  这必须成为 `tests/` 里的回归用例。
+
+已冻结的电能切片（`tools/legacy_probe.c` 实测）：
+
+| 字段 | 偏移 |
+|---|---|
+| active_p[13] | 0 |
+| active_n[13] | 52 |
+| active_p_dec[13] | 104 |
+| active_n_dec[13] | 130 |
+| Energy_chksum | 156 |
+| MonthEnegery_dec | 160 |
+| MonthEnegery | 164 |
+| UseEnergy_chksum | 168 |
+| 切片大小 | 172 |
+
+该切片在旧持久化块内的起始偏移是 3。校验和与 `reserved` 填充字由持久化层负责，
+codec 不覆盖它们。<br>
+对应实现：`targets/stategrid_meter/persistence/legacy_energy_record.h` 和
+`legacy_energy_codec.c`，偏移由 `_Static_assert` 锁死。
+
+
+## 2.2 资源所有权现状
+
+1. 三套分配并存，且都没有释放：libc `malloc`（生产代码 8 处，仅 1 处 `free`）、
+   `nd_malloc` 的 bump 区（不释放）、`user_malloc`/`power_safe_malloc` 空桩。
+2. `nd_malloc` 清零，`nd_calloc` 不清零，名字与 libc 语义相反。
+3. 计量芯片校准状态、继电器状态、UART 缓冲等是文件级可变全局变量，
+   第二实例无法创建。
+
+新的资源契约只保留一条路径：聚合构造时注入分配端口，返回清零内存，释放带 size。
+
 ## 3. 有界上下文
 
 | 上下文 | 职责 | 现状来源 |

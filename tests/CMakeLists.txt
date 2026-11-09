@@ -17,10 +17,19 @@ target_include_directories(test_support PUBLIC
     ${BLADE_ROOT}
 )
 
+file(GLOB_RECURSE DOMAIN_SOURCES CONFIGURE_DEPENDS "${BLADE_ROOT}/domain/*.c")
+add_library(blade_domain STATIC ${DOMAIN_SOURCES})
+target_include_directories(blade_domain PUBLIC ${BLADE_ROOT})
+
+add_library(blade_target_stategrid STATIC
+    ${BLADE_ROOT}/targets/stategrid_meter/persistence/legacy_energy_codec.c
+)
+target_link_libraries(blade_target_stategrid PUBLIC blade_domain)
+
 file(GLOB TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/unit/*.c")
 foreach(src ${TEST_SOURCES})
     get_filename_component(name ${src} NAME_WE)
     add_executable(${name} ${src})
-    target_link_libraries(${name} PRIVATE unity test_support)
+    target_link_libraries(${name} PRIVATE unity test_support blade_target_stategrid)
     add_test(NAME ${name} COMMAND ${name})
 endforeach()
