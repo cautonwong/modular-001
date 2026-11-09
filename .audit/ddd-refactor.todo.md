@@ -96,6 +96,8 @@ Cross-cutting:
       `list_for_each_safe` macro; legacy headers forward; host tests
 - [x] Unit 7e: move the whole `packages/kernel` into `infra/kernel`; update the
       IAR source list and include paths; baseline stays 117/117
+- [x] Unit 7f: split `packages/drivers` into `infra/soc` and `infra/board`;
+      update IAR paths; baseline stays 117/117
 - [x] Unit 8a: `targets/host` composition root wiring metering, demand, load control,
       tariff, arena, byte store and parameter store + host integration tests
 - [ ] Unit 9: delete legacy surfaces (`applications.h`, `port.h` field macros, monolith)

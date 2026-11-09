@@ -358,11 +358,11 @@
                     <state>$PROJ_DIR$\..\..\..\instances\stategrid_meter\mapper_645</state>
                     <state>$PROJ_DIR$\..\..\..\packages\dl698</state>
                     <state>$PROJ_DIR$\..\..\..\packages\dl645</state>
-                    <state>$PROJ_DIR$\..\..\..\packages\drivers</state>
-                    <state>$PROJ_DIR$\..\..\..\packages\drivers\arch</state>
-                    <state>$PROJ_DIR$\..\..\..\packages\drivers\arch\cm0</state>
-                    <state>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc</state>
-                    <state>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\inc</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\board</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\soc</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\soc\cm0</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\inc</state>
                     <state>$PROJ_DIR$\..\..\..\applications\app_resource_tool</state>
                     <state>$PROJ_DIR$\..\..\..\packages\meterbase</state>
                 </option>
@@ -1421,11 +1421,11 @@
                     <state>$PROJ_DIR$\..\..\..\nidavellir\include</state>
                     <state>$PROJ_DIR$\..\..\..\instances\stategrid_meter\</state>
                     <state>$PROJ_DIR$\..\..\..\packages\dl698</state>
-                    <state>$PROJ_DIR$\..\..\..\packages\drivers</state>
-                    <state>$PROJ_DIR$\..\..\..\packages\drivers\arch</state>
-                    <state>$PROJ_DIR$\..\..\..\packages\drivers\arch\cm0</state>
-                    <state>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc</state>
-                    <state>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\inc</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\board</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\soc</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\soc\cm0</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\inc</state>
                     <state>$PROJ_DIR$\..\..\..\applications\app_resource_tool</state>
                     <state>$PROJ_DIR$\..\..\..\packages\meterbase</state>
                 </option>
@@ -2137,59 +2137,59 @@
             <group>
                 <name>MCU LIB</name>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_adc.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_adc.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_ana.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_ana.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_clk.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_clk.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_flash.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_flash.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_gpio.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_gpio.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_lcd.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_lcd.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_misc.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_misc.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_pmu.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_pmu.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_rtc.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_rtc.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_tmr.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_tmr.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_uart.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_uart.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\src\lib_wdt.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_wdt.c</name>
                 </file>
             </group>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp\cpu_v85xxp_isr.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\cpu_v85xxp_isr.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp\lib_CodeRAM.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\lib_CodeRAM.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp\lib_cortex.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\lib_cortex.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp\lib_LoadNVR.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\lib_LoadNVR.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp\startup_target.s</name>
+                <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\startup_target.s</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp\v8500_for_single.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500_for_single.c</name>
             </file>
         </group>
         <group>
@@ -2243,31 +2243,31 @@
         <group>
             <name>drivers</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\eeprom.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\board\eeprom.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\esam698_v2.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\board\esam698_v2.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\iic_driver.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\board\iic_driver.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\ndv_Norflash.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\board\ndv_Norflash.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\ndv_RN8209.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\board\ndv_RN8209.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\ndvh_rn8209.h</name>
+                <name>$PROJ_DIR$\..\..\..\infra\board\ndvh_rn8209.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\relay.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\board\relay.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\spi_driver.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\board\spi_driver.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\drivers\uart_driver.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\board\uart_driver.c</name>
             </file>
         </group>
         <group>
@@ -2530,7 +2530,7 @@
         <name>$PROJ_DIR$\..\..\..\nidavellir\include\applications.h</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\cpu_surport.h</name>
+        <name>$PROJ_DIR$\..\..\..\infra\soc\cpu_surport.h</name>
     </file>
     <file>
         <name>$PROJ_DIR$\..\..\..\applications\display.c</name>
