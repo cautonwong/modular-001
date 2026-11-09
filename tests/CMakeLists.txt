@@ -17,11 +17,12 @@ target_include_directories(test_support PUBLIC
     ${BLADE_ROOT}
 )
 
-file(GLOB_RECURSE DOMAIN_SOURCES CONFIGURE_DEPENDS
+file(GLOB DOMAIN_SOURCES CONFIGURE_DEPENDS
     "${BLADE_ROOT}/domain/common/*.c"
     "${BLADE_ROOT}/domain/metering/*.c"
     "${BLADE_ROOT}/domain/tariff/*.c"
     "${BLADE_ROOT}/domain/load_control/*.c"
+    "${BLADE_ROOT}/domain/events/*.c"
 )
 add_library(blade_domain STATIC ${DOMAIN_SOURCES})
 target_include_directories(blade_domain PUBLIC ${BLADE_ROOT})

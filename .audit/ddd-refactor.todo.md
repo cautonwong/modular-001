@@ -112,6 +112,7 @@ Cross-cutting:
 - [x] Unit 7m: split `domain/meterbase` into `domain/{metering,tariff,events,freeze,
       load_control,display}/legacy`; dead app files to `application/meterbase/unbuilt`
 - [ ] Unit 4: `domain/events` + `domain/freeze` clean rewrites (legacy moved, not rewritten)
+- [x] Unit 4a: `domain/events/duration` debounce state machine + 6 tests
 
 ## Unbuilt legacy files (present in the tree, not in the IAR project)
 - domain/metering/legacy: demand.c, "electrical measurement.c", iv/iv_data.c
