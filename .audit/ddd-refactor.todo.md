@@ -46,8 +46,17 @@ Infra (from subagent report):
 ## Task steps
 - [x] Ground: infra/kernel/drivers map
 - [ ] Ground: domain packages map
-- [ ] Ground: applications + instances (composition root) map
+- [x] Ground: applications + instances (composition root) map
 - [ ] Ground: allocation + interface/global-state evidence
+
+Composition root (from subagent report):
+- `applications.h` declares 70 symbols; kernel umbrella `nidavellir.h:32` includes it.
+- `port.h` is a macro DSL injecting fields and resource IDs into the domain aggregate.
+- Target concerns spread across `driver_entry.c`, `os_entry.c`, `port.h`,
+  `pin_function_def.h`, and v85xxp arch headers.
+- `applications/app_698_server/stub.c` signatures already disagree with `applications.h`.
+- `msta`, `msta_test`, and `app_meterbase_baremetal` project files reference missing paths.
+- No working unit-test project; `nidavellir/tests/build/tests.vcxproj` compiles zero files.
 - [ ] Sketch design A and design B
 - [ ] Screen against design red flags
 - [x] Synthesize target layout + dependency rule + interface contracts (draft in docs/architecture.md)

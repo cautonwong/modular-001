@@ -43,7 +43,13 @@ infra/         SOCes / boards / interrupt / RTOSes / HALes。实现上层定义�
 1. `struct mbase_control_block_t` 定义在 `nidavellir/include/applications.h`，约 330 行，把计量、费率、事件、显示参数、上报配置、继电器状态混在一个聚合根里。
 2. `instances/stategrid_meter/port.h` 用宏（`U_data_fields`、`I_data_fields`、`static_start`、`dyn_cache_start`）把 target 字段注入 domain 聚合根。domain 反向依赖了 target。
 3. 持久化布局依赖对聚合根做 `offsetof`，字节布局与结构体字段顺序强绑定。
-4. `applications.h` 是一个约 32 KB 的全局 extern 清单，应用通过它直接看见实现。
+4. `applications.h` 是一个约 32 KB 的全局 extern 清单，声明 70 个符号，而实现散落在
+   `applications/`、`packages/meterbase`、`packages/dl698`、`packages/drivers`。kernel 伞头
+   `nidavellir.h:32` 无条件 include 它，于是 kernel 对外宣称了一批自己并不实现的符号。
+5. 接口已经漂移：`applications/app_698_server/stub.c` 的 `read_esam_data` 和
+   `display_oad_to_id` 签名与 `applications.h` 的声明不一致，靠近似符号名链接。
+6. target 关注点散在 `driver_entry.c`、`os_entry.c`、`port.h`、`pin_function_def.h`
+   和 v85xxp arch 头里，没有单一组合根。
 
 ## 3. 有界上下文
 
@@ -174,6 +180,14 @@ int main(void)
 2. `arm-none-eabi-gcc` 编 Cortex-M 目标代码，确认没有 host libc 依赖。
 3. `tools/check-layers.sh` 静态检查 include 方向、domain 内的 `malloc`、全局变量。
 4. 设备端字节布局回归：序列化后的字节必须与既有 EEPROM 布局对齐。
+
+## 8.1 构建
+
+新增的 `domain/`、`application/`、`infra/`、`targets/` 以 CMake + `arm-none-eabi-gcc` 为准。
+现有 MSVC `.vcxproj` 和 IAR `.ewp` 大量指向移动前的旧路径，其中
+`msta.vcxproj`、`msta_test.vcxproj`、`app_meterbase_baremetal.vcxproj` 已经是失效引用。
+旧工程文件在和旧目录一起删除的单元里统一处理，不作为新代码的验证依据。
+
 
 ## 9. 待确认
 
