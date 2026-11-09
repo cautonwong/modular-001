@@ -1,4 +1,6 @@
-#include "nidavellir.h"
+#include "infra/kernel/fifo.h"
+
+#include <string.h>
 
 
 // *****************************************************************************
@@ -60,12 +62,8 @@ uint16_t fifoBuf_getUsed(struct fifo_t *buf)
 
     return num_bytes;
 }
-volatile uint32_t test_save_addr2;
-volatile uint32_t test_save_addr1;
-
 uint16_t fifoBuf_getFree(struct fifo_t *buf)
 {       // return the free space size in the buffer
-    test_save_addr2 = (uint32_t)buf;
 
     uint16_t buf_size = buf->buf_size;
 
@@ -601,8 +599,6 @@ int fifoBuf_pushU8(struct fifo_t* buf, uint8_t b)
 
 uint16_t fifoBuf_putByte(struct fifo_t *buf, const uint8_t b)
 {       // add a data byte to the buffer
-    test_save_addr1 = (uint32_t)buf;
-
     uint16_t wr = buf->wr;
     uint16_t buf_size = buf->buf_size;
     uint8_t *buff = buf->buf_ptr;

@@ -22,6 +22,7 @@ add_library(blade_domain STATIC ${DOMAIN_SOURCES})
 target_include_directories(blade_domain PUBLIC ${BLADE_ROOT})
 
 add_library(blade_infra STATIC
+    ${BLADE_ROOT}/infra/kernel/fifo.c
     ${BLADE_ROOT}/infra/memory/arena.c
     ${BLADE_ROOT}/infra/memory/byte_store.c
     ${BLADE_ROOT}/infra/memory/parameter_store.c
