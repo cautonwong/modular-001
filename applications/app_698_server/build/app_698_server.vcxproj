@@ -46,14 +46,14 @@
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_5_Frozen.c" />
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_8_Control.c" />
     <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_f_Other.c" />
-    <ClCompile Include="..\..\..\packages\dl698\fr_698.c" />
-    <ClCompile Include="..\..\..\packages\dl698\fr_698_action.c" />
-    <ClCompile Include="..\..\..\packages\dl698\fr_698_comm.c" />
-    <ClCompile Include="..\..\..\packages\dl698\fr_698_connect.c" />
-    <ClCompile Include="..\..\..\packages\dl698\fr_698_get.c" />
-    <ClCompile Include="..\..\..\packages\dl698\fr_698_security.c" />
-    <ClCompile Include="..\..\..\packages\dl698\fr_698_set.c" />
-    <ClCompile Include="..\..\..\packages\dl698\fr_axdr.c" />
+    <ClCompile Include="..\..\..\application\adapters\dl698\fr_698.c" />
+    <ClCompile Include="..\..\..\application\adapters\dl698\fr_698_action.c" />
+    <ClCompile Include="..\..\..\application\adapters\dl698\fr_698_comm.c" />
+    <ClCompile Include="..\..\..\application\adapters\dl698\fr_698_connect.c" />
+    <ClCompile Include="..\..\..\application\adapters\dl698\fr_698_get.c" />
+    <ClCompile Include="..\..\..\application\adapters\dl698\fr_698_security.c" />
+    <ClCompile Include="..\..\..\application\adapters\dl698\fr_698_set.c" />
+    <ClCompile Include="..\..\..\application\adapters\dl698\fr_axdr.c" />
     <ClCompile Include="..\..\..\packages\kernel\bitarithm.c" />
     <ClCompile Include="..\..\..\packages\kernel\fifo.c" />
     <ClCompile Include="..\..\..\packages\kernel\log.c" />
@@ -98,9 +98,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\nidavellir\include\kernel\nidavellir.h" />
-    <ClInclude Include="..\..\..\packages\dl698\fr_698.h" />
-    <ClInclude Include="..\..\..\packages\dl698\fr_698_comm.h" />
-    <ClInclude Include="..\..\..\packages\dl698\fr_axdr.h" />
+    <ClInclude Include="..\..\..\application\adapters\dl698\fr_698.h" />
+    <ClInclude Include="..\..\..\application\adapters\dl698\fr_698_comm.h" />
+    <ClInclude Include="..\..\..\application\adapters\dl698\fr_axdr.h" />
     <ClInclude Include="..\..\..\packages\test\u_test\cjson_lib.h" />
     <ClInclude Include="..\..\..\packages\test\u_test\u_test.h" />
     <ClInclude Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_uniformity.h" />
@@ -182,7 +182,7 @@
     <OutDir>$(SolutionDir)\nidavellir\bin\</OutDir>
     <IntDir>$(SolutionDir)\build\$(ProjectName)_$(Configuration)_$(Platform)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
-    <IncludePath>$(ProjectDir)..\..\..\nidavellir\include\kernel\;$(ProjectDir)..\..\..\nidavellir\include\;$(ProjectDir)..\..\..\packages\dl698\;$(ProjectDir)..\..\..\nidavellir\include\testutil;$(ProjectDir)..\..\..\applications\app_698_server\test_case\test_app_698_server_uniformity;$(ProjectDir)..\..\..\packages\test\u_test\;$(ProjectDir)..\..\..\nidavellir\include\mxml\;$(ProjectDir)..\..\..\instances\stategrid_meter\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\..\..\nidavellir\include\kernel\;$(ProjectDir)..\..\..\nidavellir\include\;$(ProjectDir)..\..\..\application\adapters\dl698\;$(ProjectDir)..\..\..\nidavellir\include\testutil;$(ProjectDir)..\..\..\applications\app_698_server\test_case\test_app_698_server_uniformity;$(ProjectDir)..\..\..\packages\test\u_test\;$(ProjectDir)..\..\..\nidavellir\include\mxml\;$(ProjectDir)..\..\..\instances\stategrid_meter\;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\..\..\nidavellir\bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -190,7 +190,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)..\..\..\nidavellir\include\kernel\;$(ProjectDir)..\..\..\nidavellir\include\;$(ProjectDir)..\..\..\packages\dl698\;$(ProjectDir)..\..\..\nidavellir\include\testutil\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\..\..\nidavellir\include\kernel\;$(ProjectDir)..\..\..\nidavellir\include\;$(ProjectDir)..\..\..\application\adapters\dl698\;$(ProjectDir)..\..\..\nidavellir\include\testutil\;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

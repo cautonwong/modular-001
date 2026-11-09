@@ -2,28 +2,28 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="..\stategrid_meter_entry.c" />
-    <ClCompile Include="..\..\..\packages\dl698\fr_698.c">
+    <ClCompile Include="..\..\..\application\adapters\dl698\fr_698.c">
       <Filter>app_698_server</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\dl698\fr_698_action.c">
+    <ClCompile Include="..\..\..\application\adapters\dl698\fr_698_action.c">
       <Filter>app_698_server</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\dl698\fr_698_comm.c">
+    <ClCompile Include="..\..\..\application\adapters\dl698\fr_698_comm.c">
       <Filter>app_698_server</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\dl698\fr_698_connect.c">
+    <ClCompile Include="..\..\..\application\adapters\dl698\fr_698_connect.c">
       <Filter>app_698_server</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\dl698\fr_698_get.c">
+    <ClCompile Include="..\..\..\application\adapters\dl698\fr_698_get.c">
       <Filter>app_698_server</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\dl698\fr_698_security.c">
+    <ClCompile Include="..\..\..\application\adapters\dl698\fr_698_security.c">
       <Filter>app_698_server</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\dl698\fr_698_set.c">
+    <ClCompile Include="..\..\..\application\adapters\dl698\fr_698_set.c">
       <Filter>app_698_server</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\dl698\fr_axdr.c">
+    <ClCompile Include="..\..\..\application\adapters\dl698\fr_axdr.c">
       <Filter>app_698_server</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\packages\kernel\bitarithm.c">
@@ -159,7 +159,7 @@
     <ClCompile Include="..\mapper_698\map_698_action\action_f_Other.c">
       <Filter>mapper_698\action</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\dl698\fr_report.c">
+    <ClCompile Include="..\..\..\application\adapters\dl698\fr_report.c">
       <Filter>app_698_server</Filter>
     </ClCompile>
   </ItemGroup>
@@ -190,10 +190,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\packages\dl698\fr_698.h">
+    <ClInclude Include="..\..\..\application\adapters\dl698\fr_698.h">
       <Filter>app_698_server</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\packages\dl698\fr_axdr.h">
+    <ClInclude Include="..\..\..\application\adapters\dl698\fr_axdr.h">
       <Filter>app_698_server</Filter>
     </ClInclude>
   </ItemGroup>
