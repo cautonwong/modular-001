@@ -88,52 +88,52 @@
     <ClCompile Include="..\..\..\packages\test\u_test\u_test.c">
       <Filter>utest</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\mapper_698.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\mapper_698.c">
       <Filter>mapper_698</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\packages\test\u_test\cjson_lib.c">
       <Filter>utest</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_0_Energy.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_0_Energy.c">
       <Filter>mapper_698\get</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_1_Demand.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_1_Demand.c">
       <Filter>mapper_698\get</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_2_Variable.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_2_Variable.c">
       <Filter>mapper_698\get</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_3_Event.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_3_Event.c">
       <Filter>mapper_698\get</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_4_Parameter.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_4_Parameter.c">
       <Filter>mapper_698\get</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_5_Frozen.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_5_Frozen.c">
       <Filter>mapper_698\get</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_6_Collection.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_6_Collection.c">
       <Filter>mapper_698\get</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_7_Aggregate.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_7_Aggregate.c">
       <Filter>mapper_698\get</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_8_Control.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_8_Control.c">
       <Filter>mapper_698\get</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_e_Monitor.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_e_Monitor.c">
       <Filter>mapper_698\get</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_f_Other.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_f_Other.c">
       <Filter>mapper_698\get</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_4_Parameter.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_set\set_4_Parameter.c">
       <Filter>mapper_698\set</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_4_Parameter.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_action\action_4_Parameter.c">
       <Filter>mapper_698\action</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_3_Event.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_set\set_3_Event.c">
       <Filter>mapper_698\set</Filter>
     </ClCompile>
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_GET_Request_0501.c">
@@ -184,40 +184,40 @@
     <ClCompile Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_ACTION_Response_8703.c">
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_5_Frozen.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_set\set_5_Frozen.c">
       <Filter>mapper_698\set</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_f_Other.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_set\set_f_Other.c">
       <Filter>mapper_698\set</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_0.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_record\record_sel_0.c">
       <Filter>mapper_698\record</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_1.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_record\record_sel_1.c">
       <Filter>mapper_698\record</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_2.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_record\record_sel_2.c">
       <Filter>mapper_698\record</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_9.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_record\record_sel_9.c">
       <Filter>mapper_698\record</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_11.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_record\record_sel_11.c">
       <Filter>mapper_698\record</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_3_Event.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_action\action_3_Event.c">
       <Filter>mapper_698\action</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_5_Frozen.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_action\action_5_Frozen.c">
       <Filter>mapper_698\action</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_8_Control.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_action\action_8_Control.c">
       <Filter>mapper_698\action</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_f_Other.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_action\action_f_Other.c">
       <Filter>mapper_698\action</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_8_Control.c">
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_set\set_8_Control.c">
       <Filter>mapper_698\set</Filter>
     </ClCompile>
     <ClCompile Include="..\stub.c">

@@ -19,33 +19,33 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\mapper_698.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_3_Event.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_4_Parameter.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_5_Frozen.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_8_Control.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_action\action_f_Other.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_0_Energy.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_1_Demand.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_2_Variable.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_3_Event.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_4_Parameter.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_5_Frozen.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_6_Collection.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_7_Aggregate.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_8_Control.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_e_Monitor.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_get\get_f_Other.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_0.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_1.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_11.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_2.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_record\record_sel_9.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_3_Event.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_4_Parameter.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_5_Frozen.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_8_Control.c" />
-    <ClCompile Include="..\..\..\instances\stategrid_meter\mapper_698\map_698_set\set_f_Other.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\mapper_698.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_action\action_3_Event.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_action\action_4_Parameter.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_action\action_5_Frozen.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_action\action_8_Control.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_action\action_f_Other.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_0_Energy.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_1_Demand.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_2_Variable.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_3_Event.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_4_Parameter.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_5_Frozen.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_6_Collection.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_7_Aggregate.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_8_Control.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_e_Monitor.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_f_Other.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_record\record_sel_0.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_record\record_sel_1.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_record\record_sel_11.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_record\record_sel_2.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_record\record_sel_9.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_set\set_3_Event.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_set\set_4_Parameter.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_set\set_5_Frozen.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_set\set_8_Control.c" />
+    <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_set\set_f_Other.c" />
     <ClCompile Include="..\..\..\application\adapters\dl698\fr_698.c" />
     <ClCompile Include="..\..\..\application\adapters\dl698\fr_698_action.c" />
     <ClCompile Include="..\..\..\application\adapters\dl698\fr_698_comm.c" />
@@ -182,7 +182,7 @@
     <OutDir>$(SolutionDir)\nidavellir\bin\</OutDir>
     <IntDir>$(SolutionDir)\build\$(ProjectName)_$(Configuration)_$(Platform)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
-    <IncludePath>$(ProjectDir)..\..\..\nidavellir\include\kernel\;$(ProjectDir)..\..\..\nidavellir\include\;$(ProjectDir)..\..\..\application\adapters\dl698\;$(ProjectDir)..\..\..\nidavellir\include\testutil;$(ProjectDir)..\..\..\applications\app_698_server\test_case\test_app_698_server_uniformity;$(ProjectDir)..\..\..\packages\test\u_test\;$(ProjectDir)..\..\..\nidavellir\include\mxml\;$(ProjectDir)..\..\..\instances\stategrid_meter\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\..\..\nidavellir\include\kernel\;$(ProjectDir)..\..\..\nidavellir\include\;$(ProjectDir)..\..\..\application\adapters\dl698\;$(ProjectDir)..\..\..\nidavellir\include\testutil;$(ProjectDir)..\..\..\applications\app_698_server\test_case\test_app_698_server_uniformity;$(ProjectDir)..\..\..\packages\test\u_test\;$(ProjectDir)..\..\..\nidavellir\include\mxml\;$(ProjectDir)..\..\..\targets\stategrid_meter\;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\..\..\nidavellir\bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

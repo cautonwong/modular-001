@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.31129.286
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "demo_os", "nidavellir\samples\sample_threadx\build\sample_threadx.vcxproj", "{7342DEEF-AB3F-00D5-9EDB-2829CD277B76}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "msta", "instances\msta\build\msta.vcxproj", "{79D516AE-EED9-4724-99ED-5B631DA3E892}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "msta", "targets\msta\build\msta.vcxproj", "{79D516AE-EED9-4724-99ED-5B631DA3E892}"
 	ProjectSection(ProjectDependencies) = postProject
 		{055944EF-CC92-4AA7-A135-24122437B9EF} = {055944EF-CC92-4AA7-A135-24122437B9EF}
 	EndProjectSection
@@ -34,7 +34,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_app_meterbase", "appli
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pkg_crypto", "infra\security\crypto\build\pkg_crypto.vcxproj", "{C0FFE164-70A5-4809-A804-6EFF63C9627A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "instance_stategrid_meter", "instances\stategrid_meter\build\instance_stategrid_meter.vcxproj", "{521DB9A0-9573-45A8-BFC2-D957D10B8522}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "instance_stategrid_meter", "targets\stategrid_meter\build\instance_stategrid_meter.vcxproj", "{521DB9A0-9573-45A8-BFC2-D957D10B8522}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pkg_cmocka", "packages\test\pkg_cmocka.vcxproj", "{3D69149E-62C3-4224-9CDB-2DFE1CFB342C}"
 EndProject

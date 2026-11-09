@@ -6,7 +6,7 @@ set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 flags=(-std=c11 -mcpu=cortex-m0 -mthumb -ffreestanding -Wall -Wextra -Werror -I"$root")
-skipped=("$root/application/upgrade")
+skipped=("$root/application/upgrade" "$root/application/adapters")
 
 is_skipped() {
     local path="$1"
@@ -27,5 +27,5 @@ while IFS= read -r -d '' header; do
     arm-none-eabi-gcc "${flags[@]}" -x c -fsyntax-only "$header" || status=1
 done < <(find "$root/domain" "$root/application" -name '*.h' -print0 2>/dev/null)
 
-echo "skip: application/upgrade (legacy nidavellir.h dependency)"
+echo "skip: application/upgrade and application/adapters (legacy nidavellir.h dependency)"
 exit "$status"

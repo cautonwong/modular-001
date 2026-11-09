@@ -10,8 +10,8 @@ includes=(
     -I "$root"
     -I "$root/nidavellir/include"
     -I "$root/nidavellir/include/kernel"
-    -I "$root/instances/stategrid_meter"
-    -I "$root/instances/stategrid_meter/mapper_645"
+    -I "$root/targets/stategrid_meter"
+    -I "$root/targets/stategrid_meter/mapper_645"
     -I "$root/application/adapters/dl645"
     -I "$root/application/adapters/dl698"
     -I "$root/infra/board"
@@ -38,7 +38,7 @@ files=(
     packages/meterbase/runstatus.c
     applications/app_resource_tool/resource_tool.c
     applications/app_meter_base/app_meter_base_entry.c
-    instances/stategrid_meter/stategrid_meter_entry.c
+    targets/stategrid_meter/stategrid_meter_entry.c
 )
 
 errors="$(mktemp)"

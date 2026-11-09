@@ -100,7 +100,9 @@ Cross-cutting:
       update IAR paths; baseline stays 117/117
 - [x] Unit 7g: move baremetal, esam, crypto, upgrade, boot into their layers;
       update solution and IAR paths; baseline stays 117/117
-- [ ] Unit 7h: move `dl698`, `dl645`, `dlms` into `application/adapters`
+- [x] Unit 7h: move `dl698`, `dl645`, `dlms` into `application/adapters`
+- [x] Unit 7i: move `instances` to `targets`, merging stategrid under the existing
+      `targets/stategrid_meter`; tools and IAR paths updated; baseline 117/117
 - [x] Unit 8a: `targets/host` composition root wiring metering, demand, load control,
       tariff, arena, byte store and parameter store + host integration tests
 - [ ] Unit 9: delete legacy surfaces (`applications.h`, `port.h` field macros, monolith)

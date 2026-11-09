@@ -2,7 +2,7 @@
  * Prints the persisted offsets of the legacy aggregate root. Run from the repo
  * root:
  *
- *   gcc -std=gnu11 -DWIN32 -I nidavellir/include -I instances/stategrid_meter \
+ *   gcc -std=gnu11 -DWIN32 -I nidavellir/include -I targets/stategrid_meter \
  *       tools/legacy_probe.c -o /tmp/legacy_probe && /tmp/legacy_probe
  *
  * The values are frozen in

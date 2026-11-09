@@ -13,7 +13,7 @@ import sys
 import xml.etree.ElementTree as ET
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-EWP = os.path.join(ROOT, "instances/stategrid_meter/iar for arm/VG_DTZY.ewp")
+EWP = os.path.join(ROOT, "targets/stategrid_meter/iar for arm/VG_DTZY.ewp")
 PROJ_DIR = os.path.dirname(EWP)
 
 

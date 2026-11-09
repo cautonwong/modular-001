@@ -354,8 +354,8 @@
                     <state>$PROJ_DIR$\..\..\..</state>
                     <state>$PROJ_DIR$\..\..\..\nidavellir\include\kernel</state>
                     <state>$PROJ_DIR$\..\..\..\nidavellir\include</state>
-                    <state>$PROJ_DIR$\..\..\..\instances\stategrid_meter\</state>
-                    <state>$PROJ_DIR$\..\..\..\instances\stategrid_meter\mapper_645</state>
+                    <state>$PROJ_DIR$\..\..\..\targets\stategrid_meter\</state>
+                    <state>$PROJ_DIR$\..\..\..\targets\stategrid_meter\mapper_645</state>
                     <state>$PROJ_DIR$\..\..\..\application\adapters\dl698</state>
                     <state>$PROJ_DIR$\..\..\..\application\adapters\dl645</state>
                     <state>$PROJ_DIR$\..\..\..\infra\board</state>
@@ -1419,7 +1419,7 @@
                     <state>$PROJ_DIR$\..\..\..</state>
                     <state>$PROJ_DIR$\..\..\..\nidavellir\include\kernel</state>
                     <state>$PROJ_DIR$\..\..\..\nidavellir\include</state>
-                    <state>$PROJ_DIR$\..\..\..\instances\stategrid_meter\</state>
+                    <state>$PROJ_DIR$\..\..\..\targets\stategrid_meter\</state>
                     <state>$PROJ_DIR$\..\..\..\application\adapters\dl698</state>
                     <state>$PROJ_DIR$\..\..\..\infra\board</state>
                     <state>$PROJ_DIR$\..\..\..\infra\soc</state>
