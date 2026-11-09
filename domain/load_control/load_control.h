@@ -34,6 +34,25 @@ typedef struct {
     uint8_t event_switch_off;
 } nd_load_actions_t;
 
+typedef struct {
+    int32_t active_power;
+    int32_t current;
+    uint32_t relay_off_elapsed;
+    uint32_t relay_on_elapsed;
+    uint32_t feedback_threshold;
+    uint32_t min_current;
+    uint8_t second_parity;
+    uint8_t full_display;
+} nd_load_feedback_inputs_t;
+
+typedef struct {
+    uint8_t led_on;
+    uint8_t led_blink;
+    uint8_t misoperation;
+    uint8_t event_switch_on;
+    uint8_t event_switch_off;
+} nd_load_feedback_t;
+
 load_control_state_t *load_control_create(nd_allocator_t *allocator);
 
 void load_control_destroy(load_control_state_t *state, nd_allocator_t *allocator);
@@ -55,5 +74,9 @@ void load_control_request_repeat(load_control_state_t *state);
 
 void load_control_second(load_control_state_t *state, const nd_load_inputs_t *inputs,
                          nd_load_actions_t *actions);
+
+void load_control_feedback(load_control_state_t *state,
+                           const nd_load_feedback_inputs_t *inputs,
+                           nd_load_feedback_t *feedback);
 
 #endif

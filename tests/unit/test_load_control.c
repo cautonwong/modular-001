@@ -170,6 +170,125 @@ static void test_alarm_timer_arms_current_limit_and_blocks_off(void)
     TEST_ASSERT_TRUE(actions.disconnect);
 }
 
+static nd_load_feedback_inputs_t base_feedback(void)
+{
+    nd_load_feedback_inputs_t in;
+    in.active_power = 100;
+    in.current = 0;
+    in.relay_off_elapsed = 0;
+    in.relay_on_elapsed = 0;
+    in.feedback_threshold = 200;
+    in.min_current = 17;
+    in.second_parity = 0;
+    in.full_display = 0;
+    return in;
+}
+
+static void test_feedback_full_display_lights_the_led(void)
+{
+    nd_load_feedback_inputs_t in = base_feedback();
+    nd_load_feedback_t feedback;
+    in.full_display = 1;
+
+    load_control_feedback(state, &in, &feedback);
+
+    TEST_ASSERT_TRUE(feedback.led_on);
+    TEST_ASSERT_FALSE(feedback.led_blink);
+}
+
+static void test_feedback_flags_a_closed_relay_while_disconnected(void)
+{
+    tick_command(ND_LOAD_REMOTE_ON);
+    tick_command(ND_LOAD_REMOTE_OFF);
+
+    nd_load_feedback_inputs_t in = base_feedback();
+    nd_load_feedback_t feedback;
+    in.active_power = 100;
+
+    load_control_feedback(state, &in, &feedback);
+
+    TEST_ASSERT_TRUE(feedback.misoperation);
+    TEST_ASSERT_FALSE(feedback.led_on);
+}
+
+static void test_feedback_confirms_disconnect_and_reports_once(void)
+{
+    tick_command(ND_LOAD_REMOTE_ON);
+    tick_command(ND_LOAD_REMOTE_OFF);
+
+    nd_load_feedback_inputs_t in = base_feedback();
+    nd_load_feedback_t feedback;
+    in.active_power = 0;
+    in.relay_off_elapsed = 200;
+
+    load_control_feedback(state, &in, &feedback);
+    TEST_ASSERT_FALSE(feedback.misoperation);
+    TEST_ASSERT_TRUE(feedback.led_on);
+    TEST_ASSERT_TRUE(feedback.event_switch_off);
+
+    load_control_feedback(state, &in, &feedback);
+    TEST_ASSERT_FALSE(feedback.event_switch_off);
+}
+
+static void test_feedback_confirms_connect_and_reports_once(void)
+{
+    tick_command(ND_LOAD_REMOTE_ON);
+    tick_command(ND_LOAD_REMOTE_OFF);
+    tick_command(ND_LOAD_REMOTE_ON);
+
+    nd_load_feedback_inputs_t in = base_feedback();
+    nd_load_feedback_t feedback;
+    in.active_power = 100;
+
+    load_control_feedback(state, &in, &feedback);
+    TEST_ASSERT_FALSE(feedback.misoperation);
+    TEST_ASSERT_TRUE(feedback.event_switch_on);
+
+    load_control_feedback(state, &in, &feedback);
+    TEST_ASSERT_FALSE(feedback.event_switch_on);
+}
+
+static void test_feedback_blinks_while_on_allow(void)
+{
+    load_control_set_command(state, ND_LOAD_REMOTE_ON_ALLOW);
+
+    nd_load_feedback_inputs_t in = base_feedback();
+    nd_load_feedback_t feedback;
+    in.active_power = 0;
+    in.relay_off_elapsed = 200;
+
+    in.second_parity = 1;
+    load_control_feedback(state, &in, &feedback);
+    TEST_ASSERT_TRUE(feedback.led_blink);
+    TEST_ASSERT_TRUE(feedback.led_on);
+
+    in.second_parity = 0;
+    load_control_feedback(state, &in, &feedback);
+    TEST_ASSERT_TRUE(feedback.led_blink);
+    TEST_ASSERT_FALSE(feedback.led_on);
+}
+
+static void test_feedback_blinks_twice_after_a_key_reconnect(void)
+{
+    tick_command(ND_LOAD_REMOTE_ON);
+    tick_command(ND_LOAD_REMOTE_OFF);
+    tick_command(ND_LOAD_REMOTE_PRETRIP_ALLOW);
+    inputs.key_pressed = 1;
+    tick();
+    tick();
+    tick();
+
+    nd_load_feedback_inputs_t in = base_feedback();
+    nd_load_feedback_t feedback;
+
+    load_control_feedback(state, &in, &feedback);
+    TEST_ASSERT_TRUE(feedback.led_blink);
+    load_control_feedback(state, &in, &feedback);
+    TEST_ASSERT_TRUE(feedback.led_blink);
+    load_control_feedback(state, &in, &feedback);
+    TEST_ASSERT_FALSE(feedback.led_blink);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -183,5 +302,11 @@ int main(void)
     RUN_TEST(test_pretrip_allow_becomes_on_allow_and_needs_the_key);
     RUN_TEST(test_repeat_actuates_without_reporting);
     RUN_TEST(test_alarm_timer_arms_current_limit_and_blocks_off);
+    RUN_TEST(test_feedback_full_display_lights_the_led);
+    RUN_TEST(test_feedback_flags_a_closed_relay_while_disconnected);
+    RUN_TEST(test_feedback_confirms_disconnect_and_reports_once);
+    RUN_TEST(test_feedback_confirms_connect_and_reports_once);
+    RUN_TEST(test_feedback_blinks_while_on_allow);
+    RUN_TEST(test_feedback_blinks_twice_after_a_key_reconnect);
     return UNITY_END();
 }

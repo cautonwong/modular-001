@@ -17,6 +17,8 @@ struct load_control_state {
     uint8_t switch_on_success;
     uint8_t switch_off_success;
     uint8_t relay_error_record;
+    uint8_t relay_true;
+    uint8_t misoperation;
 };
 
 static uint32_t magnitude(int32_t value)
@@ -203,4 +205,62 @@ void load_control_second(load_control_state_t *state, const nd_load_inputs_t *in
     }
 
     state->command = command;
+}
+
+void load_control_feedback(load_control_state_t *state,
+                           const nd_load_feedback_inputs_t *inputs,
+                           nd_load_feedback_t *feedback)
+{
+    memset(feedback, 0, sizeof(*feedback));
+
+    if (inputs->full_display) {
+        feedback->led_on = 1;
+        return;
+    }
+
+    if (inputs->active_power == 0
+        && inputs->relay_off_elapsed >= inputs->feedback_threshold) {
+        state->relay_true = 1;
+    }
+    if (inputs->active_power > 0
+        || inputs->relay_on_elapsed >= inputs->feedback_threshold) {
+        state->relay_true = 0;
+    }
+
+    if (((state->command & ND_LOAD_REMOTE_ON_ALLOW) && state->relay_true)
+        || ((state->command & ND_LOAD_REMOTE_ON) && (state->command & ND_LOAD_REMOTE_OFF))
+        || state->led_flash > 0) {
+        if (state->led_flash > 0) {
+            state->led_flash--;
+        }
+        feedback->led_blink = 1;
+        feedback->led_on = (uint8_t)(inputs->second_parity & 1);
+        return;
+    }
+
+    feedback->led_on = state->relay_true;
+
+    if (state->switch_on == 0) {
+        if (state->relay_true == 0 || inputs->current > (int32_t)inputs->min_current) {
+            state->misoperation = 1;
+        } else {
+            if (state->switch_off_success == 0x5A) {
+                feedback->event_switch_off = 1;
+                state->switch_off_success = 0;
+            }
+            state->misoperation = 0;
+        }
+    } else {
+        if (state->relay_true == 1) {
+            state->misoperation = 1;
+        } else {
+            if (state->switch_on_success == 0x5A) {
+                feedback->event_switch_on = 1;
+                state->switch_on_success = 0;
+            }
+            state->misoperation = 0;
+        }
+    }
+
+    feedback->misoperation = state->misoperation;
 }
