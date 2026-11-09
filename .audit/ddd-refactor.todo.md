@@ -81,6 +81,8 @@ Cross-cutting:
 - [x] Unit 7b: `domain/common/store` port, `infra/memory/byte_store`, legacy energy store adapter
 - [x] Unit 7c: move `fifo` to `infra/kernel`, drop debug globals, host tests;
       legacy header forwards to the new one until callers migrate
+- [x] Unit 7d: move `list` and `bitarithm` to `infra/kernel`; fix the broken
+      `list_for_each_safe` macro; legacy headers forward; host tests
 - [x] Unit 8a: `targets/host` composition root wiring metering, demand, load control,
       tariff, arena, byte store and parameter store + host integration tests
 - [ ] Unit 9: delete legacy surfaces (`applications.h`, `port.h` field macros, monolith)
