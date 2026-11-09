@@ -66,7 +66,7 @@ Cross-cutting:
 - [x] Ground: allocation, aggregates, globals
 - [x] Ground: domain packages (energy, demand, measurement, tariff, events)
 - [x] Scaffold: allocator port, Unity 2.6.0, CMake + ctest, layer check, ARM check
-- [x] Unit 2: `domain/metering/energy` book + legacy byte-compatible codec + tests
+- [x] Unit 2: `domain/metering` opaque aggregate + energy book + legacy codec + tests
 - [ ] Unit 3: `domain/tariff`
 - [ ] Unit 4: `domain/events` + `domain/freeze`
 - [ ] Unit 5: `domain/load_control`
