@@ -68,8 +68,9 @@ Cross-cutting:
 - [x] Scaffold: allocator port, Unity 2.6.0, CMake + ctest, layer check, ARM check
 - [x] Unit 2: `domain/metering` opaque aggregate + energy book + legacy codec + tests
 - [x] Unit 2b: `domain/metering/demand` sliding-window aggregate, no malloc, tests
-- [x] Unit 3a: `domain/common/calendar` date, time, BCD, legacy day math + tests
-- [ ] Unit 3b: `domain/tariff` fee tables, TOU, step, season, electricity price
+- [x] Unit 3a: `domain/common/calendar` date, time, BCD, weekday, legacy day math + tests
+- [x] Unit 3b: `domain/tariff` interval lookup, holiday, rest day, day table, fee + tests
+- [ ] Unit 3c: legacy tariff table parser, deferred until the parameter-ID port exists
 - [ ] Unit 4: `domain/events` + `domain/freeze`
 - [ ] Unit 5: `domain/load_control`
 - [ ] Unit 6: `application/adapters` protocol migration

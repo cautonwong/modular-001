@@ -104,6 +104,13 @@ static void test_rtc_bcd_uses_two_digit_year(void)
     TEST_ASSERT_EQUAL_UINT8(0x24, out[5]);
 }
 
+static void test_weekday_matches_the_legacy_formula(void)
+{
+    TEST_ASSERT_EQUAL_UINT8(1, nd_calendar_weekday(1, 1, 2001)); /* Monday */
+    TEST_ASSERT_EQUAL_UINT8(0, nd_calendar_weekday(7, 1, 2001)); /* Sunday */
+    TEST_ASSERT_EQUAL_UINT8(6, nd_calendar_weekday(1, 1, 2000)); /* Saturday */
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -115,5 +122,6 @@ int main(void)
     RUN_TEST(test_total_minutes_combines_day_hour_and_minute);
     RUN_TEST(test_rtc_hex_is_ssmmhhddmmyyyy);
     RUN_TEST(test_rtc_bcd_uses_two_digit_year);
+    RUN_TEST(test_weekday_matches_the_legacy_formula);
     return UNITY_END();
 }

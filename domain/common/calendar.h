@@ -27,6 +27,8 @@ uint32_t nd_calendar_total_day(uint8_t day, uint8_t month, uint16_t year);
 
 uint32_t nd_calendar_total_minutes(const nd_datetime_t *datetime);
 
+uint8_t nd_calendar_weekday(uint8_t day, uint8_t month, uint16_t year);
+
 void nd_calendar_to_rtc_hex(const nd_datetime_t *datetime, uint8_t out[ND_RTC_HEX_LEN]);
 
 void nd_calendar_to_rtc_bcd(const nd_datetime_t *datetime, uint8_t out[ND_RTC_BCD_LEN]);

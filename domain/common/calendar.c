@@ -61,6 +61,11 @@ uint32_t nd_calendar_total_minutes(const nd_datetime_t *datetime)
     return datetime->minute + (uint32_t)datetime->hour * 60 + days * 60 * 24;
 }
 
+uint8_t nd_calendar_weekday(uint8_t day, uint8_t month, uint16_t year)
+{
+    return (uint8_t)((nd_calendar_total_day(day, month, year) + 5) % 7);
+}
+
 void nd_calendar_to_rtc_hex(const nd_datetime_t *datetime, uint8_t out[ND_RTC_HEX_LEN])
 {
     out[0] = datetime->second;
