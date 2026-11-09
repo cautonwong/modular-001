@@ -19,7 +19,12 @@ includes=(
     -I "$root/infra/soc/cm0"
     -I "$root/infra/soc/v85xxp inc"
     -I "$root/infra/soc/v85xxp inc/Lib_Driver/inc"
-    -I "$root/domain/meterbase"
+    -I "$root/domain/metering/legacy"
+    -I "$root/domain/tariff/legacy"
+    -I "$root/domain/events/legacy"
+    -I "$root/domain/freeze/legacy"
+    -I "$root/domain/load_control/legacy"
+    -I "$root/domain/display/legacy"
     -I "$root/application/apps/app_resource_tool"
     -I "$root/application/apps/app_645_server"
     -I "$root/application/apps/app_698_server"
@@ -32,10 +37,10 @@ files=(
     infra/kernel/time_link.c
     infra/kernel/nidavellir.c
     infra/kernel/rtc.c
-    domain/meterbase/energy.c
-    domain/meterbase/touFee.c
-    domain/meterbase/relay_control.c
-    domain/meterbase/runstatus.c
+    domain/metering/legacy/energy.c
+    domain/tariff/legacy/touFee.c
+    domain/load_control/legacy/relay_control.c
+    domain/metering/legacy/runstatus.c
     application/apps/app_resource_tool/resource_tool.c
     application/apps/app_meter_base/app_meter_base_entry.c
     targets/stategrid_meter/stategrid_meter_entry.c

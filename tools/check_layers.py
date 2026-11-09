@@ -21,7 +21,16 @@ FORBIDDEN_ALLOC = re.compile(r"\b(malloc|calloc|realloc|free|strdup)\s*\(")
 INCLUDE = re.compile(r'^\s*#\s*include\s*[<"]([^>"]+)[>"]')
 
 # Not yet split into bounded contexts. Remove entries as each module migrates.
-STAGING = (os.path.join("domain", "meterbase"), os.path.join("application", "apps"))
+STAGING = (
+    os.path.join("domain", "metering", "legacy"),
+    os.path.join("domain", "tariff", "legacy"),
+    os.path.join("domain", "events", "legacy"),
+    os.path.join("domain", "freeze", "legacy"),
+    os.path.join("domain", "load_control", "legacy"),
+    os.path.join("domain", "display", "legacy"),
+    os.path.join("application", "apps"),
+    os.path.join("application", "meterbase"),
+)
 
 
 def layer_of(rel_path):

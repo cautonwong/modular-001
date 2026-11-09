@@ -6,7 +6,18 @@ set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 flags=(-std=c11 -mcpu=cortex-m0 -mthumb -ffreestanding -Wall -Wextra -Werror -I"$root")
-skipped=("$root/domain/meterbase" "$root/application/apps" "$root/application/upgrade" "$root/application/adapters")
+skipped=(
+    "$root/domain/metering/legacy"
+    "$root/domain/tariff/legacy"
+    "$root/domain/events/legacy"
+    "$root/domain/freeze/legacy"
+    "$root/domain/load_control/legacy"
+    "$root/domain/display/legacy"
+    "$root/application/apps"
+    "$root/application/meterbase"
+    "$root/application/upgrade"
+    "$root/application/adapters"
+)
 
 is_skipped() {
     local path="$1"
@@ -27,5 +38,5 @@ while IFS= read -r -d '' header; do
     arm-none-eabi-gcc "${flags[@]}" -x c -fsyntax-only "$header" || status=1
 done < <(find "$root/domain" "$root/application" -name '*.h' -print0 2>/dev/null)
 
-echo "skip: domain/meterbase and legacy application modules (nidavellir.h dependency)"
+echo "skip: legacy domain contexts and legacy application modules (nidavellir.h dependency)"
 exit "$status"

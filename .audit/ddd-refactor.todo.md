@@ -107,6 +107,28 @@ Cross-cutting:
       new-code tests and strict checks are narrowed to migrated contexts
 - [x] Unit 7k: move `applications` to `application/apps`; update solution, IAR
       and tool paths; baseline stays 117/117
+- [x] Unit 7l: move `packages/test` to `tests/legacy` and kernel build files to
+      `infra/kernel/build`; the `packages` directory is gone
+- [x] Unit 7m: split `domain/meterbase` into `domain/{metering,tariff,events,freeze,
+      load_control,display}/legacy`; dead app files to `application/meterbase/unbuilt`
+- [ ] Unit 4: `domain/events` + `domain/freeze` clean rewrites (legacy moved, not rewritten)
+
+## Unbuilt legacy files (present in the tree, not in the IAR project)
+- domain/metering/legacy: demand.c, "electrical measurement.c", iv/iv_data.c
+- domain/tariff/legacy: gs_month_bill.c, gs_step_bill.c
+- domain/display/legacy: display.c
+- application/meterbase/unbuilt: factory.c, parainit.c, tasklet.c, meterbase.h
+
+## Remaining
+- Split `domain/meterbase` into metering, tariff, events, freeze, display,
+  load_control and delete the staging entries from the check skip lists.
+- Migrate legacy callers onto the new aggregates, then delete forwarder headers
+  and `applications.h`.
+- Move `nidavellir/include` public headers into their layers.
+- Replace `application/apps` and `application/adapters` staging with real
+  adapters over the domain.
+- Link step for the ARM baseline (object compile is green, linking not yet set
+  up).
 - [x] Unit 8a: `targets/host` composition root wiring metering, demand, load control,
       tariff, arena, byte store and parameter store + host integration tests
 - [ ] Unit 9: delete legacy surfaces (`applications.h`, `port.h` field macros, monolith)
