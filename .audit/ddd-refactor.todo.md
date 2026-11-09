@@ -70,7 +70,7 @@ Cross-cutting:
 - [x] Unit 2b: `domain/metering/demand` sliding-window aggregate, no malloc, tests
 - [x] Unit 3a: `domain/common/calendar` date, time, BCD, weekday, legacy day math + tests
 - [x] Unit 3b: `domain/tariff` interval lookup, holiday, rest day, day table, fee + tests
-- [ ] Unit 3c: legacy tariff table parser, deferred until the parameter-ID port exists
+- [x] Unit 3c: `domain/common/parameter_store` port, infra RAM table, legacy tariff parser + tests
 - [ ] Unit 4: `domain/events` + `domain/freeze`
 - [ ] Unit 5: `domain/load_control`
 - [ ] Unit 6: `application/adapters` protocol migration

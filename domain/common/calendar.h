@@ -17,6 +17,8 @@ typedef struct {
 
 uint8_t nd_calendar_bcd(uint8_t value);
 
+uint8_t nd_calendar_from_bcd(uint8_t value);
+
 uint8_t nd_calendar_days_in_month(uint8_t month, uint16_t year);
 
 int nd_calendar_date_valid(const nd_datetime_t *datetime);

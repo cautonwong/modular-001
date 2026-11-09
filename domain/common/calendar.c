@@ -16,6 +16,11 @@ uint8_t nd_calendar_bcd(uint8_t value)
     return (uint8_t)((value / 10) * 0x10 + value % 10);
 }
 
+uint8_t nd_calendar_from_bcd(uint8_t value)
+{
+    return (uint8_t)(((value >> 4) * 10) + (value & 0x0F));
+}
+
 uint8_t nd_calendar_days_in_month(uint8_t month, uint16_t year)
 {
     if (month < 1 || month > 12) {

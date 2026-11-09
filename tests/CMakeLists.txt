@@ -24,6 +24,7 @@ target_include_directories(blade_domain PUBLIC ${BLADE_ROOT})
 add_library(blade_infra STATIC
     ${BLADE_ROOT}/infra/memory/arena.c
     ${BLADE_ROOT}/infra/memory/byte_store.c
+    ${BLADE_ROOT}/infra/memory/parameter_store.c
 )
 target_include_directories(blade_infra PUBLIC ${BLADE_ROOT})
 target_link_libraries(blade_infra PUBLIC blade_domain)
@@ -31,6 +32,7 @@ target_link_libraries(blade_infra PUBLIC blade_domain)
 add_library(blade_target_stategrid STATIC
     ${BLADE_ROOT}/targets/stategrid_meter/persistence/legacy_energy_codec.c
     ${BLADE_ROOT}/targets/stategrid_meter/persistence/legacy_energy_store.c
+    ${BLADE_ROOT}/targets/stategrid_meter/persistence/legacy_tariff_parser.c
 )
 target_link_libraries(blade_target_stategrid PUBLIC blade_domain)
 
