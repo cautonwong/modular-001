@@ -118,6 +118,7 @@ Cross-cutting:
       new modules; IAR project compiles 121 sources
 - [x] Unit 4d: emu error, relay error, RTC error, power abnormal and neutral current
       migrated too; `event_duration_pro` removed; IAR project compiles 123 sources
+- [x] Handoff document written at `docs/HANDOFF.md` for the next session
 
 ## Unbuilt legacy files (present in the tree, not in the IAR project)
 - domain/metering/legacy: demand.c, "electrical measurement.c", iv/iv_data.c
