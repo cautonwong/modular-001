@@ -182,7 +182,7 @@
     <OutDir>$(SolutionDir)\nidavellir\bin\</OutDir>
     <IntDir>$(SolutionDir)\build\$(ProjectName)_$(Configuration)_$(Platform)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
-    <IncludePath>$(ProjectDir)..\..\..\nidavellir\include\kernel\;$(ProjectDir)..\..\..\nidavellir\include\;$(ProjectDir)..\..\..\application\adapters\dl698\;$(ProjectDir)..\..\..\nidavellir\include\testutil;$(ProjectDir)..\..\..\applications\app_698_server\test_case\test_app_698_server_uniformity;$(ProjectDir)..\..\..\packages\test\u_test\;$(ProjectDir)..\..\..\nidavellir\include\mxml\;$(ProjectDir)..\..\..\targets\stategrid_meter\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\..\..\nidavellir\include\kernel\;$(ProjectDir)..\..\..\nidavellir\include\;$(ProjectDir)..\..\..\application\adapters\dl698\;$(ProjectDir)..\..\..\nidavellir\include\testutil;$(ProjectDir)..\..\..\application\apps\app_698_server\test_case\test_app_698_server_uniformity;$(ProjectDir)..\..\..\packages\test\u_test\;$(ProjectDir)..\..\..\nidavellir\include\mxml\;$(ProjectDir)..\..\..\targets\stategrid_meter\;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\..\..\nidavellir\bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

@@ -19,10 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\applications\app_698_server\app_698_server_entry.c" />
-    <ClCompile Include="..\..\..\applications\app_698_server\pl_serial.c" />
-    <ClCompile Include="..\..\..\applications\app_meter_base\app_meter_base_entry.c" />
-    <ClCompile Include="..\..\..\applications\app_resource_tool\resource_tool.c" />
+    <ClCompile Include="..\..\..\application\apps\app_698_server\app_698_server_entry.c" />
+    <ClCompile Include="..\..\..\application\apps\app_698_server\pl_serial.c" />
+    <ClCompile Include="..\..\..\application\apps\app_meter_base\app_meter_base_entry.c" />
+    <ClCompile Include="..\..\..\application\apps\app_resource_tool\resource_tool.c" />
     <ClCompile Include="..\..\..\application\adapters\dl698\fr_698.c" />
     <ClCompile Include="..\..\..\application\adapters\dl698\fr_698_action.c" />
     <ClCompile Include="..\..\..\application\adapters\dl698\fr_698_comm.c" />
@@ -161,7 +161,7 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(SolutionDir)\nidavellir\include\;$(SolutionDir)\nidavellir\include\kernel\;$(SolutionDir)\packages\test\cmocka\include\;$(SolutionDir)\targets\stategrid_meter\;$(SolutionDir)\application\adapters\dl698\;$(SolutionDir)applications\app_resource_tool\;$(SolutionDir)\domain\meterbase\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\nidavellir\include\;$(SolutionDir)\nidavellir\include\kernel\;$(SolutionDir)\packages\test\cmocka\include\;$(SolutionDir)\targets\stategrid_meter\;$(SolutionDir)\application\adapters\dl698\;$(SolutionDir)application\apps\app_resource_tool\;$(SolutionDir)\domain\meterbase\</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8</AdditionalOptions>
     </ClCompile>
     <Link>

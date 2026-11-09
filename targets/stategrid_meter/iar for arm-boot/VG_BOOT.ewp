@@ -358,7 +358,7 @@
                     <state>$PROJ_DIR$\..\..\..\packages\drivers\arch\cm0</state>
                     <state>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc</state>
                     <state>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\inc</state>
-                    <state>$PROJ_DIR$\..\..\..\applications\app_resource_tool</state>
+                    <state>$PROJ_DIR$\..\..\..\application\apps\app_resource_tool</state>
                     <state>$PROJ_DIR$\..\..\..\infra\boot</state>
                     <state>$PROJ_DIR$\..\..\..\infra\boot\xz</state>
                 </option>

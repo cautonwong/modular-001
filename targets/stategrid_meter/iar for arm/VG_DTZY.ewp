@@ -363,7 +363,7 @@
                     <state>$PROJ_DIR$\..\..\..\infra\soc\cm0</state>
                     <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc</state>
                     <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\inc</state>
-                    <state>$PROJ_DIR$\..\..\..\applications\app_resource_tool</state>
+                    <state>$PROJ_DIR$\..\..\..\application\apps\app_resource_tool</state>
                     <state>$PROJ_DIR$\..\..\..\domain\meterbase</state>
                 </option>
                 <option>
@@ -1426,7 +1426,7 @@
                     <state>$PROJ_DIR$\..\..\..\infra\soc\cm0</state>
                     <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc</state>
                     <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\inc</state>
-                    <state>$PROJ_DIR$\..\..\..\applications\app_resource_tool</state>
+                    <state>$PROJ_DIR$\..\..\..\application\apps\app_resource_tool</state>
                     <state>$PROJ_DIR$\..\..\..\domain\meterbase</state>
                 </option>
                 <option>
@@ -2195,7 +2195,7 @@
         <group>
             <name>dl645</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\applications\app_645_server\app_645_server_entry.c</name>
+                <name>$PROJ_DIR$\..\..\..\application\apps\app_645_server\app_645_server_entry.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\application\adapters\dl645\fr_645.c</name>
@@ -2207,7 +2207,7 @@
         <group>
             <name>dl698</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\applications\app_698_server\app_698_server_entry.c</name>
+                <name>$PROJ_DIR$\..\..\..\application\apps\app_698_server\app_698_server_entry.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698.c</name>
@@ -2297,7 +2297,7 @@
                 <name>$PROJ_DIR$\..\..\..\infra\kernel\pipeline.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\applications\app_resource_tool\resource_tool.c</name>
+                <name>$PROJ_DIR$\..\..\..\application\apps\app_resource_tool\resource_tool.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\infra\kernel\rtc.c</name>
@@ -2462,7 +2462,7 @@
         <group>
             <name>meterbase</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\applications\app_meter_base\app_meter_base_entry.c</name>
+                <name>$PROJ_DIR$\..\..\..\application\apps\app_meter_base\app_meter_base_entry.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\meterbase\electrical_measurement.c</name>
@@ -2533,7 +2533,7 @@
         <name>$PROJ_DIR$\..\..\..\infra\soc\cpu_surport.h</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\..\..\..\applications\display.c</name>
+        <name>$PROJ_DIR$\..\..\..\application\apps\display.c</name>
     </file>
     <file>
         <name>$PROJ_DIR$\..\driver_entry.c</name>

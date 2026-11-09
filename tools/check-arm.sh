@@ -6,7 +6,7 @@ set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 flags=(-std=c11 -mcpu=cortex-m0 -mthumb -ffreestanding -Wall -Wextra -Werror -I"$root")
-skipped=("$root/domain/meterbase" "$root/application/upgrade" "$root/application/adapters")
+skipped=("$root/domain/meterbase" "$root/application/apps" "$root/application/upgrade" "$root/application/adapters")
 
 is_skipped() {
     local path="$1"

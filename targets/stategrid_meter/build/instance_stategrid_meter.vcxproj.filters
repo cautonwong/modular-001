@@ -47,10 +47,10 @@
     <ClCompile Include="..\..\..\packages\kernel\utils.c">
       <Filter>kernel</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\applications\app_698_server\pl_serial.c" />
-    <ClCompile Include="..\..\..\applications\app_resource_tool\resource_tool.c" />
-    <ClCompile Include="..\..\..\applications\app_698_server\app_698_server_entry.c" />
-    <ClCompile Include="..\..\..\applications\app_meter_base\app_meter_base_entry.c" />
+    <ClCompile Include="..\..\..\application\apps\app_698_server\pl_serial.c" />
+    <ClCompile Include="..\..\..\application\apps\app_resource_tool\resource_tool.c" />
+    <ClCompile Include="..\..\..\application\apps\app_698_server\app_698_server_entry.c" />
+    <ClCompile Include="..\..\..\application\apps\app_meter_base\app_meter_base_entry.c" />
     <ClCompile Include="..\..\..\domain\meterbase\gs_backlight_ctrl.c">
       <Filter>app_meter_base</Filter>
     </ClCompile>

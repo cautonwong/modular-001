@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31321.278
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "app_meterbase_multi_threads", "applications\app_meter_base\build\app_meterbase_baremetal.vcxproj", "{47CEA6A3-1AC3-4270-94DA-1FE4555AE887}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "app_meterbase_multi_threads", "application\apps\app_meter_base\build\app_meterbase_baremetal.vcxproj", "{47CEA6A3-1AC3-4270-94DA-1FE4555AE887}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "app_meterbase_baremetal", "applications\app_meter_base\build\app_meterbase_muti-threads.vcxproj", "{4EC8332E-F221-4E84-9A28-0EB84F7E00FD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "app_meterbase_baremetal", "application\apps\app_meter_base\build\app_meterbase_muti-threads.vcxproj", "{4EC8332E-F221-4E84-9A28-0EB84F7E00FD}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "app_dlms_server", "applications\app_dlms_server\build\app_dlms_server.vcxproj", "{158D8D93-5D08-416B-BA09-E33F237E174A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "app_dlms_server", "application\apps\app_dlms_server\build\app_dlms_server.vcxproj", "{158D8D93-5D08-416B-BA09-E33F237E174A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "app_dlms_server _multi_threads", "applications\app_dlms_server\build\app_dlms_server _multi_threads.vcxproj", "{8E09B0A8-417F-4DEA-96A7-7E9551E7FE62}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "app_dlms_server _multi_threads", "application\apps\app_dlms_server\build\app_dlms_server _multi_threads.vcxproj", "{8E09B0A8-417F-4DEA-96A7-7E9551E7FE62}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

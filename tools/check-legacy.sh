@@ -20,10 +20,10 @@ includes=(
     -I "$root/infra/soc/v85xxp inc"
     -I "$root/infra/soc/v85xxp inc/Lib_Driver/inc"
     -I "$root/domain/meterbase"
-    -I "$root/applications/app_resource_tool"
-    -I "$root/applications/app_645_server"
-    -I "$root/applications/app_698_server"
-    -I "$root/applications/app_meter_base"
+    -I "$root/application/apps/app_resource_tool"
+    -I "$root/application/apps/app_645_server"
+    -I "$root/application/apps/app_698_server"
+    -I "$root/application/apps/app_meter_base"
 )
 flags=(-std=gnu11 -mcpu=cortex-m0 -mthumb -ffreestanding -w "${includes[@]}")
 
@@ -32,12 +32,12 @@ files=(
     infra/kernel/time_link.c
     infra/kernel/nidavellir.c
     infra/kernel/rtc.c
-    packages/meterbase/energy.c
-    packages/meterbase/touFee.c
-    packages/meterbase/relay_control.c
-    packages/meterbase/runstatus.c
-    applications/app_resource_tool/resource_tool.c
-    applications/app_meter_base/app_meter_base_entry.c
+    domain/meterbase/energy.c
+    domain/meterbase/touFee.c
+    domain/meterbase/relay_control.c
+    domain/meterbase/runstatus.c
+    application/apps/app_resource_tool/resource_tool.c
+    application/apps/app_meter_base/app_meter_base_entry.c
     targets/stategrid_meter/stategrid_meter_entry.c
 )
 

@@ -84,7 +84,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>applications\app_msta;$(IncludePath)</IncludePath>
+    <IncludePath>application\apps\app_msta;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -153,20 +153,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\applications\pl_bt_rx_from_msta.c" />
-    <ClCompile Include="..\..\..\applications\pl_bt_tx_to_msta.c" />
-    <ClCompile Include="..\..\..\applications\pl_meter_rx_from_msta.c" />
-    <ClCompile Include="..\..\..\applications\pl_meter_tx_to_msta.c" />
-    <ClCompile Include="..\..\..\applications\pl_msta.c" />
-    <ClCompile Include="..\..\..\applications\pl_msta_rx_from_bt.c" />
-    <ClCompile Include="..\..\..\applications\pl_msta_rx_from_meter.c" />
-    <ClCompile Include="..\..\..\applications\pl_msta_rx_from_sta.c" />
-    <ClCompile Include="..\..\..\applications\pl_msta_tx_to_bt.c" />
-    <ClCompile Include="..\..\..\applications\pl_msta_tx_to_meter.c" />
-    <ClCompile Include="..\..\..\applications\pl_msta_tx_to_sta.c" />
-    <ClCompile Include="..\..\..\applications\pl_serial.c" />
-    <ClCompile Include="..\..\..\applications\pl_sta_rx_from_msta.c" />
-    <ClCompile Include="..\..\..\applications\pl_sta_tx_to_msta.c" />
+    <ClCompile Include="..\..\..\application\apps\pl_bt_rx_from_msta.c" />
+    <ClCompile Include="..\..\..\application\apps\pl_bt_tx_to_msta.c" />
+    <ClCompile Include="..\..\..\application\apps\pl_meter_rx_from_msta.c" />
+    <ClCompile Include="..\..\..\application\apps\pl_meter_tx_to_msta.c" />
+    <ClCompile Include="..\..\..\application\apps\pl_msta.c" />
+    <ClCompile Include="..\..\..\application\apps\pl_msta_rx_from_bt.c" />
+    <ClCompile Include="..\..\..\application\apps\pl_msta_rx_from_meter.c" />
+    <ClCompile Include="..\..\..\application\apps\pl_msta_rx_from_sta.c" />
+    <ClCompile Include="..\..\..\application\apps\pl_msta_tx_to_bt.c" />
+    <ClCompile Include="..\..\..\application\apps\pl_msta_tx_to_meter.c" />
+    <ClCompile Include="..\..\..\application\apps\pl_msta_tx_to_sta.c" />
+    <ClCompile Include="..\..\..\application\apps\pl_serial.c" />
+    <ClCompile Include="..\..\..\application\apps\pl_sta_rx_from_msta.c" />
+    <ClCompile Include="..\..\..\application\apps\pl_sta_tx_to_msta.c" />
     <ClCompile Include="..\..\..\application\adapters\dl645\fr_645.c" />
     <ClCompile Include="..\..\..\application\adapters\dl698\fr_698.c" />
     <ClCompile Include="..\..\..\application\adapters\dlms\pkg_dlms.c" />
