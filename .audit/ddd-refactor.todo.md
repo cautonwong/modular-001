@@ -62,6 +62,16 @@ Cross-cutting:
 - One allocation path: injected allocator, zeroed memory, dealloc with size.
 - No global mutable state in domain or application.
 
+## Build baseline
+- Legacy ARM GCC compile check is green for the core subset via
+  `tools/check-legacy.sh` (11 files).
+- Fixes that unblocked it: newlib `pid_t` guard, GCC `__no_init` attribute,
+  vendored CMSIS 5.1.0 `cmsis_gcc.h`.
+- `packages/kernel/resource.c` is excluded: its enums are declared after the
+  structs that use them and cannot compile upstream.
+- Remaining legacy modules with missing headers (`lego/*`, `tm.h`, `irq.h`,
+  `debug.h`) are not yet in the baseline.
+
 ## Progress
 - [x] Ground: infra / kernel / drivers
 - [x] Ground: applications + instances (composition root)
