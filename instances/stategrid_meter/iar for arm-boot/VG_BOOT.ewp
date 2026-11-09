@@ -359,8 +359,8 @@
                     <state>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc</state>
                     <state>$PROJ_DIR$\..\..\..\packages\drivers\arch\v85xxp inc\Lib_Driver\inc</state>
                     <state>$PROJ_DIR$\..\..\..\applications\app_resource_tool</state>
-                    <state>$PROJ_DIR$\..\..\..\packages\boot</state>
-                    <state>$PROJ_DIR$\..\..\..\packages\boot\xz</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\boot</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\boot\xz</state>
                 </option>
                 <option>
                     <name>CCStdIncCheck</name>
@@ -2179,32 +2179,32 @@
         <group>
             <name>dl698</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\boot\dlt698.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\boot\dlt698.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\boot\dlt698.h</name>
+                <name>$PROJ_DIR$\..\..\..\infra\boot\dlt698.h</name>
             </file>
         </group>
         <group>
             <name>drivers</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\boot\uart_driver.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\boot\uart_driver.c</name>
             </file>
         </group>
         <group>
             <name>kernel</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\boot\fifo.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\boot\fifo.c</name>
             </file>
         </group>
         <group>
             <name>libupdate</name>
         </group>
         <file>
-            <name>$PROJ_DIR$\..\..\..\packages\boot\boot.c</name>
+            <name>$PROJ_DIR$\..\..\..\infra\boot\boot.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\packages\boot\boot.h</name>
+            <name>$PROJ_DIR$\..\..\..\infra\boot\boot.h</name>
         </file>
     </group>
 </project>

@@ -32,7 +32,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "app_meterbase_multi_threads
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_app_meterbase", "applications\app_meter_base\build\app_meterbase_muti-threads.vcxproj", "{4EC8332E-F221-4E84-9A28-0EB84F7E00FD}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pkg_crypto", "packages\crypto\build\pkg_crypto.vcxproj", "{C0FFE164-70A5-4809-A804-6EFF63C9627A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pkg_crypto", "infra\security\crypto\build\pkg_crypto.vcxproj", "{C0FFE164-70A5-4809-A804-6EFF63C9627A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "instance_stategrid_meter", "instances\stategrid_meter\build\instance_stategrid_meter.vcxproj", "{521DB9A0-9573-45A8-BFC2-D957D10B8522}"
 EndProject

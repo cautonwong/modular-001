@@ -731,7 +731,7 @@
                 </option>
                 <option>
                     <name>IlinkRawBinaryFile</name>
-                    <state>$PROJ_DIR$\..\..\..\packages\boot\Project\Debug\Exe\boot.bin</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\boot\Project\Debug\Exe\boot.bin</state>
                 </option>
                 <option>
                     <name>IlinkRawBinarySymbol</name>
@@ -2273,7 +2273,7 @@
         <group>
             <name>esam</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\esam\esam_pro.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\security\esam\esam_pro.c</name>
             </file>
         </group>
         <group>
@@ -2522,7 +2522,7 @@
         <group>
             <name>upgrade</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\upgrade\upgrade.c</name>
+                <name>$PROJ_DIR$\..\..\..\application\upgrade\upgrade.c</name>
             </file>
         </group>
     </group>
