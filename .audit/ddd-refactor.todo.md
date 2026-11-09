@@ -63,14 +63,15 @@ Cross-cutting:
 - No global mutable state in domain or application.
 
 ## Build baseline
-- Legacy ARM GCC compile check is green for the core subset via
-  `tools/check-legacy.sh` (11 files).
+- `tools/legacy_baseline.py` parses the IAR `.ewp`, compiles all 117 sources with
+  arm-none-eabi-gcc, and reports failures grouped by first error.
+- Result: sources=117 ok=117 failed=0 missing_files=0.
 - Fixes that unblocked it: newlib `pid_t` guard, GCC `__no_init` attribute,
-  vendored CMSIS 5.1.0 `cmsis_gcc.h`.
-- `packages/kernel/resource.c` is excluded: its enums are declared after the
-  structs that use them and cannot compile upstream.
-- Remaining legacy modules with missing headers (`lego/*`, `tm.h`, `irq.h`,
-  `debug.h`) are not yet in the baseline.
+  `_STEPPOINT` no-op, vendored CMSIS 5.1.0 `cmsis_gcc.h`, IAR source list
+  updated for the moved `infra/kernel` files.
+- `packages/kernel/resource.c` is not in the IAR project, so it stays out of the
+  baseline; its enums are declared after use upstream.
+- `tools/check-legacy.sh` remains a smaller, faster subset check.
 
 ## Progress
 - [x] Ground: infra / kernel / drivers

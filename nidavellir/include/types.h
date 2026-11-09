@@ -18,8 +18,14 @@ typedef uint32_t object_id_t;
 typedef uint32_t context_id_t;
 typedef uint32_t worker_mask_t;
 typedef uint32_t work_flags_t;
+#ifndef _STEPPOINT
+#define _STEPPOINT ((void)0)
+#endif
+
+#ifndef _PID_T_DECLARED
 typedef uint8_t pid_t;
 #define _PID_T_DECLARED /* keep newlib sys/types.h from redefining pid_t */
+#endif
 typedef uint8_t data_type_t;
 typedef uint8_t tasklet_id_t;
 typedef uint32_t pipe_id_t;

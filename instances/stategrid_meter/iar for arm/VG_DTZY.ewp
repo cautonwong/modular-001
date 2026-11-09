@@ -2275,13 +2275,13 @@
         <group>
             <name>kernel</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\kernel\bitarithm.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\kernel\bitarithm.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\kernel\fifo.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\kernel\fifo.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\kernel\list.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\kernel\list.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\mlog.c</name>
