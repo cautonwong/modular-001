@@ -36,10 +36,15 @@ add_library(blade_target_stategrid STATIC
 )
 target_link_libraries(blade_target_stategrid PUBLIC blade_domain)
 
+add_library(blade_target_host STATIC
+    ${BLADE_ROOT}/targets/host/composition.c
+)
+target_link_libraries(blade_target_host PUBLIC blade_infra blade_target_stategrid)
+
 file(GLOB TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/unit/*.c")
 foreach(src ${TEST_SOURCES})
     get_filename_component(name ${src} NAME_WE)
     add_executable(${name} ${src})
-    target_link_libraries(${name} PRIVATE unity test_support blade_infra blade_target_stategrid)
+    target_link_libraries(${name} PRIVATE unity test_support blade_target_host)
     add_test(NAME ${name} COMMAND ${name})
 endforeach()

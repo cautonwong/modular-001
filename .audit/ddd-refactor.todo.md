@@ -77,7 +77,8 @@ Cross-cutting:
 - [ ] Unit 6: `application/adapters` protocol migration
 - [x] Unit 7a: `infra/memory/arena` implements the allocator port + host composition test
 - [x] Unit 7b: `domain/common/store` port, `infra/memory/byte_store`, legacy energy store adapter
-- [ ] Unit 8: `targets/stategrid_meter` composition root
+- [x] Unit 8a: `targets/host` composition root wiring metering, demand, load control,
+      tariff, arena, byte store and parameter store + host integration tests
 - [ ] Unit 9: delete legacy surfaces (`applications.h`, `port.h` field macros, monolith)
 
 ## Domain ground findings
