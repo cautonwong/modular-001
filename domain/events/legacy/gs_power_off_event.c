@@ -1,103 +1,65 @@
 #include "nidavellir.h"
 #include "applications.h"
 #include "gs_record.h"
+#include "domain/events/power_off.h"
 
-#define PHASE_NUM 1   //单相或三相 支持1或3 
+#define PHASE_NUM 1   //单相或三相 支持1或3
 
-
-
-// 上电运行期间 每秒调用 
+// 上电运行期间 每秒调用
 // 掉电事件 判断:  返回1:记录发生                0:不记录        -1:记录结束
 int PowerOff_event_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    //uint8_t payload[100];
-    int result = 0;
-    uint8_t state = false;
-
-    uint8_t duration_para = 4;//ctrl_block->PowerOffS_duration_para;
-    uint8_t* duration = &ctrl_block->PowerOffS_duration;
-    uint32_t* accumulate_time = &ctrl_block->PowerOffS_acc_time;
     uint16_t RecordId = PowerOffS;
-    uint8_t i;
 
-    uint32_t* U[PHASE_NUM] =
-    {
-       &ctrl_block->voltage_ac,
-#if (PHASE_NUM == 3 ) 
-       &ctrl_block->voltage_ac,
-       &ctrl_block->voltage_ac
-#endif       
+    uint32_t voltages[PHASE_NUM] = {ctrl_block->voltage_ac};
+    nd_power_off_rule_t rule = {.debounce_seconds = 4};
+    nd_power_off_state_t state = {
+        .debounce = {
+            .duration = ctrl_block->PowerOffS_duration,
+            .active = (uint8_t)(get_activeflag(instance, RecordId) ? 1 : 0),
+        },
+        .accumulated_seconds = ctrl_block->PowerOffS_acc_time,
+        .accumulated_low_power_seconds = 0,
     };
-    uint32_t* val1;
 
+    nd_event_transition_t result = nd_power_off_step(&state, &rule, voltages, PHASE_NUM,
+                                                     ctrl_block->volt_60, 0);
 
-    for (i = 0; i < PHASE_NUM; i++)
-    {
-        val1 = U[i];
-
-        // 所有相均低于60%un
-        if ((*val1) >= (ctrl_block->volt_60))
-        {
-            break;
-        }
-
+    ctrl_block->PowerOffS_duration = state.debounce.duration;
+    ctrl_block->PowerOffS_acc_time = state.accumulated_seconds;
+    if (result == ND_EVENT_STARTED) {
+        set_activeflag(instance, RecordId);
+    } else if (result == ND_EVENT_ENDED) {
+        clr_activeflag(instance, RecordId);
     }
 
-    if (i == PHASE_NUM)
-    {
-        state = true;
+    if (result != ND_EVENT_NONE) {
+        send_event_mesg_pro(instance, task, RecordId, NULL, (int)result);
     }
-
-    result = event_duration_pro(duration_para, duration, state, instance, RecordId);
-
-    if (result != 0)
-    {
-        send_event_mesg_pro(instance, task,  RecordId, NULL, result);
-    }
-
-    if (true == get_activeflag(instance, RecordId))
-    {
-        (*accumulate_time)++;//  累计时间累加 
-    }
-
-    return result;
+    return (int)result;
 }
 
-
-//  下电状态 累计时间累加 
-//  下电状态 每秒调用 
+//  下电状态 累计时间累加
+//  下电状态 每秒调用
 void PowerOff_LowPower_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    //uint32_t* accumulate_time = &ctrl_block->PowerOffS_acc_time;
     uint32_t* accumulate_time = &ctrl_block->PowerOffS_time_low_power_cnt;
     uint16_t RecordId = PowerOffS;
     struct message_t mesg_tmp;
-    uint32_t s_index;
 
-    if ( instance->ac_power_off_sec_cnt == 1 )
-    {
-        if (false == get_activeflag(instance, RecordId)) //|| ((true == get_recordflag(instance, RecordId))  )
-        {
-            set_activeflag(instance, RecordId); //停电下同时刷新e2p
+    if (instance->ac_power_off_sec_cnt == 1) {
+        if (false == get_activeflag(instance, RecordId)) {
+            set_activeflag(instance, RecordId);
+            ctrl_block->pd_active_flag_update = 0x5A;
 
-            ctrl_block->pd_active_flag_update = 0x5A;   //停电下 保存标志
-            
-            //s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + 
-            //            (offsetof(struct mbase_control_block_t, active_flag[0]) -  offsetof(struct mbase_control_block_t, persistent_section_start)) );
-            //nd_set_offset(instance, s_index, (uint8_t*)&ctrl_block->active_flag[0], sizeof(ctrl_block->active_flag));               
-        
             mesg_tmp.id = RecordId;
             recv_record_process(instance, task, &mesg_tmp, NULL);
-            //send_event_mesg_pro(instance, task,  RecordId, NULL, 1);
         }
     }
 
-    if (true == get_activeflag(instance, RecordId))
-    {
-        (*accumulate_time)++;//  累计时间累加 
-        
+    if (true == get_activeflag(instance, RecordId)) {
+        (*accumulate_time)++;
     }
 }
-

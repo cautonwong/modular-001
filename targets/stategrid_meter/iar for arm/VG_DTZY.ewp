@@ -2487,6 +2487,18 @@
                 <name>$PROJ_DIR$\..\..\..\domain\events\legacy\gs_cover_event.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\..\domain\events\duration.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\events\over_current.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\events\cover_open.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\events\power_off.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\domain\events\legacy\gs_emu_err_event.c</name>
             </file>
             <file>

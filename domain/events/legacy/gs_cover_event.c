@@ -2,115 +2,88 @@
 #include "applications.h"
 #include "gs_record.h"
 #include "cpu_surport.h" //只包含事件状态宏
+#include "domain/events/cover_open.h"
 
 #define COVEROPEN_DELAY_PARA 2 //开盖延时sec-1
 
-// 上电运行期间 每秒调用 
+// 上电运行期间 每秒调用
 // 开盖事件 判断:  返回1:记录发生                0:不记录        -1:记录结束
 int CoverOpen_event_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
-    
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    //uint8_t payload[100];
-    int result = 0;
+    uint16_t RecordId = CoverOpenS;
 
-    uint8_t duration_para       =  COVEROPEN_DELAY_PARA;//ctrl_block->CoverOpenS_duration_para;
-    uint8_t *duration           = &ctrl_block->CoverOpenS_duration;
-    uint32_t* accumulate_time   = &ctrl_block->CoverOpenS_acc_time;
-    uint8_t state               /*=  ctrl_block->CoverOpenS_status*/;
+    nd_cover_open_rule_t rule = {.debounce_seconds = COVEROPEN_DELAY_PARA};
+    nd_cover_open_state_t state = {
+        .debounce = {
+            .duration = ctrl_block->CoverOpenS_duration,
+            .active = (uint8_t)(get_activeflag(instance, RecordId) ? 1 : 0),
+        },
+        .accumulated_seconds = ctrl_block->CoverOpenS_acc_time,
+        .accumulated_low_power_seconds = 0,
+    };
 
-    uint16_t RecordId           = CoverOpenS;
+    uint8_t cover_open = (ctrl_block->CoverOpenS_status == EVENT_SET);
+    nd_event_transition_t result = nd_cover_open_step(&state, &rule, cover_open, 0);
 
-    if (ctrl_block->CoverOpenS_status == EVENT_SET)
-    {
-        state = 1;
-    }
-    else
-    {
-        state = 0;
-    }
-    
-    result = event_duration_pro(duration_para, duration, state, instance, RecordId);
-
-    if (result != 0)
-    {
-        send_event_mesg_pro(instance, task, RecordId, NULL, result);
+    ctrl_block->CoverOpenS_duration = state.debounce.duration;
+    ctrl_block->CoverOpenS_acc_time = state.accumulated_seconds;
+    if (result == ND_EVENT_STARTED) {
+        set_activeflag(instance, RecordId);
+    } else if (result == ND_EVENT_ENDED) {
+        clr_activeflag(instance, RecordId);
     }
 
-    if (true == get_activeflag(instance, RecordId))
-    {
-        (*accumulate_time)++;/* 累计时间累加 */
+    if (result != ND_EVENT_NONE) {
+        send_event_mesg_pro(instance, task, RecordId, NULL, (int)result);
     }
-
-    return result;
+    return (int)result;
 }
 
-
-
-
-
-// 下电运行期间 每秒调用 
+// 下电运行期间 每秒调用
 // 开盖事件
 int CoverOpen_event_LowPower_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
-    
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    //uint8_t payload[100];
-    int result = 0;
-
-    uint8_t duration_para       =  COVEROPEN_DELAY_PARA;//ctrl_block->CoverOpenS_duration_para;
-    uint8_t *duration           = &ctrl_block->CoverOpenS_duration;
-    uint32_t* accumulate_time   = &ctrl_block->CoverOpenS_time_low_power_cnt;//&ctrl_block->CoverOpenS_acc_time;
-    uint8_t state               /*=  ctrl_block->CoverOpenS_status*/;
-
-    uint16_t RecordId           = CoverOpenS;
+    uint16_t RecordId = CoverOpenS;
     struct message_t mesg_tmp;
+    int result = 0;
 
     if (ctrl_block->pd_cover_EndRecord_flag != 0x5A) //检测周期未完成
     {
-        if (ctrl_block->CoverOpenS_status == EVENT_SET)
-        {
-            state = 1;
-        }
-        else
-        {
-            state = 0;
-        }
-        
-        result = event_duration_pro(duration_para, duration, state, instance, RecordId);
+        nd_cover_open_rule_t rule = {.debounce_seconds = COVEROPEN_DELAY_PARA};
+        nd_cover_open_state_t state = {
+            .debounce = {
+                .duration = ctrl_block->CoverOpenS_duration,
+                .active = (uint8_t)(get_activeflag(instance, RecordId) ? 1 : 0),
+            },
+            .accumulated_seconds = 0,
+            .accumulated_low_power_seconds = ctrl_block->CoverOpenS_time_low_power_cnt,
+        };
 
-        if (result != 0)
-        {
-            //send_event_mesg_pro(instance, task, RecordId, NULL, result);
-            if (result == 1) //start
-            {
+        uint8_t cover_open = (ctrl_block->CoverOpenS_status == EVENT_SET);
+        nd_event_transition_t transition = nd_cover_open_step(&state, &rule, cover_open, 1);
+
+        ctrl_block->CoverOpenS_duration = state.debounce.duration;
+        ctrl_block->CoverOpenS_time_low_power_cnt = state.accumulated_low_power_seconds;
+        if (transition == ND_EVENT_STARTED) {
+            set_activeflag(instance, RecordId);
+        } else if (transition == ND_EVENT_ENDED) {
+            clr_activeflag(instance, RecordId);
+        }
+
+        result = (int)transition;
+        if (transition != ND_EVENT_NONE) {
+            if (transition == ND_EVENT_STARTED) {
                 mesg_tmp.id = RecordId;
-            }
-            else //end
-            {
+            } else {
                 mesg_tmp.id = RecordId + 1;
                 ctrl_block->pd_cover_EndRecord_flag = 0x5A;
             }
-
-            ctrl_block->pd_active_flag_update = 0x5A;   //停电下 保存标志
-            
-            //s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + 
-            //            (offsetof(struct mbase_control_block_t, active_flag[0]) -  offsetof(struct mbase_control_block_t, persistent_section_start)) );
-            //nd_set_offset(instance, s_index, (uint8_t*)&ctrl_block->active_flag[0], sizeof(ctrl_block->active_flag));               
+            ctrl_block->pd_active_flag_update = 0x5A;
             recv_record_process(instance, task, &mesg_tmp, NULL);
         }
-
-    }
-
-
-
-    if (true == get_activeflag(instance, RecordId))
-    {
-        (*accumulate_time)++;/* 累计时间累加 */
     }
 
     return result;
 }
-
-
-

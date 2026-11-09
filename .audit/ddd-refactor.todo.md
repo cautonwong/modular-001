@@ -114,6 +114,8 @@ Cross-cutting:
 - [ ] Unit 4: `domain/events` + `domain/freeze` clean rewrites (legacy moved, not rewritten)
 - [x] Unit 4a: `domain/events/duration` debounce state machine + 6 tests
 - [x] Unit 4b: `domain/events/{over_current,cover_open,power_off}` + 12 tests
+- [x] Unit 4c: legacy over-current, cover-open and power-off call sites now use the
+      new modules; IAR project compiles 121 sources
 
 ## Unbuilt legacy files (present in the tree, not in the IAR project)
 - domain/metering/legacy: demand.c, "electrical measurement.c", iv/iv_data.c
