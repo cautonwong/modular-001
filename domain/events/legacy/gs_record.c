@@ -273,47 +273,9 @@ void clr_recordflag(struct instance_t* instance, uint16_t RecordId)
 }
 
 
-int event_duration_pro(uint8_t duration_para, uint8_t* duration, uint8_t state, struct instance_t* instance, uint16_t RecordId)
-{
-    uint8_t activeflag = get_activeflag(instance, RecordId);
 
-    if (state) // 发生
-    {
-        if (true == activeflag)
-        {
-            *duration = duration_para;
-        }
 
-        if (*duration < duration_para)
-        {
-            (*duration)++;
-        }
-        else if (false == activeflag)
-        {
-            set_activeflag(instance, RecordId);
-            return 1; // 记录发生
-        }
-    }
-    else // 结束
-    {
-        if (false == activeflag)
-        {
-            *duration = 0;
-        }
 
-        if (*duration > 0)
-        {
-            (*duration)--;
-        }
-        else if (true == activeflag)
-        {
-            clr_activeflag(instance, RecordId);
-            return -1; // 记录结束
-        }
-    }
-
-    return 0; // 不记录
-}
 
 
 

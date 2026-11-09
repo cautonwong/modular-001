@@ -2499,6 +2499,12 @@
                 <name>$PROJ_DIR$\..\..\..\domain\events\power_off.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\..\domain\events\generic.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\events\neutral_current.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\domain\events\legacy\gs_emu_err_event.c</name>
             </file>
             <file>

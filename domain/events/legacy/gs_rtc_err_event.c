@@ -1,6 +1,7 @@
 #include "nidavellir.h"
 #include "applications.h"
 #include "gs_record.h"
+#include "domain/events/duration.h"
 
 
 //22年8月8日，8时8分8秒
@@ -155,29 +156,25 @@ void updata_powerdown_time(struct instance_t* instance)
 int RTCErr_event_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-//    uint8_t payload[100];
-    int8_t result = 0;
+    uint16_t RecordId = RTCErrS;
 
-    uint8_t duration_para       = 0; //ctrl_block->RTCErrS_duration_para;
-    uint8_t *duration           = &ctrl_block->RTCErrS_duration;
-    //uint32_t* accumulate_time   = &ctrl_block->RTCErrS_acc_time;
-    uint8_t state               =  ctrl_block->RTCErrS_status;
+    nd_event_duration_t state = {
+        .duration = ctrl_block->RTCErrS_duration,
+        .active = (uint8_t)(get_activeflag(instance, RecordId) ? 1 : 0),
+    };
 
-    uint16_t RecordId           = RTCErrS;
+    nd_event_transition_t result =
+        nd_event_duration_step(&state, 0, ctrl_block->RTCErrS_status);
 
-    result = event_duration_pro(duration_para, duration, state, instance, RecordId);
-
-    if (result != 0)
-    {
-        send_event_mesg_pro(instance, task,  RecordId, NULL, result);
+    ctrl_block->RTCErrS_duration = state.duration;
+    if (result == ND_EVENT_STARTED) {
+        set_activeflag(instance, RecordId);
+    } else if (result == ND_EVENT_ENDED) {
+        clr_activeflag(instance, RecordId);
     }
 
-#if 0
-    if (true == get_activeflag(instance, RecordId))
-    {
-        (*accumulate_time)++;// 累计时间累加 
+    if (result != ND_EVENT_NONE) {
+        send_event_mesg_pro(instance, task, RecordId, NULL, (int)result);
     }
-#endif
-
-    return result;
+    return (int)result;
 }
