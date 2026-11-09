@@ -72,7 +72,7 @@ Cross-cutting:
 - [ ] Unit 4: `domain/events` + `domain/freeze`
 - [ ] Unit 5: `domain/load_control`
 - [ ] Unit 6: `application/adapters` protocol migration
-- [ ] Unit 7: `infra` reorganisation + resource provider
+- [x] Unit 7a: `infra/memory/arena` implements the allocator port + host composition test
 - [ ] Unit 8: `targets/stategrid_meter` composition root
 - [ ] Unit 9: delete legacy surfaces (`applications.h`, `port.h` field macros, monolith)
 
