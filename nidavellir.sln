@@ -20,9 +20,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pkg_dlms", "application\ada
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tests", "nidavellir\tests\build\tests.vcxproj", "{7F4006B8-CFEA-4572-81AA-9C125FE8389F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kernel_baremetal", "packages\kernel\build\kernel_baremetal.vcxproj", "{055944EF-CC92-4AA7-A135-24122437B9EF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kernel_baremetal", "infra\kernel\build\kernel_baremetal.vcxproj", "{055944EF-CC92-4AA7-A135-24122437B9EF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kernel_multi_threads", "packages\kernel\build\kernel_multi_threads.vcxproj", "{3EA038C9-1B95-4571-8A86-085A9F3ADA76}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kernel_multi_threads", "infra\kernel\build\kernel_multi_threads.vcxproj", "{3EA038C9-1B95-4571-8A86-085A9F3ADA76}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "app_dlms_server", "application\apps\app_dlms_server\build\app_dlms_server.vcxproj", "{158D8D93-5D08-416B-BA09-E33F237E174A}"
 EndProject
@@ -36,7 +36,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pkg_crypto", "infra\securit
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "instance_stategrid_meter", "targets\stategrid_meter\build\instance_stategrid_meter.vcxproj", "{521DB9A0-9573-45A8-BFC2-D957D10B8522}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pkg_cmocka", "packages\test\pkg_cmocka.vcxproj", "{3D69149E-62C3-4224-9CDB-2DFE1CFB342C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pkg_cmocka", "tests\legacy\pkg_cmocka.vcxproj", "{3D69149E-62C3-4224-9CDB-2DFE1CFB342C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "app_698_server", "application\apps\app_698_server\build\app_698_server.vcxproj", "{4D3DA979-522C-40DE-95C4-72417A64CC8F}"
 EndProject

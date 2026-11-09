@@ -51,7 +51,7 @@
     <ClCompile Include="..\..\..\application\adapters\dl645\fr_645.c" />
     <ClCompile Include="..\..\..\application\adapters\dlms\pkg_dlms.c" />
     <ClCompile Include="..\msta.c" />
-    <ClCompile Include="..\..\..\packages\test\test_utils.c" />
+    <ClCompile Include="..\..\..\tests\legacy\test_utils.c" />
     <ClCompile Include="..\..\..\application\adapters\dl698\fr_698.c" />
   </ItemGroup>
 </Project>

@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.31321.278
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pkg_crypto", "infra\security\crypto\build\pkg_crypto.vcxproj", "{158D8D93-5D08-416B-BA09-E33F237E174A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pkg_cmocka", "packages\test\pkg_cmocka.vcxproj", "{3D69149E-62C3-4224-9CDB-2DFE1CFB342C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pkg_cmocka", "tests\legacy\pkg_cmocka.vcxproj", "{3D69149E-62C3-4224-9CDB-2DFE1CFB342C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pkg_dlms", "application\adapters\dlms\build\pkg_dlms.vcxproj", "{04B35EC3-38F0-43A7-A15D-7806C9775FE3}"
 EndProject

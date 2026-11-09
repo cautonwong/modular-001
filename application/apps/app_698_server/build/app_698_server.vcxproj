@@ -61,8 +61,8 @@
     <ClCompile Include="..\..\..\packages\kernel\pipeline.c" />
     <ClCompile Include="..\..\..\packages\kernel\rtc.c" />
     <ClCompile Include="..\..\..\packages\kernel\utils.c" />
-    <ClCompile Include="..\..\..\packages\test\u_test\cjson_lib.c" />
-    <ClCompile Include="..\..\..\packages\test\u_test\u_test.c" />
+    <ClCompile Include="..\..\..\tests\legacy\u_test\cjson_lib.c" />
+    <ClCompile Include="..\..\..\tests\legacy\u_test\u_test.c" />
     <ClCompile Include="..\app_698_server_entry.c" />
     <ClCompile Include="..\pl_serial.c" />
     <ClCompile Include="..\stub.c" />
@@ -101,8 +101,8 @@
     <ClInclude Include="..\..\..\application\adapters\dl698\fr_698.h" />
     <ClInclude Include="..\..\..\application\adapters\dl698\fr_698_comm.h" />
     <ClInclude Include="..\..\..\application\adapters\dl698\fr_axdr.h" />
-    <ClInclude Include="..\..\..\packages\test\u_test\cjson_lib.h" />
-    <ClInclude Include="..\..\..\packages\test\u_test\u_test.h" />
+    <ClInclude Include="..\..\..\tests\legacy\u_test\cjson_lib.h" />
+    <ClInclude Include="..\..\..\tests\legacy\u_test\u_test.h" />
     <ClInclude Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_uniformity.h" />
   </ItemGroup>
   <ItemGroup>
@@ -182,7 +182,7 @@
     <OutDir>$(SolutionDir)\nidavellir\bin\</OutDir>
     <IntDir>$(SolutionDir)\build\$(ProjectName)_$(Configuration)_$(Platform)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
-    <IncludePath>$(ProjectDir)..\..\..\nidavellir\include\kernel\;$(ProjectDir)..\..\..\nidavellir\include\;$(ProjectDir)..\..\..\application\adapters\dl698\;$(ProjectDir)..\..\..\nidavellir\include\testutil;$(ProjectDir)..\..\..\application\apps\app_698_server\test_case\test_app_698_server_uniformity;$(ProjectDir)..\..\..\packages\test\u_test\;$(ProjectDir)..\..\..\nidavellir\include\mxml\;$(ProjectDir)..\..\..\targets\stategrid_meter\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\..\..\nidavellir\include\kernel\;$(ProjectDir)..\..\..\nidavellir\include\;$(ProjectDir)..\..\..\application\adapters\dl698\;$(ProjectDir)..\..\..\nidavellir\include\testutil;$(ProjectDir)..\..\..\application\apps\app_698_server\test_case\test_app_698_server_uniformity;$(ProjectDir)..\..\..\tests\legacy\u_test\;$(ProjectDir)..\..\..\nidavellir\include\mxml\;$(ProjectDir)..\..\..\targets\stategrid_meter\;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\..\..\nidavellir\bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

@@ -99,7 +99,7 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(SolutionDir)\nidavellir\include\;$(SolutionDir)\nidavellir\include\kernel\;$(SolutionDir)\packages\test\cmocka\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\nidavellir\include\;$(SolutionDir)\nidavellir\include\kernel\;$(SolutionDir)\tests\legacy\cmocka\include\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -170,7 +170,7 @@
     <ClCompile Include="..\..\..\application\adapters\dl645\fr_645.c" />
     <ClCompile Include="..\..\..\application\adapters\dl698\fr_698.c" />
     <ClCompile Include="..\..\..\application\adapters\dlms\pkg_dlms.c" />
-    <ClCompile Include="..\..\..\packages\test\test_utils.c" />
+    <ClCompile Include="..\..\..\tests\legacy\test_utils.c" />
     <ClCompile Include="..\msta.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

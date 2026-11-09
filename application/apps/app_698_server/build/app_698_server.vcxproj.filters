@@ -85,13 +85,13 @@
     <ClCompile Include="..\..\..\packages\kernel\log.c">
       <Filter>kernel</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\test\u_test\u_test.c">
+    <ClCompile Include="..\..\..\tests\legacy\u_test\u_test.c">
       <Filter>utest</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\mapper_698.c">
       <Filter>mapper_698</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\packages\test\u_test\cjson_lib.c">
+    <ClCompile Include="..\..\..\tests\legacy\u_test\cjson_lib.c">
       <Filter>utest</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\targets\stategrid_meter\mapper_698\map_698_get\get_0_Energy.c">
@@ -278,10 +278,10 @@
     <ClInclude Include="..\test_case\test_app_698_server_uniformity\test_app_698_server_uniformity.h">
       <Filter>test_case\test_app_698_server_uniformity</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\packages\test\u_test\cjson_lib.h">
+    <ClInclude Include="..\..\..\tests\legacy\u_test\cjson_lib.h">
       <Filter>utest</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\packages\test\u_test\u_test.h">
+    <ClInclude Include="..\..\..\tests\legacy\u_test\u_test.h">
       <Filter>utest</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\nidavellir\include\kernel\nidavellir.h">
