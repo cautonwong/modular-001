@@ -98,6 +98,9 @@ Cross-cutting:
       IAR source list and include paths; baseline stays 117/117
 - [x] Unit 7f: split `packages/drivers` into `infra/soc` and `infra/board`;
       update IAR paths; baseline stays 117/117
+- [x] Unit 7g: move baremetal, esam, crypto, upgrade, boot into their layers;
+      update solution and IAR paths; baseline stays 117/117
+- [ ] Unit 7h: move `dl698`, `dl645`, `dlms` into `application/adapters`
 - [x] Unit 8a: `targets/host` composition root wiring metering, demand, load control,
       tariff, arena, byte store and parameter store + host integration tests
 - [ ] Unit 9: delete legacy surfaces (`applications.h`, `port.h` field macros, monolith)
