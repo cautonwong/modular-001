@@ -350,6 +350,8 @@
                 </option>
                 <option>
                     <name>CCIncludePath2</name>
+                    <state>$PROJ_DIR$\..\..\..\infra\kernel</state>
+                    <state>$PROJ_DIR$\..\..\..</state>
                     <state>$PROJ_DIR$\..\..\..\nidavellir\include\kernel</state>
                     <state>$PROJ_DIR$\..\..\..\nidavellir\include</state>
                     <state>$PROJ_DIR$\..\..\..\instances\stategrid_meter\</state>
@@ -1413,6 +1415,8 @@
                 </option>
                 <option>
                     <name>CCIncludePath2</name>
+                    <state>$PROJ_DIR$\..\..\..\infra\kernel</state>
+                    <state>$PROJ_DIR$\..\..\..</state>
                     <state>$PROJ_DIR$\..\..\..\nidavellir\include\kernel</state>
                     <state>$PROJ_DIR$\..\..\..\nidavellir\include</state>
                     <state>$PROJ_DIR$\..\..\..\instances\stategrid_meter\</state>
@@ -2284,25 +2288,25 @@
                 <name>$PROJ_DIR$\..\..\..\infra\kernel\list.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\kernel\mlog.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\kernel\mlog.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\kernel\nidavellir.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\kernel\nidavellir.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\kernel\pipeline.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\kernel\pipeline.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\applications\app_resource_tool\resource_tool.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\kernel\rtc.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\kernel\rtc.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\kernel\time_link.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\kernel\time_link.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\kernel\utils.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\kernel\utils.c</name>
             </file>
         </group>
         <group>

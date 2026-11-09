@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Compile-check the core legacy target with arm-none-eabi-gcc.
 #
-# packages/kernel/resource.c is excluded: its enums are declared after the
+# infra/kernel/resource.c is excluded: its enums are declared after the
 # structs that use them, so it cannot compile as written upstream.
 set -uo pipefail
 
@@ -28,10 +28,10 @@ includes=(
 flags=(-std=gnu11 -mcpu=cortex-m0 -mthumb -ffreestanding -w "${includes[@]}")
 
 files=(
-    packages/kernel/utils.c
-    packages/kernel/time_link.c
-    packages/kernel/nidavellir.c
-    packages/kernel/rtc.c
+    infra/kernel/utils.c
+    infra/kernel/time_link.c
+    infra/kernel/nidavellir.c
+    infra/kernel/rtc.c
     packages/meterbase/energy.c
     packages/meterbase/touFee.c
     packages/meterbase/relay_control.c
