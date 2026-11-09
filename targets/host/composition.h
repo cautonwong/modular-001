@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
+#include "application/metering/application.h"
 #include "domain/common/allocator.h"
-#include "domain/common/calendar.h"
 #include "domain/common/parameter_store.h"
 #include "domain/common/store.h"
 #include "domain/load_control/load_control.h"
@@ -20,13 +20,7 @@ typedef struct {
     nd_demand_config_t demand;
 } host_config_t;
 
-typedef struct {
-    nd_energy_direction_t direction;
-    uint32_t pulses;
-    int32_t power;
-    nd_datetime_t time;
-    nd_load_inputs_t load;
-} host_tick_t;
+typedef meter_tick_t host_tick_t;
 
 typedef struct {
     uint8_t fee;

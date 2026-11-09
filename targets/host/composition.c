@@ -11,9 +11,7 @@ struct host_composition {
     nd_demand_t *demand;
     load_control_state_t *load;
     nd_tariff_table_t tariff;
-    uint8_t fee;
-    uint8_t day_table;
-    uint8_t relay_connected;
+    meter_application_t application;
 };
 
 host_composition_t *host_composition_create(nd_allocator_t *allocator,
@@ -52,8 +50,10 @@ host_composition_t *host_composition_create(nd_allocator_t *allocator,
     composition->energy_store = config->energy_store;
     composition->parameters = config->parameters;
     composition->energy_block_offset = config->energy_block_offset;
-    composition->relay_connected = 1;
     nd_tariff_table_init(&composition->tariff);
+    meter_application_init(&composition->application, composition->metering,
+                           composition->demand, composition->load,
+                           &composition->tariff);
     return composition;
 }
 
@@ -90,30 +90,7 @@ void host_composition_set_load_command(host_composition_t *composition,
 void host_composition_second(host_composition_t *composition,
                              const host_tick_t *tick)
 {
-    composition->day_table =
-        nd_tariff_select_day_table(&composition->tariff, &tick->time);
-    composition->fee = nd_tariff_select_fee(&composition->tariff,
-                                            composition->day_table,
-                                            tick->time.hour, tick->time.minute);
-
-    if (tick->pulses != 0) {
-        metering_add_pulses(composition->metering, tick->direction,
-                            composition->fee, tick->pulses);
-    }
-
-    nd_demand_on_second(composition->demand, tick->power);
-    if (tick->time.second == 0) {
-        nd_demand_on_minute(composition->demand);
-    }
-
-    nd_load_actions_t actions;
-    load_control_second(composition->load, &tick->load, &actions);
-    if (actions.connect) {
-        composition->relay_connected = 1;
-    }
-    if (actions.disconnect) {
-        composition->relay_connected = 0;
-    }
+    meter_application_on_second(&composition->application, tick);
 }
 
 int host_composition_save(host_composition_t *composition)
@@ -126,9 +103,12 @@ int host_composition_save(host_composition_t *composition)
 void host_composition_status(const host_composition_t *composition,
                              host_status_t *status)
 {
-    status->fee = composition->fee;
-    status->day_table = composition->day_table;
-    status->relay_connected = composition->relay_connected;
+    const meter_status_t *application_status =
+        meter_application_status(&composition->application);
+
+    status->fee = application_status->fee;
+    status->day_table = application_status->day_table;
+    status->relay_connected = application_status->relay_connected;
     status->demand = nd_demand_value(composition->demand);
     status->energy_0_01_kwh = metering_read(composition->metering,
                                             ND_ENERGY_FORWARD, 0,

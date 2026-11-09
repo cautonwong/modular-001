@@ -36,10 +36,16 @@ add_library(blade_target_stategrid STATIC
 )
 target_link_libraries(blade_target_stategrid PUBLIC blade_domain)
 
+add_library(blade_application STATIC
+    ${BLADE_ROOT}/application/metering/application.c
+)
+target_include_directories(blade_application PUBLIC ${BLADE_ROOT})
+target_link_libraries(blade_application PUBLIC blade_domain)
+
 add_library(blade_target_host STATIC
     ${BLADE_ROOT}/targets/host/composition.c
 )
-target_link_libraries(blade_target_host PUBLIC blade_infra blade_target_stategrid)
+target_link_libraries(blade_target_host PUBLIC blade_application blade_infra blade_target_stategrid)
 
 file(GLOB TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/unit/*.c")
 foreach(src ${TEST_SOURCES})
