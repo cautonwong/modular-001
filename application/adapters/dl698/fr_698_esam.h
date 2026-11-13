@@ -1,6 +1,16 @@
 ﻿#ifndef __FR_698_ESAM_H__
 #define __FR_698_ESAM_H__
 
+#include <stdint.h>
+
+struct instance_t;
+struct pipeline_t;
+
+/* fr_698.h leaves #pragma pack(1) active. Pin the ESAM wire structs so a
+ * translation unit that includes fr_698.h first and one that does not still
+ * agree; on ARM32 the packed and default layouts are identical. */
+#pragma pack(push, 1)
+
 struct esam_698_input_t
 {
     uint8_t cmd_type;           //区分请求类型 
@@ -60,6 +70,19 @@ struct esam_data_t
     uint16_t sw;
 };
 
+#pragma pack(pop)
+
 int fr_698_handle_esam(struct instance_t* instance, struct esam_698_input_t *p_input, struct esam_698_output_t *p_output);
 
+int read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_t len);
+int write_esam(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_t len);
+int read_esam_no(struct instance_t* instance, uint8_t *esam_info);
+int read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t index);
+int esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p);
+uint16_t software_esam_check(struct instance_t* instance, uint8_t *key, uint8_t *rn, uint8_t *data, uint8_t p2, uint16_t datalen, uint8_t *outbuf);
+int esam_key_updata(struct instance_t* instance, uint8_t *buf, uint16_t len);
+void esam_698_init(struct instance_t* instance, uint8_t power_mode);
+uint8_t get_key_status(struct instance_t* instance);
+uint32_t fr_698_current_esam_timeout_get(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index);
+int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cmd, uint32_t oad);
 #endif //__FR_698_ESAM_H__

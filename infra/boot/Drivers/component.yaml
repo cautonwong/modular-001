@@ -1,0 +1,6 @@
+name: infra.boot.drivers
+version: 0.1.0
+layer: infra
+paths: [infra/boot/Drivers]
+dependencies: []
+legacy: true

@@ -1,6 +1,8 @@
 #ifndef __FR_698_H__
 #define __FR_698_H__
 
+#include "fr_698_context.h"
+#include "fr_698_message.h"
 #include "fr_axdr.h"
 #include "fr_698_comm.h"
 
@@ -46,7 +48,6 @@
 #define ignore_OAD_Schem(oad)   (uint32_t)((oad)&0xFFFF1FFF)
 
 
-#define TIME_WILDCARD   1
 
 
 /** data-assess-result */
@@ -215,7 +216,7 @@ enum sa_type_e
 #define WILDCARD_MILLISECOND        0x80
 #define WILDCARD_ALL                0xFF
 
-#pragma pack(1)
+#pragma pack(push, 1)
 struct oad_t
 {
     union
@@ -266,7 +267,6 @@ struct para_698_tag_t
 };
 
 
-#pragma pack(1)
 struct connect_request_t
 {
     uint16_t pro_ver;
@@ -360,11 +360,6 @@ struct event_para_pack_t
     uint8_t para_num;
 };
 
-struct security_mode_t
-{
-    uint16_t oi;
-    uint16_t mode;
-};
 enum auth_type_t
 {
     AUTH_SID_MAC = 0,
@@ -440,15 +435,15 @@ extern void report_3320list_add(struct instance_t* instance,uint32_t oad);
 extern uint8_t active_report_3320list_confirmed(struct instance_t* instance);
 extern uint8_t report_3320list_confirmed(struct instance_t* instance, uint8_t cnl, uint32_t oad, uint8_t confirm_SUB_event);
 extern uint8_t report_3320list_confirmed_All_channel(struct instance_t* instance, uint32_t oad);
-extern int fr_handle_report_response(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int fr_handle_report_response(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
 extern void EventOut_698_check(struct instance_t* instance);
 extern void report_3320list_2015state_clear(struct instance_t* instance);
 extern void clear_active_report_time_count(struct instance_t* instance, enum active_report_type_t type);
-extern int active_report_handle(struct instance_t* instance, struct pipeline_t* p_pipeline, struct message_t* mesg);
+extern int active_report_handle(struct instance_t* instance);
 
-extern int get_report_apdu(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int get_report_apdu(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
 
-extern void update_connect_timeout_cnt(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern void update_connect_timeout_cnt(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
 
 extern int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_para_pack_t *para_pack);
 
@@ -458,21 +453,28 @@ extern uint8_t get_event_oad_class(uint32_t oad);
 
 extern struct connect_request_t cfg_connect;
 extern const struct connect_request_t default_connect;
-extern int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+extern int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
 extern uint32_t dt_buf_to_second(uint8_t* dt);
 extern int second_to_dt_buf(uint32_t timesec, uint8_t* dt);
 extern uint8_t fr_698_current_connect_status_get(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index);
 extern struct connect_request_t get_default_connect_para(uint8_t channel);
 
 
-extern uint32_t get_3320_save_addr(struct instance_t* instance, uint16_t chn);
+int dl698_report_list_read(uint16_t channel, uint8_t* buffer, uint16_t length);
+int dl698_report_list_write(uint16_t channel, const uint8_t* buffer, uint16_t length);
 extern int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_list, uint8_t mode);
 extern uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t mode);
 extern int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_list, uint8_t mode);
 extern uint8_t get_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *apdu, uint8_t apdu_len , uint8_t *dst);
 extern uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t mode);
-extern int MeterWr_obj_list_clear(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg);
 extern uint8_t fr_698_get_logic_name(uint8_t *buf, uint16_t OI);
 extern int read_record_data_form_698_protocol(struct instance_t* instance, uint8_t* buf, uint32_t Record_oad, uint32_t capture_oad, uint8_t last_no, uint16_t bufsize);
 extern int check_record_table_oad__support(struct instance_t* instance, uint32_t oad);
+int fr_handle_disconnect_all_channel(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index);
+int fr_handle_disconnect2(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index, uint8_t channel);
+int check_oad(uint32_t oad);
+int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
+int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
+int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
+#pragma pack(pop)
 #endif //__FR_698_H__

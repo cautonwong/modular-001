@@ -1,5 +1,7 @@
 #ifndef __NX_DLMS_H__
 #define __NX_DLMS_H__
+#include <stdint.h>
+#include "kernel/object.h"
 
 #ifdef NX_DLMS_USER_DEFINE_FILE
 #include "nx_dlms_user.h"

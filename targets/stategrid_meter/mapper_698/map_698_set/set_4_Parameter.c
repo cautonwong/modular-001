@@ -1,7 +1,13 @@
 #include "nidavellir.h"
+#include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
 #include "port.h"
 #include "gs_record.h"
+#include "domain/freeze/legacy/freeze_applications.h"
+#include "domain/tariff/legacy/tariff_applications.h"
+#include "infra/kernel/resource_blocks.h"
+#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/mapper_698/resource_map.h"
 
 
 typedef struct 
@@ -91,7 +97,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 {
                     case 0x4012://周休日
                         if(*p != 4) return -DAR_TYPE_NOT_MATCH;
-                        mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+                        nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
                         break;
                     case 0x4013://周休日日时段表号
                         if(*p != 17) return -DAR_TYPE_NOT_MATCH;
@@ -101,7 +107,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_WeekTab);
                         nd_set_index(instance, addr, timer, 2);
                         record_event_no_mesg_pro(instance, NULL, WeekTabWrS, NULL, 1);// 周休日编程事件
-                        mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+                        nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
                         break;
                     case 0x400F://秘钥总条数
                     case 0x401C://电流变比
@@ -116,12 +122,12 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     case 0x4107:    //有功准确度等级
                     case 0x4109:    //有功脉冲常数
                     case 0x4102:    //脉冲宽度
-                        if(mbase_cb->factor_mode == false)  
+                        if(nd_mbase_factor_mode(mbase_cb) == false)  
                             return -DAR_RW_REJECT; //工厂模式外，禁止写入
                         break;
                     case 0x410B:    //电表型号
                     case 0x4111:    //软件备案号
-                        if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
+                        if(nd_mbase_factor_mode(mbase_cb) == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
                         if(*p != 0X0A) return -DAR_RW_REJECT;
                         break;
                     case 0x4103:    //资产管理编码  厂外可设置
@@ -146,10 +152,10 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                             if((Time_Format_Check(&timer[3])) || (Date_Format_Check(timer)))    return -DAR_OTHERS_ERROR;
                         }
                         *(p+7) = 0xFF;
-                        mbase_cb->Fee |= F_ChangeTmOn;
+                        nd_mbase_Fee(mbase_cb) |= F_ChangeTmOn;
                         break;
                     case 0x4401:    //密码
-                        mbase_cb->password_err_cnt = 0;     //修改密码，密码锁清零
+                        nd_mbase_password_err_cnt(mbase_cb) = 0;     //修改密码，密码锁清零
                         break;
                 }
                 tag_datalen = axdr_get_len(p);
@@ -285,11 +291,11 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
             switch(idl)
             {
                 case 0x0200:   //设备描述符
-                    if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
+                    if(nd_mbase_factor_mode(mbase_cb) == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
                     if(p[1] > 32)  return -DAR_TYPE_NOT_MATCH;
                     break;
                 case 0x0400://生产日期
-            		if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
+            		if(nd_mbase_factor_mode(mbase_cb) == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
             
                     mem_swap_cpy((uint8_t*)&year2, p+1, 2);
                     if(year2 < 2000) return -DAR_RW_REJECT;
@@ -340,7 +346,7 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
     {
         case 0x0300: //版本信息
         {
-            if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
+            if(nd_mbase_factor_mode(mbase_cb) == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
                         tmpid1 = idl;
 
             num = p[1];
@@ -376,7 +382,7 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
         case 0x0602: //协议列表
         case 0x0603: //协议列表
         {
-            if(mbase_cb->factor_mode == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
+            if(nd_mbase_factor_mode(mbase_cb) == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
             
             return set_support_protocol_list(instance,id, buf);
         }
@@ -467,8 +473,8 @@ int after_Time_set_hook(struct instance_t* instance)
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     record_rollback_after_set_time(instance, 0);
-    mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
-    mbase_cb->RTCErrS_status = 0;
+    nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+    nd_mbase_RTCErrS_status(mbase_cb) = 0;
     
     clr_last_bill_time(instance, LastBillingTime);
     clr_last_bill_time(instance, LastDayFreezTime);
@@ -562,7 +568,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 year1 = instance->time.tm_year + 1900;
                 if((buffer[3] != instance->time.tm_mday) || (buffer[2] != (instance->time.tm_mon+1)) || (year2 != year1))  //跨日，清除广播校时标志位
                 {
-                    mbase_cb->boardadjtime = 0;
+                    nd_mbase_boardadjtime(mbase_cb) = 0;
                 }
                 
                 //保存校时后时间 
@@ -577,8 +583,8 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 record_event_no_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
 
                 record_rollback_after_set_time(instance, 0);
-                mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
-                mbase_cb->RTCErrS_status = 0;
+                nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+                nd_mbase_RTCErrS_status(mbase_cb) = 0;
 
                 clr_last_bill_time(instance, LastBillingTime);
                 clr_last_bill_time(instance, LastDayFreezTime);
@@ -602,19 +608,19 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     if((index == 0)||(index == 1))
                     {
                         p++;
-                        mem_swap_cpy((uint8_t*)&mbase_cb->Limit_T_Min, p, 2);
+                        mem_swap_cpy((uint8_t*)&nd_mbase_Limit_T_Min(mbase_cb), p, 2);
                         s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, Limit_T_Min));
-                        nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->Limit_T_Min, 2);
+                        nd_mbase_offset_Limit_T_Min());
+                        nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_Limit_T_Min(mbase_cb), 2);
                         p = p + 2;
                     }
                     if((index == 0)||(index == 2))
                     {
                         p++;
-                        mem_swap_cpy((uint8_t*)&mbase_cb->Limit_T_Max, p, 2);
+                        mem_swap_cpy((uint8_t*)&nd_mbase_Limit_T_Max(mbase_cb), p, 2);
                         s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, Limit_T_Max));
-                        nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->Limit_T_Max, 2);
+                        nd_mbase_offset_Limit_T_Max());
+                        nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_Limit_T_Max(mbase_cb), 2);
                         p = p + 2;
                     }
 
@@ -648,10 +654,10 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 if(BCD_Check(buffer, 6) == 1)    return -DAR_TYPE_NOT_MATCH;
                 if(oad == 0x4001)
                 {
-                    mem_swap_cpy(mbase_cb->tsa, buffer, 6);
+                    mem_swap_cpy(nd_mbase_tsa(mbase_cb), buffer, 6);
                     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                    offsetof(struct mbase_control_block_t, tsa));
-                    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->tsa, 6);
+                    nd_mbase_offset_tsa());
+                    nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_tsa(mbase_cb), 6);
                 }
                 else
                 {
@@ -707,13 +713,13 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             if(attribute == 0x02)
             {
                 uint32_t idbuf[] = {
-                (uint32_t)&mbase_cb->lcd_poweron_all_dis_time,            //上电全显时间
-                (uint32_t)&mbase_cb->backlight_key_time,                  //背光点亮时间
-                (uint32_t)&mbase_cb->lcd_checkdis_keep_sec,               //显示查看背光点亮时间
-                (uint32_t)&mbase_cb->lcd_nopower_key_keep_sec,            //无电按键驻留时间
-                (uint32_t)&mbase_cb->energy_point,                        //电能小数显示位
-                (uint32_t)&mbase_cb->power_point,                         //功率小数显示位
-                (uint32_t)&mbase_cb->lcd_12_mean,                         //液晶12字样意义
+                (uint32_t)&nd_mbase_lcd_poweron_all_dis_time(mbase_cb),            //上电全显时间
+                (uint32_t)&nd_mbase_backlight_key_time(mbase_cb),                  //背光点亮时间
+                (uint32_t)&nd_mbase_lcd_checkdis_keep_sec(mbase_cb),               //显示查看背光点亮时间
+                (uint32_t)&nd_mbase_lcd_nopower_key_keep_sec(mbase_cb),            //无电按键驻留时间
+                (uint32_t)&nd_mbase_energy_point(mbase_cb),                        //电能小数显示位
+                (uint32_t)&nd_mbase_power_point(mbase_cb),                         //功率小数显示位
+                (uint32_t)&nd_mbase_lcd_12_mean(mbase_cb),                         //液晶12字样意义
                 };
                 uint8_t lens[] = {1, 2, 2, 2, 1, 1, 1};
                 uint8_t offset[] = {0, 1, 3, 5, 7, 8, 9};
@@ -730,9 +736,9 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     }
                     
                     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                    offsetof(struct mbase_control_block_t, lcd_poweron_all_dis_time));
-                    uint16_t s_len = offsetof(struct mbase_control_block_t, lcd_autodis_list_num) - offsetof(struct mbase_control_block_t, lcd_poweron_all_dis_time);
-                    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_poweron_all_dis_time, s_len);
+                    nd_mbase_offset_lcd_poweron_all_dis_time());
+                    uint16_t s_len = nd_mbase_offset_lcd_autodis_list_num() - nd_mbase_offset_lcd_poweron_all_dis_time();
+                    nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_lcd_poweron_all_dis_time(mbase_cb), s_len);
                     
                     return (p-buf);
                 }
@@ -756,7 +762,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     mem_swap_cpy((uint8_t*)idbuf[index-1], p, lens[index-1]);
                     
                     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                    offsetof(struct mbase_control_block_t, lcd_poweron_all_dis_time) + offset[index-1]);
+                    nd_mbase_offset_lcd_poweron_all_dis_time() + offset[index-1]);
                     nd_set_offset(instance, s_index, (uint8_t*)idbuf[index-1], lens[index-1]);
                     
                     p = p + lens[index-1];
@@ -786,7 +792,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     nd_set_index(instance, s_index, p, 1); 
                     p++;
                 }
-                mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+                nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
                 return (p-buf);
             }
             else
@@ -797,7 +803,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + (index - 1));
                 nd_set_index(instance, s_index, p, 1); 
                 p++;
-                mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+                nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
                 return (p-buf);
             }
             break;
@@ -841,7 +847,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             nd_set_index(instance, s_index, buffer, 6); 
 
             record_event_no_mesg_pro(instance, NULL, HolidayWrS, NULL, 1);// 公共假日编程事件
-            mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+            nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
             return (p-buf);
             break;
         case 0x4014://当前套时区表
@@ -850,7 +856,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             last_v = 0xFFFF;
             period = 1;
             if(index > MaxSeasonNum)    return -DAR_TIME_ZONE_EXCEED;
-            if((oad == 0x4014) && (mbase_cb->factor_mode == false))    return    -DAR_RW_REJECT;
+            if((oad == 0x4014) && (nd_mbase_factor_mode(mbase_cb) == false))    return    -DAR_RW_REJECT;
             if(index == 0)
             {
                 num = *(p+1);
@@ -979,13 +985,13 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 nd_set_index(instance, s_index, buffer, 3);
             }
             record_event_no_mesg_pro(instance, NULL, SeasonTabWrS, NULL, 1);// 
-            mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+            nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
             return (p - buf);
             break;
         case 0x4016://当前套日时段表
         case 0x4017://备用套日时段表
             if((index > MaxTouTabNum) || (index == 0))    return -DAR_RW_REJECT;
-            if((oad == 0x4016) && (mbase_cb->factor_mode == false))    return    -DAR_RW_REJECT;
+            if((oad == 0x4016) && (nd_mbase_factor_mode(mbase_cb) == false))    return    -DAR_RW_REJECT;
             
             if(oad == 0x4016)
                 addr = Day_Table00;
@@ -1130,7 +1136,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
 
             record_event_no_mesg_pro(instance, NULL, DayTabWrS, NULL, 1);// 时段表编程事件
                 
-            mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+            nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
             return (p - buf);
             break;
             
@@ -1141,11 +1147,11 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
             nd_set_index(instance, addr, timer, 3);
           
-            mbase_cb->active_energy_cal_word = *(p+2);
+            nd_mbase_active_energy_cal_word(mbase_cb) = *(p+2);
             
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, active_energy_cal_word));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_energy_cal_word, 1);
+                        nd_mbase_offset_active_energy_cal_word());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_active_energy_cal_word(mbase_cb), 1);
             
             record_event_no_mesg_pro(instance, NULL, ActCombWrS, NULL, 1);// 
             break;
@@ -1190,7 +1196,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     {
                         if ( (buffer[2*i] != temp[0]) || (buffer[1 + (2*i)] != temp[1]) ) //第一结算日改变
                         {
-                            mbase_cb->first_MbillDay_flag = 0x5A;
+                            nd_mbase_first_MbillDay_flag(mbase_cb) = 0x5A;
                             record_event_no_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
                         }
                     }
@@ -1219,7 +1225,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 {
                     if ( (buffer[0] != temp[0]) || (buffer[1] != temp[1]) ) //第一结算日改变
                     {
-                        mbase_cb->first_MbillDay_flag = 0x5A;
+                        nd_mbase_first_MbillDay_flag(mbase_cb) = 0x5A;
                         record_event_no_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
                     }
                 }

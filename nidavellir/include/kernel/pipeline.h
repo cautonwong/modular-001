@@ -1,5 +1,6 @@
 #ifndef __INCLUDE_PIPELINE_H__
 #define __INCLUDE_PIPELINE_H__
+/* Legacy message mechanism. New components use nd_bus and nd_channel. */
 
 struct instance_t;
 struct recipe_t;

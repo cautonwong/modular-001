@@ -1,0 +1,7 @@
+name: domain.events
+version: 0.1.0
+layer: domain
+paths: [domain/events]
+exclude: [domain/events/legacy]
+dependencies: [domain.common, domain.metering]
+legacy: false

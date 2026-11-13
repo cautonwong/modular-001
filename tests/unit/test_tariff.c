@@ -121,6 +121,37 @@ static void test_fee_falls_back_when_unconfigured_or_out_of_range(void)
     TEST_ASSERT_EQUAL_UINT8(1, nd_tariff_select_fee(&table, 9, 12, 0));
 }
 
+static void test_period_selection_reports_index_and_start(void)
+{
+    table.day_table_count = 2;
+    table.period_count[0] = 2;
+    table.periods[0][0].start = 0x1600; /* 22:00 */
+    table.periods[0][0].value = 1;
+    table.periods[0][1].start = 0x0600; /* 06:00 */
+    table.periods[0][1].value = 2;
+
+    uint16_t start = 0;
+    TEST_ASSERT_EQUAL_UINT8(0, nd_tariff_select_period(&table, 1, 23, 0, &start));
+    TEST_ASSERT_EQUAL_UINT16(0x1600, start);
+    TEST_ASSERT_EQUAL_UINT8(0, nd_tariff_select_period(&table, 1, 5, 0, &start));
+    TEST_ASSERT_EQUAL_UINT8(1, nd_tariff_select_period(&table, 1, 6, 0, &start));
+    TEST_ASSERT_EQUAL_UINT16(0x0600, start);
+    TEST_ASSERT_EQUAL_UINT8(1, nd_tariff_select_period(&table, 1, 12, 0, NULL));
+}
+
+static void test_period_selection_handles_empty_and_clamped_tables(void)
+{
+    uint16_t start = 0;
+
+    TEST_ASSERT_EQUAL_UINT8(0, nd_tariff_select_period(&table, 3, 12, 0, &start));
+    TEST_ASSERT_EQUAL_UINT16(0xFFFF, start);
+
+    table.period_count[ND_TARIFF_MAX_DAY_TABLES - 1] = 1;
+    table.periods[ND_TARIFF_MAX_DAY_TABLES - 1][0].start = 0x0000;
+    TEST_ASSERT_EQUAL_UINT8(0, nd_tariff_select_period(&table, 99, 0, 0, &start));
+    TEST_ASSERT_EQUAL_UINT16(0x0000, start);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -133,5 +164,7 @@ int main(void)
     RUN_TEST(test_invalid_day_table_numbers_fall_back_to_one);
     RUN_TEST(test_fee_follows_the_day_periods);
     RUN_TEST(test_fee_falls_back_when_unconfigured_or_out_of_range);
+    RUN_TEST(test_period_selection_reports_index_and_start);
+    RUN_TEST(test_period_selection_handles_empty_and_clamped_tables);
     return UNITY_END();
 }

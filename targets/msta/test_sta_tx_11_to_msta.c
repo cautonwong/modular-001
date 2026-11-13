@@ -1,4 +1,5 @@
 #include "nidavellir.h"
+#include "application/adapters/dl645/fr_645_context.h"
 #include <stdarg.h>
 #include <stddef.h>
 #include <setjmp.h>

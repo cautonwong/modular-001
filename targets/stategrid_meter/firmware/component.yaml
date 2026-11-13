@@ -1,0 +1,6 @@
+name: target.stategrid_meter.firmware
+version: 0.1.0
+layer: product
+paths: [targets/stategrid_meter/firmware]
+dependencies: []
+legacy: true

@@ -1,0 +1,6 @@
+name: infra.security
+version: 0.1.0
+layer: infra
+paths: [infra/security]
+dependencies: [application.adapters.dl698, legacy.base_headers, legacy.kernel_headers]
+legacy: true

@@ -1,0 +1,8 @@
+name: target.stategrid_meter.tools
+version: 0.1.0
+layer: product
+paths: [targets/stategrid_meter/tools]
+# Owned but not in the VG_DTZY firmware source table.
+exclude: [targets/stategrid_meter/tools/app_resource_tool/test_cases]
+dependencies: []
+legacy: true

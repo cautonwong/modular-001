@@ -1,0 +1,7 @@
+name: target.stategrid_meter.rtos
+version: 0.1.0
+layer: product
+paths: [targets/stategrid_meter/app/rtos]
+exclude: [targets/stategrid_meter/app/rtos/time_link.c]
+dependencies: []
+legacy: true

@@ -1,0 +1,6 @@
+name: legacy.base_headers
+version: 0.1.0
+layer: infra
+paths: [nidavellir/include/compiler.h, nidavellir/include/io_type.h, nidavellir/include/packages.h, nidavellir/include/type_def.h, nidavellir/include/types.h, nidavellir/include/version.h]
+dependencies: []
+legacy: true

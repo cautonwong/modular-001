@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "nidavellir.h"
-#include "applications.h"
 #include "mlog.h"
 
 #ifdef __DEBUG_LOG__

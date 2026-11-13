@@ -1,0 +1,6 @@
+name: target.stategrid_meter.adapters
+version: 0.1.0
+layer: product
+paths: [targets/stategrid_meter/app/adapters]
+dependencies: []
+legacy: true

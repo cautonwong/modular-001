@@ -30,6 +30,7 @@ typedef struct {
 typedef struct {
     uint8_t connect;
     uint8_t disconnect;
+    uint8_t transition;
     uint8_t event_switch_on;
     uint8_t event_switch_off;
 } nd_load_actions_t;
@@ -69,6 +70,10 @@ void load_control_set_timers(load_control_state_t *state, uint32_t alarm_minutes
 uint32_t load_control_alarm_minutes(const load_control_state_t *state);
 
 uint32_t load_control_current_limit_minutes(const load_control_state_t *state);
+
+uint32_t load_control_limit_minutes(const load_control_state_t *state);
+
+uint8_t load_control_relay_true(const load_control_state_t *state);
 
 void load_control_request_repeat(load_control_state_t *state);
 

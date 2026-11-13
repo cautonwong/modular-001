@@ -1,0 +1,6 @@
+name: infra.boot.hd
+version: 0.1.0
+layer: infra
+paths: [infra/boot/HD]
+dependencies: [infra.boot.drivers]
+legacy: true

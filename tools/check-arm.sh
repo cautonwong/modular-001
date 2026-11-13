@@ -1,22 +1,10 @@
 #!/usr/bin/env bash
 # Compile domain and application for Cortex-M0 to keep them free of host libc.
-# application/upgrade is skipped until its legacy nidavellir.h dependency is
-# replaced; the legacy baseline still compiles it.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-flags=(-std=c11 -mcpu=cortex-m0 -mthumb -ffreestanding -Wall -Wextra -Werror -I"$root")
+flags=(-std=c11 -mcpu=cortex-m0 -mthumb -ffreestanding -Wall -Wextra -Werror -I"$root" -I"$root/nidavellir/include" -I"$root/domain/events/legacy" -I"$root/application/adapters/dl645" -I"$root/application/adapters/dl698")
 skipped=(
-    "$root/domain/metering/legacy"
-    "$root/domain/tariff/legacy"
-    "$root/domain/events/legacy"
-    "$root/domain/freeze/legacy"
-    "$root/domain/load_control/legacy"
-    "$root/domain/display/legacy"
-    "$root/application/apps"
-    "$root/application/meterbase"
-    "$root/application/upgrade"
-    "$root/application/adapters"
 )
 
 is_skipped() {
@@ -38,5 +26,5 @@ while IFS= read -r -d '' header; do
     arm-none-eabi-gcc "${flags[@]}" -x c -fsyntax-only "$header" || status=1
 done < <(find "$root/domain" "$root/application" -name '*.h' -print0 2>/dev/null)
 
-echo "skip: legacy domain contexts and legacy application modules (nidavellir.h dependency)"
+echo "domain and application compile strictly for Cortex-M0"
 exit "$status"

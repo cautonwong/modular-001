@@ -1,5 +1,9 @@
-#include "nidavellir.h"
+#include <stdbool.h>
+#include "application/ports/fifo.h"
+#include "application/adapters/dl698/fr_698_env.h"
+struct instance_t;
 #include "fr_698.h"
+#include "fr_698_internal.h"
 
 #define SetRequestNormal            1
 #define SetRequestNormalList        2
@@ -13,9 +17,9 @@
 extern int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cmd, uint32_t oad);
 
 
-int get_SET_and_ACTION_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int get_SET_and_ACTION_Request_len(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t*)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     int len = 0;
     int i = 0;
     uint16_t tmp_num = 1, axdr_len = 0;
@@ -48,9 +52,9 @@ int get_SET_and_ACTION_Request_len(struct instance_t* instance, struct pipeline_
     return len;
 }
 
-static int __fr_handle_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+static int __fr_handle_one_object(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
@@ -181,14 +185,13 @@ int support_broadcast_addr_cmd_check(uint8_t cmd, uint32_t oad)
 
 
 
-int fr_handle_set_action_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int fr_handle_set_action_request(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
 
-    uint8_t then_get_delay = 0; 
     uint32_t get_oad = 0;
     uint16_t offset = 0;
     uint8_t oad_n = mesg->oad_n;
@@ -226,7 +229,7 @@ int fr_handle_set_action_request(struct instance_t* instance, struct pipeline_t*
                 cache->wr += 4;
                 ctx->apdu_rx_offset += 4;
             
-                then_get_delay = apdu_rx[ctx->apdu_rx_offset++];
+                ctx->apdu_rx_offset++;
                 //延时                
                 
                 r = security_mode_word_check(instance, pipeline, 0, get_oad);

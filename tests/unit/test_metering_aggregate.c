@@ -87,6 +87,21 @@ static void test_clear_and_set_total(void)
     metering_destroy(state, &fake.port);
 }
 
+static void test_configure_updates_the_energy_parameters(void)
+{
+    metering_state_t *state = metering_create(&fake.port, &config);
+
+    metering_config_t changed = config;
+    changed.meter_const = 1000;
+    metering_configure(state, &changed);
+    metering_add_pulses(state, ND_ENERGY_FORWARD, 0, 20);
+    TEST_ASSERT_EQUAL_INT64(2, metering_read(state, ND_ENERGY_FORWARD, 0,
+                                             ND_ENERGY_RES_0_01_KWH));
+
+    metering_configure(state, NULL);
+    metering_destroy(state, &fake.port);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -96,5 +111,6 @@ int main(void)
     RUN_TEST(test_aggregate_accumulates_and_reads);
     RUN_TEST(test_export_import_roundtrip);
     RUN_TEST(test_clear_and_set_total);
+    RUN_TEST(test_configure_updates_the_energy_parameters);
     return UNITY_END();
 }

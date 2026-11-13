@@ -18,7 +18,8 @@ typedef enum {
 
 typedef enum {
     ND_ENERGY_RES_0_01_KWH = 0,
-    ND_ENERGY_RES_0_0001_KWH = 1
+    ND_ENERGY_RES_0_0001_KWH = 1,
+    ND_ENERGY_RES_1_KWH = 2
 } nd_energy_resolution_t;
 
 /* integer is hundredths of a kWh, fraction is pulses. */
@@ -64,6 +65,14 @@ int64_t nd_energy_read(const nd_energy_book_t *book,
 
 int64_t nd_energy_read_combined(const nd_energy_book_t *book, uint8_t tariff,
                                 nd_energy_resolution_t resolution);
+uint32_t nd_energy_channel_add_pulses(nd_energy_channel_t *channel,
+                                      uint8_t tariff, uint32_t pulses,
+                                      uint32_t meter_const);
+int64_t nd_energy_channel_read_raw(const nd_energy_channel_t *channel,
+                                   uint8_t tariff, uint32_t meter_const);
+int64_t nd_energy_channel_read(const nd_energy_channel_t *channel,
+                               uint8_t tariff, uint32_t meter_const,
+                               nd_energy_resolution_t resolution);
 
 void nd_energy_clear(nd_energy_book_t *book);
 

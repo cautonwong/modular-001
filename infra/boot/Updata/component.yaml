@@ -1,0 +1,6 @@
+name: infra.boot.updata
+version: 0.1.0
+layer: infra
+paths: [infra/boot/Updata]
+dependencies: []
+legacy: true

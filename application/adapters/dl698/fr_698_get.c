@@ -1,5 +1,7 @@
-﻿#include "nidavellir.h"
+﻿#include "application/ports/fifo.h"
+#include "fr_698_env.h"
 #include "fr_698.h"
+#include "fr_698_esam.h"
 
 #define GetRequestNormal            1
 #define GetRequestNormalList        2
@@ -14,17 +16,16 @@ extern int GET_record_sel_1(struct instance_t* instance, uint32_t oad, uint8_t* 
 extern int GET_record_sel_2(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t buf_size,  void *ctx);
 extern int GET_record_sel_9(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t buf_size,  void *ctx);
 
-int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int get_GET_Request_len(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t*)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint16_t tmp_num = 1, rsd_len = 0, rcsd_len = 0;
-    int len = 0;
     int i = 0;
     uint8_t list = 0;
 
     uint8_t *apdu = ctx->apdu_d_rx + ctx->apdu_rx_offset;
     uint8_t  *p;
-    
+
     p = apdu;
     if (ctx->choice > GetRequestNext){
         return -1;
@@ -35,8 +36,8 @@ int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline
         list = 1;
         if ((ctx->choice == 0x02) || (ctx->choice == 0x04)){
 
-            p += axdr_decode(TYPE_octet_string, p, &tmp_num);  
-            list = tmp_num;     
+            p += axdr_decode(TYPE_octet_string, p, &tmp_num);
+            list = tmp_num;
             //list = apdu[0];
             //len++;
         }
@@ -57,9 +58,9 @@ int get_GET_Request_len(struct instance_t* instance, struct pipeline_t* pipeline
 }
 
 
-int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t* p = cache->buf_ptr;
@@ -67,7 +68,7 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
     uint16_t len= 0;
     uint16_t offset = 0;
     int r = 0;
-    
+
     if (((mesg->ctrl & 0x7f) == 0x06) ||
         ((mesg->ctrl & 0x7f) == 0x07))
     {
@@ -85,17 +86,17 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
     {
         offset = cache->wr;
         p[cache->wr++] = 0x01;
-        
+
         r = security_mode_word_check(instance, pipeline, 0, oad);
         if(r < 0){
             ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
             p[offset] = 0x00;//DAR
             p[cache->wr++] = -r;
             return 1;
-        }  
+        }
 
         if(2 != ctx->timeTag_valid){
-            r = fr_698_get(instance, oad, instance->apdu_cache, len, (void*)ctx); // p + cache->wr   改为协议临时缓存
+            r = fr_698_get(instance, oad, nd_fr698_apdu_cache(instance), len, (void*)ctx); // p + cache->wr   改为协议临时缓存
         }else{
             r = -DAR_TIME_TAG_INVALID;
         }
@@ -115,7 +116,7 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
             }
             else
             {
-                ndv_memcopy((p + cache->wr), instance->apdu_cache, r);            
+                ndv_memcopy((p + cache->wr), nd_fr698_apdu_cache(instance), r);
                 cache->wr += r;//DAR
             }
         }
@@ -124,9 +125,9 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
     return 1;
 }
 
-static int __fr_handle_get_normal_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+static int __fr_handle_get_normal_request(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     uint8_t* p = cache->buf_ptr;
@@ -136,7 +137,7 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
 
     while (oad_n-- > 0)
     {
-        if (apdu_cache_getFree(cache) > 6){   
+        if (apdu_cache_getFree(cache) > 6){
             mesg->id = buf_to_uint32_msb(apdu_rx+ctx->apdu_rx_offset);
             memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, 4);
             cache->wr += 4;
@@ -148,21 +149,21 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
             }
             cache->wr += n;
 #if 0
-            cache->wr += 1200;            
+            cache->wr += 1200;
             ctx->next_index = 0;
 #endif
         }
     }
 
 
-    return 1;   
+    return 1;
 }
 
 
 
-static int __fr_handle_get_record_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+static int __fr_handle_get_record_request(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
 
     struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -173,7 +174,7 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
     uint32_t rcsd_list[(REQ_RCSD_MAXNUM+1)]; //个数 + n个OAD  //[0][]协议筛选  [1][]事件全关联对象
     struct rsd_info_t rsd_info;
     int ret, rsd_ret, rcsd_ret;
-        
+
     while (oad_n-- > 0)
     {
         if (apdu_cache_getFree(cache) > 8) //待调整
@@ -183,7 +184,7 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
             memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, 4);
             cache->wr += 4;
             ctx->apdu_rx_offset += 4;
-            
+
 
             //RSD
             rsd_ret = rsd_decode(instance, pipeline, mesg->id, &rsd_info);
@@ -193,12 +194,12 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
                 p[cache->wr++] = 0x00; //rcsd
                 p[cache->wr++] = 0x00;//DAR
                 p[cache->wr++] = -rsd_ret;
-                return rsd_ret;  
+                return rsd_ret;
             }
             else
             {
-                
-            }  
+
+            }
 
             Selector = rsd_info.select;
 
@@ -210,22 +211,22 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
                 //ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
                 if (rcsd_ret < 0)
                 {
-                    
+
                 }
                 p[cache->wr++] = 0x00;//DAR
                 p[cache->wr++] = DAR_TYPE_NOT_MATCH;
-                return -DAR_TYPE_NOT_MATCH;  
+                return -DAR_TYPE_NOT_MATCH;
             }
-            
+
             if ((rcsd_ret < 0 ))
-            {   
+            {
 
                 ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
                 p[cache->wr++] = 0x00;//DAR
                 p[cache->wr++] = -rcsd_ret;
                 return rcsd_ret;  // 想返回dar  如何处理 ？？
             }
-            
+
             //安全模式判断
             ret = security_mode_word_check(instance, pipeline, 0, mesg->id);
             if(ret < 0){
@@ -233,8 +234,8 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
                 p[cache->wr++] = 0x00;//DAR
                 p[cache->wr++] = -ret;
                 return ret;
-            }  
-            
+            }
+
             if ((Selector == 0) || (Selector == 1) || (Selector == 2)|| (Selector == 9))
             {
                 offset = cache->wr++;
@@ -255,7 +256,7 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
                     default:
                         break;
                 }
-                
+
                 if (ret < 0)
                 {
                     p[offset] = 0;
@@ -269,11 +270,11 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
                     p[offset] = 1;// 有记录
                     cache->wr += ret;
                     #if 0
-                    cache->wr += 1200;                   
+                    cache->wr += 1200;
                     ctx->next_index = 1;
                     #endif
                 }
-            }            
+            }
         }
     }
 
@@ -282,18 +283,16 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
 
 uint8_t cnt = 0;
 
-static int __fr_handle_get_next_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+static int __fr_handle_get_next_request(struct instance_t*, struct pipeline_t*, nd_dl698_msg_t*)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* cache = ctx->apdu;
-    
+
     // 恢复上一个读取上下文信息
-    
+
     //调用api获取内容
     //    return record_data_package(instance, oad, buf, rsd_info, rcsd_info,  ctx);
     //  ctx->next_que = 1; 几条
     //判断是否大于1800
-  
+
 #if 0
     cnt++;
     ctx->next_index = 1;
@@ -306,27 +305,27 @@ static int __fr_handle_get_next_request(struct instance_t* instance, struct pipe
     return 1;
 }
 
-static int __fr_handle_get_md5_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+static int __fr_handle_get_md5_request(struct instance_t*, struct pipeline_t*, nd_dl698_msg_t*)
 {
     return 1;
 }
 
-static int __fr_handle_get_simplify_record_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+static int __fr_handle_get_simplify_record_request(struct instance_t*, struct pipeline_t*, nd_dl698_msg_t*)
 {
     return 1;
 }
 
-int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* cache = ctx->apdu;
     uint8_t data[16] = {0};
-    uint8_t next_choice = 0; 
-    
+    uint8_t next_choice = 0;
+
     if(GET_Request != ctx->service){
         return 0;
     }
-    
+
     switch (ctx->choice)
     {
         case GetRequestNormal:
@@ -337,8 +336,8 @@ int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeli
             ctx->next_last_frm = 0;
             ctx->next_index2_frm = 0;
             cnt = 0;
-            break;   
-        case GetRequestRecord:  
+            break;
+        case GetRequestRecord:
         case GetRequestRecordList:
             ctx->next_index = 0;
             __fr_handle_get_record_request(instance, pipeline, mesg);
@@ -364,14 +363,14 @@ int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeli
             return -2;
             break;
     }
-        
+
     if(1 == ctx->next_index){
         ctx->next_index1_frm=0;
         ctx->next_choice = next_choice;
         ctx->next_que = 1;
         if(0 == ctx->next_choice){
             ctx->next_que = 0;
-        }        
+        }
         data[0] = 0x85;
         data[1] = 0x05;
         data[2] = cache->buf_ptr[2];

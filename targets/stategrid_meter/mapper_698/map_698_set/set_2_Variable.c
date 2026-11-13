@@ -1,7 +1,11 @@
 #include "nidavellir.h"
+#include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
 #include "port.h"
 #include "fr_645_report.h"
+#include "infra/kernel/resource_blocks.h"
+#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/mapper_698/resource_map.h"
 
 int SET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
@@ -31,12 +35,12 @@ int SET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
                     return -DAR_TYPE_NOT_MATCH;
                 }   
                 p += 2;
-                mem_swap_cpy((uint8_t*)&mbase_cb->report_2015mode, p,  4); 
+                mem_swap_cpy((uint8_t*)&nd_mbase_report_2015mode(mbase_cb), p,  4); 
                 p += 4;
 
                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                offsetof(struct mbase_control_block_t, report_2015mode));
-                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->report_2015mode, 4);
+                nd_mbase_offset_report_2015mode());
+                nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_report_2015mode(mbase_cb), 4);
 
                 report_2015mode_set_from_698(instance);
 

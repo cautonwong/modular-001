@@ -1,0 +1,7 @@
+name: domain.freeze
+version: 0.1.0
+layer: domain
+paths: [domain/freeze]
+exclude: [domain/freeze/legacy]
+dependencies: [domain.common]
+legacy: false

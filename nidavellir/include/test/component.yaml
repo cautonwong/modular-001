@@ -1,0 +1,6 @@
+name: legacy.test_support
+version: 0.1.0
+layer: infra
+paths: [nidavellir/include/test, nidavellir/include/testutil]
+dependencies: []
+legacy: true

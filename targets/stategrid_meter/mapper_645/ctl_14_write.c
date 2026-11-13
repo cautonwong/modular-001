@@ -1,6 +1,13 @@
 #include "nidavellir.h"
+#include "targets/stategrid_meter/persistence/meter_record.h"
+#include "application/adapters/dl645/fr_645_context.h"
 #include "645id_table.h"
 #include "ndvh_rn8209.h"
+#include "cpu_surport.h"
+#include "domain/events/legacy/gs_record.h"
+#include "domain/tariff/legacy/tariff_applications.h"
+#include "infra/kernel/resource_blocks.h"
+#include "kernel/legacy_control_block.h"
 
 extern unsigned char GetCommTable( unsigned long ID );
 struct factor_adj_meter_t factory3;
@@ -78,14 +85,14 @@ uint8_t Search_DL645_Prepay_IDTab(struct instance_t* instance, uint32_t id,uint8
 
     union dlt645id   dlt645id1,dlt645id2;
 
-    if(((cmd != 0x11)&&(cmd != 0x14)) || (mbase_cb->factor_mode == true))
+    if(((cmd != 0x11)&&(cmd != 0x14)) || (nd_mbase_factor_mode(mbase_cb) == true))
     {
         return true;
     }
 
 
 
-    if(mbase_cb->metertype & F_Crad_En)
+    if(nd_mbase_metertype(mbase_cb) & F_Crad_En)
     {
         return true;
     }	
@@ -384,12 +391,12 @@ unsigned char CommWrite_SpecProc( struct instance_t* instance,  unsigned char* p
                 memcpy((uint8_t*)&adj_poffset.ps, prx, 4);
                 break;
         case 0xA8F00053://模拟停电时间（补冻结用）
-                mbase_cb->v_powerdown_tm.tm_year = BCD_BYTE((*(prx+5))) + 2000 - 1900;
-                mbase_cb->v_powerdown_tm.tm_mon = BCD_BYTE((*(prx+4))) - 1;
-                mbase_cb->v_powerdown_tm.tm_mday = BCD_BYTE((*(prx+3)));
-                mbase_cb->v_powerdown_tm.tm_hour = BCD_BYTE((*(prx+2)));
-                mbase_cb->v_powerdown_tm.tm_min = BCD_BYTE((*(prx+1)));
-                mbase_cb->v_powerdown_tm.tm_sec = BCD_BYTE((*prx));
+                nd_mbase_v_powerdown_tm(mbase_cb).tm_year = BCD_BYTE((*(prx+5))) + 2000 - 1900;
+                nd_mbase_v_powerdown_tm(mbase_cb).tm_mon = BCD_BYTE((*(prx+4))) - 1;
+                nd_mbase_v_powerdown_tm(mbase_cb).tm_mday = BCD_BYTE((*(prx+3)));
+                nd_mbase_v_powerdown_tm(mbase_cb).tm_hour = BCD_BYTE((*(prx+2)));
+                nd_mbase_v_powerdown_tm(mbase_cb).tm_min = BCD_BYTE((*(prx+1)));
+                nd_mbase_v_powerdown_tm(mbase_cb).tm_sec = BCD_BYTE((*prx));
                 return 0;
                 break;                
         case 0xA8FFFFF0:    //设置正向电能底度
@@ -433,11 +440,11 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
 	{
 		case 0x04000101://日期及星期
                 Err_Byte = Date_645Format_Check( p_rx );
-                mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+                nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
 				break;
 		case 0x04000102://
                 Err_Byte = Time_645Format_Check( p_rx );
-                mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+                nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
 				break;
 		case 0x0400010C://日期及星期时间
 				if( Time_645Format_Check( p_rx ) == 0 )
@@ -445,7 +452,7 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
 				else
 					Err_Byte = 1;
 
-				mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+				nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
 				break;
 		case 0x04000601://组合有功特征字
 //				HisRecord_Write(MeasModeProRec,START);
@@ -455,24 +462,24 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
 				if(( u16_tmp > MaxSeasonNum ) || ( u16_tmp == 0))
 					Err_Byte = RS_ERR_SEAOV;
 
-			    mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+			    nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
 				break;
 		case 0x04000202://日时段表数
 		        u16_tmp = BCD_BYTE(*p_rx);
 				if(( u16_tmp > MaxTouTabNum ) || ( u16_tmp == 0))
 					Err_Byte = RS_ERR_OTHERS;
-				mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;	
+				nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;	
 				break;
 		case 0x04000203://日时段数
 				u16_tmp = BCD_BYTE(*p_rx);
 				if(( u16_tmp > MaxTouNum ) || ( u16_tmp == 0))
 					Err_Byte = RS_ERR_TOUOV;
-                mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+                nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
 				break;
 		case 0x04000204://费率数
 				if( BCD_BYTE(*p_rx) > 12 )
 					Err_Byte = RS_ERR_FEEOV;
-                mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+                nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
 				break;
 		case 0x04000A02://负荷间隔
 		case 0x04000A03:
@@ -497,7 +504,7 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
 				Tmp = word_bcd_to_hex( u16_tmp );
 				if( Tmp > MaxHolidayNum )
 					Err_Byte = RS_ERR_OTHERS;
-				mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;	
+				nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;	
 				break;
 		case 0x04000802://周休日时段表号
 				//E2P_Read( (unsigned char*)&Num, Day_Table_Num, 1 );
@@ -513,7 +520,7 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
                 //不一定设置成功
                 record_event_no_mesg_pro(instance, NULL, WeekTabWrS, NULL, 1);// 周休日编程事件 
 
-				mbase_cb->Fee |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;	
+				nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;	
 				break;
 		case 0x04000106://切换时间
 		case 0x04000107:
@@ -521,7 +528,7 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
 		case 0x04000108:
 		case 0x04000109:
 		#endif
-				mbase_cb->Fee |= F_ChangeTmOn;
+				nd_mbase_Fee(mbase_cb) |= F_ChangeTmOn;
 				break;
 		case 0x04001203://日冻结时间
 				if( (*p_rx > 0x59) || (*(p_rx+1) > 0x23) )
@@ -602,7 +609,7 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
 				{
 					if( IDL0 == 0x00 )//时区表
 					{
-						//if(mbase_cb->factor_mode == true)
+						//if(nd_mbase_factor_mode(mbase_cb) == true)
 						//	Err_Byte = 0;
 						//else
 							Err_Byte = SeasonTab_Format_Check( instance, p_rx, Len );
@@ -611,7 +618,7 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
 					}
 					else if( IDL0 <= MaxTouTabNum )//日时段表
 					{
-						//if(mbase_cb->factor_mode == true)
+						//if(nd_mbase_factor_mode(mbase_cb) == true)
 						//	Err_Byte = 0;
 						//else
 							Err_Byte = TouTab_Format_Check( instance, p_rx, Len );
@@ -629,7 +636,7 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
                        && (*(p_rx+4) == 0)&& (*(p_rx+5) == 0))
 					{
 						//HisRecord_Write(HoliDayProRec,START);
-						mbase_cb->Fee |= F_TOUChange + F_DAYTABChange;
+						nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_DAYTABChange;
 						//Flag.ProgmReport |= F_Holiday;
 					}
 					else if( (*p_rx == 0) || (*p_rx > Num) )
@@ -642,7 +649,7 @@ uint8_t CommWrite_DataCheck( struct instance_t* instance, uint32_t ID, uint8_t *
 					{
 						//HisRecord_Write(HoliDayProRec,START);
 						//Flag.Fee |= (F_TOUChange+F_STEPChange+F_DAYTABChange);
-                        mbase_cb->Fee |= F_TOUChange + F_DAYTABChange;
+                        nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_DAYTABChange;
 						//Flag.ProgmReport |= F_Holiday;
 					}
 				}
@@ -758,7 +765,7 @@ signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx
     }
 
 	if (( (Info & CommData_W) == 0 )    //不可写
-	|| ( (Info & CommData_FACTORY) && (mbase_cb->factor_mode == false) )) //非工厂模式
+	|| ( (Info & CommData_FACTORY) && (nd_mbase_factor_mode(mbase_cb) == false) )) //非工厂模式
     {
         Err_Byte = RS_ERR_WR;
         return Err_Byte;
@@ -768,19 +775,19 @@ signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx
     
     if(ID == 0xA8000100)
     {
-        if((mbase_cb->CoverOpenS_status != EVENT_SET) && (*(p_rx+12) == 0xAA) && (mbase_cb->key_state == false))  return RS_ERR_PASS;
+        if((nd_mbase_CoverOpenS_status(mbase_cb) != EVENT_SET) && (*(p_rx+12) == 0xAA) && (nd_mbase_key_state(mbase_cb) == false))  return RS_ERR_PASS;
         
         if((*(p_rx+12) == 0xAA) || (*(p_rx+12) == 0xFB))
-            mbase_cb->factor_mode = true;
+            nd_mbase_factor_mode(mbase_cb) = true;
         else if(*(p_rx+12) == 0x00)
-            mbase_cb->factor_mode = false;
+            nd_mbase_factor_mode(mbase_cb) = false;
         else
             Err_Byte = RS_ERR_OTHERS;
         if(Err_Byte == 0)
         {
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, factor_mode));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->factor_mode, 1);//存储至EE
+                        nd_mbase_offset_factor_mode());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_factor_mode(mbase_cb), 1);//存储至EE
             return 0;
         }
         else

@@ -1,7 +1,12 @@
 #include "nidavellir.h"
+#include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
 #ifndef WIN32
 #include "gs_record.h"
+#include "domain/events/legacy/gs_record.h"
+#include "domain/tariff/legacy/tariff_applications.h"
+#include "infra/kernel/resource_blocks.h"
+#include "kernel/legacy_control_block.h"
 #endif // !WIN32
 
 
@@ -110,7 +115,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     timer_set[5] = *(p+6);  //sec
                     if(Time_Format_Check(&timer_set[3]) || Date_Format_Check(timer_set))  return -DAR_OTHERS_ERROR;  //时间非法
                     
-                    if((pctx->security_choice != 0x01) && (mbase_cb->boardadjtime == 0xAA))//当日已校时且是明文校时
+                    if((pctx->security_choice != 0x01) && (nd_mbase_boardadjtime(mbase_cb) == 0xAA))//当日已校时且是明文校时
                     {
                         return -DAR_OTHERS_ERROR;
                     }
@@ -144,9 +149,9 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         
                         //最小校时偏差：小于此范围所有校时均不响应，包括明文广播校时、密文广播校时，默认60秒；
                         //最大校时偏差：超过此范围的明文广播校时不响应，密文广播校时响应，默认300秒。
-                        if(Temp32C < mbase_cb->Limit_T_Min)  return -DAR_OTHERS_ERROR;
+                        if(Temp32C < nd_mbase_Limit_T_Min(mbase_cb))  return -DAR_OTHERS_ERROR;
                         
-                        if(Temp32C > mbase_cb->Limit_T_Max)  
+                        if(Temp32C > nd_mbase_Limit_T_Max(mbase_cb))  
                         {
                             //记录时钟故障(时钟非法)
                             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBroadcastTimeERR);
@@ -160,7 +165,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                                 
                                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBroadcastTimeERR);
                                 nd_set_index(instance, s_index, (uint8_t*)&tmpbuf[0], 3);
-                                mbase_cb->RTCErrS_status = 1;
+                                nd_mbase_RTCErrS_status(mbase_cb) = 1;
                             }
                             return -DAR_OTHERS_ERROR;
                         }
@@ -189,12 +194,12 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         if(timeout == 1)    return -DAR_OTHERS_ERROR;
 
                         
-                        mbase_cb->boardadjtime = 0xAA; //明文广播校时标志
+                        nd_mbase_boardadjtime(mbase_cb) = 0xAA; //明文广播校时标志
                     }
                     else    //密文广播校时
                     {
                         //最小校时偏差：小于此范围所有校时均不响应，包括明文广播校时、密文广播校时，默认60秒；
-                        if(Temp32C < mbase_cb->Limit_T_Min)  return -DAR_OTHERS_ERROR;
+                        if(Temp32C < nd_mbase_Limit_T_Min(mbase_cb))  return -DAR_OTHERS_ERROR;
                     }
 
 
@@ -254,7 +259,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
             switch(method)
             {
                 case 0x04://出厂参数初始化
-                    if(mbase_cb->factor_mode == false)  return -DAR_UNAUTHORIZED;
+                    if(nd_mbase_factor_mode(mbase_cb) == false)  return -DAR_UNAUTHORIZED;
                     ret = para_init( instance );
                     meter_clr(instance);
                     if(ret < 0)
@@ -265,7 +270,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                     return (p-buf);
                     break;
                 case 0x03://数据初始化（电表清零）
-                    if(mbase_cb->factor_mode == false)
+                    if(nd_mbase_factor_mode(mbase_cb) == false)
                     {
                         if((1 != pctx->timeTag_valid) || (pctx->timeTag[0] == 0))
                         {
@@ -273,12 +278,12 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         }
                     }
 
-                    if (( mbase_cb->key_state == false ) && (mbase_cb->factor_mode == false))//0私钥，1公钥，私钥不允许清零
+                    if (( nd_mbase_key_state(mbase_cb) == false ) && (nd_mbase_factor_mode(mbase_cb) == false))//0私钥，1公钥，私钥不允许清零
                     {
                         return (-DAR_UNAUTHORIZED);
                     }
 
-                    if(mbase_cb->factor_mode == false) 
+                    if(nd_mbase_factor_mode(mbase_cb) == false) 
                     {
                         record_event_no_mesg_pro(instance, NULL, MeterClrS, NULL, 1);
                     }
@@ -293,7 +298,7 @@ int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, v
                         return -DAR_TIME_TAG_INVALID;
                     }
                     event_clear_omd_add(instance, id, 0 );
-                    mbase_cb->flag_event_clear = 0x5a;
+                    nd_mbase_flag_event_clear(mbase_cb) = 0x5a;
                     event_clr(instance);// 事件清零
                     p++;                     
                     record_event_no_mesg_pro(instance, NULL, EventClrS, NULL, 1);

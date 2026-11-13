@@ -1,0 +1,6 @@
+name: application.adapters.dl698
+version: 0.1.0
+layer: protocol
+paths: [application/adapters/dl698]
+dependencies: [application.adapters.dl645, application.ports, domain.common, domain.events, domain.report, domain.security, domain.tariff, nd_buf]
+legacy: false

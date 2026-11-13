@@ -1,0 +1,6 @@
+name: infra.boot.app
+version: 0.1.0
+layer: infra
+paths: [infra/boot/App]
+dependencies: [infra.boot.drivers, infra.boot.updata]
+legacy: true

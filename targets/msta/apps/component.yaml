@@ -1,0 +1,6 @@
+name: target.msta.apps
+version: 0.1.0
+layer: product
+paths: [targets/msta/apps]
+dependencies: [application.adapters.dl645, legacy.kernel_headers]
+legacy: true

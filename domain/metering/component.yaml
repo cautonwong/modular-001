@@ -1,0 +1,8 @@
+name: domain.metering
+version: 0.1.0
+layer: domain
+paths: [domain/metering]
+# Owned but not in the VG_DTZY firmware source table.
+exclude: [domain/metering/legacy, domain/metering/demand.c]
+dependencies: [domain.common]
+legacy: false

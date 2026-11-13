@@ -1,283 +1,15 @@
-#include "nidavellir.h"
+#include <stdbool.h>
+#include "application/ports/fifo.h"
+#include "application/adapters/dl698/fr_698_env.h"
+struct instance_t;
+#include "application/ports/resource_access.h"
 #include "fr_698.h"
+#include "fr_axdr_codec.h"
+#include "application/ports/platform.h"
+#include "domain/events/legacy/gs_record.h"
+#include "domain/tariff/legacy/tariff_applications.h"
 
-uint8_t axdr_decode(uint8_t type, const uint8_t *buf, uint16_t *len)
-{
-    if (buf[0] < 128)
-    {
-        if (len != NULL)
-        {
-            *len = buf[0];
-        }
-        return 1;
-    }
-    else if (buf[0] == 0x81)
-    {
-        if (len != NULL)
-        {
-            *len = buf[1];
-        }
-        return 2;
-    }
-    else if (buf[0] == 0x82)
-    {
-        if (len != NULL)
-        {
-            *len = ((uint16_t)buf[1] << 8) + buf[2];
-        }
-        return 3;
-    }
-    else
-    {
-        if (len != NULL)
-        {
-            *len = 0;
-        }
-        return 0;
-    }
-}
 
-uint8_t axdr_len_encode(uint8_t* buf, uint16_t len)
-{
-    if (len < 128)
-    {
-        if (buf != NULL)
-        {
-            buf[0] = (uint8_t)len;
-        }
-
-        return 1;
-    }
-    else if (len < 256)
-    {
-        if (buf != NULL)
-        {
-            buf[0] = 0x81;
-            buf[1] = (uint8_t)len;
-        }
-
-        return 2;
-    }
-    else
-    {
-        if (buf != NULL)
-        {
-            buf[0] = 0x82;
-            buf[1] = (uint8_t)(len >> 8);
-            buf[2] = (uint8_t)len;
-        }
-
-        return 3;
-    }
-}
-
-uint16_t axdr_get_len(const uint8_t *data)
-{
-    uint16_t type_len = 0;
-    uint16_t data_len = 0,total_len=0;
-    uint16_t len = 0;
-    uint8_t num = 0;
-    uint8_t type = data[0];
-    uint8_t tmp = 0;
-        
-    switch (type)
-    {
-    case TYPE_null:
-        return 1;
-        break;
-    case TYPE_array: 
-    case TYPE_structure:
-        data_len++;
-        num = data[data_len];
-        data_len++;
-        data = data + data_len;
-        data_len = 0;
-        total_len = 0;
-        while (num--)
-        {
-            data_len = axdr_get_len(data);
-            total_len = total_len + data_len;
-            data = data + data_len;
-        }
-        return (total_len + 2);
-        break;
-    case TYPE_bool:
-    case TYPE_enum:
-    case TYPE_integer:
-    case TYPE_unsigned:
-        return 1+1;
-        break;
-    case TYPE_long:
-    case TYPE_long_unsigned:
-    case TYPE_Scaler_Unit:
-    case TYPE_OI:
-        return 2+1;
-        break;
-    case TYPE_double_long:
-    case TYPE_double_long_unsigned:
-    case TYPE_OAD:
-    case TYPE_OMD:
-        return 4+1;
-        break;
-    case TYPE_long64:
-    case TYPE_long64_unsigned:
-        return 8+1;
-        break;
-    case TYPE_bit_string:
-    case TYPE_octet_string:
-    case TYPE_visible_string:
-    case TYPE_UTF8_string:
-    case TYPE_TSA:
-    case TYPE_MAC:
-    case TYPE_RN:        
-        type_len = 1;
-        type_len += axdr_decode(type, data+type_len, &data_len);
-        if(TYPE_bit_string == type)
-            type_len += (data_len + 7) / 8;
-        else
-            type_len += data_len;
-        return (type_len);
-        break;
-
-    case TYPE_date_time:
-        return 10+1;
-        break;
-    case TYPE_date:
-    case TYPE_COMDCB:
-        return 6;
-        break;
-    case TYPE_time:
-    case TYPE_TI:
-        return 3+1;
-        break;
-    case TYPE_date_time_s:
-        return 7+1;
-        break;
-
-    case TYPE_Region:
-        data++;
-        len = 1;
-        data_len = axdr_get_len(data);
-        data += data_len;
-        len += data_len;
-        data_len = axdr_get_len(data);
-        return (len + data_len);
-        break;
-
-    case TYPE_RSD:
-        data++;
-        type = data[0];
-        len = 1;
-        if (0 == type)
-        {
-           len = 1;
-        }
-        else if (1 == type)
-        {
-            len += 4;
-            if ((TYPE_date_time_s != data[len]) && (TYPE_double_long_unsigned != data[len]  ))
-            {
-                //return 0;
-            }
-
-            data_len = axdr_get_len(&data[len]);
-            len += data_len;
-        }
-        else if (2 == type)
-        {
-            len += 4;
-            if ((TYPE_date_time_s != data[len]) && (TYPE_double_long_unsigned != data[len]))
-            {
-                //return 0;
-            }
-
-            //type_len = axdr_get_len(data[len], data+len, &data_len);
-            data_len = axdr_get_len(&data[len]);
-            len += data_len;
-
-            if ((TYPE_date_time_s != data[len]) && (TYPE_double_long_unsigned != data[len] ))
-            {
-                //return 0;
-            }
-
-            data_len = axdr_get_len(&data[len]);
-            len += data_len;
-            
-            if ((TYPE_TI != data[len]) && (TYPE_double_long_unsigned != data[len]) && (TYPE_null != data[len]))
-            {
-                //return 0;
-            }
-            
-            data_len = axdr_get_len(&data[len]);
-            len += data_len;
-        }
-        else if ( 9 == type)
-        {
-            len += 1;
-        }
-        else
-        {
-            return 0;
-        }
-        return len;
-        break;
-
-    case TYPE_CSD:
-        data++;
-        len = 1;
-        len += (1+4);
-        if (1 == data[0]){
-            num  = data[5];
-            len += 1;
-            len += num * 4;
-        }
-
-        return len;
-        break;
-
-    case TYPE_SID:
-        len = 4+1;
-        type_len = axdr_decode(data[len], data+len, &data_len);
-        return (len + type_len + data_len);
-        break;
-
-    case TYPE_SID_MAC:
-        len = 1 + 4;
-        type_len = axdr_decode(data[len], data+len, &data_len);
-        len += type_len + data_len;
-        type_len = axdr_decode(data[len], data+len, &data_len);
-        return (len + type_len + data_len);
-        break;
-
-    case TYPE_ROAD:
-        len = 4;
-        num  = data[len];
-        len += num * 4;
-        return (len);
-        break;
-
-    case TYPE_RCSD:
-        data++;
-        len = 1;
-        num = data[0];
-        while (num--)
-        {
-            type = data[len];
-            len += (1+4);
-            if (1 == type){
-                tmp  = data[len];
-                len += tmp * 4;
-            }
-        }
-        return len;
-        break;
-        
-    default:
-        break;
-    }
-
-    return 0;
-}
 
 
 uint16_t axdr_record_len_get(uint8_t* data, uint16_t* rsdLen, uint16_t* rcsdLen)
@@ -472,11 +204,10 @@ uint8_t check_698DateTime_valid(uint8_t *p)
 
 
 // 方法1 事件rsd解析
-int decode_rsd_event_selector_1(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
+int decode_rsd_event_selector_1(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t, struct rsd_info_t* rsd_info)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = instance->apdu_cache; //当临时缓存
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
+    uint8_t* p = nd_fr698_apdu_cache(instance); //当临时缓存
     uint32_t rsd_oad = 0;
     uint16_t data_len = 0;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -548,33 +279,13 @@ uint8_t frz_non_period_type_judge(uint16_t oi)
 
     return 1;        //非周期性冻结
 }
-struct frz_period_t
-{
-    uint16_t oi;
-    uint16_t period_id;
-    uint32_t one_period;// 秒
-};
-const struct frz_period_t frz_period_tab[] =
-{
-    {0x5002, MinuteFreeze_period,   1 * 60,             },
-    {0x5003, HourFreeze_period,     1 * 60 * 60,        }, 
-    {0x5004, DayFreeze_period,      1 * 60 * 60 * 24,   },
-};
-
-
 //周期性冻结(除去月冻结) 用方法1 时间点筛选时 给予时间点开始再加一个周期的时间范围搜索
 int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    uint8_t *apdu_rx = ctx->apdu_d_rx;
-    struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = instance->apdu_cache; //当临时缓存
+    uint16_t frz_oi = (uint16_t)((oad & 0xFFFF0000) >> 16);
 
-    uint32_t rcsd, range_sec = 0,index;
-    uint16_t frz_oi = (uint16_t)((oad&0xFFFF0000) >> 16);
-    uint16_t PeriodId = 0xFFFF;
-    uint8_t period_buf[24], scheme = 0, i, period = 0, rcsd_num = 0;
-    int ret;
+    (void)instance;
+    (void)pipeline;
 
     //判断是否为周期冻结
     if ((1 == frz_non_period_type_judge(frz_oi)) || (frz_oi == 0x5006))
@@ -584,58 +295,13 @@ int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pi
 
     rsd_info->end_mark = 0xFFFFFFFF;
     return 1;
-#if 0   
-    //根据冻结 获取冻结周期
-    for (i = 0; i < sizeof(frz_period_tab) / sizeof(frz_period_tab[0]); i++)
-    {
-        if (frz_oi == frz_period_tab[i].oi)
-        {
-            PeriodId = frz_period_tab[i].period_id;
-            range_sec = frz_period_tab[i].one_period;
-            break;
-        }
-    }
-
-    if (PeriodId == 0xFFFF)
-    {
-        return -DAR_TYPE_NOT_MATCH;
-    }
-
-    //获取捕获周期
-    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodId);
-    nd_get_index(instance, index, &period_buf[0], sizeof(period_buf));
-
-    memcpy(p, apdu_rx + ctx->apdu_rx_offset, 15);
-      
-    rcsd_num = *(p+0); 
-    if (rcsd_num)
-    {
-        rcsd = buf_to_uint32_msb(p + 2);//暂取第一个rcsd
-        scheme = get_OAD_Schem(rcsd);
-    }
-
-    if (scheme > 7)
-    {
-        scheme = 0;
-    }
-
-    if (period_buf[scheme * 3] != 0)
-    {
-        period = period_buf[scheme * 3 + 2];
-    }
-    range_sec = range_sec * period ;
-    // 结束时间  增加 周期s的时间
-    rsd_info->end_mark += (range_sec);
-    return 1;
-#endif    
 }
 
 int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad,  struct rsd_info_t* rsd_info)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
-    struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = instance->apdu_cache; //当临时缓存
+    uint8_t* p = nd_fr698_apdu_cache(instance); //当临时缓存
     uint32_t rsd_oad;
     uint16_t data_len = 0;
     uint16_t rx_offset_cache = 0;
@@ -688,10 +354,9 @@ int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t*
 
 int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
-    struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = instance->apdu_cache;//当临时缓存
+    uint8_t* p = nd_fr698_apdu_cache(instance);//当临时缓存
     uint16_t value;
     uint32_t rsd_oad;
     uint16_t oi = get_OAD_OI(oad);
@@ -851,17 +516,14 @@ int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t*
     return (1);
 }
 
-int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
+int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t, struct rsd_info_t* rsd_info)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
-    struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = instance->apdu_cache; //当临时缓存
+    uint8_t* p = nd_fr698_apdu_cache(instance); //当临时缓存
 
     uint16_t value=0, data_len = 0;
     uint32_t rsd_oad = 0;
-    uint16_t oi = get_OAD_OI(oad);
-    int dar = 0;
     uint16_t rx_offset_cache = 0;
 
     
@@ -1002,12 +664,11 @@ int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* 
     return (1);
 }
 
-int decode_rsd_selector_9(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
+int decode_rsd_selector_9(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t, struct rsd_info_t* rsd_info)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
-    struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = instance->apdu_cache; //当临时缓存
+    uint8_t* p = nd_fr698_apdu_cache(instance); //当临时缓存
 
     *p = apdu_rx[ctx->apdu_rx_offset++];
     rsd_info->last_no = *p;
@@ -1110,7 +771,7 @@ int _record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t 
 {
     uint32_t i, k, n;
     uint8_t *p_des = des, *p_src = src;
-    int single_len, store_len, orig_len;
+int single_len, orig_len;
     uint8_t tmpbuf[200];//单个oad最大长度
     
     for(i=1; i < (rcsd_req[0] + 1); i++)
@@ -1132,14 +793,14 @@ int _record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t 
                 if (single_len > 0)
                 {
                     // 个别数据仍需特殊处理
-                    for (n = 0; n < single_len; n++) // 数据全f时 转空
+                    for (n = 0; n < (uint32_t)single_len; n++) // 数据全f时 转空
                     {
                         if (p_src[n] != 0xff)
                         {
                             break;
                         }
                     }
-                    if (n >= single_len)
+                    if (n >= (uint32_t)single_len)
                     {
                         if (mode)
                         {
@@ -1227,12 +888,10 @@ int record_package_01(struct instance_t* instance,  uint8_t *des, uint8_t *src, 
 //rsd 解析
 int rsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
-    struct fifo_t* cache = ctx->apdu;
-    uint8_t* p = instance->apdu_cache; //当临时缓存
+    uint8_t* p = nd_fr698_apdu_cache(instance); //当临时缓存
     int ret = -DAR_RW_REJECT; //0;
-    uint8_t dar;
     uint8_t oad_type = (uint8_t)(oad>>28);
 
     memset((uint8_t *)rsd_info, 0, sizeof(struct rsd_info_t));
@@ -1284,7 +943,7 @@ int rsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_
 //rcsd 解析   到rcsd_list[]. 第一个元素为 rcsd个数
 int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad,  uint32_t *rcsd_list)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
@@ -1339,7 +998,7 @@ int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32
                         schemNo = get_OAD_Schem( rcsd_list[1 + i]);
                     }
                     
-                    if ((schemNo == 0xFF) && ((i+1) == rcsd_list[0]))
+                    if ((schemNo == 0xFF) && ((uint32_t)(i+1) == rcsd_list[0]))
                     {
                         schemNo = get_OAD_Schem( rcsd_list[1 + i]);
                     }
@@ -1420,7 +1079,7 @@ uint8_t rcsd_req_schem_pro(uint32_t oad, uint32_t *rcsd_req)
 //2: 方法2按时间检索条件满足,或无需协议层筛选的都返回2; 
 uint8_t select_record_time_check(uint8_t *src, uint8_t non_period, struct rsd_info_t *rsd_info)
 {
-    uint8_t *p, v, buf[7];
+uint8_t *p, v;
     uint16_t selec_mode;
     uint32_t row_start, row_end, cur_data;
 
@@ -1462,7 +1121,7 @@ uint8_t select_record_time_check(uint8_t *src, uint8_t non_period, struct rsd_in
 //获取间隔搜索的基值
 uint32_t get_interval_basic_value(uint8_t *src, struct rsd_info_t *rsd_info)
 {
-    uint8_t *p, buf[8];
+uint8_t *p;
     uint32_t value = 0xffffffffU;
 
     p = src;
@@ -1528,7 +1187,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     struct record_storage_id_info_t record_id_info; 
     struct circular_info_t circular_info = {0};
     uint32_t *rcsd_req = (uint32_t *)rcsd_info; // 待定
-    uint8_t *ptr_tmp = instance->apdu_cache;   
+    uint8_t *ptr_tmp = nd_fr698_apdu_cache(instance);   
     uint32_t rcsd_src[REQ_RCSD_MAXNUM];//设置的关联对象，用于与请求的关联对象作比对筛选
     uint16_t i, read_num, number = 0;
     uint16_t judge_size, one_len = 0,len = 0;
@@ -1556,7 +1215,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
         }
     }
 
-    if((p_ctx)&&(p_ctx->channel < chl_NUM))
+    if((p_ctx)&&(p_ctx->channel < FR_698_CHL_NUM))
     {
         channel = p_ctx->channel;
     }
@@ -1663,7 +1322,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
     read_num = circular_info.valid_num;
     for (i = circular_info.curr_num; i < read_num; i++)
     {
-        v85xxp_clear_watchdog();
+        nd_platform_watchdog_kick();
         //获取1条记录内容
         ret = nd_log_output(instance, record_id_info.save_index,  ptr_tmp, circular_info.unit_size, &circular_info);
         if(ret < 0)

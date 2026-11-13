@@ -1,0 +1,6 @@
+name: nd_bus
+version: 0.1.0
+layer: core
+paths: [components/core/bus]
+dependencies: []
+legacy: false

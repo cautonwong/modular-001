@@ -108,11 +108,9 @@ uint8_t ndv_timer_start_one(uint8_t timerid, uint32_t count)
     return false;
 } 
 
-void ndv_timer_init(void)
+void ndv_timer_reset(void)
 {
     uint8_t i;
-    struct isr_reg_ctx_t IsrReg;
-    
     for(i=0;i<TIME_OBJ_NUM;i++)
     {
         tick_timer_list[i].tickfunc = 0;
@@ -121,14 +119,17 @@ void ndv_timer_init(void)
         tick_timer_list[i].dlyctr = 0;
         tick_timer_list[i].stoped = 0;
     }
-    
+}
+
+void ndv_timer_init(void)
+{
+    struct isr_reg_ctx_t IsrReg;
+
+    ndv_timer_reset();
     IsrReg.IsrFunctionRegister = ndv_timer_tick;
     IsrReg.para = (void*)(0);
     Isr_handle_regsit((struct isr_reg_ctx_t*)&IsrReg , IRQ_SYSTICK);
-    
     cm0_systick_init(1);
-    
 }
-
 
 /** @} */

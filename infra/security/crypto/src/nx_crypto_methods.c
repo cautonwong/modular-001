@@ -32,7 +32,6 @@
 #include "nx_crypto_sha1.h"
 #include "nx_crypto_sha2.h"
 #include "nx_crypto_sha5.h"
-#include "nx_crypto.h"
 #include "nx_crypto_hmac_sha1.h"
 #include "nx_crypto_hmac_sha2.h"
 #include "nx_crypto_hmac_sha5.h"

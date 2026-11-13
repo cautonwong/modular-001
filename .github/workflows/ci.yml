@@ -1,0 +1,25 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi
+      - name: Checkout FreeRTOS kernel
+        uses: actions/checkout@v4
+        with:
+          repository: FreeRTOS/FreeRTOS-Kernel
+          ref: V11.3.3
+          path: .freertos-kernel
+      - name: Run verification
+        env:
+          FREERTOS_KERNEL_DIR: ${{ github.workspace }}/.freertos-kernel
+        run: ./ci.sh

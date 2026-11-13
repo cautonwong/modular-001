@@ -1,0 +1,6 @@
+name: protocol.dl698
+version: 0.1.0
+layer: protocol
+paths: [components/protocol/dl698]
+dependencies: [application.adapters.dl698, application.ports, nd_bus, nd_channel, infra.channel, infra.kernel]
+legacy: true

@@ -1,6 +1,14 @@
 #include "nidavellir.h"
+#include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
 #include "gs_record.h"
+#include "cpu_surport.h"
+#include "application/adapters/dl698/fr_698.h"
+#include "domain/events/legacy/gs_record.h"
+#include "domain/freeze/legacy/freeze_applications.h"
+#include "infra/kernel/resource_blocks.h"
+#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/mapper_698/resource_map.h"
 // 单个事件是否支持复位判断
 int single_event_clear_judge(uint16_t oi)
 {
@@ -81,7 +89,7 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     capture_oad = buf_to_uint32_msb(p);
     Schem = get_OAD_Schem(capture_oad);
     
-    if ((oi == 0x3013) && ( mbase_cb->key_state == false ))
+    if ((oi == 0x3013) && ( nd_mbase_key_state(mbase_cb) == false ))
     {
         *dar = DAR_RW_REJECT;
         return -DAR_RW_REJECT;
@@ -215,7 +223,7 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
     p += 4;
     Schem = get_OAD_Schem(capture_oad);
 
-    if ((oi == 0x3013) && ( mbase_cb->key_state == false ))
+    if ((oi == 0x3013) && ( nd_mbase_key_state(mbase_cb) == false ))
     {
         *dar = DAR_OTHERS_ERROR;
         return -DAR_RW_REJECT;
@@ -326,7 +334,7 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
             return -DAR_OTHERS_ERROR;
         }
         p += 2;
-        if(mbase_cb->factor_mode == false)
+        if(nd_mbase_factor_mode(mbase_cb) == false)
         {
             if((1 != pctx->timeTag_valid) || (pctx->timeTag[0] == 0))
             {
@@ -358,7 +366,7 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
 
         report_3320list_confirmed_All_channel(instance, id); //   77个 action  共 20秒  占用 17秒    测试 
 
-        mbase_cb->flag_event_clear = 0;
+        nd_mbase_flag_event_clear(mbase_cb) = 0;
         record_event_no_mesg_pro(instance, NULL, EventClrS, NULL, 1);
 
         return (p - buf);

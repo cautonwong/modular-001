@@ -27,3 +27,12 @@ nd_event_transition_t nd_event_duration_step(nd_event_duration_t *state,
     }
     return ND_EVENT_NONE;
 }
+
+nd_event_transition_t nd_event_duration_start(nd_event_duration_t *state)
+{
+    if (state->active) {
+        return ND_EVENT_NONE;
+    }
+    state->active = 1;
+    return ND_EVENT_STARTED;
+}

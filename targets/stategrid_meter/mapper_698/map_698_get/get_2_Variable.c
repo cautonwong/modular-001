@@ -1,5 +1,10 @@
 #include "nidavellir.h"
+#include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
+#include "domain/tariff/legacy/tariff_applications.h"
+#include "infra/kernel/resource_blocks.h"
+#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/mapper_698/resource_map.h"
 
 typedef struct 
 {
@@ -63,30 +68,30 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
     
     idmatch idbuf[] = 
     {
-        0x20000200,     0x01,   TYPE_long_unsigned,         (uint8_t*)&mbase_cb->voltage_ac,        2,  //电压
-        0x20000201,     0x00,   TYPE_long_unsigned,         (uint8_t*)&mbase_cb->voltage_ac,        2,  //电压
-        0x20010200,     0x01,   TYPE_double_long,           (uint8_t*)&mbase_cb->current_l,         4,  //火线电流
-        0x20010201,     0x00,   TYPE_double_long,           (uint8_t*)&mbase_cb->current_l,         4,  //火线电流
-        0x20010400,     0x00,   TYPE_double_long,           (uint8_t*)&mbase_cb->current_n,         4,  //零线电流
-        0x20040200,     0x02,   TYPE_double_long,           (uint8_t*)&mbase_cb->active_power,      4,  //有功功率
-        0x20040201,     0x00,   TYPE_double_long,           (uint8_t*)&mbase_cb->active_power,      4,  //有功功率
-        0x20040202,     0x00,   TYPE_double_long,           (uint8_t*)&mbase_cb->active_power,      4,  //有功功率
-        0x20060200,     0x02,   TYPE_double_long,           (uint8_t*)&mbase_cb->apparent_power,    4,  //视在功率
-        0x20060201,     0x00,   TYPE_double_long,           (uint8_t*)&mbase_cb->apparent_power,    4,  //视在功率
-        0x20060202,     0x00,   TYPE_double_long,           (uint8_t*)&mbase_cb->apparent_power,    4,  //视在功率
-        0x20070200,     0x02,   TYPE_double_long,           (uint8_t*)&mbase_cb->active_avg_power,  4,  //1分钟平均功率
-        0x20070201,     0x00,   TYPE_double_long,           (uint8_t*)&mbase_cb->active_avg_power,  4,  //1分钟平均功率
-        0x200A0200,     0x02,   TYPE_long,                  (uint8_t*)&mbase_cb->power_factor,      2,  //功率因数
-        0x200A0201,     0x00,   TYPE_long,                  (uint8_t*)&mbase_cb->power_factor,      2,  //功率因数
-        0x200A0202,     0x00,   TYPE_long,                  (uint8_t*)&mbase_cb->power_factor,      2,  //功率因数
-        0x200F0200,     0x00,   TYPE_long_unsigned,         (uint8_t*)&mbase_cb->frequency,         2,  //频率
-        0x20100200,     0x00,   TYPE_long,                  (uint8_t*)&mbase_cb->temperature,       2,  //温度
-        0x20110200,     0x00,   TYPE_long_unsigned,         (uint8_t*)&mbase_cb->voltage_battery,   2,  //电池电压
+        0x20000200,     0x01,   TYPE_long_unsigned,         (uint8_t*)&nd_mbase_voltage_ac(mbase_cb),        2,  //电压
+        0x20000201,     0x00,   TYPE_long_unsigned,         (uint8_t*)&nd_mbase_voltage_ac(mbase_cb),        2,  //电压
+        0x20010200,     0x01,   TYPE_double_long,           (uint8_t*)&nd_mbase_current_l(mbase_cb),         4,  //火线电流
+        0x20010201,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mbase_current_l(mbase_cb),         4,  //火线电流
+        0x20010400,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mbase_current_n(mbase_cb),         4,  //零线电流
+        0x20040200,     0x02,   TYPE_double_long,           (uint8_t*)&nd_mbase_active_power(mbase_cb),      4,  //有功功率
+        0x20040201,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mbase_active_power(mbase_cb),      4,  //有功功率
+        0x20040202,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mbase_active_power(mbase_cb),      4,  //有功功率
+        0x20060200,     0x02,   TYPE_double_long,           (uint8_t*)&nd_mbase_apparent_power(mbase_cb),    4,  //视在功率
+        0x20060201,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mbase_apparent_power(mbase_cb),    4,  //视在功率
+        0x20060202,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mbase_apparent_power(mbase_cb),    4,  //视在功率
+        0x20070200,     0x02,   TYPE_double_long,           (uint8_t*)&nd_mbase_active_avg_power(mbase_cb),  4,  //1分钟平均功率
+        0x20070201,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mbase_active_avg_power(mbase_cb),  4,  //1分钟平均功率
+        0x200A0200,     0x02,   TYPE_long,                  (uint8_t*)&nd_mbase_power_factor(mbase_cb),      2,  //功率因数
+        0x200A0201,     0x00,   TYPE_long,                  (uint8_t*)&nd_mbase_power_factor(mbase_cb),      2,  //功率因数
+        0x200A0202,     0x00,   TYPE_long,                  (uint8_t*)&nd_mbase_power_factor(mbase_cb),      2,  //功率因数
+        0x200F0200,     0x00,   TYPE_long_unsigned,         (uint8_t*)&nd_mbase_frequency(mbase_cb),         2,  //频率
+        0x20100200,     0x00,   TYPE_long,                  (uint8_t*)&nd_mbase_temperature(mbase_cb),       2,  //温度
+        0x20110200,     0x00,   TYPE_long_unsigned,         (uint8_t*)&nd_mbase_voltage_battery(mbase_cb),   2,  //电池电压
         //0x20130200,     0x00,   TYPE_double_long_unsigned,  (uint8_t*)&mbase_cb->battery_used_time, 4,  //电池工作时间     
-        0x20310200,     0x00,   TYPE_double_long_unsigned,  (uint8_t*)&mbase_cb->MonthEnegery,      4,  //月度用电量
-        //0x20150400,     0x00,   TYPE_bit_string,            (uint8_t*)&mbase_cb->report_2015state[0], 4,  //跟随上报状态字
-        0x20400200,     0x00,   TYPE_bit_string,            (uint8_t*)&mbase_cb->cmd_dostate,       2,  //控制命令执行状态字
-        0x20410200,     0x00,   TYPE_bit_string,            (uint8_t*)&mbase_cb->cmd_errstate,      2,  //控制命令错误状态字
+        0x20310200,     0x00,   TYPE_double_long_unsigned,  (uint8_t*)&nd_mbase_MonthEnegery(mbase_cb),      4,  //月度用电量
+        //0x20150400,     0x00,   TYPE_bit_string,            (uint8_t*)&nd_mbase_report_2015state(mbase_cb)[0], 4,  //跟随上报状态字
+        0x20400200,     0x00,   TYPE_bit_string,            (uint8_t*)&nd_mbase_cmd_dostate(mbase_cb),       2,  //控制命令执行状态字
+        0x20410200,     0x00,   TYPE_bit_string,            (uint8_t*)&nd_mbase_cmd_errstate(mbase_cb),      2,  //控制命令错误状态字
     };
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
@@ -209,7 +214,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
                     {
                         *p++ = TYPE_bit_string;
                         *p++ = 16;
-                        memcpy(p, (uint8_t*)&mbase_cb->run_state[i], 0x02);
+                        memcpy(p, (uint8_t*)&nd_mbase_run_state(mbase_cb)[i], 0x02);
                         p = p + 2;
                     }
                     return (p-buf);
@@ -218,7 +223,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
                 {
                     *p++ = TYPE_bit_string;
                     *p++ = 16;
-                    memcpy(p, (uint8_t*)&mbase_cb->run_state[index], 0x02);
+                    memcpy(p, (uint8_t*)&nd_mbase_run_state(mbase_cb)[index], 0x02);
                     p = p + 2;
                     return (p-buf);
                 }
@@ -244,14 +249,14 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
             {
                 *p++ = TYPE_bit_string;
                 *p++ = 32;
-                p += uint32_to_buf_msb(mbase_cb->report_2015state[channel], p);
+                p += uint32_to_buf_msb(nd_mbase_report_2015state(mbase_cb)[channel], p);
                 return (p-buf);
             }
             else if(attribute == 0x04) //模式字
             {
                 *p++ = TYPE_bit_string;
                 *p++ = 32;
-                mem_swap_cpy(p, (uint8_t*)&mbase_cb->report_2015mode, 4); 
+                mem_swap_cpy(p, (uint8_t*)&nd_mbase_report_2015mode(mbase_cb), 4); 
                 p += 4;
                 return (p-buf);
             }

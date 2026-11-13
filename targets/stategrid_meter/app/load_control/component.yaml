@@ -1,0 +1,6 @@
+name: target.stategrid_meter.load_control
+version: 0.1.0
+layer: product
+paths: [targets/stategrid_meter/app/load_control]
+dependencies: []
+legacy: true

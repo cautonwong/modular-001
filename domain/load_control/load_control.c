@@ -74,6 +74,16 @@ uint32_t load_control_current_limit_minutes(const load_control_state_t *state)
     return state->current_limit_minutes;
 }
 
+uint32_t load_control_limit_minutes(const load_control_state_t *state)
+{
+    return state->limit_minutes;
+}
+
+uint8_t load_control_relay_true(const load_control_state_t *state)
+{
+    return state->relay_true;
+}
+
 void load_control_request_repeat(load_control_state_t *state)
 {
     state->relay_do = 1;
@@ -178,6 +188,7 @@ void load_control_second(load_control_state_t *state, const nd_load_inputs_t *in
     }
 
     if (state->last_switch_on != state->switch_on) {
+        actions->transition = 1;
         if (state->switch_on) {
             actions->connect = 1;
             if (state->meter_clear != 0x5A) {

@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <setjmp.h>
-#include "testutil\cmocka.h"
+#include "testutil/cmocka.h"
 extern int __read(uint32_t id, uint8_t* buf, int len);
 extern int __write(uint32_t id, uint8_t *buf, int len);
 extern int mock_id_data_ok(uint32_t id,size_t len);

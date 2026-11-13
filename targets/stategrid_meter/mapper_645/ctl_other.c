@@ -1,8 +1,16 @@
 #include "nidavellir.h"
+#include "targets/stategrid_meter/persistence/meter_record.h"
+#include "application/adapters/dl645/fr_645_context.h"
 #include "645id_table.h"
 #include "utils.h"
 #include "gs_record.h"
 #include "ctl_03_SafeAuthen.h"
+#include "cpu_surport.h"
+#include "application/apps/app_config.h"
+#include "domain/events/legacy/gs_record.h"
+#include "domain/tariff/legacy/tariff_applications.h"
+#include "infra/kernel/resource_blocks.h"
+#include "kernel/legacy_control_block.h"
 
 extern unsigned char Cmp_RemoteCtlTime( struct instance_t* instance, uint8_t* Addr );
 extern void save_relay_state(struct instance_t* instance);
@@ -19,15 +27,15 @@ signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t*
     uint8_t buffer[10]={0},temp[10]={0};
 
 
-    if(( Cmp_MeterAddr( instance, p_rx+1 , 0 ) == 0 ))
+    if(( fr_645_addr_match(p_rx+1, nd_fr645_tsa(instance), 0) == 0 ))
     {
         maddr_type = SA_TYPE_SINGLE645;  //实际地址
     }
-    else if(( Cmp_MeterAddr( instance, p_rx+1 , 1 ) == 0 ))
+    else if(( fr_645_addr_match(p_rx+1, nd_fr645_tsa(instance), 1) == 0 ))
     {
         maddr_type = SA_TYPE_GENERAL645;  //通配 
     }
-    else if((Addr_9_9( p_rx+1 ) == 0))
+    else if((fr_645_addr_all(p_rx+1, 0x99) == 0))
     {
         maddr_type = SA_TYPE_BROADECAST645;  //  99 广播
     }
@@ -38,11 +46,11 @@ signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t*
 
     if((*(p_rx+9) == 6) )
     {
-        if((mbase_cb->metertype & F_Password_En) == 0)   //明文模式不做判断
+        if((nd_mbase_metertype(mbase_cb) & F_Password_En) == 0)   //明文模式不做判断
         {
             if(chl == chl_ir_698)    
             {
-                if(((mbase_cb->metertype & F_Password_En) == 0) && (mbase_cb->infrared_auth_timeout == 0) && (mbase_cb->factor_mode == false))//红外通道必须在红外认证有效期间进行操作。
+                if(((nd_mbase_metertype(mbase_cb) & F_Password_En) == 0) && (nd_mbase_infrared_auth_timeout(mbase_cb) == 0) && (nd_mbase_factor_mode(mbase_cb) == false))//红外通道必须在红外认证有效期间进行操作。
                 {
                     if(maddr_type == SA_TYPE_BROADECAST645)
                         return -1;
@@ -144,7 +152,7 @@ signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t*
                 Lng2 = Lng2 - Lng1;
                 if( Lng2 & 0x80000000 )
                     Lng2 = ~Lng2 + 1;
-                if( (Lng2 <= (5*60)) && (mbase_cb->boardadjtime != 0xAA) )//一天只允许广播校时一次，校时幅度小于5分钟
+                if( (Lng2 <= (5*60)) && (nd_mbase_boardadjtime(mbase_cb) != 0xAA) )//一天只允许广播校时一次，校时幅度小于5分钟
                 {
                     //保存校时前时间 
                     rtc_get_from_tm(instance,temp);
@@ -152,7 +160,7 @@ signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t*
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
                     nd_set_index(instance, s_index, buffer, 7);
                     
-                    mbase_cb->boardadjtime = 0xAA;
+                    nd_mbase_boardadjtime(mbase_cb) = 0xAA;
                     Buf[0] = (*(p_rx+10));
                     Buf[1] = (*(p_rx+11));
                     Buf[2] = (*(p_rx+12));
@@ -195,14 +203,14 @@ signed char meteraddr_write(struct instance_t* instance, uint8_t* p_rx)
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t s_index = 0;    
     
-    if( (mbase_cb->factor_mode == true) || (mbase_cb->CoverOpenS_status == EVENT_SET) )
+    if( (nd_mbase_factor_mode(mbase_cb) == true) || (nd_mbase_CoverOpenS_status(mbase_cb) == EVENT_SET) )
     {
-        if( (Addr_A_A( p_rx+1 ) == 0) && (*(p_rx+9) == 6) && (BCD_Check( p_rx+10, 6 ) == 0) )
+        if( (fr_645_addr_all( p_rx+1, 0xAA ) == 0) && (*(p_rx+9) == 6) && (BCD_Check( p_rx+10, 6 ) == 0) )
         {
-            memcpy(mbase_cb->tsa, p_rx+10, 6);
+            memcpy(nd_mbase_tsa(mbase_cb), p_rx+10, 6);
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                    offsetof(struct mbase_control_block_t, tsa));
-            nd_set_offset(instance, s_index, mbase_cb->tsa, 6); 
+                    nd_mbase_offset_tsa());
+            nd_set_offset(instance, s_index, nd_mbase_tsa(mbase_cb), 6); 
             return 0;
         }
         else
@@ -218,7 +226,7 @@ signed char MulPort_set(struct instance_t* instance, uint8_t chl, uint8_t* p_rx)
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t len = *(p_rx+9);
     
-    if( (Cmp_MeterAddr( instance, p_rx+1, 0 ) == 0) || (Addr_9_9( p_rx+1 ) == 0) )
+    if( (fr_645_addr_match(p_rx+1, nd_fr645_tsa(instance), 0) == 0) || (fr_645_addr_all(p_rx+1, 0x99) == 0) )
     {
         if( len == 1 )
         {
@@ -226,14 +234,14 @@ signed char MulPort_set(struct instance_t* instance, uint8_t chl, uint8_t* p_rx)
             {
                 if(chl == chl_ir_698)   //红外
                 {
-                    if(((mbase_cb->metertype & F_Password_En) == 0) && (mbase_cb->infrared_auth_timeout == 0) && (mbase_cb->factor_mode == false))   //明文模式未开启
+                    if(((nd_mbase_metertype(mbase_cb) & F_Password_En) == 0) && (nd_mbase_infrared_auth_timeout(mbase_cb) == 0) && (nd_mbase_factor_mode(mbase_cb) == false))   //明文模式未开启
                     {
                         return RS_ERR_PASS;
                     }
                 }
 
-                mbase_cb->MulPortMode = (*(p_rx+10));
-                if(F_PortSec != mbase_cb->MulPortMode)    
+                nd_mbase_MulPortMode(mbase_cb) = (*(p_rx+10));
+                if(F_PortSec != nd_mbase_MulPortMode(mbase_cb))    
                 {
                     opreate_second_pluse(3);   //切换至多功能口
                 }
@@ -248,7 +256,7 @@ signed char MulPort_set(struct instance_t* instance, uint8_t chl, uint8_t* p_rx)
         }
         else
             return RS_ERR_LEN;
-        if( Addr_9_9( p_rx+1 ) == 0 )//广播不要求应答
+        if( fr_645_addr_all(p_rx+1, 0x99) == 0 )//广播不要求应答
             return -1;
         else
             return 0;
@@ -269,7 +277,7 @@ signed char dl645_meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
     int8_t ret = 0;
     uint8_t len_judge = 8;
     uint8_t TmpBuffer[10] ={0};
-    if( Cmp_MeterAddr( instance, p_rx+1, 0 ) == 0 )
+    if( fr_645_addr_match(p_rx+1, nd_fr645_tsa(instance), 0) == 0 )
     {
         if (false == Dl645_IR_chl_Check(instance, 0xFFFFFFFF, ctx->channel))
         {
@@ -287,7 +295,7 @@ signed char dl645_meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
         
         if(( ctx->password[0] != DL645_PA_SC_CIPHER) && ( ctx->password[0] != DL645_PA_PLAIN_02))  //鏀寔鍘傚02绾?
         {
-            if( mbase_cb->factor_mode != true )
+            if( nd_mbase_factor_mode(mbase_cb) != true )
             {
                 return RS_ERR_PASS;
             }
@@ -296,7 +304,7 @@ signed char dl645_meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
         if(ctx->password[0] == DL645_PA_SC_CIPHER)
         {
 #if(DEF_645_PRIVATE_KEY_METERCLR_EN == 0)//私钥不允许清零
-            if (( mbase_cb->key_state == false ) && (mbase_cb->factor_mode == false))//0私钥，1公钥，
+            if (( nd_mbase_key_state(mbase_cb) == false ) && (nd_mbase_factor_mode(mbase_cb) == false))//0私钥，1公钥，
             {
                 return RS_ERR_PASS;
             }
@@ -315,7 +323,7 @@ signed char dl645_meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
                     return RS_ERR_PASS;
                 }         
                 
-                if(mbase_cb->factor_mode == false) 
+                if(nd_mbase_factor_mode(mbase_cb) == false) 
                 {
                     record_event_no_mesg_pro(instance, NULL, MeterClrS, NULL, 1);
                 }
@@ -330,7 +338,7 @@ signed char dl645_meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
         {
             if( ctx->apdu_rx_len == 8 )
             {
-                if(mbase_cb->factor_mode == false) 
+                if(nd_mbase_factor_mode(mbase_cb) == false) 
                 {
                     record_event_no_mesg_pro(instance, NULL, MeterClrS, NULL, 1);
                 }
@@ -360,7 +368,7 @@ signed char dl645_event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
     uint8_t TmpBuffer[10] = {0};
     uint32_t id_645 = 0;
     
-    if( Cmp_MeterAddr( instance, p_rx+1, 0 ) == 0 )
+    if( fr_645_addr_match(p_rx+1, nd_fr645_tsa(instance), 0) == 0 )
     {
         if (false == Dl645_IR_chl_Check(instance, 0xFFFFFFFF, ctx->channel))
         {
@@ -378,7 +386,7 @@ signed char dl645_event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
         
         if(( ctx->password[0] != DL645_PA_SC_CIPHER) && ( ctx->password[0] != DL645_PA_PLAIN_02) && ( ctx->password[0] != DL645_PA_PLAIN_04))  //鏀寔 鍘傚02銆?4绾?
         {
-            if( mbase_cb->factor_mode != true )
+            if( nd_mbase_factor_mode(mbase_cb) != true )
             {
                 return RS_ERR_PASS;
             }
@@ -394,12 +402,12 @@ signed char dl645_event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
                 id_645 = buf_to_uint32_lsb(p_rx+20);
                 if (id_645 !=  0xFFFFFFFF) //不支持分项清零
                 {
-                    mbase_cb->flag_event_clear = 0; 
+                    nd_mbase_flag_event_clear(mbase_cb) = 0; 
                     return RS_ERR_OTHERS;
                 }
                 else
                 {
-                    mbase_cb->flag_event_clear = 0x5a; //总清
+                    nd_mbase_flag_event_clear(mbase_cb) = 0x5a; //总清
                 }
                 
                 ndv_memcopy( TmpBuffer, p_rx+20+4, 6 ); //解密后数据  已经为正序
@@ -426,12 +434,12 @@ signed char dl645_event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_
                 id_645 = buf_to_uint32_lsb(p_rx+18);
                 if (id_645 !=  0xFFFFFFFF) //不支持分项清零
                 {
-                    mbase_cb->flag_event_clear = 0; 
+                    nd_mbase_flag_event_clear(mbase_cb) = 0; 
                     return RS_ERR_OTHERS;
                 }
                 else
                 {
-                    mbase_cb->flag_event_clear = 0x5a; //总清
+                    nd_mbase_flag_event_clear(mbase_cb) = 0x5a; //总清
                 }
                 event_clear_omd_add(instance, id_645, 0 );
                 event_clr(instance);
@@ -505,7 +513,7 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
     ret = security_judge_645(instance, (p_rx+10), p_tx, tx_len, ctx);
     if(ret < 0)
     {
-        if(mbase_cb->auth_timeout_645 == 0)
+        if(nd_mbase_auth_timeout_645(mbase_cb) == 0)
         {
            RemotCtrResult = ERR_AUTHENTM_OVER;
            return RS_ERR_PASS;
@@ -535,13 +543,13 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
 	}
 	else
 	{
-	    if(mbase_cb->factor_mode == false)
+	    if(nd_mbase_factor_mode(mbase_cb) == false)
 	    {
-            if((mbase_cb->metertype & F_Password_En) == 0)   //明文模式不做判断
+            if((nd_mbase_metertype(mbase_cb) & F_Password_En) == 0)   //明文模式不做判断
             {
                 if(chl == chl_ir_698)    
                 {
-                    if((mbase_cb->infrared_auth_timeout == 0))//红外通道必须在红外认证有效期间进行操作。
+                    if((nd_mbase_infrared_auth_timeout(mbase_cb) == 0))//红外通道必须在红外认证有效期间进行操作。
                     {
                         RemotCtrResult = ERR_AUTHENTM_OVER;
                         return RS_ERR_PASS;
@@ -549,7 +557,7 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
                 }
             }
 
-    		if( mbase_cb->mac_suspend_state == true)
+    		if( nd_mbase_mac_suspend_state(mbase_cb) == true)
     		{
     				RemotCtrResult = ERR_HALT;
     				return RS_ERR_PASS;
@@ -558,7 +566,7 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
 
         if( *(p_rx+10) == 0x02 )
         {
-            if(((mbase_cb->metertype & F_Password_En) == 0) && (mbase_cb->factor_mode == false))   //明文模式
+            if(((nd_mbase_metertype(mbase_cb) & F_Password_En) == 0) && (nd_mbase_factor_mode(mbase_cb) == false))   //明文模式
             {
                 RemotCtrResult = ERR_OTHERR;
                 return RS_ERR_PASS;
@@ -620,37 +628,37 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
 	switch( Cmd )
 	{
 		case 0x1A://跳闸
-				if( (mbase_cb->sta & F_RemoteRelayOn) == 0 )
+				if( (nd_mbase_sta(mbase_cb) & F_RemoteRelayOn) == 0 )
 				{
-                        mbase_cb->sta |= F_RemoteRelayOff;
-						mbase_cb->sta &= ~(F_RemoteGaoJing0+F_RemoteGaoJing1);
-						mbase_cb->sta &= ~F_RemoteRelayOnAllow; //拉闸 取消合闸允许  GS 20221214
+                        nd_mbase_sta(mbase_cb) |= F_RemoteRelayOff;
+						nd_mbase_sta(mbase_cb) &= ~(F_RemoteGaoJing0+F_RemoteGaoJing1);
+						nd_mbase_sta(mbase_cb) &= ~F_RemoteRelayOnAllow; //拉闸 取消合闸允许  GS 20221214
                         
-						mbase_cb->alarmmin = 0;
+						nd_mbase_alarmmin(mbase_cb) = 0;
                         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Remote_RelayOffTime);//跳闸告警
                         nd_get_index(instance, s_index, TmpBuffer, 2);
-                        mem_swap_cpy((uint8_t*)&mbase_cb->alarmmin, TmpBuffer, 2);
+                        mem_swap_cpy((uint8_t*)&nd_mbase_alarmmin(mbase_cb), TmpBuffer, 2);
                         
-						mbase_cb->alarmmin = mbase_cb->alarmmin*60;
+						nd_mbase_alarmmin(mbase_cb) = nd_mbase_alarmmin(mbase_cb)*60;
 
-						if(mbase_cb->alarmmin > 0)
+						if(nd_mbase_alarmmin(mbase_cb) > 0)
 						{
 							RemotCtrResult = CTRL_STATUE_RELAYOFF_DT;
-							if((abs(mbase_cb->current_l) > (mbase_cb->I_Prot / 10)) && (mbase_cb->I_Prot != 0))
+							if((abs(nd_mbase_current_l(mbase_cb)) > (nd_mbase_I_Prot(mbase_cb) / 10)) && (nd_mbase_I_Prot(mbase_cb) != 0))
 							{
-								mbase_cb->imaxmin = mbase_cb->Prot_time;   
-                                mbase_cb->imaxmin = mbase_cb->imaxmin*60;
+								nd_mbase_imaxmin(mbase_cb) = nd_mbase_Prot_time(mbase_cb);   
+                                nd_mbase_imaxmin(mbase_cb) = nd_mbase_imaxmin(mbase_cb)*60;
 							}
 						}
-						else if((abs(mbase_cb->current_l) > (mbase_cb->I_Prot / 10)) && (mbase_cb->I_Prot != 0))
+						else if((abs(nd_mbase_current_l(mbase_cb)) > (nd_mbase_I_Prot(mbase_cb) / 10)) && (nd_mbase_I_Prot(mbase_cb) != 0))
 						{
-							mbase_cb->imaxmin = mbase_cb->Prot_time;   
-                            mbase_cb->imaxmin = mbase_cb->imaxmin*60;
+							nd_mbase_imaxmin(mbase_cb) = nd_mbase_Prot_time(mbase_cb);   
+                            nd_mbase_imaxmin(mbase_cb) = nd_mbase_imaxmin(mbase_cb)*60;
 							RemotCtrResult = CTRL_STATUE_RELAYOFF_IMAX;
 						}
 						else
                         {
-                            mbase_cb->imaxmin = 0;
+                            nd_mbase_imaxmin(mbase_cb) = 0;
 							RemotCtrResult = CTRL_STATUE_RELAYOFF;
                         }
 				}
@@ -662,22 +670,22 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
 				break;
 
 		case 0x1B://合闸允许
-				mbase_cb->sta &= ~(F_RemoteGaoJing0+F_RemoteGaoJing1);
-				mbase_cb->sta &= ~F_RemoteRelayOff;
+				nd_mbase_sta(mbase_cb) &= ~(F_RemoteGaoJing0+F_RemoteGaoJing1);
+				nd_mbase_sta(mbase_cb) &= ~F_RemoteRelayOff;
                 
-				mbase_cb->imaxmin = 0;   //大电流延时，清除大电流延时时间
-                mbase_cb->alarmmin = 0;     //跳闸延时，清零
+				nd_mbase_imaxmin(mbase_cb) = 0;   //大电流延时，清除大电流延时时间
+                nd_mbase_alarmmin(mbase_cb) = 0;     //跳闸延时，清零
                     
 				RemotCtrResult = CTRL_STATUE_RELAYON_EN;
                 
-				if(mbase_cb->metertype & F_RelayonAuto_En)  //合闸允许自动合闸
+				if(nd_mbase_metertype(mbase_cb) & F_RelayonAuto_En)  //合闸允许自动合闸
                 {
-					mbase_cb->sta |= F_RemoteRelayOnDirect; //直接合闸
-                    mbase_cb->sta &= ~F_RemoteRelayOnAllow;
+					nd_mbase_sta(mbase_cb) |= F_RemoteRelayOnDirect; //直接合闸
+                    nd_mbase_sta(mbase_cb) &= ~F_RemoteRelayOnAllow;
                 }
 				else
                 {
-				    mbase_cb->sta |= F_RemoteRelayOnAllow;  //合闸允许
+				    nd_mbase_sta(mbase_cb) |= F_RemoteRelayOnAllow;  //合闸允许
                 }
 				#if 0//(CPU_CARD_EN) 
 				//用户卡取消拉闸报警
@@ -693,15 +701,15 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
 					E2P_Write( MeterState_Flag, (unsigned char*)&Flag.MeterState, 1 );
 				}
 				#endif
-				if(mbase_cb->metertype & F_ExternRelay_En)  //外置继电器
+				if(nd_mbase_metertype(mbase_cb) & F_ExternRelay_En)  //外置继电器
 				{
-					mbase_cb->sta |= F_RemoteRelayOnDirect; //直接合闸
-                    mbase_cb->sta &= ~F_RemoteRelayOnAllow;
+					nd_mbase_sta(mbase_cb) |= F_RemoteRelayOnDirect; //直接合闸
+                    nd_mbase_sta(mbase_cb) &= ~F_RemoteRelayOnAllow;
 				}
 				break;
 		case 0x1C://直接合闸
-				mbase_cb->sta &= ~(F_RemoteGaoJing0+F_RemoteGaoJing1);
-				mbase_cb->sta &= ~F_RemoteRelayOff;
+				nd_mbase_sta(mbase_cb) &= ~(F_RemoteGaoJing0+F_RemoteGaoJing1);
+				nd_mbase_sta(mbase_cb) &= ~F_RemoteRelayOff;
 				
 				#if 0//(CPU_CARD_EN) 
 				//用户卡取消拉闸报警
@@ -718,21 +726,21 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
 				}
 				#endif
 				
-				if(mbase_cb->imaxmin > 0)   mbase_cb->imaxmin = 0;   //大电流延时，清除大电流延时时间
-                if(mbase_cb->alarmmin > 0)  mbase_cb->alarmmin = 0;     //跳闸延时，清零
+				if(nd_mbase_imaxmin(mbase_cb) > 0)   nd_mbase_imaxmin(mbase_cb) = 0;   //大电流延时，清除大电流延时时间
+                if(nd_mbase_alarmmin(mbase_cb) > 0)  nd_mbase_alarmmin(mbase_cb) = 0;     //跳闸延时，清零
                 
-                mbase_cb->sta |= F_RemoteRelayOnDirect; //直接合闸
-                mbase_cb->sta &= ~F_RemoteRelayOnAllow;
+                nd_mbase_sta(mbase_cb) |= F_RemoteRelayOnDirect; //直接合闸
+                nd_mbase_sta(mbase_cb) &= ~F_RemoteRelayOnAllow;
 				RemotCtrResult = CTRL_STATUE_RELAYON;
 				break;
 		case 0x1D://预跳闸
 		case 0x1E:
-				if (mbase_cb->sta & F_RemoteRelayOn)    //保电
+				if (nd_mbase_sta(mbase_cb) & F_RemoteRelayOn)    //保电
 				{
 					RemotCtrResult = ERR_RELAYOFF_ALARM_BAODIAN;
 					return RS_ERR_PASS;
 				}
-				else if((mbase_cb->sta & F_RemoteRelayOff) || ((mbase_cb->sta & F_RemoteRelayOnAllow) && (mbase_cb->sta != (F_RemoteGaoJing0+F_RemoteGaoJing1))))   //拉闸状态下
+				else if((nd_mbase_sta(mbase_cb) & F_RemoteRelayOff) || ((nd_mbase_sta(mbase_cb) & F_RemoteRelayOnAllow) && (nd_mbase_sta(mbase_cb) != (F_RemoteGaoJing0+F_RemoteGaoJing1))))   //拉闸状态下
 				{
 					RemotCtrResult = ERR_RELAYOFF_ALARM_RELAYOFF;
 					return RS_ERR_PASS;
@@ -755,21 +763,21 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
 					{
 						if(Cmd == 0x1D)
 						{
-							mbase_cb->sta |= F_RemoteGaoJing0;
-							mbase_cb->sta &= ~F_RemoteGaoJing1;
+							nd_mbase_sta(mbase_cb) |= F_RemoteGaoJing0;
+							nd_mbase_sta(mbase_cb) &= ~F_RemoteGaoJing1;
 						}
 						else if(Cmd == 0x1E)
 						{
-							mbase_cb->sta |= F_RemoteGaoJing1;
-							mbase_cb->sta &= ~F_RemoteGaoJing0;	
+							nd_mbase_sta(mbase_cb) |= F_RemoteGaoJing1;
+							nd_mbase_sta(mbase_cb) &= ~F_RemoteGaoJing0;	
 						}
-						mbase_cb->limitmin = *(p_rx+19)*60*5;
+						nd_mbase_limitmin(mbase_cb) = *(p_rx+19)*60*5;
 
-						mbase_cb->alarmmin = 0;
-						if((abs(mbase_cb->current_l) > (mbase_cb->I_Prot / 10)) && (mbase_cb->I_Prot != 0))
+						nd_mbase_alarmmin(mbase_cb) = 0;
+						if((abs(nd_mbase_current_l(mbase_cb)) > (nd_mbase_I_Prot(mbase_cb) / 10)) && (nd_mbase_I_Prot(mbase_cb) != 0))
                         {
-                            mbase_cb->imaxmin = mbase_cb->Prot_time;   
-                            mbase_cb->imaxmin = mbase_cb->imaxmin*60;
+                            nd_mbase_imaxmin(mbase_cb) = nd_mbase_Prot_time(mbase_cb);   
+                            nd_mbase_imaxmin(mbase_cb) = nd_mbase_imaxmin(mbase_cb)*60;
                             RemotCtrResult = CTRL_STATUE_RELAYOFF_IMAX;
                         }
 						else
@@ -778,36 +786,36 @@ signed char CommRemoteCtl_Process(struct instance_t* instance,  uint8_t *p_rx, u
 				}
 				break;
 		case 0x2A://报警
-				mbase_cb->sta |= F_RemoteAlarm;
+				nd_mbase_sta(mbase_cb) |= F_RemoteAlarm;
 				RemotCtrResult = CTRL_STATUE_ALARM_ON;
 				break;
 		case 0x2B://报警解除
-				mbase_cb->sta &= ~F_RemoteAlarm;
+				nd_mbase_sta(mbase_cb) &= ~F_RemoteAlarm;
 				RemotCtrResult = CTRL_STATUE_ALARM_OFF;
 				break;
 		case 0x3A://保电
           
-                mbase_cb->sta |= F_RemoteRelayOn;
+                nd_mbase_sta(mbase_cb) |= F_RemoteRelayOn;
                 
-                mbase_cb->alarmmin = 0;     //跳闸延时，清零    
-                mbase_cb->imaxmin = 0;   //大电流延时，清除大电流延时时间
-                mbase_cb->limitmin = 0;
-				if(mbase_cb->metertype & (F_RelayonAuto_En + F_ExternRelay_En))  //合闸允许自动合闸   、外置表自动合闸
+                nd_mbase_alarmmin(mbase_cb) = 0;     //跳闸延时，清零    
+                nd_mbase_imaxmin(mbase_cb) = 0;   //大电流延时，清除大电流延时时间
+                nd_mbase_limitmin(mbase_cb) = 0;
+				if(nd_mbase_metertype(mbase_cb) & (F_RelayonAuto_En + F_ExternRelay_En))  //合闸允许自动合闸   、外置表自动合闸
                 {
-					mbase_cb->sta |= F_RemoteRelayOnDirect; //直接合闸
-                    mbase_cb->sta &= ~F_RemoteRelayOnAllow;
+					nd_mbase_sta(mbase_cb) |= F_RemoteRelayOnDirect; //直接合闸
+                    nd_mbase_sta(mbase_cb) &= ~F_RemoteRelayOnAllow;
                 }
 				else
                 {
-                    if((mbase_cb->sta & (F_RemoteRelayOff + F_RemoteGaoJing1 + F_RemoteGaoJing0))) //只有在拉闸状态下才需要合闸允许
-				        mbase_cb->sta |= F_RemoteRelayOnAllow;  //合闸允许
+                    if((nd_mbase_sta(mbase_cb) & (F_RemoteRelayOff + F_RemoteGaoJing1 + F_RemoteGaoJing0))) //只有在拉闸状态下才需要合闸允许
+				        nd_mbase_sta(mbase_cb) |= F_RemoteRelayOnAllow;  //合闸允许
                 }
 
-                mbase_cb->sta &= ~(F_RemoteRelayOff + F_RemoteGaoJing1 + F_RemoteGaoJing0);//最后取消拉闸命令
+                nd_mbase_sta(mbase_cb) &= ~(F_RemoteRelayOff + F_RemoteGaoJing1 + F_RemoteGaoJing0);//最后取消拉闸命令
 				RemotCtrResult = CTRL_STATUE_BAODIAN_ON;
 				break;
 		case 0x3B://保电解除
-				mbase_cb->sta &= ~F_RemoteRelayOn;
+				nd_mbase_sta(mbase_cb) &= ~F_RemoteRelayOn;
 				RemotCtrResult = CTRL_STATUE_BAODIAN_OFF;
 				break;
 
@@ -825,11 +833,11 @@ unsigned char FrozeCmd_Check(struct instance_t* instance, uint8_t chl, uint8_t* 
     mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t len = *(p_rx+9);
     
-    if((mbase_cb->metertype & F_Password_En) == 0)   //明文模式不做判断
+    if((nd_mbase_metertype(mbase_cb) & F_Password_En) == 0)   //明文模式不做判断
     {
         if(chl == chl_ir_698)    
         {
-            if((mbase_cb->infrared_auth_timeout == 0) && (mbase_cb->factor_mode == false))//红外通道必须在红外认证有效期间进行操作。
+            if((nd_mbase_infrared_auth_timeout(mbase_cb) == 0) && (nd_mbase_factor_mode(mbase_cb) == false))//红外通道必须在红外认证有效期间进行操作。
             {
                 return RS_ERR_PASS;
             }
@@ -847,7 +855,7 @@ unsigned char FrozeCmd_Check(struct instance_t* instance, uint8_t chl, uint8_t* 
 				if( *(p_rx+13) == 0x99 )//ss
 				{
 					//HisRecord_Write( InstantFroze, START );//瞬时冻结
-                    mbase_cb->trigger_insfreeze_delay_sec = 1;
+                    nd_mbase_trigger_insfreeze_delay_sec(mbase_cb) = 1;
 					return 0;
 				}
 				else if( *(p_rx+10) >0x59 )
@@ -870,10 +878,10 @@ signed char ctl_freeze(struct instance_t* instance, uint8_t chl, uint8_t* p_rx)
 {
     uint8_t Err = 0;
     
-    if( (Cmp_MeterAddr( instance, p_rx+1, 0 ) == 0) || (Addr_9_9( p_rx+1 ) == 0) )
+    if( (fr_645_addr_match(p_rx+1, nd_fr645_tsa(instance), 0) == 0) || (fr_645_addr_all(p_rx+1, 0x99) == 0) )
     {
         Err = FrozeCmd_Check(instance, chl, p_rx);
-        if( Addr_9_9( p_rx+1 ) == 0 )//广播不要求应答
+        if( fr_645_addr_all(p_rx+1, 0x99) == 0 )//广播不要求应答
         {
             return -1;
         }
@@ -895,7 +903,7 @@ signed char chg_baut(struct instance_t* instance, uint8_t* p_rx, struct context_
     uint8_t len = *(p_rx+9), Err=0;
     uint32_t s_index=0;
     
-    if(Cmp_MeterAddr( instance, p_rx+1, 0 ) == 0)
+    if(fr_645_addr_match(p_rx+1, nd_fr645_tsa(instance), 0) == 0)
     {
         if (false == Dl645_IR_chl_Check(instance, 0xFFFFFFFF, ctx->channel))
         {
@@ -912,28 +920,28 @@ signed char chg_baut(struct instance_t* instance, uint8_t* p_rx, struct context_
             switch( *(p_rx+10) )
             {
                 case 0x02:  //600
-                    mbase_cb->Baut_rs485 = 1;
+                    nd_mbase_Baut_rs485(mbase_cb) = 1;
                     break;
                 case 0x04:  //1200
-                    mbase_cb->Baut_rs485 = 2;
+                    nd_mbase_Baut_rs485(mbase_cb) = 2;
                     break;
                 case 0x08:  //2400
-                    mbase_cb->Baut_rs485 = 3;
+                    nd_mbase_Baut_rs485(mbase_cb) = 3;
                     break;
                 case 0x10:  //4800
-                    mbase_cb->Baut_rs485 = 4;
+                    nd_mbase_Baut_rs485(mbase_cb) = 4;
                     break;
                 case 0x20:  //9600
-                    mbase_cb->Baut_rs485 = 6;
+                    nd_mbase_Baut_rs485(mbase_cb) = 6;
                     break;
                 case 0x40:  //19200
-                    mbase_cb->Baut_rs485 = 7;
+                    nd_mbase_Baut_rs485(mbase_cb) = 7;
                     break;
             }
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, Baut_rs485));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->Baut_rs485, 1);
-            mbase_cb->baud_chg = 0x01;  //更新串口波特率
+                        nd_mbase_offset_Baut_rs485());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_Baut_rs485(mbase_cb), 1);
+            nd_mbase_baud_chg(mbase_cb) = 0x01;  //更新串口波特率
         }
         return Err;
     }

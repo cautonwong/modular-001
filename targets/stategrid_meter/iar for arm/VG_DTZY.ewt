@@ -2780,7 +2780,7 @@
         <name>$PROJ_DIR$\..\driver_entry.c</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\..\pin_function_def.h</name>
+        <name>$PROJ_DIR$\..\board\board_io.c</name>
     </file>
     <file>
         <name>$PROJ_DIR$\..\port.h</name>

@@ -1,5 +1,10 @@
 #include "nidavellir.h"
+#include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
+#include "application/adapters/dl698/fr_698_esam.h"
+#include "domain/tariff/legacy/tariff_applications.h"
+#include "infra/kernel/resource_blocks.h"
+#include "kernel/legacy_control_block.h"
 
 const uint8_t messagebuf1[8] = {0xff,0xff,0xff,0xff,0xfc, 0x00, 0x00, 0x00};
 const uint8_t messagebuf2[16] = {0xff,0xfe,0xc4,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
@@ -377,7 +382,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
         return len;
     }
 
-    if (CA_TYPE_TER(p_ctx->CA)) 
+    if ((p_ctx != NULL) && CA_TYPE_TER(p_ctx->CA)) 
     {
         cilent_index = 1;
     }
@@ -426,13 +431,13 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                         if((index == 0)||(index == 1))
                         {
                             *p++ = TYPE_long_unsigned;
-                            mem_swap_cpy(p, (uint8_t*)&mbase_cb->Limit_T_Min, 2);
+                            mem_swap_cpy(p, (uint8_t*)&nd_mbase_Limit_T_Min(mbase_cb), 2);
                             p = p + 2;
                         }
                         if((index == 0)||(index == 2))
                         {
                             *p++ = TYPE_long_unsigned;
-                            mem_swap_cpy(p, (uint8_t*)&mbase_cb->Limit_T_Max, 2);
+                            mem_swap_cpy(p, (uint8_t*)&nd_mbase_Limit_T_Max(mbase_cb), 2);
                             p = p + 2;
                         }
                     }
@@ -480,7 +485,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             {
                 *p++ = TYPE_octet_string;
                 *p++ = 6;
-                mem_swap_cpy(p, mbase_cb->tsa, 6);
+                mem_swap_cpy(p, nd_mbase_tsa(mbase_cb), 6);
                 p = p + 6;
                 return (p - buf);
             }
@@ -500,7 +505,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 *p++ = TYPE_octet_string;
                 *p++ = 6;
                 //read_esam_no(instance, temp);
-                memcpy(p, mbase_cb->meterNo, 6);
+                memcpy(p, nd_mbase_meterNo(mbase_cb), 6);
                 p = p + 6;
                 return (p - buf);
             }
@@ -562,13 +567,13 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             if(attribute == 0x02)
             {
                 uint32_t idbuf[] = {
-                (uint32_t)&mbase_cb->lcd_poweron_all_dis_time,            //上电全显时间
-                (uint32_t)&mbase_cb->backlight_key_time,                  //背光点亮时间
-                (uint32_t)&mbase_cb->lcd_checkdis_keep_sec,               //显示查看背光点亮时间
-                (uint32_t)&mbase_cb->lcd_nopower_key_keep_sec,            //无电按键驻留时间
-                (uint32_t)&mbase_cb->energy_point,                        //电能小数显示位
-                (uint32_t)&mbase_cb->power_point,                         //功率小数显示位
-                (uint32_t)&mbase_cb->lcd_12_mean,                         //液晶12字样意义
+                (uint32_t)&nd_mbase_lcd_poweron_all_dis_time(mbase_cb),            //上电全显时间
+                (uint32_t)&nd_mbase_backlight_key_time(mbase_cb),                  //背光点亮时间
+                (uint32_t)&nd_mbase_lcd_checkdis_keep_sec(mbase_cb),               //显示查看背光点亮时间
+                (uint32_t)&nd_mbase_lcd_nopower_key_keep_sec(mbase_cb),            //无电按键驻留时间
+                (uint32_t)&nd_mbase_energy_point(mbase_cb),                        //电能小数显示位
+                (uint32_t)&nd_mbase_power_point(mbase_cb),                         //功率小数显示位
+                (uint32_t)&nd_mbase_lcd_12_mean(mbase_cb),                         //液晶12字样意义
                 };
                 uint8_t lens[] = {1, 2, 2, 2, 1, 1, 1};
                 uint8_t tag[] = {TYPE_unsigned, TYPE_long_unsigned, TYPE_long_unsigned, TYPE_long_unsigned, TYPE_unsigned, TYPE_unsigned, TYPE_unsigned};
@@ -815,7 +820,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             {
                 *p++ = 0x04;
                 *p++ = 0x08;
-                *p++ = mbase_cb->active_energy_cal_word;
+                *p++ = nd_mbase_active_energy_cal_word(mbase_cb);
                 return (p-buf);
             }
             else
@@ -887,7 +892,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 }
                 break;
                 case 0x03:
-                    if(0 != mbase_cb->connect_timeout[channel][cilent_index])
+                    if(0 != nd_mbase_connect_timeout(mbase_cb)[channel][cilent_index])
                     {
                         ndv_memcopy(&connect, &cfg_connect, sizeof(cfg_connect));
                     }
@@ -927,9 +932,9 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     return (p-buf);
                 case 0x04://当前连接的客户机地址
                     *p++ = TYPE_unsigned;
-                    if(0 != mbase_cb->connect_timeout[channel][cilent_index])
+                    if(0 != nd_mbase_connect_timeout(mbase_cb)[channel][cilent_index])
                     {
-                        *p++ = mbase_cb->clientaddr[channel];
+                        *p++ = nd_mbase_clientaddr(mbase_cb)[channel];
                     }
                     else
                     {
@@ -940,7 +945,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     break;
                 case 0x05:
                     *p++ = TYPE_enum;
-                    if(0 != mbase_cb->connect_timeout[channel][cilent_index])
+                    if(0 != nd_mbase_connect_timeout(mbase_cb)[channel][cilent_index])
                     {
                         ndv_memcopy(&connect, &cfg_connect, sizeof(cfg_connect));
                     }

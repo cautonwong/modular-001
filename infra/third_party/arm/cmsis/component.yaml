@@ -1,0 +1,5 @@
+name: third_party.arm_cmsis
+version: 0.1.0
+layer: platform
+paths: [infra/third_party/arm/cmsis]
+dependencies: []

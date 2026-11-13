@@ -1,0 +1,8 @@
+name: target.stategrid_meter.mapper_698
+version: 0.1.0
+layer: product
+paths: [targets/stategrid_meter/mapper_698]
+# Owned but not in the VG_DTZY firmware source table.
+exclude: [targets/stategrid_meter/mapper_698/map_698_record/record_sel_11.c]
+dependencies: []
+legacy: true

@@ -1,0 +1,6 @@
+name: nd_buf
+version: 0.1.0
+layer: core
+paths: [components/core/buf]
+dependencies: []
+legacy: false

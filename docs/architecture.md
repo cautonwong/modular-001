@@ -40,15 +40,17 @@ infra/         SOCes / boards / interrupt / RTOSes / HALes。实现上层定义�
 
 当前的主要违规，也是重构的靶心：
 
-1. `struct mbase_control_block_t` 定义在 `nidavellir/include/applications.h`，约 330 行，把计量、费率、事件、显示参数、上报配置、继电器状态混在一个聚合根里。
+1. `struct mbase_control_block_t` 曾定义在 `nidavellir/include/applications.h`，约 330 行，把计量、费率、事件、显示参数、上报配置、继电器状态混在一个聚合根里。2026-11-10 已移到 `nidavellir/include/kernel/legacy_control_block.h`，聚合边界仍未拆开。
 2. `instances/stategrid_meter/port.h` 用宏（`U_data_fields`、`I_data_fields`、`static_start`、`dyn_cache_start`）把 target 字段注入 domain 聚合根。domain 反向依赖了 target。
 3. 持久化布局依赖对聚合根做 `offsetof`，字节布局与结构体字段顺序强绑定。
 4. `applications.h` 是一个约 32 KB 的全局 extern 清单，声明 70 个符号，而实现散落在
    `applications/`、`packages/meterbase`、`packages/dl698`、`packages/drivers`。kernel 伞头
    `nidavellir.h:32` 无条件 include 它，于是 kernel 对外宣称了一批自己并不实现的符号。
+   2026-11-10 已删除该伞头，声明按 owner 分散到 context、infra 和 target 头，`nidavellir.h`
+   不再 include 它。
 5. 接口已经漂移：`applications/app_698_server/stub.c` 的 `read_esam_data` 和
-   `display_oad_to_id` 签名与 `applications.h` 的声明不一致，靠近似符号名链接。
-6. target 关注点散在 `driver_entry.c`、`os_entry.c`、`port.h`、`pin_function_def.h`
+   `display_oad_to_id` 签名与旧 `applications.h` 的声明不一致，靠近似符号名链接。
+6. target 关注点散在 `driver_entry.c`、`os_entry.c`、`port.h`、`targets/stategrid_meter/board/board_io.c`
    和 v85xxp arch 头里，没有单一组合根。
 
 ## 2.1 兼容复刻约束（硬约束）
@@ -92,6 +94,18 @@ codec 不覆盖它们。<br>
    第二实例无法创建。
 
 新的资源契约只保留一条路径：聚合构造时注入分配端口，返回清零内存，释放带 size。
+
+## 2.3 可移植性
+
+整体组件化 monorepo 设计见 `docs/monorepo.md`，平台可移植性细节见 `docs/portability.md`。核心约定：
+
+- 产品 = domain profile + protocol adapters + platform(soc + board + rtos)。
+- 平台差异放在 `infra/soc/<soc>`、`targets/<product>/board`、`infra/rtos/<rtos>`。
+- domain 和 application 不出现具体 SoC、board、RTOS 的 include 或条件编译。
+- 端口由消费者定义，target 组合根负责绑定。
+- 新增 SoC、board、RTOS 或 domain 只新增目录和组合根，不改已有业务规则。
+
+当前落地：`application/ports/platform` 已承接看门狗和事件输出；`nidavellir.h` 已拆成 11 行兼容包装，`kernel/instance.h`、`kernel/message.h`、`kernel/object.h`、`kernel/channel.h`、`kernel/pids.h`、`kernel/resource_ids.h` 承接 kernel 内容，`fr_698_context.h` 和 `fr_645_context.h` 承接协议上下文。`kernel_core.h` 也从 450 行降到 62 行的兼容包头，tasklet、rtc、device、environment、ipc、log、flags 等各自成头。dl698 和协议适配器不再 include 伞头。组件侧已有 `nd_bus`、`nd_channel`、FIFO 通道适配器、`protocol.dl698`、`protocol.dl645`、组件清单和 `tools/check_components.py`，产品描述在 `products/` 下。dl698 的 rx pipeline 已移除，tx pipeline 已删除，实际收发由 `nd_dl698` 组件完成；698 源码不再引用 `message_t`，改用私有的 `nd_dl698_msg_t`。dl645 也完成了私有消息类型和通道组件，当前单相产品尚未接线。
 
 ## 3. 有界上下文
 
@@ -209,7 +223,7 @@ int main(void)
 | 1 | `domain/common`、allocator/resources 端口 | host 单元测试 |
 | 2 | `domain/metering` 不透明聚合 + 序列化 | Unity 测试 + ARM 编译 |
 | 3 | `domain/tariff` | Unity 测试 |
-| 4 | `domain/events` + `domain/freeze` | Unity 测试 |
+| 4 | `domain/events` + `domain/freeze` + `domain/report` + `domain/security` | Unity 测试 |
 | 5 | `domain/load_control` | Unity 测试 |
 | 6 | `application/adapters` 协议迁移 | 报文样本测试 |
 | 7 | `infra` 目录重排 + 资源提供者实现 | ARM 编译 + 层检查 |

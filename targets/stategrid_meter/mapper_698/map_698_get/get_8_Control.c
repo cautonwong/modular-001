@@ -1,5 +1,8 @@
 #include "nidavellir.h"
+#include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
+#include "infra/kernel/resource_blocks.h"
+#include "kernel/legacy_control_block.h"
 
 #define		F_RemoteRelayOn  	    0x01	//保电
 
@@ -66,7 +69,7 @@ int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *
                 case 0x04://告警状态
                     *p++ = TYPE_bit_string;
                     *p++ = 8;
-                    if((mbase_cb->sta & F_RemoteAlarm) == F_RemoteAlarm)
+                    if((nd_mbase_sta(mbase_cb) & F_RemoteAlarm) == F_RemoteAlarm)
                         *p++ = 0x80;
                     else
                         *p++ = 0;
@@ -74,7 +77,7 @@ int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *
                 case 0x05://命令状态
                     *p++ = TYPE_bit_string;
                     *p++ = 8;
-                    if((mbase_cb->sta & REMOTE_CMD_REALAY_OFF_STA) != 0)
+                    if((nd_mbase_sta(mbase_cb) & REMOTE_CMD_REALAY_OFF_STA) != 0)
                         *p++ = 0x80;
                     else
                         *p++ = 0;
@@ -92,7 +95,7 @@ int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *
 
             if((attribute != 0x02) || (index != 0x00))  return -DAR_OBJECT_NOT_EXIST;
             *p++ = TYPE_enum;
-            if(mbase_cb->sta & F_RemoteRelayOn)//保电
+            if(nd_mbase_sta(mbase_cb) & F_RemoteRelayOn)//保电
                 *p++ = 1;
             else
                 *p++ = 0;

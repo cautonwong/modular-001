@@ -1,0 +1,7 @@
+name: domain.load_control
+version: 0.1.0
+layer: domain
+paths: [domain/load_control]
+exclude: [domain/load_control/legacy]
+dependencies: [domain.common]
+legacy: false

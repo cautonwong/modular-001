@@ -27,7 +27,12 @@ int nd_calendar_time_valid(const nd_datetime_t *datetime);
 
 uint32_t nd_calendar_total_day(uint8_t day, uint8_t month, uint16_t year);
 
+/* Inverse of nd_calendar_total_day; produces a date at 00:00:00. */
+void nd_calendar_from_total_day(uint32_t total_day, nd_datetime_t *out);
+
 uint32_t nd_calendar_total_minutes(const nd_datetime_t *datetime);
+int nd_calendar_add_seconds(const nd_datetime_t *datetime, int32_t seconds,
+                            nd_datetime_t *out);
 
 uint8_t nd_calendar_weekday(uint8_t day, uint8_t month, uint16_t year);
 

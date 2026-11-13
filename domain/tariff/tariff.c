@@ -89,8 +89,7 @@ uint8_t nd_tariff_select_day_table(const nd_tariff_table_t *table,
     return clamp_day_table(table, table->seasons[index].value);
 }
 
-uint8_t nd_tariff_select_fee(const nd_tariff_table_t *table, uint8_t day_table,
-                             uint8_t hour, uint8_t minute)
+static uint8_t day_table_slot(uint8_t day_table)
 {
     if (day_table == 0) {
         day_table = 1;
@@ -98,17 +97,47 @@ uint8_t nd_tariff_select_fee(const nd_tariff_table_t *table, uint8_t day_table,
     if (day_table > ND_TARIFF_MAX_DAY_TABLES) {
         day_table = ND_TARIFF_MAX_DAY_TABLES;
     }
+    return (uint8_t)(day_table - 1);
+}
 
-    uint8_t slot = (uint8_t)(day_table - 1);
+static uint8_t period_count(const nd_tariff_table_t *table, uint8_t slot)
+{
     uint8_t periods = table->period_count[slot];
+    return periods > ND_TARIFF_MAX_PERIODS ? ND_TARIFF_MAX_PERIODS : periods;
+}
+
+uint8_t nd_tariff_select_period(const nd_tariff_table_t *table, uint8_t day_table,
+                                uint8_t hour, uint8_t minute, uint16_t *start)
+{
+    uint8_t slot = day_table_slot(day_table);
+    uint8_t periods = period_count(table, slot);
+    uint16_t key;
+
+    if (periods == 0) {
+        if (start != NULL) {
+            *start = 0xFFFFu;
+        }
+        return 0;
+    }
+
+    key = (uint16_t)((hour << 8) | minute);
+    uint8_t index = nd_tariff_find_interval(table->periods[slot], periods, key);
+    if (start != NULL) {
+        *start = table->periods[slot][index].start;
+    }
+    return index;
+}
+
+uint8_t nd_tariff_select_fee(const nd_tariff_table_t *table, uint8_t day_table,
+                             uint8_t hour, uint8_t minute)
+{
+    uint8_t slot = day_table_slot(day_table);
+    uint8_t periods = period_count(table, slot);
+
     if (periods == 0) {
         return 1;
     }
-    if (periods > ND_TARIFF_MAX_PERIODS) {
-        periods = ND_TARIFF_MAX_PERIODS;
-    }
 
-    uint16_t key = (uint16_t)((hour << 8) | minute);
-    uint8_t index = nd_tariff_find_interval(table->periods[slot], periods, key);
+    uint8_t index = nd_tariff_select_period(table, day_table, hour, minute, NULL);
     return clamp_fee(table, table->periods[slot][index].value);
 }

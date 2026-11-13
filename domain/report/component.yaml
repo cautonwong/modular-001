@@ -1,0 +1,6 @@
+name: domain.report
+version: 0.1.0
+layer: domain
+paths: [domain/report]
+dependencies: []
+legacy: false

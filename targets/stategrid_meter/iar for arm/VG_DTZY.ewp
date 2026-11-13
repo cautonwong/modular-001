@@ -355,15 +355,16 @@
                     <state>$PROJ_DIR$\..\..\..\nidavellir\include\kernel</state>
                     <state>$PROJ_DIR$\..\..\..\nidavellir\include</state>
                     <state>$PROJ_DIR$\..\..\..\targets\stategrid_meter\</state>
+                    <state>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app</state>
                     <state>$PROJ_DIR$\..\..\..\targets\stategrid_meter\mapper_645</state>
                     <state>$PROJ_DIR$\..\..\..\application\adapters\dl698</state>
                     <state>$PROJ_DIR$\..\..\..\application\adapters\dl645</state>
-                    <state>$PROJ_DIR$\..\..\..\infra\board</state>
-                    <state>$PROJ_DIR$\..\..\..\infra\soc</state>
-                    <state>$PROJ_DIR$\..\..\..\infra\soc\cm0</state>
-                    <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc</state>
-                    <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\inc</state>
-                    <state>$PROJ_DIR$\..\..\..\application\apps\app_resource_tool</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\third_party\arm\cmsis</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor\Lib_Driver\inc</state>
+                    <state>$PROJ_DIR$\..\tools\app_resource_tool</state>
                     <state>$PROJ_DIR$\..\..\..\domain\metering\legacy</state>
                     <state>$PROJ_DIR$\..\..\..\domain\tariff\legacy</state>
                     <state>$PROJ_DIR$\..\..\..\domain\events\legacy</state>
@@ -1425,13 +1426,14 @@
                     <state>$PROJ_DIR$\..\..\..\nidavellir\include\kernel</state>
                     <state>$PROJ_DIR$\..\..\..\nidavellir\include</state>
                     <state>$PROJ_DIR$\..\..\..\targets\stategrid_meter\</state>
+                    <state>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app</state>
                     <state>$PROJ_DIR$\..\..\..\application\adapters\dl698</state>
-                    <state>$PROJ_DIR$\..\..\..\infra\board</state>
-                    <state>$PROJ_DIR$\..\..\..\infra\soc</state>
-                    <state>$PROJ_DIR$\..\..\..\infra\soc\cm0</state>
-                    <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc</state>
-                    <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\inc</state>
-                    <state>$PROJ_DIR$\..\..\..\application\apps\app_resource_tool</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\third_party\arm\cmsis</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor</state>
+                    <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor\Lib_Driver\inc</state>
+                    <state>$PROJ_DIR$\..\tools\app_resource_tool</state>
                     <state>$PROJ_DIR$\..\..\..\domain\metering\legacy</state>
                     <state>$PROJ_DIR$\..\..\..\domain\tariff\legacy</state>
                     <state>$PROJ_DIR$\..\..\..\domain\events\legacy</state>
@@ -2147,80 +2149,119 @@
             <group>
                 <name>MCU LIB</name>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_adc.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor\Lib_Driver\src\lib_adc.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_ana.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor\Lib_Driver\src\lib_ana.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_clk.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor\Lib_Driver\src\lib_clk.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_flash.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor\Lib_Driver\src\lib_flash.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_gpio.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor\Lib_Driver\src\lib_gpio.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_lcd.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor\Lib_Driver\src\lib_lcd.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_misc.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor\Lib_Driver\src\lib_misc.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_pmu.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor\Lib_Driver\src\lib_pmu.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_rtc.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor\Lib_Driver\src\lib_rtc.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_tmr.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor\Lib_Driver\src\lib_tmr.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_uart.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor\Lib_Driver\src\lib_uart.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp inc\Lib_Driver\src\lib_wdt.c</name>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor\Lib_Driver\src\lib_wdt.c</name>
                 </file>
             </group>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\cpu_v85xxp_isr.c</name>
+                <name>$PROJ_DIR$\..\board\cpu_v85xxp_isr.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\lib_CodeRAM.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\lib_CodeRAM.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\lib_cortex.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\lib_cortex.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\lib_LoadNVR.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\lib_LoadNVR.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\startup_target.s</name>
+                <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\startup_target.s</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500_for_single.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\v8500_for_single.c</name>
             </file>
         </group>
         <group>
             <name>dl645</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\application\apps\app_645_server\app_645_server_entry.c</name>
+                <name>$PROJ_DIR$\..\app\apps\legacy\app_645_server\app_645_server_entry.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\application\adapters\dl645\fr_645.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\application\adapters\dl645\fr_645_report.c</name>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl645\fr_645_matcher.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl645\fr_645_pack.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl645\fr_645_data.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl645\fr_645_addr.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl645\fr_645_password.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\app\adapters\fr_645_report.c</name>
             </file>
         </group>
         <group>
             <name>dl698</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\application\apps\app_698_server\app_698_server_entry.c</name>
+                <name>$PROJ_DIR$\..\app\apps\legacy\app_698_server\app_698_server_entry.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_frame.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_pack.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_matcher.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_segment.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_gatekeeper.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_tx.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_client.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_state.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_action.c</name>
@@ -2229,10 +2270,22 @@
                 <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_comm.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\dl698_time.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\parameter_port.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\report_list.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\ports\platform.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_connect.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_esam.c</name>
+                <name>$PROJ_DIR$\..\security\fr_698_esam.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_get.c</name>
@@ -2241,49 +2294,109 @@
                 <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_security.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_esam_flow.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_esam_input.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_esam_encode.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_set.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_axdr.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_axdr_codec.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_report.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_report_frames.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\report_encoder.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\security_encoder.c</name>
+            </file>
+        </group>
+        <group>
+            <name>components</name>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\components\core\bus\nd_bus.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\components\core\buf\nd_buf.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\components\services\channel\nd_channel.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\components\protocol\dl698\nd_dl698.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\components\protocol\dl645\nd_dl645.c</name>
             </file>
         </group>
         <group>
             <name>drivers</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\board\eeprom.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\eeprom.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\board\esam698_v2.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\esam698_v2.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\board\iic_driver.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\iic_driver.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\board\ndv_Norflash.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\ndv_Norflash.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\board\ndv_RN8209.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\ndv_RN8209.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\board\ndvh_rn8209.h</name>
+                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\ndvh_rn8209.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\board\relay.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\relay.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\board\spi_driver.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\board_io.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\board\uart_driver.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\iic_pins.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\spi_pins.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\uart_pins.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\rn8209_pins.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\esam_pins.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\relay_pins.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\spi_driver.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\uart_driver.c</name>
             </file>
         </group>
         <group>
             <name>esam</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\security\esam\esam_pro.c</name>
+                <name>$PROJ_DIR$\..\security\esam_pro.c</name>
             </file>
         </group>
         <group>
@@ -2295,27 +2408,27 @@
                 <name>$PROJ_DIR$\..\..\..\infra\kernel\fifo.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\..\infra\channel\fifo_channel.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\infra\kernel\list.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\infra\kernel\mlog.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\kernel\nidavellir.c</name>
+                <name>$PROJ_DIR$\..\app\rtos\nidavellir.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\infra\kernel\pipeline.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\application\apps\app_resource_tool\resource_tool.c</name>
+                <name>$PROJ_DIR$\..\tools\app_resource_tool\resource_tool.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\infra\kernel\rtc.c</name>
             </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\infra\kernel\time_link.c</name>
-            </file>
-            <file>
+        <file>
                 <name>$PROJ_DIR$\..\..\..\infra\kernel\utils.c</name>
             </file>
         </group>
@@ -2472,22 +2585,61 @@
         <group>
             <name>meterbase</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\application\apps\app_meter_base\app_meter_base_entry.c</name>
+                <name>$PROJ_DIR$\..\app\apps\app_meter_base_entry.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\metering\legacy\electrical_measurement.c</name>
+                <name>$PROJ_DIR$\..\app\metering\electrical_measurement.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\metering\legacy\energy.c</name>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\metering\legacy\energy.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\display\legacy\gs_backlight_ctrl.c</name>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\display\legacy\gs_backlight_ctrl.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\events\legacy\gs_cover_event.c</name>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\events\legacy\gs_cover_event.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\common\calendar.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\common\runtime.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\common\timer.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\display\backlight.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\tariff\tariff.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\metering\energy.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\metering\metering_input.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\metering\metering.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\events\duration.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\report\report_policy.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\report\report_retry.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\security\security_mode.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\security\esam_result.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\security\security_request.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\events\over_current.c</name>
@@ -2502,55 +2654,94 @@
                 <name>$PROJ_DIR$\..\..\..\domain\events\generic.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\..\domain\events\switch_err.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\events\mac_suspend.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\events\program_list.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\events\rtc.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\events\power_event.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\events\event_catalog.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\events\record_capture.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\domain\events\neutral_current.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\events\legacy\gs_emu_err_event.c</name>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\events\legacy\gs_emu_err_event.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\freeze\legacy\gs_freeze.c</name>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\freeze\legacy\gs_freeze.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\events\legacy\gs_i_over_event.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\freeze\schedule.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\events\legacy\gs_mac_suspend.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\freeze\backfill.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\events\legacy\gs_meter_program_event.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\freeze\sequence.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\events\legacy\gs_neutral_current _err_event.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\freeze\storage.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\events\legacy\gs_power_abnormal_event .c</name>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\events\legacy\gs_i_over_event.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\events\legacy\gs_power_off_event.c</name>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\events\legacy\gs_mac_suspend.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\events\legacy\gs_record.c</name>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\events\legacy\gs_meter_program_event.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\events\legacy\gs_relay_err_event.c</name>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\events\legacy\gs_neutral_current _err_event.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\events\legacy\gs_rtc_err_event.c</name>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\events\legacy\gs_power_abnormal_event .c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\load_control\legacy\relay_control.c</name>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\events\legacy\gs_power_off_event.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\metering\legacy\runstatus.c</name>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\events\legacy\gs_record.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\tariff\legacy\touFee.c</name>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\events\legacy\gs_relay_err_event.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\events\legacy\gs_rtc_err_event.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\load_control\legacy\relay_control.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\load_control\load_control.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\load_control\relay_status.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\metering\legacy\runstatus.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\tariff\legacy\touFee.c</name>
             </file>
         </group>
         <group>
             <name>upgrade</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\application\upgrade\upgrade.c</name>
+                <name>$PROJ_DIR$\..\upgrade\upgrade.c</name>
             </file>
         </group>
     </group>
@@ -2561,18 +2752,108 @@
         <name>$PROJ_DIR$\..\..\..\infra\soc\cpu_surport.h</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\..\..\..\application\apps\display.c</name>
+        <name>$PROJ_DIR$\..\app\display.c</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\..\driver_entry.c</name>
+        <name>$PROJ_DIR$\..\app\driver_entry.c</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\..\pin_function_def.h</name>
+        <name>$PROJ_DIR$\..\app\port.h</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\..\port.h</name>
+        <name>$PROJ_DIR$\..\persistence\legacy_tariff_parser.c</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\..\stategrid_meter_entry.c</name>
+        <name>$PROJ_DIR$\..\..\..\infra\memory\arena.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\metering_energy_adapter.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\relay_control_adapter.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\dl698_parameter_adapter.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\meter_base_adapter.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\meter_status_adapter.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\esam_status_adapter.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\backlight_adapter.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\runtime_adapter.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\timer_adapter.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\record_message_adapter.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\fr_645_env_adapter.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\fr_698_env_adapter.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\relay_status_adapter.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\metering_input_adapter.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\platform_adapter.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\tariff_lookup.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\tariff_lookup_eeprom.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\stategrid_meter_entry.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\..\..\domain\common\clock.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\..\..\domain\common\profile_status.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\..\..\domain\events\event_log.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\..\..\domain\events\power_failure.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\..\..\domain\events\pq.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\..\..\domain\load_control\disconnect.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\..\..\domain\metering\demand_history.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\..\..\domain\metering\energy_set.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\..\..\domain\metering\measurement_average.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\..\..\domain\tariff\activity_calendar.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\..\..\infra\kernel\time_link.c</name>
+    </file>
+<file>
+        <name>$PROJ_DIR$\..\..\..\infra\memory\sector_store.c</name>
     </file>
 </project>

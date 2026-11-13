@@ -1,5 +1,8 @@
 #include "nidavellir.h"
+#include "targets/stategrid_meter/persistence/meter_record.h"
 #include "645id_table.h"
+#include "infra/kernel/resource_blocks.h"
+#include "kernel/legacy_control_block.h"
 
 int read_02( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
@@ -12,24 +15,24 @@ int read_02( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
 	switch( ID )
 	{   
         case 0x02010100:    //电压
-            WORD_BCD2(p_tx, (uint16_t)mbase_cb->voltage_ac);
+            WORD_BCD2(p_tx, (uint16_t)nd_mbase_voltage_ac(mbase_cb));
             return 2;
         case 0x0201FF00:    //电压数据块
-            WORD_BCD2(p_tx, (uint16_t)mbase_cb->voltage_ac);
+            WORD_BCD2(p_tx, (uint16_t)nd_mbase_voltage_ac(mbase_cb));
             memset(p_tx+2, 0xFF, 4);
             return 6;
 
         case 0x02020100:    //电流
         case 0x0202FF00:    //电流数据块
-            if(mbase_cb->current_l < 0)
+            if(nd_mbase_current_l(mbase_cb) < 0)
             {
-                temp = ~mbase_cb->current_l + 1;
+                temp = ~nd_mbase_current_l(mbase_cb) + 1;
                 HEX_BCD(p_tx, temp);
                 *(p_tx+2) |= 0x80;
             }
             else
             {
-                HEX_BCD(p_tx, mbase_cb->current_l);
+                HEX_BCD(p_tx, nd_mbase_current_l(mbase_cb));
             }
             if(ID == 0x0202FF00)
             {
@@ -43,15 +46,15 @@ int read_02( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
         case 0x02030000:    //总有功功率 
         case 0x02030100:   
         case 0x0203FF00:    //有功功率数据块
-            if(mbase_cb->active_power < 0)
+            if(nd_mbase_active_power(mbase_cb) < 0)
             {
-                temp = ~mbase_cb->active_power + 1;
+                temp = ~nd_mbase_active_power(mbase_cb) + 1;
                 HEX_BCD(p_tx, temp);
                 *(p_tx+2) |= 0x80;
             }
             else
             {
-                HEX_BCD(p_tx, mbase_cb->active_power);
+                HEX_BCD(p_tx, nd_mbase_active_power(mbase_cb));
             }
             if(ID == 0x0203FF00)
             {
@@ -66,7 +69,7 @@ int read_02( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
         case 0x02050000:    //总视在功率 
         case 0x02050100:   
         case 0x0205FF00:    //视在功率数据块
-            HEX_BCD(p_tx, mbase_cb->apparent_power);
+            HEX_BCD(p_tx, nd_mbase_apparent_power(mbase_cb));
             if(ID == 0x0205FF00)
             {
                 memcpy(p_tx+3, p_tx, 3);
@@ -80,15 +83,15 @@ int read_02( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
         case 0x02060000:    //功率因数
         case 0x02060100:   
         case 0x0206FF00:    //功率因数数据块
-            if(mbase_cb->power_factor < 0)
+            if(nd_mbase_power_factor(mbase_cb) < 0)
             {
-                temp = ~mbase_cb->power_factor + 1;
+                temp = ~nd_mbase_power_factor(mbase_cb) + 1;
                 WORD_BCD2(p_tx, temp);
                 *(p_tx+1) |= 0x80;
             }
             else
             {
-                WORD_BCD2(p_tx, mbase_cb->power_factor);
+                WORD_BCD2(p_tx, nd_mbase_power_factor(mbase_cb));
             }
             if(ID == 0x0206FF00)
             {
@@ -100,36 +103,36 @@ int read_02( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
                 return 2;
             break;
         case 0x02800001:    //零线电流
-            if(mbase_cb->current_n < 0)
+            if(nd_mbase_current_n(mbase_cb) < 0)
             {
-                temp = ~mbase_cb->current_n + 1;
+                temp = ~nd_mbase_current_n(mbase_cb) + 1;
                 HEX_BCD(p_tx, temp);
                 *(p_tx+2) |= 0x80;
             }
             else
             {
-                HEX_BCD(p_tx, mbase_cb->current_n);
+                HEX_BCD(p_tx, nd_mbase_current_n(mbase_cb));
             }
             return 3;
         case 0x02800002:  //频率
-            HEX_BCD(p_tx, mbase_cb->frequency);
+            HEX_BCD(p_tx, nd_mbase_frequency(mbase_cb));
             return 2;
             
         case 0x02800007:  //表内温度
-            if(mbase_cb->temperature < 0)
+            if(nd_mbase_temperature(mbase_cb) < 0)
             {
-                temp = ~mbase_cb->temperature+1;
+                temp = ~nd_mbase_temperature(mbase_cb)+1;
                 HEX_BCD(p_tx, temp);
                 *(p_tx+1) |= 0x80;
             }
             else
             {
-                HEX_BCD(p_tx, mbase_cb->temperature);
+                HEX_BCD(p_tx, nd_mbase_temperature(mbase_cb));
             }
             return 2;
             
         case 0x02800008:  //电池电压
-            HEX_BCD(p_tx, mbase_cb->voltage_battery);
+            HEX_BCD(p_tx, nd_mbase_voltage_battery(mbase_cb));
             return 2;  
             
         case 0x0280000A:  //电池使用时间
@@ -141,18 +144,18 @@ int read_02( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
             return 4;    
             
         case 0x0280000B:  //当前阶梯电价
-            //HEX_BCD(p_tx, mbase_cb->voltage_battery);
+            //HEX_BCD(p_tx, nd_mbase_voltage_battery(mbase_cb));
             return 4;   
             
         case 0x02800020:  //当前电价
-            //HEX_BCD(p_tx, mbase_cb->voltage_battery);
+            //HEX_BCD(p_tx, nd_mbase_voltage_battery(mbase_cb));
             return 4; 
             
         case 0x02800021:  //当前费率电价
-            //HEX_BCD(p_tx, mbase_cb->voltage_battery);
+            //HEX_BCD(p_tx, nd_mbase_voltage_battery(mbase_cb));
             return 4; 
         case 0x02800022:  //
-            temp = ((mbase_cb->auth_timeout_645 +59)/60);
+            temp = ((nd_mbase_auth_timeout_645(mbase_cb) +59)/60);
             if (temp > 9999)
             {
                 temp = 9999;
@@ -163,7 +166,7 @@ int read_02( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
 
             return 2;  
         case 0x02800023:  // 698共用
-            temp = ((mbase_cb->infrared_auth_timeout +59)/60);
+            temp = ((nd_mbase_infrared_auth_timeout(mbase_cb) +59)/60);
             if (temp > 99)
             {
                 temp = 99;

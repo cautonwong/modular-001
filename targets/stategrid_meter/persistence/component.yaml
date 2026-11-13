@@ -1,0 +1,8 @@
+name: target.stategrid_meter.persistence
+version: 0.1.0
+layer: product
+paths: [targets/stategrid_meter/persistence]
+# Owned but not in the VG_DTZY firmware source table.
+exclude: [targets/stategrid_meter/persistence/legacy_energy_codec.c, targets/stategrid_meter/persistence/legacy_energy_store.c]
+dependencies: []
+legacy: true

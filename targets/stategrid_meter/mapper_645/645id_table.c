@@ -1,9 +1,14 @@
 #include "nidavellir.h"
+#include "targets/stategrid_meter/persistence/meter_record.h"
 #include "645id_table.h"
 #include "port.h"
 #include "utils.h"
 #include "gs_record.h"
 #include "fr_645_report.h"
+#include "cpu_surport.h"
+#include "domain/tariff/legacy/tariff_applications.h"
+#include "infra/kernel/resource_blocks.h"
+#include "kernel/legacy_control_block.h"
 
 typedef uint8_t (*data_check_fun)(struct instance_t* instance, uint32_t addr, uint8_t *, uint8_t *);
 extern uint8_t write_mcu_rtc_time(uint8_t addr, uint8_t *buf, uint16_t len);
@@ -132,7 +137,7 @@ const COMMTAB  CommTab[] =
 	0xA8000100,	0xFFFF,							FORMAT_08,      CommData_WR + CommData_RAM + 1,	    //工厂模式
 	0xA8000105, 0xFFFF,							FORMAT_00,      CommData_W + CommData_FACTORY + 0,  //默认参数初始化
 	
-	0xA8001001,	(unsigned int)FirmWareVersion,  FORMAT_00,      CommData_R + CommData_RAM + 20,//厂家内部软件版本号    
+	0xA8001001,	(uintptr_t)FirmWareVersion,  FORMAT_00,      CommData_R + CommData_RAM + 20,//厂家内部软件版本号
 	0xA8F00002,	0xFFFF,					        FORMAT_08,      CommData_WR + CommData_E2PROM + 4,	//背光报警控制字
 	0xA8F00003,	0xFFFF,						    FORMAT_08,      CommData_WR + CommData_RAM + 2,	//电能表类型、功能配置字
 	0xA8F00051,	0xFFFF,							FORMAT_08,      CommData_WR + 2,	//掉电主动上报的阈值时间
@@ -217,7 +222,7 @@ static uint8_t dl645rd_meteraddr(struct instance_t* instance, uint32_t addr, uin
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
-    memcpy(databuf, mbase_cb->tsa, 6);
+    memcpy(databuf, nd_mbase_tsa(mbase_cb), 6);
     
     return 0;
 }
@@ -261,7 +266,7 @@ static uint8_t dl645rd_hex_bcd(struct instance_t* instance, uint32_t addr, uint8
 static uint8_t dl645rd_meterno(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    mem_swap_cpy(databuf, mbase_cb->meterNo, 6);
+    mem_swap_cpy(databuf, nd_mbase_meterNo(mbase_cb), 6);
     return 0;
 }
 
@@ -278,22 +283,22 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
     switch(id)
     {
         case 0x04000301:    //轮显屏数
-            *databuf = BYTE_BCD(mbase_cb->lcd_autodis_list_num);
+            *databuf = BYTE_BCD(nd_mbase_lcd_autodis_list_num(mbase_cb));
             break;
         case 0x04000302:    //轮显每屏时间
-            WORD_BCD2(databuf, mbase_cb->lcd_autodis_keep_sec);
+            WORD_BCD2(databuf, nd_mbase_lcd_autodis_keep_sec(mbase_cb));
             break;
         case 0x04000303:    //电能小数位数
-            *databuf = BYTE_BCD(mbase_cb->energy_point);
+            *databuf = BYTE_BCD(nd_mbase_energy_point(mbase_cb));
             break;
         case 0x04000304:    //功率小数尾数
-            *databuf = BYTE_BCD(mbase_cb->power_point);
+            *databuf = BYTE_BCD(nd_mbase_power_point(mbase_cb));
             break;
         case 0x04000305:    //按显屏数
-            *databuf = BYTE_BCD(mbase_cb->lcd_keydis_list_num);
+            *databuf = BYTE_BCD(nd_mbase_lcd_keydis_list_num(mbase_cb));
             break;
         case 0x04000308:    //全显时间
-            *databuf = BYTE_BCD(mbase_cb->lcd_poweron_all_dis_time);
+            *databuf = BYTE_BCD(nd_mbase_lcd_poweron_all_dis_time(mbase_cb));
             break;
         case 0x04000501:
         case 0x04000502:
@@ -306,7 +311,7 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             index = id & 0x000000FF;
             if(index != 0xFF)
             {
-                mem_swap_cpy((uint8_t*)&sate, (uint8_t*)&mbase_cb->run_state[index], 2);
+                mem_swap_cpy((uint8_t*)&sate, (uint8_t*)&nd_mbase_run_state(mbase_cb)[index], 2);
                 for(i=0; i<16; i++)
                 {
                     sate1 = sate1 >> 1;
@@ -323,7 +328,7 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             {
                 for(j=1;j<8;j++)
                 {
-                    mem_swap_cpy((uint8_t*)&sate, (uint8_t*)&mbase_cb->run_state[j], 2);
+                    mem_swap_cpy((uint8_t*)&sate, (uint8_t*)&nd_mbase_run_state(mbase_cb)[j], 2);
                     sate1 = 0;
                     for(i=0; i<16; i++)
                     {
@@ -341,10 +346,10 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             break;
 
         case 0x04001104:  //主动上报模式字
-            ndv_memcopy(databuf, mbase_cb->report_mode_645, sizeof(mbase_cb->report_mode_645));
+            ndv_memcopy(databuf, nd_mbase_report_mode_645(mbase_cb), sizeof(nd_mbase_report_mode_645(mbase_cb)));
             break;
         case 0x04100901:    //按键显示每屏时间
-            WORD_BCD2(databuf, mbase_cb->lcd_keydis_keep_sec);
+            WORD_BCD2(databuf, nd_mbase_lcd_keydis_keep_sec(mbase_cb));
             break;
         case 0x04000705:    //载波波特率 
             Baut = get_current_plc_baud(instance);
@@ -361,7 +366,7 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
         case 0x04000703:    //485波特率
             for(i=0;i<8;i++)
             {
-                if(mbase_cb->Baut_rs485 == baud698[i])
+                if(nd_mbase_Baut_rs485(mbase_cb) == baud698[i])
                 {
                     *databuf = baud645[i];
                     return 0;
@@ -373,15 +378,15 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             *databuf = 0x04;
             break;
         case 0x04090801:    //过流事件阈值
-            sate = mbase_cb->OverCurrent_threshold/1000;
+            sate = nd_mbase_OverCurrent_threshold(mbase_cb)/1000;
             WORD_BCD2(databuf, sate);
             break;
         case 0x04090802:    //过流事件阈值
-            *databuf = BYTE_BCD(mbase_cb->OverCurrent_duration_para);
+            *databuf = BYTE_BCD(nd_mbase_OverCurrent_duration_para(mbase_cb));
             break;
         case 0xA8000100:    //工厂模式
-            *databuf = mbase_cb->factor_mode;
-            if(mbase_cb->factor_mode == true)
+            *databuf = nd_mbase_factor_mode(mbase_cb);
+            if(nd_mbase_factor_mode(mbase_cb) == true)
             {
                 *databuf = 0xAA;
             }
@@ -394,22 +399,22 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             memset(databuf, 0, 2);
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Meter_Type);
             nd_get_index(instance, addr, (uint8_t*)databuf, 2); //区分判断 是否已经设置过表型
-            //memcpy(databuf, (uint8_t *)&mbase_cb->metertype, 2);
+            //memcpy(databuf, (uint8_t *)&nd_mbase_metertype(mbase_cb), 2);
             break;
         case 0xA8F00002:    //背光配置字
             memset(databuf, 0, 4);
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Blt_Alarm_Byte);
             nd_get_index(instance, addr, (uint8_t*)databuf, 4); 
-            //memcpy(databuf, (uint8_t *)&mbase_cb->blt_alarm, 2);
+            //memcpy(databuf, (uint8_t *)&nd_mbase_blt_alarm(mbase_cb), 2);
             break;
         case 0xA8F00051://掉电主动上报的阈值时间(秒)hex  0x0E10
-            memcpy(databuf, (uint8_t*)&mbase_cb->active_report_sec_limit, 2 );        
+            memcpy(databuf, (uint8_t*)&nd_mbase_active_report_sec_limit(mbase_cb), 2 );        
             break; 
         case 0xA8F00052://工频防潜开关
-            *databuf = mbase_cb->no_filt;
+            *databuf = nd_mbase_no_filt(mbase_cb);
             break;
         case 0xA8F00055:    //电能定量保存阈值格式hex--0.01kwh
-            memcpy(databuf, (uint8_t *)&mbase_cb->EC_SaveDiff, 2);
+            memcpy(databuf, (uint8_t *)&nd_mbase_EC_SaveDiff(mbase_cb), 2);
             break;  
         case 0xA601100F:
 			StAddr = SoftwareCHK();
@@ -467,18 +472,18 @@ static uint8_t dl645rd_runbyte(struct instance_t* instance, uint32_t addr, uint8
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
     nd_get_index(instance, s_index, databuf, 1);
     
-    if(mbase_cb->relay_ctl_mode == 0)   //（0：脉冲式，1：保持式）
+    if(nd_mbase_relay_ctl_mode(mbase_cb) == 0)   //（0：脉冲式，1：保持式）
         *databuf |= 0x01;
-    else if(mbase_cb->relay_ctl_mode == 1)
+    else if(nd_mbase_relay_ctl_mode(mbase_cb) == 1)
         *databuf &= ~0x01;
 
-    if((mbase_cb->metertype & F_ExternRelay_En) == 0) //内置 固定为0
+    if((nd_mbase_metertype(mbase_cb) & F_ExternRelay_En) == 0) //内置 固定为0
     {
         *databuf &= ~0x01;
     }
 
     
-    if(mbase_cb->lcd_12_mean == 1)  // 0显示当前套、备用套时段; 1显示当前套、备用套费率
+    if(nd_mbase_lcd_12_mean(mbase_cb) == 1)  // 0显示当前套、备用套时段; 1显示当前套、备用套费率
         *databuf |= 0x02;
     else
         *databuf &= ~0x02;
@@ -495,7 +500,7 @@ static uint8_t dl645rd_hex_string(struct instance_t* instance, uint32_t addr, ui
     switch(addr)
     {
         case Measure_Mode:  //组合特征字
-            word = mbase_cb->active_energy_cal_word;
+            word = nd_mbase_active_energy_cal_word(mbase_cb);
             break;
         case Weekend:  //周休日特征字
             addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
@@ -563,7 +568,7 @@ static uint8_t dl645wt_date(struct instance_t* instance, uint32_t addr, uint8_t 
     
     if(day != instance->time.tm_mday)  //跨日，清除广播校时标志位
     {
-        mbase_cb->boardadjtime = 0;
+        nd_mbase_boardadjtime(mbase_cb) = 0;
     }
 
     record_event_no_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
@@ -630,7 +635,7 @@ static uint8_t dl645wt_datetime(struct instance_t* instance, uint32_t addr, uint
     read_mcu_rtc(0x00, instance);
     if(day != instance->time.tm_mday)  //跨日，清除广播校时标志位
     {
-        mbase_cb->boardadjtime = 0;
+        nd_mbase_boardadjtime(mbase_cb) = 0;
     }
 
     //保存校时后时间 
@@ -672,11 +677,11 @@ static uint8_t dl645wt_meteraddr(struct instance_t* instance, uint32_t addr, uin
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t s_index=0;
     
-    memcpy(mbase_cb->tsa, prx, 6);
+    memcpy(nd_mbase_tsa(mbase_cb), prx, 6);
     
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-            offsetof(struct mbase_control_block_t, tsa));
-    nd_set_offset(instance, s_index, mbase_cb->tsa, 6); 
+            nd_mbase_offset_tsa());
+    nd_set_offset(instance, s_index, nd_mbase_tsa(mbase_cb), 6); 
     
     return 0;
 }
@@ -739,21 +744,21 @@ static uint8_t dl645wt_hex_bcd(struct instance_t* instance, uint32_t addr, uint8
     switch(addr)
     {
         case ImaxProtectTime://大电流延时时间赋值
-            mem_swap_cpy((uint8_t *)&mbase_cb->Prot_time, (uint8_t*)&temp, 2);
-            if(mbase_cb->imaxmin > 0)   //过流中修改时间，刷新
-                mbase_cb->imaxmin = mbase_cb->Prot_time*60;
+            mem_swap_cpy((uint8_t *)&nd_mbase_Prot_time(mbase_cb), (uint8_t*)&temp, 2);
+            if(nd_mbase_imaxmin(mbase_cb) > 0)   //过流中修改时间，刷新
+                nd_mbase_imaxmin(mbase_cb) = nd_mbase_Prot_time(mbase_cb)*60;
 
             break;
             
         case ImaxProtectValue: 
-            mem_swap_cpy((uint8_t*)&mbase_cb->I_Prot, (uint8_t*)&temp, 4);
+            mem_swap_cpy((uint8_t*)&nd_mbase_I_Prot(mbase_cb), (uint8_t*)&temp, 4);
             break;
         
         case Remote_RelayOffTime: 
             mem_swap_cpy((uint8_t *)&temp_u16, (uint8_t*)&temp, 2);
-            if(mbase_cb->alarmmin > 0)   //延时中刷新
+            if(nd_mbase_alarmmin(mbase_cb) > 0)   //延时中刷新
             {
-                mbase_cb->alarmmin = temp_u16*60;   
+                nd_mbase_alarmmin(mbase_cb) = temp_u16*60;   
             }
             break;
             
@@ -778,41 +783,41 @@ static uint8_t dl645wt_ram(struct instance_t* instance, uint32_t addr, uint8_t *
     switch(id)
     {
         case 0x04000301:    //轮显屏数
-            mbase_cb->lcd_autodis_list_num = BCD_BYTE(*databuf);
+            nd_mbase_lcd_autodis_list_num(mbase_cb) = BCD_BYTE(*databuf);
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, lcd_autodis_list_num));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_autodis_list_num, 1);
+                        nd_mbase_offset_lcd_autodis_list_num());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_lcd_autodis_list_num(mbase_cb), 1);
             break;
         case 0x04000302:    //轮显每屏时间
             memcpy((uint8_t*)&temp, databuf, 2);
-            mbase_cb->lcd_autodis_keep_sec = word_bcd_to_hex(temp);
+            nd_mbase_lcd_autodis_keep_sec(mbase_cb) = word_bcd_to_hex(temp);
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, lcd_autodis_keep_sec));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_autodis_keep_sec, 2);
+                        nd_mbase_offset_lcd_autodis_keep_sec());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_lcd_autodis_keep_sec(mbase_cb), 2);
             break;
         case 0x04000303:    //电能小数位数
-            mbase_cb->energy_point = BCD_BYTE(*databuf);
+            nd_mbase_energy_point(mbase_cb) = BCD_BYTE(*databuf);
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, energy_point));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->energy_point, 1);
+                        nd_mbase_offset_energy_point());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_energy_point(mbase_cb), 1);
             break;
         case 0x04000304:    //功率小数尾数
-            mbase_cb->power_point = BCD_BYTE(*databuf);
+            nd_mbase_power_point(mbase_cb) = BCD_BYTE(*databuf);
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, power_point));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->power_point, 1);
+                        nd_mbase_offset_power_point());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_power_point(mbase_cb), 1);
             break;
         case 0x04000305:    //按显屏数
-            mbase_cb->lcd_keydis_list_num = BCD_BYTE(*databuf);
+            nd_mbase_lcd_keydis_list_num(mbase_cb) = BCD_BYTE(*databuf);
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, lcd_keydis_list_num));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_keydis_list_num, 1);
+                        nd_mbase_offset_lcd_keydis_list_num());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_lcd_keydis_list_num(mbase_cb), 1);
             break;
         case 0x04000308:    //全显时间
-            mbase_cb->lcd_poweron_all_dis_time = BCD_BYTE(*databuf);
+            nd_mbase_lcd_poweron_all_dis_time(mbase_cb) = BCD_BYTE(*databuf);
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, lcd_poweron_all_dis_time));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_poweron_all_dis_time, 1);
+                        nd_mbase_offset_lcd_poweron_all_dis_time());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_lcd_poweron_all_dis_time(mbase_cb), 1);
             break;
         case 0x04000701:    //紅外波特率設置無效
             break;
@@ -820,114 +825,114 @@ static uint8_t dl645wt_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             switch( *databuf )
             {
                 case 0x02:  //600
-                    mbase_cb->Baut_plc = 1;
+                    nd_mbase_Baut_plc(mbase_cb) = 1;
                     break;
                 case 0x04:  //1200
-                    mbase_cb->Baut_plc = 2;
+                    nd_mbase_Baut_plc(mbase_cb) = 2;
                     break;
                 case 0x08:  //2400
-                    mbase_cb->Baut_plc = 3;
+                    nd_mbase_Baut_plc(mbase_cb) = 3;
                     break;
                 case 0x10:  //4800
-                    mbase_cb->Baut_plc = 4;
+                    nd_mbase_Baut_plc(mbase_cb) = 4;
                     break;
                 case 0x20:  //9600
-                    mbase_cb->Baut_plc = 6;
+                    nd_mbase_Baut_plc(mbase_cb) = 6;
                     break;
                 case 0x40:  //19200
-                    mbase_cb->Baut_plc = 7;
+                    nd_mbase_Baut_plc(mbase_cb) = 7;
                     break;
             }
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, Baut_plc));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->Baut_plc, 1);
-            mbase_cb->baud_chg = 0x02;  //更新串口波特率  
+                        nd_mbase_offset_Baut_plc());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_Baut_plc(mbase_cb), 1);
+            nd_mbase_baud_chg(mbase_cb) = 0x02;  //更新串口波特率  
             break;
         case 0x04000703:    //485波特率
             switch( *databuf )
             {
                 case 0x02:  //600
-                    mbase_cb->Baut_rs485 = 1;
+                    nd_mbase_Baut_rs485(mbase_cb) = 1;
                     break;
                 case 0x04:  //1200
-                    mbase_cb->Baut_rs485 = 2;
+                    nd_mbase_Baut_rs485(mbase_cb) = 2;
                     break;
                 case 0x08:  //2400
-                    mbase_cb->Baut_rs485 = 3;
+                    nd_mbase_Baut_rs485(mbase_cb) = 3;
                     break;
                 case 0x10:  //4800
-                    mbase_cb->Baut_rs485 = 4;
+                    nd_mbase_Baut_rs485(mbase_cb) = 4;
                     break;
                 case 0x20:  //9600
-                    mbase_cb->Baut_rs485 = 6;
+                    nd_mbase_Baut_rs485(mbase_cb) = 6;
                     break;
                 case 0x40:  //19200
-                    mbase_cb->Baut_rs485 = 7;
+                    nd_mbase_Baut_rs485(mbase_cb) = 7;
                     break;
             }
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, Baut_rs485));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->Baut_rs485, 1);
-            mbase_cb->baud_chg = 0x01;  //更新串口波特率
+                        nd_mbase_offset_Baut_rs485());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_Baut_rs485(mbase_cb), 1);
+            nd_mbase_baud_chg(mbase_cb) = 0x01;  //更新串口波特率
             break;
         case 0x04001104:  //主动上报模式字
-            ndv_memcopy(mbase_cb->report_mode_645, databuf, sizeof(mbase_cb->report_mode_645));
+            ndv_memcopy(nd_mbase_report_mode_645(mbase_cb), databuf, sizeof(nd_mbase_report_mode_645(mbase_cb)));
             //保存 645上报模式字
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-            offsetof(struct mbase_control_block_t, report_mode_645));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->report_mode_645, sizeof(mbase_cb->report_mode_645));
+            nd_mbase_offset_report_mode_645());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_report_mode_645(mbase_cb), sizeof(nd_mbase_report_mode_645(mbase_cb)));
 
             report_mode_set_from_645(instance, databuf);
             break;
         case 0x04090801:    //过流事件阈值
             memcpy((uint8_t*)&dt, databuf, 2);
             temp = word_bcd_to_hex(dt);
-            mbase_cb->OverCurrent_threshold = temp*1000;
+            nd_mbase_OverCurrent_threshold(mbase_cb) = temp*1000;
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, OverCurrent_threshold));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->OverCurrent_threshold, 4);
+                        nd_mbase_offset_OverCurrent_threshold());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_OverCurrent_threshold(mbase_cb), 4);
             break;
         case 0x04090802:    //过流事件阈值
-            mbase_cb->OverCurrent_duration_para = BCD_BYTE(*databuf);
+            nd_mbase_OverCurrent_duration_para(mbase_cb) = BCD_BYTE(*databuf);
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, OverCurrent_duration_para));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->OverCurrent_duration_para, 1);
+                        nd_mbase_offset_OverCurrent_duration_para());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_OverCurrent_duration_para(mbase_cb), 1);
             break;
             
         case 0x04100901:    //按键显示每屏时间
             memcpy((uint8_t*)&temp, databuf, 2);
-            mbase_cb->lcd_keydis_keep_sec = word_bcd_to_hex(temp);
+            nd_mbase_lcd_keydis_keep_sec(mbase_cb) = word_bcd_to_hex(temp);
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, lcd_keydis_keep_sec));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_keydis_keep_sec, 2);
+                        nd_mbase_offset_lcd_keydis_keep_sec());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_lcd_keydis_keep_sec(mbase_cb), 2);
             break;
         case 0xA8F00002:    //背光报警配置字
-            memcpy((uint8_t*)&mbase_cb->blt_alarm, databuf, 4);
+            memcpy((uint8_t*)&nd_mbase_blt_alarm(mbase_cb), databuf, 4);
 
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Blt_Alarm_Byte);
-            nd_set_index(instance, s_index, (uint8_t*)&mbase_cb->blt_alarm, 4);
+            nd_set_index(instance, s_index, (uint8_t*)&nd_mbase_blt_alarm(mbase_cb), 4);
             break;
         case 0xA8F00003:    //多功能配置字
-            memcpy((uint8_t*)&mbase_cb->metertype, databuf, 2);
+            memcpy((uint8_t*)&nd_mbase_metertype(mbase_cb), databuf, 2);
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Meter_Type);
-            nd_set_index(instance, s_index, (uint8_t*)&mbase_cb->metertype, 2);
+            nd_set_index(instance, s_index, (uint8_t*)&nd_mbase_metertype(mbase_cb), 2);
             break;
         case 0xA8F00051://掉电主动上报的阈值时间(秒)hex  0x0E10
-            memcpy(&mbase_cb->active_report_sec_limit, databuf, 2);                
+            memcpy(&nd_mbase_active_report_sec_limit(mbase_cb), databuf, 2);                
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, active_report_sec_limit));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_report_sec_limit, 2);//存储至EE  
+                        nd_mbase_offset_active_report_sec_limit());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_active_report_sec_limit(mbase_cb), 2);//存储至EE  
             break;  
         case 0xA8F00052://工频防潜开关
-            mbase_cb->no_filt = *databuf;
+            nd_mbase_no_filt(mbase_cb) = *databuf;
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, no_filt));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->no_filt, 1);//存储至EE  
+                        nd_mbase_offset_no_filt());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_no_filt(mbase_cb), 1);//存储至EE  
             break;
         case 0xA8F00055: //电能定量保存阈值hex       --0.01kwh  
-            memcpy((uint8_t*)&mbase_cb->EC_SaveDiff, databuf, 2);
+            memcpy((uint8_t*)&nd_mbase_EC_SaveDiff(mbase_cb), databuf, 2);
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + EC_SaveDiff_E);
-            nd_set_index(instance, s_index, (uint8_t*)&mbase_cb->EC_SaveDiff, 2);
+            nd_set_index(instance, s_index, (uint8_t*)&nd_mbase_EC_SaveDiff(mbase_cb), 2);
             break;  
     }
     return 0;
@@ -975,7 +980,7 @@ static uint8_t dl645wt_blanceday(struct instance_t* instance, uint32_t addr, uin
     {
         if ( (buf[0] != buftmp[0]) || (buf[1] != buftmp[1]) ) //第一结算日改变
         {
-            mbase_cb->first_MbillDay_flag = 0x5A;
+            nd_mbase_first_MbillDay_flag(mbase_cb) = 0x5A;
             record_event_no_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
         }
     }
@@ -991,23 +996,23 @@ static uint8_t dl645wt_runbyte(struct instance_t* instance, uint32_t addr, uint8
     uint32_t s_index =0;
     
     if(*databuf & 0x01)
-        mbase_cb->relay_ctl_mode = 0;   //（0：脉冲式，1：保持式）
+        nd_mbase_relay_ctl_mode(mbase_cb) = 0;   //（0：脉冲式，1：保持式）
     else
-        mbase_cb->relay_ctl_mode = 1;
+        nd_mbase_relay_ctl_mode(mbase_cb) = 1;
 
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    offsetof(struct mbase_control_block_t, relay_ctl_mode));
-    nd_set_offset(instance, s_index, &mbase_cb->relay_ctl_mode, sizeof(mbase_cb->relay_ctl_mode));  
+    nd_mbase_offset_relay_ctl_mode());
+    nd_set_offset(instance, s_index, &nd_mbase_relay_ctl_mode(mbase_cb), sizeof(nd_mbase_relay_ctl_mode(mbase_cb)));  
 
     
     if(*databuf & 0x02) 
-        mbase_cb->lcd_12_mean = 1;  // 0显示当前套、备用套时段; 1显示当前套、备用套费率
+        nd_mbase_lcd_12_mean(mbase_cb) = 1;  // 0显示当前套、备用套时段; 1显示当前套、备用套费率
     else
-        mbase_cb->lcd_12_mean = 0;
+        nd_mbase_lcd_12_mean(mbase_cb) = 0;
 
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    offsetof(struct mbase_control_block_t, lcd_12_mean));
-    nd_set_offset(instance, s_index, &mbase_cb->lcd_12_mean, sizeof(mbase_cb->lcd_12_mean));  
+    nd_mbase_offset_lcd_12_mean());
+    nd_set_offset(instance, s_index, &nd_mbase_lcd_12_mean(mbase_cb), sizeof(nd_mbase_lcd_12_mean(mbase_cb)));  
 
    
     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
@@ -1040,10 +1045,10 @@ static uint8_t dl645wt_hex_string(struct instance_t* instance, uint32_t addr, ui
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
             nd_set_index(instance, addr, tmpbuf, 3);
 
-            mbase_cb->active_energy_cal_word = word;
+            nd_mbase_active_energy_cal_word(mbase_cb) = word;
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        offsetof(struct mbase_control_block_t, active_energy_cal_word));
-            nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->active_energy_cal_word, 1);
+                        nd_mbase_offset_active_energy_cal_word());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_active_energy_cal_word(mbase_cb), 1);
 
             record_event_no_mesg_pro(instance, NULL, ActCombWrS, NULL, 1);// 
             break;
@@ -1099,7 +1104,7 @@ static uint8_t dl645wt_reset_report_state(struct instance_t* instance, uint32_t 
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t cnt, index;
         
-    if (0 == mbase_cb->report_stat_already_read645)
+    if (0 == nd_mbase_report_stat_already_read645(mbase_cb))
     {
         return RS_ERR_OTHERS;
     }
@@ -1108,26 +1113,26 @@ static uint8_t dl645wt_reset_report_state(struct instance_t* instance, uint32_t 
     {      
         for (index = 0; index < 8; index++) /*若复位状态字中包含已发生未读事件，返回异常应答，状态位保留*/
         {   
-            if ((0 == (databuf[cnt] & (0x01 << index))) && (0 == (mbase_cb->report_stat_read_cache645[cnt] & (0x01 << index)))
-                && (mbase_cb->report_stat_645[cnt] & (0x01 << index)))
+            if ((0 == (databuf[cnt] & (0x01 << index))) && (0 == (nd_mbase_report_stat_read_cache645(mbase_cb)[cnt] & (0x01 << index)))
+                && (nd_mbase_report_stat_645(mbase_cb)[cnt] & (0x01 << index)))
             {
                 return RS_ERR_OTHERS;
             }  
 
-            if ((0 == (databuf[cnt] & (0x01 << index))) && (mbase_cb->report_stat_read_cache645[cnt] & (0x01 << index)))
+            if ((0 == (databuf[cnt] & (0x01 << index))) && (nd_mbase_report_stat_read_cache645(mbase_cb)[cnt] & (0x01 << index)))
             {
-                mbase_cb->report_stat_645[12 + 8*cnt + index] = 0; 
+                nd_mbase_report_stat_645(mbase_cb)[12 + 8*cnt + index] = 0; 
                 report_645stat_reset_from_645(instance, 8*cnt + index);
             }
         }
 
-        mbase_cb->report_stat_645[cnt] &= databuf[cnt];
-        mbase_cb->report_stat_read_cache645[cnt] &= databuf[cnt];
+        nd_mbase_report_stat_645(mbase_cb)[cnt] &= databuf[cnt];
+        nd_mbase_report_stat_read_cache645(mbase_cb)[cnt] &= databuf[cnt];
     }
 
     report_645stat_save(instance);        
 
-    mbase_cb->report_stat_already_read645 = 0; 
+    nd_mbase_report_stat_already_read645(mbase_cb) = 0; 
 
     event_out_check(instance);
 

@@ -1,0 +1,6 @@
+name: legacy.dlms_headers
+version: 0.1.0
+layer: infra
+paths: [nidavellir/include/dlms]
+dependencies: [legacy.kernel_headers]
+legacy: true

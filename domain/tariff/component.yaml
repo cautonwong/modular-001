@@ -1,0 +1,7 @@
+name: domain.tariff
+version: 0.1.0
+layer: domain
+paths: [domain/tariff]
+exclude: [domain/tariff/legacy]
+dependencies: [domain.common]
+legacy: false

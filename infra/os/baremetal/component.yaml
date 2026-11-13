@@ -1,0 +1,6 @@
+name: infra.os.baremetal
+version: 0.1.0
+layer: infra
+paths: [infra/os/baremetal]
+dependencies: []
+legacy: true
