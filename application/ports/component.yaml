@@ -1,0 +1,6 @@
+name: application.ports
+version: 0.1.0
+layer: application
+paths: [application/ports]
+dependencies: [nd_channel]
+legacy: false

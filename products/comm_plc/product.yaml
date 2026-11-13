@@ -1,0 +1,4 @@
+name: comm_plc
+version: 0.1.0
+components: [application.adapters.dl645, application.adapters.dl698, application.ports, domain.common, domain.events, domain.metering, domain.report, domain.security, domain.tariff, legacy.base_headers, nd_buf, nd_bus, nd_channel]
+notes: PLC communication module assembly; no metering domain

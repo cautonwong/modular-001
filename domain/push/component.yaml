@@ -1,0 +1,5 @@
+name: domain.push
+version: 0.1.0
+layer: domain
+paths: [domain/push]
+dependencies: [domain.common]

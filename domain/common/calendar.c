@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include "domain/common/calendar.h"
 
 static const uint8_t month_days[13] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -60,10 +61,56 @@ uint32_t nd_calendar_total_day(uint8_t day, uint8_t month, uint16_t year)
     return result;
 }
 
+void nd_calendar_from_total_day(uint32_t total_day, nd_datetime_t *out)
+{
+    uint32_t day = total_day > 0 ? total_day - 1 : 0;
+    uint16_t year = 2000;
+    uint8_t month = 1;
+
+    while (day >= (uint32_t)(is_leap(year) ? 366 : 365)) {
+        day -= is_leap(year) ? 366 : 365;
+        year++;
+    }
+    while (day >= nd_calendar_days_in_month(month, year)) {
+        day -= nd_calendar_days_in_month(month, year);
+        month++;
+    }
+
+    out->second = 0;
+    out->minute = 0;
+    out->hour = 0;
+    out->day = (uint8_t)(day + 1);
+    out->month = month;
+    out->year = year;
+}
+
 uint32_t nd_calendar_total_minutes(const nd_datetime_t *datetime)
 {
     uint32_t days = nd_calendar_total_day(datetime->day, datetime->month, datetime->year);
     return datetime->minute + (uint32_t)datetime->hour * 60 + days * 60 * 24;
+}
+
+int nd_calendar_add_seconds(const nd_datetime_t *datetime, int32_t seconds,
+                            nd_datetime_t *out)
+{
+    if (datetime == NULL || out == NULL) {
+        return -1;
+    }
+    int64_t total = (int64_t)nd_calendar_total_day(datetime->day, datetime->month,
+                                                   datetime->year) * 86400
+        + (int64_t)datetime->hour * 3600 + (int64_t)datetime->minute * 60
+        + datetime->second + seconds;
+    if (total < 86400) {
+        return -1;
+    }
+    uint32_t day = (uint32_t)(total / 86400);
+    uint32_t rest = (uint32_t)(total % 86400);
+    nd_calendar_from_total_day(day, out);
+    out->hour = (uint8_t)(rest / 3600);
+    rest %= 3600;
+    out->minute = (uint8_t)(rest / 60);
+    out->second = (uint8_t)(rest % 60);
+    return 0;
 }
 
 uint8_t nd_calendar_weekday(uint8_t day, uint8_t month, uint16_t year)

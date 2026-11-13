@@ -1,8 +1,6 @@
 #include "type_def.h"
 #include "nidavellir.h"
-#include "cpu_surport.h"
 #include "time_link.h"
-#include "pin_function_def.h"
 #include "fr_698_esam.h"
 #include "io_type.h"
 

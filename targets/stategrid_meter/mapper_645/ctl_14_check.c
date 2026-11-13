@@ -1,5 +1,8 @@
 #include "nidavellir.h"
 #include "645id_table.h"
+#include "domain/tariff/legacy/tariff_applications.h"
+#include "infra/kernel/resource_blocks.h"
+#include "port.h"
 
 extern const uint8_t  MonTab[13];
 extern const unsigned int  DayTab[13];

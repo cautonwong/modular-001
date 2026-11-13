@@ -1,6 +1,12 @@
 #include "nidavellir.h"
+#include "application/ports/resource_access.h"
 #include "fr_698.h"
 #include "gs_record.h"
+#include "cpu_surport.h"
+#include "domain/events/legacy/gs_record.h"
+#include "infra/kernel/resource_blocks.h"
+#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/mapper_698/resource_map.h"
 
 //extern uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t mode);
 
@@ -13,12 +19,13 @@ int get_3320_attr2(struct instance_t* instance, uint32_t oad, uint8_t* buf,void 
     uint8_t index = (uint8_t)(oad);
     uint8_t tempbuf[250] = {0};
     uint8_t* tmp = tempbuf;
-    uint32_t addr;
     uint8_t i, count, unit_size;
     //int ret;
 
-    addr = get_3320_save_addr(instance, pctx->channel);
-    nd_get_index(instance, addr, tempbuf, 241);
+    if (dl698_report_list_read(pctx->channel, tempbuf, 241) != 0)
+    {
+        return -DAR_OTHERS_ERROR;
+    }
     tmp = tempbuf;
     unit_size = 4;
 

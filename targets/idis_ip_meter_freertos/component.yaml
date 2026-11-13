@@ -1,0 +1,6 @@
+name: target.idis_ip_meter_freertos
+version: 0.1.0
+layer: product
+paths: [targets/idis_ip_meter_freertos]
+dependencies: []
+legacy: false

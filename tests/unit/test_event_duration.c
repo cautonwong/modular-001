@@ -77,6 +77,14 @@ static void test_event_can_start_again_after_it_ends(void)
     TEST_ASSERT_EQUAL_UINT8(1, state.active);
 }
 
+static void test_forced_start_activates_once(void)
+{
+    TEST_ASSERT_EQUAL_INT(ND_EVENT_STARTED, nd_event_duration_start(&state));
+    TEST_ASSERT_EQUAL_UINT8(1, state.active);
+    TEST_ASSERT_EQUAL_INT(ND_EVENT_NONE, nd_event_duration_start(&state));
+    TEST_ASSERT_EQUAL_INT(ND_EVENT_NONE, nd_event_duration_step(&state, 3, 1));
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -86,5 +94,6 @@ int main(void)
     RUN_TEST(test_zero_debounce_starts_immediately);
     RUN_TEST(test_inactive_event_stays_at_zero);
     RUN_TEST(test_event_can_start_again_after_it_ends);
+    RUN_TEST(test_forced_start_activates_once);
     return UNITY_END();
 }

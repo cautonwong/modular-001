@@ -1,9 +1,12 @@
 #include "nidavellir.h"
+#include "application/adapters/dl645/fr_645_context.h"
 //#include "645id_table.h"
 #include "gs_record.h"
 #include "fr_axdr.h"
 #include "fr_698.h"
 #include "upgrade_645_97.h"
+#include "kernel/legacy_control_block.h"
+#include "port.h"
 
 
 

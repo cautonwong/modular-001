@@ -40,4 +40,17 @@ uint32_t nd_demand_value(const nd_demand_t *demand);
 
 uint32_t nd_demand_fee_value(const nd_demand_t *demand);
 
+typedef struct {
+    uint32_t current_value;
+    uint32_t current_fee_value;
+    uint32_t period_seconds;
+    uint16_t periods;
+} nd_demand_snapshot_t;
+
+int nd_demand_snapshot(const nd_demand_t *demand, nd_demand_snapshot_t *out);
+
+int nd_demand_reset(nd_demand_t *demand);
+
+int nd_demand_next_period(nd_demand_t *demand);
+
 #endif

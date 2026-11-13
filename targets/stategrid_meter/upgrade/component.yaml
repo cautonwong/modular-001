@@ -1,0 +1,6 @@
+name: platform.stategrid_upgrade
+version: 0.1.0
+layer: product
+paths: [targets/stategrid_meter/upgrade]
+dependencies: []
+legacy: true

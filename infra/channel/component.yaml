@@ -1,0 +1,6 @@
+name: infra.channel
+version: 0.1.0
+layer: infra
+paths: [infra/channel]
+dependencies: [nd_channel, infra.kernel, application.ports]
+legacy: false

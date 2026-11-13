@@ -127,6 +127,27 @@ static void test_mode_one_waits_for_a_full_period(void)
     nd_demand_destroy(demand, &fake.port);
 }
 
+static void test_snapshot_reset_and_next_period(void)
+{
+    nd_demand_config_t config = default_config();
+    nd_demand_t *demand = nd_demand_create(&fake.port, &config);
+    nd_demand_snapshot_t snapshot;
+
+    run_minute(demand, 100);
+    TEST_ASSERT_EQUAL_INT(0, nd_demand_snapshot(demand, &snapshot));
+    TEST_ASSERT_EQUAL_UINT32(33, snapshot.current_value);
+    TEST_ASSERT_EQUAL_UINT32(60, snapshot.period_seconds);
+    TEST_ASSERT_EQUAL_UINT16(3, snapshot.periods);
+
+    TEST_ASSERT_EQUAL_INT(0, nd_demand_reset(demand));
+    TEST_ASSERT_EQUAL_UINT32(0, nd_demand_value(demand));
+    TEST_ASSERT_EQUAL_INT(0, nd_demand_snapshot(demand, &snapshot));
+    TEST_ASSERT_EQUAL_UINT32(0, snapshot.current_value);
+
+    TEST_ASSERT_EQUAL_INT(ND_DEMAND_BOTH, nd_demand_next_period(demand));
+    nd_demand_destroy(demand, &fake.port);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -136,5 +157,6 @@ int main(void)
     RUN_TEST(test_demand_averages_the_most_recent_slides);
     RUN_TEST(test_negative_power_counts_by_magnitude);
     RUN_TEST(test_mode_one_waits_for_a_full_period);
+    RUN_TEST(test_snapshot_reset_and_next_period);
     return UNITY_END();
 }

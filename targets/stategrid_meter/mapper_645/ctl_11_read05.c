@@ -1,9 +1,17 @@
 #include "nidavellir.h"
+#include "targets/stategrid_meter/persistence/meter_record.h"
+#include "application/ports/resource_access.h"
+#include "application/adapters/dl645/fr_645_context.h"
 #include "645id_table.h"
 #include "gs_record.h"
 #include "fr_axdr.h"
 #include "fr_698.h"
 #include "ctl_11_record.h"
+#include "cpu_surport.h"
+#include "domain/events/legacy/gs_record.h"
+#include "infra/kernel/resource_blocks.h"
+#include "infra/soc/v85xxp/v8500/v85xxp_system.h"
+#include "kernel/legacy_control_block.h"
 
 
 
@@ -792,7 +800,7 @@ int get_record_645_id_info(struct instance_t* instance, uint32_t ID, struct reco
                 case 0x05050000: //两套费率电价切换
                 case 0x05070000: //两套阶梯电价切换
                 {
-                    if(!(mbase_cb->metertype & BIT3))
+                    if(!(nd_mbase_metertype(mbase_cb) & BIT3))
                     {
                         return -1;
                     }

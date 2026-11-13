@@ -1,6 +1,10 @@
 #include "nidavellir.h"
+#include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
 #include "port.h"
+#include "infra/kernel/resource_blocks.h"
+#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/mapper_698/resource_map.h"
 
 
 int SET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
@@ -37,30 +41,30 @@ int SET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *
                         p = p + 3;
                         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectValue);
                         nd_set_index(instance, addr, p, 4); 
-                        mem_swap_cpy((uint8_t *)&mbase_cb->I_Prot, p, 4);
+                        mem_swap_cpy((uint8_t *)&nd_mbase_I_Prot(mbase_cb), p, 4);
                         p = p + 4;
                         p++;
                         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectTime);
                         nd_set_index(instance, addr, p, 2); 
-                        mem_swap_cpy((uint8_t *)&mbase_cb->Prot_time, p, 2);
-                        if(mbase_cb->imaxmin > 0)   //过流中修改时间，刷新
-                            mbase_cb->imaxmin = mbase_cb->Prot_time*60;
+                        mem_swap_cpy((uint8_t *)&nd_mbase_Prot_time(mbase_cb), p, 2);
+                        if(nd_mbase_imaxmin(mbase_cb) > 0)   //过流中修改时间，刷新
+                            nd_mbase_imaxmin(mbase_cb) = nd_mbase_Prot_time(mbase_cb)*60;
                         p = p + 2;
                         return (p-buf);
                     case 0x01:
                         p++;
                         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectValue);
                         nd_set_index(instance, addr, p, 4); 
-                        mem_swap_cpy((uint8_t *)&mbase_cb->I_Prot, p, 4);
+                        mem_swap_cpy((uint8_t *)&nd_mbase_I_Prot(mbase_cb), p, 4);
                         p = p + 4;
                         return (p-buf);
                     case 0x02:  
                         p++;
                         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectTime);
                         nd_set_index(instance, addr, p, 2); 
-                        mem_swap_cpy((uint8_t *)&mbase_cb->Prot_time, p, 2);
-                        if(mbase_cb->imaxmin > 0)   //过流中修改时间，刷新
-                            mbase_cb->imaxmin = mbase_cb->Prot_time*60;
+                        mem_swap_cpy((uint8_t *)&nd_mbase_Prot_time(mbase_cb), p, 2);
+                        if(nd_mbase_imaxmin(mbase_cb) > 0)   //过流中修改时间，刷新
+                            nd_mbase_imaxmin(mbase_cb) = nd_mbase_Prot_time(mbase_cb)*60;
                         p = p + 2;
                         return (p-buf);
                     default:

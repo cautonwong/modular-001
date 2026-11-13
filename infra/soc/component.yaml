@@ -1,0 +1,8 @@
+name: infra.soc
+version: 0.1.0
+layer: infra
+paths: [infra/soc]
+exclude: [infra/soc/v85xxp]
+dependencies: [legacy.base_headers, legacy.kernel_headers]
+# Owned but not in the VG_DTZY firmware source table.
+legacy: true

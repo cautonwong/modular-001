@@ -1,0 +1,6 @@
+name: target.host
+version: 0.1.0
+layer: product
+paths: [targets/host]
+dependencies: [application.metering, domain.metering]
+legacy: false

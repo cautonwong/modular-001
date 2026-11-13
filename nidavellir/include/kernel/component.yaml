@@ -1,0 +1,8 @@
+name: legacy.kernel_headers
+version: 0.1.0
+layer: infra
+paths: [nidavellir/include/kernel]
+# port.h supplies the mbase section markers; this known reverse edge is
+# explicit until the layout macros leave the product header.
+dependencies: [infra.kernel, legacy.base_headers, legacy.test_support, target.stategrid_meter]
+legacy: true

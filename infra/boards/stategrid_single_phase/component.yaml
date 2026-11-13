@@ -1,0 +1,6 @@
+name: board.stategrid_single_phase
+version: 0.1.0
+layer: platform
+paths: [infra/boards/stategrid_single_phase]
+dependencies: [legacy.base_headers, legacy.kernel_headers, soc.v85xxp_v8500, third_party.arm_cmsis, application.adapters.dl698]
+legacy: true

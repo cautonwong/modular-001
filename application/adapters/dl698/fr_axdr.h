@@ -1,5 +1,10 @@
 ﻿#ifndef __FR_AXDR_H__
 #define __FR_AXDR_H__
+#include <stdint.h>
+
+struct instance_t;
+struct context_698_t;
+struct pipeline_t;
 
 
 

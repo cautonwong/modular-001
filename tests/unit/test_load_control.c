@@ -54,10 +54,12 @@ static void test_remote_off_disconnects_once_and_reports(void)
 
     nd_load_actions_t actions = tick_command(ND_LOAD_REMOTE_OFF);
     TEST_ASSERT_TRUE(actions.disconnect);
+    TEST_ASSERT_TRUE(actions.transition);
     TEST_ASSERT_TRUE(actions.event_switch_off);
 
     actions = tick();
     TEST_ASSERT_FALSE(actions.disconnect);
+    TEST_ASSERT_FALSE(actions.transition);
 }
 
 static void test_remote_on_connects_once_and_reports(void)
@@ -82,6 +84,7 @@ static void test_meter_clear_suppresses_the_switch_on_event(void)
     nd_load_actions_t actions = tick_command(ND_LOAD_REMOTE_ON);
 
     TEST_ASSERT_TRUE(actions.connect);
+    TEST_ASSERT_TRUE(actions.transition);
     TEST_ASSERT_FALSE(actions.event_switch_on);
 }
 
@@ -148,7 +151,18 @@ static void test_repeat_actuates_without_reporting(void)
     nd_load_actions_t actions = tick();
 
     TEST_ASSERT_TRUE(actions.connect);
+    TEST_ASSERT_FALSE(actions.transition);
     TEST_ASSERT_FALSE(actions.event_switch_on);
+}
+
+static void test_limit_timer_counts_down_and_is_readable(void)
+{
+    load_control_set_timers(state, 0, 0, 2);
+
+    tick();
+    TEST_ASSERT_EQUAL_UINT32(1, load_control_limit_minutes(state));
+    tick();
+    TEST_ASSERT_EQUAL_UINT32(0, load_control_limit_minutes(state));
 }
 
 static void test_alarm_timer_arms_current_limit_and_blocks_off(void)
@@ -289,6 +303,23 @@ static void test_feedback_blinks_twice_after_a_key_reconnect(void)
     TEST_ASSERT_FALSE(feedback.led_blink);
 }
 
+static void test_feedback_reports_the_detected_relay_state(void)
+{
+    nd_load_feedback_inputs_t in = base_feedback();
+    nd_load_feedback_t feedback;
+
+    in.active_power = 0;
+    in.relay_off_elapsed = 200;
+    load_control_feedback(state, &in, &feedback);
+    TEST_ASSERT_EQUAL_UINT8(1, load_control_relay_true(state));
+    TEST_ASSERT_TRUE(feedback.led_on);
+
+    in.active_power = 100;
+    load_control_feedback(state, &in, &feedback);
+    TEST_ASSERT_EQUAL_UINT8(0, load_control_relay_true(state));
+}
+
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -302,11 +333,13 @@ int main(void)
     RUN_TEST(test_pretrip_allow_becomes_on_allow_and_needs_the_key);
     RUN_TEST(test_repeat_actuates_without_reporting);
     RUN_TEST(test_alarm_timer_arms_current_limit_and_blocks_off);
+    RUN_TEST(test_limit_timer_counts_down_and_is_readable);
     RUN_TEST(test_feedback_full_display_lights_the_led);
     RUN_TEST(test_feedback_flags_a_closed_relay_while_disconnected);
     RUN_TEST(test_feedback_confirms_disconnect_and_reports_once);
     RUN_TEST(test_feedback_confirms_connect_and_reports_once);
     RUN_TEST(test_feedback_blinks_while_on_allow);
     RUN_TEST(test_feedback_blinks_twice_after_a_key_reconnect);
+    RUN_TEST(test_feedback_reports_the_detected_relay_state);
     return UNITY_END();
 }

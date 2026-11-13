@@ -1,3 +1,7 @@
+# Python
+__pycache__/
+*.py[cod]
+
 # Prerequisites
 *.d
 *.log
@@ -52,8 +56,22 @@
 .tmp_versions/
 .vs/
 build/
+backupfiles/
 modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
 *.enc
+
+# External FreeRTOS kernel checkout (provided at build time)
+infra/third_party/freertos/FreeRTOS-KernelV11.3.3
+
+# Local Claude workspace settings
+CLAUDE.local.md
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Internal IDIS reference documents
+/docs/idis/

@@ -1,5 +1,7 @@
 #include "domain/metering/demand.h"
 
+#include <string.h>
+
 struct nd_demand {
     nd_demand_config_t config;
     uint64_t cumulative_seconds;
@@ -123,4 +125,43 @@ uint32_t nd_demand_value(const nd_demand_t *demand)
 uint32_t nd_demand_fee_value(const nd_demand_t *demand)
 {
     return demand->fee_value;
+}
+
+int nd_demand_snapshot(const nd_demand_t *demand, nd_demand_snapshot_t *out)
+{
+    if (demand == NULL || out == NULL) {
+        return -1;
+    }
+    out->current_value = demand->value;
+    out->current_fee_value = demand->fee_value;
+    out->period_seconds = (uint32_t)demand->config.sliding * 60u;
+    out->periods = demand->config.slide_num;
+    return 0;
+}
+
+int nd_demand_reset(nd_demand_t *demand)
+{
+    if (demand == NULL) {
+        return -1;
+    }
+    demand->cumulative_seconds = 0;
+    demand->cumulative_minute = 0;
+    demand->seconds = 0;
+    demand->value = 0;
+    demand->fee_value = 0;
+    demand->minute_count = 0;
+    demand->slide_index = 0;
+    demand->slide_count = 0;
+    demand->fee_count = 0;
+    memset(demand->slide, 0,
+           (size_t)demand->config.max_slide * sizeof(demand->slide[0]));
+    return 0;
+}
+
+int nd_demand_next_period(nd_demand_t *demand)
+{
+    if (demand == NULL) {
+        return -1;
+    }
+    return (int)nd_demand_on_minute(demand);
 }

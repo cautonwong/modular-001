@@ -1,0 +1,3 @@
+# mbase access ratchet: direct accesses to the legacy mbase_control_block_t layout.
+# Counts may only go down. Delete a line when both counts reach zero.
+# Format: <repo-relative path> access=<n> layout=<n>

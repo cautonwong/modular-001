@@ -1,0 +1,6 @@
+name: target.stategrid_meter.iar_for_arm
+version: 0.1.0
+layer: product
+paths: [targets/stategrid_meter/iar for arm]
+dependencies: []
+legacy: true

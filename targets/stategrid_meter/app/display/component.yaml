@@ -1,0 +1,6 @@
+name: target.stategrid_meter.display
+version: 0.1.0
+layer: product
+paths: [targets/stategrid_meter/app/display]
+dependencies: []
+legacy: true

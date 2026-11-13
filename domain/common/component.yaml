@@ -1,0 +1,6 @@
+name: domain.common
+version: 0.1.0
+layer: domain
+paths: [domain/common]
+dependencies: []
+legacy: false

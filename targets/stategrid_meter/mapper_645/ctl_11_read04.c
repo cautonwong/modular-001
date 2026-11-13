@@ -1,5 +1,8 @@
 #include "nidavellir.h"
 #include "645id_table.h"
+#include "domain/tariff/legacy/tariff_applications.h"
+#include "infra/kernel/resource_blocks.h"
+#include "port.h"
 
 extern uint8_t dl645rd_chg_data(struct instance_t* instance, uint32_t addr, uint8_t format, uint8_t *pbuf, uint8_t *len);
 

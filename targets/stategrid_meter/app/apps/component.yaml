@@ -1,0 +1,8 @@
+name: target.stategrid_meter.apps
+version: 0.1.0
+layer: product
+paths: [targets/stategrid_meter/app/apps]
+# Owned but not in the VG_DTZY firmware source table.
+exclude: [targets/stategrid_meter/app/apps/legacy/app_698_server/698_mapper.c, targets/stategrid_meter/app/apps/legacy/app_698_server/pl_serial.c, targets/stategrid_meter/app/apps/legacy/app_698_server/process_entry.c, targets/stategrid_meter/app/apps/legacy/app_698_server/thread_698_server.c, targets/stategrid_meter/app/apps/legacy/app_dlms_client/baremetal_entry.c, targets/stategrid_meter/app/apps/legacy/app_dlms_client/process_entry.c, targets/stategrid_meter/app/apps/legacy/app_dlms_client/thread_entry.c, targets/stategrid_meter/app/apps/legacy/app_dlms_server/baremetal_entry.c, targets/stategrid_meter/app/apps/legacy/app_dlms_server/process_entry.c, targets/stategrid_meter/app/apps/legacy/app_dlms_server/thread_entry.c, targets/stategrid_meter/app/apps/legacy/app_resource_manager/baremetal_entry.c, targets/stategrid_meter/app/apps/legacy/app_resource_manager/process_entry.c, targets/stategrid_meter/app/apps/legacy/app_resource_manager/thread_entry.c]
+dependencies: []
+legacy: true

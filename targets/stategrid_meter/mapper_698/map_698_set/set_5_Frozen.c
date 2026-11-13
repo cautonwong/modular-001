@@ -1,5 +1,10 @@
 #include "nidavellir.h"
 #include "fr_698.h"
+#include "domain/events/legacy/gs_record.h"
+#include "domain/freeze/legacy/freeze_applications.h"
+#include "infra/kernel/resource_blocks.h"
+#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/mapper_698/resource_map.h"
 
 
 int period_check1(uint16_t oi, uint16_t* capture_period)

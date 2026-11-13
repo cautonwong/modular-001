@@ -1,0 +1,6 @@
+name: platform.stategrid_board
+version: 0.1.0
+layer: product
+paths: [targets/stategrid_meter/board]
+dependencies: []
+legacy: true

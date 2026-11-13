@@ -47,6 +47,11 @@ uint8_t nd_tariff_find_interval(const nd_tariff_interval_t *intervals,
 uint8_t nd_tariff_select_day_table(const nd_tariff_table_t *table,
                                    const nd_datetime_t *now);
 
+/* Active period index for the day table. Writes the period start key
+ * (hour<<8|minute) to *start when non-NULL. Returns 0 for an empty table. */
+uint8_t nd_tariff_select_period(const nd_tariff_table_t *table, uint8_t day_table,
+                                uint8_t hour, uint8_t minute, uint16_t *start);
+
 uint8_t nd_tariff_select_fee(const nd_tariff_table_t *table, uint8_t day_table,
                              uint8_t hour, uint8_t minute);
 

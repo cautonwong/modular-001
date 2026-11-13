@@ -1,0 +1,6 @@
+name: target.msta
+version: 0.1.0
+layer: product
+paths: [targets/msta/msta.c, targets/msta/port.h, targets/msta/target.h, targets/msta/integration_test_sync_time_when_poweron.c, targets/msta/test_698_rx_entry.c, targets/msta/test_bt_tx_11_to_msta.c, targets/msta/test_dlms_rx_entry.c, targets/msta/test_meter_tx_86_to_msta.c, targets/msta/test_mock_data.c, targets/msta/test_msta.c, targets/msta/test_msta_read_meter_data_periodicly.c, targets/msta/test_msta_tx_11_to_meter.c, targets/msta/test_msta_tx_86_to_sta.c, targets/msta/test_sta_tx_07_to_meter.c, targets/msta/test_sta_tx_11_to_msta.c, targets/msta/test_sync_time.c, targets/msta/test_tasklet.c, targets/msta/test_upgrade.c]
+dependencies: [application.adapters.dl645, legacy.kernel_headers]
+legacy: true

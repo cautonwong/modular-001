@@ -1,8 +1,19 @@
 #include "nidavellir.h"
+#include "targets/stategrid_meter/persistence/meter_record.h"
+#include "targets/stategrid_meter/tools/app_resource_tool/resource_tool.h"
 #include "fr_698.h"
 #include "fr_645_report.h"
 #include "gs_record.h"
-#include "pin_function_def.h"
+#include "infra/boards/stategrid_single_phase/board_io.h"
+#include "application/apps/app_config.h"
+#include "application/adapters/dl698/fr_698.h"
+#include "domain/events/legacy/gs_record.h"
+#include "domain/freeze/legacy/freeze_applications.h"
+#include "infra/kernel/resource_blocks.h"
+#include "infra/soc/v85xxp/v8500/v85xxp_system.h"
+#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/app/driver_entry.h"
+#include "targets/stategrid_meter/mapper_698/resource_map.h"
 //参数初始化  
 extern const uint8_t  init_MinuteFreeze_oad[];
 extern const uint8_t  init_HourFreeze_oad[];
@@ -951,7 +962,7 @@ int check_metertype_OI_valid(struct instance_t* instance, uint16_t OI)
         struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
         uint8_t i;
 
-    if ((mbase_cb->metertype & F_Crad_En) == 0)  //非本地表
+    if ((nd_mbase_metertype(mbase_cb) & F_Crad_En) == 0)  //非本地表
     {   
 #if 0 //三相
         if (0) //智能表
@@ -1040,7 +1051,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     ReportFlagId = OverCurrentAS_RptFlag;   //上报标识
                     ReportModeId = OverCurrentAS_RptMode;   //上报方式   
                     info->record_head = record_head_t1;     // 记录单元
-                    info->acc_time = &mbase_cb->OverCurrentAS_acc_time;
+                    info->acc_time = &nd_mbase_OverCurrentAS_acc_time(mbase_cb);
                 }
                 break;
                 
@@ -1054,7 +1065,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     ReportFlagId = PowerOffS_RptFlag;   //上报标识
                     ReportModeId = PowerOffS_RptMode;   //上报方式   
                     info->record_head = record_head_t0;     // 记录单元
-                    info->acc_time = &mbase_cb->PowerOffS_acc_time;
+                    info->acc_time = &nd_mbase_PowerOffS_acc_time(mbase_cb);
                 }
                 break;
                 case 0x30120000: //编程事件
@@ -1135,7 +1146,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     ReportFlagId = CoverOpenS_RptFlag + temp;   //上报标识
                     ReportModeId = CoverOpenS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
-                    info->acc_time = &mbase_cb->CoverOpenS_acc_time;
+                    info->acc_time = &nd_mbase_CoverOpenS_acc_time(mbase_cb);
                 }
                 break;
 
@@ -1211,7 +1222,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     ReportFlagId = SwitchErrS_RptFlag + temp;   //上报标识
                     ReportModeId = SwitchErrS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
-                    info->acc_time = &mbase_cb->SwitchErrS_acc_time;
+                    info->acc_time = &nd_mbase_SwitchErrS_acc_time(mbase_cb);
                 }
                 break;
                 case 0x302C0000:
@@ -1224,7 +1235,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     ReportFlagId = PowerAbnormalS_RptFlag + temp;   //上报标识
                     ReportModeId = PowerAbnormalS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
-                    info->acc_time = &mbase_cb->PowerAbnormalS_acc_time;
+                    info->acc_time = &nd_mbase_PowerAbnormalS_acc_time(mbase_cb);
                 }
                 break;
                 case 0x302E0000:
@@ -1249,7 +1260,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     ReportFlagId = EmuErrS_RptFlag + temp;   //上报标识
                     ReportModeId = EmuErrS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
-                    info->acc_time = &mbase_cb->EmuErrS_acc_time;
+                    info->acc_time = &nd_mbase_EmuErrS_acc_time(mbase_cb);
                 }
                 break;
                 case 0x303C0000:
@@ -1274,7 +1285,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                     ReportFlagId = ZeroLineErrS_RptFlag + temp;   //上报标识
                     ReportModeId = ZeroLineErrS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
-                    info->acc_time = &mbase_cb->ZeroLineErrS_acc_time;
+                    info->acc_time = &nd_mbase_ZeroLineErrS_acc_time(mbase_cb);
                 }
                 break;
 
@@ -2677,77 +2688,77 @@ int para_init(struct instance_t* instance )
     
     //RAM部分更新
 
-    //if (mbase_cb->metertype & F_Password_En)
+    //if (nd_mbase_metertype(mbase_cb) & F_Password_En)
     //{
-        //memset(mbase_cb->meterNo, 0x00, 6);//表号 //由esam恢复
+        //memset(nd_mbase_meterNo(mbase_cb), 0x00, 6);//表号 //由esam恢复
     //}
 
     
-    mbase_cb->meter_const = 2000;
-    mbase_cb->active_energy_cal_word = 0xA0;
+    nd_mbase_meter_const(mbase_cb) = 2000;
+    nd_mbase_active_energy_cal_word(mbase_cb) = 0xA0;
     
-    mbase_cb->lcd_poweron_all_dis_time = 5;            //上电全显时间
-    mbase_cb->backlight_key_time = 60;                  //背光点亮时间
-    mbase_cb->lcd_checkdis_keep_sec = 10;               //显示查看背光点亮时间
-    mbase_cb->lcd_nopower_key_keep_sec = 30;            //无电按键驻留时间
-    mbase_cb->energy_point = 2;                        //电能小数显示位
-    mbase_cb->power_point = 4;                         //功率小数显示位
-    mbase_cb->lcd_12_mean = 0;                         //液晶12字样意义
-    mbase_cb->lcd_autodis_list_num = 5;                           //轮显屏数
-    mbase_cb->lcd_autodis_list_maxnum = 99;                       //最大轮显屏数
-    mbase_cb->lcd_keydis_list_num = 23;                           //键显屏数
-    mbase_cb->lcd_keydis_list_maxnum = 99;      //键显最大屏数
-    mbase_cb->lcd_autodis_keep_sec = 5;                           /*轮显持续时间 */
-    mbase_cb->lcd_keydis_keep_sec = 60;                           /*按键轮显持续时间 */
-    mbase_cb->Baut_rs485 = 10;//6;
-    mbase_cb->Baut_plc = DEF_BAUT_PLC;//6;
-    mbase_cb->SafeEn = 1;       //安全模式启用
-    mbase_cb->relay_ctl_mode = 0; //脉冲式控制方式
-    mbase_cb->Limit_T_Max = 300;  //广播校时最大允许时间
-    mbase_cb->Limit_T_Min = 60;   //广播校时最小允许时间
+    nd_mbase_lcd_poweron_all_dis_time(mbase_cb) = 5;            //上电全显时间
+    nd_mbase_backlight_key_time(mbase_cb) = 60;                  //背光点亮时间
+    nd_mbase_lcd_checkdis_keep_sec(mbase_cb) = 10;               //显示查看背光点亮时间
+    nd_mbase_lcd_nopower_key_keep_sec(mbase_cb) = 30;            //无电按键驻留时间
+    nd_mbase_energy_point(mbase_cb) = 2;                        //电能小数显示位
+    nd_mbase_power_point(mbase_cb) = 4;                         //功率小数显示位
+    nd_mbase_lcd_12_mean(mbase_cb) = 0;                         //液晶12字样意义
+    nd_mbase_lcd_autodis_list_num(mbase_cb) = 5;                           //轮显屏数
+    nd_mbase_lcd_autodis_list_maxnum(mbase_cb) = 99;                       //最大轮显屏数
+    nd_mbase_lcd_keydis_list_num(mbase_cb) = 23;                           //键显屏数
+    nd_mbase_lcd_keydis_list_maxnum(mbase_cb) = 99;      //键显最大屏数
+    nd_mbase_lcd_autodis_keep_sec(mbase_cb) = 5;                           /*轮显持续时间 */
+    nd_mbase_lcd_keydis_keep_sec(mbase_cb) = 60;                           /*按键轮显持续时间 */
+    nd_mbase_Baut_rs485(mbase_cb) = 10;//6;
+    nd_mbase_Baut_plc(mbase_cb) = DEF_BAUT_PLC;//6;
+    nd_mbase_SafeEn(mbase_cb) = 1;       //安全模式启用
+    nd_mbase_relay_ctl_mode(mbase_cb) = 0; //脉冲式控制方式
+    nd_mbase_Limit_T_Max(mbase_cb) = 300;  //广播校时最大允许时间
+    nd_mbase_Limit_T_Min(mbase_cb) = 60;   //广播校时最小允许时间
     
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    offsetof(struct mbase_control_block_t, meterNo));
-    s_len = offsetof(struct mbase_control_block_t, OverCurrent_threshold) - offsetof(struct mbase_control_block_t, meterNo);
-    nd_set_offset(instance, s_index, (uint8_t*)mbase_cb->meterNo, s_len);
+    nd_mbase_offset_meterNo());
+    s_len = nd_mbase_offset_OverCurrent_threshold() - nd_mbase_offset_meterNo();
+    nd_set_offset(instance, s_index, (uint8_t*)nd_mbase_meterNo(mbase_cb), s_len);
     
-    memset(mbase_cb->tsa, 0x11, 6);//表地址
+    memset(nd_mbase_tsa(mbase_cb), 0x11, 6);//表地址
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    offsetof(struct mbase_control_block_t, tsa));
-    nd_set_offset(instance, s_index, mbase_cb->tsa, 6);
+    nd_mbase_offset_tsa());
+    nd_set_offset(instance, s_index, nd_mbase_tsa(mbase_cb), 6);
     
 
-    mbase_cb->OverCurrent_threshold = 720000;         //参数 电能表过流事件-电流触发下限 
-    mbase_cb->ZeroLineErrS_rate_threshold = 5000;   // 电能表零线电流异常事件 限值
-    mbase_cb->ZeroLineErrS_Current_threshold = 10000;// 电能表零线电流异常事件-电流触发下限
-    mbase_cb->OverCurrent_duration_para = 60;  //参数 判定延时时间  
-    mbase_cb->PowerOffS_duration_para = 0;    //参数 判定延时时间  
-    mbase_cb->CoverOpenS_duration_para = 3;   //参数 判定延时时间  
-    mbase_cb->SwitchErrS_duration_para = 5;   //参数 判定延时时间  
-    mbase_cb->EmuErrS_duration_para = 60;      //参数 判定延时时间  
-    mbase_cb->RTCErrS_duration_para = 1;      //参数 判定延时时间  
-    mbase_cb->ZeroLineErrS_duration_para = 60; //参数 判定延时时间      
+    nd_mbase_OverCurrent_threshold(mbase_cb) = 720000;         //参数 电能表过流事件-电流触发下限 
+    nd_mbase_ZeroLineErrS_rate_threshold(mbase_cb) = 5000;   // 电能表零线电流异常事件 限值
+    nd_mbase_ZeroLineErrS_Current_threshold(mbase_cb) = 10000;// 电能表零线电流异常事件-电流触发下限
+    nd_mbase_OverCurrent_duration_para(mbase_cb) = 60;  //参数 判定延时时间  
+    nd_mbase_PowerOffS_duration_para(mbase_cb) = 0;    //参数 判定延时时间  
+    nd_mbase_CoverOpenS_duration_para(mbase_cb) = 3;   //参数 判定延时时间  
+    nd_mbase_SwitchErrS_duration_para(mbase_cb) = 5;   //参数 判定延时时间  
+    nd_mbase_EmuErrS_duration_para(mbase_cb) = 60;      //参数 判定延时时间  
+    nd_mbase_RTCErrS_duration_para(mbase_cb) = 1;      //参数 判定延时时间  
+    nd_mbase_ZeroLineErrS_duration_para(mbase_cb) = 60; //参数 判定延时时间      
 
-    mbase_cb->report_2015mode = 0;
+    nd_mbase_report_2015mode(mbase_cb) = 0;
 
-    mbase_cb->active_report_sec_limit = 3600; //掉电 主动上报 上电时间阈值 默认3600 
-    memset(mbase_cb->report_mode_645, 0x00, sizeof(mbase_cb->report_mode_645));//645主动上报模式 待调整
+    nd_mbase_active_report_sec_limit(mbase_cb) = 3600; //掉电 主动上报 上电时间阈值 默认3600 
+    memset(nd_mbase_report_mode_645(mbase_cb), 0x00, sizeof(nd_mbase_report_mode_645(mbase_cb)));//645主动上报模式 待调整
 
-    mbase_cb->factor_mode = true; //用于 自动初始化时  进入厂内
+    nd_mbase_factor_mode(mbase_cb) = true; //用于 自动初始化时  进入厂内
 
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    offsetof(struct mbase_control_block_t, OverCurrent_threshold));
-    s_len = offsetof(struct mbase_control_block_t, factor_mode) - offsetof(struct mbase_control_block_t, OverCurrent_threshold) + sizeof(mbase_cb->factor_mode);
-    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->OverCurrent_threshold, s_len);  
+    nd_mbase_offset_OverCurrent_threshold());
+    s_len = nd_mbase_offset_factor_mode() - nd_mbase_offset_OverCurrent_threshold() + sizeof(nd_mbase_factor_mode(mbase_cb));
+    nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_OverCurrent_threshold(mbase_cb), s_len);  
 
     // 波特率更新标志
-    mbase_cb->baud_chg = 0xFF;
+    nd_mbase_baud_chg(mbase_cb) = 0xFF;
 
     //掉电保存区
-    mbase_cb->sta = 0; //继电器命令状态
+    nd_mbase_sta(mbase_cb) = 0; //继电器命令状态
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
-        offsetof(struct mbase_control_block_t, sta)) -  offsetof(struct mbase_control_block_t, persistent_section_start);
-    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->sta, sizeof(mbase_cb->sta));
+        nd_mbase_offset_sta()) -  nd_mbase_offset_persistent_section_start();
+    nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_sta(mbase_cb), sizeof(nd_mbase_sta(mbase_cb)));
 
     //双备份区初始化
     num = sizeof(parameter_item_1)/sizeof(parameter_item_t);
@@ -2826,8 +2837,8 @@ int auto_parameter_inital(struct instance_t* instance)
     uint16_t check_id[3] = {KeyDisplayList, Report_channel, OverCurrentAS_oad  }; //mbase_block_parameter 区参数   按键显示项、上报通道、过流事件关联对象
 
 
-    METER_COVER_INPUT();
-    if(METER_COVER_GET_DIN() != METER_COVER_OPEN_LEVE)//开盖下
+    nd_board_cover_input_enable();
+    if(!nd_board_cover_closed())//开盖下
     {
         ret = nd_get_index_e2p(instance, buf, mbase_block_parameter, ParaInitFinish_Flag, 2);  //判断 完成标志
         if((ret > 0) && ((buf[0] == 0x55) || (buf[1] == 0x55) || (buf[2] == 0xaa) || (buf[1] != 0xaa)) )
@@ -2869,7 +2880,7 @@ int auto_parameter_inital(struct instance_t* instance)
 //编程记录 判断  协议set和 action 调用
 //set (OAD)
 //action   类7  24 的 方法 4/5(OMD)；    类9 的 方法 4/5/7/8(OMD);    类21 的方法4（OAD）/7(OMD = 0xF1000700)/9（OMD = 0xF1000900）
-void fr_698_MeterWr_program_judge(struct instance_t* instance, struct pipeline_t* pipeline,  struct message_t* mesg)
+void fr_698_MeterWr_program_judge(struct instance_t* instance, struct pipeline_t* pipeline,  struct nd_dl698_msg* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
@@ -2933,7 +2944,7 @@ void fr_698_MeterWr_program_judge(struct instance_t* instance, struct pipeline_t
 // 协议相关 、应用链接相关----------------start
 
 //更新（重新计数）应用连接超时时间
-void update_connect_timeout_cnt(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+void update_connect_timeout_cnt(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
@@ -2957,9 +2968,9 @@ void update_connect_timeout_cnt(struct instance_t* instance, struct pipeline_t* 
     }
 
 
-    if (mbase_cb->connect_status[ctx->channel][cilent_index] == true)
+    if (nd_mbase_connect_status(mbase_cb)[ctx->channel][cilent_index] == true)
     {
-        mbase_cb->connect_timeout_cnt[ctx->channel][cilent_index] = 0;
+        nd_mbase_connect_timeout_cnt(mbase_cb)[ctx->channel][cilent_index] = 0;
     }
 }
 
@@ -2969,10 +2980,10 @@ void fr_dl645_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t i,cilent_index, channel;
 
-    if (mbase_cb->auth_timeout_645 > 0)    
+    if (nd_mbase_auth_timeout_645(mbase_cb) > 0)    
     {
-        mbase_cb->auth_timeout_645--;
-        if (mbase_cb->auth_timeout_645 == 0)    
+        nd_mbase_auth_timeout_645(mbase_cb)--;
+        if (nd_mbase_auth_timeout_645(mbase_cb) == 0)    
         {
             MeterWr645_obj_list_clear(instance, NULL, NULL);
         }
@@ -2990,16 +3001,16 @@ void fr_dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline
     uint8_t i,cilent_index, channel;
 
 
-    if (mbase_cb->infrared_auth_timeout > 0)    mbase_cb->infrared_auth_timeout--;
-    if (mbase_cb->term_auth_timeout > 0)        mbase_cb->term_auth_timeout--;
-    if (mbase_cb->poweron_active_report_dly < 10)     mbase_cb->poweron_active_report_dly++;
+    if (nd_mbase_infrared_auth_timeout(mbase_cb) > 0)    nd_mbase_infrared_auth_timeout(mbase_cb)--;
+    if (nd_mbase_term_auth_timeout(mbase_cb) > 0)        nd_mbase_term_auth_timeout(mbase_cb)--;
+    if (nd_mbase_poweron_active_report_dly(mbase_cb) < 10)     nd_mbase_poweron_active_report_dly(mbase_cb)++;
 
 
     for(i = 0; i < 4; i++)
     {
-        if(mbase_cb->active_report_retry_dly[i] > 0)
+        if(nd_mbase_active_report_retry_dly(mbase_cb)[i] > 0)
         {
-            mbase_cb->active_report_retry_dly[i]--;  //R_3011_END
+            nd_mbase_active_report_retry_dly(mbase_cb)[i]--;  //R_3011_END
         }
     }
 
@@ -3009,16 +3020,16 @@ void fr_dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline
         //待调整  块抄读 超时复位
         for(channel=0; channel<4; channel++)
         {
-            if (mbase_cb->connect_status[channel][cilent_index])
+            if (nd_mbase_connect_status(mbase_cb)[channel][cilent_index])
             {
-                if (mbase_cb->esam_connect_timeout[channel][cilent_index] > 0)
+                if (nd_mbase_esam_connect_timeout(mbase_cb)[channel][cilent_index] > 0)
                 {
-                    mbase_cb->esam_connect_timeout[channel][cilent_index]--;
+                    nd_mbase_esam_connect_timeout(mbase_cb)[channel][cilent_index]--;
                 }
 
-                mbase_cb->connect_timeout_cnt[channel][cilent_index]++;
+                nd_mbase_connect_timeout_cnt(mbase_cb)[channel][cilent_index]++;
 
-                if ((mbase_cb->connect_timeout_cnt[channel][cilent_index] >  mbase_cb->connect_timeout[channel][cilent_index]) || (mbase_cb->esam_connect_timeout[channel][cilent_index] == 0))
+                if ((nd_mbase_connect_timeout_cnt(mbase_cb)[channel][cilent_index] >  nd_mbase_connect_timeout(mbase_cb)[channel][cilent_index]) || (nd_mbase_esam_connect_timeout(mbase_cb)[channel][cilent_index] == 0))
                 {
                     //待调整    释放链接通知
                     //return release_notification(channel, s,cilent_index);
@@ -3038,8 +3049,8 @@ void fr_dl645_power_on(struct instance_t* instance,  struct pipeline_t* pipeline
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
-    mbase_cb->auth_timeout_645 = 0;
-    memset(&mbase_cb->rand8_645[0], 0, sizeof(mbase_cb->rand8_645));
+    nd_mbase_auth_timeout_645(mbase_cb) = 0;
+    memset(&nd_mbase_rand8_645(mbase_cb)[0], 0, sizeof(nd_mbase_rand8_645(mbase_cb)));
     report_645stat_recover(instance);
 
 }
@@ -3052,21 +3063,21 @@ void fr_dl698_power_on(struct instance_t* instance,  struct pipeline_t* pipeline
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
 
-    mbase_cb->infrared_auth_timeout = 0;
-    mbase_cb->term_auth_timeout = 0;
-    mbase_cb->poweron_active_report_dly = 0;   
-    mbase_cb->active_report_retry_dly[R_3320] = 0;  //R_3011_END
-    mbase_cb->active_report_retry_dly[R_2015] = 0;
-    mbase_cb->active_report_retry_dly[R_3011_END] = 0;
-    mbase_cb->active_report_retry_dly[R_3011_START] = 0;
+    nd_mbase_infrared_auth_timeout(mbase_cb) = 0;
+    nd_mbase_term_auth_timeout(mbase_cb) = 0;
+    nd_mbase_poweron_active_report_dly(mbase_cb) = 0;   
+    nd_mbase_active_report_retry_dly(mbase_cb)[R_3320] = 0;  //R_3011_END
+    nd_mbase_active_report_retry_dly(mbase_cb)[R_2015] = 0;
+    nd_mbase_active_report_retry_dly(mbase_cb)[R_3011_END] = 0;
+    nd_mbase_active_report_retry_dly(mbase_cb)[R_3011_START] = 0;
 
-    mbase_cb->active_report_retry_cnt[R_3011_END] = 0;
-    mbase_cb->active_report_retry_cnt[R_3011_START] = 0;
+    nd_mbase_active_report_retry_cnt(mbase_cb)[R_3011_END] = 0;
+    nd_mbase_active_report_retry_cnt(mbase_cb)[R_3011_START] = 0;
 
-    //mbase_cb->active_report_retry_cnt[R_3320] = 0; //从 e2p中获取
-    //mbase_cb->active_report_retry_cnt[R_2015] = 0;
+    //nd_mbase_active_report_retry_cnt(mbase_cb)[R_3320] = 0; //从 e2p中获取
+    //nd_mbase_active_report_retry_cnt(mbase_cb)[R_2015] = 0;
 
-    mbase_cb->report_piid = 0;
+    nd_mbase_report_piid(mbase_cb) = 0;
     
 
     fr_handle_disconnect_all_channel(instance,  pipeline, 0);
@@ -3081,13 +3092,13 @@ void fr_dl698_power_on(struct instance_t* instance,  struct pipeline_t* pipeline
 
 
 
-int update_plc_baut_tick(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int update_plc_baut_tick(struct instance_t* instance, struct pipeline_t* pipeline, struct nd_dl698_msg* mesg)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
 
     if(chl_PLC_698 == ctx->channel){
-        mbase_cb->plc_baut_tick = 3600;    
+        nd_mbase_plc_baut_tick(mbase_cb) = 3600;    
     }
     return 1;
 }

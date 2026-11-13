@@ -1,0 +1,6 @@
+name: nd_ip
+version: 0.1.0
+layer: services
+paths: [components/services/ip]
+dependencies: []
+legacy: false

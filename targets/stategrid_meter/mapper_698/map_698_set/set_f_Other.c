@@ -1,5 +1,10 @@
 #include "nidavellir.h"
+#include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
+#include "cpu_surport.h"
+#include "application/apps/display_applications.h"
+#include "infra/kernel/resource_blocks.h"
+#include "kernel/legacy_control_block.h"
 
 
 int SET_F10103XX(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
@@ -120,7 +125,7 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
         case 0xF101://
             if(attribute == 0x02)   //安全模式参数
             {
-                if(mbase_cb->factor_mode == false)
+                if(nd_mbase_factor_mode(mbase_cb) == false)
                 {
                     return -DAR_RW_REJECT;
                 }
@@ -129,9 +134,9 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_En);
                 nd_set_index(instance, s_index, &tempbuf[0], 1);
 #if 0
-                mbase_cb->SafeEn = *p++;
+                nd_mbase_SafeEn(mbase_cb) = *p++;
                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                offsetof(struct mbase_control_block_t, SafeEn) + 1);
+                nd_mbase_offset_SafeEn() + 1);
                 nd_set_offset(instance, s_index, p, 1);
 #endif                
                 return (p-buf);
@@ -211,19 +216,19 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                                 /*
                                 p = p + 3;
                                 if(oad == 0xF300)
-                                    mbase_cb->lcd_autodis_list_num = *p;
+                                    nd_mbase_lcd_autodis_list_num(mbase_cb) = *p;
                                 else
-                                    mbase_cb->lcd_keydis_list_num = *p;
+                                    nd_mbase_lcd_keydis_list_num(mbase_cb) = *p;
                                 p = p + 2;
                                 if(oad == 0xF300)
-                                    mbase_cb->lcd_autodis_list_maxnum = 99;
+                                    nd_mbase_lcd_autodis_list_maxnum(mbase_cb) = 99;
                                 else
-                                    mbase_cb->lcd_keydis_list_maxnum = 99;
+                                    nd_mbase_lcd_keydis_list_maxnum(mbase_cb) = 99;
                                 
                                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                                offsetof(struct mbase_control_block_t, lcd_autodis_list_num));
-                                len = offsetof(struct mbase_control_block_t, Baut_rs485) - offsetof(struct mbase_control_block_t, lcd_keydis_keep_sec);
-                                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_autodis_list_num, len);
+                                nd_mbase_offset_lcd_autodis_list_num());
+                                len = nd_mbase_offset_Baut_rs485() - nd_mbase_offset_lcd_keydis_keep_sec();
+                                nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_lcd_autodis_list_num(mbase_cb), len);
                                 return (p-buf);
                                 break;*/
                             case 0x01://当前总对象数
@@ -234,17 +239,17 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                                 }
                                 if(oad == 0xF300)
                                 {
-                                    mbase_cb->lcd_autodis_list_num = *p++;
+                                    nd_mbase_lcd_autodis_list_num(mbase_cb) = *p++;
                                     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                                                offsetof(struct mbase_control_block_t, lcd_autodis_list_num));
-                                    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_autodis_list_num, 1);
+                                                nd_mbase_offset_lcd_autodis_list_num());
+                                    nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_lcd_autodis_list_num(mbase_cb), 1);
                                 }
                                 else
                                 {
-                                    mbase_cb->lcd_keydis_list_num = *p++;
+                                    nd_mbase_lcd_keydis_list_num(mbase_cb) = *p++;
                                     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                                                offsetof(struct mbase_control_block_t, lcd_keydis_list_num));
-                                    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_keydis_list_num, 1);
+                                                nd_mbase_offset_lcd_keydis_list_num());
+                                    nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_lcd_keydis_list_num(mbase_cb), 1);
                                 }
                                 return (p-buf);
                                 break;
@@ -262,17 +267,17 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                             {
                                 mem_swap_cpy((unsigned char*)&displayid, p, 2);
                                 if((displayid < 5) || (displayid > 20))   return -DAR_BUFFER_OVERFLOW;
-                                mem_swap_cpy((unsigned char*)&mbase_cb->lcd_autodis_keep_sec, p, 2);
+                                mem_swap_cpy((unsigned char*)&nd_mbase_lcd_autodis_keep_sec(mbase_cb), p, 2);
                                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                                            offsetof(struct mbase_control_block_t, lcd_autodis_keep_sec));
-                                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_autodis_keep_sec, 2);
+                                            nd_mbase_offset_lcd_autodis_keep_sec());
+                                nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_lcd_autodis_keep_sec(mbase_cb), 2);
                             }
                             else
                             {
-                                mem_swap_cpy((unsigned char*)&mbase_cb->lcd_keydis_keep_sec, p, 2);
+                                mem_swap_cpy((unsigned char*)&nd_mbase_lcd_keydis_keep_sec(mbase_cb), p, 2);
                                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                                            offsetof(struct mbase_control_block_t, lcd_keydis_keep_sec));
-                                nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->lcd_keydis_keep_sec, 2);
+                                            nd_mbase_offset_lcd_keydis_keep_sec());
+                                nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_lcd_keydis_keep_sec(mbase_cb), 2);
                             }
                             p = p + 2;
                             return (p-buf);
@@ -295,13 +300,13 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                 {
                     tempbuf[0] = *p++;
                     
-                    if( ((tempbuf[0] == 0xAA) && (mbase_cb->CoverOpenS_status == EVENT_SET)) || (tempbuf[0] == 0xFB) )
+                    if( ((tempbuf[0] == 0xAA) && (nd_mbase_CoverOpenS_status(mbase_cb) == EVENT_SET)) || (tempbuf[0] == 0xFB) )
                     {
-                        mbase_cb->factor_mode = true;
+                        nd_mbase_factor_mode(mbase_cb) = true;
                     }
                     else if(tempbuf[0] == 0x00) // 退厂内
                     {
-                        mbase_cb->factor_mode = false;
+                        nd_mbase_factor_mode(mbase_cb) = false;
                     }
                     else 
                     {
@@ -309,8 +314,8 @@ int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
                     }
 
                     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                    offsetof(struct mbase_control_block_t, factor_mode));
-                    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->factor_mode, sizeof(mbase_cb->factor_mode));
+                    nd_mbase_offset_factor_mode());
+                    nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_factor_mode(mbase_cb), sizeof(nd_mbase_factor_mode(mbase_cb)));
                 }
                 return (p-buf);
                 break;

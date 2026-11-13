@@ -1,9 +1,14 @@
 #include "nidavellir.h"
+#include "targets/stategrid_meter/persistence/meter_record.h"
+#include "application/adapters/dl645/fr_645_context.h"
 #include "645id_table.h"
 #include "gs_record.h"
 #include "fr_axdr.h"
 #include "fr_698.h"
 #include "ctl_03_SafeAuthen.h"
+#include "application/adapters/dl698/fr_698_esam.h"
+#include "infra/kernel/resource_blocks.h"
+#include "kernel/legacy_control_block.h"
 
 
 
@@ -132,7 +137,7 @@ int8_t security_decode_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *
 	uint8_t tx_apdu_len = 0;   
     uint8_t k1_offset = 0, k1_len = 0, decode_len = 0;
 
-    if(mbase_cb->auth_timeout_645 == 0)
+    if(nd_mbase_auth_timeout_645(mbase_cb) == 0)
     {
        return RS_ERR_PASS;
     }
@@ -176,7 +181,7 @@ int8_t security_decode_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *
         apdu += 4; 
         k1_offset += 4;
         
-        memcpy((unsigned char*)mbase_cb->handler_code, apdu, 4);
+        memcpy((unsigned char*)nd_mbase_handler_code(mbase_cb), apdu, 4);
         apdu += 4; 
         k1_offset += 4;
         
@@ -205,7 +210,7 @@ int8_t security_decode_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *
         apdu += 4; 
         k1_offset += 4;
         
-        memcpy((unsigned char*)mbase_cb->handler_code, apdu, 4);
+        memcpy((unsigned char*)nd_mbase_handler_code(mbase_cb), apdu, 4);
         apdu += 4; 
         k1_offset += 4;
         
@@ -277,7 +282,7 @@ int8_t security_judge_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *p
             {
                 memcpy((unsigned char*)&DI.di, p_rx, 4);
             }
-            if((mbase_cb->metertype & F_Password_En) || ((ctx->ctrl == 0x1B) || (ctx->ctrl == 0x1C)) //明文合闸 或开启明文设参
+            if((nd_mbase_metertype(mbase_cb) & F_Password_En) || ((ctx->ctrl == 0x1B) || (ctx->ctrl == 0x1C)) //明文合闸 或开启明文设参
                || (0x04001503 == DI.di))  //复位主动上报状态字  支持明文
             {
                 err = 1;
@@ -290,7 +295,7 @@ int8_t security_judge_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *p
        
 		break;
 	case DL645_PA_SC_CIPHER:    //密文 二类参数
-        if (mbase_cb->mac_suspend_state == true) //挂起
+        if (nd_mbase_mac_suspend_state(mbase_cb) == true) //挂起
         {
             err =  (-RS_ERR_OTHERS);
         }
@@ -306,7 +311,7 @@ int8_t security_judge_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *p
 		break;
 	}
 
-    if (mbase_cb->factor_mode == true) 
+    if (nd_mbase_factor_mode(mbase_cb) == true) 
     {
         err = 1;
     }
@@ -345,20 +350,20 @@ int dl645_remote_authenticate(struct instance_t* instance, uint8_t *p_rx, uint8_
     MeterWr645_obj_list_clear(instance, NULL, NULL);
     if(ctx->channel == chl_ir_698)
     {
-        if (mbase_cb->infrared_auth_timeout == 0)
+        if (nd_mbase_infrared_auth_timeout(mbase_cb) == 0)
         {
             return SC_ERR_AUTHEN;
         }
     }
 
 
-    mbase_cb->auth_timeout_645 = 0;
-    mem_swap_cpy(&mbase_cb->rand8_645[0], &apdu[16], 8); //backup rand8
+    nd_mbase_auth_timeout_645(mbase_cb) = 0;
+    mem_swap_cpy(&nd_mbase_rand8_645(mbase_cb)[0], &apdu[16], 8); //backup rand8
 
 
     ret = read_esam_no(instance, buffer_1);
     ndv_memcopy(&buffer_2[0], (uint8_t*)&buffer_1[5], 8);//表号, 8bytes
-    ndv_memcopy(&buffer_2[8], (uint8_t*)&mbase_cb->rand8_645[0], 8);//rn
+    ndv_memcopy(&buffer_2[8], (uint8_t*)&nd_mbase_rand8_645(mbase_cb)[0], 8);//rn
 
     
     ndv_memcopy(buffer_1, buffer_2, 16); // 表号，随机数
@@ -405,7 +410,7 @@ int dl645_remote_authenticate(struct instance_t* instance, uint8_t *p_rx, uint8_
 #endif    
     Authen_Tmr = 60 * Authen_Tmr;
 
-    mbase_cb->auth_timeout_645 = Authen_Tmr;
+    nd_mbase_auth_timeout_645(mbase_cb) = Authen_Tmr;
 
     *tx_len = (uint8_t)(p_tx - p_tx_cache);  
     
@@ -420,12 +425,12 @@ int dl645_esamcleartime(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_t
     uint8_t *apdu = p_rx; 
     uint8_t *p_tx_cache = p_tx;
 
-    if(mbase_cb->auth_timeout_645 == 0)
+    if(nd_mbase_auth_timeout_645(mbase_cb) == 0)
     {
        return SC_ERR_OTHER;
     }
 
-    mbase_cb->auth_timeout_645 = 0;
+    nd_mbase_auth_timeout_645(mbase_cb) = 0;
 
     *tx_len = (uint8_t)(p_tx - p_tx_cache);  
     
@@ -445,13 +450,13 @@ int dl645_Identity_auth_time_set(struct instance_t* instance, uint8_t *p_rx, uin
 
     if(ctx->channel == chl_ir_698)
     {
-        if (mbase_cb->infrared_auth_timeout == 0)
+        if (nd_mbase_infrared_auth_timeout(mbase_cb) == 0)
         {
             return SC_ERR_OTHER;
         }
     }
 
-    if(mbase_cb->auth_timeout_645 == 0)
+    if(nd_mbase_auth_timeout_645(mbase_cb) == 0)
     {
        return SC_ERR_OTHER;
     }
@@ -480,7 +485,7 @@ int dl645_Identity_auth_time_set(struct instance_t* instance, uint8_t *p_rx, uin
 #endif
               
     nd_set_index_e2p(instance, (uint8_t *) &time, mbase_block_parameter, AuthTime_DL645, 2); 
-    mbase_cb->auth_timeout_645 = time * 60;
+    nd_mbase_auth_timeout_645(mbase_cb) = time * 60;
 
     trigger_MeterWr645_record(instance, 0x070001FF, 0);
 
@@ -507,7 +512,7 @@ int dl645_ir_atuh_request_step1(struct instance_t* instance, uint8_t *p_rx, uint
         return SC_ERR_OTHER; 
     }   
     
-    mbase_cb->infrared_auth_timeout = 0;
+    nd_mbase_infrared_auth_timeout(mbase_cb) = 0;
 
     ret = read_esam_no(instance, buffer_1);
     ndv_memcopy(&buffer_2[0], (uint8_t*)&buffer_1[5], 8);//表号, 8bytes
@@ -552,7 +557,7 @@ int dl645_ir_atuh_request_step1(struct instance_t* instance, uint8_t *p_rx, uint
     mem_swap_cpy(p_tx, buffer_2, 8);// rand4
     p_tx += 8;
 
-    mbase_cb->esam_power_close_dly = 60;
+    nd_mbase_esam_power_close_dly(mbase_cb) = 60;
 
     *tx_len = (uint8_t)(p_tx - p_tx_cache); 
     return 0;
@@ -576,7 +581,7 @@ int dl645_ir_atuh_request_step2(struct instance_t* instance, uint8_t *p_rx, uint
         return SC_ERR_OTHER;  
     }  
     
-    mbase_cb->infrared_auth_timeout = 0;
+    nd_mbase_infrared_auth_timeout(mbase_cb) = 0;
 
     mem_swap_cpy(&buffer_2[0], (uint8_t*)&apdu[8], 8);//k1
 
@@ -596,8 +601,8 @@ int dl645_ir_atuh_request_step2(struct instance_t* instance, uint8_t *p_rx, uint
     
     mem_swap_cpy((uint8_t*)&tempU32, buffer_1, 4);
 
-    mbase_cb->auth_timeout_645 = 0;
-    mbase_cb->infrared_auth_timeout = tempU32 * 60;   // 红外认证剩余时间  698和645共用
+    nd_mbase_auth_timeout_645(mbase_cb) = 0;
+    nd_mbase_infrared_auth_timeout(mbase_cb) = tempU32 * 60;   // 红外认证剩余时间  698和645共用
      
     *tx_len = (uint8_t)(p_tx - p_tx_cache); 
 
@@ -631,7 +636,7 @@ int8_t safe_Authen03_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_
         return response_x_byte_err_645(p_err, SC_ERR_OTHER, 2,  tx_len);
     }
 
-    if (mbase_cb->mac_suspend_state == true) //挂起
+    if (nd_mbase_mac_suspend_state(mbase_cb) == true) //挂起
     {
         return response_x_byte_err_645(p_err, SC_ERR_HALT, 2,  tx_len);
     }
@@ -643,7 +648,7 @@ int8_t safe_Authen03_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_
 
 	memcpy((unsigned char*)&DI.di, p_rx, 4);
 
-    memcpy((unsigned char*)mbase_cb->handler_code, p_rx + 4, 4);
+    memcpy((unsigned char*)nd_mbase_handler_code(mbase_cb), p_rx + 4, 4);
 
 
     switch(DI.di)
@@ -681,7 +686,7 @@ int8_t safe_Authen03_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_
         case 0x078001FF:  //数据回抄
         case 0x078102FF:  //状态查询 
         default:
-            if(mbase_cb->auth_timeout_645 == 0) // 后续每个增加case 需判断
+            if(nd_mbase_auth_timeout_645(mbase_cb) == 0) // 后续每个增加case 需判断
             {
                Err_Byte = SC_ERR_OTHER;
             }

@@ -1,0 +1,8 @@
+name: infra.kernel
+version: 0.1.0
+layer: infra
+paths: [infra/kernel]
+dependencies: [application.ports, legacy.base_headers, legacy.kernel_headers, soc.v85xxp_v8500]
+# Owned but not in the VG_DTZY firmware source table (the product runs bare metal).
+exclude: [infra/kernel/bitfield.c, infra/kernel/cmsis_os2.c, infra/kernel/console_windows.c, infra/kernel/gui_windows.c, infra/kernel/hexdump.c, infra/kernel/log.c, infra/kernel/memory.c, infra/kernel/queue.c, infra/kernel/resource.c, infra/kernel/router.c, infra/kernel/task.c, infra/kernel/tasklet.c, infra/kernel/timex.c, infra/kernel/tm.c]
+legacy: true

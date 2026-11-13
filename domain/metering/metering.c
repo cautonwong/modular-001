@@ -26,6 +26,16 @@ void metering_destroy(metering_state_t *state, nd_allocator_t *allocator)
     nd_dealloc(allocator, state, sizeof(*state));
 }
 
+void metering_configure(metering_state_t *state, const metering_config_t *config)
+{
+    if (config == NULL) {
+        return;
+    }
+    state->energy.meter_const = config->meter_const;
+    state->energy.cal_word = config->cal_word;
+    state->energy.save_step = config->save_step;
+}
+
 nd_energy_update_t metering_add_pulses(metering_state_t *state,
                                        nd_energy_direction_t direction,
                                        uint8_t tariff, uint32_t pulses)

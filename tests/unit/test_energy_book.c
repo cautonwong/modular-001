@@ -113,6 +113,39 @@ static void test_clear_zeroes_energy_and_month(void)
     TEST_ASSERT_EQUAL_UINT32(0, book.month.integer);
 }
 
+static void test_zero_pulse_call_carries_a_pending_fraction(void)
+{
+    book.forward.slots[1].fraction = 20;
+    book.forward.slots[0].fraction = 20;
+    nd_energy_update_t update = nd_energy_add_pulses(&book, ND_ENERGY_FORWARD, 1, 0);
+
+    TEST_ASSERT_TRUE(update.energy_changed);
+    TEST_ASSERT_EQUAL_UINT32(1, book.forward.slots[1].integer);
+    TEST_ASSERT_EQUAL_UINT16(0, book.forward.slots[1].fraction);
+    TEST_ASSERT_EQUAL_UINT32(1, book.forward.slots[0].integer);
+}
+
+static void test_month_carries_without_the_cal_word_bit(void)
+{
+    nd_energy_book_init(&book, 2000, ND_CAL_ADD_POS, 200);
+    book.month.fraction = 20;
+    nd_energy_update_t update = nd_energy_add_pulses(&book, ND_ENERGY_REVERSE, 1, 0);
+
+    TEST_ASSERT_TRUE(update.month_changed);
+    TEST_ASSERT_EQUAL_UINT32(1, book.month.integer);
+    TEST_ASSERT_EQUAL_UINT16(0, book.month.fraction);
+}
+
+static void test_combined_read_sums_components_before_converting(void)
+{
+    nd_energy_book_init(&book, 300, ND_CAL_ADD_POS | ND_CAL_ADD_NEG, 200);
+    book.forward.slots[0].fraction = 1;
+    book.reverse.slots[0].fraction = 2;
+
+    TEST_ASSERT_EQUAL_INT64(100, nd_energy_read_combined(&book, 0,
+                                                         ND_ENERGY_RES_0_0001_KWH));
+}
+
 static void test_set_total_matches_factory_behaviour(void)
 {
     nd_energy_add_pulses(&book, ND_ENERGY_FORWARD, 3, 4000);
@@ -137,6 +170,9 @@ int main(void)
     RUN_TEST(test_month_ignores_direction_outside_cal_word);
     RUN_TEST(test_combined_read_sums_both_directions);
     RUN_TEST(test_tariff_zero_and_out_of_range_map_to_first_step);
+    RUN_TEST(test_zero_pulse_call_carries_a_pending_fraction);
+    RUN_TEST(test_month_carries_without_the_cal_word_bit);
+    RUN_TEST(test_combined_read_sums_components_before_converting);
     RUN_TEST(test_zero_meter_const_is_inert);
     RUN_TEST(test_clear_zeroes_energy_and_month);
     RUN_TEST(test_set_total_matches_factory_behaviour);

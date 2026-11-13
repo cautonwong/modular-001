@@ -1,0 +1,6 @@
+name: nd_dlms
+version: 0.1.0
+layer: protocol
+paths: [components/protocol/dlms]
+dependencies: [nd_channel, nd_buf, application.ports]
+legacy: false

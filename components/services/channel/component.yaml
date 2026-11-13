@@ -1,0 +1,6 @@
+name: nd_channel
+version: 0.1.0
+layer: services
+paths: [components/services/channel]
+dependencies: []
+legacy: false

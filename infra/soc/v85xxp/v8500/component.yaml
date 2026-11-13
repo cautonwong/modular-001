@@ -1,0 +1,6 @@
+name: soc.v85xxp_v8500
+version: 0.1.0
+layer: platform
+paths: [infra/soc/v85xxp/v8500]
+exclude: [infra/soc/v85xxp/v8500/nd_v8500_irq.c, infra/soc/v85xxp/v8500/vendor/Lib_Driver/src/lib_adc_tiny.c, infra/soc/v85xxp/v8500/vendor/Lib_Driver/src/lib_comp.c, infra/soc/v85xxp/v8500/vendor/Lib_Driver/src/lib_crypt.c, infra/soc/v85xxp/v8500/vendor/Lib_Driver/src/lib_dma.c, infra/soc/v85xxp/v8500/vendor/Lib_Driver/src/lib_i2c.c, infra/soc/v85xxp/v8500/vendor/Lib_Driver/src/lib_iso7816.c, infra/soc/v85xxp/v8500/vendor/Lib_Driver/src/lib_pwm.c, infra/soc/v85xxp/v8500/vendor/Lib_Driver/src/lib_spi.c, infra/soc/v85xxp/v8500/vendor/Lib_Driver/src/lib_u32k.c, infra/soc/v85xxp/v8500/vendor/Lib_Driver/src/lib_version.c]
+dependencies: [legacy.base_headers, legacy.kernel_headers, third_party.arm_cmsis]

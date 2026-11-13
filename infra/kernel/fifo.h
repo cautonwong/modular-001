@@ -3,20 +3,10 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "application/ports/fifo.h"
 //-1 迭代出错
 //0 正常继续
 //1 正常结束
-typedef int (*fifo_callback_t)(void* ctx, uint8_t *b);
-
-struct fifo_t
-{
-    uint8_t *buf_ptr;
-    volatile uint16_t rd;
-    volatile uint16_t wr;
-    uint16_t buf_size;
-    //uint8_t  trigger_level_bytes;//最小长度
-};
-
 struct cache_t
 {
     uint32_t capacity;

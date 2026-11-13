@@ -1,0 +1,14 @@
+name: meter_electricity_single_phase_idis
+version: 0.1.0
+phases: 1
+components:
+  - domain.common
+  - domain.metering
+  - domain.tariff
+  - domain.freeze
+  - domain.events
+  - domain.load_control
+  - application.metering
+  - soc.v85xxp_v8500
+  - board.stategrid_single_phase
+notes: IDIS Pack3 single-phase meter bring-up image

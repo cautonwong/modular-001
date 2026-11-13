@@ -23,4 +23,8 @@ nd_event_transition_t nd_event_duration_step(nd_event_duration_t *state,
                                              uint8_t debounce_seconds,
                                              uint8_t condition);
 
+/* Power-down path: commits the event before the rail collapses, so it starts
+ * without waiting for the debounce. Reports STARTED once. */
+nd_event_transition_t nd_event_duration_start(nd_event_duration_t *state);
+
 #endif

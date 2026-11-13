@@ -1,6 +1,12 @@
 #include "nidavellir.h"
+#include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
 #include "gs_record.h"
+#include "application/adapters/dl698/fr_698.h"
+#include "domain/events/legacy/gs_record.h"
+#include "domain/freeze/legacy/freeze_applications.h"
+#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/mapper_698/resource_map.h"
 
 
 int freeze_add_one_capture(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
@@ -549,7 +555,7 @@ int ACTION_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             return -DAR_TYPE_NOT_MATCH;
         }
         p++;
-        mbase_cb->trigger_insfreeze_delay_sec = buf_to_uint16_msb(p);
+        nd_mbase_trigger_insfreeze_delay_sec(mbase_cb) = buf_to_uint16_msb(p);
         return (int)(p - buf);
 
     case 4: // 添加一个冻结关联对象属性 

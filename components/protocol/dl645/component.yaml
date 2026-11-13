@@ -1,0 +1,6 @@
+name: protocol.dl645
+version: 0.1.0
+layer: protocol
+paths: [components/protocol/dl645]
+dependencies: [application.adapters.dl645, application.ports, nd_bus, nd_channel, infra.channel, infra.kernel]
+legacy: true

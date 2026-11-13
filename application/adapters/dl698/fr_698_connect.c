@@ -1,5 +1,12 @@
-﻿#include "nidavellir.h"
+#include <stdbool.h>
+#include "application/ports/fifo.h"
+#include "application/adapters/dl698/fr_698_env.h"
+struct instance_t;
 #include "fr_698.h"
+#include "domain/events/legacy/gs_record.h"
+#include "application/adapters/dl698/fr_698.h"
+#include "application/adapters/dl698/fr_698_esam.h"
+#include "meter_base_view.h"
 
 
 
@@ -45,9 +52,9 @@ struct factory_version_t
 //通道顺序 :红外、485-1，载波，485-2；
 const struct connect_request_t default_connect = 
 {
-    0x0016, 
-    0xFF,0xFF,0xFF,0xff,0xc0,0x00,0x00,0x00,
-    0xFF,0xFE,0xC4,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x0016,
+    {0xFF,0xFF,0xFF,0xff,0xc0,0x00,0x00,0x00},
+    {0xFF,0xFE,0xC4,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
     0x0200,
     0x0200,
     0x01,
@@ -60,12 +67,12 @@ struct connect_request_t get_default_connect_para(uint8_t channel)
 {
     struct connect_request_t default_connect_para;
     ndv_memcopy((uint8_t *)&default_connect_para,  (uint8_t *)&default_connect, sizeof(struct connect_request_t));
-    if(channel == chl_ir_698)
+    if(channel == FR_698_CHL_IR)
     {
         default_connect_para.send_frm_size = 200;
         default_connect_para.recv_frm_size = 200;
     }
-    else if(channel == chl_PLC_698)
+    else if(channel == FR_698_CHL_PLC)
     {
         default_connect_para.send_frm_size = 255; //
         default_connect_para.recv_frm_size = 255;
@@ -78,9 +85,9 @@ struct connect_request_t get_default_connect_para(uint8_t channel)
 
 
 struct connect_request_t cfg_connect = {
-    0x0016, 
-    0xFF,0xFF,0xFF,0xff,0xc0,0x00,0x00,0x00,
-    0xFF,0xFE,0xC4,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x0016,
+    {0xFF,0xFF,0xFF,0xff,0xc0,0x00,0x00,0x00},
+    {0xFF,0xFE,0xC4,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
     0x0200,
     0x0200,
     0x01,
@@ -92,10 +99,10 @@ struct connect_request_t cfg_connect = {
     
 
 
-static int __common_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-static int __password_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-static int __signature_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+static int __common_process(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
+static int __password_process(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
+static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
+static int __signature_process(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
 
 
 #define Security_FUNC   \
@@ -113,7 +120,7 @@ enum connect_mode_e
     Security_MAX
 };
 
-typedef int(*pFunc_security_process)(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
+typedef int(*pFunc_security_process)(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
      
 const pFunc_security_process Func_security[] = 
 {
@@ -123,31 +130,16 @@ const pFunc_security_process Func_security[] =
 };
 
 
-static int __common_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+static int __common_process(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t*)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
 
     uint8_t *p_apdu = cache->buf_ptr;
     uint8_t buf[70];
-    uint8_t  rn_len = 0;
-    uint8_t cilent_index = 0;
-    uint32_t esam_session_timeout = 0xffffffffU;
-    int len_len = 0;
     uint8_t *p_connect_timeout = cache->buf_ptr;
 
-
-    if (CA_TYPE_TER(ctx->CA))//from 终端
-    {
-        cilent_index = 1;
-    }
-    else
-    {
-        cilent_index = 0;
-    }
-    
     memcpy(buf, apdu_rx + ctx->apdu_rx_offset, 38);
     ctx->apdu_rx_offset += 38;
     
@@ -190,20 +182,17 @@ static int __common_process(struct instance_t* instance, struct pipeline_t* pipe
 
 }
 
-static int __password_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+static int __password_process(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t*)
 {
 
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
     
     uint8_t *p_apdu = cache->buf_ptr;
     uint8_t buf[70];
-    uint8_t  rn_len = 0;
     uint8_t cilent_index = 0;
     uint32_t esam_session_timeout = 0xffffffffU;
-    int len_len = 0;
     uint8_t *p_connect_timeout = cache->buf_ptr;
 
     uint8_t *p_password = cache->buf_ptr;
@@ -212,7 +201,7 @@ static int __password_process(struct instance_t* instance, struct pipeline_t* pi
     int ret = DL698_SEC_SUCCESS;
     uint8_t channel = 0;
     
-    if((ctx)&&(ctx->channel < chl_NUM))
+    if((ctx)&&(ctx->channel < FR_698_CHL_NUM))
     {
         channel = ctx->channel;
     }
@@ -292,23 +281,23 @@ static int __password_process(struct instance_t* instance, struct pipeline_t* pi
 
         if (esam_session_timeout == 0)
         {
-            esam_session_timeout = mbase_cb->connect_timeout[channel][cilent_index];
+            esam_session_timeout = nd_mb_connect_timeout(instance)[channel][cilent_index];
         }
 
-        if (mbase_cb->connect_timeout[channel][cilent_index] > esam_session_timeout)
+        if (nd_mb_connect_timeout(instance)[channel][cilent_index] > esam_session_timeout)
         {
-            mbase_cb->connect_timeout[channel][cilent_index] = esam_session_timeout;
-            mem_swap_cpy(p_connect_timeout, (uint8_t*)&mbase_cb->connect_timeout[channel][cilent_index], 4);     //期望的应用连接超时时间    
+            nd_mb_connect_timeout(instance)[channel][cilent_index] = esam_session_timeout;
+            mem_swap_cpy(p_connect_timeout, (uint8_t*)&nd_mb_connect_timeout(instance)[channel][cilent_index], 4);     //期望的应用连接超时时间
         }
         
-        mbase_cb->esam_connect_timeout[channel][cilent_index] = esam_session_timeout;
+        nd_mb_esam_connect_timeout(instance)[channel][cilent_index] = esam_session_timeout;
         
-        mbase_cb->current_connect_channel[cilent_index] = channel;
-        mbase_cb->connect_status[channel][cilent_index] = true;
-        mbase_cb->connect_timeout_cnt[channel][cilent_index] = 0;
+        nd_mb_current_connect_channel(instance)[cilent_index] = channel;
+        nd_mb_connect_status(instance)[channel][cilent_index] = true;
+        nd_mb_connect_timeout_cnt(instance)[channel][cilent_index] = 0;
 
         
-        MeterWr_obj_list_clear(instance, pipeline, mesg);
+        MeterWr_obj_list_clear(instance, pipeline, NULL);
         return DL698_SEC_SUCCESS;        
     }
     else
@@ -326,12 +315,10 @@ static int __password_process(struct instance_t* instance, struct pipeline_t* pi
    
 }
 
-static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t*)
 {
-    struct mbase_control_block_t* mbase_cb;
     
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
 
@@ -344,7 +331,7 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     uint8_t *p_connect_timeout = cache->buf_ptr;
     uint8_t channel = 0;
     
-    if((ctx)&&(ctx->channel < chl_NUM))
+    if((ctx)&&(ctx->channel < FR_698_CHL_NUM))
     {
         channel = ctx->channel;
     }
@@ -390,7 +377,7 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     mem_swap_cpy(p_connect_timeout, (uint8_t*)&cfg_connect.connect_time, 4);     //期望的应用连接超时时间    
     cache->wr = cache->wr + 4;
 
-    mbase_cb->connect_timeout[channel][cilent_index] = cfg_connect.connect_time;
+    nd_mb_connect_timeout(instance)[channel][cilent_index] = cfg_connect.connect_time;
 
 
     len_len = esam_consult_key(instance, CA_TYPE_TER(ctx->CA) , buf+1 );
@@ -435,31 +422,31 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
 
         if (esam_session_timeout == 0)
         {
-            esam_session_timeout = mbase_cb->connect_timeout[channel][cilent_index];
+            esam_session_timeout = nd_mb_connect_timeout(instance)[channel][cilent_index];
         }
 
-        if (mbase_cb->connect_timeout[channel][cilent_index] > esam_session_timeout)
+        if (nd_mb_connect_timeout(instance)[channel][cilent_index] > esam_session_timeout)
         {
-            mbase_cb->connect_timeout[channel][cilent_index] = esam_session_timeout;
-            mem_swap_cpy(p_connect_timeout, (uint8_t*)&mbase_cb->connect_timeout[channel][cilent_index], 4);     //期望的应用连接超时时间    
+            nd_mb_connect_timeout(instance)[channel][cilent_index] = esam_session_timeout;
+            mem_swap_cpy(p_connect_timeout, (uint8_t*)&nd_mb_connect_timeout(instance)[channel][cilent_index], 4);     //期望的应用连接超时时间
         }
         
-        mbase_cb->esam_connect_timeout[channel][cilent_index] = esam_session_timeout;
+        nd_mb_esam_connect_timeout(instance)[channel][cilent_index] = esam_session_timeout;
         
-        mbase_cb->current_connect_channel[cilent_index] = channel;
-        mbase_cb->connect_status[channel][cilent_index] = true;
-        mbase_cb->connect_timeout_cnt[channel][cilent_index] = 0;
+        nd_mb_current_connect_channel(instance)[cilent_index] = channel;
+        nd_mb_connect_status(instance)[channel][cilent_index] = true;
+        nd_mb_connect_timeout_cnt(instance)[channel][cilent_index] = 0;
 
         
         if(1 == cilent_index)//建立终端应用链接时，要失效终端身份认证
         {
-            mbase_cb->term_auth_timeout = 0;
+            nd_mb_term_auth_timeout(instance) = 0;
         }
 
-//        mbase_cb->clientaddr = ctx->CA;
+//        nd_mb_clientaddr(instance) = ctx->CA;
 
         
-        MeterWr_obj_list_clear(instance, pipeline, mesg);
+        MeterWr_obj_list_clear(instance, pipeline, NULL);
         return DAR_SUCCESS;
     }
     else
@@ -469,37 +456,22 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
         *(p_apdu+cache->wr) = 0;//认证附加信息
         cache->wr++;
 
-        mbase_cb->connect_status[channel][cilent_index] = false;
-        mbase_cb->connect_timeout[channel][cilent_index]   = 0;
+        nd_mb_connect_status(instance)[channel][cilent_index] = false;
+        nd_mb_connect_timeout(instance)[channel][cilent_index]   = 0;
         return DAR_ESAM_CHECK_FAILED;
     }
 }
 
-static int __signature_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+static int __signature_process(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t*)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
 
     uint8_t *p_apdu = cache->buf_ptr;
     uint8_t buf[70];
-    uint8_t  rn_len = 0;
-    uint8_t cilent_index = 0;
-    uint32_t esam_session_timeout = 0xffffffffU;
-    int len_len = 0;
     uint8_t *p_connect_timeout = cache->buf_ptr;
 
-
-    if (CA_TYPE_TER(ctx->CA))//from 终端
-    {
-        cilent_index = 1;
-    }
-    else
-    {
-        cilent_index = 0;
-    }
-    
     memcpy(buf, apdu_rx + ctx->apdu_rx_offset, 38);
     ctx->apdu_rx_offset += 38;
     
@@ -569,26 +541,14 @@ static void ___get_consult_info(struct connect_request_t *connect, struct connec
 }
 
 
-int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t*)
 {
-    struct mbase_control_block_t* mbase_cb;
     uint8_t cilent_index = 0;
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
     uint16_t offset= 0;
-    uint8_t channel = 0;
-    
-    if((ctx)&&(ctx->channel < chl_NUM))
-    {
-        channel = ctx->channel;
-    }
 
-
-    
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-   
-    
     if (CA_TYPE_TER(ctx->CA))//终端
     {
         cilent_index = 1;
@@ -599,13 +559,13 @@ int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipelin
     }
     
         
-    mbase_cb->connect_timeout[ctx->channel][cilent_index] = 0;  
-    mbase_cb->esam_connect_timeout[ctx->channel][cilent_index] = 0;
-    mbase_cb->connect_status[ctx->channel][cilent_index] = false;
+    nd_mb_connect_timeout(instance)[ctx->channel][cilent_index] = 0;
+    nd_mb_esam_connect_timeout(instance)[ctx->channel][cilent_index] = 0;
+    nd_mb_connect_status(instance)[ctx->channel][cilent_index] = false;
     
-    if ((mbase_cb->connect_status[ctx->channel][0] == false)&& (mbase_cb->connect_status[ctx->channel][1] == false))
+    if ((nd_mb_connect_status(instance)[ctx->channel][0] == false)&& (nd_mb_connect_status(instance)[ctx->channel][1] == false))
     {
-        MeterWr_obj_list_clear(instance, pipeline, mesg);
+        MeterWr_obj_list_clear(instance, pipeline, NULL);
     }
     
     //复位ESAM
@@ -622,21 +582,19 @@ int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipelin
 
 
 
-int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     //struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct connect_request_t connect = {0};
     struct connect_request_t default_connect_para = {0};
     struct connect_request_t cfg_connect_cache = {0};
     int result = DAR_OTHERS_ERROR;
-    uint32_t temp=0;
     uint16_t offset = 0;
     uint8_t channel = 0;
     
-    if((ctx)&&(ctx->channel < chl_NUM))
+    if((ctx)&&(ctx->channel < FR_698_CHL_NUM))
     {
         channel = ctx->channel;
     }
@@ -695,7 +653,7 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
             result = Func_security[connect.connect_mode](instance, pipeline, mesg);
             if (result == DL698_SEC_SUCCESS)
             {
-                mbase_cb->clientaddr[channel] = ctx->CA;
+                nd_mb_clientaddr(instance)[channel] = ctx->CA;
                 //mbase_cb->connect_mode[ctx->channel] = cfg_connect.connect_mode;
             }
             else
@@ -710,9 +668,9 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
 }
 
 
-int get_CONNECT_Request_len(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int get_CONNECT_Request_len(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t*)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint16_t len = 0;
     int offset = 0;
     uint8_t *apdu = ctx->apdu_d_rx + ctx->apdu_rx_offset;
@@ -761,10 +719,7 @@ int get_CONNECT_Request_len(struct instance_t* instance, struct pipeline_t* pipe
 //给定通道号的 断开应用链接
 int fr_handle_disconnect2(struct instance_t* instance,  struct pipeline_t* pipeline,  uint8_t cilent_index, uint8_t channel)
 {
-    struct message_t mesg;
     //uint8_t result = DAR_SUCCESS;
-    struct mbase_control_block_t* mbase_cb;
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
    
     if (cilent_index > 1)//终端
     {
@@ -777,13 +732,13 @@ int fr_handle_disconnect2(struct instance_t* instance,  struct pipeline_t* pipel
     }
 
      
-    mbase_cb->connect_timeout[channel][cilent_index] = 0;  
-    mbase_cb->esam_connect_timeout[channel][cilent_index] = 0;
-    mbase_cb->connect_status[channel][cilent_index] = false;
+    nd_mb_connect_timeout(instance)[channel][cilent_index] = 0;
+    nd_mb_esam_connect_timeout(instance)[channel][cilent_index] = 0;
+    nd_mb_connect_status(instance)[channel][cilent_index] = false;
     
-    if ((mbase_cb->connect_status[channel][0] == false)&& (mbase_cb->connect_status[channel][1] == false))
+    if ((nd_mb_connect_status(instance)[channel][0] == false)&& (nd_mb_connect_status(instance)[channel][1] == false))
     {
-        MeterWr_obj_list_clear(instance, pipeline, &mesg);
+        MeterWr_obj_list_clear(instance, pipeline, NULL);
     }
     
     //复位ESAM

@@ -104,11 +104,48 @@ static void test_rtc_bcd_uses_two_digit_year(void)
     TEST_ASSERT_EQUAL_UINT8(0x24, out[5]);
 }
 
+static void test_from_total_day_round_trips(void)
+{
+    static const uint32_t days[] = {1, 60, 61, 366, 367, 1521, 1522, 8893, 8949};
+    nd_datetime_t datetime;
+
+    for (uint8_t i = 0; i < sizeof(days) / sizeof(days[0]); i++) {
+        nd_calendar_from_total_day(days[i], &datetime);
+        TEST_ASSERT_EQUAL_UINT32(days[i], nd_calendar_total_day(datetime.day, datetime.month,
+                                                                datetime.year));
+    }
+
+    nd_calendar_from_total_day(8893, &datetime); /* 2024-05-06 */
+    TEST_ASSERT_EQUAL_UINT8(6, datetime.day);
+    TEST_ASSERT_EQUAL_UINT8(5, datetime.month);
+    TEST_ASSERT_EQUAL_UINT16(2024, datetime.year);
+
+    nd_calendar_from_total_day(60, &datetime); /* 2000-02-29 */
+    TEST_ASSERT_EQUAL_UINT8(29, datetime.day);
+    TEST_ASSERT_EQUAL_UINT8(2, datetime.month);
+}
+
 static void test_weekday_matches_the_legacy_formula(void)
 {
     TEST_ASSERT_EQUAL_UINT8(1, nd_calendar_weekday(1, 1, 2001)); /* Monday */
     TEST_ASSERT_EQUAL_UINT8(0, nd_calendar_weekday(7, 1, 2001)); /* Sunday */
     TEST_ASSERT_EQUAL_UINT8(6, nd_calendar_weekday(1, 1, 2000)); /* Saturday */
+}
+
+
+static void test_add_seconds_handles_day_boundary(void)
+{
+    nd_datetime_t datetime = {0, 15, 10, 11, 11, 2026};
+    nd_datetime_t out;
+    TEST_ASSERT_EQUAL_INT(0, nd_calendar_add_seconds(&datetime, -900, &out));
+    TEST_ASSERT_EQUAL_UINT8(10, out.hour);
+    TEST_ASSERT_EQUAL_UINT8(0, out.minute);
+    TEST_ASSERT_EQUAL_INT(0, nd_calendar_add_seconds(&datetime, 3600, &out));
+    TEST_ASSERT_EQUAL_UINT8(11, out.hour);
+    TEST_ASSERT_EQUAL_UINT8(15, out.minute);
+    TEST_ASSERT_EQUAL_INT(0, nd_calendar_add_seconds(&datetime, 86400, &out));
+    TEST_ASSERT_EQUAL_UINT8(12, out.day);
+    TEST_ASSERT_EQUAL_UINT8(10, out.hour);
 }
 
 int main(void)
@@ -120,8 +157,10 @@ int main(void)
     RUN_TEST(test_time_validation);
     RUN_TEST(test_total_day_matches_legacy_formula);
     RUN_TEST(test_total_minutes_combines_day_hour_and_minute);
+    RUN_TEST(test_from_total_day_round_trips);
     RUN_TEST(test_rtc_hex_is_ssmmhhddmmyyyy);
     RUN_TEST(test_rtc_bcd_uses_two_digit_year);
     RUN_TEST(test_weekday_matches_the_legacy_formula);
+    RUN_TEST(test_add_seconds_handles_day_boundary);
     return UNITY_END();
 }

@@ -1,0 +1,10 @@
+#ifndef ND_DOMAIN_COMMON_STATUS_H
+#define ND_DOMAIN_COMMON_STATUS_H
+
+#define ND_EVENT_RESET 0x55
+#define ND_EVENT_SET 0xAA
+
+#define ND_AC_POWER_OFF 0x55
+#define ND_AC_POWER_ON 0xAA
+
+#endif

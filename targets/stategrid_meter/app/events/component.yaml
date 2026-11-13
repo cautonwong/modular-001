@@ -1,0 +1,6 @@
+name: target.stategrid_meter.events
+version: 0.1.0
+layer: product
+paths: [targets/stategrid_meter/app/events]
+dependencies: []
+legacy: true

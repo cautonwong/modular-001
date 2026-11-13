@@ -1,5 +1,11 @@
 #include "nidavellir.h"
+#include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
+#include "application/apps/app_config.h"
+#include "application/apps/display_applications.h"
+#include "application/adapters/dl698/fr_698_esam.h"
+#include "infra/kernel/resource_blocks.h"
+#include "kernel/legacy_control_block.h"
 
 extern int read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t index);
 
@@ -12,14 +18,14 @@ uint8_t get_current_plc_baud(struct instance_t* instance)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t baud = DEF_BAUT_PLC;
-    if(mbase_cb->Baut_plc_neg <= 10)
+    if(nd_mbase_Baut_plc_neg(mbase_cb) <= 10)
     {
-        baud = mbase_cb->Baut_plc_neg;    //载波协商波特率
+        baud = nd_mbase_Baut_plc_neg(mbase_cb);    //载波协商波特率
     }
     else
     {
-        if(mbase_cb->Baut_plc <= 10)
-            baud = mbase_cb->Baut_plc;    //载波设置波特率
+        if(nd_mbase_Baut_plc(mbase_cb) <= 10)
+            baud = nd_mbase_Baut_plc(mbase_cb);    //载波设置波特率
     }
 
     return baud;
@@ -115,7 +121,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     p = p + 0;
                 }
                 *p++ = TYPE_COMDCB;
-                if(oad == 0xF201)   *p++ = mbase_cb->Baut_rs485;    //485波特率
+                if(oad == 0xF201)   *p++ = nd_mbase_Baut_rs485(mbase_cb);    //485波特率
                 else if(oad == 0xF202)   *p++ = 2;    //红外波特率
                 else if(oad == 0xF209)   
                 {   
@@ -157,9 +163,9 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     memcpy(p, name_relay, 5);
                     p = p + 5;
                     *p++ = TYPE_enum;
-                    *p++ = mbase_cb->relay_true_sta;
+                    *p++ = nd_mbase_relay_true_sta(mbase_cb);
                     *p++ = TYPE_enum;
-                    *p++ = mbase_cb->relay_ctl_mode;
+                    *p++ = nd_mbase_relay_ctl_mode(mbase_cb);
                     *p++ = TYPE_enum;
                     *p++ = 0;
                 }
@@ -172,9 +178,9 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     memcpy(p, name_relay, 5);
                     p = p + 5;
                     *p++ = TYPE_enum;
-                    *p++ = mbase_cb->relay_true_sta;
+                    *p++ = nd_mbase_relay_true_sta(mbase_cb);
                     *p++ = TYPE_enum;
-                    *p++ = mbase_cb->relay_ctl_mode;
+                    *p++ = nd_mbase_relay_ctl_mode(mbase_cb);
                     *p++ = TYPE_enum;
                     *p++ = 0;
                 }
@@ -198,7 +204,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 *p++ = TYPE_array;
                 *p++ = 1;
                 *p++ = TYPE_enum;
-                *p++ = mbase_cb->MulPortMode;
+                *p++ = nd_mbase_MulPortMode(mbase_cb);
             }
             else
                 return -DAR_OTHERS_ERROR;
@@ -216,12 +222,12 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 case 0x02://显示对象列表
                     if(oad == 0xF300)
                     {
-                        maxnum = mbase_cb->lcd_autodis_list_num;
+                        maxnum = nd_mbase_lcd_autodis_list_num(mbase_cb);
                         addr = AutoDisplayList;
                     }
                     else if(oad == 0xF301)
                     {
-                        maxnum = mbase_cb->lcd_keydis_list_num;
+                        maxnum = nd_mbase_lcd_keydis_list_num(mbase_cb);
                         addr = KeyDisplayList;
                     }
                     
@@ -338,9 +344,9 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     if(index != 0)  return -DAR_OTHERS_ERROR;
                     *p++ = TYPE_long_unsigned;
                     if(oad == 0xF300)
-                        mem_swap_cpy(p, (uint8_t*)&mbase_cb->lcd_autodis_keep_sec, 2);
+                        mem_swap_cpy(p, (uint8_t*)&nd_mbase_lcd_autodis_keep_sec(mbase_cb), 2);
                     else
-                        mem_swap_cpy(p, (uint8_t*)&mbase_cb->lcd_keydis_keep_sec, 2);
+                        mem_swap_cpy(p, (uint8_t*)&nd_mbase_lcd_keydis_keep_sec(mbase_cb), 2);
                     p = p + 2;
                     return (p - buf);
                     break;
@@ -352,9 +358,9 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                             *p++ = 2;
                             *p++ = TYPE_unsigned;
                             if(oad == 0xF300)
-                                memcpy(p, (uint8_t*)&mbase_cb->lcd_autodis_list_num, 1);
+                                memcpy(p, (uint8_t*)&nd_mbase_lcd_autodis_list_num(mbase_cb), 1);
                             else
-                                memcpy(p, (uint8_t*)&mbase_cb->lcd_keydis_list_num, 1);
+                                memcpy(p, (uint8_t*)&nd_mbase_lcd_keydis_list_num(mbase_cb), 1);
                             p++;
                             *p++ = TYPE_unsigned;
                             *p = 99;
@@ -364,9 +370,9 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                         case 0x01://当前对象数
                             *p++ = TYPE_unsigned;
                             if(oad == 0xF300)
-                                memcpy(p, (uint8_t*)&mbase_cb->lcd_autodis_list_num, 1);
+                                memcpy(p, (uint8_t*)&nd_mbase_lcd_autodis_list_num(mbase_cb), 1);
                             else
-                                memcpy(p, (uint8_t*)&mbase_cb->lcd_keydis_list_num, 1);
+                                memcpy(p, (uint8_t*)&nd_mbase_lcd_keydis_list_num(mbase_cb), 1);
                             p = p + 1;
                             return (p - buf);
                             break;
@@ -482,11 +488,11 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 case 0x0F://剩余红外认证时效
                     if(cilent_index )
                     {
-                        tmp32 = mbase_cb->term_auth_timeout;
+                        tmp32 = nd_mbase_term_auth_timeout(mbase_cb);
                     }
                     else
                     {
-                        tmp32 = mbase_cb->infrared_auth_timeout;
+                        tmp32 = nd_mbase_infrared_auth_timeout(mbase_cb);
                     }     
                 
                     if ((tmp32%60) > 0 && (tmp32%60) < 60)
@@ -506,8 +512,8 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 case 0x11://身份权限
                     *p++ = TYPE_unsigned;
                     read_esam_info(instance, esam_inf,8);
-                    memcpy(&mbase_cb->AuthOn, esam_inf, 1);
-                    *p++ = mbase_cb->AuthOn;
+                    memcpy(&nd_mbase_AuthOn(mbase_cb), esam_inf, 1);
+                    *p++ = nd_mbase_AuthOn(mbase_cb);
                     return (p-buf);
                     break;
                 case 0x12://终端地址
@@ -701,7 +707,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
         case 0xFFFE0001: //操作者代码
         {
             len = 4;
-            ndv_memcopy(p, mbase_cb->handler_code, len);
+            ndv_memcopy(p, nd_mbase_handler_code(mbase_cb), len);
             p += len;
             return (p-buf);
         }

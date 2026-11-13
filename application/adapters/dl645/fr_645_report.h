@@ -1,5 +1,8 @@
 #ifndef __FR_645_REPORT_H__
 #define __FR_645_REPORT_H__
+#include <stdint.h>
+struct instance_t;
+struct context_645_t;
 
 extern void report_645state_judge(struct instance_t* instance, uint32_t OAD_State698);
 extern void report_3320flag_set_from_698(struct instance_t* instance, uint32_t oad, uint8_t value);

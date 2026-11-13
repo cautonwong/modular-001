@@ -1,6 +1,13 @@
 #include "nidavellir.h"
+#include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
 #include "fr_645_report.h"
+#include "cpu_surport.h"
+#include "domain/events/legacy/gs_record.h"
+#include "domain/freeze/legacy/freeze_applications.h"
+#include "infra/kernel/resource_blocks.h"
+#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/mapper_698/resource_map.h"
 
 // 设置事件上报标识或上报方式   mode  0: 上报标识      1:上报方式 (无tag)
 int set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t value, uint8_t mode)
@@ -104,7 +111,7 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
         return -DAR_RW_REJECT;
     }
 
-    if ((get_OAD_OI(oad) == 0x3013) && ( mbase_cb->key_state == false ))
+    if ((get_OAD_OI(oad) == 0x3013) && ( nd_mbase_key_state(mbase_cb) == false ))
     {
         *dar = DAR_RW_REJECT;
         return -DAR_RW_REJECT;
@@ -252,9 +259,9 @@ int set_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
     
     // 事件参数 全部更新
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    offsetof(struct mbase_control_block_t, OverCurrent_threshold));
-    s_len = offsetof(struct mbase_control_block_t, ZeroLineErrS_duration_para) - offsetof(struct mbase_control_block_t, OverCurrent_threshold) + sizeof(mbase_cb->ZeroLineErrS_duration_para);
-    nd_set_offset(instance, s_index, (uint8_t*)&mbase_cb->OverCurrent_threshold, s_len);  
+    nd_mbase_offset_OverCurrent_threshold());
+    s_len = nd_mbase_offset_ZeroLineErrS_duration_para() - nd_mbase_offset_OverCurrent_threshold() + sizeof(nd_mbase_ZeroLineErrS_duration_para(mbase_cb));
+    nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_OverCurrent_threshold(mbase_cb), s_len);  
     
     
     *dar = DAR_SUCCESS;

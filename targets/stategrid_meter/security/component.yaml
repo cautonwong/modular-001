@@ -1,0 +1,6 @@
+name: target.stategrid_meter.security
+version: 0.1.0
+layer: product
+paths: [targets/stategrid_meter/security]
+dependencies: []
+legacy: true

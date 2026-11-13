@@ -1,5 +1,8 @@
 #include "nidavellir.h"
 #include "fr_698.h"
+#include "domain/metering/legacy/metering_applications.h"
+#include "infra/kernel/resource_blocks.h"
+#include "kernel/legacy_control_block.h"
 
 
 int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, void *ctx)

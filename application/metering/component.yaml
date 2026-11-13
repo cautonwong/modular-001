@@ -1,0 +1,6 @@
+name: application.metering
+version: 0.1.0
+layer: application
+paths: [application/metering]
+dependencies: [domain.metering, domain.common, domain.load_control, domain.tariff]
+legacy: false
