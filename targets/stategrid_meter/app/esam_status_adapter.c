@@ -1,6 +1,7 @@
 #include "infra/security/esam/esam_status.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "nidavellir.h"
+#include "application/ports/resource_access.h"
 #include "kernel/legacy_control_block.h"
 #include "infra/kernel/resource_blocks.h"
 #include <stddef.h>

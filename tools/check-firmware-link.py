@@ -142,6 +142,7 @@ def main() -> int:
         "-lc",
         "-lgcc",
         "-lnosys",
+        "-lm",
         "-Wl,--end-group",
     ]
     result = subprocess.run(link, capture_output=True, text=True, errors="replace")

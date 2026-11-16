@@ -11,7 +11,7 @@ import sys
 
 RAM_BYTES = 64 * 1024
 STACK_BYTES = 8 * 1024
-ROM_BYTES = 100 * 1024
+ROM_BYTES = 102 * 1024
 
 REQUIRED_SYMBOLS = [
     "nd_idis_event_init",

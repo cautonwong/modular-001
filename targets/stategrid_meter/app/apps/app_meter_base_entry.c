@@ -24,6 +24,13 @@
 #include "targets/stategrid_meter/app/driver_entry.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
 #include "targets/stategrid_meter/app/devices.h"
+
+/* Target-only services the composition root still calls directly. */
+void fr_dl645_sec_task(void *instance, void *pipeline);
+void fr_dl645_power_on(void *instance, void *pipeline);
+void upgrade_second_pro(void *instance);
+int auto_parameter_inital(void *instance);
+
 #ifdef ND_FIRMWARE_SIM
 void nd_sim_stage(const char *name);
 #define ND_SIM_STAGE(name) nd_sim_stage(name)

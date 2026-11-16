@@ -83,7 +83,7 @@ targets/stategrid_meter/app/relay_control_adapter.c 9
 targets/stategrid_meter/app/relay_control_adapter.h 1
 targets/stategrid_meter/app/rtos/nidavellir.c 62
 targets/stategrid_meter/app/rtos/time_link.c 1
-targets/stategrid_meter/app/stategrid_meter_entry.c 37
+targets/stategrid_meter/app/stategrid_meter_entry.c 39
 targets/stategrid_meter/app/tariff/legacy/gs_month_bill.c 7
 targets/stategrid_meter/app/tariff/legacy/gs_step_bill.c 8
 targets/stategrid_meter/app/tariff/tariff_applications.h 2

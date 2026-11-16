@@ -4,6 +4,8 @@
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "application/adapters/dl645/fr_645_context.h"
+#include "application/adapters/dl645/fr_645_env.h"
+#include "application/ports/resource_access.h"
 #include "645id_table.h"
 #include "utils.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"

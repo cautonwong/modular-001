@@ -1,5 +1,8 @@
+#include <string.h>
+
 #include "kernel/instance.h"
 #include "application/adapters/dl698/meter_base_view.h"
+#include "application/ports/resource_access.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "kernel/channel.h"
 #include "kernel/pids.h"

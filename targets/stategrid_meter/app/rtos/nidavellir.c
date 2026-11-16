@@ -58,7 +58,7 @@ struct fifo_t* get_pipeline_stdin(struct instance_t* instance, pid_t pipeline_id
 
     return NULL;
 }
-void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id)
+void* get_pipeline_ctx(struct instance_t* instance, uint8_t pipeline_id)
 {
     const struct recipe_t* recipe = instance->recipe;
     struct pipeline_t* pipeline;

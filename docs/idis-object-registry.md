@@ -20,11 +20,11 @@ IDIS 对象模型，但列表不是完整的对象注册表。
 | 全量条目最小 ROM（class 1 B + version 1 B + OBIS 6 B） | 2478 B |
 | 全量条目含访问权限（约 8 B/条） | 2832 B |
 | object_list 响应大小（约 28 B/条） | 9912 B |
-| FreeRTOS ROM 余量（ELF section，100 KiB 预算） | 1324 B |
+| FreeRTOS ROM 余量（ELF section，102 KiB 预算） | 1388 B |
 | IDIS 裸机 ROM 余量 | 5477 B |
 | FreeRTOS RAM 余量（64 KiB） | 11872 B |
 
-结论。354 条全量注册表放不进 FreeRTOS 的 1324 B ROM 余量。裸机余量也不够
+结论。354 条全量注册表放不进 FreeRTOS 的 1388 B ROM 余量。裸机余量也不够
 带访问权限的全量表。object_list 响应约 9.9 KiB，超过常见单帧 APDU，需要
 block transfer 或子集策略。
 
