@@ -23,6 +23,12 @@ int16_t nd_log_output(void *ctx, uint32_t index,
                       uint8_t *buf, uint16_t buf_size,
                       struct circular_info_t *info);
 
+int nd_log_clean(void *ctx, uint32_t index);
+int16_t nd_log_append(void *ctx, uint32_t index, uint8_t *buf,
+                      uint16_t unit_size);
+int16_t nd_log_append_revise(void *ctx, uint32_t index, uint8_t *buf,
+                             uint16_t offset, uint16_t unit_size);
+
 int16_t nd_get_index(void *ctx, uint32_t index,
                      uint8_t *buf, uint16_t size);
 int16_t nd_set_index(void *ctx, uint32_t index,

@@ -1,7 +1,10 @@
 #include <stdbool.h>
+#include <string.h>
 #include "fr_698.h"
 #include "port.h"
 #include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
+#include "application/ports/resource_access.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/freeze/freeze_applications.h"
 #include "infra/kernel/resource_blocks.h"

@@ -8,6 +8,7 @@
 
 static nd_idis_objects_t objects;
 static nd_dlms_datetime_t now;
+static nd_clock_port_t clock_port;
 
 static int clock_read(void *ctx, nd_dlms_datetime_t *out)
 {
@@ -30,8 +31,8 @@ void setUp(void)
         .year = 2026, .month = 11, .day = 11, .hour = 10, .minute = 7,
         .second = 31, .status = 0,
     };
-    nd_clock_port_t port = {.read = clock_read, .write = clock_write};
-    nd_idis_clock_init(&objects.clock, &port);
+    clock_port = (nd_clock_port_t){.read = clock_read, .write = clock_write};
+    nd_idis_clock_init(&objects.clock, &clock_port);
     objects.clock.config.time_zone = 60;
 }
 

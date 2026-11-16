@@ -10,6 +10,7 @@ extern void report_2015mode_set_from_698(struct instance_t* instance);
 extern void report_645state_reset_sec_judge(struct instance_t* instance);
 extern int report_645stat_recover(struct instance_t* instance);
 extern int report_645stat_save(struct instance_t* instance);
+extern int report_645stat_clear(struct instance_t* instance);
 extern uint8_t report_stat_reset_from_698(struct instance_t* instance, uint32_t State2015_698);
 extern void report_state_read_pro(struct instance_t* instance, uint8_t *buff, uint8_t *length);
 extern void report_mode_set_from_645(struct instance_t* instance, uint8_t* report_mode);

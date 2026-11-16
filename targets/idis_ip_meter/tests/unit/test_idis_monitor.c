@@ -9,6 +9,7 @@
 
 static nd_idis_objects_t objects;
 static nd_cosem_port_t port;
+static nd_measurement_port_t measurement_port;
 static int64_t voltage;
 
 static int fake_measurement(void *ctx, nd_measure_quantity_t quantity,
@@ -27,8 +28,8 @@ static int fake_measurement(void *ctx, nd_measure_quantity_t quantity,
 void setUp(void)
 {
     objects = (nd_idis_objects_t){0};
-    nd_measurement_port_t measurement = {.ctx = NULL, .read = fake_measurement};
-    objects.reg.measurement = &measurement;
+    measurement_port = (nd_measurement_port_t){.ctx = NULL, .read = fake_measurement};
+    objects.reg.measurement = &measurement_port;
     nd_disconnect_init(&objects.disconnect, 2, NULL);
     nd_idis_script_init(&objects.scripts);
     nd_idis_monitors_init(&objects.monitors);

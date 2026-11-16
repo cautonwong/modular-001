@@ -66,8 +66,8 @@ uint8_t nd_freeze_bill_backfill(const nd_datetime_t *now,
     cursor.minute = 0;
 
     for (month = 0; month < ND_FREEZE_BILL_CATCH_UP_MONTHS; month++) {
-        nd_datetime_t when[ND_FREEZE_BILL_DATES];
-        uint8_t slot[ND_FREEZE_BILL_DATES];
+        nd_datetime_t when[ND_FREEZE_BILL_DATES] = {0};
+        uint8_t slot[ND_FREEZE_BILL_DATES] = {0};
         uint8_t n = 0;
         uint8_t i;
 

@@ -3,7 +3,9 @@
 #include <stddef.h>
 
 #include "nidavellir.h"
+#include "application/ports/resource_access.h"
 #include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/app/metering_energy_adapter.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
 
@@ -1080,7 +1082,7 @@ uint16_t *nd_mb_active_p_dec_ptr(void *instance)
     return nd_mbase_active_p_dec(mb(instance));
 }
 
-struct metering_energy_ledger *nd_mb_energy_ledger(void *instance)
+nd_energy_ledger_t *nd_mb_energy_ledger(void *instance)
 {
     return metering_energy_ledger_from_mbase(mb(instance));
 }

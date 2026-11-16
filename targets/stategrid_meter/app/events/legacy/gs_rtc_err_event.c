@@ -5,6 +5,8 @@
 #include <time.h>
 #include "application/adapters/dl698/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
+#include "application/ports/resource_access.h"
+#include "cpu_surport.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "port.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"

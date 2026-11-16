@@ -40,7 +40,7 @@ static void test_645_head_data_and_tail(void)
     struct context_645_t ctx;
     struct pipeline_t pipeline;
     struct fifo_t out;
-    uint8_t out_buffer[32];
+    uint8_t out_buffer[32] = {0};
     nd_dl645_msg_t mesg;
 
     memset(&ctx, 0, sizeof(ctx));
@@ -73,7 +73,7 @@ static void test_645_apdu_bytes_are_scrambled(void)
     struct pipeline_t pipeline;
     struct fifo_t out;
     uint8_t apdu_buffer[8];
-    uint8_t out_buffer[8];
+    uint8_t out_buffer[8] = {0};
     uint8_t payload[2] = {0xAA, 0xBB};
     nd_dl645_msg_t mesg;
 

@@ -114,7 +114,7 @@ static void test_698_client_forwards_response_payload(void)
     struct pipeline_t pipeline;
     struct fifo_t in;
     struct fifo_t apdu;
-    uint8_t in_buffer[32];
+    uint8_t in_buffer[32] = {0};
     uint8_t apdu_buffer[8] = {0};
     uint8_t frame[15] = {0};
     nd_dl698_msg_t mesg;
@@ -153,7 +153,7 @@ static void test_698_client_without_callback_drains_payload(void)
     struct pipeline_t pipeline;
     struct fifo_t in;
     struct fifo_t apdu;
-    uint8_t in_buffer[32];
+    uint8_t in_buffer[32] = {0};
     uint8_t apdu_buffer[8] = {0};
     uint8_t frame[15] = {0};
     nd_dl698_msg_t mesg;

@@ -25,9 +25,12 @@
 #include "infra/channel/fifo_channel.h"
 #include "application/adapters/dl645/fr_645_context.h"
 
-
-
-
+/* The supply callbacks take void *instance; register_* declares a typed
+ * instance pointer. The ABI is identical, so match it here. */
+typedef int16_t (*resource_supply_fn)(struct instance_t *, uint16_t,
+                                      uint32_t *, uint32_t *, uint32_t *);
+typedef int (*resource_map_fn)(struct instance_t *, uint32_t, uint8_t *,
+                               uint16_t, void *, uint16_t);
 
 
 #ifdef ND_FIRMWARE_SIM
@@ -452,11 +455,11 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
 
 
     //注册参数区1 及其备份区  
-    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter_1, 1 * 1024, supply_parameter_1_info);
-    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter_1_bp, 1 * 1024, supply_parameter_1_info);
+    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter_1, 1 * 1024, (resource_supply_fn)supply_parameter_1_info);
+    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter_1_bp, 1 * 1024, (resource_supply_fn)supply_parameter_1_info);
 
     //注册事件的管理区/参数区
-    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter, 15 * 1024, supply_parameter_info);
+    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter, 15 * 1024, (resource_supply_fn)supply_parameter_info);
 
 
     //申请一块参数保存区的EPROM区域 及备份区
@@ -468,18 +471,18 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
     
 
     //注册事件
-    register_log(instance, RES_DEV_EEPROM, mbase_block_event, RES_DEV_EEPROM, mbase_block_parameter, 26 * 1024, supply_event_info);
+    register_log(instance, RES_DEV_EEPROM, mbase_block_event, RES_DEV_EEPROM, mbase_block_parameter, 26 * 1024, (resource_supply_fn)supply_event_info);
 
     //注册冻结1-flash
     //必须为flash 首个块，和升级文件缓存 共用
-    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash1, RES_DEV_EEPROM, mbase_block_parameter, (MinuteFreeze_SECTION_SIZE) * 4 * 1024, supply_event_flash_1_info);
+    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash1, RES_DEV_EEPROM, mbase_block_parameter, (MinuteFreeze_SECTION_SIZE) * 4 * 1024, (resource_supply_fn)supply_event_flash_1_info);
 
     //注册冻结2-flash
-    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash2, RES_DEV_EEPROM, mbase_block_parameter, (HourFreeze_SECTION_SIZE + DayFreeze_SECTION_SIZE + MonthFreeze_SECTION_SIZE) * 4 * 1024, supply_event_flash_2_info); 
+    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash2, RES_DEV_EEPROM, mbase_block_parameter, (HourFreeze_SECTION_SIZE + DayFreeze_SECTION_SIZE + MonthFreeze_SECTION_SIZE) * 4 * 1024, (resource_supply_fn)supply_event_flash_2_info);
     //申请一块-flash
     add_block(instance, RES_DEV_FLASH, public_block_flash, 4096*2);
     //注册一个698的MAP
-    register_map(instance, res_map_698, resource_map_698);
+    register_map(instance, res_map_698, (resource_map_fn)resource_map_698);
 #ifdef WIN32
     init_timer(instance);
 #endif

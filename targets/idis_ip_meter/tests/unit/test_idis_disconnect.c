@@ -7,6 +7,7 @@
 #include "targets/idis_ip_meter/mapper_idis/nd_idis_ids.h"
 
 static nd_idis_objects_t objects;
+static nd_clock_port_t clock_port;
 
 static int fake_clock(void *ctx, nd_dlms_datetime_t *now)
 {
@@ -18,7 +19,8 @@ static int fake_clock(void *ctx, nd_dlms_datetime_t *now)
 void setUp(void)
 {
     objects = (nd_idis_objects_t){0};
-    objects.clock.port = &(nd_clock_port_t){.read = fake_clock};
+    clock_port = (nd_clock_port_t){.read = fake_clock};
+    objects.clock.port = &clock_port;
     nd_disconnect_init(&objects.disconnect, 2, NULL);
 }
 

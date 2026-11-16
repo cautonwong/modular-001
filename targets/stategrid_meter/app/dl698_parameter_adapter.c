@@ -2,6 +2,7 @@
 
 #include "nidavellir.h"
 #include "port.h"
+#include "application/ports/resource_access.h"
 
 #include "application/adapters/dl698/parameter_port.h"
 

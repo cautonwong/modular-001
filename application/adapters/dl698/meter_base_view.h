@@ -595,8 +595,8 @@ uint32_t *nd_mb_active_p_ptr(void *instance);
 uint16_t *nd_mb_active_p_dec_ptr(void *instance);
 #define nd_mb_active_p_dec(i) (nd_mb_active_p_dec_ptr(i))
 
-struct metering_energy_ledger;
-struct metering_energy_ledger *nd_mb_energy_ledger(void *instance);
+struct nd_energy_ledger;
+struct nd_energy_ledger *nd_mb_energy_ledger(void *instance);
 
 uint32_t nd_mb_offset_record_rollback_flag(void);
 

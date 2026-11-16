@@ -32,7 +32,7 @@ static void test_698_head_and_tail_bytes(void)
     struct context_698_t ctx;
     struct pipeline_t pipeline;
     struct fifo_t out;
-    uint8_t out_buffer[64];
+    uint8_t out_buffer[64] = {0};
     nd_dl698_msg_t mesg;
 
     memset(&ctx, 0, sizeof(ctx));
@@ -64,8 +64,8 @@ static void test_698_apdu_bytes_are_written(void)
     struct pipeline_t pipeline;
     struct fifo_t in;
     struct fifo_t out;
-    uint8_t in_buffer[8];
-    uint8_t out_buffer[8];
+    uint8_t in_buffer[8] = {0};
+    uint8_t out_buffer[8] = {0};
     uint8_t payload[2] = {0xAA, 0xBB};
     nd_dl698_msg_t mesg;
 

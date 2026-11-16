@@ -103,8 +103,8 @@ static void test_698_first_segment_accumulates_and_confirms(void)
     struct pipeline_t pipeline;
     struct fifo_t in;
     struct fifo_t out;
-    uint8_t in_buffer[8];
-    uint8_t out_buffer[8];
+    uint8_t in_buffer[8] = {0};
+    uint8_t out_buffer[8] = {0};
     uint8_t payload[] = {0x00, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55};
     nd_dl698_msg_t mesg;
 
@@ -139,8 +139,8 @@ static void test_698_out_of_order_segment_resets_block(void)
     struct pipeline_t pipeline;
     struct fifo_t in;
     struct fifo_t out;
-    uint8_t in_buffer[8];
-    uint8_t out_buffer[8];
+    uint8_t in_buffer[8] = {0};
+    uint8_t out_buffer[8] = {0};
     uint8_t payload[] = {0x02, 0xc0, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE};
     nd_dl698_msg_t mesg;
 
@@ -172,7 +172,7 @@ static void test_698_segment_tx_confirm_advances_and_sends(void)
     struct context_698_t ctx;
     struct pipeline_t pipeline;
     struct fifo_t in;
-    uint8_t in_buffer[4];
+    uint8_t in_buffer[4] = {0};
     uint8_t payload[] = {0x03, 0x80};
     nd_dl698_msg_t mesg;
 

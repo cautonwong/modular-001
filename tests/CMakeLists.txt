@@ -236,6 +236,9 @@ target_compile_options(firmware_sim PRIVATE
     -fcommon
     -fno-stack-protector
     -w
+    # Legacy target sources still rely on implicit declarations; GCC 14 makes
+    # them a hard error even under -w. New code is covered by the strict build.
+    -Wno-error=implicit-function-declaration
     -include "${BLADE_ROOT}/tests/sim/include/sim_compat.h"
 )
 target_link_options(firmware_sim PRIVATE -no-pie -Wl,--section-start=.sim_periph=0x40000000)

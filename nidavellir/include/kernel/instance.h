@@ -4,9 +4,12 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <time.h>
 
+/* types.h must precede time.h: newlib's sys/types.h defines pid_t as int and
+ * sets _PID_T_DECLARED, which would otherwise win over the project's uint8_t. */
 #include "types.h"
+
+#include <time.h>
 #include "list.h"
 #include "fifo.h"
 #include "resource_ids.h"
@@ -87,7 +90,7 @@ int nidavellir_run_baremetal(struct instance_t *instance);
 int nidavellir_loop_n(struct instance_t *instance, int n);
 int nidavellir_loop_n_with_rtc_running(struct instance_t *instance, int n);
 struct pipeline_t *get_pipeline(struct instance_t *instance, pid_t id);
-void *get_pipeline_ctx(struct instance_t *instance, pid_t pipeline_id);
+void *get_pipeline_ctx(struct instance_t *instance, uint8_t pipeline_id);
 uint16_t nd_get_crc16(uint8_t *buf, size_t len);
 void irq_transform_to_instance(struct instance_t *instance);
 int16_t nd_get(struct instance_t *instance, uint32_t id, uint8_t *buf,
