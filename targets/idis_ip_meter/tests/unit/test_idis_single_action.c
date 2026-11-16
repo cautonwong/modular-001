@@ -1,5 +1,6 @@
 #include "unity.h"
 
+#include <stddef.h>
 #include <string.h>
 
 #include "infra/memory/byte_store.h"
@@ -153,6 +154,37 @@ static void test_single_action_persists(void)
 }
 
 
+static void test_load_validates_time_count_range(void)
+{
+    static uint8_t memory[2048];
+    nd_byte_store_t store;
+
+    nd_byte_store_init(&store, memory, sizeof(memory));
+    set_executed_script(2);
+    set_time(6, 30, 0);
+    TEST_ASSERT_EQUAL_INT(0, nd_idis_single_action_save(
+                                 &objects.single_action,
+                                 nd_byte_store_port(&store), 0));
+
+    size_t offset = sizeof(uint32_t)
+                    + offsetof(nd_single_action_state_t, time_count);
+    nd_single_action_t restored;
+
+    for (uint16_t count = 0; count <= ND_SINGLE_ACTION_TIMES_MAX; count++) {
+        memory[offset] = (uint8_t)count;
+        nd_idis_single_action_init(&restored);
+        TEST_ASSERT_EQUAL_INT(0, nd_idis_single_action_load(
+                                      &restored, nd_byte_store_port(&store), 0));
+    }
+    for (uint16_t count = ND_SINGLE_ACTION_TIMES_MAX + 1; count <= 0xFF;
+         count++) {
+        memory[offset] = (uint8_t)count;
+        nd_idis_single_action_init(&restored);
+        TEST_ASSERT_EQUAL_INT(-1, nd_idis_single_action_load(
+                                       &restored, nd_byte_store_port(&store), 0));
+    }
+}
+
 static void test_default_billing_schedule(void)
 {
     nd_idis_single_action_apply_defaults(&objects.single_action);
@@ -230,5 +262,6 @@ int main(void)
     RUN_TEST(test_default_billing_schedule_captures);
     RUN_TEST(test_tick_executes_script_once);
     RUN_TEST(test_single_action_persists);
+    RUN_TEST(test_load_validates_time_count_range);
     return UNITY_END();
 }

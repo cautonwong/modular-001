@@ -1,3 +1,5 @@
+#include "board_ports.h"
+
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -11,28 +13,40 @@
 #include "infra/boards/stategrid_single_phase/ndvh_rn8209.h"
 #include "infra/boards/stategrid_single_phase/relay_pins.h"
 #include "infra/boards/stategrid_single_phase/uart_driver.h"
+#include "infra/boards/stategrid_single_phase/board_ops.h"
+#include "infra/boards/stategrid_single_phase/eeprom.h"
+#include "infra/soc/v85xxp/v8500/v85xxp_system.h"
 #include "infra/soc/v85xxp/v8500/vendor/Lib_Driver/inc/lib_uart.h"
 #include "target.h"
 #include "lib_gpio.h"
 #include "lib_pmu.h"
 #include "cpu_surport.h"
 
-struct instance_t;
 
-extern const struct bus_ops_t iic_bus;
-extern const struct bus_ops_t mcu_uart_bus_ops;
-extern const struct bus_ops_t spi_mode3;
-extern const struct driver_ops_t eeprom_driver;
-extern const struct driver_ops_t rn8209_drv;
-extern const struct driver_ops_t nor_flash_driver;
-extern int eeprom_initialize(struct instance_t *instance,
-                             const struct dev_info_t *dev);
-extern int eeprom_read_chk(struct instance_t *instance,
-                           const struct dev_info_t *dev, uint32_t addr,
-                           uint16_t len, void *src);
-extern int eeprom_write_chk(struct instance_t *instance,
-                            const struct dev_info_t *dev, uint32_t addr,
-                            uint16_t len, void *src);
+
+static struct instance_t rtc_scratch;
+
+int board_rtc_read(nd_dlms_datetime_t *now)
+{
+    if (now == NULL || !read_mcu_rtc(0, &rtc_scratch)) {
+        return -1;
+    }
+    int year = rtc_scratch.time.tm_year + 1900;
+    int month = rtc_scratch.time.tm_mon + 1;
+    if (year < 2020 || month < 1 || month > 12) {
+        return -1;
+    }
+    *now = (nd_dlms_datetime_t){
+        .year = (uint16_t)year,
+        .month = (uint8_t)month,
+        .day = (uint8_t)rtc_scratch.time.tm_mday,
+        .hour = (uint8_t)rtc_scratch.time.tm_hour,
+        .minute = (uint8_t)rtc_scratch.time.tm_min,
+        .second = (uint8_t)rtc_scratch.time.tm_sec,
+        .status = 0,
+    };
+    return 0;
+}
 
 static const struct dev_info_t eeprom_dev = {
     .dev_type = DEV_EEPROM,

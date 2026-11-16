@@ -7,27 +7,16 @@
 #include "ndvh_rn8209.h"
 #include "infra/boards/stategrid_single_phase/board_io.h"
 #include "infra/boards/stategrid_single_phase/uart_pins.h"
-#include "application/apps/app_config.h"
-#include "application/apps/display_applications.h"
+#include "targets/stategrid_meter/app/app_config.h"
+#include "targets/stategrid_meter/app/display_applications.h"
 #include "application/adapters/dl698/fr_698_esam.h"
-#include "domain/metering/legacy/metering_applications.h"
-#include "infra/boards/stategrid_single_phase/devices.h"
+#include "targets/stategrid_meter/app/metering/metering_applications.h"
+#include "targets/stategrid_meter/app/devices.h"
+#include "infra/boards/stategrid_single_phase/board_ops.h"
 #include "infra/kernel/resource_blocks.h"
 #include "infra/soc/v85xxp/v8500/v85xxp_system.h"
 #include "kernel/legacy_control_block.h"
 #include "targets/stategrid_meter/app/driver_entry.h"
-
-
-extern const struct driver_ops_t  eeprom_driver;
-extern const struct bus_ops_t iic_bus;
-extern const struct bus_ops_t spi_mode3;
-extern const struct bus_ops_t spi_mode1;
-extern const struct driver_ops_t  uart_driver;
-extern const struct driver_ops_t rn8209_drv;
-extern const struct driver_ops_t nor_flash_driver;
-extern const struct bus_ops_t mcu_uart_bus_ops;
-extern void gpio_configuration_AC(void);
-extern void fnINTTC3_Init(uint8_t cmd);
 
 static uint8_t fifo_buf[32];
 static struct fifo_t irq_fifo;
@@ -177,8 +166,6 @@ void IO_Interrupt(void *para)
     }
 }
 
-extern  uint32_t over_Imax;
-extern void Energy_Pluse_Add(void);
 
 void timing_ftr(void *para)
 {
@@ -976,42 +963,6 @@ void gpio_configuration_AC(void)
     PMU_ClearIOAINTStatus(GPIO_Pin_2);
     
     
-#if 0   
-     /* 涓婃媺鐢甸樆閰嶇疆 */
-     GPIO->PUA = 0x00300000;
-     GPIO->PUB = 0x00000004;
-     GPIO->PUC = BIT28;
-     /* 杈撳嚭妯″紡閰嶇疆 */  
-     GPIO->PIMA = 0x00000000;
-     GPIO->PIMB = 0x00000000;
-     GPIO->PIMC = 0x00000000;
-     
-     GPIO->PMA = PM31_OUT | PM32_IN | PM33_OUT | PM34_OUT | PM35_OUT | PM36_IN | PM37_IN |
-                 PM20_OUT | PM21_OUT | PM22_IN | PM23_OUT | PM24_IN | PM25_IN | PM26_IN | PM27_IN |
-                 PM10_OUT | PM11_OUT | PM12_OUT| PM13_OUT | PM14_OUT| PM15_OUT |PM16_OUT| PM17_IN|
-                 PM00_IN  | PM01_OUT | PM02_IN | PM03_IN  | PM04_IN ;
-     
-     GPIO->PMB = PM70_OUT | PM71_OUT | PM72_OUT | PM73_IN | PM74_OUT | PM75_OUT | PM76_OUT | PM77_OUT |
-                 PM60_OUT | PM61_OUT | PM62_OUT | PM63_OUT | PM64_OUT | PM65_OUT | PM66_OUT | PM67_OUT |
-                 PM50_OUT | PM51_OUT | PM52_OUT| PM53_IN | PM54_OUT| PM55_OUT |PM56_IN| PM57_OUT|
-                 PM40_IN  | PM41_IN  | PM42_OUT | PM43_IN  | PM44_IN | PM45_IN |PM46_IN| PM47_OUT;/* 20标准液晶新增一个seg72口 */
-
-     GPIO->PMC = PM110_OUT | PM111_OUT | PM112_IN | PM113_OUT | PM114_IN | PM115_OUT | PM116_IN | PM117_IN |
-                 PM100_IN | PM101_IN | PM102_OUT | PM103_OUT | PM104_OUT | PM105_IN | PM106_OUT | PM107_OUT |
-                 PM90_OUT | PM91_OUT | PM92_OUT| PM93_OUT | PM94_OUT| PM95_OUT |PM96_OUT| PM97_OUT|
-                 PM80_OUT | PM81_OUT | PM82_OUT| PM83_OUT | PM84_OUT| PM85_OUT |PM86_OUT| PM87_OUT;
-
-     /*杈撳叆浣胯兘閰嶇疆*/
-     GPIO->PIEA = BIT31 + BIT30 + BIT27 + BIT17 + BIT19 + BIT22 + BIT23 + BIT12 + BIT13 + BIT14;
-     GPIO->PIEB = 0;
-     GPIO->PIEC = 0;
-
-#if POWER_OFF_TEST
-     GPIO->PMA |= PM30_OUT;
-#else
-     GPIO->PMA |= PM30_IN;
-#endif
-#endif
 }
 
 static uint8_t IOState(void *ptr)

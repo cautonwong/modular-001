@@ -1,8 +1,11 @@
 #include "nidavellir.h"
+#include "domain/report/report_policy.h"
+#include "fr_698.h"
+#include "targets/stategrid_meter/app/app_entry.h"
+#include "targets/stategrid_meter/mapper_698/factory_cfg.h"
 #include "components/core/bus/nd_bus.h"
 #include "infra/boards/stategrid_single_phase/meter_config.h"
 #include "infra/boards/stategrid_single_phase/meter_status.h"
-extern const uint8_t init_Meter_Type[];
 #ifndef WIN32
 #include "cpu_surport.h"
 #endif // !WIN32
@@ -17,8 +20,7 @@ extern const uint8_t init_Meter_Type[];
 void nd_sim_filter(struct instance_t* instance, struct pipeline_t* pipeline, const struct filter_t* filter, int ret);
 void nd_sim_message(struct instance_t* instance, struct message_t* mesg);
 #endif
-extern int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline, struct message_t* mesg);
-extern int clear_mesg(struct instance_t *instance,struct pipeline_t *pipeline,struct message_t *mesg);
+static int clear_mesg(struct instance_t *instance, struct pipeline_t *pipeline, struct message_t *mesg);
 char* get_pipeline_name(struct instance_t* instance, pid_t pipeline_id)
 {
     struct recipe_t* recipe = instance->recipe;
@@ -267,8 +269,7 @@ int nidavellir_run(struct instance_t *instance)
     uint8_t pipeline_n = recipe->pipeline_n;
     struct pipeline_t* pipeline;
 
-//    extern int fr_rx_data_from_serial(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
-  //  fr_rx_data_from_serial(instance, &pl_rx_from_serial, &mesg);
+//  //  fr_rx_data_from_serial(instance, &pl_rx_from_serial, &mesg);
 
     fr_sw_ac_power(instance,NULL,&mesg); //挪到RTC前面
     
@@ -407,7 +408,6 @@ int fr_uart_empty(struct instance_t* instance, uint8_t chl)
     return -1;
 }
 
-extern uint16_t report_flag;
 int nidavellir_run_baremetal(struct instance_t* instance)
 {
     struct message_t mesg;
@@ -490,7 +490,7 @@ int nidavellir_run_baremetal(struct instance_t* instance)
         }
     }
 
-    if(report_flag == 0xa55a)
+    if(nd_fr698_report_pending())
     {
         uint16_t dly=0;
         tick_report = 0x4FFFF;
@@ -508,7 +508,7 @@ int nidavellir_run_baremetal(struct instance_t* instance)
           }
           tick_report--;
         }
-        report_flag = 0;
+        nd_fr698_report_clear();
     }
     //处理持久化事务  如掉电保存和记录保存等  每圈保存一次
     //sync_data()
@@ -550,7 +550,7 @@ int baremetal_loop(struct instance_t* instance)
     }
 }
 
-int clear_mesg(struct instance_t *instance,struct pipeline_t *pipeline,struct message_t *mesg)
+static int clear_mesg(struct instance_t *instance,struct pipeline_t *pipeline,struct message_t *mesg)
 {
     struct  fifo_t* fifo = get_pipeline_stdin(instance,mesg->to);
     if(fifo){
@@ -572,9 +572,6 @@ int send_mesg(struct instance_t *instance,struct pipeline_t *pipeline,struct mes
     mesg->check = nd_get_crc16((uint8_t*)mesg, sizeof(struct message_t) - 2);
 #ifdef ND_FIRMWARE_SIM
     nd_sim_message(instance, mesg);
-#endif
-#if 0
-    log_info(": Free=%d.from=%d.to=%d.ctrl=%d.\n", fifoBuf_getFree(fifo), mesg->from, mesg->to, mesg->ctrl);
 #endif
 
     fifoBuf_putData(fifo, mesg, sizeof(struct message_t));
@@ -620,24 +617,6 @@ int recv_mesg_v2(struct instance_t* instance, struct pipeline_t* pipeline, struc
                 }
             }
         }
-#if 0
-        if(ret < 0){
-          //while(1)
-          {
-            log_info(": ret=%d.\n", ret);
-            log_info(": rd=%d.\n", rd);
-            log_info(": wr=%d.\n", wr);
-            log_info(": buf_size=%d.\n", buf->buf_size);
-            log_hex(p, 32);
-            mcu_delay_us(50000);
-            mcu_delay_us(50000);
-            v85xxp_clear_watchdog();
-            mcu_delay_us(50000);
-            mcu_delay_us(50000);
-            v85xxp_clear_watchdog();
-          }
-        }
-#endif
     }
     //if(ret < MESG_V2_OK){
         //uint8_t data = 0;

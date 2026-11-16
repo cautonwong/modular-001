@@ -1,11 +1,25 @@
 # IDIS acceptance
 
-These cases drive `idis_host_runner` through the external contract:
+`test_idis_acceptance.py` registers four cases with the shared runner in
+`tests/acceptance/` and drives `idis_host_runner` through its external
+contract:
 
-- `power_loss.sh`: records survive an abrupt exit without the final save.
-- `billing_default.sh`: the default monthly billing schedule fires at midnight.
-- `default_calendar.sh`: the default daily tariff calendar selects script 1.
-- `restart_persistence.sh`: energy, demand, alarm and billing survive a restart.
+- `idis.power-loss`: PQ records and the event log survive an abrupt exit
+  without the final save.
+- `idis.billing-default`: the default monthly billing schedule fires at the
+  month boundary.
+- `idis.default-calendar`: the default daily tariff calendar selects script 1.
+- `idis.restart-persistence`: energy, demand, alarm and billing survive a
+  restart.
 
-The shared test-platform lives in `tests/acceptance/`; target-specific cases
-live here and are run by `tools/ci_matrix.py`.
+Run them locally:
+
+```sh
+python3 tests/acceptance/run.py \
+  --runner build/ci-host/idis_host_runner \
+  --cases targets/idis_ip_meter/tests/acceptance \
+  --select tag:idis
+```
+
+`tools/ci_matrix.py` runs the cases for both IDIS targets and writes evidence
+under `build/acceptance/evidence/<target>/`.

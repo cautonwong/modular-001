@@ -1,22 +1,20 @@
-#include "nidavellir.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
+#include "application/adapters/dl698/meter_base_view.h"
 #include "port.h"
 #include "fr_645_report.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
 
-int SET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
+int SET_2_Variable(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint16_t oad;
     uint8_t attribute;
     uint8_t* p = buf;
     uint32_t s_index = 0;
 
     
-    if(mbase_cb == NULL)
+    if(!nd_mb_valid(instance))
     {
         return -1;
     }
@@ -35,12 +33,12 @@ int SET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
                     return -DAR_TYPE_NOT_MATCH;
                 }   
                 p += 2;
-                mem_swap_cpy((uint8_t*)&nd_mbase_report_2015mode(mbase_cb), p,  4); 
+                mem_swap_cpy((uint8_t*)&nd_mb_report_2015_mode(instance), p,  4); 
                 p += 4;
 
-                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                nd_mbase_offset_report_2015mode());
-                nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_report_2015mode(mbase_cb), 4);
+                s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                nd_mb_offset_report_2015mode());
+                nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_report_2015_mode(instance), 4);
 
                 report_2015mode_set_from_698(instance);
 

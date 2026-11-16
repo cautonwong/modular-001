@@ -1,10 +1,11 @@
 #include "unity.h"
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include "infra/memory/arena.h"
 
-static unsigned char buffer[64];
+static _Alignas(ND_ARENA_ALIGNMENT) unsigned char buffer[64];
 static nd_arena_t arena;
 
 void setUp(void)
@@ -68,6 +69,29 @@ static void test_reset_reclaims_everything(void)
     TEST_ASSERT_EQUAL_PTR(buffer, nd_alloc(nd_arena_allocator(&arena), 4));
 }
 
+static void test_misaligned_base_is_realigned(void)
+{
+    _Alignas(ND_ARENA_ALIGNMENT) unsigned char raw[64 + ND_ARENA_ALIGNMENT];
+    nd_arena_t local;
+
+    nd_arena_init(&local, raw + 1, sizeof(raw) - 1);
+    void *block = nd_alloc(nd_arena_allocator(&local), 8);
+
+    TEST_ASSERT_NOT_NULL(block);
+    TEST_ASSERT_EQUAL_size_t(0, (uintptr_t)block % ND_ARENA_ALIGNMENT);
+}
+
+static void test_misaligned_base_can_consume_all_capacity(void)
+{
+    _Alignas(ND_ARENA_ALIGNMENT) unsigned char raw[16];
+    nd_arena_t local;
+
+    nd_arena_init(&local, raw + 1, ND_ARENA_ALIGNMENT - 1);
+
+    TEST_ASSERT_EQUAL_size_t(0, nd_arena_used(&local));
+    TEST_ASSERT_NULL(nd_alloc(nd_arena_allocator(&local), 1));
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -77,5 +101,7 @@ int main(void)
     RUN_TEST(test_most_recent_block_is_reclaimed);
     RUN_TEST(test_lower_block_is_not_reclaimed);
     RUN_TEST(test_reset_reclaims_everything);
+    RUN_TEST(test_misaligned_base_is_realigned);
+    RUN_TEST(test_misaligned_base_can_consume_all_capacity);
     return UNITY_END();
 }

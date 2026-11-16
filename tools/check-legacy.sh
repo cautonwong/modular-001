@@ -20,34 +20,35 @@ includes=(
     -I "$root/infra/third_party/arm/cmsis"
     -I "$root/infra/soc/v85xxp/v8500/vendor"
     -I "$root/infra/soc/v85xxp/v8500/vendor/Lib_Driver/inc"
-    -I "$root/domain/metering/legacy"
-    -I "$root/domain/tariff/legacy"
-    -I "$root/domain/events/legacy"
-    -I "$root/domain/freeze/legacy"
-    -I "$root/domain/load_control/legacy"
     -I "$root/domain/display/legacy"
     -I "$root/targets/stategrid_meter/tools/app_resource_tool"
     -I "$root/targets/stategrid_meter/app/apps/legacy/app_645_server"
     -I "$root/targets/stategrid_meter/app/apps/legacy/app_698_server"
     -I "$root/targets/stategrid_meter/app/apps"
 )
-# -fpermissive keeps GCC 14 from promoting the old code's implicit
-# declarations to errors; GCC 10 only warned.
-flags=(-std=gnu11 -mcpu=cortex-m0 -mthumb -ffreestanding -w -fpermissive "${includes[@]}")
+# -w keeps vendor noise down. The explicit -Werror flag still promotes
+# implicit declarations, which are defects even in legacy code.
+flags=(-std=gnu11 -mcpu=cortex-m0 -mthumb -ffreestanding -w
+       -Werror=implicit-function-declaration -fpermissive "${includes[@]}")
 
 files=(
+    components/protocol/dl645/nd_dl645.c
+    components/protocol/dl698/nd_dl698.c
     infra/kernel/utils.c
     targets/stategrid_meter/app/rtos/time_link.c
     targets/stategrid_meter/app/rtos/nidavellir.c
     infra/kernel/rtc.c
     targets/stategrid_meter/app/metering/legacy/energy.c
     targets/stategrid_meter/app/tariff/legacy/touFee.c
-    targets/stategrid_meter/app/load_control/legacy/relay_control.c
-    targets/stategrid_meter/app/metering/legacy/runstatus.c
+    targets/stategrid_meter/app/metering/runstatus.c
+    targets/stategrid_meter/app/metering/static_checksum.c
     targets/stategrid_meter/tools/app_resource_tool/resource_tool.c
     targets/stategrid_meter/app/apps/app_meter_base_entry.c
     targets/stategrid_meter/app/metering_energy_adapter.c
     targets/stategrid_meter/app/relay_control_adapter.c
+    targets/stategrid_meter/app/record_storage_adapter.c
+    application/ports/record_storage.c
+    targets/stategrid_meter/app/display_control_adapter.c
     targets/stategrid_meter/app/stategrid_meter_entry.c
     targets/stategrid_meter/app/tariff_lookup.c
     targets/stategrid_meter/app/tariff_lookup_eeprom.c
@@ -69,6 +70,9 @@ if ! python3 "$root/tools/check_components.py"; then
     status=1
 fi
 if ! python3 "$root/tools/check_platform_boundary.py"; then
+    status=1
+fi
+if ! python3 "$root/tools/check_externs.py"; then
     status=1
 fi
 exit "$status"

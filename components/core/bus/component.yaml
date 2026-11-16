@@ -1,4 +1,4 @@
-name: nd_bus
+name: core.bus
 version: 0.1.0
 layer: core
 paths: [components/core/bus]

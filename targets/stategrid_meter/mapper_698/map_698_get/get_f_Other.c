@@ -1,42 +1,39 @@
-#include "nidavellir.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
-#include "application/apps/app_config.h"
-#include "application/apps/display_applications.h"
+#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
+#include "targets/stategrid_meter/app/app_config.h"
+#include "targets/stategrid_meter/app/display_applications.h"
 #include "application/adapters/dl698/fr_698_esam.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
 
-extern int read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t index);
 
 const uint8_t name_rs485[5] = {'R', 'S', '4', '8', '5'};
 const uint8_t name_ir[5] = {'I', 'N', 'F', 'R', 'A'};
 const uint8_t name_plc[3] = {'P', 'L', 'C'};
 const uint8_t name_relay[5] = {'R', 'E', 'L', 'A', 'Y'};
 
-uint8_t get_current_plc_baud(struct instance_t* instance)
+uint8_t get_current_plc_baud(void *instance)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t baud = DEF_BAUT_PLC;
-    if(nd_mbase_Baut_plc_neg(mbase_cb) <= 10)
+    if(nd_mb_baut_plc_neg(instance) <= 10)
     {
-        baud = nd_mbase_Baut_plc_neg(mbase_cb);    //载波协商波特率
+        baud = nd_mb_baut_plc_neg(instance);    //载波协商波特率
     }
     else
     {
-        if(nd_mbase_Baut_plc(mbase_cb) <= 10)
-            baud = nd_mbase_Baut_plc(mbase_cb);    //载波设置波特率
+        if(nd_mb_baut_plc(instance) <= 10)
+            baud = nd_mb_baut_plc(instance);    //载波设置波特率
     }
 
     return baud;
 }
 
 
-int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *ctx)
+int GET_f_Other(void *instance, uint32_t id, uint8_t* buf,  void *ctx)
 {    
 #ifndef WIN32
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    struct pipeline_t* pipeline =  get_pipeline(instance, pid_meter_base); 
+    void *pipeline = nd_fr698_pipeline(instance); 
     struct context_698_t* p_ctx = (struct context_698_t*)ctx;
     uint16_t oad,displayid;
     uint8_t index,attribute,i,len,maxnum, count = 0;
@@ -48,7 +45,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
     uint8_t cilent_index = 0;
     uint8_t schem = 0;
     
-    if(mbase_cb == NULL)
+    if(!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -57,7 +54,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
     index = (unsigned char)(id & 0x000000FF);
     attribute = (unsigned char)((id & 0x00001F00) >> 8);    //属性
     schem = get_OAD_Schem(id);
-    if (CA_TYPE_TER(p_ctx->CA)) 
+    if ((p_ctx != NULL) && CA_TYPE_TER(p_ctx->CA))
     {
         cilent_index = 1;
     }
@@ -121,7 +118,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     p = p + 0;
                 }
                 *p++ = TYPE_COMDCB;
-                if(oad == 0xF201)   *p++ = nd_mbase_Baut_rs485(mbase_cb);    //485波特率
+                if(oad == 0xF201)   *p++ = nd_mb_baut_rs485(instance);    //485波特率
                 else if(oad == 0xF202)   *p++ = 2;    //红外波特率
                 else if(oad == 0xF209)   
                 {   
@@ -163,9 +160,9 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     memcpy(p, name_relay, 5);
                     p = p + 5;
                     *p++ = TYPE_enum;
-                    *p++ = nd_mbase_relay_true_sta(mbase_cb);
+                    *p++ = nd_mb_relay_true_sta(instance);
                     *p++ = TYPE_enum;
-                    *p++ = nd_mbase_relay_ctl_mode(mbase_cb);
+                    *p++ = nd_mb_relay_ctl_mode(instance);
                     *p++ = TYPE_enum;
                     *p++ = 0;
                 }
@@ -178,9 +175,9 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     memcpy(p, name_relay, 5);
                     p = p + 5;
                     *p++ = TYPE_enum;
-                    *p++ = nd_mbase_relay_true_sta(mbase_cb);
+                    *p++ = nd_mb_relay_true_sta(instance);
                     *p++ = TYPE_enum;
-                    *p++ = nd_mbase_relay_ctl_mode(mbase_cb);
+                    *p++ = nd_mb_relay_ctl_mode(instance);
                     *p++ = TYPE_enum;
                     *p++ = 0;
                 }
@@ -204,7 +201,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 *p++ = TYPE_array;
                 *p++ = 1;
                 *p++ = TYPE_enum;
-                *p++ = nd_mbase_MulPortMode(mbase_cb);
+                *p++ = nd_mb_mul_port_mode(instance);
             }
             else
                 return -DAR_OTHERS_ERROR;
@@ -222,12 +219,12 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 case 0x02://显示对象列表
                     if(oad == 0xF300)
                     {
-                        maxnum = nd_mbase_lcd_autodis_list_num(mbase_cb);
+                        maxnum = nd_mb_lcd_autodis_list_num(instance);
                         addr = AutoDisplayList;
                     }
                     else if(oad == 0xF301)
                     {
-                        maxnum = nd_mbase_lcd_keydis_list_num(mbase_cb);
+                        maxnum = nd_mb_lcd_keydis_list_num(instance);
                         addr = KeyDisplayList;
                     }
                     
@@ -250,7 +247,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     */
                     if(index != 0)
                     {
-                        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
+                        s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
                         nd_get_index(instance, s_index, (uint8_t*)&displayid, 2);
                         len = display_id_to_oad( displayid, esam_inf );
                         if(len == 5)
@@ -296,7 +293,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                         *p++ = maxnum;
                         for(i=0;i<maxnum;i++)
                         {
-                            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
+                            s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
                             nd_get_index(instance, s_index, (uint8_t*)&displayid, 2);
                             len = display_id_to_oad( displayid, esam_inf );
                             if(len == 5)
@@ -344,9 +341,9 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     if(index != 0)  return -DAR_OTHERS_ERROR;
                     *p++ = TYPE_long_unsigned;
                     if(oad == 0xF300)
-                        mem_swap_cpy(p, (uint8_t*)&nd_mbase_lcd_autodis_keep_sec(mbase_cb), 2);
+                        mem_swap_cpy(p, (uint8_t*)&nd_mb_lcd_autodis_keep_sec(instance), 2);
                     else
-                        mem_swap_cpy(p, (uint8_t*)&nd_mbase_lcd_keydis_keep_sec(mbase_cb), 2);
+                        mem_swap_cpy(p, (uint8_t*)&nd_mb_lcd_keydis_keep_sec(instance), 2);
                     p = p + 2;
                     return (p - buf);
                     break;
@@ -358,9 +355,9 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                             *p++ = 2;
                             *p++ = TYPE_unsigned;
                             if(oad == 0xF300)
-                                memcpy(p, (uint8_t*)&nd_mbase_lcd_autodis_list_num(mbase_cb), 1);
+                                memcpy(p, (uint8_t*)&nd_mb_lcd_autodis_list_num(instance), 1);
                             else
-                                memcpy(p, (uint8_t*)&nd_mbase_lcd_keydis_list_num(mbase_cb), 1);
+                                memcpy(p, (uint8_t*)&nd_mb_lcd_keydis_list_num(instance), 1);
                             p++;
                             *p++ = TYPE_unsigned;
                             *p = 99;
@@ -370,9 +367,9 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                         case 0x01://当前对象数
                             *p++ = TYPE_unsigned;
                             if(oad == 0xF300)
-                                memcpy(p, (uint8_t*)&nd_mbase_lcd_autodis_list_num(mbase_cb), 1);
+                                memcpy(p, (uint8_t*)&nd_mb_lcd_autodis_list_num(instance), 1);
                             else
-                                memcpy(p, (uint8_t*)&nd_mbase_lcd_keydis_list_num(mbase_cb), 1);
+                                memcpy(p, (uint8_t*)&nd_mb_lcd_keydis_list_num(instance), 1);
                             p = p + 1;
                             return (p - buf);
                             break;
@@ -418,7 +415,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 case 0x04://对称秘钥版本
                     if( schem )//事件记录用
                     {
-                        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_KeyVer);
+                        addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_KeyVer);
                         nd_get_index(instance, addr, p, 18);
                         p += 18;
                         return (p-buf);
@@ -480,7 +477,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     break;
                 case 0x0E://红外认证时效
                     *p++ = TYPE_double_long_unsigned;
-                    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + IrAuthenTime);
+                    addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + IrAuthenTime);
                     nd_get_index(instance, addr, p, 4); 
                     p = p + 4;
                     return (p - buf);
@@ -488,11 +485,11 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 case 0x0F://剩余红外认证时效
                     if(cilent_index )
                     {
-                        tmp32 = nd_mbase_term_auth_timeout(mbase_cb);
+                        tmp32 = nd_mb_term_auth_timeout(instance);
                     }
                     else
                     {
-                        tmp32 = nd_mbase_infrared_auth_timeout(mbase_cb);
+                        tmp32 = nd_mb_infrared_auth_timeout(instance);
                     }     
                 
                     if ((tmp32%60) > 0 && (tmp32%60) < 60)
@@ -512,8 +509,8 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 case 0x11://身份权限
                     *p++ = TYPE_unsigned;
                     read_esam_info(instance, esam_inf,8);
-                    memcpy(&nd_mbase_AuthOn(mbase_cb), esam_inf, 1);
-                    *p++ = nd_mbase_AuthOn(mbase_cb);
+                    memcpy(&nd_mb_auth_on(instance), esam_inf, 1);
+                    *p++ = nd_mb_auth_on(instance);
                     return (p-buf);
                     break;
                 case 0x12://终端地址
@@ -616,7 +613,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                 }
                 break;
                 case 0x02://安全模式参数
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_En);
+                    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_En);
                     nd_get_index(instance, s_index, ptr_tmp, 1);
                     *p++ = TYPE_enum;
                     *p++ = ptr_tmp[0];
@@ -629,7 +626,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
                     }
 
                     ptr_tmp[0] = 0;
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+                    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
                     nd_get_index(instance, s_index, ptr_tmp, SecurityMode_EXData_LEN);
                     count = ptr_tmp[0];
 
@@ -697,7 +694,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
     {
         case 0xFFFE0000: //事件编程        //电能表编程列表645  
         {
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr645_List);
+            s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr645_List);
             len = 52;
             nd_get_index(instance, s_index, p, len);
             p += len;
@@ -707,7 +704,7 @@ int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf,  void *c
         case 0xFFFE0001: //操作者代码
         {
             len = 4;
-            ndv_memcopy(p, nd_mbase_handler_code(mbase_cb), len);
+            ndv_memcopy(p, nd_mb_handler_code(instance), len);
             p += len;
             return (p-buf);
         }

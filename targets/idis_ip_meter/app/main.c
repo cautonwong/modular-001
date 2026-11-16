@@ -4,10 +4,10 @@
 #include "baremetal.h"
 #include "board_ports.h"
 #include "components/protocol/dlms/include/nd_cosem_port.h"
+#include "targets/idis_ip_meter/cosem/nd_idis_registry.h"
 #include "cpu_surport.h"
 #include "domain/common/calendar.h"
 #include "domain/push/push.h"
-#include "kernel/instance.h"
 #include "infra/boards/stategrid_single_phase/board_io.h"
 #include "infra/boards/stategrid_single_phase/meter_config.h"
 #include "targets/idis_ip_meter/cosem/classes/nd_ic_calendar.h"
@@ -38,9 +38,6 @@
 #include "time_link.h"
 #include "time_link.h"
 
-extern void mcu_init(void *init_type);
-extern void cm0_systick_init(uint8_t cmd);
-extern uint8_t ac_power_off_monitor(void);
 
 enum {
     EEPROM_EVENT = 0u,
@@ -62,6 +59,7 @@ enum {
     EEPROM_LIMITER = 34816u,
     EEPROM_IMAGE = 35840u,
     EEPROM_SETUP = 36864u,
+    EEPROM_REGISTRY = ND_IDIS_REGISTRY_EEPROM_OFFSET,
     EEPROM_PERIOD = 300u,
     FLASH_IMAGE = 1048576u
 };
@@ -70,7 +68,6 @@ static nd_idis_objects_t objects;
 static nd_cosem_port_t port;
 static nd_clock_port_t clock_port;
 static nd_measurement_port_t measurement;
-static struct instance_t rtc_instance;
 /* cm0_systick_init() programs a 10 ms SysTick, and ndv_timer_tick() uses
  * that same unit. Keep the second counter separate from the timer ticks. */
 static uint64_t energy_pulse_fraction;
@@ -86,30 +83,20 @@ static unsigned relay_feedback_seconds;
 static int clock_read(void *ctx, nd_dlms_datetime_t *now)
 {
     (void)ctx;
-    if (read_mcu_rtc(0, &rtc_instance)) {
-        int year = rtc_instance.time.tm_year + 1900;
-        int month = rtc_instance.time.tm_mon + 1;
-        if (year >= 2020 && month >= 1 && month <= 12) {
-            *now = (nd_dlms_datetime_t){
-                .year = (uint16_t)year,
-                .month = (uint8_t)month,
-                .day = (uint8_t)rtc_instance.time.tm_mday,
-                .hour = (uint8_t)rtc_instance.time.tm_hour,
-                .minute = (uint8_t)rtc_instance.time.tm_min,
-                .second = (uint8_t)rtc_instance.time.tm_sec,
-                .status = 0,
-            };
-            return 0;
-        }
+    if (board_rtc_read(now) == 0) {
+        return 0;
     }
     uint32_t seconds = baremetal_uptime_seconds();
+    nd_datetime_t fallback;
+    nd_calendar_from_elapsed(nd_calendar_total_day(1, 1, 2026), seconds,
+                             &fallback);
     *now = (nd_dlms_datetime_t){
-        .year = 2026,
-        .month = 1,
-        .day = 1,
-        .hour = (uint8_t)(seconds / 3600u),
-        .minute = (uint8_t)((seconds / 60u) % 60u),
-        .second = (uint8_t)(seconds % 60u),
+        .year = fallback.year,
+        .month = fallback.month,
+        .day = fallback.day,
+        .hour = fallback.hour,
+        .minute = fallback.minute,
+        .second = fallback.second,
         .status = 0x01, /* DLMS clock status: invalid value */
     };
     return 0;
@@ -135,8 +122,8 @@ static int clock_write(void *ctx, const nd_dlms_datetime_t *now)
 
 static void rtc_init(void)
 {
-    if (read_mcu_rtc(0, &rtc_instance)
-        && rtc_instance.time.tm_year + 1900 >= 2020) {
+    nd_dlms_datetime_t current;
+    if (board_rtc_read(&current) == 0) {
         return;
     }
     nd_dlms_datetime_t default_time = {
@@ -199,6 +186,10 @@ static void load_persisted(void)
     (void)nd_idis_limiter_load(&objects.limiter, eeprom, EEPROM_LIMITER);
     (void)nd_idis_image_load(&objects.image, eeprom, EEPROM_IMAGE);
     (void)nd_idis_setup_load(&objects.setup, eeprom, EEPROM_SETUP);
+    if (nd_idis_registry_load(&objects.association.association.base, eeprom,
+                              EEPROM_REGISTRY) != 0) {
+        nd_idis_association_init(&objects.association);
+    }
     (void)nd_idis_event_load(&objects.event, eeprom, EEPROM_EVENT);
     mcu_clear_watchdog();
 }

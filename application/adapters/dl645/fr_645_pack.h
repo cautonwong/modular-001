@@ -9,4 +9,6 @@ int fr_pack_645_data(struct instance_t* instance, struct pipeline_t* pipeline,
                      nd_dl645_msg_t* mesg);
 int fr_pack_645_tail(struct instance_t* instance, struct pipeline_t* pipeline,
                      nd_dl645_msg_t* mesg);
+int __update_cs(void* pctx, uint8_t* byte);
+int __update_scrambler_and_cs(void* pctx, uint8_t* byte);
 #endif

@@ -1,13 +1,13 @@
-#include "nidavellir.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
-#include "gs_record.h"
+#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
 #include "cpu_surport.h"
 #include "application/adapters/dl698/fr_698.h"
-#include "domain/events/legacy/gs_record.h"
-#include "domain/freeze/legacy/freeze_applications.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
+#include "targets/stategrid_meter/app/freeze/freeze_applications.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
 // 单个事件是否支持复位判断
 int single_event_clear_judge(uint16_t oi)
@@ -23,7 +23,7 @@ int single_event_clear_judge(uint16_t oi)
 
 
 //记录事件清零列表
-int event_clear_omd_add(struct instance_t* instance, uint32_t omd, uint16_t chn)
+int event_clear_omd_add(void *instance, uint32_t omd, uint16_t chn)
 {
     uint8_t tempbuf[7];
 //    uint16_t id;
@@ -44,10 +44,9 @@ int event_clear_omd_add(struct instance_t* instance, uint32_t omd, uint16_t chn)
 }
 
 
-int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *buf, uint8_t *dar)
+int event_add_one_capture(void *instance, uint32_t oad , uint8_t *buf, uint8_t *dar)
 {
 
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t* p = buf;
     uint16_t i;
     uint8_t tempbuf[200] = {0};
@@ -57,10 +56,10 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     uint8_t* oadlist = tempbuf;
     uint16_t CaptureLen;
     uint32_t CaptureId, capture_oad, temp_oad;
-    uint8_t* apdu_cache = instance->apdu_cache; 
+    uint8_t* apdu_cache = nd_fr698_apdu_cache(instance); 
 
 
-    if (mbase_cb == NULL)
+    if (!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -89,7 +88,7 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     capture_oad = buf_to_uint32_msb(p);
     Schem = get_OAD_Schem(capture_oad);
     
-    if ((oi == 0x3013) && ( nd_mbase_key_state(mbase_cb) == false ))
+    if ((oi == 0x3013) && ( nd_mb_key_state(instance) == false ))
     {
         *dar = DAR_RW_REJECT;
         return -DAR_RW_REJECT;
@@ -176,9 +175,8 @@ int event_add_one_capture(struct instance_t* instance, uint32_t oad , uint8_t *b
     return (int)(p - buf);
 }
 
-int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t *buf, uint8_t* dar)
+int event_delete_one_capture(void *instance, uint32_t oad, uint8_t *buf, uint8_t* dar)
 {
-    struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
     uint16_t i;
     uint8_t tempbuf[200] = { 0 };
@@ -189,8 +187,7 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
     uint16_t CaptureLen;
     uint32_t CaptureId, capture_oad, temp_oad;
 
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    if (mbase_cb == NULL)
+    if (!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -223,20 +220,13 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
     p += 4;
     Schem = get_OAD_Schem(capture_oad);
 
-    if ((oi == 0x3013) && ( nd_mbase_key_state(mbase_cb) == false ))
+    if ((oi == 0x3013) && ( nd_mb_key_state(instance) == false ))
     {
         *dar = DAR_OTHERS_ERROR;
         return -DAR_RW_REJECT;
     }
 
 
-#if 0 // vs 要求 其他
-    if ((Schem < 1) || (Schem > 4))
-    {
-        *dar = DAR_OTHERS_ERROR;
-        return -1;
-    }
-#endif
 
     ret = nd_get_index(instance, CaptureId, &tempbuf[0], sizeof(tempbuf));
     if (ret < 0)
@@ -301,10 +291,9 @@ int event_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t 
 
 
 
-int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
+int ACTION_3_Event(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
     struct context_698_t* pctx = (struct context_698_t*)ctx;
-    struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
 //    uint16_t i;
 //    uint8_t tempbuf[200];
@@ -312,8 +301,7 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
     uint8_t  dar = 0;
     int ret;
 
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    if (mbase_cb == NULL)
+    if (!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -334,7 +322,7 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
             return -DAR_OTHERS_ERROR;
         }
         p += 2;
-        if(nd_mbase_factor_mode(mbase_cb) == false)
+        if(nd_mb_factor_mode(instance) == false)
         {
             if((1 != pctx->timeTag_valid) || (pctx->timeTag[0] == 0))
             {
@@ -366,7 +354,7 @@ int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void 
 
         report_3320list_confirmed_All_channel(instance, id); //   77个 action  共 20秒  占用 17秒    测试 
 
-        nd_mbase_flag_event_clear(mbase_cb) = 0;
+        nd_mb_flag_event_clear(instance) = 0;
         record_event_no_mesg_pro(instance, NULL, EventClrS, NULL, 1);
 
         return (p - buf);

@@ -1,6 +1,0 @@
-name: application.apps
-version: 0.1.0
-layer: application
-paths: [application/apps]
-dependencies: []
-legacy: true

@@ -12,11 +12,16 @@ void nd_idis_association_init(nd_idis_association_t *state)
     memset(state, 0, sizeof(*state));
     state->association.client_sap = 16;
     state->association.status = 1;
-    state->association.object_count = 2;
-    state->association.objects[0] =
-        (nd_assoc_object_t){8, ND_OBIS_CLOCK, 2, 0};
-    state->association.objects[1] =
-        (nd_assoc_object_t){1, ND_OBIS_ACTIVE_ENERGY_IMPORT, 2, 0};
+    (void)nd_idis_registry_add(&state->association.base, 8, 0,
+                               &ND_OBIS_CLOCK);
+    (void)nd_idis_registry_add(&state->association.base, 3, 0,
+                               &ND_OBIS_ACTIVE_ENERGY_IMPORT);
+    (void)nd_idis_registry_add(&state->association.base, 15, 0,
+                               &ND_OBIS_ASSOCIATION);
+    (void)nd_idis_registry_add(&state->association.base, 64, 0,
+                               &ND_OBIS_SECURITY_SETUP);
+    (void)nd_idis_registry_add(&state->association.base, 17, 0,
+                               &ND_OBIS_SAP_ASSIGNMENT);
     state->sap_count = 1;
     state->sap_list[0].sap = 16;
     state->sap_list[0].ln = ND_OBIS_ASSOCIATION;
@@ -41,21 +46,38 @@ static int put_ln(nd_axdr_writer_t *out, const nd_obis_t *ln)
     return 0;
 }
 
-static int read_unsigned(nd_axdr_reader_t *in, uint32_t *value)
+static void put_access_list(nd_axdr_writer_t *out,
+                            const nd_assoc_access_t *items, uint8_t count,
+                            int with_selector)
 {
-    uint8_t tag = nd_axdr_get_tag(in);
-    if (tag == ND_AXDR_UNSIGNED || tag == ND_AXDR_ENUM
-        || tag == ND_AXDR_BOOLEAN) {
-        *value = nd_axdr_get_u8(in);
-    } else if (tag == ND_AXDR_INTEGER) {
-        *value = (uint8_t)nd_axdr_get_u8(in);
-    } else if (tag == ND_AXDR_LONG_UNSIGNED) {
-        *value = nd_axdr_get_u16(in);
-    } else if (tag == ND_AXDR_DOUBLE_LONG_UNSIGNED) {
-        *value = nd_axdr_get_u32(in);
-    } else {
+    nd_axdr_put_array_header(out, count);
+    for (uint8_t index = 0; index < count; index++) {
+        nd_axdr_put_structure_header(out, with_selector ? 3 : 2);
+        nd_axdr_put_tag(out, ND_AXDR_INTEGER);
+        nd_axdr_put_u8(out, items[index].id);
+        nd_axdr_put_tag(out, ND_AXDR_ENUM);
+        nd_axdr_put_u8(out, items[index].access);
+        if (with_selector) {
+            nd_axdr_put_tag(out, ND_AXDR_NULL);
+        }
+    }
+}
+
+static int read_typed_u8(nd_axdr_reader_t *in, uint8_t tag, uint8_t *value)
+{
+    if (nd_axdr_get_tag(in) != tag) {
         return -1;
     }
+    *value = nd_axdr_get_u8(in);
+    return nd_axdr_reader_ok(in) ? 0 : -1;
+}
+
+static int read_long_unsigned(nd_axdr_reader_t *in, uint16_t *value)
+{
+    if (nd_axdr_get_tag(in) != ND_AXDR_LONG_UNSIGNED) {
+        return -1;
+    }
+    *value = nd_axdr_get_u16(in);
     return nd_axdr_reader_ok(in) ? 0 : -1;
 }
 
@@ -80,6 +102,86 @@ static int read_octets(nd_axdr_reader_t *in, uint8_t *out, uint8_t capacity,
     return 0;
 }
 
+static int read_access_list(nd_axdr_reader_t *in, nd_assoc_access_t *items,
+                            uint8_t capacity, uint8_t *count,
+                            int with_selector)
+{
+    if (nd_axdr_get_tag(in) != ND_AXDR_ARRAY) {
+        return -1;
+    }
+    uint16_t total = nd_axdr_get_length(in);
+    if (total > capacity) {
+        return -1;
+    }
+    for (uint16_t index = 0; index < total; index++) {
+        if (nd_axdr_get_tag(in) != ND_AXDR_STRUCTURE
+            || nd_axdr_get_length(in) < (with_selector ? 3 : 2)
+            || nd_axdr_get_tag(in) != ND_AXDR_INTEGER) {
+            return -1;
+        }
+        items[index].id = nd_axdr_get_u8(in);
+        if (nd_axdr_get_tag(in) != ND_AXDR_ENUM) {
+            return -1;
+        }
+        items[index].access = nd_axdr_get_u8(in);
+        if (with_selector && nd_axdr_skip_value(in) != 0) {
+            return -1;
+        }
+    }
+    *count = (uint8_t)total;
+    return nd_axdr_reader_ok(in) ? 0 : -1;
+}
+
+static int read_object_entry(nd_axdr_reader_t *in, nd_assoc_object_t *entry)
+{
+    memset(entry, 0, sizeof(*entry));
+    if (nd_axdr_get_tag(in) != ND_AXDR_STRUCTURE
+        || nd_axdr_get_length(in) < 4
+        || nd_axdr_get_tag(in) != ND_AXDR_LONG_UNSIGNED) {
+        return -1;
+    }
+    entry->class_id = nd_axdr_get_u16(in);
+    if (nd_axdr_get_tag(in) != ND_AXDR_UNSIGNED) {
+        return -1;
+    }
+    entry->version = nd_axdr_get_u8(in);
+    uint8_t ln[6];
+    uint8_t length = 0;
+    if (read_octets(in, ln, sizeof(ln), &length) != 0 || length != 6) {
+        return -1;
+    }
+    memcpy(&entry->ln, ln, 6);
+    if (nd_axdr_get_tag(in) != ND_AXDR_STRUCTURE
+        || nd_axdr_get_length(in) < 2) {
+        return -1;
+    }
+    if (read_access_list(in, entry->attributes, ND_ASSOC_ACCESS_MAX,
+                         &entry->attribute_count, 1) != 0
+        || read_access_list(in, entry->methods, ND_ASSOC_ACCESS_MAX,
+                            &entry->method_count, 0) != 0) {
+        return -1;
+    }
+    return nd_axdr_reader_ok(in) ? 0 : -1;
+}
+
+static nd_assoc_access_t access_for_class(uint8_t class_id)
+{
+    static const struct {
+        uint8_t class_id;
+        nd_assoc_access_t access;
+    } policy[] = {
+        {8, {2, 3}},  /* clock: value read and write */
+        {3, {2, 1}},  /* register: value read */
+        {4, {2, 1}},  /* extended register: value read */
+    };
+    for (size_t index = 0; index < sizeof(policy) / sizeof(policy[0]); index++) {
+        if (policy[index].class_id == class_id) {
+            return policy[index].access;
+        }
+    }
+    return (nd_assoc_access_t){1, 1}; /* logical name read */
+}
+
 static int assoc_get(nd_assoc_state_t *state, const nd_obis_t *ln,
                      uint8_t attribute_id, nd_axdr_writer_t *out)
 {
@@ -87,19 +189,36 @@ static int assoc_get(nd_assoc_state_t *state, const nd_obis_t *ln,
     case 1:
         put_ln(out, ln);
         break;
-    case 2:
-        nd_axdr_put_array_header(out, state->object_count);
-        for (uint8_t index = 0; index < state->object_count; index++) {
+    case 2: {
+        uint16_t total = (uint16_t)(state->base.count + state->extra_count);
+        nd_axdr_put_array_header(out, total);
+        for (uint16_t index = 0; index < state->base.count; index++) {
+            const nd_idis_registry_entry_t *entry = &state->base.entries[index];
+            nd_assoc_access_t access = access_for_class(entry->class_id);
             nd_axdr_put_structure_header(out, 4);
             nd_axdr_put_tag(out, ND_AXDR_LONG_UNSIGNED);
-            nd_axdr_put_u16(out, state->objects[index].class_id);
-            put_ln(out, &state->objects[index].ln);
-            nd_axdr_put_tag(out, ND_AXDR_INTEGER);
-            nd_axdr_put_u8(out, state->objects[index].attribute);
+            nd_axdr_put_u16(out, entry->class_id);
+            nd_axdr_put_tag(out, ND_AXDR_UNSIGNED);
+            nd_axdr_put_u8(out, entry->version);
+            put_ln(out, &entry->ln);
+            nd_axdr_put_structure_header(out, 2);
+            put_access_list(out, &access, 1, 1);
+            put_access_list(out, NULL, 0, 0);
+        }
+        for (uint8_t index = 0; index < state->extra_count; index++) {
+            const nd_assoc_object_t *entry = &state->extra[index];
+            nd_axdr_put_structure_header(out, 4);
             nd_axdr_put_tag(out, ND_AXDR_LONG_UNSIGNED);
-            nd_axdr_put_u16(out, state->objects[index].index);
+            nd_axdr_put_u16(out, entry->class_id);
+            nd_axdr_put_tag(out, ND_AXDR_UNSIGNED);
+            nd_axdr_put_u8(out, entry->version);
+            put_ln(out, &entry->ln);
+            nd_axdr_put_structure_header(out, 2);
+            put_access_list(out, entry->attributes, entry->attribute_count, 1);
+            put_access_list(out, entry->methods, entry->method_count, 0);
         }
         break;
+    }
     case 3:
         nd_axdr_put_structure_header(out, 2);
         nd_axdr_put_tag(out, ND_AXDR_LONG_UNSIGNED);
@@ -112,15 +231,24 @@ static int assoc_get(nd_assoc_state_t *state, const nd_obis_t *ln,
         nd_axdr_put_length(out, state->app_context_len);
         nd_axdr_put_octets(out, state->app_context, state->app_context_len);
         break;
-    case 5:
-        nd_axdr_put_structure_header(out, 3);
-        nd_axdr_put_tag(out, ND_AXDR_ENUM);
-        nd_axdr_put_u8(out, 0); /* conformance */
+    case 5: {
+        static const uint8_t conformance[3] = {0, 0, 0};
+        nd_axdr_put_structure_header(out, 6);
+        nd_axdr_put_tag(out, ND_AXDR_BIT_STRING);
+        nd_axdr_put_length(out, 24);
+        nd_axdr_put_octets(out, conformance, 3);
+        nd_axdr_put_tag(out, ND_AXDR_LONG_UNSIGNED);
+        nd_axdr_put_u16(out, 0x007F); /* max receive PDU */
+        nd_axdr_put_tag(out, ND_AXDR_LONG_UNSIGNED);
+        nd_axdr_put_u16(out, 0x007F); /* max send PDU */
         nd_axdr_put_tag(out, ND_AXDR_UNSIGNED);
-        nd_axdr_put_u8(out, 0x7F); /* max receive PDU */
-        nd_axdr_put_tag(out, ND_AXDR_UNSIGNED);
-        nd_axdr_put_u8(out, 0x7F); /* max send PDU */
+        nd_axdr_put_u8(out, 6); /* DLMS version */
+        nd_axdr_put_tag(out, ND_AXDR_INTEGER);
+        nd_axdr_put_u8(out, 0xFF); /* quality of service: not used */
+        nd_axdr_put_tag(out, ND_AXDR_OCTET_STRING);
+        nd_axdr_put_length(out, 0); /* ciphered APDU: not used */
         break;
+    }
     case 6:
         nd_axdr_put_structure_header(out, 2);
         nd_axdr_put_tag(out, ND_AXDR_ENUM);
@@ -225,8 +353,8 @@ int nd_ic_association_get(void *ctx, uint8_t client_sap, const nd_obis_t *ln,
             nd_axdr_put_array_header(out, state->sap_count);
             for (uint8_t index = 0; index < state->sap_count; index++) {
                 nd_axdr_put_structure_header(out, 2);
-                nd_axdr_put_tag(out, ND_AXDR_UNSIGNED);
-                nd_axdr_put_u8(out, state->sap_list[index].sap);
+                nd_axdr_put_tag(out, ND_AXDR_LONG_UNSIGNED);
+                nd_axdr_put_u16(out, state->sap_list[index].sap);
                 put_ln(out, &state->sap_list[index].ln);
             }
         } else {
@@ -266,8 +394,8 @@ int nd_ic_association_set(void *ctx, uint8_t client_sap, const nd_obis_t *ln,
                 || nd_axdr_get_length(in) < 2) {
                 return ND_ERR_TYPE_MISMATCH;
             }
-            uint32_t sap = 0;
-            if (read_unsigned(in, &sap) != 0 || sap > 0xFF) {
+            uint16_t sap = 0;
+            if (read_long_unsigned(in, &sap) != 0 || sap > 0xFF) {
                 return ND_ERR_TYPE_MISMATCH;
             }
             uint8_t body[6];
@@ -292,14 +420,14 @@ int nd_ic_association_set(void *ctx, uint8_t client_sap, const nd_obis_t *ln,
         return ND_ERR_OBJECT_UNDEFINED;
     }
     if (attribute_id == 2 || attribute_id == 3) {
-        uint32_t value = 0;
-        if (read_unsigned(in, &value) != 0 || value > 0xFF) {
+        uint8_t value = 0;
+        if (read_typed_u8(in, ND_AXDR_ENUM, &value) != 0) {
             return ND_ERR_TYPE_MISMATCH;
         }
         if (attribute_id == 2) {
-            security->policy = (uint8_t)value;
+            security->policy = value;
         } else {
-            security->suite = (uint8_t)value;
+            security->suite = value;
         }
         return ND_OK;
     }
@@ -326,7 +454,6 @@ static int assoc_action(nd_assoc_state_t *state, uint8_t method_id,
                         nd_axdr_reader_t *in, nd_axdr_writer_t *out,
                         const nd_crypto_port_t *crypto)
 {
-    uint32_t value = 0;
     if (method_id == 1) { /* reply_to_HLS_authentication */
         if (crypto == NULL || crypto->sha256 == NULL || out == NULL) {
             return ND_ERR_OPERATION_NOT_POSSIBLE;
@@ -357,54 +484,32 @@ static int assoc_action(nd_assoc_state_t *state, uint8_t method_id,
                    : ND_ERR_TYPE_MISMATCH;
     }
     if (method_id == 3) { /* add_object */
-        if (state->object_count >= ND_ASSOC_OBJECTS_MAX
-            || nd_axdr_get_tag(in) != ND_AXDR_STRUCTURE
-            || nd_axdr_get_length(in) < 4) {
+        if (state->extra_count >= ND_ASSOC_OBJECTS_MAX) {
             return ND_ERR_TYPE_MISMATCH;
         }
-        uint32_t class_id = 0;
-        if (read_unsigned(in, &class_id) != 0 || class_id > 0xFFFF) {
+        nd_assoc_object_t entry;
+        if (read_object_entry(in, &entry) != 0) {
             return ND_ERR_TYPE_MISMATCH;
         }
-        uint8_t ln[6];
-        uint8_t length = 0;
-        if (read_octets(in, ln, sizeof(ln), &length) != 0 || length != 6) {
-            return ND_ERR_TYPE_MISMATCH;
-        }
-        uint32_t attribute = 0;
-        uint32_t index = 0;
-        if (read_unsigned(in, &attribute) != 0
-            || read_unsigned(in, &index) != 0) {
-            return ND_ERR_TYPE_MISMATCH;
-        }
-        nd_assoc_object_t *entry = &state->objects[state->object_count++];
-        entry->class_id = (uint16_t)class_id;
-        memcpy(&entry->ln, ln, 6);
-        entry->attribute = (uint8_t)attribute;
-        entry->index = (uint16_t)index;
+        state->extra[state->extra_count++] = entry;
         return ND_OK;
     }
     if (method_id == 4) { /* remove_object */
-        if (nd_axdr_get_tag(in) != ND_AXDR_STRUCTURE
-            || nd_axdr_get_length(in) < 4) {
+        nd_assoc_object_t entry;
+        if (read_object_entry(in, &entry) != 0) {
             return ND_ERR_TYPE_MISMATCH;
         }
-        uint32_t class_id = 0;
-        if (read_unsigned(in, &class_id) != 0 || class_id > 0xFFFF) {
-            return ND_ERR_TYPE_MISMATCH;
-        }
-        uint8_t ln[6];
-        uint8_t length = 0;
-        if (read_octets(in, ln, sizeof(ln), &length) != 0 || length != 6) {
-            return ND_ERR_TYPE_MISMATCH;
-        }
-        for (uint8_t index = 0; index < state->object_count; index++) {
-            if (memcmp(&state->objects[index].ln, ln, 6) == 0) {
-                state->objects[index] =
-                    state->objects[state->object_count - 1];
-                state->object_count--;
+        for (uint8_t index = 0; index < state->extra_count; index++) {
+            if (state->extra[index].class_id == entry.class_id
+                && memcmp(&state->extra[index].ln, &entry.ln, 6) == 0) {
+                state->extra[index] = state->extra[state->extra_count - 1];
+                state->extra_count--;
                 return ND_OK;
             }
+        }
+        if (nd_idis_registry_remove(&state->base, (uint8_t)entry.class_id,
+                                    &entry.ln) == 0) {
+            return ND_OK;
         }
         return ND_ERR_OPERATION_NOT_POSSIBLE;
     }
@@ -417,9 +522,11 @@ static int assoc_action(nd_assoc_state_t *state, uint8_t method_id,
             /* standard wraps {user id, user name}; the unwrapped form is
              * also accepted for the skeleton's script tables. */
         }
-        if (read_unsigned(in, &value) != 0) { /* user id */
+        uint8_t user_id = 0;
+        if (read_typed_u8(in, ND_AXDR_UNSIGNED, &user_id) != 0) {
             return ND_ERR_TYPE_MISMATCH;
         }
+        (void)user_id;
         return read_octets(in, state->users[state->user_count],
                            ND_ASSOC_USER_LEN,
                            &state->user_len[state->user_count]) == 0
@@ -432,12 +539,13 @@ static int assoc_action(nd_assoc_state_t *state, uint8_t method_id,
             && nd_axdr_get_length(&probe) >= 2) {
             *in = probe; /* accept the standard structure wrapper */
         }
-        if (read_unsigned(in, &value) != 0 || value == 0
-            || value > state->user_count) {
+        uint8_t user_id = 0;
+        if (read_typed_u8(in, ND_AXDR_UNSIGNED, &user_id) != 0 || user_id == 0
+            || user_id > state->user_count) {
             return ND_ERR_TYPE_MISMATCH;
         }
-        state->users[value - 1][0] = 0;
-        state->user_len[value - 1] = 0;
+        state->users[user_id - 1][0] = 0;
+        state->user_len[user_id - 1] = 0;
         return ND_OK;
     }
     return ND_ERR_OPERATION_NOT_POSSIBLE;
@@ -447,9 +555,9 @@ static int security_action(nd_security_state_t *state, uint8_t method_id,
                            nd_axdr_reader_t *in, nd_axdr_writer_t *out,
                            const nd_crypto_port_t *crypto)
 {
-    uint32_t value = 0;
     if (method_id == 1) { /* security_activate */
-        if (read_unsigned(in, &value) != 0) {
+        uint8_t value = 0;
+        if (read_typed_u8(in, ND_AXDR_ENUM, &value) != 0) {
             return ND_ERR_TYPE_MISMATCH;
         }
         state->activated = 1;
@@ -460,10 +568,11 @@ static int security_action(nd_security_state_t *state, uint8_t method_id,
         uint8_t length = 0;
         if (nd_axdr_get_tag(in) == ND_AXDR_STRUCTURE
             && nd_axdr_get_length(in) >= 2) {
-            uint32_t key_id = 0;
-            if (read_unsigned(in, &key_id) != 0) {
+            uint8_t key_id = 0;
+            if (read_typed_u8(in, ND_AXDR_ENUM, &key_id) != 0) {
                 return ND_ERR_TYPE_MISMATCH;
             }
+            (void)key_id;
         }
         if (read_octets(in, key, sizeof(key), &length) != 0 || length != 16) {
             return ND_ERR_TYPE_MISMATCH;
@@ -488,7 +597,10 @@ static int security_action(nd_security_state_t *state, uint8_t method_id,
         size_t public_len = sizeof(public_key);
         uint8_t request[128];
         size_t request_len = sizeof(request);
-        if (crypto == NULL || crypto->certificate_request == NULL
+        if (crypto == NULL || crypto->key_pair_generate == NULL
+            || crypto->certificate_request == NULL
+            || crypto->key_pair_generate(crypto->ctx, public_key,
+                                         &public_len) != 0
             || crypto->certificate_request(crypto->ctx, public_key,
                                            public_len, request,
                                            &request_len) != 0) {

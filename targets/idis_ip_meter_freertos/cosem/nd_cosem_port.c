@@ -1,3 +1,4 @@
+#include "targets/idis_ip_meter_freertos/cosem/nd_cosem_port.h"
 #include "components/protocol/dlms/include/nd_cosem_port.h"
 
 #include "targets/idis_ip_meter_freertos/cosem/classes/nd_ic_clock.h"

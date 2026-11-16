@@ -104,18 +104,39 @@ def symbol_table(rows):
             for name, address, size, kind in rows}
 
 
-def section_totals(rows):
-    text = rodata = data = bss = 0
-    for _, _, size, kind in rows:
-        if kind in ("T", "t"):
-            text += size
-        elif kind in ("R", "r"):
-            rodata += size
-        elif kind in ("D", "d"):
-            data += size
-        elif kind in ("B", "b"):
-            bss += size
-    return text, rodata, data, bss
+def elf_sections(path):
+    data = open(path, "rb").read()
+    if data[:4] != b"\x7fELF" or data[4] != 1 or data[5] != 1:
+        raise ValueError(f"{path}: not a 32-bit little-endian ELF")
+    shoff = int.from_bytes(data[0x20:0x24], "little")
+    shentsize = int.from_bytes(data[0x2E:0x30], "little")
+    shnum = int.from_bytes(data[0x30:0x32], "little")
+    shstrndx = int.from_bytes(data[0x32:0x34], "little")
+
+    names_header = shoff + shstrndx * shentsize
+    names_offset = int.from_bytes(data[names_header + 16:names_header + 20],
+                                  "little")
+    names_size = int.from_bytes(data[names_header + 20:names_header + 24],
+                                "little")
+    names = data[names_offset:names_offset + names_size]
+
+    sections = {}
+    for index in range(shnum):
+        header = shoff + index * shentsize
+        name_offset = int.from_bytes(data[header:header + 4], "little")
+        size = int.from_bytes(data[header + 20:header + 24], "little")
+        end = names.find(b"\0", name_offset)
+        name = names[name_offset:end].decode()
+        sections[name] = size
+    return sections
+
+
+def section_totals(sections):
+    text = sections.get(".text", 0)
+    vector = sections.get(".isr_vector", 0)
+    data = sections.get(".data", 0)
+    bss = sections.get(".bss", 0)
+    return vector, text, data, bss
 
 
 def main():
@@ -139,9 +160,9 @@ def main():
         print("vector_table missing or not 48 entries")
         return 1
 
-    text, rodata, data, bss = section_totals(rows)
+    vector, text, data, bss = section_totals(elf_sections(sys.argv[1]))
     ram = bss + data + STACK_BYTES
-    rom = text + rodata + data
+    rom = vector + text + data
     if ram > RAM_BYTES:
         print(f"RAM overflow: {ram} > {RAM_BYTES}")
         return 1
@@ -152,7 +173,7 @@ def main():
     print(f"wired symbols ok ({len(REQUIRED_SYMBOLS)} services, "
           f"{len(IRQ_HANDLERS)} IRQ handlers)")
     print(f"ram={ram} bytes (bss={bss} data={data} stack={STACK_BYTES}) "
-          f"rom={rom} bytes")
+          f"rom={rom} bytes (vector={vector} text={text} data={data})")
     return 0
 
 

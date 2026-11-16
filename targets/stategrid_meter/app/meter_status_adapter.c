@@ -11,15 +11,17 @@ static struct mbase_control_block_t *mb(struct instance_t *instance)
                                                              pid_meter_base);
 }
 
-uint16_t nd_meter_status_metertype(struct instance_t *instance)
+uint16_t nd_meter_status_metertype(void *ctx)
 {
+    struct instance_t *instance = (struct instance_t *)ctx;
     struct mbase_control_block_t *block = mb(instance);
 
     return block != NULL ? nd_mbase_metertype(block) : 0;
 }
 
-void nd_meter_status_metertype_set(struct instance_t *instance, uint16_t value)
+void nd_meter_status_metertype_set(void *ctx, uint16_t value)
 {
+    struct instance_t *instance = (struct instance_t *)ctx;
     struct mbase_control_block_t *block = mb(instance);
 
     if (block != NULL)
@@ -28,8 +30,9 @@ void nd_meter_status_metertype_set(struct instance_t *instance, uint16_t value)
     }
 }
 
-void nd_meter_status_emu_error_set(struct instance_t *instance, int is_error)
+void nd_meter_status_emu_error_set(void *ctx, int is_error)
 {
+    struct instance_t *instance = (struct instance_t *)ctx;
     struct mbase_control_block_t *block = mb(instance);
 
     if (block != NULL)
@@ -38,16 +41,18 @@ void nd_meter_status_emu_error_set(struct instance_t *instance, int is_error)
     }
 }
 
-uint8_t nd_meter_status_esam_power(struct instance_t *instance)
+uint8_t nd_meter_status_esam_power(void *ctx)
 {
+    struct instance_t *instance = (struct instance_t *)ctx;
     struct mbase_control_block_t *block = mb(instance);
 
     return block != NULL ? nd_mbase_esam_power_status(block) : 0;
 }
 
-void nd_meter_status_esam_power_set(struct instance_t *instance, uint8_t on,
+void nd_meter_status_esam_power_set(void *ctx, uint8_t on,
                                     uint16_t close_delay)
 {
+    struct instance_t *instance = (struct instance_t *)ctx;
     struct mbase_control_block_t *block = mb(instance);
 
     if (block != NULL)
@@ -57,16 +62,18 @@ void nd_meter_status_esam_power_set(struct instance_t *instance, uint8_t on,
     }
 }
 
-uint16_t nd_meter_status_esam_close_delay(struct instance_t *instance)
+uint16_t nd_meter_status_esam_close_delay(void *ctx)
 {
+    struct instance_t *instance = (struct instance_t *)ctx;
     struct mbase_control_block_t *block = mb(instance);
 
     return block != NULL ? nd_mbase_esam_power_close_dly(block) : 0;
 }
 
-void nd_meter_status_esam_close_delay_set(struct instance_t *instance,
-                                         uint16_t close_delay)
+void nd_meter_status_esam_close_delay_set(void *ctx,
+                                          uint16_t close_delay)
 {
+    struct instance_t *instance = (struct instance_t *)ctx;
     struct mbase_control_block_t *block = mb(instance);
 
     if (block != NULL)

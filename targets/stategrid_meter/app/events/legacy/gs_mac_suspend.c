@@ -1,18 +1,26 @@
 #include "nidavellir.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <time.h>
+#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
+#include "targets/stategrid_meter/app/meter_flags.h"
+#include "port.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "kernel/legacy_control_block.h"
 #include "domain/events/mac_suspend.h"
 
 static nd_mac_suspend_state_t sec_state;
 
-static void now_datetime(struct instance_t *instance, nd_datetime_t *now)
+static void now_datetime(void *instance, nd_datetime_t *now)
 {
-    now->second = (uint8_t)instance->time.tm_sec;
-    now->minute = (uint8_t)instance->time.tm_min;
-    now->hour = (uint8_t)instance->time.tm_hour;
-    now->day = (uint8_t)instance->time.tm_mday;
-    now->month = (uint8_t)(instance->time.tm_mon + 1);
-    now->year = (uint16_t)(instance->time.tm_year + 1900);
+    now->second = (uint8_t)nd_fr698_time(instance)->tm_sec;
+    now->minute = (uint8_t)nd_fr698_time(instance)->tm_min;
+    now->hour = (uint8_t)nd_fr698_time(instance)->tm_hour;
+    now->day = (uint8_t)nd_fr698_time(instance)->tm_mday;
+    now->month = (uint8_t)(nd_fr698_time(instance)->tm_mon + 1);
+    now->year = (uint16_t)(nd_fr698_time(instance)->tm_year + 1900);
 }
 
 static void state_from_mbase(struct mbase_control_block_t *mbase_cb,
@@ -38,7 +46,7 @@ static void state_to_mbase(struct mbase_control_block_t *mbase_cb,
     }
 }
 
-void mac_err_cnt_add(struct instance_t* instance)
+void mac_err_cnt_add(void *instance)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     nd_mac_suspend_state_t state = {0};
@@ -51,7 +59,7 @@ void mac_err_cnt_add(struct instance_t* instance)
 }
 
 
-void mac_suspend_reset(struct instance_t* instance)
+void mac_suspend_reset(void *instance)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
@@ -66,7 +74,7 @@ void mac_suspend_reset(struct instance_t* instance)
 }
 
 
-void mac_suspend_sec_pro(struct instance_t* instance, struct pipeline_t* task)
+void mac_suspend_sec_pro(void *instance, void *task)
 {
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     nd_datetime_t now;

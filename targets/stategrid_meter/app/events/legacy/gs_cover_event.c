@@ -1,15 +1,23 @@
 #include "nidavellir.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <time.h>
+#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
+#include "targets/stategrid_meter/app/meter_flags.h"
+#include "port.h"
 #include "domain/common/status.h"
-#include "gs_record.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
 #include "domain/events/cover_open.h"
-#include "domain/events/legacy/events_applications.h"
+#include "targets/stategrid_meter/app/events/events_applications.h"
 #include "kernel/legacy_control_block.h"
 
 #define COVEROPEN_DELAY_PARA 2 //开盖延时sec-1
 
 // 上电运行期间 每秒调用
 // 开盖事件 判断:  返回1:记录发生                0:不记录        -1:记录结束
-int CoverOpen_event_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+int CoverOpen_event_judge(void *instance, void *task, void *mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint16_t RecordId = CoverOpenS;
@@ -43,7 +51,7 @@ int CoverOpen_event_judge(struct instance_t* instance, struct pipeline_t* task, 
 
 // 下电运行期间 每秒调用
 // 开盖事件
-int CoverOpen_event_LowPower_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+int CoverOpen_event_LowPower_pro(void *instance, void *task, void *mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint16_t RecordId = CoverOpenS;

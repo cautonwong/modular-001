@@ -1,11 +1,9 @@
-#include "nidavellir.h"
 #include "application/adapters/dl645/fr_645_context.h"
 //#include "645id_table.h"
-#include "gs_record.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
 #include "fr_axdr.h"
 #include "fr_698.h"
 #include "upgrade_645_97.h"
-#include "kernel/legacy_control_block.h"
 #include "port.h"
 
 
@@ -35,9 +33,8 @@ static uint8_t process_attr(uint8_t *buff,struct pro_imange_transfer_id_t *proce
 	return RS_SUCCESS;
 }
 
-static int8_t process_image_id(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
+static int8_t process_image_id(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     int ret;
     uint8_t *p_err = (p_tx);
 	uint8_t tx_apdu_len = 0;
@@ -97,14 +94,14 @@ static int8_t process_image_id(struct instance_t* instance, uint8_t *p_rx, uint8
 	
 }
 
-static int8_t execute_image_transfer(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
+static int8_t execute_image_transfer(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
     return process_image_id(instance, p_rx, p_tx, tx_len, ctx);
 }
 
 
 // 返回0 正常应答          ＞0 其他异常应答          -1 不应答
-int8_t dlt645_image_transfer(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
+int8_t dlt645_image_transfer(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
 
     return execute_image_transfer(instance, p_rx, p_tx, tx_len, ctx);

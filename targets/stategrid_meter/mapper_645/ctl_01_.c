@@ -1,19 +1,18 @@
-#include "nidavellir.h"
 #include "application/adapters/dl645/fr_645_context.h"
+#include <stddef.h>
+#include "application/adapters/dl698/meter_base_view.h"
 //#include "645id_table.h"
-#include "gs_record.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
 #include "fr_axdr.h"
 #include "fr_698.h"
 #include "upgrade_645_97.h"
-#include "kernel/legacy_control_block.h"
 #include "port.h"
 
 
 
 // 返回0 正常应答          ＞0 其他异常应答          -1 不应答
-int8_t dlt645_image_read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
+int8_t dlt645_image_read(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     int ret;
     uint8_t *p_err = (p_tx);
 	uint8_t tx_apdu_len = 0;

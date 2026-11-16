@@ -3,6 +3,7 @@
 #include "application/adapters/dl698/fr_698_env.h"
 struct instance_t;
 #include "fr_698.h"
+#include "fr_698_internal.h"
 #include "parameter_port.h"
 #include "report_list.h"
 #include "meter_base_view.h"
@@ -13,20 +14,9 @@ struct instance_t;
 #include "fr_645_report.h"
 #include "fr_report_frames.h"
 
-extern uint8_t DEVICE_ERR;
-extern void report_3320list_add(struct instance_t* instance, uint32_t oad);
-extern uint8_t active_report_3320list_confirmed(struct instance_t* instance);
-extern uint8_t report_3320list_confirmed(struct instance_t* instance, uint8_t cnl, uint32_t oad, uint8_t confirm_SUB_event);
-extern uint8_t report_3320list_confirmed_All_channel(struct instance_t* instance, uint32_t oad);
-extern int fr_handle_report_response(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
-extern void EventOut_698_check(struct instance_t* instance);
-extern uint8_t report_channel_check(struct instance_t* instance, uint16_t channel);
-extern uint32_t follow_report_3320List_Latest_oad_get(struct instance_t* instance, uint8_t chn);
-
-extern void report_port_open(struct instance_t* instance);
 
 
-extern uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t mode);
+
 
 
 
@@ -78,7 +68,7 @@ void report_2015state_judge(struct instance_t* instance)
 
     
     //存储器故障
-    if ( DEVICE_ERR & (1u << 1) )
+    if ( nd_platform_device_error() )
     {
         if (!(nd_mb_report_2015_cache(instance) & RPT_2015_MEMORIZER_ERR))
         {
@@ -93,21 +83,6 @@ void report_2015state_judge(struct instance_t* instance)
     }
 
       
-#if 0  ////拉合闸成功
-    if ( nd_mb_switch_on_success(instance) == 0x5A   )
-    {
-        nd_mb_switch_on_success(instance) = 0;
-        report_645state_judge(instance, RPT_2015_SWITCH_ON_SUCCEES);
-        report_2015state_update(instance, RPT_2015_SWITCH_ON_SUCCEES);
-    }
-
-    if ( nd_mb_switch_off_success(instance) == 0x5A   )
-    {
-        nd_mb_switch_off_success(instance) = 0;
-        report_645state_judge(instance, RPT_2015_SWITCH_OFF_SUCCEES);
-        report_2015state_update(instance, RPT_2015_SWITCH_OFF_SUCCEES);
-    }
-#endif
 
 
 }
@@ -117,7 +92,7 @@ void report_2015state_judge(struct instance_t* instance)
 
 
 //获取跟随上报使能开关
-uint8_t follow_report_enable_get(struct instance_t*)
+static uint8_t follow_report_enable_get(struct instance_t*)
 {
     int ret;
     uint8_t buf[5] = {0};
@@ -307,7 +282,7 @@ uint32_t follow_report_3320List_Latest_oad_get(struct instance_t* instance, uint
 
 
 //模块上报引脚 EventOut处理    
-void EventOut_698_check(struct instance_t* instance)
+void EventOut_698_check(void *instance)
 {
 uint8_t rptmode, count;
     uint32_t mask;
@@ -476,7 +451,7 @@ void clear_active_report_time_count(struct instance_t* instance, enum active_rep
 
 //置位3320或2015的主动上报 
 //setType: 0 开启2015主动上报   1   开启3320主动上报
-void active_report_normal_CMD_set(struct instance_t* instance, uint8_t chn, uint8_t setType)
+static void active_report_normal_CMD_set(struct instance_t* instance, uint8_t chn, uint8_t setType)
 {   
 
 
@@ -512,7 +487,7 @@ void active_report_normal_CMD_set(struct instance_t* instance, uint8_t chn, uint
 //更新 3320列表，   
 //add_or_del: 0 删除  1新增,          0xFF: 传入属性6，自动删除属性6/7/8/9 [针对分项事件清零]
 //chn通道
-uint8_t report_3320list_update(struct instance_t* instance, uint8_t chn, uint8_t add_or_del, uint32_t oad)
+static uint8_t report_3320list_update(struct instance_t* instance, uint8_t chn, uint8_t add_or_del, uint32_t oad)
 {
     nd_report_list_t list;
     uint8_t buf[241];
@@ -793,7 +768,17 @@ uint8_t active_report_check_3011(struct instance_t* instance, struct pipeline_t*
 }
 
 // 掉电事件 发生和恢复 主动上报组帧(apdu)
-uint16_t report_flag = 0;
+static uint16_t report_flag = 0;
+
+uint8_t nd_fr698_report_pending(void)
+{
+    return report_flag == 0xa55a;
+}
+
+void nd_fr698_report_clear(void)
+{
+    report_flag = 0;
+}
 
 static void report_retry_load(struct instance_t* instance,
                               nd_report_retry_t* retry)
@@ -823,7 +808,7 @@ static void report_retry_store(struct instance_t* instance,
     }
 }
 
-int fr_active_report_pro(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg, uint8_t get_data)
+static int fr_active_report_pro(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg, uint8_t get_data)
 {
     nd_report_retry_t retry;
     nd_report_retry_input_t input = { 0 };

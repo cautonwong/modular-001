@@ -105,7 +105,7 @@ codec 不覆盖它们。<br>
 - 端口由消费者定义，target 组合根负责绑定。
 - 新增 SoC、board、RTOS 或 domain 只新增目录和组合根，不改已有业务规则。
 
-当前落地：`application/ports/platform` 已承接看门狗和事件输出；`nidavellir.h` 已拆成 11 行兼容包装，`kernel/instance.h`、`kernel/message.h`、`kernel/object.h`、`kernel/channel.h`、`kernel/pids.h`、`kernel/resource_ids.h` 承接 kernel 内容，`fr_698_context.h` 和 `fr_645_context.h` 承接协议上下文。`kernel_core.h` 也从 450 行降到 62 行的兼容包头，tasklet、rtc、device、environment、ipc、log、flags 等各自成头。dl698 和协议适配器不再 include 伞头。组件侧已有 `nd_bus`、`nd_channel`、FIFO 通道适配器、`protocol.dl698`、`protocol.dl645`、组件清单和 `tools/check_components.py`，产品描述在 `products/` 下。dl698 的 rx pipeline 已移除，tx pipeline 已删除，实际收发由 `nd_dl698` 组件完成；698 源码不再引用 `message_t`，改用私有的 `nd_dl698_msg_t`。dl645 也完成了私有消息类型和通道组件，当前单相产品尚未接线。
+当前落地：`application/ports/platform` 已承接看门狗和事件输出；`nidavellir.h` 已拆成 11 行兼容包装，`kernel/instance.h`、`kernel/message.h`、`kernel/object.h`、`kernel/channel.h`、`kernel/pids.h`、`kernel/resource_ids.h` 承接 kernel 内容，`fr_698_context.h` 和 `fr_645_context.h` 承接协议上下文。`kernel_core.h` 也从 450 行降到 62 行的兼容包头，tasklet、rtc、device、environment、ipc、log、flags 等各自成头。dl698 和协议适配器不再 include 伞头。组件侧已有 `core.bus`、`services.channel`、FIFO 通道适配器、`protocol.dl698`、`protocol.dl645`、组件清单和 `tools/check_components.py`，产品描述在 `products/` 下。dl698 的 rx pipeline 已移除，tx pipeline 已删除，实际收发由 `nd_dl698` 组件完成；698 源码不再引用 `message_t`，改用私有的 `nd_dl698_msg_t`。dl645 也完成了私有消息类型和通道组件，当前单相产品尚未接线。
 
 ## 3. 有界上下文
 

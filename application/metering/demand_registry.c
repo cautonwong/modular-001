@@ -13,6 +13,9 @@ struct nd_demand_registry {
     struct nd_demand_entry entries[];
 };
 
+_Static_assert(_Alignof(struct nd_demand_registry) <= ND_ALLOC_ALIGNMENT,
+               "demand registry needs more alignment than the allocator promises");
+
 static size_t registry_size(uint8_t count)
 {
     return sizeof(struct nd_demand_registry)

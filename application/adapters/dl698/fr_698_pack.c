@@ -1,6 +1,7 @@
 #include "application/adapters/dl698/fr_698_pack.h"
 #include "application/ports/fifo.h"
 #include "fr_698.h"
+#include "fr_698_internal.h"
 #include "fr_698_env.h"
 
 static uint16_t pack_crc16(uint16_t init, uint8_t byte)
@@ -18,7 +19,7 @@ static uint16_t pack_crc_finish(uint16_t cs)
     return (uint16_t)(cs ^ 0xFFFFu);
 }
 
-int update_hcs_fcs(void* pctx, uint8_t* byte)
+static int update_hcs_fcs(void* pctx, uint8_t* byte)
 {
     struct context_698_t* ctx = pctx;
     ctx->tx_len++;
@@ -27,7 +28,7 @@ int update_hcs_fcs(void* pctx, uint8_t* byte)
     return 0;
 }
 
-int update_fcs(void* pctx, uint8_t* byte)
+static int update_fcs(void* pctx, uint8_t* byte)
 {
     struct context_698_t* ctx = pctx;
     ctx->tx_len++;

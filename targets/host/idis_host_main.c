@@ -19,6 +19,7 @@
 #include "targets/idis_ip_meter/cosem/nd_idis_energy_store.h"
 #include "targets/idis_ip_meter/cosem/nd_idis_event_map.h"
 #include "targets/idis_ip_meter/cosem/nd_idis_objects.h"
+#include "targets/idis_ip_meter/cosem/nd_idis_registry.h"
 #include "tests/gen/obis_audit_table.h"
 #include "tests/gen/obis_audit_methods.h"
 #include "targets/idis_ip_meter/mapper_idis/nd_idis_ids.h"
@@ -44,6 +45,14 @@
 #define EEPROM_LIMITER 42496u
 #define EEPROM_IMAGE 43008u
 #define EEPROM_SETUP 45056u
+#define EEPROM_REGISTRY ND_IDIS_REGISTRY_EEPROM_OFFSET
+
+_Static_assert(ND_IDIS_REGISTRY_EEPROM_OFFSET
+                   + ND_IDIS_REGISTRY_HEADER_SIZE
+                   + ND_IDIS_REGISTRY_MAX * ND_IDIS_REGISTRY_ENTRY_SIZE
+                   + ND_IDIS_REGISTRY_TRAILER_SIZE
+               <= EEPROM_SIZE,
+               "registry must fit the simulated EEPROM");
 
 typedef struct {
     nd_dlms_datetime_t now;
@@ -388,15 +397,25 @@ static size_t build_method_param(uint8_t kind, uint8_t *buffer,
         buffer[2] = ND_AXDR_LONG_UNSIGNED;
         buffer[3] = 0;
         buffer[4] = ND_IC_REGISTER;
-        buffer[5] = ND_AXDR_OCTET_STRING;
-        buffer[6] = 6;
-        memcpy(buffer + 7, &ND_OBIS_ACTIVE_ENERGY_IMPORT, 6);
-        buffer[13] = ND_AXDR_INTEGER;
-        buffer[14] = 2;
-        buffer[15] = ND_AXDR_LONG_UNSIGNED;
-        buffer[16] = 0;
-        buffer[17] = 0;
-        return 18;
+        buffer[5] = ND_AXDR_UNSIGNED;
+        buffer[6] = 0;
+        buffer[7] = ND_AXDR_OCTET_STRING;
+        buffer[8] = 6;
+        memcpy(buffer + 9, &ND_OBIS_ACTIVE_ENERGY_IMPORT, 6);
+        buffer[15] = ND_AXDR_STRUCTURE;
+        buffer[16] = 2;
+        buffer[17] = ND_AXDR_ARRAY;
+        buffer[18] = 1;
+        buffer[19] = ND_AXDR_STRUCTURE;
+        buffer[20] = 3;
+        buffer[21] = ND_AXDR_INTEGER;
+        buffer[22] = 2;
+        buffer[23] = ND_AXDR_ENUM;
+        buffer[24] = 3;
+        buffer[25] = ND_AXDR_NULL;
+        buffer[26] = ND_AXDR_ARRAY;
+        buffer[27] = 0;
+        return 28;
     case 11:
         buffer[0] = ND_AXDR_STRUCTURE;
         buffer[1] = 2;
@@ -740,6 +759,11 @@ int main(int argc, char **argv)
     nd_idis_image_init(&objects.image);
     nd_idis_setup_init(&objects.setup);
     nd_idis_association_init(&objects.association);
+    if (nd_idis_registry_load(&objects.association.association.base,
+                              nd_file_store_port(&eeprom),
+                              EEPROM_REGISTRY) != 0) {
+        nd_idis_association_init(&objects.association);
+    }
     for (uint8_t index = 0; index < 3; index++) {
         snprintf((char *)objects.firmware_id[index],
                  sizeof(objects.firmware_id[index]), "FW-%u.0.0", index + 1);
@@ -982,6 +1006,11 @@ int main(int argc, char **argv)
                 parameter[0] = ND_AXDR_UNSIGNED;
                 parameter[1] = (uint8_t)script;
                 parameter_len = 2;
+            } else if (obis_method_entries[index].ic == ND_IC_SECURITY_SETUP
+                       && obis_method_entries[index].method == 1) {
+                parameter[0] = ND_AXDR_ENUM;
+                parameter[1] = 0;
+                parameter_len = 2;
             } else {
                 parameter_len = build_method_param(
                     obis_method_entries[index].param_kind, parameter,
@@ -1114,10 +1143,11 @@ int main(int argc, char **argv)
     }
     }
 
-    printf("profiles=%u billing=%u lp1=%u lp2=%u pq=%u event_log=%u "
+    printf("profiles=%u registry=%u billing=%u lp1=%u lp2=%u pq=%u event_log=%u "
            "event=%u counter=%" PRIu32 " ec2=%" PRIu32
            " alarm=0x%08" PRIX32 " scripts=%" PRIu32 "\n",
            objects.profiles.count,
+           objects.association.association.base.count,
            nd_profile_store_entries(&objects.profiles.items[0].store),
            nd_profile_store_entries(&objects.profiles.items[1].store),
            nd_profile_store_entries(&objects.profiles.items[2].store),

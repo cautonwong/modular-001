@@ -1,6 +1,6 @@
-name: nd_mbus
+name: protocol.mbus
 version: 0.1.0
 layer: protocol
 paths: [components/protocol/mbus]
-dependencies: [nd_channel]
+dependencies: [services.channel]
 legacy: false

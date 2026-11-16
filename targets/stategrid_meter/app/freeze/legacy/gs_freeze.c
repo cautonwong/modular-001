@@ -1,20 +1,25 @@
-#include "nidavellir.h"
+#include <stdbool.h>
+#include "application/adapters/dl698/legacy_message.h"
+#include <stddef.h>
+#include <stdint.h>
+#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
+#include "targets/stategrid_meter/app/meter_flags.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "application/ports/resource_access.h"
-#include "gs_record.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
 #include "fr_698.h"
 #include "lib_ana.h"
 #include "domain/freeze/schedule.h"
 #include "domain/freeze/backfill.h"
 #include "domain/freeze/sequence.h"
 #include "domain/common/runtime.h"
-#include "application/apps/app_config.h"
-#include "domain/events/legacy/events_applications.h"
-#include "domain/events/legacy/gs_record.h"
-#include "domain/freeze/legacy/freeze_applications.h"
+#include "targets/stategrid_meter/app/app_config.h"
+#include "targets/stategrid_meter/app/events/events_applications.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
+#include "targets/stategrid_meter/app/freeze/freeze_applications.h"
 #include "domain/freeze/storage.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
 #define CONVERT_TM_MONTH(x)  ((x<1)?0:(x-1))
 
 static void freeze_stored_datetime(const uint8_t* p, nd_datetime_t* out)
@@ -48,7 +53,7 @@ static void freeze_now_datetime(const struct tm* time, nd_datetime_t* out)
 }
 //计算记录型配置关联对象时  总长度是否超预留空间，  入参关联对象、深度，  事件无深度，需传Null.
 //并且计算保存分钟冻结8个方案中每个方案的空间大小偏移(扇区)
-int cal_record_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, uint8_t *depth_ptr, uint32_t oad)
+int cal_record_size_sectors(void *instance, uint8_t *capture_ptr, uint8_t *depth_ptr, uint32_t oad)
 {
     uint8_t scheme = 0,obj_num, scheme_num, tmpbuf[220] = {0};
     uint16_t i, k, recordID = 0;
@@ -183,7 +188,7 @@ int cal_record_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, u
     {
         if ((oad & 0xFFFF0000) == 0x50020000)
         {
-            addr_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MinFrez_Sectors);
+            addr_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MinFrez_Sectors);
             nd_set_index(instance, addr_index, (uint8_t*)&sector_size[0], 18);
         }
 
@@ -195,7 +200,7 @@ int cal_record_size_sectors(struct instance_t* instance, uint8_t *capture_ptr, u
 
 
 //分冻结 各方案空间分配  恢复出厂参数时，分钟冻结必须调用 
-int freez_size_sectors_init(struct instance_t* instance, uint32_t oad)
+int freez_size_sectors_init(void *instance, uint32_t oad)
 {
     uint8_t tempbuf[200], depth[1 + 2 * 15];
     uint32_t CaptureId, DepthId /*, oad = 0x50020200*/;
@@ -238,53 +243,51 @@ int freez_size_sectors_init(struct instance_t* instance, uint32_t oad)
 }
 
 
-int instant_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+int instant_freeze_judge(void *instance, void *task, void *mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     nd_freeze_instant_t instant;
 
     uint16_t FlagID = InstantFreeze;
     uint8_t tmp[10] = {0};
     uint8_t payload[20] = {0};
-    struct message_t mesg_tmp;
+    nd_message_t mesg_tmp;
 
 
-    if (ctrl_block->trigger_insfreeze_delay_sec == 0xFFFF)
+    if (nd_mb_trigger_insfreeze_delay_sec(instance) == 0xFFFF)
     {
         return -1;
     }
 
-    instant.remaining = ctrl_block->trigger_insfreeze_delay_sec;
+    instant.remaining = nd_mb_trigger_insfreeze_delay_sec(instance);
     instant.armed = 1;
 
     if (!nd_freeze_instant_step(&instant))
     {
-        ctrl_block->trigger_insfreeze_delay_sec = instant.remaining;
+        nd_mb_trigger_insfreeze_delay_sec(instance) = instant.remaining;
         return -1;
     }
 
-    ctrl_block->trigger_insfreeze_delay_sec = 0xFFFF;
+    nd_mb_trigger_insfreeze_delay_sec(instance) = 0xFFFF;
 
     mesg_tmp.id = FlagID;
     uint32_to_buf_msb(0x20210200, &payload[0]);
     payload[4] = 8; //data len
     payload[5] = 0x1C;//TYPE_date_time_s;
-    rtc_format_change_from_tm(&instance->time,tmp);
+    rtc_format_change_from_tm(nd_fr698_time(instance),tmp);
     tmp[0] = 0; //sec = 0;
     mem_swap_cpy(&payload[6], &tmp[0], 7);
     recv_record_process(instance, NULL, &mesg_tmp, payload);
 
 
-    //memcpy((uint8_t*)&record_time.tm_sec, (uint8_t*)&instance->time.tm_sec, sizeof(struct tm));
+    //memcpy((uint8_t*)&record_time.tm_sec, (uint8_t*)nd_fr698_time(instance).tm_sec, sizeof(struct tm));
     //send_recordflag_mesg(instance, task,  (FlagID), NULL);
     return 1;
 }
 
 
 
-int rollback_sequence(struct instance_t* instance, uint32_t oad,  uint16_t rollback_num)
+int rollback_sequence(void *instance, uint32_t oad,  uint16_t rollback_num)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     uint32_t sequence = 0, s_index = 0;
     struct record_storage_id_info_t record_id_info; 
@@ -302,7 +305,7 @@ int rollback_sequence(struct instance_t* instance, uint32_t oad,  uint16_t rollb
 
     if ((SeqId >= MinuteFreeze1_seq) && (SeqId <= MinuteFreeze8_seq))
     {
-        sequence = nd_mbase_minute_freeze_seq(mbase_cb)[SeqId - MinuteFreeze1_seq];
+        sequence = nd_mb_minute_freeze_seq(instance)[SeqId - MinuteFreeze1_seq];
     }
     else
     {
@@ -319,11 +322,11 @@ int rollback_sequence(struct instance_t* instance, uint32_t oad,  uint16_t rollb
 
     if ((SeqId >= MinuteFreeze1_seq) && (SeqId <= MinuteFreeze8_seq))
     {
-        nd_mbase_minute_freeze_seq(mbase_cb)[SeqId - MinuteFreeze1_seq] = sequence;
+        nd_mb_minute_freeze_seq(instance)[SeqId - MinuteFreeze1_seq] = sequence;
 
-        s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
-        nd_mbase_offset_minute_freeze_seq()) + ((SeqId - MinuteFreeze1_seq) * 4) -  nd_mbase_offset_persistent_section_start();
-        nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_minute_freeze_seq(mbase_cb)[SeqId - MinuteFreeze1_seq], 4);
+        s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+        nd_mb_offset_minute_freeze_seq()) + ((SeqId - MinuteFreeze1_seq) * 4) -  nd_mb_offset_persistent_section_start();
+        nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_minute_freeze_seq(instance)[SeqId - MinuteFreeze1_seq], 4);
     }
     else
     {
@@ -337,9 +340,8 @@ int rollback_sequence(struct instance_t* instance, uint32_t oad,  uint16_t rollb
 //设置或修改时间后调用  冻结回退处理
 //finish_check: 5A - 检查是否有未完成的回滚操作。 
 //              其他- 回滚操作
-int record_rollback_after_set_time(struct instance_t* instance, uint8_t finish_check)
+int record_rollback_after_set_time(void *instance, uint8_t finish_check)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     struct record_storage_id_info_t record_id_info; 
     uint8_t i, num = 0, buffer[10] = { 0xFF };
@@ -353,14 +355,14 @@ int record_rollback_after_set_time(struct instance_t* instance, uint8_t finish_c
 
     if (finish_check == 0x5A)
     {
-        if (nd_mbase_record_rollback_flag(mbase_cb) != 0x5A)
+        if (nd_mb_record_rollback_flag(instance) != 0x5A)
         {
             return 1;
         }
     }
 
     //时间合法性判断 待调整
-    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
+    addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
     ret = nd_get_index(instance, addr, buffer, 7);
     if (ret < 0)
     {
@@ -370,7 +372,7 @@ int record_rollback_after_set_time(struct instance_t* instance, uint8_t finish_c
     last_timesec = dt_buf_to_second(buffer);
 
     //时间合法性判断 待调整
-    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
+    addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
     ret = nd_get_index(instance, addr, buffer, 7);
     if (ret < 0)
     {
@@ -384,11 +386,11 @@ int record_rollback_after_set_time(struct instance_t* instance, uint8_t finish_c
         // 非检查 情况下 保存回退标志 
         if (finish_check != 0x5A)
         {
-            nd_mbase_record_rollback_flag(mbase_cb) = 0x5A;
+            nd_mb_record_rollback_flag(instance) = 0x5A;
             
-            addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
-            nd_mbase_offset_record_rollback_flag()) -  nd_mbase_offset_persistent_section_start();
-            nd_set_offset(instance, addr, (uint8_t*)&nd_mbase_record_rollback_flag(mbase_cb), sizeof(nd_mbase_record_rollback_flag(mbase_cb)));
+            addr = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+            nd_mb_offset_record_rollback_flag()) -  nd_mb_offset_persistent_section_start();
+            nd_set_offset(instance, addr, (uint8_t*)&nd_mb_record_rollback_flag(instance), sizeof(nd_mb_record_rollback_flag(instance)));
         }
         
         num = 0;
@@ -417,37 +419,37 @@ int record_rollback_after_set_time(struct instance_t* instance, uint8_t finish_c
         if (i >= (sizeof(TabOAD) / sizeof(TabOAD[0])))
         {
             //清除回退标志
-            nd_mbase_record_rollback_flag(mbase_cb) = 0;
+            nd_mb_record_rollback_flag(instance) = 0;
             
-            addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
-            nd_mbase_offset_record_rollback_flag()) -  nd_mbase_offset_persistent_section_start();
-            nd_set_offset(instance, addr, (uint8_t*)&nd_mbase_record_rollback_flag(mbase_cb), sizeof(nd_mbase_record_rollback_flag(mbase_cb)));
+            addr = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+            nd_mb_offset_record_rollback_flag()) -  nd_mb_offset_persistent_section_start();
+            nd_set_offset(instance, addr, (uint8_t*)&nd_mb_record_rollback_flag(instance), sizeof(nd_mb_record_rollback_flag(instance)));
         }
     }
 
     return 1;
 }
 #endif
-int minute_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+int minute_freeze_judge(void *instance, void *task, void *mesg)
 {
     uint8_t i, period[24];
     uint32_t index;
     nd_datetime_t now;
     uint16_t PeriodID = MinuteFreeze_period;
     uint16_t FlagID = MinuteFreeze1;
-    struct message_t mesg_tmp;
+    nd_message_t mesg_tmp;
 
-    if (instance->time.tm_sec != 0)
+    if (nd_fr698_time(instance)->tm_sec != 0)
     {
         return -1;
     }
-    memset((uint8_t *)&mesg_tmp, 0, sizeof(struct message_t));
+    memset((uint8_t *)&mesg_tmp, 0, sizeof(nd_message_t));
 
     // 周期
-    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
+    index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
     nd_get_index(instance, index, &period[0], sizeof(period));
 
-    freeze_now_datetime(&instance->time, &now);
+    freeze_now_datetime(nd_fr698_time(instance), &now);
 
     for (i = 0; i < 8; i++)
     {
@@ -464,7 +466,7 @@ int minute_freeze_judge(struct instance_t* instance, struct pipeline_t* task, st
     }
     return 1;
 }
-int hour_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+int hour_freeze_judge(void *instance, void *task, void *mesg)
 {
     uint8_t period[24];
     uint32_t index;
@@ -472,20 +474,20 @@ int hour_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
     nd_freeze_period_t freeze_period;
     uint16_t PeriodID = HourFreeze_period;
     uint16_t FlagID = HourFreeze;
-    struct message_t mesg_tmp;
+    nd_message_t mesg_tmp;
 
 
 
-    if ((instance->time.tm_sec != 0) || (instance->time.tm_min != 0))
+    if ((nd_fr698_time(instance)->tm_sec != 0) || (nd_fr698_time(instance)->tm_min != 0))
     {
         return -1;
     }
-    memset((uint8_t *)&mesg_tmp, 0, sizeof(struct message_t));
+    memset((uint8_t *)&mesg_tmp, 0, sizeof(nd_message_t));
     // 周期
-    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
+    index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
     nd_get_index(instance, index, &period[0], sizeof(period));
 
-    freeze_now_datetime(&instance->time, &now);
+    freeze_now_datetime(nd_fr698_time(instance), &now);
     freeze_period.valid = period[0];
     freeze_period.interval = buf_to_uint16_msb(&period[1]);
 
@@ -498,7 +500,7 @@ int hour_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
     return 1;
 }
 
-int day_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+int day_freeze_judge(void *instance, void *task, void *mesg)
 {
     uint8_t period[24]= {0}, tmp[10] = {0};
     uint32_t index;
@@ -506,36 +508,36 @@ int day_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struc
     nd_freeze_period_t freeze_period;
     uint16_t PeriodID = DayFreeze_period;
     uint16_t FlagID = DayFreeze;
-    struct message_t mesg_tmp;
+    nd_message_t mesg_tmp;
 
-    if ((instance->time.tm_sec != 0) || (instance->time.tm_min != 0) || (instance->time.tm_hour != 0))
+    if ((nd_fr698_time(instance)->tm_sec != 0) || (nd_fr698_time(instance)->tm_min != 0) || (nd_fr698_time(instance)->tm_hour != 0))
     {
         return -1;
     }
-    memset((uint8_t *)&mesg_tmp, 0, sizeof(struct message_t));
+    memset((uint8_t *)&mesg_tmp, 0, sizeof(nd_message_t));
 
     //读最近一次冻结时间 比较当前时间记录是否已存在   待添加
     //待添加
 
     // 周期
-    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
+    index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
     nd_get_index(instance, index, &period[0], sizeof(period));
 
-    freeze_now_datetime(&instance->time, &now);
+    freeze_now_datetime(nd_fr698_time(instance), &now);
     freeze_period.valid = period[0];
     freeze_period.interval = buf_to_uint16_msb(&period[1]);
 
     if (nd_freeze_period_due(&now, &freeze_period, 60*24))
     {
             //保存 结算时间
-        tmp[0] = instance->time.tm_sec ;
-        tmp[1] = instance->time.tm_min ;
-        tmp[2] = instance->time.tm_hour;
-        tmp[3] = instance->time.tm_mday;
-        tmp[4] = instance->time.tm_mon + 1;
-        tmp[5] = (uint8_t)((instance->time.tm_year + 1900)-2000);
+        tmp[0] = nd_fr698_time(instance)->tm_sec ;
+        tmp[1] = nd_fr698_time(instance)->tm_min ;
+        tmp[2] = nd_fr698_time(instance)->tm_hour;
+        tmp[3] = nd_fr698_time(instance)->tm_mday;
+        tmp[4] = nd_fr698_time(instance)->tm_mon + 1;
+        tmp[5] = (uint8_t)((nd_fr698_time(instance)->tm_year + 1900)-2000);
 
-        index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastDayFreezTime);
+        index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastDayFreezTime);
         nd_set_index(instance, index, &tmp[0], 6);
 
         //send_recordflag_mesg(instance, task,  FlagID, NULL);
@@ -547,24 +549,24 @@ int day_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struc
 }
 
 //月冻结
-int month_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+int month_freeze_judge(void *instance, void *task, void *mesg)
 {
     nd_datetime_t now;
     uint16_t FlagID = MonthFreeze;
-    struct message_t mesg_tmp;
+    nd_message_t mesg_tmp;
 
-    freeze_now_datetime(&instance->time, &now);
+    freeze_now_datetime(nd_fr698_time(instance), &now);
     if (!nd_freeze_month_due(&now))
     {
         return -1;
     }
-    memset((uint8_t *)&mesg_tmp, 0, sizeof(struct message_t));
+    memset((uint8_t *)&mesg_tmp, 0, sizeof(nd_message_t));
 
     //读最近一次冻结时间 比较当前时间记录是否已存在   待添加
     //待添加
 
     // 周期
-    //index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
+    //index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
     //nd_get_index(instance, index, &period[0], sizeof(period));
 
     //if (1 == freeze_judge(instance, &period[0], 60 * 24, &record_time))
@@ -581,10 +583,8 @@ int month_freeze_judge(struct instance_t* instance, struct pipeline_t* task, str
 
 
 //上电日冻结补冻结处理
-int day_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+int day_freeze_power_on_pro(void *instance, void *task, void *mesg)
 {
-
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     uint8_t tmp[10];
     struct tm pd_tm;
@@ -593,13 +593,13 @@ int day_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task
     uint32_t s_index, tmp_u32;
     uint8_t payload[20] = {0};
     //uint8_t *p = payload;
-    struct message_t mesg_tmp;
+    nd_message_t mesg_tmp;
     uint16_t    period;
     uint8_t count, i;
     int ret;
 
     //获取周期 天
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + DayFreeze_period);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + DayFreeze_period);
     nd_get_index(instance, s_index, &tmp[0], 3);
     
     period =  buf_to_uint16_msb(&tmp[1]);
@@ -608,28 +608,28 @@ int day_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task
         period = 1;
     }
 
-    ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->v_powerdown_tm), sizeof(ctrl_block->v_powerdown_tm));
+    ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&nd_mb_v_powerdown_tm(instance)), sizeof(nd_mb_v_powerdown_tm(instance)));
 
-    if (false == rtc_tm_valid(&ctrl_block->v_powerdown_tm))    // 模拟停电时间无效          取上次停电时间
+    if (false == rtc_tm_valid(&nd_mb_v_powerdown_tm(instance)))    // 模拟停电时间无效          取上次停电时间
     {
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PDTime_Frez); // 冻结停电时间
+        s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PDTime_Frez); // 冻结停电时间
         ret = nd_get_index(instance, s_index, (uint8_t *)&tmp_u32, 4);
         rtc_localtime(tmp_u32, &pd_tm);
 
         if ((ret < 0) || (tmp_u32 == 0) || (false == rtc_tm_valid(&pd_tm)))   // 冻结停电时间无效  则使用电表停电时间
         {
-            if (false == rtc_tm_valid(&ctrl_block->powerdown_tm))   // 电表停电时间无效       退出
+            if (false == rtc_tm_valid(&nd_mb_powerdown_tm(instance)))   // 电表停电时间无效       退出
             {
                 return 0;
             }
-            ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->powerdown_tm), sizeof(ctrl_block->powerdown_tm));
+            ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&nd_mb_powerdown_tm(instance)), sizeof(nd_mb_powerdown_tm(instance)));
         }
     }
 
-    freeze_now_datetime(&instance->time, &now_dt);
+    freeze_now_datetime(nd_fr698_time(instance), &now_dt);
     freeze_now_datetime(&pd_tm, &pd_dt);
 
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastDayFreezTime);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastDayFreezTime);
     nd_get_index(instance, s_index, &tmp[0], 6);
     freeze_stored_datetime(tmp, &last_dt);
 
@@ -650,7 +650,7 @@ int day_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task
         tmp[4] = dates[i].month;
         tmp[5] = (uint8_t)(dates[i].year - 2000);
 
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastDayFreezTime);
+        s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastDayFreezTime);
         nd_set_index(instance, s_index, &tmp[0], 6);
 
         // 本条记录存储的时间
@@ -671,9 +671,8 @@ int day_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task
 
 
 //  上电补结算冻结处理           上电调用 
-int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+int bill_freeze_power_on_pro(void *instance, void *task, void *mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     uint8_t tmp[10];
     struct tm pd_tm;
@@ -683,37 +682,37 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
     uint32_t s_index, tmp_u32;
     uint8_t payload[20] = {0};
     //uint8_t *p = payload;
-    struct message_t mesg_tmp;
+    nd_message_t mesg_tmp;
     uint8_t count, i;
     int ret = 0;
 
-    ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->v_powerdown_tm), sizeof(ctrl_block->v_powerdown_tm));
+    ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&nd_mb_v_powerdown_tm(instance)), sizeof(nd_mb_v_powerdown_tm(instance)));
 
-    if (false == rtc_tm_valid(&ctrl_block->v_powerdown_tm))    // 模拟停电时间无效          取上次停电时间
+    if (false == rtc_tm_valid(&nd_mb_v_powerdown_tm(instance)))    // 模拟停电时间无效          取上次停电时间
     {
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PDTime_Frez); // 冻结停电时间
+        s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PDTime_Frez); // 冻结停电时间
         ret = nd_get_index(instance, s_index, (uint8_t *)&tmp_u32, 4);
         rtc_localtime(tmp_u32, &pd_tm);
         if ((ret < 0) || (tmp_u32 == 0)  || (false == rtc_tm_valid(&pd_tm)))   // 冻结停电时间无效  则使用电表停电时间
         {
-            if (false == rtc_tm_valid(&ctrl_block->powerdown_tm))   // 电表停电时间无效       退出
+            if (false == rtc_tm_valid(&nd_mb_powerdown_tm(instance)))   // 电表停电时间无效       退出
             {
                 return 0;
             }
-            ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&ctrl_block->powerdown_tm), sizeof(ctrl_block->powerdown_tm));
+            ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&nd_mb_powerdown_tm(instance)), sizeof(nd_mb_powerdown_tm(instance)));
         }
     }
 
-    freeze_now_datetime(&instance->time, &now_dt);
+    freeze_now_datetime(nd_fr698_time(instance), &now_dt);
     freeze_now_datetime(&pd_tm, &pd_dt);
 
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillingTime);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillingTime);
     nd_get_index(instance, s_index, &tmp[0], 6);
     freeze_stored_datetime(tmp, &last_dt);
 
     for(i=0;i<ND_FREEZE_BILL_DATES;i++)
     {
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
+        s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
         nd_get_index(instance, s_index, tmp, 2);
         bill_dates[i].day = tmp[0];
         bill_dates[i].hour = tmp[1];
@@ -730,7 +729,7 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
 
         if (events[i].slot == 0)
         {
-            ctrl_block->first_MbillDay_flag = 0x5A;
+            nd_mb_first_mbill_day_flag(instance) = 0x5A;
         }
 
         // 刷新最近一次结算时间
@@ -741,7 +740,7 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
         tmp[4] = events[i].when.month;
         tmp[5] = (uint8_t)(events[i].when.year - 2000);
 
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillingTime);
+        s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillingTime);
         nd_set_index(instance, s_index, &tmp[0], 6);
 
         // 本条记录存储的时间
@@ -763,9 +762,8 @@ int bill_freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* tas
 #endif
 
 //结算冻结
-int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+int bill_freeze_judge(void *instance, void *task, void *mesg)
 {
-        struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
         uint32_t s_index;
         nd_datetime_t now, last_bill;
         uint8_t tmp[20];
@@ -773,15 +771,15 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
         uint16_t LastBillTimeID = LastBillingTime;
         uint16_t FlagID = BillFreeze;
         uint8_t  i;
-        struct message_t mesg_tmp;
+        nd_message_t mesg_tmp;
 
-        if ((instance->time.tm_sec != 0) || (instance->time.tm_min != 0))
+        if ((nd_fr698_time(instance)->tm_sec != 0) || (nd_fr698_time(instance)->tm_min != 0))
         {
             return -1;
         }
-        memset((uint8_t *)&mesg_tmp, 0, sizeof(struct message_t));
+        memset((uint8_t *)&mesg_tmp, 0, sizeof(nd_message_t));
 
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillTimeID);
+        s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillTimeID);
         nd_get_index(instance, s_index, &tmp[0], 6);
 
         last_bill.second = tmp[0];
@@ -793,15 +791,15 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
 
         for(i=0;i<3;i++)
         {
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
+            s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
             nd_get_index(instance, s_index, tmp, 2);
             billdate[i][0] = tmp[0];
             billdate[i][1] = tmp[1];
         }
 
-        freeze_now_datetime(&instance->time, &now);
+        freeze_now_datetime(nd_fr698_time(instance), &now);
 
-        ctrl_block->first_MbillDay_flag = 0;
+        nd_mb_first_mbill_day_flag(instance) = 0;
         for (i = 0; i < 3; i++)
         {
             nd_freeze_bill_date_t bill;
@@ -817,7 +815,7 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
             //第二、第三结算日时需量需要清成FF
             if (i == 0x00)
             {
-                ctrl_block->first_MbillDay_flag = 0x5A;
+                nd_mb_first_mbill_day_flag(instance) = 0x5A;
             }
 
             //保存 结算时间
@@ -828,7 +826,7 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
             tmp[4] = now.month;
             tmp[5] = (uint8_t)(now.year - 2000);
 
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillTimeID);
+            s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillTimeID);
             nd_set_index(instance, s_index, &tmp[0], 6);
 
             mesg_tmp.id = FlagID;
@@ -846,13 +844,12 @@ int bill_freeze_judge(struct instance_t* instance, struct pipeline_t* task, stru
 uint8_t test_freeze = 0;
 #endif
 // 每秒调用
-int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+int freeze_pro(void *instance, void *task, void *mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
 #if RESET_INFO    
         //复位记录测试代码
-        if (instance->reset_flag == 0x5A)
+        if (*nd_fr698_reset_flag(instance) == 0x5A)
         {
             
             send_event_mesg_pro(instance, NULL, StepCutFreeze, NULL, 1);
@@ -883,7 +880,7 @@ int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct mess
 
 
 #if(UPGRADE_MODE == UPGRADE_MODE_LOCAL)
-        if (ctrl_block->frz_min_start_dlysec == 0)
+        if (nd_mb_frz_min_start_dlysec(instance) == 0)
 #endif
         {
             minute_freeze_judge(instance, task, mesg); //分钟冻结
@@ -900,9 +897,8 @@ int freeze_pro(struct instance_t* instance, struct pipeline_t* task, struct mess
     return 1;
 }
 
-int recover_minFreeze_sequence(struct instance_t* instance)
+int recover_minFreeze_sequence(void *instance)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t sequence = 0;
     uint32_t oad = 0x50020200;
     uint8_t buf[20] = {0};
@@ -917,36 +913,35 @@ int recover_minFreeze_sequence(struct instance_t* instance)
         if(ret > 0)
         {
             sequence = buf_to_uint32_msb(buf + 1 + CIRCULAR_OFFSET_SEQUENCE);
-            nd_mbase_minute_freeze_seq(mbase_cb)[i] =
-                nd_freeze_sequence_recover(nd_mbase_minute_freeze_seq(mbase_cb)[i], sequence);
+            nd_mb_minute_freeze_seq(instance)[i] =
+                nd_freeze_sequence_recover(nd_mb_minute_freeze_seq(instance)[i], sequence);
         }
     }
     return 0;
 }
 // 上电调用
-int freeze_power_on_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+int freeze_power_on_pro(void *instance, void *task, void *mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t tmp_u32 = 0, s_index;
     
-    ctrl_block->trigger_insfreeze_delay_sec = 0xFFFF; 
+    nd_mb_trigger_insfreeze_delay_sec(instance) = 0xFFFF; 
     
     record_rollback_after_set_time(instance, 0x5A);
 
-    if (instance->reset_flag == 0x5A)
+    if (*nd_fr698_reset_flag(instance) == 0x5A)
     {
         recover_minFreeze_sequence(instance); //分钟冻结序号检查
     }
 
     day_freeze_power_on_pro(instance, task, mesg);
     bill_freeze_power_on_pro(instance, task, mesg);
-    ctrl_block->frz_replenish_end = 0x5A; //完成补冻结
+    nd_mb_frz_replenish_end(instance) = 0x5A; //完成补冻结
     
     tmp_u32 = 0;
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PDTime_Frez); // 清冻结停电时间
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PDTime_Frez); // 清冻结停电时间
     nd_set_index(instance, s_index, (uint8_t *)&tmp_u32, 4);
     
-    memset((uint8_t *)(&ctrl_block->v_powerdown_tm), 0 , sizeof(ctrl_block->v_powerdown_tm));
+    memset((uint8_t *)(&nd_mb_v_powerdown_tm(instance)), 0 , sizeof(nd_mb_v_powerdown_tm(instance)));
     return 1;
 }
 

@@ -3,7 +3,7 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-flags=(-std=c11 -mcpu=cortex-m0 -mthumb -ffreestanding -Wall -Wextra -Werror -I"$root" -I"$root/nidavellir/include" -I"$root/domain/events/legacy" -I"$root/application/adapters/dl645" -I"$root/application/adapters/dl698")
+flags=(-std=c11 -mcpu=cortex-m0 -mthumb -ffreestanding -Wall -Wextra -Werror -Wmissing-prototypes -Wshadow -Wundef -Wstrict-prototypes -I"$root" -I"$root/nidavellir/include" -I"$root/domain/events/legacy" -I"$root/application/adapters/dl645" -I"$root/application/adapters/dl698")
 skipped=(
 )
 

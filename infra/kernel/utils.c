@@ -255,6 +255,8 @@ unsigned int GetTotalDay( unsigned char* Addr )
 	Year= ( *(Addr+2) );
 	Mon = ( *(Addr+1) );
 	Day = ( *Addr );
+	if( (Mon < 1) || (Mon > 12) )
+		return 0;
 	Day = Day + DayTab[Mon] + Year*365 + (Year>>2) + 1;
 	if( ((Year&0x03) == 0) && (Mon <= 2) )
 		Day--;

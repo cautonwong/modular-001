@@ -1,22 +1,19 @@
-#include "nidavellir.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
+#include "application/adapters/dl698/meter_base_view.h"
 #include "port.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
 
 
-int SET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
+int SET_8_Control(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
-    struct mbase_control_block_t* mbase_cb;
     uint16_t oad;
     uint8_t index,attribute;
     uint8_t* p = buf;
     uint32_t addr=0;
     
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    if(mbase_cb == NULL)
+    if(!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -39,32 +36,32 @@ int SET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *
                 {
                     case 0x00:
                         p = p + 3;
-                        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectValue);
+                        addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectValue);
                         nd_set_index(instance, addr, p, 4); 
-                        mem_swap_cpy((uint8_t *)&nd_mbase_I_Prot(mbase_cb), p, 4);
+                        mem_swap_cpy((uint8_t *)&nd_mb_i_prot(instance), p, 4);
                         p = p + 4;
                         p++;
-                        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectTime);
+                        addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectTime);
                         nd_set_index(instance, addr, p, 2); 
-                        mem_swap_cpy((uint8_t *)&nd_mbase_Prot_time(mbase_cb), p, 2);
-                        if(nd_mbase_imaxmin(mbase_cb) > 0)   //过流中修改时间，刷新
-                            nd_mbase_imaxmin(mbase_cb) = nd_mbase_Prot_time(mbase_cb)*60;
+                        mem_swap_cpy((uint8_t *)&nd_mb_prot_time(instance), p, 2);
+                        if(nd_mb_imaxmin(instance) > 0)   //过流中修改时间，刷新
+                            nd_mb_imaxmin(instance) = nd_mb_prot_time(instance)*60;
                         p = p + 2;
                         return (p-buf);
                     case 0x01:
                         p++;
-                        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectValue);
+                        addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectValue);
                         nd_set_index(instance, addr, p, 4); 
-                        mem_swap_cpy((uint8_t *)&nd_mbase_I_Prot(mbase_cb), p, 4);
+                        mem_swap_cpy((uint8_t *)&nd_mb_i_prot(instance), p, 4);
                         p = p + 4;
                         return (p-buf);
                     case 0x02:  
                         p++;
-                        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectTime);
+                        addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectTime);
                         nd_set_index(instance, addr, p, 2); 
-                        mem_swap_cpy((uint8_t *)&nd_mbase_Prot_time(mbase_cb), p, 2);
-                        if(nd_mbase_imaxmin(mbase_cb) > 0)   //过流中修改时间，刷新
-                            nd_mbase_imaxmin(mbase_cb) = nd_mbase_Prot_time(mbase_cb)*60;
+                        mem_swap_cpy((uint8_t *)&nd_mb_prot_time(instance), p, 2);
+                        if(nd_mb_imaxmin(instance) > 0)   //过流中修改时间，刷新
+                            nd_mb_imaxmin(instance) = nd_mb_prot_time(instance)*60;
                         p = p + 2;
                         return (p-buf);
                     default:

@@ -4,18 +4,21 @@
 #include "targets/stategrid_meter/app/dl698_parameter_adapter.h"
 #include "targets/stategrid_meter/app/platform_adapter.h"
 #include "targets/stategrid_meter/app/backlight_adapter.h"
+#include "targets/stategrid_meter/app/record_storage_adapter.h"
 #include "targets/stategrid_meter/app/relay_status_adapter.h"
 #include "targets/stategrid_meter/app/metering_input_adapter.h"
 #include "targets/stategrid_meter/app/runtime_adapter.h"
 #include "targets/stategrid_meter/app/timer_adapter.h"
 #include "resource_tool.h"
 #include "cpu_surport.h"
-#include "application/apps/app_entry.h"
-#include "infra/boards/stategrid_single_phase/devices.h"
+#include "targets/stategrid_meter/app/app_entry.h"
+#include "targets/stategrid_meter/app/devices.h"
+#include "infra/boards/stategrid_single_phase/board_ops.h"
 #include "infra/kernel/resource_blocks.h"
 #include "kernel/legacy_control_block.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "targets/stategrid_meter/app/driver_entry.h"
+#include "targets/stategrid_meter/app/iar_linker_symbols.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
 #include "time_link.h"
 #include "components/protocol/dl698/nd_dl698.h"
@@ -23,13 +26,9 @@
 #include "application/adapters/dl645/fr_645_context.h"
 
 
-extern int CSTACK$$Base;            /* symbol created by the IAR linker */
-extern int CSTACK$$Limit;           /* symbol created by the IAR linker */
-
-extern const uint32_t baud_table[11];
 
 
-extern int baremetal_instance_entry(struct instance_t* instance);
+
 
 #ifdef ND_FIRMWARE_SIM
 int nd_sim_should_stop(struct instance_t* instance);
@@ -42,7 +41,6 @@ struct mbase_control_block_t* mbase_cb_do_not_operation;//只用于仿真调试�
 
 
 #ifdef WIN32
-extern const struct driver_ops_t  eeprom_driver;
 const struct dev_info_t eeprom_dev = 
 {
     0x00,0x01,0xFFFF,0x00,0x00, NULL, &eeprom_driver, NULL, NULL, NULL, NULL,".//e2prom.dat"
@@ -543,6 +541,7 @@ int main(int argc, char** argv)
     }
     dl698_parameter_bind(instance);
     stategrid_platform_bind(instance);
+    stategrid_record_storage_bind(instance);
     stategrid_backlight_bind();
     stategrid_relay_status_bind();
     stategrid_metering_input_bind();

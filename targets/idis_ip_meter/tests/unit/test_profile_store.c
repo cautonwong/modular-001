@@ -49,6 +49,47 @@ static void test_append_read_and_reopen(void)
     TEST_ASSERT_EQUAL_UINT8_ARRAY(record, out, sizeof(record));
 }
 
+static void test_meta_corruption_is_survivable(void)
+{
+    static uint8_t seed[1024];
+    uint8_t record[] = {0x10, 0x20, 0x30};
+    uint8_t out[64];
+    nd_byte_store_t seed_store;
+    nd_profile_store_t seeded;
+    nd_datetime_t time = time_at(1);
+
+    nd_byte_store_init(&seed_store, seed, sizeof(seed));
+    TEST_ASSERT_EQUAL_INT(0, nd_profile_store_init(&seeded, &seed_store.port, 0,
+                                                   3, 64));
+    TEST_ASSERT_EQUAL_INT(0, nd_profile_store_append(&seeded, &time, 0x55,
+                                                     record, sizeof(record)));
+
+    for (unsigned offset = 0; offset < 32; offset++) {
+        for (unsigned value = 0; value <= 0xFF; value++) {
+            nd_profile_store_t reopened;
+
+            if (value == seed[offset]) {
+                continue;
+            }
+            memcpy(memory, seed, sizeof(seed));
+            memory[offset] = (uint8_t)value;
+            int result = nd_profile_store_init(&reopened, &store.port, 0, 3,
+                                               64);
+            if (result != 0) {
+                continue;
+            }
+            uint16_t entries = nd_profile_store_entries(&reopened);
+            TEST_ASSERT_TRUE(entries <= nd_profile_store_capacity(&reopened));
+            for (uint16_t index = 0; index < entries; index++) {
+                size_t length = 0;
+                (void)nd_profile_store_read(&reopened, index, out,
+                                            sizeof(out), &length);
+                TEST_ASSERT_TRUE(length <= sizeof(out));
+            }
+        }
+    }
+}
+
 static void test_ring_wraps_and_keeps_newest_records(void)
 {
     uint8_t out[8] = {0};
@@ -167,6 +208,7 @@ int main(void)
 {
     UNITY_BEGIN();
     RUN_TEST(test_append_read_and_reopen);
+    RUN_TEST(test_meta_corruption_is_survivable);
     RUN_TEST(test_ring_wraps_and_keeps_newest_records);
     RUN_TEST(test_reset_clears_entries);
     RUN_TEST(test_corrupt_record_is_rejected);

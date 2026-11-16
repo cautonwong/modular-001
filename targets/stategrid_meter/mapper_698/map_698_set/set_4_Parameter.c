@@ -1,12 +1,13 @@
-#include "nidavellir.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
+#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
 #include "port.h"
-#include "gs_record.h"
-#include "domain/freeze/legacy/freeze_applications.h"
-#include "domain/tariff/legacy/tariff_applications.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
+#include "targets/stategrid_meter/app/freeze/freeze_applications.h"
+#include "targets/stategrid_meter/app/tariff/tariff_applications.h"
+#include "domain/common/time_format.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
 
 
@@ -71,18 +72,16 @@ const general_set4  general_set4_talble[] =
 #define		set4num			sizeof(general_set4_talble)/sizeof(general_set4)
 
 
-int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
+int general_set_4_para(void *instance, uint32_t id, uint8_t* buf)
 {
 //    struct mbase_control_block_t* mbase_cb;
     uint16_t oad,i,year2;
     uint8_t attribute,timer[6];
     uint8_t* p = buf;
-    uint8_t* ptr_tmp = instance->apdu_cache;
+    uint8_t* ptr_tmp = nd_fr698_apdu_cache(instance);
     uint32_t addr=0;
-    struct mbase_control_block_t* mbase_cb;
     uint16_t tag_datalen = 0, datalen = 0;
     
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
     attribute = (unsigned char)((id & 0x00001F00) >> 8);
@@ -97,17 +96,17 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 {
                     case 0x4012://周休日
                         if(*p != 4) return -DAR_TYPE_NOT_MATCH;
-                        nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+                        nd_mb_fee(instance) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
                         break;
                     case 0x4013://周休日日时段表号
                         if(*p != 17) return -DAR_TYPE_NOT_MATCH;
                         if (( p[1] ==  0 ) || ( p[1] >  MaxTouTabNum )) return -DAR_OTHERS_ERROR;
                         //保存编程前
                         nd_get(instance, id, timer, 2, NULL);
-                        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_WeekTab);
+                        addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_WeekTab);
                         nd_set_index(instance, addr, timer, 2);
                         record_event_no_mesg_pro(instance, NULL, WeekTabWrS, NULL, 1);// 周休日编程事件
-                        nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+                        nd_mb_fee(instance) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
                         break;
                     case 0x400F://秘钥总条数
                     case 0x401C://电流变比
@@ -122,12 +121,12 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                     case 0x4107:    //有功准确度等级
                     case 0x4109:    //有功脉冲常数
                     case 0x4102:    //脉冲宽度
-                        if(nd_mbase_factor_mode(mbase_cb) == false)  
+                        if(nd_mb_factor_mode(instance) == false)  
                             return -DAR_RW_REJECT; //工厂模式外，禁止写入
                         break;
                     case 0x410B:    //电表型号
                     case 0x4111:    //软件备案号
-                        if(nd_mbase_factor_mode(mbase_cb) == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
+                        if(nd_mb_factor_mode(instance) == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
                         if(*p != 0X0A) return -DAR_RW_REJECT;
                         break;
                     case 0x4103:    //资产管理编码  厂外可设置
@@ -152,10 +151,10 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                             if((Time_Format_Check(&timer[3])) || (Date_Format_Check(timer)))    return -DAR_OTHERS_ERROR;
                         }
                         *(p+7) = 0xFF;
-                        nd_mbase_Fee(mbase_cb) |= F_ChangeTmOn;
+                        nd_mb_fee(instance) |= F_ChangeTmOn;
                         break;
                     case 0x4401:    //密码
-                        nd_mbase_password_err_cnt(mbase_cb) = 0;     //修改密码，密码锁清零
+                        nd_mb_password_err_cnt(instance) = 0;     //修改密码，密码锁清零
                         break;
                 }
                 tag_datalen = axdr_get_len(p);
@@ -172,7 +171,7 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 }
                 ndv_memcopy(ptr_tmp, (p + general_set4_talble[i].offset), datalen);
               
-                addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + general_set4_talble[i].s_index);
+                addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + general_set4_talble[i].s_index);
                 nd_set_index(instance, addr, ptr_tmp, general_set4_talble[i].len); 
                 return tag_datalen;//(general_set4_talble[i].offset + general_set4_talble[i].len);
             }
@@ -186,19 +185,18 @@ int general_set_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
 }
 
 
-int set_support_protocol_list(struct instance_t* instance, uint32_t id, uint8_t* buf)
+int set_support_protocol_list(void *instance, uint32_t id, uint8_t* buf)
 {
 
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t i;
     uint8_t* p = buf;
     uint32_t addr=0;
     uint8_t index = 0;
-    uint8_t *tmp = instance->apdu_cache;
-    uint8_t *tmp_cache = instance->apdu_cache;
+    uint8_t *tmp = nd_fr698_apdu_cache(instance);
+    uint8_t *tmp_cache = nd_fr698_apdu_cache(instance);
     uint8_t count, len,maxlen;
 
-    if(mbase_cb == NULL)
+    if(!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -238,7 +236,7 @@ int set_support_protocol_list(struct instance_t* instance, uint32_t id, uint8_t*
             tmp += maxlen;
         }
 
-        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Protocol_List);
+        addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Protocol_List);
         nd_set_index(instance, addr, tmp_cache, (uint16_t)(tmp - tmp_cache)); 
         p = p + (uint16_t)(tmp - tmp_cache);
 
@@ -252,7 +250,7 @@ int set_support_protocol_list(struct instance_t* instance, uint32_t id, uint8_t*
             return -DAR_OTHERS_ERROR;
         }
 
-        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Protocol_List);
+        addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Protocol_List);
         nd_get_index(instance, addr, tmp_cache, 76); 
 
         ndv_memcopy((tmp_cache + (index - 1) * maxlen + 1), &p[1], len + 1);
@@ -266,18 +264,16 @@ int set_support_protocol_list(struct instance_t* instance, uint32_t id, uint8_t*
 }
 
 
-int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
+int set4300(void *instance, uint32_t id, uint8_t* buf)
 {
-    struct mbase_control_block_t* mbase_cb;
     uint8_t j, i,timer[6], num, Tnum, tmpbuf[60] ={0};
-    uint8_t* ptr_tmp = instance->apdu_cache;
+    uint8_t* ptr_tmp = nd_fr698_apdu_cache(instance);
     uint8_t* p = buf;
     uint32_t addr=0, chn;
     uint16_t idl = 0,year2, tmpid1;
     uint16_t tag_datalen = 0, datalen = 0;
     
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    if(mbase_cb == NULL)
+    if(!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -291,11 +287,11 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
             switch(idl)
             {
                 case 0x0200:   //设备描述符
-                    if(nd_mbase_factor_mode(mbase_cb) == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
+                    if(nd_mb_factor_mode(instance) == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
                     if(p[1] > 32)  return -DAR_TYPE_NOT_MATCH;
                     break;
                 case 0x0400://生产日期
-            		if(nd_mbase_factor_mode(mbase_cb) == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
+            		if(nd_mb_factor_mode(instance) == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
             
                     mem_swap_cpy((uint8_t*)&year2, p+1, 2);
                     if(year2 < 2000) return -DAR_RW_REJECT;
@@ -331,7 +327,7 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
             
             ndv_memcopy(ptr_tmp, (p + set4300_table[i].offset), datalen);
 
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + set4300_table[i].s_index);
+            addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + set4300_table[i].s_index);
             nd_set_index(instance, addr, ptr_tmp, set4300_table[i].len); 
 
             EventOut_698_check(instance);  
@@ -346,7 +342,7 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
     {
         case 0x0300: //版本信息
         {
-            if(nd_mbase_factor_mode(mbase_cb) == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
+            if(nd_mb_factor_mode(instance) == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
                         tmpid1 = idl;
 
             num = p[1];
@@ -368,7 +364,7 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
                         }
                         
                         p = p + set4300_table[i].offset;
-                        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + set4300_table[i].s_index);
+                        addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + set4300_table[i].s_index);
                         nd_set_index(instance, addr, p, set4300_table[i].len); 
                         p = p + set4300_table[i].len ;
                     }
@@ -382,7 +378,7 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
         case 0x0602: //协议列表
         case 0x0603: //协议列表
         {
-            if(nd_mbase_factor_mode(mbase_cb) == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
+            if(nd_mb_factor_mode(instance) == false)  return -DAR_RW_REJECT; //工厂模式外，禁止写入
             
             return set_support_protocol_list(instance,id, buf);
         }
@@ -417,7 +413,7 @@ int set4300(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 uint32_to_buf_lsb(chn, &tmpbuf[4*i+1]);
             }
 
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Report_channel);
+            addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Report_channel);
             nd_set_index(instance, addr, tmpbuf, 13); 
 
             EventOut_698_check(instance);  
@@ -466,30 +462,27 @@ int CheckData400C(uint8_t *p,uint8_t index)
 }
 
 
-extern const uint8_t  MonTab[13];// = {	0,31,28,31,30,31,30,31,31,30,31,30,31};
 // 时间设置后调用  (包含广播校时)
-int after_Time_set_hook(struct instance_t* instance)
+int after_Time_set_hook(void *instance)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     record_rollback_after_set_time(instance, 0);
-    nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
-    nd_mbase_RTCErrS_status(mbase_cb) = 0;
+    nd_mb_fee(instance) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+    nd_mb_rtc_errs_status(instance) = 0;
     
     clr_last_bill_time(instance, LastBillingTime);
     clr_last_bill_time(instance, LastDayFreezTime);
     
-    if (instance->time.tm_sec == 0)
+    if (nd_fr698_time(instance)->tm_sec == 0)
     {
-        instance->time.tm_sec = 1; //规避冻结临界时间。最坏情况为时间跳1秒 ，30s后恢复
+        nd_fr698_time(instance)->tm_sec = 1; //规避冻结临界时间。最坏情况为时间跳1秒 ，30s后恢复
     }
     write_powerdown_time(instance);
     
     return 1;
 }
-int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
+int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
-    struct mbase_control_block_t* mbase_cb;
     uint16_t oad,year2,year1;
     uint8_t index,attribute,i,num,buffer[42]={0},temp[114]={0},num_hourtab=0,year,timer[6];
     int dar =0;
@@ -498,8 +491,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
     uint16_t cur_v = 0, last_v = 0xFFFF, first_v = 0,max_v = 0, period = 15, last_fee=1, first_fee=1; //时段检查
     int len=0;
     
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    if(mbase_cb == NULL)
+    if(!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -547,7 +539,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
 
     log_info("%02x-%02x-%02x-%02x-%02x-%02x\n", buffer[0],buffer[1],buffer[2],buffer[3],buffer[4],buffer[5]);
 
-                addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
+                addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
                 nd_set_index(instance, addr, buffer, 7);
                 
                 mem_swap_cpy((uint8_t*)&oad, p, 2);
@@ -565,36 +557,20 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 read_mcu_rtc(0x00, instance);
                 
                 mem_swap_cpy((uint8_t*)&year2, buffer, 2);
-                year1 = instance->time.tm_year + 1900;
-                if((buffer[3] != instance->time.tm_mday) || (buffer[2] != (instance->time.tm_mon+1)) || (year2 != year1))  //跨日，清除广播校时标志位
+                year1 = nd_fr698_time(instance)->tm_year + 1900;
+                if((buffer[3] != nd_fr698_time(instance)->tm_mday) || (buffer[2] != (nd_fr698_time(instance)->tm_mon+1)) || (year2 != year1))  //跨日，清除广播校时标志位
                 {
-                    nd_mbase_boardadjtime(mbase_cb) = 0;
+                    nd_mb_boardadjtime(instance) = 0;
                 }
                 
                 //保存校时后时间 
                 rtc_get_from_tm(instance,temp);
                 mem_swap_cpy( &buffer[0], &temp[0], 7);
-                addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
+                addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
                 nd_set_index(instance, addr, buffer, 7);
 
                 record_event_no_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
                 after_Time_set_hook(instance);
-#if 0
-                record_event_no_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
-
-                record_rollback_after_set_time(instance, 0);
-                nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
-                nd_mbase_RTCErrS_status(mbase_cb) = 0;
-
-                clr_last_bill_time(instance, LastBillingTime);
-                clr_last_bill_time(instance, LastDayFreezTime);
-                
-                if (instance->time.tm_sec == 0)
-                {
-                    instance->time.tm_sec = 1; //规避冻结临界时间。最坏情况为时间跳1秒 ，30s后恢复
-                }
-                write_powerdown_time(instance);
-#endif                
                 return (p-buf);
             }
             else if(attribute == 0x05)  //广播校时参数
@@ -608,19 +584,19 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     if((index == 0)||(index == 1))
                     {
                         p++;
-                        mem_swap_cpy((uint8_t*)&nd_mbase_Limit_T_Min(mbase_cb), p, 2);
-                        s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        nd_mbase_offset_Limit_T_Min());
-                        nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_Limit_T_Min(mbase_cb), 2);
+                        mem_swap_cpy((uint8_t*)&nd_mb_limit_t_min(instance), p, 2);
+                        s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        nd_mb_offset_limit_t_min());
+                        nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_limit_t_min(instance), 2);
                         p = p + 2;
                     }
                     if((index == 0)||(index == 2))
                     {
                         p++;
-                        mem_swap_cpy((uint8_t*)&nd_mbase_Limit_T_Max(mbase_cb), p, 2);
-                        s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        nd_mbase_offset_Limit_T_Max());
-                        nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_Limit_T_Max(mbase_cb), 2);
+                        mem_swap_cpy((uint8_t*)&nd_mb_limit_t_max(instance), p, 2);
+                        s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        nd_mb_offset_limit_t_max());
+                        nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_limit_t_max(instance), 2);
                         p = p + 2;
                     }
 
@@ -654,14 +630,14 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 if(BCD_Check(buffer, 6) == 1)    return -DAR_TYPE_NOT_MATCH;
                 if(oad == 0x4001)
                 {
-                    mem_swap_cpy(nd_mbase_tsa(mbase_cb), buffer, 6);
-                    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                    nd_mbase_offset_tsa());
-                    nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_tsa(mbase_cb), 6);
+                    mem_swap_cpy(nd_mb_tsa(instance), buffer, 6);
+                    s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                    nd_mb_offset_tsa());
+                    nd_set_offset(instance, s_index, (uint8_t*)nd_mb_tsa(instance), 6);
                 }
                 else
                 {
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + User_Number);
+                    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + User_Number);
                     nd_set_index(instance, s_index, buffer, 6); 
                 }
                 p = p + len;
@@ -675,15 +651,15 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 if((*(p+5) > 1) || (*(p+15) > 1))   return -DAR_BUFFER_OVERFLOW;
                 
                 p = p + 2;
-                addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location1);
+                addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location1);
                 nd_set_index(instance, addr, p, 10); 
                 p = p + 10;
                 
-                addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location2);
+                addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location2);
                 nd_set_index(instance, addr, p, 10); 
                 p = p + 10;
                 
-                addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location3);
+                addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location3);
                 nd_set_index(instance, addr, p, 5); 
                 p = p + 5;
                 
@@ -713,13 +689,13 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             if(attribute == 0x02)
             {
                 uint32_t idbuf[] = {
-                (uint32_t)&nd_mbase_lcd_poweron_all_dis_time(mbase_cb),            //上电全显时间
-                (uint32_t)&nd_mbase_backlight_key_time(mbase_cb),                  //背光点亮时间
-                (uint32_t)&nd_mbase_lcd_checkdis_keep_sec(mbase_cb),               //显示查看背光点亮时间
-                (uint32_t)&nd_mbase_lcd_nopower_key_keep_sec(mbase_cb),            //无电按键驻留时间
-                (uint32_t)&nd_mbase_energy_point(mbase_cb),                        //电能小数显示位
-                (uint32_t)&nd_mbase_power_point(mbase_cb),                         //功率小数显示位
-                (uint32_t)&nd_mbase_lcd_12_mean(mbase_cb),                         //液晶12字样意义
+                (uint32_t)&nd_mb_lcd_poweron_all_dis_time(instance),            //上电全显时间
+                (uint32_t)&nd_mb_backlight_key_time(instance),                  //背光点亮时间
+                (uint32_t)&nd_mb_lcd_checkdis_keep_sec(instance),               //显示查看背光点亮时间
+                (uint32_t)&nd_mb_lcd_nopower_key_keep_sec(instance),            //无电按键驻留时间
+                (uint32_t)&nd_mb_energy_point(instance),                        //电能小数显示位
+                (uint32_t)&nd_mb_power_point(instance),                         //功率小数显示位
+                (uint32_t)&nd_mb_lcd_12_mean(instance),                         //液晶12字样意义
                 };
                 uint8_t lens[] = {1, 2, 2, 2, 1, 1, 1};
                 uint8_t offset[] = {0, 1, 3, 5, 7, 8, 9};
@@ -735,10 +711,10 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                         p = p + lens[i];
                     }
                     
-                    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                    nd_mbase_offset_lcd_poweron_all_dis_time());
-                    uint16_t s_len = nd_mbase_offset_lcd_autodis_list_num() - nd_mbase_offset_lcd_poweron_all_dis_time();
-                    nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_lcd_poweron_all_dis_time(mbase_cb), s_len);
+                    s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                    nd_mb_offset_lcd_poweron_all_dis_time());
+                    uint16_t s_len = nd_mb_offset_lcd_autodis_list_num() - nd_mb_offset_lcd_poweron_all_dis_time();
+                    nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_lcd_poweron_all_dis_time(instance), s_len);
                     
                     return (p-buf);
                 }
@@ -761,8 +737,8 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     p++;
                     mem_swap_cpy((uint8_t*)idbuf[index-1], p, lens[index-1]);
                     
-                    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                    nd_mbase_offset_lcd_poweron_all_dis_time() + offset[index-1]);
+                    s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                    nd_mb_offset_lcd_poweron_all_dis_time() + offset[index-1]);
                     nd_set_offset(instance, s_index, (uint8_t*)idbuf[index-1], lens[index-1]);
                     
                     p = p + lens[index-1];
@@ -788,11 +764,11 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     dar = CheckData400C(p,i);
                     if( dar != 0 ) return -dar;
                     p++;
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + i);
+                    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + i);
                     nd_set_index(instance, s_index, p, 1); 
                     p++;
                 }
-                nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+                nd_mb_fee(instance) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
                 return (p-buf);
             }
             else
@@ -800,10 +776,10 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 dar = CheckData400C(p,index-1);
                 if( dar != 0 ) return -dar;
                 p++;
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + (index - 1));
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + (index - 1));
                 nd_set_index(instance, s_index, p, 1); 
                 p++;
-                nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+                nd_mb_fee(instance) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
                 return (p-buf);
             }
             break;
@@ -830,12 +806,12 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
 
             // 编程事件-保存编程前
             nd_get(instance, id, temp, 10, NULL);
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Holiday);
+            s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Holiday);
             nd_set_index(instance, s_index, temp, 10);                                          
 
             temp[0] = TYPE_OAD;
             uint32_to_buf_msb(id, &temp[1]);
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Set_Holiday_Oad);
+            s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Set_Holiday_Oad);
             nd_set_index(instance, s_index, temp, 5);
        
             p = p + 3;
@@ -843,11 +819,11 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             p = p + 6;
             buffer[5] = *p++;
  
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + HoliDay_Table + (index-1));
+            s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + HoliDay_Table + (index-1));
             nd_set_index(instance, s_index, buffer, 6); 
 
             record_event_no_mesg_pro(instance, NULL, HolidayWrS, NULL, 1);// 公共假日编程事件
-            nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+            nd_mb_fee(instance) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
             return (p-buf);
             break;
         case 0x4014://当前套时区表
@@ -856,7 +832,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             last_v = 0xFFFF;
             period = 1;
             if(index > MaxSeasonNum)    return -DAR_TIME_ZONE_EXCEED;
-            if((oad == 0x4014) && (nd_mbase_factor_mode(mbase_cb) == false))    return    -DAR_RW_REJECT;
+            if((oad == 0x4014) && (nd_mb_factor_mode(instance) == false))    return    -DAR_RW_REJECT;
             if(index == 0)
             {
                 num = *(p+1);
@@ -888,7 +864,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             if (oad == 0x4015)
             {
                 nd_get(instance, 0x40150200, temp, 114, NULL);
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_SeasonT);
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_SeasonT);
                 nd_set_index(instance, s_index, temp, 114);
             }
 
@@ -959,7 +935,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                         buffer[2+i*3] = buffer[2+(num-1)*3];
                     }
                 }
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
                 nd_set_index(instance, s_index, buffer, 3*MaxSeasonNum);
             }
             else
@@ -971,27 +947,27 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 p++;
                 buffer[2] = *p++;
                 
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para);
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para);
                 nd_get_index(instance, s_index, &num, 1);
                 if(num > MaxSeasonNum) num = MaxSeasonNum;
                 for(i=0; i<num; i++)
                 {
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
+                    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
                     nd_get_index(instance, s_index, temp, 3);
                     if((buffer[0] == temp[0]) && (buffer[1] == temp[1]) && (buffer[2] != temp[2]))  return -DAR_RW_REJECT;
                 }
                 
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
                 nd_set_index(instance, s_index, buffer, 3);
             }
             record_event_no_mesg_pro(instance, NULL, SeasonTabWrS, NULL, 1);// 
-            nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+            nd_mb_fee(instance) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
             return (p - buf);
             break;
         case 0x4016://当前套日时段表
         case 0x4017://备用套日时段表
             if((index > MaxTouTabNum) || (index == 0))    return -DAR_RW_REJECT;
-            if((oad == 0x4016) && (nd_mbase_factor_mode(mbase_cb) == false))    return    -DAR_RW_REJECT;
+            if((oad == 0x4016) && (nd_mb_factor_mode(instance) == false))    return    -DAR_RW_REJECT;
             
             if(oad == 0x4016)
                 addr = Day_Table00;
@@ -1027,7 +1003,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                             buffer[2+(num_hourtab-1+i)*3] = buffer[2+(num_hourtab-1)*3];
                         }
                     }
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + j);
+                    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + j);
                     nd_set_index(instance, s_index, buffer, 42);
                 }
             }
@@ -1119,24 +1095,24 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 if (oad == 0x4017)
                 {
                     nd_get(instance, id, temp, 114, NULL);
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_DayTab);
+                    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_DayTab);
                     nd_set_index(instance, s_index, temp, 114);
 
                     temp[0] = TYPE_OAD;
                     uint32_to_buf_msb(id, &temp[1]);
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Set_DayTab_Oad);
+                    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Set_DayTab_Oad);
                     nd_set_index(instance, s_index, temp, 5);
                 }            
                 
                 
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index - 1));
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index - 1));
                 nd_set_index(instance, s_index, buffer, 42);
                 
             }
 
             record_event_no_mesg_pro(instance, NULL, DayTabWrS, NULL, 1);// 时段表编程事件
                 
-            nd_mbase_Fee(mbase_cb) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
+            nd_mb_fee(instance) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
             return (p - buf);
             break;
             
@@ -1144,14 +1120,14 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             if(*p != 4) return -DAR_TYPE_NOT_MATCH;
 
             nd_get(instance, id, timer, 3, NULL);
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
+            addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
             nd_set_index(instance, addr, timer, 3);
           
-            nd_mbase_active_energy_cal_word(mbase_cb) = *(p+2);
+            nd_mb_active_energy_cal_word(instance) = *(p+2);
             
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        nd_mbase_offset_active_energy_cal_word());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_active_energy_cal_word(mbase_cb), 1);
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        nd_mb_offset_active_energy_cal_word());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_active_energy_cal_word(instance), 1);
             
             record_event_no_mesg_pro(instance, NULL, ActCombWrS, NULL, 1);// 
             break;
@@ -1159,7 +1135,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
         case 0x4116://结算日
             //-保存编程前
             nd_get(instance, 0x41160200, temp, 20, NULL);
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Balance);
+            s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Balance);
             nd_set_index(instance, s_index, temp, 20);
             temp[0] = temp[5]; // 第一结算日 
             temp[1] = temp[7];
@@ -1186,17 +1162,17 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
 
                 for(i=0;i<num;i++)
                 {                   
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
+                    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
                     nd_set_index(instance, s_index, &buffer[2*i], 2); 
                     
                     memset(&buffer[2*i], 0xaa, 2);
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
+                    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
                     nd_get_index(instance, s_index, &buffer[2*i], 2);
                     if(i == 0)
                     {
                         if ( (buffer[2*i] != temp[0]) || (buffer[1 + (2*i)] != temp[1]) ) //第一结算日改变
                         {
-                            nd_mbase_first_MbillDay_flag(mbase_cb) = 0x5A;
+                            nd_mb_first_mbill_day_flag(instance) = 0x5A;
                             record_event_no_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
                         }
                     }
@@ -1219,13 +1195,13 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     return -DAR_OTHERS_ERROR;
                 }
                 
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + (index - 1));
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + (index - 1));
                 nd_set_index(instance, s_index, buffer, 2);
                 if(index == 1)
                 {
                     if ( (buffer[0] != temp[0]) || (buffer[1] != temp[1]) ) //第一结算日改变
                     {
-                        nd_mbase_first_MbillDay_flag(mbase_cb) = 0x5A;
+                        nd_mb_first_mbill_day_flag(instance) = 0x5A;
                         record_event_no_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
                     }
                 }
@@ -1262,7 +1238,7 @@ int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
     }
     if(len != 0)
     {
-        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + s_index);
+        addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + s_index);
         nd_set_index(instance, addr, p, len); 
         p = p + len;
     }

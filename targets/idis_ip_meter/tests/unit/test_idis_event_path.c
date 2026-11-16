@@ -177,11 +177,6 @@ static void test_event_data_objects(void)
     nd_idis_event_init(&objects.event, nd_idis_event_rules,
                        nd_idis_event_rule_count);
     objects.event.counters[1] = 5;
-    nd_cosem_port_t port = {
-        .ctx = &objects,
-        .get = nd_cosem_port_get,
-        .set = nd_cosem_port_set,
-    };
 
     uint8_t buffer[64];
     nd_axdr_writer_t out;

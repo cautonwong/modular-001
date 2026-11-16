@@ -1,4 +1,6 @@
 #include "components/protocol/dl645/nd_dl645.h"
+#include "application/ports/legacy_uart_timeout.h"
+#include "application/ports/legacy_pipeline.h"
 
 #include <string.h>
 
@@ -8,18 +10,6 @@
 #include "application/ports/fifo.h"
 
 #define ND_DL645_INSTANCES 3
-
-struct pipeline_t {
-    uint8_t id;
-    char *name;
-    void *ctx;
-    void *in_queue;
-    void *out_queue;
-    int (*on_work)(struct instance_t *instance, struct pipeline_t *pipeline,
-                   struct message_t *mesg);
-    size_t filter_n;
-    const void *filters;
-};
 
 
 

@@ -15,6 +15,22 @@ import sys
 from check_components import ROOT as ROOT_TEXT, discover, parse_manifest
 
 ROOT = Path(ROOT_TEXT)
+CYCLE_ALLOWLIST = ROOT / "tools/component_cycles.txt"
+
+
+def cycle_allowlist():
+    allowed = set()
+    if not CYCLE_ALLOWLIST.exists():
+        return allowed
+    for line in CYCLE_ALLOWLIST.read_text(encoding="utf-8").splitlines():
+        line = line.split("#", 1)[0].strip()
+        if not line:
+            continue
+        parts = line.split()
+        if len(parts) != 2:
+            raise SystemExit(f"{CYCLE_ALLOWLIST}: bad cycle line {line!r}")
+        allowed.add(tuple(sorted(parts)))
+    return allowed
 
 
 def component_index():
@@ -31,16 +47,26 @@ def closure(product_file: Path, index: dict) -> list[str]:
     errors = []
     ordered = []
     seen = set()
+    visiting = set()
+    allowed = cycle_allowlist()
 
-    def visit(name):
+    def visit(name, parent=None):
         if name in seen:
             return
         if name not in index:
             errors.append(f"{product_file.relative_to(ROOT)}: unknown component {name}")
             return
-        seen.add(name)
+        if name in visiting:
+            if parent is not None and tuple(sorted((parent, name))) in allowed:
+                return
+            errors.append(
+                f"{product_file.relative_to(ROOT)}: dependency cycle at {name}")
+            return
+        visiting.add(name)
         for dependency in index[name].get("dependencies", []):
-            visit(dependency)
+            visit(dependency, name)
+        visiting.discard(name)
+        seen.add(name)
         ordered.append(name)
 
     for name in selected:

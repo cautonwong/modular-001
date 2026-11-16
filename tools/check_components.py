@@ -33,10 +33,18 @@ SOURCE = re.compile(r"\.(c|h)$")
 
 def parse_manifest(path):
     data = {}
+    list_key = None
     with open(path, encoding="utf-8", errors="replace") as handle:
         for raw in handle:
             line = raw.split("#", 1)[0].strip()
-            if not line or ":" not in line:
+            if not line:
+                continue
+            if line.startswith("- ") and list_key is not None:
+                item = line[2:].strip().strip("'\"")
+                if item:
+                    data[list_key].append(item)
+                continue
+            if ":" not in line:
                 continue
             key, value = line.split(":", 1)
             key = key.strip()
@@ -44,10 +52,16 @@ def parse_manifest(path):
             if value.startswith("[") and value.endswith("]"):
                 items = [item.strip().strip("'\"") for item in value[1:-1].split(",")]
                 data[key] = [item for item in items if item]
+                list_key = None
+            elif not value:
+                data[key] = []
+                list_key = key
             elif value.lower() in ("true", "false"):
                 data[key] = value.lower() == "true"
+                list_key = None
             else:
                 data[key] = value.strip("'\"")
+                list_key = None
     return data
 
 
@@ -56,6 +70,8 @@ def discover():
     for base in COMPONENT_ROOTS:
         root = os.path.join(ROOT, base)
         for dirpath, _dirs, files in os.walk(root):
+            if "build" in os.path.relpath(dirpath, ROOT).split(os.sep):
+                continue  # generated build trees can contain copied manifests
             if "component.yaml" in files:
                 path = os.path.join(dirpath, "component.yaml")
                 data = parse_manifest(path)

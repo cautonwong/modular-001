@@ -1,11 +1,12 @@
-#include "nidavellir.h"
+#include "utils.h"
+#include <stddef.h>
+#include "application/adapters/dl698/meter_base_view.h"
+#include "domain/common/time_format.h"
 #include "645id_table.h"
-#include "domain/tariff/legacy/tariff_applications.h"
+#include "targets/stategrid_meter/app/tariff/tariff_applications.h"
 #include "infra/kernel/resource_blocks.h"
 #include "port.h"
 
-extern const uint8_t  MonTab[13];
-extern const unsigned int  DayTab[13];
 
 unsigned char Comm485Baut_Check( unsigned char Baut )
 {
@@ -115,13 +116,13 @@ unsigned char Time_645Format_Check( unsigned char* Addr )
 /*            Len：写入E方的数据长度                                   */
 /*  输出参数：0为正确，其余为错误 									   */
 /***********************************************************************/
-unsigned char SeasonTab_Format_Check( struct instance_t* instance, unsigned char* Addr, unsigned char* Len )
+unsigned char SeasonTab_Format_Check( void *instance, unsigned char* Addr, unsigned char* Len )
 {
     unsigned char i,Num,Sign,buf[5]={0,};
     unsigned int Int1,Int2;
     uint32_t s_index;
 
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para);//读取时区表个数
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para);//读取时区表个数
     nd_get_index(instance, s_index, buf, 5);
 
 	if( buf[1] > MaxTouTabNum ) buf[1] = MaxTouTabNum;
@@ -166,13 +167,13 @@ unsigned char SeasonTab_Format_Check( struct instance_t* instance, unsigned char
 /*            Len：写入E方的数据长度                                   */
 /*  输出参数：0为正确，其余为错误 									   */
 /***********************************************************************/
-unsigned char TouTab_Format_Check( struct instance_t* instance, unsigned char* Addr, unsigned char* Len )
+unsigned char TouTab_Format_Check( void *instance, unsigned char* Addr, unsigned char* Len )
 {
 	unsigned char i,Num,Sign,Tmp,buf[5]={0,};
 	unsigned int Int1,Int2;
     uint32_t s_index=0;
 
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para);//读取时区表个数
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para);//读取时区表个数
     nd_get_index(instance, s_index, buf, 5);
 
    	if( buf[3] > MaxFeeNum ) buf[3] = MaxFeeNum;

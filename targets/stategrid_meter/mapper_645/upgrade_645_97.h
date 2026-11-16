@@ -3,7 +3,6 @@
 #include "application/adapters/dl645/fr_645_context.h"
 #define  __UPGRADE_645_97__H_
 
-#include "nidavellir.h"
 #include "645id_table.h"
 
 #define UPGRADE_MODE_ONLINE   0 //在线升级
@@ -11,6 +10,8 @@
 
 #define UPGRADE_MODE  (UPGRADE_MODE_ONLINE)
 
+
+#include "infra/kernel/resource_blocks.h"
 
 #define	IMAGE_MAP_LEN				1024	                    //位图信息长度 
 #define	IMAGE_PARA_ID				UPGRADE_PARA_INFO          //升级参数e2p 绝对地址 从0开始             60字节 
@@ -127,24 +128,24 @@ struct pro_imange_transfer_id_t
 	uint16_t 	id;
 	uint8_t	attr;/*bit0 1:带密码验证，0:无需密码验证	其他:保留，默认为 0*/
 	uint8_t 	length;
-	uint8_t	(*pro_id)(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
+	uint8_t	(*pro_id)(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
 };
 
 struct image_read_id_t
 {
 	uint16_t dl645_id;
-	uint8_t(*pro_down_ops)(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
-	uint8_t(*pro_up_ops)(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
+	uint8_t(*pro_down_ops)(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
+	uint8_t(*pro_up_ops)(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
 };
 
 
 extern const struct mode_frame_len_t CODE mode_frame[];
 
-extern uint8_t get_imange_transfer_para(struct instance_t* instance, uint8_t *buff, const uint8_t len, const uint8_t offset);
+extern uint8_t get_imange_transfer_para(void *instance, uint8_t *buff, const uint8_t len, const uint8_t offset);
 
 extern uint8_t upgrade_mode_judge(const uint8_t mode);
 
-extern uint8_t set_image_state(struct instance_t* instance, const uint8_t state, struct image_transfer_state_t *image_transfer_state);
+extern uint8_t set_image_state(void *instance, const uint8_t state, struct image_transfer_state_t *image_transfer_state);
 
 extern const struct pro_imange_transfer_id_t * find_image_transfer_process(const uint16_t id);
 

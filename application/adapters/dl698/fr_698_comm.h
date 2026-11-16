@@ -20,8 +20,8 @@ int16_t nd_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16
 int __nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size);
 int __nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size);
 int __nd_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size);
-int16_t nd_get_index(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t buf_size);
-int16_t nd_set_index(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t buf_size);
+int16_t nd_get_index(void *ctx, uint32_t index, uint8_t* buf, uint16_t buf_size);
+int16_t nd_set_index(void *ctx, uint32_t index, uint8_t* buf, uint16_t buf_size);
 
 #endif
 

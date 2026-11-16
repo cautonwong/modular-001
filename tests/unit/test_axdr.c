@@ -36,6 +36,21 @@ static void test_length_forms(void)
     TEST_ASSERT_EQUAL_INT(0, reader.err);
 }
 
+static void test_length_0x83_must_fit_uint16(void)
+{
+    uint8_t too_long[] = {0x83, 0x01, 0x00, 0x00};
+    uint8_t fits[] = {0x83, 0x00, 0x12, 0x34};
+    nd_axdr_reader_t reader;
+
+    nd_axdr_reader_init(&reader, too_long, sizeof(too_long));
+    TEST_ASSERT_EQUAL_UINT16(0, nd_axdr_get_length(&reader));
+    TEST_ASSERT_EQUAL_INT(1, reader.err);
+
+    nd_axdr_reader_init(&reader, fits, sizeof(fits));
+    TEST_ASSERT_EQUAL_UINT16(0x1234, nd_axdr_get_length(&reader));
+    TEST_ASSERT_EQUAL_INT(0, reader.err);
+}
+
 static void test_scalars_roundtrip(void)
 {
     nd_axdr_writer_t writer;
@@ -131,14 +146,73 @@ static void test_writer_overflow(void)
     TEST_ASSERT_EQUAL_INT(0, nd_axdr_writer_ok(&writer));
 }
 
+static void test_every_two_byte_input_is_bounded(void)
+{
+    uint8_t input[2];
+
+    for (unsigned first = 0; first <= 0xFF; first++) {
+        for (unsigned second = 0; second <= 0xFF; second++) {
+            nd_axdr_reader_t reader;
+
+            input[0] = (uint8_t)first;
+            input[1] = (uint8_t)second;
+            nd_axdr_reader_init(&reader, input, sizeof(input));
+            (void)nd_axdr_skip_value(&reader);
+            TEST_ASSERT_TRUE(reader.pos <= reader.len);
+
+            nd_axdr_reader_init(&reader, input, sizeof(input));
+            (void)nd_axdr_get_length(&reader);
+            TEST_ASSERT_TRUE(reader.pos <= reader.len);
+        }
+    }
+}
+
+static void test_skip_accepts_sixteen_nested_levels(void)
+{
+    uint8_t nested[2 * 16 + 1];
+    size_t index = 0;
+    nd_axdr_reader_t reader;
+
+    for (int level = 0; level < 16; level++) {
+        nested[index++] = ND_AXDR_ARRAY;
+        nested[index++] = 1;
+    }
+    nested[index++] = ND_AXDR_NULL;
+    nd_axdr_reader_init(&reader, nested, index);
+
+    TEST_ASSERT_EQUAL_INT(0, nd_axdr_skip_value(&reader));
+    TEST_ASSERT_EQUAL_size_t(0, nd_axdr_remaining(&reader));
+}
+
+static void test_skip_depth_is_bounded(void)
+{
+    uint8_t nested[2 * 17 + 1];
+    size_t index = 0;
+    nd_axdr_reader_t reader;
+
+    for (int level = 0; level < 17; level++) {
+        nested[index++] = ND_AXDR_ARRAY;
+        nested[index++] = 1;
+    }
+    nested[index++] = ND_AXDR_NULL;
+    nd_axdr_reader_init(&reader, nested, index);
+
+    TEST_ASSERT_EQUAL_INT(-1, nd_axdr_skip_value(&reader));
+    TEST_ASSERT_EQUAL_INT(1, reader.err);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
     RUN_TEST(test_length_forms);
+    RUN_TEST(test_length_0x83_must_fit_uint16);
     RUN_TEST(test_scalars_roundtrip);
     RUN_TEST(test_nested_skip);
     RUN_TEST(test_strings_and_datetime_skip);
     RUN_TEST(test_truncated_input_fails);
     RUN_TEST(test_writer_overflow);
+    RUN_TEST(test_every_two_byte_input_is_bounded);
+    RUN_TEST(test_skip_accepts_sixteen_nested_levels);
+    RUN_TEST(test_skip_depth_is_bounded);
     return UNITY_END();
 }

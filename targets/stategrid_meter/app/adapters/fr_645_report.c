@@ -1,14 +1,15 @@
 #include "kernel/instance.h"
+#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/app/meter_flags.h"
 #include "kernel/channel.h"
 #include "kernel/pids.h"
 #include "application/ports/platform.h"
 #include "application/adapters/dl645/fr_645_context.h"
-#include "gs_record.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
 #include "645id_table.h"
 #include "fr_698.h"
 #include "utils.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 //参数  
 //0x04001405  主动上报状态字自动复位延时时间     //默认30min
@@ -24,62 +25,45 @@ struct double_protocol_report_map_t
     uint8_t mode_index645;       // 645模式位  // BIT7 1: 表示 为状态 2015（非事件）
 };
 
-int report_645stat_save(struct instance_t* instance)
+int report_645stat_save(void *instance)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     int ret = 0;
     
-    ret = nd_set_index_e2p(instance, (uint8_t *) &nd_mbase_report_stat_645(mbase_cb)[0], mbase_block_parameter, report_stat_645_E, 108); 
+    ret = nd_set_index_e2p(instance, (uint8_t *) nd_mb_report_stat_645(instance), mbase_block_parameter, report_stat_645_E, 108); 
 
     return ret;
 }
 
-int report_645stat_recover(struct instance_t* instance)
+int report_645stat_recover(void *instance)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     int ret = 0;
 
-    memset((uint8_t *) &nd_mbase_report_stat_645(mbase_cb)[0], 0, sizeof(nd_mbase_report_stat_645(mbase_cb)));
-    ret = nd_get_index_e2p(instance, (uint8_t *) &nd_mbase_report_stat_645(mbase_cb)[0], mbase_block_parameter, report_stat_645_E, 108); 
+    memset((uint8_t *) nd_mb_report_stat_645(instance), 0, 108);
+    ret = nd_get_index_e2p(instance, (uint8_t *) nd_mb_report_stat_645(instance), mbase_block_parameter, report_stat_645_E, 108); 
     if(ret < 0)
     {
-        memset((uint8_t *) &nd_mbase_report_stat_645(mbase_cb)[0], 0, sizeof(nd_mbase_report_stat_645(mbase_cb)));
+        memset((uint8_t *) nd_mb_report_stat_645(instance), 0, 108);
     }
 
     return ret;
 }
-int report_645stat_clear(struct instance_t* instance)
+int report_645stat_clear(void *instance)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     int ret = 0;
 
-    memset((uint8_t *) &nd_mbase_report_stat_645(mbase_cb)[0], 0, sizeof(nd_mbase_report_stat_645(mbase_cb)));
+    memset((uint8_t *) nd_mb_report_stat_645(instance), 0, 108);
     report_645stat_save(instance);
 
     return ret;
 }
 
 
-void event_out_check(struct instance_t* instance)
+void event_out_check(void *instance)
 {    
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t tmp[12] = {0};
 
     EventOut_698_check(instance); //以698上报为准
 
-#if 0        
-    if ((nd_mbase_metertype(mbase_cb) & F_Plc_En))  //模块
-    {
-        if (0 == mem_compare(tmp, nd_mbase_report_stat_645(mbase_cb), 12))
-        {
-            nd_platform_event_output_set(false); //关闭
-        } 
-        else
-        {
-            nd_platform_event_output_set(true);   //打开 置高  
-        }
-    }
-#endif    
 }
 
 static const struct double_protocol_report_map_t  double_protocol_report_map_table[] =
@@ -107,67 +91,11 @@ static const struct double_protocol_report_map_t  double_protocol_report_map_tab
     {RPT_2015_SWITCH_ON_SUCCEES , 15, 15| REPORT_TYPE_2015},               // 电能表合闸成功状态// 
 
 
-#if 0  //三相
-    {0x30000700, 16, 16},               // A相电能表失压事件  
-    {0x30010700, 17, 17},               // A相电能表欠压事件  
-    {0x30020700, 18, 18},               // A相电能表过压事件  
-    {0x30040700, 19, 19},               // A相电能表失流事件  
-#endif
     {0x30050700, 20, 20},               // A相电能表过流事件  
-#if 0  //三相    
-    {0x30080700, 21, 21},               // A相电能表过载事件  
-    {0x30070700, 22, 22},               // A相电能表功率反向事件  
-    {0x30030700, 23, 23},               // A相电能表断相事件  
-    {0x30060700, 24, 24},               // A相电能表断流事件  
-#endif
 
-#if 0  //三相
-    //{, 30, 30},                 // 电能表外置表跳闸成功2015bit31   //山东
-    //{, 31, 31},                  // 电能表外置表合闸成功2015bit31   //山东
 
-    {0x30000800, 32, 16},    // B相电能表失压事件  
-    {0x30010800, 33, 17},    // B相电能表欠压事件  
-    {0x30020800, 34, 18},    // B相电能表过压事件  
-    {0x30040800, 35, 19},    // B相电能表失流事件  
-    {0x30050800, 36, 20},    // B相电能表过流事件  
-    {0x30080800, 37, 21},    // B相电能表过载事件  
-    {0x30070800, 38, 22},    // B相电能表功率反向事件  
-    {0x30030800, 39, 23},    // B相电能表断相事件  
-    {0x30060800, 40, 24},    // B相电能表断流事件  
+    {0x30110200, 69, 37},   // 电能表掉电事件
 
-    {0x30000900, 48, 16},    // C相电能表失压事件  
-    {0x30010900, 49, 17},    // C相电能表欠压事件  
-    {0x30020900, 50, 18},    // C相电能表过压事件  
-    {0x30040900, 51, 19},    // C相电能表失流事件  
-    {0x30050900, 52, 20},    // C相电能表过流事件  
-    {0x30080900, 53, 21},    // C相电能表过载事件  
-    {0x30070900, 54, 22},    // C相电能表功率反向事件  
-    {0x30030900, 55, 23},    // C相电能表断相事件  
-    {0x30060900, 56, 24},    // C相电能表断流事件  
-
-    {0x300F0200, 64, 32},    // 电能表电压逆相序事件  
-    {0x30100200, 65, 33},    // 电能表电流逆相序事件  
-    {0x301D0200, 66, 34},    // 电能表电压不平衡事件  
-    {0x301E0200, 67, 35},    // 电能表电流不平衡事件  
-    {0x300E0200, 68, 36},    // 电能表辅助电源掉电事件  
-#endif
-
-    {0x30110200, 69, 37},   // 电能表掉电事件  
-
-#if 0 //三相
-    {0x30090200, 70, 38},// 正向有功需量超限事件 
-    {0x300A0200, 70, 38},// 反向有功需量超限事件 
-    {0x300B0600, 70, 38},// 1象限无功需量超限事件 
-    {0x300B0700, 70, 38},// 2象限无功需量超限事件 
-    {0x300B0800, 70, 38},// 3象限无功需量超限事件 
-    {0x300B0900, 70, 38},// 4象限无功需量超限事件 
-
-    {0x300C0200, 71, 39},       // 电能表功率因数超下限事件  
-
-    {0x302D0200, 72, 40},       // 电能表电流严重不平衡事件  
-    //{, 73, 41},               // 电能表潮流反向事件  
-    {0x300D0200, 74, 42},       // 电能表全失压事件  
-#endif
 
     {0xFF310000, 80, 48},               // 电能表编程事件  //645
     {0x30130200, 81, 49},               // 电能表清零事件  
@@ -195,9 +123,8 @@ static const uint8_t  double_protocol_report_map_num =sizeof(double_protocol_rep
 
 // 645设置上报模式字,更新698的事件上报标识和跟随上报模式字
 // 入参:mode 645上报模式字数据，  数据长度8byte
-void report_mode_set_from_645(struct instance_t* instance, uint8_t* report_mode)
+void report_mode_set_from_645(void *instance, uint8_t* report_mode)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     uint8_t cnt, mod_cnt645 = 0,  value = 0;
     uint32_t mod_cnt_2015 = 0xFFFFFFFF,event_oad = 0xFFFFFFFF;
@@ -237,16 +164,16 @@ void report_mode_set_from_645(struct instance_t* instance, uint8_t* report_mode)
         {
             if (1 == value)
             {
-                nd_mbase_report_2015mode(mbase_cb) |= mod_cnt_2015;
+                nd_mb_report_2015_mode(instance) |= mod_cnt_2015;
             }
             else
             {
-                nd_mbase_report_2015mode(mbase_cb) &= ~mod_cnt_2015;
+                nd_mb_report_2015_mode(instance) &= ~mod_cnt_2015;
             } 
             
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-            nd_mbase_offset_report_2015mode());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_report_2015mode(mbase_cb), 4);
+            nd_mb_offset_report_2015mode());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_report_2015_mode(instance), 4);
         }
 
         if (0xFFFFFFFF != event_oad) //事件
@@ -268,9 +195,8 @@ void report_mode_set_from_645(struct instance_t* instance, uint8_t* report_mode)
 
 
 //698设置跟随上报模式字,更新645的上报模式字
-void report_2015mode_set_from_698(struct instance_t* instance)
+void report_2015mode_set_from_698(void *instance)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t cnt, mod_cnt645 = 0, value = 0;
 
     uint32_t mod_cnt_2015 = 0xFFFFFFFF, event_oad = 0xFFFFFFFF;
@@ -298,7 +224,7 @@ void report_2015mode_set_from_698(struct instance_t* instance)
         if (0xFFFFFFFF != mod_cnt_2015 )
         {
 
-            if (nd_mbase_report_2015mode(mbase_cb) & mod_cnt_2015)
+            if (nd_mb_report_2015_mode(instance) & mod_cnt_2015)
             {
                 value = 1;
             }
@@ -311,11 +237,11 @@ void report_2015mode_set_from_698(struct instance_t* instance)
             {
                 if (1 == value)
                 {
-                    nd_mbase_report_mode_645(mbase_cb)[mod_cnt645/8] |= (0x01 << (mod_cnt645 % 8));
+                    nd_mb_report_mode_645(instance)[mod_cnt645/8] |= (0x01 << (mod_cnt645 % 8));
                 }
                 else
                 {
-                    nd_mbase_report_mode_645(mbase_cb)[mod_cnt645/8] &= ~(0x01 << (mod_cnt645 % 8));
+                    nd_mb_report_mode_645(instance)[mod_cnt645/8] &= ~(0x01 << (mod_cnt645 % 8));
                 } 
             }
         }
@@ -323,17 +249,16 @@ void report_2015mode_set_from_698(struct instance_t* instance)
 
     //保存 645上报模式字
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    nd_mbase_offset_report_mode_645());
-    nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_report_mode_645(mbase_cb), sizeof(nd_mbase_report_mode_645(mbase_cb)));
+    nd_mb_offset_report_mode_645());
+    nd_set_offset(instance, s_index, (uint8_t*)nd_mb_report_mode_645(instance), 8);
 
     EventOut_698_check(instance);  
 }
 
 // 698设置事件上报标识,同时修改645上报模式字数据
 // 入参:mode 698设置事件oad和上报标识，
-void report_3320flag_set_from_698(struct instance_t* instance, uint32_t oad, uint8_t value)
+void report_3320flag_set_from_698(void *instance, uint32_t oad, uint8_t value)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t cnt, mod_cnt645 = 0, rptmode = 0;
     uint32_t s_index;
     uint32_t mod_cnt_2015 = 0xFFFFFFFF, event_oad = 0xFFFFFFFF;
@@ -374,16 +299,16 @@ void report_3320flag_set_from_698(struct instance_t* instance, uint32_t oad, uin
         //            {
                          if(value == 0)
                          {
-                            nd_mbase_report_mode_645(mbase_cb)[mod_cnt645/8] &= ~(0x01 << (mod_cnt645 % 8));
+                            nd_mb_report_mode_645(instance)[mod_cnt645/8] &= ~(0x01 << (mod_cnt645 % 8));
                          }
                          else
                          {
-                            nd_mbase_report_mode_645(mbase_cb)[mod_cnt645/8] |= (0x01 << (mod_cnt645 % 8));
+                            nd_mb_report_mode_645(instance)[mod_cnt645/8] |= (0x01 << (mod_cnt645 % 8));
                          }
         //           }
         //           else//如果被配置为主动上报，则645也不在跟随上报
         //           {
-        //               nd_mbase_report_mode_645(mbase_cb)[mod_cnt645/8] &= ~(0x01 << (mod_cnt645 % 8));
+        //               nd_mb_report_mode_645(instance)[mod_cnt645/8] &= ~(0x01 << (mod_cnt645 % 8));
         //           }
 
             }
@@ -393,8 +318,8 @@ void report_3320flag_set_from_698(struct instance_t* instance, uint32_t oad, uin
     
     //保存 645上报模式字
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    nd_mbase_offset_report_mode_645());
-    nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_report_mode_645(mbase_cb), sizeof(nd_mbase_report_mode_645(mbase_cb)));
+    nd_mb_offset_report_mode_645());
+    nd_set_offset(instance, s_index, (uint8_t*)nd_mb_report_mode_645(instance), 8);
 
     EventOut_698_check(instance);  
 
@@ -403,10 +328,8 @@ void report_3320flag_set_from_698(struct instance_t* instance, uint32_t oad, uin
 
 //  698设置事件上报方式，如果上报标识已经打开,则同时修改645上报模式字数据 
 // 入参:mode 698设置事件oad和上报标识，
-void report_3320mode_set_from_698(struct instance_t* instance, uint32_t oad, uint8_t value)
+void report_3320mode_set_from_698(void *instance, uint32_t oad, uint8_t value)
 {
-
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t cnt, mod_cnt645 = 0, rptmode = 0;
     uint32_t s_index;
     uint32_t mod_cnt_2015 = 0xFFFFFFFF, event_oad = 0xFFFFFFFF;
@@ -434,7 +357,7 @@ void report_3320mode_set_from_698(struct instance_t* instance, uint32_t oad, uin
             {                
                 if(value == 0)//如果被设置为主动上报，就直接将645的上报模式字中的位清零，因为645所说的主动上报，其实就是2020中的跟随上报
                 {
-                    nd_mbase_report_mode_645(mbase_cb)[mod_cnt645/8] &= ~(0x01 << (mod_cnt645 % 8));
+                    nd_mb_report_mode_645(instance)[mod_cnt645/8] &= ~(0x01 << (mod_cnt645 % 8));
                 }
             }
         }
@@ -442,8 +365,8 @@ void report_3320mode_set_from_698(struct instance_t* instance, uint32_t oad, uin
     
     //保存 645上报模式字
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    nd_mbase_offset_report_mode_645());
-    nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_report_mode_645(mbase_cb), sizeof(nd_mbase_report_mode_645(mbase_cb)));
+    nd_mb_offset_report_mode_645());
+    nd_set_offset(instance, s_index, (uint8_t*)nd_mb_report_mode_645(instance), 8);
 
     EventOut_698_check(instance);  
 
@@ -452,9 +375,8 @@ void report_3320mode_set_from_698(struct instance_t* instance, uint32_t oad, uin
 
 
 //OAD_State698  698事件oad或者698状态 2015的BITMAP
-void report_645state_judge(struct instance_t* instance, uint32_t OAD_State698)
+void report_645state_judge(void *instance, uint32_t OAD_State698)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint16_t cnt;
     uint8_t tmp,  rptmode = 0, rptflag = 0;
     uint8_t mod_cnt645, stat_cnt645;
@@ -467,7 +389,7 @@ void report_645state_judge(struct instance_t* instance, uint32_t OAD_State698)
         rptflag = read_event_report_flag_mode(instance, OAD_State698, 0);
         rptmode = read_event_report_flag_mode(instance, OAD_State698, 1);
         if((rptmode == 0x00) && (rptflag != 0x00) 
-        && (nd_mbase_power_on_sec_accum(mbase_cb) < nd_mbase_active_report_sec_limit(mbase_cb)))
+        && (nd_mb_power_on_sec_accum(instance) < nd_mb_active_report_sec_limit(instance)))
         {
             return;
         }
@@ -481,7 +403,7 @@ void report_645state_judge(struct instance_t* instance, uint32_t OAD_State698)
             mod_cnt645 &=~ REPORT_TYPE_2015;
             stat_cnt645 = double_protocol_report_map_table[cnt].state_index645;
 
-            if (nd_mbase_report_mode_645(mbase_cb)[mod_cnt645 / 8] & (0x01 << (mod_cnt645 % 8)))
+            if (nd_mb_report_mode_645(instance)[mod_cnt645 / 8] & (0x01 << (mod_cnt645 % 8)))
             {
                 switch(OAD_State698)
                 {
@@ -491,52 +413,52 @@ void report_645state_judge(struct instance_t* instance, uint32_t OAD_State698)
                     case RPT_2015_READ_BATTERY_LOW:
                     case RPT_2015_MEMORIZER_ERR:
                     case RPT_2015_OVERDRAFT:
-                        nd_mbase_report_stat_645(mbase_cb)[12 + stat_cnt645] = 0xFF;
-                        nd_mbase_report_stat_645(mbase_cb)[stat_cnt645/8] |= (0x01 << (stat_cnt645 % 8));
+                        nd_mb_report_stat_645(instance)[12 + stat_cnt645] = 0xFF;
+                        nd_mb_report_stat_645(instance)[stat_cnt645/8] |= (0x01 << (stat_cnt645 % 8));
                         break;
                     case 0x30130200: //电表清零
-                        memset(&nd_mbase_report_stat_645(mbase_cb)[0], 0x00, 108);    
+                        memset(nd_mb_report_stat_645(instance), 0x00, 108);    
                         
-                        if ((false == nd_mbase_key_state(mbase_cb)))// 私钥状态上报清零事件  
+                        if ((false == nd_mb_key_state(instance)))// 私钥状态上报清零事件  
                         {  
-                            nd_mbase_report_stat_645(mbase_cb)[12 + stat_cnt645] = 0x01;
-                            nd_mbase_report_stat_645(mbase_cb)[stat_cnt645/8] |= (0x01 << (stat_cnt645 % 8));
+                            nd_mb_report_stat_645(instance)[12 + stat_cnt645] = 0x01;
+                            nd_mb_report_stat_645(instance)[stat_cnt645/8] |= (0x01 << (stat_cnt645 % 8));
                         }                        
                         break;
                     case 0x30150200://事件清零
-                        if (0x00 == nd_mbase_flag_event_clear(mbase_cb)) // 分项清零不报
+                        if (0x00 == nd_mb_flag_event_clear(instance)) // 分项清零不报
                         {
                             break;
                         }
                         
-                        nd_mbase_flag_event_clear(mbase_cb) = 0x00;//645清零后应将该变量清零。
+                        nd_mb_flag_event_clear(instance) = 0x00;//645清零后应将该变量清零。
                         
-                        tmp = nd_mbase_report_stat_645(mbase_cb)[12 + stat_cnt645];
+                        tmp = nd_mb_report_stat_645(instance)[12 + stat_cnt645];
                         
-                        if (nd_mbase_report_stat_645(mbase_cb)[10] & 0x02)// 清零事件 
+                        if (nd_mb_report_stat_645(instance)[10] & 0x02)// 清零事件 
                         {
-                            memset(nd_mbase_report_stat_645(mbase_cb), 0x00, 108);
-                            nd_mbase_report_stat_645(mbase_cb)[10] |= 0x02;
-                            nd_mbase_report_stat_645(mbase_cb)[12 + 81] = 0x01;
+                            memset(nd_mb_report_stat_645(instance), 0x00, 108);
+                            nd_mb_report_stat_645(instance)[10] |= 0x02;
+                            nd_mb_report_stat_645(instance)[12 + 81] = 0x01;
                         }
                         else
                         {
-                            memset(nd_mbase_report_stat_645(mbase_cb), 0x00, 108);
+                            memset(nd_mb_report_stat_645(instance), 0x00, 108);
                         }
                         
-                        nd_mbase_report_stat_645(mbase_cb)[12 + stat_cnt645] = tmp;
+                        nd_mb_report_stat_645(instance)[12 + stat_cnt645] = tmp;
                         if (tmp != 0xff)
                         {
-                            nd_mbase_report_stat_645(mbase_cb)[12 + stat_cnt645] ++; 
+                            nd_mb_report_stat_645(instance)[12 + stat_cnt645] ++; 
                         }
-                        nd_mbase_report_stat_645(mbase_cb)[stat_cnt645/8] |= (0x01 << (stat_cnt645 % 8));
+                        nd_mb_report_stat_645(instance)[stat_cnt645/8] |= (0x01 << (stat_cnt645 % 8));
                         break;
                     default:
-                        if (nd_mbase_report_stat_645(mbase_cb)[12 + stat_cnt645] != 0xFF)
+                        if (nd_mb_report_stat_645(instance)[12 + stat_cnt645] != 0xFF)
                         {
-                            nd_mbase_report_stat_645(mbase_cb)[12 + stat_cnt645] ++;
+                            nd_mb_report_stat_645(instance)[12 + stat_cnt645] ++;
                         }
-                        nd_mbase_report_stat_645(mbase_cb)[stat_cnt645/8] |= (0x01 << (stat_cnt645 % 8));
+                        nd_mb_report_stat_645(instance)[stat_cnt645/8] |= (0x01 << (stat_cnt645 % 8));
                         break;                   
                 }  
                 
@@ -548,26 +470,26 @@ void report_645state_judge(struct instance_t* instance, uint32_t OAD_State698)
 
             if (0x30130200 == OAD_State698)
             {
-                memset(nd_mbase_report_stat_645(mbase_cb), 0x00, 108);
+                memset(nd_mb_report_stat_645(instance), 0x00, 108);
                 report_645stat_save(instance);
             }
             else if (0x30150200 == OAD_State698)
             {  
-                if (0x00 == nd_mbase_flag_event_clear(mbase_cb))
+                if (0x00 == nd_mb_flag_event_clear(instance))
                 {
                     return;
                 }
 
-                nd_mbase_flag_event_clear(mbase_cb) = 0x00;//645清零后应将该变量清零。    
-                if (nd_mbase_report_stat_645(mbase_cb)[10] & 0x02)// 清零事件 
+                nd_mb_flag_event_clear(instance) = 0x00;//645清零后应将该变量清零。    
+                if (nd_mb_report_stat_645(instance)[10] & 0x02)// 清零事件 
                 {
-                    memset(nd_mbase_report_stat_645(mbase_cb), 0x00, 108);
-                    nd_mbase_report_stat_645(mbase_cb)[10] |= 0x02;
-                    nd_mbase_report_stat_645(mbase_cb)[12 + 81] = 0x01;
+                    memset(nd_mb_report_stat_645(instance), 0x00, 108);
+                    nd_mb_report_stat_645(instance)[10] |= 0x02;
+                    nd_mb_report_stat_645(instance)[12 + 81] = 0x01;
                 }
                 else
                 {
-                    memset(nd_mbase_report_stat_645(mbase_cb), 0x00, 108);
+                    memset(nd_mb_report_stat_645(instance), 0x00, 108);
                 }
                 report_645stat_save(instance);
             }
@@ -581,11 +503,9 @@ void report_645state_judge(struct instance_t* instance, uint32_t OAD_State698)
 
 
 //698读取事件oad,清3320中的上报oad时,同时清645上报状态字
-uint8_t report_stat_reset_from_3320_698(struct instance_t* instance, uint32_t OAD_State698)
+uint8_t report_stat_reset_from_3320_698(void *instance, uint32_t OAD_State698)
 {
     uint8_t value = false;
-
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t cnt, mod_cnt645 = 0xFF, state_cnt645 = 0xFF,index = 0;
     uint32_t s_index;
     uint32_t mod_cnt_2015 = 0xFFFFFFFF, event_oad = 0xFFFFFFFF;
@@ -612,23 +532,12 @@ uint8_t report_stat_reset_from_3320_698(struct instance_t* instance, uint32_t OA
     if (state_cnt645 != 0xFF)
     {
         index = state_cnt645%8;
-        nd_mbase_report_stat_645(mbase_cb)[12 + state_cnt645] = 0; 
-        nd_mbase_report_stat_645(mbase_cb)[state_cnt645/8] &= ~(0x01<<index);
-        nd_mbase_report_stat_read_cache645(mbase_cb)[state_cnt645/8] &= ~(0x01<<index);
-#if 0
-        //  外置表拉合闸成功清除  
-        if((bitNo == 14) || (bitNo == 15))
-        {
-            bitNo += 16;
-            index = bitNo%8;
-            nd_mbase_report_stat_645(mbase_cb)[12 + bitNo] = 0; 
-            nd_mbase_report_stat_645(mbase_cb)[bitNo/8] &= ~(0x01<<index);
-            nd_mbase_report_stat_read_cache645(mbase_cb)[bitNo/8] &= ~(0x01<<index);
-        }
-#endif
+        nd_mb_report_stat_645(instance)[12 + state_cnt645] = 0; 
+        nd_mb_report_stat_645(instance)[state_cnt645/8] &= ~(0x01<<index);
+        nd_mb_report_stat_read_cache645(instance)[state_cnt645/8] &= ~(0x01<<index);
         report_645stat_save(instance);   
 
-        nd_mbase_report_stat_already_read645(mbase_cb) = 0; 
+        nd_mb_report_stat_already_read645(instance) = 0; 
 
         event_out_check(instance);
         value = true;
@@ -646,11 +555,8 @@ uint8_t report_stat_reset_from_3320_698(struct instance_t* instance, uint32_t OA
 //645复位上报状态字同时清该通道698上报标志
 //通过bit位号找上报名称oad  ,清当前通道698新增上报列表中的该oad  ,或通过bitNo查找698中2015上报状态对应位
  
-uint8_t report_645stat_reset_from_645(struct instance_t* instance, uint8_t state_cnt645)
+uint8_t report_645stat_reset_from_645(void *instance, uint8_t state_cnt645)
 {
-    
-    
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t i, cnt, mod_cnt645 = 0xFF,index = 0;
     uint32_t s_index;
     uint32_t mod_cnt_2015 = 0xFFFFFFFF, event_oad = 0xFFFFFFFF;
@@ -697,18 +603,18 @@ uint8_t report_645stat_reset_from_645(struct instance_t* instance, uint8_t state
                  value = report_3320list_confirmed(instance, comm_chn[i], event_oad, 0); 
                  if (state_cnt645 == 14)// 拉闸 可能同时存在事件和状态 
                  {
-                    nd_mbase_report_2015state(mbase_cb)[i] &=~ RPT_2015_SWITCH_OFF_SUCCEES;
+                    nd_mb_report_2015_state(instance)[i] &=~ RPT_2015_SWITCH_OFF_SUCCEES;
                     value = true;
                  }
                  else if (state_cnt645 == 15)// 合闸 可能同时存在事件和状态 
                  {
-                    nd_mbase_report_2015state(mbase_cb)[i] &=~ RPT_2015_SWITCH_ON_SUCCEES;
+                    nd_mb_report_2015_state(instance)[i] &=~ RPT_2015_SWITCH_ON_SUCCEES;
                     value = true;
                  }
             }
             if (mod_cnt_2015 != 0xFFFFFFFF)              // 2015 
             {
-                 nd_mbase_report_2015state(mbase_cb)[i] &=~ mod_cnt_2015;
+                 nd_mb_report_2015_state(instance)[i] &=~ mod_cnt_2015;
                  value = true;
             }
         }
@@ -718,11 +624,8 @@ uint8_t report_645stat_reset_from_645(struct instance_t* instance, uint8_t state
 }
 
 // 698复位上报状态字(32bit 4字节  2015) 同时清645上报标志  //OAD_State698 状态位
-uint8_t report_stat_reset_from_698(struct instance_t* instance, uint32_t State2015_698) 
+uint8_t report_stat_reset_from_698(void *instance, uint32_t State2015_698) 
 {
-
-
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t cnt, mod_cnt645 = 0xFF, stat_cnt645 = 0xFF;
     uint32_t s_index;
     uint32_t mod_cnt_2015 = 0xFFFFFFFF, event_oad = 0xFFFFFFFF;
@@ -737,9 +640,9 @@ uint8_t report_stat_reset_from_698(struct instance_t* instance, uint32_t State20
                 mod_cnt645 &=~ REPORT_TYPE_2015;
                 stat_cnt645 = double_protocol_report_map_table[cnt].state_index645;
 
-                nd_mbase_report_stat_645(mbase_cb)[12 + stat_cnt645] = 0; 
-                nd_mbase_report_stat_645(mbase_cb)[stat_cnt645/8] &= ~(0x01 << (stat_cnt645 % 8));
-                nd_mbase_report_stat_read_cache645(mbase_cb)[stat_cnt645/8] &= ~(0x01 << (stat_cnt645 % 8));
+                nd_mb_report_stat_645(instance)[12 + stat_cnt645] = 0; 
+                nd_mb_report_stat_645(instance)[stat_cnt645/8] &= ~(0x01 << (stat_cnt645 % 8));
+                nd_mb_report_stat_read_cache645(instance)[stat_cnt645/8] &= ~(0x01 << (stat_cnt645 % 8));
 
             }
         }
@@ -748,7 +651,7 @@ uint8_t report_stat_reset_from_698(struct instance_t* instance, uint32_t State20
 
     report_645stat_save(instance);        
 
-    nd_mbase_report_stat_already_read645(mbase_cb) = 0; 
+    nd_mb_report_stat_already_read645(instance) = 0; 
 
     event_out_check(instance);
     
@@ -760,33 +663,32 @@ uint8_t report_stat_reset_from_698(struct instance_t* instance, uint32_t State20
 
 
 //秒调用
-void report_645state_reset_sec_judge(struct instance_t* instance)
+void report_645state_reset_sec_judge(void *instance)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     uint8_t cnt, index;
         
-    if (0 != nd_mbase_report_reset_sec_cnt_645(mbase_cb))
+    if (0 != nd_mb_report_reset_sec_cnt_645(instance))
     {
-        nd_mbase_report_reset_sec_cnt_645(mbase_cb)--;
+        nd_mb_report_reset_sec_cnt_645(instance)--;
 
-        if (0 == nd_mbase_report_reset_sec_cnt_645(mbase_cb))
+        if (0 == nd_mb_report_reset_sec_cnt_645(instance))
         {                        
             for (cnt = 0; cnt < 12; cnt++)
             {
                 for (index = 0; index < 8; index++)
                 {
-                    if (nd_mbase_report_stat_read_cache645(mbase_cb)[cnt] & (0x01 << index))
+                    if (nd_mb_report_stat_read_cache645(instance)[cnt] & (0x01 << index))
                     {   
-                        nd_mbase_report_stat_645(mbase_cb)[cnt] &= ~(0x01 << index);
-                        nd_mbase_report_stat_645(mbase_cb)[12 + 8*cnt + index] = 0;
+                        nd_mb_report_stat_645(instance)[cnt] &= ~(0x01 << index);
+                        nd_mb_report_stat_645(instance)[12 + 8*cnt + index] = 0;
                         report_645stat_reset_from_645(instance,   8*cnt + index);
                     }
                 }
             }
 
-            nd_mbase_report_stat_already_read645(mbase_cb) = 0;
-            memset(nd_mbase_report_stat_read_cache645(mbase_cb), 0x00, 12);
+            nd_mb_report_stat_already_read645(instance) = 0;
+            memset(nd_mb_report_stat_read_cache645(instance), 0x00, 12);
             
             report_645stat_save(instance);   
             
@@ -795,25 +697,24 @@ void report_645state_reset_sec_judge(struct instance_t* instance)
     }
 }
 
-void report_state_read_pro(struct instance_t* instance, uint8_t *buff, uint8_t *length)
+void report_state_read_pro(void *instance, uint8_t *buff, uint8_t *length)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t delay = 1;
     uint8_t cnt, index, num = 0;
     int ret = 0;
     
-    nd_mbase_report_stat_already_read645(mbase_cb) = 1;
-    ndv_memcopy(nd_mbase_report_stat_read_cache645(mbase_cb), nd_mbase_report_stat_645(mbase_cb), 12);
-    ndv_memcopy(buff, nd_mbase_report_stat_645(mbase_cb), 12);
+    nd_mb_report_stat_already_read645(instance) = 1;
+    ndv_memcopy(nd_mb_report_stat_read_cache645(instance), nd_mb_report_stat_645(instance), 12);
+    ndv_memcopy(buff, nd_mb_report_stat_645(instance), 12);
     buff[12] = 0xAA;
 
     for (cnt = 0; cnt < 12; cnt++)
     {
         for (index = 0; index < 8; index++)
         {
-            if (nd_mbase_report_stat_645(mbase_cb)[cnt] & (0x01 << index))
+            if (nd_mb_report_stat_645(instance)[cnt] & (0x01 << index))
             {
-                buff[13 + num] = nd_mbase_report_stat_645(mbase_cb)[12 + 8*cnt + index];
+                buff[13 + num] = nd_mb_report_stat_645(instance)[12 + 8*cnt + index];
                 num ++;
             }
         }
@@ -829,15 +730,15 @@ void report_state_read_pro(struct instance_t* instance, uint8_t *buff, uint8_t *
     }
     delay = bcd_to_hex(delay);
 
-    nd_mbase_report_reset_sec_cnt_645(mbase_cb) = 60*delay;
+    nd_mb_report_reset_sec_cnt_645(instance) = 60*delay;
         
-    if (0 == nd_mbase_report_reset_sec_cnt_645(mbase_cb))
+    if (0 == nd_mb_report_reset_sec_cnt_645(instance))
     {
-        nd_mbase_report_reset_sec_cnt_645(mbase_cb) = 1;
+        nd_mb_report_reset_sec_cnt_645(instance) = 1;
     }
 }
 
-void dlt645_clear_follow_para(struct instance_t* instance, struct context_645_t* ctx)
+void dlt645_clear_follow_para(void *instance, struct context_645_t* ctx)
 {
     ctx->segment_tx_no = 0;
     ctx->segment_tx = 0;
@@ -848,9 +749,8 @@ void dlt645_clear_follow_para(struct instance_t* instance, struct context_645_t*
 *判断无后续帧时是否上报主动上报状态字
 *
 ***************************************************/
-int report_push_data_judge(struct instance_t* instance, uint8_t* databuf,  struct context_645_t* ctx)
+int report_push_data_judge(void *instance, uint8_t* databuf,  struct context_645_t* ctx)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t charact = 0, length = 0;
     uint8_t tmp[12] = {0};
     int ret = 0;
@@ -879,7 +779,7 @@ int report_push_data_judge(struct instance_t* instance, uint8_t* databuf,  struc
            return -1;
         }  
 
-        if (0 == mem_compare(tmp, nd_mbase_report_stat_645(mbase_cb), 12))
+        if (0 == mem_compare(tmp, nd_mb_report_stat_645(instance), 12))
         {
             dlt645_clear_follow_para(instance, ctx);
             return -1;
@@ -888,20 +788,6 @@ int report_push_data_judge(struct instance_t* instance, uint8_t* databuf,  struc
         report_state_read_pro(instance, databuf, &length);
         //report_state_read_pro(pdlt645_para->push_para.remain_data, (uint8*)&pdlt645_para->push_para.remain_len);
 
-#if 0
-        if (0 != pdlt645_para->push_para.remain_len)
-        {
-            pdlt645_para->push_para.report_flag = 1;
-            pdlt645_para->push_para.push_flag = 1;
-
-            hfp_memcopy((uint8*)&pdlt645_para->push_para.dl645_info_push.dlt645_id, rxbuf, 4);
-            pdlt645_para->control_code |= 0x20;
-        }
-        else
-        {
-            dlt645_clear_follow_para();
-        }
-#endif
 
         return length;
     }

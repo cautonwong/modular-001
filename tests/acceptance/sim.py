@@ -155,6 +155,9 @@ class SimHarness:
         self.timeout = timeout
         self._run_index = 0
 
+    def context(self, case_dir: Path) -> "SimContext":
+        return SimContext(self, case_dir)
+
     def run(
         self,
         case_dir: Path,

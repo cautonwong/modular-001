@@ -1,13 +1,15 @@
-#include "nidavellir.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
-#include "application/apps/display_applications.h"
+#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
+#include "application/ports/fifo.h"
+#include "targets/stategrid_meter/app/display_applications.h"
 #include "application/adapters/dl698/fr_698.h"
 #include "application/adapters/dl698/fr_698_esam.h"
-#include "domain/events/legacy/events_applications.h"
-#include "domain/tariff/legacy/tariff_applications.h"
+#include "targets/stategrid_meter/app/events/events_applications.h"
+#include "targets/stategrid_meter/app/tariff/tariff_applications.h"
+#include "domain/common/time_format.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
 
 #define PROGRAMEND1	0x03FFFF	//程序空间1结束地址
 #define PROGRAMPROZ	0x03FFFF//0x03F800	//程序保护区起始地址
@@ -33,9 +35,8 @@ uint32_t Byte2uInt(uint8_t* byte)
   return byte[3]+((uint32_t)byte[2]<<8) + ((uint32_t)byte[1]<<16) +((uint32_t)byte[0]<<24) ;
 }
 //文件传输类接口
-int16_t ActionFile( struct instance_t* instance, uint32_t id, uint8_t* inbuf, uint16_t buf_size, void *ctx, uint8_t* outbuf)
+int16_t ActionFile( void *instance, uint32_t id, uint8_t* inbuf, uint16_t buf_size, void *ctx, uint8_t* outbuf)
 {
-    struct mbase_control_block_t* mbase_cb;
 	unsigned char i, result;
 	//RetFrame Ret = {0,0,0,0};
 	//union B16_B08  DataLen;
@@ -43,13 +44,12 @@ int16_t ActionFile( struct instance_t* instance, uint32_t id, uint8_t* inbuf, ui
 	unsigned char BufA[16], RnBuf[64];
 //	unsigned char code *Code_Flash_Char;
     const unsigned char *Code_Flash_Char;
-	unsigned char *RtBuf = instance->apdu_cache;
+	unsigned char *RtBuf = nd_fr698_apdu_cache(instance);
 	uint16_t cc16,DataLen;
 	uint32_t cc32;
     uint8_t *p = inbuf;
     
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    if(mbase_cb == NULL)
+    if(!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -128,17 +128,15 @@ int16_t ActionFile( struct instance_t* instance, uint32_t id, uint8_t* inbuf, ui
 
 }
 
-int _f101_m127_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx)
+int _f101_m127_action(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx)
 {
-    struct mbase_control_block_t* mbase_cb;
 
     uint8_t  i, count, maxnum;
     uint8_t* p = buf;
     uint32_t s_index = 0;
-    uint8_t* ptr_tmp = instance->apdu_cache;
+    uint8_t* ptr_tmp = nd_fr698_apdu_cache(instance);
 
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    if (mbase_cb == NULL)
+    if (!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -163,8 +161,8 @@ int _f101_m127_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
     obj_right = buf_to_uint16_msb(p + 4);
     p += 4;
 
-    instance->apdu_cache[0] = 0;
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+    nd_fr698_apdu_cache(instance)[0] = 0;
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
     nd_get_index(instance, s_index, ptr_tmp, SecurityMode_EXData_LEN);
 
     maxnum = (SecurityMode_EXData_LEN - 1) / 4;
@@ -190,8 +188,8 @@ int _f101_m127_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
             {
                 memcpy(ptr_tmp + 2, (uint8_t*)&obj_right, 2);
 
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
-                nd_set_index(instance, s_index, instance->apdu_cache, SecurityMode_EXData_LEN);
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+                nd_set_index(instance, s_index, nd_fr698_apdu_cache(instance), SecurityMode_EXData_LEN);
 
                 return (p - buf);
             }
@@ -202,23 +200,21 @@ int _f101_m127_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
 
     memcpy(ptr_tmp, (uint8_t*)&obj_oi, 2);
     memcpy(ptr_tmp+2, (uint8_t*)&obj_right, 2);
-    instance->apdu_cache[0]++;
+    nd_fr698_apdu_cache(instance)[0]++;
 
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
-    nd_set_index(instance, s_index, instance->apdu_cache, SecurityMode_EXData_LEN);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+    nd_set_index(instance, s_index, nd_fr698_apdu_cache(instance), SecurityMode_EXData_LEN);
 
     return (p - buf);
 }
-int _f101_m128_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx) 
+int _f101_m128_action(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx) 
 {
-    struct mbase_control_block_t* mbase_cb;
     uint8_t  i, count, maxnum;
     uint8_t* p = buf;
     uint32_t s_index = 0;
-    uint8_t* ptr_tmp = instance->apdu_cache;
+    uint8_t* ptr_tmp = nd_fr698_apdu_cache(instance);
     uint16_t oi, tmp_oi;
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    if (mbase_cb == NULL)
+    if (!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -231,8 +227,8 @@ int _f101_m128_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
 
     oi = buf_to_uint16_msb(p);
     p += 2;
-    instance->apdu_cache[0] = 0;
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+    nd_fr698_apdu_cache(instance)[0] = 0;
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
     nd_get_index(instance, s_index, ptr_tmp, SecurityMode_EXData_LEN);
 
     maxnum = (SecurityMode_EXData_LEN - 1) / 4;
@@ -260,24 +256,22 @@ int _f101_m128_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
         return -DAR_OTHERS_ERROR;
     }
 
-    instance->apdu_cache[0]--;
-    memcpy(ptr_tmp, ptr_tmp + 4, instance->apdu_cache + SecurityMode_EXData_LEN - ptr_tmp);
+    nd_fr698_apdu_cache(instance)[0]--;
+    memcpy(ptr_tmp, ptr_tmp + 4, nd_fr698_apdu_cache(instance) + SecurityMode_EXData_LEN - ptr_tmp);
 
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
-    nd_set_index(instance, s_index, instance->apdu_cache, SecurityMode_EXData_LEN);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+    nd_set_index(instance, s_index, nd_fr698_apdu_cache(instance), SecurityMode_EXData_LEN);
 
     return (p - buf);
 
 }
-int _f101_m129_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx)
+int _f101_m129_action(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx)
 {
-    struct mbase_control_block_t* mbase_cb;
     uint8_t  i,count;
     uint8_t* p = buf;
     uint32_t s_index = 0;
-    uint8_t* ptr_tmp = instance->apdu_cache;
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    if (mbase_cb == NULL)
+    uint8_t* ptr_tmp = nd_fr698_apdu_cache(instance);
+    if (!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -294,8 +288,8 @@ int _f101_m129_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
     }
     p++;
 
-    instance->apdu_cache[0] = 0;
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+    nd_fr698_apdu_cache(instance)[0] = 0;
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
     nd_get_index(instance, s_index, ptr_tmp, SecurityMode_EXData_LEN);
 
     num = *p++;
@@ -312,7 +306,7 @@ int _f101_m129_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
     while (num--)
     {
         noadd_flag = 0;
-        ptr_tmp = instance->apdu_cache + 1;
+        ptr_tmp = nd_fr698_apdu_cache(instance) + 1;
         p += 2;
 
         if ((p[0] != TYPE_OI) || (p[3] != TYPE_long_unsigned))
@@ -363,10 +357,10 @@ int _f101_m129_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
 
     if (write_flag == 1)
     {
-        instance->apdu_cache[0] = count;
+        nd_fr698_apdu_cache(instance)[0] = count;
 
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
-        nd_set_index(instance, s_index, instance->apdu_cache, SecurityMode_EXData_LEN);
+        s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+        nd_set_index(instance, s_index, nd_fr698_apdu_cache(instance), SecurityMode_EXData_LEN);
 
         return (p - buf);
     }
@@ -375,9 +369,8 @@ int _f101_m129_action(struct instance_t* instance, uint32_t id, uint8_t* buf, ui
 }
 
 //协商失效
-int connect_failture(struct instance_t* instance, uint8_t* req_buf, struct context_698_t* ctx )
+int connect_failture(void *instance, uint8_t* req_buf, struct context_698_t* ctx )
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     struct fifo_t* cache = ctx->apdu;
     uint8_t cilent_index, temp[42]={0};
     uint8_t *p_req = req_buf;
@@ -385,7 +378,7 @@ int connect_failture(struct instance_t* instance, uint8_t* req_buf, struct conte
     uint8_t *p_res_tmp = p_res;
     uint8_t channel = 0;
     
-    if((ctx)&&(ctx->channel < chl_NUM))
+    if((ctx)&&(ctx->channel < FR_698_CHL_NUM))
     {
         channel = ctx->channel;
     }
@@ -405,8 +398,8 @@ int connect_failture(struct instance_t* instance, uint8_t* req_buf, struct conte
         cilent_index = 0;
     }
 
-    nd_mbase_connect_timeout(mbase_cb)[channel][cilent_index] = 0;
-    nd_mbase_esam_connect_timeout(mbase_cb)[channel][cilent_index] = 0;
+    nd_mb_connect_timeout(instance)[channel][cilent_index] = 0;
+    nd_mb_esam_connect_timeout(instance)[channel][cilent_index] = 0;
 
     p_res = p_res + 2;
     *p_res++ = TYPE_date_time_s;
@@ -427,10 +420,9 @@ int connect_failture(struct instance_t* instance, uint8_t* req_buf, struct conte
 
 
 
-int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx)
+int ACTION_F_Other(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx)
 {    
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    struct pipeline_t* pipeline =  get_pipeline(instance, pid_meter_base); 
+    void *pipeline = nd_fr698_pipeline(instance); 
     struct context_698_t* p_ctx = (struct context_698_t*)ctx;
     struct fifo_t* cache = p_ctx->apdu;
     uint8_t *apdu_rx = p_ctx->apdu_d_rx + p_ctx->apdu_rx_offset;
@@ -441,14 +433,14 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
     int16_t complen;
     uint8_t *p = buf,disp_sequ=0;
     uint32_t temp = 0,s_index=0,addr=0,displayid=0,displayoad1=0,displayoad2=0;
-    uint8_t* ptr_tmp = instance->apdu_cache;
+    uint8_t* ptr_tmp = nd_fr698_apdu_cache(instance);
     uint8_t i, tmp_len = 0;
     //struct fifo_t* cache_t = p_ctx->apdu;
     uint8_t* p_tx = cache->buf_ptr;
     uint8_t* p_data;
     uint8_t channel = 0;
     
-    if((p_ctx)&&(p_ctx->channel < chl_NUM))
+    if((p_ctx)&&(p_ctx->channel < FR_698_CHL_NUM))
     {
         channel = p_ctx->channel;
     }
@@ -457,7 +449,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
     method = (unsigned char)((id & 0x0000FF00) >> 8);    //方法
     
     
-    if(mbase_cb == NULL)
+    if(!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -581,23 +573,23 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                         if((tmp_len < 5) || (tmp_len > 32))    return -DAR_TYPE_NOT_MATCH;
                         if(BCD_Check((uint8_t*)&buffer[5], tmp_len) == 1)    return -DAR_TYPE_NOT_MATCH;
 
-                        if(nd_mbase_key_state(mbase_cb) == 0)    return -DAR_OTHERS_ERROR; // 私钥不允许改表号
+                        if(nd_mb_key_state(instance) == 0)    return -DAR_OTHERS_ERROR; // 私钥不允许改表号
 
                         if ((tmp_len < 6))
                         {
                             tmp_len = 6;
                         }
-                        ndv_memcopy(nd_mbase_meterNo(mbase_cb), &buffer[5+ tmp_len - 6], 6);  
-                        addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        nd_mbase_offset_meterNo());
-                        nd_set_offset(instance, addr, nd_mbase_meterNo(mbase_cb), 6);     
+                        ndv_memcopy(nd_mb_meter_no(instance), &buffer[5+ tmp_len - 6], 6);  
+                        addr = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        nd_mb_offset_meter_no());
+                        nd_set_offset(instance, addr, nd_mb_meter_no(instance), 6);     
                     }
                     break;
 
                     case 0x40030200: /*客户编号*/
                     {
                         if (tmp_len != 6)  return -DAR_TYPE_NOT_MATCH;
-                        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + User_Number);
+                        s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + User_Number);
                         nd_set_index(instance, s_index, p_data, 6); 
                     }
                     break;
@@ -614,77 +606,6 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                         if (tmp_len != 3)  return -DAR_TYPE_NOT_MATCH;
                     }
                     break;
-#if 0                 
-                    
-                    case 0x400A0200: /*两套分时费率切换时间*/
-                    case 0x400B0200: /*两套阶梯电价切换时间*/
-                    {
-                        if (tmp_len != 5)  return -DAR_TYPE_NOT_MATCH;
-
-                        bcd_to_hex_array(&keybuf[20], p_data, tmp_len);  
-                        
-                        swap_buffer(&keybuf[20], tmp_len);           //待调整
-
-                        temp = 2000 + keybuf[20];
-
-                        keybuf[0] = keybuf[22]; //day
-                        keybuf[1] = keybuf[21]; //month   
-                        keybuf[2] = keybuf[20]; //year
-                        
-                        keybuf[3] = keybuf[23];  //hour
-                        keybuf[4] = keybuf[24];  //min
-                        keybuf[5] = 0;  //sec
-                        keybuf[25] = 0xFF;//sec
-                        if((Time_Format_Check(&keybuf[3])) || (Date_Format_Check(keybuf)))    return -DAR_OTHERS_ERROR;
-
-                        ndv_move_buffer(&keybuf[21], &keybuf[22], 5);
-                        keybuf[20] = (uint8_t)(temp>>8);
-                        keybuf[21] = (uint8_t)(temp);
-                        
-                        if (displayoad2 == 0x400A0200)
-                        {
-                            nd_set_index_e2p(instance, &keybuf[20], mbase_block_parameter, FeePrice_ChangeTimeID, 7);
-                        }
-                        else
-                        {
-                            nd_set_index_e2p(instance, &keybuf[20], mbase_block_parameter, StepPrice_ChangeTimeID, 7);
-                        }
-                       
-
-                    }
-                    break;
-                    
-                    case 0x40190200: /*备用套费率电价*/
-                    {
-                        if ((tmp_len % 4)) return -DAR_TYPE_NOT_MATCH;
-
-                        /*保存编程前的费率电价表*/
-                        save_last_tariff_price_table(instance);
-
-                        for (i = 0; i < (tmp_len / 4); i++)
-                        {
-                            bcd_to_hex_array(keybuf, p_data, 4);
-                            temp = (uint32_t)keybuf[0] * 1000000 + (uint32_t)keybuf[1] * 10000 + (uint32_t)keybuf[2] * 100 + keybuf[3];
-
-                            nd_set_index_e2p(instance, (uint8_t *)&temp, mbase_block_parameter, Fee_Price_II_1_ID + i, 4);
-                            p_data += 4;
-                        }
-                        
-                        for(i = tmp_len/4; i < 32; i++)
-                        {
-                            nd_set_index_e2p(instance, (uint8_t *)&temp, mbase_block_parameter, Fee_Price_II_1_ID + i, 4);
-                        }
-
-                        record_event_no_mesg_pro(instance, NULL, FeeTabWrS, NULL, 1);
-                    }
-                    break;
-                    
-                    case 0x401B0200: /*备用套阶梯电价*/
-                    {
-                    
-                    }
-                    break;
-#endif                    
                     default:
                         return -DAR_OTHERS_ERROR;
                         break;
@@ -705,7 +626,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 keybuf[1] = 16;
                 read_esam_info(instance, esam_inf,0X04);
                 memcpy(&keybuf[2], (uint8_t*)&esam_inf[0], 16);
-                addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_KeyVer);
+                addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_KeyVer);
                 nd_set_index(instance, addr, &keybuf[0], 18);
 
                 uint8_t *pdata = apdu_rx + 3;
@@ -713,7 +634,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 if(rxlen > 0){
                     p = p + rxlen + 3;
 
-                    nd_mbase_key_state(mbase_cb) = get_key_status(instance);//获取秘钥状态
+                    nd_mb_key_state(instance) = get_key_status(instance);//获取秘钥状态
                     send_event_mesg_pro(instance, NULL, SecretKeyWrS, NULL, 1);//成功后 再触发 密钥更新事件
                 }
                 return (p-buf);
@@ -752,26 +673,20 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 {
                     if(0 < (read_esam_info(instance, keybuf, 0x08)))
                     {
-                        nd_mbase_AuthOn(mbase_cb) = keybuf[0];
+                        nd_mb_auth_on(instance) = keybuf[0];
                     }
                     else      
-                        nd_mbase_AuthOn(mbase_cb) = 0;
+                        nd_mb_auth_on(instance) = 0;
                 }
                 return (p-buf);
             }
-#if 0			
-            else if(method == 0x0A) //钱包初始化 
-            {
-
-            }
-#endif			
             else if(method == 0x0B) //红外请求
             {
-                 if((cilent_index == 0) && (channel != chl_ir_698))//主站只能红外
+                 if((cilent_index == 0) && (channel != FR_698_CHL_IR))//主站只能红外
                 {
                     return -DAR_OTHERS_ERROR;
                 }
-                if((cilent_index == 1) && (channel == chl_ir_698))//终端不能红外
+                if((cilent_index == 1) && (channel == FR_698_CHL_IR))//终端不能红外
                 {
                     return -DAR_OTHERS_ERROR;
                 }
@@ -834,16 +749,16 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 cache->buf_ptr[cache->wr++] = 8;
                 memcpy((uint8_t*)&cache->buf_ptr[cache->wr], (uint8_t*)&keybuf[24], 8);//随机数2
                 cache->wr = cache->wr + 8;
-                nd_mbase_esam_power_close_dly(mbase_cb) = 60;
+                nd_mb_esam_power_close_dly(instance) = 60;
                 return (p-buf);
             }
             else if(method == 0x0C) //红外认证
             {
-                if((cilent_index == 0) && (channel != chl_ir_698))//主站只能红外
+                if((cilent_index == 0) && (channel != FR_698_CHL_IR))//主站只能红外
                 {
                     return -DAR_OTHERS_ERROR;
                 }
-                if((cilent_index == 1) && (channel == chl_ir_698))//终端不能红外
+                if((cilent_index == 1) && (channel == FR_698_CHL_IR))//终端不能红外
                 {
                     return -DAR_OTHERS_ERROR;
                 }
@@ -861,18 +776,18 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 }
                 else
                 {
-                    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + IrAuthenTime);
+                    addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + IrAuthenTime);
                     nd_get_index(instance, addr, buffer, 4); 
                     
                     mem_swap_cpy((uint8_t*)&temp, buffer, 4);
                    
                     if(cilent_index )
                     {
-                        nd_mbase_term_auth_timeout(mbase_cb) = temp * 60;
+                        nd_mb_term_auth_timeout(instance) = temp * 60;
                     }
                     else
                     {
-                        nd_mbase_infrared_auth_timeout(mbase_cb) = temp * 60;
+                        nd_mb_infrared_auth_timeout(instance) = temp * 60;
                     }                
                     
                     if(cilent_index)//终端需断开所有应用链接
@@ -897,7 +812,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     return -DAR_OTHERS_ERROR;
                 }
                 memset(ptr_tmp, 0, SecurityMode_EXData_LEN);
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
                 nd_set_index(instance, s_index, ptr_tmp, SecurityMode_EXData_LEN);
                 p += 2;
                 return (p - buf);
@@ -931,15 +846,15 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 {
                     return -DAR_BUFFER_OVERFLOW;
                 }
-                nd_mbase_baud_chg(mbase_cb) = 0;
-                if(nd_mbase_Baut_rs485(mbase_cb) != *p)
+                nd_mb_baud_chg(instance) = 0;
+                if(nd_mb_baut_rs485(instance) != *p)
                 {
-                    nd_mbase_Baut_rs485(mbase_cb) = *p;
-                    nd_mbase_baud_chg(mbase_cb) = 0x01;
+                    nd_mb_baut_rs485(instance) = *p;
+                    nd_mb_baud_chg(instance) = 0x01;
                     
-                    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                    nd_mbase_offset_Baut_rs485());
-                    nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_Baut_rs485(mbase_cb), 1);
+                    s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                    nd_mb_offset_baut_rs485());
+                    nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_baut_rs485(instance), 1);
                 }
                 
                 p = p + 7;
@@ -973,7 +888,7 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 {
                     return -DAR_BUFFER_OVERFLOW;
                 }
-                nd_mbase_relay_ctl_mode(mbase_cb) = *p++;
+                nd_mb_relay_ctl_mode(instance) = *p++;
             }
             else
             {
@@ -990,12 +905,12 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 {
                     return -DAR_OBJECT_NOT_EXIST;
                 }
-                if((*p != F_PortSec) && (*p != F_PortTouCut))
+                if((*p != ND_MB_FLAG_PORT_SEC) && (*p != ND_MB_FLAG_PORT_TOU_CUT))
                 {
                     return -DAR_OTHERS_ERROR;//return -DAR_BUFFER_OVERFLOW;
                 }
-                nd_mbase_MulPortMode(mbase_cb) = *p++;
-                if(F_PortTouCut == nd_mbase_MulPortMode(mbase_cb))    
+                nd_mb_mul_port_mode(instance) = *p++;
+                if(ND_MB_FLAG_PORT_TOU_CUT == nd_mb_mul_port_mode(instance))    
                 {
                     opreate_second_pluse(3);    //切换至多功能口
                 }
@@ -1026,26 +941,26 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                 {
                     return -DAR_COMM_SPEED_CANNOT_CHANGE;
                 }
-                nd_mbase_baud_chg(mbase_cb) = 0;
+                nd_mb_baud_chg(instance) = 0;
                 if(temp == 0xF20902FD)  //协商
                 {
-                    if(channel != chl_PLC_698)     return -DAR_RW_REJECT; 
-                    if(nd_mbase_Baut_plc_neg(mbase_cb) != *p)
+                    if(channel != FR_698_CHL_PLC)     return -DAR_RW_REJECT; 
+                    if(nd_mb_baut_plc_neg(instance) != *p)
                     {
-                        nd_mbase_Baut_plc_neg(mbase_cb) = *p;
-                        nd_mbase_baud_chg(mbase_cb) = 0x04;
+                        nd_mb_baut_plc_neg(instance) = *p;
+                        nd_mb_baud_chg(instance) = 0x04;
                     }
                 }
                 else
                 {
-                    if(nd_mbase_Baut_plc(mbase_cb) != *p)
+                    if(nd_mb_baut_plc(instance) != *p)
                     {
-                        nd_mbase_Baut_plc(mbase_cb) = *p;
-                        nd_mbase_baud_chg(mbase_cb) = 0x02;
+                        nd_mb_baut_plc(instance) = *p;
+                        nd_mb_baud_chg(instance) = 0x02;
                         
-                        s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        nd_mbase_offset_Baut_plc());
-                        nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_Baut_plc(mbase_cb), 1);
+                        s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        nd_mb_offset_baut_plc());
+                        nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_baut_plc(instance), 1);
                     }
                 }
                 p = p + 5;
@@ -1064,52 +979,52 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     if(0 != p[0]){
                         return -DAR_TYPE_NOT_MATCH;
                     }
-                    if(nd_mbase_lcd_keydis_list_num(mbase_cb) > 0)
+                    if(nd_mb_lcd_keydis_list_num(instance) > 0)
                     {
-                        if( nd_mbase_KeyPtr(mbase_cb) >= (nd_mbase_lcd_keydis_list_num(mbase_cb)-1) )
-                            nd_mbase_KeyPtr(mbase_cb) = 0;
+                        if( nd_mb_key(instance) >= (nd_mb_lcd_keydis_list_num(instance)-1) )
+                            nd_mb_key(instance) = 0;
                         else
-                            nd_mbase_KeyPtr(mbase_cb)++;
+                            nd_mb_key(instance)++;
                     }
                     else
                     {
-                        nd_mbase_KeyPtr(mbase_cb) = 0;
+                        nd_mb_key(instance) = 0;
                     }
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + nd_mbase_KeyPtr(mbase_cb));
+                    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + nd_mb_key(instance));
                     nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
                     if(pageid == 0xFFFF)
                     {
                         pageid = 0xFFFE; //避免上下翻出现全屏
                     }
-                    nd_mbase_Page_ID(mbase_cb) = pageid;
-                    nd_mbase_AutoInv(mbase_cb) = nd_mbase_lcd_keydis_keep_sec(mbase_cb)+1;
-                    nd_mbase_BackLightTmr(mbase_cb) = 60;
+                    nd_mb_page_id(instance) = pageid;
+                    nd_mb_auto_inv(instance) = nd_mb_lcd_keydis_keep_sec(instance)+1;
+                    nd_mb_backlight_tmr(instance) = 60;
                     return 1;
             case 0x04://上翻
                     if(oad == 0xF300)   return -DAR_RW_REJECT;;
                     if(0 != p[0]){
                         return -DAR_TYPE_NOT_MATCH;
                     }
-                    if(nd_mbase_lcd_keydis_list_num(mbase_cb) > 0)
+                    if(nd_mb_lcd_keydis_list_num(instance) > 0)
                     {
-                        if( nd_mbase_KeyPtr(mbase_cb) == 0 )
-                            nd_mbase_KeyPtr(mbase_cb) = nd_mbase_lcd_keydis_list_num(mbase_cb)-1;
+                        if( nd_mb_key(instance) == 0 )
+                            nd_mb_key(instance) = nd_mb_lcd_keydis_list_num(instance)-1;
                         else
-                            nd_mbase_KeyPtr(mbase_cb)--;
+                            nd_mb_key(instance)--;
                     }
                     else
                     {
-                        nd_mbase_KeyPtr(mbase_cb) = 0;
+                        nd_mb_key(instance) = 0;
                     }
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + nd_mbase_KeyPtr(mbase_cb));
+                    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + nd_mb_key(instance));
                     nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
                     if(pageid == 0xFFFF)
                     {
                         pageid = 0xFFFE; //避免上下翻出现全屏
                     }
-                    nd_mbase_Page_ID(mbase_cb) = pageid;
-                    nd_mbase_AutoInv(mbase_cb) = nd_mbase_lcd_keydis_keep_sec(mbase_cb) + 1;
-                    nd_mbase_BackLightTmr(mbase_cb) = 60;
+                    nd_mb_page_id(instance) = pageid;
+                    nd_mb_auto_inv(instance) = nd_mb_lcd_keydis_keep_sec(instance) + 1;
+                    nd_mb_backlight_tmr(instance) = 60;
                     return 1;
                 case 0x05://显示查看
                     p=p+2;
@@ -1144,24 +1059,24 @@ int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint1
                     p = p + 2;
                     displayid = display_oad_to_id((uint8_t*)&displayoad1, (uint8_t*)&displayoad2, disp_sequ, len);
                     if(displayid == 0)  return -DAR_BUFFER_OVERFLOW;
-                    nd_mbase_Page_ID(mbase_cb) = displayid;
-                    mem_swap_cpy((uint8_t*)&nd_mbase_AutoInv(mbase_cb), p, 2);//持续时间
+                    nd_mb_page_id(instance) = displayid;
+                    mem_swap_cpy((uint8_t*)&nd_mb_auto_inv(instance), p, 2);//持续时间
                     p=p+2;  
-                    nd_mbase_AutoInv(mbase_cb) += 1; 
-                    nd_mbase_BackLightTmr(mbase_cb) = nd_mbase_lcd_checkdis_keep_sec(mbase_cb) + 1;
+                    nd_mb_auto_inv(instance) += 1; 
+                    nd_mb_backlight_tmr(instance) = nd_mb_lcd_checkdis_keep_sec(instance) + 1;
                     return (p-buf);
                     break;
                 case 0x06://全屏显示
-                    nd_mbase_AutoPtr(mbase_cb) = 0xFF;
-                    nd_mbase_Page_ID(mbase_cb) = 0xFFFF;
+                    nd_mb_auto_ptr(instance) = 0xFF;
+                    nd_mb_page_id(instance) = 0xFFFF;
                     p++;
-                    mem_swap_cpy((uint8_t*)&nd_mbase_AutoInv(mbase_cb), p, 2);
+                    mem_swap_cpy((uint8_t*)&nd_mb_auto_inv(instance), p, 2);
                     p = p + 2;
-                    nd_mbase_AutoInv(mbase_cb) += 1; 
-                    if((nd_mbase_AutoInv(mbase_cb) > 30) || (nd_mbase_AutoInv(mbase_cb) == 0))
-                        nd_mbase_BackLightTmr(mbase_cb) = 5;
+                    nd_mb_auto_inv(instance) += 1; 
+                    if((nd_mb_auto_inv(instance) > 30) || (nd_mb_auto_inv(instance) == 0))
+                        nd_mb_backlight_tmr(instance) = 5;
                     else
-                        nd_mbase_BackLightTmr(mbase_cb) = nd_mbase_AutoInv(mbase_cb);
+                        nd_mb_backlight_tmr(instance) = nd_mb_auto_inv(instance);
                     return (p-buf);
                 default:
                     return -DAR_RW_REJECT;

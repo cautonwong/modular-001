@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check every script action target against the OBIS inventory and member matrix."""
 import csv
+import sys
 from collections import defaultdict
 
 OUT = 'docs/idis/script_target_check.md'
@@ -39,7 +40,8 @@ def main():
     print(f'{len(problems)} problems -> {OUT}')
     for p in problems[:20]:
         print(p)
+    return 1 if problems else 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

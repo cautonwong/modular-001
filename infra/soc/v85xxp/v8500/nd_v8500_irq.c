@@ -2,6 +2,7 @@
 #include "target_isr.h"
 #include "type_def.h"
 #include "cpu_surport.h"
+#include "lib_tmr.h"
 
 /*
  * The V8500 vector table lives in the product startup file.  Peripheral

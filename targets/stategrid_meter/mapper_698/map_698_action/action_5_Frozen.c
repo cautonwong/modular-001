@@ -1,15 +1,15 @@
-#include "nidavellir.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
-#include "gs_record.h"
+#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
 #include "application/adapters/dl698/fr_698.h"
-#include "domain/events/legacy/gs_record.h"
-#include "domain/freeze/legacy/freeze_applications.h"
-#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
+#include "targets/stategrid_meter/app/freeze/freeze_applications.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
 
 
-int freeze_add_one_capture(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
+int freeze_add_one_capture(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
     uint8_t num, maxnum, scheme, offset;
     uint8_t tempbuf[200], period_buf[3 * 8], depth_buf[1 + 2 * 15];
@@ -19,7 +19,7 @@ int freeze_add_one_capture(struct instance_t* instance, uint32_t oad, uint8_t* b
     uint16_t period, depth, OI, CaptureLen, PeriodLen, DepthLen;
     uint32_t CaptureId, PeriodId, DepthId;
     uint32_t capture_oad;
-    uint8_t* apdu_cache = instance->apdu_cache; 
+    uint8_t* apdu_cache = nd_fr698_apdu_cache(instance); 
 
 
     struct record_storage_id_info_t  record_id_info;
@@ -175,7 +175,7 @@ int freeze_add_one_capture(struct instance_t* instance, uint32_t oad, uint8_t* b
     return (int)(p - buf);
 }
 
-int freeze_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
+int freeze_delete_one_capture(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
     uint8_t i, num, maxnum, scheme, offset;
     uint8_t tempbuf[200], period_buf[3 * 8],depth_buf[1 + 2 * 15];
@@ -269,13 +269,6 @@ int freeze_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t
         memcpy(oadlist, oadlist + 4, CaptureLen + tempbuf - oadlist);//关联对象
         tempbuf[0] -= 1;
     
-#if 0
-        ret = cal_record_size_sectors(instance,tempbuf, depth_buf, oad);
-        if (ret <= 0)
-        {
-            return -DAR_BUFFER_OVERFLOW;
-        }
-#endif     
         // write  period
         nd_set_index(instance, PeriodId, &period_buf[0], PeriodLen);
     
@@ -293,7 +286,7 @@ int freeze_delete_one_capture(struct instance_t* instance, uint32_t oad, uint8_t
     return (int)(p - buf);
 }
 
-int freeze_add_multi_capture(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
+int freeze_add_multi_capture(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
     uint8_t add_num, num, maxnum, scheme, offset;
     uint8_t tempbuf[200], period_buf[3 * 8], depth_buf[1 + 2 * 15];
@@ -303,7 +296,7 @@ int freeze_add_multi_capture(struct instance_t* instance, uint32_t oad, uint8_t*
     uint16_t period, depth, OI, CaptureLen, PeriodLen, DepthLen;
     uint32_t CaptureId, PeriodId, DepthId;
     uint32_t capture_oad;
-    uint8_t* apdu_cache = instance->apdu_cache; 
+    uint8_t* apdu_cache = nd_fr698_apdu_cache(instance); 
 
     struct record_storage_id_info_t  record_id_info;
     int ret;
@@ -457,7 +450,7 @@ int freeze_add_multi_capture(struct instance_t* instance, uint32_t oad, uint8_t*
     return (int)(p - buf);
 }
 
-int freeze_delete_all_capture(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
+int freeze_delete_all_capture(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
     uint8_t maxnum;//, scheme;//, offset;num, 
     uint8_t tempbuf[200], period_buf[3 * 8], depth_buf[1 + 2 * 15];
@@ -517,10 +510,9 @@ int freeze_delete_all_capture(struct instance_t* instance, uint32_t oad, uint8_t
 }
 
 
-int ACTION_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
+int ACTION_5_Frozen(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 {  
 
-    struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
 //    uint16_t i;
 //    uint8_t tempbuf[200];
@@ -528,8 +520,7 @@ int ACTION_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, void
     uint8_t  dar = 0;
 //    int ret;
 
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    if (mbase_cb == NULL)
+    if (!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -555,7 +546,7 @@ int ACTION_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             return -DAR_TYPE_NOT_MATCH;
         }
         p++;
-        nd_mbase_trigger_insfreeze_delay_sec(mbase_cb) = buf_to_uint16_msb(p);
+        nd_mb_trigger_insfreeze_delay_sec(instance) = buf_to_uint16_msb(p);
         return (int)(p - buf);
 
     case 4: // 添加一个冻结关联对象属性 

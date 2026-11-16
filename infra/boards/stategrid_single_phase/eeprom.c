@@ -1,5 +1,6 @@
 #include "type_def.h"
 #include "nidavellir.h"
+#include "infra/boards/stategrid_single_phase/eeprom.h"
 #include "cpu_surport.h"
 /**
  * @ingroup    drivers_eepromdev

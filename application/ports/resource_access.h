@@ -8,8 +8,6 @@
 #define CIRCULAR_OFFSET_SEQUENCE 0x01
 #define CIRCULAR_OFFSET_TIME 0x06
 
-struct instance_t;
-
 struct circular_info_t
 {
     uint8_t mode;
@@ -21,26 +19,26 @@ struct circular_info_t
     uint16_t valid_num;
 };
 
-int16_t nd_log_output(struct instance_t *instance, uint32_t index,
+int16_t nd_log_output(void *ctx, uint32_t index,
                       uint8_t *buf, uint16_t buf_size,
                       struct circular_info_t *info);
 
-int16_t nd_get_index(struct instance_t *instance, uint32_t index,
+int16_t nd_get_index(void *ctx, uint32_t index,
                      uint8_t *buf, uint16_t size);
-int16_t nd_set_index(struct instance_t *instance, uint32_t index,
+int16_t nd_set_index(void *ctx, uint32_t index,
                      uint8_t *buf, uint16_t size);
-int16_t nd_get_offset(struct instance_t *instance, uint32_t offset,
+int16_t nd_get_offset(void *ctx, uint32_t offset,
                       uint8_t *buf, uint16_t len);
-int16_t nd_set_offset(struct instance_t *instance, uint32_t offset,
+int16_t nd_set_offset(void *ctx, uint32_t offset,
                       uint8_t *buf, uint16_t len);
-int16_t nd_get_index_e2p(struct instance_t *instance, uint8_t *buf,
+int16_t nd_get_index_e2p(void *ctx, uint8_t *buf,
                          uint8_t block_name, uint16_t id, uint16_t len);
-int16_t nd_set_index_e2p(struct instance_t *instance, uint8_t *buf,
+int16_t nd_set_index_e2p(void *ctx, uint8_t *buf,
                          uint8_t block_name, uint16_t id, uint16_t len);
-int16_t nd_set_offset_flash(struct instance_t *instance, uint8_t blockname,
+int16_t nd_set_offset_flash(void *ctx, uint8_t blockname,
                             uint32_t addr_offset, uint8_t *buf, uint16_t len,
                             uint8_t check_erase);
-int16_t nd_get_offset_flash(struct instance_t *instance, uint8_t blockname,
+int16_t nd_get_offset_flash(void *ctx, uint8_t blockname,
                             uint32_t addr_offset, uint8_t *buf, uint16_t len);
 
 #endif

@@ -5,7 +5,7 @@
 #include "testutil/cmocka.h"
 #include <stdio.h>
 #include "cpu_surport.h"
-#include "application/apps/app_entry.h"
+#include "targets/stategrid_meter/app/app_entry.h"
 #include "kernel/legacy_control_block.h"
 extern int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg);
 

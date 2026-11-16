@@ -1,13 +1,12 @@
-#include "nidavellir.h"
 #include "fr_698.h"
-#include "domain/metering/legacy/metering_applications.h"
+#include "port.h"
+#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/app/metering/metering_applications.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
 
 
-int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, void *ctx)
+int GET_0_Energy(void *instance, uint32_t id, uint8_t* buf, uint8_t mode, void *ctx)
 {    
-    struct mbase_control_block_t* mbase_cb;
     uint8_t i;
     uint16_t OI;
     uint8_t attr_index, attribute,Num;
@@ -17,8 +16,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
     uint32_t s_index=0;
     unsigned long long engery=0;
     uint8_t phase = 0,pn = 0;
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    if(mbase_cb == NULL)
+    if(!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -71,7 +69,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
       }
     }
     
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3);    //读取费率个数
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3);    //读取费率个数
     nd_get_index(instance, s_index, (uint8_t*)&Num, 1);
     if((Num==0) || (Num>12))
     {
@@ -96,7 +94,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                       for(i=0;i<Num;i++)
                       {
                           *ptr++ = TYPE_double_long;
-                          tmp = Get_Cal_Active_Energy_T(mbase_cb,  i, 0);
+                          tmp = nd_mb_cal_active_energy(instance,  i, 0);
                           mem_swap_cpy(ptr, (uint8_t*)&tmp, 4);
                           ptr += 4;
                           len += 5;
@@ -120,7 +118,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                       for(i=0;i<Num;i++)
                       {
                             *ptr++ = TYPE_long64;
-                            engery = Get_Cal_Active_Energy_T(mbase_cb, i, 1);
+                            engery = nd_mb_cal_active_energy(instance, i, 1);
                             mem_swap_cpy(ptr, (uint8_t*)&engery, 8);
                             ptr += 8;
                             len += 9;
@@ -150,7 +148,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                     {
                     case 0x00:
                       buf[0] = TYPE_double_long;
-                      tmp = Get_Cal_Active_Energy_T(mbase_cb, attr_index, 0);
+                      tmp = nd_mb_cal_active_energy(instance, attr_index, 0);
                       mem_swap_cpy(&buf[1], (uint8_t*)&tmp, 4);
                       len = 5;                        
                       break;
@@ -167,7 +165,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                     {
                     case 0x00:
                       buf[0] = TYPE_long64;
-                      engery = Get_Cal_Active_Energy_T(mbase_cb, attr_index, 1);
+                      engery = nd_mb_cal_active_energy(instance, attr_index, 1);
                       mem_swap_cpy(&buf[1], (uint8_t*)&engery, 8);
                       len = 9;      
                       break;
@@ -206,7 +204,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                           for(i=0;i<Num;i++)
                           {
                               *ptr++ = TYPE_double_long_unsigned;
-                              tmp = Get_Active_Energy_TABC(mbase_cb, phase, i, 0, 0);
+                              tmp = nd_mb_active_energy_tabc(instance, phase, i, 0, 0);
                               mem_swap_cpy(ptr, (uint8_t*)&tmp, 4);
                               ptr += 4;
                               len += 5;
@@ -230,7 +228,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                           for(i=0;i<Num;i++)
                           {
                             *ptr++ = TYPE_long64_unsigned;
-                            engery = Get_Active_Energy_TABC(mbase_cb, phase, i, 1, 0);
+                            engery = nd_mb_active_energy_tabc(instance, phase, i, 1, 0);
                             mem_swap_cpy(ptr, (uint8_t*)&engery, 8);
                             ptr += 8;
                             len += 9;
@@ -257,14 +255,14 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                   if(attribute==2)
                   {
                       buf[0] = TYPE_double_long_unsigned;
-                      tmp = Get_Active_Energy_TABC(mbase_cb, phase, attr_index, 0, 0);
+                      tmp = nd_mb_active_energy_tabc(instance, phase, attr_index, 0, 0);
                       mem_swap_cpy(&buf[1], (uint8_t*)&tmp, 4);
                       len = 5;
                   }
                   else if(attribute==4)
                   {
                       buf[0] = TYPE_long64_unsigned;
-                      engery = Get_Active_Energy_TABC(mbase_cb, phase, attr_index, 1, 0);
+                      engery = nd_mb_active_energy_tabc(instance, phase, attr_index, 1, 0);
                       mem_swap_cpy(&buf[1], (uint8_t*)&engery, 8);
                       len = 9;
                   }
@@ -304,7 +302,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                       for(i=0;i<Num;i++)
                       {
                           *ptr++ = TYPE_double_long_unsigned;
-                          tmp = Get_Active_Energy_TABC(mbase_cb, phase, i, 0, 1);
+                          tmp = nd_mb_active_energy_tabc(instance, phase, i, 0, 1);
                           mem_swap_cpy(ptr, (uint8_t*)&tmp, 4);
                           ptr += 4;
                           len += 5;
@@ -328,7 +326,7 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                           for(i=0;i<Num;i++)
                           {
                             *ptr++ = TYPE_long64_unsigned;
-                            engery = Get_Active_Energy_TABC(mbase_cb, phase, i, 1, 1);
+                            engery = nd_mb_active_energy_tabc(instance, phase, i, 1, 1);
                             mem_swap_cpy(ptr, (uint8_t*)&engery, 8);
                             ptr += 8;
                             len += 9;
@@ -355,14 +353,14 @@ int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t
                   if(attribute==2)
                   {
                       buf[0] = TYPE_double_long_unsigned;
-                      tmp = Get_Active_Energy_TABC(mbase_cb, phase, attr_index, 0, 1);
+                      tmp = nd_mb_active_energy_tabc(instance, phase, attr_index, 0, 1);
                       mem_swap_cpy(&buf[1], (uint8_t*)&tmp, 4);
                       len = 5;
                   }
                   else if(attribute==4)
                   {
                       buf[0] = TYPE_long64_unsigned;
-                      engery = Get_Active_Energy_TABC(mbase_cb, phase, attr_index, 1, 1);
+                      engery = nd_mb_active_energy_tabc(instance, phase, attr_index, 1, 1);
                       mem_swap_cpy(&buf[1], (uint8_t*)&engery, 8);
                       len = 9;
                   }

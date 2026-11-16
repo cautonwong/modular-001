@@ -3,6 +3,7 @@
 #include "time_link.h"
 #include "fr_698_esam.h"
 #include "io_type.h"
+#include "esam_io.h"
 
 
 enum verification_choice_e
@@ -450,7 +451,8 @@ static const struct Func_esam_698_t Func_esam[] =
 };
 
 
-int esam_pro_handle(int fd, int request, void *param)
+/* Software ESAM dispatcher; the target path uses esam_pro.c instead. */
+int esam_soft_handle(int fd, int request, void *param)
 {
     if((request < esam_type_max_cmd) && (request >= esam_type_base)){
         return Func_esam[request - esam_type_base].pFunc((struct esam_698_data_t *)param, 0);

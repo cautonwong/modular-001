@@ -5,6 +5,9 @@
 #include "domain/report/report_retry.h"
 
 uint8_t report_channel_check(struct instance_t* instance, uint16_t channel);
+void report_port_open(struct instance_t* instance);
+void report_2015state_judge(struct instance_t* instance);
+uint32_t follow_report_3320List_Latest_oad_get(struct instance_t* instance, uint8_t chn);
 uint8_t active_report_enable_check(struct instance_t* instance,
                                    struct pipeline_t* pipeline,
                                    nd_dl698_msg_t* mesg);

@@ -32,9 +32,9 @@ static int __fr_handle_one_object(struct instance_t* instance, struct pipeline_t
         uint8_t type = apdu_rx[ctx->apdu_rx_offset++];
         if (type == 0x09)//octet-string
         {
-            uint8_t len = apdu_rx[ctx->apdu_rx_offset++];
-            memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, len);
-            ctx->apdu_rx_offset += len;
+            uint8_t octet_len = apdu_rx[ctx->apdu_rx_offset++];
+            memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, octet_len);
+            ctx->apdu_rx_offset += octet_len;
             p[cache->wr++] = 0x00;
         }
     }

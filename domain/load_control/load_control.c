@@ -21,6 +21,9 @@ struct load_control_state {
     uint8_t misoperation;
 };
 
+_Static_assert(_Alignof(struct load_control_state) <= ND_ALLOC_ALIGNMENT,
+               "load control needs more alignment than the allocator promises");
+
 static uint32_t magnitude(int32_t value)
 {
     return value < 0 ? (uint32_t)(-(value + 1)) + 1u : (uint32_t)value;

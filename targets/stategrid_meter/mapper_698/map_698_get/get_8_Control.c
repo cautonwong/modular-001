@@ -1,21 +1,20 @@
-#include "nidavellir.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
+#include "application/adapters/dl698/meter_base_view.h"
+#include "port.h"
+#include "targets/stategrid_meter/app/meter_flags.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
 
 #define		F_RemoteRelayOn  	    0x01	//保电
 
-int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
+int GET_8_Control(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
-    struct mbase_control_block_t* mbase_cb;
     uint16_t oad;
     uint8_t index,attribute;
     uint8_t* p=buf;
     uint32_t addr = 0;
     
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    if(mbase_cb == NULL)
+    if(!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -42,24 +41,24 @@ int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *
                             *p++ = TYPE_structure;
                             *p++ = 2;
                             *p++ = TYPE_double_long_unsigned;
-                            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectValue);
+                            addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectValue);
                             nd_get_index(instance, addr, p, 4); 
                             p = p + 4;
                             *p++ = TYPE_long_unsigned;
-                            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectTime);
+                            addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectTime);
                             nd_get_index(instance, addr, p, 2); 
                             p = p + 2;
                             return (p-buf);
                             break;
                         case 0x01:
                             *p++ = TYPE_double_long_unsigned;
-                            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectValue);
+                            addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectValue);
                             nd_get_index(instance, addr, p, 4); 
                             p = p + 4;
                             return (p-buf);
                         case 0x02:
                             *p++ = TYPE_long_unsigned;
-                            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectTime);
+                            addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectTime);
                             nd_get_index(instance, addr, p, 2); 
                             p = p + 2;
                             return (p-buf);
@@ -69,7 +68,7 @@ int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *
                 case 0x04://告警状态
                     *p++ = TYPE_bit_string;
                     *p++ = 8;
-                    if((nd_mbase_sta(mbase_cb) & F_RemoteAlarm) == F_RemoteAlarm)
+                    if((nd_mb_sta(instance) & F_RemoteAlarm) == F_RemoteAlarm)
                         *p++ = 0x80;
                     else
                         *p++ = 0;
@@ -77,7 +76,7 @@ int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *
                 case 0x05://命令状态
                     *p++ = TYPE_bit_string;
                     *p++ = 8;
-                    if((nd_mbase_sta(mbase_cb) & REMOTE_CMD_REALAY_OFF_STA) != 0)
+                    if((nd_mb_sta(instance) & REMOTE_CMD_REALAY_OFF_STA) != 0)
                         *p++ = 0x80;
                     else
                         *p++ = 0;
@@ -95,7 +94,7 @@ int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *
 
             if((attribute != 0x02) || (index != 0x00))  return -DAR_OBJECT_NOT_EXIST;
             *p++ = TYPE_enum;
-            if(nd_mbase_sta(mbase_cb) & F_RemoteRelayOn)//保电
+            if(nd_mb_sta(instance) & F_RemoteRelayOn)//保电
                 *p++ = 1;
             else
                 *p++ = 0;

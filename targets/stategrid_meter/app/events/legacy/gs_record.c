@@ -1,20 +1,28 @@
-#include "nidavellir.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
-#include "gs_record.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <time.h>
+#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
+#include "port.h"
+#include "targets/stategrid_meter/app/meter_flags.h"
+#include "nidavellir/include/kernel/message.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
+#include "targets/stategrid_meter/app/events/gs_record_tables.h"
 #include "fr_698.h"
 #include "application/ports/resource_access.h"
 #include "fr_645_report.h"
 #include "domain/common/status.h"
 #include "domain/events/record_message.h"
-#include "application/apps/app_config.h"
+#include "targets/stategrid_meter/app/app_config.h"
 #include "domain/events/power_event.h"
 #include "domain/events/event_catalog.h"
 #include "domain/events/record_capture.h"
-#include "domain/events/legacy/events_applications.h"
-#include "domain/events/legacy/gs_record.h"
-#include "domain/metering/legacy/metering_applications.h"
+#include "targets/stategrid_meter/app/events/events_applications.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
+#include "targets/stategrid_meter/app/metering/metering_applications.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
 
 #define U32toBufLSB(x)  ((uint8_t)(x)), ((uint8_t)(x>>8)), ((uint8_t)(x>>16)), ((uint8_t)(x>>24))
 #define U32toBufMSB(x)  ((uint8_t)(x>>24)),((uint8_t)(x>>16)), ((uint8_t)(x>>8)), ((uint8_t)(x))
@@ -31,21 +39,21 @@ __no_init uint32_t resetinfo_line;  //复位信息   扩展 OAD 0xFFFF02
 //const uint8_t init_50020300[] = { 0x01,0x07, U32toBufMSB(0x00100401), U32toBufMSB(0x00200401), U32toBufMSB(0x20000200), U32toBufMSB(0x20010200), U32toBufMSB(0x20010400), U32toBufMSB(0x20040200), U32toBufMSB(0x200A0200) };
 
 
-const uint8_t  init_MinuteFreeze_oad[]      = { 0x07, U32toBufMSB(0x00100401), U32toBufMSB(0x00200401), U32toBufMSB(0x20000200), U32toBufMSB(0x20010200), U32toBufMSB(0x20010400), U32toBufMSB(0x20040200), U32toBufMSB(0x200A0200) };
-const uint8_t  init_HourFreeze_oad[]        = { 0x02, U32toBufMSB(0x00100401), U32toBufMSB(0x00200401) };
-const uint8_t  init_DayFreeze_oad[]         = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
-const uint8_t  init_BillFreeze_oad[]        = { 0x04, U32toBufMSB(0x00000400), U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20310200) };
-const uint8_t  init_MonthFreeze_oad[]       = { 0x03, U32toBufMSB(0x00000400), U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), };
-const uint8_t  init_SeasonTabCutFreeze_oad[]= { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
-const uint8_t  init_DayTabCutFreeze_oad[]   = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
-const uint8_t  init_FeePriceCutFreeze_oad[] = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
+const uint8_t  init_MinuteFreeze_oad[ND_EVENT_OAD_LIST_BYTES]      = { 0x07, U32toBufMSB(0x00100401), U32toBufMSB(0x00200401), U32toBufMSB(0x20000200), U32toBufMSB(0x20010200), U32toBufMSB(0x20010400), U32toBufMSB(0x20040200), U32toBufMSB(0x200A0200) };
+const uint8_t  init_HourFreeze_oad[ND_EVENT_OAD_LIST_BYTES]        = { 0x02, U32toBufMSB(0x00100401), U32toBufMSB(0x00200401) };
+const uint8_t  init_DayFreeze_oad[ND_EVENT_OAD_LIST_BYTES]         = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
+const uint8_t  init_BillFreeze_oad[ND_EVENT_OAD_LIST_BYTES]        = { 0x04, U32toBufMSB(0x00000400), U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20310200) };
+const uint8_t  init_MonthFreeze_oad[ND_EVENT_OAD_LIST_BYTES]       = { 0x03, U32toBufMSB(0x00000400), U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), };
+const uint8_t  init_SeasonTabCutFreeze_oad[ND_EVENT_OAD_LIST_BYTES]= { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
+const uint8_t  init_DayTabCutFreeze_oad[ND_EVENT_OAD_LIST_BYTES]   = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
+const uint8_t  init_FeePriceCutFreeze_oad[ND_EVENT_OAD_LIST_BYTES] = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
 #if RESET_INFO  
-const uint8_t  init_StepCutFreeze_oad[]     = { 0x02, U32toBufMSB(0xFFFF0201), U32toBufMSB(0xFFFF0202), }; //复位次数      测试代码
+const uint8_t  init_StepCutFreeze_oad[ND_EVENT_OAD_LIST_BYTES]     = { 0x02, U32toBufMSB(0xFFFF0201), U32toBufMSB(0xFFFF0202), }; //复位次数      测试代码
 #else
-const uint8_t  init_StepCutFreeze_oad[]     = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
+const uint8_t  init_StepCutFreeze_oad[ND_EVENT_OAD_LIST_BYTES]     = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
 #endif
-const uint8_t  init_StepBillFreeze_oad[]    = { 0x01, U32toBufMSB(0x20320200)};
-const uint8_t  init_InstantFreeze_oad[]     = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
+const uint8_t  init_StepBillFreeze_oad[ND_EVENT_OAD_LIST_BYTES]    = { 0x01, U32toBufMSB(0x20320200)};
+const uint8_t  init_InstantFreeze_oad[ND_EVENT_OAD_LIST_BYTES]     = { 0x03, U32toBufMSB(0x00100400), U32toBufMSB(0x00200400), U32toBufMSB(0x20040200) };
 
 const uint8_t  init_Event_ReportFlag_3[]    = { 0x03 };
 const uint8_t  init_Event_ReportFlag_1[]    = { 0x01 };
@@ -66,7 +74,7 @@ const uint8_t  init_StepCutFreeze_period[]  = { 0x03, 0x00, 0x01 };
 const uint8_t  init_StepBillFreeze_period[] = { 0x03, 0x00, 0x01 };
 const uint8_t  init_InstantFreeze_period[]  = { 0x03, 0x00, 0x00 };                                           
                                                                                          
-const uint8_t  init_MinuteFreeze_depth[] = { 0x88, 0xE0,    0x00, 0x00,     0x00, 0x00,     0x00, 0x00,     0x00, 0x00,     0x00, 0x00,     0x00, 0x00,     0x00, 0x00, };
+const uint8_t  init_MinuteFreeze_depth[ND_MINUTE_FREEZE_DEPTH_BYTES] = { 0x88, 0xE0,    0x00, 0x00,     0x00, 0x00,     0x00, 0x00,     0x00, 0x00,     0x00, 0x00,     0x00, 0x00,     0x00, 0x00, };
 const uint8_t  init_HourFreeze_depth[] = { 0x00,0xFE };
 const uint8_t  init_DayFreeze_depth[] = { 0x01,0x6D };
 const uint8_t  init_BillFreeze_depth[] = { 0x00,0x0C };
@@ -84,58 +92,55 @@ const uint8_t  init_StepCutFreeze_depth[] = { 0x00,0x02 };
 const uint8_t  init_StepBillFreeze_depth[] = { 0x00,0x02 };                                                        
 const uint8_t  init_InstantFreeze_depth[] = { 0x00,0x03 };
 
-const uint8_t  init_BeforSet_SeasonT [] = { 0x01,0x01,0x02,0x03,0x11,0x01,0x11,0x01,0x11,0x11};
+const uint8_t  init_BeforSet_SeasonT [ND_BEFOR_SET_SEASON_T_BYTES] = { 0x01,0x01,0x02,0x03,0x11,0x01,0x11,0x01,0x11,0x11};
 
 
 
 const uint8_t  init_SecurityMode_En[] = { 0x01 };
-const uint8_t  init_SecurityMode_EXData[] = { 0x00 };
+const uint8_t  init_SecurityMode_EXData[ND_SECURITY_MODE_EXDATA_BYTES] = { 0x00 };
 const uint8_t  init_AuthTime_DL645[] = {  0x1E, 0x00 };
 
 
 
 
-const uint8_t  init_OverCurrentAS_oad[] = { 0x08, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201), U32toBufMSB(0x20002200), U32toBufMSB(0x20012200), U32toBufMSB(0x20042200), U32toBufMSB(0x200A2200), U32toBufMSB(0x00108201), U32toBufMSB(0x00208201) };
-const uint8_t  init_PowerOffS_oad[]     = { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201)};
-const uint8_t  init_MeterWrS_oad[]      = { 0x00 };
-const uint8_t  init_MeterClrS_oad[]     = { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201)};
-const uint8_t  init_EventClrS_oad[]     = { 0x00 };
-const uint8_t  init_SetTimeS_oad[]      = { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201) };
-const uint8_t  init_DayTabWrS_oad[]     = { 0x00 };
-const uint8_t  init_SeasonTabWrS_oad[]  = { 0x01, U32toBufMSB(0x40152200)};
-const uint8_t  init_WeekTabWrS_oad[]    = { 0x01, U32toBufMSB(0x40132200) };
-const uint8_t  init_BillDayWrS_oad[]    = { 0x01, U32toBufMSB(0x41162200) };
-const uint8_t  init_CoverOpenS_oad[]    = { 0x04, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201), U32toBufMSB(0x00108201), U32toBufMSB(0x00208201)};
-const uint8_t  init_SwitchOffS_oad[]    = { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201) };
-const uint8_t  init_SwitchOnS_oad[]     = { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201) };
-const uint8_t  init_HolidayWrS_oad[]    = { 0x00 };
-const uint8_t  init_ActCombWrS_oad[]    = { 0x01, U32toBufMSB(0x41122200) };
-const uint8_t  init_FeeTabWrS_oad[]     = { 0x00 };  
-const uint8_t  init_StepTabWrS_oad[]    = { 0x00 };  
-const uint8_t  init_SecretKeyWrS_oad[]  = { 0x01, U32toBufMSB(0xF1002400) };
-const uint8_t  init_ErrPlugCardS_oad[]  = { 0x00 };  
-const uint8_t  init_RechargeS_oad[]     = { 0x00 };  
-const uint8_t  init_RefundS_oad[]       = { 0x00 };  
-const uint8_t  init_SwitchErrS_oad[]    = { 0x05, U32toBufMSB(0xF2052201), U32toBufMSB(0x00102201), U32toBufMSB(0x00202201), U32toBufMSB(0x00108201), U32toBufMSB(0x00208201) };
-const uint8_t  init_PowerAbnormalS_oad[]= { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201) };
-const uint8_t  init_RTCErrS_oad[]       = { 0x04, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201), U32toBufMSB(0x00108201), U32toBufMSB(0x00208201) };
-const uint8_t  init_EmuErrS_oad[]       = { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201) };
-const uint8_t  init_BroadcastTimeS_oad[]= { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201) };
-const uint8_t  init_ZeroLineErrS_oad[]  = { 0x02, U32toBufMSB(0x20012201), U32toBufMSB(0x20012400) };
+const uint8_t  init_OverCurrentAS_oad[ND_EVENT_OAD_LIST_BYTES] = { 0x08, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201), U32toBufMSB(0x20002200), U32toBufMSB(0x20012200), U32toBufMSB(0x20042200), U32toBufMSB(0x200A2200), U32toBufMSB(0x00108201), U32toBufMSB(0x00208201) };
+const uint8_t  init_PowerOffS_oad[ND_EVENT_OAD_LIST_BYTES]     = { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201)};
+const uint8_t  init_MeterWrS_oad[ND_EVENT_OAD_LIST_BYTES]      = { 0x00 };
+const uint8_t  init_MeterClrS_oad[ND_EVENT_OAD_LIST_BYTES]     = { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201)};
+const uint8_t  init_EventClrS_oad[ND_EVENT_OAD_LIST_BYTES]     = { 0x00 };
+const uint8_t  init_SetTimeS_oad[ND_EVENT_OAD_LIST_BYTES]      = { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201) };
+const uint8_t  init_DayTabWrS_oad[ND_EVENT_OAD_LIST_BYTES]     = { 0x00 };
+const uint8_t  init_SeasonTabWrS_oad[ND_EVENT_OAD_LIST_BYTES]  = { 0x01, U32toBufMSB(0x40152200)};
+const uint8_t  init_WeekTabWrS_oad[ND_EVENT_OAD_LIST_BYTES]    = { 0x01, U32toBufMSB(0x40132200) };
+const uint8_t  init_BillDayWrS_oad[ND_EVENT_OAD_LIST_BYTES]    = { 0x01, U32toBufMSB(0x41162200) };
+const uint8_t  init_CoverOpenS_oad[ND_EVENT_OAD_LIST_BYTES]    = { 0x04, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201), U32toBufMSB(0x00108201), U32toBufMSB(0x00208201)};
+const uint8_t  init_SwitchOffS_oad[ND_EVENT_OAD_LIST_BYTES]    = { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201) };
+const uint8_t  init_SwitchOnS_oad[ND_EVENT_OAD_LIST_BYTES]     = { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201) };
+const uint8_t  init_HolidayWrS_oad[ND_EVENT_OAD_LIST_BYTES]    = { 0x00 };
+const uint8_t  init_ActCombWrS_oad[ND_EVENT_OAD_LIST_BYTES]    = { 0x01, U32toBufMSB(0x41122200) };
+const uint8_t  init_FeeTabWrS_oad[ND_EVENT_OAD_LIST_BYTES]     = { 0x00 };
+const uint8_t  init_StepTabWrS_oad[ND_EVENT_OAD_LIST_BYTES]    = { 0x00 };
+const uint8_t  init_SecretKeyWrS_oad[ND_EVENT_OAD_LIST_BYTES]  = { 0x01, U32toBufMSB(0xF1002400) };
+const uint8_t  init_ErrPlugCardS_oad[ND_EVENT_OAD_LIST_BYTES]  = { 0x00 };
+const uint8_t  init_RechargeS_oad[ND_EVENT_OAD_LIST_BYTES]     = { 0x00 };
+const uint8_t  init_RefundS_oad[ND_EVENT_OAD_LIST_BYTES]       = { 0x00 };
+const uint8_t  init_SwitchErrS_oad[ND_EVENT_OAD_LIST_BYTES]    = { 0x05, U32toBufMSB(0xF2052201), U32toBufMSB(0x00102201), U32toBufMSB(0x00202201), U32toBufMSB(0x00108201), U32toBufMSB(0x00208201) };
+const uint8_t  init_PowerAbnormalS_oad[ND_EVENT_OAD_LIST_BYTES]= { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201) };
+const uint8_t  init_RTCErrS_oad[ND_EVENT_OAD_LIST_BYTES]       = { 0x04, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201), U32toBufMSB(0x00108201), U32toBufMSB(0x00208201) };
+const uint8_t  init_EmuErrS_oad[ND_EVENT_OAD_LIST_BYTES]       = { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201) };
+const uint8_t  init_BroadcastTimeS_oad[ND_EVENT_OAD_LIST_BYTES]= { 0x02, U32toBufMSB(0x00102201), U32toBufMSB(0x00202201) };
+const uint8_t  init_ZeroLineErrS_oad[ND_EVENT_OAD_LIST_BYTES]  = { 0x02, U32toBufMSB(0x20012201), U32toBufMSB(0x20012400) };
 
 
 
 
 
 // 获取事件参数配置表
-int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_para_pack_t *para_pack)
+int get_event_para_pack(void *instance, uint32_t oad, struct event_para_pack_t *para_pack)
 {
-    struct mbase_control_block_t* mbase_cb;
 
     uint16_t OI = ((uint16_t)((oad & 0xFFFF0000) >> 16));
-
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    if (mbase_cb == NULL)
+    if (!nd_mb_valid(instance))
     {
         return -1;
     }
@@ -146,8 +151,8 @@ int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_
         {
             struct para_698_tag_t OverCurrentAS_para[2] =
             {
-                {TYPE_double_long,      (uint8_t*)&nd_mbase_OverCurrent_threshold(mbase_cb),      4},
-                {TYPE_unsigned,         (uint8_t*)&nd_mbase_OverCurrent_duration_para(mbase_cb),  1},
+                {TYPE_double_long,      (uint8_t*)&nd_mb_over_current_threshold(instance),      4},
+                {TYPE_unsigned,         (uint8_t*)&nd_mb_over_current_duration_para(instance),  1},
             };
             
             memcpy((uint8_t*)para_pack->event_para, (uint8_t*)OverCurrentAS_para , sizeof(OverCurrentAS_para));
@@ -159,7 +164,7 @@ int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_
         {
             struct para_698_tag_t PowerOffS_para[1] =
             {
-                {TYPE_unsigned,         (uint8_t*)&nd_mbase_PowerOffS_duration_para(mbase_cb),        1},
+                {TYPE_unsigned,         (uint8_t*)&nd_mb_power_off_s_duration_para(instance),        1},
             };
           
             memcpy((uint8_t*)para_pack->event_para, (uint8_t*)PowerOffS_para, sizeof(PowerOffS_para));
@@ -171,7 +176,7 @@ int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_
         {
             struct para_698_tag_t EmuErrS__para[1] =
             {
-                {TYPE_unsigned,         (uint8_t*)&nd_mbase_EmuErrS_duration_para(mbase_cb),        1},
+                {TYPE_unsigned,         (uint8_t*)&nd_mb_emu_err_s_duration_para(instance),        1},
             };
             memcpy((uint8_t*)para_pack->event_para, (uint8_t*)EmuErrS__para, sizeof(EmuErrS__para));
             para_pack->para_num = sizeof(EmuErrS__para) / sizeof(EmuErrS__para[0]);
@@ -182,9 +187,9 @@ int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_
         {
             struct para_698_tag_t ZeroLineErrS_para[3] =
             {
-                {TYPE_double_long,      (uint8_t*)&nd_mbase_ZeroLineErrS_Current_threshold(mbase_cb),    4},
-                {TYPE_long_unsigned,    (uint8_t*)&nd_mbase_ZeroLineErrS_rate_threshold(mbase_cb),       2},
-                {TYPE_unsigned,         (uint8_t*)&nd_mbase_ZeroLineErrS_duration_para(mbase_cb),        1},
+                {TYPE_double_long,      (uint8_t*)&nd_mb_zero_line_err_s_current_threshold(instance),    4},
+                {TYPE_long_unsigned,    (uint8_t*)&nd_mb_zero_line_err_s_rate_threshold(instance),       2},
+                {TYPE_unsigned,         (uint8_t*)&nd_mb_zero_line_errs_duration_para(instance),        1},
             };
 
             memcpy((uint8_t*)para_pack->event_para, (uint8_t*)ZeroLineErrS_para, sizeof(ZeroLineErrS_para));
@@ -202,61 +207,57 @@ int get_event_para_pack(struct instance_t* instance, uint32_t oad, struct event_
 
 
 
-uint8_t get_activeflag(struct instance_t* instance, uint16_t RecordId)
+uint8_t get_activeflag(void *instance, uint16_t RecordId)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
-    if (ctrl_block->active_flag[RecordId / 8] & (1 << (RecordId % 8)))
+    if (nd_mb_active_flag(instance)[RecordId / 8] & (1 << (RecordId % 8)))
     {
         return true;
     }
     return false;
 
 }
-void set_activeflag(struct instance_t* instance, uint16_t RecordId)
+void set_activeflag(void *instance, uint16_t RecordId)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
-    ctrl_block->active_flag[RecordId / 8] |= (1 << (RecordId % 8));
+    nd_mb_active_flag(instance)[RecordId / 8] |= (1 << (RecordId % 8));
 }
 
-void clr_activeflag(struct instance_t* instance, uint16_t RecordId)
+void clr_activeflag(void *instance, uint16_t RecordId)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
-    ctrl_block->active_flag[RecordId / 8] &= ~(1 << (RecordId % 8));
+    nd_mb_active_flag(instance)[RecordId / 8] &= ~(1 << (RecordId % 8));
 }
 
 //手动结束事件时 需要调用 清 事件延时
-void clr_event_duration(struct instance_t* instance, uint16_t RecordId)
+void clr_event_duration(void *instance, uint16_t RecordId)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     switch(RecordId)
     {
         case OverCurrentAS:
-            ctrl_block->OverCurrentAS_duration = 0;
+            nd_mb_over_current_as_duration(instance) = 0;
             break;
         case PowerOffS:
-            ctrl_block->PowerOffS_duration = 0;
+            nd_mb_power_off_s_duration(instance) = 0;
             break;
         case CoverOpenS:
-            ctrl_block->CoverOpenS_duration = 0;
+            nd_mb_cover_open_s_duration(instance) = 0;
             break;
         case SwitchErrS:
-            ctrl_block->SwitchErrS_duration = 0;
+            nd_mb_switch_err_s_duration(instance) = 0;
             break;
         case PowerAbnormalS:
-            ctrl_block->PowerAbnormalS_duration = 0;
+            nd_mb_power_abnormal_s_duration(instance) = 0;
             break;
         case EmuErrS:
-            ctrl_block->EmuErrS_duration = 0;
+            nd_mb_emu_err_s_duration(instance) = 0;
             break;
         case RTCErrS:
-            ctrl_block->RTCErrS_duration = 0;
+            nd_mb_rtcerr_s_duration(instance) = 0;
             break;
         case ZeroLineErrS:
-            ctrl_block->ZeroLineErrS_duration = 0;
+            nd_mb_zero_line_err_s_duration(instance) = 0;
             break;
         default:
             break;
@@ -267,20 +268,18 @@ void clr_event_duration(struct instance_t* instance, uint16_t RecordId)
 
 
 
-void set_recordflag(struct instance_t* instance, uint16_t RecordId)
+void set_recordflag(void *instance, uint16_t RecordId)
 {
     //struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
-    ctrl_block->record_flag[RecordId / 8] |= (1 << (RecordId % 8));
+    nd_mb_record_flag(instance)[RecordId / 8] |= (1 << (RecordId % 8));
 }
 
-void clr_recordflag(struct instance_t* instance, uint16_t RecordId)
+void clr_recordflag(void *instance, uint16_t RecordId)
 {
     //struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)task->ctx;
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
-    ctrl_block->record_flag[RecordId / 8] &= ~(1 << (RecordId % 8));
+    nd_mb_record_flag(instance)[RecordId / 8] &= ~(1 << (RecordId % 8));
 }
 
 
@@ -293,7 +292,7 @@ void clr_recordflag(struct instance_t* instance, uint16_t RecordId)
 
 //记录接口
 //发送记录标识
-void send_recordflag_mesg(struct instance_t* instance, struct pipeline_t* task, uint16_t RecordId, uint8_t* payload)
+void send_recordflag_mesg(void *instance, void *task, uint16_t RecordId, uint8_t* payload)
 {
     set_recordflag(instance, RecordId);
     nd_record_message_send(instance, task, RecordId, payload);
@@ -301,7 +300,7 @@ void send_recordflag_mesg(struct instance_t* instance, struct pipeline_t* task, 
 
 //事件记录接口-发消息
 // mode 1：记录发生   0 不记录。 -1 记录结束
-void send_event_mesg_pro(struct instance_t* instance, struct pipeline_t* task, uint16_t RecordId, uint8_t* payload, int mode)
+void send_event_mesg_pro(void *instance, void *task, uint16_t RecordId, uint8_t* payload, int mode)
 {
     if (mode == 1) // 发生
     {
@@ -316,7 +315,7 @@ void send_event_mesg_pro(struct instance_t* instance, struct pipeline_t* task, u
 
 //事件记录接口-直接写存储
 // mode 1：记录发生   0 不记录。 -1 记录结束
-void record_event_no_mesg_pro(struct instance_t* instance, struct pipeline_t* task, uint16_t RecordId, uint8_t* payload, int mode)
+void record_event_no_mesg_pro(void *instance, void *task, uint16_t RecordId, uint8_t* payload, int mode)
 {
     struct message_t mesg_tmp;
     
@@ -343,21 +342,19 @@ void record_event_no_mesg_pro(struct instance_t* instance, struct pipeline_t* ta
 
 
 
-void clr_sequence(struct instance_t* instance, uint32_t sequence_index)
+void clr_sequence(void *instance, uint32_t sequence_index)
 {
-
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t sequence = 0, s_index = 0;
     uint16_t SeqId = (uint16_t)sequence_index;
 
 
     if ((SeqId >= MinuteFreeze1_seq) && (SeqId <= MinuteFreeze8_seq))
     {
-        nd_mbase_minute_freeze_seq(mbase_cb)[SeqId - MinuteFreeze1_seq] = 0;
+        nd_mb_minute_freeze_seq(instance)[SeqId - MinuteFreeze1_seq] = 0;
 
-        s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
-        nd_mbase_offset_minute_freeze_seq()) + ((SeqId - MinuteFreeze1_seq) * 4) -  nd_mbase_offset_persistent_section_start();
-        nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_minute_freeze_seq(mbase_cb)[SeqId - MinuteFreeze1_seq], 4);
+        s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+        nd_mb_offset_minute_freeze_seq()) + ((SeqId - MinuteFreeze1_seq) * 4) -  nd_mb_offset_persistent_section_start();
+        nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_minute_freeze_seq(instance)[SeqId - MinuteFreeze1_seq], 4);
     }
     else
     {
@@ -366,10 +363,8 @@ void clr_sequence(struct instance_t* instance, uint32_t sequence_index)
 }
 
 //冻结或事件清零 接口    传入要清除的oad 
-int clr_record(struct instance_t* instance, uint32_t oad)
+int clr_record(void *instance, uint32_t oad)
 {
-    
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t s_index = 0;
     uint8_t i, tmpbuf[10] = {0};
     struct record_storage_id_info_t info;
@@ -415,12 +410,12 @@ int clr_record(struct instance_t* instance, uint32_t oad)
             {
                 if (get_OAD_OI(oad) == 0x301F)
                 {
-                    nd_mbase_report_2015state(mbase_cb)[i] &= ~RPT_2015_SWITCH_OFF_SUCCEES;
+                    nd_mb_report_2015_state(instance)[i] &= ~RPT_2015_SWITCH_OFF_SUCCEES;
                     report_stat_reset_from_698(instance,  RPT_2015_SWITCH_OFF_SUCCEES);
                 }
                 else
                 {
-                    nd_mbase_report_2015state(mbase_cb)[i] &= ~RPT_2015_SWITCH_ON_SUCCEES;
+                    nd_mb_report_2015_state(instance)[i] &= ~RPT_2015_SWITCH_ON_SUCCEES;
                     report_stat_reset_from_698(instance,  RPT_2015_SWITCH_ON_SUCCEES);
                 }
             }
@@ -431,9 +426,9 @@ int clr_record(struct instance_t* instance, uint32_t oad)
         {
             //清最近一次广播导致时钟异常时间
             memset(tmpbuf, 0, sizeof(tmpbuf));
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBroadcastTimeERR);
+            s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBroadcastTimeERR);
             nd_set_index(instance, s_index, &tmpbuf[0], 3);
-            nd_mbase_RTCErrS_status(mbase_cb) = 0; //清时钟故障标志   
+            nd_mb_rtc_errs_status(instance) = 0; //清时钟故障标志   
         }
             break;
         case 0xFF31://电能表编程事件645 
@@ -461,7 +456,7 @@ int clr_record(struct instance_t* instance, uint32_t oad)
 }
 
 //多个记录 清零    根据oad_list
-static int list_record_clr(struct instance_t* instance, const uint32_t* oad_list, uint16_t num)
+static int list_record_clr(void *instance, const uint32_t* oad_list, uint16_t num)
 {
     uint16_t i;
     int ret;
@@ -479,7 +474,7 @@ static int list_record_clr(struct instance_t* instance, const uint32_t* oad_list
 
 
 //多个记录 清零    根据oad_list中      除去事件清零事件和电表清零事件
-static int list_record_clr_2(struct instance_t* instance, const uint32_t* oad_list, uint16_t num)
+static int list_record_clr_2(void *instance, const uint32_t* oad_list, uint16_t num)
 {
     uint16_t i;
     int ret;
@@ -573,10 +568,9 @@ const uint32_t event_oad_list[] =
 const uint8_t event_oad_num = sizeof(event_oad_list) / sizeof(event_oad_list[0]);
 
 //事件清零 // 不包含事件清零事件 和电表清零事件
-int event_clr(struct instance_t* instance)
+int event_clr(void *instance)
 {
     int ret;
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     ret = list_record_clr_2(instance, event_oad_list, (sizeof(event_oad_list) / sizeof(event_oad_list[0])));
 
@@ -586,7 +580,7 @@ int event_clr(struct instance_t* instance)
     return ret;
 }
 //冻结清零
-int freeze_clr(struct instance_t* instance)
+int freeze_clr(void *instance)
 {
     int ret;
 
@@ -594,9 +588,8 @@ int freeze_clr(struct instance_t* instance)
     return ret;
 }
 // 电表清零
-int meter_clr(struct instance_t* instance)
+int meter_clr(void *instance)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     const uint8_t tmpbuf[30] = {0};
     uint32_t s_addr = 0;
     
@@ -606,22 +599,22 @@ int meter_clr(struct instance_t* instance)
     clr_record(instance, 0x30150200); //事件清零事件 清零
     clr_last_bill_time(instance, LastBillingTime);
     clr_last_bill_time(instance, LastDayFreezTime);
-    if ((nd_mbase_factor_mode(mbase_cb) == true)) //电表清零事件 清零
+    if ((nd_mb_factor_mode(instance) == true)) //电表清零事件 清零
     {
         clr_record(instance, 0x30130200);
 
-        s_addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Bat_UseTime);// 电池使用时间
+        s_addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Bat_UseTime);// 电池使用时间
         nd_set_index(instance, s_addr, (uint8_t*)tmpbuf, 4);
     }
 
     //其他清零    待添加
-    nd_mbase_disp_borrow(mbase_cb) = 0;   //显示借位清零
-    nd_mbase_sta(mbase_cb) &= F_RemoteRelayOn;  //清除控制命令状态,保留保电状态
-    nd_mbase_cmd_errstate(mbase_cb) = 0;        //错误信息字
+    nd_mb_disp_borrow(instance) = 0;   //显示借位清零
+    nd_mb_sta(instance) &= F_RemoteRelayOn;  //清除控制命令状态,保留保电状态
+    nd_mb_cmd_errstate(instance) = 0;        //错误信息字
     mac_suspend_reset(instance);
-    nd_mbase_password_err_cnt(mbase_cb) = 0;     //密码锁清零
-    nd_mbase_cmd_dostate(mbase_cb) = 0;          //控制命令执行状态字清零
-    nd_mbase_meterclear(mbase_cb) = 0x5a;
+    nd_mb_password_err_cnt(instance) = 0;     //密码锁清零
+    nd_mb_cmd_dostate(instance) = 0;          //控制命令执行状态字清零
+    nd_mb_meterclear(instance) = 0x5a;
 
 #if RESET_INFO    
     resetinfo_file = 0;
@@ -631,13 +624,12 @@ int meter_clr(struct instance_t* instance)
 }
 
 //清月度用电量
-int clr_MonthEC(struct instance_t* instance)
+int clr_MonthEC(void *instance)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t s_index;
     
-    nd_mbase_MonthEnegery_dec(mbase_cb) = 0;
-    nd_mbase_MonthEnegery(mbase_cb) = 0;
+    nd_mb_month_energery_dec(instance) = 0;
+    nd_mb_month_energy(instance) = 0;
 
     updata_EC_checksum(instance, 1);
 
@@ -647,21 +639,20 @@ int clr_MonthEC(struct instance_t* instance)
 }
 
 //清最近一次结算时间   //清最近一次日冻结时间 // LastBillingTime +  LastDayFreezTime
-int clr_last_bill_time(struct instance_t* instance, uint32_t ID)
+int clr_last_bill_time(void *instance, uint32_t ID)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t s_index;
     uint8_t tmpbuf[10] = {0};
     
     memset(tmpbuf, 0, sizeof(tmpbuf));
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ID);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ID);
     nd_set_index(instance, s_index, &tmpbuf[0], 6);
     return 1;
 }
 
 
 //修改关联对象时 调用 清零
-int modify_capture_clr_pro(struct instance_t* instance, uint32_t oad)
+int modify_capture_clr_pro(void *instance, uint32_t oad)
 {
     uint8_t i, schem_num = 1;
     int ret = 0;
@@ -679,7 +670,7 @@ int modify_capture_clr_pro(struct instance_t* instance, uint32_t oad)
 }
 
 // 每秒调用
-int event_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int event_pro(void *instance, void *pipeline, void *mesg)
 {
       ia_over_event_judge(instance, pipeline, mesg);    // 电能表A相过流事件
       PowerOff_event_judge(instance, pipeline, mesg);   // 电能表掉电事件  
@@ -696,50 +687,47 @@ int event_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct m
 
 }
 
-int event_poweroff_save(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int event_poweroff_save(void *instance, void *pipeline, void *mesg)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t s_index, s_len; 
     
-    nd_mbase_pd_cover_EndRecord_flag(mbase_cb) = 0;
+    nd_mb_pd_cover_end_record_flag(instance) = 0;
     
     
     
-    //s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    //nd_mbase_offset_active_flag());
-    //nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_active_flag(mbase_cb)[0], 100);     
+    //s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+    //nd_mb_offset_active_flag());
+    //nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_active_flag(instance)[0], 100);     
 
-    //s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    //nd_mbase_offset_active_flag());
-    //s_len = nd_mbase_offset_v_powerdown_tm() - nd_mbase_offset_active_flag();
-    //nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_active_flag(mbase_cb)[0], s_len);  
+    //s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+    //nd_mb_offset_active_flag());
+    //s_len = nd_mb_offset_v_powerdown_tm() - nd_mb_offset_active_flag();
+    //nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_active_flag(instance)[0], s_len);  
     return 1;
 }
 
 //停电下每秒调用  主要处理事件累计时间
-int event_LowPower_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int event_LowPower_pro(void *instance, void *pipeline, void *mesg)
 {
-    
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t s_index;
 
     /*
-    if(instance->reset_flag == 0x5A) //未上过电
+    if(*nd_fr698_reset_flag(instance) == 0x5A) //未上过电
     {
         return true;
     }
     */
-    ctrl_block->pd_active_flag_update = 0;
+    nd_mb_pd_active_flag_update(instance) = 0;
 
     PowerOff_LowPower_pro(instance, pipeline, mesg);
     PowerAbnormal_LowPower_pro(instance, pipeline, mesg);
     CoverOpen_event_LowPower_pro(instance, pipeline, mesg);
 
-    if (ctrl_block->pd_active_flag_update == 0x5A)
+    if (nd_mb_pd_active_flag_update(instance) == 0x5A)
     {
-        s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + 
-                    (nd_mbase_offset_active_flag() -  nd_mbase_offset_persistent_section_start()) );
-        nd_set_offset(instance, s_index, (uint8_t*)&ctrl_block->active_flag[0], sizeof(ctrl_block->active_flag));               
+        s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + 
+                    (nd_mb_offset_active_flag() -  nd_mb_offset_persistent_section_start()) );
+        nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_active_flag(instance)[0], 50);               
     }
 
     
@@ -748,10 +736,8 @@ int event_LowPower_pro(struct instance_t* instance, struct pipeline_t* pipeline,
 
 
 //上电处理
-int event_PowerOn_pro(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int event_PowerOn_pro(void *instance, void *pipeline, void *mesg)
 {
-
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t payload[20] ={0}, tmp[15]={0};
     uint16_t i, RecordId;
     struct record_storage_id_info_t info;
@@ -760,7 +746,7 @@ int event_PowerOn_pro(struct instance_t* instance, struct pipeline_t* pipeline, 
     int ret;
 
 
-    ctrl_block->active_report_CMDtype &=~ (ACTIVE_REPORT_3011_END | ACTIVE_REPORT_3011_START);
+    nd_mb_active_report_cmdtype(instance) &=~ (ACTIVE_REPORT_3011_END | ACTIVE_REPORT_3011_START);
 
     for (i = 0; i < (sizeof(power_grid_event_oad) / sizeof(power_grid_event_oad[0])); i++)
     {
@@ -773,11 +759,11 @@ int event_PowerOn_pro(struct instance_t* instance, struct pipeline_t* pipeline, 
 
         if (nd_event_close_uses_poweron(power_grid_event_oad[i]))
         {
-            ndv_memcopy((uint8_t *)&tmpTM, (uint8_t *)&instance->time, sizeof(struct tm));
+            ndv_memcopy((uint8_t *)&tmpTM, (uint8_t *)nd_fr698_time(instance), sizeof(struct tm));
         }
         else
         {
-            ndv_memcopy((uint8_t *)&tmpTM, (uint8_t *)&ctrl_block->powerdown_tm, sizeof(struct tm));
+            ndv_memcopy((uint8_t *)&tmpTM, (uint8_t *)&nd_mb_powerdown_tm(instance), sizeof(struct tm));
         }
         
         RecordId = (uint16_t)info.save_index;
@@ -802,21 +788,21 @@ int event_PowerOn_pro(struct instance_t* instance, struct pipeline_t* pipeline, 
 
     //停电下的累计时间 保存。
     nd_event_power_resume_state_t resume = {
-        .power_off_acc = ctrl_block->PowerOffS_acc_time,
-        .power_off_low = ctrl_block->PowerOffS_time_low_power_cnt,
-        .cover_open_acc = ctrl_block->CoverOpenS_acc_time,
-        .cover_open_low = ctrl_block->CoverOpenS_time_low_power_cnt,
-        .power_abnormal_acc = ctrl_block->PowerAbnormalS_acc_time,
-        .power_abnormal_low = ctrl_block->PowerAbnormalS_time_low_power_cnt,
+        .power_off_acc = nd_mb_power_off_s_acc_time(instance),
+        .power_off_low = nd_mb_power_off_s_time_low_power_cnt(instance),
+        .cover_open_acc = nd_mb_cover_open_s_acc_time(instance),
+        .cover_open_low = nd_mb_cover_open_s_time_low_power_cnt(instance),
+        .power_abnormal_acc = nd_mb_power_abnormal_s_acc_time(instance),
+        .power_abnormal_low = nd_mb_power_abnormal_s_time_low_power_cnt(instance),
     };
 
     nd_event_power_resume(&resume);
-    ctrl_block->PowerOffS_acc_time = resume.power_off_acc;
-    ctrl_block->CoverOpenS_acc_time = resume.cover_open_acc;
-    ctrl_block->PowerAbnormalS_acc_time = resume.power_abnormal_acc;
-    ctrl_block->PowerOffS_time_low_power_cnt = resume.power_off_low;
-    ctrl_block->CoverOpenS_time_low_power_cnt = resume.cover_open_low;
-    ctrl_block->PowerAbnormalS_time_low_power_cnt = resume.power_abnormal_low;
+    nd_mb_power_off_s_acc_time(instance) = resume.power_off_acc;
+    nd_mb_cover_open_s_acc_time(instance) = resume.cover_open_acc;
+    nd_mb_power_abnormal_s_acc_time(instance) = resume.power_abnormal_acc;
+    nd_mb_power_off_s_time_low_power_cnt(instance) = resume.power_off_low;
+    nd_mb_cover_open_s_time_low_power_cnt(instance) = resume.cover_open_low;
+    nd_mb_power_abnormal_s_time_low_power_cnt(instance) = resume.power_abnormal_low;
 
     
     return true;
@@ -841,7 +827,7 @@ enum scheme_mode
 
 //record_head 记录头 首字节为个数，后续为OAD，  
 //mode 0-7 为冻结方案， 10为 事件发生 11位 结束
-int read_record_head(struct instance_t* instance, uint8_t* databuf, const uint32_t* record_head, enum scheme_mode mode, uint16_t *remain_size,  struct record_storage_id_info_t *record_id_info)
+int read_record_head(void *instance, uint8_t* databuf, const uint32_t* record_head, enum scheme_mode mode, uint16_t *remain_size,  struct record_storage_id_info_t *record_id_info)
 {
     uint8_t *p , i, scheme_valid = true,  normal_type, tmpbuf[220] = {0};
     int16_t single_len = 0;
@@ -859,14 +845,6 @@ int read_record_head(struct instance_t* instance, uint8_t* databuf, const uint32
             switch (obj)
             {
                 case 0x20220200: //事件记录序号
-#if 0               //序号统一最后补     
-                    nd_get_index(instance, record_id_info->sequence_index, (uint8_t *)&seq, sizeof(seq));
-                    *p++ = 0x06;
-                    memcpy(p, &seq, 4);
-                    p += 4;
-                    single_len = 1 + 4;
-                    //normal_type = 0;
-#endif                    
                     break;
                 case 0x201E0200: //事件发生时间
                     if (mode == END_MODE)
@@ -925,9 +903,8 @@ int read_record_head(struct instance_t* instance, uint8_t* databuf, const uint32
     return (p - databuf);
 }
 //记录时捕获对象转换
-uint32_t record_capture_change(struct instance_t* instance, uint32_t obj, uint16_t record_id)
+uint32_t record_capture_change(void *instance, uint32_t obj, uint16_t record_id)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     nd_record_capture_kind_t kind = ND_RECORD_CAPTURE_DEFAULT;
 
     switch (record_id)
@@ -945,7 +922,7 @@ uint32_t record_capture_change(struct instance_t* instance, uint32_t obj, uint16
     }
 
     return nd_record_capture_oad(kind, obj,
-                                 nd_mbase_MeterWr_SetTime_flag(mbase_cb) == 0x5A);
+                                 nd_mb_meter_wr_set_time_flag(instance) == 0x5A);
 }
 //方案号 & 属性特征 判断
 //mode 0-7 为冻结方案， 10为 事件发生 11为 结束
@@ -979,16 +956,15 @@ uint8_t check_scheme(enum scheme_mode mode, uint32_t obj, uint16_t record_id)
 }
 
 //获取当前序号值 序号累加 分钟冻结序号 存ram，掉电存e2p
-void get_record_sequence_add(struct instance_t* instance, uint32_t sequence_index, uint8_t *dst)
+void get_record_sequence_add(void *instance, uint32_t sequence_index, uint8_t *dst)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t sequence = 0;
     uint16_t SeqId = (uint16_t)sequence_index;
 
     if ((SeqId >= MinuteFreeze1_seq) && (SeqId <= MinuteFreeze8_seq))
     {
-        mem_swap_cpy(dst, (uint8_t*)&nd_mbase_minute_freeze_seq(mbase_cb)[SeqId - MinuteFreeze1_seq], 4);
-        nd_mbase_minute_freeze_seq(mbase_cb)[SeqId - MinuteFreeze1_seq]++;
+        mem_swap_cpy(dst, (uint8_t*)&nd_mb_minute_freeze_seq(instance)[SeqId - MinuteFreeze1_seq], 4);
+        nd_mb_minute_freeze_seq(instance)[SeqId - MinuteFreeze1_seq]++;
     }
     else
     {
@@ -1001,7 +977,7 @@ void get_record_sequence_add(struct instance_t* instance, uint32_t sequence_inde
 
 //capturelist  关联对象列表  首字节为个数，后续为OAD，  
 //mode 0-7 为冻结方案， 10为 事件发生 11为 结束
-int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t* CaptureList, enum scheme_mode mode, uint16_t* remain_size,  struct record_storage_id_info_t *record_id_info, uint8_t* payload)
+int read_record_capture(void *instance, uint8_t* databuf, uint32_t* CaptureList, enum scheme_mode mode, uint16_t* remain_size,  struct record_storage_id_info_t *record_id_info, uint8_t* payload)
 {
     uint8_t* p, i, scheme_valid = true;
     int16_t single_len = 0;
@@ -1136,10 +1112,9 @@ int read_record_capture(struct instance_t* instance, uint8_t* databuf, uint32_t*
 }
 
 //记录数据
-//直接提供mesg->id   可不走消息 记录事件
-int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg, uint8_t* payload)
+//直接提供nd_mesg_id(mesg)   可不走消息 记录事件
+int recv_record_process(void *instance, void *pipeline, void *mesg, uint8_t* payload)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     uint8_t mode = START_MODE;//enum scheme_mode mode = START_MODE;
     uint8_t data_buff[400] = { 0 };
@@ -1154,7 +1129,7 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
     int ret;
     uint8_t report_updata = 0;
 
-    if (!nd_event_catalog_lookup((uint16_t)mesg->id, &catalog_entry))
+    if (!nd_event_catalog_lookup((uint16_t)nd_mesg_id(mesg), &catalog_entry))
     {
         return 0;
     }
@@ -1193,7 +1168,7 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
 
     if((mode == START_MODE) || (mode == END_MODE))  //事件类 
     {
-        if ((mesg->id != MeterWrR) && (mesg->id != MeterWr645S) && (mesg->id != MeterWr645R)) //自扩
+        if ((nd_mesg_id(mesg) != MeterWrR) && (nd_mesg_id(mesg) != MeterWr645S) && (nd_mesg_id(mesg) != MeterWr645R)) //自扩
         {
             report_updata = 1;
         }
@@ -1212,56 +1187,56 @@ int recv_record_process(struct instance_t* instance, struct pipeline_t* pipeline
             event_scheme = 4;
         }
         report_3320list_add(instance,Oad|(event_scheme<<13)); 
-        if(PowerOffS == mesg->id)
+        if(PowerOffS == nd_mesg_id(mesg))
         {
-            if(( instance->ac_power_statue == ND_AC_POWER_ON ) && (nd_mbase_power_on_sec_accum(mbase_cb) >= nd_mbase_active_report_sec_limit(mbase_cb)))
+            if(( *nd_fr698_power_state(instance) == ND_AC_POWER_ON ) && (nd_mb_power_on_sec_accum(instance) >= nd_mb_active_report_sec_limit(instance)))
             {
-                nd_mbase_active_report_CMDtype(mbase_cb) |= ACTIVE_REPORT_3011_START;
-                nd_mbase_active_report_CMDtype(mbase_cb) &=~ ACTIVE_REPORT_3011_END;
+                nd_mb_active_report_cmdtype(instance) |= ACTIVE_REPORT_3011_START;
+                nd_mb_active_report_cmdtype(instance) &=~ ACTIVE_REPORT_3011_END;
                 clear_active_report_time_count(instance, R_3011_START);
                 
-                s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
-                nd_mbase_offset_power_on_sec_accum()) -  nd_mbase_offset_persistent_section_start();
-                nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_power_on_sec_accum(mbase_cb), 4);
+                s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+                nd_mb_offset_power_on_sec_accum()) -  nd_mb_offset_persistent_section_start();
+                nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_power_on_sec_accum(instance), 4);
             }
         }
-        else if(PowerOffE == mesg->id)
+        else if(PowerOffE == nd_mesg_id(mesg))
         {
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
-            nd_mbase_offset_power_on_sec_accum())  -  nd_mbase_offset_persistent_section_start();
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+            nd_mb_offset_power_on_sec_accum())  -  nd_mb_offset_persistent_section_start();
             nd_get_offset(instance, s_index, (uint8_t*)&last_poweron_time, 4);
         
-            nd_mbase_active_report_CMDtype(mbase_cb) &=~ ACTIVE_REPORT_3011_START;
+            nd_mb_active_report_cmdtype(instance) &=~ ACTIVE_REPORT_3011_START;
             
-            if (last_poweron_time >= nd_mbase_active_report_sec_limit(mbase_cb))
+            if (last_poweron_time >= nd_mb_active_report_sec_limit(instance))
             {
-                nd_mbase_active_report_CMDtype(mbase_cb) |= ACTIVE_REPORT_3011_END;
+                nd_mb_active_report_cmdtype(instance) |= ACTIVE_REPORT_3011_END;
                 clear_active_report_time_count(instance, R_3011_END);
             }
 
             last_poweron_time = 0;
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
-            nd_mbase_offset_power_on_sec_accum())  -  nd_mbase_offset_persistent_section_start();
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+            nd_mb_offset_power_on_sec_accum())  -  nd_mb_offset_persistent_section_start();
             nd_set_offset(instance, s_index, (uint8_t*)&last_poweron_time, 4);
         }
 
     }
     //结算日
-    if(BillFreeze == mesg->id)
+    if(BillFreeze == nd_mesg_id(mesg))
     {
-        if(nd_mbase_first_MbillDay_flag(mbase_cb) == 0x5A)
+        if(nd_mb_first_mbill_day_flag(instance) == 0x5A)
         {
             clr_MonthEC(instance);
-            nd_mbase_first_MbillDay_flag(mbase_cb) = 0;
+            nd_mb_first_mbill_day_flag(instance) = 0;
         }
     }
 
-    clr_recordflag(instance, mesg->id);
+    clr_recordflag(instance, nd_mesg_id(mesg));
     return 1;
 
 }
 
-int sync_data_record(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int sync_data_record(void *instance, void *pipeline, void *mesg)
 {
     uint8_t payload[100]={0};
     

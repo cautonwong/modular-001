@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Compare IDIS object members with the Blue Book class definitions."""
 import csv
+import os
 import re
+import sys
 from collections import defaultdict
 
 BB = 'docs/idis/Blue-Book-Ed14.txt'
 MEMBERS = 'docs/idis/obis_members.csv'
 OUT = 'docs/idis/bluebook_class_check.md'
+BASELINE = 'tools/bluebook_baseline.txt'
 
 HEADER = re.compile(r'class_id\s*=\s*(\d+),\s*version\s*=\s*(\d+)')
 NUMBERED = re.compile(r'^\s*(\d+)\.\s+([A-Za-z_][A-Za-z0-9_ ]*?)(?:\s*\(data\))?\s{2,}(.*)$')
@@ -62,9 +65,26 @@ def member_sets():
     return by
 
 
+def load_baseline(path):
+    if not os.path.exists(path):
+        return set()
+    entries = set()
+    for line in open(path, encoding='utf-8'):
+        line = line.split('#', 1)[0].strip()
+        if not line:
+            continue
+        parts = line.split()
+        if len(parts) != 2 or not all(part.isdigit() for part in parts):
+            raise SystemExit(f'{path}: bad baseline line {line!r}')
+        entries.add((int(parts[0]), int(parts[1])))
+    return entries
+
+
 def main():
     bb = parse_bluebook()
     ids = member_sets()
+    baseline = load_baseline(BASELINE)
+    differing = set()
     out = ['# IDIS 成员矩阵与 Blue Book 类定义对照', '',
            '按接口类版本逐项对照。Blue Book 标为可选的 method 可以被 IDIS 省略。', '']
     problems = 0
@@ -76,37 +96,51 @@ def main():
         ia, im = ids[key]['attr'], ids[key]['method']
         ba = {i: n for i, n in battrs}
         bm = {i: (n, opt) for i, n, opt in bmethods}
-        ia_d = {i: n for i, n in ia}
-        im_d = {i: n for i, n in im}
-        missing_a = sorted(set(ba) - set(ia_d))
-        missing_m = sorted(set(bm) - set(im_d))
-        extra_a = sorted(set(ia_d) - set(ba))
-        extra_m = sorted(set(im_d) - set(bm))
+        ia_names = defaultdict(set)
+        for i, n in ia:
+            ia_names[i].add(n)
+        im_names = defaultdict(set)
+        for i, n in im:
+            im_names[i].add(n)
+        missing_a = sorted(set(ba) - set(ia_names))
+        missing_m = sorted(set(bm) - set(im_names))
+        extra_a = sorted(set(ia_names) - set(ba))
+        extra_m = sorted(set(im_names) - set(bm))
         name_diff = []
-        for i in sorted(set(ba) & set(ia_d)):
-            if ba[i] != ia_d[i]:
-                name_diff.append((i, ba[i], ia_d[i]))
-        for i in sorted(set(bm) & set(im_d)):
-            if bm[i][0] != im_d[i]:
-                name_diff.append((i, bm[i][0], im_d[i]))
+        for i in sorted(set(ba) & set(ia_names)):
+            if ba[i] not in ia_names[i]:
+                name_diff.append((i, ba[i], sorted(ia_names[i])))
+        for i in sorted(set(bm) & set(im_names)):
+            if bm[i][0] not in im_names[i]:
+                name_diff.append((i, bm[i][0], sorted(im_names[i])))
         if not (missing_a or missing_m or extra_a or extra_m or name_diff):
             continue
         problems += 1
+        differing.add(key)
         out.append(f'## IC {key[0]} v{key[1]}')
         if missing_a:
             out.append(f'- Blue Book 有、矩阵没有的属性：{[(i, ba[i]) for i in missing_a]}')
         if missing_m:
             out.append(f'- Blue Book 有、矩阵没有的方法：{[(i, bm[i][0], "optional" if bm[i][1] else "mandatory") for i in missing_m]}')
         if extra_a:
-            out.append(f'- 矩阵有、Blue Book 没有的属性：{[(i, ia_d[i]) for i in extra_a]}')
+            out.append(f'- 矩阵有、Blue Book 没有的属性：{[(i, sorted(ia_names[i])) for i in extra_a]}')
         if extra_m:
-            out.append(f'- 矩阵有、Blue Book 没有的方法：{[(i, im_d[i]) for i in extra_m]}')
+            out.append(f'- 矩阵有、Blue Book 没有的方法：{[(i, sorted(im_names[i])) for i in extra_m]}')
         if name_diff:
             out.append(f'- 同编号不同名字：{name_diff}')
         out.append('')
     open(OUT, 'w', encoding='utf-8').write('\n'.join(out))
-    print(f'compared {len(ids)} IDIS class versions; {problems} with differences -> {OUT}')
+    unexpected = sorted(differing - baseline)
+    stale = sorted(baseline - differing)
+    print(f'compared {len(ids)} IDIS class versions; {problems} with differences '
+          f'({len(baseline & differing)} baselined, {len(unexpected)} unexpected, '
+          f'{len(stale)} stale) -> {OUT}')
+    for key in unexpected:
+        print(f'unexpected Blue Book difference: IC {key[0]} v{key[1]}')
+    for key in stale:
+        print(f'stale baseline entry: IC {key[0]} v{key[1]}')
+    return 1 if unexpected or stale else 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

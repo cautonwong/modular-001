@@ -158,9 +158,7 @@ int nd_ic_mbus_client_set(void *ctx, uint8_t client_sap, const nd_obis_t *ln,
         return ND_ERR_OBJECT_UNDEFINED;
     }
     if (attribute_id == 3) {
-        uint8_t channel = 0;
-        if (client_for(mbus, ln, &channel) == NULL
-            || nd_axdr_get_tag(in) != ND_AXDR_ARRAY) {
+        if (nd_axdr_get_tag(in) != ND_AXDR_ARRAY) {
             return ND_ERR_TYPE_MISMATCH;
         }
         uint16_t count = nd_axdr_get_length(in);

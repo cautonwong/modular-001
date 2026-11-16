@@ -1,10 +1,10 @@
-#include "nidavellir.h"
 #include "645id_table.h"
-#include "domain/tariff/legacy/tariff_applications.h"
+#include <stddef.h>
+#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/app/tariff/tariff_applications.h"
 #include "infra/kernel/resource_blocks.h"
 #include "port.h"
 
-extern uint8_t dl645rd_chg_data(struct instance_t* instance, uint32_t addr, uint8_t format, uint8_t *pbuf, uint8_t *len);
 
 typedef struct
 {
@@ -33,18 +33,10 @@ const  DISPTAB Display645Tab[] =
     0xB005,		0x0400040E,     0x00,   //客户编号高4位
     0xB006,		0x0400040E,     0x01,   //客户编号低8位
     0xB007,		0x04000409,     0x00,   //电表有功常数  
-#if 0    
-    //正向电能量
-    //0xC0FF,     0xC001~0xC00D:总，费率1~12;   0xC000~0xC180:当前~上24月正向总电能
-    //反向电能量
-    //0xD0FF,     0xD001~0xD00D:总，费率1~12;   0xD000~0xD180:当前~上24月反向总电能  
-    //组合电能量
-    //0xE0FF,     0xE001~0xE00D:总，费率1~12;   0xE000~0xE180:当前~上24月组合总电能  
-#endif
 };
 
 
-void displayid_to_645id( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
+void displayid_to_645id( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
     uint8_t IDL1, IDL0, maxnum, i, id[3]={0,};
     uint32_t addr=0, index, id_645=0;
@@ -60,7 +52,7 @@ void displayid_to_645id( struct instance_t* instance, unsigned long ID , uint8_t
     else if(IDL1 == 0x02)
         addr = KeyDisplayList + IDL0 - 1;
     
-    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
+    index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
     nd_get_index(instance, index, (uint8_t *)&displayid, 2);
     
     for(i=0; i<maxnum; i++)
@@ -92,7 +84,7 @@ void displayid_to_645id( struct instance_t* instance, unsigned long ID , uint8_t
     *(p_tx+4) = 0;
 }
 
-uint8_t get_645_Seasonday_table( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
+uint8_t get_645_Seasonday_table( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
     uint32_t addr=0, s_index;
     uint8_t season_num=0, day_num=0, temp[42]={0,}, i, IDL0=0;
@@ -108,13 +100,13 @@ uint8_t get_645_Seasonday_table( struct instance_t* instance, unsigned long ID ,
         else if(ID == 0x04020000)   //第二套时区
             addr = Season_Table1;
         
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para);
+        s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para);
         nd_get_index(instance, s_index, &season_num, 1);
         if(season_num > MaxSeasonNum) season_num = MaxSeasonNum;
 
         for(i=0; i<season_num; i++)
         {
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
+            s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
             nd_get_index(instance, s_index, temp, 3);
             *p_tx++ = BYTE_BCD(temp[2]);
             *p_tx++ = BYTE_BCD(temp[1]);
@@ -129,11 +121,11 @@ uint8_t get_645_Seasonday_table( struct instance_t* instance, unsigned long ID ,
         else if(IDH == 0x0402)   //第二套时段
             addr = Day_Table10 + IDL0 - 1;
         
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para+2);
+        s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para+2);
         nd_get_index(instance, s_index, &day_num, 1);
         if(day_num > MaxTouNum) day_num = MaxTouNum;
         
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
+        s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
         nd_get_index(instance, s_index, temp, 42);
         
         for(i=0; i<day_num; i++)
@@ -146,7 +138,7 @@ uint8_t get_645_Seasonday_table( struct instance_t* instance, unsigned long ID ,
     }
 }
 
-int8_t get_645_holiyday_table( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
+int8_t get_645_holiyday_table( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
     uint32_t s_index;
     uint8_t IDL0=0, temp[6] = {0,};
@@ -155,7 +147,7 @@ int8_t get_645_holiyday_table( struct instance_t* instance, unsigned long ID , u
     IDL0 = ID & 0x000000FF;
     if(IDL0 > MaxHolidayNum)    return -1;
     
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + HoliDay_Table + IDL0 - 1);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + HoliDay_Table + IDL0 - 1);
     nd_get_index(instance, s_index, temp, 6);
     *p_tx++ = BYTE_BCD(temp[5]);
     *p_tx++ = BYTE_BCD(temp[3]);
@@ -173,7 +165,7 @@ int8_t get_645_holiyday_table( struct instance_t* instance, unsigned long ID , u
     return 4;
 }
 
-int read_04( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
+int read_04( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
     uint8_t MemType,buf[200] = {0,}, Ptr,len=0;
     unsigned short Format=0;
@@ -224,13 +216,13 @@ int read_04( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     
 	if(MemType == Mem_E2PROM)  
 	{
-		addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Addr);
+		addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Addr);
 		nd_get_index(instance, addr1, buf, len);
         mem_swap_cpy(p_tx, buf, len);
 	}
 	else if(MemType == Mem_E2PROM_BP)  
 	{
-		addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Addr);
+		addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Addr);
 		nd_get_index(instance, addr1, p_tx, len);        
 	}
 	else

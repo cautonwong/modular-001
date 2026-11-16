@@ -9,6 +9,9 @@
 
 #define ND_IDIS_PROFILE_TABLE_COUNT 22
 
+_Static_assert(ND_IDIS_PROFILE_TABLE_COUNT <= ND_IDIS_PROFILE_MAX,
+               "profile table must fit the profiles aggregate");
+
 /* Each profile owns a fixed flash region; the largest ends below 640 KiB. */
 #define ND_IDIS_PROFILE_FLASH_BYTES (640u * 1024u)
 

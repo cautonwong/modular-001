@@ -1,6 +1,10 @@
 #ifndef __INCLUDE_UTILS_H__
 #define __INCLUDE_UTILS_H__
 
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
 #define eleof(x)                    (sizeof(x) / sizeof(x[0]))
 #define MIN(a, b)  (((a) < (b)) ? (a) : (b))
 #define MAX(a, b)  (((a) > (b)) ? (a) : (b))
@@ -35,6 +39,7 @@ uint8_t swap_byte_bit(uint8_t hex);
 
 unsigned char BCD_BYTE( unsigned char BCD );
 unsigned int GetTotalDay( unsigned char* Addr );
+extern const unsigned int DayTab[13];
 unsigned char GetWeek( unsigned char* Addr );
 
 unsigned char BYTE_BCD( unsigned char HEX );

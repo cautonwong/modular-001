@@ -4,6 +4,7 @@
 struct instance_t;
 #include "fr_698.h"
 #include "fr_698_internal.h"
+#include "fr_698_esam.h"
 
 #define SetRequestNormal            1
 #define SetRequestNormalList        2
@@ -14,7 +15,6 @@ struct instance_t;
 #define ActionThenGetRequestNormalList  3
 
 
-extern int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cmd, uint32_t oad);
 
 
 int get_SET_and_ACTION_Request_len(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t*)
@@ -69,9 +69,9 @@ static int __fr_handle_one_object(struct instance_t* instance, struct pipeline_t
         uint8_t type = apdu_rx[ctx->apdu_rx_offset++];
         if (type == 0x09)//octet-string
         {
-            uint8_t len = apdu_rx[ctx->apdu_rx_offset++];
-            memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, len);
-            ctx->apdu_rx_offset += len;
+            uint8_t octet_len = apdu_rx[ctx->apdu_rx_offset++];
+            memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, octet_len);
+            ctx->apdu_rx_offset += octet_len;
             p[cache->wr++] = 0x00;
         }
     }

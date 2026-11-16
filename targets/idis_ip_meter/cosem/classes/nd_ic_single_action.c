@@ -358,6 +358,9 @@ int nd_idis_single_action_load(nd_single_action_t *state, nd_store_t *store,
         return -1;
     }
     for (uint8_t index = 0; index < ND_SINGLE_ACTION_MAX; index++) {
+        if (record.items[index].time_count > ND_SINGLE_ACTION_TIMES_MAX) {
+            return -1;
+        }
         state->items[index] = record.items[index];
         state->items[index].ln = single_action_lns[index];
     }

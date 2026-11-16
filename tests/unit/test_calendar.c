@@ -63,6 +63,8 @@ static void test_total_day_matches_legacy_formula(void)
     TEST_ASSERT_EQUAL_UINT32(426, nd_calendar_total_day(1, 3, 2001));
     TEST_ASSERT_EQUAL_UINT32(1522, nd_calendar_total_day(1, 3, 2004));
     TEST_ASSERT_EQUAL_UINT32(8893, nd_calendar_total_day(6, 5, 2024));
+    /* Legacy two-digit year formula repeats every 100 years. */
+    TEST_ASSERT_EQUAL_UINT32(1, nd_calendar_total_day(1, 1, 2100));
 }
 
 static void test_total_minutes_combines_day_hour_and_minute(void)
@@ -148,6 +150,55 @@ static void test_add_seconds_handles_day_boundary(void)
     TEST_ASSERT_EQUAL_UINT8(10, out.hour);
 }
 
+static void test_from_elapsed_keeps_time_legal_across_days(void)
+{
+    nd_datetime_t out;
+    uint32_t base = nd_calendar_total_day(1, 1, 2026);
+    nd_calendar_from_elapsed(base, 0, &out);
+    TEST_ASSERT_EQUAL_UINT16(2026, out.year);
+    TEST_ASSERT_EQUAL_UINT8(1, out.month);
+    TEST_ASSERT_EQUAL_UINT8(1, out.day);
+    TEST_ASSERT_EQUAL_UINT8(0, out.hour);
+    nd_calendar_from_elapsed(base, 3661, &out);
+    TEST_ASSERT_EQUAL_UINT8(1, out.hour);
+    TEST_ASSERT_EQUAL_UINT8(1, out.minute);
+    TEST_ASSERT_EQUAL_UINT8(1, out.second);
+    nd_calendar_from_elapsed(base, 86400u + 5u, &out);
+    TEST_ASSERT_EQUAL_UINT8(2, out.day);
+    TEST_ASSERT_EQUAL_UINT8(0, out.hour);
+    TEST_ASSERT_EQUAL_UINT8(5, out.second);
+    nd_calendar_from_elapsed(base, 365u * 86400u + 3600u, &out);
+    TEST_ASSERT_EQUAL_UINT16(2027, out.year);
+    TEST_ASSERT_EQUAL_UINT8(1, out.month);
+    TEST_ASSERT_EQUAL_UINT8(1, out.day);
+    TEST_ASSERT_EQUAL_UINT8(1, out.hour);
+    nd_calendar_from_elapsed(base, 4294967295u, &out);
+    TEST_ASSERT_TRUE(nd_calendar_date_valid(&out));
+    TEST_ASSERT_TRUE(nd_calendar_time_valid(&out));
+}
+
+static void test_every_day_round_trips_for_a_century(void)
+{
+    uint32_t previous = 0;
+
+    for (uint16_t year = 2000; year <= 2099; year++) {
+        for (uint8_t month = 1; month <= 12; month++) {
+            uint8_t days = nd_calendar_days_in_month(month, year);
+            for (uint8_t day = 1; day <= days; day++) {
+                nd_datetime_t out;
+                uint32_t total = nd_calendar_total_day(day, month, year);
+
+                TEST_ASSERT_EQUAL_UINT32(previous + 1, total);
+                previous = total;
+                nd_calendar_from_total_day(total, &out);
+                TEST_ASSERT_EQUAL_UINT16(year, out.year);
+                TEST_ASSERT_EQUAL_UINT8(month, out.month);
+                TEST_ASSERT_EQUAL_UINT8(day, out.day);
+            }
+        }
+    }
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -162,5 +213,7 @@ int main(void)
     RUN_TEST(test_rtc_bcd_uses_two_digit_year);
     RUN_TEST(test_weekday_matches_the_legacy_formula);
     RUN_TEST(test_add_seconds_handles_day_boundary);
+    RUN_TEST(test_from_elapsed_keeps_time_legal_across_days);
+    RUN_TEST(test_every_day_round_trips_for_a_century);
     return UNITY_END();
 }

@@ -1,6 +1,7 @@
 ﻿#include "application/ports/fifo.h"
 #include "fr_698_env.h"
 #include "fr_698.h"
+#include "fr_698_internal.h"
 #include "fr_698_esam.h"
 
 #define GetRequestNormal            1
@@ -11,10 +12,6 @@
 #define GetRequestMD5               6
 #define GetRequestSimplifyRecord    23
 
-extern uint16_t axdr_record_len_get(uint8_t* data, uint16_t* rsdLen, uint16_t* rcsdLen);
-extern int GET_record_sel_1(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t buf_size,  void *ctx);
-extern int GET_record_sel_2(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t buf_size,  void *ctx);
-extern int GET_record_sel_9(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t buf_size,  void *ctx);
 
 int get_GET_Request_len(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t*)
 {
@@ -58,7 +55,7 @@ int get_GET_Request_len(struct instance_t*, struct pipeline_t* pipeline, nd_dl69
 }
 
 
-int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+static int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* cache = ctx->apdu;
@@ -75,9 +72,9 @@ int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, 
         uint8_t type = apdu_rx[ctx->apdu_rx_offset++];
         if (type == 0x09)//octet-string
         {
-            uint8_t len = apdu_rx[ctx->apdu_rx_offset++];
-            memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, len);
-            ctx->apdu_rx_offset += len;
+            uint8_t octet_len = apdu_rx[ctx->apdu_rx_offset++];
+            memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, octet_len);
+            ctx->apdu_rx_offset += octet_len;
             //todo write data
             p[cache->wr++] = 0x00;
         }
@@ -148,10 +145,6 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
                 return DAR_OTHERS_ERROR;
             }
             cache->wr += n;
-#if 0
-            cache->wr += 1200;
-            ctx->next_index = 0;
-#endif
         }
     }
 
@@ -269,10 +262,6 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
                 {
                     p[offset] = 1;// 有记录
                     cache->wr += ret;
-                    #if 0
-                    cache->wr += 1200;
-                    ctx->next_index = 1;
-                    #endif
                 }
             }
         }
@@ -293,15 +282,6 @@ static int __fr_handle_get_next_request(struct instance_t*, struct pipeline_t*, 
     //  ctx->next_que = 1; 几条
     //判断是否大于1800
 
-#if 0
-    cnt++;
-    ctx->next_index = 1;
-    if(cnt>10){
-        ctx->next_last_frm = 1;
-    }
-    //剩余记录为0，清 ctx->next_index = 0;
-    cache->wr = 600;
-#endif
     return 1;
 }
 

@@ -23,5 +23,5 @@
 
 
 
-extern int8_t security_decode_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
+extern int8_t security_decode_645(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
 

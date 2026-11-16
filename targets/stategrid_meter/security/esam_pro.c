@@ -1,12 +1,12 @@
 #include "type_def.h"
-#include "nidavellir.h"
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #include "infra/boards/stategrid_single_phase/meter_status.h"
 #include "time_link.h"
 #include "fr_698_esam.h"
 #include "io_type.h"
-
-extern int openM_ioctl(int fd, int request, void *param);
-extern void mac_err_cnt_add(struct instance_t* instance);
+#include "infra/security/esam/esam_io.h"
+#include "targets/stategrid_meter/app/events/events_applications.h"
+#include "targets/stategrid_meter/security/esam_pro.h"
 
 enum verification_choice_e
 {
@@ -482,7 +482,7 @@ static const struct Func_esam_698_t Func_esam[] =
 };
 
 
-int esam_pro_handle(struct instance_t* instance, int fd, int request, void *param)
+int esam_pro_handle(void *instance, int fd, int request, void *param)
 {
     struct esam_698_data_t *para = (struct esam_698_data_t *)param;
     int ret = 0;

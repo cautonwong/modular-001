@@ -42,7 +42,7 @@ uint16_t fifoBuf_update_rd(struct fifo_t* buf, uint16_t len, uint8_t type)
         if(rd >= len)
             rd -= len;
         else
-            rd = buf_size - len - rd;
+            rd = buf_size - (len - rd);
     }
 
     buf->rd = rd;
@@ -338,28 +338,6 @@ uint8_t fifoBuf_getByte(struct fifo_t *buf)
     return b;                           // return the byte
 }
 
-int16_t fifoBuf_getByteCount(struct fifo_t* buf,uint16_t *count)
-{       // get a data byte from the buffer
-    uint16_t rd = buf->rd;
-    uint16_t buf_size = buf->buf_size;
-    uint8_t* buff = buf->buf_ptr;
-
-    // get number of bytes available
-    uint16_t num_bytes = fifoBuf_getUsed(buf);
-    //n_assert(num_bytes >= 1);
-    if (num_bytes < 1)
-        return -1;                      // no byte returned
-
-    uint8_t b = buff[rd];
-    if (++rd >= buf_size)
-        rd = 0;
-
-    *count++;
-    buf->rd = rd;
-
-    return b;                           // return the byte
-}
-
 uint16_t fifoBuf_getDataPeek(struct fifo_t *buf, void *data, uint16_t len)
 {       // get data from the buffer without removing it
 
@@ -603,11 +581,7 @@ uint16_t fifoBuf_putByte(struct fifo_t *buf, const uint8_t b)
     uint16_t buf_size = buf->buf_size;
     uint8_t *buff = buf->buf_ptr;
 
-    uint16_t num_bytes = fifoBuf_getFree(buf);
-    //n_assert(num_bytes >= 1);//overflow
-    //if (num_bytes < 1)
-    //    return 0;
-
+    /* Full FIFO overwrites the oldest byte; legacy behavior is preserved. */
     buff[wr] = b;
     if (++wr >= buf_size)
         wr = 0;
@@ -760,7 +734,8 @@ uint16_t apdu_cache_getFree(struct fifo_t *buf)
     uint16_t buf_size = buf->buf_size;
     uint16_t rd = buf->rd;
     uint16_t wr = buf->wr;
-    uint16_t num_bytes = wr - rd;
+    uint16_t num_bytes = wr >= rd ? (uint16_t)(wr - rd)
+                                  : (uint16_t)((buf_size - rd) + wr);
 
     if(num_bytes >= (buf_size - 1))   
     {

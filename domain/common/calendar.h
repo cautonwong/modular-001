@@ -25,10 +25,15 @@ int nd_calendar_date_valid(const nd_datetime_t *datetime);
 
 int nd_calendar_time_valid(const nd_datetime_t *datetime);
 
+/* Returns 0 when month is outside 1..12; valid days start at 1. */
 uint32_t nd_calendar_total_day(uint8_t day, uint8_t month, uint16_t year);
 
 /* Inverse of nd_calendar_total_day; produces a date at 00:00:00. */
 void nd_calendar_from_total_day(uint32_t total_day, nd_datetime_t *out);
+
+/* Legal calendar time for base_day plus an elapsed second count. */
+void nd_calendar_from_elapsed(uint32_t base_day, uint32_t seconds,
+                              nd_datetime_t *out);
 
 uint32_t nd_calendar_total_minutes(const nd_datetime_t *datetime);
 int nd_calendar_add_seconds(const nd_datetime_t *datetime, int32_t seconds,

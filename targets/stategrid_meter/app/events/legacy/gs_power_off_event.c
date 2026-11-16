@@ -1,14 +1,22 @@
 #include "nidavellir.h"
-#include "gs_record.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <time.h>
+#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
+#include "targets/stategrid_meter/app/meter_flags.h"
+#include "port.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
 #include "domain/events/power_off.h"
-#include "domain/events/legacy/events_applications.h"
+#include "targets/stategrid_meter/app/events/events_applications.h"
 #include "kernel/legacy_control_block.h"
 
 #define PHASE_NUM 1   //单相或三相 支持1或3
 
 // 上电运行期间 每秒调用
 // 掉电事件 判断:  返回1:记录发生                0:不记录        -1:记录结束
-int PowerOff_event_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+int PowerOff_event_judge(void *instance, void *task, void *mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint16_t RecordId = PowerOffS;
@@ -43,14 +51,14 @@ int PowerOff_event_judge(struct instance_t* instance, struct pipeline_t* task, s
 
 //  下电状态 累计时间累加
 //  下电状态 每秒调用
-void PowerOff_LowPower_pro(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+void PowerOff_LowPower_pro(void *instance, void *task, void *mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t* accumulate_time = &ctrl_block->PowerOffS_time_low_power_cnt;
     uint16_t RecordId = PowerOffS;
     struct message_t mesg_tmp;
 
-    if (instance->ac_power_off_sec_cnt == 1) {
+    if (*nd_fr698_ac_power_off_sec_cnt(instance) == 1) {
         nd_event_duration_t debounce = {
             .active = (uint8_t)(get_activeflag(instance, RecordId) ? 1 : 0),
         };
