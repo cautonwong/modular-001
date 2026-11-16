@@ -17,6 +17,10 @@ typedef struct nd_allocator {
     void (*dealloc)(void *ctx, void *ptr, size_t size);
 } nd_allocator_t;
 
+/* nd_alloc returns memory aligned to this boundary. Every aggregate that is
+ * obtained through the port must not require more than this. */
+#define ND_ALLOC_ALIGNMENT 8
+
 static inline void *nd_alloc(const nd_allocator_t *allocator, size_t size)
 {
     if (allocator == NULL || allocator->alloc == NULL) {

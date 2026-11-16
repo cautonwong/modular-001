@@ -4,19 +4,31 @@
 #include "nidavellir.h"
 #include "fr_645_report.h"
 #include "fr_698.h"
-#include "gs_record.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
 #include "infra/boards/stategrid_single_phase/board_io.h"
 
 #include "domain/load_control/load_control.h"
 #include "infra/memory/arena.h"
-#include "domain/events/legacy/events_applications.h"
-#include "domain/metering/legacy/metering_applications.h"
+#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/events/events_applications.h"
+#include "targets/stategrid_meter/app/metering/metering_applications.h"
 #include "infra/boards/stategrid_single_phase/relay_config.h"
 #include "kernel/legacy_control_block.h"
 
-extern uint16_t relay_off_chk, relay_on_chk;
-extern uint8_t Magnetic_hold_relay_connect(void);
-extern uint8_t Magnetic_hold_relay_disconnect(void);
+uint16_t relay_off_chk, relay_on_chk;
+
+void save_relay_state(struct instance_t *instance)
+{
+    struct mbase_control_block_t *mbase_cb =
+        (struct mbase_control_block_t *)get_pipeline_ctx(instance, pid_meter_base);
+    uint32_t s_addr = ((uint32_t)(RES_DEV_EEPROM << 24)
+                       + ((uint32_t)mbase_block_persistent_eprom << 16)
+                       + nd_mbase_offset_cmd()
+                       - nd_mbase_offset_persistent_section_start());
+    uint32_t len = nd_mbase_offset_sta() - nd_mbase_offset_cmd()
+                   + sizeof(nd_mbase_sta(mbase_cb));
+    nd_set_offset(instance, s_addr, (uint8_t *)&nd_mbase_cmd(mbase_cb), len);
+}
 
 /* shortcut: one relay state per firmware. Move it into the target
  * composition root when the target owns instance state. */

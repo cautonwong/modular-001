@@ -1,11 +1,10 @@
-#include "nidavellir.h"
 #include "fr_698.h"
-#include "gs_record.h"
-#include "domain/events/legacy/gs_record.h"
-#include "kernel/legacy_control_block.h"
+#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
 
 // 获取冻结关联对象
-int get_frozen_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct frozen_obj_t frozen_obj, uint8_t* dar)
+int get_frozen_obj(void *instance, uint32_t oad, uint8_t* buf, struct frozen_obj_t frozen_obj, uint8_t* dar)
 {
 
     uint8_t i, num, maxnum, scheme;
@@ -106,15 +105,14 @@ int get_frozen_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, stru
     return (p - buf);
 }
 
-int GET_5_Frozen(struct instance_t* instance, uint32_t oad, uint8_t* buf, void *ctx)
+int GET_5_Frozen(void *instance, uint32_t oad, uint8_t* buf, void *ctx)
 {    
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t dar = DAR_SUCCESS;
     uint8_t* p = buf;
     int ret;
 
    
-    if(mbase_cb == NULL)
+    if(!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -152,14 +150,6 @@ int GET_5_Frozen(struct instance_t* instance, uint32_t oad, uint8_t* buf, void *
         {
 
             struct frozen_obj_t frozen_obj = {0};
-#if 0
-            frozen_obj.CaptureId = MinuteFreeze_oad;
-            frozen_obj.PeriodId = MinuteFreeze_period;
-            frozen_obj.DepthId = MinuteFreeze_depth;
-            frozen_obj.CaptureLen = 1 + 4 * 15;  
-            frozen_obj.PeriodLen = 24;
-            frozen_obj.DepthLen = 31;
-#endif
             return get_frozen_obj(instance, oad, buf, frozen_obj, &dar);
         }
         break;

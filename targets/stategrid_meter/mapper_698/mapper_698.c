@@ -1,228 +1,35 @@
-#include "nidavellir.h"
+#include "targets/stategrid_meter/app/metering/metering_applications.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "targets/stategrid_meter/tools/app_resource_tool/resource_tool.h"
 #include "fr_698.h"
+#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
+#include "targets/stategrid_meter/app/meter_flags.h"
+
+#define eleof(a) (sizeof(a) / sizeof((a)[0]))
 #include "fr_645_report.h"
-#include "gs_record.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
+#include "targets/stategrid_meter/app/events/gs_record_tables.h"
+#include "targets/stategrid_meter/mapper_698/factory_cfg.h"
+#include "targets/stategrid_meter/mapper_698/mapper_698.h"
 #include "infra/boards/stategrid_single_phase/board_io.h"
-#include "application/apps/app_config.h"
+#include "targets/stategrid_meter/app/app_config.h"
 #include "application/adapters/dl698/fr_698.h"
-#include "domain/events/legacy/gs_record.h"
-#include "domain/freeze/legacy/freeze_applications.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
+#include "targets/stategrid_meter/app/freeze/freeze_applications.h"
 #include "infra/kernel/resource_blocks.h"
 #include "infra/soc/v85xxp/v8500/v85xxp_system.h"
-#include "kernel/legacy_control_block.h"
 #include "targets/stategrid_meter/app/driver_entry.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
 //参数初始化  
-extern const uint8_t  init_MinuteFreeze_oad[];
-extern const uint8_t  init_HourFreeze_oad[];
-extern const uint8_t  init_DayFreeze_oad[];
-extern const uint8_t  init_DayFreeze_oad_local[];
-extern const uint8_t  init_BillFreeze_oad[];
-extern const uint8_t  init_MonthFreeze_oad[];
-extern const uint8_t  init_SeasonTabCutFreeze_oad[];
-extern const uint8_t  init_DayTabCutFreeze_oad[];
-extern const uint8_t  init_FeePriceCutFreeze_oad[];
-extern const uint8_t  init_StepCutFreeze_oad[];
-extern const uint8_t  init_StepBillFreeze_oad[];
-extern const uint8_t  init_InstantFreeze_oad[];
-extern const uint8_t  init_Event_ReportFlag_3[];  
-extern const uint8_t  init_Event_ReportFlag_1[]; 
-extern const uint8_t  init_Event_ReportFlag_0[]; 
-extern const uint8_t  init_Event_ReportMode_1[]; 
-extern const uint8_t  init_Event_ReportMode_0[]; 
-
-extern const uint8_t  init_MinuteFreeze_period[];        
-extern const uint8_t  init_HourFreeze_period[];          
-extern const uint8_t  init_DayFreeze_period[];  
-extern const uint8_t  init_DayFreeze_period_local[]; 
-extern const uint8_t  init_BillFreeze_period[];          
-extern const uint8_t  init_MonthFreeze_period[];         
-extern const uint8_t  init_SeasonTabCutFreeze_period[];  
-extern const uint8_t  init_DayTabCutFreeze_period[];   
-extern const uint8_t  init_FeePriceCutFreeze_period[]; 
-extern const uint8_t  init_StepCutFreeze_period[];     
-extern const uint8_t  init_StepBillFreeze_period[];    
-extern const uint8_t  init_InstantFreeze_period[];     
-
-extern const uint8_t  init_MinuteFreeze_depth[];             
-extern const uint8_t  init_HourFreeze_depth[];               
-extern const uint8_t  init_DayFreeze_depth[];                
-extern const uint8_t  init_BillFreeze_depth[];               
-extern const uint8_t  init_MonthFreeze_depth[];        
-extern const uint8_t  init_SeasonTabCutFreeze_depth[]; 
-extern const uint8_t  init_DayTabCutFreeze_depth[];    
-extern const uint8_t  init_FeePriceCutFreeze_depth[];  
-extern const uint8_t  init_StepCutFreeze_depth[];     
-extern const uint8_t  init_StepBillFreeze_depth[];    
-extern const uint8_t  init_InstantFreeze_depth[];     
-
-extern const uint8_t  init_BeforSet_SeasonT[];
-
-extern const uint8_t  init_SecurityMode_En[];
-extern const uint8_t  init_SecurityMode_EXData[];
-
-extern const uint8_t  init_OverCurrentAS_oad[];
-extern const uint8_t  init_PowerOffS_oad[];
-extern const uint8_t  init_MeterWrS_oad[];
-extern const uint8_t  init_MeterClrS_oad[];
-extern const uint8_t  init_EventClrS_oad[];
-extern const uint8_t  init_SetTimeS_oad[];
-extern const uint8_t  init_DayTabWrS_oad[];
-extern const uint8_t  init_SeasonTabWrS_oad[];
-extern const uint8_t  init_WeekTabWrS_oad[];
-extern const uint8_t  init_BillDayWrS_oad[];
-extern const uint8_t  init_CoverOpenS_oad[];
-extern const uint8_t  init_SwitchOffS_oad[];
-extern const uint8_t  init_SwitchOnS_oad[];
-extern const uint8_t  init_HolidayWrS_oad[];
-extern const uint8_t  init_ActCombWrS_oad[];
-extern const uint8_t  init_FeeTabWrS_oad[];
-extern const uint8_t  init_StepTabWrS_oad[];
-extern const uint8_t  init_SecretKeyWrS_oad[];
-extern const uint8_t  init_ErrPlugCardS_oad[];
-extern const uint8_t  init_RechargeS_oad[];
-extern const uint8_t  init_RefundS_oad[];
-extern const uint8_t  init_SwitchErrS_oad[];
-extern const uint8_t  init_PowerAbnormalS_oad[];
-extern const uint8_t  init_RTCErrS_oad[];
-extern const uint8_t  init_EmuErrS_oad[];
-extern const uint8_t  init_BroadcastTimeS_oad[];
-extern const uint8_t  init_ZeroLineErrS_oad[];
-
-
-extern const uint8_t  init_AuthTime_DL645[];
 
 
 
-extern const uint8_t  init_AutoDisplayList[];
-extern const uint8_t  init_KeyDisplayList[];
 
-extern const uint8_t   init_Comm_Number[];//表地址
+
+
+
 //extern const uint8_t   init_Meter_Number[];//表号
-extern const uint8_t   init_User_Number[];//客户编号
-extern const uint8_t   init_Meter_Num[];//计量元件数
-extern const uint8_t   init_SeasonTable_Changetime[];//两套时区切换时间
-extern const uint8_t   init_SeasonTable_Changetime[];//两套时段切换时间
-extern const uint8_t   init_SeasonDay_Para[];//时区时段参数（年时区数、日时段表
-extern const uint8_t   init_SecretKey_Num[];//秘钥总条数
-extern const uint8_t   init_HoliDay_Table[];//公共假日表，10张，每张6字节
-extern const uint8_t   init_Weekend[];//周休日特征字
-extern const uint8_t   init_WeekendFee[];//周休日采用费率号
-extern const uint8_t   init_Season_Table0[];//当前套时区表，≤14
-extern const uint8_t   init_Season_Table0[];//备用套时区表，≤14
-extern const uint8_t   init_Day_Table00[];//当前套日时段表数据
-extern const uint8_t   init_Day_Table00[];//备用套日时段表数据
-
-extern const uint8_t  init_Alarm_Credit1[];   //报警金额限值1 
-extern const uint8_t  init_Alarm_Credit2[];   //报警金额限值2   
-extern const uint8_t   init_Meter_CT[];//CT
-extern const uint8_t   init_Meter_PT[];//PT
-extern const uint8_t   init_Pulse_Width[];//脉冲宽度
-extern const uint8_t   init_ASCII_AssetsMan[];//资产管理编码
-extern const uint8_t   init_ASCII_Un[];//额定电压
-extern const uint8_t  init_ASCII_Ib[];//额定电流
-extern const uint8_t  init_ASCII_Imax[];//最大电流
-extern const uint8_t    init_ASCII_Imin[];//最小电流
-extern const uint8_t    init_ASCII_Itr[];//转折电流
-extern const uint8_t  init_ASCII_AccuracyClass1[];//有功准确度等级
-extern const uint8_t  init_Meter_Const1[];//有功脉冲常数
-extern const uint8_t  init_ASCII_MeterType[];//电能表型号
-extern const uint8_t  init_MeterRunWord[];//电能表运行特征字
-extern const uint8_t  init_SoftWareNo[];//软件备案号
-extern const uint8_t  init_Measure_Mode[];//有功组合特征字
-extern const uint8_t  init_Balance_Time[];//结算日
-extern const uint8_t  init_Meter_Password[];//应用连接密码
-extern const uint8_t  init_Meter_02Password[];
-extern const uint8_t  init_Meter_04Password[];
-extern const uint8_t  init_Meter_Location1[];//设备地理位置经度
-extern const uint8_t  init_Meter_Location2[];//设备地理位置纬度
-extern const uint8_t  init_Meter_Location3[];//设备地理位置高度
-
-extern const uint8_t  init_Device_descriptor[];//设备描述符
-
-extern const uint8_t  init_Factory_No[]; //厂家代码
-extern const uint8_t  init_Version_SoftWare[]; //软件版本
-extern const uint8_t  init_Date_SoftWare[]; //软件版本日期
-extern const uint8_t  init_Version_HardWare[]; //硬件版本
-extern const uint8_t  init_Date_HardWare[]; //硬件版本日期
-extern const uint8_t  init_Extend_Info[]; //扩展信息
-
-extern const uint8_t  init_Produced_Date[]; //生产日期
-extern const uint8_t  init_Produced_Date645[]; //生产日期
-
-extern const uint8_t  init_Subset_List[]; //子设备列表(num+2*oi)
-extern const uint8_t  init_Protocol_List[]; //协议列表
-extern const uint8_t  init_FollowReport_en[]; //允许跟随上报
-extern const uint8_t  init_ActiveReport_en[]; //允许主动上报
-extern const uint8_t  init_Comm_Master_en[]; //允许与主站通讯
-extern const uint8_t  init_Report_channel[]; //上报通道
-extern const uint8_t  init_ImaxProtectValue[]; //继电器拉闸电流门限值
-extern const uint8_t  init_ImaxProtectTime[]; //超电流门限保护延时时间
-extern const uint8_t  init_Blt_Alarm_Byte[];
-extern const uint8_t  init_IrAuthenTime[];//红外认证时效
-extern const uint8_t  init_Pstart_En[];
-
-extern const uint32_t record_head_t1[];
-extern const uint32_t record_head_t0[];
-
-extern const uint8_t init_Remote_RelayOffTime[];    //拉闸延时时间
-extern const uint8_t init_HourFroze_StartTime[];  //整点冻结起始时间
-extern const uint8_t init_DayFroze_Time[];
-extern const uint8_t init_ReportRstTime[];
-extern const uint8_t init_HourFroze_Inv[];  //整点冻结间隔时间
-extern const uint8_t init_Step_Num[];
-extern const uint8_t init_ASCII_ptl645_Version[];
-extern const uint8_t init_ASCII_SoftWareNo[];
-extern const uint8_t init_ASCII_HardWareNo[];
-extern const uint8_t init_SoftWareNo_645[];
-extern const uint8_t init_LoadRec_Mode[];
-extern const uint8_t init_TimeFroze_Mode[];
-extern const uint8_t init_InsFroze_Mode[];
-extern const uint8_t init_AppointFroze_Mode[];
-extern const uint8_t init_HourFroze_Mode[];
-extern const uint8_t init_DayFroze_Mode[];
-extern const uint8_t init_LoadRec_Time[];
-extern const uint8_t init_LoadRec_Inv1[];
-extern const uint8_t init_LoadRec_Inv2[];
-extern const uint8_t init_LoadRec_Inv3[];
-extern const uint8_t init_LoadRec_Inv4[];
-extern const uint8_t init_ASCII_Factor[];
-extern const uint8_t  init_Meter_Type[]; //表功能配置字 
-extern const uint8_t  init_ParaInitFinish_Flag[];// 恢复出厂已执行标志
-extern const uint8_t init_EC_SaveDiff_E[];
-
-extern void* get_pipeline_ctx(struct instance_t* instance, pid_t pipeline_id);
-
-extern int GET_0_Energy(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, void *ctx);
-extern int GET_1_Demand(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-extern int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, void *ctx);
-extern int SET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-
-extern int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-extern int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-
-extern int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-extern int SET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-
-extern int ACTION_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-extern int ACTION_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-extern int ACTION_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-extern int ACTION_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-extern int ACTION_8_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *pctx);
-extern int ACTION_F_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx);
-
-extern int GET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-extern int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-extern int GET_6_Collection(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-extern int GET_7_Aggregate(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-extern int GET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-extern int SET_8_Control(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-extern int GET_e_Monitor(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-extern int GET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-extern int SET_f_Other(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx);
-extern int16_t Check_para_Pro(struct instance_t* instance);
 
 #define POINTER_EMPTY(a)  if(a == NULL) { return -1; }
 struct record_item_t
@@ -366,45 +173,45 @@ const  parameter_item_t  parameter_item[] =
 
     
     //事件关联对象
-    { OverCurrentAS_oad             , 0x01,  61, init_OverCurrentAS_oad   }, //oad列表 1+ 4*15     默认8个   电能表A相过流事件
-    { PowerOffS_oad                 , 0x01,  61, init_PowerOffS_oad       }, //oad列表 1+ 4*15     默认8个   电能表掉电事件            
-    { MeterWrS_oad                  , 0x01,  61, init_MeterWrS_oad        }, //oad列表 1+ 4*15     默认8个   电能表编程事件            
-    { MeterClrS_oad                 , 0x01,  61, init_MeterClrS_oad       }, //oad列表 1+ 4*15     默认8个   电能表清零事件            
-    { EventClrS_oad                 , 0x01,  61, init_EventClrS_oad       }, //oad列表 1+ 4*15     默认8个   电能表事件清零事件        
-    { SetTimeS_oad                  , 0x01,  61, init_SetTimeS_oad        }, //oad列表 1+ 4*15     默认8个   电能表校时事件            
-    { DayTabWrS_oad                 , 0x01,  61, init_DayTabWrS_oad       }, //oad列表 1+ 4*15     默认8个   电能表时段表编程事件      
-    { SeasonTabWrS_oad              , 0x01,  61, init_SeasonTabWrS_oad    }, //oad列表 1+ 4*15     默认8个   电能表时区表编程事件      
-    { WeekTabWrS_oad                , 0x01,  61, init_WeekTabWrS_oad      }, //oad列表 1+ 4*15     默认8个   电能表周休日编程事件      
-    { BillDayWrS_oad                , 0x01,  61, init_BillDayWrS_oad      }, //oad列表 1+ 4*15     默认8个   电能表结算日编程事件  
-    { CoverOpenS_oad                , 0x01,  61, init_CoverOpenS_oad      }, //oad列表 1+ 4*15     默认8个   电能表开盖事件            
-    { SwitchOffS_oad                , 0x01,  61, init_SwitchOffS_oad      }, //oad列表 1+ 4*15     默认8个   电能表跳闸事件            
-    { SwitchOnS_oad                 , 0x01,  61, init_SwitchOnS_oad       }, //oad列表 1+ 4*15     默认8个   电能表合闸事件            
-    { HolidayWrS_oad                , 0x01,  61, init_HolidayWrS_oad      }, //oad列表 1+ 4*15     默认8个   电能表节假日编程事件      
-    { ActCombWrS_oad                , 0x01,  61, init_ActCombWrS_oad      }, //oad列表 1+ 4*15     默认8个   电能表有功组合方式编程事件
-    { FeeTabWrS_oad                 , 0x01,  61, init_FeeTabWrS_oad       }, //oad列表 1+ 4*15     默认8个   电能表费率参数表编程事件  
-    { StepTabWrS_oad                , 0x01,  61, init_StepTabWrS_oad      }, //oad列表 1+ 4*15     默认8个   电能表阶梯表编程事件      
-    { SecretKeyWrS_oad              , 0x01,  61, init_SecretKeyWrS_oad    }, //oad列表 1+ 4*15     默认8个   电能表密钥更新事件 
-    { ErrPlugCardS_oad              , 0x01,  61, init_ErrPlugCardS_oad    }, //oad列表 1+ 4*15     默认8个   电能表异常插卡事件        
-    { RechargeS_oad                 , 0x01,  61, init_RechargeS_oad       }, //oad列表 1+ 4*15     默认8个   电能表购电记录            
-    { RefundS_oad                   , 0x01,  61, init_RefundS_oad         }, //oad列表 1+ 4*15     默认8个   电能表退费记录  
-    { SwitchErrS_oad                , 0x01,  61, init_SwitchErrS_oad      }, //oad列表 1+ 4*15     默认8个   电能表负荷开关误动作事件  
-    { PowerAbnormalS_oad            , 0x01,  61, init_PowerAbnormalS_oad  }, //oad列表 1+ 4*15     默认8个   电能表电源异常事件 
-    { RTCErrS_oad                   , 0x01,  61, init_RTCErrS_oad         }, //oad列表 1+ 4*15     默认8个   电能表时钟故障事件 
-    { EmuErrS_oad                   , 0x01,  61, init_EmuErrS_oad         }, //oad列表 1+ 4*15     默认8个   电能表计量芯片故障事件
-    { BroadcastTimeS_oad            , 0x01,  61, init_BroadcastTimeS_oad  }, //oad列表 1+ 4*15     默认8个   广播校时事件 
-    { ZeroLineErrS_oad              , 0x01,  61, init_ZeroLineErrS_oad    }, //oad列表 1+ 4*15     默认8个   零线电流异常事件 
+    { OverCurrentAS_oad             , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_OverCurrentAS_oad   }, //oad列表 1+ 4*15     默认8个   电能表A相过流事件
+    { PowerOffS_oad                 , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_PowerOffS_oad       }, //oad列表 1+ 4*15     默认8个   电能表掉电事件
+    { MeterWrS_oad                  , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_MeterWrS_oad        }, //oad列表 1+ 4*15     默认8个   电能表编程事件
+    { MeterClrS_oad                 , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_MeterClrS_oad       }, //oad列表 1+ 4*15     默认8个   电能表清零事件
+    { EventClrS_oad                 , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_EventClrS_oad       }, //oad列表 1+ 4*15     默认8个   电能表事件清零事件
+    { SetTimeS_oad                  , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_SetTimeS_oad        }, //oad列表 1+ 4*15     默认8个   电能表校时事件
+    { DayTabWrS_oad                 , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_DayTabWrS_oad       }, //oad列表 1+ 4*15     默认8个   电能表时段表编程事件
+    { SeasonTabWrS_oad              , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_SeasonTabWrS_oad    }, //oad列表 1+ 4*15     默认8个   电能表时区表编程事件
+    { WeekTabWrS_oad                , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_WeekTabWrS_oad      }, //oad列表 1+ 4*15     默认8个   电能表周休日编程事件
+    { BillDayWrS_oad                , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_BillDayWrS_oad      }, //oad列表 1+ 4*15     默认8个   电能表结算日编程事件
+    { CoverOpenS_oad                , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_CoverOpenS_oad      }, //oad列表 1+ 4*15     默认8个   电能表开盖事件
+    { SwitchOffS_oad                , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_SwitchOffS_oad      }, //oad列表 1+ 4*15     默认8个   电能表跳闸事件
+    { SwitchOnS_oad                 , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_SwitchOnS_oad       }, //oad列表 1+ 4*15     默认8个   电能表合闸事件
+    { HolidayWrS_oad                , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_HolidayWrS_oad      }, //oad列表 1+ 4*15     默认8个   电能表节假日编程事件
+    { ActCombWrS_oad                , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_ActCombWrS_oad      }, //oad列表 1+ 4*15     默认8个   电能表有功组合方式编程事件
+    { FeeTabWrS_oad                 , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_FeeTabWrS_oad       }, //oad列表 1+ 4*15     默认8个   电能表费率参数表编程事件
+    { StepTabWrS_oad                , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_StepTabWrS_oad      }, //oad列表 1+ 4*15     默认8个   电能表阶梯表编程事件
+    { SecretKeyWrS_oad              , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_SecretKeyWrS_oad    }, //oad列表 1+ 4*15     默认8个   电能表密钥更新事件
+    { ErrPlugCardS_oad              , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_ErrPlugCardS_oad    }, //oad列表 1+ 4*15     默认8个   电能表异常插卡事件
+    { RechargeS_oad                 , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_RechargeS_oad       }, //oad列表 1+ 4*15     默认8个   电能表购电记录
+    { RefundS_oad                   , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_RefundS_oad         }, //oad列表 1+ 4*15     默认8个   电能表退费记录
+    { SwitchErrS_oad                , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_SwitchErrS_oad      }, //oad列表 1+ 4*15     默认8个   电能表负荷开关误动作事件
+    { PowerAbnormalS_oad            , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_PowerAbnormalS_oad  }, //oad列表 1+ 4*15     默认8个   电能表电源异常事件
+    { RTCErrS_oad                   , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_RTCErrS_oad         }, //oad列表 1+ 4*15     默认8个   电能表时钟故障事件
+    { EmuErrS_oad                   , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_EmuErrS_oad         }, //oad列表 1+ 4*15     默认8个   电能表计量芯片故障事件
+    { BroadcastTimeS_oad            , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_BroadcastTimeS_oad  }, //oad列表 1+ 4*15     默认8个   广播校时事件
+    { ZeroLineErrS_oad              , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_ZeroLineErrS_oad    }, //oad列表 1+ 4*15     默认8个   零线电流异常事件
     //冻结关联对象
-    { MinuteFreeze_oad              , 0x01,  61, init_MinuteFreeze_oad       }, //oad列表 1+ 4*15     默认7个
-    { HourFreeze_oad                , 0x01,  61, init_HourFreeze_oad         }, //oad列表 1+ 4*15     
-    { DayFreeze_oad                 , 0x01,  61, init_DayFreeze_oad          }, //oad列表 1+ 4*15     
-    { BillFreeze_oad                , 0x01,  61, init_BillFreeze_oad         }, //oad列表 1+ 4*15   
-    { MonthFreeze_oad               , 0x01,  61, init_MonthFreeze_oad        }, //oad列表 1+ 4*15     
-    { SeasonTabCutFreeze_oad        , 0x01,  61, init_SeasonTabCutFreeze_oad }, //oad列表 1+ 4*15   
-    { DayTabCutFreeze_oad           , 0x01,  61, init_DayTabCutFreeze_oad    }, //oad列表 1+ 4*15   
-    { FeePriceCutFreeze_oad         , 0x01,  61, init_FeePriceCutFreeze_oad  }, //oad列表 1+ 4*15   
-    { StepCutFreeze_oad             , 0x01,  61, init_StepCutFreeze_oad      }, //oad列表 1+ 4*15   
-    { StepBillFreeze_oad            , 0x01,  61, init_StepBillFreeze_oad     }, //oad列表 1+ 4*15   
-    { InstantFreeze_oad             , 0x01,  61, init_InstantFreeze_oad      }, //oad列表 1+ 4*15   
+    { MinuteFreeze_oad              , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_MinuteFreeze_oad       }, //oad列表 1+ 4*15     默认7个
+    { HourFreeze_oad                , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_HourFreeze_oad         }, //oad列表 1+ 4*15
+    { DayFreeze_oad                 , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_DayFreeze_oad          }, //oad列表 1+ 4*15
+    { BillFreeze_oad                , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_BillFreeze_oad         }, //oad列表 1+ 4*15
+    { MonthFreeze_oad               , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_MonthFreeze_oad        }, //oad列表 1+ 4*15
+    { SeasonTabCutFreeze_oad        , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_SeasonTabCutFreeze_oad }, //oad列表 1+ 4*15
+    { DayTabCutFreeze_oad           , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_DayTabCutFreeze_oad    }, //oad列表 1+ 4*15
+    { FeePriceCutFreeze_oad         , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_FeePriceCutFreeze_oad  }, //oad列表 1+ 4*15
+    { StepCutFreeze_oad             , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_StepCutFreeze_oad      }, //oad列表 1+ 4*15
+    { StepBillFreeze_oad            , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_StepBillFreeze_oad     }, //oad列表 1+ 4*15
+    { InstantFreeze_oad             , 0x01,  ND_EVENT_OAD_LIST_BYTES, init_InstantFreeze_oad      }, //oad列表 1+ 4*15
     //上报标识
     { OverCurrentAS_RptFlag         , 0x01,   0x01,  init_Event_ReportFlag_1 },// 上报标识   电能表A相过流事件
     { PowerOffS_RptFlag             , 0x01,   0x01,  init_Event_ReportFlag_3 },// 上报标识   电能表掉电事件            
@@ -525,7 +332,7 @@ const  parameter_item_t  parameter_item[] =
     { StepBillFreeze_period         , 0x01,  3, init_StepBillFreeze_period     }, //阶梯结算冻结冻结 周期   3 
     { InstantFreeze_period          , 0x01,  3, init_InstantFreeze_period      }, //瞬时冻结冻结 周期   3                                      
     //冻结深度                    
-    { MinuteFreeze_depth            , 0x01, 30, init_MinuteFreeze_depth       }, //分钟冻结 深度     2*15  
+    { MinuteFreeze_depth            , 0x01, ND_MINUTE_FREEZE_DEPTH_BYTES, init_MinuteFreeze_depth       }, //分钟冻结 深度     2*15
     { HourFreeze_depth              , 0x01,  2, init_HourFreeze_depth         }, //分钟冻结 深度     2   
     { DayFreeze_depth               , 0x01,  2, init_DayFreeze_depth          }, //分钟冻结 深度     2   
     { BillFreeze_depth              , 0x01,  2, init_BillFreeze_depth         }, //分钟冻结 深度     2   
@@ -542,7 +349,7 @@ const  parameter_item_t  parameter_item[] =
     { BeforSetT_Time                , 0x01,  7, 0 }, //校时前时间 秒 分 时 日 月 年(2字节)
     { AfterSetT_Time                , 0x01,  7, 0 }, //校时后时间 秒 分 时 日 月 年(2字节)
     { MeterWr_List                  , 0x01, 52, 0 }, //编程对象列表  array OAD    
-    { BeforSet_SeasonT              , 0x01,114, init_BeforSet_SeasonT }, //编程前备用套时区  array num 14*8  
+    { BeforSet_SeasonT              , 0x01, ND_BEFOR_SET_SEASON_T_BYTES, init_BeforSet_SeasonT }, //编程前备用套时区  array num 14*8
     { Set_DayTab_Oad                , 0x01,  5, 0 }, //编程时段表对象          
     { BeforSet_DayTab               , 0x01,114, 0 }, //编程前备用套时段表  array num 14*8  
     { BeforSet_WeekTab              , 0x01,  2, 0 }, //编程前周休日时段表号   
@@ -565,7 +372,7 @@ const  parameter_item_t  parameter_item[] =
     { ActReport_Info                , 0x01 ,     4    , 0                           }, // ----未使用 主动上报 停电下缓存信息  2 + 1 + 1   主动上报标志（2） + 3320上报次数（1）+2015上报次数（1）                                                                                      
     { MinFrez_Sectors               , 0x01 ,     18   , 0                           }, //分钟冻结各方案的扇区偏移 9*2     ram也存一份                                              
     { SecurityMode_En               , 0x01 ,     1    , init_SecurityMode_En        }, //安全模式参数使能0-dis   1-en
-    { SecurityMode_EXData           , 0x01 ,     101  , init_SecurityMode_EXData    }, //显式安全模式参数缓存                                               
+    { SecurityMode_EXData           , 0x01 ,     ND_SECURITY_MODE_EXDATA_BYTES  , init_SecurityMode_EXData    }, //显式安全模式参数缓存
     { AutoDisplayList               , 0x64 ,     2    , init_AutoDisplayList        }, //100屏*2字节
     { KeyDisplayList                , 0x64 ,     2    , init_KeyDisplayList         }, //100屏*2字节
 
@@ -617,11 +424,11 @@ const  parameter_item_t  parameter_item[] =
                                                 
     { Produced_Date                 , 0x01 ,     10   , init_Produced_Date          }, //生产日期
     { Subset_List                   , 0x01 ,     1    , init_Subset_List            }, //子设备列表(num+2*oi)
-    { Protocol_List                 , 0x01 ,   	 76   , init_Protocol_List          }, //协议列表
+    { Protocol_List                 , 0x01 ,   	 ND_PROTOCOL_LIST_BYTES   , init_Protocol_List          }, //协议列表
     { FollowReport_en               , 0x01 ,     1    , init_FollowReport_en        }, //允许跟随上报
     { ActiveReport_en               , 0x01 ,     1    , init_ActiveReport_en        }, //允许主动上报
     { Comm_Master_en                , 0x01 ,     1    , init_Comm_Master_en         }, //允许与主站通讯
-    { Report_channel                , 0x01 ,     13   , init_Report_channel         }, //上报通道
+    { Report_channel                , 0x01 ,     ND_REPORT_CHANNEL_BYTES   , init_Report_channel         }, //上报通道
                                                 
     { ImaxProtectValue              , 0x01 ,     4    , init_ImaxProtectValue       }, //继电器拉闸电流门限值
     { ImaxProtectTime               , 0x01 ,     2    , init_ImaxProtectTime        }, //超电流门限保护延时时间
@@ -708,7 +515,7 @@ const  parameter_item_t  parameter_item_1[] =
 };
 
 
-int16_t supply_parameter_info(struct instance_t* instance, uint16_t id, uint32_t* addr, uint32_t* size,uint32_t *offset)
+int16_t supply_parameter_info(void *instance, uint16_t id, uint32_t* addr, uint32_t* size,uint32_t *offset)
 {
     uint16_t i;
 
@@ -734,7 +541,7 @@ int16_t supply_parameter_info(struct instance_t* instance, uint16_t id, uint32_t
     return -1;
 }
 
-int16_t supply_parameter_1_info(struct instance_t* instance, uint16_t id, uint32_t* addr, uint32_t* size,uint32_t *offset)
+int16_t supply_parameter_1_info(void *instance, uint16_t id, uint32_t* addr, uint32_t* size,uint32_t *offset)
 {
     uint16_t i;
 
@@ -760,7 +567,7 @@ int16_t supply_parameter_1_info(struct instance_t* instance, uint16_t id, uint32
     return -1;
 }
 
-int16_t supply_event_info(struct instance_t* instance, uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
+int16_t supply_event_info(void *instance, uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
 {
     uint16_t i;
 
@@ -786,21 +593,21 @@ int16_t supply_event_info(struct instance_t* instance, uint16_t event_flag, uint
     return -1;
 }
 
-int16_t supply_event_flash_1_info(struct instance_t* instance, uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
+int16_t supply_event_flash_1_info(void *instance, uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
 {
     uint16_t i;
     uint32_t addr_index;
     uint16_t sector_size[9] = { 0 };
     uint8_t tempbuf[2*8] = { 0 };
     int ret;
-    addr_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MinFrez_Sectors); //待调整  可优化到ram
+    addr_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MinFrez_Sectors); //待调整  可优化到ram
     ret = nd_get_index(instance, addr_index, (uint8_t*)&sector_size[0], 18);
     if (ret < 0)
     {
         memset(&sector_size[0], 0, sizeof(sector_size));
     }
 
-    addr_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MinuteFreeze_depth);//待调整  可优化到ram
+    addr_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MinuteFreeze_depth);//待调整  可优化到ram
     ret = nd_get_index(instance, addr_index, (uint8_t*)&tempbuf[0], 16);
     if (ret < 0)
     {
@@ -839,7 +646,7 @@ int16_t supply_event_flash_1_info(struct instance_t* instance, uint16_t event_fl
     return -1;
 }
 
-int16_t supply_event_flash_2_info(struct instance_t* instance, uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
+int16_t supply_event_flash_2_info(void *instance, uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
 {
     uint16_t i;
 
@@ -957,25 +764,12 @@ const uint16_t fr698_prepay_oi[] =
 
 
 //1 有效，-DAR_OBJECT_UNDEF 无效        //此函数内部 不能调  resource map
-int check_metertype_OI_valid(struct instance_t* instance, uint16_t OI)
+int check_metertype_OI_valid(void *instance, uint16_t OI)
 {
-        struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
         uint8_t i;
 
-    if ((nd_mbase_metertype(mbase_cb) & F_Crad_En) == 0)  //非本地表
+    if ((nd_mb_metertype(instance) & F_Crad_En) == 0)  //非本地表
     {   
-#if 0 //三相
-        if (0) //智能表
-        {
-            for (i=0; i < eleof(fr698_remote_oi); i++)
-            {
-                if(OI == fr698_remote_oi[i])
-                {
-                    return true;
-                }
-            }
-        }
-#endif        
         for (i=0; i < eleof(fr698_prepay_oi); i++)
         {
             if(OI == fr698_prepay_oi[i])
@@ -992,7 +786,7 @@ int check_metertype_OI_valid(struct instance_t* instance, uint16_t OI)
 
 
 // 通过oad 获取 事件相关的存储地址信息
-int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_storage_id_info_t* info)
+int get_record_id_info(void *instance, uint32_t oad, struct record_storage_id_info_t* info)
 {
     
     uint16_t SaveId = 0, SeqId = 0, CaptureId = 0, PeriodId = 0, DepthId = 0, ReportFlagId = 0, ReportModeId = 0;
@@ -1002,9 +796,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
     //uint16_t OI;
     uint8_t /*attr = 0, oadclass = 7, */scheme = 0;
 
-    struct mbase_control_block_t* mbase_cb;
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    if (mbase_cb == NULL)
+    if (!nd_mb_valid(instance))
     {
         return -1;
     }
@@ -1044,34 +836,34 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 {
                     
                     SaveId = OverCurrentAS;                 // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = OverCurrentAS_oad;          // 关联对象存储地址信息
                     SeqId = OverCurrentAS_seq;              // 序号存储地址信息
                     ReportFlagId = OverCurrentAS_RptFlag;   //上报标识
                     ReportModeId = OverCurrentAS_RptMode;   //上报方式   
                     info->record_head = record_head_t1;     // 记录单元
-                    info->acc_time = &nd_mbase_OverCurrentAS_acc_time(mbase_cb);
+                    info->acc_time = &nd_mb_over_current_as_acc_time(instance);
                 }
                 break;
                 
                 case 0x30110000:
                 {
                     SaveId = PowerOffS;                 // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = PowerOffS_oad;          // 关联对象存储地址信息
                     SeqId = PowerOffS_seq;              // 序号存储地址信息
                     ReportFlagId = PowerOffS_RptFlag;   //上报标识
                     ReportModeId = PowerOffS_RptMode;   //上报方式   
                     info->record_head = record_head_t0;     // 记录单元
-                    info->acc_time = &nd_mbase_PowerOffS_acc_time(mbase_cb);
+                    info->acc_time = &nd_mb_power_off_s_acc_time(instance);
                 }
                 break;
                 case 0x30120000: //编程事件
                 {
                     SaveId = MeterWrS;                 // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = MeterWrS_oad;          // 关联对象存储地址信息
                     SeqId = MeterWrS_seq;              // 序号存储地址信息
@@ -1083,7 +875,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 case 0x30130000:
                 {
                     SaveId = MeterClrS;                 // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = MeterClrS_oad;          // 关联对象存储地址信息
                     SeqId = MeterClrS_seq;              // 序号存储地址信息
@@ -1101,7 +893,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 {
                     temp = (((oad & 0xFFFF0000) - 0x30150000) >> 16);
                     SaveId = EventClrS + temp;                 // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = EventClrS_oad + temp;          // 关联对象存储地址信息
                     SeqId = EventClrS_seq + temp;              // 序号存储地址信息
@@ -1114,7 +906,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 {
                     temp = (((oad & 0xFFFF0000) - 0x30150000) >> 16);
                     SaveId = EventClrS + temp;                 // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = EventClrS_oad + temp;          // 关联对象存储地址信息
                     SeqId = EventClrS_seq + temp;              // 序号存储地址信息
@@ -1127,7 +919,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 {
                     //temp = (((oad & 0xFFFF0000) - 0x30150000) >> 16);
                     SaveId = DayTabWrS;                 // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = DayTabWrS_oad;          // 关联对象存储地址信息
                     SeqId = DayTabWrS_seq;              // 序号存储地址信息
@@ -1139,14 +931,14 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 case 0x301B0000:
                 {
                     SaveId = CoverOpenS;                 // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = CoverOpenS_oad;          // 关联对象存储地址信息
                     SeqId = CoverOpenS_seq;              // 序号存储地址信息
                     ReportFlagId = CoverOpenS_RptFlag + temp;   //上报标识
                     ReportModeId = CoverOpenS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
-                    info->acc_time = &nd_mbase_CoverOpenS_acc_time(mbase_cb);
+                    info->acc_time = &nd_mb_cover_open_s_acc_time(instance);
                 }
                 break;
 
@@ -1157,7 +949,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 {
                     temp = (((oad & 0xFFFF0000) - 0x301F0000) >> 16);
                     SaveId = SwitchOffS + temp;                 // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = SwitchOffS_oad + temp;          // 关联对象存储地址信息
                     SeqId = SwitchOffS_seq + temp;              // 序号存储地址信息
@@ -1171,7 +963,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 {
                     //temp = (((oad & 0xFFFF0000) - 0x301F0000) >> 16);
                     SaveId = HolidayWrS;                 // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = HolidayWrS_oad;          // 关联对象存储地址信息
                     SeqId = HolidayWrS_seq;              // 序号存储地址信息
@@ -1192,7 +984,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 {
                     temp = (((oad & 0xFFFF0000) - 0x30240000) >> 16);
                     SaveId = FeeTabWrS + temp;                 // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = FeeTabWrS_oad + temp;          // 关联对象存储地址信息
                     SeqId = FeeTabWrS_seq + temp;              // 序号存储地址信息
@@ -1215,33 +1007,33 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 case 0x302B0000:
                 {
                     SaveId = SwitchErrS;                 // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = SwitchErrS_oad;          // 关联对象存储地址信息
                     SeqId = SwitchErrS_seq;              // 序号存储地址信息
                     ReportFlagId = SwitchErrS_RptFlag + temp;   //上报标识
                     ReportModeId = SwitchErrS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
-                    info->acc_time = &nd_mbase_SwitchErrS_acc_time(mbase_cb);
+                    info->acc_time = &nd_mb_switch_err_s_acc_time(instance);
                 }
                 break;
                 case 0x302C0000:
                 {
                     SaveId = PowerAbnormalS;                 // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = PowerAbnormalS_oad;          // 关联对象存储地址信息
                     SeqId = PowerAbnormalS_seq;              // 序号存储地址信息
                     ReportFlagId = PowerAbnormalS_RptFlag + temp;   //上报标识
                     ReportModeId = PowerAbnormalS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
-                    info->acc_time = &nd_mbase_PowerAbnormalS_acc_time(mbase_cb);
+                    info->acc_time = &nd_mb_power_abnormal_s_acc_time(instance);
                 }
                 break;
                 case 0x302E0000:
                 {
                     SaveId = RTCErrS;                 // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = RTCErrS_oad;          // 关联对象存储地址信息
                     SeqId = RTCErrS_seq;              // 序号存储地址信息
@@ -1253,20 +1045,20 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 case 0x302F0000:
                 {
                     SaveId = EmuErrS;                 // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = EmuErrS_oad;          // 关联对象存储地址信息
                     SeqId = EmuErrS_seq;              // 序号存储地址信息
                     ReportFlagId = EmuErrS_RptFlag + temp;   //上报标识
                     ReportModeId = EmuErrS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
-                    info->acc_time = &nd_mbase_EmuErrS_acc_time(mbase_cb);
+                    info->acc_time = &nd_mb_emu_err_s_acc_time(instance);
                 }
                 break;
                 case 0x303C0000:
                 {
                     SaveId = BroadcastTimeS;                 // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = BroadcastTimeS_oad;          // 关联对象存储地址信息
                     SeqId = BroadcastTimeS_seq;              // 序号存储地址信息
@@ -1278,14 +1070,14 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 case 0x30400000:
                 {
                     SaveId = ZeroLineErrS;                 // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = ZeroLineErrS_oad;          // 关联对象存储地址信息
                     SeqId = ZeroLineErrS_seq;              // 序号存储地址信息
                     ReportFlagId = ZeroLineErrS_RptFlag + temp;   //上报标识
                     ReportModeId = ZeroLineErrS_RptMode + temp;   //上报方式  
                     info->record_head = record_head_t0;     // 记录单元
-                    info->acc_time = &nd_mbase_ZeroLineErrS_acc_time(mbase_cb);
+                    info->acc_time = &nd_mb_zero_line_err_s_acc_time(instance);
                 }
                 break;
 
@@ -1307,7 +1099,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 case 0x50000000://瞬时冻结
                 {
                     SaveId = InstantFreeze;                    // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = InstantFreeze_oad;             // 关联对象存储地址信息
                     SeqId = InstantFreeze_seq;                 // 序号存储地址信息
@@ -1318,7 +1110,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 case 0x50020000://8方案
                 {
                     SaveId = MinuteFreeze1 + scheme;                 // + schem 记录存储地址信息
-                    SaveDevice = RES_DEV_FLASH;
+                    SaveDevice = DEV_FLASH;
                     SaveBlock = mbase_block_event_flash1;
                     CaptureId = MinuteFreeze_oad;           // 关联对象存储地址信息
                     SeqId = MinuteFreeze1_seq + scheme;              // 序号存储地址信息
@@ -1341,7 +1133,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 {
                     temp = (((oad & 0xFFFF0000) - 0x50030000) >> 16);
                     SaveId = HourFreeze + temp;                    // 记录存储地址信息
-                    SaveDevice = RES_DEV_FLASH;
+                    SaveDevice = DEV_FLASH;
                     SaveBlock = mbase_block_event_flash2;
                     CaptureId = HourFreeze_oad + temp;             // 关联对象存储地址信息
                     SeqId = HourFreeze_seq + temp;                 // 序号存储地址信息
@@ -1353,7 +1145,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 case 0x50050000: //结算日冻结
                 {
                     SaveId = BillFreeze;                    // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = BillFreeze_oad;             // 关联对象存储地址信息
                     SeqId = BillFreeze_seq;                 // 序号存储地址信息
@@ -1371,7 +1163,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 {
                     temp = (((oad & 0xFFFF0000) - 0x50030000) >> 16);
                     SaveId = HourFreeze + temp;                    // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = HourFreeze_oad + temp;             // 关联对象存储地址信息
                     SeqId = HourFreeze_seq + temp;                 // 序号存储地址信息
@@ -1383,7 +1175,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 case 0x50110000://阶梯结算冻结
                 {
                     SaveId = StepBillFreeze;                    // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = StepBillFreeze_oad;             // 关联对象存储地址信息
                     SeqId = StepBillFreeze_seq;                 // 序号存储地址信息
@@ -1410,7 +1202,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
                 case 0xFF310000: //编程事件645 //
                 {
                     SaveId = MeterWr645S;               // 记录存储地址信息
-                    SaveDevice = RES_DEV_EEPROM;
+                    SaveDevice = DEV_EEPROM;
                     SaveBlock = mbase_block_event;
                     CaptureId = MeterWrS_oad;           // 关联对象存储地址信息
                     SeqId = MeterWr645S_seq;            // 序号存储地址信息
@@ -1433,28 +1225,35 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
     }
 
 
-    info->save_index = ((SaveDevice << 24) + (SaveBlock << 16) + SaveId);
-    info->capture_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + CaptureId);
-    info->sequence_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeqId);
+    info->save_index = ((uint32_t)SaveDevice << 24)
+                       + ((uint32_t)SaveBlock << 16) + (uint32_t)SaveId;
+    info->capture_index = ((uint32_t)DEV_EEPROM << 24)
+                          + ((uint32_t)mbase_block_parameter << 16)
+                          + (uint32_t)CaptureId;
+    info->sequence_index = ((uint32_t)DEV_EEPROM << 24)
+                           + ((uint32_t)mbase_block_parameter << 16)
+                           + (uint32_t)SeqId;
 
     if (PeriodId)
     {
-        info->period_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodId);
+        info->period_index = ((uint32_t)DEV_EEPROM << 24)
+                             + ((uint32_t)mbase_block_parameter << 16)
+                             + (uint32_t)PeriodId;
     }
 
     if (DepthId)
     {
-        info->depth_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + DepthId);
+        info->depth_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + DepthId);
     }
 
     if (ReportFlagId)   //上报标识
     {
-        info->rpt_flag = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ReportFlagId);
+        info->rpt_flag = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ReportFlagId);
     }
 
     if (ReportModeId) //上报方式  
     {
-        info->rpt_mode = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ReportModeId);
+        info->rpt_mode = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ReportModeId);
     }
 
     return 1;
@@ -1462,7 +1261,7 @@ int get_record_id_info(struct instance_t* instance, uint32_t oad, struct record_
 
 // 通过oad 获取 事件rcsd
 // mode = 1，获取记录头；   mode=2，获取配置关联对象， mode = 3，获取所有关联对象
-int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_list, uint8_t mode)
+int get_capture_list(void *instance, uint32_t oad, uint32_t *rcsd_list, uint8_t mode)
 {
     uint8_t i, num;
     uint32_t *p = (rcsd_list + 1);
@@ -1531,7 +1330,7 @@ int get_capture_list(struct instance_t* instance, uint32_t oad, uint32_t *rcsd_l
 
 
 // data_time_s 转4字节
-int fc_fun_01(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_01(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint32_t temp;
     uint8_t *p = des;
@@ -1552,7 +1351,7 @@ int fc_fun_01(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, u
 }
 
 // 编程列表  按解析取数据长度
-int fc_fun_02(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_02(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint16_t decode_len = 0;
     uint8_t *p = des;
@@ -1579,7 +1378,7 @@ int fc_fun_02(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, u
 }
 
 // 按解析取数据长度
-int fc_fun_03(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_03(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint16_t decode_len = 0;
     uint8_t *p = des;
@@ -1619,7 +1418,7 @@ int fc_fun_03(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, u
 }
 
 //电压块 支持单个电压读取
-int fc_fun_04(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_04(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint16_t decode_len = 0, len = 0;
     uint8_t *p = des;
@@ -1698,7 +1497,7 @@ int fc_fun_04(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, u
 }
 
 //电流块 支持单个读取
-int fc_fun_05(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_05(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint16_t decode_len = 0, len;
     uint8_t *p = des;
@@ -1775,7 +1574,7 @@ int fc_fun_05(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, u
 }
 
 //功率块 支持单个读取
-int fc_fun_06(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_06(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint16_t decode_len = 0, len;
     uint8_t *p = des;
@@ -1854,7 +1653,7 @@ int fc_fun_06(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, u
     return (p - des);
 }
 //功率因数块 支持单个读取
-int fc_fun_07(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_07(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint16_t decode_len = 0, len;
     uint8_t *p = des;
@@ -1932,9 +1731,8 @@ int fc_fun_07(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, u
     return (p - des);
 }
 // 电能数据 存储和协议转换  
-int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src,uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
+int fc_fun_Energy(void *instance, uint32_t oad_req, uint32_t oad_src,uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     uint8_t i, /*type,*/ attr, index, index_src,  /*len, */block_num = (4+1);
     uint16_t oi;
@@ -1951,7 +1749,7 @@ int fc_fun_Energy(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
 
     index_src = get_OAD_Index(oad_src);
 
-    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3); //读取费率数
+    addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3); //读取费率数
     nd_get_index(instance, addr, &block_num, 1); 
     
     block_num += 1;   // 总加 费率个数
@@ -2194,7 +1992,7 @@ const struct format_conversion_t format_conversion_tab[] =
 //    RFC_GET_ORIGINAL_LEN,//获取原协议格式len
 //    RFC_GET_STORE_LEN,   //获取存储格式len
 //
-int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* src, uint32_t oad_req, uint32_t oad_src, enum format_conversion_mode mode)
+int record_change_format(void *instance, uint8_t *des,  uint8_t* src, uint32_t oad_req, uint32_t oad_src, enum format_conversion_mode mode)
 {
     uint16_t i, OI;
     uint8_t type, attr, index, len, block_num = (4+1);
@@ -2214,7 +2012,7 @@ int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* sr
                 return -1;
             }
 
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3); //读取费率数
+            addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3); //读取费率数
             nd_get_index(instance, addr, &block_num, 1); 
             
             block_num += 1;   // 总加 费率个数
@@ -2372,7 +2170,7 @@ int record_change_format(struct instance_t* instance, uint8_t *des,  uint8_t* sr
 }
 
 
-int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx, uint16_t mode)
+int resource_map_698(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx, uint16_t mode)
 {
     uint8_t OIA1 = get_OAD_OIA1(id);
     uint8_t h_mode = (uint8_t) (mode >> 8);
@@ -2478,207 +2276,14 @@ int resource_map_698(struct instance_t* instance, uint32_t id, uint8_t* buf, uin
 	return -1;
 }
 
-#if 0
-#define DT_END 0xED
-
-#define calnum(x)                    (sizeof(x) / sizeof(x[0]))
-
-struct attr_tag_t
-{
-    uint8_t attr;
-    const uint8_t* tags;
-};
-
-struct data_tag_t
-{
-    uint16_t oi1;
-    uint16_t oi2;
-    const struct attr_tag_t *dtags;
-    uint8_t number;
-    uint8_t info;
-};
-
-struct tag_len_t
-{
-    uint8_t tag;
-    uint8_t datalen;
-};
-
-
-//注意 长度  0的 可能不需要，也可能未 核对。
-const struct tag_len_t tag_data_len[] =
-{
-     {  TYPE_null                   ,  0    },
-     {  TYPE_array                  ,  0    },
-     {  TYPE_structure              ,  0    },
-     {  TYPE_bool                   ,  0    },
-     {  TYPE_bit_string             ,  0    },
-     {  TYPE_double_long            ,  4    },
-     {  TYPE_double_long_unsigned   ,  4    },
-
-     {  TYPE_octet_string            ,  0xFF    },
-     {  TYPE_visible_string          ,  0xFF    },
-     {  TYPE_UTF8_string             ,  0xFF    },
-
-     {  TYPE_integer                ,  1    },
-     {  TYPE_long                   ,  2    },
-     {  TYPE_unsigned               ,  1    },
-     {  TYPE_long_unsigned          ,  2    },
-
-     {  TYPE_long64                 ,  8    },
-     {  TYPE_long64_unsigned        ,  8    },
-     {  TYPE_enum                    ,  0    },
-     {  TYPE_float32                 ,  4    },
-     {  TYPE_float64                 ,  8    },
-     {  TYPE_date_time               ,  10    },
-     {  TYPE_date                    ,  0    },
-     {  TYPE_time                    ,  0    },
-     {  TYPE_date_time_s              ,  7    },
-     {  TYPE_OI                      ,  2    },
-     {  TYPE_OAD                     ,  4    },
-     {  TYPE_ROAD                    ,  0    },
-     {  TYPE_OMD                     ,  4    },
-     {  TYPE_TI                      ,  0    },
-     {  TYPE_TSA                     ,  0    },
-     {  TYPE_MAC                     ,  0    },
-     {  TYPE_RN                      ,  0    },
-     {  TYPE_Region                  ,  0    },
-     {  TYPE_Scaler_Unit             ,  0    },
-     {  TYPE_RSD                     ,  0    },
-     {  TYPE_CSD                     ,  0    },
-     {  TYPE_MS                      ,  0    },
-     {  TYPE_SID                     ,  0    },
-     {  TYPE_SID_MAC                     ,  0    },
-     {  TYPE_COMDCB                      ,  0    },
-     {  TYPE_RCSD                        ,  0    },
-     {  TYPE_VQDS                        ,  0    },
-
-     {  TYPE_USER_HIGH_ENERGY_INTEGER    ,  0    },
-     {  TYPE_USER_HIGH_ENERGY_UNSIGNED   ,  0    },
-     {  TYPE_USER_NOT_CARE               ,  0    },
-     {  TYPE_USER_SPECIAL_PROCESS        ,  0    },
-     {  TYPE_USER_PUSH_PROCESS           ,  0    },
-     {  TYPE_USER_ERROR                  ,  0    },
-};
-
-const uint8_t _0000_02_tag[] = { TYPE_array, 13, TYPE_double_long, DT_END };
-const uint8_t _0000_04_tag[] = { TYPE_array, 13, TYPE_long64, DT_END };
-const uint8_t _0000_06_tag[] = { TYPE_array, 13, TYPE_integer, DT_END };
-const struct attr_tag_t _0000_tag[] = { {2, _0000_02_tag}, {4, _0000_04_tag}, {6, _0000_06_tag} };
-
-const uint8_t _2022_02_tag[] = { TYPE_double_long_unsigned, DT_END };
-const struct attr_tag_t _2022_tag[] = { {2, _2022_02_tag}};
-
-const uint8_t _201E_02_tag[] = { TYPE_date_time_s, DT_END };
-const struct attr_tag_t _201E_tag[] = { {2, _201E_02_tag} };
-
-const uint8_t _NULL_02_tag[] = { TYPE_null, DT_END };
-const struct attr_tag_t _NULL_tag[] = { {2, _NULL_02_tag} };
-
-const struct data_tag_t data_tag[] =
-{
-    {   0x0000, 0x0000,    _0000_tag,  calnum(_0000_tag),  0    }, // 组合有功
-    {   0x201E, 0x2021,    _201E_tag,  calnum(_201E_tag),  0    }, // 记录时间
-    {   0x2022, 0x2023,    _2022_tag,  calnum(_2022_tag),  0    }, // 记录序号
-    {   0x2024, 0x2024,    _NULL_tag,  calnum(_NULL_tag),  0    }, // 事件发生源
-    {   0x3300, 0x3300,    _NULL_tag,  calnum(_NULL_tag),  0    }, // 事件上报状态
-    //待添加
-
-};
-
-const uint8_t*  get_tag(uint32_t oad)
-{
-    uint16_t i, oi;
-    uint8_t index, attr, num, info;
-    const struct attr_tag_t* data_tags;
-    
-    oi = (oad & 0xFFFF0000) >> 16;
-    index = (oad & 0x000000FF);
-    attr = (oad & 0x0000FF00) >> 8;
-    num = 0;
-
-    // -------------get tag start
-    for (i = 0; i < calnum(data_tag); i++)
-    {
-        if ((oi >= data_tag[i].oi1) && (oi <= data_tag[i].oi2))
-        {
-            data_tags = data_tag[i].dtags;
-            num = data_tag[i].number;
-            info = data_tag[i].info;
-            break;
-        }
-    }
-
-    if (i >= calnum(data_tag))
-    {
-        return _NULL;
-    }
-
-    // 不同的索引tag 不一样
-    for (i = 0; i < num; i++)
-    {
-        if (attr == data_tags->attr)
-        {
-            return data_tags->tags;
-        }
-    }
-
-    return _NULL;
-
-}
-int add_tag(uint8_t* des, uint8_t* src, uint8_t* tags)
-{
-    uint16_t i, oi;
-    uint8_t index,attr,num,info;
-    const struct attr_tag_t* data_tags;
-    uint8_t* attr_tags;
-
-    uint8_t * p, * tmp;
-
-    p = des;
-    tmp = src;
-
-    
-    //*attr_tags
-
-
-
-}
-//  obj_num 关联对象个数 , srclen 源数据（不带ta）总长度， des_size目标
-int record_data_add_tag(uint8_t* des, uint8_t* src, uint32_t* obj_list, uint8_t obj_num, uint16_t srclen, uint16_t des_size)
-{
-    uint8_t i, *p, *tmp;
-    uint16_t taglen;
-    uint32_t oad;
-    uint8_t* attr_tags;
-    
-    p = des;
-    tmp = src;
-    // 逐个查询obj list 获取所有tag长度
-    for (i = 0; i < obj_num; i++)
-    {
-        oad = *obj_list++;
-        
-        attr_tags = get tag(oad);    
-        add_tag(p, tmp, oad, attr_tags);
-    }
-}
-// 00000200  00000400 
-// 01 13 06 
-// 00000001 00000001 00000001 00000001
-// 01 13 06  XXXX 06 XXXX
-
-#endif
-int para_init(struct instance_t* instance )
+int para_init(void *instance )
 {
     uint16_t i,num=0,s_len,j,sm=0;
     uint32_t s_index=0;
-    struct mbase_control_block_t* mbase_cb;
     int ret;
     int16_t err=0;
     const uint8_t *p_data;
     
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     num = sizeof(parameter_item)/sizeof(parameter_item_t);
     
@@ -2688,77 +2293,77 @@ int para_init(struct instance_t* instance )
     
     //RAM部分更新
 
-    //if (nd_mbase_metertype(mbase_cb) & F_Password_En)
+    //if (nd_mb_metertype(instance) & F_Password_En)
     //{
-        //memset(nd_mbase_meterNo(mbase_cb), 0x00, 6);//表号 //由esam恢复
+        //memset(nd_mb_meter_no(instance), 0x00, 6);//表号 //由esam恢复
     //}
 
     
-    nd_mbase_meter_const(mbase_cb) = 2000;
-    nd_mbase_active_energy_cal_word(mbase_cb) = 0xA0;
+    nd_mb_meter_const(instance) = 2000;
+    nd_mb_active_energy_cal_word(instance) = 0xA0;
     
-    nd_mbase_lcd_poweron_all_dis_time(mbase_cb) = 5;            //上电全显时间
-    nd_mbase_backlight_key_time(mbase_cb) = 60;                  //背光点亮时间
-    nd_mbase_lcd_checkdis_keep_sec(mbase_cb) = 10;               //显示查看背光点亮时间
-    nd_mbase_lcd_nopower_key_keep_sec(mbase_cb) = 30;            //无电按键驻留时间
-    nd_mbase_energy_point(mbase_cb) = 2;                        //电能小数显示位
-    nd_mbase_power_point(mbase_cb) = 4;                         //功率小数显示位
-    nd_mbase_lcd_12_mean(mbase_cb) = 0;                         //液晶12字样意义
-    nd_mbase_lcd_autodis_list_num(mbase_cb) = 5;                           //轮显屏数
-    nd_mbase_lcd_autodis_list_maxnum(mbase_cb) = 99;                       //最大轮显屏数
-    nd_mbase_lcd_keydis_list_num(mbase_cb) = 23;                           //键显屏数
-    nd_mbase_lcd_keydis_list_maxnum(mbase_cb) = 99;      //键显最大屏数
-    nd_mbase_lcd_autodis_keep_sec(mbase_cb) = 5;                           /*轮显持续时间 */
-    nd_mbase_lcd_keydis_keep_sec(mbase_cb) = 60;                           /*按键轮显持续时间 */
-    nd_mbase_Baut_rs485(mbase_cb) = 10;//6;
-    nd_mbase_Baut_plc(mbase_cb) = DEF_BAUT_PLC;//6;
-    nd_mbase_SafeEn(mbase_cb) = 1;       //安全模式启用
-    nd_mbase_relay_ctl_mode(mbase_cb) = 0; //脉冲式控制方式
-    nd_mbase_Limit_T_Max(mbase_cb) = 300;  //广播校时最大允许时间
-    nd_mbase_Limit_T_Min(mbase_cb) = 60;   //广播校时最小允许时间
+    nd_mb_lcd_poweron_all_dis_time(instance) = 5;            //上电全显时间
+    nd_mb_backlight_key_time(instance) = 60;                  //背光点亮时间
+    nd_mb_lcd_checkdis_keep_sec(instance) = 10;               //显示查看背光点亮时间
+    nd_mb_lcd_nopower_key_keep_sec(instance) = 30;            //无电按键驻留时间
+    nd_mb_energy_point(instance) = 2;                        //电能小数显示位
+    nd_mb_power_point(instance) = 4;                         //功率小数显示位
+    nd_mb_lcd_12_mean(instance) = 0;                         //液晶12字样意义
+    nd_mb_lcd_autodis_list_num(instance) = 5;                           //轮显屏数
+    nd_mb_lcd_autodis_list_maxnum(instance) = 99;                       //最大轮显屏数
+    nd_mb_lcd_keydis_list_num(instance) = 23;                           //键显屏数
+    nd_mb_lcd_keydis_list_maxnum(instance) = 99;      //键显最大屏数
+    nd_mb_lcd_autodis_keep_sec(instance) = 5;                           /*轮显持续时间 */
+    nd_mb_lcd_keydis_keep_sec(instance) = 60;                           /*按键轮显持续时间 */
+    nd_mb_baut_rs485(instance) = 10;//6;
+    nd_mb_baut_plc(instance) = DEF_BAUT_PLC;//6;
+    nd_mb_safe_en(instance) = 1;       //安全模式启用
+    nd_mb_relay_ctl_mode(instance) = 0; //脉冲式控制方式
+    nd_mb_limit_t_max(instance) = 300;  //广播校时最大允许时间
+    nd_mb_limit_t_min(instance) = 60;   //广播校时最小允许时间
     
-    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    nd_mbase_offset_meterNo());
-    s_len = nd_mbase_offset_OverCurrent_threshold() - nd_mbase_offset_meterNo();
-    nd_set_offset(instance, s_index, (uint8_t*)nd_mbase_meterNo(mbase_cb), s_len);
+    s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+    nd_mb_offset_meter_no());
+    s_len = nd_mb_offset_over_current_threshold() - nd_mb_offset_meter_no();
+    nd_set_offset(instance, s_index, (uint8_t*)nd_mb_meter_no(instance), s_len);
     
-    memset(nd_mbase_tsa(mbase_cb), 0x11, 6);//表地址
-    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    nd_mbase_offset_tsa());
-    nd_set_offset(instance, s_index, nd_mbase_tsa(mbase_cb), 6);
+    memset(nd_mb_tsa(instance), 0x11, 6);//表地址
+    s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+    nd_mb_offset_tsa());
+    nd_set_offset(instance, s_index, nd_mb_tsa(instance), 6);
     
 
-    nd_mbase_OverCurrent_threshold(mbase_cb) = 720000;         //参数 电能表过流事件-电流触发下限 
-    nd_mbase_ZeroLineErrS_rate_threshold(mbase_cb) = 5000;   // 电能表零线电流异常事件 限值
-    nd_mbase_ZeroLineErrS_Current_threshold(mbase_cb) = 10000;// 电能表零线电流异常事件-电流触发下限
-    nd_mbase_OverCurrent_duration_para(mbase_cb) = 60;  //参数 判定延时时间  
-    nd_mbase_PowerOffS_duration_para(mbase_cb) = 0;    //参数 判定延时时间  
-    nd_mbase_CoverOpenS_duration_para(mbase_cb) = 3;   //参数 判定延时时间  
-    nd_mbase_SwitchErrS_duration_para(mbase_cb) = 5;   //参数 判定延时时间  
-    nd_mbase_EmuErrS_duration_para(mbase_cb) = 60;      //参数 判定延时时间  
-    nd_mbase_RTCErrS_duration_para(mbase_cb) = 1;      //参数 判定延时时间  
-    nd_mbase_ZeroLineErrS_duration_para(mbase_cb) = 60; //参数 判定延时时间      
+    nd_mb_over_current_threshold(instance) = 720000;         //参数 电能表过流事件-电流触发下限 
+    nd_mb_zero_line_err_s_rate_threshold(instance) = 5000;   // 电能表零线电流异常事件 限值
+    nd_mb_zero_line_err_s_current_threshold(instance) = 10000;// 电能表零线电流异常事件-电流触发下限
+    nd_mb_over_current_duration_para(instance) = 60;  //参数 判定延时时间  
+    nd_mb_power_off_s_duration_para(instance) = 0;    //参数 判定延时时间  
+    nd_mb_cover_open_s_duration_para(instance) = 3;   //参数 判定延时时间  
+    nd_mb_switch_err_s_duration_para(instance) = 5;   //参数 判定延时时间  
+    nd_mb_emu_err_s_duration_para(instance) = 60;      //参数 判定延时时间  
+    nd_mb_rtcerr_s_duration_para(instance) = 1;      //参数 判定延时时间  
+    nd_mb_zero_line_errs_duration_para(instance) = 60; //参数 判定延时时间      
 
-    nd_mbase_report_2015mode(mbase_cb) = 0;
+    nd_mb_report_2015_mode(instance) = 0;
 
-    nd_mbase_active_report_sec_limit(mbase_cb) = 3600; //掉电 主动上报 上电时间阈值 默认3600 
-    memset(nd_mbase_report_mode_645(mbase_cb), 0x00, sizeof(nd_mbase_report_mode_645(mbase_cb)));//645主动上报模式 待调整
+    nd_mb_active_report_sec_limit(instance) = 3600; //掉电 主动上报 上电时间阈值 默认3600 
+    memset(nd_mb_report_mode_645(instance), 0x00, 8);//645主动上报模式 待调整
 
-    nd_mbase_factor_mode(mbase_cb) = true; //用于 自动初始化时  进入厂内
+    nd_mb_factor_mode(instance) = true; //用于 自动初始化时  进入厂内
 
-    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    nd_mbase_offset_OverCurrent_threshold());
-    s_len = nd_mbase_offset_factor_mode() - nd_mbase_offset_OverCurrent_threshold() + sizeof(nd_mbase_factor_mode(mbase_cb));
-    nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_OverCurrent_threshold(mbase_cb), s_len);  
+    s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+    nd_mb_offset_over_current_threshold());
+    s_len = nd_mb_offset_factor_mode() - nd_mb_offset_over_current_threshold() + sizeof(nd_mb_factor_mode(instance));
+    nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_over_current_threshold(instance), s_len);  
 
     // 波特率更新标志
-    nd_mbase_baud_chg(mbase_cb) = 0xFF;
+    nd_mb_baud_chg(instance) = 0xFF;
 
     //掉电保存区
-    nd_mbase_sta(mbase_cb) = 0; //继电器命令状态
-    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
-        nd_mbase_offset_sta()) -  nd_mbase_offset_persistent_section_start();
-    nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_sta(mbase_cb), sizeof(nd_mbase_sta(mbase_cb)));
+    nd_mb_sta(instance) = 0; //继电器命令状态
+    s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+        nd_mb_offset_sta()) -  nd_mb_offset_persistent_section_start();
+    nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_sta(instance), sizeof(nd_mb_sta(instance)));
 
     //双备份区初始化
     num = sizeof(parameter_item_1)/sizeof(parameter_item_t);
@@ -2769,7 +2374,7 @@ int para_init(struct instance_t* instance )
             v85xxp_clear_watchdog();
             p_data = parameter_item_1[i].data;
                     
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + parameter_item_1[i].paramerer_index);
+            s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + parameter_item_1[i].paramerer_index);
             nd_set_index(instance, s_index, (uint8_t*)(p_data), parameter_item_1[i].len); 
         }
     }
@@ -2784,17 +2389,11 @@ int para_init(struct instance_t* instance )
         {
             p_data = parameter_item[i].data;
             
-#if 0     // test        
-            if (parameter_item[i].paramerer_index == Follow2015_RptMode)
-            {
-                v85xxp_clear_watchdog();
-            }
-#endif            
             if (((parameter_item[i].paramerer_index >= MinuteFreeze_oad) && (parameter_item[i].paramerer_index <= ZeroLineErrS_seq))
                 || ((parameter_item[i].paramerer_index >= __INITFLAG2_Start) && (parameter_item[i].paramerer_index <= __INITFLAG2_End)))
             {
 
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + parameter_item[i].paramerer_index);
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + parameter_item[i].paramerer_index);
                 nd_set_index(instance, s_index, (uint8_t*)(p_data), parameter_item[i].len); 
             }
             else
@@ -2809,7 +2408,7 @@ int para_init(struct instance_t* instance )
                 }
                 for(j=0; j<sm; j++)
                 {
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + parameter_item[i].paramerer_index + j);
+                    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + parameter_item[i].paramerer_index + j);
                     nd_set_index(instance, s_index, (uint8_t*)(p_data+1), (*p_data)); 
                 }
             }
@@ -2827,12 +2426,11 @@ int para_init(struct instance_t* instance )
 
 //首次上电 参数自动初始化
 //条件: 开盖,参数校验区异常, 表型读取异常,
-int auto_parameter_inital(struct instance_t* instance)
+int auto_parameter_inital(void *instance)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t s_index = 0;
     int ret = 0;
-    uint8_t* buf = instance->apdu_cache;
+    uint8_t* buf = nd_fr698_apdu_cache(instance);
     uint8_t i,meter_cover_flag = 0;
     uint16_t check_id[3] = {KeyDisplayList, Report_channel, OverCurrentAS_oad  }; //mbase_block_parameter 区参数   按键显示项、上报通道、过流事件关联对象
 
@@ -2880,10 +2478,9 @@ int auto_parameter_inital(struct instance_t* instance)
 //编程记录 判断  协议set和 action 调用
 //set (OAD)
 //action   类7  24 的 方法 4/5(OMD)；    类9 的 方法 4/5/7/8(OMD);    类21 的方法4（OAD）/7(OMD = 0xF1000700)/9（OMD = 0xF1000900）
-void fr_698_MeterWr_program_judge(struct instance_t* instance, struct pipeline_t* pipeline,  struct nd_dl698_msg* mesg)
+void fr_698_MeterWr_program_judge(void *instance, void *pipeline,  struct nd_dl698_msg* mesg)
 {
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t cilent_index = 0;
     uint32_t id = mesg->id;
     uint8_t tag = TYPE_OAD;
@@ -2944,14 +2541,13 @@ void fr_698_MeterWr_program_judge(struct instance_t* instance, struct pipeline_t
 // 协议相关 、应用链接相关----------------start
 
 //更新（重新计数）应用连接超时时间
-void update_connect_timeout_cnt(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+void update_connect_timeout_cnt(void *instance, void *pipeline, nd_dl698_msg_t* mesg)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t cilent_index = 0;
     uint8_t channel = 0;
     
-    if((ctx)&&(ctx->channel < chl_NUM))
+    if((ctx)&&(ctx->channel < FR_698_CHL_NUM))
     {
         channel = ctx->channel;
     }
@@ -2968,22 +2564,21 @@ void update_connect_timeout_cnt(struct instance_t* instance, struct pipeline_t* 
     }
 
 
-    if (nd_mbase_connect_status(mbase_cb)[ctx->channel][cilent_index] == true)
+    if (nd_mb_connect_status(instance)[ctx->channel][cilent_index] == true)
     {
-        nd_mbase_connect_timeout_cnt(mbase_cb)[ctx->channel][cilent_index] = 0;
+        nd_mb_connect_timeout_cnt(instance)[ctx->channel][cilent_index] = 0;
     }
 }
 
 // 645协议 秒任务
-void fr_dl645_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline)
+void fr_dl645_sec_task(void *instance,  void *pipeline)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t i,cilent_index, channel;
 
-    if (nd_mbase_auth_timeout_645(mbase_cb) > 0)    
+    if (nd_mb_auth_timeout_645(instance) > 0)    
     {
-        nd_mbase_auth_timeout_645(mbase_cb)--;
-        if (nd_mbase_auth_timeout_645(mbase_cb) == 0)    
+        nd_mb_auth_timeout_645(instance)--;
+        if (nd_mb_auth_timeout_645(instance) == 0)    
         {
             MeterWr645_obj_list_clear(instance, NULL, NULL);
         }
@@ -2995,22 +2590,21 @@ void fr_dl645_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline
 }
 
 // 698协议 秒任务
-void fr_dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline)
+void fr_dl698_sec_task(void *instance,  void *pipeline)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t i,cilent_index, channel;
 
 
-    if (nd_mbase_infrared_auth_timeout(mbase_cb) > 0)    nd_mbase_infrared_auth_timeout(mbase_cb)--;
-    if (nd_mbase_term_auth_timeout(mbase_cb) > 0)        nd_mbase_term_auth_timeout(mbase_cb)--;
-    if (nd_mbase_poweron_active_report_dly(mbase_cb) < 10)     nd_mbase_poweron_active_report_dly(mbase_cb)++;
+    if (nd_mb_infrared_auth_timeout(instance) > 0)    nd_mb_infrared_auth_timeout(instance)--;
+    if (nd_mb_term_auth_timeout(instance) > 0)        nd_mb_term_auth_timeout(instance)--;
+    if (nd_mb_poweron_active_report_dly(instance) < 10)     nd_mb_poweron_active_report_dly(instance)++;
 
 
     for(i = 0; i < 4; i++)
     {
-        if(nd_mbase_active_report_retry_dly(mbase_cb)[i] > 0)
+        if(nd_mb_active_report_retry_dly(instance)[i] > 0)
         {
-            nd_mbase_active_report_retry_dly(mbase_cb)[i]--;  //R_3011_END
+            nd_mb_active_report_retry_dly(instance)[i]--;  //R_3011_END
         }
     }
 
@@ -3020,16 +2614,16 @@ void fr_dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline
         //待调整  块抄读 超时复位
         for(channel=0; channel<4; channel++)
         {
-            if (nd_mbase_connect_status(mbase_cb)[channel][cilent_index])
+            if (nd_mb_connect_status(instance)[channel][cilent_index])
             {
-                if (nd_mbase_esam_connect_timeout(mbase_cb)[channel][cilent_index] > 0)
+                if (nd_mb_esam_connect_timeout(instance)[channel][cilent_index] > 0)
                 {
-                    nd_mbase_esam_connect_timeout(mbase_cb)[channel][cilent_index]--;
+                    nd_mb_esam_connect_timeout(instance)[channel][cilent_index]--;
                 }
 
-                nd_mbase_connect_timeout_cnt(mbase_cb)[channel][cilent_index]++;
+                nd_mb_connect_timeout_cnt(instance)[channel][cilent_index]++;
 
-                if ((nd_mbase_connect_timeout_cnt(mbase_cb)[channel][cilent_index] >  nd_mbase_connect_timeout(mbase_cb)[channel][cilent_index]) || (nd_mbase_esam_connect_timeout(mbase_cb)[channel][cilent_index] == 0))
+                if ((nd_mb_connect_timeout_cnt(instance)[channel][cilent_index] >  nd_mb_connect_timeout(instance)[channel][cilent_index]) || (nd_mb_esam_connect_timeout(instance)[channel][cilent_index] == 0))
                 {
                     //待调整    释放链接通知
                     //return release_notification(channel, s,cilent_index);
@@ -3045,12 +2639,11 @@ void fr_dl698_sec_task(struct instance_t* instance,  struct pipeline_t* pipeline
 
 // 645协议相关的认证、上报等数据上电初始化
 
-void fr_dl645_power_on(struct instance_t* instance,  struct pipeline_t* pipeline)
+void fr_dl645_power_on(void *instance,  void *pipeline)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
-    nd_mbase_auth_timeout_645(mbase_cb) = 0;
-    memset(&nd_mbase_rand8_645(mbase_cb)[0], 0, sizeof(nd_mbase_rand8_645(mbase_cb)));
+    nd_mb_auth_timeout_645(instance) = 0;
+    memset(&nd_mb_rand8_645(instance)[0], 0, 8);
     report_645stat_recover(instance);
 
 }
@@ -3058,26 +2651,25 @@ void fr_dl645_power_on(struct instance_t* instance,  struct pipeline_t* pipeline
 
 
 // 698协议相关的认证、上报等数据上电初始化
-void fr_dl698_power_on(struct instance_t* instance,  struct pipeline_t* pipeline)
+void fr_dl698_power_on(void *instance,  void *pipeline)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
 
-    nd_mbase_infrared_auth_timeout(mbase_cb) = 0;
-    nd_mbase_term_auth_timeout(mbase_cb) = 0;
-    nd_mbase_poweron_active_report_dly(mbase_cb) = 0;   
-    nd_mbase_active_report_retry_dly(mbase_cb)[R_3320] = 0;  //R_3011_END
-    nd_mbase_active_report_retry_dly(mbase_cb)[R_2015] = 0;
-    nd_mbase_active_report_retry_dly(mbase_cb)[R_3011_END] = 0;
-    nd_mbase_active_report_retry_dly(mbase_cb)[R_3011_START] = 0;
+    nd_mb_infrared_auth_timeout(instance) = 0;
+    nd_mb_term_auth_timeout(instance) = 0;
+    nd_mb_poweron_active_report_dly(instance) = 0;   
+    nd_mb_active_report_retry_dly(instance)[R_3320] = 0;  //R_3011_END
+    nd_mb_active_report_retry_dly(instance)[R_2015] = 0;
+    nd_mb_active_report_retry_dly(instance)[R_3011_END] = 0;
+    nd_mb_active_report_retry_dly(instance)[R_3011_START] = 0;
 
-    nd_mbase_active_report_retry_cnt(mbase_cb)[R_3011_END] = 0;
-    nd_mbase_active_report_retry_cnt(mbase_cb)[R_3011_START] = 0;
+    nd_mb_active_report_retry_cnt(instance)[R_3011_END] = 0;
+    nd_mb_active_report_retry_cnt(instance)[R_3011_START] = 0;
 
-    //nd_mbase_active_report_retry_cnt(mbase_cb)[R_3320] = 0; //从 e2p中获取
-    //nd_mbase_active_report_retry_cnt(mbase_cb)[R_2015] = 0;
+    //nd_mb_active_report_retry_cnt(instance)[R_3320] = 0; //从 e2p中获取
+    //nd_mb_active_report_retry_cnt(instance)[R_2015] = 0;
 
-    nd_mbase_report_piid(mbase_cb) = 0;
+    nd_mb_report_piid(instance) = 0;
     
 
     fr_handle_disconnect_all_channel(instance,  pipeline, 0);
@@ -3092,13 +2684,12 @@ void fr_dl698_power_on(struct instance_t* instance,  struct pipeline_t* pipeline
 
 
 
-int update_plc_baut_tick(struct instance_t* instance, struct pipeline_t* pipeline, struct nd_dl698_msg* mesg)
+int update_plc_baut_tick(void *instance, void *pipeline, struct nd_dl698_msg* mesg)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    struct context_698_t* ctx = (struct context_698_t*)pipeline->ctx;
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
 
-    if(chl_PLC_698 == ctx->channel){
-        nd_mbase_plc_baut_tick(mbase_cb) = 3600;    
+    if(FR_698_CHL_PLC == ctx->channel){
+        nd_mb_plc_baut_tick(instance) = 3600;    
     }
     return 1;
 }

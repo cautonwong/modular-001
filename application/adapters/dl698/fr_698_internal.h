@@ -47,6 +47,11 @@ int support_broadcast_addr_cmd_check(uint8_t cmd, uint32_t oad);
 
 int __matcher_698(void* pctx, uint8_t* b);
 int __pack_apdu_byte(void* pctx, uint8_t* byte);
+int fr_handle_action_request(struct instance_t* instance, struct pipeline_t* pipeline,
+                             nd_dl698_msg_t* mesg);
+uint8_t fr_698_current_channel_num_get(struct instance_t* instance,
+                                       struct pipeline_t* pipeline);
+uint16_t get_crc16(uint16_t cs);
 int fr_pack_698_head(struct instance_t* instance, struct pipeline_t* pipeline,
                      nd_dl698_msg_t* mesg);
 int fr_pack_698_tx_head(struct instance_t* instance,

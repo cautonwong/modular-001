@@ -1,16 +1,16 @@
-#include "nidavellir.h"
+#include "application/adapters/dl698/meter_base_view.h"
+#include "port.h"
 #include "application/ports/resource_access.h"
 #include "fr_698.h"
-#include "gs_record.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
 #include "cpu_surport.h"
-#include "domain/events/legacy/gs_record.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
 
-//extern uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t mode);
+//extern uint8_t read_event_report_flag_mode(void *instance, uint32_t oad, uint8_t mode);
 
-int get_3320_attr2(struct instance_t* instance, uint32_t oad, uint8_t* buf,void *ctx)
+int get_3320_attr2(void *instance, uint32_t oad, uint8_t* buf,void *ctx)
 {
     struct context_698_t* pctx = (struct context_698_t*)ctx;
 
@@ -61,7 +61,7 @@ int get_3320_attr2(struct instance_t* instance, uint32_t oad, uint8_t* buf,void 
 }
 
 
-int get_3320_attr3(struct instance_t* instance, uint32_t oad, uint8_t* buf,void *ctx)
+int get_3320_attr3(void *instance, uint32_t oad, uint8_t* buf,void *ctx)
 {
 
     //struct context_698_t* pctx = (struct context_698_t*)ctx;
@@ -114,7 +114,7 @@ int get_3320_attr3(struct instance_t* instance, uint32_t oad, uint8_t* buf,void 
 
 // 获取事件上报标识或上报方式   mode  0: 上报标识      1:上报方式
 //返回0xFF 未找到对象
-uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t mode)
+uint8_t read_event_report_flag_mode(void *instance, uint32_t oad, uint8_t mode)
 {
     uint8_t tempbuf[2] = {0};
     struct record_storage_id_info_t  record_id_info;
@@ -149,7 +149,7 @@ uint8_t read_event_report_flag_mode(struct instance_t* instance, uint32_t oad, u
 
 
 // 698协议读取事件上报标识或上报方式   mode  0: 上报标识      1:上报方式
-int get_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t mode)
+int get_event_report_flag_mode(void *instance, uint32_t oad, uint8_t* buf, uint8_t mode)
 {
     uint8_t tempbuf[200] = {0};
     uint8_t* p = buf;
@@ -171,24 +171,6 @@ int get_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_
     }
     
     
-#if 0 
-    ret = get_record_id_info(instance, oad, &record_id_info);
-    if (ret <= 0)
-    {
-        return -DAR_OTHERS_ERROR;
-    }
-
-    if (mode == 0)
-    {
-        AddrID = record_id_info.rpt_flag;
-    }
-    else //if (mode == 1)
-    {
-        AddrID = record_id_info.rpt_mode;
-    }
-
-    nd_get_index(instance, AddrID, &tempbuf[0], 1);
-#endif
     *p++ = TYPE_enum;
     *p++ = tempbuf[0];
 
@@ -208,7 +190,7 @@ uint8_t get_event_oad_class(uint32_t oad)
 }
 
 // 获取事件关联对象
-int get_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
+int get_event_obj(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
 
     uint8_t i, num, maxnum;
@@ -265,7 +247,7 @@ int get_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
 }
 
 // 获取事件当前记录数
-int get_current_record_number(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
+int get_current_record_number(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
 #ifndef WIN32
     struct circular_info_t circular_info = { 0 };
@@ -306,7 +288,7 @@ int get_current_record_number(struct instance_t* instance, uint32_t oad, uint8_t
 }
 
 
-int get_current_record_number_ic_24(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
+int get_current_record_number_ic_24(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
 #ifndef WIN32
     uint8_t  i, num;
@@ -399,7 +381,7 @@ int get_current_record_number_ic_24(struct instance_t* instance, uint32_t oad, u
 }
 
 // 获取事件最大记录数
-int get_max_record_number(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
+int get_max_record_number(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
     uint8_t* p = buf;
     uint16_t OI = get_OAD_OI(oad);
@@ -434,7 +416,7 @@ int get_max_record_number(struct instance_t* instance, uint32_t oad, uint8_t* bu
     *dar = DAR_SUCCESS;
     return (p - buf);
 }
-int get_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
+int get_struct_event_para_t(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
     struct event_para_pack_t para_pack;
     uint8_t* p;
@@ -484,7 +466,7 @@ int get_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
     return (p - buf);
 }
 
-int get_current_value(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar )
+int get_current_value(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar )
 {
     uint32_t sequence;
     uint8_t* p = buf;
@@ -551,7 +533,7 @@ int get_current_value(struct instance_t* instance, uint32_t oad, uint8_t* buf, u
     *dar = DAR_SUCCESS;
     return (p - buf);
 }
-int get_current_value_one_element_ic_24(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar, void* current_value)
+int get_current_value_one_element_ic_24(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar, void* current_value)
 {
 #ifndef WIN32
     uint32_t sequence;
@@ -599,7 +581,7 @@ int get_current_value_one_element_ic_24(struct instance_t* instance, uint32_t oa
     return (p - buf);
 #endif
 }
-int get_current_value_ic_24(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
+int get_current_value_ic_24(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
     //uint32_t /*sequence, */time;
     //uint8_t tempbuf[200];
@@ -709,7 +691,7 @@ int get_current_value_ic_24(struct instance_t* instance, uint32_t oad, uint8_t* 
 }
 
 
-int get_time_status_record(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
+int get_time_status_record(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
 #ifndef WIN32
     uint32_t sequence, time;
@@ -832,7 +814,7 @@ int get_time_status_record(struct instance_t* instance, uint32_t oad, uint8_t* b
 #endif
 }
 
-int get_time_status_record_one_element_ic_24(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
+int get_time_status_record_one_element_ic_24(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
 #ifndef WIN32
     uint32_t sequence, time;
@@ -924,7 +906,7 @@ int get_time_status_record_one_element_ic_24(struct instance_t* instance, uint32
 #endif
 }
 
-int get_time_status_record_ic_24(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
+int get_time_status_record_ic_24(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
     //uint32_t sequence, time;
    // struct circular_info_t circular_info = { 0 };
@@ -1025,7 +1007,7 @@ int get_time_status_record_ic_24(struct instance_t* instance, uint32_t oad, uint
 }
 
 //检查 表计是否支持 该记录，不关心属性，索引等
-int check_record_item_support(struct instance_t* instance, uint32_t oad)
+int check_record_item_support(void *instance, uint32_t oad)
 {
     struct record_storage_id_info_t  record_id_info;
     int ret;
@@ -1039,7 +1021,7 @@ int check_record_item_support(struct instance_t* instance, uint32_t oad)
 }
 
 //检查 读取的记录型oad合法性  涉及oi,属性,索引等
-int check_record_table_oad__support(struct instance_t* instance, uint32_t oad)
+int check_record_table_oad__support(void *instance, uint32_t oad)
 {
     struct record_storage_id_info_t  record_id_info;
     int ret;
@@ -1098,10 +1080,9 @@ int check_record_table_oad__support(struct instance_t* instance, uint32_t oad)
 
 
 
-int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
+int GET_3_Event(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
     struct context_698_t* pctx = (struct context_698_t*)ctx;
-    struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
     uint8_t tempbuf[200];
 //    uint8_t* src = tempbuf;
@@ -1112,8 +1093,7 @@ int GET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ct
     uint32_t index, tmpU32;
     int ret;
 
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    if(mbase_cb == NULL)
+    if(!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }

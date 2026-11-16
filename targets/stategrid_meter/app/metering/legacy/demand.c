@@ -9,7 +9,7 @@
 
 #include "nidavellir.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
-#include "domain/metering/legacy/metering_applications.h"
+#include "targets/stategrid_meter/app/metering/metering_applications.h"
 #include "kernel/legacy_control_block.h"
 
 //每秒执行

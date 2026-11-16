@@ -2,7 +2,7 @@
 #include "threadx/tx_api.h"
 #include <stdio.h>
 #include "cpu_surport.h"
-#include "application/apps/app_entry.h"
+#include "targets/stategrid_meter/app/app_entry.h"
 
 #define     DEMO_STACK_SIZE         1024
 #define     DEMO_BYTE_POOL_SIZE     9120
@@ -55,9 +55,6 @@ void    thread_3_and_4_entry(ULONG thread_input);
 void    thread_meter_base_entry(ULONG thread_input);
 void    thread_persistent_entry(ULONG thread_input);
 void    thread_6_and_7_entry(ULONG thread_input);
-extern struct pipeline_t pl_meter_base;
-extern struct pipeline_t pl_rx_698;
-extern struct instance_t* baremetal_instance_entry_main(int argc, char** argv);
 
 
 /* Define main entry point.  */
@@ -73,7 +70,8 @@ void  tx_application_define(void* first_unused_memory)
 {
 
     CHAR* pointer = TX_NULL;
-    struct instance_t *instance = baremetal_instance_entry_main(0, NULL);
+    struct instance_t *instance = NULL;
+    baremetal_instance_entry_main(instance, 0, NULL);
 
     /* Create a byte memory pool from which to allocate the thread stacks.  */
     tx_byte_pool_create(&byte_pool_0, "byte pool 0", first_unused_memory, DEMO_BYTE_POOL_SIZE);

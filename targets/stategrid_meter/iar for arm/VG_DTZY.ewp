@@ -2282,6 +2282,9 @@
                 <name>$PROJ_DIR$\..\..\..\application\ports\platform.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\..\application\ports\record_storage.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_connect.c</name>
             </file>
             <file>
@@ -2594,13 +2597,16 @@
                 <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\metering\legacy\energy.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\display\legacy\gs_backlight_ctrl.c</name>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\display_control_adapter.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\events\legacy\gs_cover_event.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\common\calendar.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\common\time_format.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\common\runtime.c</name>
@@ -2610,6 +2616,9 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\display\backlight.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\display\backlight_control.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\tariff\tariff.c</name>
@@ -2622,6 +2631,9 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\metering\metering.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\metering\run_status.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\events\duration.c</name>
@@ -2723,16 +2735,16 @@
                 <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\events\legacy\gs_rtc_err_event.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\load_control\legacy\relay_control.c</name>
-            </file>
-            <file>
                 <name>$PROJ_DIR$\..\..\..\domain\load_control\load_control.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\load_control\relay_status.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\metering\legacy\runstatus.c</name>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\metering\runstatus.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\metering\static_checksum.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\tariff\legacy\touFee.c</name>
@@ -2771,6 +2783,9 @@
     </file>
     <file>
         <name>$PROJ_DIR$\..\app\relay_control_adapter.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\record_storage_adapter.c</name>
     </file>
     <file>
         <name>$PROJ_DIR$\..\app\dl698_parameter_adapter.c</name>

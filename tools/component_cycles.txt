@@ -1,0 +1,7 @@
+# Known staging cycles in the component graph. Keep this list exact; any
+# cycle not named here fails the product closure check.
+# time_link.c needs cpu_surport.h, the SoC needs nidavellir.h, and the legacy
+# kernel headers still include infra/kernel headers.
+infra.kernel legacy.kernel_headers
+infra.kernel soc.v85xxp_v8500
+legacy.kernel_headers soc.v85xxp_v8500

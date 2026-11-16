@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "targets/stategrid_meter/mapper_698/factory_cfg.h"
 #include "fr_698.h"
 #include "port.h"
 
@@ -445,11 +445,12 @@ const uint8_t  init_Extend_Info[] = { 8, 'X', 'X', 'X', 'X','X', 'X', 'X', 'X' }
 const uint8_t  init_Produced_Date[] = { 10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; /**< 生产日期 - 设备的出厂日期，数据格式date_time_s */
 const uint8_t  init_Produced_Date645[] = { 10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; /**< 生产日期 - 设备的出厂日期，数据格式date_time_s */
 const uint8_t  init_Subset_List[] = { 1,0x00 }; /**< 子设备列表 1+2*3  */
-const uint8_t  init_Protocol_List[] = { 32, 1, 20, 'D', 'L', '/', 'T', '6', '9', '8', '.', '4', '5' ,'-', '2' , '0', '1', '7', '-', '2', '0', '2', '0' }; /**< 支持规约列表1+16*3 */
+const uint8_t  init_Protocol_List[ND_PROTOCOL_LIST_BYTES] = { 22, 1, 20, 'D', 'L', '/', 'T', '6', '9', '8', '.', '4', '5' ,'-', '2' , '0', '1', '7', '-', '2', '0', '2', '0' }; /**< 支持规约列表1+16*3 */
 const uint8_t  init_FollowReport_en[] = { 1,0x00 }; /**< 允许跟随上报 */
 const uint8_t  init_ActiveReport_en[] = { 1,0x01 }; /**< 允许主动上报 */
 const uint8_t  init_Comm_Master_en[] = { 1,0x01 }; /**< 允许与主站通话 */
-const uint8_t  init_Report_channel[] = { 13, 0x01, /*0x01, 0x02, 0x01, 0xf2, */0x01, 0x02, 0x09, 0xf2, /*0x02, 0x02, 0x01, 0xf2,*/}; /**< 上报通道*/
+/* Channels are disabled; a zero count keeps the 13-byte GET path in bounds. */
+const uint8_t  init_Report_channel[ND_REPORT_CHANNEL_BYTES] = { 0 }; /**< 上报通道*/
 
 const uint8_t  init_4b00[] =
 {

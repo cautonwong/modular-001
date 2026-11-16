@@ -3,22 +3,33 @@
 
 #include "components/protocol/dlms/include/nd_cosem_port.h"
 #include "components/protocol/dlms/include/nd_dlms_security.h"
+#include "targets/idis_ip_meter_freertos/cosem/nd_idis_registry.h"
 
 #define ND_ASSOC_OBJECTS_MAX 8
+#define ND_ASSOC_ACCESS_MAX 4
 #define ND_ASSOC_USERS_MAX 4
 #define ND_ASSOC_USER_LEN 16
 #define ND_SECURITY_CERT_MAX 64
 
 typedef struct {
+    uint8_t id;
+    uint8_t access;
+} nd_assoc_access_t;
+
+typedef struct {
     uint16_t class_id;
+    uint8_t version;
     nd_obis_t ln;
-    uint8_t attribute;
-    uint16_t index;
+    uint8_t attribute_count;
+    nd_assoc_access_t attributes[ND_ASSOC_ACCESS_MAX];
+    uint8_t method_count;
+    nd_assoc_access_t methods[ND_ASSOC_ACCESS_MAX];
 } nd_assoc_object_t;
 
 typedef struct {
-    uint8_t object_count;
-    nd_assoc_object_t objects[ND_ASSOC_OBJECTS_MAX];
+    nd_idis_registry_t base;
+    uint8_t extra_count;
+    nd_assoc_object_t extra[ND_ASSOC_OBJECTS_MAX];
     uint16_t client_sap;
     uint16_t server_sap;
     uint8_t app_context[16];

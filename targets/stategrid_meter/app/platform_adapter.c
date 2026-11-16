@@ -3,6 +3,7 @@
 #include "nidavellir.h"
 #include "infra/soc/v85xxp/v8500/v85xxp_system.h"
 #include "infra/boards/stategrid_single_phase/board_io.h"
+#include "infra/boards/stategrid_single_phase/eeprom.h"
 
 #include "application/ports/platform.h"
 
@@ -26,6 +27,12 @@ static void platform_event_output_set(void *ctx, bool enable)
     }
 }
 
+static bool platform_device_error(void *ctx)
+{
+    (void)ctx;
+    return (DEVICE_ERR & (1u << 1)) != 0;
+}
+
 void stategrid_platform_bind(struct instance_t *instance)
 {
     static nd_platform_port_t port;
@@ -33,5 +40,6 @@ void stategrid_platform_bind(struct instance_t *instance)
     port.ctx = instance;
     port.watchdog_kick = platform_watchdog_kick;
     port.event_output_set = platform_event_output_set;
+    port.device_error = platform_device_error;
     nd_platform_bind(&port);
 }

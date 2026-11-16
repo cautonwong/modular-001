@@ -1,9 +1,10 @@
-#include "nidavellir.h"
+#include <stdbool.h>
 #include "fr_698.h"
-#include "domain/events/legacy/gs_record.h"
-#include "domain/freeze/legacy/freeze_applications.h"
+#include "port.h"
+#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
+#include "targets/stategrid_meter/app/freeze/freeze_applications.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
 
 
@@ -141,7 +142,7 @@ uint8_t capture_check(uint32_t oad, uint8_t* oad_buf)
 
     return true;
 }
-int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, struct frozen_obj_t frozen_obj, uint8_t* dar)
+int set_frozen_capture(void *instance, uint32_t id, uint8_t* buf, struct frozen_obj_t frozen_obj, uint8_t* dar)
 {
     uint8_t i,num, maxnum, scheme, offset;
     uint8_t tempbuf[200],period_buf[3 * 8], depth_buf[1 + 2 * 15];
@@ -149,7 +150,7 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
     uint16_t period, depth, OI, CaptureLen, PeriodLen, DepthLen;
     uint32_t CaptureId, PeriodId, DepthId;
     uint32_t oad;
-    uint8_t* apdu_cache = instance->apdu_cache; 
+    uint8_t* apdu_cache = nd_fr698_apdu_cache(instance); 
 
     struct record_storage_id_info_t  record_id_info;
     int ret;
@@ -169,14 +170,6 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
     maxnum = (CaptureLen - 1) / 4;
 
  
-#if 0
-    CaptureId = frozen_obj.CaptureId;
-    PeriodId = frozen_obj.PeriodId;
-    DepthId = frozen_obj.DepthId;
-    CaptureLen = frozen_obj.CaptureLen;  // 
-    PeriodLen = frozen_obj.PeriodLen;
-    DepthLen = frozen_obj.DepthLen;
-#endif
 
 
     OI = (uint16_t)(id >> 16);
@@ -313,9 +306,8 @@ int set_frozen_capture(struct instance_t* instance, uint32_t id, uint8_t* buf, s
     return (p - buf);// 
 }
 
-int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
+int SET_5_Frozen(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
 
     if (get_OAD_Index(id) != 0)
@@ -324,7 +316,7 @@ int SET_5_Frozen(struct instance_t* instance, uint32_t id, uint8_t* buf, void *c
     }
 
 
-    if(mbase_cb == NULL)
+    if(!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }

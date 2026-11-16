@@ -28,6 +28,8 @@ struct pipeline_t;
 #define FR_698_CHL_PLC 2
 #define FR_698_CHL_RS485_2 3
 #define FR_698_CHL_NUM 4
+#define FR_698_CHL_IR 0
+#define FR_698_CHL_PLC 2
 
 
 #define pl_tx_698_len   128

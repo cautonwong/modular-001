@@ -1,6 +1,7 @@
-#include "nidavellir.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
-#include "kernel/legacy_control_block.h"
+#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
+#include "targets/stategrid_meter/upgrade/upgrade_info.h"
 
 //测试某位是否为1
 #define	TEST_BIT_BYTE(a,x)	((a)[(x)/8] & (1<<((x)%8)))
@@ -40,18 +41,15 @@
  */
 
 
-int upgrade_file_handle(struct instance_t* instance, uint8_t *data, uint16_t len, uint8_t *data_tx, uint8_t *tx_len)
+int upgrade_file_handle(void *instance, uint8_t *data, uint16_t len, uint8_t *data_tx, uint8_t *tx_len)
 {
     uint8_t factor_mode = 0;
-    struct mbase_control_block_t* mbase_cb;
     
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    
-    if(nd_mbase_factor_mode(mbase_cb) == true){
+    if(nd_mb_factor_mode(instance) == true){
         factor_mode = true;
     }
     
-    struct upgrade_info_t *_info = (struct upgrade_info_t *)&instance->upgrade_info;
+    struct upgrade_info_t *_info = (struct upgrade_info_t *)nd_instance_upgrade_info(instance);
     
     uint16_t frm_no = 0;
     uint16_t frm_size = 0;
@@ -121,18 +119,15 @@ int upgrade_file_handle(struct instance_t* instance, uint8_t *data, uint16_t len
     return 0; 
 }
                  
-int upgrade_check_handle(struct instance_t* instance)
+int upgrade_check_handle(void *instance)
 {
     uint8_t factor_mode = 0;
-    struct mbase_control_block_t* mbase_cb;
     
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    
-    if(nd_mbase_factor_mode(mbase_cb) == true){
+    if(nd_mb_factor_mode(instance) == true){
         factor_mode = true;
     }
     
-    struct upgrade_info_t *_info = (struct upgrade_info_t *)&instance->upgrade_info;
+    struct upgrade_info_t *_info = (struct upgrade_info_t *)nd_instance_upgrade_info(instance);
     
     
     if(0xef87 != _info->magic_num){

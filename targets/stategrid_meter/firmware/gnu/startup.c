@@ -7,14 +7,9 @@
  */
 #include <stdint.h>
 
-extern uint32_t _sidata;
-extern uint32_t _sdata;
-extern uint32_t _edata;
-extern uint32_t _sbss;
-extern uint32_t _ebss;
-extern uint32_t _estack;
+#include "linker_symbols.h"
 
-extern int main(void);
+int main(void);
 
 void Reset_Handler(void);
 void Default_Handler(void);

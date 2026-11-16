@@ -12,6 +12,7 @@
 #include "targets/stategrid_meter/app/dl698_parameter_adapter.h"
 #include "targets/stategrid_meter/app/platform_adapter.h"
 #include "targets/stategrid_meter/app/backlight_adapter.h"
+#include "targets/stategrid_meter/app/record_storage_adapter.h"
 #include "targets/stategrid_meter/app/relay_status_adapter.h"
 #include "targets/stategrid_meter/app/metering_input_adapter.h"
 #include "targets/stategrid_meter/app/runtime_adapter.h"
@@ -268,6 +269,7 @@ int main(int argc, char **argv)
 
     dl698_parameter_bind(instance);
     stategrid_platform_bind(instance);
+    stategrid_record_storage_bind(instance);
     stategrid_backlight_bind();
     stategrid_relay_status_bind();
     stategrid_metering_input_bind();

@@ -131,7 +131,12 @@ uint16_t nd_axdr_get_length(nd_axdr_reader_t *reader)
     if (first == 0x83) {
         uint32_t value = (uint32_t)nd_axdr_get_u8(reader) << 16;
         value |= (uint32_t)nd_axdr_get_u8(reader) << 8;
-        return (uint16_t)(value | nd_axdr_get_u8(reader));
+        value |= nd_axdr_get_u8(reader);
+        if (value > 0xFFFFu) {
+            reader->err = 1;
+            return 0;
+        }
+        return (uint16_t)value;
     }
     reader->err = 1;
     return 0;
@@ -193,12 +198,17 @@ static int skip_bytes(nd_axdr_reader_t *reader, size_t length)
     return 1;
 }
 
-int nd_axdr_skip_value(nd_axdr_reader_t *reader)
+#define ND_AXDR_MAX_DEPTH 16
+
+static int skip_value_at(nd_axdr_reader_t *reader, unsigned depth)
 {
-    if (reader == NULL) {
+    uint8_t tag;
+
+    if (depth > ND_AXDR_MAX_DEPTH) {
+        reader->err = 1;
         return -1;
     }
-    uint8_t tag = nd_axdr_get_tag(reader);
+    tag = nd_axdr_get_tag(reader);
     switch (tag) {
     case ND_AXDR_NULL:
         break;
@@ -206,7 +216,7 @@ int nd_axdr_skip_value(nd_axdr_reader_t *reader)
     case ND_AXDR_STRUCTURE: {
         uint16_t count = nd_axdr_get_length(reader);
         for (uint16_t index = 0; index < count; index++) {
-            if (nd_axdr_skip_value(reader) != 0) {
+            if (skip_value_at(reader, depth + 1) != 0) {
                 return -1;
             }
         }
@@ -279,6 +289,14 @@ int nd_axdr_skip_value(nd_axdr_reader_t *reader)
         return -1;
     }
     return nd_axdr_reader_ok(reader) ? 0 : -1;
+}
+
+int nd_axdr_skip_value(nd_axdr_reader_t *reader)
+{
+    if (reader == NULL) {
+        return -1;
+    }
+    return skip_value_at(reader, 0);
 }
 
 size_t nd_axdr_remaining(const nd_axdr_reader_t *reader)

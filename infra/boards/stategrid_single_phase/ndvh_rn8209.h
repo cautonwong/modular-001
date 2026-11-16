@@ -3,6 +3,9 @@
 #define MEA_RN8209_H_
 
 #include "target.h"
+
+struct dev_info_t;
+struct instance_t;
 //#include "lib_gpio.h"
 
 #define	SYSCON		0x00
@@ -138,6 +141,7 @@ extern struct ADJ_POFFSET_T adj_poffset;
 
 //æä¾›ç»™ä¸»ç¨‹åºè°ƒç”¨çš„å‡½æ•°ç”³æ˜Ž
 extern void ResetRn8209(void);                  //RN8209èŠ¯ç‰‡ç¡¬ä»¶å¤ä½
+extern unsigned char WriteRn8209(unsigned char ChipAddr, unsigned char* Buf, unsigned char length, const struct dev_info_t* dev);
 extern unsigned char Rn8209cCommInit(void);     //RN8209èŠ¯ç‰‡ä¸²å£é€šè®¯é…ç½®
 extern unsigned char Rn8209AdjParaSet(struct instance_t* instance, struct Rn8209AdjSet_t* Set , const struct dev_info_t* dev); //RN8209èŠ¯ç‰‡æ ¡è¡¨å‚æ•°è®¾ç½®
 extern unsigned char Rn8209DeviceIDCheck();     //RN8209èŠ¯ç‰‡IDæ£€æŸ¥

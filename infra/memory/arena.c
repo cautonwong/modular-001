@@ -38,11 +38,15 @@ static void arena_dealloc(void *ctx, void *ptr, size_t size)
 
 void nd_arena_init(nd_arena_t *arena, void *buffer, size_t capacity)
 {
+    uintptr_t address = (uintptr_t)buffer;
+    size_t skip = (ND_ARENA_ALIGNMENT - (address % ND_ARENA_ALIGNMENT))
+                  % ND_ARENA_ALIGNMENT;
+
     arena->port.ctx = arena;
     arena->port.alloc = arena_alloc;
     arena->port.dealloc = arena_dealloc;
-    arena->base = buffer;
-    arena->capacity = capacity;
+    arena->base = (uint8_t *)buffer + skip;
+    arena->capacity = skip < capacity ? capacity - skip : 0;
     arena->used = 0;
 }
 

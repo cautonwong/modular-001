@@ -1,7 +1,15 @@
 #include "nidavellir.h"
-#include "gs_record.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <time.h>
+#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
+#include "targets/stategrid_meter/app/meter_flags.h"
+#include "port.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
 #include "application/ports/resource_access.h"
-#include "domain/events/legacy/gs_record.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
 #include "domain/events/program_list.h"
 #include "infra/kernel/resource_blocks.h"
 #include "kernel/legacy_control_block.h"
@@ -11,7 +19,7 @@
 
 
 // 编程列表清零
-int MeterWr_obj_list_clear(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+int MeterWr_obj_list_clear(void *instance, void *task, void *mesg)
 {
     uint8_t tempbuf[52];
     uint32_t index = 0;
@@ -21,13 +29,13 @@ int MeterWr_obj_list_clear(struct instance_t* instance, struct pipeline_t* task,
     tempbuf[0] = 0x01;
     tempbuf[1] = 0;
 
-    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr_List);;
+    index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr_List);;
     ret = nd_set_index(instance, index, &tempbuf[0], sizeof(tempbuf));
     return ret;
 }
 
 // 更新编程列表
-int MeterWr_obj_list_add(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg, uint32_t oad, uint8_t tag)
+int MeterWr_obj_list_add(void *instance, void *task, void *mesg, uint32_t oad, uint8_t tag)
 {
     struct mbase_control_block_t* ctrl_block  = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t payload[100];
@@ -37,7 +45,7 @@ int MeterWr_obj_list_add(struct instance_t* instance, struct pipeline_t* task, s
 
     memset(tempbuf, 0, sizeof(tempbuf));
 
-    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr_List);;
+    index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr_List);;
     ret = nd_get_index(instance, index, &tempbuf[0], sizeof(tempbuf));
 
     if (ret < 0)
@@ -58,7 +66,7 @@ int MeterWr_obj_list_add(struct instance_t* instance, struct pipeline_t* task, s
     uint8_t first = nd_program_list_is_first(tempbuf[1]);
     tempbuf[1]++;
 
-    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr_List);;
+    index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr_List);;
     ret = nd_set_index(instance, index, &tempbuf[0], sizeof(tempbuf));
 
     if (first) //
@@ -80,7 +88,7 @@ int MeterWr_obj_list_add(struct instance_t* instance, struct pipeline_t* task, s
 
 
 // 编程列表清零
-int MeterWr645_obj_list_clear(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+int MeterWr645_obj_list_clear(void *instance, void *task, void *mesg)
 {
     uint8_t tempbuf[52];
     uint32_t index = 0;
@@ -90,13 +98,13 @@ int MeterWr645_obj_list_clear(struct instance_t* instance, struct pipeline_t* ta
     tempbuf[0] = 0x01;
     tempbuf[1] = 0;
 
-    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr645_List);;
+    index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr645_List);;
     ret = nd_set_index(instance, index, &tempbuf[0], sizeof(tempbuf));
     return ret;
 }
 
 // 更新编程列表
-int MeterWr645_obj_list_add(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg, uint32_t oad, uint8_t tag)
+int MeterWr645_obj_list_add(void *instance, void *task, void *mesg, uint32_t oad, uint8_t tag)
 {
     struct mbase_control_block_t* ctrl_block  = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t payload[100];
@@ -106,7 +114,7 @@ int MeterWr645_obj_list_add(struct instance_t* instance, struct pipeline_t* task
 
     memset(tempbuf, 0, sizeof(tempbuf));
 
-    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr645_List);;
+    index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr645_List);;
     ret = nd_get_index(instance, index, &tempbuf[0], sizeof(tempbuf));
 
     if (ret < 0)
@@ -127,7 +135,7 @@ int MeterWr645_obj_list_add(struct instance_t* instance, struct pipeline_t* task
     uint8_t first = nd_program_list_is_first(tempbuf[1]);
     tempbuf[1]++;
 
-    index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr645_List);;
+    index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr645_List);;
     ret = nd_set_index(instance, index, &tempbuf[0], sizeof(tempbuf));
 
     if (first) //
@@ -149,7 +157,7 @@ int MeterWr645_obj_list_add(struct instance_t* instance, struct pipeline_t* task
 
 
 // 645 编程事件
-int trigger_MeterWr645_record(struct instance_t* instance, uint32_t DI645, uint8_t tag)
+int trigger_MeterWr645_record(void *instance, uint32_t DI645, uint8_t tag)
 {
     struct mbase_control_block_t* ctrl_block  = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 

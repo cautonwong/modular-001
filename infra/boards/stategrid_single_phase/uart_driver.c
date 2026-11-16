@@ -49,7 +49,7 @@ void UartReceiveHandle(void *para)
 {
     uint8_t rcv_data = 0;
     
-    uint8_t uartIndex = (uint8_t)para;
+    uint8_t uartIndex = (uint8_t)(uintptr_t)para;
     if(uartIndex < MCU_UART_NUM)
     {
         if(true == mcu_uart_recive_byte(&rcv_data , uartIndex))
@@ -63,7 +63,7 @@ void UartReceiveHandle(void *para)
 void UartTransmissionHandle(void *para)
 {
     uint8_t tx_data = 0;
-    uint8_t uartIndex = (uint8_t)para;
+    uint8_t uartIndex = (uint8_t)(uintptr_t)para;
     if(uartIndex < MCU_UART_NUM)
     {
         if(fifoBuf_getUsed(uart_dev[uartIndex].tx_fifo) > 0 )
@@ -187,11 +187,11 @@ int uart_chl_initialize(struct uart_chl_init_t *uart_chl)
         ndv_timer_create(&tm);
         
         IsrReg.IsrFunctionRegister = UartTransmissionHandle;
-        IsrReg.para = (void*)(index);
+        IsrReg.para = (void*)(uintptr_t)index;
         Isr_handle_regsit((struct isr_reg_ctx_t*)&IsrReg , IRQ_UART0_TX+(index<<1));
 
         IsrReg.IsrFunctionRegister = UartReceiveHandle;
-        IsrReg.para = (void*)(index);
+        IsrReg.para = (void*)(uintptr_t)index;
         Isr_handle_regsit((struct isr_reg_ctx_t*)&IsrReg , IRQ_UART0_RX+(index<<1));
         
         mcu_uart_init((void*)uart_chl->uart_cfg, index, infrared_enable);

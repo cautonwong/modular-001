@@ -75,6 +75,7 @@ add_library(blade_idis_skeleton STATIC
     ${BLADE_ROOT}/targets/idis_ip_meter/cosem/classes/nd_ic_image_transfer.c
     ${BLADE_ROOT}/targets/idis_ip_meter/cosem/classes/nd_ic_setup.c
     ${BLADE_ROOT}/targets/idis_ip_meter/cosem/classes/nd_ic_association.c
+    ${BLADE_ROOT}/targets/idis_ip_meter/cosem/nd_idis_registry.c
     ${BLADE_ROOT}/targets/idis_ip_meter/cosem/nd_idis_mbus.c
     ${BLADE_ROOT}/targets/idis_ip_meter/cosem/nd_idis_average.c
     ${BLADE_ROOT}/targets/idis_ip_meter/cosem/nd_idis_pq.c
@@ -118,6 +119,7 @@ target_link_libraries(blade_target_stategrid PUBLIC blade_domain)
 add_library(blade_application STATIC
     ${BLADE_ROOT}/application/metering/application.c
     ${BLADE_ROOT}/application/metering/demand_registry.c
+    ${BLADE_ROOT}/application/ports/record_storage.c
     ${BLADE_ROOT}/application/adapters/dl698/dl698_time.c
     ${BLADE_ROOT}/application/adapters/dl698/parameter_port.c
     ${BLADE_ROOT}/application/adapters/dl698/report_list.c
@@ -155,6 +157,11 @@ foreach(src ${TEST_SOURCES})
     get_filename_component(name ${src} NAME_WE)
     add_executable(${name} ${src})
     target_link_libraries(${name} PRIVATE unity test_support blade_target_host)
+    # Test files provide linker fakes without publishing an interface header
+    # and use C brace elision and partial port fixtures.
+    target_compile_options(${name} PRIVATE -Wno-missing-prototypes
+                                            -Wno-missing-braces
+                                            -Wno-missing-field-initializers)
     if(src MATCHES "/targets/idis_ip_meter/tests/unit/"
        OR name STREQUAL "test_dlms_assoc"
        OR name STREQUAL "test_dlms_apdu"
@@ -177,6 +184,7 @@ target_sources(test_fr_698_segment PRIVATE
 )
 target_sources(test_fr_698_connect_len PRIVATE
     ${BLADE_ROOT}/application/adapters/dl698/fr_698_connect.c
+    ${BLADE_ROOT}/application/ports/record_storage.c
 )
 target_sources(test_fr_698_get_len PRIVATE
     ${BLADE_ROOT}/application/adapters/dl698/fr_698_get.c
@@ -198,8 +206,10 @@ target_sources(test_fr_698_client PRIVATE
 # nd_sim_should_stop().
 # ---------------------------------------------------------------------------
 
+option(BLADE_BUILD_SIM "Build the whole-firmware host simulation" ON)
 option(BLADE_FIRMWARE_SIM_PROFILE "Build firmware_sim with gprof instrumentation" OFF)
 
+if(BLADE_BUILD_SIM)
 set(FIRMWARE_SIM_MANIFEST "${CMAKE_CURRENT_BINARY_DIR}/firmware_sim_manifest.cmake")
 execute_process(
     COMMAND ${Python3_EXECUTABLE} ${BLADE_ROOT}/tools/firmware_sim_manifest.py --cmake
@@ -256,3 +266,4 @@ set_tests_properties(firmware_acceptance PROPERTIES
     LABELS acceptance
     TIMEOUT 120
 )
+endif()

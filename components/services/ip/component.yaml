@@ -1,4 +1,4 @@
-name: nd_ip
+name: services.ip
 version: 0.1.0
 layer: services
 paths: [components/services/ip]

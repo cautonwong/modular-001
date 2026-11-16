@@ -39,7 +39,7 @@ uint16_t axdr_record_len_get(uint8_t *unused, uint16_t *rsd_len,
     return record_len_return;
 }
 
-int GET_record_sel_1(struct instance_t *unused, uint32_t unused2,
+int GET_record_sel_1(void *unused, uint32_t unused2,
                      uint8_t *unused3, struct rsd_info_t *unused4,
                      uint32_t *unused5, uint16_t unused6, void *unused7)
 {
@@ -53,7 +53,7 @@ int GET_record_sel_1(struct instance_t *unused, uint32_t unused2,
     return 0;
 }
 
-int GET_record_sel_2(struct instance_t *unused, uint32_t unused2,
+int GET_record_sel_2(void *unused, uint32_t unused2,
                      uint8_t *unused3, struct rsd_info_t *unused4,
                      uint32_t *unused5, uint16_t unused6, void *unused7)
 {
@@ -67,7 +67,7 @@ int GET_record_sel_2(struct instance_t *unused, uint32_t unused2,
     return 0;
 }
 
-int GET_record_sel_9(struct instance_t *unused, uint32_t unused2,
+int GET_record_sel_9(void *unused, uint32_t unused2,
                      uint8_t *unused3, struct rsd_info_t *unused4,
                      uint32_t *unused5, uint16_t unused6, void *unused7)
 {

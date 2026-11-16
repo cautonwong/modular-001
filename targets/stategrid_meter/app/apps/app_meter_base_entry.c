@@ -4,26 +4,26 @@
 #include "lib_clk.h"
 #include "lib_conf.h"
 #include "fr_698.h"
-#include "gs_record.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
 #include "utils.h"
 #include "cpu_surport.h"
-#include "application/apps/app_config.h"
-#include "application/apps/app_entry.h"
-#include "application/apps/display_applications.h"
-#include "domain/events/legacy/events_applications.h"
-#include "domain/events/legacy/gs_record.h"
-#include "domain/freeze/legacy/freeze_applications.h"
-#include "domain/load_control/legacy/load_control_applications.h"
-#include "domain/metering/legacy/metering_applications.h"
-#include "domain/tariff/legacy/tariff_applications.h"
+#include "targets/stategrid_meter/app/app_config.h"
+#include "targets/stategrid_meter/app/app_entry.h"
+#include "targets/stategrid_meter/app/display_applications.h"
+#include "targets/stategrid_meter/app/display_control_adapter.h"
+#include "targets/stategrid_meter/app/events/events_applications.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
+#include "targets/stategrid_meter/app/freeze/freeze_applications.h"
+#include "targets/stategrid_meter/app/relay_control_adapter.h"
+#include "targets/stategrid_meter/app/metering/metering_applications.h"
+#include "targets/stategrid_meter/app/tariff/tariff_applications.h"
 #include "infra/boards/stategrid_single_phase/relay_config.h"
 #include "infra/kernel/resource_blocks.h"
 #include "kernel/legacy_control_block.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "targets/stategrid_meter/app/driver_entry.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
-extern int16_t Check_para_Pro(struct instance_t* instance);
-extern void Poffset_adj_oneself(struct instance_t* instance);
+#include "targets/stategrid_meter/app/devices.h"
 #ifdef ND_FIRMWARE_SIM
 void nd_sim_stage(const char *name);
 #define ND_SIM_STAGE(name) nd_sim_stage(name)
@@ -33,9 +33,6 @@ void nd_sim_stage(const char *name);
 //#define     P_BACKLIGHT_ON      GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT |= 0x10; //推挽输出高
 //#define     P_BACKLIGHT_OFF     GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT &=~0x10; //推挽输出低
 
-extern const struct dev_info_t rn8209_dev;
-extern void rs485_init(struct instance_t* instance, struct pipeline_t* pipeline);
-extern const uint32_t baud_table[];
 
 #if 1 
 
@@ -285,10 +282,10 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             backlight_pro(instance, pipeline, mesg);
 
             ND_SIM_STAGE("do_relay");
-            do_relay(instance, pipeline);
+            relay_control_second(instance);
 
             ND_SIM_STAGE("relay_led_ctl");
-            relay_led_ctl(instance, pipeline);
+            relay_control_led(instance);
 
             ND_SIM_STAGE("IOStateCheck");
             IOStateCheck(instance, pipeline);

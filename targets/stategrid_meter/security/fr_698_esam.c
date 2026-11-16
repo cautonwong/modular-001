@@ -1,11 +1,12 @@
-#include "nidavellir.h"
 #include "fr_698.h"
+#include "application/adapters/dl698/fr_698_env.h"
 #include "fr_698_esam.h"
 #include "io_type.h"
 #include "domain/common/status.h"
 #include "application/adapters/dl698/fr_698_esam.h"
 #include "infra/boards/stategrid_single_phase/meter_status.h"
 #include "infra/security/esam/esam_status.h"
+#include "targets/stategrid_meter/security/esam_pro.h"
 
 enum verification_choice_e
 {
@@ -15,10 +16,9 @@ enum verification_choice_e
    verification_choice_SID,
 };
 
-extern int esam_pro_handle(struct instance_t* instance, int fd, int request, void *param);
 
 
-uint16_t software_esam_check(struct instance_t* instance, uint8_t *key, uint8_t *rn, uint8_t *data, uint8_t p2, uint16_t datalen, uint8_t *outbuf)
+uint16_t software_esam_check(void *instance, uint8_t *key, uint8_t *rn, uint8_t *data, uint8_t p2, uint16_t datalen, uint8_t *outbuf)
 {
     int fd = 0;
     int request = esam_type_softwarecheck_cmd;
@@ -27,7 +27,7 @@ uint16_t software_esam_check(struct instance_t* instance, uint8_t *key, uint8_t 
     struct esam_698_output_t output= {0};
     
     input.cmd_type      = p2;//这里填秘钥索引
-    input.data_buf      = instance->apdu_cache; //临时缓冲区
+    input.data_buf      = nd_fr698_apdu_cache(instance); //临时缓冲区
     input.data_buf_len  = cache_max;            //临时缓冲长度
     input.Dispersion_factor = key;//这里填比对因子内容。
     input.Dispersion_factor_len = 8;
@@ -48,7 +48,7 @@ uint16_t software_esam_check(struct instance_t* instance, uint8_t *key, uint8_t 
     return 0;
 }
 
-int write_esam(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_t len)
+int write_esam(void *instance, uint32_t addr, uint8_t *buf, uint16_t len)
 {
     int fd = 0;
     int request = esam_type_write_cmd;
@@ -60,7 +60,7 @@ int write_esam(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_
     input.data      = buf;
     input.data_len  = len;
     input.sid_id    = addr;
-    input.data_buf      = instance->apdu_cache; //临时缓冲区
+    input.data_buf      = nd_fr698_apdu_cache(instance); //临时缓冲区
     input.data_buf_len  = cache_max;            //临时缓冲长度
     
     output.data = buf;
@@ -80,7 +80,7 @@ int write_esam(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_
     return -1;
 }
 
-int esam_key_updata(struct instance_t* instance, uint8_t *buf, uint16_t len)
+int esam_key_updata(void *instance, uint8_t *buf, uint16_t len)
 {
     int fd = 0;
     int request = esam_type_write_cmd;
@@ -109,7 +109,7 @@ int esam_key_updata(struct instance_t* instance, uint8_t *buf, uint16_t len)
     input.MAC_data = buf + offset + 1;
     input.MAC_len = 4;
     offset += 4 + 1;
-    input.data_buf      = instance->apdu_cache; //临时缓冲区
+    input.data_buf      = nd_fr698_apdu_cache(instance); //临时缓冲区
     input.data_buf_len  = cache_max;            //临时缓冲长度
     
     output.data = buf;
@@ -124,7 +124,7 @@ int esam_key_updata(struct instance_t* instance, uint8_t *buf, uint16_t len)
     return -1;
 }
 
-int read_esam_no(struct instance_t* instance, uint8_t *esam_info)
+int read_esam_no(void *instance, uint8_t *esam_info)
 {
     int fd = 0;
     int request = esam_type_read_esam_no_cmd;
@@ -136,7 +136,7 @@ int read_esam_no(struct instance_t* instance, uint8_t *esam_info)
 
     input.data_buf      = tmpbuf; //临时缓冲区
     input.data_buf_len  = 64;            //临时缓冲长度
-    //input.data_buf      = instance->apdu_cache; //临时缓冲区
+    //input.data_buf      = nd_fr698_apdu_cache(instance); //临时缓冲区
     //input.data_buf_len  = cache_max;            //临时缓冲长度
 
     output.data  = esam_info;
@@ -155,7 +155,7 @@ int read_esam_no(struct instance_t* instance, uint8_t *esam_info)
     return output.data_len;
 }
 
-int read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_t len)
+int read_esam_data(void *instance, uint32_t addr, uint8_t *buf, uint16_t len)
 {
     int fd = 0;
     int request = esam_type_read_esam_data_cmd;
@@ -171,7 +171,7 @@ int read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf, uin
 
     input.data_buf      = tmpbuf; //临时缓冲区
     input.data_buf_len  = 164;            //临时缓冲长度
-    //input.data_buf      = instance->apdu_cache; //临时缓冲区
+    //input.data_buf      = nd_fr698_apdu_cache(instance); //临时缓冲区
     //input.data_buf_len  = cache_max;            //临时缓冲长度
     
     output.data = buf;
@@ -190,7 +190,7 @@ int read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf, uin
 }
 
 //读取对应长度 ESAM  随机数
-int read_esam_random(struct instance_t* instance,uint8_t read_num,  uint8_t *read_buf) 
+int read_esam_random(void *instance,uint8_t read_num,  uint8_t *read_buf) 
 {
     int rxlen = 0;
     uint16_t txlen = 0;
@@ -203,7 +203,7 @@ int read_esam_random(struct instance_t* instance,uint8_t read_num,  uint8_t *rea
 
 
 //读 ESAM  序列号 8字节
-int read_esam_serial_number(struct instance_t* instance, uint8_t *read_buf) 
+int read_esam_serial_number(void *instance, uint8_t *read_buf) 
 {
     int rxlen = 0;
     uint16_t txlen = 0;
@@ -215,7 +215,7 @@ int read_esam_serial_number(struct instance_t* instance, uint8_t *read_buf)
 
 
 
-int esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
+int esam_consult_key(void *instance, uint8_t cmd, uint8_t *p)
 {
     int fd = 0;
     int request = 0;
@@ -230,7 +230,7 @@ int esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
     input.data_len = 32;
     input.MAC_data = p + 32 + 1;
     input.MAC_len  = 4;
-    input.data_buf      = instance->apdu_cache; //临时缓冲区
+    input.data_buf      = nd_fr698_apdu_cache(instance); //临时缓冲区
     input.data_buf_len  = cache_max;            //临时缓冲长度
     
     output.data     = p;
@@ -252,7 +252,7 @@ int esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p)
 }
 
 
-int read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t index)
+int read_esam_info(void *instance, uint8_t *esam_info, uint8_t index)
 {
     int fd = 0;
     int request = esam_type_get_esam_p2_info_cmd;
@@ -267,7 +267,7 @@ int read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t inde
 
     input.data_buf      = tmpbuf; //临时缓冲区
     input.data_buf_len  = 64;            //临时缓冲长度
-    //input.data_buf      = instance->apdu_cache; //临时缓冲区
+    //input.data_buf      = nd_fr698_apdu_cache(instance); //临时缓冲区
     //input.data_buf_len  = cache_max;            //临时缓冲长度
 
     param.input  = (struct esam_698_input_t *)&input;
@@ -285,7 +285,7 @@ int read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t inde
    
 }
 
-uint8_t get_key_status(struct instance_t* instance)
+uint8_t get_key_status(void *instance)
 {
     uint8_t Buf[16] = {0};
     uint32_t keystate=0;
@@ -300,7 +300,7 @@ uint8_t get_key_status(struct instance_t* instance)
 }
 
 
-void esam_698_init(struct instance_t* instance, uint8_t power_mode)
+void esam_698_init(void *instance, uint8_t power_mode)
 {
     int fd = 0;
     int request = 0;
@@ -315,7 +315,7 @@ void esam_698_init(struct instance_t* instance, uint8_t power_mode)
 
 
 
-void esam_698_power_on(struct instance_t* instance)
+void esam_698_power_on(void *instance)
 {
     uint8_t esam_inf[45] = {0};
     int ret = 0;
@@ -340,7 +340,7 @@ void esam_698_power_on(struct instance_t* instance)
 }
 
 //esam 电源控制(关闭)   秒调用 
-void esam_698_power_supply_ctrl(struct instance_t* instance, struct pipeline_t* pipeline)
+void esam_698_power_supply_ctrl(void *instance, void *pipeline)
 {
     int fd = 0;
     int request = 0;
@@ -368,7 +368,7 @@ void esam_698_power_supply_ctrl(struct instance_t* instance, struct pipeline_t* 
                                    nd_meter_status_esam_close_delay(instance));
 }
 
-int esam_self_check(struct instance_t* instance, struct pipeline_t* pipeline)
+int esam_self_check(void *instance, void *pipeline)
 {
     uint8_t result = 0, temp[42] = {0};
 
@@ -387,7 +387,7 @@ int esam_self_check(struct instance_t* instance, struct pipeline_t* pipeline)
 }
 
 
-int fr_698_handle_esam(struct instance_t* instance, struct esam_698_input_t *p_input, struct esam_698_output_t *p_output)
+int fr_698_handle_esam(void *instance, struct esam_698_input_t *p_input, struct esam_698_output_t *p_output)
 {
     int fd = 0;
     int request = 0;
@@ -451,7 +451,7 @@ int fr_698_handle_esam(struct instance_t* instance, struct esam_698_input_t *p_i
 }
 
 //主动上报  
-uint8_t get_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *apdu, uint8_t apdu_len , uint8_t *dst)
+uint8_t get_upreport_esam_rn_mac(void *instance, uint8_t *apdu, uint8_t apdu_len , uint8_t *dst)
 {
     int fd = 0;
     int request = esam_type_upreport_cmd;
@@ -460,7 +460,7 @@ uint8_t get_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *apdu, uin
     struct esam_698_output_t output= {0};
     int ret = 0;
     
-    input.data_buf      = instance->apdu_cache; //临时缓冲区
+    input.data_buf      = nd_fr698_apdu_cache(instance); //临时缓冲区
     input.data_buf_len  = cache_max;            //临时缓冲长度
     
     input.data = apdu;
@@ -475,7 +475,7 @@ uint8_t get_upreport_esam_rn_mac(struct instance_t* instance, uint8_t *apdu, uin
     return ret;
 }
 //主动上报验证
-int check_upreport_esam_rn_mac(struct instance_t* instance, struct esam_698_input_t *p_input, struct esam_698_output_t *p_output)
+int check_upreport_esam_rn_mac(void *instance, struct esam_698_input_t *p_input, struct esam_698_output_t *p_output)
 {
     int fd = 0;
     int request = esam_type_upreportcheck_cmd;
@@ -500,7 +500,7 @@ int check_upreport_esam_rn_mac(struct instance_t* instance, struct esam_698_inpu
 
 
 //esam模块上电期间 秒处理. 电源控制 和  esam自检(间隔15分，每02、17、32、47分的第35秒 )。
-void esam_sec_pro(struct instance_t* instance, struct pipeline_t* pipeline)
+void esam_sec_pro(void *instance, void *pipeline)
 {
     uint16_t close_delay = nd_meter_status_esam_close_delay(instance);
     uint32_t s_addr;
@@ -512,7 +512,7 @@ void esam_sec_pro(struct instance_t* instance, struct pipeline_t* pipeline)
 
     esam_698_power_supply_ctrl(instance, pipeline);
     
-    if ((instance->time.tm_sec == 35) && ((instance->time.tm_min%15) == 2)) 
+    if ((nd_fr698_time(instance)->tm_sec == 35) && ((nd_fr698_time(instance)->tm_min%15) == 2)) 
     {
         esam_self_check(instance, pipeline);
     }

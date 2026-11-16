@@ -12,7 +12,16 @@ jobs:
       - name: Install toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi
+          sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi cbmc default-jre-headless
+      - name: Install TLA+ tools
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/tla2tools.jar" \
+            https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar
+      - name: Install Lean
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
+            | sh -s -- -y --default-toolchain leanprover/lean4:v4.9.0
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
       - name: Checkout FreeRTOS kernel
         uses: actions/checkout@v4
         with:
@@ -23,3 +32,7 @@ jobs:
         env:
           FREERTOS_KERNEL_DIR: ${{ github.workspace }}/.freertos-kernel
         run: ./ci.sh
+      - name: Run formal verification
+        env:
+          TLA2TOOLS: ${{ runner.temp }}/tla2tools.jar
+        run: ./tools/check_formal.sh --strict

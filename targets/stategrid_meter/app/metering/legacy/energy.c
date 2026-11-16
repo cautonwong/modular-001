@@ -1,5 +1,10 @@
 
-#include "nidavellir.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
+#include "targets/stategrid_meter/app/meter_flags.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 
 
@@ -10,9 +15,8 @@
 #define  ADD_NEG    0x20
 #define  DEC_NEG    0x10
 #include "targets/stategrid_meter/app/metering_energy_adapter.h"
-#include "domain/metering/legacy/metering_applications.h"
+#include "targets/stategrid_meter/app/metering/metering_applications.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
 #include "targets/stategrid_meter/persistence/legacy_energy_layout.h"
 
 static uint32_t ec_pluse_cnt = 0;
@@ -20,21 +24,20 @@ static uint32_t ec_pluse_cnt = 0;
 
 //计算电能校验和
 // type:0 电量   1 用电量
-uint32_t __cal_EC_checksum(struct instance_t* instance, uint8_t type)
+uint32_t __cal_EC_checksum(void *instance, uint8_t type)
 {
     uint8_t *buff;
     uint16_t len;
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     switch(type)
     {
         case 0:
-            buff =  (uint8_t *)&nd_mbase_active_p(mbase_cb)[0];
+            buff =  (uint8_t *)nd_mb_active_p(instance);
             len = (uint16_t)legacy_energy_checksum_span();       
             break;
 
         case 1:
-            buff =  (uint8_t *)&nd_mbase_MonthEnegery_dec(mbase_cb);
+            buff =  (uint8_t *)&nd_mb_month_energery_dec(instance);
             len = (uint16_t)legacy_energy_use_checksum_span();
             break;
 
@@ -49,19 +52,18 @@ uint32_t __cal_EC_checksum(struct instance_t* instance, uint8_t type)
 // 判断电能校验和             
 // 正确返回1，错误返回-1
 // type:0 电量   1 用电量
-int judge_EC_checksum(struct instance_t* instance, uint8_t type)
+int judge_EC_checksum(void *instance, uint8_t type)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t cs = 0;
     
     switch(type)
     {
         case 0:
-            cs = nd_mbase_Energy_chksum(mbase_cb);
+            cs = nd_mb_energy_chksum(instance);
             break;
 
         case 1:
-            cs = nd_mbase_UseEnergy_chksum(mbase_cb);
+            cs = nd_mb_use_energy_chksum(instance);
             break;
 
         default:
@@ -80,19 +82,18 @@ int judge_EC_checksum(struct instance_t* instance, uint8_t type)
 
 // 更新电能校验和             
 // type:0 电量   1 用电量
-int updata_EC_checksum(struct instance_t* instance, uint8_t type)
+int updata_EC_checksum(void *instance, uint8_t type)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t *cs = NULL;
     
     switch(type)
     {
         case 0:
-            cs = &nd_mbase_Energy_chksum(mbase_cb);
+            cs = &nd_mb_energy_chksum(instance);
             break;
 
         case 1:
-            cs = &nd_mbase_UseEnergy_chksum(mbase_cb);
+            cs = &nd_mb_use_energy_chksum(instance);
             break;
 
         default:
@@ -108,13 +109,12 @@ int updata_EC_checksum(struct instance_t* instance, uint8_t type)
 
 //写双备份区
 //type :0 电量   1 用电量
-int16_t Save_EC2(struct instance_t* instance, uint8_t type)
+int16_t Save_EC2(void *instance, uint8_t type)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint16_t len_tmp, energy_len =  (legacy_energy_checksum_span());
     uint16_t use_energy_len =  (legacy_energy_use_checksum_span());
     uint32_t s_index;
-    uint8_t *p_tmp = (uint8_t*)&nd_mbase_active_p(mbase_cb);
+    uint8_t *p_tmp = (uint8_t*)nd_mb_active_p(instance);
     uint16_t ID = Energy_block;
     int ret;
 
@@ -122,13 +122,13 @@ int16_t Save_EC2(struct instance_t* instance, uint8_t type)
     {
         case 0:
             ID = Energy_block;
-            p_tmp = (uint8_t*)&nd_mbase_active_p(mbase_cb);
+            p_tmp = (uint8_t*)nd_mb_active_p(instance);
             len_tmp = energy_len + legacy_energy_checksum_size();
             break;
 
         case 1:
             ID = UseEnergy_block;
-            p_tmp = (uint8_t*)&nd_mbase_MonthEnegery_dec(mbase_cb);
+            p_tmp = (uint8_t*)&nd_mb_month_energery_dec(instance);
             len_tmp = use_energy_len + legacy_energy_use_checksum_size();
             break;
 
@@ -137,7 +137,7 @@ int16_t Save_EC2(struct instance_t* instance, uint8_t type)
             break;
     } 
 
-    s_index = (uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_parameter_1 << 16) + ID;
+    s_index = (uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_parameter_1 << 16) + ID;
     ret = nd_set_index(instance, s_index, p_tmp, len_tmp); 
     if (ret < 0) //无效 暂不处理
     {
@@ -152,16 +152,15 @@ int16_t Save_EC2(struct instance_t* instance, uint8_t type)
 //电能的 校验恢复 主入口
 //type :0 电量   1 用电量
 //mode :0 上电校验恢复   1 运行期校验恢复
-int16_t Check_EC_recover(struct instance_t* instance, uint8_t type, uint8_t mode)
+int16_t Check_EC_recover(void *instance, uint8_t type, uint8_t mode)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t check_sum[2] = {0,};
     uint32_t addr = 0x00,s_index;
     uint16_t i, len_tmp, energy_len =  (legacy_energy_checksum_span());
     uint16_t use_energy_len =  (legacy_energy_use_checksum_span());
     uint16_t block_len = (legacy_energy_block_span());
-    uint8_t *p_block = (uint8_t*)&nd_mbase_active_p(mbase_cb);
-    uint8_t *p_tmp = (uint8_t*)&nd_mbase_active_p(mbase_cb);
+    uint8_t *p_block = (uint8_t*)nd_mb_active_p(instance);
+    uint8_t *p_tmp = (uint8_t*)nd_mb_active_p(instance);
     uint16_t ID = Energy_block;
     int ret = 0;
 
@@ -178,13 +177,13 @@ int16_t Check_EC_recover(struct instance_t* instance, uint8_t type, uint8_t mode
     {
         case 0:
             ID = Energy_block;
-            p_tmp = (uint8_t*)&nd_mbase_active_p(mbase_cb);
+            p_tmp = (uint8_t*)nd_mb_active_p(instance);
             len_tmp = energy_len + legacy_energy_checksum_size();
             break;
 
         case 1:
             ID = UseEnergy_block;
-            p_tmp = (uint8_t*)&nd_mbase_MonthEnegery_dec(mbase_cb);
+            p_tmp = (uint8_t*)&nd_mb_month_energery_dec(instance);
             len_tmp = use_energy_len + legacy_energy_use_checksum_size();
             break;
 
@@ -197,19 +196,19 @@ int16_t Check_EC_recover(struct instance_t* instance, uint8_t type, uint8_t mode
     if (mode == 0) 
     {
         //读EC1
-        if (nd_mbase_ec_save_success(mbase_cb) == 0x5AA5)
+        if (nd_mb_ec_save_success(instance) == 0x5AA5)
         {
             //EC block 从active_p开始
-            p_block = (uint8_t*)&nd_mbase_active_p(mbase_cb);
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+            p_block = (uint8_t*)nd_mb_active_p(instance);
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
                     legacy_energy_persistent_offset());
             nd_get_offset(instance, s_index, p_block, block_len);
 
             // EC1 只使用一次   // 需清标志      
-            nd_mbase_ec_save_success(mbase_cb) = 0;
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+            nd_mb_ec_save_success(instance) = 0;
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
                     legacy_energy_ec_offset());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_ec_save_success(mbase_cb), legacy_energy_ec_size());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_ec_save_success(instance), legacy_energy_ec_size());
 
             ret = judge_EC_checksum(instance, type);
 
@@ -228,7 +227,7 @@ int16_t Check_EC_recover(struct instance_t* instance, uint8_t type, uint8_t mode
 
 
     //读EC2 
-    s_index = (uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_parameter_1 << 16) + ID;
+    s_index = (uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_parameter_1 << 16) + ID;
     ret = nd_get_index(instance, s_index, p_tmp, len_tmp); 
     if (ret < 0) //无效 暂不处理
     {
@@ -255,31 +254,30 @@ static void merge_update(nd_energy_update_t *total, nd_energy_update_t part)
     total->month_save_due |= part.month_save_due;
 }
 
-void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
+void Energy_Meter(void *instance, void *pipeline)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     nd_energy_update_t update = {0};
     nd_energy_update_t part;
 
-    if ((nd_mbase_meter_const(mbase_cb) / 100) == 0)
+    if ((nd_mb_meter_const(instance) / 100) == 0)
     {
         return;
     }
-    if ((nd_mbase_EC_SaveDiff(mbase_cb) < 30) || (nd_mbase_EC_SaveDiff(mbase_cb) > 1000))
+    if ((nd_mb_ec_save_diff(instance) < 30) || (nd_mb_ec_save_diff(instance) > 1000))
     {
-        nd_mbase_EC_SaveDiff(mbase_cb) = 200;
+        nd_mb_ec_save_diff(instance) = 200;
     }
 
     Check_EC_recover(instance, 0, 1);
     Check_EC_recover(instance, 1, 1);
 
-    part = metering_energy_add(metering_energy_ledger_from_instance(instance), ND_ENERGY_FORWARD, nd_mbase_p_pluse(mbase_cb));
+    part = metering_energy_add(metering_energy_ledger_from_instance(instance), ND_ENERGY_FORWARD, nd_mb_p_pluse(instance));
     merge_update(&update, part);
-    nd_mbase_p_pluse(mbase_cb) = 0;
+    nd_mb_p_pluse(instance) = 0;
 
-    part = metering_energy_add(metering_energy_ledger_from_instance(instance), ND_ENERGY_REVERSE, nd_mbase_n_pluse(mbase_cb));
+    part = metering_energy_add(metering_energy_ledger_from_instance(instance), ND_ENERGY_REVERSE, nd_mb_n_pluse(instance));
     merge_update(&update, part);
-    nd_mbase_n_pluse(mbase_cb) = 0;
+    nd_mb_n_pluse(instance) = 0;
 
     if (update.energy_changed)
     {
@@ -299,47 +297,44 @@ void Energy_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
     }
 }
 
-void Energy_Meter_PowerON(struct instance_t* instance, struct pipeline_t* pipeline)
+void Energy_Meter_PowerON(void *instance, void *pipeline)
 {
     uint32_t s_index;
     int ret = 0;
-    
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     ec_pluse_cnt = 0;
     Check_EC_recover(instance, 0, 0);
     Check_EC_recover(instance, 1, 0);
 
     //完成上电      清标志
-    if(nd_mbase_ec_save_success(mbase_cb) == 0x5AA5)
+    if(nd_mb_ec_save_success(instance) == 0x5AA5)
     {
-        nd_mbase_ec_save_success(mbase_cb) = 0;
-        s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+        nd_mb_ec_save_success(instance) = 0;
+        s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
                 legacy_energy_ec_offset());
-        nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_ec_save_success(mbase_cb), legacy_energy_ec_size());
+        nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_ec_save_success(instance), legacy_energy_ec_size());
     }
 
     //电量保存阈值 读取
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + EC_SaveDiff_E);
-    ret = nd_get_index(instance, s_index, (uint8_t*)&nd_mbase_EC_SaveDiff(mbase_cb), 2);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + EC_SaveDiff_E);
+    ret = nd_get_index(instance, s_index, (uint8_t*)&nd_mb_ec_save_diff(instance), 2);
     if(ret < 0)
     {
-        nd_mbase_EC_SaveDiff(mbase_cb) = 200; //默认2度一存。
+        nd_mb_ec_save_diff(instance) = 200; //默认2度一存。
     }
 
 }
 
 
 //停电处理 刷新脉冲尾数
-void Energy_Meter_PowerOFF(struct instance_t* instance, struct pipeline_t* pipeline)
+void Energy_Meter_PowerOFF(void *instance, void *pipeline)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     nd_energy_update_t update = {0};
     nd_energy_update_t part;
     uint8_t i = 0;
     int ret = 0;
 
-    nd_mbase_ec_save_success(mbase_cb) = 0;
+    nd_mb_ec_save_success(instance) = 0;
     for(i = 0; i < 2; i++)
     {
         ret = judge_EC_checksum(instance, i);
@@ -351,13 +346,13 @@ void Energy_Meter_PowerOFF(struct instance_t* instance, struct pipeline_t* pipel
 
     Energy_Pluse_Count(instance, pipeline);
 
-    part = metering_energy_add(metering_energy_ledger_from_instance(instance), ND_ENERGY_FORWARD, nd_mbase_p_pluse(mbase_cb));
+    part = metering_energy_add(metering_energy_ledger_from_instance(instance), ND_ENERGY_FORWARD, nd_mb_p_pluse(instance));
     merge_update(&update, part);
-    nd_mbase_p_pluse(mbase_cb) = 0;
+    nd_mb_p_pluse(instance) = 0;
 
-    part = metering_energy_add(metering_energy_ledger_from_instance(instance), ND_ENERGY_REVERSE, nd_mbase_n_pluse(mbase_cb));
+    part = metering_energy_add(metering_energy_ledger_from_instance(instance), ND_ENERGY_REVERSE, nd_mb_n_pluse(instance));
     merge_update(&update, part);
-    nd_mbase_n_pluse(mbase_cb) = 0;
+    nd_mb_n_pluse(instance) = 0;
 
     if (update.energy_changed)
     {
@@ -369,35 +364,35 @@ void Energy_Meter_PowerOFF(struct instance_t* instance, struct pipeline_t* pipel
     }
 }
 
-int32_t Get_Cal_Active_Energy(struct mbase_control_block_t* mbase_cb, uint8_t index , uint8_t type)
+int32_t Get_Cal_Active_Energy(void *instance, uint8_t index , uint8_t type)
 {
     int32_t energy_kwh = 0;
     int32_t energy_pulse = 0;
-    uint8_t word = nd_mbase_active_energy_cal_word(mbase_cb);
+    uint8_t word = nd_mb_active_energy_cal_word(instance);
     
-    if((nd_mbase_meter_const(mbase_cb)==0) || (index>Max_tou_fee))
+    if((nd_mb_meter_const(instance)==0) || (index>Max_tou_fee))
     {
         return 0;
     }
     if(word & ADD_POS)
     {
-        energy_kwh += nd_mbase_active_p(mbase_cb)[index];
-        energy_pulse += nd_mbase_active_p_dec(mbase_cb)[index];
+        energy_kwh += nd_mb_active_p(instance)[index];
+        energy_pulse += nd_mb_active_p_dec(instance)[index];
     }
     if(word & DEC_POS)
     {
-        energy_kwh -= nd_mbase_active_p(mbase_cb)[index];
-        energy_pulse -= nd_mbase_active_p_dec(mbase_cb)[index];
+        energy_kwh -= nd_mb_active_p(instance)[index];
+        energy_pulse -= nd_mb_active_p_dec(instance)[index];
     }
     if(word & ADD_NEG)
     {
-        energy_kwh += nd_mbase_active_n(mbase_cb)[index];
-        energy_pulse += nd_mbase_active_n_dec(mbase_cb)[index];
+        energy_kwh += nd_mb_active_n(instance)[index];
+        energy_pulse += nd_mb_active_n_dec(instance)[index];
     }
     if(word & DEC_NEG)
     {
-        energy_kwh -= nd_mbase_active_n(mbase_cb)[index];
-        energy_pulse -= nd_mbase_active_n_dec(mbase_cb)[index];
+        energy_kwh -= nd_mb_active_n(instance)[index];
+        energy_pulse -= nd_mb_active_n_dec(instance)[index];
     }
     
     if(type == 1)
@@ -405,12 +400,12 @@ int32_t Get_Cal_Active_Energy(struct mbase_control_block_t* mbase_cb, uint8_t in
         if(energy_pulse < 0)    
         {   
             energy_pulse = ~energy_pulse+1;
-            energy_kwh = energy_pulse*10000/nd_mbase_meter_const(mbase_cb);
+            energy_kwh = energy_pulse*10000/nd_mb_meter_const(instance);
             energy_kwh = -energy_kwh;
         }
         else
         {
-            energy_kwh = energy_pulse*10000/nd_mbase_meter_const(mbase_cb);//0.0001kwh
+            energy_kwh = energy_pulse*10000/nd_mb_meter_const(instance);//0.0001kwh
         }
     }
     else
@@ -421,29 +416,29 @@ int32_t Get_Cal_Active_Energy(struct mbase_control_block_t* mbase_cb, uint8_t in
 }
 
 
-int32_t Get_Active_Energy(struct mbase_control_block_t* mbase_cb, uint8_t index , uint8_t type , uint8_t pn)
+int32_t Get_Active_Energy(void *instance, uint8_t index , uint8_t type , uint8_t pn)
 {
     int32_t energy_kwh = 0;
     int32_t energy_pulse = 0;
     
-    if((nd_mbase_meter_const(mbase_cb)==0) || (index>Max_tou_fee))
+    if((nd_mb_meter_const(instance)==0) || (index>Max_tou_fee))
     {
         return 0;
     }
     if(pn ==0)
     {
-        energy_kwh += nd_mbase_active_p(mbase_cb)[index];
-        energy_pulse += nd_mbase_active_p_dec(mbase_cb)[index];
+        energy_kwh += nd_mb_active_p(instance)[index];
+        energy_pulse += nd_mb_active_p_dec(instance)[index];
     }
     else
     {
-        energy_kwh += nd_mbase_active_n(mbase_cb)[index];
-        energy_pulse += nd_mbase_active_n_dec(mbase_cb)[index];
+        energy_kwh += nd_mb_active_n(instance)[index];
+        energy_pulse += nd_mb_active_n_dec(instance)[index];
     }
 
     if(type == 1)
     {
-        energy_kwh = energy_pulse*10000 / nd_mbase_meter_const(mbase_cb);//0.0001kwh
+        energy_kwh = energy_pulse*10000 / nd_mb_meter_const(instance);//0.0001kwh
     }
     else
     {
@@ -465,14 +460,14 @@ int32_t Get_Active_Energy(struct mbase_control_block_t* mbase_cb, uint8_t index 
 //FeeNo: 0:总,  1-12: F1-F12
 //type: 0:4字节hex(x.xx), 1:8字节hex(x.xxxx)
 //pn:   0:正,   1:反
-int64_t Get_Active_Energy_TABC(struct mbase_control_block_t* mbase_cb, uint8_t phase, uint8_t FeeNo , uint8_t type , uint8_t pn)
+int64_t Get_Active_Energy_TABC(void *instance, uint8_t phase, uint8_t FeeNo , uint8_t type , uint8_t pn)
 {
-    if((nd_mbase_meter_const(mbase_cb) == 0) || (FeeNo > Max_tou_fee) || (phase != 0))
+    if((nd_mb_meter_const(instance) == 0) || (FeeNo > Max_tou_fee) || (phase != 0))
     {
         return 0;
     }
 
-    return metering_energy_read(metering_energy_ledger_from_mbase(mbase_cb),
+    return metering_energy_read(nd_mb_energy_ledger(instance),
                                 pn ? ND_ENERGY_REVERSE : ND_ENERGY_FORWARD,
                                 FeeNo,
                                 type ? ND_ENERGY_RES_0_0001_KWH : ND_ENERGY_RES_0_01_KWH);
@@ -480,31 +475,30 @@ int64_t Get_Active_Energy_TABC(struct mbase_control_block_t* mbase_cb, uint8_t p
 //组合有功 电能获取
 //FeeNo: 0:总,  1-12: F1-F12
 //type: 0:4字节hex(x.xx), 1:8字节hex(x.xxxx)
-int64_t Get_Cal_Active_Energy_T(struct mbase_control_block_t* mbase_cb, uint8_t FeeNo , uint8_t type)
+int64_t Get_Cal_Active_Energy_T(void *instance, uint8_t FeeNo , uint8_t type)
 {
-    if((nd_mbase_meter_const(mbase_cb) == 0) || (FeeNo > Max_tou_fee))
+    if((nd_mb_meter_const(instance) == 0) || (FeeNo > Max_tou_fee))
     {
         return 0;
     }
 
     return metering_energy_read_combined(
-        metering_energy_ledger_from_mbase(mbase_cb), FeeNo,
+        nd_mb_energy_ledger(instance), FeeNo,
         type ? ND_ENERGY_RES_0_0001_KWH : ND_ENERGY_RES_0_01_KWH);
 }
-void Energy_Pluse_Count(struct instance_t* instance, struct pipeline_t* pipeline)
+void Energy_Pluse_Count(void *instance, void *pipeline)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     //DISABLE_ALL_INT();
     if((ec_pluse_cnt < 64) && (ec_pluse_cnt > 0))
     {
-        if(nd_mbase_power_dir(mbase_cb) == 0)
+        if(nd_mb_power_dir(instance) == 0)
         {
-            nd_mbase_p_pluse(mbase_cb) += ec_pluse_cnt;
+            nd_mb_p_pluse(instance) += ec_pluse_cnt;
         }
         else
         {
-            nd_mbase_n_pluse(mbase_cb) += ec_pluse_cnt;
+            nd_mb_n_pluse(instance) += ec_pluse_cnt;
         }
         ec_pluse_cnt = 0;
     }
@@ -518,10 +512,9 @@ void Energy_Pluse_Add(void)
 
 
 
-void Energy_clr(struct instance_t* instance)
+void Energy_clr(void *instance)
 {
     uint32_t s_index;
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint16_t block_len = (legacy_energy_block_span());
 
     metering_energy_clear(metering_energy_ledger_from_instance(instance));
@@ -532,18 +525,17 @@ void Energy_clr(struct instance_t* instance)
     Save_EC2(instance, 0);
     Save_EC2(instance, 1);
     //清 EC1
-    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+    s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
     legacy_energy_persistent_offset());
-    nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_active_p(mbase_cb), block_len);
+    nd_set_offset(instance, s_index, (uint8_t*)nd_mb_active_p(instance), block_len);
 }
 
-void Energy_Set(struct instance_t* instance, uint32_t basedata, uint8_t dir)
+void Energy_Set(void *instance, uint32_t basedata, uint8_t dir)
 {
     uint32_t s_index;
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint16_t block_len = (legacy_energy_block_span());
 
-    if(nd_mbase_factor_mode(mbase_cb) == false)  return;
+    if(nd_mb_factor_mode(instance) == false)  return;
 
     metering_energy_set_total(metering_energy_ledger_from_instance(instance),
                               dir == 0 ? ND_ENERGY_FORWARD : ND_ENERGY_REVERSE,
@@ -555,7 +547,7 @@ void Energy_Set(struct instance_t* instance, uint32_t basedata, uint8_t dir)
     Save_EC2(instance, 0);
     Save_EC2(instance, 1);
     //清 EC1
-    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+    s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
     legacy_energy_persistent_offset());
-    nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_active_p(mbase_cb), block_len);
+    nd_set_offset(instance, s_index, (uint8_t*)nd_mb_active_p(instance), block_len);
 }

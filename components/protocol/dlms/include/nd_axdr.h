@@ -14,6 +14,9 @@ typedef struct {
     uint8_t f;
 } nd_obis_t;
 
+_Static_assert(sizeof(nd_obis_t) == 6,
+               "OBIS logical name is a six-byte wire field");
+
 typedef struct {
     int8_t scaler;
     uint8_t unit;

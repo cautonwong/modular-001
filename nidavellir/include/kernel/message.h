@@ -8,6 +8,7 @@
 
 struct instance_t;
 struct pipeline_t;
+struct fifo_t;
 
 enum recv_mesg_v2_e 
 {

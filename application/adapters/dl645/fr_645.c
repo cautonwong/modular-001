@@ -6,8 +6,9 @@
 #endif
 #include "application/adapters/dl645/fr_645_env.h"
 #include "application/ports/fifo.h"
+#include "application/ports/record_storage.h"
 #include "application/adapters/dl645/fr_645_context.h"
-#include "gs_record.h"
+#include "application/adapters/dl645/fr_645.h"
 #include "645id_table.h"
 #include "fr_645_report.h"
 #include <string.h>
@@ -36,17 +37,7 @@ struct pipeline_t;
 #define eleof(x) (sizeof(x) / sizeof((x)[0]))
 
 
-extern signed char ft_adj_set_meter(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
-extern signed char Broadcast_timeadj(struct instance_t* instance, uint8_t chl, uint8_t* p_rx);
-extern signed char MulPort_set(struct instance_t* instance, uint8_t chl, uint8_t* p_rx);
-extern signed char meteraddr_write(struct instance_t* instance, uint8_t* p_rx);
-extern signed char dl645_event_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
-extern signed char dl645_meter_clear(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
-extern signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len,struct context_645_t* ctx);
-extern signed char Comm_Write(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len, struct context_645_t* ctx);
-extern int8_t safe_Authen03_645(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
-extern int8_t dlt645_image_transfer(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
-extern int8_t dlt645_image_read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);
+
 
 static uint8_t uint32_to_buf_lsb(uint32_t data, uint8_t *buf)
 {
@@ -94,7 +85,7 @@ static void fr645_fifo_update_rd(fr_645_fifo_t *fifo, uint16_t len,
     }
     else
     {
-        rd = (uint16_t)(fifo->buf_size - len - rd);
+        rd = (uint16_t)(fifo->buf_size - (len - rd));
     }
     fifo->rd = rd;
 }
@@ -110,53 +101,6 @@ static void fr645_fifo_update_rd(fr_645_fifo_t *fifo, uint16_t len,
 
 int fr_decode_645_11(struct instance_t*, struct pipeline_t*, nd_dl645_msg_t*)
 {
-#if 0
-    struct context_645_t* ctx = (struct context_645_t*)nd_fr645_pipeline_ctx(pipeline);
-    struct fifo_t* fifo = (struct fifo_t*)nd_fr645_pipeline_in_queue(pipeline);
-    int r = 0;
-    mesg->from = nd_fr645_pipeline_id(pipeline);
-    mesg->to = sta_rx_from_msta;
-    mesg->ctrl = 0x91;
-    mesg->id = 0x00;//��ʱû��
-    mesg->len = 0;//������ĳ���
-    //memcpy(instance->cache, mesg, sizeof(nd_dl645_msg_t));
-    uint8_t len = ctx->min_len - 12;//�յ���������ĳ���
-    //uint8_t* p = instance->cache + sizeof(nd_dl645_msg_t);//���������ʼ
-    //fifoBuf_getData(fifo, p + mesg->len, 4);
-    uint32_t id = buf_to_uint32_lsb(p + mesg->len);
-    mesg->len += 4;
-    uint8_t byte;
-
-    if (len == 0x04)
-    {
-        r = __read(id, p + mesg->len, 4);//����ID  todo
-        if (r < 0)
-        {
-            r = 1;
-            mesg->ctrl = 0xb1;
-            p[mesg->len++] = -r;//todo ������ӳ��
-        }
-        else
-        {
-            mesg->len += r;
-        }
-    }
-    else if (len == 0x09)//��ȡλͼ
-    {
-        if (id == 0x07fb0303)
-        {
-            fifoBuf_getData(fifo, p + mesg->len, 5);
-            //SA = p[mesg->len];
-            uint16_t n = (p[mesg->len + 1] | (p[mesg->len + 2] << 8));
-            uint16_t m = (p[mesg->len + 3] | (p[mesg->len + 4] << 8));
-            //todo �ж���Ϸ���
-            r = (m + 7) / 8 - n / 8;//Ҫ��ȡ���ܰ���
-            mesg->len += 5;
-            memcpy(&p[mesg->len], instance->upgrade_info.bits + n / 8, r);
-            mesg->len += r;
-        }
-    }
-#endif
     return 1;
 }
 
@@ -176,284 +120,19 @@ int fr_encode_645_11(struct instance_t* instance, struct pipeline_t* pipeline, n
 }
 int fr_decode_645_08(struct instance_t*, struct pipeline_t*, nd_dl645_msg_t*)
 {
-#if 0
-    struct context_645_t* ctx = (struct context_645_t*)nd_fr645_pipeline_ctx(pipeline);
-    struct fifo_t* fifo = (struct fifo_t*)(struct fifo_t*)nd_fr645_pipeline_in_queue(pipeline);
-    uint8_t len = ctx->min_len - 12;
-    uint8_t* p = instance->cache + sizeof(nd_dl645_msg_t);
-    fifoBuf_getData(fifo, p, len);
-    fifoBuf_getByte(fifo);
-    fifoBuf_getByte(fifo);
-
-    if (nd_fr645_pipeline_id(pipeline) == 10)
-    {
-        struct tm t;
-        array_0_to_time(&t, p, len);
-
-        if (tm_diff(&instance->meter_rtc, &t) <= 5 * 60)
-        {
-            array_0_to_time(&instance->meter_rtc, p, len);
-        }
-    }
-    else
-    {
-        mesg->ctrl = 0x08;
-        mesg->id = 0x00000001;
-        mesg->to = FR_645_PID_MSTA;
-        mesg->len = len + 4;
-        mesg->payload = p;
-        if ((ctx != NULL) && (ctx->forward != NULL)) { ctx->forward(instance, pipeline, mesg); }
-    }
-#endif
     return 0;
 }
 
 int fr_encode_645_86(struct instance_t*, struct pipeline_t*, nd_dl645_msg_t*)
 {
-#if 0
-    struct context_645_t* ctx = (struct context_645_t*)nd_fr645_pipeline_ctx(pipeline);
-    struct fifo_t* fifo = (struct fifo_t*)nd_fr645_pipeline_in_queue(pipeline);
-    memcpy(instance->cache, mesg, sizeof(nd_dl645_msg_t));
-    uint8_t* p = instance->cache + sizeof(nd_dl645_msg_t);//���������ʼ
-    uint32_to_buf_lsb(mesg->id, p);
-    if (mesg->len > 4)
-    {
-        fifoBuf_getData((struct fifo_t*)nd_fr645_pipeline_in_queue(pipeline), p + 4, mesg->len - 4);
-    }
-    else
-    {
-        int r = __read(mesg->id, p + 4, 4);
-        mesg->len += r;
-    }
-#endif
     return 1;
 }
 
 int fr_decode_645_86(struct instance_t*, struct pipeline_t*, nd_dl645_msg_t*)
 {
-#if 0
-    struct context_645_t* ctx = (struct context_645_t*)nd_fr645_pipeline_ctx(pipeline);
-    struct fifo_t* fifo = (struct fifo_t*)(struct fifo_t*)nd_fr645_pipeline_in_queue(pipeline);
-    uint32_t id;
-    mesg->from = nd_fr645_pipeline_id(pipeline);
-    mesg->ctrl = 0x06;
-    mesg->len = 0;//������ĳ���
-    memcpy(instance->cache, mesg, sizeof(nd_dl645_msg_t));
-
-    uint8_t len = ctx->min_len - 12;
-    uint8_t* p = instance->cache + sizeof(nd_dl645_msg_t);
-    fifoBuf_getData(fifo, p, len);
-    id = buf_to_uint32_lsb(p);
-    mesg->len = 4;
-    mesg->id = id;
-
-    //__write(id, p + mesg->len, len - 4);
-    p[mesg->len++] = 0x00;
-#endif
     return 1;
 }
 
-#if 0
-int fr_encode_645_08(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl645_msg_t* mesg)
-{
-    memcpy(instance->cache, mesg, sizeof(nd_dl645_msg_t));
-    uint8_t* p = instance->cache + sizeof(nd_dl645_msg_t);
-    mesg->len -= 4;//�㲥��ʱ  û�����ֽ�ID
-    fifoBuf_getData((struct fifo_t*)nd_fr645_pipeline_in_queue(pipeline), p, mesg->len);
-    return 1;
-}
-
-int fr_encode_645_14(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl645_msg_t* mesg)
-{
-    memcpy(instance->cache, mesg, sizeof(nd_dl645_msg_t));
-    uint8_t* p = instance->cache + sizeof(nd_dl645_msg_t);
-    uint32_to_buf_lsb(mesg->id, p);
-    fifoBuf_getData((struct fifo_t*)nd_fr645_pipeline_in_queue(pipeline), p + 4, mesg->len - 4);
-    return 1;
-}
-
-int fr_decode_645_14(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl645_msg_t* mesg)
-{
-    struct context_645_t* ctx = (struct context_645_t*)nd_fr645_pipeline_ctx(pipeline);
-    struct fifo_t* fifo = (struct fifo_t*)nd_fr645_pipeline_in_queue(pipeline);
-    int r = 0;
-    mesg->from = nd_fr645_pipeline_id(pipeline);
-    mesg->to = sta_rx_from_msta;
-    mesg->ctrl = 0x91;
-    mesg->id = 0x00;
-    mesg->len = 0;
-    memcpy(instance->cache, mesg, sizeof(nd_dl645_msg_t));
-    uint32_t id;
-    uint32_t seq;
-    uint8_t len = ctx->min_len - 12;//�յ���������ĳ���
-    uint8_t* p = instance->cache + sizeof(nd_dl645_msg_t);//���������ʼ
-    fifoBuf_getData(fifo, p, len);
-    id = buf_to_uint32_lsb(p);
-
-    if (id == 0x07fb0400)//�ļ�����
-    {
-        //4�ֽ�:FC0FC1FC2FC3 ����
-        if (((instance->upgrade_info.info >> 7) == 1) &&
-            instance->upgrade_info.pid != 0 &&
-            instance->upgrade_info.pid != nd_fr645_pipeline_id(pipeline))
-        {
-            return 0;//���ͨ����������
-        }
-
-        //4�ֽ�:DA
-        //4�ֽ�:PAP0P1P2  ����Ȩ�޼�������
-        //4�ֽ�:C0C1C2C3  �����ߴ���
-        //4�ֽ�:FC
-        seq = buf_to_uint32_lsb(p + 12);
-        if (seq > upgrade_setsize * 8)
-        {
-            return 0;
-        }
-
-        if (bit_isset(seq, instance->upgrade_info.bits))
-        {
-            //�ж��Ƿ�д����  �����漰������
-            //����д����  �Ͳ�д��
-            return 0;
-        }
-
-        //__write(id, p + 12, len - 12);//���δ�����ļ�����
-
-        bit_set(seq, instance->upgrade_info.bits);
-        instance->upgrade_info.info |= 1 << 7;//������
-        instance->upgrade_info.pid = nd_fr645_pipeline_id(pipeline);
-    }
-    else if (id == 0x07fb0201)//�·�֤��
-    {
-        //__write(id, p + 12, len - 12);
-    }
-    else if (id == 0x07fb0202)//�·��������򼤻�ʱ��
-    {
-        //__write(id, p + mesg->len, len - 4);
-    }
-    else
-    {
-        //__write(id, p + mesg->len, len - 4);
-    }
-
-    mesg->ctrl = 0x94;
-    p[mesg->len] = 0x00;
-    return 1;
-}
-
-int fr_645_decode_91_from_meter(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl645_msg_t* mesg)
-{
-    struct context_645_t* ctx = (struct context_645_t*)nd_fr645_pipeline_ctx(pipeline);
-    struct fifo_t* fifo = (struct fifo_t*)(struct fifo_t*)nd_fr645_pipeline_in_queue(pipeline);
-    uint32_t id;
-
-    uint8_t len = ctx->min_len - 12;//�յ���������ĳ���
-    uint8_t* p = instance->cache + sizeof(nd_dl645_msg_t);//���������ʼ
-    fifoBuf_getData(fifo, p, len);
-    id = buf_to_uint32_lsb(p);
-
-    fifoBuf_getByte(fifo); fifoBuf_getByte(fifo);
-
-    (void)id;
-    fr_645_parse_91_data(p, len, mesg, FR_645_PID_MSTA);
-    if (len == 5)
-    {
-        // return 1;//������ todo
-    }
-    //����ȫ���ض�����pl_mstaȥ����
-    //ҪŪ���ض������  todo
-    if ((ctx != NULL) && (ctx->forward != NULL)) { ctx->forward(instance, pipeline, mesg); }
-    return 0;
-}
-
-int fr_encode_645_13(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl645_msg_t* mesg)
-{
-    memcpy(instance->cache, mesg, sizeof(nd_dl645_msg_t));
-    uint8_t* p = instance->cache + sizeof(nd_dl645_msg_t);
-    mesg->len = 0;
-    p[mesg->len] = 0;
-    return 1;
-}
-
-int fr_decode_645_13(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl645_msg_t* mesg)
-{
-    struct context_645_t* ctx = (struct context_645_t*)nd_fr645_pipeline_ctx(pipeline);
-    struct fifo_t* fifo = (struct fifo_t*)nd_fr645_pipeline_in_queue(pipeline);
-    int r = 0;
-    mesg->from = nd_fr645_pipeline_id(pipeline);
-    mesg->to = msta_rx_from_meter;
-    mesg->ctrl = 0x93;
-    mesg->id = 0x04000401;
-    mesg->len = 0;//
-    memcpy(instance->cache, mesg, sizeof(nd_dl645_msg_t));
-    uint8_t len = ctx->min_len - 12;//�յ���������ĳ���
-    n_assert(len == 0);
-    uint8_t* p = instance->cache + sizeof(nd_dl645_msg_t);
-
-    r = __read(mesg->id, p, 6);
-    mesg->len += r;
-    return 1;
-}
-
-int fr_msta_decode_645_13(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl645_msg_t* mesg)
-{
-    struct context_645_t* ctx = (struct context_645_t*)nd_fr645_pipeline_ctx(pipeline);
-    struct fifo_t* fifo = (struct fifo_t*)nd_fr645_pipeline_in_queue(pipeline);
-    int r = 0;
-    mesg->from = nd_fr645_pipeline_id(pipeline);
-    mesg->to = msta_tx_to_sta;
-    mesg->ctrl = 0x93;
-    mesg->id = 0x04000401;
-    mesg->len = 0;//
-    memcpy(instance->cache, mesg, sizeof(nd_dl645_msg_t));
-    uint8_t len = ctx->min_len - 12;//�յ���������ĳ���
-    n_assert(len == 0);
-    uint8_t* p = instance->cache + sizeof(nd_dl645_msg_t);
-    extern struct rtc_context_t msta_context;
-    memcpy(p, &msta_context.addr, 6); //msta_context.addr  ���ϵ�ʱ�����Ļ�����ַ
-    r = 6;
-    mesg->len += r;
-    return 1;
-}
-
-int fr_645_decode_93_from_meter(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl645_msg_t* mesg)
-{
-    struct context_645_t* ctx = (struct context_645_t*)nd_fr645_pipeline_ctx(pipeline);
-    struct fifo_t* fifo = (struct fifo_t*)(struct fifo_t*)nd_fr645_pipeline_in_queue(pipeline);
-
-    uint8_t len = ctx->min_len - 12;//�յ���������ĳ���
-    uint8_t* p = instance->cache + sizeof(nd_dl645_msg_t);//���������ʼ
-    fifoBuf_getData(fifo, p, len);
-    fifoBuf_getByte(fifo); fifoBuf_getByte(fifo);
-    mesg->to = FR_645_PID_MSTA;
-    mesg->ctrl = 0x93;
-    mesg->id = 0x04000401;
-    mesg->len = len + 4;
-    mesg->payload = p;
-    //����ȫ���ض�����pl_mstaȥ����
-    //ҪŪ���ض������  todo
-    if ((ctx != NULL) && (ctx->forward != NULL)) { ctx->forward(instance, pipeline, mesg); }
-    return 0;
-}
-
-int fr_645_decode_91(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl645_msg_t* mesg)
-{
-    struct context_645_t* ctx = (struct context_645_t*)nd_fr645_pipeline_ctx(pipeline);
-    struct fifo_t* fifo = (struct fifo_t*)(struct fifo_t*)nd_fr645_pipeline_in_queue(pipeline);
-    uint32_t id;
-
-    uint8_t len = ctx->min_len - 12;//�յ���������ĳ���
-    uint8_t* p = instance->cache + sizeof(nd_dl645_msg_t);//���������ʼ
-    fifoBuf_getData(fifo, p, len);
-    id = buf_to_uint32_lsb(p);
-    mesg->len = 4;
-
-    fifoBuf_getByte(fifo); fifoBuf_getByte(fifo);
-    //__write(id, p + mesg->len, len - 4);
-
-    return 0;
-}
-#endif
 
 
 
@@ -478,7 +157,7 @@ int fr_rx_645_end(struct instance_t* instance, struct pipeline_t* pipeline, nd_d
     return 0;
 }
 
-int fr_pack_645_check(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl645_msg_t* mesg)
+static int fr_pack_645_check(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl645_msg_t* mesg)
 {
     (void)pipeline;
     (void)mesg;
@@ -487,7 +166,7 @@ int fr_pack_645_check(struct instance_t* instance, struct pipeline_t* pipeline, 
 
 
 
-unsigned char Password_Check(struct instance_t* instance, unsigned char* Pass )
+static unsigned char Password_Check(struct instance_t* instance, unsigned char* Pass )
 {
     uint32_t s_index = 0;
     uint8_t Buf[4]={0,};
@@ -583,7 +262,7 @@ unsigned char Cmp_Password(struct instance_t* instance, unsigned char* Addr )
 	else
 		return 1;
 }
-int __fr_segment_tx_645_handle(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl645_msg_t* mesg)
+static int __fr_segment_tx_645_handle(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl645_msg_t* mesg)
 {
     struct context_645_t* ctx = (struct context_645_t*)nd_fr645_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -798,7 +477,7 @@ uint32_t ID=0;
                 ERRBYTE = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len, ctx);
                 if(ERRBYTE == 0)
                 {
-                    trigger_MeterWr645_record(instance,   ID, 0);
+                    nd_record_storage_trigger_645_record(ID, 0);
                     tx_len = 0;
                 }
                 else
@@ -815,7 +494,7 @@ uint32_t ID=0;
                     ERRBYTE = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len, ctx);
                     if(ERRBYTE == 0)
                     {
-                        trigger_MeterWr645_record(instance,   ID, 0);
+                        nd_record_storage_trigger_645_record(ID, 0);
                         tx_len = 0;
                     }
                     else

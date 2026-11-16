@@ -1,10 +1,18 @@
 #include "nidavellir.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <time.h>
+#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
+#include "targets/stategrid_meter/app/meter_flags.h"
+#include "port.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
-#include "gs_record.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
 #include "domain/events/duration.h"
 #include "domain/events/rtc.h"
-#include "domain/events/legacy/events_applications.h"
-#include "domain/freeze/legacy/freeze_applications.h"
+#include "targets/stategrid_meter/app/events/events_applications.h"
+#include "targets/stategrid_meter/app/freeze/freeze_applications.h"
 #include "infra/kernel/resource_blocks.h"
 #include "kernel/legacy_control_block.h"
 
@@ -50,14 +58,14 @@ void tm_to_mcu_rtc_bcd(struct tm t, uint8_t *des)
 }
 
 //保存时钟电池工作时间
-int save_RtcBat_work_time(struct instance_t* instance)
+int save_RtcBat_work_time(void *instance)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t addr = 0, batTime = 0;
     int ret;
 
     //保存电池工作时间
-    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Bat_UseTime);
+    addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Bat_UseTime);
     ret = nd_get_index(instance, addr, (uint8_t *)&batTime, 4);
     batTime += ctrl_block->battery_used_time_cnt;
     ret = nd_set_index(instance, addr, (uint8_t *)&batTime, 4);
@@ -67,7 +75,7 @@ int save_RtcBat_work_time(struct instance_t* instance)
 
 
 //上电时钟检查
-int rtc_check_poweron(struct instance_t* instance)
+int rtc_check_poweron(void *instance)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t year = 0, mark = 0, buffer[8] = {0}, temp[8] = {0}, settimebuf[8] = {0};
@@ -84,10 +92,10 @@ int rtc_check_poweron(struct instance_t* instance)
         set_default_rtc(&temp_tm);//优化 可取上一次分钟冻结的时间 待调整
     }
 
-    t_now = rtc_mktime(&instance->time);
+    t_now = rtc_mktime(nd_fr698_time(instance));
     t_pd  = rtc_mktime(&temp_tm);
 
-    if (nd_rtc_poweron_fault((uint8_t)(rtc_tm_valid(&instance->time) ? 1 : 0),
+    if (nd_rtc_poweron_fault((uint8_t)(rtc_tm_valid(nd_fr698_time(instance)) ? 1 : 0),
                              t_now, t_pd))
     {
         mark = 0x5A;
@@ -100,15 +108,15 @@ int rtc_check_poweron(struct instance_t* instance)
         record_rollback_after_set_time(instance, 0x5A); // 检查可能有未完成的覆盖
     
         //保存校时前时间 
-        rtc_format_change_from_tm(&instance->time,temp); 
+        rtc_format_change_from_tm(nd_fr698_time(instance),temp); 
         mem_swap_cpy( &buffer[0], &temp[0], 7);
-        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
+        addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
         nd_set_index(instance, addr, buffer, 7);
         
         //保存校时后时间 
         rtc_format_change_from_tm(&temp_tm,temp); 
         mem_swap_cpy( &buffer[0], &temp[0], 7);
-        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
+        addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
         nd_set_index(instance, addr, buffer, 7);
 
         record_rollback_after_set_time(instance, 0); // 翻转覆盖
@@ -130,25 +138,25 @@ int rtc_check_poweron(struct instance_t* instance)
 }
 
 //写当前时间到停电时间
-void write_powerdown_time(struct instance_t* instance)
+void write_powerdown_time(void *instance)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t addr;
     
-    ndv_memcopy((uint8_t *)(&ctrl_block->powerdown_tm),  (uint8_t *)&instance->time,  sizeof(ctrl_block->powerdown_tm));
+    ndv_memcopy((uint8_t *)(&ctrl_block->powerdown_tm),  (uint8_t *)nd_fr698_time(instance),  sizeof(ctrl_block->powerdown_tm));
 
-    addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+    addr = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
         nd_mbase_offset_powerdown_tm()) -  nd_mbase_offset_persistent_section_start();
     nd_set_offset(instance, addr, (uint8_t*)&ctrl_block->powerdown_tm, sizeof(ctrl_block->powerdown_tm));
 }
 
 
 //上电运行 期间 定时保存停电时间  每日12点1分35秒 保存停电时间  --每秒调用，
-void updata_powerdown_time(struct instance_t* instance)
+void updata_powerdown_time(void *instance)
 {
     nd_datetime_t now;
 
-    tm_to_datetime(&instance->time, &now);
+    tm_to_datetime(nd_fr698_time(instance), &now);
     if (nd_rtc_snapshot_due(&now))
     {
         write_powerdown_time(instance);
@@ -158,7 +166,7 @@ void updata_powerdown_time(struct instance_t* instance)
 
 // 上电运行期间 每秒调用 
 // 事件 判断:  返回1:记录发生                0:不记录        -1:记录结束
-int RTCErr_event_judge(struct instance_t* instance, struct pipeline_t* task, struct message_t* mesg)
+int RTCErr_event_judge(void *instance, void *task, void *mesg)
 {
     struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint16_t RecordId = RTCErrS;

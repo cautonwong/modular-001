@@ -1,41 +1,9 @@
 #include <stdint.h>
 
-extern uint32_t _estack;
-extern uint32_t _sidata;
-extern uint32_t _sdata;
-extern uint32_t _edata;
-extern uint32_t _sbss;
-extern uint32_t _ebss;
-extern int main(void);
-extern void SysTick_Handler(void);
-extern void SVC_Handler(void);
-extern void PendSV_Handler(void);
-extern void PMU_IRQHandler(void);
-extern void RTC_IRQHandler(void);
-extern void U32K0_IRQHandler(void);
-extern void U32K1_IRQHandler(void);
-extern void I2C_IRQHandler(void);
-extern void SPI1_IRQHandler(void);
-extern void UART0_IRQHandler(void);
-extern void UART1_IRQHandler(void);
-extern void UART2_IRQHandler(void);
-extern void UART3_IRQHandler(void);
-extern void UART4_IRQHandler(void);
-extern void UART5_IRQHandler(void);
-extern void ISO78160_IRQHandler(void);
-extern void ISO78161_IRQHandler(void);
-extern void TMR0_IRQHandler(void);
-extern void TMR1_IRQHandler(void);
-extern void TMR2_IRQHandler(void);
-extern void TMR3_IRQHandler(void);
-extern void PWM0_IRQHandler(void);
-extern void PWM1_IRQHandler(void);
-extern void PWM2_IRQHandler(void);
-extern void PWM3_IRQHandler(void);
-extern void DMA_IRQHandler(void);
-extern void FLASH_IRQHandler(void);
-extern void ANA_IRQHandler(void);
-extern void SPI2_IRQHandler(void);
+#include "linker_symbols.h"
+#include "target_isr.h"
+
+int main(void);
 
 void Reset_Handler(void)
 {

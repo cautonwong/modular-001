@@ -1,9 +1,10 @@
 #include <stdbool.h>
 #include "application/ports/fifo.h"
+#include "application/ports/record_storage.h"
 #include "application/adapters/dl698/fr_698_env.h"
 struct instance_t;
 #include "fr_698.h"
-#include "domain/events/legacy/gs_record.h"
+#include "fr_698_internal.h"
 #include "application/adapters/dl698/fr_698.h"
 #include "application/adapters/dl698/fr_698_esam.h"
 #include "meter_base_view.h"
@@ -297,7 +298,7 @@ static int __password_process(struct instance_t* instance, struct pipeline_t* pi
         nd_mb_connect_timeout_cnt(instance)[channel][cilent_index] = 0;
 
         
-        MeterWr_obj_list_clear(instance, pipeline, NULL);
+        nd_record_storage_clear_program_list(pipeline, NULL);
         return DL698_SEC_SUCCESS;        
     }
     else
@@ -446,7 +447,7 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
 //        nd_mb_clientaddr(instance) = ctx->CA;
 
         
-        MeterWr_obj_list_clear(instance, pipeline, NULL);
+        nd_record_storage_clear_program_list(pipeline, NULL);
         return DAR_SUCCESS;
     }
     else
@@ -528,16 +529,16 @@ static void __consistency_block(uint8_t *data,  uint8_t* cfg_data, const uint8_t
     }
 }
 
-static void ___get_consult_info(struct connect_request_t *connect, struct connect_request_t *connect_cache, const struct connect_request_t *default_connect)
+static void ___get_consult_info(struct connect_request_t *connect, struct connect_request_t *connect_cache, const struct connect_request_t *factory_connect)
 {
-    __consistency_block(connect->protocal_conformance, connect_cache->protocal_conformance, default_connect->protocal_conformance, 8);
-    __consistency_block(connect->function_conformance, connect_cache->function_conformance, default_connect->function_conformance, 16);
+    __consistency_block(connect->protocal_conformance, connect_cache->protocal_conformance, factory_connect->protocal_conformance, 8);
+    __consistency_block(connect->function_conformance, connect_cache->function_conformance, factory_connect->function_conformance, 16);
 
-    connect->send_frm_size      = __get_connect_info(connect_cache->recv_frm_size, default_connect->send_frm_size);
-    connect->recv_frm_size      = __get_connect_info(connect_cache->send_frm_size, default_connect->recv_frm_size);
-    connect->client_win_size    = __get_connect_info(connect_cache->client_win_size, default_connect->client_win_size);
-    connect->client_apdu_size   = __get_connect_info(connect_cache->client_apdu_size, default_connect->client_apdu_size);
-    connect->connect_time       = __get_connect_info(connect_cache->connect_time, default_connect->connect_time);
+    connect->send_frm_size      = __get_connect_info(connect_cache->recv_frm_size, factory_connect->send_frm_size);
+    connect->recv_frm_size      = __get_connect_info(connect_cache->send_frm_size, factory_connect->recv_frm_size);
+    connect->client_win_size    = __get_connect_info(connect_cache->client_win_size, factory_connect->client_win_size);
+    connect->client_apdu_size   = __get_connect_info(connect_cache->client_apdu_size, factory_connect->client_apdu_size);
+    connect->connect_time       = __get_connect_info(connect_cache->connect_time, factory_connect->connect_time);
 }
 
 
@@ -565,7 +566,7 @@ int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipelin
     
     if ((nd_mb_connect_status(instance)[ctx->channel][0] == false)&& (nd_mb_connect_status(instance)[ctx->channel][1] == false))
     {
-        MeterWr_obj_list_clear(instance, pipeline, NULL);
+        nd_record_storage_clear_program_list(pipeline, NULL);
     }
     
     //复位ESAM
@@ -738,7 +739,7 @@ int fr_handle_disconnect2(struct instance_t* instance,  struct pipeline_t* pipel
     
     if ((nd_mb_connect_status(instance)[channel][0] == false)&& (nd_mb_connect_status(instance)[channel][1] == false))
     {
-        MeterWr_obj_list_clear(instance, pipeline, NULL);
+        nd_record_storage_clear_program_list(pipeline, NULL);
     }
     
     //复位ESAM

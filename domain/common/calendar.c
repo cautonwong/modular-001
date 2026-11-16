@@ -51,6 +51,9 @@ int nd_calendar_time_valid(const nd_datetime_t *datetime)
 
 uint32_t nd_calendar_total_day(uint8_t day, uint8_t month, uint16_t year)
 {
+    if (month < 1 || month > 12) {
+        return 0;
+    }
     uint16_t short_year = year % 100;
     uint32_t result = (uint32_t)day + month_start[month] + (uint32_t)short_year * 365
                       + (short_year >> 2) + 1;
@@ -84,8 +87,16 @@ void nd_calendar_from_total_day(uint32_t total_day, nd_datetime_t *out)
     out->year = year;
 }
 
-uint32_t nd_calendar_total_minutes(const nd_datetime_t *datetime)
+void nd_calendar_from_elapsed(uint32_t base_day, uint32_t seconds,
+                              nd_datetime_t *out)
 {
+    nd_calendar_from_total_day(base_day + seconds / 86400u, out);
+    out->hour = (uint8_t)((seconds / 3600u) % 24u);
+    out->minute = (uint8_t)((seconds / 60u) % 60u);
+    out->second = (uint8_t)(seconds % 60u);
+}
+
+uint32_t nd_calendar_total_minutes(const nd_datetime_t *datetime){
     uint32_t days = nd_calendar_total_day(datetime->day, datetime->month, datetime->year);
     return datetime->minute + (uint32_t)datetime->hour * 60 + days * 60 * 24;
 }
@@ -96,8 +107,12 @@ int nd_calendar_add_seconds(const nd_datetime_t *datetime, int32_t seconds,
     if (datetime == NULL || out == NULL) {
         return -1;
     }
-    int64_t total = (int64_t)nd_calendar_total_day(datetime->day, datetime->month,
-                                                   datetime->year) * 86400
+    uint32_t days = nd_calendar_total_day(datetime->day, datetime->month,
+                                          datetime->year);
+    if (days == 0) {
+        return -1;
+    }
+    int64_t total = (int64_t)days * 86400
         + (int64_t)datetime->hour * 3600 + (int64_t)datetime->minute * 60
         + datetime->second + seconds;
     if (total < 86400) {

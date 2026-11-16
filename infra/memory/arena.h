@@ -11,7 +11,7 @@
  * allocator port. dealloc only reclaims when the freed block is the most
  * recent allocation, which matches the lifetime of a composition root.
  */
-#define ND_ARENA_ALIGNMENT 8
+#define ND_ARENA_ALIGNMENT ND_ALLOC_ALIGNMENT
 
 typedef struct {
     nd_allocator_t port;

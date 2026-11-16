@@ -72,17 +72,20 @@ struct esam_data_t
 
 #pragma pack(pop)
 
-int fr_698_handle_esam(struct instance_t* instance, struct esam_698_input_t *p_input, struct esam_698_output_t *p_output);
+int fr_698_handle_esam(void *instance, struct esam_698_input_t *p_input, struct esam_698_output_t *p_output);
 
-int read_esam_data(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_t len);
-int write_esam(struct instance_t* instance, uint32_t addr, uint8_t *buf, uint16_t len);
-int read_esam_no(struct instance_t* instance, uint8_t *esam_info);
-int read_esam_info(struct instance_t* instance, uint8_t *esam_info, uint8_t index);
-int esam_consult_key(struct instance_t* instance, uint8_t cmd, uint8_t *p);
-uint16_t software_esam_check(struct instance_t* instance, uint8_t *key, uint8_t *rn, uint8_t *data, uint8_t p2, uint16_t datalen, uint8_t *outbuf);
-int esam_key_updata(struct instance_t* instance, uint8_t *buf, uint16_t len);
-void esam_698_init(struct instance_t* instance, uint8_t power_mode);
-uint8_t get_key_status(struct instance_t* instance);
+int read_esam_data(void *instance, uint32_t addr, uint8_t *buf, uint16_t len);
+int write_esam(void *instance, uint32_t addr, uint8_t *buf, uint16_t len);
+int read_esam_no(void *instance, uint8_t *esam_info);
+int read_esam_info(void *instance, uint8_t *esam_info, uint8_t index);
+int esam_consult_key(void *instance, uint8_t cmd, uint8_t *p);
+uint16_t software_esam_check(void *instance, uint8_t *key, uint8_t *rn, uint8_t *data, uint8_t p2, uint16_t datalen, uint8_t *outbuf);
+int esam_key_updata(void *instance, uint8_t *buf, uint16_t len);
+void esam_698_init(void *instance, uint8_t power_mode);
+uint8_t get_key_status(void *instance);
 uint32_t fr_698_current_esam_timeout_get(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index);
 int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cmd, uint32_t oad);
+struct esam_698_input_t;
+struct esam_698_output_t;
+int check_upreport_esam_rn_mac(void *instance, struct esam_698_input_t *p_input, struct esam_698_output_t *p_output);
 #endif //__FR_698_ESAM_H__

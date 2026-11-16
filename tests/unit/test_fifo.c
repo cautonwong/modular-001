@@ -79,6 +79,22 @@ static void test_clear_resets_the_ring(void)
     TEST_ASSERT_EQUAL_UINT16(7, fifoBuf_getFree(&fifo));
 }
 
+static void test_rewind_wraps_backwards(void)
+{
+    fifo.rd = 2;
+
+    TEST_ASSERT_EQUAL_UINT16(5, fifoBuf_update_rd(&fifo, 5, 0));
+    TEST_ASSERT_EQUAL_UINT16(5, fifo.rd);
+}
+
+static void test_apdu_cache_free_handles_wrap(void)
+{
+    fifo.rd = 6;
+    fifo.wr = 2;
+
+    TEST_ASSERT_EQUAL_UINT16(3, apdu_cache_getFree(&fifo));
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -87,5 +103,7 @@ int main(void)
     RUN_TEST(test_wraparound_preserves_order);
     RUN_TEST(test_u16_and_u32_roundtrip);
     RUN_TEST(test_clear_resets_the_ring);
+    RUN_TEST(test_rewind_wraps_backwards);
+    RUN_TEST(test_apdu_cache_free_handles_wrap);
     return UNITY_END();
 }

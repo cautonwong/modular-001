@@ -22,3 +22,11 @@ void nd_platform_event_output_set(bool enable)
         bound->event_output_set(bound->ctx, enable);
     }
 }
+
+bool nd_platform_device_error(void)
+{
+    if ((bound != NULL) && (bound->device_error != NULL)) {
+        return bound->device_error(bound->ctx);
+    }
+    return false;
+}

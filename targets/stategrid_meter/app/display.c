@@ -1,15 +1,21 @@
 #include "target.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <time.h>
+#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
+#include "targets/stategrid_meter/app/meter_flags.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "string.h"
-#include "nidavellir.h"
 #include "domain/display/backlight.h"
 #include "lib_conf.h"
 #include "cpu_surport.h"
-#include "application/apps/display_applications.h"
-#include "domain/tariff/legacy/tariff_applications.h"
+#include "targets/stategrid_meter/app/display_applications.h"
+#include "targets/stategrid_meter/app/tariff/tariff_applications.h"
+#include "fr_698.h"
 #include "infra/kernel/resource_blocks.h"
 #include "infra/soc/v85xxp/v8500/v85xxp_system.h"
-#include "kernel/legacy_control_block.h"
 
 #ifdef ND_FIRMWARE_SIM
 #include "sim/sim.h"
@@ -23,7 +29,6 @@ void nd_sim_lcd_snapshot(void)
 }
 #endif
 
-extern int read_record_data_form_698_protocol(struct instance_t* instance, uint8_t* buf, uint32_t Record_oad, uint32_t capture_oad, uint8_t last_no, uint16_t bufsize);
 
 /**********************************************************************/
 /*  液晶显示程序                                                       */
@@ -312,8 +317,8 @@ const unsigned char  SIGN_SHIJIAN[9] = { Sign_shi, Sign_jian2, Sign_time, Sign_d
 const unsigned char  SIGN_CHANGSHU[9] = { Sign_changshu, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null };
 const unsigned char  SIGN_JIESUANRI[9] = { Sign_Jiesuanri, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null, Sign_Null };
 
-struct instance_t* instance;
-struct pipeline_t* pipeline;
+void *instance;
+void *pipeline;
 
 //显示表格定义
 const  DISPLAYTAB DisplayTab[] =
@@ -336,14 +341,6 @@ const  DISPLAYTAB DisplayTab[] =
     0xB005,		0x40030200,     0x01,   DispData_E2PROM + DispData_BCD +2,						(uintptr_t)SIGN_HUHAO,//客户编号高4位
     0xB006,		0x40030200,     0x02,   DispData_E2PROM + DispData_BCD +4,						(uintptr_t)SIGN_HUHAO,//客户编号低8位
     0xB007,		0x41090200,     0x00,   DispData_E2PROM + DispData_HEX +4,						(uintptr_t)SIGN_CHANGSHU,//电表有功常数  
-#if 0    
-    //正向电能量
-    //0xC0FF,     0xC000~0xC00C:总，费率1~12;   0xC000~0xC180:当前~上24月正向总电能
-    //反向电能量
-    //0xD0FF,     0xD000~0xD00C:总，费率1~12;   0xD000~0xD180:当前~上24月反向总电能  
-    //组合电能量
-    //0xE0FF,     0xE000~0xE00C:总，费率1~12;   0xE000~0xE180:当前~上24月组合总电能  
-#endif
 };
 
 #define 	DisplayTabNum		sizeof(DisplayTab)/sizeof(DISPLAYTAB)
@@ -585,13 +582,12 @@ void ClearLCD(void)
 }
 
 //送显示数据
-void Send_DisplayData(struct instance_t* instance, struct pipeline_t* pipeline)	
+void Send_DisplayData(void *instance, void *pipeline)	
 {
     unsigned long bf[4];
     uint8_t i;
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
-    if(nd_mbase_Page_ID(mbase_control_block) == 0xFFFF)
+    if(nd_mb_page_id(instance) == 0xFFFF)
     {
         for( i=0;i<MaxLcd;i++ )
         {
@@ -682,22 +678,21 @@ void Send_DisplayData(struct instance_t* instance, struct pipeline_t* pipeline)
 /*  函数名称：AllDisplayLCD                                            */
 /*  函数功能：液晶全屏显示                                             */
 /***********************************************************************/
-void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
+void AllDisplayLCD(void *instance, void *pipeline)
 {
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 	
     nd_backlight_set(1);
-	if((nd_mbase_lcd_poweron_all_dis_time(mbase_control_block) > 30) || (nd_mbase_lcd_poweron_all_dis_time(mbase_control_block) == 0))
-		nd_mbase_AutoInv(mbase_control_block) = 5;
+	if((nd_mb_lcd_poweron_all_dis_time(instance) > 30) || (nd_mb_lcd_poweron_all_dis_time(instance) == 0))
+		nd_mb_auto_inv(instance) = 5;
     else
-        nd_mbase_AutoInv(mbase_control_block) = nd_mbase_lcd_poweron_all_dis_time(mbase_control_block);
+        nd_mb_auto_inv(instance) = nd_mb_lcd_poweron_all_dis_time(instance);
    
-	nd_mbase_AutoPtr(mbase_control_block) = 0xFF;
-	nd_mbase_Page_ID(mbase_control_block) = 0xFFFF;
+	nd_mb_auto_ptr(instance) = 0xFF;
+	nd_mb_page_id(instance) = 0xFFFF;
     
-    nd_mbase_KeyPtr(mbase_control_block) = 0;
-    nd_mbase_KeyInv(mbase_control_block) = 0;
-    nd_mbase_Key(mbase_control_block) = 0;
+    nd_mb_key(instance) = 0;
+    nd_mb_key_inv(instance) = 0;
+    nd_mb_key_byte(instance) = 0;
     
     Send_DisplayData(instance, pipeline);
     
@@ -707,83 +702,82 @@ void AllDisplayLCD(struct instance_t* instance, struct pipeline_t* pipeline)
 /*  函数名称：Key_Display                                              */
 /*  函数功能：获取按键显的显示项ID                                     */
 /***********************************************************************/
-void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t ctr)
+void Key_Display(void *instance, void *pipeline, uint8_t ctr)
 {
     uint16_t pageid=0;
     uint32_t    s_index = 0;
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     if(ctr == MSG_PAGE_KEY_UP)    //按键
     {
         Flag.Run |= F_Disp;
-        if( instance->ac_power_statue == AC_POWER_ON )
+        if( *nd_fr698_power_state(instance) == AC_POWER_ON )
         {
-            nd_mbase_BackLightTmr(mbase_control_block) = nd_mbase_backlight_key_time(mbase_control_block);//按键时,背光点亮
+            nd_mb_backlight_tmr(instance) = nd_mb_backlight_key_time(instance);//按键时,背光点亮
             nd_backlight_set(1); // 这里打开背光,保证显示与背光相对同步，测试提出显示与背光没有同步
         }
         else
         {
             if(ANA_GetStatus(ANA_STATUS_COMP1) == 0)
             {
-                nd_mbase_Key(mbase_control_block) &= ~F_KeyAwake;
+                nd_mb_key_byte(instance) &= ~F_KeyAwake;
                 Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
                 return;
             }
             Flag.Disp &= ~F_DispStop;
-            if( ((nd_mbase_Key(mbase_control_block) & F_KeyAwake) == 0))// && (Flag.Disp & F_DispOff) )
+            if( ((nd_mb_key_byte(instance) & F_KeyAwake) == 0))// && (Flag.Disp & F_DispOff) )
             {
                 Flag.Disp &= ~F_DispPause;
-                nd_mbase_Key(mbase_control_block) |= F_KeyAwake;
+                nd_mb_key_byte(instance) |= F_KeyAwake;
                 Flag.Disp &= ~F_DispOff;
-                nd_mbase_AutoPtr(mbase_control_block) = 0xFF;
-                nd_mbase_AutoInv(mbase_control_block) = 0;
+                nd_mb_auto_ptr(instance) = 0xFF;
+                nd_mb_auto_inv(instance) = 0;
                 lcd_init(AC_POWER_ON);
                 return;
             }
         }
 
-        if( (nd_mbase_Key(mbase_control_block) & F_KeyDispay) == 0 )
+        if( (nd_mb_key_byte(instance) & F_KeyDispay) == 0 )
         {
-            nd_mbase_Key(mbase_control_block) |= F_KeyDispay;
-            nd_mbase_KeyPtr(mbase_control_block) = 0xFF;
+            nd_mb_key_byte(instance) |= F_KeyDispay;
+            nd_mb_key(instance) = 0xFF;
         }
 
-        if(nd_mbase_lcd_keydis_list_num(mbase_control_block) > 0)
+        if(nd_mb_lcd_keydis_list_num(instance) > 0)
         {
-            if( nd_mbase_KeyPtr(mbase_control_block) >= (nd_mbase_lcd_keydis_list_num(mbase_control_block)-1) )
-                nd_mbase_KeyPtr(mbase_control_block) = 0;
+            if( nd_mb_key(instance) >= (nd_mb_lcd_keydis_list_num(instance)-1) )
+                nd_mb_key(instance) = 0;
             else
-                nd_mbase_KeyPtr(mbase_control_block)++;
+                nd_mb_key(instance)++;
         }
         else
         {
-            nd_mbase_KeyPtr(mbase_control_block) = 0;
+            nd_mb_key(instance) = 0;
         }
         
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + nd_mbase_KeyPtr(mbase_control_block));
+        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + nd_mb_key(instance));
         nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
         if(pageid ==  0xFFFF)    pageid = 0xA001;
-        nd_mbase_Page_ID(mbase_control_block) = pageid;
+        nd_mb_page_id(instance) = pageid;
         
-        if( instance->ac_power_statue == AC_POWER_ON )
+        if( *nd_fr698_power_state(instance) == AC_POWER_ON )
         {
-            if( nd_mbase_lcd_keydis_keep_sec(mbase_control_block) == 0 )
-                nd_mbase_KeyInv(mbase_control_block) = 5;
+            if( nd_mb_lcd_keydis_keep_sec(instance) == 0 )
+                nd_mb_key_inv(instance) = 5;
             else
-                nd_mbase_KeyInv(mbase_control_block) = nd_mbase_lcd_keydis_keep_sec(mbase_control_block);
+                nd_mb_key_inv(instance) = nd_mb_lcd_keydis_keep_sec(instance);
         }
         else
-            nd_mbase_KeyInv(mbase_control_block) = nd_mbase_lcd_nopower_key_keep_sec(mbase_control_block) + 1;
+            nd_mb_key_inv(instance) = nd_mb_lcd_nopower_key_keep_sec(instance) + 1;
     }
     
-    if( (nd_mbase_Key(mbase_control_block) & F_KeyDispay) && (nd_mbase_KeyInv(mbase_control_block) == 0) )//退出键显
+    if( (nd_mb_key_byte(instance) & F_KeyDispay) && (nd_mb_key_inv(instance) == 0) )//退出键显
 	{
-		nd_mbase_Key(mbase_control_block) &= ~F_KeyDispay;
-		nd_mbase_AutoPtr(mbase_control_block) = 0xFF;
-		if( instance->ac_power_statue != AC_POWER_ON )//按键显示结束后,进入掉电暂显
+		nd_mb_key_byte(instance) &= ~F_KeyDispay;
+		nd_mb_auto_ptr(instance) = 0xFF;
+		if( *nd_fr698_power_state(instance) != AC_POWER_ON )//按键显示结束后,进入掉电暂显
 		{
 			Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
-            nd_mbase_Key(mbase_control_block) &= ~F_KeyAwake;
+            nd_mb_key_byte(instance) &= ~F_KeyAwake;
 		}
 	}
 }
@@ -792,45 +786,44 @@ void Key_Display(struct instance_t* instance, struct pipeline_t* pipeline, uint8
 /*  函数名称：Get_DisplayPage                                          */
 /*  函数功能：获取轮显的显示项ID                                       */
 /***********************************************************************/
-void Get_DisplayPage(struct instance_t* instance, struct pipeline_t* pipeline)
+void Get_DisplayPage(void *instance, void *pipeline)
 {
     uint16_t pageid;
     uint32_t s_index = 0;
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
       
-	if( (nd_mbase_Key(mbase_control_block) & F_KeyDispay) == 0 )//轮显
+	if( (nd_mb_key_byte(instance) & F_KeyDispay) == 0 )//轮显
 	{
-		if( nd_mbase_AutoInv(mbase_control_block) == 0 )
+		if( nd_mb_auto_inv(instance) == 0 )
 		{
-            if( (instance->ac_power_statue != AC_POWER_ON) && ((nd_mbase_AutoPtr(mbase_control_block) == (nd_mbase_lcd_autodis_list_num(mbase_control_block)-1))) )//自动循环显示一遍后，进入掉电暂显
+            if( (*nd_fr698_power_state(instance) != AC_POWER_ON) && ((nd_mb_auto_ptr(instance) == (nd_mb_lcd_autodis_list_num(instance)-1))) )//自动循环显示一遍后，进入掉电暂显
 			{
-                memset((uint8_t *)&nd_mbase_AutoPtr(mbase_control_block), 0x00, 10);
-                nd_mbase_Key(mbase_control_block) &= ~F_KeyAwake;
+                memset((uint8_t *)&nd_mb_auto_ptr(instance), 0x00, 10);
+                nd_mb_key_byte(instance) &= ~F_KeyAwake;
 				Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
 				return;
 			}
 			//获取轮显显示时间
-            nd_mbase_AutoInv(mbase_control_block) = nd_mbase_lcd_autodis_keep_sec(mbase_control_block);
-			if( (nd_mbase_AutoInv(mbase_control_block) < 0x05) || (nd_mbase_AutoInv(mbase_control_block) > 0x20) )
-				nd_mbase_AutoInv(mbase_control_block) = 5;
+            nd_mb_auto_inv(instance) = nd_mb_lcd_autodis_keep_sec(instance);
+			if( (nd_mb_auto_inv(instance) < 0x05) || (nd_mb_auto_inv(instance) > 0x20) )
+				nd_mb_auto_inv(instance) = 5;
             
 			//获取轮显显示屏数
-			if( nd_mbase_lcd_autodis_list_num(mbase_control_block) > 0 )
+			if( nd_mb_lcd_autodis_list_num(instance) > 0 )
             {            
-                if( nd_mbase_AutoPtr(mbase_control_block) >= (nd_mbase_lcd_autodis_list_num(mbase_control_block)-1) )
-                    nd_mbase_AutoPtr(mbase_control_block) = 0;
+                if( nd_mb_auto_ptr(instance) >= (nd_mb_lcd_autodis_list_num(instance)-1) )
+                    nd_mb_auto_ptr(instance) = 0;
                 else
-                    nd_mbase_AutoPtr(mbase_control_block)++;
+                    nd_mb_auto_ptr(instance)++;
             }
             else
             {
-                nd_mbase_AutoPtr(mbase_control_block) = 0;
+                nd_mb_auto_ptr(instance) = 0;
             }
             
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AutoDisplayList + nd_mbase_AutoPtr(mbase_control_block));
+            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AutoDisplayList + nd_mb_auto_ptr(instance));
             nd_get_index(instance, s_index, (uint8_t*)&pageid, 2);
             if(pageid ==  0xFFFF)    pageid = 0xA001;
-            nd_mbase_Page_ID(mbase_control_block) = pageid;
+            nd_mb_page_id(instance) = pageid;
 		}
 	}
 }
@@ -857,15 +850,14 @@ void DispNum( unsigned char* Addr, unsigned char Lenth )
 }
 
 //电能小数尾数及借位处理
-void display_energy_pro(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t *data, uint8_t id)
+void display_energy_pro(void *instance, void *pipeline, uint8_t *data, uint8_t id)
 {
     uint8_t EnergyDot,i,borrownum=0;
     long long energy_p=0,p_max=0;//正向，反向
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
-    nd_mbase_disp_borrow(mbase_control_block) = 0;
+    nd_mb_disp_borrow(instance) = 0;
     
-    EnergyDot = nd_mbase_energy_point(mbase_control_block);
+    EnergyDot = nd_mb_energy_point(instance);
     
     mem_swap_cpy((uint8_t*)&energy_p, data, 8);
 
@@ -890,9 +882,9 @@ void display_energy_pro(struct instance_t* instance, struct pipeline_t* pipeline
             break;
     }
     /*
-    if(nd_mbase_disp_borrow(mbase_control_block) != 0)
+    if(nd_mb_disp_borrow(instance) != 0)
     {
-        for(i=0; i<nd_mbase_disp_borrow(mbase_control_block); i++)
+        for(i=0; i<nd_mb_disp_borrow(instance); i++)
         {
             energy_p = energy_p / 10;
         }
@@ -929,9 +921,9 @@ void display_energy_pro(struct instance_t* instance, struct pipeline_t* pipeline
         }
     }
     
-    if(borrownum > nd_mbase_disp_borrow(mbase_control_block))
+    if(borrownum > nd_mb_disp_borrow(instance))
     {
-        nd_mbase_disp_borrow(mbase_control_block) = borrownum;
+        nd_mb_disp_borrow(instance) = borrownum;
     }
     
     mem_swap_cpy(data, (uint8_t*)&energy_p, 4);
@@ -945,7 +937,7 @@ void display_energy_pro(struct instance_t* instance, struct pipeline_t* pipeline
 /*            Info：数据信息                                           */
 /*  输出参数：0为ID存在，1为ID不存在                                   */
 /***********************************************************************/
-unsigned long GetDispAddrInfo( struct instance_t* instance, struct pipeline_t* pipeline, unsigned short ID, unsigned char* data, unsigned long Info, unsigned char* SignBuf )
+unsigned long GetDispAddrInfo( void *instance, void *pipeline, unsigned short ID, unsigned char* data, unsigned long Info, unsigned char* SignBuf )
 {
 	unsigned char D1,D2,D3,len=0;
     unsigned long oad,temp=0;
@@ -1038,60 +1030,59 @@ unsigned long GetDispAddrInfo( struct instance_t* instance, struct pipeline_t* p
 /*  函数名称：Display_Meter                                            */
 /*  函数功能：显示电表相关指示信息                                     */
 /***********************************************************************/
-void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
+void Display_Meter(void *instance, void *pipeline)
 {
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
-	if( nd_mbase_Page_ID(mbase_control_block) == 0xFFFF ) return;//当前全屏显，则返回
+	if( nd_mb_page_id(instance) == 0xFFFF ) return;//当前全屏显，则返回
 	
-    if( nd_mbase_key_state(mbase_control_block) == true )   //秘钥状态，小房子显示	
+    if( nd_mb_key_state(instance) == true )   //秘钥状态，小房子显示	
         Lcdcon[18] |= DS_Chr_Lab;  
-    if(( nd_mbase_mac_suspend_state(mbase_control_block) == true ) || (nd_mbase_password_err_cnt(mbase_control_block) >= 3))   //MAC锁
+    if(( nd_mb_mac_suspend_state(instance) == true ) || (nd_mb_password_err_cnt(instance) >= 3))   //MAC锁
         Lcdcon[17] |= DS_Chr_Lock;      
 	
-	if( instance->ac_power_statue == AC_POWER_ON )
+	if( *nd_fr698_power_state(instance) == AC_POWER_ON )
 	{
-		if( nd_mbase_infrared_auth_timeout(mbase_control_block) > 0 )//红外认证有效
+		if( nd_mb_infrared_auth_timeout(instance) > 0 )//红外认证有效
             Lcdcon[17] |= DS_Chr_KeyProgram;
 		//通讯指示
-		if( nd_mbase_commdisp_ir485(mbase_control_block) > 0 ) 
+		if( nd_mb_commdisp_ir485(instance) > 0 ) 
 		{
 			Lcdcon[18] |= DS_Chr_Comm;
 		}
 		
-		if( nd_mbase_commdisp_plc(mbase_control_block) > 0 ) 
+		if( nd_mb_commdisp_plc(instance) > 0 ) 
 		{
 			Lcdcon[19] |= DS_Chr_CommPLC;
 		}
 
-        if( nd_mbase_power_dir(mbase_control_block) == true )  //电流反向
+        if( nd_mb_power_dir(instance) == true )  //电流反向
         {
             Lcdcon[18] |= DS_Chr_Reverse;
-            if((nd_mbase_Page_ID(mbase_control_block) == 0xA006) || (nd_mbase_Page_ID(mbase_control_block) == 0xA00A) || (nd_mbase_Page_ID(mbase_control_block) == 0xA00B) 
-              || (nd_mbase_Page_ID(mbase_control_block) == 0xA012) || (nd_mbase_Page_ID(mbase_control_block) == 0xA013)) 
+            if((nd_mb_page_id(instance) == 0xA006) || (nd_mb_page_id(instance) == 0xA00A) || (nd_mb_page_id(instance) == 0xA00B) 
+              || (nd_mb_page_id(instance) == 0xA012) || (nd_mb_page_id(instance) == 0xA013)) 
             {
                 Lcdcon[12] |= DS_Chr_Xiang;
 				Lcdcon[16] |= DS_Chr_Fan;
             }
         }
-        if(nd_mbase_current_n(mbase_control_block) < 0)
+        if(nd_mb_current_n(instance) < 0)
         {
-            if(nd_mbase_Page_ID(mbase_control_block) == 0xA009)
+            if(nd_mb_page_id(instance) == 0xA009)
             {
                 Lcdcon[12] |= DS_Chr_Xiang;
 				Lcdcon[16] |= DS_Chr_Fan;
             }
         }
                 
-		if(nd_mbase_RtcBat_UnderV_state(mbase_control_block) == true)//电池欠压指示
+		if(nd_mb_rtcbat_under_v_state(instance) == true)//电池欠压指示
             Lcdcon[18] |= DS_Chr_Bat;
 		//密码验证闭锁指示
 		//Lcdcon[17] |= DS_Chr_Lock;
 		
-		if( nd_mbase_lcd_12_mean(mbase_control_block) == true )
+		if( nd_mb_lcd_12_mean(instance) == true )
 		{
 			//费率电价主、副表指示
-			if( nd_mbase_TouPriceTable(mbase_control_block) == true ) 
+			if( nd_mb_tou_price_table(instance) == true ) 
 			{
 				Lcdcon[15] |= DS_Chr_TouTable1;
 				Lcdcon[14] |= DS_Chr_TouTable2;
@@ -1106,7 +1097,7 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
               Lcdcon[15] |= DS_Chr_TouTable1;
 			//else 
               //Lcdcon[14] |= DS_Chr_TouTable2;
-            if( nd_mbase_Disp12(mbase_control_block) == 1)
+            if( nd_mb_disp12(instance) == 1)
             {
                 Lcdcon[15] |= DS_Chr_TouTable1;
                 Lcdcon[14] |= DS_Chr_TouTable2;
@@ -1115,41 +1106,41 @@ void Display_Meter(struct instance_t* instance, struct pipeline_t* pipeline)
 
 		//分时费率指示
         Lcdcon[14] |= DS_Chr_T;
-        if(nd_mbase_TOUNo(mbase_control_block) < 10)    Lcdcon[11] |= NumSeg[nd_mbase_TOUNo(mbase_control_block)];
+        if(nd_mb_tou_no(instance) < 10)    Lcdcon[11] |= NumSeg[nd_mb_tou_no(instance)];
         else
         {
             Lcdcon[13] |= DS_Chr_L18;
-            Lcdcon[11] |= NumSeg[nd_mbase_TOUNo(mbase_control_block)-10];
+            Lcdcon[11] |= NumSeg[nd_mb_tou_no(instance)-10];
         }
                     
 		//闪烁
 		if( (Flag.Disp & F_DispFlash) == 0 )
 		{
-			if( nd_mbase_sta(mbase_control_block) & F_RemoteAlarm )
+			if( nd_mb_sta(instance) & F_RemoteAlarm )
 				Lcdcon[12] |=  (DS_Chr_GouDian);
-			if((nd_mbase_alarmmin(mbase_control_block) > 0) || (nd_mbase_imaxmin(mbase_control_block) > 0))//跳闸延时过程中指示(闪烁"拉闸)
+			if((nd_mb_alarmmin(instance) > 0) || (nd_mb_imaxmin(instance) > 0))//跳闸延时过程中指示(闪烁"拉闸)
 				Lcdcon[13] |= DS_Chr_LaZha;
-            if(nd_mbase_factor_mode(mbase_control_block) == true)//工厂模式
+            if(nd_mb_factor_mode(instance) == true)//工厂模式
                 Lcdcon[17] |= DS_Chr_KeyProgram;
             Flag.Disp |= F_DispFlash;
 		}
 		else
 		{
-			if( nd_mbase_sta(mbase_control_block) & F_RemoteAlarm )
+			if( nd_mb_sta(instance) & F_RemoteAlarm )
 				Lcdcon[12] &= ~(DS_Chr_GouDian);
-			if((nd_mbase_alarmmin(mbase_control_block) > 0) || (nd_mbase_imaxmin(mbase_control_block) > 0))
+			if((nd_mb_alarmmin(instance) > 0) || (nd_mb_imaxmin(instance) > 0))
 				Lcdcon[13] &= ~DS_Chr_LaZha;
-            if(nd_mbase_factor_mode(mbase_control_block) == true)
+            if(nd_mb_factor_mode(instance) == true)
                 Lcdcon[17] &= ~DS_Chr_KeyProgram;
             Flag.Disp &= ~F_DispFlash;
 		}
 		//继电器状态指示
 //		if( (Flag.Relay & F_StateOff) && (Flag.Relay & F_RelayOff) 
 //		&& (((Credit_Block.Credit.Amount+MeterPara_Block.MeterPara.OverdraftCredit) <= 0) || ( (Credit_Block.Credit.Amount <= MeterPara_Block.MeterPara.RelayOnCredit)&&(Flag.MeterState & F_RelayOffed) ) || (Flag.RemoteCmd & F_RemoteRelayOff))) 
-		if(((nd_mbase_sta(mbase_control_block) & F_RemoteRelayOff) || (nd_mbase_sta(mbase_control_block) & F_RemoteGaoJing0) || (nd_mbase_sta(mbase_control_block) & F_RemoteGaoJing1))
-           && ((nd_mbase_sta(mbase_control_block) & F_RemoteRelayOn) != F_RemoteRelayOn))    //拉闸
+		if(((nd_mb_sta(instance) & F_RemoteRelayOff) || (nd_mb_sta(instance) & F_RemoteGaoJing0) || (nd_mb_sta(instance) & F_RemoteGaoJing1))
+           && ((nd_mb_sta(instance) & F_RemoteRelayOn) != F_RemoteRelayOn))    //拉闸
         {
-            if((nd_mbase_alarmmin(mbase_control_block) == 0) && (nd_mbase_imaxmin(mbase_control_block) == 0))   Lcdcon[13] |= DS_Chr_LaZha;
+            if((nd_mb_alarmmin(instance) == 0) && (nd_mb_imaxmin(instance) == 0))   Lcdcon[13] |= DS_Chr_LaZha;
         }
         else
         {
@@ -1230,8 +1221,8 @@ void Disp_Value( unsigned short id, unsigned char *data, unsigned int Info )
 	}
 	else
 	{
-/*		if(( Info & DispData_Sign ) && ( ((nd_mbase_Page_ID(mbase_control_block) & 0xFFFF0000) == 0x00000000)
-		||((nd_mbase_Page_ID(mbase_control_block) & 0xFFFF0000) == 0x000B0000)||((nd_mbase_Page_ID(mbase_control_block) & 0xFFFF0000) == 0x000C0000)) )
+/*		if(( Info & DispData_Sign ) && ( ((nd_mb_page_id(instance) & 0xFFFF0000) == 0x00000000)
+		||((nd_mb_page_id(instance) & 0xFFFF0000) == 0x000B0000)||((nd_mb_page_id(instance) & 0xFFFF0000) == 0x000C0000)) )
 		{
 		  	if( Buffer[Len-1] & 0x80 )
 			{
@@ -1277,22 +1268,21 @@ void ZeroDark( unsigned char i )
 /*  函数功能：显示字符和单位                                           */
 /*  输入参数：i：显示项在显示表格里对应的位置                          */
 /***********************************************************************/
-void Disp_Char( struct instance_t* instance, struct pipeline_t* pipeline, unsigned char* SignBuf )
+void Disp_Char( void *instance, void *pipeline, unsigned char* SignBuf )
 {
 	unsigned char j,EnergyDot = 2, PowerDot = 4,i=0;
 	unsigned char ID1L;
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
-    EnergyDot = nd_mbase_energy_point(mbase_control_block);
-    PowerDot = nd_mbase_power_point(mbase_control_block);
+    EnergyDot = nd_mb_energy_point(instance);
+    PowerDot = nd_mb_power_point(instance);
     
-    if(nd_mbase_disp_borrow(mbase_control_block) != 0)   //借位
+    if(nd_mb_disp_borrow(instance) != 0)   //借位
     {
-        if(EnergyDot >= nd_mbase_disp_borrow(mbase_control_block))
-            EnergyDot = EnergyDot - nd_mbase_disp_borrow(mbase_control_block);
+        if(EnergyDot >= nd_mb_disp_borrow(instance))
+            EnergyDot = EnergyDot - nd_mb_disp_borrow(instance);
     }
     
-	ID1L = (unsigned char)(nd_mbase_Page_ID(mbase_control_block) & 0x000F);
+	ID1L = (unsigned char)(nd_mb_page_id(instance) & 0x000F);
     if(ID1L >= 1)    ID1L = ID1L - 1;
     
 	for( j=0;j<9;j++ )
@@ -1512,9 +1502,8 @@ void Disp_Char( struct instance_t* instance, struct pipeline_t* pipeline, unsign
 /*  函数名称：Display_Page                                             */
 /*  函数功能：获取显示项的显示信息                                     */
 /***********************************************************************/
-void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
+void Display_Page(void *instance, void *pipeline)
 {
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     unsigned char i,buf[40]={0,},Len=0,temp[7];
 	unsigned long oad,Info=0,Info1;
 	unsigned char SignBuf[9]={0,};
@@ -1527,26 +1516,26 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
     };
     struct idmatch idbuf[] = 
     {
-        0xA001, (unsigned char*)&instance->time.tm_mday, //日期
-        0xA002, (unsigned char*)&instance->time.tm_sec,  //时间
-        0xA003, (unsigned char*)&nd_mbase_voltage_ac(mbase_control_block), //电压
-        0xA006, (unsigned char*)&nd_mbase_current_l(mbase_control_block), //火线电流
-        0xA009, (unsigned char*)&nd_mbase_current_n(mbase_control_block), //零线电流
-        0xA00A, (unsigned char*)&nd_mbase_active_power(mbase_control_block), //A相功率
-        0xA00B, (unsigned char*)&nd_mbase_active_power(mbase_control_block), //A相功率
-        0xA012, (unsigned char*)&nd_mbase_power_factor(mbase_control_block), //A相功率因数
-        0xA013, (unsigned char*)&nd_mbase_power_factor(mbase_control_block), //A相功率因数
+        0xA001, (unsigned char*)nd_fr698_time(instance)->tm_mday, //日期
+        0xA002, (unsigned char*)nd_fr698_time(instance)->tm_sec,  //时间
+        0xA003, (unsigned char*)&nd_mb_voltage_ac(instance), //电压
+        0xA006, (unsigned char*)&nd_mb_current_l(instance), //火线电流
+        0xA009, (unsigned char*)&nd_mb_current_n(instance), //零线电流
+        0xA00A, (unsigned char*)&nd_mb_active_power(instance), //A相功率
+        0xA00B, (unsigned char*)&nd_mb_active_power(instance), //A相功率
+        0xA012, (unsigned char*)&nd_mb_power_factor(instance), //A相功率因数
+        0xA013, (unsigned char*)&nd_mb_power_factor(instance), //A相功率因数
     };
     
-    //nd_mbase_Page_ID(mbase_control_block) = 0xA002;
+    //nd_mb_page_id(instance) = 0xA002;
     
-	if( nd_mbase_Page_ID(mbase_control_block) == 0xFFFF ) return;//当前全屏显,则返回
-    Info1 = GetDispAddrInfo( instance, pipeline, nd_mbase_Page_ID(mbase_control_block), buf, Info, SignBuf);
+	if( nd_mb_page_id(instance) == 0xFFFF ) return;//当前全屏显,则返回
+    Info1 = GetDispAddrInfo( instance, pipeline, nd_mb_page_id(instance), buf, Info, SignBuf);
     if(Info1 == 1)
     {
         for( i=0;i<DisplayTabNum;i++ )
         {
-            if(nd_mbase_Page_ID(mbase_control_block) == DisplayTab[i].Id) 
+            if(nd_mb_page_id(instance) == DisplayTab[i].Id) 
                 break;
         }
         if( i >= DisplayTabNum )//如果显示项在表格里不存在,则显示第一项内容
@@ -1597,7 +1586,7 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
 	//清屏
 	ClearLCD();
 	//显示数据
-	Disp_Value( nd_mbase_Page_ID(mbase_control_block), buf, Info1 );
+	Disp_Value( nd_mb_page_id(instance), buf, Info1 );
 	//显示字符和单位
 	Disp_Char( instance, pipeline, SignBuf );
 }
@@ -1606,24 +1595,21 @@ void Display_Page(struct instance_t* instance, struct pipeline_t* pipeline)
 /*  函数名称：Display                                                  */
 /*  函数功能：液晶显示                                                 */
 /***********************************************************************/
-void Display(struct instance_t* instance, struct pipeline_t* pipeline)
+void Display(void *instance, void *pipeline)
 {
-  
-    struct mbase_control_block_t* mbase_control_block;
-    mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
-    if(instance->ac_power_statue != AC_POWER_ON)
+    if(*nd_fr698_power_state(instance) != AC_POWER_ON)
     {
         if(ANA_GetStatus(ANA_STATUS_COMP1)==0)
         {
-            memset((uint8_t *)&nd_mbase_AutoPtr(mbase_control_block), 0x00, 10);
-            nd_mbase_Key(mbase_control_block) &= ~F_KeyAwake;
+            memset((uint8_t *)&nd_mb_auto_ptr(instance), 0x00, 10);
+            nd_mb_key_byte(instance) &= ~F_KeyAwake;
             Flag.Disp |= (F_DispPause+F_DispStop+F_DispOff);
             return;
         }
     }
 	//获取显示项ID
-    //if(instance->ac_power_statue == AC_POWER_ON)
+    //if(*nd_fr698_power_state(instance) == AC_POWER_ON)
     {
         Get_DisplayPage(instance,  pipeline);
     }

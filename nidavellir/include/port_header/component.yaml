@@ -1,0 +1,7 @@
+name: legacy.port_header
+version: 0.1.0
+layer: product
+paths: [targets/stategrid_meter/app/port.h]
+# Staging owner for port.h so the shared legacy kernel headers do not depend
+# on the whole stategrid target component.
+legacy: true

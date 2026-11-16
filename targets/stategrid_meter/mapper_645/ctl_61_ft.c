@@ -1,17 +1,14 @@
-#include "nidavellir.h"
+#include "targets/stategrid_meter/app/metering/metering_applications.h"
+#include "application/adapters/dl698/meter_base_view.h"
 #include "645id_table.h"
 
-extern int rn8209c_set( struct instance_t* instance, uint8_t *p_rx );
-extern uint8_t rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx);
-signed char ft_adj_set_meter(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len)
+signed char ft_adj_set_meter(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len)
 {
     uint16_t data = 0;
     uint8_t addr = 0,buf[30]={0,};
     int err = 0;
-    struct mbase_control_block_t* mbase_cb;
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
-    if(mbase_cb == NULL)
+    if(!nd_mb_valid(instance))
     {
         *p_tx = RS_ERR_OTHERS;
         return 1;
@@ -40,14 +37,12 @@ signed char ft_adj_set_meter(struct instance_t* instance, uint8_t *p_rx, uint8_t
     else return 1;
 }
 
-signed char ft_adj_get_meter(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len)
+signed char ft_adj_get_meter(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len)
 {
     uint8_t buf[5]={0,};
     uint8_t err = 0;
-    struct mbase_control_block_t* mbase_cb;
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
-    if(mbase_cb == NULL)
+    if(!nd_mb_valid(instance))
     {
         *p_tx = RS_ERR_OTHERS;
         return 1;

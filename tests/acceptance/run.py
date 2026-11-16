@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import importlib
 import json
+import shutil
 import sys
 import time
 import traceback
@@ -15,7 +16,8 @@ ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 
 from cases import Case, SelectorError, describe, select  # noqa: E402
-from sim import HarnessError, SimContext, SimHarness, SimRun, SimTimeout, evidence_record  # noqa: E402
+from runner import RunnerHarness  # noqa: E402
+from sim import HarnessError, SimHarness, SimRun, SimTimeout, evidence_record  # noqa: E402
 from sim import write_jsonl  # noqa: E402
 
 DEFAULT_CASE_DIR = ROOT / "targets/stategrid_meter/tests/acceptance"
@@ -64,10 +66,12 @@ def verdict_of(results: list[CaseResult]) -> str:
     return "clean"
 
 
-def run_case(case: Case, harness: SimHarness, workdir: Path) -> CaseResult:
+def run_case(case: Case, harness, workdir: Path) -> CaseResult:
     case_dir = workdir / case.id
+    if case_dir.exists():
+        shutil.rmtree(case_dir)
     case_dir.mkdir(parents=True, exist_ok=True)
-    context = SimContext(harness, case_dir)
+    context = harness.context(case_dir)
     started = time.monotonic()
     try:
         case.fn(context)
@@ -103,7 +107,8 @@ def write_case_evidence(path: Path, result: CaseResult) -> None:
     ]
     for run in result.runs:
         try:
-            records.append(evidence_record(run))
+            recorder = getattr(run, "evidence", None)
+            records.append(recorder() if callable(recorder) else evidence_record(run))
         except HarnessError as exc:
             records.append({"kind": "run", "error": str(exc)})
     records.append(
@@ -121,15 +126,17 @@ def write_case_evidence(path: Path, result: CaseResult) -> None:
 def write_summary(
     evidence_root: Path,
     started_at: datetime,
-    sim: Path,
+    binary: Path,
+    label: str,
     selectors: list[str],
     results: list[CaseResult],
     verdict: str,
 ) -> None:
     summary = {
         "kind": "acceptance",
+        "harness": label,
         "started_at": started_at.isoformat().replace("+00:00", "Z"),
-        "sim": str(sim),
+        "sim": str(binary),
         "select": selectors,
         "verdict": verdict,
         "cases": [
@@ -148,10 +155,10 @@ def write_summary(
     )
 
     lines = [
-        "# firmware_sim acceptance",
+        f"# {label} acceptance",
         "",
         f"- verdict: {verdict}",
-        f"- simulator: `{sim}`",
+        f"- target: `{binary}`",
         f"- started: {started_at.isoformat().replace('+00:00', 'Z')}",
         "",
         "| case | status | runs | seconds |",
@@ -171,7 +178,8 @@ def write_summary(
 
     scope = {
         "kind": "acceptance",
-        "sim": str(sim),
+        "harness": label,
+        "sim": str(binary),
         "select": selectors,
         "cases": [result.case.id for result in results],
     }
@@ -183,6 +191,8 @@ def write_summary(
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run firmware_sim acceptance cases")
     parser.add_argument("--sim", type=Path, default=None, help="firmware_sim binary")
+    parser.add_argument("--runner", type=Path, default=None,
+                        help="idis_host_runner binary")
     parser.add_argument("--workdir", type=Path, default=ROOT / "build" / "acceptance" / "work")
     parser.add_argument("--evidence-dir", type=Path, default=None)
     parser.add_argument("--select", action="append", default=[], help="case:ID or tag:NAME")
@@ -212,25 +222,38 @@ def main(argv: list[str]) -> int:
         print("INVALID no acceptance cases selected", file=sys.stderr)
         return STATUS_EXIT["invalid"]
 
-    sim = args.sim or default_sim()
-    if not sim.is_file():
-        print(
-            f"INVALID firmware_sim is not built at {sim}; "
-            "run cmake --build build --target firmware_sim",
-            file=sys.stderr,
-        )
-        return STATUS_EXIT["invalid"]
+    if args.runner is not None:
+        binary = args.runner
+        harness_label = "idis_host_runner"
+        if not binary.is_file():
+            print(
+                f"INVALID idis_host_runner is not built at {binary}; "
+                "run cmake --build build --target idis_host_runner",
+                file=sys.stderr,
+            )
+            return STATUS_EXIT["invalid"]
+        harness = RunnerHarness(binary, ROOT, timeout=args.timeout)
+    else:
+        binary = args.sim or default_sim()
+        harness_label = "firmware_sim"
+        if not binary.is_file():
+            print(
+                f"INVALID firmware_sim is not built at {binary}; "
+                "run cmake --build build --target firmware_sim",
+                file=sys.stderr,
+            )
+            return STATUS_EXIT["invalid"]
+        harness = SimHarness(binary, ROOT, timeout=args.timeout)
 
     started_at = datetime.now(timezone.utc)
-    harness = SimHarness(sim, ROOT, timeout=args.timeout)
     results = [run_case(item, harness, args.workdir) for item in selected]
     verdict = verdict_of(results)
 
     for result in results:
-        label = {"pass": "PASS", "fail": "FAIL", "invalid": "INVALID", "incomplete": "INCOMPLETE"}[
+        status_label = {"pass": "PASS", "fail": "FAIL", "invalid": "INVALID", "incomplete": "INCOMPLETE"}[
             result.status
         ]
-        print(f"{label} {result.case.id} {result.case.clause} ({result.duration_s:.2f}s)")
+        print(f"{status_label} {result.case.id} {result.case.clause} ({result.duration_s:.2f}s)")
         if result.error:
             print(f"  {result.error}")
 
@@ -242,7 +265,8 @@ def main(argv: list[str]) -> int:
         evidence_root.mkdir(parents=True, exist_ok=True)
         for result in results:
             write_case_evidence(evidence_root / f"{result.case.id}.jsonl", result)
-        write_summary(evidence_root, started_at, sim, args.select, results, verdict)
+        write_summary(evidence_root, started_at, binary, harness_label,
+                      args.select, results, verdict)
         print(f"evidence {evidence_root}")
 
     passed = sum(result.status == "pass" for result in results)

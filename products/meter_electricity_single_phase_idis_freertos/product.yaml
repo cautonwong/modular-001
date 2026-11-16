@@ -8,7 +8,22 @@ components:
   - domain.freeze
   - domain.events
   - domain.load_control
+  - domain.mbus
+  - domain.push
   - application.metering
+  - application.ports
+  - application.adapters.dl645
+  - application.adapters.dl698
+  - domain.report
+  - domain.security
   - soc.v85xxp_v8500
   - board.stategrid_single_phase
+  - infra.kernel
+  - legacy.base_headers
+  - legacy.kernel_headers
+  - legacy.port_header
+  - legacy.test_support
+  - core.buf
+  - services.channel
+  - third_party.arm_cmsis
 notes: IDIS Pack3 single-phase FreeRTOS target copy

@@ -54,7 +54,7 @@ int __update_scrambler_and_cs(void* pctx, uint8_t* byte)
     ctx->cs += *byte;
     return 0;
 }
-int __pack_apdu_byte_645(void* pctx, uint8_t* byte)
+static int __pack_apdu_byte_645(void* pctx, uint8_t* byte)
 {
     struct pipeline_t* pipeline = pctx;
     struct context_645_t* ctx = (struct context_645_t*)nd_fr645_pipeline_ctx(pipeline);

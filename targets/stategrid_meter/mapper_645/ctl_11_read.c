@@ -1,17 +1,12 @@
-#include "nidavellir.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
+#include "application/adapters/dl698/meter_base_view.h"
 #include "application/adapters/dl645/fr_645_context.h"
 #include "645id_table.h"
 #include "ndvh_rn8209.h"
 #include "infra/kernel/resource_blocks.h"
 #include "infra/soc/v85xxp/v8500/v85xxp_system.h"
-#include "kernel/legacy_control_block.h"
-    
-extern const struct dev_info_t rn8209_dev;
-extern unsigned char rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx);
-extern unsigned char IxRMSOS_Adjust(struct instance_t* instance, unsigned char CH);
-extern unsigned char ft_adj_meter(struct instance_t* instance, uint8_t *p_rx);
-extern int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, uint8_t *tx_len);
+#include "targets/stategrid_meter/app/devices.h"
+#include "targets/stategrid_meter/app/metering/metering_applications.h"
 /***********************************************************************/
 /*  函数名称：GetCommTable                                             */
 /*  函数功能：根据给定的ID,找出其在CommTab里的位置                    */
@@ -55,9 +50,8 @@ unsigned long SoftwareCHK(void)
 /*  输入参数：ID:通讯ID                                                */
 /*  输出参数：1为特殊数据,其它为非特殊数据                            */
 /***********************************************************************/
-int Direct_Read( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
+int Direct_Read( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     unsigned char len;
     uint8_t tmpbuf[10] = {0};
     uint32_t s_index,temp=0;
@@ -69,18 +63,18 @@ int Direct_Read( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, 
             return len;
             break;
   		case 0xA800020F://复位次数
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ResetCount);
+            s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ResetCount);
             nd_get_index(instance, s_index, tmpbuf, 4);   
             memcpy( (unsigned char*)p_tx, tmpbuf, 4 );
             return 4;
             break;                 
         case 0xA8F00053://模拟停电时间（补冻结用）
-            (*(p_tx+5)) = BYTE_BCD(nd_mbase_v_powerdown_tm(mbase_cb).tm_year + 1900 - 2000);
-            (*(p_tx+4)) = BYTE_BCD(nd_mbase_v_powerdown_tm(mbase_cb).tm_mon + 1);
-            (*(p_tx+3)) = BYTE_BCD(nd_mbase_v_powerdown_tm(mbase_cb).tm_mday);
-            (*(p_tx+2)) = BYTE_BCD(nd_mbase_v_powerdown_tm(mbase_cb).tm_hour);
-            (*(p_tx+1)) = BYTE_BCD(nd_mbase_v_powerdown_tm(mbase_cb).tm_min);
-            (*(p_tx+0)) = BYTE_BCD(nd_mbase_v_powerdown_tm(mbase_cb).tm_sec);
+            (*(p_tx+5)) = BYTE_BCD(nd_mb_v_powerdown_tm(instance).tm_year + 1900 - 2000);
+            (*(p_tx+4)) = BYTE_BCD(nd_mb_v_powerdown_tm(instance).tm_mon + 1);
+            (*(p_tx+3)) = BYTE_BCD(nd_mb_v_powerdown_tm(instance).tm_mday);
+            (*(p_tx+2)) = BYTE_BCD(nd_mb_v_powerdown_tm(instance).tm_hour);
+            (*(p_tx+1)) = BYTE_BCD(nd_mb_v_powerdown_tm(instance).tm_min);
+            (*(p_tx+0)) = BYTE_BCD(nd_mb_v_powerdown_tm(instance).tm_sec);
             return 6;
             break;  
 
@@ -96,15 +90,12 @@ int Direct_Read( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, 
 /*  函数功能：通讯读                                                   */
 /*  输出参数：读结果：0为正确,其余为错误                              */
 /***********************************************************************/
-signed char Comm_Read(struct instance_t* instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len, struct context_645_t* ctx)
+signed char Comm_Read(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len, struct context_645_t* ctx)
 {
     unsigned char IDH1=0, IDL0 = 0;
     int Err_Byte = 0;
-	unsigned long ID;
-    struct mbase_control_block_t* mbase_cb;
-	
-	mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    if(mbase_cb == NULL)
+	uint32_t ID;
+    if(!nd_mb_valid(instance))
     {
         return -1;
     }

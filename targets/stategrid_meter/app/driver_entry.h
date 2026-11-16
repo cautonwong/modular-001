@@ -13,6 +13,10 @@ void irq_transform_to_instance(struct instance_t *instance);
 void communication_chlx_init(struct fifo_t *txfifo, struct fifo_t *rxfifo,
                              uint8_t chl_type, struct instance_t *instance);
 void IOStateCheck(struct instance_t *instance, struct pipeline_t *pipeline);
+void timing_ftr(void *param);
+void IO_Interrupt(void *param);
+void rs485_init(struct instance_t *instance, struct pipeline_t *pipeline);
+extern const uint32_t baud_table[11];
 
 extern const uint8_t init_Meter_Type[];
 

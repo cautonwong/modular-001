@@ -1,9 +1,8 @@
-#include "nidavellir.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
-#include "domain/tariff/legacy/tariff_applications.h"
+#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/app/tariff/tariff_applications.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
 
 typedef struct 
@@ -32,9 +31,8 @@ const ATBE3 Atbe3_table[] =
     0x2041,     0,      unit_undefined,
 };
 
-int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8_t mode, void *ctx)
+int GET_2_Variable(void *instance, uint32_t id, uint8_t* buf, uint8_t mode, void *ctx)
 {    
-    struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
     uint8_t i,j,maxnum=0;
     uint16_t oad;
@@ -43,7 +41,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
     uint32_t tmp_u32 = 0, s_addr;
     uint8_t channel = 0;
     
-    if((p_ctx)&&(p_ctx->channel < chl_NUM))
+    if((p_ctx)&&(p_ctx->channel < FR_698_CHL_NUM))
     {
         channel = p_ctx->channel;
     }
@@ -51,8 +49,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
 
 
     
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    if(mbase_cb == NULL)
+    if(!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -68,30 +65,30 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
     
     idmatch idbuf[] = 
     {
-        0x20000200,     0x01,   TYPE_long_unsigned,         (uint8_t*)&nd_mbase_voltage_ac(mbase_cb),        2,  //电压
-        0x20000201,     0x00,   TYPE_long_unsigned,         (uint8_t*)&nd_mbase_voltage_ac(mbase_cb),        2,  //电压
-        0x20010200,     0x01,   TYPE_double_long,           (uint8_t*)&nd_mbase_current_l(mbase_cb),         4,  //火线电流
-        0x20010201,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mbase_current_l(mbase_cb),         4,  //火线电流
-        0x20010400,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mbase_current_n(mbase_cb),         4,  //零线电流
-        0x20040200,     0x02,   TYPE_double_long,           (uint8_t*)&nd_mbase_active_power(mbase_cb),      4,  //有功功率
-        0x20040201,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mbase_active_power(mbase_cb),      4,  //有功功率
-        0x20040202,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mbase_active_power(mbase_cb),      4,  //有功功率
-        0x20060200,     0x02,   TYPE_double_long,           (uint8_t*)&nd_mbase_apparent_power(mbase_cb),    4,  //视在功率
-        0x20060201,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mbase_apparent_power(mbase_cb),    4,  //视在功率
-        0x20060202,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mbase_apparent_power(mbase_cb),    4,  //视在功率
-        0x20070200,     0x02,   TYPE_double_long,           (uint8_t*)&nd_mbase_active_avg_power(mbase_cb),  4,  //1分钟平均功率
-        0x20070201,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mbase_active_avg_power(mbase_cb),  4,  //1分钟平均功率
-        0x200A0200,     0x02,   TYPE_long,                  (uint8_t*)&nd_mbase_power_factor(mbase_cb),      2,  //功率因数
-        0x200A0201,     0x00,   TYPE_long,                  (uint8_t*)&nd_mbase_power_factor(mbase_cb),      2,  //功率因数
-        0x200A0202,     0x00,   TYPE_long,                  (uint8_t*)&nd_mbase_power_factor(mbase_cb),      2,  //功率因数
-        0x200F0200,     0x00,   TYPE_long_unsigned,         (uint8_t*)&nd_mbase_frequency(mbase_cb),         2,  //频率
-        0x20100200,     0x00,   TYPE_long,                  (uint8_t*)&nd_mbase_temperature(mbase_cb),       2,  //温度
-        0x20110200,     0x00,   TYPE_long_unsigned,         (uint8_t*)&nd_mbase_voltage_battery(mbase_cb),   2,  //电池电压
+        0x20000200,     0x01,   TYPE_long_unsigned,         (uint8_t*)&nd_mb_voltage_ac(instance),        2,  //电压
+        0x20000201,     0x00,   TYPE_long_unsigned,         (uint8_t*)&nd_mb_voltage_ac(instance),        2,  //电压
+        0x20010200,     0x01,   TYPE_double_long,           (uint8_t*)&nd_mb_current_l(instance),         4,  //火线电流
+        0x20010201,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mb_current_l(instance),         4,  //火线电流
+        0x20010400,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mb_current_n(instance),         4,  //零线电流
+        0x20040200,     0x02,   TYPE_double_long,           (uint8_t*)&nd_mb_active_power(instance),      4,  //有功功率
+        0x20040201,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mb_active_power(instance),      4,  //有功功率
+        0x20040202,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mb_active_power(instance),      4,  //有功功率
+        0x20060200,     0x02,   TYPE_double_long,           (uint8_t*)&nd_mb_apparent_power(instance),    4,  //视在功率
+        0x20060201,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mb_apparent_power(instance),    4,  //视在功率
+        0x20060202,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mb_apparent_power(instance),    4,  //视在功率
+        0x20070200,     0x02,   TYPE_double_long,           (uint8_t*)&nd_mb_active_avg_power(instance),  4,  //1分钟平均功率
+        0x20070201,     0x00,   TYPE_double_long,           (uint8_t*)&nd_mb_active_avg_power(instance),  4,  //1分钟平均功率
+        0x200A0200,     0x02,   TYPE_long,                  (uint8_t*)&nd_mb_power_factor(instance),      2,  //功率因数
+        0x200A0201,     0x00,   TYPE_long,                  (uint8_t*)&nd_mb_power_factor(instance),      2,  //功率因数
+        0x200A0202,     0x00,   TYPE_long,                  (uint8_t*)&nd_mb_power_factor(instance),      2,  //功率因数
+        0x200F0200,     0x00,   TYPE_long_unsigned,         (uint8_t*)&nd_mb_frequency(instance),         2,  //频率
+        0x20100200,     0x00,   TYPE_long,                  (uint8_t*)&nd_mb_temperature(instance),       2,  //温度
+        0x20110200,     0x00,   TYPE_long_unsigned,         (uint8_t*)&nd_mb_voltage_battery(instance),   2,  //电池电压
         //0x20130200,     0x00,   TYPE_double_long_unsigned,  (uint8_t*)&mbase_cb->battery_used_time, 4,  //电池工作时间     
-        0x20310200,     0x00,   TYPE_double_long_unsigned,  (uint8_t*)&nd_mbase_MonthEnegery(mbase_cb),      4,  //月度用电量
-        //0x20150400,     0x00,   TYPE_bit_string,            (uint8_t*)&nd_mbase_report_2015state(mbase_cb)[0], 4,  //跟随上报状态字
-        0x20400200,     0x00,   TYPE_bit_string,            (uint8_t*)&nd_mbase_cmd_dostate(mbase_cb),       2,  //控制命令执行状态字
-        0x20410200,     0x00,   TYPE_bit_string,            (uint8_t*)&nd_mbase_cmd_errstate(mbase_cb),      2,  //控制命令错误状态字
+        0x20310200,     0x00,   TYPE_double_long_unsigned,  (uint8_t*)&nd_mb_month_energy(instance),      4,  //月度用电量
+        //0x20150400,     0x00,   TYPE_bit_string,            (uint8_t*)&nd_mb_report_2015_state(instance)[0], 4,  //跟随上报状态字
+        0x20400200,     0x00,   TYPE_bit_string,            (uint8_t*)&nd_mb_cmd_dostate(instance),       2,  //控制命令执行状态字
+        0x20410200,     0x00,   TYPE_bit_string,            (uint8_t*)&nd_mb_cmd_errstate(instance),      2,  //控制命令错误状态字
     };
     
     oad = (unsigned short)((id & 0xFFFF0000) >> 16);
@@ -187,7 +184,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
                 {
 
                     *p++ = TYPE_double_long_unsigned;
-                    s_addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Bat_UseTime);
+                    s_addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Bat_UseTime);
                     nd_get_index(instance, s_addr, (uint8_t*)&tmp_u32, 4); 
                     tmp_u32 = tmp_u32 / 60;
                     mem_swap_cpy(p, (unsigned char*)&tmp_u32, 4);
@@ -214,7 +211,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
                     {
                         *p++ = TYPE_bit_string;
                         *p++ = 16;
-                        memcpy(p, (uint8_t*)&nd_mbase_run_state(mbase_cb)[i], 0x02);
+                        memcpy(p, (uint8_t*)&nd_mb_run_state(instance)[i], 0x02);
                         p = p + 2;
                     }
                     return (p-buf);
@@ -223,7 +220,7 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
                 {
                     *p++ = TYPE_bit_string;
                     *p++ = 16;
-                    memcpy(p, (uint8_t*)&nd_mbase_run_state(mbase_cb)[index], 0x02);
+                    memcpy(p, (uint8_t*)&nd_mb_run_state(instance)[index], 0x02);
                     p = p + 2;
                     return (p-buf);
                 }
@@ -249,14 +246,14 @@ int GET_2_Variable(struct instance_t* instance, uint32_t id, uint8_t* buf, uint8
             {
                 *p++ = TYPE_bit_string;
                 *p++ = 32;
-                p += uint32_to_buf_msb(nd_mbase_report_2015state(mbase_cb)[channel], p);
+                p += uint32_to_buf_msb(nd_mb_report_2015_state(instance)[channel], p);
                 return (p-buf);
             }
             else if(attribute == 0x04) //模式字
             {
                 *p++ = TYPE_bit_string;
                 *p++ = 32;
-                mem_swap_cpy(p, (uint8_t*)&nd_mbase_report_2015mode(mbase_cb), 4); 
+                mem_swap_cpy(p, (uint8_t*)&nd_mb_report_2015_mode(instance), 4); 
                 p += 4;
                 return (p-buf);
             }

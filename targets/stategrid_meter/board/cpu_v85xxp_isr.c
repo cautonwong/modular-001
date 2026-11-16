@@ -6,6 +6,7 @@
 #include "cpu_surport.h"
 #include "infra/boards/stategrid_single_phase/board_io.h"
 #include "infra/boards/stategrid_single_phase/relay_config.h"
+#include "targets/stategrid_meter/app/driver_entry.h"
 
 
 #define IS_ACPOWER_OFF  1
@@ -14,7 +15,6 @@
 
 
 
-extern void timing_ftr(void);
 
 static struct isr_reg_ctx_t Isr_Function[IRQ_NUM] = {0};
 
@@ -108,7 +108,6 @@ void NMI_Handler(void)
 * Output         : None
 * Return         : None
 *******************************************************************************/
-extern void test_pin_turn(void);
 extern uint16_t relay_off_chk,relay_on_chk; //继电器状态监测
 void SysTick_Handler(void) //10ms
 {    
@@ -171,7 +170,7 @@ void TMR3_IRQHandler(void)
         {
             Isr_Function[IRQ_TMR3].IsrFunctionRegister(Isr_Function[IRQ_TMR3].para);
         }*/
-        timing_ftr();
+        timing_ftr(NULL);
     }
 }
 
@@ -277,7 +276,6 @@ void RTC_IRQHandler(void)
     RTC->INTSTS = 0xFF; 
 }
 
-extern void IO_Interrupt(void);
 /**
   * @brief  This function handles PMU interrupt request.
   * @param  None
@@ -285,7 +283,7 @@ extern void IO_Interrupt(void);
   */
 void PMU_IRQHandler(void)
 {
-    IO_Interrupt();
+    IO_Interrupt(NULL);
 }
 
 

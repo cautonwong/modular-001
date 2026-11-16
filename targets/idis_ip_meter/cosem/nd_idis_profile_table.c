@@ -40,11 +40,109 @@ typedef struct {
     uint8_t compressed;
     uint8_t delta;
     uint8_t capture_count;
-    nd_capture_object_t captures[ND_IDIS_PROFILE_MAX_CAPTURES];
+    uint16_t capture_first;
 } nd_idis_profile_desc_t;
 
+static const nd_capture_object_t capture_pool[96] = {
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_IMPORT, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_EXPORT, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_REACTIVE_ENERGY_IMPORT, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_REACTIVE_ENERGY_EXPORT, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_DATA, ND_OBIS_PROFILE_STATUS_1, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_IMPORT, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_EXPORT, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_DATA, ND_OBIS_PROFILE_STATUS_2, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_IMPORT, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_EXPORT, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_DATA, ND_OBIS_PROFILE_STATUS_PQ, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_AVERAGE_VOLTAGE_L1, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_AVERAGE_VOLTAGE_L2, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_AVERAGE_VOLTAGE_L3, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_AVERAGE_CURRENT_L1, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_AVERAGE_CURRENT_L2, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_AVERAGE_CURRENT_L3, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_IMPORT, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_EXPORT, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_REACTIVE_ENERGY_IMPORT, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_REACTIVE_ENERGY_EXPORT, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_STANDARD, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_FRAUD, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_DISCONNECTOR, 2),
+    CAP(ND_IC_LIMITER, ND_OBIS_LIMITER, 3),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_MBUS, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_PQ, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_COMM, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_COMM_DETAILS, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_POWER_FAILURE_DURATION, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_DATA, ND_OBIS_PROFILE_STATUS_MBUS_1, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_1_1, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_1_2, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_1_3, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_1_4, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_1_5, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_1_6, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_1_7, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_1_8, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_DATA, ND_OBIS_PROFILE_STATUS_MBUS_2, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_2_1, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_2_2, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_2_3, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_2_4, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_2_5, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_2_6, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_2_7, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_2_8, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_DATA, ND_OBIS_PROFILE_STATUS_MBUS_3, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_3_1, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_3_2, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_3_3, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_3_4, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_3_5, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_3_6, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_3_7, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_3_8, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_DATA, ND_OBIS_PROFILE_STATUS_MBUS_4, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_4_1, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_4_2, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_4_3, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_4_4, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_4_5, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_4_6, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_4_7, 2),
+    CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_4_8, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_MBUS, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_MBUS, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_MBUS, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_MBUS, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_IMPORT, 2),
+    CAP(ND_IC_DATA, ND_OBIS_PROFILE_STATUS_1, 2),
+    CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
+    CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_IMPORT, 2),
+    CAP(ND_IC_DATA, ND_OBIS_PROFILE_STATUS_1, 2),
+};
+
 static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
-    /* 1: Data of billing period 1. */
     {
         .ln = ND_OBIS_BILLING_PROFILE,
         .base_offset = FLASH_BILLING,
@@ -53,15 +151,8 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .capture_period = 0,
         .compressed = 1,
         .capture_count = 5,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_IMPORT, 2), /* 1.8.1 */
-            CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_EXPORT, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_REACTIVE_ENERGY_IMPORT, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_REACTIVE_ENERGY_EXPORT, 2),
-        },
+        .capture_first = 0,
     },
-    /* 2: Load profile 1. */
     {
         .ln = ND_OBIS_LOAD_PROFILE_1,
         .base_offset = FLASH_LP1,
@@ -71,14 +162,8 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .compressed = 1,
         .delta = 1,
         .capture_count = 4,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_DATA, ND_OBIS_PROFILE_STATUS_1, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_IMPORT, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_EXPORT, 2),
-        },
+        .capture_first = 5,
     },
-    /* 3: Load profile 2. */
     {
         .ln = ND_OBIS_LOAD_PROFILE_2,
         .base_offset = FLASH_LP2,
@@ -88,14 +173,8 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .compressed = 1,
         .delta = 1,
         .capture_count = 4,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_DATA, ND_OBIS_PROFILE_STATUS_2, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_IMPORT, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_EXPORT, 2),
-        },
+        .capture_first = 9,
     },
-    /* 4: Power quality profile. */
     {
         .ln = ND_OBIS_PQ_PROFILE,
         .base_offset = FLASH_PQ,
@@ -105,22 +184,8 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .compressed = 1,
         .delta = 1,
         .capture_count = 12,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_DATA, ND_OBIS_PROFILE_STATUS_PQ, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_AVERAGE_VOLTAGE_L1, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_AVERAGE_VOLTAGE_L2, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_AVERAGE_VOLTAGE_L3, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_AVERAGE_CURRENT_L1, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_AVERAGE_CURRENT_L2, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_AVERAGE_CURRENT_L3, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_IMPORT, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_EXPORT, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_REACTIVE_ENERGY_IMPORT, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_REACTIVE_ENERGY_EXPORT, 2),
-        },
+        .capture_first = 13,
     },
-    /* 5: Standard event log. */
     {
         .ln = ND_OBIS_STANDARD_EVENT_LOG,
         .base_offset = FLASH_EVENT_STANDARD,
@@ -128,12 +193,8 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .slot_size = 128,
         .capture_period = 0,
         .capture_count = 2,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_STANDARD, 2),
-        },
+        .capture_first = 25,
     },
-    /* 6: Fraud detection log. */
     {
         .ln = ND_OBIS_FRAUD_LOG,
         .base_offset = FLASH_EVENT_FRAUD,
@@ -141,12 +202,8 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .slot_size = 128,
         .capture_period = 0,
         .capture_count = 2,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_FRAUD, 2),
-        },
+        .capture_first = 27,
     },
-    /* 7: Disconnector control log. */
     {
         .ln = ND_OBIS_DISCONNECTOR_LOG,
         .base_offset = FLASH_EVENT_DISCONNECTOR,
@@ -154,13 +211,8 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .slot_size = 128,
         .capture_period = 0,
         .capture_count = 3,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_DISCONNECTOR, 2),
-            CAP(ND_IC_LIMITER, ND_OBIS_LIMITER, 3),
-        },
+        .capture_first = 29,
     },
-    /* 8: M-Bus event log. */
     {
         .ln = ND_OBIS_MBUS_EVENT_LOG,
         .base_offset = FLASH_EVENT_MBUS,
@@ -168,12 +220,8 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .slot_size = 128,
         .capture_period = 0,
         .capture_count = 2,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_MBUS, 2),
-        },
+        .capture_first = 32,
     },
-    /* 9: Power quality log. */
     {
         .ln = ND_OBIS_PQ_LOG,
         .base_offset = FLASH_EVENT_PQ,
@@ -181,12 +229,8 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .slot_size = 128,
         .capture_period = 0,
         .capture_count = 2,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_PQ, 2),
-        },
+        .capture_first = 34,
     },
-    /* 10: Communication log. */
     {
         .ln = ND_OBIS_COMM_LOG,
         .base_offset = FLASH_EVENT_COMM,
@@ -194,12 +238,8 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .slot_size = 128,
         .capture_period = 0,
         .capture_count = 2,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_COMM, 2),
-        },
+        .capture_first = 36,
     },
-    /* 11: Communication details log. */
     {
         .ln = ND_OBIS_COMM_DETAILS_LOG,
         .base_offset = FLASH_EVENT_COMM_DETAILS,
@@ -207,12 +247,8 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .slot_size = 128,
         .capture_period = 0,
         .capture_count = 2,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_COMM_DETAILS, 2),
-        },
+        .capture_first = 38,
     },
-    /* 12: Power failure event log. */
     {
         .ln = ND_OBIS_POWER_FAILURE_LOG,
         .base_offset = FLASH_POWER_FAILURE,
@@ -220,12 +256,8 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .slot_size = 128,
         .capture_period = 0,
         .capture_count = 2,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_POWER_FAILURE_DURATION, 2),
-        },
+        .capture_first = 40,
     },
-    /* 13..16: M-Bus load profiles, one per channel. */
     {
         .ln = ND_OBIS_MBUS_LOAD_PROFILE_1,
         .base_offset = FLASH_MBUS_LOAD_1,
@@ -233,18 +265,7 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .slot_size = 128,
         .capture_period = 3600,
         .capture_count = 10,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_DATA, ND_OBIS_PROFILE_STATUS_MBUS_1, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_1_1, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_1_2, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_1_3, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_1_4, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_1_5, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_1_6, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_1_7, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_1_8, 2),
-        },
+        .capture_first = 42,
     },
     {
         .ln = ND_OBIS_MBUS_LOAD_PROFILE_2,
@@ -253,18 +274,7 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .slot_size = 128,
         .capture_period = 3600,
         .capture_count = 10,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_DATA, ND_OBIS_PROFILE_STATUS_MBUS_2, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_2_1, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_2_2, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_2_3, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_2_4, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_2_5, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_2_6, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_2_7, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_2_8, 2),
-        },
+        .capture_first = 52,
     },
     {
         .ln = ND_OBIS_MBUS_LOAD_PROFILE_3,
@@ -273,18 +283,7 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .slot_size = 128,
         .capture_period = 3600,
         .capture_count = 10,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_DATA, ND_OBIS_PROFILE_STATUS_MBUS_3, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_3_1, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_3_2, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_3_3, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_3_4, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_3_5, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_3_6, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_3_7, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_3_8, 2),
-        },
+        .capture_first = 62,
     },
     {
         .ln = ND_OBIS_MBUS_LOAD_PROFILE_4,
@@ -293,30 +292,15 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .slot_size = 128,
         .capture_period = 3600,
         .capture_count = 10,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_DATA, ND_OBIS_PROFILE_STATUS_MBUS_4, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_4_1, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_4_2, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_4_3, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_4_4, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_4_5, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_4_6, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_4_7, 2),
-            CAP(ND_IC_EXTENDED_REGISTER, ND_OBIS_MBUS_VALUE_4_8, 2),
-        },
+        .capture_first = 72,
     },
-    /* 17..20: M-Bus control logs, one per channel. */
     {
         .ln = ND_OBIS_MBUS_CONTROL_LOG_1,
         .base_offset = FLASH_MBUS_CONTROL_1,
         .capacity = 10,
         .slot_size = 128,
         .capture_count = 2,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_MBUS, 2),
-        },
+        .capture_first = 82,
     },
     {
         .ln = ND_OBIS_MBUS_CONTROL_LOG_2,
@@ -324,10 +308,7 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .capacity = 10,
         .slot_size = 128,
         .capture_count = 2,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_MBUS, 2),
-        },
+        .capture_first = 84,
     },
     {
         .ln = ND_OBIS_MBUS_CONTROL_LOG_3,
@@ -335,10 +316,7 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .capacity = 10,
         .slot_size = 128,
         .capture_count = 2,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_MBUS, 2),
-        },
+        .capture_first = 86,
     },
     {
         .ln = ND_OBIS_MBUS_CONTROL_LOG_4,
@@ -346,23 +324,15 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .capacity = 10,
         .slot_size = 128,
         .capture_count = 2,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_DATA, ND_OBIS_EVENT_OBJECT_MBUS, 2),
-        },
+        .capture_first = 88,
     },
-    /* 21..22: Display profiles. Column lists are vendor defined. */
     {
         .ln = ND_OBIS_DISPLAY_GENERAL,
         .base_offset = FLASH_DISPLAY_GENERAL,
         .capacity = 10,
         .slot_size = 128,
         .capture_count = 3,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_IMPORT, 2),
-            CAP(ND_IC_DATA, ND_OBIS_PROFILE_STATUS_1, 2),
-        },
+        .capture_first = 90,
     },
     {
         .ln = ND_OBIS_DISPLAY_ALTERNATE,
@@ -370,13 +340,20 @@ static const nd_idis_profile_desc_t table[ND_IDIS_PROFILE_TABLE_COUNT] = {
         .capacity = 10,
         .slot_size = 128,
         .capture_count = 3,
-        .captures = {
-            CAP(ND_IC_CLOCK, ND_OBIS_CLOCK, 2),
-            CAP(ND_IC_REGISTER, ND_OBIS_ACTIVE_ENERGY_IMPORT, 2),
-            CAP(ND_IC_DATA, ND_OBIS_PROFILE_STATUS_1, 2),
-        },
+        .capture_first = 93,
     },
 };
+
+static int desc_is_valid(const nd_idis_profile_desc_t *desc)
+{
+    size_t pool_size = sizeof(capture_pool) / sizeof(capture_pool[0]);
+
+    return desc->capture_count <= ND_IDIS_PROFILE_MAX_CAPTURES
+           && (size_t)desc->capture_first + desc->capture_count <= pool_size
+           && (uint64_t)desc->base_offset
+                      + (uint64_t)desc->capacity * desc->slot_size
+                  <= ND_IDIS_PROFILE_FLASH_BYTES;
+}
 
 int nd_idis_profile_table_build(nd_idis_profile_config_t *configs, uint8_t max,
                                 nd_store_t *flash,
@@ -388,6 +365,9 @@ int nd_idis_profile_table_build(nd_idis_profile_config_t *configs, uint8_t max,
     }
     for (uint8_t index = 0; index < ND_IDIS_PROFILE_TABLE_COUNT; index++) {
         const nd_idis_profile_desc_t *desc = &table[index];
+        if (!desc_is_valid(desc)) {
+            return -1;
+        }
         configs[index] = (nd_idis_profile_config_t){
             .ln = desc->ln,
             .store = flash,
@@ -400,8 +380,9 @@ int nd_idis_profile_table_build(nd_idis_profile_config_t *configs, uint8_t max,
             .compressed = desc->compressed,
             .delta = desc->delta,
         };
-        memcpy(configs[index].captures, desc->captures,
-               sizeof(desc->captures));
+        memcpy(configs[index].captures,
+               &capture_pool[desc->capture_first],
+               (size_t)desc->capture_count * sizeof(nd_capture_object_t));
     }
     return ND_IDIS_PROFILE_TABLE_COUNT;
 }
@@ -415,10 +396,14 @@ int nd_idis_profile_table_init(nd_idis_profiles_t *profiles, nd_store_t *flash,
     memset(profiles, 0, sizeof(*profiles));
     for (uint8_t index = 0; index < ND_IDIS_PROFILE_TABLE_COUNT; index++) {
         const nd_idis_profile_desc_t *desc = &table[index];
+        if (!desc_is_valid(desc)) {
+            return -1;
+        }
         if (nd_idis_profile_init(&profiles->items[index], flash,
                                  desc->base_offset, desc->capacity,
                                  desc->slot_size, &desc->ln, clock,
-                                 desc->captures, desc->capture_count,
+                                 &capture_pool[desc->capture_first],
+                                 desc->capture_count,
                                  desc->capture_period, desc->compressed,
                                  desc->delta) != 0) {
             return -1;

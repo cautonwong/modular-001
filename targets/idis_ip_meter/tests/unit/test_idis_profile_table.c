@@ -159,6 +159,28 @@ static void test_every_profile_captures(void)
     }
 }
 
+static void test_build_rejects_invalid_arguments(void)
+{
+    nd_idis_profile_config_t configs[ND_IDIS_PROFILE_TABLE_COUNT];
+    nd_clock_port_t clock = {.read = fake_clock};
+    nd_store_t *store_port = nd_byte_store_port(&store);
+
+    TEST_ASSERT_EQUAL_INT(-1, nd_idis_profile_table_build(
+                                  NULL, ND_IDIS_PROFILE_TABLE_COUNT,
+                                  store_port, &clock));
+    TEST_ASSERT_EQUAL_INT(-1, nd_idis_profile_table_build(
+                                  configs, ND_IDIS_PROFILE_TABLE_COUNT - 1,
+                                  store_port, &clock));
+    TEST_ASSERT_EQUAL_INT(-1, nd_idis_profile_table_build(
+                                  configs, ND_IDIS_PROFILE_TABLE_COUNT, NULL,
+                                  &clock));
+    TEST_ASSERT_EQUAL_INT(-1, nd_idis_profile_table_build(
+                                  configs, ND_IDIS_PROFILE_TABLE_COUNT,
+                                  store_port, NULL));
+    TEST_ASSERT_EQUAL_INT(-1, nd_idis_profile_table_init(NULL, store_port,
+                                                         &clock));
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -166,5 +188,6 @@ int main(void)
     RUN_TEST(test_table_regions_do_not_overlap);
     RUN_TEST(test_profiles_init_accepts_table);
     RUN_TEST(test_every_profile_captures);
+    RUN_TEST(test_build_rejects_invalid_arguments);
     return UNITY_END();
 }

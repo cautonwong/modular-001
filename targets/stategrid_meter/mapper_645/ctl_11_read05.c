@@ -1,24 +1,19 @@
-#include "nidavellir.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
+#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
 #include "application/ports/resource_access.h"
 #include "application/adapters/dl645/fr_645_context.h"
 #include "645id_table.h"
-#include "gs_record.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
 #include "fr_axdr.h"
 #include "fr_698.h"
 #include "ctl_11_record.h"
 #include "cpu_surport.h"
-#include "domain/events/legacy/gs_record.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
 #include "infra/kernel/resource_blocks.h"
 #include "infra/soc/v85xxp/v8500/v85xxp_system.h"
-#include "kernel/legacy_control_block.h"
 
 
-
-extern uint8_t check_capture_exist(uint32_t rcsd_req, uint32_t rcsd_src);
-extern uint32_t get_interval_basic_value(uint8_t *src, struct rsd_info_t *rsd_info);
-extern uint8_t select_record_time_check(uint8_t *src, uint8_t non_period, struct rsd_info_t *rsd_info);
-extern int record_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,  struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t *capture_645len,  uint8_t  package_type,   void *ctx);
 
 struct load_rsd_info_t
 {
@@ -384,9 +379,8 @@ const uint16_t Load_di2_06_645oad_len[] =
 
 // 获取冻结中实际费率的需量或电量长度
 
-uint16_t get_645record_rate_obj_len(struct instance_t* instance,uint16_t obj_len)
+uint16_t get_645record_rate_obj_len(void *instance,uint16_t obj_len)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base); 
 
     uint8_t single_len = 0;
     uint32_t addr;
@@ -459,9 +453,8 @@ int SwitchOn_sub_index_check(uint32_t ID)
 
 
 // 通过oad 获取 事件相关的存储地址信息
-int get_record_645_id_info(struct instance_t* instance, uint32_t ID, struct record_storage_645_id_info_t* info)
+int get_record_645_id_info(void *instance, uint32_t ID, struct record_storage_645_id_info_t* info)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base); 
     union dl645_DI_t DI;
     uint32_t oad = 0;
     uint16_t SaveId = 0, SeqId = 0, CaptureId = 0, PeriodId = 0, DepthId = 0, ReportFlagId = 0, ReportModeId = 0;
@@ -471,7 +464,7 @@ int get_record_645_id_info(struct instance_t* instance, uint32_t ID, struct reco
     int ret = 0;
 
 
-    if (mbase_cb == NULL)
+    if (!nd_mb_valid(instance))
     {
         return -1;
     }
@@ -717,25 +710,6 @@ int get_record_645_id_info(struct instance_t* instance, uint32_t ID, struct reco
                 return -1;
             }
 
-#if 0            
-            oad = 00000200;
-            oad +=   ((DI.elem.di2 << 4) << 24); // 00XX000200
-            
-            info->rd_645obj[0] = 1;
-            if(DI.elem.di1 == 0xFF) //单个电能 块
-            {
-               info->rd_645obj_len[0] = temp * 4;
-               info->rd_645obj_len[1] = temp * 4;
-            }
-            else
-            {
-                oad += ((DI.elem.di1) + 1); // 00XX0002YY 
-                info->rd_645obj_len[0] =  4;
-                info->rd_645obj_len[1] =  4;
-            }
-            info->rd_645obj[1] = oad;
-            
-#endif
         }
         break;
         case 0x05000000: //冻结类
@@ -800,7 +774,7 @@ int get_record_645_id_info(struct instance_t* instance, uint32_t ID, struct reco
                 case 0x05050000: //两套费率电价切换
                 case 0x05070000: //两套阶梯电价切换
                 {
-                    if(!(nd_mbase_metertype(mbase_cb) & BIT3))
+                    if(!(nd_mb_metertype(instance) & BIT3))
                     {
                         return -1;
                     }
@@ -989,7 +963,7 @@ int response_x_byte_err_645(uint8_t *p_tx, uint16_t err, uint8_t errLen, uint8_t
 
 
 // data_time_s 转6字节 
-int fc_fun_01_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_01_645(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint32_t temp;
     uint8_t *p = des;
@@ -1031,7 +1005,7 @@ int fc_fun_01_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
 }
 
 // //事件清零数据标识
-int fc_fun_02_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_02_645(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint16_t decode_len = 0;
     uint8_t *p = des;
@@ -1051,7 +1025,7 @@ int fc_fun_02_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
 }
 
 
-int fc_fun_03_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_03_645(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint16_t decode_len = 0;
     uint8_t *p = des;
@@ -1074,7 +1048,7 @@ int fc_fun_03_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
 }
 
 //电压块 支持单个电压读取
-int fc_fun_04_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_04_645(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint16_t decode_len = 0, len = 0, tmp_U16 = 0;
     uint8_t *p = des;
@@ -1140,7 +1114,7 @@ int fc_fun_04_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
 }
 
 //电流块 支持单个读取
-int fc_fun_05_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_05_645(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint16_t decode_len = 0, len;
     uint8_t *p = des;
@@ -1212,7 +1186,7 @@ int fc_fun_05_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
 }
 
 //功率块 支持单个读取
-int fc_fun_06_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_06_645(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint16_t decode_len = 0, len;
     uint8_t *p = des;
@@ -1283,7 +1257,7 @@ int fc_fun_06_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
     return (p - des);
 }
 //功率因数块 支持单个读取
-int fc_fun_07_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_07_645(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint16_t decode_len = 0, len;
     uint8_t *p = des;
@@ -1349,7 +1323,7 @@ int fc_fun_07_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
 }
 
 // 结算日
-int fc_fun_08_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_08_645(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint8_t *p = des;
     uint8_t i;
@@ -1378,7 +1352,7 @@ int fc_fun_08_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
 
 }
 // 有功组合方式特征字
-int fc_fun_09_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_09_645(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint8_t *p = des;
     uint8_t i;
@@ -1399,7 +1373,7 @@ int fc_fun_09_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
 
 }
 // 周休日采用时段表号    1字节tag + 1字节数据   hex 转BCD
-int fc_fun_10_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_10_645(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint8_t *p = des;
     uint8_t i;
@@ -1421,7 +1395,7 @@ int fc_fun_10_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
 
 }
 // 645编程列表
-int fc_fun_11_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_11_645(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint8_t *p = des;
     uint8_t i,num = 0;
@@ -1459,7 +1433,7 @@ int fc_fun_11_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
 }
 
 // 月度用电量 2031  
-int fc_fun_12_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
+int fc_fun_12_645(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, uint8_t* src, enum format_conversion_mode mode, struct format_conversion_t *fc)
 {
     uint8_t *p = des;
     uint8_t i,num = 0;
@@ -1494,9 +1468,8 @@ int fc_fun_12_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_sr
 
 
 // 电能数据 存储和协议转换  
-int fc_fun_Energy_645(struct instance_t* instance, uint32_t oad_req, uint32_t oad_src,uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
+int fc_fun_Energy_645(void *instance, uint32_t oad_req, uint32_t oad_src,uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     uint8_t i, /*type,*/ attr, index, index_src,  /*len, */block_num = (4+1);
     uint16_t oi;
@@ -1669,7 +1642,7 @@ const struct format_conversion_t format_conversion_tab_645[] =
 //    RFC_GET_ORIGINAL_LEN,//获取原协议格式len
 //    RFC_GET_STORE_LEN,   //获取存储格式len
 //
-int record_change_format_645(struct instance_t* instance, uint8_t *des,  uint8_t* src, uint32_t oad_req, uint32_t oad_src, enum format_conversion_mode mode)
+int record_change_format_645(void *instance, uint8_t *des,  uint8_t* src, uint32_t oad_req, uint32_t oad_src, enum format_conversion_mode mode)
 {
     uint16_t i;
     uint8_t type, attr, index, len, block_num = (4+1);
@@ -1840,7 +1813,7 @@ int record_change_format_645(struct instance_t* instance, uint8_t *des,  uint8_t
 //返回1 为总累计次数    
 //返回2 为总累计时间
 //其他 -1
-int event_acc_number_times_DI_check(struct instance_t* instance, unsigned long ID)
+int event_acc_number_times_DI_check(void *instance, unsigned long ID)
 {
      //合法性外部已判断
     union dl645_DI_t DI;
@@ -1855,31 +1828,6 @@ int event_acc_number_times_DI_check(struct instance_t* instance, unsigned long I
 
     switch(ID)
     {
-#if 0    
-        
-
-
-        case 0x03300A00://无功组合1编程
-        case 0x03300B00://无功组合2编程
-        case 0x03301200://秘钥更新
-        case 0x03301300://异常插卡
-        case 0x03301400://非法插卡
-        
-        case 0x03301000://阶梯表编程
-        case 0x03300F00://费率表编程
-        case 0x03300E00://开端盖
-        case 0x03300D00://开盖
-        case 0x03300C00://结算日编程
-        case 0x03300900://有功组合方式编程
-        case 0x03300800://节假日编程
-        case 0x03300700://周休日编程
-        case 0x03300600://时区表编程
-        case 0x03300500://时段表编程
-        case 0x03300400://校时
-        case 0x03300300://事件清零
-        case 0x03300100://电表清零
-        case 0x03300000://编程记录
-#endif      
         case 0x03350000://恒定磁场
         case 0x03360000://负荷开关误动作
         case 0x03370000://电源异常
@@ -1915,7 +1863,7 @@ int event_acc_number_times_DI_check(struct instance_t* instance, unsigned long I
 
 
 //获取冻结模式字
-uint8_t get_freeze_mode(struct instance_t* instance,  uint8_t dlt645_id_d2)
+uint8_t get_freeze_mode(void *instance,  uint8_t dlt645_id_d2)
 {
     uint8_t mode;
     uint32_t s_addr = 0;
@@ -1995,7 +1943,7 @@ uint8_t get_freeze_shift_value(uint8_t index )
 }
 
 //读取单个冻结数据项时判断冻结模式字
-int freeze_mode_check_single_item(struct instance_t* instance,uint32_t ID)
+int freeze_mode_check_single_item(void *instance,uint32_t ID)
 {
     uint8_t i, mode = 0xFF, shift = 0xFF;
     union dl645_DI_t DI;
@@ -2128,7 +2076,7 @@ uint8_t check_capture_exist_645(uint32_t rcsd_req, uint32_t rcsd_src)
 //协议列选打包    rcsd_req:列选oad，   rcsd_src:原关联对象oad，   
 //mode:0，不拷贝数据，只计算长度   1，  解析数据，并返回长度 
 //package_type,只有读块记录且需要间隔符时，才需置1。
-int _record_data_package_01_645(struct instance_t* instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src, uint8_t mode, uint16_t *capture_645len,  uint32_t  ID)
+int _record_data_package_01_645(void *instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src, uint8_t mode, uint16_t *capture_645len,  uint32_t  ID)
 {
     
     uint32_t i, k,z, n;
@@ -2261,18 +2209,18 @@ int _record_data_package_01_645(struct instance_t* instance,  uint8_t *des, uint
 }
 
 //获取协议列选打包长度   rcsd_req:列选oad，   rcsd_src:原关联对象oad，   mode:0，不拷贝数据，只计算长度。  1，  解析数据，并返回长度 
-int get_package_01_len_645(struct instance_t* instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src,  uint16_t *capture_645len,  uint32_t  ID)
+int get_package_01_len_645(void *instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src,  uint16_t *capture_645len,  uint32_t  ID)
 {
     return _record_data_package_01_645(instance,  des, src, rcsd_req, rcsd_src, 0,  capture_645len,    ID);
 }
 
 //协议列选打包   rcsd_req:列选oad，   rcsd_src:原关联对象oad，   mode:0，不拷贝数据，只计算长度。  1，  解析数据，并返回长度 
-int record_package_01_645(struct instance_t* instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src,  uint16_t *capture_645len,  uint32_t  ID)
+int record_package_01_645(void *instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src,  uint16_t *capture_645len,  uint32_t  ID)
 {
     return _record_data_package_01_645(instance,  des, src, rcsd_req, rcsd_src, 1,  capture_645len,    ID);
 }
 //数据未产生，补0.
-int record_response_null_645(struct instance_t* instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src, uint16_t *capture_645len,  uint32_t ID)
+int record_response_null_645(void *instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src, uint16_t *capture_645len,  uint32_t ID)
 {
     union dl645_DI_t DI;
     int one_len = 0;
@@ -2307,7 +2255,7 @@ int record_response_null_645(struct instance_t* instance,  uint8_t *des, uint8_t
 }
 
 //645读记录型数据打包
-int record_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,  struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t *capture_645len,  uint8_t  package_type,   void *ctx)
+int record_data_package645(void *instance, uint32_t ID, uint8_t* buf,  struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t *capture_645len,  uint8_t  package_type,   void *ctx)
 {
 #ifndef WIN32
 
@@ -2317,7 +2265,7 @@ int record_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* bu
 
     struct circular_info_t circular_info = {0};
     uint32_t *rcsd_req = (uint32_t *)rcsd_info; 
-    uint8_t *ptr_tmp = instance->apdu_cache + 500;    
+    uint8_t *ptr_tmp = nd_fr698_apdu_cache(instance) + 500;    
     uint32_t rcsd_src[50] = {0};
     uint16_t i, read_num, number = 0;
     uint16_t judge_size, one_len = 0,len = 0;
@@ -2493,7 +2441,7 @@ int record_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* bu
 }
 
 
-int record_data_package645_packageAA(struct instance_t* instance, uint8_t* dest, uint8_t* src, uint16_t datalen, uint32_t ID,struct record_storage_645_id_info_t  *info)
+int record_data_package645_packageAA(void *instance, uint8_t* dest, uint8_t* src, uint16_t datalen, uint32_t ID,struct record_storage_645_id_info_t  *info)
 {
     uint8_t i, mode = 0xFF, shift = 0xFF, index_num = info->package_num;
     uint16_t  dest_single_len = 0, src_single_len = 0;
@@ -2548,7 +2496,7 @@ int record_data_package645_packageAA(struct instance_t* instance, uint8_t* dest,
 
 //冻结、结算、事件记录读取
 // 返回0 正常应答        返回＞0 异常应答
-int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, uint8_t *tx_len)
+int read_05( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, uint8_t *tx_len)
 {
     union dl645_DI_t DI;
     struct record_storage_645_id_info_t  info;
@@ -2557,7 +2505,7 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     uint16_t rcsd_645len[51] = {0};
     struct rsd_info_t rsd_info;
     int total_len = 0, data_len = 0;
-    uint8_t *ptr_tmp = instance->apdu_cache;
+    uint8_t *ptr_tmp = nd_fr698_apdu_cache(instance);
     uint8_t di1_index = 0;
 
     uint8_t *p_err = (p_tx - 4);
@@ -2817,11 +2765,11 @@ int read_05( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
 }
 
 // -1 无数据
-int load_search_copy_first_time(struct instance_t* instance, uint8_t *buf, struct load_rsd_info_t *load_rsd_info, struct record_storage_645_id_info_t  *info)
+int load_search_copy_first_time(void *instance, uint8_t *buf, struct load_rsd_info_t *load_rsd_info, struct record_storage_645_id_info_t  *info)
 {
     uint32_t start_sec = 0, first_sec = 0, spec_sec = 0, end_sec = 0, cur_sec = 0, tmp_sec = 0;  
     struct circular_info_t circular_info = {0};
-    uint8_t *ptr_tmp = buf;//instance->apdu_cache;  
+    uint8_t *ptr_tmp = buf;//nd_fr698_apdu_cache(instance);  
     uint8_t tmpbuf[100];
     int ret = 0, orig_len = 0;
 
@@ -2850,7 +2798,7 @@ int load_search_copy_first_time(struct instance_t* instance, uint8_t *buf, struc
 
     start_sec = 0; //负荷记录起始时间         默认0
     
-    cur_sec = rtc_mktime(&instance->time); //系统当前时间
+    cur_sec = rtc_mktime(nd_fr698_time(instance)); //系统当前时间
     
     spec_sec = load_rsd_info->rsd_info.start_mark; //指定 
 
@@ -2928,7 +2876,7 @@ int load_search_copy_first_time(struct instance_t* instance, uint8_t *buf, struc
 }
 
 //新负荷记录补数据.  src_buf 缓存长度 大于1500字节
-int load_response_fill_645(struct instance_t* instance,  uint8_t *des, uint8_t *src_buf, uint32_t *rcsd_req, uint32_t *rcsd_src, uint16_t *capture_645len,  uint32_t ID, struct circular_info_t fill_info)
+int load_response_fill_645(void *instance,  uint8_t *des, uint8_t *src_buf, uint32_t *rcsd_req, uint32_t *rcsd_src, uint16_t *capture_645len,  uint32_t ID, struct circular_info_t fill_info)
 {
     union dl645_DI_t DI;
     int one_len = 0;
@@ -2985,7 +2933,7 @@ int load_response_fill_645(struct instance_t* instance,  uint8_t *des, uint8_t *
     return (int)(p-des);
 }
 
-int search_load_scheme_No(struct instance_t* instance, uint32_t rcsd_req, uint8_t *scheme, uint32_t *period_sec, struct record_storage_645_id_info_t  *info)
+int search_load_scheme_No(void *instance, uint32_t rcsd_req, uint8_t *scheme, uint32_t *period_sec, struct record_storage_645_id_info_t  *info)
 {
     struct circular_info_t circular_info = {0};
     uint8_t i,k,scheme_no = 0;
@@ -3026,7 +2974,7 @@ int search_load_scheme_No(struct instance_t* instance, uint32_t rcsd_req, uint8_
 
 
 //645读负荷数据
-int load_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,  struct load_rsd_info_t *load_rsd_info, struct record_storage_645_id_info_t *record_id_info, uint32_t *rcsd_info, uint16_t *capture_645len,  uint8_t  package_type,  struct context_645_t* ctx)
+int load_data_package645(void *instance, uint32_t ID, uint8_t* buf,  struct load_rsd_info_t *load_rsd_info, struct record_storage_645_id_info_t *record_id_info, uint32_t *rcsd_info, uint16_t *capture_645len,  uint8_t  package_type,  struct context_645_t* ctx)
 {
 #ifndef WIN32
 
@@ -3034,7 +2982,7 @@ int load_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,
 
     struct circular_info_t circular_info = {0};
     uint32_t *rcsd_req = (uint32_t *)rcsd_info; 
-    uint8_t *ptr_tmp = instance->apdu_cache + 500;    
+    uint8_t *ptr_tmp = nd_fr698_apdu_cache(instance) + 500;    
     uint32_t rcsd_src[50] = {0};
     uint16_t i, read_num, number = 0;
     uint16_t judge_size, one_len = 0,len = 0;
@@ -3166,12 +3114,6 @@ int load_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,
         if (rsd_info->interval > 0)
         {
             value = get_interval_basic_value(ptr_tmp, rsd_info);
-#if 0
-            if (number == 0)
-            {
-                circular_info.start_mark = value;
-            }
-#endif            
             if (value == circular_info.start_mark)
             {
                 one_len = record_package_01_645(instance, p+len, ptr_tmp, rcsd_req, rcsd_src, capture_645len,  ID);
@@ -3229,7 +3171,7 @@ int load_data_package645(struct instance_t* instance, uint32_t ID, uint8_t* buf,
 //新负荷记录读取
 // 返回0 正常应答        返回＞0 异常应答
 
-int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, uint8_t *tx_len, struct context_645_t* ctx)
+int read_06( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
     union dl645_DI_t DI;
     struct record_storage_645_id_info_t  info;
@@ -3239,7 +3181,7 @@ int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     struct rsd_info_t rsd_info;
     struct load_rsd_info_t load_rsd_info;
     int total_len = 0, data_len = 0;
-    uint8_t *ptr_tmp = instance->apdu_cache; //至少保证 500字节
+    uint8_t *ptr_tmp = nd_fr698_apdu_cache(instance); //至少保证 500字节
     uint8_t di0_index = 0;
 
     uint8_t *p_err = (p_tx - 4);
@@ -3267,15 +3209,6 @@ int read_06( struct instance_t* instance, unsigned long ID , uint8_t *p_rx, uint
     }
 
     // ---------------------
-#if 0    
-    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LoadRec_Mode); //读取负荷模式字
-    nd_get_index(instance, addr, &temp, 1); 
-    info.mark_para = temp;
-    if(0 == (info.mark_para & (1 << info.mark_bit)))
-    {
-        return response_x_byte_err_645(p_err, RS_ERR_ID, 1,  tx_len);
-    }
-#endif
     // -------------------- --------------------
     if((!info.rd_645obj_len)||(!info.rd_645obj)||(info.rd_645obj[0] > 50))
     {

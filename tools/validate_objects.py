@@ -2,6 +2,7 @@
 """Check every OBIS instance for missing Blue Book attribute IDs."""
 import csv
 import importlib.util
+import sys
 from collections import defaultdict
 
 spec = importlib.util.spec_from_file_location('v', 'tools/validate_bluebook.py')
@@ -43,7 +44,8 @@ def main():
         for ob, ic, ver, missing, missing_methods, obj in gaps:
             f.write(f'- `{ob}` IC {ic} v{ver} {obj} 缺属性 {missing}，缺强制方法 {missing_methods}\n')
     print(f'{len(gaps)} objects with missing attributes -> {OUT}')
+    return 1 if gaps else 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

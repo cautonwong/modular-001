@@ -16,6 +16,9 @@ struct nd_demand {
     uint32_t slide[];
 };
 
+_Static_assert(_Alignof(struct nd_demand) <= ND_ALLOC_ALIGNMENT,
+               "demand needs more alignment than the allocator port promises");
+
 static uint32_t magnitude(int32_t value)
 {
     return value < 0 ? (uint32_t)(-(value + 1)) + 1u : (uint32_t)value;

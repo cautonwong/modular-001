@@ -1,0 +1,30 @@
+#ifndef ND_APPLICATION_PORTS_RECORD_STORAGE_H
+#define ND_APPLICATION_PORTS_RECORD_STORAGE_H
+
+#include <stdint.h>
+
+enum nd_record_format_mode {
+    ND_RECORD_WRITE = 0,
+    ND_RECORD_READ,
+    ND_RECORD_GET_ORIGINAL_LEN,
+    ND_RECORD_GET_STORE_LEN,
+};
+
+typedef struct nd_record_storage_port {
+    void *ctx;
+    int (*save_index)(void *ctx, uint32_t oad, uint32_t *index);
+    int (*change_format)(void *ctx, uint8_t *des, const uint8_t *src,
+                         uint32_t oad_req, uint32_t oad_src, int mode);
+    int (*clear_program_list)(void *ctx, void *pipeline, void *mesg);
+    int (*trigger_645_record)(void *ctx, uint32_t di, uint8_t tag);
+} nd_record_storage_port_t;
+
+void nd_record_storage_bind(const nd_record_storage_port_t *port);
+int nd_record_storage_save_index(uint32_t oad, uint32_t *index);
+int nd_record_storage_change_format(uint8_t *des, const uint8_t *src,
+                                    uint32_t oad_req, uint32_t oad_src,
+                                    int mode);
+int nd_record_storage_clear_program_list(void *pipeline, void *mesg);
+int nd_record_storage_trigger_645_record(uint32_t di, uint8_t tag);
+
+#endif

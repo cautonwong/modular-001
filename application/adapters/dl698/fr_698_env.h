@@ -8,7 +8,6 @@
 
 struct tm;
 struct instance_t;
-struct pipeline_t;
 struct nd_dl698_msg;
 
 /* Legacy services the adapter consumes; implemented by kernel or target. */
@@ -26,25 +25,38 @@ void *get_pipeline_ctx(struct instance_t *instance, uint8_t pipeline_id);
 
 #ifndef n_assert
 #define n_assert(x) ((void)0)
+void *nd_instance_upgrade_info(void *instance);
+
+uint32_t nd_mesg_id(const void *mesg);
+
 #endif
 #ifndef log_info
 #define log_info(...) ((void)0)
+void *nd_instance_upgrade_info(void *instance);
+
+uint32_t nd_mesg_id(const void *mesg);
+
 #endif
 #ifndef log_hex
 #define log_hex(...) ((void)0)
+void *nd_instance_upgrade_info(void *instance);
+
+uint32_t nd_mesg_id(const void *mesg);
+
 #endif
 
-int update_plc_baut_tick(struct instance_t *instance,
-                         struct pipeline_t *pipeline,
+int update_plc_baut_tick(void *instance,
+                         void *pipeline,
                          struct nd_dl698_msg *mesg);
 void app_handle_mac_suspend(struct instance_t *instance, uint32_t oad);
-void fr_698_MeterWr_program_judge(struct instance_t *instance,
-                                  struct pipeline_t *pipeline,
+void fr_698_MeterWr_program_judge(void *instance,
+                                  void *pipeline,
                                   struct nd_dl698_msg *mesg);
 int16_t nd_size(struct instance_t *instance, uint8_t *buf, uint32_t id);
 
 struct tm *nd_fr698_time(struct instance_t *instance);
 uint8_t *nd_fr698_apdu_cache(struct instance_t *instance);
+void *nd_fr698_pipeline(void *instance);
 uint8_t *nd_fr698_power_state(struct instance_t *instance);
 uint8_t *nd_fr698_reset_flag(struct instance_t *instance);
 uint32_t nd_fr698_ms(struct instance_t *instance);
@@ -54,5 +66,9 @@ void *nd_fr698_pipeline_ctx(const void *pipeline);
 uint32_t nd_fr698_pipeline_id(const void *pipeline);
 void *nd_fr698_pipeline_in_queue(const void *pipeline);
 void *nd_fr698_pipeline_out_queue(const void *pipeline);
+
+void *nd_instance_upgrade_info(void *instance);
+
+uint32_t nd_mesg_id(const void *mesg);
 
 #endif

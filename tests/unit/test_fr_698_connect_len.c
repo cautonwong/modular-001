@@ -29,43 +29,43 @@ void *nd_fr698_pipeline_ctx(const void *pipeline)
     return ((const struct pipeline_t *)pipeline)->ctx;
 }
 
-uint32_t (*nd_mb_connect_timeout_ptr(struct instance_t *unused))[2]
+uint32_t (*nd_mb_connect_timeout_ptr(void *unused))[2]
 {
     (void)unused;
     return connect_timeout;
 }
 
-uint32_t (*nd_mb_esam_connect_timeout_ptr(struct instance_t *unused))[2]
+uint32_t (*nd_mb_esam_connect_timeout_ptr(void *unused))[2]
 {
     (void)unused;
     return esam_connect_timeout;
 }
 
-uint8_t (*nd_mb_connect_status_ptr(struct instance_t *unused))[2]
+uint8_t (*nd_mb_connect_status_ptr(void *unused))[2]
 {
     (void)unused;
     return connect_status;
 }
 
-uint32_t (*nd_mb_connect_timeout_cnt_ptr(struct instance_t *unused))[2]
+uint32_t (*nd_mb_connect_timeout_cnt_ptr(void *unused))[2]
 {
     (void)unused;
     return connect_timeout_cnt;
 }
 
-uint8_t *nd_mb_current_connect_channel_ptr(struct instance_t *unused)
+uint8_t *nd_mb_current_connect_channel_ptr(void *unused)
 {
     (void)unused;
     return current_connect_channel;
 }
 
-uint8_t *nd_mb_clientaddr_ptr(struct instance_t *unused)
+uint8_t *nd_mb_clientaddr_ptr(void *unused)
 {
     (void)unused;
     return client_addr;
 }
 
-uint32_t *nd_mb_term_auth_timeout_ptr(struct instance_t *unused)
+uint32_t *nd_mb_term_auth_timeout_ptr(void *unused)
 {
     (void)unused;
     return &term_auth_timeout;
@@ -99,7 +99,7 @@ void ndv_memcopy(void *unused, void *unused2, uint16_t unused3)
     (void)unused3;
 }
 
-int read_esam_info(struct instance_t *unused, uint8_t *unused2,
+int read_esam_info(void *unused, uint8_t *unused2,
                    uint8_t unused3)
 {
     (void)unused;
@@ -108,7 +108,7 @@ int read_esam_info(struct instance_t *unused, uint8_t *unused2,
     return 0;
 }
 
-int esam_consult_key(struct instance_t *unused, uint8_t unused2, uint8_t *unused3)
+int esam_consult_key(void *unused, uint8_t unused2, uint8_t *unused3)
 {
     (void)unused;
     (void)unused2;

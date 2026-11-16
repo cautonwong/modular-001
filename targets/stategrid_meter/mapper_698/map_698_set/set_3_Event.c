@@ -1,16 +1,16 @@
-#include "nidavellir.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
+#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
 #include "fr_645_report.h"
 #include "cpu_surport.h"
-#include "domain/events/legacy/gs_record.h"
-#include "domain/freeze/legacy/freeze_applications.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
+#include "targets/stategrid_meter/app/freeze/freeze_applications.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
 
 // 设置事件上报标识或上报方式   mode  0: 上报标识      1:上报方式 (无tag)
-int set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t value, uint8_t mode)
+int set_event_report_flag_mode(void *instance, uint32_t oad, uint8_t value, uint8_t mode)
 {
     struct record_storage_id_info_t  record_id_info;
     int ret;
@@ -54,7 +54,7 @@ int set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_
 
 
 // 698协议 设置事件上报标识或上报方式   mode  0: 上报标识      1:上报方式
-int fr_set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t mode)
+int fr_set_event_report_flag_mode(void *instance, uint32_t oad, uint8_t* buf, uint8_t mode)
 {
     uint8_t tempbuf[20] = { 0 };
     uint8_t* p = buf;
@@ -88,9 +88,8 @@ int fr_set_event_report_flag_mode(struct instance_t* instance, uint32_t oad, uin
 
 
 // 设置事件关联对象
-int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
+int set_event_obj(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     uint8_t i, num, maxnum, Schem;
     uint8_t tempbuf[200]; //oadlist
@@ -100,7 +99,7 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
     uint16_t CaptureLen;
 //    uint32_t CaptureId;
     uint32_t oad_tmp;
-    uint8_t* apdu_cache = instance->apdu_cache; 
+    uint8_t* apdu_cache = nd_fr698_apdu_cache(instance); 
 
     struct record_storage_id_info_t  info;
     int ret;
@@ -111,7 +110,7 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
         return -DAR_RW_REJECT;
     }
 
-    if ((get_OAD_OI(oad) == 0x3013) && ( nd_mbase_key_state(mbase_cb) == false ))
+    if ((get_OAD_OI(oad) == 0x3013) && ( nd_mb_key_state(instance) == false ))
     {
         *dar = DAR_RW_REJECT;
         return -DAR_RW_REJECT;
@@ -183,9 +182,8 @@ int set_event_obj(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8
     return (p - buf);
 }
 
-int set_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
+int set_struct_event_para_t(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
-    struct mbase_control_block_t* mbase_cb= (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     struct event_para_pack_t para_pack;
     uint8_t* p;
     int16_t ret;
@@ -259,9 +257,9 @@ int set_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
     
     // 事件参数 全部更新
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    nd_mbase_offset_OverCurrent_threshold());
-    s_len = nd_mbase_offset_ZeroLineErrS_duration_para() - nd_mbase_offset_OverCurrent_threshold() + sizeof(nd_mbase_ZeroLineErrS_duration_para(mbase_cb));
-    nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_OverCurrent_threshold(mbase_cb), s_len);  
+    nd_mb_offset_over_current_threshold());
+    s_len = nd_mb_offset_zero_line_errs_duration_para() - nd_mb_offset_over_current_threshold() + sizeof(nd_mb_zero_line_errs_duration_para(instance));
+    nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_over_current_threshold(instance), s_len);  
     
     
     *dar = DAR_SUCCESS;
@@ -270,17 +268,15 @@ int set_struct_event_para_t(struct instance_t* instance, uint32_t oad, uint8_t* 
 
 
 
-int SET_3_Event(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
+int SET_3_Event(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
-    struct mbase_control_block_t* mbase_cb;
     uint8_t* p = buf;
 //    uint8_t tempbuf[200];
 //    uint8_t *des = tempbuf;
     uint16_t OI;
     uint8_t attr, class;
     uint8_t dar = 0;
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    if(mbase_cb == NULL)
+    if(!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }

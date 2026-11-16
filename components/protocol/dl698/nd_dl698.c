@@ -1,15 +1,6 @@
 #include "components/protocol/dl698/nd_dl698.h"
-struct pipeline_t {
-    uint8_t id;
-    char *name;
-    void *ctx;
-    void *in_queue;
-    void *out_queue;
-    int (*on_work)(struct instance_t *instance, struct pipeline_t *pipeline,
-                   struct message_t *mesg);
-    size_t filter_n;
-    const void *filters;
-};
+#include "application/ports/legacy_uart_timeout.h"
+#include "application/ports/legacy_pipeline.h"
 
 
 #include <string.h>

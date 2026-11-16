@@ -3,6 +3,7 @@
 #include "application/adapters/dl698/fr_698_env.h"
 struct instance_t;
 #include "fr_698.h"
+#include "fr_698_internal.h"
 #include "fr_698_esam.h"
 #include "parameter_port.h"
 #include "application/adapters/dl698/fr_698_esam.h"
@@ -52,7 +53,7 @@ int fr_security_request(struct instance_t* instance, struct pipeline_t* pipeline
 }
 
 
-int fr_698_esam_plain_read_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index, uint32_t oad)
+static int fr_698_esam_plain_read_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index, uint32_t oad)
 {
     if ((0 == nd_mb_auth_on(instance)) || (true == fr_698_current_connect_status_get(instance, pipeline, client_index))) //身份认证未启用或当前客户机应用链接状态
     {
@@ -68,7 +69,7 @@ int fr_698_esam_plain_read_check(struct instance_t* instance, struct pipeline_t*
 }
 
 //红外通道 认证检查
-int fr_infrared_auth_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cmd, uint32_t oad)
+static int fr_infrared_auth_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cmd, uint32_t oad)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     if (ctx->channel != FR_698_CHL_IR || (nd_mb_infrared_auth_timeout(instance) != 0) || (nd_mb_factor_mode(instance) == true))
@@ -121,7 +122,7 @@ int fr_infrared_auth_check(struct instance_t* instance, struct pipeline_t* pipel
 
 #if 1
 
-int __explicit_security_mode(struct instance_t*, struct pipeline_t*, uint16_t oi, uint16_t* mode, uint8_t* tmp_buf)
+static int __explicit_security_mode(struct instance_t*, struct pipeline_t*, uint16_t oi, uint16_t* mode, uint8_t* tmp_buf)
 {
     uint8_t* tmp, i, count, maxnum;
     uint16_t oi2;
@@ -162,7 +163,7 @@ int __explicit_security_mode(struct instance_t*, struct pipeline_t*, uint16_t oi
 
 
 
-uint16_t __security_mode_word_get(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, uint8_t* tmp_buf)
+static uint16_t __security_mode_word_get(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, uint8_t* tmp_buf)
 {
     uint8_t flag = 0;
     uint16_t oi;

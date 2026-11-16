@@ -1,5 +1,6 @@
 #include "nidavellir.h"
 #include "resource_tool.h"
+#include "targets/stategrid_meter/app/metering/metering_applications.h"
 #include "infra/kernel/resource_blocks.h"
 #include "kernel/legacy_control_block.h"
 
@@ -36,10 +37,27 @@ int16_t verify_data(struct instance_t* instance, uint32_t addr, uint16_t offset,
     uint8_t s_buf[128];
 
     driver = dev->dev_driver_ops;
+    if (len < 2) {
+        return -1;
+    }
     if (len <= 128)  //小于128字节
     {
+        uint16_t copy = 0;
+
         res_conditions_true(0x00 > driver->dev_read(instance, dev, addr, len, s_buf), -1);
-        memcpy(buf, s_buf + offset, size);
+        if (offset < len && offset < sizeof(s_buf)) {
+            copy = (uint16_t)(sizeof(s_buf) - offset);
+            if (copy > len - offset) {
+                copy = (uint16_t)(len - offset);
+            }
+            if (copy > size) {
+                copy = size;
+            }
+            memcpy(buf, s_buf + offset, copy);
+        }
+        if (copy < size) {
+            memset(buf + copy, 0, (size_t)(size - copy));
+        }
         checksum += do_sum(s_buf, len - 0x02);
         rchecksum = ((uint16_t)s_buf[len - 0x02] << 8);
         rchecksum += s_buf[len - 0x01];
@@ -112,10 +130,21 @@ int16_t update_verify(struct instance_t* instance, uint32_t addr, uint16_t offse
     uint8_t s_buf[128];
 
     driver = dev->dev_driver_ops;
+    if (len < 2) {
+        return -1;
+    }
     if (len <= 128)  //小于128字节
     {
+        uint16_t copy = 0;
+
         res_conditions_true(0x00 > driver->dev_read(instance, dev,addr,len,s_buf), -1);
-        memcpy(s_buf + offset, buf, size);
+        if (offset < sizeof(s_buf)) {
+            copy = (uint16_t)(sizeof(s_buf) - offset);
+            if (copy > size) {
+                copy = size;
+            }
+            memcpy(s_buf + offset, buf, copy);
+        }
         checksum += do_sum(s_buf, len - 0x02);
         s_buf[len - 0x02] = (uint8_t)(checksum >> 8);
         s_buf[len - 0x01] = (uint8_t)checksum;
@@ -996,8 +1025,9 @@ int16_t nd_log_append_revise(struct instance_t* instance, uint32_t index, uint8_
     return unit_size;
 }
 
-int16_t nd_log_output(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t buf_size, struct circular_info_t* info)
+int16_t nd_log_output(void *ctx, uint32_t index, uint8_t* buf, uint16_t buf_size, struct circular_info_t* info)
 {
+    struct instance_t *instance = (struct instance_t *)ctx;
     struct block_device_t* device01 = NULL, * device02 = NULL;
     const struct driver_ops_t* driver01 = NULL, * driver02 = NULL;
     struct resource_block_t* block01 = NULL, * block02 = NULL;
@@ -1274,8 +1304,9 @@ int16_t __nd_get_index(struct instance_t* instance, uint32_t index, uint8_t* buf
 
 
 
-int16_t nd_get_index(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t size)
+int16_t nd_get_index(void *ctx, uint32_t index, uint8_t* buf, uint16_t size)
 {
+    struct instance_t *instance = (struct instance_t *)ctx;
     int ret = 0;
     uint8_t block_name = (uint8_t)(index >> 16);
     
@@ -1315,8 +1346,9 @@ int16_t __nd_set_index(struct instance_t* instance, uint32_t index, uint8_t* buf
 }
 
 
-int16_t nd_set_index(struct instance_t* instance, uint32_t index, uint8_t* buf, uint16_t size)
+int16_t nd_set_index(void *ctx, uint32_t index, uint8_t* buf, uint16_t size)
 {
+    struct instance_t *instance = (struct instance_t *)ctx;
     int ret = 0;
     uint8_t block_name = (uint8_t)(index >> 16);
 
@@ -1331,8 +1363,9 @@ int16_t nd_set_index(struct instance_t* instance, uint32_t index, uint8_t* buf, 
     return ret;
 }
 
-int16_t nd_get_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf, uint16_t len)
+int16_t nd_get_offset(void *ctx, uint32_t offset, uint8_t* buf, uint16_t len)
 {
+    struct instance_t *instance = (struct instance_t *)ctx;
     struct block_device_t* device = NULL;
     const struct driver_ops_t* driver = NULL;
     struct resource_block_t* block = NULL;
@@ -1352,35 +1385,6 @@ int16_t nd_get_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf
 
     return len;
 }
-
-uint32_t do_checksum(uint8_t *buf, uint16_t len)
-{
-    uint16_t i, checksum = 0xA5A5;
- 
-    for (i = 0; i < len; i++)
-    {
-        checksum += *(buf+i);
-    }
-    return checksum;   
-}
-
-
-uint32_t do_block_static_checksum(struct instance_t* instance)
-{
-    uint8_t *buff;
-    uint16_t len;
-    struct mbase_control_block_t* mbase_cb;
-    
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    
-    buff = &mbase_cb->static_section_start + 1; // 是否有字节对齐的问题？  待调整 
-
-    len = (uint16_t)((uint8_t *)(&mbase_cb->static_chksum) - buff);
-    
-    return do_checksum(buff, len);
-}
-
-
 
 int16_t __nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf, uint16_t len)
 {
@@ -1406,8 +1410,9 @@ int16_t __nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* b
 
 
 
-int16_t nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf, uint16_t len)
+int16_t nd_set_offset(void *ctx, uint32_t offset, uint8_t* buf, uint16_t len)
 {
+    struct instance_t *instance = (struct instance_t *)ctx;
     struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t chkaddr = 0x00,end_addr=0;
     uint16_t checksum = 0;
@@ -1453,16 +1458,18 @@ int16_t nd_set_offset(struct instance_t* instance, uint32_t offset, uint8_t* buf
 
 
 
-int16_t nd_get_index_e2p(struct instance_t* instance, uint8_t* buf, uint8_t block_name,  uint16_t id, uint16_t len)
+int16_t nd_get_index_e2p(void *ctx, uint8_t* buf, uint8_t block_name,  uint16_t id, uint16_t len)
 {
+    struct instance_t *instance = (struct instance_t *)ctx;
     uint32_t s_index = 0;
     
     s_index = ((RES_DEV_EEPROM << 24) + (block_name << 16) + id);
     return nd_get_index(instance, s_index, buf, len); 
 }
 
-int16_t nd_set_index_e2p(struct instance_t* instance, uint8_t* buf, uint8_t block_name,  uint16_t id, uint16_t len)
+int16_t nd_set_index_e2p(void *ctx, uint8_t* buf, uint8_t block_name,  uint16_t id, uint16_t len)
 {
+    struct instance_t *instance = (struct instance_t *)ctx;
     uint32_t s_index = 0;
     
     s_index = ((RES_DEV_EEPROM << 24) + (block_name << 16) + id);
@@ -1473,8 +1480,9 @@ int16_t nd_set_index_e2p(struct instance_t* instance, uint8_t* buf, uint8_t bloc
 
 //addr_offset为偏移地址
 //check_erase  0,跨页不擦除，其他     跨页擦除 
-int16_t nd_set_offset_flash(struct instance_t* instance, uint8_t blockname, uint32_t addr_offset, uint8_t* buf, uint16_t len, uint8_t check_erase)
+int16_t nd_set_offset_flash(void *ctx, uint8_t blockname, uint32_t addr_offset, uint8_t* buf, uint16_t len, uint8_t check_erase)
 {
+    struct instance_t *instance = (struct instance_t *)ctx;
     struct block_device_t* device = NULL;
     const struct driver_ops_t* driver = NULL;
     struct resource_block_t* block = NULL;
@@ -1505,8 +1513,9 @@ int16_t nd_set_offset_flash(struct instance_t* instance, uint8_t blockname, uint
     return len;
 }
 
-int16_t nd_get_offset_flash(struct instance_t* instance, uint8_t blockname, uint32_t addr_offset,  uint8_t* buf, uint16_t len)
+int16_t nd_get_offset_flash(void *ctx, uint8_t blockname, uint32_t addr_offset,  uint8_t* buf, uint16_t len)
 {
+    struct instance_t *instance = (struct instance_t *)ctx;
     struct block_device_t* device = NULL;
     const struct driver_ops_t* driver = NULL;
     struct resource_block_t* block = NULL;

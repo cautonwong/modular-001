@@ -1,10 +1,9 @@
-#include "nidavellir.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
+#include "application/adapters/dl698/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_esam.h"
-#include "domain/tariff/legacy/tariff_applications.h"
+#include "targets/stategrid_meter/app/tariff/tariff_applications.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
 
 const uint8_t messagebuf1[8] = {0xff,0xff,0xff,0xff,0xfc, 0x00, 0x00, 0x00};
 const uint8_t messagebuf2[16] = {0xff,0xfe,0xc4,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
@@ -67,7 +66,7 @@ const general_get4  general_get4_talble[] =
 };
 #define		get4num			sizeof(general_get4_talble)/sizeof(general_get4)
 
-int get_support_protocol_list(struct instance_t* instance, uint32_t id, uint8_t* buf)
+int get_support_protocol_list(void *instance, uint32_t id, uint8_t* buf)
 {
     uint8_t* p = buf;
     uint32_t addr = 0;
@@ -82,7 +81,7 @@ int get_support_protocol_list(struct instance_t* instance, uint32_t id, uint8_t*
     //tmp1 = res->tmp_buf;
     //tmp2 = tmp1 + 100;
 
-    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Protocol_List);
+    addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Protocol_List);
     nd_get_index(instance, addr, tmp2, 76); 
 
 
@@ -140,7 +139,7 @@ int get_support_protocol_list(struct instance_t* instance, uint32_t id, uint8_t*
 }
 
 
-int get4300_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
+int get4300_para(void *instance, uint32_t id, uint8_t* buf)
 {
     uint16_t idl=0, tmpid1;
     uint8_t j, i, tmpbuf[13] = {0}, num, Tnum;
@@ -164,7 +163,7 @@ int get4300_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
             {
                 *p++ = get4300_table[i].len;
             }
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + get4300_table[i].s_index);
+            addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + get4300_table[i].s_index);
             nd_get_index(instance, addr, p, get4300_table[i].len); 
             p = p + get4300_table[i].len;
             return (p-buf);
@@ -176,7 +175,7 @@ int get4300_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
     {
         *p++ = TYPE_visible_string;
         *p++ = 32;
-        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Device_descriptor);
+        addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Device_descriptor);
         nd_get_index(instance, addr, p, 32); 
         //num = p[0];
         p = p + 32;
@@ -196,7 +195,7 @@ int get4300_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
                 {
                     *p++ = TYPE_visible_string;
                     *p++ = get4300_table[i].len;
-                    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + get4300_table[i].s_index);
+                    addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + get4300_table[i].s_index);
                     nd_get_index(instance, addr, p, get4300_table[i].len); 
                     p = p + get4300_table[i].len;
                 }
@@ -216,7 +215,7 @@ int get4300_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
     }
     else if(idl == 0x0A00)//上报通道
     {
-        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Report_channel);
+        addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Report_channel);
         ret = nd_get_index(instance, addr, tmpbuf, 13); 
         num = tmpbuf[0];
         if(ret < 0)
@@ -240,9 +239,8 @@ int get4300_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
 }
 
 
-int general_get_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
+int general_get_4_para(void *instance, uint32_t id, uint8_t* buf)
 {
-//    struct mbase_control_block_t* mbase_cb;
     uint16_t oad,i;
     uint8_t attribute;
     uint8_t* p = buf;
@@ -253,7 +251,7 @@ int general_get_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
     {
         case 0x40132200: //编程前周休日时段表号
         {
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_WeekTab);
+            addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_WeekTab);
             nd_get_index(instance, addr, p, 2);
             p += 2;
             return (p-buf);
@@ -261,7 +259,7 @@ int general_get_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
             break;
         case 0x41122200: //编程前组合有功特征字
         {
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
+            addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
             nd_get_index(instance, addr, p, 3);
             p += 3;
             return (p-buf);
@@ -289,7 +287,7 @@ int general_get_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
             {
                 *p++ = general_get4_talble[i].len * 8;
             }
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + general_get4_talble[i].s_index);
+            addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + general_get4_talble[i].s_index);
             nd_get_index(instance, addr, p, general_get4_talble[i].len); 
             p = p + general_get4_talble[i].len;
             return (p-buf);
@@ -299,7 +297,7 @@ int general_get_4_para(struct instance_t* instance, uint32_t id, uint8_t* buf)
 }
 
 //读取应用语境 44000300
-int apply_context_element_get(struct instance_t* instance, uint8_t index, uint8_t* buf, struct connect_request_t *connect)
+int apply_context_element_get(void *instance, uint8_t index, uint8_t* buf, struct connect_request_t *connect)
 {
     uint8_t *p = buf;
 	uint32_t data;
@@ -347,9 +345,8 @@ int apply_context_element_get(struct instance_t* instance, uint8_t index, uint8_
 
 }
 
-int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void *ctx)
+int GET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
-    struct mbase_control_block_t* mbase_cb  = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     struct context_698_t* p_ctx = (struct context_698_t*)ctx;
     uint32_t addr = 0,s_index=0;
     uint16_t oad;
@@ -360,13 +357,13 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
     int ret;
     uint8_t channel = 0;
     
-    if((p_ctx)&&(p_ctx->channel < chl_NUM))
+    if((p_ctx)&&(p_ctx->channel < FR_698_CHL_NUM))
     {
         channel = p_ctx->channel;
     }
 
 
-    if(mbase_cb == NULL)
+    if(!nd_mb_valid(instance))
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -431,13 +428,13 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                         if((index == 0)||(index == 1))
                         {
                             *p++ = TYPE_long_unsigned;
-                            mem_swap_cpy(p, (uint8_t*)&nd_mbase_Limit_T_Min(mbase_cb), 2);
+                            mem_swap_cpy(p, (uint8_t*)&nd_mb_limit_t_min(instance), 2);
                             p = p + 2;
                         }
                         if((index == 0)||(index == 2))
                         {
                             *p++ = TYPE_long_unsigned;
-                            mem_swap_cpy(p, (uint8_t*)&nd_mbase_Limit_T_Max(mbase_cb), 2);
+                            mem_swap_cpy(p, (uint8_t*)&nd_mb_limit_t_max(instance), 2);
                             p = p + 2;
                         }
                     }
@@ -453,7 +450,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 case 0x42:
                 {
                     *p++ = TYPE_date_time_s;
-                    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
+                    addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
                     nd_get_index(instance, addr, p, 7);
                     p += 7;
                     return (p - buf);
@@ -463,7 +460,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 case 0x82:
                 {
                     *p++ = TYPE_date_time_s;
-                    addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
+                    addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
                     nd_get_index(instance, addr, p, 7);
                     p += 7;
                     return (p - buf);
@@ -485,7 +482,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             {
                 *p++ = TYPE_octet_string;
                 *p++ = 6;
-                mem_swap_cpy(p, nd_mbase_tsa(mbase_cb), 6);
+                mem_swap_cpy(p, nd_mb_tsa(instance), 6);
                 p = p + 6;
                 return (p - buf);
             }
@@ -505,7 +502,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 *p++ = TYPE_octet_string;
                 *p++ = 6;
                 //read_esam_no(instance, temp);
-                memcpy(p, nd_mbase_meterNo(mbase_cb), 6);
+                memcpy(p, nd_mb_meter_no(instance), 6);
                 p = p + 6;
                 return (p - buf);
             }
@@ -524,13 +521,13 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             {
                 *p++ = TYPE_structure;
                 *p++ = 0x03;
-                addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location1);
+                addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location1);
                 nd_get_index(instance, addr, p, 10); 
                 p = p + 10;
-                addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location2);
+                addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location2);
                 nd_get_index(instance, addr, p, 10); 
                 p = p + 10;
-                addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location3);
+                addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location3);
                 nd_get_index(instance, addr, p, 5); 
                 p = p + 5;
                 return (p-buf);
@@ -553,7 +550,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             else
                 return -DAR_OBJECT_NOT_EXIST;
             
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + s_index);
+            addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + s_index);
             nd_get_index(instance, addr, p, len); 
             p = p + len;
             return (p-buf);
@@ -567,13 +564,13 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             if(attribute == 0x02)
             {
                 uint32_t idbuf[] = {
-                (uint32_t)&nd_mbase_lcd_poweron_all_dis_time(mbase_cb),            //上电全显时间
-                (uint32_t)&nd_mbase_backlight_key_time(mbase_cb),                  //背光点亮时间
-                (uint32_t)&nd_mbase_lcd_checkdis_keep_sec(mbase_cb),               //显示查看背光点亮时间
-                (uint32_t)&nd_mbase_lcd_nopower_key_keep_sec(mbase_cb),            //无电按键驻留时间
-                (uint32_t)&nd_mbase_energy_point(mbase_cb),                        //电能小数显示位
-                (uint32_t)&nd_mbase_power_point(mbase_cb),                         //功率小数显示位
-                (uint32_t)&nd_mbase_lcd_12_mean(mbase_cb),                         //液晶12字样意义
+                (uint32_t)&nd_mb_lcd_poweron_all_dis_time(instance),            //上电全显时间
+                (uint32_t)&nd_mb_backlight_key_time(instance),                  //背光点亮时间
+                (uint32_t)&nd_mb_lcd_checkdis_keep_sec(instance),               //显示查看背光点亮时间
+                (uint32_t)&nd_mb_lcd_nopower_key_keep_sec(instance),            //无电按键驻留时间
+                (uint32_t)&nd_mb_energy_point(instance),                        //电能小数显示位
+                (uint32_t)&nd_mb_power_point(instance),                         //功率小数显示位
+                (uint32_t)&nd_mb_lcd_12_mean(instance),                         //液晶12字样意义
                 };
                 uint8_t lens[] = {1, 2, 2, 2, 1, 1, 1};
                 uint8_t tag[] = {TYPE_unsigned, TYPE_long_unsigned, TYPE_long_unsigned, TYPE_long_unsigned, TYPE_unsigned, TYPE_unsigned, TYPE_unsigned};
@@ -621,7 +618,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 for(i=0;i<5;i++)
                 {
                     *p++ = TYPE_unsigned;
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + i);
+                    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + i);
                     nd_get_index(instance, s_index, p, 1); 
                     p++;
                 }
@@ -630,7 +627,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             else
             {
                 *p++ = TYPE_unsigned;
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + (index - 1));
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + (index - 1));
                 nd_get_index(instance, s_index, p, 1); 
                 p++;
                 return (p-buf);
@@ -646,14 +643,14 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             if(index > MaxHolidayNum)    return -DAR_OBJECT_NOT_EXIST;
             if(index == 0)
             {
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 4);
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 4);
                 nd_get_index(instance, s_index, &num, 1);
                 if(num > MaxHolidayNum ) num = MaxHolidayNum;
                 *p++ = TYPE_array;
                 *p++ = num;
                 for(i=0;i<num;i++)
                 {
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + HoliDay_Table + i);
+                    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + HoliDay_Table + i);
                     nd_get_index(instance, s_index, temp, 6); 
                     
                     *p++ = TYPE_structure;
@@ -668,7 +665,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             else 
             {
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + HoliDay_Table + (index-1));
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + HoliDay_Table + (index-1));
                 nd_get_index(instance, s_index, temp, 6); 
                 
                 *p++ = TYPE_structure;
@@ -690,7 +687,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             if (id == 0x40152200) // 编程事件用
             {
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_SeasonT);
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_SeasonT);
                 ret = nd_get_index(instance, s_index, p, 114);
                 if ((ret < 0) || (p[1] > 14) || (p[0] != TYPE_array))// 错误
                 {
@@ -710,14 +707,14 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 addr = Season_Table1;
             if(index == 0)
             {
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para);
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para);
                 nd_get_index(instance, s_index, &num, 1);
                 if(num > MaxSeasonNum) num = MaxSeasonNum;
                 *p++ = TYPE_array;
                 *p++ = num;
                 for(i=0; i<num; i++)
                 {
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
+                    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
                     nd_get_index(instance, s_index, temp, 3);
                     *p++ = TYPE_structure;
                     *p++ = 3;
@@ -732,7 +729,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             else
             {
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
                 nd_get_index(instance, s_index, temp, 3);
                 *p++ = TYPE_structure;
                 *p++ = 3;
@@ -760,20 +757,20 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             if(index == 0)
             {
                 *p++ = TYPE_array;
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 1);//日时段表数
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 1);//日时段表数
                 nd_get_index(instance, s_index, p, 1);
                 num = *p++;
                 if(num > MaxTouTabNum)     num = MaxTouTabNum;
                 for(j=0;j<num;j++)//日时段表数
                 {
                     *p++ = TYPE_array;
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 2);//日时段数，每日切换数
+                    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 2);//日时段数，每日切换数
                     nd_get_index(instance, s_index, p, 1);
                     num_hourtab = *p++; 
                     
                     if(num_hourtab > MaxTouNum)     num_hourtab = MaxTouNum;
                     
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + j);
+                    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + j);
                     nd_get_index(instance, s_index, temp, 3*num_hourtab);
                     
                     for(i=0; i<num_hourtab; i++)
@@ -793,13 +790,13 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             else
             {
                 *p++ = TYPE_array;
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 2);//日时段数，每日切换数
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 2);//日时段数，每日切换数
                 nd_get_index(instance, s_index, p, 1);
                 num_hourtab = *p++; 
                 
                 if(num_hourtab > MaxTouNum)     num_hourtab = MaxTouNum;
                 
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
                 nd_get_index(instance, s_index, temp, 3*num_hourtab);
                 for(i=0; i<num_hourtab; i++)
                 {
@@ -820,7 +817,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             {
                 *p++ = 0x04;
                 *p++ = 0x08;
-                *p++ = nd_mbase_active_energy_cal_word(mbase_cb);
+                *p++ = nd_mb_active_energy_cal_word(instance);
                 return (p-buf);
             }
             else
@@ -834,7 +831,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             if (id == 0x41162200) // 编程事件用
             {
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Balance);
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Balance);
                 nd_get_index(instance, s_index, p, 20);
                 p += 20;
                 return (p-buf);
@@ -846,7 +843,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 *p++ = 3;
                 for(i=0;i<3;i++)
                 {
-                    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
+                    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
                     nd_get_index(instance, s_index, temp, 2); 
                     
                     *p++ = TYPE_structure;
@@ -860,7 +857,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
             }
             else if(index < 4)
             {
-                s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + (index-1));
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + (index-1));
                 nd_get_index(instance, s_index, temp, 2); 
                 
                 *p++ = TYPE_structure;
@@ -892,7 +889,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                 }
                 break;
                 case 0x03:
-                    if(0 != nd_mbase_connect_timeout(mbase_cb)[channel][cilent_index])
+                    if(0 != nd_mb_connect_timeout(instance)[channel][cilent_index])
                     {
                         ndv_memcopy(&connect, &cfg_connect, sizeof(cfg_connect));
                     }
@@ -932,9 +929,9 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     return (p-buf);
                 case 0x04://当前连接的客户机地址
                     *p++ = TYPE_unsigned;
-                    if(0 != nd_mbase_connect_timeout(mbase_cb)[channel][cilent_index])
+                    if(0 != nd_mb_connect_timeout(instance)[channel][cilent_index])
                     {
-                        *p++ = nd_mbase_clientaddr(mbase_cb)[channel];
+                        *p++ = nd_mb_clientaddr(instance)[channel];
                     }
                     else
                     {
@@ -945,7 +942,7 @@ int GET_4_Parameter(struct instance_t* instance, uint32_t id, uint8_t* buf, void
                     break;
                 case 0x05:
                     *p++ = TYPE_enum;
-                    if(0 != nd_mbase_connect_timeout(mbase_cb)[channel][cilent_index])
+                    if(0 != nd_mb_connect_timeout(instance)[channel][cilent_index])
                     {
                         ndv_memcopy(&connect, &cfg_connect, sizeof(cfg_connect));
                     }

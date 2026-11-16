@@ -20,6 +20,13 @@ SYSTEM_HEADERS = {"stdint.h", "stddef.h", "stdbool.h", "string.h"}
 FORBIDDEN_ALLOC = re.compile(r"\b(malloc|calloc|realloc|free|strdup)\s*\(")
 INCLUDE = re.compile(r'^\s*#\s*include\s*[<"]([^>"]+)[>"]')
 
+# docs/platform-layout.md §4: vendor sublayers see infra only, and a product
+# target never includes another product target (the shared host harness may).
+VENDOR_DIRS = ("infra/soc/", "infra/drivers/", "infra/boards/", "infra/rtos/",
+               "infra/third_party/")
+UPPER_LAYERS = ("application", "domain", "components", "targets")
+HARNESS_TARGET = "host"
+
 # Not yet split into bounded contexts. Remove entries as each module migrates.
 STAGING = ()
 
@@ -44,6 +51,8 @@ def main():
     for layer in LAYERS:
         for path in source_files(layer):
             rel = os.path.relpath(path, ROOT)
+            rel_posix = rel.replace(os.sep, "/")
+            owner = rel_posix.split("/", 2)[1] if rel_posix.startswith("targets/") else None
             with open(path, encoding="utf-8", errors="replace") as handle:
                 for number, line in enumerate(handle, 1):
                     match = INCLUDE.match(line)
@@ -60,6 +69,16 @@ def main():
                                 errors.append(
                                     f"{rel}:{number}: domain may not include {target}"
                                 )
+                        if rel_posix.startswith(VENDOR_DIRS) and first in UPPER_LAYERS:
+                            errors.append(
+                                f"{rel}:{number}: vendor layer may not include {target}"
+                            )
+                        if (layer == "targets" and owner != HARNESS_TARGET
+                                and first == "targets"
+                                and target.split("/", 2)[1] != owner):
+                            errors.append(
+                                f"{rel}:{number}: {owner} may not include {target}"
+                            )
                     if layer == "domain" and FORBIDDEN_ALLOC.search(line):
                         errors.append(
                             f"{rel}:{number}: domain may not allocate directly"

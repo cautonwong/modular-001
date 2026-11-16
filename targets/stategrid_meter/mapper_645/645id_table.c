@@ -1,24 +1,22 @@
-#include "nidavellir.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
+#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
 #include "645id_table.h"
 #include "port.h"
 #include "utils.h"
-#include "gs_record.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
 #include "fr_645_report.h"
 #include "cpu_surport.h"
-#include "domain/tariff/legacy/tariff_applications.h"
+#include "targets/stategrid_meter/app/tariff/tariff_applications.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
+#include "infra/soc/v85xxp/v8500/v85xxp_system.h"
+#include "targets/stategrid_meter/app/devices.h"
+#include "targets/stategrid_meter/app/metering/metering_applications.h"
+#include "targets/stategrid_meter/mapper_698/factory_cfg.h"
+#include "targets/stategrid_meter/mapper_698/mapper_698.h"
 
-typedef uint8_t (*data_check_fun)(struct instance_t* instance, uint32_t addr, uint8_t *, uint8_t *);
-extern uint8_t write_mcu_rtc_time(uint8_t addr, uint8_t *buf, uint16_t len);
-extern uint8_t write_mcu_rtc_date(uint8_t addr, uint8_t *buf, uint16_t len);
-extern unsigned char GetWeek645( unsigned char* Addr );
-extern const  unsigned char FirmWareVersion[20];
-extern unsigned long SoftwareCHK(void);
-extern int rn8209c_set( struct instance_t* instance, uint8_t *p_rx );
-extern uint8_t rn8209c_get( struct instance_t* instance, uint8_t *p_rx, uint8_t* p_tx);
-extern uint8_t get_current_plc_baud(struct instance_t* instance);
+typedef uint8_t (*data_check_fun)(void *instance, uint32_t addr, uint8_t *, uint8_t *);
+
 
 const COMMTAB  CommTab[] =
 {
@@ -162,48 +160,48 @@ const COMMTAB  CommTab[] =
     0xA8FFFFF1,	0xFFFF,							FORMAT_00,      CommData_WR + CommData_FACTORY + 4,//反向电能设置底度
 };
 
-static uint8_t dl645rd_date(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645rd_date(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
     uint8_t temp=0;
     
-    *databuf++ = BYTE_BCD((uint8_t)instance->time.tm_wday);
-    *databuf++ = BYTE_BCD((uint8_t)instance->time.tm_mday);
-    *databuf++ = BYTE_BCD((uint8_t)instance->time.tm_mon + 1);
-    temp = instance->time.tm_year + 1900 - 2000;
+    *databuf++ = BYTE_BCD((uint8_t)nd_fr698_time(instance)->tm_wday);
+    *databuf++ = BYTE_BCD((uint8_t)nd_fr698_time(instance)->tm_mday);
+    *databuf++ = BYTE_BCD((uint8_t)nd_fr698_time(instance)->tm_mon + 1);
+    temp = nd_fr698_time(instance)->tm_year + 1900 - 2000;
     *databuf++ = BYTE_BCD((uint8_t)temp);
     
     return 0;
 }
 
-static uint8_t dl645rd_time(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645rd_time(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
-    *databuf++ = BYTE_BCD((uint8_t)instance->time.tm_sec);
-    *databuf++ = BYTE_BCD((uint8_t)instance->time.tm_min);
-    *databuf++ = BYTE_BCD((uint8_t)instance->time.tm_hour);
+    *databuf++ = BYTE_BCD((uint8_t)nd_fr698_time(instance)->tm_sec);
+    *databuf++ = BYTE_BCD((uint8_t)nd_fr698_time(instance)->tm_min);
+    *databuf++ = BYTE_BCD((uint8_t)nd_fr698_time(instance)->tm_hour);
     return 0;
 }
 
-static uint8_t dl645rd_datetime(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645rd_datetime(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
     uint8_t temp=0;
-    *databuf++ = BYTE_BCD((uint8_t)instance->time.tm_sec);
-    *databuf++ = BYTE_BCD((uint8_t)instance->time.tm_min);
-    *databuf++ = BYTE_BCD((uint8_t)instance->time.tm_hour);
-    *databuf++ = BYTE_BCD((uint8_t)instance->time.tm_wday);
-    *databuf++ = BYTE_BCD((uint8_t)instance->time.tm_mday);
-    *databuf++ = BYTE_BCD((uint8_t)instance->time.tm_mon + 1);
-    temp = instance->time.tm_year + 1900 - 2000;
+    *databuf++ = BYTE_BCD((uint8_t)nd_fr698_time(instance)->tm_sec);
+    *databuf++ = BYTE_BCD((uint8_t)nd_fr698_time(instance)->tm_min);
+    *databuf++ = BYTE_BCD((uint8_t)nd_fr698_time(instance)->tm_hour);
+    *databuf++ = BYTE_BCD((uint8_t)nd_fr698_time(instance)->tm_wday);
+    *databuf++ = BYTE_BCD((uint8_t)nd_fr698_time(instance)->tm_mday);
+    *databuf++ = BYTE_BCD((uint8_t)nd_fr698_time(instance)->tm_mon + 1);
+    temp = nd_fr698_time(instance)->tm_year + 1900 - 2000;
     *databuf++ = BYTE_BCD((uint8_t)temp);
     return 0;
 }
 
-static uint8_t dl645rd_chgtime(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645rd_chgtime(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
     uint32_t addr1=0;
     uint16_t temp=0;
     uint8_t buf[7] = {0,};
     
-    addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
+    addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
     nd_get_index(instance, addr1, buf, 7);
     
     *databuf++ = BYTE_BCD(buf[5]);  
@@ -218,16 +216,15 @@ static uint8_t dl645rd_chgtime(struct instance_t* instance, uint32_t addr, uint8
     return 0;
 }
 
-static uint8_t dl645rd_meteraddr(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645rd_meteraddr(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
-    memcpy(databuf, nd_mbase_tsa(mbase_cb), 6);
+    memcpy(databuf, nd_mb_tsa(instance), 6);
     
     return 0;
 }
 
-static uint8_t dl645rd_hex_bcd(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645rd_hex_bcd(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
     uint32_t addr1=0;
     uint32_t temp=0;
@@ -250,7 +247,7 @@ static uint8_t dl645rd_hex_bcd(struct instance_t* instance, uint32_t addr, uint8
         storage_len = len;
     }
     
-    addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
+    addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
     nd_get_index(instance, addr1, buf, storage_len);
     mem_swap_cpy((uint8_t*)&temp, buf, storage_len);
     
@@ -263,18 +260,16 @@ static uint8_t dl645rd_hex_bcd(struct instance_t* instance, uint32_t addr, uint8
     return 0;
 }
 
-static uint8_t dl645rd_meterno(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645rd_meterno(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    mem_swap_cpy(databuf, nd_mbase_meterNo(mbase_cb), 6);
+    mem_swap_cpy(databuf, nd_mb_meter_no(instance), 6);
     return 0;
 }
 
 const uint8_t baud645[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
 const uint8_t baud698[8] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x06, 0x07, 0x00};
-static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645rd_ram(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t id=0,StAddr=0, s_index = 0;
     uint8_t i=0,j,index=0, Baut = 0;
     uint16_t sate=0,sate1=0;
@@ -283,22 +278,22 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
     switch(id)
     {
         case 0x04000301:    //轮显屏数
-            *databuf = BYTE_BCD(nd_mbase_lcd_autodis_list_num(mbase_cb));
+            *databuf = BYTE_BCD(nd_mb_lcd_autodis_list_num(instance));
             break;
         case 0x04000302:    //轮显每屏时间
-            WORD_BCD2(databuf, nd_mbase_lcd_autodis_keep_sec(mbase_cb));
+            WORD_BCD2(databuf, nd_mb_lcd_autodis_keep_sec(instance));
             break;
         case 0x04000303:    //电能小数位数
-            *databuf = BYTE_BCD(nd_mbase_energy_point(mbase_cb));
+            *databuf = BYTE_BCD(nd_mb_energy_point(instance));
             break;
         case 0x04000304:    //功率小数尾数
-            *databuf = BYTE_BCD(nd_mbase_power_point(mbase_cb));
+            *databuf = BYTE_BCD(nd_mb_power_point(instance));
             break;
         case 0x04000305:    //按显屏数
-            *databuf = BYTE_BCD(nd_mbase_lcd_keydis_list_num(mbase_cb));
+            *databuf = BYTE_BCD(nd_mb_lcd_keydis_list_num(instance));
             break;
         case 0x04000308:    //全显时间
-            *databuf = BYTE_BCD(nd_mbase_lcd_poweron_all_dis_time(mbase_cb));
+            *databuf = BYTE_BCD(nd_mb_lcd_poweron_all_dis_time(instance));
             break;
         case 0x04000501:
         case 0x04000502:
@@ -311,7 +306,7 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             index = id & 0x000000FF;
             if(index != 0xFF)
             {
-                mem_swap_cpy((uint8_t*)&sate, (uint8_t*)&nd_mbase_run_state(mbase_cb)[index], 2);
+                mem_swap_cpy((uint8_t*)&sate, (uint8_t*)&nd_mb_run_state(instance)[index], 2);
                 for(i=0; i<16; i++)
                 {
                     sate1 = sate1 >> 1;
@@ -328,7 +323,7 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             {
                 for(j=1;j<8;j++)
                 {
-                    mem_swap_cpy((uint8_t*)&sate, (uint8_t*)&nd_mbase_run_state(mbase_cb)[j], 2);
+                    mem_swap_cpy((uint8_t*)&sate, (uint8_t*)&nd_mb_run_state(instance)[j], 2);
                     sate1 = 0;
                     for(i=0; i<16; i++)
                     {
@@ -346,10 +341,10 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             break;
 
         case 0x04001104:  //主动上报模式字
-            ndv_memcopy(databuf, nd_mbase_report_mode_645(mbase_cb), sizeof(nd_mbase_report_mode_645(mbase_cb)));
+            ndv_memcopy(databuf, nd_mb_report_mode_645(instance), 8);
             break;
         case 0x04100901:    //按键显示每屏时间
-            WORD_BCD2(databuf, nd_mbase_lcd_keydis_keep_sec(mbase_cb));
+            WORD_BCD2(databuf, nd_mb_lcd_keydis_keep_sec(instance));
             break;
         case 0x04000705:    //载波波特率 
             Baut = get_current_plc_baud(instance);
@@ -366,7 +361,7 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
         case 0x04000703:    //485波特率
             for(i=0;i<8;i++)
             {
-                if(nd_mbase_Baut_rs485(mbase_cb) == baud698[i])
+                if(nd_mb_baut_rs485(instance) == baud698[i])
                 {
                     *databuf = baud645[i];
                     return 0;
@@ -378,15 +373,15 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             *databuf = 0x04;
             break;
         case 0x04090801:    //过流事件阈值
-            sate = nd_mbase_OverCurrent_threshold(mbase_cb)/1000;
+            sate = nd_mb_over_current_threshold(instance)/1000;
             WORD_BCD2(databuf, sate);
             break;
         case 0x04090802:    //过流事件阈值
-            *databuf = BYTE_BCD(nd_mbase_OverCurrent_duration_para(mbase_cb));
+            *databuf = BYTE_BCD(nd_mb_over_current_duration_para(instance));
             break;
         case 0xA8000100:    //工厂模式
-            *databuf = nd_mbase_factor_mode(mbase_cb);
-            if(nd_mbase_factor_mode(mbase_cb) == true)
+            *databuf = nd_mb_factor_mode(instance);
+            if(nd_mb_factor_mode(instance) == true)
             {
                 *databuf = 0xAA;
             }
@@ -397,24 +392,24 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             break;
         case 0xA8F00003:    //多功能配置字+
             memset(databuf, 0, 2);
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Meter_Type);
+            addr = ((DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Meter_Type);
             nd_get_index(instance, addr, (uint8_t*)databuf, 2); //区分判断 是否已经设置过表型
-            //memcpy(databuf, (uint8_t *)&nd_mbase_metertype(mbase_cb), 2);
+            //memcpy(databuf, (uint8_t *)&nd_mb_metertype(instance), 2);
             break;
         case 0xA8F00002:    //背光配置字
             memset(databuf, 0, 4);
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Blt_Alarm_Byte);
+            addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Blt_Alarm_Byte);
             nd_get_index(instance, addr, (uint8_t*)databuf, 4); 
-            //memcpy(databuf, (uint8_t *)&nd_mbase_blt_alarm(mbase_cb), 2);
+            //memcpy(databuf, (uint8_t *)&nd_mb_blt_alarm(instance), 2);
             break;
         case 0xA8F00051://掉电主动上报的阈值时间(秒)hex  0x0E10
-            memcpy(databuf, (uint8_t*)&nd_mbase_active_report_sec_limit(mbase_cb), 2 );        
+            memcpy(databuf, (uint8_t*)&nd_mb_active_report_sec_limit(instance), 2 );        
             break; 
         case 0xA8F00052://工频防潜开关
-            *databuf = nd_mbase_no_filt(mbase_cb);
+            *databuf = nd_mb_no_filt(instance);
             break;
         case 0xA8F00055:    //电能定量保存阈值格式hex--0.01kwh
-            memcpy(databuf, (uint8_t *)&nd_mbase_EC_SaveDiff(mbase_cb), 2);
+            memcpy(databuf, (uint8_t *)&nd_mb_ec_save_diff(instance), 2);
             break;  
         case 0xA601100F:
 			StAddr = SoftwareCHK();
@@ -424,26 +419,26 @@ static uint8_t dl645rd_ram(struct instance_t* instance, uint32_t addr, uint8_t *
     return 0;
 }
 
-static uint8_t dl645rd_loction(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645rd_loction(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
     uint32_t addr1=0;
     uint8_t buf[10] = {0,};
     
-    addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location1);
+    addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location1);
     nd_get_index(instance, addr1, buf, 10);
     *databuf++ = buf[9];
     *databuf++ = buf[7];
     *databuf++ = buf[5];
     *databuf++ = buf[3];
     
-    addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location2);
+    addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location2);
     nd_get_index(instance, addr1, buf, 10);
     *databuf++ = buf[9];
     *databuf++ = buf[7];
     *databuf++ = buf[5];
     *databuf++ = buf[3];
     
-    addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location3);
+    addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location3);
     nd_get_index(instance, addr1, buf, 5);
     *databuf++ = buf[4];
     *databuf++ = buf[3];
@@ -452,38 +447,37 @@ static uint8_t dl645rd_loction(struct instance_t* instance, uint32_t addr, uint8
     return 0;
 }
 
-static uint8_t dl645rd_blanceday(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645rd_blanceday(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
     uint32_t addr1=0;
     uint8_t buf[2] = {0,};
     
-    addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
+    addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
     nd_get_index(instance, addr1, buf, 2);
     *databuf++ = BYTE_BCD(buf[1]);
     *databuf++ = BYTE_BCD(buf[0]);
     return 0;
 }
 
-static uint8_t dl645rd_runbyte(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645rd_runbyte(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t s_index = 0;
  
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
     nd_get_index(instance, s_index, databuf, 1);
     
-    if(nd_mbase_relay_ctl_mode(mbase_cb) == 0)   //（0：脉冲式，1：保持式）
+    if(nd_mb_relay_ctl_mode(instance) == 0)   //（0：脉冲式，1：保持式）
         *databuf |= 0x01;
-    else if(nd_mbase_relay_ctl_mode(mbase_cb) == 1)
+    else if(nd_mb_relay_ctl_mode(instance) == 1)
         *databuf &= ~0x01;
 
-    if((nd_mbase_metertype(mbase_cb) & F_ExternRelay_En) == 0) //内置 固定为0
+    if((nd_mb_metertype(instance) & F_ExternRelay_En) == 0) //内置 固定为0
     {
         *databuf &= ~0x01;
     }
 
     
-    if(nd_mbase_lcd_12_mean(mbase_cb) == 1)  // 0显示当前套、备用套时段; 1显示当前套、备用套费率
+    if(nd_mb_lcd_12_mean(instance) == 1)  // 0显示当前套、备用套时段; 1显示当前套、备用套费率
         *databuf |= 0x02;
     else
         *databuf &= ~0x02;
@@ -491,19 +485,18 @@ static uint8_t dl645rd_runbyte(struct instance_t* instance, uint32_t addr, uint8
     return 0;
 }
 
-static uint8_t dl645rd_hex_string(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645rd_hex_string(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t i=0,word=0;
     uint32_t addr1 = 0;
     
     switch(addr)
     {
         case Measure_Mode:  //组合特征字
-            word = nd_mbase_active_energy_cal_word(mbase_cb);
+            word = nd_mb_active_energy_cal_word(instance);
             break;
         case Weekend:  //周休日特征字
-            addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
+            addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
             nd_get_index(instance, addr1, (uint8_t*)&word, 1);
             break;
     }
@@ -519,7 +512,7 @@ static uint8_t dl645rd_hex_string(struct instance_t* instance, uint32_t addr, ui
     return 0;
 }
 
-static uint8_t dl645rd_meterchip(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645rd_meterchip(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
     uint8_t len=0;
     
@@ -528,7 +521,7 @@ static uint8_t dl645rd_meterchip(struct instance_t* instance, uint32_t addr, uin
     return 0;
 }
 
-static uint8_t dl645rd_report_stat(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645rd_report_stat(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
 
     report_state_read_pro(instance, databuf, length);
@@ -538,9 +531,8 @@ static uint8_t dl645rd_report_stat(struct instance_t* instance, uint32_t addr, u
 
 
 
-static uint8_t dl645wt_date(struct instance_t* instance, uint32_t addr, uint8_t *prx, uint8_t *length)
+static uint8_t dl645wt_date(void *instance, uint32_t addr, uint8_t *prx, uint8_t *length)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t day = 0, settimebuf[4]={0,};
     uint8_t buffer[10]={0},temp[10]={0};
     uint32_t s_index = 0;
@@ -548,10 +540,10 @@ static uint8_t dl645wt_date(struct instance_t* instance, uint32_t addr, uint8_t 
     //保存校时前时间 
     rtc_get_from_tm(instance,temp);
     mem_swap_cpy( &buffer[0], &temp[0], 7);
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
     nd_set_index(instance, s_index, buffer, 7);
 
-    day = instance->time.tm_mday;
+    day = nd_fr698_time(instance)->tm_mday;
     prx++;
     settimebuf[0] = *prx++;//日
     settimebuf[1] = *prx++;//月
@@ -563,12 +555,12 @@ static uint8_t dl645wt_date(struct instance_t* instance, uint32_t addr, uint8_t 
     //保存校时后时间 
     rtc_get_from_tm(instance,temp);
     mem_swap_cpy( &buffer[0], &temp[0], 7);
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
     nd_set_index(instance, s_index, buffer, 7);
     
-    if(day != instance->time.tm_mday)  //跨日，清除广播校时标志位
+    if(day != nd_fr698_time(instance)->tm_mday)  //跨日，清除广播校时标志位
     {
-        nd_mbase_boardadjtime(mbase_cb) = 0;
+        nd_mb_boardadjtime(instance) = 0;
     }
 
     record_event_no_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
@@ -577,9 +569,8 @@ static uint8_t dl645wt_date(struct instance_t* instance, uint32_t addr, uint8_t 
     return 0;
 }
 
-static uint8_t dl645wt_time(struct instance_t* instance, uint32_t addr, uint8_t *prx, uint8_t *length)
+static uint8_t dl645wt_time(void *instance, uint32_t addr, uint8_t *prx, uint8_t *length)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t settimebuf[3]={0,};
     uint8_t buffer[10]={0},temp[10]={0};
     uint32_t s_index = 0;
@@ -587,7 +578,7 @@ static uint8_t dl645wt_time(struct instance_t* instance, uint32_t addr, uint8_t 
     //保存校时前时间 
     rtc_get_from_tm(instance,temp);
     mem_swap_cpy( &buffer[0], &temp[0], 7);
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
     nd_set_index(instance, s_index, buffer, 7);
     
     settimebuf[0] = *prx++;//日
@@ -599,7 +590,7 @@ static uint8_t dl645wt_time(struct instance_t* instance, uint32_t addr, uint8_t 
     //保存校时后时间 
     rtc_get_from_tm(instance,temp);
     mem_swap_cpy( &buffer[0], &temp[0], 7);
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
     nd_set_index(instance, s_index, buffer, 7);
 
 
@@ -609,9 +600,8 @@ static uint8_t dl645wt_time(struct instance_t* instance, uint32_t addr, uint8_t 
     return 0;
 }
 
-static uint8_t dl645wt_datetime(struct instance_t* instance, uint32_t addr, uint8_t *prx, uint8_t *length)
+static uint8_t dl645wt_datetime(void *instance, uint32_t addr, uint8_t *prx, uint8_t *length)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t day = 0, settimebuf[7]={0,};
     uint8_t buffer[10]={0},temp[10]={0};
     uint32_t s_index = 0;
@@ -619,10 +609,10 @@ static uint8_t dl645wt_datetime(struct instance_t* instance, uint32_t addr, uint
     //保存校时前时间 
     rtc_get_from_tm(instance,temp);
     mem_swap_cpy( &buffer[0], &temp[0], 7);
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
     nd_set_index(instance, s_index, buffer, 7);
     
-    day = instance->time.tm_mday;
+    day = nd_fr698_time(instance)->tm_mday;
     settimebuf[0] = *prx++;//秒
     settimebuf[1] = *prx++;//分
     settimebuf[2] = *prx++;//时
@@ -633,15 +623,15 @@ static uint8_t dl645wt_datetime(struct instance_t* instance, uint32_t addr, uint
     settimebuf[6] = GetWeek645(&settimebuf[3]);
     write_mcu_rtc(0, settimebuf, 7);
     read_mcu_rtc(0x00, instance);
-    if(day != instance->time.tm_mday)  //跨日，清除广播校时标志位
+    if(day != nd_fr698_time(instance)->tm_mday)  //跨日，清除广播校时标志位
     {
-        nd_mbase_boardadjtime(mbase_cb) = 0;
+        nd_mb_boardadjtime(instance) = 0;
     }
 
     //保存校时后时间 
     rtc_get_from_tm(instance,temp);
     mem_swap_cpy( &buffer[0], &temp[0], 7);
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
     nd_set_index(instance, s_index, buffer, 7);
 
 
@@ -652,7 +642,7 @@ static uint8_t dl645wt_datetime(struct instance_t* instance, uint32_t addr, uint
     return 0;
 }
 
-static uint8_t dl645wt_chgtime(struct instance_t* instance, uint32_t addr, uint8_t *prx, uint8_t *length)
+static uint8_t dl645wt_chgtime(void *instance, uint32_t addr, uint8_t *prx, uint8_t *length)
 {
     uint32_t addr1=0;
     uint16_t year=0;
@@ -666,29 +656,27 @@ static uint8_t dl645wt_chgtime(struct instance_t* instance, uint32_t addr, uint8
     year = BCD_BYTE(*prx++) + 2000;  //年
     mem_swap_cpy((uint8_t*)&buf[0], (uint8_t*)&year, 2);//
 
-    addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
+    addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
     nd_set_index(instance, addr1, buf, 7);
     
     return 0;
 }
 
-static uint8_t dl645wt_meteraddr(struct instance_t* instance, uint32_t addr, uint8_t *prx, uint8_t *length)
+static uint8_t dl645wt_meteraddr(void *instance, uint32_t addr, uint8_t *prx, uint8_t *length)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t s_index=0;
     
-    memcpy(nd_mbase_tsa(mbase_cb), prx, 6);
+    memcpy(nd_mb_tsa(instance), prx, 6);
     
-    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-            nd_mbase_offset_tsa());
-    nd_set_offset(instance, s_index, nd_mbase_tsa(mbase_cb), 6); 
+    s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+            nd_mb_offset_tsa());
+    nd_set_offset(instance, s_index, nd_mb_tsa(instance), 6); 
     
     return 0;
 }
 
-static uint8_t dl645wt_hex_bcd(struct instance_t* instance, uint32_t addr, uint8_t *prx, uint8_t *length)
+static uint8_t dl645wt_hex_bcd(void *instance, uint32_t addr, uint8_t *prx, uint8_t *length)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     uint32_t addr1=0;
     uint32_t temp=0,data=0;
@@ -734,7 +722,7 @@ static uint8_t dl645wt_hex_bcd(struct instance_t* instance, uint32_t addr, uint8
     }
     mem_swap_cpy((uint8_t*)&temp, (uint8_t*)&data, storage_len);
     
-    addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
+    addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
     nd_set_index(instance, addr1, (uint8_t*)&temp, storage_len);
 
 
@@ -744,21 +732,21 @@ static uint8_t dl645wt_hex_bcd(struct instance_t* instance, uint32_t addr, uint8
     switch(addr)
     {
         case ImaxProtectTime://大电流延时时间赋值
-            mem_swap_cpy((uint8_t *)&nd_mbase_Prot_time(mbase_cb), (uint8_t*)&temp, 2);
-            if(nd_mbase_imaxmin(mbase_cb) > 0)   //过流中修改时间，刷新
-                nd_mbase_imaxmin(mbase_cb) = nd_mbase_Prot_time(mbase_cb)*60;
+            mem_swap_cpy((uint8_t *)&nd_mb_prot_time(instance), (uint8_t*)&temp, 2);
+            if(nd_mb_imaxmin(instance) > 0)   //过流中修改时间，刷新
+                nd_mb_imaxmin(instance) = nd_mb_prot_time(instance)*60;
 
             break;
             
         case ImaxProtectValue: 
-            mem_swap_cpy((uint8_t*)&nd_mbase_I_Prot(mbase_cb), (uint8_t*)&temp, 4);
+            mem_swap_cpy((uint8_t*)&nd_mb_i_prot(instance), (uint8_t*)&temp, 4);
             break;
         
         case Remote_RelayOffTime: 
             mem_swap_cpy((uint8_t *)&temp_u16, (uint8_t*)&temp, 2);
-            if(nd_mbase_alarmmin(mbase_cb) > 0)   //延时中刷新
+            if(nd_mb_alarmmin(instance) > 0)   //延时中刷新
             {
-                nd_mbase_alarmmin(mbase_cb) = temp_u16*60;   
+                nd_mb_alarmmin(instance) = temp_u16*60;   
             }
             break;
             
@@ -770,10 +758,8 @@ static uint8_t dl645wt_hex_bcd(struct instance_t* instance, uint32_t addr, uint8
     return 0;
 }
 
-static uint8_t dl645wt_ram(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645wt_ram(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
-    struct mbase_control_block_t* mbase_cb;
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     
     uint32_t id=0,s_index=0,dt=0;
     uint16_t temp=0;
@@ -783,41 +769,41 @@ static uint8_t dl645wt_ram(struct instance_t* instance, uint32_t addr, uint8_t *
     switch(id)
     {
         case 0x04000301:    //轮显屏数
-            nd_mbase_lcd_autodis_list_num(mbase_cb) = BCD_BYTE(*databuf);
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        nd_mbase_offset_lcd_autodis_list_num());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_lcd_autodis_list_num(mbase_cb), 1);
+            nd_mb_lcd_autodis_list_num(instance) = BCD_BYTE(*databuf);
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        nd_mb_offset_lcd_autodis_list_num());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_lcd_autodis_list_num(instance), 1);
             break;
         case 0x04000302:    //轮显每屏时间
             memcpy((uint8_t*)&temp, databuf, 2);
-            nd_mbase_lcd_autodis_keep_sec(mbase_cb) = word_bcd_to_hex(temp);
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        nd_mbase_offset_lcd_autodis_keep_sec());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_lcd_autodis_keep_sec(mbase_cb), 2);
+            nd_mb_lcd_autodis_keep_sec(instance) = word_bcd_to_hex(temp);
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        nd_mb_offset_lcd_autodis_keep_sec());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_lcd_autodis_keep_sec(instance), 2);
             break;
         case 0x04000303:    //电能小数位数
-            nd_mbase_energy_point(mbase_cb) = BCD_BYTE(*databuf);
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        nd_mbase_offset_energy_point());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_energy_point(mbase_cb), 1);
+            nd_mb_energy_point(instance) = BCD_BYTE(*databuf);
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        nd_mb_offset_energy_point());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_energy_point(instance), 1);
             break;
         case 0x04000304:    //功率小数尾数
-            nd_mbase_power_point(mbase_cb) = BCD_BYTE(*databuf);
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        nd_mbase_offset_power_point());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_power_point(mbase_cb), 1);
+            nd_mb_power_point(instance) = BCD_BYTE(*databuf);
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        nd_mb_offset_power_point());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_power_point(instance), 1);
             break;
         case 0x04000305:    //按显屏数
-            nd_mbase_lcd_keydis_list_num(mbase_cb) = BCD_BYTE(*databuf);
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        nd_mbase_offset_lcd_keydis_list_num());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_lcd_keydis_list_num(mbase_cb), 1);
+            nd_mb_lcd_keydis_list_num(instance) = BCD_BYTE(*databuf);
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        nd_mb_offset_lcd_keydis_list_num());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_lcd_keydis_list_num(instance), 1);
             break;
         case 0x04000308:    //全显时间
-            nd_mbase_lcd_poweron_all_dis_time(mbase_cb) = BCD_BYTE(*databuf);
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        nd_mbase_offset_lcd_poweron_all_dis_time());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_lcd_poweron_all_dis_time(mbase_cb), 1);
+            nd_mb_lcd_poweron_all_dis_time(instance) = BCD_BYTE(*databuf);
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        nd_mb_offset_lcd_poweron_all_dis_time());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_lcd_poweron_all_dis_time(instance), 1);
             break;
         case 0x04000701:    //紅外波特率設置無效
             break;
@@ -825,138 +811,137 @@ static uint8_t dl645wt_ram(struct instance_t* instance, uint32_t addr, uint8_t *
             switch( *databuf )
             {
                 case 0x02:  //600
-                    nd_mbase_Baut_plc(mbase_cb) = 1;
+                    nd_mb_baut_plc(instance) = 1;
                     break;
                 case 0x04:  //1200
-                    nd_mbase_Baut_plc(mbase_cb) = 2;
+                    nd_mb_baut_plc(instance) = 2;
                     break;
                 case 0x08:  //2400
-                    nd_mbase_Baut_plc(mbase_cb) = 3;
+                    nd_mb_baut_plc(instance) = 3;
                     break;
                 case 0x10:  //4800
-                    nd_mbase_Baut_plc(mbase_cb) = 4;
+                    nd_mb_baut_plc(instance) = 4;
                     break;
                 case 0x20:  //9600
-                    nd_mbase_Baut_plc(mbase_cb) = 6;
+                    nd_mb_baut_plc(instance) = 6;
                     break;
                 case 0x40:  //19200
-                    nd_mbase_Baut_plc(mbase_cb) = 7;
+                    nd_mb_baut_plc(instance) = 7;
                     break;
             }
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        nd_mbase_offset_Baut_plc());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_Baut_plc(mbase_cb), 1);
-            nd_mbase_baud_chg(mbase_cb) = 0x02;  //更新串口波特率  
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        nd_mb_offset_baut_plc());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_baut_plc(instance), 1);
+            nd_mb_baud_chg(instance) = 0x02;  //更新串口波特率  
             break;
         case 0x04000703:    //485波特率
             switch( *databuf )
             {
                 case 0x02:  //600
-                    nd_mbase_Baut_rs485(mbase_cb) = 1;
+                    nd_mb_baut_rs485(instance) = 1;
                     break;
                 case 0x04:  //1200
-                    nd_mbase_Baut_rs485(mbase_cb) = 2;
+                    nd_mb_baut_rs485(instance) = 2;
                     break;
                 case 0x08:  //2400
-                    nd_mbase_Baut_rs485(mbase_cb) = 3;
+                    nd_mb_baut_rs485(instance) = 3;
                     break;
                 case 0x10:  //4800
-                    nd_mbase_Baut_rs485(mbase_cb) = 4;
+                    nd_mb_baut_rs485(instance) = 4;
                     break;
                 case 0x20:  //9600
-                    nd_mbase_Baut_rs485(mbase_cb) = 6;
+                    nd_mb_baut_rs485(instance) = 6;
                     break;
                 case 0x40:  //19200
-                    nd_mbase_Baut_rs485(mbase_cb) = 7;
+                    nd_mb_baut_rs485(instance) = 7;
                     break;
             }
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        nd_mbase_offset_Baut_rs485());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_Baut_rs485(mbase_cb), 1);
-            nd_mbase_baud_chg(mbase_cb) = 0x01;  //更新串口波特率
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        nd_mb_offset_baut_rs485());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_baut_rs485(instance), 1);
+            nd_mb_baud_chg(instance) = 0x01;  //更新串口波特率
             break;
         case 0x04001104:  //主动上报模式字
-            ndv_memcopy(nd_mbase_report_mode_645(mbase_cb), databuf, sizeof(nd_mbase_report_mode_645(mbase_cb)));
+            ndv_memcopy(nd_mb_report_mode_645(instance), databuf, 8);
             //保存 645上报模式字
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-            nd_mbase_offset_report_mode_645());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_report_mode_645(mbase_cb), sizeof(nd_mbase_report_mode_645(mbase_cb)));
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+            nd_mb_offset_report_mode_645());
+            nd_set_offset(instance, s_index, (uint8_t*)nd_mb_report_mode_645(instance), 8);
 
             report_mode_set_from_645(instance, databuf);
             break;
         case 0x04090801:    //过流事件阈值
             memcpy((uint8_t*)&dt, databuf, 2);
             temp = word_bcd_to_hex(dt);
-            nd_mbase_OverCurrent_threshold(mbase_cb) = temp*1000;
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        nd_mbase_offset_OverCurrent_threshold());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_OverCurrent_threshold(mbase_cb), 4);
+            nd_mb_over_current_threshold(instance) = temp*1000;
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        nd_mb_offset_over_current_threshold());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_over_current_threshold(instance), 4);
             break;
         case 0x04090802:    //过流事件阈值
-            nd_mbase_OverCurrent_duration_para(mbase_cb) = BCD_BYTE(*databuf);
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        nd_mbase_offset_OverCurrent_duration_para());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_OverCurrent_duration_para(mbase_cb), 1);
+            nd_mb_over_current_duration_para(instance) = BCD_BYTE(*databuf);
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        nd_mb_offset_over_current_duration_para());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_over_current_duration_para(instance), 1);
             break;
             
         case 0x04100901:    //按键显示每屏时间
             memcpy((uint8_t*)&temp, databuf, 2);
-            nd_mbase_lcd_keydis_keep_sec(mbase_cb) = word_bcd_to_hex(temp);
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        nd_mbase_offset_lcd_keydis_keep_sec());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_lcd_keydis_keep_sec(mbase_cb), 2);
+            nd_mb_lcd_keydis_keep_sec(instance) = word_bcd_to_hex(temp);
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        nd_mb_offset_lcd_keydis_keep_sec());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_lcd_keydis_keep_sec(instance), 2);
             break;
         case 0xA8F00002:    //背光报警配置字
-            memcpy((uint8_t*)&nd_mbase_blt_alarm(mbase_cb), databuf, 4);
+            memcpy((uint8_t*)&nd_mb_blt_alarm(instance), databuf, 4);
 
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Blt_Alarm_Byte);
-            nd_set_index(instance, s_index, (uint8_t*)&nd_mbase_blt_alarm(mbase_cb), 4);
+            s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Blt_Alarm_Byte);
+            nd_set_index(instance, s_index, (uint8_t*)&nd_mb_blt_alarm(instance), 4);
             break;
         case 0xA8F00003:    //多功能配置字
-            memcpy((uint8_t*)&nd_mbase_metertype(mbase_cb), databuf, 2);
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Meter_Type);
-            nd_set_index(instance, s_index, (uint8_t*)&nd_mbase_metertype(mbase_cb), 2);
+            memcpy((uint8_t*)&nd_mb_metertype(instance), databuf, 2);
+            s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Meter_Type);
+            nd_set_index(instance, s_index, (uint8_t*)&nd_mb_metertype(instance), 2);
             break;
         case 0xA8F00051://掉电主动上报的阈值时间(秒)hex  0x0E10
-            memcpy(&nd_mbase_active_report_sec_limit(mbase_cb), databuf, 2);                
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        nd_mbase_offset_active_report_sec_limit());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_active_report_sec_limit(mbase_cb), 2);//存储至EE  
+            memcpy(&nd_mb_active_report_sec_limit(instance), databuf, 2);                
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        nd_mb_offset_active_report_sec_limit());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_active_report_sec_limit(instance), 2);//存储至EE  
             break;  
         case 0xA8F00052://工频防潜开关
-            nd_mbase_no_filt(mbase_cb) = *databuf;
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        nd_mbase_offset_no_filt());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_no_filt(mbase_cb), 1);//存储至EE  
+            nd_mb_no_filt(instance) = *databuf;
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        nd_mb_offset_no_filt());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_no_filt(instance), 1);//存储至EE  
             break;
         case 0xA8F00055: //电能定量保存阈值hex       --0.01kwh  
-            memcpy((uint8_t*)&nd_mbase_EC_SaveDiff(mbase_cb), databuf, 2);
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + EC_SaveDiff_E);
-            nd_set_index(instance, s_index, (uint8_t*)&nd_mbase_EC_SaveDiff(mbase_cb), 2);
+            memcpy((uint8_t*)&nd_mb_ec_save_diff(instance), databuf, 2);
+            s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + EC_SaveDiff_E);
+            nd_set_index(instance, s_index, (uint8_t*)&nd_mb_ec_save_diff(instance), 2);
             break;  
     }
     return 0;
 }
 
-static uint8_t dl645wt_loction(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645wt_loction(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
     uint32_t s_index = 0;
   
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location1);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location1);
     nd_set_index(instance, s_index, databuf, 10); 
     
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location2);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location2);
     nd_set_index(instance, s_index, databuf, 10);   
     
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location3);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location3);
     nd_set_index(instance, s_index, databuf, 5);
 
     return 0;
 }
 
-static uint8_t dl645wt_blanceday(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645wt_blanceday(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
 
     uint32_t addr1=0;
     uint8_t buf[2] = {0};
@@ -965,14 +950,14 @@ static uint8_t dl645wt_blanceday(struct instance_t* instance, uint32_t addr, uin
 
     //-保存编程前
     nd_get(instance, 0x41160200, buftmp, 20, NULL);
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Balance);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Balance);
     nd_set_index(instance, s_index, buftmp, 20);
     buftmp[0] = buftmp[5]; // 第一结算日 
     buftmp[1] = buftmp[7];
 
     buf[1] = BCD_BYTE(*databuf++);
     buf[0] = BCD_BYTE(*databuf++);
-    addr1 = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
+    addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
     nd_set_index(instance, addr1, buf, 2);
 
 
@@ -980,7 +965,7 @@ static uint8_t dl645wt_blanceday(struct instance_t* instance, uint32_t addr, uin
     {
         if ( (buf[0] != buftmp[0]) || (buf[1] != buftmp[1]) ) //第一结算日改变
         {
-            nd_mbase_first_MbillDay_flag(mbase_cb) = 0x5A;
+            nd_mb_first_mbill_day_flag(instance) = 0x5A;
             record_event_no_mesg_pro(instance, NULL, BillFreeze, NULL, 1);//
         }
     }
@@ -990,40 +975,38 @@ static uint8_t dl645wt_blanceday(struct instance_t* instance, uint32_t addr, uin
     return 0;
 }
 
-static uint8_t dl645wt_runbyte(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645wt_runbyte(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t s_index =0;
     
     if(*databuf & 0x01)
-        nd_mbase_relay_ctl_mode(mbase_cb) = 0;   //（0：脉冲式，1：保持式）
+        nd_mb_relay_ctl_mode(instance) = 0;   //（0：脉冲式，1：保持式）
     else
-        nd_mbase_relay_ctl_mode(mbase_cb) = 1;
+        nd_mb_relay_ctl_mode(instance) = 1;
 
-    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    nd_mbase_offset_relay_ctl_mode());
-    nd_set_offset(instance, s_index, &nd_mbase_relay_ctl_mode(mbase_cb), sizeof(nd_mbase_relay_ctl_mode(mbase_cb)));  
+    s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+    nd_mb_offset_relay_ctl_mode());
+    nd_set_offset(instance, s_index, &nd_mb_relay_ctl_mode(instance), sizeof(nd_mb_relay_ctl_mode(instance)));  
 
     
     if(*databuf & 0x02) 
-        nd_mbase_lcd_12_mean(mbase_cb) = 1;  // 0显示当前套、备用套时段; 1显示当前套、备用套费率
+        nd_mb_lcd_12_mean(instance) = 1;  // 0显示当前套、备用套时段; 1显示当前套、备用套费率
     else
-        nd_mbase_lcd_12_mean(mbase_cb) = 0;
+        nd_mb_lcd_12_mean(instance) = 0;
 
-    s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-    nd_mbase_offset_lcd_12_mean());
-    nd_set_offset(instance, s_index, &nd_mbase_lcd_12_mean(mbase_cb), sizeof(nd_mbase_lcd_12_mean(mbase_cb)));  
+    s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+    nd_mb_offset_lcd_12_mean());
+    nd_set_offset(instance, s_index, &nd_mb_lcd_12_mean(instance), sizeof(nd_mb_lcd_12_mean(instance)));  
 
    
-    s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
+    s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
     nd_set_index(instance, s_index, databuf, 1);
     
     return 0;
 }
 
-static uint8_t dl645wt_hex_string(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645wt_hex_string(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t i=0,word=0;
     uint32_t s_index = 0;
     uint8_t tmpbuf[30] = {0};
@@ -1042,25 +1025,25 @@ static uint8_t dl645wt_hex_string(struct instance_t* instance, uint32_t addr, ui
         case Measure_Mode:  //组合特征字
             //保存编程前
             nd_get(instance, 0x41120200, tmpbuf, 3, NULL);
-            addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
+            addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
             nd_set_index(instance, addr, tmpbuf, 3);
 
-            nd_mbase_active_energy_cal_word(mbase_cb) = word;
-            s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
-                        nd_mbase_offset_active_energy_cal_word());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mbase_active_energy_cal_word(mbase_cb), 1);
+            nd_mb_active_energy_cal_word(instance) = word;
+            s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+                        nd_mb_offset_active_energy_cal_word());
+            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_active_energy_cal_word(instance), 1);
 
             record_event_no_mesg_pro(instance, NULL, ActCombWrS, NULL, 1);// 
             break;
         case Weekend:  //周休日特征字
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
+            s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
             nd_set_index(instance, s_index, (uint8_t*)&word, 1);
             break;
     }
     return 0;
 }
 
-static uint8_t dl645wt_daytable(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645wt_daytable(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
     uint32_t s_index;
     uint8_t i,temp[42]={0,};
@@ -1072,7 +1055,7 @@ static uint8_t dl645wt_daytable(struct instance_t* instance, uint32_t addr, uint
             temp[2] = BCD_BYTE(*databuf++);
             temp[1] = BCD_BYTE(*databuf++);
             temp[0] = BCD_BYTE(*databuf++);
-            s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
+            s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
             nd_set_index(instance, s_index, temp, 3);
         }
     }
@@ -1084,13 +1067,13 @@ static uint8_t dl645wt_daytable(struct instance_t* instance, uint32_t addr, uint
             temp[i*3+1] = BCD_BYTE(*databuf++);
             temp[i*3+0] = BCD_BYTE(*databuf++);
         }
-        s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
+        s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
         nd_set_index(instance, s_index, temp, 3*MaxTouNum);
     }
     return 0;
 }
  
-static uint8_t dl645wt_meterchip(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645wt_meterchip(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
     int len;
     len = rn8209c_set(instance, databuf);
@@ -1099,12 +1082,11 @@ static uint8_t dl645wt_meterchip(struct instance_t* instance, uint32_t addr, uin
 }
 
 
-static uint8_t dl645wt_reset_report_state(struct instance_t* instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
+static uint8_t dl645wt_reset_report_state(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t cnt, index;
         
-    if (0 == nd_mbase_report_stat_already_read645(mbase_cb))
+    if (0 == nd_mb_report_stat_already_read645(instance))
     {
         return RS_ERR_OTHERS;
     }
@@ -1113,26 +1095,26 @@ static uint8_t dl645wt_reset_report_state(struct instance_t* instance, uint32_t 
     {      
         for (index = 0; index < 8; index++) /*若复位状态字中包含已发生未读事件，返回异常应答，状态位保留*/
         {   
-            if ((0 == (databuf[cnt] & (0x01 << index))) && (0 == (nd_mbase_report_stat_read_cache645(mbase_cb)[cnt] & (0x01 << index)))
-                && (nd_mbase_report_stat_645(mbase_cb)[cnt] & (0x01 << index)))
+            if ((0 == (databuf[cnt] & (0x01 << index))) && (0 == (nd_mb_report_stat_read_cache645(instance)[cnt] & (0x01 << index)))
+                && (nd_mb_report_stat_645(instance)[cnt] & (0x01 << index)))
             {
                 return RS_ERR_OTHERS;
             }  
 
-            if ((0 == (databuf[cnt] & (0x01 << index))) && (nd_mbase_report_stat_read_cache645(mbase_cb)[cnt] & (0x01 << index)))
+            if ((0 == (databuf[cnt] & (0x01 << index))) && (nd_mb_report_stat_read_cache645(instance)[cnt] & (0x01 << index)))
             {
-                nd_mbase_report_stat_645(mbase_cb)[12 + 8*cnt + index] = 0; 
+                nd_mb_report_stat_645(instance)[12 + 8*cnt + index] = 0; 
                 report_645stat_reset_from_645(instance, 8*cnt + index);
             }
         }
 
-        nd_mbase_report_stat_645(mbase_cb)[cnt] &= databuf[cnt];
-        nd_mbase_report_stat_read_cache645(mbase_cb)[cnt] &= databuf[cnt];
+        nd_mb_report_stat_645(instance)[cnt] &= databuf[cnt];
+        nd_mb_report_stat_read_cache645(instance)[cnt] &= databuf[cnt];
     }
 
     report_645stat_save(instance);        
 
-    nd_mbase_report_stat_already_read645(mbase_cb) = 0; 
+    nd_mb_report_stat_already_read645(instance) = 0; 
 
     event_out_check(instance);
 
@@ -1187,20 +1169,20 @@ static const CODE data_check_fun data_645write_table[] =
 
 static const uint8_t CODE data_check_fun_num = sizeof(data_645read_table) / sizeof(data_645read_table[0]);
 
-uint8_t CODE(*find_check_rd_fun(uint8_t index))(struct instance_t* instance, uint32_t addr, uint8_t *, uint8_t *)
+uint8_t CODE(*find_check_rd_fun(uint8_t index))(void *instance, uint32_t addr, uint8_t *, uint8_t *)
 {
     return data_645read_table[index];
 }
 
-uint8_t CODE(*find_check_wt_fun(uint8_t index))(struct instance_t* instance, uint32_t addr, uint8_t *, uint8_t *)
+uint8_t CODE(*find_check_wt_fun(uint8_t index))(void *instance, uint32_t addr, uint8_t *, uint8_t *)
 {
     return data_645write_table[index];
 }
 
-uint8_t dl645rd_chg_data(struct instance_t* instance, uint32_t addr, uint8_t format, uint8_t *pbuf, uint8_t *len)
+uint8_t dl645rd_chg_data(void *instance, uint32_t addr, uint8_t format, uint8_t *pbuf, uint8_t *len)
 {
     uint8_t      result;
-    uint8_t CODE (*format_fun)(struct instance_t* instance, uint32_t addr, uint8_t *, uint8_t *);
+    uint8_t CODE (*format_fun)(void *instance, uint32_t addr, uint8_t *, uint8_t *);
 
     format_fun = find_check_rd_fun(format);
     if (0 != format_fun)
@@ -1212,10 +1194,10 @@ uint8_t dl645rd_chg_data(struct instance_t* instance, uint32_t addr, uint8_t for
     return 1;
 }
 
-uint8_t dl645wt_chg_data(struct instance_t* instance, uint32_t addr, uint8_t format, uint8_t *pbuf, uint8_t *len)
+uint8_t dl645wt_chg_data(void *instance, uint32_t addr, uint8_t format, uint8_t *pbuf, uint8_t *len)
 {
     uint8_t      result;
-    uint8_t CODE (*format_fun)(struct instance_t* instance, uint32_t addr, uint8_t *, uint8_t *);
+    uint8_t CODE (*format_fun)(void *instance, uint32_t addr, uint8_t *, uint8_t *);
 
     format_fun = find_check_wt_fun(format);
     if (0 != format_fun)

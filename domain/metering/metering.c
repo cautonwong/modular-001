@@ -4,6 +4,9 @@ struct metering_state {
     nd_energy_book_t energy;
 };
 
+_Static_assert(_Alignof(struct metering_state) <= ND_ALLOC_ALIGNMENT,
+               "metering needs more alignment than the allocator port promises");
+
 metering_state_t *metering_create(nd_allocator_t *allocator,
                                   const metering_config_t *config)
 {

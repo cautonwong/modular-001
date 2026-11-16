@@ -3,8 +3,6 @@
 
 #include "domain/tariff/activity_calendar.h"
 
-static const nd_calendar_name_t season_name = {2, {'S', '1'}};
-static const nd_calendar_name_t week_name = {2, {'W', '1'}};
 static const nd_calendar_action_t actions[] = {
     {.start = {8, 0, 0, 0}, .script_ln = {1, 2, 3, 4, 5, 6},
      .script_selector = 1},

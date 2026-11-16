@@ -1,0 +1,14 @@
+# file blocks
+components/protocol/dlms/pkg_dlms.c 2
+components/protocol/dlms/user_information.c 1
+infra/boot/App/Source/common.c 1
+infra/boot/App/Source/main.c 1
+infra/boot/Drivers/Libraries/CMSIS/device/lib_LoadNVR.c 1
+infra/boot/Drivers/Libraries/Lib_Driver/src/lib_clk.c 1
+infra/boot/Drivers/Libraries/Lib_Driver/src/lib_gpio.c 1
+infra/boot/Drivers/Libraries/Lib_Driver/src/lib_uart.c 1
+infra/boot/Drivers/Libraries/Lib_Driver/src/lib_wdt.c 1
+infra/boot/HD/HD_SPI/nor_flash.c 1
+infra/security/crypto/src/nx_crypto_hmac.c 1
+infra/security/esam/esam.c 1
+infra/soc/v85xxp/v8500/vendor/Lib_Driver/src/lib_iso7816.c 1
