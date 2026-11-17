@@ -1,7 +1,6 @@
 #include <stdbool.h>
 #include "application/ports/fifo.h"
 #include "application/adapters/dl698/fr_698_env.h"
-struct instance_t;
 #include "application/ports/resource_access.h"
 #include "fr_698.h"
 #include "fr_axdr_codec.h"
@@ -204,7 +203,7 @@ static uint8_t check_698DateTime_valid(uint8_t *p)
 
 
 // 方法1 事件rsd解析
-static int decode_rsd_event_selector_1(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t, struct rsd_info_t* rsd_info)
+static int decode_rsd_event_selector_1(void * instance, void * pipeline, uint32_t, struct rsd_info_t* rsd_info)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t* p = nd_fr698_apdu_cache(instance); //当临时缓存
@@ -280,7 +279,7 @@ static uint8_t frz_non_period_type_judge(uint16_t oi)
     return 1;        //非周期性冻结
 }
 //周期性冻结(除去月冻结) 用方法1 时间点筛选时 给予时间点开始再加一个周期的时间范围搜索
-static int frz_selector_1_add_period(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
+static int frz_selector_1_add_period(void * instance, void * pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
 {
     uint16_t frz_oi = (uint16_t)((oad & 0xFFFF0000) >> 16);
 
@@ -297,7 +296,7 @@ static int frz_selector_1_add_period(struct instance_t* instance, struct pipelin
     return 1;
 }
 
-static int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad,  struct rsd_info_t* rsd_info)
+static int decode_rsd_freeze_selector_1(void * instance, void * pipeline, uint32_t oad,  struct rsd_info_t* rsd_info)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -352,7 +351,7 @@ static int decode_rsd_freeze_selector_1(struct instance_t* instance, struct pipe
     return (1);
 }
 
-static int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
+static int decode_rsd_freeze_selector_2(void * instance, void * pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -516,7 +515,7 @@ static int decode_rsd_freeze_selector_2(struct instance_t* instance, struct pipe
     return (1);
 }
 
-static int decode_rsd_event_selector_2(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t, struct rsd_info_t* rsd_info)
+static int decode_rsd_event_selector_2(void * instance, void * pipeline, uint32_t, struct rsd_info_t* rsd_info)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -664,7 +663,7 @@ static int decode_rsd_event_selector_2(struct instance_t* instance, struct pipel
     return (1);
 }
 
-static int decode_rsd_selector_9(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t, struct rsd_info_t* rsd_info)
+static int decode_rsd_selector_9(void * instance, void * pipeline, uint32_t, struct rsd_info_t* rsd_info)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -767,7 +766,7 @@ uint8_t check_capture_exist(uint32_t rcsd_req, uint32_t rcsd_src)
 
 //协议列选打包    rcsd_req:列选oad，   rcsd_src：原关联对象oad，   
 //mode：0，不拷贝数据，只计算长度   1，  解析数据，并返回长度 
-static int _record_data_package_01(struct instance_t* instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src, uint8_t mode)
+static int _record_data_package_01(void * instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src, uint8_t mode)
 {
     uint32_t i, k, n;
     uint8_t *p_des = des, *p_src = src;
@@ -873,20 +872,20 @@ int single_len, orig_len;
 }
 
 //获取协议列选打包长度   rcsd_req:列选oad，   rcsd_src：原关联对象oad，   mode：0，不拷贝数据，只计算长度。  1，  解析数据，并返回长度 
-static int get_package_01_len(struct instance_t* instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src)
+static int get_package_01_len(void * instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src)
 {
     return _record_data_package_01(instance,  des, src, rcsd_req, rcsd_src, 0);
 }
 
 //协议列选打包   rcsd_req:列选oad，   rcsd_src：原关联对象oad，   mode：0，不拷贝数据，只计算长度。  1，  解析数据，并返回长度 
-static int record_package_01(struct instance_t* instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src)
+static int record_package_01(void * instance,  uint8_t *des, uint8_t *src, uint32_t *rcsd_req, uint32_t *rcsd_src)
 {
     return _record_data_package_01(instance,  des, src, rcsd_req, rcsd_src, 1);
 }
 
 
 //rsd 解析
-int rsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
+int rsd_decode(void * instance, void * pipeline, uint32_t oad, struct rsd_info_t* rsd_info)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -941,7 +940,7 @@ int rsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_
 }
 
 //rcsd 解析   到rcsd_list[]. 第一个元素为 rcsd个数
-int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad,  uint32_t *rcsd_list)
+int rcsd_decode(void * instance, void * pipeline, uint32_t oad,  uint32_t *rcsd_list)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -1180,7 +1179,7 @@ uint8_t *p;
 
 
 //读记录型数据打包
-int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t buf_size,  void *ctx)
+int record_data_package(void * instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t buf_size,  void *ctx)
 {
 #ifndef WIN32
     struct context_698_t* p_ctx = (struct context_698_t*)ctx;
@@ -1440,7 +1439,7 @@ int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf,
 // 函数返回 长度   698格式带tag，  返回0时，无数据。
 // Record_oad 记录种类，  capture_oad 关联对象， last_no，上n次
 // 举例：获取上一条日冻结 正向有功总电能 :Record_oad = 0x50040200, capture_oad = 0x00100200， last_no = 1;
-int read_record_data_form_698_protocol(struct instance_t* instance, uint8_t* buf, uint32_t Record_oad, uint32_t capture_oad, uint8_t last_no, uint16_t bufsize)
+int read_record_data_form_698_protocol(void * instance, uint8_t* buf, uint32_t Record_oad, uint32_t capture_oad, uint8_t last_no, uint16_t bufsize)
 {
     int ret = 0;
     struct rsd_info_t rsd_info;

@@ -1,10 +1,10 @@
 #include "fr_698.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "fr_698_esam.h"
-#include "io_type.h"
+#include "infra/security/esam/io_type.h"
 #include "domain/common/status.h"
 #include "application/adapters/dl698/fr_698_esam.h"
-#include "infra/boards/stategrid_single_phase/meter_status.h"
+#include "targets/stategrid_meter/board/meter_status.h"
 #include "infra/security/esam/esam_status.h"
 #include "targets/stategrid_meter/security/esam_pro.h"
 

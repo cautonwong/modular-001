@@ -226,6 +226,9 @@
                     <name>CCDefines</name>
                     <state>__DEBUG_ASSERT__</state>
                     <state>__DEBUG_ESAM__</state>
+                    <state>ND_BOARD_UART_MODE=0</state>
+                    <state>ND_BOARD_SPI_MODE=0</state>
+                    <state>ND_BOARD_IIC_MODE=0</state>
                 </option>
                 <option>
                     <name>CCPreprocFile</name>
@@ -352,14 +355,12 @@
                     <name>CCIncludePath2</name>
                     <state>$PROJ_DIR$\..\..\..\infra\kernel</state>
                     <state>$PROJ_DIR$\..\..\..</state>
-                    <state>$PROJ_DIR$\..\..\..\nidavellir\include\kernel</state>
-                    <state>$PROJ_DIR$\..\..\..\nidavellir\include</state>
                     <state>$PROJ_DIR$\..\..\..\targets\stategrid_meter\</state>
                     <state>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app</state>
                     <state>$PROJ_DIR$\..\..\..\targets\stategrid_meter\mapper_645</state>
                     <state>$PROJ_DIR$\..\..\..\application\adapters\dl698</state>
                     <state>$PROJ_DIR$\..\..\..\application\adapters\dl645</state>
-                    <state>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase</state>
+                    <state>$PROJ_DIR$\..\board</state>
                     <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500</state>
                     <state>$PROJ_DIR$\..\..\..\infra\third_party\arm\cmsis</state>
                     <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor</state>
@@ -1296,7 +1297,9 @@
                 </option>
                 <option>
                     <name>CCDefines</name>
-                    <state></state>
+                    <state>ND_BOARD_UART_MODE=0</state>
+                    <state>ND_BOARD_SPI_MODE=0</state>
+                    <state>ND_BOARD_IIC_MODE=0</state>
                 </option>
                 <option>
                     <name>CCPreprocFile</name>
@@ -1423,12 +1426,10 @@
                     <name>CCIncludePath2</name>
                     <state>$PROJ_DIR$\..\..\..\infra\kernel</state>
                     <state>$PROJ_DIR$\..\..\..</state>
-                    <state>$PROJ_DIR$\..\..\..\nidavellir\include\kernel</state>
-                    <state>$PROJ_DIR$\..\..\..\nidavellir\include</state>
                     <state>$PROJ_DIR$\..\..\..\targets\stategrid_meter\</state>
                     <state>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app</state>
                     <state>$PROJ_DIR$\..\..\..\application\adapters\dl698</state>
-                    <state>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase</state>
+                    <state>$PROJ_DIR$\..\board</state>
                     <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500</state>
                     <state>$PROJ_DIR$\..\..\..\infra\third_party\arm\cmsis</state>
                     <state>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor</state>
@@ -2158,6 +2159,9 @@
                     <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor\Lib_Driver\src\lib_clk.c</name>
                 </file>
                 <file>
+                    <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor\Lib_Driver\src\lib_dma.c</name>
+                </file>
+                <file>
                     <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\vendor\Lib_Driver\src\lib_flash.c</name>
                 </file>
                 <file>
@@ -2207,9 +2211,6 @@
         <group>
             <name>dl645</name>
             <file>
-                <name>$PROJ_DIR$\..\app\apps\legacy\app_645_server\app_645_server_entry.c</name>
-            </file>
-            <file>
                 <name>$PROJ_DIR$\..\..\..\application\adapters\dl645\fr_645.c</name>
             </file>
             <file>
@@ -2233,9 +2234,6 @@
         </group>
         <group>
             <name>dl698</name>
-            <file>
-                <name>$PROJ_DIR$\..\app\apps\legacy\app_698_server\app_698_server_entry.c</name>
-            </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698.c</name>
             </file>
@@ -2283,6 +2281,9 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\application\ports\record_storage.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\ports\resource_access.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_connect.c</name>
@@ -2348,52 +2349,73 @@
         <group>
             <name>drivers</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\eeprom.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\drivers\storage\eeprom\eeprom.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\esam698_v2.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\drivers\storage\mx25l3206e\mx25l3206e.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\iic_driver.c</name>
+                <name>$PROJ_DIR$\..\board\board_eeprom.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\ndv_Norflash.c</name>
+                <name>$PROJ_DIR$\..\board\board_flash.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\ndv_RN8209.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\drivers\security\esam\esam.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\ndvh_rn8209.h</name>
+                <name>$PROJ_DIR$\..\board\board_esam.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\relay.c</name>
+                <name>$PROJ_DIR$\..\board\iic_driver.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\board_io.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\drivers\metering\rn8209\rn8209.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\iic_pins.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\drivers\metering\rn8209\rn8209.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\spi_pins.c</name>
+                <name>$PROJ_DIR$\..\board\board_rn8209.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\uart_pins.c</name>
+                <name>$PROJ_DIR$\..\board\board_rn8209.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\rn8209_pins.c</name>
+                <name>$PROJ_DIR$\..\board\relay.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\esam_pins.c</name>
+                <name>$PROJ_DIR$\..\board\board_io.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\relay_pins.c</name>
+                <name>$PROJ_DIR$\..\board\iic_pins.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\spi_driver.c</name>
+                <name>$PROJ_DIR$\..\board\spi_pins.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\boards\stategrid_single_phase\uart_driver.c</name>
+                <name>$PROJ_DIR$\..\board\uart_pins.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\board\rn8209_pins.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\board\esam_pins.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\board\relay_pins.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\board\board_transport.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\board\board_transport_soc.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\board\spi_driver.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\board\uart_driver.c</name>
             </file>
         </group>
         <group>
@@ -2415,15 +2437,6 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\infra\kernel\list.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\infra\kernel\mlog.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\app\rtos\nidavellir.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\infra\kernel\pipeline.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\tools\app_resource_tool\resource_tool.c</name>
@@ -2758,9 +2771,6 @@
         </group>
     </group>
     <file>
-        <name>$PROJ_DIR$\..\..\..\nidavellir\include\applications.h</name>
-    </file>
-    <file>
         <name>$PROJ_DIR$\..\..\..\infra\soc\cpu_surport.h</name>
     </file>
     <file>
@@ -2768,6 +2778,12 @@
     </file>
     <file>
         <name>$PROJ_DIR$\..\app\driver_entry.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\uart_timeout_adapter.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\storage_device.c</name>
     </file>
     <file>
         <name>$PROJ_DIR$\..\app\port.h</name>
@@ -2833,6 +2849,9 @@
         <name>$PROJ_DIR$\..\app\tariff_lookup_eeprom.c</name>
     </file>
     <file>
+        <name>$PROJ_DIR$\..\app\stategrid_context.c</name>
+    </file>
+    <file>
         <name>$PROJ_DIR$\..\app\stategrid_meter_entry.c</name>
     </file>
     <file>
@@ -2868,7 +2887,7 @@
     <file>
         <name>$PROJ_DIR$\..\..\..\infra\kernel\time_link.c</name>
     </file>
-<file>
+    <file>
         <name>$PROJ_DIR$\..\..\..\infra\memory\sector_store.c</name>
     </file>
 </project>

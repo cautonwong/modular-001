@@ -2,5 +2,5 @@ name: application.adapters.dl645
 version: 0.1.0
 layer: protocol
 paths: [application/adapters/dl645]
-dependencies: [application.ports, domain.events, legacy.base_headers]
+dependencies: [application.ports, core.types, domain.events]
 legacy: false

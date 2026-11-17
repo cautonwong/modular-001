@@ -184,17 +184,17 @@ domain 变体不是复制整套代码，而是组合和参数化。
 - `domain/common/status.h` 提供与平台无关的电源和事件状态值。
 - dl698 目录不再直接 include `port.h`、`v85xxp_system.h`、`cpu_surport.h`、`pin_function_def.h`、`lib_clk.h`、`lib_uart.h` 或 `infra/kernel/resource_blocks.h`。
 - `meter_base_view` 把旧单体控制块收口到 target 适配器，dl698 不再直接访问其字段。
-- `targets/stategrid_meter/board/meter_status.h` 声明 board 和 security 需要的表类型、计量芯片故障和 ESAM 电源状态，target 的 `meter_status_adapter.c` 在旧控制块上实现。`ndv_RN8209.c`、`esam_pro.c`、`nidavellir.c` 不再直接读写这些字段。
+- `targets/stategrid_meter/board/meter_status.h` 声明 board 和 security 需要的表类型、计量芯片故障和 ESAM 电源状态，target 的 `meter_status_adapter.c` 在旧控制块上实现。`ndv_RN8209.c`、`esam_pro.c` 不再直接读写这些字段。
 - `infra/security/esam/esam_status.h` 声明 ESAM 芯片异常、密钥、认证开关、表号和认证超时状态，target 的 `esam_status_adapter.c` 负责映射和保存。`fr_698_esam.c` 不再直接访问旧控制块。
 - `targets/stategrid_meter/board/meter_config.h` 固定表类型、计量校准和自热补偿参数 ID。`infra/` 目录已经不再 include `targets/stategrid_meter/app/port.h`，`fr_698_esam.c` 也不再 include `cpu_surport.h`。
 - `targets/stategrid_meter/board/board_io.{h,c}` 只提供背光、PLC 事件、继电器 LED 和反馈、表盖、按键这些语义接口。IIC、SPI、UART/RS485、RN8209、ESAM 和继电器线圈的线级操作在 `iic_pins`、`spi_pins`、`uart_pins`、`rn8209_pins`、`esam_pins`、`relay_pins` 私有头里，对应驱动只 include 自己需要的那个。原 `pin_function_def.h` 已删除，寄存器访问只在 board 实现文件里。`board_io` 是 stategrid 专用实现，不计划抽通用 board 接口。按 `docs/device-model.md`，board 在构建期选定，组合根直接调用具体 board 函数。
 - `domain/display/backlight.h` 和 `domain/load_control/relay_status.h` 是消费者定义的端口。显示和运行状态代码不再 include `board_io.h`，stategrid target 在组合根里把端口直接绑到 `board_io`。host 测试用假实现验证绑定和调用。
 - `domain/metering/metering_input.h` 提供温度和电池输入，返回旧 ADC 原始值。stategrid target 的 `metering_input_adapter.c` 负责映射到板级 ADC 通道，计量 legacy 代码不再直接调用 MCU ADC。
-- `infra/board` 已合并到 `targets/stategrid_meter/board`。依赖 board 的 `nidavellir.c`、`time_link.c`、`cpu_v85xxp_isr.c`、`esam_pro.c`、`fr_698_esam.c` 移到 target 的 `rtos`、`soc`、`security`。`tools/check_platform_boundary.py` 已接入 `check-legacy.sh`，共享代码里的平台 include 和 RTOS 调度调用会失败；application/apps 的平台依赖已清零，SoC/RTOS 调用 staging 依赖也已清零；0 条 legacy kernel 头依赖进入 ratchet baseline。
+- `infra/board` 已合并到 `targets/stategrid_meter/board`。依赖 board 的 `time_link.c`、`cpu_v85xxp_isr.c`、`esam_pro.c`、`fr_698_esam.c` 已归 SoC、board 或 security。`tools/check_platform_boundary.py` 已接入 `check-legacy.sh`，共享代码里的平台 include 和 RTOS 调度调用会失败；application/apps 的平台依赖已清零，SoC/RTOS 调用 staging 依赖也已清零；0 条 legacy kernel 头依赖进入 ratchet baseline。
 
 ## 9. 迁移顺序
 
-1. 把 `application/adapters/dl698` 从 `nidavellir.h` 伞头解耦，改成显式包含领域和端口头。
+1. `application/adapters/dl698` 已从旧 kernel 伞头解耦，改为显式包含领域和端口头。
 2. ~~把 `targets/stategrid_meter/pin_function_def.h` 的引脚宏拆到 board 层，由 board 端口暴露语义。~~ 引脚头已删除，线级操作在私有 pin 模块里，语义接口走 `board_io`。
 3. ~~保持 `board_io` 的 stategrid 专用定位，把 IIC、SPI、UART 线级操作移到 board 驱动私有头。~~ 已完成。应用和领域需要的共享能力通过消费者端口进入。
 4. 把 `infra/kernel` 里依赖 target 的部分收口到 `targets/<product>/rtos` 或对应平台实现，不定义通用 RTOS adapter。

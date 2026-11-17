@@ -1,8 +1,7 @@
-#include "type_def.h"
-#include "nidavellir.h"
+#include "components/core/types/type_def.h"
 #include "time_link.h"
 #include "fr_698_esam.h"
-#include "io_type.h"              
+#include "infra/security/esam/io_type.h"
 #include "sm3.h"
 #include "sm4.h"
 
@@ -62,7 +61,7 @@ int encrypt_or_decrypt(uint8_t *input, uint8_t *output, uint8_t type)
 		//printf("\n");
 	}
     return 0;
-}	
+}
 
 int m_test()
 {
@@ -73,7 +72,7 @@ int m_test()
 	uint8_t data[32] = { 0 };
 	uint8_t mac[4] = { 0 };
 	uint8_t mac_2[4] = { 0 };
-    
+
 	uint8_t mac_len = get_mac(input, ilen, mac);
 #if 0
 	printf("input:\n   ");
@@ -120,21 +119,21 @@ int m_test()
 
 int openM_ioctl(int fd, int request, void *param)
 {
-    struct esam_data_t *esam_data = (struct esam_data_t *)param;   
+    struct esam_data_t *esam_data = (struct esam_data_t *)param;
     uint16_t len = 0;
     int ret = 0;
-    
+
     if(esam_poweron_cmd == request){
         return 1;
     }
-    
+
     if(esam_poweroff_cmd == request){
         return 1;
     }
-    
+
     if(esam_comm_handle_cmd == request){
         //tx_esam(esam_data->head , esam_data->input->data_buf , esam_data->len , NULL);
-        //ret = rx_esam(esam_data->input->data_buf , &len , NULL , &esam_data->sw);    
+        //ret = rx_esam(esam_data->input->data_buf , &len , NULL , &esam_data->sw);
         if(esam_data->sw == 0x9000){
             esam_data->len = len;
             return 1;

@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -10,7 +10,7 @@
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "domain/events/power_off.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
-#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/persistence/legacy_control_block.h"
 
 #define PHASE_NUM 1   //单相或三相 支持1或3
 
@@ -18,7 +18,7 @@
 // 掉电事件 判断:  返回1:记录发生                0:不记录        -1:记录结束
 int PowerOff_event_judge(void *instance, void *task, void *mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct mbase_control_block_t* ctrl_block = ((stategrid_context_t *)instance)->mbase;
     uint16_t RecordId = PowerOffS;
 
     uint32_t voltages[PHASE_NUM] = {ctrl_block->voltage_ac};
@@ -53,10 +53,9 @@ int PowerOff_event_judge(void *instance, void *task, void *mesg)
 //  下电状态 每秒调用
 void PowerOff_LowPower_pro(void *instance, void *task, void *mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct mbase_control_block_t* ctrl_block = ((stategrid_context_t *)instance)->mbase;
     uint32_t* accumulate_time = &ctrl_block->PowerOffS_time_low_power_cnt;
     uint16_t RecordId = PowerOffS;
-    struct message_t mesg_tmp;
 
     if (*nd_fr698_ac_power_off_sec_cnt(instance) == 1) {
         nd_event_duration_t debounce = {
@@ -67,8 +66,7 @@ void PowerOff_LowPower_pro(void *instance, void *task, void *mesg)
             set_activeflag(instance, RecordId);
             ctrl_block->pd_active_flag_update = 0x5A;
 
-            mesg_tmp.id = RecordId;
-            recv_record_process(instance, task, &mesg_tmp, NULL);
+            recv_record_process(instance, RecordId, NULL);
         }
     }
 

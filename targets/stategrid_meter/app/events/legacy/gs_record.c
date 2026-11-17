@@ -7,7 +7,7 @@
 #include "application/adapters/dl698/fr_698_env.h"
 #include "port.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
-#include "nidavellir/include/kernel/message.h"
+#include "targets/stategrid_meter/app/message.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/events/gs_record_tables.h"
 #include "fr_698.h"
@@ -294,8 +294,10 @@ void clr_recordflag(void *instance, uint16_t RecordId)
 //发送记录标识
 void send_recordflag_mesg(void *instance, void *task, uint16_t RecordId, uint8_t* payload)
 {
+    (void)task;
+    (void)payload;
     set_recordflag(instance, RecordId);
-    nd_record_message_send(instance, task, RecordId, payload);
+    nd_record_message_send(instance, RecordId);
 }
 
 //事件记录接口-发消息
@@ -317,26 +319,22 @@ void send_event_mesg_pro(void *instance, void *task, uint16_t RecordId, uint8_t*
 // mode 1：记录发生   0 不记录。 -1 记录结束
 void record_event_no_mesg_pro(void *instance, void *task, uint16_t RecordId, uint8_t* payload, int mode)
 {
-    struct message_t mesg_tmp;
-    
-    memset((uint8_t*)&mesg_tmp, 0, sizeof(mesg_tmp));
+    (void)task;
+    (void)payload;
 
-    
     if (mode == 1) // 发生
     {
         //set_activeflag(instance, RecordId); //外部处理
-        mesg_tmp.id = RecordId;
-        set_recordflag(instance, mesg_tmp.id);
-        recv_record_process(instance, NULL, &mesg_tmp, NULL);
-        
+        set_recordflag(instance, RecordId);
+        recv_record_process(instance, RecordId, NULL);
+
 
     }
     else if (mode == -1) //结束
     {
         //clr_activeflag(instance, RecordId);//外部处理
-        mesg_tmp.id = RecordId + 1;
-        set_recordflag(instance, mesg_tmp.id);
-        recv_record_process(instance, NULL, &mesg_tmp, NULL);
+        set_recordflag(instance, RecordId + 1);
+        recv_record_process(instance, RecordId + 1, NULL);
     }
 }
 
@@ -741,7 +739,6 @@ int event_PowerOn_pro(void *instance, void *pipeline, void *mesg)
     uint8_t payload[20] ={0}, tmp[15]={0};
     uint16_t i, RecordId;
     struct record_storage_id_info_t info;
-    struct message_t mesg_tmp;
     struct tm tmpTM;
     int ret;
 
@@ -770,7 +767,6 @@ int event_PowerOn_pro(void *instance, void *pipeline, void *mesg)
         if (true == get_activeflag(instance, RecordId))
         {
             // 本条记录存储的时间
-            mesg_tmp.id = RecordId+1; // 结束
             uint32_to_buf_msb(0x20200200, &payload[0]);
             payload[4] = 8; //data len
             payload[5] = 0x1C;//TYPE_date_time_s;
@@ -778,7 +774,7 @@ int event_PowerOn_pro(void *instance, void *pipeline, void *mesg)
             mem_swap_cpy(&payload[6], &tmp[0], 7);
             clr_activeflag(instance, RecordId);
             clr_event_duration(instance, RecordId);
-            recv_record_process(instance, pipeline, &mesg_tmp, payload);    
+            recv_record_process(instance, RecordId + 1, payload);
         }
     }
 
@@ -1112,8 +1108,8 @@ int read_record_capture(void *instance, uint8_t* databuf, uint32_t* CaptureList,
 }
 
 //记录数据
-//直接提供nd_mesg_id(mesg)   可不走消息 记录事件
-int recv_record_process(void *instance, void *pipeline, void *mesg, uint8_t* payload)
+//直接提供record_id  可不走消息 记录事件
+int recv_record_process(void *instance, uint16_t record_id, uint8_t* payload)
 {
 
     uint8_t mode = START_MODE;//enum scheme_mode mode = START_MODE;
@@ -1129,7 +1125,7 @@ int recv_record_process(void *instance, void *pipeline, void *mesg, uint8_t* pay
     int ret;
     uint8_t report_updata = 0;
 
-    if (!nd_event_catalog_lookup((uint16_t)nd_mesg_id(mesg), &catalog_entry))
+    if (!nd_event_catalog_lookup((uint16_t)record_id, &catalog_entry))
     {
         return 0;
     }
@@ -1168,7 +1164,7 @@ int recv_record_process(void *instance, void *pipeline, void *mesg, uint8_t* pay
 
     if((mode == START_MODE) || (mode == END_MODE))  //事件类 
     {
-        if ((nd_mesg_id(mesg) != MeterWrR) && (nd_mesg_id(mesg) != MeterWr645S) && (nd_mesg_id(mesg) != MeterWr645R)) //自扩
+        if ((record_id != MeterWrR) && (record_id != MeterWr645S) && (record_id != MeterWr645R)) //自扩
         {
             report_updata = 1;
         }
@@ -1187,7 +1183,7 @@ int recv_record_process(void *instance, void *pipeline, void *mesg, uint8_t* pay
             event_scheme = 4;
         }
         report_3320list_add(instance,Oad|(event_scheme<<13)); 
-        if(PowerOffS == nd_mesg_id(mesg))
+        if(PowerOffS == record_id)
         {
             if(( *nd_fr698_power_state(instance) == ND_AC_POWER_ON ) && (nd_mb_power_on_sec_accum(instance) >= nd_mb_active_report_sec_limit(instance)))
             {
@@ -1200,7 +1196,7 @@ int recv_record_process(void *instance, void *pipeline, void *mesg, uint8_t* pay
                 nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_power_on_sec_accum(instance), 4);
             }
         }
-        else if(PowerOffE == nd_mesg_id(mesg))
+        else if(PowerOffE == record_id)
         {
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
             nd_mb_offset_power_on_sec_accum())  -  nd_mb_offset_persistent_section_start();
@@ -1222,7 +1218,7 @@ int recv_record_process(void *instance, void *pipeline, void *mesg, uint8_t* pay
 
     }
     //结算日
-    if(BillFreeze == nd_mesg_id(mesg))
+    if(BillFreeze == record_id)
     {
         if(nd_mb_first_mbill_day_flag(instance) == 0x5A)
         {
@@ -1231,23 +1227,17 @@ int recv_record_process(void *instance, void *pipeline, void *mesg, uint8_t* pay
         }
     }
 
-    clr_recordflag(instance, nd_mesg_id(mesg));
+    clr_recordflag(instance, record_id);
     return 1;
 
 }
 
-int sync_data_record(void *instance, void *pipeline, void *mesg)
+int sync_data_event(void *instance, uint16_t record_id)
 {
     uint8_t payload[100]={0};
-    
-    //mesg 的id 就是事件代码
-    int r = recv_mesg_v2(instance, pipeline, mesg, payload, 100);
-    
-    if (r > 0)
-    {
-        recv_record_process(instance, pipeline, mesg, payload);
-    }
-    
+
+    recv_record_process(instance, record_id, payload);
+
     return 0;//返回0代表结束
 }
 

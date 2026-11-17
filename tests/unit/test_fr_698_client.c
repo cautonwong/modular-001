@@ -5,11 +5,11 @@
 #include "application/adapters/dl698/fr_698_internal.h"
 #include "application/ports/fifo.h"
 
-struct instance_t {
+struct fake_instance_t {
     uint8_t unused;
 };
 
-struct pipeline_t {
+struct fake_pipeline_t {
     void *ctx;
     struct fifo_t *in_queue;
     struct fifo_t *out_queue;
@@ -23,20 +23,20 @@ static uint8_t forward_payload[8];
 
 void *nd_fr698_pipeline_ctx(const void *pipeline)
 {
-    return ((const struct pipeline_t *)pipeline)->ctx;
+    return ((const struct fake_pipeline_t *)pipeline)->ctx;
 }
 
 uint32_t nd_fr698_pipeline_id(const void *pipeline)
 {
-    return ((const struct pipeline_t *)pipeline)->id;
+    return ((const struct fake_pipeline_t *)pipeline)->id;
 }
 
 void *nd_fr698_pipeline_in_queue(const void *pipeline)
 {
-    return ((const struct pipeline_t *)pipeline)->in_queue;
+    return ((const struct fake_pipeline_t *)pipeline)->in_queue;
 }
 
-static int capture_forward(struct instance_t *unused, struct pipeline_t *unused2,
+static int capture_forward(void *unused, void *unused2,
                            nd_dl698_msg_t *mesg)
 {
     (void)unused;
@@ -61,7 +61,7 @@ void tearDown(void) {}
 static void test_698_client_rejects_request_frame(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
     struct fifo_t in;
     struct fifo_t apdu;
     uint8_t in_buffer[16] = {0};
@@ -88,7 +88,7 @@ static void test_698_client_rejects_request_frame(void)
 static void test_698_client_ignores_segment_frame(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
     struct fifo_t in;
     uint8_t in_buffer[16] = {0};
     nd_dl698_msg_t mesg;
@@ -111,7 +111,7 @@ static void test_698_client_ignores_segment_frame(void)
 static void test_698_client_forwards_response_payload(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
     struct fifo_t in;
     struct fifo_t apdu;
     uint8_t in_buffer[32] = {0};
@@ -150,7 +150,7 @@ static void test_698_client_forwards_response_payload(void)
 static void test_698_client_without_callback_drains_payload(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
     struct fifo_t in;
     struct fifo_t apdu;
     uint8_t in_buffer[32] = {0};

@@ -1,9 +1,8 @@
 #include "targets/stategrid_meter/app/platform_adapter.h"
 
-#include "nidavellir.h"
 #include "infra/soc/v85xxp/v8500/v85xxp_system.h"
-#include "infra/boards/stategrid_single_phase/board_io.h"
-#include "infra/boards/stategrid_single_phase/eeprom.h"
+#include "targets/stategrid_meter/board/board_io.h"
+#include "targets/stategrid_meter/board/board_eeprom.h"
 
 #include "application/ports/platform.h"
 
@@ -33,7 +32,7 @@ static bool platform_device_error(void *ctx)
     return (DEVICE_ERR & (1u << 1)) != 0;
 }
 
-void stategrid_platform_bind(struct instance_t *instance)
+void stategrid_platform_bind(stategrid_context_t *instance)
 {
     static nd_platform_port_t port;
 

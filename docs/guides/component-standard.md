@@ -13,12 +13,11 @@
 | `application/adapters/<x>` | `application.adapters.<x>` | `protocol` |
 | `components/<类别>/<x>` | `<类别>.<x>` | 该类别 |
 | `infra/<x>` | `infra.<x>` | `infra` |
-| `infra/boards/<board>` | `board.<board>` | `platform` |
 | `infra/soc/<vendor>/<soc>` | `soc.<vendor>_<soc>` | `platform` |
+| `infra/drivers/<class>/<chip>` | `driver.<class>_<chip>` | `platform` |
 | `infra/third_party/<vendor>/<lib>` | `third_party.<vendor>_<lib>` | `platform` |
 | `targets/<t>` | `target.<t>` | `product` |
 | `targets/<t>/<子目录>` | `target.<t>.<子目录>`（跳过 `app/`） | `product` |
-| `nidavellir/include*` | `legacy.*` | `infra` 或 `product` |
 
 旧的 `nd_*` 组件名已在 2026-11-15 统一迁移到上表规则，现在没有例外。
 
@@ -45,7 +44,7 @@ dependencies: [domain.common]
 - 函数全部在头文件里声明。`check-arm.sh` 对 domain 和 application 启用了 `-Wmissing-prototypes`。
 - 可变全局变量不进头文件。需要共享状态时给访问器，参考 `nd_platform_device_error()`。
 - 消费者定义的端口放 `application/ports/`，实现放在 target 的组合根里绑定。模板见 `docs/guides/port-binding.md`。
-- 头文件不 include `targets/`、`infra/soc`、`infra/boards`、`nidavellir/`。这些由 `check:platform` 和 `check:layers` 拦截。
+- 头文件不 include `targets/` 或 `infra/soc`。这些由 `check:platform` 和 `check:layers` 拦截。
 
 ## 4. 测试
 

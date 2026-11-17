@@ -19,6 +19,41 @@ struct circular_info_t
     uint16_t valid_num;
 };
 
+/* The resource store behind a consumer-defined port. ctx is the product
+ * context, opaque here; the target adapter maps it to its store engine. */
+typedef struct nd_resource_port
+{
+    void *ctx;
+    int16_t (*get_index)(void *ctx, uint32_t index,
+                         uint8_t *buf, uint16_t size);
+    int16_t (*set_index)(void *ctx, uint32_t index,
+                         uint8_t *buf, uint16_t size);
+    int16_t (*get_offset)(void *ctx, uint32_t offset,
+                          uint8_t *buf, uint16_t len);
+    int16_t (*set_offset)(void *ctx, uint32_t offset,
+                          uint8_t *buf, uint16_t len);
+    int16_t (*get_index_e2p)(void *ctx, uint8_t *buf,
+                             uint8_t block_name, uint16_t id, uint16_t len);
+    int16_t (*set_index_e2p)(void *ctx, uint8_t *buf,
+                             uint8_t block_name, uint16_t id, uint16_t len);
+    int16_t (*get_offset_flash)(void *ctx, uint8_t blockname,
+                                uint32_t addr_offset, uint8_t *buf,
+                                uint16_t len);
+    int16_t (*set_offset_flash)(void *ctx, uint8_t blockname,
+                                uint32_t addr_offset, uint8_t *buf,
+                                uint16_t len, uint8_t check_erase);
+    int16_t (*log_output)(void *ctx, uint32_t index,
+                          uint8_t *buf, uint16_t buf_size,
+                          struct circular_info_t *info);
+    int (*log_clean)(void *ctx, uint32_t index);
+    int16_t (*log_append)(void *ctx, uint32_t index, uint8_t *buf,
+                          uint16_t unit_size);
+    int16_t (*log_append_revise)(void *ctx, uint32_t index, uint8_t *buf,
+                                 uint16_t offset, uint16_t unit_size);
+} nd_resource_port_t;
+
+void nd_resource_bind(const nd_resource_port_t *port);
+
 int16_t nd_log_output(void *ctx, uint32_t index,
                       uint8_t *buf, uint16_t buf_size,
                       struct circular_info_t *info);

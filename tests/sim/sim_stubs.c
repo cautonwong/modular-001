@@ -1,13 +1,12 @@
 #include "sim.h"
-#include "infra/boards/stategrid_single_phase/relay_config.h"
+#include "targets/stategrid_meter/board/relay_config.h"
 
 #include <stdint.h>
 
 #include "cpu_surport.h"
 #include "driver_entry.h"
-#include "nidavellir.h"
-#include "infra/boards/stategrid_single_phase/ndvh_rn8209.h"
-#include "infra/boards/stategrid_single_phase/board_io.h"
+#include "targets/stategrid_meter/board/board_esam.h"
+#include "targets/stategrid_meter/board/board_io.h"
 
 /*
  * Hardware entry points that are not linked into the simulation. They are
@@ -74,7 +73,7 @@ uint32_t read_mcu_adc_measure_value(uint8_t chl_type, int32_t *adc_measure)
     return 1;
 }
 void opreate_second_pluse(uint8_t mode) { (void)mode; }
-void cpu_io_lowpower_cfg_chk(struct instance_t *instance) { (void)instance; }
+void cpu_io_lowpower_cfg_chk(void *instance) { (void)instance; }
 void mcu_uart_send_enable(uint8_t enable, size_t index) { (void)enable; (void)index; }
 void mcu_uart_recive_enable(uint8_t enable, size_t index) { (void)enable; (void)index; }
 int mcu_uart_send_byte(uint8_t byte, size_t index)
@@ -102,17 +101,17 @@ void mcu_power_off(void) {}
 void mcu_power_on(void) {}
 uint8_t mcu_get_power_status(void) { return 0; }
 
-uint8_t read_mcu_rtc(uint8_t addr, struct instance_t *instance)
+uint8_t read_mcu_rtc(uint8_t addr, struct tm *time)
 {
     (void)addr;
-    if (instance != NULL && sim_rtc_set_valid) {
-        instance->time.tm_year = 2000 + ((sim_rtc_set[5] >> 4) * 10)
+    if (time != NULL && sim_rtc_set_valid) {
+        time->tm_year = 2000 + ((sim_rtc_set[5] >> 4) * 10)
                                  + (sim_rtc_set[5] & 0x0F) - 1900;
-        instance->time.tm_mon = ((sim_rtc_set[4] >> 4) * 10) + (sim_rtc_set[4] & 0x0F) - 1;
-        instance->time.tm_mday = ((sim_rtc_set[3] >> 4) * 10) + (sim_rtc_set[3] & 0x0F);
-        instance->time.tm_hour = ((sim_rtc_set[2] >> 4) * 10) + (sim_rtc_set[2] & 0x0F);
-        instance->time.tm_min = ((sim_rtc_set[1] >> 4) * 10) + (sim_rtc_set[1] & 0x0F);
-        instance->time.tm_sec = ((sim_rtc_set[0] >> 4) * 10) + (sim_rtc_set[0] & 0x0F);
+        time->tm_mon = ((sim_rtc_set[4] >> 4) * 10) + (sim_rtc_set[4] & 0x0F) - 1;
+        time->tm_mday = ((sim_rtc_set[3] >> 4) * 10) + (sim_rtc_set[3] & 0x0F);
+        time->tm_hour = ((sim_rtc_set[2] >> 4) * 10) + (sim_rtc_set[2] & 0x0F);
+        time->tm_min = ((sim_rtc_set[1] >> 4) * 10) + (sim_rtc_set[1] & 0x0F);
+        time->tm_sec = ((sim_rtc_set[0] >> 4) * 10) + (sim_rtc_set[0] & 0x0F);
         sim_rtc_set_valid = 0;
         return 0;
     }
@@ -121,38 +120,38 @@ uint8_t read_mcu_rtc(uint8_t addr, struct instance_t *instance)
      * it re-synchronizes from the hardware RTC. A real RTC has advanced by
      * then; model that by advancing the simulated clock one second.
      */
-    if (instance != NULL && instance->time.tm_sec == 20) {
-        instance->time.tm_sec++;
-        rtc_tm_normalize(&instance->time);
+    if (time != NULL && time->tm_sec == 20) {
+        time->tm_sec++;
+        rtc_tm_normalize(time);
     }
     return 0;
 }
 
-void cpu_sleep_manage(struct instance_t *instance, struct pipeline_t *pipeline)
+void cpu_sleep_manage(stategrid_context_t *instance, void *pipeline)
 {
     (void)instance;
     (void)pipeline;
 }
 
-void device_power_close(struct instance_t *instance) { (void)instance; }
-void device_power_close1(struct instance_t *instance) { (void)instance; }
-void device_power_open(struct instance_t *instance, struct pipeline_t *pipeline)
+void device_power_close(stategrid_context_t *instance) { (void)instance; }
+void device_power_close1(stategrid_context_t *instance) { (void)instance; }
+void device_power_open(stategrid_context_t *instance, void *pipeline)
 {
     (void)instance;
     (void)pipeline;
 }
 
-void irq_transform_to_instance(struct instance_t *instance) { (void)instance; }
+void irq_transform_to_instance(stategrid_context_t *instance) { (void)instance; }
 void irq_system_init(void) {}
 void communication_chlx_init(struct fifo_t *txfifo, struct fifo_t *rxfifo,
-                             uint8_t chl_type, struct instance_t *instance)
+                             uint8_t chl_type, stategrid_context_t *instance)
 {
     (void)instance;
     sim_uart_bind(chl_type, txfifo, rxfifo);
 }
 extern uint16_t relay_off_chk, relay_on_chk;
 
-void IOStateCheck(struct instance_t *instance, struct pipeline_t *pipeline)
+void IOStateCheck(stategrid_context_t *instance, void *pipeline)
 {
     (void)instance;
     (void)pipeline;
@@ -170,27 +169,17 @@ void IOStateCheck(struct instance_t *instance, struct pipeline_t *pipeline)
         relay_off_chk = 0;
     }
 }
-void rs485_init(struct instance_t *instance, struct pipeline_t *pipeline)
+void rs485_init(stategrid_context_t *instance, void *pipeline)
 {
     (void)instance;
     (void)pipeline;
 }
 void start_emu_signal_pro(void) {}
-unsigned char WriteRn8209(unsigned char chip_addr, unsigned char *buf,
-                          unsigned char length, const struct dev_info_t *dev)
-{
-    (void)chip_addr;
-    (void)buf;
-    (void)length;
-    (void)dev;
-    return 0;
-}
 void gpio_configuration_AC(void) {}
 void fnINTTC3_Init(uint8_t cmd) { (void)cmd; }
 uint8_t Magnetic_hold_relay_Init(void) { return 0; }
 
 uint8_t DEVICE_ERR = 0;
-struct Rn8209AdjK_t Rn8209Adj_K;
 
 uint8_t ANA_GetStatus(uint32_t status_mask) { (void)status_mask; return 0; }
 void CLK_AHBPeriphralCmd(uint32_t peripheral, uint32_t state)
@@ -198,24 +187,12 @@ void CLK_AHBPeriphralCmd(uint32_t peripheral, uint32_t state)
     (void)peripheral;
     (void)state;
 }
-unsigned char CmdRn8209(unsigned char cmd, const struct dev_info_t *dev)
-{
-    (void)cmd;
-    (void)dev;
-    return 0;
-}
 int nd_board_cover_closed(void) { return sim_scenario_cover_closed(); }
 void nd_board_cover_input_enable(void) {}
 int nd_board_key_released(void) { return sim_scenario_key_released(); }
-int openM_ioctl(int fd, int request, void *param)
-{
-    (void)fd;
-    (void)request;
-    (void)param;
-    return -1;
-}
-void report_port_open(struct instance_t *instance) { (void)instance; }
-void reset_all_channel_baud(struct instance_t *instance) { (void)instance; }
+nd_esam_t *board_esam(void) { return NULL; }
+void report_port_open(stategrid_context_t *instance) { (void)instance; }
+void reset_all_channel_baud(stategrid_context_t *instance) { (void)instance; }
 uint8_t write_mcu_rtc_date(uint8_t addr, uint8_t *buf, uint16_t len)
 {
     (void)addr;
@@ -242,7 +219,7 @@ uint8_t Magnetic_hold_relay_disconnect(void)
     sim_log_relay("disconnect");
     return 0;
 }
-void dev_init(struct instance_t *instance, uint8_t power_mode)
+void dev_init(stategrid_context_t *instance, uint8_t power_mode)
 {
     (void)instance;
     (void)power_mode;

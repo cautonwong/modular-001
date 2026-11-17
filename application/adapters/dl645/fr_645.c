@@ -1,4 +1,4 @@
-#include "type_def.h"
+#include "components/core/types/type_def.h"
 #include <stdbool.h>
 
 #ifndef n_assert
@@ -19,8 +19,6 @@
 #include "application/adapters/dl645/fr_645_addr.h"
 #include "application/adapters/dl645/fr_645_password.h"
 #include "application/ports/resource_access.h"
-struct instance_t;
-struct pipeline_t;
 #define FR_645_PID_MSTA 12
 #define FR_645_PID_RX_698 14
 #define FR_645_PID_TX_698 15
@@ -99,12 +97,12 @@ static void fr645_fifo_update_rd(fr_645_fifo_t *fifo, uint16_t len,
 
 
 
-int fr_decode_645_11(struct instance_t*, struct pipeline_t*, nd_dl645_msg_t*)
+int fr_decode_645_11(void *, void *, nd_dl645_msg_t*)
 {
     return 1;
 }
 
-int fr_encode_645_11(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl645_msg_t* mesg)
+int fr_encode_645_11(void * instance, void * pipeline, nd_dl645_msg_t* mesg)
 {
 //    struct context_645_t* ctx = (struct context_645_t*)nd_fr645_pipeline_ctx(pipeline);
 //    struct fifo_t* fifo = (struct fifo_t*)nd_fr645_pipeline_in_queue(pipeline);
@@ -118,17 +116,17 @@ int fr_encode_645_11(struct instance_t* instance, struct pipeline_t* pipeline, n
 
     return 1;
 }
-int fr_decode_645_08(struct instance_t*, struct pipeline_t*, nd_dl645_msg_t*)
+int fr_decode_645_08(void *, void *, nd_dl645_msg_t*)
 {
     return 0;
 }
 
-int fr_encode_645_86(struct instance_t*, struct pipeline_t*, nd_dl645_msg_t*)
+int fr_encode_645_86(void *, void *, nd_dl645_msg_t*)
 {
     return 1;
 }
 
-int fr_decode_645_86(struct instance_t*, struct pipeline_t*, nd_dl645_msg_t*)
+int fr_decode_645_86(void *, void *, nd_dl645_msg_t*)
 {
     return 1;
 }
@@ -142,7 +140,7 @@ int fr_decode_645_86(struct instance_t*, struct pipeline_t*, nd_dl645_msg_t*)
 
 
 
-int fr_rx_645_end(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl645_msg_t* mesg)
+int fr_rx_645_end(void * instance, void * pipeline, nd_dl645_msg_t* mesg)
 {
 
     //uint8_t cs = fifoBuf_getByte(ififo);
@@ -157,7 +155,7 @@ int fr_rx_645_end(struct instance_t* instance, struct pipeline_t* pipeline, nd_d
     return 0;
 }
 
-static int fr_pack_645_check(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl645_msg_t* mesg)
+static int fr_pack_645_check(void * instance, void * pipeline, nd_dl645_msg_t* mesg)
 {
     (void)pipeline;
     (void)mesg;
@@ -166,7 +164,7 @@ static int fr_pack_645_check(struct instance_t* instance, struct pipeline_t* pip
 
 
 
-static unsigned char Password_Check(struct instance_t* instance, unsigned char* Pass )
+static unsigned char Password_Check(void * instance, unsigned char* Pass )
 {
     uint32_t s_index = 0;
     uint8_t Buf[4]={0,};
@@ -188,7 +186,7 @@ const uint32_t CODE dl645_ir_readable_id[] =
 };
 
 //红外权限判断
-unsigned char Dl645_IR_chl_Check(struct instance_t* instance, uint32_t id, uint8_t chl)
+unsigned char Dl645_IR_chl_Check(void * instance, uint32_t id, uint8_t chl)
 {
     uint8_t i;
     if(chl != FR_645_CHL_IR)
@@ -225,7 +223,7 @@ unsigned char Dl645_IR_chl_Check(struct instance_t* instance, uint32_t id, uint8
 
 
 
-unsigned char Cmp_Password(struct instance_t* instance, unsigned char* Addr )
+unsigned char Cmp_Password(void * instance, unsigned char* Addr )
 {
 
     if((*nd_fr645_factor_mode(instance) == true ))
@@ -262,7 +260,7 @@ unsigned char Cmp_Password(struct instance_t* instance, unsigned char* Addr )
 	else
 		return 1;
 }
-static int __fr_segment_tx_645_handle(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl645_msg_t* mesg)
+static int __fr_segment_tx_645_handle(void * instance, void * pipeline, nd_dl645_msg_t* mesg)
 {
     struct context_645_t* ctx = (struct context_645_t*)nd_fr645_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -331,7 +329,7 @@ static int __fr_segment_tx_645_handle(struct instance_t* instance, struct pipeli
     return 0;
 }
 
-int fr_gatekeeper_645_server(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl645_msg_t* mesg)
+int fr_gatekeeper_645_server(void * instance, void * pipeline, nd_dl645_msg_t* mesg)
 {
     struct context_645_t* ctx = (struct context_645_t*)nd_fr645_pipeline_ctx(pipeline);
     struct fifo_t* fifo = (struct fifo_t*)(struct fifo_t*)nd_fr645_pipeline_in_queue(pipeline);
@@ -630,7 +628,7 @@ uint32_t ID=0;
 
 }
 
-int fr_rx_645_entry(struct instance_t*, struct pipeline_t* pipeline, nd_dl645_msg_t*)
+int fr_rx_645_entry(void *, void * pipeline, nd_dl645_msg_t*)
 {
     struct context_645_t* ctx = (struct context_645_t*)nd_fr645_pipeline_ctx(pipeline);
     struct fifo_t* fifo = (struct fifo_t*)(struct fifo_t*)nd_fr645_pipeline_in_queue(pipeline);
@@ -652,7 +650,7 @@ int fr_rx_645_entry(struct instance_t*, struct pipeline_t* pipeline, nd_dl645_ms
 
 
 
-int fr_tx_645_end(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl645_msg_t* mesg)
+int fr_tx_645_end(void * instance, void * pipeline, nd_dl645_msg_t* mesg)
 {
 
     //todo  ���Ƿ�Ҫ����
@@ -664,7 +662,7 @@ int fr_tx_645_end(struct instance_t* instance, struct pipeline_t* pipeline, nd_d
     if (ctx->tx_len > 0)
     {
         uint8_t buf[256];
-        printf("                   {%s,send", get_pipeline_name(instance, nd_fr645_pipeline_id(pipeline)));
+        printf("                   {%s,send", "dl645");
         uint16_t len = fifoBuf_getDataPeek((struct fifo_t*)nd_fr645_pipeline_out_queue(pipeline), buf, ctx->tx_len);
         printf(",");
         for (size_t i = 0; i < len; i++)
@@ -679,7 +677,7 @@ int fr_tx_645_end(struct instance_t* instance, struct pipeline_t* pipeline, nd_d
     return 0;
 }
 
-int fr_tx_645_entry(struct instance_t*, struct pipeline_t*, nd_dl645_msg_t* mesg)
+int fr_tx_645_entry(void *, void *, nd_dl645_msg_t* mesg)
 {
 //    struct context_645_t* ctx = (struct context_645_t*)nd_fr645_pipeline_ctx(pipeline);
 //    struct fifo_t* ififo = (struct fifo_t*)(struct fifo_t*)nd_fr645_pipeline_in_queue(pipeline);

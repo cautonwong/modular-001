@@ -2,10 +2,6 @@
 #define __FR_698_ESAM_H__
 
 #include <stdint.h>
-
-struct instance_t;
-struct pipeline_t;
-
 /* fr_698.h leaves #pragma pack(1) active. Pin the ESAM wire structs so a
  * translation unit that includes fr_698.h first and one that does not still
  * agree; on ARM32 the packed and default layouts are identical. */
@@ -83,8 +79,8 @@ uint16_t software_esam_check(void *instance, uint8_t *key, uint8_t *rn, uint8_t 
 int esam_key_updata(void *instance, uint8_t *buf, uint16_t len);
 void esam_698_init(void *instance, uint8_t power_mode);
 uint8_t get_key_status(void *instance);
-uint32_t fr_698_current_esam_timeout_get(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index);
-int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cmd, uint32_t oad);
+uint32_t fr_698_current_esam_timeout_get(void * instance, void * pipeline, uint8_t client_index);
+int security_mode_word_check(void * instance, void * pipeline, uint8_t cmd, uint32_t oad);
 struct esam_698_input_t;
 struct esam_698_output_t;
 int check_upreport_esam_rn_mac(void *instance, struct esam_698_input_t *p_input, struct esam_698_output_t *p_output);

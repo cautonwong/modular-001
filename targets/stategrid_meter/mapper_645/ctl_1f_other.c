@@ -1,4 +1,6 @@
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
+#include "targets/stategrid_meter/app/resource_ids.h"
+#include "resource_ids.h"
 #include "application/adapters/dl698/meter_base_view.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "645id_table.h"

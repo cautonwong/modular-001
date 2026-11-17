@@ -6,11 +6,11 @@
 #include "application/adapters/dl698/fr_698_internal.h"
 #include "application/ports/fifo.h"
 
-struct instance_t {
+struct fake_instance_t {
     uint8_t unused;
 };
 
-struct pipeline_t {
+struct fake_pipeline_t {
     void *ctx;
     struct fifo_t *in_queue;
     struct fifo_t *out_queue;
@@ -23,20 +23,20 @@ static int send_calls;
 
 void *nd_fr698_pipeline_ctx(const void *pipeline)
 {
-    return ((const struct pipeline_t *)pipeline)->ctx;
+    return ((const struct fake_pipeline_t *)pipeline)->ctx;
 }
 
 uint32_t nd_fr698_pipeline_id(const void *pipeline)
 {
-    return ((const struct pipeline_t *)pipeline)->id;
+    return ((const struct fake_pipeline_t *)pipeline)->id;
 }
 
 void *nd_fr698_pipeline_in_queue(const void *pipeline)
 {
-    return ((const struct pipeline_t *)pipeline)->in_queue;
+    return ((const struct fake_pipeline_t *)pipeline)->in_queue;
 }
 
-int fr_rx_698_end(struct instance_t *unused, struct pipeline_t *unused2,
+int fr_rx_698_end(void *unused, void *unused2,
                   nd_dl698_msg_t *mesg)
 {
     (void)unused;
@@ -46,7 +46,7 @@ int fr_rx_698_end(struct instance_t *unused, struct pipeline_t *unused2,
     return 0;
 }
 
-int __fr_send_handle(struct instance_t *unused, struct pipeline_t *unused2,
+int __fr_send_handle(void *unused, void *unused2,
                      nd_dl698_msg_t *unused3)
 {
     (void)unused;
@@ -79,7 +79,7 @@ static void test_698_apdu_data_len_accounts_for_address(void)
 static void test_698_scrambler_only_runs_when_flag_set(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
@@ -100,7 +100,7 @@ static void test_698_scrambler_only_runs_when_flag_set(void)
 static void test_698_first_segment_accumulates_and_confirms(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
     struct fifo_t in;
     struct fifo_t out;
     uint8_t in_buffer[8] = {0};
@@ -136,7 +136,7 @@ static void test_698_first_segment_accumulates_and_confirms(void)
 static void test_698_out_of_order_segment_resets_block(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
     struct fifo_t in;
     struct fifo_t out;
     uint8_t in_buffer[8] = {0};
@@ -170,7 +170,7 @@ static void test_698_out_of_order_segment_resets_block(void)
 static void test_698_segment_tx_confirm_advances_and_sends(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
     struct fifo_t in;
     uint8_t in_buffer[4] = {0};
     uint8_t payload[] = {0x03, 0x80};

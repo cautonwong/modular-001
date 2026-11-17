@@ -5,18 +5,18 @@
 #include "application/adapters/dl698/fr_698_esam.h"
 #include "application/adapters/dl698/fr_698_internal.h"
 
-struct instance_t {
+struct fake_instance_t {
     uint8_t unused;
 };
 
-struct pipeline_t {
+struct fake_pipeline_t {
     void *ctx;
     uint8_t id;
 };
 
 void *nd_fr698_pipeline_ctx(const void *pipeline)
 {
-    return ((const struct pipeline_t *)pipeline)->ctx;
+    return ((const struct fake_pipeline_t *)pipeline)->ctx;
 }
 
 uint32_t buf_to_uint32_msb(uint8_t *unused)
@@ -25,7 +25,7 @@ uint32_t buf_to_uint32_msb(uint8_t *unused)
     return 0;
 }
 
-int16_t nd_get(struct instance_t *unused, uint32_t unused2, uint8_t *unused3,
+int16_t nd_get(void *unused, uint32_t unused2, uint8_t *unused3,
                uint16_t unused4, void *unused5)
 {
     (void)unused;
@@ -36,7 +36,7 @@ int16_t nd_get(struct instance_t *unused, uint32_t unused2, uint8_t *unused3,
     return 0;
 }
 
-int16_t nd_set(struct instance_t *unused, uint32_t unused2, uint8_t *unused3,
+int16_t nd_set(void *unused, uint32_t unused2, uint8_t *unused3,
                uint16_t unused4, void *unused5)
 {
     (void)unused;
@@ -47,7 +47,7 @@ int16_t nd_set(struct instance_t *unused, uint32_t unused2, uint8_t *unused3,
     return 0;
 }
 
-int16_t nd_action(struct instance_t *unused, uint32_t unused2, uint8_t *unused3,
+int16_t nd_action(void *unused, uint32_t unused2, uint8_t *unused3,
                   uint16_t unused4, void *unused5)
 {
     (void)unused;
@@ -58,8 +58,8 @@ int16_t nd_action(struct instance_t *unused, uint32_t unused2, uint8_t *unused3,
     return 0;
 }
 
-int security_mode_word_check(struct instance_t *unused,
-                             struct pipeline_t *unused2, uint8_t unused3,
+int security_mode_word_check(void *unused,
+                             void *unused2, uint8_t unused3,
                              uint32_t unused4)
 {
     (void)unused;
@@ -69,8 +69,8 @@ int security_mode_word_check(struct instance_t *unused,
     return 0;
 }
 
-void fr_698_MeterWr_program_judge(struct instance_t *unused,
-                                  struct pipeline_t *unused2,
+void fr_698_MeterWr_program_judge(void *unused,
+                                  void *unused2,
                                   nd_dl698_msg_t *unused3)
 {
     (void)unused;
@@ -85,7 +85,7 @@ void tearDown(void) {}
 static void test_698_set_normal_consumes_oad_and_value(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
@@ -98,7 +98,7 @@ static void test_698_set_normal_consumes_oad_and_value(void)
 static void test_698_set_list_consumes_count_and_values(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
@@ -113,7 +113,7 @@ static void test_698_set_list_consumes_count_and_values(void)
 static void test_698_action_list_consumes_selectors(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
@@ -128,7 +128,7 @@ static void test_698_action_list_consumes_selectors(void)
 static void test_698_set_rejects_unknown_choice(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;

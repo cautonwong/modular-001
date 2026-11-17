@@ -7,10 +7,9 @@
  *
  */
 
-#include "nidavellir.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
-#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/persistence/legacy_control_block.h"
 
 //每秒执行
 uint8_t scond_execute_for_demand(struct mbase_control_block_t* mbase_block)

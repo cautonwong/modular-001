@@ -1,6 +1,6 @@
 #include "components/protocol/dl698/nd_dl698.h"
-#include "application/ports/legacy_uart_timeout.h"
-#include "application/ports/legacy_pipeline.h"
+#include "application/ports/uart_timeout.h"
+#include "application/ports/pipeline_view.h"
 
 
 #include <string.h>
@@ -55,7 +55,7 @@ nd_dl698_t *nd_dl698_create(const nd_dl698_config_t *config)
 
 int nd_dl698_send(nd_dl698_t *self, nd_dl698_msg_t *mesg)
 {
-    struct pipeline_t pipeline = { 0 };
+    nd_pipeline_view_t pipeline = { 0 };
 
     if ((self == NULL) || !self->used || (mesg == NULL)) {
         return -1;
@@ -77,7 +77,7 @@ void nd_dl698_destroy(nd_dl698_t *self)
 
 int nd_dl698_poll(nd_dl698_t *self)
 {
-    struct pipeline_t pipeline = { 0 };
+    nd_pipeline_view_t pipeline = { 0 };
     nd_dl698_msg_t mesg = { 0 };
 
     if ((self == NULL) || !self->used) {
@@ -89,7 +89,7 @@ int nd_dl698_poll(nd_dl698_t *self)
     pipeline.in_queue = self->rx_fifo;
     pipeline.out_queue = self->tx_fifo;
 
-    if ((fr_uart_timeout(self->config.instance, &pipeline) != 0)
+    if ((fr_uart_timeout(self->config.instance, self->config.pid) != 0)
         && (fifoBuf_getUsed(self->rx_fifo) >= 12)) {
         self->config.context->fr_err = 0;
         self->config.context->fr_err = fr_rx_698_entry(self->config.instance,

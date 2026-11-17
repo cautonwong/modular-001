@@ -5,4 +5,4 @@ paths: [infra/memory]
 dependencies: [domain.common]
 # Owned but not in the VG_DTZY firmware source table.
 exclude: [infra/memory/byte_store.c, infra/memory/file_store.c, infra/memory/parameter_store.c]
-legacy: true
+legacy: false

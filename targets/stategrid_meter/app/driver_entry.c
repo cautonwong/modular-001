@@ -1,41 +1,26 @@
 #include "cpu_surport.h"
+#include "targets/stategrid_meter/app/meter_flags.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
-#include "nidavellir.h"
 #include "lib_conf.h"
 #include "time_link.h"
 #include "uart_driver.h"
-#include "ndvh_rn8209.h"
-#include "infra/boards/stategrid_single_phase/board_io.h"
-#include "infra/boards/stategrid_single_phase/uart_pins.h"
+#include "targets/stategrid_meter/board/board_io.h"
+#include "targets/stategrid_meter/board/uart_pins.h"
 #include "targets/stategrid_meter/app/app_config.h"
 #include "targets/stategrid_meter/app/display_applications.h"
 #include "application/adapters/dl698/fr_698_esam.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
-#include "targets/stategrid_meter/app/devices.h"
-#include "infra/boards/stategrid_single_phase/board_ops.h"
+#include "targets/stategrid_meter/board/board_eeprom.h"
+#include "targets/stategrid_meter/board/board_flash.h"
 #include "infra/kernel/resource_blocks.h"
 #include "infra/soc/v85xxp/v8500/v85xxp_system.h"
-#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/persistence/legacy_control_block.h"
 #include "targets/stategrid_meter/app/driver_entry.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
 
 static uint8_t fifo_buf[32];
 static struct fifo_t irq_fifo;
 static uint8_t meter_cover_cnt;
-
-const struct dev_info_t eeprom_dev=
-{
-    DEV_EEPROM,
-    1,
-    0xFFFF,
-    0,
-    0,
-    &iic_bus,
-    &eeprom_driver,
-    __NULL,
-    __NULL,
-    __NULL,
-    __NULL,
-};
 
 const UART_InitType  Uart_InitType_485 = 
 {
@@ -60,48 +45,6 @@ const UART_InitType  Uart_InitType_ir =
     UART_WORDLEN_9B,
     UART_FIRSTBIT_LSB,
     1200,
-};
-
-const UART_InitType  Rn8209_Uart_InitType = 
-{
-    UART_MODE_Msk,
-    UART_PARITY_EVEN_LIB,
-    UART_WORDLEN_9B,
-    UART_FIRSTBIT_LSB,
-    4800*Fr_K,
-};
-
-
-
-const struct dev_info_t rn8209_dev=
-{
-    DEV_EMU,
-    0,
-    0x0000,
-    0,
-    0,
-    &mcu_uart_bus_ops,
-    &rn8209_drv,
-    __NULL,
-    __NULL,
-    __NULL,
-    &Rn8209_Uart_InitType,
-};
-
-
-const struct dev_info_t nor_flash_dev=
-{
-    DEV_FLASH,
-    0,
-    0x7FFFFF,
-    0,
-    0,
-    &spi_mode3,
-    &nor_flash_driver,
-    __NULL,
-    __NULL,
-    __NULL,
-    __NULL,
 };
 
 
@@ -253,8 +196,8 @@ const uint32_t baud_table[11]={300,600,1200,2400,4800,7200,9600,19200,38400,5760
 void baud_update(void *CallBackSendPara)
 {
     uint32_t baud=115200,i; 
-    struct instance_t* instance = (struct instance_t*)CallBackSendPara;
-    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    stategrid_context_t * instance = (stategrid_context_t *)CallBackSendPara;
+    struct mbase_control_block_t* mbase_control_block = ((stategrid_context_t *)instance)->mbase;
 
     if(nd_mbase_baud_chg(mbase_control_block) & 0x01)    //485
     {
@@ -319,7 +262,7 @@ void ir_send_timeout(void *CallBackSendPara)
 }   
 
 
-void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uint8_t chl_type , struct instance_t* p_instance)
+void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uint8_t chl_type , stategrid_context_t * p_instance)
 {
     struct uart_chl_init_t chl_init;
     
@@ -375,9 +318,10 @@ void irq_system_init(void)
     
 }
 
-void irq_transform_to_instance(struct instance_t* instance)
+void irq_transform_to_instance(stategrid_context_t * instance)
 {
     uint8_t fifo_irq = 0;
+    stategrid_context_t *ctx = ((stategrid_context_t *)instance);
 
 #ifdef DEBUG
     if(fifoBuf_getUsed(&irq_fifo) >0)
@@ -390,20 +334,20 @@ void irq_transform_to_instance(struct instance_t* instance)
        switch(fifo_irq)
        {
            case IRQ_RTC:
-                fifoBuf_putByte(&instance->pipe_rtc, IRQ_RTC);
+                fifoBuf_putByte(&ctx->pipe_rtc, IRQ_RTC);
                 break;
              
            case IRQ_PMU:
-                fifoBuf_putByte(&instance->pipe_key, IRQ_PMU);
+                fifoBuf_putByte(&ctx->pipe_key, IRQ_PMU);
                 break;
            case IRQ_RS485_RX_TM_OUT:
-                fifoBuf_putByte(&instance->pipe_uart[UART_RS4851_CHL], IRQ_UART_RX_TM_OUT);
+                fifoBuf_putByte(&ctx->pipe_uart[UART_RS4851_CHL], IRQ_UART_RX_TM_OUT);
                 break;
            case IRQ_PLC_RX_TM_OUT:
-                fifoBuf_putByte(&instance->pipe_uart[UART_MODULE_CHL], IRQ_UART_RX_TM_OUT);
+                fifoBuf_putByte(&ctx->pipe_uart[UART_MODULE_CHL], IRQ_UART_RX_TM_OUT);
                 break;
            case IRQ_IR_RX_TM_OUT:
-                fifoBuf_putByte(&instance->pipe_uart[UART_IR_CHL], IRQ_UART_RX_TM_OUT);
+                fifoBuf_putByte(&ctx->pipe_uart[UART_IR_CHL], IRQ_UART_RX_TM_OUT);
                 break;
            default:
                 break;
@@ -449,7 +393,7 @@ void mcu_main_frequency_mode(uint8_t clk_mode)
 }
 
 
-void dev_init(struct instance_t* instance, uint8_t power_mode)
+void dev_init(stategrid_context_t * instance, uint8_t power_mode)
 {
     mcu_main_power_on_config(power_mode);
     
@@ -457,22 +401,20 @@ void dev_init(struct instance_t* instance, uint8_t power_mode)
 	
     IOStateCheckInit();
     
-    eeprom_dev.dev_driver_ops->dev_initialize(instance, &eeprom_dev);
-    
+    (void)board_eeprom();
+
     nd_board_key_input_enable();
-    
-    rn8209_dev.dev_driver_ops->dev_initialize(instance,&rn8209_dev);
-    
-    nor_flash_dev.dev_driver_ops->dev_initialize(instance,&nor_flash_dev);
-    
-    rn8209_dev.dev_driver_ops->dev_control(instance, &rn8209_dev , power_mode , 0);
+
+    (void)board_flash();
+
+    rn8209_target_power(instance, power_mode == AC_POWER_ON);
     
     esam_698_init(instance, power_mode);
 }
 
-void report_port_open(struct instance_t* instance)
+void report_port_open(stategrid_context_t * instance)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct mbase_control_block_t* mbase_cb = ((stategrid_context_t *)instance)->mbase;
     uint8_t Baut = DEF_BAUT_PLC;
     
     CLK_InitTypeDef CLK_Struct;
@@ -512,7 +454,7 @@ void report_port_open(struct instance_t* instance)
 }
 
 //关闭用电大户外设的电源，比如背光，LED，串口，高速定时器，tick
- void device_power_close(struct instance_t* instance)
+ void device_power_close(stategrid_context_t * instance)
  {
     uint32_t lcd_tmp[20] = {0,};
     
@@ -572,7 +514,7 @@ void report_port_open(struct instance_t* instance)
 }
 
 //上报完之后调用，关闭除液晶以外的 用电大户外设的电源，比如背光，LED，串口，高速定时器，tick
- void device_power_close_after_report(struct instance_t* instance)
+ void device_power_close_after_report(stategrid_context_t * instance)
  {
     uint32_t lcd_tmp[20] = {0,};
     
@@ -664,11 +606,11 @@ uint8_t multifunction_port_Init(void)
    return true;
 }
 
-void rs485_init(struct instance_t* instance, struct pipeline_t* pipeline)
+void rs485_init(stategrid_context_t * instance, void * pipeline)
 {
     uint32_t baud = 115200;
     uint8_t i;
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct mbase_control_block_t* mbase_cb = ((stategrid_context_t *)instance)->mbase;
     
     uart_chl_open(UART_RS4851_CHL);
 
@@ -686,20 +628,20 @@ void rs485_init(struct instance_t* instance, struct pipeline_t* pipeline)
 }
 
 //刷新所有通道   波特率配置
-void reset_all_channel_baud(struct instance_t* instance)
+void reset_all_channel_baud(stategrid_context_t * instance)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct mbase_control_block_t* mbase_cb = ((stategrid_context_t *)instance)->mbase;
 
     nd_mbase_baud_chg(mbase_cb) = 0xFF; 
     baud_update((void *)instance);
 }
 
 //打开串口，高速定时器，tick，初始化IO上电配置
- void device_power_open(struct instance_t* instance, struct pipeline_t* pipeline)
+ void device_power_open(stategrid_context_t * instance, void * pipeline)
  {
     uint32_t baud = 115200;
     uint8_t i;
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct mbase_control_block_t* mbase_cb = ((stategrid_context_t *)instance)->mbase;
     
     mcu_main_frequency_mode(1);
     gpio_configuration_AC();
@@ -728,7 +670,7 @@ void init_rs485_baud()
 }
 
 //初始化IO低功耗配置，初始化系统低功耗配置，准备进入sleep模式。
-void cpu_io_lowpower_cfg_chk(struct instance_t* instance)
+void cpu_io_lowpower_cfg_chk(void *instance)
 {
 
 
@@ -740,9 +682,12 @@ void cpu_io_lowpower_cfg_chk(struct instance_t* instance)
 }
 
 //此处放sleep函数，以及唤醒后的系统基本处理
-void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
+void cpu_sleep_manage(stategrid_context_t * instance, void * pipeline)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)pipeline->ctx;
+    stategrid_context_t *ctx = ((stategrid_context_t *)instance);
+    struct mbase_control_block_t* mbase_cb = ctx->mbase;
+
+    (void)pipeline;
     PMU_LowPWRTypeDef LowPower_InitStruct;
     GPIO_InitType GPIO_InitStruct;
     
@@ -776,7 +721,7 @@ void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline)
 
         GPIOBToF_Init(GPIOC, &GPIO_InitStruct);
 
-        if(( instance->ac_power_off_sec_cnt <= 5 )) // 电源异常检测、上报等。   e2p电源打开，电源上升完整大约需要50ms
+        if(( ctx->ac_power_off_sec_cnt <= 5 )) // 电源异常检测、上报等。   e2p电源打开，电源上升完整大约需要50ms
         {
             GPIOC->OEN &= ~(BIT4|BIT5|BIT6);  //e2p 电源打开
             GPIOC->IE &= ~(BIT4|BIT5|BIT6);
@@ -1017,17 +962,17 @@ void IOStateCheckInit(void)
 
 }
 
-void IOStateCheck(struct instance_t* instance, struct pipeline_t* pipeline)
+void IOStateCheck(stategrid_context_t * instance, void * pipeline)
 {
     struct mbase_control_block_t* mbase_control_block;
-    mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    mbase_control_block = ((stategrid_context_t *)instance)->mbase;
     GPIO_InitType GPIO_InitStruct;
     
     
     nd_board_cover_input_enable();
 
 
-    if( instance->ac_power_statue == AC_POWER_OFF ) 
+    if( ((stategrid_context_t *)instance)->ac_power_status == AC_POWER_OFF )
     {
         //开盖
         if(nd_board_cover_closed())

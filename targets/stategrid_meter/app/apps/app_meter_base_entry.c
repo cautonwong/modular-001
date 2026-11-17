@@ -1,14 +1,17 @@
-#include "nidavellir.h"
+#include "targets/stategrid_meter/app/message.h"
+#include "targets/stategrid_meter/app/meter_flags.h"
+#include "targets/stategrid_meter/app/resource_ids.h"
 #include "resource_tool.h"
 #include "target.h"
 #include "lib_clk.h"
 #include "lib_conf.h"
 #include "fr_698.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
-#include "utils.h"
+#include "components/core/types/utils.h"
 #include "cpu_surport.h"
 #include "targets/stategrid_meter/app/app_config.h"
 #include "targets/stategrid_meter/app/app_entry.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
 #include "targets/stategrid_meter/app/display_applications.h"
 #include "targets/stategrid_meter/app/display_control_adapter.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
@@ -17,13 +20,12 @@
 #include "targets/stategrid_meter/app/relay_control_adapter.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
-#include "infra/boards/stategrid_single_phase/relay_config.h"
+#include "targets/stategrid_meter/board/relay_config.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/persistence/legacy_control_block.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "targets/stategrid_meter/app/driver_entry.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
-#include "targets/stategrid_meter/app/devices.h"
 
 /* Target-only services the composition root still calls directly. */
 void fr_dl645_sec_task(void *instance, void *pipeline);
@@ -41,23 +43,16 @@ void nd_sim_stage(const char *name);
 //#define     P_BACKLIGHT_OFF     GPIOB->OEN &=~0x10; GPIOB->IE &=~0x10; GPIOB->ATT &=~0x10; GPIOB->DAT &=~0x10; //推挽输出低
 
 
-#if 1 
-
-int sync_data(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int PowerOff_Save_data(stategrid_context_t *instance)
 {
-    return sync_data_record(instance, pipeline, mesg);
-}
-
-#endif
-
-int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline, struct message_t* mesg)
-{
-//    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    stategrid_context_t *ctx = ((stategrid_context_t *)instance);
     size_t mbase_block_persistent_size = nd_mbase_offset_persistent_section_end() - nd_mbase_offset_persistent_section_start() + 1;
     uint32_t addr = 0;
     uint32_t res = 0, tmp_u32;
     struct mbase_control_block_t* mbase_cb;
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    void *pipeline = NULL;
+    struct message_t *mesg = NULL;
+    mbase_cb = ctx->mbase;
     
     __disable_irq();
     
@@ -68,7 +63,7 @@ int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline
     
     //掉电需要保存数据
     //先刷新停电时间ram
-    ndv_memcopy((uint8_t *)(&nd_mbase_powerdown_tm(mbase_cb)),  (uint8_t *)&instance->time,  sizeof(nd_mbase_powerdown_tm(mbase_cb)));
+    ndv_memcopy((uint8_t *)(&nd_mbase_powerdown_tm(mbase_cb)),  (uint8_t *)&ctx->time,  sizeof(nd_mbase_powerdown_tm(mbase_cb)));
 
     Energy_Meter_PowerOFF(instance, pipeline); 
 
@@ -90,8 +85,8 @@ int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline
 
     nd_mbase_ec_save_success(mbase_cb) = 0;       //保存后 清 标志
     
-    instance->ac_power_off_sec_cnt = 0;
-   
+    ctx->ac_power_off_sec_cnt = 0;
+
     //掉电清空显示相关内容
     memset((uint8_t *)&nd_mbase_voltage_ac(mbase_cb), 0x00, 32);
     memset((uint8_t *)&nd_mbase_AutoPtr(mbase_cb), 0x00, 10);
@@ -120,27 +115,24 @@ int PowerOff_Save_data(struct instance_t* instance,  struct pipeline_t* pipeline
 }
 
 
-void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
+void SecTick_Task(stategrid_context_t * instance,  void * pipeline)
 {
-//    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
-    struct message_t mesg;
+    stategrid_context_t *ctx = ((stategrid_context_t *)instance);
     struct mbase_control_block_t* mbase_cb;
     uint8_t baud = DEF_BAUT_PLC;
-    
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-   
-    memset(&mesg, 0, sizeof(struct message_t));
-    
+
+    mbase_cb = ctx->mbase;
+
     if(nd_mbase_AutoInv(mbase_cb) > 0)   nd_mbase_AutoInv(mbase_cb)--;
-    
+
     if(nd_mbase_KeyInv(mbase_cb) > 0)    nd_mbase_KeyInv(mbase_cb)--;
 
-    if( instance->ac_power_statue != AC_POWER_ON ) //低功耗
+    if( ctx->ac_power_status != AC_POWER_ON ) //低功耗
     {
-        instance->ac_power_off_sec_cnt++;
+        ctx->ac_power_off_sec_cnt++;
 
-        
-        event_LowPower_pro(instance, pipeline, &mesg); // 事件 低功耗下处理
+
+        event_LowPower_pro(instance, pipeline, NULL); // 事件 低功耗下处理
   
 
         if(ANA_GetStatus(ANA_STATUS_COMP1))//判断电池是否存在
@@ -181,22 +173,22 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
         fr_dl698_sec_task(instance, pipeline);
         fr_dl645_sec_task(instance, pipeline);
         
-        if(instance->time.tm_sec == 33)     //效验
+        if(ctx->time.tm_sec == 33)     //效验
         {
             Check_para_Pro(instance);
         }
-        
-        if(((instance->time.tm_sec == 44) || (instance->time.tm_sec == 14)) && (nd_mbase_meter_start_cnt(mbase_cb) == 0))//每半分钟做计量监测，发现故障立即复位计量芯片
+
+        if(((ctx->time.tm_sec == 44) || (ctx->time.tm_sec == 14)) && (nd_mbase_meter_start_cnt(mbase_cb) == 0))//每半分钟做计量监测，发现故障立即复位计量芯片
         {
-            if(false == rn8209_dev.dev_driver_ops->dev_control(instance, &rn8209_dev , METERCHIP_CHK , 0))
+            if(0 != rn8209_target_check(instance))
             {
                 Electrical_measurement_poweron(instance, pipeline);
             }
         }
         
-        if(instance->time.tm_sec == 0)  //定时补拉合闸
+        if(ctx->time.tm_sec == 0)  //定时补拉合闸
         {
-            if((instance->time.tm_min == 0) || (instance->time.tm_min == 15) || (instance->time.tm_min == 30) || (instance->time.tm_min == 45))
+            if((ctx->time.tm_min == 0) || (ctx->time.tm_min == 15) || (ctx->time.tm_min == 30) || (ctx->time.tm_min == 45))
             {
                 if(nd_mbase_relay_do(mbase_cb) == 0)
                 {
@@ -222,9 +214,9 @@ void SecTick_Task(struct instance_t* instance,  struct pipeline_t* pipeline)
 }
 
 // !!!在此app中不做IO操作!!!
-int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int app_meter_base_event(stategrid_context_t * instance, uint8_t event)
 {
-//    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    stategrid_context_t *ctx = ((stategrid_context_t *)instance);
     size_t mbase_block_persistent_size = nd_mbase_offset_persistent_section_end() - nd_mbase_offset_persistent_section_start() + 1;
     size_t mbase_block_static_size = nd_mbase_offset_static_section_end() - nd_mbase_offset_static_section_start() + 1;
     size_t persitent_ec_size = nd_mbase_offset_persistent_energy_EC_label() - nd_mbase_offset_persistent_section_start();
@@ -232,22 +224,24 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
     uint32_t res = 0;
     int ret;
     struct mbase_control_block_t* mbase_cb;
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    
+    /* The business handlers still take the legacy carriers; the event value
+     * is the only input. */
+    void *pipeline = NULL;
+    struct message_t *mesg = NULL;
+    mbase_cb = ctx->mbase;
+
     if (ANA_GetStatus(ANA_STATUS_VDCINDROP))
     {
         return 0;
     }
-    
+
     //cmd len data cmd 接入校验
     //调用领域层完成业务  要反映用例场景
 
-    uint8_t buf[20] = {0}, tmp[4]={0,};
-    int r = recv_mesg_v2(instance,pipeline,mesg, buf, 20);
-    if(r > 0 )
+    uint8_t tmp[4]={0,};
+
+    switch (event)
     {
-      switch (mesg->ctrl)
-      {
       case 0x86://采样的外设数据抵达
           break;
       case 0x87:
@@ -297,7 +291,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             ND_SIM_STAGE("IOStateCheck");
             IOStateCheck(instance, pipeline);
 
-            instance->reset_flag = 0x00; //走完一圈秒任务后 复位标志清零
+            ctx->reset_flag = 0x00; //走完一圈秒任务后 复位标志清零
             break;
       case MSG_PAGE_KEY_UP:
             Key_Display(instance, pipeline, MSG_PAGE_KEY_UP);
@@ -305,7 +299,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             break;
       case MSG_POWERON:
             //上电恢复参数
-            read_mcu_rtc(0x00, instance);
+            read_mcu_rtc(0x00, &ctx->time);
             get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_static, &addr);//RAM对应的地址
             res = get_res(RES_DEV_EEPROM, mbase_block_static_eprom);
             nd_get_block(instance, res, (uint8_t*)addr, mbase_block_static_size); //将EPROM中的数据恢复到RAM;  
@@ -373,7 +367,7 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
             //事件
             event_PowerOn_pro(instance, pipeline, mesg);
 
-            instance->need_data_recovery = 0;//数据恢复完成 
+            ctx->need_data_recovery = 0;//数据恢复完成
             break;
       case MSG_POWEROFF: //掉电相关的操作 不在此操作
             //开启EE电源和IO口时钟 //
@@ -384,13 +378,13 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
           
             //掉电需要保存数据
             //刷新停电时间ram
-            ndv_memcopy((uint8_t *)(&nd_mbase_powerdown_tm(mbase_control_block)),  (uint8_t *)&instance->time,  sizeof(nd_mbase_powerdown_tm(mbase_control_block)));
+            ndv_memcopy((uint8_t *)(&nd_mbase_powerdown_tm(mbase_control_block)),  (uint8_t *)&ctx->time,  sizeof(nd_mbase_powerdown_tm(mbase_control_block)));
 
             nd_mbase_ec_save_success(mbase_cb) = 0x5AA5;  //保存前 置 标志   
             get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
             nd_set_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;      
             nd_mbase_ec_save_success(mbase_cb) = 0;       //保存后 清 标志
-            instance->ac_power_off_sec_cnt = 0;
+            ctx->ac_power_off_sec_cnt = 0;
 
             event_poweroff_save(instance,pipeline,mesg);
 
@@ -404,74 +398,72 @@ int app_meter_base_entry(struct instance_t* instance, struct pipeline_t* pipelin
       default:
             break;
       }
-    }
 
     return 0;
 }
 
-int app_meter_lowpower_wakeup_entry(struct instance_t* instance, struct pipeline_t* pipeline, struct message_t* mesg)
+int app_meter_lowpower_event(stategrid_context_t * instance, uint8_t event)
 {
-//    struct mbase_control_block_t* mbase_control_block = (struct mbase_control_block_t*)pipeline->ctx;
+    stategrid_context_t *ctx = ((stategrid_context_t *)instance);
     struct mbase_control_block_t* mbase_control_block;
     uint32_t addr = 0;
     size_t mbase_block_persistent_size = nd_mbase_offset_persistent_section_end() - nd_mbase_offset_persistent_section_start() + 1;
     size_t mbase_block_static_size = nd_mbase_offset_static_section_end() - nd_mbase_offset_static_section_start() + 1;
     size_t persitent_ec_size = nd_mbase_offset_persistent_energy_EC_label() - nd_mbase_offset_persistent_section_start();
+    /* The business handlers still take the legacy carriers; the event value
+     * is the only input. */
+    void *pipeline = NULL;
+    struct message_t *mesg = NULL;
 
-    mbase_control_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
-    
+    mbase_control_block = ctx->mbase;
+
     if (mbase_control_block == NULL)
     {
         return -1;
     }
-    uint8_t buf[20] = {0};
-    int r = recv_mesg_v2(instance,pipeline,mesg, buf, 20);
-    if(r > 0 )
+    //开启EE电源和IO口时钟
+    CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);
+    GPIOC->OEN &= ~(BIT4|BIT5|BIT6);
+    GPIOC->IE &= ~(BIT4|BIT5|BIT6);
+    GPIOC->DAT |= (BIT6);
+
+    if(ctx->need_data_recovery == 0x5A) //数据恢复
     {
-        //开启EE电源和IO口时钟
-        CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);
-        GPIOC->OEN &= ~(BIT4|BIT5|BIT6); 
-        GPIOC->IE &= ~(BIT4|BIT5|BIT6);
-        GPIOC->DAT |= (BIT6);
+        //上电需要恢复数据   //跳过电能恢复 由电能模块处理
+        addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
+            nd_mbase_offset_persistent_energy_EC_label()  -  nd_mbase_offset_persistent_section_start());
+        nd_get_offset(instance, addr, (uint8_t*)&nd_mbase_persistent_energy_EC_label(mbase_control_block), (mbase_block_persistent_size - persitent_ec_size));
 
-        if(instance->need_data_recovery == 0x5A) //数据恢复
-        {
-            //上电需要恢复数据   //跳过电能恢复 由电能模块处理  
-            addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
-                nd_mbase_offset_persistent_energy_EC_label()  -  nd_mbase_offset_persistent_section_start());
-            nd_get_offset(instance, addr, (uint8_t*)&nd_mbase_persistent_energy_EC_label(mbase_control_block), (mbase_block_persistent_size - persitent_ec_size));           
-        
-            rtc_check_poweron(instance);
-            Energy_Meter_PowerON(instance, pipeline);
-            instance->need_data_recovery = 0x00;
-        }
+        rtc_check_poweron(instance);
+        Energy_Meter_PowerON(instance, pipeline);
+        ctx->need_data_recovery = 0x00;
+    }
 
 
-        switch (mesg->ctrl)
-        {
-            case MSG_SECOND:
+    switch (event)
+    {
+        case MSG_SECOND:
 
-                SecTick_Task(instance, pipeline);
+            SecTick_Task(instance, pipeline);
 
-                Rtc_Prossecc(instance, pipeline);
-                
-                Key_Display(instance, pipeline, MSG_SECOND);
+            Rtc_Prossecc(instance, pipeline);
 
-                if(nd_mbase_Key(mbase_control_block) & F_KeyAwake)
-                {
-                    Display(instance, pipeline);
-                }
+            Key_Display(instance, pipeline, MSG_SECOND);
 
-                IOStateCheck(instance, pipeline);
-
-                break;
-            case MSG_PAGE_KEY_UP:
-                Key_Display(instance, pipeline, MSG_PAGE_KEY_UP);
+            if(nd_mbase_Key(mbase_control_block) & F_KeyAwake)
+            {
                 Display(instance, pipeline);
-                break;
-            default:
-                break;
-        }
+            }
+
+            IOStateCheck(instance, pipeline);
+
+            break;
+        case MSG_PAGE_KEY_UP:
+            Key_Display(instance, pipeline, MSG_PAGE_KEY_UP);
+            Display(instance, pipeline);
+            break;
+        default:
+            break;
     }
     return 0;
 }

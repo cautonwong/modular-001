@@ -13,7 +13,7 @@
 #define GetRequestSimplifyRecord    23
 
 
-int get_GET_Request_len(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t*)
+int get_GET_Request_len(void *, void * pipeline, nd_dl698_msg_t*)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint16_t tmp_num = 1, rsd_len = 0, rcsd_len = 0;
@@ -55,7 +55,7 @@ int get_GET_Request_len(struct instance_t*, struct pipeline_t* pipeline, nd_dl69
 }
 
 
-static int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+static int fr_get_one_object(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* cache = ctx->apdu;
@@ -122,7 +122,7 @@ static int fr_get_one_object(struct instance_t* instance, struct pipeline_t* pip
     return 1;
 }
 
-static int __fr_handle_get_normal_request(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+static int __fr_handle_get_normal_request(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* cache = ctx->apdu;
@@ -154,7 +154,7 @@ static int __fr_handle_get_normal_request(struct instance_t* instance, struct pi
 
 
 
-static int __fr_handle_get_record_request(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+static int __fr_handle_get_record_request(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
 
@@ -272,7 +272,7 @@ static int __fr_handle_get_record_request(struct instance_t* instance, struct pi
 
 uint8_t cnt = 0;
 
-static int __fr_handle_get_next_request(struct instance_t*, struct pipeline_t*, nd_dl698_msg_t*)
+static int __fr_handle_get_next_request(void *, void *, nd_dl698_msg_t*)
 {
 
     // 恢复上一个读取上下文信息
@@ -285,17 +285,17 @@ static int __fr_handle_get_next_request(struct instance_t*, struct pipeline_t*, 
     return 1;
 }
 
-static int __fr_handle_get_md5_request(struct instance_t*, struct pipeline_t*, nd_dl698_msg_t*)
+static int __fr_handle_get_md5_request(void *, void *, nd_dl698_msg_t*)
 {
     return 1;
 }
 
-static int __fr_handle_get_simplify_record_request(struct instance_t*, struct pipeline_t*, nd_dl698_msg_t*)
+static int __fr_handle_get_simplify_record_request(void *, void *, nd_dl698_msg_t*)
 {
     return 1;
 }
 
-int fr_handle_get_request(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+int fr_handle_get_request(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* cache = ctx->apdu;

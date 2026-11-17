@@ -6,7 +6,7 @@
 #include "application/adapters/dl645/fr_645_pack.h"
 #include "application/ports/fifo.h"
 
-struct pipeline_t {
+struct fake_pipeline_t {
     uint8_t id;
     char *name;
     void *ctx;
@@ -18,15 +18,15 @@ static uint8_t meter_addr[6] = {0x12, 0x34, 0x56, 0x78, 0x90, 0x12};
 
 void *nd_fr645_pipeline_ctx(const void *pipeline)
 {
-    return ((const struct pipeline_t *)pipeline)->ctx;
+    return ((const struct fake_pipeline_t *)pipeline)->ctx;
 }
 
 void *nd_fr645_pipeline_out_queue(const void *pipeline)
 {
-    return ((const struct pipeline_t *)pipeline)->out_queue;
+    return ((const struct fake_pipeline_t *)pipeline)->out_queue;
 }
 
-uint8_t *nd_fr645_tsa(struct instance_t *instance)
+uint8_t *nd_fr645_tsa(void *instance)
 {
     (void)instance;
     return meter_addr;
@@ -38,7 +38,7 @@ void tearDown(void) {}
 static void test_645_head_data_and_tail(void)
 {
     struct context_645_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
     struct fifo_t out;
     uint8_t out_buffer[32] = {0};
     nd_dl645_msg_t mesg;
@@ -70,7 +70,7 @@ static void test_645_head_data_and_tail(void)
 static void test_645_apdu_bytes_are_scrambled(void)
 {
     struct context_645_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
     struct fifo_t out;
     uint8_t apdu_buffer[8];
     uint8_t out_buffer[8] = {0};

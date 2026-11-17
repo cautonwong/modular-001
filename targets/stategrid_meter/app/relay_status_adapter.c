@@ -1,6 +1,6 @@
 #include "targets/stategrid_meter/app/relay_status_adapter.h"
 #include "domain/load_control/relay_status.h"
-#include "infra/boards/stategrid_single_phase/board_io.h"
+#include "targets/stategrid_meter/board/board_io.h"
 #include <stddef.h>
 
 static int board_relay_is_off(void *ctx)

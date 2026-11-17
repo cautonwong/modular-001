@@ -5,7 +5,7 @@
 #include "__enums__.h"
 
 struct fifo_t;
-struct pipeline_t;
+struct nd_dlms_pipeline_t;
 
 struct object_t {
     uint32_t id;
@@ -32,7 +32,7 @@ struct hdlc_control_block_t {
     struct fifo_t *apdu;
     struct fifo_t *apdu_ctx;
     struct object_t object;
-    struct pipeline_t *pipeline;
+    struct nd_dlms_pipeline_t *pipeline;
 };
 
 struct client_t {

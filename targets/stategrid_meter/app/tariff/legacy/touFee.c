@@ -1,6 +1,4 @@
 
-#include "application/adapters/dl698/legacy_message.h"
-#include "nidavellir/include/kernel/message.h"
 #include "application/adapters/dl698/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
@@ -94,7 +92,6 @@ void FeeTable_Change(void *instance, void *pipeline)
     uint8_t Buf[50];
     uint8_t tmp[10] = {0}; 
     uint8_t payload[20] = {0};
-    nd_message_t mesg_tmp;
 
 //	ptr = (unsigned char*)&mbase_cb->SeasonTable;
     Buf[0] = nd_fr698_time(instance)->tm_min; //min,hour,day,mon,year
@@ -123,15 +120,14 @@ void FeeTable_Change(void *instance, void *pipeline)
 			switch( i )
 			{
 				case 0:					
-                    //记录 时区表切换冻结  
-                    mesg_tmp.id = SeasonTabCutFreeze;
+                    //记录 时区表切换冻结
                     uint32_to_buf_msb(0x20210200, &payload[0]);
                     payload[4] = 8; //data len
                     payload[5] = 0x1C;//TYPE_date_time_s;
                     rtc_format_change_from_tm(nd_fr698_time(instance),tmp);
                     tmp[0] = 0; //sec = 0;
                     mem_swap_cpy(&payload[6], &tmp[0], 7);
-                    recv_record_process(instance, NULL, &mesg_tmp, payload);  
+                    recv_record_process(instance, SeasonTabCutFreeze, payload);
                     //send_event_mesg_pro(instance, NULL, SeasonTabCutFreeze, NULL, 1);
 					
 					nd_mb_fee(instance) |= (F_TOUChange+F_DAYTABChange);
@@ -147,14 +143,13 @@ void FeeTable_Change(void *instance, void *pipeline)
 					break;
 				case 1:
 				    //记录 日时段表切换冻结
-                    mesg_tmp.id = DayTabCutFreeze;
                     uint32_to_buf_msb(0x20210200, &payload[0]);
                     payload[4] = 8; //data len
                     payload[5] = 0x1C;//TYPE_date_time_s;
                     rtc_format_change_from_tm(nd_fr698_time(instance),tmp);
                     tmp[0] = 0; //sec = 0;
                     mem_swap_cpy(&payload[6], &tmp[0], 7);
-                    recv_record_process(instance, NULL, &mesg_tmp, payload);  
+                    recv_record_process(instance, DayTabCutFreeze, payload);
 					//send_event_mesg_pro(instance, NULL, , NULL, 1);
 					
 					nd_mb_fee(instance) |= F_TOUChange;
@@ -282,7 +277,7 @@ void Rtc_Prossecc(void *instance, void *pipeline)
         }
         else
         {
-            read_mcu_rtc(0x00, instance);
+            read_mcu_rtc(0x00, nd_fr698_time(instance));
         }
         
         if(nd_fr698_time(instance)->tm_sec == 0)

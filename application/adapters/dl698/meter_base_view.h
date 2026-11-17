@@ -122,6 +122,9 @@ uint16_t *nd_mb_limit_t_min_ptr(void *instance);
 uint8_t *nd_mb_rtc_errs_status_ptr(void *instance);
 #define nd_mb_rtc_errs_status(i) (*nd_mb_rtc_errs_status_ptr(i))
 
+uint32_t *nd_mb_battery_used_time_cnt_ptr(void *instance);
+#define nd_mb_battery_used_time_cnt(i) (*nd_mb_battery_used_time_cnt_ptr(i))
+
 uint16_t *nd_mb_trigger_insfreeze_delay_sec_ptr(void *instance);
 #define nd_mb_trigger_insfreeze_delay_sec(i) (*nd_mb_trigger_insfreeze_delay_sec_ptr(i))
 

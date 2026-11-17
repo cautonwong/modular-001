@@ -1,7 +1,6 @@
 #include <stdbool.h>
 #include "application/ports/fifo.h"
 #include "application/adapters/dl698/fr_698_env.h"
-struct instance_t;
 #include "fr_axdr.h"
 #include "fr_698.h"
 #include "application/adapters/dl698/fr_698.h"
@@ -10,17 +9,17 @@ struct instance_t;
 
 #ifdef WIN32_U_TEST
 
-int __nd_get(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx)
+int __nd_get(void * instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx)
 {
     return nd_get(instance, id, buf, buf_size, ctx);
 }
 
-int __nd_set(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx)
+int __nd_set(void * instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx)
 {
     return nd_set(instance, id, buf, buf_size, ctx);
 }
 
-int __nd_action(struct instance_t* instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx)
+int __nd_action(void * instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx)
 {
     return nd_action(instance, id, buf, buf_size, ctx);
 }

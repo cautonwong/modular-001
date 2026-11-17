@@ -1,8 +1,8 @@
-#include "type_def.h"
-#include "nidavellir.h"
+#include "components/core/types/type_def.h"
+#include "components/core/types/utils.h"
 #include "time_link.h"
 #include "fr_698_esam.h"
-#include "io_type.h"
+#include "infra/security/esam/io_type.h"
 #include "esam_io.h"
 
 

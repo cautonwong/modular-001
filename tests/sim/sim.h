@@ -1,13 +1,9 @@
 #ifndef ND_TESTS_SIM_SIM_H
 #define ND_TESTS_SIM_SIM_H
 
+#include "targets/stategrid_meter/app/stategrid_context.h"
+
 #include <stdint.h>
-
-struct instance_t;
-struct pipeline_t;
-struct filter_t;
-struct message_t;
-
 typedef struct {
     unsigned cycles;
     unsigned arena_size;
@@ -32,7 +28,7 @@ void sim_meter_set_adc(uint8_t channel, int32_t value);
 void sim_devices_close(void);
 
 int sim_scenario_load(const char *path);
-void sim_scenario_apply(struct instance_t *instance, unsigned cycle);
+void sim_scenario_apply(stategrid_context_t *instance, unsigned cycle);
 void sim_scenario_apply_stage(const char *name);
 int sim_scenario_power_on(void);
 int sim_scenario_relay_is_off(void);
@@ -52,11 +48,10 @@ void sim_log_lcd(const uint8_t *segments, unsigned len);
 
 void nd_sim_lcd_snapshot(void);
 
-int nd_sim_should_stop(struct instance_t *instance);
-void nd_sim_after_run(struct instance_t *instance);
-void nd_sim_filter(struct instance_t *instance, struct pipeline_t *pipeline,
-                   const struct filter_t *filter, int ret);
-void nd_sim_message(struct instance_t *instance, struct message_t *mesg);
+int nd_sim_should_stop(stategrid_context_t *instance);
+void nd_sim_after_run(stategrid_context_t *instance);
+void nd_sim_filter(const char *pipeline, uint8_t filter_id, int ret);
+void nd_sim_event(uint8_t from, uint8_t to, uint8_t ctrl, uint16_t len);
 void nd_sim_stage(const char *name);
 void nd_sim_system_reset(void);
 

@@ -1,6 +1,6 @@
 #include "components/protocol/dl645/nd_dl645.h"
-#include "application/ports/legacy_uart_timeout.h"
-#include "application/ports/legacy_pipeline.h"
+#include "application/ports/uart_timeout.h"
+#include "application/ports/pipeline_view.h"
 
 #include <string.h>
 
@@ -62,7 +62,7 @@ void nd_dl645_destroy(nd_dl645_t *self)
 
 int nd_dl645_poll(nd_dl645_t *self)
 {
-    struct pipeline_t pipeline = { 0 };
+    nd_pipeline_view_t pipeline = { 0 };
 
     if ((self == NULL) || !self->used) {
         return -1;
@@ -73,7 +73,7 @@ int nd_dl645_poll(nd_dl645_t *self)
     pipeline.in_queue = self->rx_fifo;
     pipeline.out_queue = self->tx_fifo;
 
-    if ((fr_uart_timeout(self->config.instance, &pipeline) != 0)
+    if ((fr_uart_timeout(self->config.instance, self->config.pid) != 0)
         && (fifoBuf_getUsed(self->rx_fifo) > 0)) {
         nd_dl645_msg_t mesg = { 0 };
         int result = fr_rx_645_entry(self->config.instance, &pipeline, &mesg);

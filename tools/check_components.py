@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 import legacy_baseline
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-COMPONENT_ROOTS = ("components", "domain", "application", "infra", "nidavellir", "targets")
+COMPONENT_ROOTS = ("components", "domain", "application", "infra", "targets")
 LAYERS = ("core", "domain", "application", "protocol", "services", "infra", "platform", "product")
 LEGACY_LAYER = "legacy"
 FORBIDDEN = {
@@ -91,8 +91,6 @@ def target_layer(include):
     for layer in ("domain", "application", "infra", "targets", "products"):
         if include.startswith(layer + "/"):
             return "product" if layer in ("targets", "products") else layer
-    if include.startswith(("kernel/", "nidavellir/")):
-        return LEGACY_LAYER
     return None
 
 

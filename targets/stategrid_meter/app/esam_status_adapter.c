@@ -1,18 +1,18 @@
 #include "infra/security/esam/esam_status.h"
+#include "targets/stategrid_meter/app/resource_ids.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
-#include "nidavellir.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
 #include "application/ports/resource_access.h"
-#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/persistence/legacy_control_block.h"
 #include "infra/kernel/resource_blocks.h"
 #include <stddef.h>
 
-static struct mbase_control_block_t *mb(struct instance_t *instance)
+static struct mbase_control_block_t *mb(void *instance)
 {
-    return (struct mbase_control_block_t *)get_pipeline_ctx(instance,
-                                                             pid_meter_base);
+    return ((stategrid_context_t *)instance)->mbase;
 }
 
-void nd_esam_status_chip_abnormal_set(struct instance_t *instance,
+void nd_esam_status_chip_abnormal_set(void *instance,
                                       uint8_t abnormal)
 {
     struct mbase_control_block_t *block = mb(instance);
@@ -23,7 +23,7 @@ void nd_esam_status_chip_abnormal_set(struct instance_t *instance,
     }
 }
 
-void nd_esam_status_key_state_set(struct instance_t *instance, uint8_t state)
+void nd_esam_status_key_state_set(void *instance, uint8_t state)
 {
     struct mbase_control_block_t *block = mb(instance);
 
@@ -33,7 +33,7 @@ void nd_esam_status_key_state_set(struct instance_t *instance, uint8_t state)
     }
 }
 
-void nd_esam_status_auth_on_set(struct instance_t *instance, uint8_t on)
+void nd_esam_status_auth_on_set(void *instance, uint8_t on)
 {
     struct mbase_control_block_t *block = mb(instance);
 
@@ -43,7 +43,7 @@ void nd_esam_status_auth_on_set(struct instance_t *instance, uint8_t on)
     }
 }
 
-int nd_esam_status_meter_no_update(struct instance_t *instance,
+int nd_esam_status_meter_no_update(void *instance,
                                    const uint8_t *meter_no)
 {
     struct mbase_control_block_t *block = mb(instance);
@@ -76,7 +76,7 @@ int nd_esam_status_meter_no_update(struct instance_t *instance,
     return 1;
 }
 
-int nd_esam_status_auth_pending(struct instance_t *instance)
+int nd_esam_status_auth_pending(void *instance)
 {
     struct mbase_control_block_t *block = mb(instance);
 

@@ -1,17 +1,16 @@
 #include <string.h>
+#include "targets/stategrid_meter/app/resource_ids.h"
 
-#include "kernel/instance.h"
 #include "application/adapters/dl698/meter_base_view.h"
 #include "application/ports/resource_access.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
-#include "kernel/channel.h"
-#include "kernel/pids.h"
+#include "targets/stategrid_meter/app/channels.h"
 #include "application/ports/platform.h"
 #include "application/adapters/dl645/fr_645_context.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "645id_table.h"
 #include "fr_698.h"
-#include "utils.h"
+#include "components/core/types/utils.h"
 #include "infra/kernel/resource_blocks.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 //参数  

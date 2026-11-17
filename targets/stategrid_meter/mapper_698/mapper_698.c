@@ -12,7 +12,7 @@
 #include "targets/stategrid_meter/app/events/gs_record_tables.h"
 #include "targets/stategrid_meter/mapper_698/factory_cfg.h"
 #include "targets/stategrid_meter/mapper_698/mapper_698.h"
-#include "infra/boards/stategrid_single_phase/board_io.h"
+#include "targets/stategrid_meter/board/board_io.h"
 #include "targets/stategrid_meter/app/app_config.h"
 #include "application/adapters/dl698/fr_698.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"

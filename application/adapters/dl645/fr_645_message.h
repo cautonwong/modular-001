@@ -2,9 +2,6 @@
 #define ND_APPLICATION_ADAPTERS_DL645_MESSAGE_H
 
 #include <stdint.h>
-
-struct instance_t;
-struct pipeline_t;
 struct context_645_t;
 
 /*
@@ -28,8 +25,8 @@ typedef struct nd_dl645_msg {
 } nd_dl645_msg_t;
 #pragma pack()
 
-typedef int (*nd_dl645_send_fn)(struct instance_t *instance,
-                                struct pipeline_t *pipeline,
+typedef int (*nd_dl645_send_fn)(void *instance,
+                                void *pipeline,
                                 nd_dl645_msg_t *mesg);
 
 #endif

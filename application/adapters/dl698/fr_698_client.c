@@ -1,11 +1,10 @@
 #include <stdbool.h>
 #include "application/ports/fifo.h"
 #include "application/adapters/dl698/fr_698_env.h"
-struct instance_t;
 #include "fr_698.h"
 #include "fr_698_internal.h"
 
-int fr_gatekeeper_698_client(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+int fr_gatekeeper_698_client(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* fifo = (struct fifo_t*)(struct fifo_t*)nd_fr698_pipeline_in_queue(pipeline);

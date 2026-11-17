@@ -421,18 +421,18 @@ enum report_mode_t {
 
 
 // 上报相关
-extern uint8_t report_2015state_update(struct instance_t* instance, uint32_t mask);
-extern void report_3320list_add(struct instance_t* instance,uint32_t oad);
-extern uint8_t active_report_3320list_confirmed(struct instance_t* instance);
-extern uint8_t report_3320list_confirmed(struct instance_t* instance, uint8_t cnl, uint32_t oad, uint8_t confirm_SUB_event);
-extern uint8_t report_3320list_confirmed_All_channel(struct instance_t* instance, uint32_t oad);
-extern int fr_handle_report_response(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
+extern uint8_t report_2015state_update(void * instance, uint32_t mask);
+extern void report_3320list_add(void * instance,uint32_t oad);
+extern uint8_t active_report_3320list_confirmed(void * instance);
+extern uint8_t report_3320list_confirmed(void * instance, uint8_t cnl, uint32_t oad, uint8_t confirm_SUB_event);
+extern uint8_t report_3320list_confirmed_All_channel(void * instance, uint32_t oad);
+extern int fr_handle_report_response(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
 extern void EventOut_698_check(void *instance);
-extern void report_3320list_2015state_clear(struct instance_t* instance);
-extern void clear_active_report_time_count(struct instance_t* instance, enum active_report_type_t type);
-extern int active_report_handle(struct instance_t* instance);
+extern void report_3320list_2015state_clear(void * instance);
+extern void clear_active_report_time_count(void * instance, enum active_report_type_t type);
+extern int active_report_handle(void * instance);
 
-extern int get_report_apdu(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
+extern int get_report_apdu(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
 
 extern void update_connect_timeout_cnt(void *instance, void *pipeline, nd_dl698_msg_t* mesg);
 
@@ -444,10 +444,10 @@ extern uint8_t get_event_oad_class(uint32_t oad);
 
 extern struct connect_request_t cfg_connect;
 extern const struct connect_request_t default_connect;
-extern int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
+extern int fr_security_encode(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
 extern uint32_t dt_buf_to_second(uint8_t* dt);
 extern int second_to_dt_buf(uint32_t timesec, uint8_t* dt);
-extern uint8_t fr_698_current_connect_status_get(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index);
+extern uint8_t fr_698_current_connect_status_get(void * instance, void * pipeline, uint8_t client_index);
 extern struct connect_request_t get_default_connect_para(uint8_t channel);
 
 
@@ -457,19 +457,19 @@ extern int get_capture_list(void *instance, uint32_t oad, uint32_t *rcsd_list, u
 extern uint8_t get_upreport_esam_rn_mac(void *instance, uint8_t *apdu, uint8_t apdu_len , uint8_t *dst);
 extern uint8_t read_event_report_flag_mode(void *instance, uint32_t oad, uint8_t mode);
 extern uint8_t fr_698_get_logic_name(uint8_t *buf, uint16_t OI);
-extern int read_record_data_form_698_protocol(struct instance_t* instance, uint8_t* buf, uint32_t Record_oad, uint32_t capture_oad, uint8_t last_no, uint16_t bufsize);
+extern int read_record_data_form_698_protocol(void * instance, uint8_t* buf, uint32_t Record_oad, uint32_t capture_oad, uint8_t last_no, uint16_t bufsize);
 extern int check_record_table_oad__support(void *instance, uint32_t oad);
-int fr_handle_disconnect_all_channel(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index);
-int fr_handle_disconnect2(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index, uint8_t channel);
+int fr_handle_disconnect_all_channel(void * instance, void * pipeline, uint8_t client_index);
+int fr_handle_disconnect2(void * instance, void * pipeline, uint8_t client_index, uint8_t channel);
 int check_oad(uint32_t oad);
-int fr_rx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
-int fr_tx_698_entry(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
+int fr_rx_698_entry(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
+int fr_tx_698_entry(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
 int GET_record_sel_1(void *instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t buf_size, void *ctx);
 int GET_record_sel_2(void *instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t buf_size, void *ctx);
 int GET_record_sel_9(void *instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t buf_size, void *ctx);
 uint8_t nd_fr698_report_pending(void);
 void nd_fr698_report_clear(void);
-int fr_gatekeeper_698_client(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
-int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
+int fr_gatekeeper_698_client(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
+int fr_gatekeeper_698_server(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
 #pragma pack(pop)
 #endif //__FR_698_H__

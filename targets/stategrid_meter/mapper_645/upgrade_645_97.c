@@ -210,7 +210,7 @@ void reboot(void *instance)
 
     nd_mb_frz_min_start_dlysec(instance) = 0; //单相
     
-    PowerOff_Save_data(instance, NULL, NULL); //数据保存
+    PowerOff_Save_data(instance); //数据保存
 
     nd_set_index_e2p(instance, (uint8_t*)&value, IMAGE_PARA_BLOCK, IMAGE_PARA_ID2, 4);
     

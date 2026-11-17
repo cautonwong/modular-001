@@ -10,7 +10,7 @@
 #include "domain/report/report_retry.h"
 #include "report_encoder.h"
 
-int active_report_3011_pro(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg, uint8_t eventtype)
+int active_report_3011_pro(void * instance, void * pipeline, nd_dl698_msg_t* mesg, uint8_t eventtype)
 {
     uint8_t data_buf[500] = {0};
     nd_report_encoder_t encoder;
@@ -125,7 +125,7 @@ int active_report_3011_pro(struct instance_t* instance, struct pipeline_t* pipel
 
 //获取模块通道 3320上报列表中主动上报 oad
 //函数返回值为主动上报oad个数，    传入buf空间需保证300字节 
-uint8_t active_report_3320list_get(struct instance_t* instance, struct pipeline_t*, nd_dl698_msg_t*, uint8_t* buf)
+uint8_t active_report_3320list_get(void * instance, void *, nd_dl698_msg_t*, uint8_t* buf)
 {
     nd_report_list_t list;
     uint8_t tmp_buf[241];
@@ -159,7 +159,7 @@ uint8_t active_report_3320list_get(struct instance_t* instance, struct pipeline_
 }
 //2015跟随上报状态字  检查是否需要上报，及获取状态字
 //mode: 0 主动上报， 1跟随上报
-uint32_t report_2015_get(struct instance_t* instance, struct pipeline_t*, nd_dl698_msg_t*, uint16_t chn, enum report_mode_t mode)
+uint32_t report_2015_get(void * instance, void *, nd_dl698_msg_t*, uint16_t chn, enum report_mode_t mode)
 {
     uint32_t value;
 
@@ -178,7 +178,7 @@ uint32_t report_2015_get(struct instance_t* instance, struct pipeline_t*, nd_dl6
 }
 // 常规的3320和2015 主动上报组帧(apdu)
 // get_data:0 只判断是否需要上报。  其他:获取一次上报内容
-int active_report_normal_pro(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg, uint8_t get_data, nd_report_retry_t* retry)
+int active_report_normal_pro(void * instance, void * pipeline, nd_dl698_msg_t* mesg, uint8_t get_data, nd_report_retry_t* retry)
 {
     uint8_t* apdu, num, count = 0;
     uint32_t value = 0;

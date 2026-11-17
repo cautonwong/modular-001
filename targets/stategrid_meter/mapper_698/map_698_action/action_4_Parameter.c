@@ -9,7 +9,7 @@
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
 #include "domain/common/time_format.h"
-#include "utils.h"
+#include "components/core/types/utils.h"
 #include "infra/kernel/resource_blocks.h"
 #endif // !WIN32
 
@@ -217,7 +217,7 @@ switch (oad)
                     timer_set[0] = BYTE_BCD(*p++);//秒
                     timer_set[6] = GetWeek(&timer[0]);
                     write_mcu_rtc(0, timer_set, 7);
-                    read_mcu_rtc(0x00, instance);
+                    read_mcu_rtc(0x00, nd_fr698_time(instance));
 
 
                     //保存校时后时间 

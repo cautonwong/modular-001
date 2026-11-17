@@ -1,6 +1,6 @@
 #include "target.h"
 #include "target_isr.h"
-#include "type_def.h"
+#include "components/core/types/type_def.h"
 #include "cpu_surport.h"
 #include "lib_tmr.h"
 

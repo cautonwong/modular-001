@@ -23,6 +23,7 @@ EXCLUDED = (
     "/board/",
     "/boards/",
     "targets/stategrid_meter/app/driver_entry.c",
+    "targets/stategrid_meter/app/storage_device.c",
     "infra/soc/",
 )
 

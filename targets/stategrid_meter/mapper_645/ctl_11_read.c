@@ -1,11 +1,11 @@
+#include <stdbool.h>
+
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "application/adapters/dl698/meter_base_view.h"
 #include "application/adapters/dl645/fr_645_context.h"
 #include "645id_table.h"
-#include "ndvh_rn8209.h"
 #include "infra/kernel/resource_blocks.h"
 #include "infra/soc/v85xxp/v8500/v85xxp_system.h"
-#include "targets/stategrid_meter/app/devices.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
 /***********************************************************************/
 /*  函数名称：GetCommTable                                             */

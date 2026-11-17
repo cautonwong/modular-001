@@ -1,4 +1,11 @@
-#include "nidavellir.h"
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <time.h>
+
+#include "components/core/types/utils.h"
+
+#define NIDAVELLIR_EPOCH 2000
 
 #ifndef RTC_NORMALIZE_COMPAT
 #define RTC_NORMALIZE_COMPAT (1)

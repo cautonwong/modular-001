@@ -1,11 +1,11 @@
 #include "targets/stategrid_meter/app/metering_energy_adapter.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 
-#include "nidavellir.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
 
 #include "domain/metering/metering.h"
 #include "infra/memory/arena.h"
-#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/persistence/legacy_control_block.h"
 
 /* shortcut: one energy book per firmware. Move it into the target composition
  * root when the target owns instance state. */
@@ -20,14 +20,13 @@ struct nd_energy_ledger
 
 static struct nd_energy_ledger ledger;
 
-static struct mbase_control_block_t *control_block(struct instance_t *instance)
+static struct mbase_control_block_t *control_block(stategrid_context_t *instance)
 {
-    return (struct mbase_control_block_t *)get_pipeline_ctx(instance,
-                                                            pid_meter_base);
+    return ((stategrid_context_t *)instance)->mbase;
 }
 
 nd_energy_ledger_t *metering_energy_ledger_from_instance(
-    struct instance_t *instance)
+    stategrid_context_t *instance)
 {
     ledger.mbase_cb = control_block(instance);
     return &ledger;

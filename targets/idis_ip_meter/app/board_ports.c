@@ -3,18 +3,18 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 
 #include "domain/common/store.h"
 #include "infra/kernel/fifo.h"
 #include "infra/memory/sector_store.h"
 #include "targets/idis_ip_meter/cosem/nd_measurement_port.h"
 #include "infra/kernel/resource_blocks.h"
-#include "nidavellir/include/kernel/device.h"
-#include "infra/boards/stategrid_single_phase/ndvh_rn8209.h"
-#include "infra/boards/stategrid_single_phase/relay_pins.h"
-#include "infra/boards/stategrid_single_phase/uart_driver.h"
-#include "infra/boards/stategrid_single_phase/board_ops.h"
-#include "infra/boards/stategrid_single_phase/eeprom.h"
+#include "targets/idis_ip_meter/board/board_rn8209.h"
+#include "targets/idis_ip_meter/board/relay_pins.h"
+#include "targets/idis_ip_meter/board/uart_driver.h"
+#include "targets/idis_ip_meter/board/board_eeprom.h"
+#include "targets/idis_ip_meter/board/board_flash.h"
 #include "infra/soc/v85xxp/v8500/v85xxp_system.h"
 #include "infra/soc/v85xxp/v8500/vendor/Lib_Driver/inc/lib_uart.h"
 #include "target.h"
@@ -24,47 +24,30 @@
 
 
 
-static struct instance_t rtc_scratch;
+static struct tm rtc_scratch;
 
 int board_rtc_read(nd_dlms_datetime_t *now)
 {
     if (now == NULL || !read_mcu_rtc(0, &rtc_scratch)) {
         return -1;
     }
-    int year = rtc_scratch.time.tm_year + 1900;
-    int month = rtc_scratch.time.tm_mon + 1;
+    int year = rtc_scratch.tm_year + 1900;
+    int month = rtc_scratch.tm_mon + 1;
     if (year < 2020 || month < 1 || month > 12) {
         return -1;
     }
     *now = (nd_dlms_datetime_t){
         .year = (uint16_t)year,
         .month = (uint8_t)month,
-        .day = (uint8_t)rtc_scratch.time.tm_mday,
-        .hour = (uint8_t)rtc_scratch.time.tm_hour,
-        .minute = (uint8_t)rtc_scratch.time.tm_min,
-        .second = (uint8_t)rtc_scratch.time.tm_sec,
+        .day = (uint8_t)rtc_scratch.tm_mday,
+        .hour = (uint8_t)rtc_scratch.tm_hour,
+        .minute = (uint8_t)rtc_scratch.tm_min,
+        .second = (uint8_t)rtc_scratch.tm_sec,
         .status = 0,
     };
     return 0;
 }
 
-static const struct dev_info_t eeprom_dev = {
-    .dev_type = DEV_EEPROM,
-    .dev_index = 1,
-    .data_size = 0xFFFF,
-    .dev_bus_ops = &iic_bus,
-    .dev_driver_ops = &eeprom_driver,
-};
-
-static const struct dev_info_t nor_flash_dev = {
-    .dev_type = DEV_FLASH,
-    .dev_index = 0,
-    .data_size = 0x7FFFFF,
-    .dev_bus_ops = &spi_mode3,
-    .dev_driver_ops = &nor_flash_driver,
-};
-
-#define BOARD_FLASH_SECTOR 4096u
 static uint8_t flash_sector[BOARD_FLASH_SECTOR];
 
 #define BOARD_UART_FIFO_BYTES 128u
@@ -100,8 +83,8 @@ static int32_t calibration_power = 1791867;
 static void board_calibration_load(void)
 {
     board_calibration_record_t record;
-    if (eeprom_read_chk(NULL, &eeprom_dev, BOARD_CALIBRATION_OFFSET,
-                        sizeof(record), &record)
+    if (nd_eeprom_read(board_eeprom(), BOARD_CALIBRATION_OFFSET,
+                       (uint8_t *)&record, sizeof(record)) == 0
         && record.magic == BOARD_CALIBRATION_MAGIC && record.voltage > 0
         && record.current > 0 && record.power > 0) {
         calibration_voltage = record.voltage;
@@ -117,7 +100,8 @@ static int board_store_read(void *ctx, uint32_t offset, uint8_t *buffer,
     if (length > 0xFFFFu) {
         return -1;
     }
-    return eeprom_read_chk(NULL, &eeprom_dev, offset, (uint16_t)length, buffer)
+    return nd_eeprom_read(board_eeprom(), offset, buffer,
+                          (uint16_t)length) == 0
                ? 0
                : -1;
 }
@@ -130,8 +114,8 @@ static int board_store_write(void *ctx, uint32_t offset, const uint8_t *buffer,
         return -1;
     }
     mcu_clear_watchdog();
-    int result = eeprom_write_chk(NULL, &eeprom_dev, offset,
-                                  (uint16_t)length, (void *)buffer)
+    int result = nd_eeprom_write(board_eeprom(), offset, buffer,
+                                 (uint16_t)length) == 0
                      ? 0
                      : -1;
     mcu_clear_watchdog();
@@ -145,8 +129,8 @@ static int flash_read(void *ctx, uint32_t offset, uint8_t *buffer,
     if (length > 0xFFFFu) {
         return -1;
     }
-    return nor_flash_driver.dev_read(NULL, &nor_flash_dev, offset,
-                                     (uint16_t)length, buffer)
+    return nd_mx25l3206e_read(board_flash(), offset, buffer,
+                              (uint16_t)length) == 0
                ? 0
                : -1;
 }
@@ -154,9 +138,7 @@ static int flash_read(void *ctx, uint32_t offset, uint8_t *buffer,
 static int flash_erase(void *ctx, uint32_t offset)
 {
     (void)ctx;
-    uint32_t address = offset;
-    return nor_flash_driver.dev_control(NULL, &nor_flash_dev,
-                                        CTRL_FLS_SECTOR_ERASE, &address)
+    return nd_mx25l3206e_erase(board_flash(), offset, BOARD_FLASH_SECTOR) == 0
                ? 0
                : -1;
 }
@@ -168,26 +150,13 @@ static int flash_write(void *ctx, uint32_t offset, const uint8_t *buffer,
     if (length > 0xFFFFu) {
         return -1;
     }
-    return nor_flash_driver.dev_write(NULL, &nor_flash_dev, offset,
-                                      (uint16_t)length, (void *)buffer)
+    return nd_mx25l3206e_write(board_flash(), offset, buffer,
+                               (uint16_t)length) == 0
                ? 0
                : -1;
 }
 
 static nd_sector_store_t flash_store;
-
-static const UART_InitType rn8209_uart_config = {
-    UART_MODE_Msk, UART_PARITY_EVEN_LIB, UART_WORDLEN_9B,
-    UART_FIRSTBIT_LSB, 4800 * Fr_K,
-};
-
-static const struct dev_info_t rn8209_dev = {
-    .dev_type = DEV_EMU,
-    .dev_index = 0,
-    .dev_bus_ops = &mcu_uart_bus_ops,
-    .dev_driver_ops = &rn8209_drv,
-    .cfg = &rn8209_uart_config,
-};
 
 static const nd_store_t board_store = {
     .ctx = NULL,
@@ -207,15 +176,15 @@ nd_store_t *board_flash_port(void)
 
 void board_store_init(void)
 {
-    (void)eeprom_initialize(NULL, &eeprom_dev);
+    (void)board_eeprom();
 }
 
 void board_flash_init(void)
 {
-    (void)nor_flash_driver.dev_initialize(NULL, &nor_flash_dev);
+    (void)board_flash();
     nd_sector_store_init(&flash_store, NULL, flash_read, flash_erase,
-                         flash_write, (uint32_t)nor_flash_dev.data_size,
-                         BOARD_FLASH_SECTOR, flash_sector);
+                         flash_write, BOARD_FLASH_SIZE, BOARD_FLASH_SECTOR,
+                         flash_sector);
 }
 
 static void uart_receive_timeout(void)
@@ -334,11 +303,7 @@ void board_gpio_init(void)
 void board_measurement_init(void)
 {
     board_calibration_load();
-    /* Rn8209_initialize() is a no-op; the UART bus carries the config. */
-    if (rn8209_dev.dev_bus_ops != NULL && rn8209_dev.dev_bus_ops->init != NULL) {
-        (void)rn8209_dev.dev_bus_ops->init((size_t)rn8209_dev.cfg);
-    }
-    (void)rn8209_drv.dev_initialize(NULL, &rn8209_dev);
+    (void)board_rn8209();
 }
 
 int board_adc_read(uint8_t channel, int32_t *value)
@@ -363,7 +328,7 @@ int board_measurement_read(void *ctx, nd_measure_quantity_t quantity,
     nd_measurement_unit_t unit = ND_MEASUREMENT_UNIT_NONE;
     switch (quantity) {
     case ND_MEASURE_VOLTAGE:
-        if (!rn8209_drv.dev_read(NULL, &rn8209_dev, URMS, 3, &raw)) {
+        if (nd_rn8209_read(board_rn8209(), ND_RN8209_URMS, &raw, 3) != 0) {
             return -1;
         }
         value = (int64_t)(((float)calibration_voltage / 1000000000.0f)
@@ -374,7 +339,7 @@ int board_measurement_read(void *ctx, nd_measure_quantity_t quantity,
         break;
     case ND_MEASURE_CURRENT:
     case ND_MEASURE_CURRENT_SUM:
-        if (!rn8209_drv.dev_read(NULL, &rn8209_dev, IARMS, 3, &raw)) {
+        if (nd_rn8209_read(board_rn8209(), ND_RN8209_IARMS, &raw, 3) != 0) {
             return -1;
         }
         value = (int64_t)(((float)calibration_current / 1000000000.0f)
@@ -385,7 +350,7 @@ int board_measurement_read(void *ctx, nd_measure_quantity_t quantity,
         break;
     case ND_MEASURE_ACTIVE_POWER:
     case ND_MEASURE_TOTAL_ACTIVE_POWER:
-        if (!rn8209_drv.dev_read(NULL, &rn8209_dev, POWERPA, 4, &raw)) {
+        if (nd_rn8209_read(board_rn8209(), ND_RN8209_POWERPA, &raw, 4) != 0) {
             return -1;
         }
         value = (int64_t)(((float)calibration_power / 1000000000.0f)
@@ -393,7 +358,7 @@ int board_measurement_read(void *ctx, nd_measure_quantity_t quantity,
         unit = ND_MEASUREMENT_UNIT_WATT;
         break;
     case ND_MEASURE_FREQUENCY:
-        if (!rn8209_drv.dev_read(NULL, &rn8209_dev, UFREQ, 2, &raw)) {
+        if (nd_rn8209_read(board_rn8209(), ND_RN8209_UFREQ, &raw, 2) != 0) {
             return -1;
         }
         value = raw;

@@ -554,7 +554,7 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                 settimebuf[6] = GetWeek(&timer[0]);
                 write_mcu_rtc(0, settimebuf, 7);
 
-                read_mcu_rtc(0x00, instance);
+                read_mcu_rtc(0x00, nd_fr698_time(instance));
                 
                 mem_swap_cpy((uint8_t*)&year2, buffer, 2);
                 year1 = nd_fr698_time(instance)->tm_year + 1900;

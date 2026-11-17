@@ -1,8 +1,19 @@
 #ifndef _CPU_SURPORT_H_
 #define _CPU_SURPORT_H_
 
-#include "type_def.h"
-#include "nidavellir.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <time.h>
+
+
+#ifndef CODE
+#define CODE
+#endif
+
+#ifndef BIT
+#define BIT(x) (1ul << (x))
+#endif
 
 //typedef void (*isr_handle)(void);
 
@@ -25,6 +36,8 @@ extern int mcu_uart_send_byte(uint8_t send_data, size_t uart_index);
 
 extern int mcu_uart_recive_byte(uint8_t* byte , size_t uart_index);
 extern void mcu_uart_send_enable(uint8_t ops_enable, size_t uart_index);
+extern int mcu_uart_get_tx_status(size_t uart_index);
+extern int mcu_uart_get_rx_status(size_t uart_index);
 
 extern uint8_t mcu_uart_close(uint8_t uart_index);
 extern uint8_t mcu_uart_set_baud(uint32_t baud, uint8_t uart_index);
@@ -52,17 +65,13 @@ extern void cm0_systick_init(uint8_t cmd);
 //extern void ndv_isr_handle_regsit(isr_handle isr_handle_f , uint8_t irq);
 extern uint8_t Isr_handle_regsit(struct isr_reg_ctx_t *isrRegctx , uint8_t irq);
 
-extern uint8_t read_mcu_rtc(uint8_t addr, struct instance_t* instance);
+extern uint8_t read_mcu_rtc(uint8_t addr, struct tm *time);
 extern uint8_t write_mcu_rtc(uint8_t addr, uint8_t *buf, uint16_t len);
 
 extern uint8_t mcu_adc_start_once(uint8_t chl_type);
 extern uint32_t read_mcu_adc_measure_value(uint8_t chl_type , int32_t *adc_measure);
 extern void opreate_second_pluse(uint8_t mode);
-extern void device_power_close(struct instance_t* instance);
-extern void device_power_open(struct instance_t* instance, struct pipeline_t* pipeline);
-extern void cpu_io_lowpower_cfg_chk(struct instance_t *instance);
-extern void cpu_sleep_manage(struct instance_t* instance, struct pipeline_t* pipeline);
-extern  void device_power_close1(struct instance_t* instance);
+extern void cpu_io_lowpower_cfg_chk(void *instance);
 
 #define  DISABLE_ALL_INT()     __disable_irq();
 #define  ENABLE_ALL_INT()      __enable_irq();
@@ -112,23 +121,6 @@ enum irq_en
    IRQ_UART_RX_TM_OUT,
    IRQ_NUM
 };
-
-
-
-
-
-
-enum bus_type
-{
-    BUS_I2C,
-    BUS_SPI,
-    BUS_UART,
-};
-
-
-
-
-
 
 
 

@@ -6,7 +6,7 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 binary="$(mktemp /tmp/legacy-probe-XXXXXX)"
 trap 'rm -f "${binary}"' EXIT
 
-gcc -std=gnu11 -DWIN32 -I "${root}" -I "${root}/nidavellir/include" \
+gcc -std=gnu11 -DWIN32 -I "${root}" \
     -I "${root}/targets/stategrid_meter" \
     -I "${root}/targets/stategrid_meter/app" \
     "${root}/tools/legacy_probe.c" -o "${binary}"

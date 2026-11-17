@@ -1,6 +1,6 @@
 #include "targets/stategrid_meter/app/backlight_adapter.h"
 #include "domain/display/backlight.h"
-#include "infra/boards/stategrid_single_phase/board_io.h"
+#include "targets/stategrid_meter/board/board_io.h"
 #include <stddef.h>
 
 static void board_backlight_set(void *ctx, int on)

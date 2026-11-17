@@ -6,7 +6,7 @@
 #include "domain/security/security_mode.h"
 #include "security_encoder.h"
 
-static int ___get_encode_and_mac(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t*)
+static int ___get_encode_and_mac(void * instance, void * pipeline, nd_dl698_msg_t*)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* cache = ctx->apdu;
@@ -67,7 +67,7 @@ static int ___get_encode_and_mac(struct instance_t* instance, struct pipeline_t*
 }
 
 
-int fr_security_encode(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+int fr_security_encode(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* cache = ctx->apdu;

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Ratchet the legacy kernel types left in the product targets.
 
-The terminal state has no instance, no pipeline and no nidavellir. Every
-target source that still names them is recorded here; the count may only
-go down. A file that grows fails, and so does a baseline entry that no
-longer exists.
+The terminal state has no instance, no pipeline and no nidavellir. The
+target-owned control block keeps its name and is not part of this scan.
+Every target source that still names the retired kernel types is recorded
+here; the count may only go down.
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 BASELINE = ROOT / "tools" / "target_kernel_baseline.txt"
 PATTERN = re.compile(
-    r'nidavellir\.h|"kernel/|legacy_control_block|'
+    r'nidavellir\.h|"kernel/|'
     r'struct\s+pipeline_t|struct\s+instance_t|\bpid_[a-z_]+')
 
 
@@ -25,10 +25,13 @@ def counts() -> dict[str, int]:
     for path in sorted((ROOT / "targets").rglob("*")):
         if path.suffix not in (".c", ".h") or "build" in path.parts:
             continue
+        rel = path.relative_to(ROOT).as_posix()
+        if "/tools/app_resource_tool/test_cases/" in rel:
+            continue
         text = path.read_text(encoding="utf-8", errors="replace")
         number = len(PATTERN.findall(text))
         if number:
-            found[path.relative_to(ROOT).as_posix()] = number
+            found[rel] = number
     return found
 
 

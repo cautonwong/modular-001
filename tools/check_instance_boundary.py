@@ -10,7 +10,7 @@ SCAN_DIRS = ("domain", "application")
 
 FORBIDDEN_INCLUDES = (
     "kernel/instance.h",
-    "kernel/legacy_control_block.h",
+    "legacy_control_block.h",
 )
 FORBIDDEN_DEFINITIONS = (
     re.compile(r"struct\s+instance_t\s*\{"),

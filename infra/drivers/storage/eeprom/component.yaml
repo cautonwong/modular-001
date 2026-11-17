@@ -1,0 +1,5 @@
+name: driver.storage_eeprom
+version: 0.1.0
+layer: platform
+paths: [infra/drivers/storage/eeprom]
+dependencies: []

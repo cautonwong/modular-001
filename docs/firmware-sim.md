@@ -44,11 +44,11 @@ gprof ./firmware_sim gmon.out > profile.txt
 |---|---|
 | `tests/sim/sim_main.c` | 用 `mmap(MAP_32BIT)` 申请低 4 GiB 的 24 KiB 实例区；调用真实 `create_instance` 和真实入口 |
 | `tests/sim/sim_trace.c` | 每周期注入 RTC 事件、设置 `instance->ms`、输出 trace；提供 filter/报文/阶段钩子 |
-| `tests/sim/sim_devices.c` | 文件后端 EEPROM/flash `driver_ops_t`，以及返回零读数的 RN8209 桩 |
+| `tests/sim/sim_devices.c` | 文件后端的 `nd_storage_read/write/size`，以及返回零读数的 RN8209 桩 |
 | `tests/sim/sim_stubs.c` | MCU、看门狗、IRQ、继电器、LCD、ESAM 等板级入口 |
 | `tests/sim/include/sim_compat.h` | 保 `pid_t` 为 `uint8_t` 的 glibc 兼容层、CMSIS intrinsic 空实现、IAR 关键字 |
 | `tests/sim/include/core_cm0.h` | 屏蔽真实 CMSIS 的 Cortex-M0 汇编 |
-| `tools/firmware_sim_manifest.py` | 从 IAR `.ewp` 派生 172 个可移植源文件，排除 board/SOC/driver_entry |
+| `tools/firmware_sim_manifest.py` | 从 IAR `.ewp` 派生可移植源文件，排除 board/SOC/driver_entry/storage_device |
 | `tests/CMakeLists.txt` | `firmware_sim` 目标和 ctest 冒烟 |
 
 低 4 GiB 不是随便选的。资源管理器把地址存进 `uint32_t`：
@@ -63,12 +63,12 @@ gprof ./firmware_sim gmon.out > profile.txt
 
 | 阶段 | 调用 | 说明 |
 |---|---:|---|
-| `create_instance` | 1 | 真实资源管理器 |
+| `stategrid_context_create` | 1 | 真实资源管理器 |
 | `add_block` / `add_inside_block` | 7 / 3 | RAM 块、698 块、mbase 块 |
 | `add_device` | 2 | EEPROM、flash |
 | `register_parameter` / `register_log` / `register_map` | 3 / 3 / 1 | 参数区、事件区、698 map |
 | `nd_get_block` | 3 | 启动恢复 static 区 |
-| `nidavellir_run_baremetal` | 60 | 每个模拟秒一圈 |
+| `baremetal_instance_entry_main` 主循环 | 60 | 每个模拟秒一圈 |
 | `app_meter_base_entry` | 60 | `pl_meter_base` 唯一 filter |
 | `nd_sim_stage` | 840 | 14 个应用阶段 × 60 秒 |
 | `legacy_energy_checksum_span` | 180 | 电能校验/保存路径 |
@@ -78,9 +78,9 @@ gprof ./firmware_sim gmon.out > profile.txt
 （`targets/stategrid_meter/app/stategrid_meter_entry.c:333`）：创建 recipe、注册
 RAM/EEPROM/flash 块、创建三个 698 通道、分配 mbase 三区、恢复 static 区、
 递增复位次数。之后每圈由 `sim_trace.c` 往 `instance->pipe_rtc` 写 `IRQ_RTC`，
-`fr_sw_rtc` 把它变成 `MSG_SECOND` 投给 `pid_meter_base`，
-`nidavellir_run_baremetal`（`targets/stategrid_meter/app/rtos/nidavellir.c:411`）
-调用 `app_meter_base_entry`（`targets/stategrid_meter/app/apps/app_meter_base_entry.c:221`）。
+`event_tick` 把它变成 `MSG_SECOND` 投给 `pid_meter_base`，
+`targets/stategrid_meter/app/stategrid_meter_entry.c` 的主循环调用
+`app_meter_base_event`（`targets/stategrid_meter/app/apps/app_meter_base_entry.c:213`）。
 
 `MSG_SECOND` 实际执行的阶段：
 
@@ -141,7 +141,7 @@ IOStateCheck
 5. `Rtc_Prossecc` 在每秒第 20 秒调用 `read_mcu_rtc` 对时
    （`targets/stategrid_meter/app/tariff/legacy/touFee.c:321`）。主机桩必须让时间
    前进，否则秒数会卡在 20。
-6. `nidavellir_run_baremetal` 无条件调用看门狗、IRQ 泵、电源监控和
+6. target 主循环无条件调用看门狗、IRQ 泵、电源监控和
    `cpu_sleep_manage`；WIN32 之外没有宿主保护。孪生用桩承接。
 7. `resource_tool.h` 的 `#pragma pack(4)` 没有复位，泄漏到后续所有头文件。
    `stategrid_meter_entry.c` 和 `nd_dl698.c` 因此对

@@ -1,16 +1,16 @@
 #include "targets/stategrid_meter/persistence/meter_record.h"
+#include "targets/stategrid_meter/app/meter_flags.h"
 #include "application/adapters/dl698/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "645id_table.h"
 #include "port.h"
-#include "utils.h"
+#include "components/core/types/utils.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "fr_645_report.h"
 #include "cpu_surport.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
 #include "infra/kernel/resource_blocks.h"
 #include "infra/soc/v85xxp/v8500/v85xxp_system.h"
-#include "targets/stategrid_meter/app/devices.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
 #include "targets/stategrid_meter/mapper_698/factory_cfg.h"
 #include "targets/stategrid_meter/mapper_698/mapper_698.h"
@@ -550,7 +550,7 @@ static uint8_t dl645wt_date(void *instance, uint32_t addr, uint8_t *prx, uint8_t
     settimebuf[2] = *prx++;//年
     settimebuf[3] = GetWeek645(&settimebuf[0]);
     write_mcu_rtc_date(0, settimebuf, 4);
-    read_mcu_rtc(0x00, instance);
+    read_mcu_rtc(0x00, nd_fr698_time(instance));
 
     //保存校时后时间 
     rtc_get_from_tm(instance,temp);
@@ -585,7 +585,7 @@ static uint8_t dl645wt_time(void *instance, uint32_t addr, uint8_t *prx, uint8_t
     settimebuf[1] = *prx++;//月
     settimebuf[2] = *prx++;//年
     write_mcu_rtc_time(0, settimebuf, 3);
-    read_mcu_rtc(0x00, instance);
+    read_mcu_rtc(0x00, nd_fr698_time(instance));
 
     //保存校时后时间 
     rtc_get_from_tm(instance,temp);
@@ -622,7 +622,7 @@ static uint8_t dl645wt_datetime(void *instance, uint32_t addr, uint8_t *prx, uin
     settimebuf[5] = *prx++;//年
     settimebuf[6] = GetWeek645(&settimebuf[3]);
     write_mcu_rtc(0, settimebuf, 7);
-    read_mcu_rtc(0x00, instance);
+    read_mcu_rtc(0x00, nd_fr698_time(instance));
     if(day != nd_fr698_time(instance)->tm_mday)  //跨日，清除广播校时标志位
     {
         nd_mb_boardadjtime(instance) = 0;

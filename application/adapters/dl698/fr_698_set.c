@@ -1,7 +1,6 @@
 #include <stdbool.h>
 #include "application/ports/fifo.h"
 #include "application/adapters/dl698/fr_698_env.h"
-struct instance_t;
 #include "fr_698.h"
 #include "fr_698_internal.h"
 #include "fr_698_esam.h"
@@ -17,7 +16,7 @@ struct instance_t;
 
 
 
-int get_SET_and_ACTION_Request_len(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t*)
+int get_SET_and_ACTION_Request_len(void *, void * pipeline, nd_dl698_msg_t*)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     int len = 0;
@@ -52,7 +51,7 @@ int get_SET_and_ACTION_Request_len(struct instance_t*, struct pipeline_t* pipeli
     return len;
 }
 
-static int __fr_handle_one_object(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+static int __fr_handle_one_object(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -185,7 +184,7 @@ int support_broadcast_addr_cmd_check(uint8_t cmd, uint32_t oad)
 
 
 
-int fr_handle_set_action_request(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+int fr_handle_set_action_request(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;

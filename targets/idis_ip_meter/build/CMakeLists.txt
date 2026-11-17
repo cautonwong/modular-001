@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(idis_app C)
 
 set(ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
-set(BOARD ${ROOT}/infra/boards/stategrid_single_phase)
+set(BOARD ${ROOT}/targets/idis_ip_meter/board)
 set(SOC ${ROOT}/infra/soc/v85xxp/v8500)
 
 set(IDIS_PHASES 1 CACHE STRING "Meter phase count for this product")
@@ -32,10 +32,10 @@ if(NOT PRODUCT_RESULT EQUAL 0)
 endif()
 include(${CMAKE_CURRENT_BINARY_DIR}/product_sources.cmake)
 list(TRANSFORM PRODUCT_SOURCES PREPEND "${ROOT}/")
-# The domain closure comes from product.yaml and the component manifests;
-# the target no longer compiles every file under domain/.
-list(FILTER PRODUCT_SOURCES INCLUDE REGEX "/domain/")
-set(DOMAIN_SOURCES ${PRODUCT_SOURCES})
+# The domain and device-driver closure comes from product.yaml and the
+# component manifests; the target no longer compiles every file itself.
+list(FILTER PRODUCT_SOURCES INCLUDE REGEX "/domain/|/infra/drivers/")
+set(LAYER_SOURCES ${PRODUCT_SOURCES})
 set(PROTOCOL_SOURCES ${ROOT}/components/protocol/dlms/src/nd_axdr.c)
 set(INFRA_SOURCES ${ROOT}/infra/memory/byte_store.c
     ${ROOT}/infra/memory/sector_store.c
@@ -47,21 +47,31 @@ add_executable(idis
     ${APP_SOURCES}
     ${SOC_SOURCES}
     ${IDIS_SOURCES}
-    ${DOMAIN_SOURCES}
+    ${LAYER_SOURCES}
     ${PROTOCOL_SOURCES}
     ${INFRA_SOURCES})
 
 target_include_directories(idis PRIVATE
     ${ROOT}
-    ${ROOT}/nidavellir/include
-    ${ROOT}/nidavellir/include/kernel
     ${ROOT}/components/protocol/dlms/include
+    ${ROOT}/infra/kernel
     ${SOC}
     ${SOC}/vendor
     ${SOC}/vendor/Lib_Driver/inc
     ${ROOT}/infra/third_party/arm/cmsis)
 
 target_compile_definitions(idis PRIVATE IDIS_PHASES=${IDIS_PHASES})
+# Board transport modes are compile-time and selected per product. Defaults
+# keep the polling path that has HIL history.
+set(ND_BOARD_UART_MODE 0 CACHE STRING "0 poll, 1 irq")
+set(ND_BOARD_SPI_MODE 0 CACHE STRING "0 poll, 2 dma")
+set(ND_BOARD_IIC_MODE 0 CACHE STRING "0 poll")
+foreach(mode_target board idis)
+    target_compile_definitions(${mode_target} PRIVATE
+        ND_BOARD_UART_MODE=${ND_BOARD_UART_MODE}
+        ND_BOARD_SPI_MODE=${ND_BOARD_SPI_MODE}
+        ND_BOARD_IIC_MODE=${ND_BOARD_IIC_MODE})
+endforeach()
 target_compile_options(idis PRIVATE
     -mcpu=cortex-m0 -mthumb -ffreestanding -Os -g
     -ffunction-sections -fdata-sections)

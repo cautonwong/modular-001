@@ -67,13 +67,12 @@ components/<category>/<name>/
 
 ## 3.1 遗留隔离
 
-旧 kernel 的 pipeline、filter、message 和全局 fifo 不删除，但被标记为 legacy，只允许 legacy 组件使用。
+旧 kernel 的 pipeline、filter、message 和全局 fifo 已在 Wave 6 删除。
 
-- `infra/kernel` 和 `nidavellir/include/kernel` 的组件清单标记 `legacy: true`。
-- `application/adapters/dl698`、`dl645` 在完成协议组件迁移前标记 legacy。`application/apps` 已清空，两个 C 头移到 target，Go 上传工具移到 `tools/file_uploader`。
-- `tools/check_components.py` 禁止 core、domain、application、protocol、services 组件 include `kernel/` 或 `nidavellir/`。
-- 新组件只能依赖公开组件和端口，不能依赖 legacy 头。
-- 遗留代码在阶段 5 删除，届时 legacy 清单和 `kernel_core.h` 一起移除。
+- `infra/kernel` 只保留 FIFO、list、RTC、timer 和通用工具，组件清单不再标记 legacy。
+- `application/adapters/dl698`、`dl645` 只保留协议适配，消息类型改为私有的 `nd_dl69x_msg_t`。
+- `tools/check_components.py` 继续禁止 core、domain、application、protocol、services 组件 include product 或 SoC 平台头。
+- 新组件只能依赖公开组件和端口。
 
 ## 4. 目录布局
 
@@ -311,7 +310,7 @@ UART、PLC、RF、红外都实现这个端口。协议组件只看见通道，�
 阶段 5：删除旧机制
 
 - 删除 pipeline/filter/message 和全局 fifo/pipeline extern。
-- 删除 `nidavellir.h` 和 `kernel_core.h` 兼容层。
+- `nidavellir.h`、`kernel_core.h` 和旧 kernel 源文件已删除。
 - 组件依赖检查改为硬失败。
 
 阶段 6：产品矩阵

@@ -7,7 +7,7 @@
 /*
  * Frozen copy of the persisted energy slice from the legacy aggregate root.
  * Offsets were measured with tools/legacy_probe.c against the original
- * nidavellir/include/applications.h and instances/stategrid_meter/port.h.
+ * targets/stategrid_meter/persistence/legacy_control_block.h and app/port.h.
  * Do not reorder fields. Existing meters are read with these bytes.
  */
 #define ND_LEGACY_TARIFF_SLOTS 13

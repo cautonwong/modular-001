@@ -421,8 +421,8 @@ int connect_failture(void *instance, uint8_t* req_buf, struct context_698_t* ctx
 
 
 int ACTION_F_Other(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx)
-{    
-    void *pipeline = nd_fr698_pipeline(instance); 
+{
+    void *pipeline = NULL;
     struct context_698_t* p_ctx = (struct context_698_t*)ctx;
     struct fifo_t* cache = p_ctx->apdu;
     uint8_t *apdu_rx = p_ctx->apdu_d_rx + p_ctx->apdu_rx_offset;

@@ -132,15 +132,15 @@ Zephyr board 实现只 include `<zephyr/drivers/gpio.h>` 和 devicetree 生成�
 
 具体 RTOS 的选择和绑定只在 product/target。一个 product 选定一个 RTOS 后就不换。product 的 target 文件可以直接 include 具体 RTOS 头，直接调用具体 API。这是有意的显式依赖。
 
-当前只有一套实际运行的调度器，`nidavellir` 的 tasklet、定时器和主循环。Zephyr 有自己的内核对象和设备模型。现在抽一层通用接口，等于先把未来 API 猜一遍，成本高，收益为零。
+当前只有一套实际运行的调度器：`targets/stategrid_meter/app/stategrid_meter_entry.c` 的裸机主循环。Zephyr 有自己的内核对象和设备模型。现在抽一层通用接口，等于先把未来 API 猜一遍，成本高，收益为零。
 
 规则。
 
 - 外部 RTOS 内核原样放 `infra/third_party/<rtos>/`；`FreeRTOSConfig.h`、`freertos.c` 和具体调用留在 product target。
-- product/target 是唯一选择和绑定具体 RTOS 的地方。target 可以显式 include `nidavellir` 或 Zephyr 头。
+- product/target 是唯一选择和绑定具体 RTOS 的地方。target 可以显式 include 具体 RTOS 头。
 - `infra/rtos/<rtos>` 可以作为具体实现的存放目录，但它不是共享抽象层，也不暴露通用句柄。只有被该 product 的 target 选中时才参与构建。
 - domain、application 和共享组件不 include 具体 RTOS 头。共享组件需要定时、互斥、队列时，由 target 传回调或绑定消费者端口。
-- 当前 baremetal target 继续直接使用 `nidavellir`。
+- 当前 baremetal target 直接拥有主循环、context 和端口绑定。
 - Zephyr target 如果真的落地，优先把现有主循环放进一个 Zephyr 线程，只替换节拍、休眠、中断投递这些入口。需要内核对象时，在 Zephyr target 或对应 infra 模块里直接调用 `k_*`。
 - 某个 product 要换 RTOS 时，复制该 product 的 target 和构建配置，改具体依赖即可。不做 adapter。这个做法便宜的前提是共享 application/domain 里没有具体 RTOS 头；所以规则是先把 RTOS 依赖关在 target 里。
 - 中断里只做投递，不在中断里跑领域逻辑。这条约束与 RTOS 无关，现在就要遵守。
@@ -204,14 +204,60 @@ targets/<product>/zephyr/
 - host 测试可以在没有板子和 RTOS 的情况下运行全部业务规则。
 - 旧持久化切片、事件记录和冻结记录的字节回归测试持续通过。
 
-## 9. 当前差距
+## 9. 板级传输模式
+
+每条总线在 board target 上按构建期选择传输模式，运行期不切换：
+
+```c
+#define ND_BOARD_UART_MODE ND_BOARD_MODE_POLL  /* 默认 */
+#define ND_BOARD_SPI_MODE  ND_BOARD_MODE_POLL
+#define ND_BOARD_IIC_MODE  ND_BOARD_MODE_POLL
+```
+
+模式值是 `ND_BOARD_MODE_POLL`、`ND_BOARD_MODE_IRQ`、`ND_BOARD_MODE_DMA`。每个产品 board 自带
+`board_transport.h`、`board_transport.c`（完成原语、UART 接收环、SPI DMA 状态机）和
+`board_transport_soc.c`（SoC 粘合层）。产品构建用 `-D` 覆盖模式；默认全部是 POLL。
+
+| 总线 | POLL | IRQ | DMA |
+|---|---|---|---|
+| UART (RN8209) | 现有轮询 | 接收环 + TX-empty 中断 | 未实现；驱动逐字节写，没有缓冲 API |
+| SPI (ESAM 请求阶段) | 现有轮询 | 未实现 | TX/RX 两个 DMA 通道 + DMA 完成中断 |
+| SPI (NOR flash) | 现有 bit-bang | 未实现 | 未实现；flash 接在 GPIO 上，先要板级改到硬件 SPI |
+| IIC (EEPROM) | 现有 bit-bang | 只有失败桩 | 只有失败桩 |
+
+裸机完成原语用 `volatile` 完成位、`__WFI` 和看门狗喂狗。V8500 的 SysTick 按
+`cpu_clk / 100` 编程，一次唤醒是 10 ms，因此超时按唤醒次数计步，精确的墙钟时间在
+HIL 之前是推断值。FreeRTOS 产品用 `ND_BOARD_USE_FREERTOS` 选择二值信号量版本，
+`xSemaphoreGiveFromISR` 在 ISR 里唤醒等待者。
+
+UART IRQ 为每个通道维护 128 字节接收环，RX 中断把字节填入，环满时保留最旧、丢弃
+最新。`nd_board_uart_read` 在环上等待，超时用 board 常量；发送仍是逐字节，等待
+TX-empty 中断完成位。stategrid 的中断在 `cpu_v85xxp_isr.c` 的 `DMA_IRQHandler` 和
+UART 入口分发；IDIS 两个产品复用 `infra/soc/v85xxp/v8500/nd_v8500_irq.c` 的分发表，
+不需要新的入口。
+
+ESAM 请求帧一次最多 256 字节，DMA 的包长度字段只有 8 位，更长的帧由 board 侧分块。
+请求阶段同时开 RX 通道，把从机在请求时钟里移出的字节排空，否则这些字节会留在 FIFO
+里让后续响应错位。响应长度要读了头部才知道，因此接收保持逐字节轮询。flash 仍走
+bit-bang，和 DMA 路径无关。
+
+IIC 硬件控制器路径缺失是已知差距。厂商 `lib_i2c.c` 的 `I2C_Master*Bytes` 在状态轮询
+里无限等待，且 I2C 中断入口为空；启用会把无超时挂死带进产品。选择 IRQ 或 DMA 模式
+的构建可以编译，但 `nd_board_iic_*` 返回失败，不假装工作。
+
+`tests/unit/test_board_transport.c` 直接调用 ISR 入口，覆盖接收环顺序、溢出丢新字节、
+完成位、超时、SPI 两通道完成状态和 256 字节分块边界。`tools/check-board-modes.sh`
+用 `arm-none-eabi-gcc` 按模式编译每个产品 board，不存在的组合在输出里跳过并说明原因。
+中断延迟、DMA 通道仲裁、I2C 总线恢复和 SPI 时序在 HIL 之前仍是推断值。
+
+## 10. 当前差距
 
 - `board_io` 是 stategrid 专用实现，这个定位保留，不再计划拆通用 board 接口。
 - 线级操作已经移出 `board_io.h`，只在 `iic_pins`、`spi_pins`、`uart_pins`、`rn8209_pins`、`esam_pins` 和 `relay_pins` 私有模块里。
 - 显示、运行状态和计量输入已经改走端口。application 和 domain 目录不再 include `board_io.h`，也不再直接调用 `nd_board_*`。
-- `infra/board` 已合并到 `targets/stategrid_meter/board`，依赖 board 的 nidavellir、time_link、SoC ISR 和 ESAM 源文件也移到 target。非 staging 的平台 include 和 RTOS 调用为 0。
+- `infra/board` 已合并到 `targets/stategrid_meter/board`，依赖 board 的 time_link、SoC ISR 和 ESAM 源文件也已归位。非 staging 的平台 include 和 RTOS 调用为 0。
 - application/apps、domain legacy 和 dl645 adapter 的平台 include/RTOS 调度调用已经清零。`tools/check_platform_boundary.py` 把它们记为 staging 债，新增的非 staging 违例会直接失败。
-- `nidavellir` 仍是实际调度器。这是有意保留的，不计划先抽通用 RTOS adapter。
-- `application/apps` 里还有约 50 个文件直接调用 `ndv_timer`、`send_mesg` 或 tasklet。它们还没有遵守“RTOS 选择只在 target”的规则，离开 staging 时要逐个收口。
+- 调度器已经是 target 主循环，`nidavellir` 已删除；不计划先抽通用 RTOS adapter。
+- `application/apps` 已清空；事件和 tick 入口在 target 里直接调用。
 - 还没有 Zephyr 组合根、devicetree overlay 或 Zephyr board 实现。
 - 还没有主机假 board 实现。

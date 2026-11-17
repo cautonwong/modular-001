@@ -2,6 +2,7 @@ name: meter_electricity_single_phase_idis_freertos
 version: 0.1.0
 phases: 1
 components:
+  - core.types
   - domain.common
   - domain.metering
   - domain.tariff
@@ -17,12 +18,11 @@ components:
   - domain.report
   - domain.security
   - soc.v85xxp_v8500
-  - board.stategrid_single_phase
+  - driver.storage_eeprom
+  - driver.storage_mx25l3206e
+  - driver.metering_rn8209
+  - driver.security_esam
   - infra.kernel
-  - legacy.base_headers
-  - legacy.kernel_headers
-  - legacy.port_header
-  - legacy.test_support
   - core.buf
   - services.channel
   - third_party.arm_cmsis

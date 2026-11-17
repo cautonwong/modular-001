@@ -2,10 +2,6 @@
 #define ND_TARGET_STATEGRID_TARIFF_APPLICATIONS_H
 
 #include <stdint.h>
-
-struct instance_t;
-struct pipeline_t;
-
 void Rtc_Prossecc(void *instance, void *pipeline);
 void TouFeePro(void *instance, void *pipeline);
 void rtc_get_from_tm(void *instance, uint8_t *p);

@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -12,7 +12,7 @@
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "domain/events/program_list.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/persistence/legacy_control_block.h"
 
 
 //编程事件 
@@ -37,7 +37,7 @@ int MeterWr_obj_list_clear(void *instance, void *task, void *mesg)
 // 更新编程列表
 int MeterWr_obj_list_add(void *instance, void *task, void *mesg, uint32_t oad, uint8_t tag)
 {
-    struct mbase_control_block_t* ctrl_block  = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct mbase_control_block_t* ctrl_block  = ((stategrid_context_t *)instance)->mbase;
     uint8_t payload[100];
     uint8_t ofset, tempbuf[52];
     uint32_t index = 0;
@@ -106,7 +106,7 @@ int MeterWr645_obj_list_clear(void *instance, void *task, void *mesg)
 // 更新编程列表
 int MeterWr645_obj_list_add(void *instance, void *task, void *mesg, uint32_t oad, uint8_t tag)
 {
-    struct mbase_control_block_t* ctrl_block  = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct mbase_control_block_t* ctrl_block  = ((stategrid_context_t *)instance)->mbase;
     uint8_t payload[100];
     uint8_t ofset, tempbuf[52];
     uint32_t index = 0;
@@ -159,7 +159,7 @@ int MeterWr645_obj_list_add(void *instance, void *task, void *mesg, uint32_t oad
 // 645 编程事件
 int trigger_MeterWr645_record(void *instance, uint32_t DI645, uint8_t tag)
 {
-    struct mbase_control_block_t* ctrl_block  = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct mbase_control_block_t* ctrl_block  = ((stategrid_context_t *)instance)->mbase;
 
     if(ctrl_block->factor_mode)
     {

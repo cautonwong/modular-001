@@ -1,4 +1,7 @@
 #include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/app/resource_ids.h"
+#include "resource_ids.h"
+#include "components/core/types/type_def.h"
 #include "port.h"
 #include "application/ports/resource_access.h"
 #include "fr_698.h"
