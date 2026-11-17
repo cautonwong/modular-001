@@ -47,6 +47,13 @@ add_library(blade_components STATIC
 )
 target_include_directories(blade_components PUBLIC ${BLADE_ROOT})
 
+add_library(blade_board_transport STATIC
+    ${BLADE_ROOT}/targets/stategrid_meter/board/board_transport.c
+)
+target_include_directories(blade_board_transport PUBLIC
+    ${BLADE_ROOT}
+    ${BLADE_ROOT}/targets/stategrid_meter/board)
+
 add_library(blade_idis_skeleton STATIC
     ${BLADE_ROOT}/components/protocol/dlms/src/nd_axdr.c
     ${BLADE_ROOT}/components/protocol/dlms/src/nd_dlms_server.c
@@ -98,6 +105,10 @@ add_library(blade_infra STATIC
     ${BLADE_ROOT}/infra/kernel/bitarithm.c
     ${BLADE_ROOT}/infra/kernel/fifo.c
     ${BLADE_ROOT}/infra/kernel/list.c
+    ${BLADE_ROOT}/infra/drivers/storage/eeprom/eeprom.c
+    ${BLADE_ROOT}/infra/drivers/storage/mx25l3206e/mx25l3206e.c
+    ${BLADE_ROOT}/infra/drivers/metering/rn8209/rn8209.c
+    ${BLADE_ROOT}/infra/drivers/security/esam/esam.c
     ${BLADE_ROOT}/infra/channel/fifo_channel.c
     ${BLADE_ROOT}/infra/memory/arena.c
     ${BLADE_ROOT}/infra/memory/byte_store.c
@@ -120,6 +131,7 @@ add_library(blade_application STATIC
     ${BLADE_ROOT}/application/metering/application.c
     ${BLADE_ROOT}/application/metering/demand_registry.c
     ${BLADE_ROOT}/application/ports/record_storage.c
+    ${BLADE_ROOT}/application/ports/resource_access.c
     ${BLADE_ROOT}/application/adapters/dl698/dl698_time.c
     ${BLADE_ROOT}/application/adapters/dl698/parameter_port.c
     ${BLADE_ROOT}/application/adapters/dl698/report_list.c
@@ -168,11 +180,13 @@ foreach(src ${TEST_SOURCES})
        OR name STREQUAL "test_axdr")
         target_link_libraries(${name} PRIVATE blade_idis_skeleton)
     endif()
+    if(name STREQUAL "test_board_transport")
+        target_link_libraries(${name} PRIVATE blade_board_transport)
+    endif()
     add_test(NAME ${name} COMMAND ${name})
 endforeach()
 
 target_include_directories(test_file_persistence PRIVATE
-    ${BLADE_ROOT}/nidavellir/include
     ${BLADE_ROOT}/targets/stategrid_meter
 )
 

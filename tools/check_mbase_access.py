@@ -11,7 +11,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 ALLOWLIST = ROOT / "tools" / "mbase_access_allowlist.txt"
-SKIP_DIRS = {".git", "third_party", "docs", "tests", "tools"}
+SKIP_DIRS = {".git", ".claude", "third_party", "docs", "tests", "tools"}
 SKIP_FILES = {
     "targets/stategrid_meter/persistence/meter_record.c",
     "targets/stategrid_meter/persistence/meter_record.h",

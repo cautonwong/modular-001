@@ -1,10 +1,11 @@
-#include "type_def.h"
+#include "components/core/types/type_def.h"
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
-#include "infra/boards/stategrid_single_phase/meter_status.h"
+#include "domain/common/status.h"
+#include "targets/stategrid_meter/board/board_esam.h"
+#include "targets/stategrid_meter/board/meter_status.h"
 #include "time_link.h"
 #include "fr_698_esam.h"
-#include "io_type.h"
-#include "infra/security/esam/esam_io.h"
+#include "infra/security/esam/io_type.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
 #include "targets/stategrid_meter/security/esam_pro.h"
 
@@ -28,10 +29,10 @@ static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8
 {
     struct esam_698_output_t *esam_out = para->output;
     struct esam_698_input_t *esam_in = para->input;
-    struct esam_data_t esam_data = {0};
-    
+
     uint16_t len = 0;
     uint16_t sw = 0;
+    uint16_t rx_len;
     uint16_t outdata_size = esam_out->data_len;
 	
     if(esam_in->Dispersion_factor_len){
@@ -63,15 +64,10 @@ static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8
         len = (esam_in->AttachData[0]<<8)+esam_in->AttachData[1];
     }
 
-    esam_data.input  = esam_in;
-    esam_data.output = esam_out;
-    esam_data.head   = head;
-    esam_data.len    = len;
-    esam_data.sw     = 0;
-    int ret = openM_ioctl(0, esam_comm_handle_cmd, &esam_data);
-    sw = esam_data.sw;
-    len = esam_data.len; 
-   
+    rx_len = len;
+    sw = (uint16_t)nd_esam_transceive(board_esam(), head, esam_in->data_buf,
+                                      len, esam_in->data_buf, &rx_len);
+    len = rx_len;
 
     if(sw == 0x9000)
     {
@@ -94,6 +90,8 @@ static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8
     }
     else
     {
+        esam_out->esam_chip_abnormal =
+            nd_esam_link_ok(board_esam()) ? ND_EVENT_RESET : ND_EVENT_SET;
         esam_out->esam_err_no = sw;
         return -1;
     }
@@ -163,12 +161,12 @@ static uint8_t f_esam_type_point_get_data2(struct esam_698_data_t *para, void *e
 //////////////////////////////////////////////////////////////////////////////////
 static int f_esam_698_power_ctrl_on(struct esam_698_data_t *para, void *esam_hal)
 {
-    return openM_ioctl(0, esam_poweron_cmd, NULL);
+    return nd_esam_power_on(board_esam());
 }
 
 static int f_esam_698_power_ctrl_off(struct esam_698_data_t *para, void *esam_hal)
 {
-    return openM_ioctl(0, esam_poweroff_cmd, NULL);
+    return nd_esam_power_off(board_esam());
 }
 
 static int f_esam_type_read_esam_no(struct esam_698_data_t *para, void *esam_hal)

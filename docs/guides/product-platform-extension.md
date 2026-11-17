@@ -59,8 +59,8 @@ dependencies: []
 2. 放板级文件。 `board.c`、`pins.c`、`devices.c`、`board.h`。
 3. 板级文件只做三件事。配置引脚，实例化 `infra/drivers` 里的器件，按顺序初始化。
 4. 产品选择自己的 board。`product.yaml` 里不再单列 board 组件，board 随产品 target 构建。
-5. 只有当第二个产品明确复用同一块 board 时，才把它提升到 `infra/boards/<board>/`，并给原产品保留差异覆盖。
-6. `infra/boards/` 作为跨产品 board 的位置。现有 `infra/boards/stategrid_single_phase` 同时服务 645/698 两个产品，已经按这个规则提升。
+5. 多个产品需要同一块 board 时，复制到各自的 `targets/<product>/board/`。不建 `infra/boards/`，也不做共享 board 组件。
+6. 复制后各产品可以独立修改引脚和器件，不需要向后兼容另一块板。
 
 检查。board 不 include 其他 `targets/`。board 不写费率、对象模型、事件规则。
 
@@ -68,7 +68,7 @@ dependencies: []
 
 适用场景。从裸机换到 FreeRTOS 或 Zephyr。
 
-终态没有 `nidavellir`。它是待删除的 legacy 内核，不再作为新产品的选项。
+`nidavellir` 已删除，不再作为新产品的选项；产品 target 自带主循环。
 
 FreeRTOS 按 `docs/device-model.md` 的 target 边界处理，不做通用 RTOS 适配层。
 
@@ -80,7 +80,7 @@ FreeRTOS 按 `docs/device-model.md` 的 target 边界处理，不做通用 RTOS 
 6. target 直接 include `FreeRTOS.h` 并调用 `xTaskCreate` 等 API；共享层仍不得出现这些头或调用。
 7. 复制 target 不保留对原 target 的 include；CMake 源列表和链接脚本一起复制并改名。
 
-检查。`tools/check_platform_boundary.py` 只检查 domain、application、components 和 `infra` 非平台实现；target 可以直接调 RTOS API。新代码不要让 domain 出现 `k_thread`、`ndv_tasklet`、`xTaskCreate`。`nidavellir` 相关 include 只减不增。
+检查。`tools/check_platform_boundary.py` 只检查 domain、application、components 和 `infra` 非平台实现；target 可以直接调 RTOS API。新代码不要让 domain 出现 `k_thread`、`ndv_tasklet` 或 `xTaskCreate`。
 
 ## 4. 新增驱动
 
@@ -121,7 +121,7 @@ FreeRTOS 按 `docs/device-model.md` 的 target 边界处理，不做通用 RTOS 
 
 | 改动 | 放哪里 |
 |---|---|
-| 引脚、器件、电源时序 | `infra/boards/<board>` 或 `targets/<product>/board` |
+| 引脚、器件、电源时序 | `targets/<product>/board` |
 | 计量芯片型号 | `infra/drivers/metering/<chip>` |
 | 费率、对象模型、事件规则 | `domain` 或 `components` |
 | 协议版本 | `components/protocol/<protocol>` |
@@ -206,8 +206,8 @@ targets/<product>/
 8. 启动节拍或调度器。
 
 端口用编译期结构体或函数指针绑定，不做运行时注册表。target 可以 include
-平台头和 RTOS API，共享层不可以。board 默认放 target 下，第二个产品明确复用
-时才提升到 `infra/boards/`。
+平台头和 RTOS API，共享层不可以。board 放 `targets/<product>/board`，多个产品
+共享时复制，不建 `infra/boards/`。
 
 验收。target 自己的外部契约由 `targets/<target>/tests/acceptance/` 覆盖，
 共享测试只测共享逻辑。
@@ -268,7 +268,7 @@ FREERTOS_KERNEL_DIR=/home/edge/FreeRTOS-KernelV11.3.3 \
 - `check:audit`。IDIS 属性、方法和脚本的失败预算。
 - `check:acceptance-matrix`。stategrid 122 行验收矩阵和用例一致性。
 - `check:layers`。分层方向。
-- `check:target-kernel`。target 里残留的 `instance`、`pipeline`、`nidavellir` 引用棘轮。
+- `check:target-kernel`。target 里残留的旧 kernel 类型棘轮，当前为 0。
 - `check:idis-twins`。两个 IDIS target 的 COSEM 和 mapper 副本必须一致。
 - `check:platform`。平台边界 baseline。
 - `check:meter-record`。计量记录生成结果。

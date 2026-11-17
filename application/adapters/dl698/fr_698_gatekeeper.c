@@ -1,12 +1,11 @@
 #include <stdbool.h>
 #include "application/ports/fifo.h"
 #include "application/adapters/dl698/fr_698_env.h"
-struct instance_t;
 #include "fr_698.h"
 #include "meter_base_view.h"
 #include "fr_698_internal.h"
 
-int fr_check_service_and_choice(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+int fr_check_service_and_choice(void *, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -39,7 +38,7 @@ int fr_check_service_and_choice(struct instance_t*, struct pipeline_t* pipeline,
 
 
 //struct fifo_t* s_fifo;
-int fr_gatekeeper_698_server(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+int fr_gatekeeper_698_server(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* fifo = (struct fifo_t*)(struct fifo_t*)nd_fr698_pipeline_in_queue(pipeline);

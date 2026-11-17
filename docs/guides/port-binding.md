@@ -51,7 +51,7 @@ int nd_example_write(const uint8_t *buffer, uint16_t length);
 - `ctx` 不透明。头文件不解释它指向什么。
 - 函数按业务动作命名。不要 `dev_ops`、`ioctl`、`board_ops`。
 - 返回值用 `int`，0 表示成功，负数表示失败。
-- 头文件不 include `targets/`、`infra/soc`、`infra/boards`、`nidavellir/`。
+- 头文件不 include `targets/` 或 `infra/soc`。
 - 端口按业务能力增长，不按板子数量增长。
 
 ## 4. target 侧适配
@@ -60,7 +60,7 @@ int nd_example_write(const uint8_t *buffer, uint16_t length);
 
 ```c
 #include "application/ports/example.h"
-#include "infra/boards/<board>/board_io.h"
+#include "targets/<t>/board/board_io.h"
 
 static int example_read(void *ctx, uint8_t *buffer, uint16_t length)
 {

@@ -6,7 +6,6 @@
 #include <string.h>
 
 #include "cpu_surport.h"
-#include "nidavellir.h"
 
 sim_config_t g_sim = {
     .cycles = 10,
@@ -55,7 +54,7 @@ void sim_trace_printf(const char *format, ...)
     fflush(trace_file);
 }
 
-int nd_sim_should_stop(struct instance_t *instance)
+int nd_sim_should_stop(stategrid_context_t *instance)
 {
     if (cycle_index >= g_sim.cycles) {
         return 1;
@@ -67,7 +66,7 @@ int nd_sim_should_stop(struct instance_t *instance)
         /* The firmware initializes the meter in the power-off state. Keep the
          * normal metering path selected so the second tick is delivered to
          * pl_meter_base instead of the low-power pipeline. */
-        instance->ac_power_statue = AC_POWER_ON;
+        instance->ac_power_status = AC_POWER_ON;
     }
 
     /* The baremetal firmware has no ms timebase of its own: instance->ms is
@@ -92,33 +91,30 @@ int nd_sim_should_stop(struct instance_t *instance)
     return 0;
 }
 
-void nd_sim_after_run(struct instance_t *instance)
+void nd_sim_after_run(stategrid_context_t *instance)
 {
     (void)instance;
     sim_uart_drain();
 }
 
-void nd_sim_filter(struct instance_t *instance, struct pipeline_t *pipeline,
-                   const struct filter_t *filter, int ret)
+void nd_sim_filter(const char *pipeline, uint8_t filter_id, int ret)
 {
-    (void)instance;
     if (!g_sim.verbose) {
         return;
     }
     sim_trace_printf("[sim] filter pipeline=%s id=0x%02x ret=%d",
-                     pipeline->name != NULL ? pipeline->name : "?",
-                     (unsigned)filter->id, ret);
+                     pipeline != NULL ? pipeline : "?",
+                     (unsigned)filter_id, ret);
 }
 
-void nd_sim_message(struct instance_t *instance, struct message_t *mesg)
+void nd_sim_event(uint8_t from, uint8_t to, uint8_t ctrl, uint16_t len)
 {
-    (void)instance;
     if (!g_sim.verbose) {
         return;
     }
     sim_trace_printf("[sim] msg from=0x%02x to=0x%02x ctrl=0x%02x len=%u",
-                     (unsigned)mesg->from, (unsigned)mesg->to,
-                     (unsigned)mesg->ctrl, (unsigned)mesg->len);
+                     (unsigned)from, (unsigned)to, (unsigned)ctrl,
+                     (unsigned)len);
 }
 
 void nd_sim_stage(const char *name)

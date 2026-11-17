@@ -16,7 +16,7 @@ void fr_698_esam_input_init(struct context_698_t* ctx,
     input->data_len = ctx->security_data_len;
 }
 
-void fr_698_esam_input_buffers(struct instance_t* instance,
+void fr_698_esam_input_buffers(void * instance,
                                struct esam_698_input_t* input)
 {
     input->data_buf = nd_fr698_apdu_cache(instance);

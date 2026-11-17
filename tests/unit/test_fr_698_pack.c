@@ -6,7 +6,7 @@
 #include "application/adapters/dl698/fr_698_pack.h"
 #include "application/ports/fifo.h"
 
-struct pipeline_t {
+struct fake_pipeline_t {
     uint8_t id;
     char *name;
     void *ctx;
@@ -16,12 +16,12 @@ struct pipeline_t {
 
 void *nd_fr698_pipeline_ctx(const void *pipeline)
 {
-    return ((const struct pipeline_t *)pipeline)->ctx;
+    return ((const struct fake_pipeline_t *)pipeline)->ctx;
 }
 
 void *nd_fr698_pipeline_out_queue(const void *pipeline)
 {
-    return ((const struct pipeline_t *)pipeline)->out_queue;
+    return ((const struct fake_pipeline_t *)pipeline)->out_queue;
 }
 
 void setUp(void) {}
@@ -30,7 +30,7 @@ void tearDown(void) {}
 static void test_698_head_and_tail_bytes(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
     struct fifo_t out;
     uint8_t out_buffer[64] = {0};
     nd_dl698_msg_t mesg;
@@ -61,7 +61,7 @@ static void test_698_head_and_tail_bytes(void)
 static void test_698_apdu_bytes_are_written(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
     struct fifo_t in;
     struct fifo_t out;
     uint8_t in_buffer[8] = {0};

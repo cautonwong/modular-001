@@ -1,13 +1,12 @@
 #include <stdbool.h>
 #include "application/ports/fifo.h"
 #include "application/adapters/dl698/fr_698_env.h"
-struct instance_t;
 #include "fr_698.h"
 #include "meter_base_view.h"
 #include "fr_698_internal.h"
 
 
-int fr_rx_698_entry(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t*)
+int fr_rx_698_entry(void *, void * pipeline, nd_dl698_msg_t*)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* fifo = (struct fifo_t*)(struct fifo_t*)nd_fr698_pipeline_in_queue(pipeline);

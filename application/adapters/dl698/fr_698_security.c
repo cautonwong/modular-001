@@ -1,7 +1,6 @@
 #include <stdbool.h>
 #include "application/ports/fifo.h"
 #include "application/adapters/dl698/fr_698_env.h"
-struct instance_t;
 #include "fr_698.h"
 #include "fr_698_internal.h"
 #include "fr_698_esam.h"
@@ -13,9 +12,9 @@ struct instance_t;
 #include "domain/security/security_request.h"
 #include "fr_698_esam_flow.h"
 
-static int fr_698_security_request_check(struct instance_t* instance, struct pipeline_t* pipeline);
+static int fr_698_security_request_check(void * instance, void * pipeline);
 
-int fr_security_request(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+int fr_security_request(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -53,7 +52,7 @@ int fr_security_request(struct instance_t* instance, struct pipeline_t* pipeline
 }
 
 
-static int fr_698_esam_plain_read_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t client_index, uint32_t oad)
+static int fr_698_esam_plain_read_check(void * instance, void * pipeline, uint8_t client_index, uint32_t oad)
 {
     if ((0 == nd_mb_auth_on(instance)) || (true == fr_698_current_connect_status_get(instance, pipeline, client_index))) //身份认证未启用或当前客户机应用链接状态
     {
@@ -69,7 +68,7 @@ static int fr_698_esam_plain_read_check(struct instance_t* instance, struct pipe
 }
 
 //红外通道 认证检查
-static int fr_infrared_auth_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cmd, uint32_t oad)
+static int fr_infrared_auth_check(void * instance, void * pipeline, uint8_t cmd, uint32_t oad)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     if (ctx->channel != FR_698_CHL_IR || (nd_mb_infrared_auth_timeout(instance) != 0) || (nd_mb_factor_mode(instance) == true))
@@ -122,7 +121,7 @@ static int fr_infrared_auth_check(struct instance_t* instance, struct pipeline_t
 
 #if 1
 
-static int __explicit_security_mode(struct instance_t*, struct pipeline_t*, uint16_t oi, uint16_t* mode, uint8_t* tmp_buf)
+static int __explicit_security_mode(void *, void *, uint16_t oi, uint16_t* mode, uint8_t* tmp_buf)
 {
     uint8_t* tmp, i, count, maxnum;
     uint16_t oi2;
@@ -163,7 +162,7 @@ static int __explicit_security_mode(struct instance_t*, struct pipeline_t*, uint
 
 
 
-static uint16_t __security_mode_word_get(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, uint8_t* tmp_buf)
+static uint16_t __security_mode_word_get(void * instance, void * pipeline, uint32_t oad, uint8_t* tmp_buf)
 {
     uint8_t flag = 0;
     uint16_t oi;
@@ -194,7 +193,7 @@ static uint16_t __security_mode_word_get(struct instance_t* instance, struct pip
 
 //判断安全模式字是否符合要求   明文	明文+数据验证码	  密文	  密文+数据验证码
 // cmd : 0 get, 1 set, 2 action
-static int __security_mode_word_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cmd, uint32_t oad)
+static int __security_mode_word_check(void * instance, void * pipeline, uint8_t cmd, uint32_t oad)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
 
@@ -281,7 +280,7 @@ static int __security_mode_word_check(struct instance_t* instance, struct pipeli
     return 1;
 }
 //安全模式
-int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pipeline, uint8_t cmd, uint32_t oad)
+int security_mode_word_check(void * instance, void * pipeline, uint8_t cmd, uint32_t oad)
 {
     int r;
 
@@ -302,7 +301,7 @@ int security_mode_word_check(struct instance_t* instance, struct pipeline_t* pip
 
 
 
-uint8_t fr_698_current_connect_status_get(struct instance_t* instance, struct pipeline_t*, uint8_t client_index)
+uint8_t fr_698_current_connect_status_get(void * instance, void *, uint8_t client_index)
 {
     //struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
 
@@ -333,7 +332,7 @@ uint8_t fr_698_current_connect_status_get(struct instance_t* instance, struct pi
 
 #if 1 //--698 安全传输权限判断
 //返回 : 1 成功；     0 不需要应答；     ＜ 0 错误dar ；
-static int fr_698_security_request_check(struct instance_t* instance, struct pipeline_t* pipeline)
+static int fr_698_security_request_check(void * instance, void * pipeline)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     nd_security_request_t request = {0};
@@ -390,7 +389,7 @@ static int fr_698_security_request_check(struct instance_t* instance, struct pip
 #endif
 
 
-uint32_t fr_698_current_esam_timeout_get(struct instance_t* instance, struct pipeline_t*, uint8_t client_index)
+uint32_t fr_698_current_esam_timeout_get(void * instance, void *, uint8_t client_index)
 {
     uint8_t i = 0;
 
@@ -412,7 +411,7 @@ uint32_t fr_698_current_esam_timeout_get(struct instance_t* instance, struct pip
     return nd_mb_esam_connect_timeout(instance)[i][client_index];
 }
 
-uint8_t fr_698_current_channel_num_get(struct instance_t* instance, struct pipeline_t* pipeline)
+uint8_t fr_698_current_channel_num_get(void * instance, void * pipeline)
 {
     uint8_t i = 0;
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);

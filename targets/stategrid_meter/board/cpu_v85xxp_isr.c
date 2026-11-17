@@ -1,11 +1,11 @@
 
 #include "target.h"
 #include "target_isr.h"
-#include "type_def.h"
 #include "lib_conf.h"
+#include "targets/stategrid_meter/board/pin_ops.h"
 #include "cpu_surport.h"
-#include "infra/boards/stategrid_single_phase/board_io.h"
-#include "infra/boards/stategrid_single_phase/relay_config.h"
+#include "targets/stategrid_meter/board/board_io.h"
+#include "targets/stategrid_meter/board/relay_config.h"
 #include "targets/stategrid_meter/app/driver_entry.h"
 
 
@@ -217,6 +217,10 @@ void PWM3_IRQHandler(void)
   */
 void DMA_IRQHandler(void)
 {
+    if((Isr_Function[IRQ_DMA].IsrFunctionRegister)&&(Isr_Function[IRQ_DMA].irq_index==IRQ_DMA))
+    {
+        Isr_Function[IRQ_DMA].IsrFunctionRegister(Isr_Function[IRQ_DMA].para);
+    }
 }
 
 /**

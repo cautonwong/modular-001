@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -11,7 +11,7 @@
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "domain/events/cover_open.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
-#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/persistence/legacy_control_block.h"
 
 #define COVEROPEN_DELAY_PARA 2 //开盖延时sec-1
 
@@ -19,7 +19,7 @@
 // 开盖事件 判断:  返回1:记录发生                0:不记录        -1:记录结束
 int CoverOpen_event_judge(void *instance, void *task, void *mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct mbase_control_block_t* ctrl_block = ((stategrid_context_t *)instance)->mbase;
     uint16_t RecordId = CoverOpenS;
 
     nd_cover_open_rule_t rule = {.debounce_seconds = COVEROPEN_DELAY_PARA};
@@ -53,9 +53,8 @@ int CoverOpen_event_judge(void *instance, void *task, void *mesg)
 // 开盖事件
 int CoverOpen_event_LowPower_pro(void *instance, void *task, void *mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct mbase_control_block_t* ctrl_block = ((stategrid_context_t *)instance)->mbase;
     uint16_t RecordId = CoverOpenS;
-    struct message_t mesg_tmp;
     int result = 0;
 
     if (ctrl_block->pd_cover_EndRecord_flag != 0x5A) //检测周期未完成
@@ -84,13 +83,13 @@ int CoverOpen_event_LowPower_pro(void *instance, void *task, void *mesg)
         result = (int)transition;
         if (transition != ND_EVENT_NONE) {
             if (transition == ND_EVENT_STARTED) {
-                mesg_tmp.id = RecordId;
+                ctrl_block->pd_active_flag_update = 0x5A;
+                recv_record_process(instance, RecordId, NULL);
             } else {
-                mesg_tmp.id = RecordId + 1;
                 ctrl_block->pd_cover_EndRecord_flag = 0x5A;
+                ctrl_block->pd_active_flag_update = 0x5A;
+                recv_record_process(instance, RecordId + 1, NULL);
             }
-            ctrl_block->pd_active_flag_update = 0x5A;
-            recv_record_process(instance, task, &mesg_tmp, NULL);
         }
     }
 

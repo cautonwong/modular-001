@@ -7,11 +7,11 @@
 #include "application/adapters/dl698/fr_698_internal.h"
 #include "application/adapters/dl698/meter_base_view.h"
 
-struct instance_t {
+struct fake_instance_t {
     uint8_t unused;
 };
 
-struct pipeline_t {
+struct fake_pipeline_t {
     void *ctx;
     uint8_t id;
 };
@@ -26,7 +26,7 @@ static uint32_t term_auth_timeout;
 
 void *nd_fr698_pipeline_ctx(const void *pipeline)
 {
-    return ((const struct pipeline_t *)pipeline)->ctx;
+    return ((const struct fake_pipeline_t *)pipeline)->ctx;
 }
 
 uint32_t (*nd_mb_connect_timeout_ptr(void *unused))[2]
@@ -116,7 +116,7 @@ int esam_consult_key(void *unused, uint8_t unused2, uint8_t *unused3)
     return 0;
 }
 
-int16_t nd_get(struct instance_t *unused, uint32_t unused2, uint8_t *unused3,
+int16_t nd_get(void *unused, uint32_t unused2, uint8_t *unused3,
                uint16_t unused4, void *unused5)
 {
     (void)unused;
@@ -127,7 +127,7 @@ int16_t nd_get(struct instance_t *unused, uint32_t unused2, uint8_t *unused3,
     return 0;
 }
 
-int MeterWr_obj_list_clear(struct instance_t *unused, struct pipeline_t *unused2,
+int MeterWr_obj_list_clear(void *unused, void *unused2,
                            nd_dl698_msg_t *unused3)
 {
     (void)unused;
@@ -143,7 +143,7 @@ void tearDown(void) {}
 static void test_698_connect_null_security_is_two_bytes(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
@@ -155,7 +155,7 @@ static void test_698_connect_null_security_is_two_bytes(void)
 static void test_698_connect_password_security_uses_octet_length(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
@@ -168,7 +168,7 @@ static void test_698_connect_password_security_uses_octet_length(void)
 static void test_698_connect_symmetry_security_uses_two_octet_strings(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
@@ -182,7 +182,7 @@ static void test_698_connect_symmetry_security_uses_two_octet_strings(void)
 static void test_698_connect_rejects_unknown_security(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;

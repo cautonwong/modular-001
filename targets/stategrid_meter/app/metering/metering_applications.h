@@ -8,6 +8,8 @@ struct factor_adj_meter_t;
 
 void Electrical_measurement_poweron(void *instance,
                                     void *pipeline);
+int rn8209_target_power(void *instance, int power_on);
+int rn8209_target_check(void *instance);
 void Electrical_measurement(void *instance,
                             void *pipeline);
 void Energy_Pluse_Count(void *instance,

@@ -24,7 +24,6 @@ PLATFORM_PREFIXES = (
     "targets/",
     "zephyr/",
     "kernel/",
-    "nidavellir/",
 )
 PLATFORM_HEADERS = {
     "zephyr.h",
@@ -35,7 +34,6 @@ PLATFORM_HEADERS = {
     "lib_clk.h",
     "rn8318.h",
     "rn8209.h",
-    "nidavellir.h",
     "FreeRTOS.h",
     "task.h",
     "queue.h",

@@ -1,10 +1,8 @@
 #ifndef ND_TARGET_STATEGRID_METER_DISPLAY_APPLICATIONS_H
 #define ND_TARGET_STATEGRID_METER_DISPLAY_APPLICATIONS_H
+#include "targets/stategrid_meter/app/message.h"
 
 #include <stdint.h>
-
-struct instance_t;
-struct pipeline_t;
 struct message_t;
 
 void Display(void *instance, void *pipeline);

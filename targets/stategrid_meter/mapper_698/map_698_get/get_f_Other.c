@@ -31,9 +31,9 @@ uint8_t get_current_plc_baud(void *instance)
 
 
 int GET_f_Other(void *instance, uint32_t id, uint8_t* buf,  void *ctx)
-{    
+{
 #ifndef WIN32
-    void *pipeline = nd_fr698_pipeline(instance); 
+    void *pipeline = NULL;
     struct context_698_t* p_ctx = (struct context_698_t*)ctx;
     uint16_t oad,displayid;
     uint8_t index,attribute,i,len,maxnum, count = 0;

@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -8,7 +8,7 @@
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "port.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
-#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/persistence/legacy_control_block.h"
 #include "domain/events/mac_suspend.h"
 
 static nd_mac_suspend_state_t sec_state;
@@ -48,7 +48,7 @@ static void state_to_mbase(struct mbase_control_block_t *mbase_cb,
 
 void mac_err_cnt_add(void *instance)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct mbase_control_block_t* mbase_cb = ((stategrid_context_t *)instance)->mbase;
     nd_mac_suspend_state_t state = {0};
     nd_datetime_t now;
 
@@ -61,7 +61,7 @@ void mac_err_cnt_add(void *instance)
 
 void mac_suspend_reset(void *instance)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct mbase_control_block_t* mbase_cb = ((stategrid_context_t *)instance)->mbase;
 
     nd_mbase_mac_suspend_state(mbase_cb) = false;
     nd_mbase_mac_suspend_date(mbase_cb)[0] = 0;
@@ -76,7 +76,7 @@ void mac_suspend_reset(void *instance)
 
 void mac_suspend_sec_pro(void *instance, void *task)
 {
-    struct mbase_control_block_t* mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct mbase_control_block_t* mbase_cb = ((stategrid_context_t *)instance)->mbase;
     nd_datetime_t now;
 
     now_datetime(instance, &now);

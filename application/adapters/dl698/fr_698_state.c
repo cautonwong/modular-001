@@ -5,7 +5,7 @@
 #include "fr_698_internal.h"
 #include "meter_base_view.h"
 
-int fr_ctx_clear(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t*)
+int fr_ctx_clear(void *, void * pipeline, nd_dl698_msg_t*)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     ctx->apdu_len_valid = 0;
@@ -16,7 +16,7 @@ int fr_ctx_clear(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t
     ctx->apdu_rx_offset = 0;
     return 0;
 }
-int fr698_inital(struct instance_t* instance, struct pipeline_t*)
+int fr698_inital(void * instance, void *)
 {
 
     nd_mb_current_connect_channel(instance)[0] = 0;

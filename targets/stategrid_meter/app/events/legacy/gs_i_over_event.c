@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -10,13 +10,13 @@
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "domain/events/over_current.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
-#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/persistence/legacy_control_block.h"
 
 // 上电运行期间 每秒的调用
 // 过流事件 判断:  返回1:记录发生                0:不记录        -1:记录结束
 int ia_over_event_judge(void *instance, void *task, void *mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    struct mbase_control_block_t* ctrl_block = ((stategrid_context_t *)instance)->mbase;
     uint16_t RecordId = OverCurrentAS;
 
     nd_over_current_rule_t rule = {

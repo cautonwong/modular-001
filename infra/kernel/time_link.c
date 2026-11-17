@@ -1,7 +1,8 @@
-#include "nidavellir.h"
-#include "type_def.h"
-#include "time_link.h"
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "cpu_surport.h"
+#include "time_link.h"
 
 
 struct tick_timer_list_t

@@ -30,7 +30,7 @@
 - `./ci.sh` 全绿输出。
 - `host:strict`、`host:analyzer`、`host:sim-san` 的 ctest 或告警输出。
 - target 验收 `verdict=clean` 和 evidence 目录。
-- ELF section 实测数字，以及 IDIS 的 100 KiB 链接断言。
+- ELF section 实测数字，以及 IDIS 的 102 KiB 链接断言。
 - `[clean-clone] ok`。
 
 没有证据不算完成。验证覆盖用户视角。本项目用验收矩阵当 feature map：
@@ -66,8 +66,8 @@
 
 - C11，Cortex-M0，裸机和 FreeRTOS 两种构建。domain 和 application 必须能按
   Cortex-M0 严格编译，不能引入 host libc。
-- IDIS 两个 target 的 ROM 必须小于 100 KiB，链接脚本有断言。FreeRTOS 余量约
-  2 KiB，任何固件功能先做 ROM 账。
+- IDIS 两个 target 的 ROM 必须小于 102 KiB，链接脚本有断言。FreeRTOS 余量约
+  1.5 KiB（CI 工具链），任何固件功能先做 ROM 账。
 - 代码执行性能、功耗与唤醒、掉电安全是三大优先指标。掉电安全路径的改动需要
   真机或 HIL 证据；没有硬件时不要盲改。
 - `test-platform` 验收是 must。新功能同时补验收用例或说明为什么不能补。

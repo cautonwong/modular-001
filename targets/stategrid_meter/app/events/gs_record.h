@@ -75,7 +75,7 @@ int get_record_id_info(void *instance, uint32_t oad, struct record_storage_id_in
 int record_change_format(void *instance, uint8_t *des, uint8_t* src, uint32_t oad_req, uint32_t oad_src, enum format_conversion_mode mode);
 int clr_record(void *instance, uint32_t oad);
 int para_init(void *instance);
-int sync_data_record(void *instance, void *pipeline, void *mesg);
+int sync_data_event(void *instance, uint16_t record_id);
 int period_check1(uint16_t oi, uint16_t* capture_period);
 int period_check2(uint8_t scheme, uint16_t period, uint8_t* period_buf);
 uint8_t capture_check(uint32_t oad, uint8_t* oad_buf);
@@ -137,7 +137,7 @@ int trigger_MeterWr645_record(void *instance, uint32_t DI645, uint8_t tag);
 //ⲿӿ
 extern void report_2015state_judge(void *instance);
 extern void rtc_format_change_from_tm(struct tm *time, uint8_t* p);
-extern int recv_record_process(void *instance, void *pipeline, void *mesg, uint8_t* payload);
+extern int recv_record_process(void *instance, uint16_t record_id, uint8_t* payload);
 extern int get_capture_list(void *instance, uint32_t oad, uint32_t *rcsd_list, uint8_t mode);
 extern uint16_t nd_log_append_rollback(void *instance, uint32_t index, uint8_t public_flash_name, uint32_t last_time,uint32_t curr_time);
 

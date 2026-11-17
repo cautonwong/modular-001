@@ -1,4 +1,8 @@
 #include "targets/stategrid_meter/app/relay_control_adapter.h"
+#include "targets/stategrid_meter/app/resource_ids.h"
+#include "targets/stategrid_meter/app/channels.h"
+#include "targets/stategrid_meter/app/meter_flags.h"
+#include "resource_ids.h"
 #include "application/adapters/dl698/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
@@ -7,7 +11,7 @@
 #include "application/adapters/dl645/fr_645_env.h"
 #include "application/ports/resource_access.h"
 #include "645id_table.h"
-#include "utils.h"
+#include "components/core/types/utils.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "ctl_03_SafeAuthen.h"
 #include "cpu_surport.h"
@@ -151,7 +155,7 @@ signed char Broadcast_timeadj(void *instance, uint8_t chl, uint8_t* p_rx)
                     Buf[5] = (*(p_rx+15));
                     write_mcu_rtc(0, Buf, 7);
 
-                    read_mcu_rtc(0x00, instance);
+                    read_mcu_rtc(0x00, nd_fr698_time(instance));
 
                     //保存校时后时间 
                     rtc_get_from_tm(instance,temp);

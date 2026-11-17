@@ -1,5 +1,5 @@
 #ifndef __UPGRADE_645_97__H_
-#include "type_def.h"
+#include "components/core/types/type_def.h"
 #include "application/adapters/dl645/fr_645_context.h"
 #define  __UPGRADE_645_97__H_
 

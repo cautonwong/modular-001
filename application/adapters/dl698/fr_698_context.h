@@ -10,8 +10,6 @@
 struct connect_cfg_info_t;
 struct factory_version_t;
 struct fifo_t;
-struct pipeline_t;
-
 #define Max698len       544
 #define Max698_apdu     2000
 #define Max698_apdu_rx  2048
@@ -119,7 +117,7 @@ struct context_698_t
 
    
     //接收和发送都要用的状态
-    struct pipeline_t* pipeline;//to-be-deleted
+    void * pipeline;//to-be-deleted
     nd_dl698_send_fn send;
     nd_dl698_send_fn forward;
 

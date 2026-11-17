@@ -1,26 +1,26 @@
 #include "targets/stategrid_meter/app/relay_control_adapter.h"
+#include "targets/stategrid_meter/app/resource_ids.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
 
-#include "nidavellir.h"
 #include "fr_645_report.h"
 #include "fr_698.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
-#include "infra/boards/stategrid_single_phase/board_io.h"
+#include "targets/stategrid_meter/board/board_io.h"
 
 #include "domain/load_control/load_control.h"
 #include "infra/memory/arena.h"
 #include "infra/kernel/resource_blocks.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
-#include "infra/boards/stategrid_single_phase/relay_config.h"
-#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/board/relay_config.h"
+#include "targets/stategrid_meter/persistence/legacy_control_block.h"
 
 uint16_t relay_off_chk, relay_on_chk;
 
-void save_relay_state(struct instance_t *instance)
+void save_relay_state(stategrid_context_t *instance)
 {
-    struct mbase_control_block_t *mbase_cb =
-        (struct mbase_control_block_t *)get_pipeline_ctx(instance, pid_meter_base);
+    struct mbase_control_block_t *mbase_cb = ((stategrid_context_t *)instance)->mbase;
     uint32_t s_addr = ((uint32_t)(RES_DEV_EEPROM << 24)
                        + ((uint32_t)mbase_block_persistent_eprom << 16)
                        + nd_mbase_offset_cmd()
@@ -45,10 +45,9 @@ static load_control_state_t *relay_state(void)
     return control;
 }
 
-void relay_control_second(struct instance_t *instance)
+void relay_control_second(void *instance)
 {
-    struct mbase_control_block_t *mbase_cb =
-        (struct mbase_control_block_t *)get_pipeline_ctx(instance, pid_meter_base);
+    struct mbase_control_block_t *mbase_cb = ((stategrid_context_t *)instance)->mbase;
     load_control_state_t *state = relay_state();
     nd_load_inputs_t inputs;
     nd_load_actions_t actions;
@@ -115,10 +114,9 @@ void relay_control_second(struct instance_t *instance)
     }
 }
 
-void relay_control_led(struct instance_t *instance)
+void relay_control_led(void *instance)
 {
-    struct mbase_control_block_t *mbase_cb =
-        (struct mbase_control_block_t *)get_pipeline_ctx(instance, pid_meter_base);
+    struct mbase_control_block_t *mbase_cb = ((stategrid_context_t *)instance)->mbase;
     load_control_state_t *state = relay_state();
     nd_load_feedback_inputs_t inputs;
     nd_load_feedback_t feedback;
@@ -137,7 +135,7 @@ void relay_control_led(struct instance_t *instance)
     inputs.relay_on_elapsed = relay_on_chk;
     inputs.feedback_threshold = Relay_Ck_Time;
     inputs.min_current = MIN_CURRENT;
-    inputs.second_parity = instance->time.tm_sec;
+    inputs.second_parity = ((stategrid_context_t *)instance)->time.tm_sec;
     inputs.full_display = 0;
 
     load_control_feedback(state, &inputs, &feedback);

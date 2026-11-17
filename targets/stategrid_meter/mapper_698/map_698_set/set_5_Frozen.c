@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include "targets/stategrid_meter/app/resource_ids.h"
 #include <string.h>
 #include "fr_698.h"
 #include "port.h"

@@ -1,29 +1,24 @@
 #!/usr/bin/env bash
 # Compile-check the core legacy target with arm-none-eabi-gcc.
 #
-# infra/kernel/resource.c is excluded: its enums are declared after the
-# structs that use them, so it cannot compile as written upstream.
 set -uo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 includes=(
     -I "$root"
-    -I "$root/nidavellir/include"
-    -I "$root/nidavellir/include/kernel"
+    -I "$root/infra/kernel"
     -I "$root/targets/stategrid_meter"
     -I "$root/targets/stategrid_meter/app"
     -I "$root/targets/stategrid_meter/mapper_645"
     -I "$root/application/adapters/dl645"
     -I "$root/application/adapters/dl698"
-    -I "$root/infra/boards/stategrid_single_phase"
+    -I "$root/targets/stategrid_meter/board"
     -I "$root/infra/soc/v85xxp/v8500"
     -I "$root/infra/third_party/arm/cmsis"
     -I "$root/infra/soc/v85xxp/v8500/vendor"
     -I "$root/infra/soc/v85xxp/v8500/vendor/Lib_Driver/inc"
     -I "$root/domain/display/legacy"
     -I "$root/targets/stategrid_meter/tools/app_resource_tool"
-    -I "$root/targets/stategrid_meter/app/apps/legacy/app_645_server"
-    -I "$root/targets/stategrid_meter/app/apps/legacy/app_698_server"
     -I "$root/targets/stategrid_meter/app/apps"
 )
 # -w keeps vendor noise down. The explicit -Werror flag still promotes
@@ -35,8 +30,7 @@ files=(
     components/protocol/dl645/nd_dl645.c
     components/protocol/dl698/nd_dl698.c
     infra/kernel/utils.c
-    targets/stategrid_meter/app/rtos/time_link.c
-    targets/stategrid_meter/app/rtos/nidavellir.c
+    targets/stategrid_meter/app/uart_timeout_adapter.c
     infra/kernel/rtc.c
     targets/stategrid_meter/app/metering/legacy/energy.c
     targets/stategrid_meter/app/tariff/legacy/touFee.c
@@ -48,8 +42,10 @@ files=(
     targets/stategrid_meter/app/relay_control_adapter.c
     targets/stategrid_meter/app/record_storage_adapter.c
     application/ports/record_storage.c
+    application/ports/resource_access.c
     targets/stategrid_meter/app/display_control_adapter.c
     targets/stategrid_meter/app/stategrid_meter_entry.c
+    targets/stategrid_meter/app/stategrid_context.c
     targets/stategrid_meter/app/tariff_lookup.c
     targets/stategrid_meter/app/tariff_lookup_eeprom.c
 )

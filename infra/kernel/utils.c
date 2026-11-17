@@ -1,5 +1,10 @@
-#include "nidavellir.h"
-#include "type_def.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <time.h>
+
+#include "components/core/types/utils.h"
+#include "components/core/types/type_def.h"
 
 
 /*

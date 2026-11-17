@@ -220,6 +220,7 @@ def main() -> int:
     for label, command in [
         ("check:components", [sys.executable, str(root / "tools/check_components.py")]),
         ("check:component-standard", [sys.executable, str(root / "tools/check_component_standard.py")]),
+        ("check:board-modes", [str(root / "tools/check-board-modes.sh")]),
         ("check:domain", [sys.executable, str(root / "tools/check_domain_contracts.py")]),
         ("check:rtos", [sys.executable, str(root / "tools/check_rtos_targets.py")]),
         ("check:ids", [sys.executable, str(root / "tools/check_idis_ids.py")]),
@@ -231,6 +232,7 @@ def main() -> int:
         ("check:target-kernel", [sys.executable, str(root / "tools/check_target_kernel.py")]),
         ("check:idis-twins", [sys.executable, str(root / "tools/check_idis_twins.py")]),
         ("check:platform", [sys.executable, str(root / "tools/check_platform_boundary.py")]),
+        ("check:drivers", [sys.executable, str(root / "tools/check_drivers.py")]),
         ("check:meter-record", [sys.executable, str(root / "tools/gen_meter_record.py"), "--check"]),
         ("check:param-tables", [sys.executable, str(root / "tools/check_param_tables.py"),
                                 "--source", str(root / "targets/stategrid_meter/mapper_698/mapper_698.c"),

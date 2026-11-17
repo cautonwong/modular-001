@@ -2,9 +2,6 @@
 #define ND_APPLICATION_ADAPTERS_DL698_MESSAGE_H
 
 #include <stdint.h>
-
-struct instance_t;
-struct pipeline_t;
 struct context_698_t;
 
 /*
@@ -22,8 +19,8 @@ typedef struct nd_dl698_msg {
     uint8_t *payload;
 } nd_dl698_msg_t;
 
-typedef int (*nd_dl698_send_fn)(struct instance_t *instance,
-                                struct pipeline_t *pipeline,
+typedef int (*nd_dl698_send_fn)(void *instance,
+                                void *pipeline,
                                 nd_dl698_msg_t *mesg);
 
 #endif

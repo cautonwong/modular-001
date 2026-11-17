@@ -18,7 +18,7 @@ extern uint16_t maxServerPDUSize;
 extern uint8_t useLogicalNameReferencing;
 extern ciphering cipher;
 
-int _parseUserInformation(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms_msg_t* mesg);
-int _getUserInformation(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms_msg_t* mesg);
+int _parseUserInformation(void * instance, struct nd_dlms_pipeline_t* pipeline, nd_dlms_msg_t* mesg);
+int _getUserInformation(void * instance, struct nd_dlms_pipeline_t* pipeline, nd_dlms_msg_t* mesg);
 
 #endif

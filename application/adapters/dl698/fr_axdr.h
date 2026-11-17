@@ -1,13 +1,7 @@
 ﻿#ifndef __FR_AXDR_H__
 #define __FR_AXDR_H__
 #include <stdint.h>
-
-struct instance_t;
 struct context_698_t;
-struct pipeline_t;
-
-
-
 typedef enum 
 {
     TYPE_null                   = 0,
@@ -100,7 +94,7 @@ struct data_time_s_t;
 uint32_t datetimes_to_second(struct data_time_s_t* dt);
 uint8_t select_record_time_check(uint8_t *src, uint8_t non_period, struct rsd_info_t *rsd_info);
 uint32_t get_interval_basic_value(uint8_t *src, struct rsd_info_t *rsd_info);
-extern int rsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad, struct rsd_info_t* rsd_info);
-extern int rcsd_decode(struct instance_t* instance, struct pipeline_t* pipeline, uint32_t oad,  uint32_t *rcsd_list);
-extern int record_data_package(struct instance_t* instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t buf_size,  void *ctx);
+extern int rsd_decode(void * instance, void * pipeline, uint32_t oad, struct rsd_info_t* rsd_info);
+extern int rcsd_decode(void * instance, void * pipeline, uint32_t oad,  uint32_t *rcsd_list);
+extern int record_data_package(void * instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t buf_size,  void *ctx);
 #endif //__FR_AXDR_H__

@@ -7,10 +7,10 @@
 
 #include "cpu_surport.h"
 #include "domain/common/status.h"
-#include "kernel/legacy_control_block.h"
-#include "nidavellir.h"
-#include "infra/boards/stategrid_single_phase/meter_config.h"
-#include "infra/boards/stategrid_single_phase/uart_driver.h"
+#include "targets/stategrid_meter/persistence/legacy_control_block.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
+#include "targets/stategrid_meter/board/meter_config.h"
+#include "targets/stategrid_meter/board/uart_driver.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 
 #define SIM_SCENARIO_MAX_EVENTS 64
@@ -69,7 +69,7 @@ static uint8_t scenario_relay_off = 1;
 static uint8_t scenario_cover_closed = 1;
 static uint8_t scenario_key_pressed;
 
-static struct instance_t *scenario_instance;
+static stategrid_context_t *scenario_instance;
 static unsigned scenario_cycle;
 
 static struct fifo_t *uart_tx_fifo[SIM_UART_CHANNELS];
@@ -82,7 +82,7 @@ static FILE *backlight_log_file;
 static FILE *lcd_log_file;
 
 extern void Energy_Pluse_Add(void);
-extern void Energy_clr(struct instance_t *instance);
+extern void Energy_clr(stategrid_context_t *instance);
 
 static int scenario_error(const char *path, unsigned line, const char *message)
 {
@@ -510,7 +510,7 @@ int sim_scenario_load(const char *path)
     return 0;
 }
 
-void sim_scenario_apply(struct instance_t *instance, unsigned cycle)
+void sim_scenario_apply(stategrid_context_t *instance, unsigned cycle)
 {
     scenario_instance = instance;
     scenario_cycle = cycle;
@@ -554,8 +554,7 @@ void sim_scenario_apply(struct instance_t *instance, unsigned cycle)
             break;
         case SIM_SCENARIO_COVER: {
             struct mbase_control_block_t *mbase =
-                (struct mbase_control_block_t *)get_pipeline_ctx(instance,
-                                                                 pid_meter_base);
+                ((stategrid_context_t *)instance)->mbase;
 
             scenario_cover_closed = event->value;
             if (mbase != NULL) {
@@ -630,8 +629,7 @@ void sim_scenario_apply_stage(const char *name)
     if ((scenario_instance == NULL) || (strcmp(name, "Energy_Pluse_Count") != 0)) {
         return;
     }
-    mbase = (struct mbase_control_block_t *)get_pipeline_ctx(scenario_instance,
-                                                             pid_meter_base);
+    mbase = ((stategrid_context_t *)scenario_instance)->mbase;
     if (mbase == NULL) {
         return;
     }

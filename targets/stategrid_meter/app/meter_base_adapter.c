@@ -1,18 +1,19 @@
 #include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/app/resource_ids.h"
 
 #include <stddef.h>
 
-#include "nidavellir.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
 #include "application/ports/resource_access.h"
-#include "kernel/legacy_control_block.h"
+#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/persistence/legacy_control_block.h"
 #include "targets/stategrid_meter/app/metering_energy_adapter.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
 
 static struct mbase_control_block_t *mb(void *instance)
 {
-    return (struct mbase_control_block_t *)get_pipeline_ctx((struct instance_t *)instance,
-                                                             pid_meter_base);
+    return ((stategrid_context_t *)instance)->mbase;
 }
 
 int nd_mb_valid(void *instance)
@@ -235,6 +236,11 @@ uint16_t *nd_mb_limit_t_min_ptr(void *instance)
 uint8_t *nd_mb_rtc_errs_status_ptr(void *instance)
 {
     return &nd_mbase_RTCErrS_status(mb(instance));
+}
+
+uint32_t *nd_mb_battery_used_time_cnt_ptr(void *instance)
+{
+    return &nd_mbase_battery_used_time_cnt(mb(instance));
 }
 
 uint16_t *nd_mb_trigger_insfreeze_delay_sec_ptr(void *instance)

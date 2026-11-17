@@ -1,8 +1,9 @@
 #include "targets/stategrid_meter/app/dl698_parameter_adapter.h"
+#include "targets/stategrid_meter/app/resource_ids.h"
 
-#include "nidavellir.h"
 #include "port.h"
 #include "application/ports/resource_access.h"
+#include "infra/kernel/resource_blocks.h"
 
 #include "application/adapters/dl698/parameter_port.h"
 
@@ -72,7 +73,7 @@ static int write_parameter(void *ctx, dl698_parameter_t parameter,
                         (uint16_t)length) < 0 ? -1 : 0;
 }
 
-void dl698_parameter_bind(struct instance_t *instance)
+void dl698_parameter_bind(stategrid_context_t *instance)
 {
     static nd_dl698_parameter_port_t port;
 

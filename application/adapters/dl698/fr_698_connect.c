@@ -2,7 +2,6 @@
 #include "application/ports/fifo.h"
 #include "application/ports/record_storage.h"
 #include "application/adapters/dl698/fr_698_env.h"
-struct instance_t;
 #include "fr_698.h"
 #include "fr_698_internal.h"
 #include "application/adapters/dl698/fr_698.h"
@@ -100,10 +99,10 @@ struct connect_request_t cfg_connect = {
     
 
 
-static int __common_process(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
-static int __password_process(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
-static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
-static int __signature_process(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
+static int __common_process(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
+static int __password_process(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
+static int __symmetry_process(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
+static int __signature_process(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
 
 
 #define Security_FUNC   \
@@ -121,7 +120,7 @@ enum connect_mode_e
     Security_MAX
 };
 
-typedef int(*pFunc_security_process)(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
+typedef int(*pFunc_security_process)(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
      
 const pFunc_security_process Func_security[] = 
 {
@@ -131,7 +130,7 @@ const pFunc_security_process Func_security[] =
 };
 
 
-static int __common_process(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t*)
+static int __common_process(void *, void * pipeline, nd_dl698_msg_t*)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -183,7 +182,7 @@ static int __common_process(struct instance_t*, struct pipeline_t* pipeline, nd_
 
 }
 
-static int __password_process(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t*)
+static int __password_process(void * instance, void * pipeline, nd_dl698_msg_t*)
 {
 
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
@@ -316,7 +315,7 @@ static int __password_process(struct instance_t* instance, struct pipeline_t* pi
    
 }
 
-static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t*)
+static int __symmetry_process(void * instance, void * pipeline, nd_dl698_msg_t*)
 {
     
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
@@ -463,7 +462,7 @@ static int __symmetry_process(struct instance_t* instance, struct pipeline_t* pi
     }
 }
 
-static int __signature_process(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t*)
+static int __signature_process(void *, void * pipeline, nd_dl698_msg_t*)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -542,7 +541,7 @@ static void ___get_consult_info(struct connect_request_t *connect, struct connec
 }
 
 
-int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t*)
+int fr_handle_disconnect(void * instance, void * pipeline, nd_dl698_msg_t*)
 {
     uint8_t cilent_index = 0;
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
@@ -583,7 +582,7 @@ int fr_handle_disconnect(struct instance_t* instance, struct pipeline_t* pipelin
 
 
 
-int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+int fr_handle_connect(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     //struct fifo_t* cache = ctx->apdu;
@@ -669,7 +668,7 @@ int fr_handle_connect(struct instance_t* instance, struct pipeline_t* pipeline, 
 }
 
 
-int get_CONNECT_Request_len(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t*)
+int get_CONNECT_Request_len(void *, void * pipeline, nd_dl698_msg_t*)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint16_t len = 0;
@@ -718,7 +717,7 @@ int get_CONNECT_Request_len(struct instance_t*, struct pipeline_t* pipeline, nd_
 
 
 //给定通道号的 断开应用链接
-int fr_handle_disconnect2(struct instance_t* instance,  struct pipeline_t* pipeline,  uint8_t cilent_index, uint8_t channel)
+int fr_handle_disconnect2(void * instance,  void * pipeline,  uint8_t cilent_index, uint8_t channel)
 {
     //uint8_t result = DAR_SUCCESS;
    
@@ -747,7 +746,7 @@ int fr_handle_disconnect2(struct instance_t* instance,  struct pipeline_t* pipel
 }
 
 // 断开所有通道 应用链接
-int fr_handle_disconnect_all_channel(struct instance_t* instance,  struct pipeline_t* pipeline,  uint8_t cilent_index)
+int fr_handle_disconnect_all_channel(void * instance,  void * pipeline,  uint8_t cilent_index)
 {
     uint8_t i;
    

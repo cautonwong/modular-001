@@ -6,18 +6,16 @@
 
 #include "components/services/channel/nd_channel.h"
 #include "application/adapters/dl698/fr_698_message.h"
-
-struct instance_t;
 struct context_698_t;
 struct fifo_t;
 
 typedef struct nd_dl698 nd_dl698_t;
 
 typedef struct {
-    struct instance_t *instance;
+    void *instance;
     struct context_698_t *context;
     uint8_t pid;
-    uint32_t (*now_ms)(struct instance_t *instance);
+    uint32_t (*now_ms)(void *instance);
     nd_channel_t *input;
     nd_channel_t *output;
 } nd_dl698_config_t;

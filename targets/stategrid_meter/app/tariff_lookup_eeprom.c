@@ -1,6 +1,8 @@
 #include "targets/stategrid_meter/app/tariff_lookup.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
+#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_ids.h"
 
-#include "nidavellir.h"
 
 static uint32_t parameter_index(uint16_t id)
 {
@@ -10,7 +12,7 @@ static uint32_t parameter_index(uint16_t id)
 
 static int eeprom_read(void *ctx, uint16_t id, uint8_t *buffer, size_t length)
 {
-    struct instance_t *instance = ctx;
+    stategrid_context_t *instance = ctx;
 
     return nd_get_index(instance, parameter_index(id), buffer, (uint16_t)length) < 0
                ? -1
@@ -19,7 +21,7 @@ static int eeprom_read(void *ctx, uint16_t id, uint8_t *buffer, size_t length)
 
 static int eeprom_write(void *ctx, uint16_t id, const uint8_t *buffer, size_t length)
 {
-    struct instance_t *instance = ctx;
+    stategrid_context_t *instance = ctx;
 
     return nd_set_index(instance, parameter_index(id), (uint8_t *)buffer,
                         (uint16_t)length) < 0
@@ -27,7 +29,7 @@ static int eeprom_write(void *ctx, uint16_t id, const uint8_t *buffer, size_t le
                : 0;
 }
 
-int tariff_lookup_reload(struct instance_t *instance)
+int tariff_lookup_reload(void *instance)
 {
     nd_parameter_store_t store = {instance, eeprom_read, eeprom_write};
 

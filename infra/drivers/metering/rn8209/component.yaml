@@ -1,0 +1,5 @@
+name: driver.metering_rn8209
+version: 0.1.0
+layer: platform
+paths: [infra/drivers/metering/rn8209]
+dependencies: []

@@ -6,9 +6,6 @@
 
 
 #include "fr_645_message.h"
-
-struct pipeline_t;
-
 typedef struct fr_645_fifo {
     uint8_t *buf_ptr;
     volatile uint16_t rd;
@@ -56,7 +53,7 @@ struct context_645_t
     uint8_t password[4];
 
     //接收和发送都要用的状态
-    struct pipeline_t *pipeline;//to-be-deleted
+    void *pipeline;//to-be-deleted
     nd_dl645_send_fn forward;
 };
 
@@ -77,10 +74,10 @@ extern struct context_645_t ctx_msta_proxy_to_bt;
 extern struct context_645_t ctx_proxy;
 
 
-int fr_rx_645_entry(struct instance_t *instance, struct pipeline_t *pipeline,
+int fr_rx_645_entry(void *instance, void *pipeline,
                     nd_dl645_msg_t *mesg);
-int fr_gatekeeper_645_server(struct instance_t *instance,
-                             struct pipeline_t *pipeline,
+int fr_gatekeeper_645_server(void *instance,
+                             void *pipeline,
                              nd_dl645_msg_t *mesg);
 
 #endif

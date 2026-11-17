@@ -1,4 +1,7 @@
 #include "target.h"
+#include "targets/stategrid_meter/app/resource_ids.h"
+#include "targets/stategrid_meter/app/meter_flags.h"
+#include "resource_ids.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

@@ -1,7 +1,6 @@
 #include <stdbool.h>
 #include "application/ports/fifo.h"
 #include "application/adapters/dl698/fr_698_env.h"
-struct instance_t;
 #include "fr_698.h"
 #include "meter_base_view.h"
 #include "fr_698_internal.h"
@@ -61,7 +60,7 @@ static void fr_rx_block_truncate(struct context_698_t* ctx, uint16_t length)
     ctx->apdu_rx_len = (uint16_t)ctx->rx_block.total_len;
 }
 
-int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+int fr_segments_handle(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* fifo = (struct fifo_t*)(struct fifo_t*)nd_fr698_pipeline_in_queue(pipeline);
@@ -148,7 +147,7 @@ int fr_segments_handle(struct instance_t* instance, struct pipeline_t* pipeline,
     return -1;//异常
 }
 
-int handle_scrambler(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t*)
+int handle_scrambler(void *, void * pipeline, nd_dl698_msg_t*)
 {
     int i = 0;
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
@@ -162,7 +161,7 @@ int handle_scrambler(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_m
     return 1;
 }
 
-int __fr_segment_tx_handle(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+int __fr_segment_tx_handle(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* fifo = (struct fifo_t*)(struct fifo_t*)nd_fr698_pipeline_in_queue(pipeline);

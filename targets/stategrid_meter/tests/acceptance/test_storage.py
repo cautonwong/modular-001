@@ -254,7 +254,7 @@ class FirmwareLayoutTests(unittest.TestCase):
         source = r"""
 #include <stddef.h>
 #include <stdio.h>
-#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/persistence/legacy_control_block.h"
 #define P(name) printf("%s %zu\n", #name, offsetof(struct mbase_control_block_t, name))
 int main(void) {
     printf("sizeof %zu\n", sizeof(struct mbase_control_block_t));
@@ -277,8 +277,8 @@ int main(void) {
                 "-std=gnu11",
                 "-DWIN32",
                 f"-I{REPO_ROOT}",
-                f"-I{REPO_ROOT / 'nidavellir/include'}",
                 f"-I{REPO_ROOT / 'targets/stategrid_meter'}",
+                f"-I{REPO_ROOT / 'targets/stategrid_meter/app'}",
                 str(src),
                 "-o",
                 str(exe),

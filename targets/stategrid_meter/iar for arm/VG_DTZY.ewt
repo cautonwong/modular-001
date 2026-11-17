@@ -2532,9 +2532,6 @@
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\mlog.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\packages\kernel\nidavellir.c</name>
-            </file>
-            <file>
                 <name>$PROJ_DIR$\..\..\..\packages\kernel\pipeline.c</name>
             </file>
             <file>
@@ -2767,9 +2764,6 @@
             </file>
         </group>
     </group>
-    <file>
-        <name>$PROJ_DIR$\..\..\..\nidavellir\include\applications.h</name>
-    </file>
     <file>
         <name>$PROJ_DIR$\..\..\..\packages\drivers\arch\cpu_surport.h</name>
     </file>

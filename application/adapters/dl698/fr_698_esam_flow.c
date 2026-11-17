@@ -1,7 +1,6 @@
 #include <stdbool.h>
 #include "application/ports/fifo.h"
 #include "application/adapters/dl698/fr_698_env.h"
-struct instance_t;
 #include "fr_698.h"
 #include "fr_698_esam.h"
 #include "application/adapters/dl698/fr_698_esam.h"
@@ -11,10 +10,10 @@ struct instance_t;
 #include "fr_698_esam_input.h"
 #include "application/adapters/dl698/fr_698_esam_flow.h"
 
-static int __verification_SID_MAC(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
-static int __verification_RN(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
-static int __verification_RN_MAC(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
-static int __verification_SID(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
+static int __verification_SID_MAC(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
+static int __verification_RN(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
+static int __verification_RN_MAC(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
+static int __verification_SID(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
 
 #define choice_FUNC                                        \
     DEF_X(verification_choice_SID_MAC,  __verification_SID_MAC)\
@@ -31,7 +30,7 @@ enum verification_choice_e
     verification_choice_MAX
 };
 
-typedef int(*pFunc_verification_choice)(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg);
+typedef int(*pFunc_verification_choice)(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
      
 const pFunc_verification_choice Func_verification[] = 
 {
@@ -44,7 +43,7 @@ const pFunc_verification_choice Func_verification[] =
 
 
 
-static int ___verification_handle(struct instance_t* instance, struct esam_698_input_t *p_input, struct esam_698_output_t *p_output, uint8_t type)
+static int ___verification_handle(void * instance, struct esam_698_input_t *p_input, struct esam_698_output_t *p_output, uint8_t type)
 {
     int mac_matches = 1;
 
@@ -59,7 +58,7 @@ static int ___verification_handle(struct instance_t* instance, struct esam_698_i
 }
 
 
-static int __verification_SID_MAC(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t*)
+static int __verification_SID_MAC(void * instance, void * pipeline, nd_dl698_msg_t*)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint16_t offset = 0;
@@ -90,7 +89,7 @@ static int __verification_SID_MAC(struct instance_t* instance, struct pipeline_t
 
 
 }
-static int __verification_RN(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t*)
+static int __verification_RN(void * instance, void * pipeline, nd_dl698_msg_t*)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -150,7 +149,7 @@ static int __verification_RN(struct instance_t* instance, struct pipeline_t* pip
     return ret;
 }
 
-static int __verification_RN_MAC(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t*)
+static int __verification_RN_MAC(void * instance, void * pipeline, nd_dl698_msg_t*)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* cache = ctx->apdu;
@@ -186,7 +185,7 @@ static int __verification_RN_MAC(struct instance_t* instance, struct pipeline_t*
     return ret;
 }
 
-static int __verification_SID(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t*)
+static int __verification_SID(void * instance, void * pipeline, nd_dl698_msg_t*)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* cache = ctx->apdu;
@@ -219,7 +218,7 @@ static int __verification_SID(struct instance_t* instance, struct pipeline_t* pi
 
 
 
-int fr_698_esam_verify(struct instance_t* instance, struct pipeline_t* pipeline,
+int fr_698_esam_verify(void * instance, void * pipeline,
                        nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx =

@@ -45,7 +45,7 @@
 
 ### P1.1 收窄 `instance_t`（已完成）
 
-现状：`nidavellir/include/kernel/instance.h:58` 定义宽运行时句柄，domain 只前置声明，但 application 仍可直接取字段。
+历史：`nidavellir/include/kernel/instance.h` 曾定义宽运行时句柄。Wave 6 已删除该类型，产品状态归 `stategrid_context_t`，application/domain 只看到不透明 `void *`。
 
 工作：
 
@@ -73,7 +73,7 @@
 
 验收：
 
-- `domain/metering` 不 include `kernel/legacy_control_block.h`。
+- `domain/metering` 不 include `targets/stategrid_meter/persistence/legacy_control_block.h`。
 - 账本端口不出现 `mbase` 类型。
 - 持久化探针数值不变，205/205 链接通过。
 
@@ -107,7 +107,7 @@
 - 18 个 target 子目录各自建立清单，组件总数 59。
 - 59 个组件全部检查 include 依赖和层方向，legacy 不再豁免；协议组件通过 `application/ports/fifo_channel.h` 脱离 infra 头。
 - `check_components.py` 解析全部 `.ewp` 的 include 路径，按所属工程的搜索顺序解析裸头名；未构建（`exclude`）的源文件不参与依赖检查。
-- legacy 容器已按目录拆开：`infra.boot` 拆成 app/drivers/hd/updata，`legacy.kernel_headers` 拆成 kernel/base/dlms/test 头，`target.msta` 拆出 apps；`infra.os.baremetal` 只有单个源文件，保持原样。
+- legacy 容器已按目录拆开；`legacy.*`、`nidavellir/` 和 `infra.os.baremetal` 已在 Wave 6 删除。
 
 ### P2.3 协议适配器归位（依赖完成，forward 未绑定）
 

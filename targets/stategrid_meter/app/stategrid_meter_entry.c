@@ -1,6 +1,15 @@
-#include "nidavellir.h"
-#include "infra/boards/stategrid_single_phase/uart_driver.h"
+#include "targets/stategrid_meter/board/uart_driver.h"
+#include "targets/stategrid_meter/app/meter_flags.h"
+#include "targets/stategrid_meter/app/resource_ids.h"
+#include "targets/stategrid_meter/board/board_io.h"
+#include "application/adapters/dl698/fr_698.h"
+#include "application/ports/pipeline_view.h"
 #include "application/adapters/dl698/fr_698_context.h"
+#include "components/core/bus/nd_bus.h"
+#include "targets/stategrid_meter/app/events/gs_record.h"
+#include "targets/stategrid_meter/board/meter_config.h"
+#include "targets/stategrid_meter/board/meter_status.h"
+#include "targets/stategrid_meter/mapper_698/factory_cfg.h"
 #include "targets/stategrid_meter/app/dl698_parameter_adapter.h"
 #include "targets/stategrid_meter/app/platform_adapter.h"
 #include "targets/stategrid_meter/app/backlight_adapter.h"
@@ -12,213 +21,56 @@
 #include "resource_tool.h"
 #include "cpu_surport.h"
 #include "targets/stategrid_meter/app/app_entry.h"
-#include "targets/stategrid_meter/app/devices.h"
-#include "infra/boards/stategrid_single_phase/board_ops.h"
+#include "targets/stategrid_meter/app/pids.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
+#include "targets/stategrid_meter/app/app_config.h"
+#include "targets/stategrid_meter/board/board_flash.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/persistence/legacy_control_block.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "targets/stategrid_meter/app/driver_entry.h"
 #include "targets/stategrid_meter/app/iar_linker_symbols.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
 #include "time_link.h"
+#include "infra/kernel/key_config.h"
 #include "components/protocol/dl698/nd_dl698.h"
 #include "infra/channel/fifo_channel.h"
 #include "application/adapters/dl645/fr_645_context.h"
 
 /* The supply callbacks take void *instance; register_* declares a typed
  * instance pointer. The ABI is identical, so match it here. */
-typedef int16_t (*resource_supply_fn)(struct instance_t *, uint16_t,
+typedef int16_t (*resource_supply_fn)(stategrid_context_t *, uint16_t,
                                       uint32_t *, uint32_t *, uint32_t *);
-typedef int (*resource_map_fn)(struct instance_t *, uint32_t, uint8_t *,
+typedef int (*resource_map_fn)(stategrid_context_t *, uint32_t, uint8_t *,
                                uint16_t, void *, uint16_t);
 
 
 #ifdef ND_FIRMWARE_SIM
-int nd_sim_should_stop(struct instance_t* instance);
-void nd_sim_after_run(struct instance_t* instance);
+int nd_sim_should_stop(stategrid_context_t * instance);
+void nd_sim_after_run(stategrid_context_t * instance);
+void nd_sim_event(uint8_t from, uint8_t to, uint8_t ctrl, uint16_t len);
+void nd_sim_filter(const char *pipeline, uint8_t filter_id, int ret);
 #endif
 
 
 struct mbase_control_block_t* mbase_cb_do_not_operation;//只用于仿真调试监控
 
-
-
-#ifdef WIN32
-const struct dev_info_t eeprom_dev = 
+/* What the pipeline container used to hold: one 698 context and the inbound
+ * and outbound FIFO pair for a serial channel. */
+typedef struct
 {
-    0x00,0x01,0xFFFF,0x00,0x00, NULL, &eeprom_driver, NULL, NULL, NULL, NULL,".//e2prom.dat"
-};
-const struct dev_info_t nor_flash_dev = 
-{
-    0x01,0x01,0xFFFF,0x00,0x00, NULL, NULL, NULL, NULL, NULL, NULL,".//flash.dat"
-};
-#endif // WIN32
+    uint8_t id;
+    struct context_698_t *ctx;
+    struct fifo_t *in;
+    struct fifo_t *out;
+} stategrid_698_link_t;
 
-const struct filter_t fr_resource_manager[] =
-{
-    {0x01,sync_data,0,13},
-};
-
-struct pipeline_t pl_resource_manager =
-{
-    pid_resource_manager,
-    "app_resource_manager",
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    sizeof(fr_resource_manager) / sizeof(fr_resource_manager[0]),
-    fr_resource_manager,
-};
-
-struct filter_t fr_meter_base[] =
-{
-    {0,app_meter_base_entry,1,13},
-};
-
-struct pipeline_t pl_meter_base =
-{
-    pid_meter_base,
-    "app_meter_base",
-    NULL,
-    NULL,
-    NULL,
-    app_meter_base_entry,
-    sizeof(fr_meter_base) / sizeof(fr_meter_base[0]),
-    fr_meter_base,
-};
-
-const struct filter_t fr_rx_698[2] =
-{
-    {0x01,app_rx_server_645_entry,0,0x02},    
-    {0x02,app_rx_server_698_entry,0,13},
-
-};
-
-struct pipeline_t pl_rx_698 =
-{
-    pid_rx_698,
-    "pl_rx_698",
-    NULL,
-    NULL,//serial driver isr put byte into this 
-    NULL,//pl_rx_698 put apdu into this 
-    app_rx_server_698_entry,
-    0,
-    NULL,
-};
-
-struct pipeline_t pl_plc_rx_698 =
-{
-    pid_plc_rx_698,
-    "pl_plc_rx_698",
-    NULL,
-    NULL,
-    NULL,
-    app_rx_server_698_entry,
-    0,
-    NULL,
-};
-
-struct pipeline_t pl_ir_rx_698 =
-{
-    pid_ir_rx_698,
-    "pl_ir_rx_698",
-    NULL,
-    NULL,
-    NULL,
-    app_rx_server_698_entry,
-    0,
-    NULL,
-};
-
-
-
-struct pipeline_t pl_rx_645 =
-{
-    pid_rx_645,
-    "pl_rx_645",
-    NULL,
-    NULL,//serial driver isr put byte into this
-    NULL,//pl_rx_645 put apdu into this
-    app_rx_server_645_entry,
-    //sizeof(fr_rx_645) / sizeof(fr_rx_645[0]),
-    //fr_rx_645,
-};
+static stategrid_698_link_t link_4851;
+static stategrid_698_link_t link_plc;
+static stategrid_698_link_t link_ir;
 
 static struct context_645_t ctx_645_server;
-
-
-
-
-const struct filter_t fr_tx_698[1] =
-{
-    {0x01,app_tx_server_698_entry,0,13},
-};
-
-struct pipeline_t pl_tx_698 =
-{
-    pid_tx_698,
-    "pl_tx_698",
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    0,
-    NULL,
-};
-
-struct pipeline_t pl_plc_tx_698 =
-{
-    pid_plc_tx_698,
-    "pl_plc_tx_698",
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    0,
-    NULL,
-};
-
-struct pipeline_t pl_ir_tx_698 =
-{
-    pid_ir_tx_698,
-    "pl_ir_tx_698",
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    0,
-    NULL,
-};
-
-const struct filter_t fr_lowpower[1] =
-{
-    {0x01,app_meter_lowpower_wakeup_entry,0,13},
-};
-
-struct pipeline_t pl_lowpower_wakeup =
-{
-    pid_lowpower_wakeup,
-    "pl_lowpower_wakeup",
-    NULL,
-    NULL,
-    NULL,
-    app_meter_lowpower_wakeup_entry,
-    sizeof(fr_lowpower) / sizeof(fr_lowpower[0]),
-    fr_lowpower,
-};
-
-struct pipeline_t* pipelines[] =
-{
-    &pl_rx_698,
-    &pl_plc_rx_698,
-    &pl_ir_rx_698,
-    &pl_meter_base,
-    &pl_resource_manager,
-    &pl_lowpower_wakeup,
-};
-
-//cautonwong  以上的内容  应该放在instance的入口函数里面去分配和初始化
+static nd_pipeline_view_t rx645_view;
 
 
 void csstack_base_init(void)
@@ -236,12 +88,14 @@ void csstack_base_init(void)
 
 
 
-int update_instance_rtc(struct instance_t* instance)
+int update_instance_rtc(stategrid_context_t * instance)
 {
     uint32_t ts;
-    ts = rtc_mktime(&instance->time);
+    struct tm *time = &((stategrid_context_t *)instance)->time;
+
+    ts = rtc_mktime(time);
     ts += 1;
-    rtc_localtime(ts, &instance->time);
+    rtc_localtime(ts, time);
     return 0;
 }
 
@@ -253,16 +107,16 @@ static nd_fifo_channel_t dl698_output_storage[3];
 static nd_channel_t dl698_input_channel[3];
 static nd_channel_t dl698_output_channel[3];
 
-static uint32_t dl698_now_ms(struct instance_t *instance)
+static uint32_t dl698_now_ms(void *context)
 {
-    return instance != NULL ? instance->ms : 0;
+    return context != NULL ? ((stategrid_context_t *)context)->ms : 0;
 }
 
-static int stategrid_dl698_send(struct instance_t *instance,
-                                struct pipeline_t *pipeline,
+static int stategrid_dl698_send(void *context,
+                                void *pipeline,
                                 nd_dl698_msg_t *mesg)
 {
-    (void)instance;
+    (void)context;
     (void)pipeline;
     if (dl698_plc_component == NULL) {
         return -1;
@@ -270,32 +124,28 @@ static int stategrid_dl698_send(struct instance_t *instance,
     return nd_dl698_send(dl698_plc_component, mesg);
 }
 
-int communication_channel_init(struct instance_t* p_instance, struct pipeline_t *pl_rx, struct pipeline_t *pl_tx, uint8_t chl_type)
+static int communication_channel_init(stategrid_context_t * p_instance, stategrid_698_link_t *link, uint8_t chl_type)
 {
     struct context_698_t* ctx_698 = NULL;
-    
-    //初始化pl_rx_698初始化
-    pl_rx->ctx = nd_malloc(p_instance, control_block_698_name, sizeof(struct context_698_t));
-    ctx_698 = pl_rx->ctx;
+    stategrid_context_t *ctx = ((stategrid_context_t *)p_instance);
+
+    //初始化698接收上下文
+    link->ctx = nd_malloc(p_instance, control_block_698_name, sizeof(struct context_698_t));
+    ctx_698 = link->ctx;
 
     ctx_698->apdu = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
     fifoBuf_init(ctx_698->apdu, nd_malloc(p_instance, control_block_698_name, Max698_apdu), Max698_apdu);
-    
-    pl_rx->in_queue = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
-    fifoBuf_init(pl_rx->in_queue, nd_malloc(p_instance, control_block_698_name, Max698len), Max698len);
-    pl_rx->out_queue = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
-    fifoBuf_init(pl_rx->out_queue, nd_malloc(p_instance, control_block_698_name, Max698len), Max698len);
 
-    //初始化pl_tx_698初始化
-    pl_tx->ctx = ctx_698;
-    pl_tx->in_queue = NULL;
-    pl_tx->out_queue = pl_rx->out_queue;
-    
+    link->in = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
+    fifoBuf_init(link->in, nd_malloc(p_instance, control_block_698_name, Max698len), Max698len);
+    link->out = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
+    fifoBuf_init(link->out, nd_malloc(p_instance, control_block_698_name, Max698len), Max698len);
+
     if(chl_type<4){
         uint8_t* buf = nd_malloc(p_instance, control_block_cache, 8);
-        fifoBuf_init(&p_instance->pipe_uart[chl_type], buf, 8);
+        fifoBuf_init(&ctx->pipe_uart[chl_type], buf, 8);
     }
-    communication_chlx_init((struct fifo_t*)pl_tx->out_queue, (struct fifo_t*)pl_rx->in_queue, chl_type , p_instance);
+    communication_chlx_init(link->out, link->in, chl_type , p_instance);
 
     if (dl698_component_count < 3)
     {
@@ -304,14 +154,14 @@ int communication_channel_init(struct instance_t* p_instance, struct pipeline_t 
 
         nd_fifo_channel_init(&dl698_input_channel[index],
                              &dl698_input_storage[index],
-                             (struct fifo_t*)pl_rx->in_queue);
+                             link->in);
         nd_fifo_channel_init(&dl698_output_channel[index],
                              &dl698_output_storage[index],
-                             (struct fifo_t*)pl_tx->out_queue);
+                             link->out);
 
         config.instance = p_instance;
-        config.context = pl_rx->ctx;
-        config.pid = (uint8_t)pl_rx->id;
+        config.context = link->ctx;
+        config.pid = link->id;
         config.now_ms = dl698_now_ms;
         config.input = &dl698_input_channel[index];
         config.output = &dl698_output_channel[index];
@@ -320,7 +170,7 @@ int communication_channel_init(struct instance_t* p_instance, struct pipeline_t 
         dl698_components[index] = nd_dl698_create(&config);
         if (dl698_components[index] != NULL)
         {
-            if (pl_rx->id == pid_plc_rx_698)
+            if (link->id == STG_PID_PLC_RX_698)
             {
                 dl698_plc_component = dl698_components[index];
             }
@@ -332,13 +182,13 @@ int communication_channel_init(struct instance_t* p_instance, struct pipeline_t 
 
 /* RS485-1 carries both 698 and 645. A 645 frame is 68 | 6-byte address | 68,
  * so byte 7 separates it from a 698 frame, whose length bytes occupy 1..3. */
-static void dispatch_645_rs4851(struct instance_t* instance)
+static void dispatch_645_rs4851(stategrid_context_t * instance)
 {
-    struct fifo_t* irq = &instance->pipe_uart[UART_RS4851_CHL];
-    struct fifo_t* rx = (struct fifo_t*)pl_rx_645.in_queue;
+    struct fifo_t* irq = &((stategrid_context_t *)instance)->pipe_uart[UART_RS4851_CHL];
+    struct fifo_t* rx = link_4851.in;
     nd_dl645_msg_t mesg;
 
-    if ((pl_rx_645.ctx == NULL) || (fifoBuf_getUsed(irq) == 0)
+    if ((rx645_view.ctx == NULL) || (fifoBuf_getUsed(irq) == 0)
         || (fifoBuf_getUsed(rx) < 8)
         || (fifoBuf_peekByteB(rx, 0) != 0x68)
         || (fifoBuf_peekByteB(rx, 7) != 0x68))
@@ -347,37 +197,285 @@ static void dispatch_645_rs4851(struct instance_t* instance)
     }
     fifoBuf_getByte(irq);
     memset(&mesg, 0, sizeof(mesg));
-    if (fr_rx_645_entry(instance, &pl_rx_645, &mesg) > 0)
+    if (fr_rx_645_entry(instance, &rx645_view, &mesg) > 0)
     {
-        fr_gatekeeper_645_server(instance, &pl_rx_645, &mesg);
+        fr_gatekeeper_645_server(instance, &rx645_view, &mesg);
     }
 }
 
 __no_init uint8_t nd_memory[24 * 1024]; //26
 
-int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** argv)
+static void trace_event(uint8_t to, uint8_t ctrl)
 {
-    struct recipe_t *recipe = NULL;
+#ifdef ND_FIRMWARE_SIM
+    nd_sim_event(STG_PID_KERNEL, to, ctrl, 0);
+#else
+    (void)to;
+    (void)ctrl;
+#endif
+}
+
+static void push_meter_event(stategrid_context_t *instance, uint8_t ctrl)
+{
+    fifoBuf_putByte(((stategrid_context_t *)instance)->meter_events, ctrl);
+    trace_event(STG_PID_METER_BASE, ctrl);
+}
+
+static void push_lowpower_event(stategrid_context_t *instance, uint8_t ctrl)
+{
+    fifoBuf_putByte(((stategrid_context_t *)instance)->lowpower_events, ctrl);
+    trace_event(STG_PID_LOWPOWER_WAKEUP, ctrl);
+}
+
+/* The record adapter posts here; the resource tick consumes one per pass,
+ * matching the kernel's one-message-per-pass dispatch order. */
+void stategrid_record_enqueue(stategrid_context_t *instance, uint16_t record_id)
+{
+    fifoBuf_putData(((stategrid_context_t *)instance)->records, &record_id,
+                    sizeof(record_id));
+    trace_event(STG_PID_RESOURCE_MANAGER, 0);
+}
+
+static void publish_event(stategrid_context_t *instance, nd_event_topic_t topic)
+{
+    nd_event_t event = { 0 };
+
+    event.topic = topic;
+    event.timestamp_ms = ((stategrid_context_t *)instance)->ms;
+    nd_bus_publish(&event);
+}
+
+static void publish_power_event(stategrid_context_t *instance, uint8_t on)
+{
+    nd_event_t event = { 0 };
+
+    event.topic = ND_EVENT_POWER_CHANGE;
+    event.timestamp_ms = ((stategrid_context_t *)instance)->ms;
+    event.data.power.on = on;
+    nd_bus_publish(&event);
+}
+
+static void power_tick(stategrid_context_t *instance)
+{
+#ifndef WIN32
+    uint32_t addr = 0;
+    int ret = 0;
+    uint16_t metertype = 0;
+    stategrid_context_t *ctx = ((stategrid_context_t *)instance);
+
+    if (ctx->ac_power_status == AC_POWER_ON)
+    {
+        if (ac_power_off_monitor())
+        {
+            device_power_close(instance);
+            PowerOff_Save_data(instance);
+
+            ringbuffer_clear(ctx->meter_events);
+            push_meter_event(instance, MSG_POWEROFF);
+            ctx->ac_power_status = AC_POWER_OFF;
+            publish_power_event(instance, 0);
+        }
+    }
+    else if (ac_power_on_monitor())
+    {
+        addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ND_METER_TYPE_PARAM_ID);
+        ret = nd_get_index(instance, addr, (uint8_t*)&metertype, 2);
+        if(ret < 0)
+        {
+            metertype = (uint16_t)(init_Meter_Type[0] |
+                                   ((uint16_t)init_Meter_Type[1] << 8));
+        }
+        nd_meter_status_metertype_set(instance, metertype);
+
+        device_power_open(instance, NULL);
+        ringbuffer_clear(ctx->meter_events);
+        push_meter_event(instance, MSG_POWERON);
+        ctx->ac_power_status = AC_POWER_ON;
+        publish_power_event(instance, 1);
+    }
+#else
+    (void)instance;
+#endif
+}
+
+static void second_tick(stategrid_context_t *instance)
+{
+    stategrid_context_t *ctx = ((stategrid_context_t *)instance);
+
+    if (fifoBuf_getUsed(&ctx->pipe_rtc) > 0)
+    {
+        uint8_t byte = fifoBuf_getByte(&ctx->pipe_rtc);
+#if WIN32
+        if (byte == 1)
+#else
+        if (byte == IRQ_RTC)
+#endif
+        {
+            if (ctx->ac_power_status == AC_POWER_ON)
+            {
+                push_meter_event(instance, MSG_SECOND);
+            }
+            else
+            {
+                push_lowpower_event(instance, MSG_SECOND);
+            }
+            publish_event(instance, ND_EVENT_TICK_SECOND);
+        }
+    }
+}
+
+static void key_tick(stategrid_context_t *instance)
+{
+    uint8_t keydly = 0;
+    stategrid_context_t *ctx = ((stategrid_context_t *)instance);
+
+    if (fifoBuf_getUsed(&ctx->pipe_key) > 0)
+    {
+        uint8_t byte = fifoBuf_getByte(&ctx->pipe_key);
+#if WIN32
+        if (byte == 2)
+#else
+        if (byte == IRQ_PMU)
+#endif
+        {
+            if (ctx->ac_power_status == AC_POWER_ON)
+            {
+                push_meter_event(instance, MSG_PAGE_KEY_UP);
+            }
+            else
+            {
+                for (keydly = 0; keydly < keydlymax; keydly++)
+                {
+                    if (nd_board_key_released())
+                    {
+                        return;
+                    }
+                }
+                if (keydly >= keydlymax)
+                {
+                    push_lowpower_event(instance, MSG_PAGE_KEY_UP);
+                }
+            }
+        }
+    }
+}
+
+static void io_poll(stategrid_context_t *instance)
+{
+    size_t i;
+
+    dispatch_645_rs4851(instance);
+    for (i = 0; i < dl698_component_count; i++)
+    {
+        nd_dl698_poll(dl698_components[i]);
+    }
+}
+
+static void event_tick(stategrid_context_t *instance)
+{
+#ifndef WIN32
+    mcu_clear_watchdog();
+    irq_transform_to_instance(instance);
+#endif
+    power_tick(instance);
+    second_tick(instance);
+    key_tick(instance);
+}
+
+static void meter_base_tick(stategrid_context_t *instance)
+{
+    stategrid_context_t *ctx = ((stategrid_context_t *)instance);
+
+    if (fifoBuf_getUsed(ctx->meter_events) > 0)
+    {
+        uint8_t ctrl = fifoBuf_getByte(ctx->meter_events);
+        int ret = app_meter_base_event(instance, ctrl);
+
+#ifdef ND_FIRMWARE_SIM
+        nd_sim_filter("app_meter_base", 0x00, ret);
+#endif
+    }
+}
+
+static void resource_tick(stategrid_context_t *instance)
+{
+    stategrid_context_t *ctx = ((stategrid_context_t *)instance);
+    uint16_t record_id;
+
+    if (fifoBuf_getUsed(ctx->records) >= sizeof(record_id))
+    {
+        fifoBuf_getData(ctx->records, &record_id, sizeof(record_id));
+        sync_data_event(instance, record_id);
+#ifdef ND_FIRMWARE_SIM
+        nd_sim_filter("app_resource_manager", 0x01, 0);
+#endif
+    }
+}
+
+static void lowpower_tick(stategrid_context_t *instance)
+{
+    stategrid_context_t *ctx = ((stategrid_context_t *)instance);
+
+    if (fifoBuf_getUsed(ctx->lowpower_events) > 0)
+    {
+        uint8_t ctrl = fifoBuf_getByte(ctx->lowpower_events);
+        int ret = app_meter_lowpower_event(instance, ctrl);
+
+#ifdef ND_FIRMWARE_SIM
+        nd_sim_filter("pl_lowpower_wakeup", 0x01, ret);
+#endif
+    }
+}
+
+/* Waits for the PLC transmitter to drain before the report is cleared. The
+ * bounds are the kernel loop's: 0x4FFFF watchdog-cleared polls, then a short
+ * busy delay so the last byte leaves the shift register. */
+static void report_poll(stategrid_context_t *instance)
+{
+    (void)instance;
+    if (nd_fr698_report_pending())
+    {
+        uint32_t tick_report = 0x4FFFF;
+        uint16_t dly = 0;
+        while (tick_report)
+        {
+            mcu_clear_watchdog();
+            if (fifoBuf_getUsed(link_plc.out) == 0)
+            {
+                tick_report = 1;
+                dly = 10000;
+                while (dly)
+                {
+                    dly--;
+                }
+            }
+            tick_report--;
+        }
+        nd_fr698_report_clear();
+    }
+}
+
+static void sleep_tick(stategrid_context_t *instance)
+{
+    if (((stategrid_context_t *)instance)->ac_power_status != AC_POWER_ON)
+    {
+        cpu_sleep_manage(instance, NULL);
+    }
+}
+
+int baremetal_instance_entry_main(stategrid_context_t * instance, int argc, char** argv)
+{
+    stategrid_context_t *ctx = instance;
+
+    stategrid_context_init(ctx);
+
+    resource_tool_bind(ctx);
 
 
     csstack_base_init();
 
-    instance->recipe = nd_malloc(instance, instance->resource_block, sizeof(struct recipe_t));
-    recipe = instance->recipe;
-    if (recipe == NULL)
-    {
-        return -1;
-    }
-    recipe->pipelines = &pipelines[0];
-    recipe->pipeline_n = sizeof(pipelines) / sizeof(pipelines[0]);
-    recipe->name = 0;
-
-    //初始化pl_resource_manager
-    pl_resource_manager.in_queue = nd_malloc(instance, instance->resource_block, sizeof(struct fifo_t));
-    fifoBuf_init(pl_resource_manager.in_queue, nd_malloc(instance, instance->resource_block, 256), 256);
-
     //初始化时间
-    instance->ms = 0;
+    ctx->ms = 0;
     /*struct tm time =
     {
         .tm_year = 2021 - 1900,  
@@ -387,8 +485,8 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
         .tm_min = 59,
         .tm_sec = 57
     };
-    memcpy(&instance->time, &time, sizeof(struct tm));*/
-    read_mcu_rtc(0x00, instance);
+    memcpy(&ctx->time, &time, sizeof(struct tm));*/
+    read_mcu_rtc(0x00, &ctx->time);
     ///////////////////////////////申请一个cache的BLOCK = 02/////////////////////////////////////////////
     if (NULL == add_block(instance, RES_DEV_RAM, control_block_cache, (2108)))
     {
@@ -396,16 +494,16 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
     }
     
 
-    instance->reset_flag = 0x5A; //复位标志
-    instance->need_data_recovery = 0x5A; 
-    
+    ctx->reset_flag = 0x5A; //复位标志
+    ctx->need_data_recovery = 0x5A;
+
     uint8_t* buf = nd_malloc(instance, control_block_cache, 4);
-    fifoBuf_init(&instance->pipe_rtc, buf, 4);
+    fifoBuf_init(&ctx->pipe_rtc, buf, 4);
 
     buf = nd_malloc(instance, control_block_cache, 8);
-    fifoBuf_init(&instance->pipe_key, buf, 8);
-    
-    instance->apdu_cache = nd_malloc(instance, control_block_cache, cache_max);
+    fifoBuf_init(&ctx->pipe_key, buf, 8);
+
+    ctx->apdu_cache = nd_malloc(instance, control_block_cache, cache_max);
         
     /////////////////////////////////////申请一个698应用的BLOCK = 03/////////////////////////////////////////////////
     if (NULL == add_block(instance, RES_DEV_RAM, control_block_698_name, 16 * 1024 + 640))//16
@@ -413,12 +511,17 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
         return -1;
     }
 
-    communication_channel_init(instance, &pl_rx_698, &pl_tx_698, UART_RS4851_CHL);
-    pl_rx_645.ctx = &ctx_645_server;
-    pl_rx_645.in_queue = pl_rx_698.in_queue;
-    pl_rx_645.out_queue = pl_tx_698.out_queue;
-    communication_channel_init(instance, &pl_plc_rx_698, &pl_plc_tx_698 , UART_MODULE_CHL);
-    communication_channel_init(instance, &pl_ir_rx_698, &pl_ir_tx_698, UART_IR_CHL);
+    link_4851.id = STG_PID_RX_698;
+    link_plc.id = STG_PID_PLC_RX_698;
+    link_ir.id = STG_PID_IR_RX_698;
+    communication_channel_init(instance, &link_4851, UART_RS4851_CHL);
+    rx645_view.id = STG_PID_RX_645;
+    rx645_view.ctx = &ctx_645_server;
+    rx645_view.in_queue = link_4851.in;
+    rx645_view.out_queue = link_4851.out;
+    communication_channel_init(instance, &link_plc, UART_MODULE_CHL);
+    communication_channel_init(instance, &link_ir, UART_IR_CHL);
+    ctx->plc_698_ctx = link_plc.ctx;
 
     ////////////////////////////申请一个mbase应用的BLOCK = 04/////////////////////////////////////////////
     mbase_cb_do_not_operation = (struct mbase_control_block_t*)add_block(instance, RES_DEV_RAM, mbase_control_block_name, 3 * 1024);
@@ -426,15 +529,7 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
     {
         return -1;
     }
-    //初始化pl_meter_base初始化
-    pl_meter_base.ctx = nd_calloc(instance, mbase_control_block_name, nd_mbase_size());
-    pl_meter_base.in_queue = nd_malloc(instance, mbase_control_block_name, sizeof(struct fifo_t));
-    fifoBuf_init(pl_meter_base.in_queue, nd_malloc(instance, mbase_control_block_name, 256), 256);
-    pl_meter_base.out_queue = NULL;
-    pl_lowpower_wakeup.ctx = pl_meter_base.ctx;
-    pl_lowpower_wakeup.in_queue = nd_malloc(instance, mbase_control_block_name, sizeof(struct fifo_t));
-    fifoBuf_init(pl_lowpower_wakeup.in_queue, nd_malloc(instance, mbase_control_block_name, 256), 256);
-    pl_lowpower_wakeup.out_queue = NULL;
+    stategrid_context_set_mbase(ctx, mbase_cb_do_not_operation);
     //mbase分三个区
     //mbase_block_static
     size_t mbase_block_static_size = nd_mbase_offset_static_section_end() - nd_mbase_offset_static_section_start() + 1;
@@ -449,9 +544,9 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
     uint32_t persistent_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_persistent, mbase_block_persistent_size, mbase_block_static_size + mbase_block_cache_size);
 
     //注册EPROM  
-    add_device(instance, RES_DEV_EEPROM, &eeprom_dev,0x00);
+    add_device(instance, RES_DEV_EEPROM, 0x00);
     //注册FLASH
-    add_device(instance, RES_DEV_FLASH, &nor_flash_dev,4096);
+    add_device(instance, RES_DEV_FLASH, BOARD_FLASH_SECTOR);
 
 
     //注册参数区1 及其备份区  
@@ -498,25 +593,24 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
     count++;
     nd_set_index(instance, addr, (uint8_t*)&count, sizeof(count));   
 
-    instance->ac_power_statue = AC_POWER_OFF; // 初始化为停电模式
+    ctx->ac_power_status = AC_POWER_OFF; // 初始化为停电模式
     
     
     for (;;)
     {
-        size_t i;
-
 #ifdef ND_FIRMWARE_SIM
         if (nd_sim_should_stop(instance))
         {
             break;
         }
 #endif
-        dispatch_645_rs4851(instance);
-        for (i = 0; i < dl698_component_count; i++)
-        {
-            nd_dl698_poll(dl698_components[i]);
-        }
-        nidavellir_run_baremetal(instance);
+        io_poll(instance);
+        event_tick(instance);
+        meter_base_tick(instance);
+        resource_tick(instance);
+        lowpower_tick(instance);
+        report_poll(instance);
+        sleep_tick(instance);
 #ifdef ND_FIRMWARE_SIM
         nd_sim_after_run(instance);
 #endif
@@ -524,20 +618,19 @@ int baremetal_instance_entry_main(struct instance_t* instance, int argc, char** 
     return 0;
 }
 
-#include "log.h"
 
 
 
 int main(int argc, char** argv)
 {
-    struct instance_t* instance = NULL;
+    stategrid_context_t * instance = NULL;
     
 #ifndef WIN32
     mcu_init(NULL);
     
     ndv_timer_init();
     
-    instance = create_instance(RES_DEV_RAM, (uint32_t)&nd_memory, 24 * 1024, 2 * 1024, resource_block_name);//用资源描述创建instance
+    instance = stategrid_context_create(RES_DEV_RAM, (uint32_t)&nd_memory, 24 * 1024, 2 * 1024, resource_block_name);
     if (instance == NULL)
     {
         return -1;

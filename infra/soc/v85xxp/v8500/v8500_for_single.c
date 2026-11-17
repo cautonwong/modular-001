@@ -1,10 +1,12 @@
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "target.h"
 #include "core_cm0.h"
 #include "lib_cortex.h"
 #include "lib_uart.h"
 #include "cpu_surport.h"
-#include "nidavellir.h"
-#include "type_def.h"
+#include "components/core/types/utils.h"
 #include "lib_conf.h"
 
 
@@ -299,7 +301,7 @@ void opreate_second_pluse(uint8_t mode) // 1：秒脉冲，2：多功能口导�
 
 
 
-uint8_t read_mcu_rtc(uint8_t addr, struct instance_t* instance)
+uint8_t read_mcu_rtc(uint8_t addr, struct tm *time)
 {
     uint8_t time_data[7];
     uint8_t time_check[7];
@@ -339,15 +341,15 @@ uint8_t read_mcu_rtc(uint8_t addr, struct instance_t* instance)
     
     //memcpy(buf, time_data,7);
     
-    instance->time.tm_sec = BCD_BYTE(time_data[0]);
-    instance->time.tm_min = BCD_BYTE(time_data[1]);
-    instance->time.tm_hour = BCD_BYTE(time_data[2]);
-    instance->time.tm_mday = BCD_BYTE(time_data[3]);
-    instance->time.tm_mon = BCD_BYTE(time_data[4]) - 1;
-    instance->time.tm_year = BCD_BYTE(time_data[5]) + 2000 - 1900;
+    time->tm_sec = BCD_BYTE(time_data[0]);
+    time->tm_min = BCD_BYTE(time_data[1]);
+    time->tm_hour = BCD_BYTE(time_data[2]);
+    time->tm_mday = BCD_BYTE(time_data[3]);
+    time->tm_mon = BCD_BYTE(time_data[4]) - 1;
+    time->tm_year = BCD_BYTE(time_data[5]) + 2000 - 1900;
 #ifdef __DEBUG_LOG__
     extern void log_set_time(struct tm *time);
-    log_set_time((struct tm*)&instance->time.tm_sec);
+    log_set_time(time);
 #endif
     return true;
 }
@@ -1043,87 +1045,6 @@ void mcu_enter_lowpower_then_sleep(void)
 }
 
 
-int v85xxp_spi_bus_init(size_t index)
-{
-
-    MISC2->PCLKEN |= MISC2_PCLKEN_SPI2;
-    
-    __NOP();
-    __NOP();
-    
-    SPI2->CTRL = 0x00;
-    
-    mcu_delay_us(10);
-    // CS软件控制 /  前边沿建立数据 / sck空闲状态为高 / MSB先传输   / 主机/ apbclk 4分频
-    SPI2->CTRL = BIT10 | BIT5 | BIT4 | BIT0;
-
-    SPI2->MISC_ |= BIT8;
-    
-    SPI2->CTRL |= (0x00000001 << 15);
-    
-    mcu_delay_us(10);
-    
-    return true;
-}
-
-
-int v85xxp_spi_send_byte(uint8_t byte , size_t index)
-{
-   uint16_t timeout = 50000; // 待调整
-   uint8_t  rxd;
-    
-
-   while((0 == (SPI2->MISC_ & SPI_MISC_TFE))&&(timeout>0))
-   {
-        timeout--;
-   }
-   
-   SPI2->TXDAT = byte;
-   timeout = 60000;
-   
-   while((SPI2->MISC_ & SPI_MISC_BSY_Msk)&&(timeout>0))
-   {
-        timeout--;
-   }
-   rxd = SPI2->RXDAT;
-   /////
-   if(timeout > 0 )
-   {
-        return true;
-   }
-   //////
-   rxd -= rxd;
-   
-   return false;
-}
-
-int v85xxp_spi_recive_byte(uint8_t *byte , size_t index)
-{
-   uint16_t timeout = 50000;
-   uint8_t  rxd = 0;
-   
-   while((0 == (SPI2->MISC_ & SPI_MISC_TFE))&&(timeout>0))
-   {
-        timeout--;
-   }
-
-   SPI2->TXDAT = 0x00;
-   timeout = 50000;
-
-   while((SPI2->MISC_ & SPI_MISC_BSY_Msk)&&(timeout>0))
-   {
-        timeout--;
-   }
-   
-   if(timeout > 0 )
-   {
-        rxd = SPI2->RXDAT;
-        *byte = rxd;
-        return true;
-   }
-   return false;
-}
-
 void v85xxp_spi_ctrl(uint8_t ctrl , size_t index)
 {
     switch(ctrl)
@@ -1306,17 +1227,6 @@ void mcu_main_power_off_config(void)
 
 
 
-int emu_uart_init(size_t index)
-{
-    UART_InitType* InitType = (UART_InitType*)index;
-    
-    mcu_uart_init(InitType, 3, 0);
-    
-    return true;
-}
-
-
-
 uint8_t mcu_adc_start_once(uint8_t chl_type)
 { 
 
@@ -1416,66 +1326,12 @@ uint32_t read_mcu_adc_measure_value(uint8_t chl_type , int32_t *adc_measure)
     return true;  
 }
 
-
-const struct bus_ops_t mcu_uart_bus_ops = 
+#ifndef ASSERT_NDEBUG
+void assert_errhandler(uint8_t *file, uint32_t line)
 {
-    BUS_UART,
-    3,
-    emu_uart_init,
-    mcu_uart_send_enable,
-    mcu_uart_send_byte,
-    mcu_uart_recive_enable,
-    mcu_uart_recive_byte,
-    mcu_uart_get_tx_status,
-    mcu_uart_get_rx_status,
-    __NULL, 
-};
-
-const struct bus_ops_t mcu_spi_ops = 
-{
-   BUS_SPI,
-   1,
-   v85xxp_spi_bus_init,
-   __NULL,
-   v85xxp_spi_send_byte,
-   __NULL,
-   v85xxp_spi_recive_byte,
-   __NULL,
-   __NULL,
-   v85xxp_spi_ctrl,
-};
-
-
-
-
-
-#ifndef  ASSERT_NDEBUG
-/**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_errhandler error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_errhandler error line source number
-  * @retval None
-  */
-void assert_errhandler(uint8_t* file, uint32_t line)
-{
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-
-  /* Infinite loop */
-  while (1)
-  {
-  }
+    (void)file;
+    (void)line;
+    while (1) {
+    }
 }
-
-
-
-
-
-
-
-
-
-
-
 #endif

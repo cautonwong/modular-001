@@ -1,6 +1,6 @@
 #include "targets/stategrid_meter/app/metering_input_adapter.h"
 #include "domain/metering/metering_input.h"
-#include "infra/boards/stategrid_single_phase/meter_config.h"
+#include "targets/stategrid_meter/board/meter_config.h"
 #include "cpu_surport.h"
 
 static int board_read(void *ctx, nd_metering_input_t input, int32_t *value)

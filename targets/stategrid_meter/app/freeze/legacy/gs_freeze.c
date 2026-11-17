@@ -1,5 +1,4 @@
 #include <stdbool.h>
-#include "application/adapters/dl698/legacy_message.h"
 #include <stddef.h>
 #include <stdint.h>
 #include "application/adapters/dl698/meter_base_view.h"
@@ -250,7 +249,6 @@ int instant_freeze_judge(void *instance, void *task, void *mesg)
     uint16_t FlagID = InstantFreeze;
     uint8_t tmp[10] = {0};
     uint8_t payload[20] = {0};
-    nd_message_t mesg_tmp;
 
 
     if (nd_mb_trigger_insfreeze_delay_sec(instance) == 0xFFFF)
@@ -269,14 +267,13 @@ int instant_freeze_judge(void *instance, void *task, void *mesg)
 
     nd_mb_trigger_insfreeze_delay_sec(instance) = 0xFFFF;
 
-    mesg_tmp.id = FlagID;
     uint32_to_buf_msb(0x20210200, &payload[0]);
     payload[4] = 8; //data len
     payload[5] = 0x1C;//TYPE_date_time_s;
     rtc_format_change_from_tm(nd_fr698_time(instance),tmp);
     tmp[0] = 0; //sec = 0;
     mem_swap_cpy(&payload[6], &tmp[0], 7);
-    recv_record_process(instance, NULL, &mesg_tmp, payload);
+    recv_record_process(instance, FlagID, payload);
 
 
     //memcpy((uint8_t*)&record_time.tm_sec, (uint8_t*)nd_fr698_time(instance).tm_sec, sizeof(struct tm));
@@ -437,13 +434,11 @@ int minute_freeze_judge(void *instance, void *task, void *mesg)
     nd_datetime_t now;
     uint16_t PeriodID = MinuteFreeze_period;
     uint16_t FlagID = MinuteFreeze1;
-    nd_message_t mesg_tmp;
 
     if (nd_fr698_time(instance)->tm_sec != 0)
     {
         return -1;
     }
-    memset((uint8_t *)&mesg_tmp, 0, sizeof(nd_message_t));
 
     // 周期
     index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
@@ -460,8 +455,7 @@ int minute_freeze_judge(void *instance, void *task, void *mesg)
 
         if (nd_freeze_period_due(&now, &freeze_period, 1))
         {
-            mesg_tmp.id = FlagID + i;
-            recv_record_process(instance, NULL, &mesg_tmp, NULL);
+            recv_record_process(instance, FlagID + i, NULL);
         }
     }
     return 1;
@@ -474,7 +468,6 @@ int hour_freeze_judge(void *instance, void *task, void *mesg)
     nd_freeze_period_t freeze_period;
     uint16_t PeriodID = HourFreeze_period;
     uint16_t FlagID = HourFreeze;
-    nd_message_t mesg_tmp;
 
 
 
@@ -482,7 +475,6 @@ int hour_freeze_judge(void *instance, void *task, void *mesg)
     {
         return -1;
     }
-    memset((uint8_t *)&mesg_tmp, 0, sizeof(nd_message_t));
     // 周期
     index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
     nd_get_index(instance, index, &period[0], sizeof(period));
@@ -493,8 +485,7 @@ int hour_freeze_judge(void *instance, void *task, void *mesg)
 
     if (nd_freeze_period_due(&now, &freeze_period, 60))
     {
-        mesg_tmp.id = FlagID;
-        recv_record_process(instance, NULL, &mesg_tmp, NULL);
+        recv_record_process(instance, FlagID, NULL);
     }
 
     return 1;
@@ -508,13 +499,11 @@ int day_freeze_judge(void *instance, void *task, void *mesg)
     nd_freeze_period_t freeze_period;
     uint16_t PeriodID = DayFreeze_period;
     uint16_t FlagID = DayFreeze;
-    nd_message_t mesg_tmp;
 
     if ((nd_fr698_time(instance)->tm_sec != 0) || (nd_fr698_time(instance)->tm_min != 0) || (nd_fr698_time(instance)->tm_hour != 0))
     {
         return -1;
     }
-    memset((uint8_t *)&mesg_tmp, 0, sizeof(nd_message_t));
 
     //读最近一次冻结时间 比较当前时间记录是否已存在   待添加
     //待添加
@@ -541,8 +530,7 @@ int day_freeze_judge(void *instance, void *task, void *mesg)
         nd_set_index(instance, index, &tmp[0], 6);
 
         //send_recordflag_mesg(instance, task,  FlagID, NULL);
-        mesg_tmp.id = FlagID;
-        recv_record_process(instance, NULL, &mesg_tmp, NULL);
+        recv_record_process(instance, FlagID, NULL);
     }
 
     return 1;
@@ -553,14 +541,12 @@ int month_freeze_judge(void *instance, void *task, void *mesg)
 {
     nd_datetime_t now;
     uint16_t FlagID = MonthFreeze;
-    nd_message_t mesg_tmp;
 
     freeze_now_datetime(nd_fr698_time(instance), &now);
     if (!nd_freeze_month_due(&now))
     {
         return -1;
     }
-    memset((uint8_t *)&mesg_tmp, 0, sizeof(nd_message_t));
 
     //读最近一次冻结时间 比较当前时间记录是否已存在   待添加
     //待添加
@@ -572,8 +558,7 @@ int month_freeze_judge(void *instance, void *task, void *mesg)
     //if (1 == freeze_judge(instance, &period[0], 60 * 24, &record_time))
     {
         //send_recordflag_mesg(instance, task,  FlagID, NULL);
-        mesg_tmp.id = FlagID;
-        recv_record_process(instance, NULL, &mesg_tmp, NULL);
+        recv_record_process(instance, FlagID, NULL);
     }
 
     return 1;
@@ -593,7 +578,6 @@ int day_freeze_power_on_pro(void *instance, void *task, void *mesg)
     uint32_t s_index, tmp_u32;
     uint8_t payload[20] = {0};
     //uint8_t *p = payload;
-    nd_message_t mesg_tmp;
     uint16_t    period;
     uint8_t count, i;
     int ret;
@@ -654,13 +638,12 @@ int day_freeze_power_on_pro(void *instance, void *task, void *mesg)
         nd_set_index(instance, s_index, &tmp[0], 6);
 
         // 本条记录存储的时间
-        mesg_tmp.id = DayFreeze;
         uint32_to_buf_msb(0x20210200, &payload[0]);
         payload[4] = 8; //data len
         payload[5] = 28;//TYPE_date_time_s;
         rtc_format_change_from_tm(&record_tm,tmp);
         mem_swap_cpy(&payload[6], &tmp[0], 7);
-        recv_record_process(instance, task, &mesg_tmp, payload);
+        recv_record_process(instance, DayFreeze, payload);
         nd_runtime_watchdog_clear();//清看门狗
     }
 
@@ -682,7 +665,6 @@ int bill_freeze_power_on_pro(void *instance, void *task, void *mesg)
     uint32_t s_index, tmp_u32;
     uint8_t payload[20] = {0};
     //uint8_t *p = payload;
-    nd_message_t mesg_tmp;
     uint8_t count, i;
     int ret = 0;
 
@@ -744,7 +726,6 @@ int bill_freeze_power_on_pro(void *instance, void *task, void *mesg)
         nd_set_index(instance, s_index, &tmp[0], 6);
 
         // 本条记录存储的时间
-        mesg_tmp.id = BillFreeze;
         uint32_to_buf_msb(0x20210200, &payload[0]);
         payload[4] = 8; //data len
         payload[5] = 28;//TYPE_date_time_s;
@@ -752,7 +733,7 @@ int bill_freeze_power_on_pro(void *instance, void *task, void *mesg)
         mem_swap_cpy(&payload[6], &tmp[0], 7);
          // 记录1次结算       需根据i判断需量结算是否填空，
         // 第1结算日过后，最大需量清零                是否需要发送消息？             待添加
-        recv_record_process(instance, task, &mesg_tmp, payload);
+        recv_record_process(instance, BillFreeze, payload);
         nd_runtime_watchdog_clear();
     }
 
@@ -771,13 +752,11 @@ int bill_freeze_judge(void *instance, void *task, void *mesg)
         uint16_t LastBillTimeID = LastBillingTime;
         uint16_t FlagID = BillFreeze;
         uint8_t  i;
-        nd_message_t mesg_tmp;
 
         if ((nd_fr698_time(instance)->tm_sec != 0) || (nd_fr698_time(instance)->tm_min != 0))
         {
             return -1;
         }
-        memset((uint8_t *)&mesg_tmp, 0, sizeof(nd_message_t));
 
         s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillTimeID);
         nd_get_index(instance, s_index, &tmp[0], 6);
@@ -829,8 +808,7 @@ int bill_freeze_judge(void *instance, void *task, void *mesg)
             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillTimeID);
             nd_set_index(instance, s_index, &tmp[0], 6);
 
-            mesg_tmp.id = FlagID;
-            recv_record_process(instance, NULL, &mesg_tmp, NULL);
+            recv_record_process(instance, FlagID, NULL);
             last_bill = now;
         }
 

@@ -5,7 +5,7 @@
 
 /* Wire-layout copy of the legacy kernel message, packed identically.
  * Target code uses this type so it does not include the kernel header;
- * callers that still take struct message_t * accept it by layout. */
+ * callers that still take the legacy message pointer accept it by layout. */
 #pragma pack(push, 1)
 typedef struct nd_message_t
 {

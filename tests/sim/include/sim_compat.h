@@ -13,11 +13,9 @@
 #include <stdint.h>
 
 /*
- * nidavellir/include/kernel/types.h defines pid_t as uint8_t and guards it
- * with newlib's _PID_T_DECLARED. glibc uses __pid_t_defined instead, and its
- * time.h/sys/types.h would otherwise typedef a conflicting int pid_t. Define
- * both guards before any system header is seen and keep the firmware's
- * one-byte type.
+ * The firmware used a one-byte pid_t. glibc defines a conflicting int pid_t
+ * through __pid_t_defined, so define both guards before any system header is
+ * seen and keep the one-byte type.
  */
 #ifndef _PID_T_DECLARED
 typedef unsigned char pid_t;

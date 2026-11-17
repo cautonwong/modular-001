@@ -8,7 +8,7 @@
 
 #include "domain/metering/metering.h"
 #include "infra/memory/arena.h"
-#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/persistence/legacy_control_block.h"
 #include "support/file_store.h"
 #include "targets/stategrid_meter/persistence/legacy_energy_record.h"
 #include "targets/stategrid_meter/persistence/legacy_energy_store.h"

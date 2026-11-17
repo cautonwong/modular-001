@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include "application/adapters/dl645/fr_645_addr.h"
-struct instance_t;
 struct context_645_t;
 
 #define data_max_len 222
@@ -149,19 +148,19 @@ extern int read_00(void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_
 extern int read_02(void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx);
 extern int read_04(void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx);
 extern int read_06(void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, uint8_t *tx_len, struct context_645_t* ctx);
-extern int read_record_data_form_698_protocol(struct instance_t* instance, uint8_t* buf, uint32_t Record_oad, uint32_t capture_oad, uint8_t last_no, uint16_t bufsize);
+extern int read_record_data_form_698_protocol(void * instance, uint8_t* buf, uint32_t Record_oad, uint32_t capture_oad, uint8_t last_no, uint16_t bufsize);
 extern unsigned char GetCommTable( unsigned long ID );
 extern signed char ctl_freeze(void *instance, uint8_t chl, uint8_t* p_rx);
 extern signed char chg_baut(void *instance, uint8_t* p_rx, struct context_645_t* ctx);
 extern signed char CommRemoteCtl_Process(void *instance,  uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx,  uint16_t RemotCtrResult);
-extern int upgrade_file_handle(struct instance_t* instance, uint8_t *data, uint16_t len, uint8_t *data_tx, uint8_t *tx_len);
+extern int upgrade_file_handle(void * instance, uint8_t *data, uint16_t len, uint8_t *data_tx, uint8_t *tx_len);
 extern signed char ft_adj_get_meter(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
 extern unsigned long GetTotalSec( unsigned char* Addr );
 extern unsigned char ChangeTime_Format_Check( unsigned char* Addr );
-extern unsigned char Cmp_Password(struct instance_t* instance, unsigned char* Addr );
+extern unsigned char Cmp_Password(void * instance, unsigned char* Addr );
 extern signed char ctl_freeze(void *instance, uint8_t chl, uint8_t* p_rx);
 extern signed char ft_adj_get_meter(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len);
-extern int upgrade_file_handle(struct instance_t* instance, uint8_t *data, uint16_t len, uint8_t *data_tx, uint8_t *tx_len);
+extern int upgrade_file_handle(void * instance, uint8_t *data, uint16_t len, uint8_t *data_tx, uint8_t *tx_len);
 extern unsigned char Comm485Baut_Check( unsigned char Baut );
 extern int response_x_byte_err_645(uint8_t *p_tx, uint16_t err, uint8_t errLen, uint8_t *tx_len);
 extern uint8_t Search_DL645_Prepay_IDTab(void *instance, uint32_t id,uint8_t cmd);
@@ -172,5 +171,5 @@ extern uint8_t dl645rd_chg_data(void *instance, uint32_t addr, uint8_t format, u
 extern unsigned char GetWeek645( unsigned char* Addr );
 extern unsigned long SoftwareCHK(void);
 extern int read_05(void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, uint8_t *tx_len);
-extern unsigned char Dl645_IR_chl_Check(struct instance_t* instance, uint32_t id, uint8_t chl);
+extern unsigned char Dl645_IR_chl_Check(void * instance, uint32_t id, uint8_t chl);
 extern int8_t security_judge_645(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx);

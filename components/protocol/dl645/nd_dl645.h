@@ -5,16 +5,14 @@
 #include <stdint.h>
 
 #include "components/services/channel/nd_channel.h"
-
-struct instance_t;
 struct context_645_t;
 
 typedef struct nd_dl645 nd_dl645_t;
 
 typedef struct {
-    struct instance_t *instance;
+    void *instance;
     struct context_645_t *context;
-    uint32_t (*now_ms)(struct instance_t *instance);
+    uint32_t (*now_ms)(void *instance);
     uint8_t pid;
     nd_channel_t *input;
     nd_channel_t *output;

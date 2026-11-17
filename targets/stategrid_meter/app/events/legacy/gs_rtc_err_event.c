@@ -1,7 +1,7 @@
-#include "nidavellir.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 #include <time.h>
 #include "application/adapters/dl698/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
@@ -16,7 +16,6 @@
 #include "targets/stategrid_meter/app/events/events_applications.h"
 #include "targets/stategrid_meter/app/freeze/freeze_applications.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
 
 
 static void tm_to_datetime(const struct tm *t, nd_datetime_t *d)
@@ -62,16 +61,15 @@ void tm_to_mcu_rtc_bcd(struct tm t, uint8_t *des)
 //保存时钟电池工作时间
 int save_RtcBat_work_time(void *instance)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t addr = 0, batTime = 0;
     int ret;
 
     //保存电池工作时间
     addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Bat_UseTime);
     ret = nd_get_index(instance, addr, (uint8_t *)&batTime, 4);
-    batTime += ctrl_block->battery_used_time_cnt;
+    batTime += nd_mb_battery_used_time_cnt(instance);
     ret = nd_set_index(instance, addr, (uint8_t *)&batTime, 4);
-    ctrl_block->battery_used_time_cnt = 0;
+    nd_mb_battery_used_time_cnt(instance) = 0;
 
 }
 
@@ -79,7 +77,6 @@ int save_RtcBat_work_time(void *instance)
 //上电时钟检查
 int rtc_check_poweron(void *instance)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint8_t year = 0, mark = 0, buffer[8] = {0}, temp[8] = {0}, settimebuf[8] = {0};
     uint32_t t_now = 0, t_pd = 0, addr = 0;
     struct tm temp_tm; 
@@ -88,7 +85,7 @@ int rtc_check_poweron(void *instance)
     //------------------
 
     //检查上一次停电时间
-    ndv_memcopy(&temp_tm, &ctrl_block->powerdown_tm, sizeof(struct tm));
+    temp_tm = nd_mb_powerdown_tm(instance);
     if (false == rtc_tm_valid(&temp_tm))
     {
         set_default_rtc(&temp_tm);//优化 可取上一次分钟冻结的时间 待调整
@@ -126,8 +123,8 @@ int rtc_check_poweron(void *instance)
         // 上一次停电时间 写 rtc
         tm_to_mcu_rtc_bcd(temp_tm, settimebuf);
         write_mcu_rtc(0, settimebuf, 7);
-        read_mcu_rtc(0x00, instance);
-        ctrl_block->RTCErrS_status = 1;
+        read_mcu_rtc(0x00, nd_fr698_time(instance));
+        nd_mb_rtc_errs_status(instance) = 1;
 
 
         clr_last_bill_time(instance, LastBillingTime);
@@ -142,14 +139,14 @@ int rtc_check_poweron(void *instance)
 //写当前时间到停电时间
 void write_powerdown_time(void *instance)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint32_t addr;
-    
-    ndv_memcopy((uint8_t *)(&ctrl_block->powerdown_tm),  (uint8_t *)nd_fr698_time(instance),  sizeof(ctrl_block->powerdown_tm));
+
+    *nd_mb_powerdown_tm_ptr(instance) = *nd_fr698_time(instance);
 
     addr = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
         nd_mbase_offset_powerdown_tm()) -  nd_mbase_offset_persistent_section_start();
-    nd_set_offset(instance, addr, (uint8_t*)&ctrl_block->powerdown_tm, sizeof(ctrl_block->powerdown_tm));
+    nd_set_offset(instance, addr, (uint8_t *)nd_mb_powerdown_tm_ptr(instance),
+                  sizeof(struct tm));
 }
 
 
@@ -170,18 +167,17 @@ void updata_powerdown_time(void *instance)
 // 事件 判断:  返回1:记录发生                0:不记录        -1:记录结束
 int RTCErr_event_judge(void *instance, void *task, void *mesg)
 {
-    struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
     uint16_t RecordId = RTCErrS;
 
     nd_event_duration_t state = {
-        .duration = ctrl_block->RTCErrS_duration,
+        .duration = nd_mb_rtcerr_s_duration(instance),
         .active = (uint8_t)(get_activeflag(instance, RecordId) ? 1 : 0),
     };
 
     nd_event_transition_t result =
-        nd_event_duration_step(&state, 0, ctrl_block->RTCErrS_status);
+        nd_event_duration_step(&state, 0, nd_mb_rtc_errs_status(instance));
 
-    ctrl_block->RTCErrS_duration = state.duration;
+    nd_mb_rtcerr_s_duration(instance) = state.duration;
     if (result == ND_EVENT_STARTED) {
         set_activeflag(instance, RecordId);
     } else if (result == ND_EVENT_ENDED) {

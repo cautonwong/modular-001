@@ -5,11 +5,11 @@
 #include "application/adapters/dl698/fr_698_esam.h"
 #include "application/adapters/dl698/fr_698_internal.h"
 
-struct instance_t {
+struct fake_instance_t {
     uint8_t unused;
 };
 
-struct pipeline_t {
+struct fake_pipeline_t {
     void *ctx;
     uint8_t id;
 };
@@ -20,10 +20,10 @@ static uint16_t record_rcsd;
 
 void *nd_fr698_pipeline_ctx(const void *pipeline)
 {
-    return ((const struct pipeline_t *)pipeline)->ctx;
+    return ((const struct fake_pipeline_t *)pipeline)->ctx;
 }
 
-uint8_t *nd_fr698_apdu_cache(struct instance_t *unused)
+uint8_t *nd_fr698_apdu_cache(void *unused)
 {
     static uint8_t cache[16];
     (void)unused;
@@ -94,7 +94,7 @@ void ndv_memcopy(void *unused, void *unused2, uint16_t unused3)
     (void)unused3;
 }
 
-int16_t nd_get(struct instance_t *unused, uint32_t unused2, uint8_t *unused3,
+int16_t nd_get(void *unused, uint32_t unused2, uint8_t *unused3,
                uint16_t unused4, void *unused5)
 {
     (void)unused;
@@ -105,8 +105,8 @@ int16_t nd_get(struct instance_t *unused, uint32_t unused2, uint8_t *unused3,
     return 0;
 }
 
-int security_mode_word_check(struct instance_t *unused,
-                             struct pipeline_t *unused2, uint8_t unused3,
+int security_mode_word_check(void *unused,
+                             void *unused2, uint8_t unused3,
                              uint32_t unused4)
 {
     (void)unused;
@@ -116,7 +116,7 @@ int security_mode_word_check(struct instance_t *unused,
     return 0;
 }
 
-int rsd_decode(struct instance_t *unused, struct pipeline_t *unused2,
+int rsd_decode(void *unused, void *unused2,
                uint32_t unused3, struct rsd_info_t *unused4)
 {
     (void)unused;
@@ -126,7 +126,7 @@ int rsd_decode(struct instance_t *unused, struct pipeline_t *unused2,
     return 0;
 }
 
-int rcsd_decode(struct instance_t *unused, struct pipeline_t *unused2,
+int rcsd_decode(void *unused, void *unused2,
                 uint32_t unused3, uint32_t *unused4)
 {
     (void)unused;
@@ -148,7 +148,7 @@ void tearDown(void) {}
 static void test_698_get_normal_consumes_one_oad(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
@@ -160,7 +160,7 @@ static void test_698_get_normal_consumes_one_oad(void)
 static void test_698_get_normal_list_consumes_count_and_oads(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
@@ -173,7 +173,7 @@ static void test_698_get_normal_list_consumes_count_and_oads(void)
 static void test_698_get_record_consumes_oad_and_selectors(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
@@ -185,7 +185,7 @@ static void test_698_get_record_consumes_oad_and_selectors(void)
 static void test_698_get_record_list_consumes_each_record(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
@@ -198,7 +198,7 @@ static void test_698_get_record_list_consumes_each_record(void)
 static void test_698_get_record_rejects_empty_selectors(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
@@ -211,7 +211,7 @@ static void test_698_get_record_rejects_empty_selectors(void)
 static void test_698_get_next_and_unknown_choice(void)
 {
     struct context_698_t ctx;
-    struct pipeline_t pipeline;
+    struct fake_pipeline_t pipeline;
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;

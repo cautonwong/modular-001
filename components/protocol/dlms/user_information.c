@@ -8,7 +8,7 @@
 
 static const uint8_t EMPTY_SYSTEM_TITLE[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-int _parseUserInformation(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms_msg_t* mesg)
+int _parseUserInformation(void * instance, struct nd_dlms_pipeline_t* pipeline, nd_dlms_msg_t* mesg)
 {
     struct hdlc_control_block_t* ctx = (struct hdlc_control_block_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
@@ -260,7 +260,7 @@ int _parseUserInformation(struct instance_t* instance, struct pipeline_t* pipeli
     return 0;
 }
 
-int _getUserInformation(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms_msg_t* mesg)
+int _getUserInformation(void * instance, struct nd_dlms_pipeline_t* pipeline, nd_dlms_msg_t* mesg)
 {
     struct hdlc_control_block_t* ctx = (struct hdlc_control_block_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;

@@ -170,7 +170,7 @@ int __update_fcs(struct hdlc_control_block_t* ctx, uint8_t* byte)
     return 0;
 }
 
-int __pack_pdu_byte(struct pipeline_t* pipeline, uint8_t* byte)
+int __pack_pdu_byte(struct nd_dlms_pipeline_t* pipeline, uint8_t* byte)
 {
     struct hdlc_control_block_t* ctx = (struct hdlc_control_block_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
@@ -389,7 +389,7 @@ int __hdlc_filter(struct hdlc_control_block_t* ctx, uint8_t* b)
 }
 
 
-int fr_pack_hdlc_head(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms_msg_t* mesg)
+int fr_pack_hdlc_head(void * instance, struct nd_dlms_pipeline_t* pipeline, nd_dlms_msg_t* mesg)
 {
     struct hdlc_control_block_t* ctx = (struct hdlc_control_block_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
@@ -413,7 +413,7 @@ int fr_pack_hdlc_head(struct instance_t* instance, struct pipeline_t* pipeline, 
     return 1;
 }
 
-int fr_pack_hdlc_apdu(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms_msg_t* mesg)
+int fr_pack_hdlc_apdu(void * instance, struct nd_dlms_pipeline_t* pipeline, nd_dlms_msg_t* mesg)
 {
     struct hdlc_control_block_t* ctx = (struct hdlc_control_block_t*)pipeline->ctx;
 
@@ -421,7 +421,7 @@ int fr_pack_hdlc_apdu(struct instance_t* instance, struct pipeline_t* pipeline, 
     return 1;
 }
 
-int fr_pack_hdlc_tail(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms_msg_t* mesg)
+int fr_pack_hdlc_tail(void * instance, struct nd_dlms_pipeline_t* pipeline, nd_dlms_msg_t* mesg)
 {
     struct hdlc_control_block_t* ctx = (struct hdlc_control_block_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->out_queue;
@@ -435,7 +435,7 @@ int fr_pack_hdlc_tail(struct instance_t* instance, struct pipeline_t* pipeline, 
     return 1;
 }
 
-int apdu_parseUserInformation(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms_msg_t* mesg)
+int apdu_parseUserInformation(void * instance, struct nd_dlms_pipeline_t* pipeline, nd_dlms_msg_t* mesg)
 {
     struct hdlc_control_block_t* ctx = (struct hdlc_control_block_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
@@ -687,7 +687,7 @@ int apdu_parseUserInformation(struct instance_t* instance, struct pipeline_t* pi
     return 0;
 }
 
-int apdu_parseApplicationContextName(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms_msg_t* mesg)
+int apdu_parseApplicationContextName(void * instance, struct nd_dlms_pipeline_t* pipeline, nd_dlms_msg_t* mesg)
 {
     struct hdlc_control_block_t* ctx = (struct hdlc_control_block_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
@@ -769,7 +769,7 @@ uint8_t isCiphered(ciphering* cipher)
     return cipher->security != DLMS_SECURITY_NONE;
 }
 
-int apdu_generateApplicationContextName(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms_msg_t* mesg)
+int apdu_generateApplicationContextName(void * instance, struct nd_dlms_pipeline_t* pipeline, nd_dlms_msg_t* mesg)
 {
     struct hdlc_control_block_t* ctx = (struct hdlc_control_block_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
@@ -840,7 +840,7 @@ int apdu_setConformanceToArray(uint32_t value, struct fifo_t* data)
     return 0;
 }
 
-int apdu_getUserInformation(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms_msg_t* mesg)
+int apdu_getUserInformation(void * instance, struct nd_dlms_pipeline_t* pipeline, nd_dlms_msg_t* mesg)
 {
     struct hdlc_control_block_t* ctx = (struct hdlc_control_block_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
@@ -899,7 +899,7 @@ int apdu_getUserInformation(struct instance_t* instance, struct pipeline_t* pipe
     return ret;
 }
 
-int apdu_generateAARE(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms_msg_t* mesg)
+int apdu_generateAARE(void * instance, struct nd_dlms_pipeline_t* pipeline, nd_dlms_msg_t* mesg)
 {
     struct hdlc_control_block_t* ctx = (struct hdlc_control_block_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
@@ -1027,7 +1027,7 @@ int apdu_generateAARE(struct instance_t* instance, struct pipeline_t* pipeline, 
     return 0;
 }
 
-int serve_aarq(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms_msg_t* mesg)
+int serve_aarq(void * instance, struct nd_dlms_pipeline_t* pipeline, nd_dlms_msg_t* mesg)
 {
     struct hdlc_control_block_t* ctx = (struct hdlc_control_block_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
@@ -1488,7 +1488,7 @@ int serve_aarq(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms
     return 1;
 }
 
-int serve_GetRequest(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms_msg_t* mesg)
+int serve_GetRequest(void * instance, struct nd_dlms_pipeline_t* pipeline, nd_dlms_msg_t* mesg)
 {
     struct hdlc_control_block_t* ctx = (struct hdlc_control_block_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
@@ -1559,7 +1559,7 @@ int serve_GetRequest(struct instance_t* instance, struct pipeline_t* pipeline, n
     return 1;
 }
 
-int serve_iframe(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms_msg_t* mesg)
+int serve_iframe(void * instance, struct nd_dlms_pipeline_t* pipeline, nd_dlms_msg_t* mesg)
 {
     struct hdlc_control_block_t* ctx = (struct hdlc_control_block_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
@@ -1607,7 +1607,7 @@ int serve_iframe(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl
     return 1;
 }
 
-int serve_snrm(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms_msg_t* mesg)
+int serve_snrm(void * instance, struct nd_dlms_pipeline_t* pipeline, nd_dlms_msg_t* mesg)
 {
     struct hdlc_control_block_t* ctx = (struct hdlc_control_block_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
@@ -1701,7 +1701,7 @@ int serve_snrm(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms
     return 1;
 }
 
-int serve_disc(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms_msg_t* mesg)
+int serve_disc(void * instance, struct nd_dlms_pipeline_t* pipeline, nd_dlms_msg_t* mesg)
 {
     struct hdlc_control_block_t* ctx = (struct hdlc_control_block_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;
@@ -1762,7 +1762,7 @@ int serve_disc(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms
     return 1;
 }
 
-int serve_release_request(struct instance_t* instance, struct pipeline_t* pipeline, nd_dlms_msg_t* mesg)
+int serve_release_request(void * instance, struct nd_dlms_pipeline_t* pipeline, nd_dlms_msg_t* mesg)
 {
     struct hdlc_control_block_t* ctx = (struct hdlc_control_block_t*)pipeline->ctx;
     struct fifo_t* fifo = (struct fifo_t*)pipeline->in_queue;

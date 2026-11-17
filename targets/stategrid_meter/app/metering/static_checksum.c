@@ -1,4 +1,4 @@
-#include "nidavellir.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -26,7 +26,7 @@ uint32_t do_block_static_checksum(void *instance)
     uint16_t len;
     struct mbase_control_block_t* mbase_cb;
 
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    mbase_cb = ((stategrid_context_t *)instance)->mbase;
 
     buff = (uint8_t *)mbase_cb + nd_mbase_offset_static_section_start() + 1;
 

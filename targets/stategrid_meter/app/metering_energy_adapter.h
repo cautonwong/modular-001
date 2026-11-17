@@ -1,9 +1,9 @@
 #ifndef ND_TARGET_STATEGRID_METERING_ENERGY_ADAPTER_H
 #define ND_TARGET_STATEGRID_METERING_ENERGY_ADAPTER_H
 
-#include "domain/metering/metering_energy_port.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
 
-struct instance_t;
+#include "domain/metering/metering_energy_port.h"
 struct mbase_control_block_t;
 
 /*
@@ -12,7 +12,7 @@ struct mbase_control_block_t;
  * exposes only nd_energy_ledger_t.
  */
 nd_energy_ledger_t *metering_energy_ledger_from_instance(
-    struct instance_t *instance);
+    stategrid_context_t *instance);
 nd_energy_ledger_t *metering_energy_ledger_from_mbase(
     struct mbase_control_block_t *mbase_cb);
 

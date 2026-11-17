@@ -2,7 +2,6 @@
 #include "application/ports/fifo.h"
 #include "fr_698_pack.h"
 #include "application/adapters/dl698/fr_698_env.h"
-struct instance_t;
 #include "fr_698.h"
 #include "meter_base_view.h"
 #include "fr_698_internal.h"
@@ -24,7 +23,7 @@ uint16_t get_crc16(uint16_t cs)
     return cs;
 }
 
-int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+int fr_rx_698_end(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 {
     fr_pack_698_head(instance, pipeline, mesg);
     if(mesg->len)
@@ -35,7 +34,7 @@ int fr_rx_698_end(struct instance_t* instance, struct pipeline_t* pipeline, nd_d
 }
 
 
-int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+int fr_timetag_check(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -105,7 +104,7 @@ int fr_timetag_check(struct instance_t* instance, struct pipeline_t* pipeline, n
     return 1;
 }
 
-int fr_addr_handle(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t*)
+int fr_addr_handle(void * instance, void * pipeline, nd_dl698_msg_t*)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t i = 0;
@@ -157,7 +156,7 @@ int fr_addr_handle(struct instance_t* instance, struct pipeline_t* pipeline, nd_
     return 1;
 }
 
-int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+int fr_pack_698_check(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* fifo = (struct fifo_t*)(struct fifo_t*)nd_fr698_pipeline_in_queue(pipeline);
@@ -218,7 +217,7 @@ int fr_pack_698_check(struct instance_t* instance, struct pipeline_t* pipeline, 
 }
 
 
-int fr_apdu_effective_check(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t*)
+int fr_apdu_effective_check(void *, void * pipeline, nd_dl698_msg_t*)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
 
@@ -241,7 +240,7 @@ int fr_apdu_effective_check(struct instance_t*, struct pipeline_t* pipeline, nd_
     return 1;
 }
 
-int fr_timeTag_optional(struct instance_t* instance, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+int fr_timeTag_optional(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* cache = ctx->apdu;

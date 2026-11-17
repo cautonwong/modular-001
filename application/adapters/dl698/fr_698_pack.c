@@ -38,7 +38,7 @@ static int update_fcs(void* pctx, uint8_t* byte)
 
 int __pack_apdu_byte(void* pctx, uint8_t* byte)
 {
-    struct pipeline_t* pipeline = pctx;
+    void * pipeline = pctx;
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* fifo = (struct fifo_t*)(struct fifo_t*)nd_fr698_pipeline_out_queue(pipeline);
     if (is_scrambler_set(ctx->ctrl)){
@@ -51,7 +51,7 @@ int __pack_apdu_byte(void* pctx, uint8_t* byte)
 
 
 
-int fr_pack_698_head(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+int fr_pack_698_head(void *, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* fifo = (struct fifo_t*)(struct fifo_t*)nd_fr698_pipeline_out_queue(pipeline);
@@ -83,7 +83,7 @@ int fr_pack_698_head(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_m
     return 1;
 }
 
-int fr_pack_698_tx_head(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+int fr_pack_698_tx_head(void *, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* fifo = (struct fifo_t*)(struct fifo_t*)nd_fr698_pipeline_out_queue(pipeline);
@@ -110,14 +110,14 @@ int fr_pack_698_tx_head(struct instance_t*, struct pipeline_t* pipeline, nd_dl69
     return 1;
 }
 
-int fr_pack_698_apdu(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t* mesg)
+int fr_pack_698_apdu(void *, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     fifo_popData(ctx->apdu, mesg->len, __pack_apdu_byte, pipeline);
     return 1;
 }
 
-int fr_pack_698_tail(struct instance_t*, struct pipeline_t* pipeline, nd_dl698_msg_t*)
+int fr_pack_698_tail(void *, void * pipeline, nd_dl698_msg_t*)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     struct fifo_t* fifo = (struct fifo_t*)(struct fifo_t*)nd_fr698_pipeline_out_queue(pipeline);

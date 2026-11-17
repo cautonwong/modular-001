@@ -1,0 +1,5 @@
+name: driver.storage_mx25l3206e
+version: 0.1.0
+layer: platform
+paths: [infra/drivers/storage/mx25l3206e]
+dependencies: []

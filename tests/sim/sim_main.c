@@ -6,8 +6,8 @@
 #include <sys/mman.h>
 #include <time.h>
 
-#include "nidavellir.h"
 #include "resource_tool.h"
+#include "targets/stategrid_meter/app/resource_ids.h"
 #include "infra/kernel/resource_blocks.h"
 #include "targets/stategrid_meter/app/dl698_parameter_adapter.h"
 #include "targets/stategrid_meter/app/platform_adapter.h"
@@ -34,7 +34,7 @@
 #define SIM_PERIPH_BASE ((void *)0x40000000u)
 #define SIM_PERIPH_SIZE (1024u * 1024u)
 
-extern int baremetal_instance_entry_main(struct instance_t *instance, int argc,
+extern int baremetal_instance_entry_main(stategrid_context_t *instance, int argc,
                                          char **argv);
 
 static int sim_arena_clear_of_peripherals(void *arena, size_t size)
@@ -196,7 +196,7 @@ static int parse_args(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-    struct instance_t *instance;
+    stategrid_context_t *instance;
 
     struct tm start_time;
     void *arena;
@@ -241,11 +241,11 @@ int main(int argc, char **argv)
         return 2;
     }
 
-    instance = create_instance(RES_DEV_RAM, (uint32_t)(uintptr_t)arena,
+    instance = stategrid_context_create(RES_DEV_RAM, (uint32_t)(uintptr_t)arena,
                                g_sim.arena_size, SIM_RESOURCE_BLOCK_SIZE,
                                resource_block_name);
     if (instance == NULL) {
-        fprintf(stderr, "firmware_sim: create_instance failed\n");
+        fprintf(stderr, "firmware_sim: stategrid_context_create failed\n");
         sim_arena_unmap(arena, g_sim.arena_size);
         sim_devices_close();
         sim_script_close();

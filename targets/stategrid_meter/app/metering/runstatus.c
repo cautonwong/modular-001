@@ -1,4 +1,5 @@
-#include "nidavellir.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
+#include "targets/stategrid_meter/app/resource_ids.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -7,7 +8,7 @@
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "application/ports/resource_access.h"
-#include "type_def.h"
+#include "components/core/types/type_def.h"
 #include "domain/common/status.h"
 #include "domain/metering/run_status.h"
 #include "fr_698.h"
@@ -15,7 +16,7 @@
 #include "targets/stategrid_meter/app/events/events_applications.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
 #include "infra/kernel/resource_blocks.h"
-#include "kernel/legacy_control_block.h"
+#include "targets/stategrid_meter/persistence/legacy_control_block.h"
 #include "application/ports/platform.h"
 
 
@@ -24,7 +25,7 @@ void Meter_Run_State(void *instance, void *pipeline)
     struct mbase_control_block_t* mbase_cb;
     nd_run_status_inputs_t inputs = {0};
 
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    mbase_cb = ((stategrid_context_t *)instance)->mbase;
 
     inputs.battery_mv = nd_mbase_voltage_battery(mbase_cb);
     inputs.power_direction = nd_mbase_power_dir(mbase_cb);
@@ -57,7 +58,7 @@ int16_t Check_para_Pro(void *instance)
     uint32_t addr = 0x00;
     size_t mbase_block_static_size = nd_mbase_offset_static_section_end() - nd_mbase_offset_static_section_start() + 1;
     
-    mbase_cb = (struct mbase_control_block_t*)get_pipeline_ctx(instance, pid_meter_base);
+    mbase_cb = ((stategrid_context_t *)instance)->mbase;
     
     /******************* mbase_control_block_t *******************/
     check_sum = do_block_static_checksum(instance);

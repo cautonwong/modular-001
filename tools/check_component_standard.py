@@ -3,8 +3,7 @@
 
 Every manifest needs a semver, a known layer and existing paths. The name is
 derived from the directory, except for the documented special roots (boards,
-SoCs, third-party libraries, the legacy nidavellir headers and the two
-platform adapters). New components therefore cannot invent a name that does
+SoCs, third-party libraries and the two platform adapters). New components therefore cannot invent a name that does
 not match their location.
 """
 from __future__ import annotations
@@ -24,21 +23,12 @@ NAME = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$")
 
 
 def special_name(parts: list[str]) -> str | None:
-    if parts[:2] == ["infra", "boards"] and len(parts) == 3:
-        return f"board.{parts[2]}"
     if parts[:2] == ["infra", "soc"] and len(parts) == 4:
         return f"soc.{parts[2]}_{parts[3]}"
     if parts[:2] == ["infra", "third_party"] and len(parts) == 4:
         return f"third_party.{parts[2]}_{parts[3]}"
-    legacy_names = {
-        ("nidavellir", "include"): "legacy.base_headers",
-        ("nidavellir", "include", "dlms"): "legacy.dlms_headers",
-        ("nidavellir", "include", "kernel"): "legacy.kernel_headers",
-        ("nidavellir", "include", "test"): "legacy.test_support",
-        ("nidavellir", "include", "port_header"): "legacy.port_header",
-    }
-    if tuple(parts) in legacy_names:
-        return legacy_names[tuple(parts)]
+    if parts[:2] == ["infra", "drivers"] and len(parts) == 4:
+        return f"driver.{parts[2]}_{parts[3]}"
     if parts[:3] == ["targets", "stategrid_meter", "board"]:
         return "platform.stategrid_board"
     if parts[:3] == ["targets", "stategrid_meter", "upgrade"]:
@@ -71,13 +61,11 @@ def allowed_layers(path: str) -> set[str]:
     if parts[0] == "components" and len(parts) > 1:
         return {parts[1]}
     if parts[0] == "infra":
-        if len(parts) >= 3 and parts[1] in ("boards", "soc", "third_party"):
+        if len(parts) >= 3 and parts[1] in ("boards", "soc", "third_party", "drivers"):
             return {"platform"}
         return {"infra"}
     if parts[0] == "targets":
         return {"product", "platform"}
-    if parts[0] == "nidavellir":
-        return {"infra", "product"}
     return set()
 
 
