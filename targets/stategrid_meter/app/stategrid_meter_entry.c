@@ -107,16 +107,16 @@ static nd_fifo_channel_t dl698_output_storage[3];
 static nd_channel_t dl698_input_channel[3];
 static nd_channel_t dl698_output_channel[3];
 
-static uint32_t dl698_now_ms(stategrid_context_t *instance)
+static uint32_t dl698_now_ms(void *context)
 {
-    return instance != NULL ? ((stategrid_context_t *)instance)->ms : 0;
+    return context != NULL ? ((stategrid_context_t *)context)->ms : 0;
 }
 
-static int stategrid_dl698_send(stategrid_context_t *instance,
+static int stategrid_dl698_send(void *context,
                                 void *pipeline,
                                 nd_dl698_msg_t *mesg)
 {
-    (void)instance;
+    (void)context;
     (void)pipeline;
     if (dl698_plc_component == NULL) {
         return -1;
