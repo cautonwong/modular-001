@@ -35,8 +35,8 @@
 #include "targets/idis_ip_meter_freertos/cosem/nd_idis_profiles.h"
 #include "targets/idis_ip_meter_freertos/cosem/nd_idis_scheduler.h"
 #include "targets/idis_ip_meter_freertos/mapper_idis/nd_idis_ids.h"
-#include "time_link.h"
-#include "time_link.h"
+#include "infra/soc/v85xxp/v8500/time_link.h"
+#include "infra/soc/v85xxp/v8500/time_link.h"
 
 
 /* shortcut: fixed wait for the PMU hold-up budget; tune when hardware is known. */

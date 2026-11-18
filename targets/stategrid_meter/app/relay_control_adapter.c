@@ -10,7 +10,7 @@
 
 #include "domain/load_control/load_control.h"
 #include "infra/memory/arena.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
 #include "targets/stategrid_meter/board/relay_config.h"

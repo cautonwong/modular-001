@@ -1,0 +1,36 @@
+{
+  "include": ["**/*.md", "**/*.txt", "**/*.py"],
+  "exclude": [],
+  "rules": [
+    {
+      "path": "domain/**",
+      "rule": "domain is the model layer and the cleanest code in the repo. It must not depend on platform, infra, targets, RTOS or host libc. C11 with a strict Cortex-M0 compile. No mutable globals; inject ports and aggregates through constructors. Public headers compile standalone. A change here keeps the host tests and the 91-case stategrid acceptance green.",
+      "merge_system_rule": true
+    },
+    {
+      "path": "application/**",
+      "rule": "application depends on domain only. Cross-context calls go through consumer-defined ports bound once at the composition root with a void *ctx opaque handle. No device_ops tables, no driver registries, no new mutable globals. C11 with a strict Cortex-M0 compile and no host libc.",
+      "merge_system_rule": true
+    },
+    {
+      "path": "components/**",
+      "rule": "components are providers, not a second domain. core has no dependencies; protocol and services must not depend on application; only application may depend on protocol. Keep the manifest-visible dependency direction that check_components enforces. A public function without a production caller fails check_component_reachability unless the baseline names the test or host path.",
+      "merge_system_rule": true
+    },
+    {
+      "path": "infra/**",
+      "rule": "infra holds SoCs, boards, drivers and RTOS adapters. No kernel types cross into application, domain or components; ports stay void *. One board per product, no device abstraction. ROM stays under the target link assert (IDIS 102 KiB). A power-safety path change needs hardware evidence or an explicit note that it is untested.",
+      "merge_system_rule": true
+    },
+    {
+      "path": "targets/**",
+      "rule": "targets are product composition roots. product.yaml, not a CMake GLOB, decides which components enter the firmware. Every target needs a tests/acceptance entry; new behavior adds a case or explains why not. Keep the RAM and ROM static asserts tight; the 698 arena has 212 B slack on host, so a new buffer needs a budget change.",
+      "merge_system_rule": true
+    },
+    {
+      "path": "tools/**",
+      "rule": "The checks and baselines are the gates. Do not weaken a check, a baseline entry or a self-check to make a change pass; fix the code or add a justified exception with a check= premise that fails when the premise stops holding. A new lint needs a negative probe. Keep the baselines exact (path, name, line; product, component, source).",
+      "merge_system_rule": true
+    }
+  ]
+}

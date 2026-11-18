@@ -11,7 +11,7 @@
 #include "application/ports/resource_access.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "domain/events/program_list.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/persistence/legacy_control_block.h"
 
 

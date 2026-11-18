@@ -6,7 +6,7 @@ set -uo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 includes=(
     -I "$root"
-    -I "$root/infra/kernel"
+    -I "$root/components/core/types"
     -I "$root/targets/stategrid_meter"
     -I "$root/targets/stategrid_meter/app"
     -I "$root/targets/stategrid_meter/mapper_645"
@@ -27,11 +27,9 @@ flags=(-std=gnu11 -mcpu=cortex-m0 -mthumb -ffreestanding -w
        -Werror=implicit-function-declaration -fpermissive "${includes[@]}")
 
 files=(
-    components/protocol/dl645/nd_dl645.c
-    components/protocol/dl698/nd_dl698.c
-    infra/kernel/utils.c
+    components/core/types/utils.c
     targets/stategrid_meter/app/uart_timeout_adapter.c
-    infra/kernel/rtc.c
+    components/core/types/rtc.c
     targets/stategrid_meter/app/metering/legacy/energy.c
     targets/stategrid_meter/app/tariff/legacy/touFee.c
     targets/stategrid_meter/app/metering/runstatus.c

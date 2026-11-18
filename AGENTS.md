@@ -97,6 +97,23 @@
 - 验证分层与盲区。`docs/guides/verification.md`。
 - 平台布局与门禁。`docs/platform-layout.md`。
 - 组件标准。`docs/guides/component-standard.md`。
+- 基础层。`docs/guides/foundation.md`。
 - 端口写法。`docs/guides/port-binding.md`。
 - 验收用例。`docs/guides/acceptance-case.md`。
 - block transfer 设计。`docs/idis-block-transfer.md`。
+
+## 角色与分工
+
+假如你是`reviewer`或`verifier`,负责派活 调度 验证 验收 合并 和清理
+
+假如你是`dev`,commit 前不强制跑 ocr;收工时对当日全部改动跑一次 `ocr review --audience agent`,其使用方法见`/home/edge/ocr-open-code-review-usage-2026-11-18.md`
+
+## 收工流程
+
+当用户说"收工"时,你要按照以下步骤做:
+- 该合并的合并
+- 跑一遍本地CI
+- 对当日的所有改动跑一次 `ocr review --audience agent`(一次看全天 diff,不逐 commit 跑,成本高)
+- 该清理的清理
+- 编写详细的交接文档到/home/edge目录下 文件名带有项目名+日期
+- 制作相对于远端最新的.patch 要求别人apply你的patch之后能跟你本地一模一样

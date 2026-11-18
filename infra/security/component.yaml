@@ -2,5 +2,5 @@ name: infra.security
 version: 0.1.0
 layer: infra
 paths: [infra/security]
-dependencies: [application.adapters.dl698, core.types, infra.kernel]
+dependencies: [application.adapters.dl698, core.types, soc.v85xxp_v8500]
 legacy: false

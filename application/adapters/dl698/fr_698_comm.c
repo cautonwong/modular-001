@@ -1,5 +1,5 @@
 #include <stdbool.h>
-#include "application/ports/fifo.h"
+#include "components/core/fifo/fifo.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "fr_axdr.h"
 #include "fr_698.h"

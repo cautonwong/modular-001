@@ -1,6 +1,0 @@
-name: protocol.mbus
-version: 0.1.0
-layer: protocol
-paths: [components/protocol/mbus]
-dependencies: [services.channel]
-legacy: false

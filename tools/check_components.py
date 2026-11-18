@@ -1,14 +1,27 @@
 #!/usr/bin/env python3
-"""Check component manifests and component include direction.
+"""Check component manifests and component dependency direction.
 
 Each component owns one or more paths and declares its layer. The checker
-walks the declared paths, maps every repo-relative include to a layer, and
-fails when a component includes a layer it may not depend on. Legacy
-components are checked for metadata only.
+walks the declared paths, maps every include to a layer, and fails when a
+component includes a layer it may not depend on. Declared
+`dependencies:` are checked against the same FORBIDDEN table, so a manifest
+cannot bypass the include ban. Legacy components are checked for metadata
+only.
+
+A relative include is resolved against the including file's directory before
+its layer is classified, so a parent-relative path cannot dodge the ban.
+System includes and paths outside the repo are skipped.
+
+--self-check builds a throwaway tree and proves the include ban for both a
+repo-relative and a parent-relative include, the dependency-direction ban for
+protocol and services, and a clean component. The self-check runs on every
+invocation, so the CI gate always exercises it.
 """
+import argparse
 import os
 import re
 import sys
+import tempfile
 import xml.etree.ElementTree as ET
 
 import legacy_baseline
@@ -21,14 +34,18 @@ FORBIDDEN = {
     "core": {"domain", "application", "protocol", "services", "infra", "platform", LEGACY_LAYER, "product"},
     "domain": {"application", "protocol", "services", "infra", "platform", LEGACY_LAYER, "product"},
     "application": {"protocol", "infra", "platform", LEGACY_LAYER, "product"},
-    "protocol": {"infra", "platform", LEGACY_LAYER, "product"},
-    "services": {"infra", "platform", LEGACY_LAYER, "product"},
+    "protocol": {"application", "infra", "platform", LEGACY_LAYER, "product"},
+    "services": {"protocol", "application", "infra", "platform", LEGACY_LAYER, "product"},
     "infra": {"product"},
     "platform": {"product"},
     "product": set(),
 }
 INCLUDE = re.compile(r'^\s*#\s*include\s*[<"]([^>"]+)[>"]')
 SOURCE = re.compile(r"\.(c|h)$")
+# One FIFO storage type. A copy reappears as a struct with the same fields.
+FIFO_FIELDS = {"buf_ptr", "rd", "wr", "buf_size"}
+STRUCT_BODY = re.compile(r"struct\s+\w+\s*\{([^{}]*)\}", re.DOTALL)
+STRUCT_MEMBER = re.compile(r"\b(\w+)\s*(?:\[[^\]]*\])?\s*;")
 
 
 def parse_manifest(path):
@@ -65,12 +82,12 @@ def parse_manifest(path):
     return data
 
 
-def discover():
+def discover(root=ROOT):
     components = []
     for base in COMPONENT_ROOTS:
-        root = os.path.join(ROOT, base)
-        for dirpath, _dirs, files in os.walk(root):
-            if "build" in os.path.relpath(dirpath, ROOT).split(os.sep):
+        root_dir = os.path.join(root, base)
+        for dirpath, _dirs, files in os.walk(root_dir):
+            if "build" in os.path.relpath(dirpath, root).split(os.sep):
                 continue  # generated build trees can contain copied manifests
             if "component.yaml" in files:
                 path = os.path.join(dirpath, "component.yaml")
@@ -94,10 +111,27 @@ def target_layer(include):
     return None
 
 
-def ewp_projects():
+def include_layer(include, source, component, root=ROOT):
+    """Layer of an include, resolving a relative path against the source dir."""
+    layer = target_layer(include)
+    if layer is not None:
+        return layer
+    resolved = os.path.normpath(os.path.join(os.path.dirname(source), include))
+    if not os.path.isfile(resolved):
+        return None
+    rel = os.path.relpath(resolved, root)
+    if rel == ".." or rel.startswith(".." + os.sep):
+        return None
+    owned = [os.path.join(root, path) for path in component.get("paths", [])]
+    if any(resolved == path or resolved.startswith(path + os.sep) for path in owned):
+        return None
+    return target_layer(rel.replace(os.sep, "/"))
+
+
+def ewp_projects(root=ROOT):
     """Include directories and source lists of every IAR project in the tree."""
     projects = []
-    for dirpath, dirs, files in os.walk(ROOT):
+    for dirpath, dirs, files in os.walk(root):
         dirs[:] = [name for name in dirs if not name.startswith(".")]
         for filename in sorted(files):
             if not filename.endswith(".ewp"):
@@ -139,12 +173,12 @@ def projects_for_source(path, projects):
     return best
 
 
-def resolve_include(source, include, projects):
+def resolve_include(source, include, projects, root=ROOT):
     include = include.replace("\\", "/")
     candidates = [os.path.join(os.path.dirname(source), include)]
     for project in projects_for_source(source, projects):
         candidates.extend(os.path.join(base, include) for base in project["includes"])
-    candidates.append(os.path.join(ROOT, include))
+    candidates.append(os.path.join(root, include))
     for candidate in candidates:
         candidate = os.path.normpath(candidate)
         if os.path.isfile(candidate):
@@ -152,12 +186,12 @@ def resolve_include(source, include, projects):
     return None
 
 
-def main():
+def check(root=ROOT):
     errors = []
-    components = discover()
-    projects = ewp_projects()
+    components = discover(root)
+    projects = ewp_projects(root)
     owned_components = [
-        (os.path.join(ROOT, path), component)
+        (os.path.join(root, path), component)
         for component in components
         for path in component.get("paths", [])
     ]
@@ -172,7 +206,7 @@ def main():
 
     names = {}
     for component in components:
-        rel = os.path.relpath(component["_file"], ROOT)
+        rel = os.path.relpath(component["_file"], root)
         for key in ("name", "layer", "paths"):
             if key not in component:
                 errors.append(f"{rel}: missing {key}")
@@ -184,18 +218,18 @@ def main():
         if layer not in LAYERS:
             errors.append(f"{rel}: unknown layer {layer}")
         for path in component.get("paths", []):
-            if not os.path.exists(os.path.join(ROOT, path)):
+            if not os.path.exists(os.path.join(root, path)):
                 errors.append(f"{rel}: path does not exist: {path}")
         for path in component.get("exclude", []):
-            if not os.path.exists(os.path.join(ROOT, path)):
+            if not os.path.exists(os.path.join(root, path)):
                 errors.append(f"{rel}: exclude path does not exist: {path}")
 
         if layer == "product":
             continue
 
-        excludes = [os.path.join(ROOT, path) for path in component.get("exclude", [])]
+        excludes = [os.path.join(root, path) for path in component.get("exclude", [])]
         for owned in component.get("paths", []):
-            owned_root = os.path.join(ROOT, owned)
+            owned_root = os.path.join(root, owned)
             for dirpath, _dirs, files in os.walk(owned_root):
                 if any(dirpath == ex or dirpath.startswith(ex + os.sep) for ex in excludes):
                     continue
@@ -205,14 +239,26 @@ def main():
                     source = os.path.join(dirpath, filename)
                     if any(source == ex for ex in excludes):
                         continue
-                    rel_source = os.path.relpath(source, ROOT)
+                    rel_source = os.path.relpath(source, root)
                     with open(source, encoding="utf-8", errors="replace") as handle:
-                        for number, line in enumerate(handle, 1):
+                        text = handle.read()
+                    if "/components/core/fifo/" not in "/" + rel_source.replace(
+                            os.sep, "/"):
+                        for body in STRUCT_BODY.findall(text):
+                            members = set(STRUCT_MEMBER.findall(body))
+                            if len(members & FIFO_FIELDS) >= 3:
+                                errors.append(
+                                    f"{rel_source}: a second FIFO type; use "
+                                    "struct fifo_t from "
+                                    "components/core/fifo/fifo.h"
+                                )
+                                break
+                    for number, line in enumerate(text.splitlines(), 1):
                             match = INCLUDE.match(line)
                             if not match:
                                 continue
                             include = match.group(1)
-                            target = target_layer(include)
+                            target = include_layer(include, source, component, root)
                             if target is not None and target != layer:
                                 if target in FORBIDDEN.get(layer, set()):
                                     errors.append(
@@ -220,7 +266,7 @@ def main():
                                         f"may not include {include} ({target})"
                                     )
                             dependency = None
-                            resolved = resolve_include(source, include, projects)
+                            resolved = resolve_include(source, include, projects, root)
                             if resolved is not None:
                                 dependency = component_for(resolved)
                             if (dependency is not None
@@ -234,18 +280,23 @@ def main():
                                 )
 
     for component in components:
-        rel = os.path.relpath(component["_file"], ROOT)
+        rel = os.path.relpath(component["_file"], root)
         for dependency in component.get("dependencies", []):
             if dependency not in names:
                 errors.append(f"{rel}: unknown dependency {dependency}")
+            elif names[dependency].get("layer") in FORBIDDEN.get(component.get("layer"), set()):
+                errors.append(
+                    f"{rel}: {component.get('layer')} component may not depend "
+                    f"on {dependency} ({names[dependency].get('layer')})"
+                )
 
     owned_roots = [
-        os.path.join(ROOT, path)
+        os.path.join(root, path)
         for component in components
         for path in component.get("paths", [])
     ]
     for base in COMPONENT_ROOTS:
-        for dirpath, _dirs, files in os.walk(os.path.join(ROOT, base)):
+        for dirpath, _dirs, files in os.walk(os.path.join(root, base)):
             for filename in files:
                 if not SOURCE.search(filename):
                     continue
@@ -254,18 +305,18 @@ def main():
                     source == owned or source.startswith(owned + os.sep)
                     for owned in owned_roots
                 ):
-                    rel_source = os.path.relpath(source, ROOT)
+                    rel_source = os.path.relpath(source, root)
                     errors.append(f"{rel_source}: source is not owned by any component")
 
     # Product descriptors may only select components that exist.
-    products_root = os.path.join(ROOT, "products")
+    products_root = os.path.join(root, "products")
     if os.path.isdir(products_root):
         for dirpath, _dirs, files in os.walk(products_root):
             if "product.yaml" not in files:
                 continue
             path = os.path.join(dirpath, "product.yaml")
             data = parse_manifest(path)
-            rel = os.path.relpath(path, ROOT)
+            rel = os.path.relpath(path, root)
             if "name" not in data:
                 errors.append(f"{rel}: missing name")
             selected = data.get("components", [])
@@ -292,10 +343,85 @@ def main():
                         )
                     pending.append(dependency)
 
+    return errors
+
+
+def _write(root, relative, text):
+    path = os.path.join(root, relative)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write(text)
+
+
+def _manifest(name, layer, path, dependencies="[]"):
+    return (f"name: {name}\nversion: 0.1.0\nlayer: {layer}\n"
+            f"paths: [{path}]\ndependencies: {dependencies}\nlegacy: false\n")
+
+
+def self_check():
+    with tempfile.TemporaryDirectory() as tmp:
+        _write(tmp, "application/ports/component.yaml",
+               _manifest("application.ports", "application", "application/ports"))
+        _write(tmp, "application/ports/uart_timeout.h",
+               "#ifndef DEMO_FIFO_H\n#define DEMO_FIFO_H\n#endif\n")
+        for name, layer, dependencies in (
+                ("demo.clean", "protocol", "[demo.protocol]"),
+                ("demo.protocol", "protocol", "[]"),
+                ("demo.app", "application", "[]"),
+                ("demo.protocol_include", "protocol", "[]"),
+                ("demo.protocol_relative", "protocol", "[]"),
+                ("demo.protocol_dep", "protocol", "[demo.app]"),
+                ("demo.services_dep", "services", "[demo.protocol]"),
+                ("demo.fifo", "protocol", "[]")):
+            short = name.split(".")[1]
+            path = f"components/demo/{short}"
+            _write(tmp, f"{path}/component.yaml",
+                   _manifest(name, layer, path, dependencies))
+            _write(tmp, f"{path}/{short}.c", "")
+        _write(tmp, "components/demo/protocol_include/protocol_include.c",
+               '#include "application/ports/uart_timeout.h"\n')
+        _write(tmp, "components/demo/protocol_relative/protocol_relative.c",
+               '#include "../../../application/ports/uart_timeout.h"\n')
+        _write(tmp, "components/demo/fifo/fifo.h",
+               "struct second_fifo {\n    uint8_t *buf_ptr;\n"
+               "    volatile uint16_t rd;\n    volatile uint16_t wr;\n"
+               "    uint16_t buf_size;\n};\n")
+
+        joined = "\n".join(check(tmp))
+        expected = (
+            "protocol component may not include application/ports/uart_timeout.h "
+            "(application)",
+            "protocol component may not include ../../../application/ports/uart_timeout.h "
+            "(application)",
+            "protocol component may not depend on demo.app (application)",
+            "services component may not depend on demo.protocol (protocol)",
+            "components/demo/fifo/fifo.h: a second FIFO type",
+        )
+        for fragment in expected:
+            if fragment not in joined:
+                print(f"components self-check failed: missing {fragment!r}")
+                return False
+        if "demo.clean" in joined:
+            print("components self-check failed: clean component was rejected")
+            return False
+    print("components self-check ok: repo-relative and parent-relative include "
+          "bans, dependency direction, clean pass")
+    return True
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--self-check", action="store_true")
+    args = parser.parse_args()
+    if not self_check():
+        return 1
+    if args.self_check:
+        return 0
+    errors = check()
     for error in errors:
         print(error)
     if not errors:
-        print(f"components ok ({len(components)} manifests)")
+        print(f"components ok ({len(discover())} manifests)")
     return 1 if errors else 0
 
 

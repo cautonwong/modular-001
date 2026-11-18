@@ -18,7 +18,7 @@
 #include "targets/stategrid_meter/app/display_applications.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
 #include "fr_698.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "infra/soc/v85xxp/v8500/v85xxp_system.h"
 
 #ifdef ND_FIRMWARE_SIM

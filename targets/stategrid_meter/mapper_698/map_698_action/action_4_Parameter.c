@@ -10,7 +10,7 @@
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
 #include "domain/common/time_format.h"
 #include "components/core/types/utils.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #endif // !WIN32
 
 

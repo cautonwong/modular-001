@@ -1,7 +1,7 @@
 #include "unity.h"
 
 #include "infra/channel/fifo_channel.h"
-#include "infra/kernel/fifo.h"
+#include "components/core/fifo/fifo.h"
 
 #include <string.h>
 

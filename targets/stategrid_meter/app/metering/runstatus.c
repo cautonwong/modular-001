@@ -15,7 +15,7 @@
 #include "domain/load_control/relay_status.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/persistence/legacy_control_block.h"
 #include "application/ports/platform.h"
 

@@ -8,7 +8,7 @@
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "cpu_surport.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
 
 //extern uint8_t read_event_report_flag_mode(void *instance, uint32_t oad, uint8_t mode);

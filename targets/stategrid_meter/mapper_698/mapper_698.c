@@ -17,7 +17,7 @@
 #include "application/adapters/dl698/fr_698.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/freeze/freeze_applications.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "infra/soc/v85xxp/v8500/v85xxp_system.h"
 #include "targets/stategrid_meter/app/driver_entry.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"

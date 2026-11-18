@@ -11,7 +11,7 @@
 #include "645id_table.h"
 #include "fr_698.h"
 #include "components/core/types/utils.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 //参数  
 //0x04001405  主动上报状态字自动复位延时时间     //默认30min

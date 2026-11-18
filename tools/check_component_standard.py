@@ -20,6 +20,9 @@ LAYERS = {"core", "domain", "application", "protocol", "services", "infra",
           "platform", "product"}
 VERSION = re.compile(r"^\d+\.\d+\.\d+$")
 NAME = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$")
+# Dissolved 2026-11-18: FIFO to core.fifo, maths to core.types, timer to
+# infra/soc. The path must stay gone so a new bucket cannot reappear.
+BANNED_PATHS = ("infra/kernel",)
 
 
 def special_name(parts: list[str]) -> str | None:
@@ -72,6 +75,10 @@ def allowed_layers(path: str) -> set[str]:
 def main() -> int:
     errors: list[str] = []
     index = product_manifest.component_index()
+    for banned in BANNED_PATHS:
+        if (ROOT / banned).exists():
+            errors.append(f"{banned}: dissolved into core.fifo, core.types and "
+                          "soc.v85xxp_v8500; do not recreate it")
     for name, component in sorted(index.items()):
         path = Path(component["_file"]).parent.relative_to(ROOT).as_posix()
         manifest = Path(component["_file"]).relative_to(ROOT)

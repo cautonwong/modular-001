@@ -21,7 +21,7 @@
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
 #include "targets/stategrid_meter/board/relay_config.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/persistence/legacy_control_block.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "targets/stategrid_meter/app/driver_entry.h"

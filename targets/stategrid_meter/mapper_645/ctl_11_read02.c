@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include "application/adapters/dl698/meter_base_view.h"
 #include "645id_table.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 
 int read_02( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {

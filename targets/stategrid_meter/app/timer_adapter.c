@@ -1,6 +1,6 @@
 #include "targets/stategrid_meter/app/timer_adapter.h"
 #include "domain/common/timer.h"
-#include "time_link.h"
+#include "infra/soc/v85xxp/v8500/time_link.h"
 #include <stddef.h>
 
 static void board_start_one(void *ctx, uint8_t timer_id, uint32_t count)

@@ -1,6 +1,0 @@
-name: infra.kernel
-version: 0.1.0
-layer: infra
-paths: [infra/kernel]
-dependencies: [application.ports, core.types, soc.v85xxp_v8500]
-legacy: false

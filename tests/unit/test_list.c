@@ -2,7 +2,7 @@
 
 #include <stddef.h>
 
-#include "infra/kernel/list.h"
+#include "components/core/types/list.h"
 
 struct node {
     int value;

@@ -6,10 +6,11 @@
 #include <string.h>
 
 #include "cpu_surport.h"
+#include "targets/stategrid_meter/app/ram_budget.h"
 
 sim_config_t g_sim = {
     .cycles = 10,
-    .arena_size = 24u * 1024u,
+    .arena_size = STG_RAM_ARENA_SIZE,
     .eeprom_path = "backupfiles/firmware_eeprom.bin",
     .flash_path = "backupfiles/firmware_flash.bin",
     .trace_path = NULL,
@@ -18,6 +19,7 @@ sim_config_t g_sim = {
 
 static FILE *trace_file;
 static unsigned cycle_index;
+static unsigned malloc_calls;
 
 void sim_trace_open(void)
 {
@@ -52,6 +54,21 @@ void sim_trace_printf(const char *format, ...)
     va_end(args);
     fputc('\n', trace_file);
     fflush(trace_file);
+}
+
+int nd_sim_malloc_should_fail(void)
+{
+    malloc_calls++;
+    if ((g_sim.fail_malloc_at != 0u) && (malloc_calls == g_sim.fail_malloc_at)) {
+        sim_trace_printf("[sim] malloc fail call=%u", malloc_calls);
+        return 1;
+    }
+    return 0;
+}
+
+unsigned nd_sim_malloc_count(void)
+{
+    return malloc_calls;
 }
 
 int nd_sim_should_stop(stategrid_context_t *instance)

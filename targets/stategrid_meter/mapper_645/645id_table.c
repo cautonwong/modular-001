@@ -9,7 +9,7 @@
 #include "fr_645_report.h"
 #include "cpu_surport.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "infra/soc/v85xxp/v8500/v85xxp_system.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
 #include "targets/stategrid_meter/mapper_698/factory_cfg.h"

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Ratchet the ad-hoc extern declarations in owned sources.
 
-The scan covers targets/, application/, components/ and infra/kernel.
-Vendor trees (infra/soc, infra/boards, infra/third_party) stay out.
+The scan covers targets/, application/, components/ and infra/.
+Vendor trees (infra/third_party, infra/boards, infra/soc/**/vendor and
+infra/security/crypto) stay out.
 
 A declaration belongs in the header of the module that defines the
 symbol. The baseline records the current debt. The check fails when a file
@@ -18,15 +19,19 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 BASELINE = ROOT / "tools" / "extern_baseline.txt"
 EXTERN = re.compile(r"^\s*extern\s")
+VENDOR = (("infra", "third_party"), ("infra", "boards"),
+          ("infra", "security", "crypto"))
 
 
 def counts() -> dict[str, int]:
     found: dict[str, int] = {}
     for base in (ROOT / "targets", ROOT / "application",
-                 ROOT / "components", ROOT / "infra" / "kernel"):
+                 ROOT / "components", ROOT / "infra"):
         for path in sorted(base.rglob("*.c")):
             rel = path.relative_to(ROOT)
-            if "build" in rel.parts:
+            if "build" in rel.parts or "vendor" in rel.parts:
+                continue
+            if any(rel.parts[:len(prefix)] == prefix for prefix in VENDOR):
                 continue
             number = sum(1 for line in path.read_text(errors="replace").splitlines()
                          if EXTERN.match(line))

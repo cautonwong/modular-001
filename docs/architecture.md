@@ -1,7 +1,7 @@
 # Blade 四层架构
 
 状态：草案，等待勘察报告校订。
-工作分支：`refactor/ddd-clean-arch`，合入 `modular`，不碰 `main`。
+工作分支：`main`。
 
 ## 1. 四层与依赖规则
 
@@ -29,6 +29,22 @@ infra/         SOCes / boards / interrupt / RTOSes / HALes。实现上层定义�
 
 其他方向一律视为架构错误，由 `tools/check-layers.sh` 拦截。
 
+## 1.1 components 是 provider 层，不是 domain
+
+`components/` 放可复用的协议、服务和基础设施能力。它不是领域模型，也不合并进 `domain/`。
+
+- `domain` 只放聚合、聚合根、值对象、领域服务和有界上下文。纯 C，不依赖协议、通道、缓冲或 IP。
+- `core` 组件无依赖。`protocol` 和 `services` 组件的目标是只依赖 `domain`、`core`、`services`，不依赖 `application`、`infra` 或 `targets`。
+- `tools/check_components.py` 对 `#include` 和 `dependencies:` 使用同一张 `FORBIDDEN` 表。`protocol`/`services` 不能依赖 `application`、`infra`、`platform`、`legacy` 和 `product`；`services` 只能依赖 `domain`、`core`、`services`，不能依赖 `protocol`。`dependencies:` 里的名字先解析到组件清单的 `layer` 再判定。`--self-check` 每次运行都在临时树里构造负例（protocol include application、protocol 以 `../../../` 相对路径 include application、protocol 依赖 application、services 依赖 protocol）和一个干净组件。include 先按仓库根相对路径归类；不在已知前缀下时按包含文件所在目录解析成仓库相对路径再归类，组件自身路径、仓库外路径和系统头跳过。`protocol.dl698` wrapper 已删除，698 状态机留在 `application/adapters/dl698`，由 target 的组合根驱动。
+- `tools/check_layers.py` 只管四层，不扫描 `components/`。组件方向以 `check_components.py` 为准。
+- `tools/check_component_reachability.py` 扫描组件根和 `include/` 下所有公开 C 函数声明，不只 `nd_*_create`/`nd_*_init`。至少一个公开函数要在组件之外的固件 `.c` 里有直接调用点；`tests/`、`formal/`、`targets/host`（host runner 不是固件）、函数定义本身和组件内部调用都不算。调用按符号归属计数：调用方必须直接或传递 include 组件路径下声明该函数的头，同名函数在其他组件里不计数。`tools/reachability_baseline.txt` 只记录当前只有非生产调用者的组件和该调用路径（测试或 host）；条目重新获得固件调用者会失败，`--update` 重写基线。当前基线两条：`application.metering targets/host/composition.c` 和 `services.channel tests/unit/test_fifo_channel.c`。product 层是 target 组合根，不在本检查范围；逐产品链接覆盖见下一条。
+- `tools/check_product_component_usage.py` 用构建产物逐源检查产品链接覆盖。固件产品从 `targets/` 派生，不靠手写清单：有 `app/` 或 `build/` CMake 的 target 是固件，用 `set(PRODUCT ...)` 指定产品；有 `iar for arm` `.ewp` 的 target 是固件，按产品选中的组件路径归属产品（组件 `paths` 指向 target 目录本身也算选中该 target）。固件 target 没有产品、同一产品归属两个固件 target、或给固件产品登记 `non_firmware` 都失败；没有固件 target 的产品必须登记 `non_firmware`。每个固件产品选中的组件，其 `paths` 下每个 `.c`（扣除 `exclude` 和 `tests/`）都必须是该产品链接的输入。stategrid 的证据是 `check-firmware-link.py` 把 IAR EWP 源清单编译并交给 `arm-none-eabi-gcc` 链接后写出的 `--manifest`；它记录的是链接输入（编译并传给 ld 的翻译单元），不是符号存活：`-Wl,--gc-sections` 可能丢掉某个源的全部 section。当前 223 个产品源中有 23 个在 `firmware.elf` 里没有任何已定义全局符号存活（`arm-none-eabi-nm --defined-only`）；要求符号存活会把它们变成 23 条例外，所以门禁只声明链接输入，符号存活是残余。两个 IDIS 产品取 `build/ci-*/build.ninja` 唯一的可执行链接语句，链接对象必须有编译规则。没有 `.c` 的组件按 header-only 通过；只在 host 测试里编译、只通过头文件使用、或被产品未选组件调用的源，在 `tools/product_link_baseline.txt` 按 `source` 逐条登记，每条带 `check=` 前置条件：`header=<includer>:<header>` 要求任一已链接源能到达包含者、包含者 include 仓库相对的指定头、且头属于例外组件，`unselected=<component>` 要求产品不选中调用者组件、也不把调用者组件放进依赖闭包，`test=<manifest>` 要求测试清单有未注释的该源条目，`closure=<component>` 要求例外组件在该组件的依赖闭包内。前置条件失效即失败；新增未链接源、链接对象缺编译规则、例外过期、产品无链接证据也都失败。非固件产品按 `non_firmware` 登记原因，并核对选中组件的 `.c` 都在 `product_manifest` 源清单里；`application.metering` 只被 `meter_gas` 和 `meter_water` 选中，两者都没有固件镜像，登记为 manifest-only。自检每次运行都证明部分链接会在新未登记源上失败、已登记例外通过、固件产品从 CMake `PRODUCT` 和 IAR 组件路径派生、无产品 target 和双 target 产品都失败、仓库相对 include 可达、只出现在依赖闭包里的 `unselected` 组件、没有已链接源到达的 `header` 前置条件、不在任何组件下的头、注释掉的 `test` 条目都被拒绝。残余：EWP 里 `fr_698_comm.c` 和 `resource_access.c` 都定义 `nd_get_index`，dl698 那个在 `WIN32_U_TEST` 下编译为空；检查不解析预处理条件。
+- `tools/check_mutable_globals.py` 扫描受管层的 `.c` 和 `.h`，规则相同：`static` 声明，含函数内 `static` 局部；以及位于行首、花括号深度为 0 的非 `static` 文件作用域声明。可变指针、数组和对象计数；`const` 对象、`const` 指针、`extern` 声明、`typedef`、函数原型和函数定义不计数，IAR 的 `@` 位置后缀先去掉。`tools/mutable_globals_baseline.txt` 按“路径 名字 行号”每行一条：同一文件里两个同名全局是两条，删一个再在另一行加一个会同时报新条目和过期条目；移动行号也会失败，直到 `--update`。当前 249 条，74 个文件，其中头文件 28 条（三个 `infra/boot/HD` 头，都是缺 `extern` 的文件作用域定义；`static` 定义目前为零）。扫描跳过 `tests/`、`infra/third_party`、`infra/soc` 下的 `vendor/` 子树、`infra/security/crypto` 和构建目录。剩余盲区：宏展开产生的声明看不到，宏可能带参数，安全展开要逐文件的预处理标志；`#if` 两个分支都参与解析；函数内 `static` 仍按债务计数；非 `static` 函数局部靠行首缩进和花括号深度排除。
+- `components/core` 和 `components/services` 是模板。`components/protocol` 现在只有 DLMS；698 状态机在 `application/adapters/dl698`，由 stategrid target 驱动。两个 IDIS 产品的选择已与构建对齐：删掉了被 CMake 过滤的 `application.metering`、`application.adapters.dl645`、`application.adapters.dl698` 和 `core.buf`。`protocol.dlms` 的固件链接只编 `src/nd_axdr.c`，其余 `src/nd_dlms_*.c` 只在 host 测试里编译；`application.ports` 和 `services.channel` 在 IDIS 固件里都没有链接源。DLMS 的四个 test-only 源、`core.types` 的三个未链接源（`bitarithm.c`、`list.c`、`rtc.c`）、`application.ports` 和 `services.channel` 的源，都在 `tools/product_link_baseline.txt` 逐条登记并带 `check=` 前置条件：`bitarithm.c`/`list.c`、DLMS 四个源和 `application.ports` 的三个源由 `tests/CMakeLists.txt` 编译，`rtc.c` 的调用者 `application.adapters.dl698` 不被 IDIS 产品选中，`services.channel` 在 `application.ports` 的依赖闭包里；非固件产品也按 `non_firmware` 登记原因。
+- stategrid_meter 的 RAM 预算和 OOM 覆盖也编在代码里。`targets/stategrid_meter/app/ram_budget.h` 定义 24 KiB arena、2 KiB 元数据区、cache 2108 B、mbase 3 KiB，并按 `STG_698_LINK_COUNT` 推导 698 块；共享分配入口 `__nd_malloc`/`__nd_calloc` 按 4 字节取整，元数据、cache 和 698 块的分配项按同样方式取整；mbase 三区按 `offsetof` 的原始大小放置，不经过分配器。断言分两层：每个块内部先算自己的占用（元数据 = context + 4 个 `block_device_t` + 17 个 `resource_block_t`；cache = RTC 4 + key 8 + `cache_max` + 每 698 通道 8；mbase = static + cache + persistent 三区；698 = 通道数 × 单通道）并断言不超过块大小，再断言四个块之和不超过 arena。host 当前：元数据 1208/2048 B、cache 2084/2108 B（余 24 B）、698 17136 B、mbase 1361/3072 B；四块按块大小合计 24364 B（2048 + 2108 + 17136 + 3072），arena 总余量 212 B（不是某个块的 headroom；内部 used 之和为 21789 B）。Cortex-M0 用 arm-none-eabi-gcc 的 sizeof：元数据 848/2048 B、mbase 1321/3072 B、698 16572 B，总余量 776 B；IAR 实编译仍未跑。运行时每个 `add_block`/`add_inside_block`/`add_device`/`register_parameter`/`register_log`/`register_map` 结果都检查，`add_inside_block` 拒绝 `offset + size > block->size`，`stategrid_context_create` 的第一个分配也检查，所以溢出在启动时失败而不是静默重叠；`add_block`/`add_inside_block`/`register_parameter`/`register_log` 返回资源块描述符而不是可能为 0 的存储地址，EEPROM/flash 首块地址 0 不再被误判为失败；`register_map` 本来就返回 `resource_map_t` 描述符。`stategrid_meter_entry.c` 的 698 通道表与计数不一致编译失败，所以加第四个通道必须先改计数，而计数一变预算断言就重算：当前产品只有 RS485-1、PLC 和 IR 三个 698 通道，第四个不是产品配置。`__no_init nd_memory[STG_RAM_ARENA_SIZE]`、`stategrid_context_create` 和 host 模拟的 arena 默认值共用这组宏。ACC-BOOT-002 先跑一次正常启动，从模拟器的 `[sim] mallocs=N` 读共享分配入口的调用总数，再对 1..N 逐个 `--fail-malloc`，断言退出非 0、`init failed`、无 `done`；当前正常启动 `mallocs=49`（3 次 context create、7 次 `add_block`、3 次 `add_inside_block`、2 次 `add_device`、7 次 `register_*`、27 次 `nd_malloc`），测试同时断言总数不低于 49，掉回旧的 27 会失败。盲区：元数据断言里的 17 个块和 4 个设备是手工计数，加注册调用要同步改计数，否则只有启动时的运行时检查会发现；号码随工具链布局变化，文档数字只是当前编译输出。
+
+合并 `components` 到 `domain` 会把协议、通道、缓冲和 IP 放进模型层，破坏依赖方向和 `check_components.py` 的边界。
+
 ## 2. 数据形状优先
 
 先定数据，再定接口。
@@ -40,15 +56,14 @@ infra/         SOCes / boards / interrupt / RTOSes / HALes。实现上层定义�
 
 当前的主要违规，也是重构的靶心：
 
-1. `struct mbase_control_block_t` 曾定义在 `nidavellir/include/applications.h`，约 330 行，把计量、费率、事件、显示参数、上报配置、继电器状态混在一个聚合根里。2026-11-10 已移到 `targets/stategrid_meter/persistence/legacy_control_block.h`，聚合边界仍未拆开。
+1. `struct mbase_control_block_t` 曾定义在旧 kernel 的 `applications.h`，约 330 行，把计量、费率、事件、显示参数、上报配置、继电器状态混在一个聚合根里。2026-11-10 已移到 `targets/stategrid_meter/persistence/legacy_control_block.h`，聚合边界仍未拆开。
 2. `instances/stategrid_meter/port.h` 用宏（`U_data_fields`、`I_data_fields`、`static_start`、`dyn_cache_start`）把 target 字段注入 domain 聚合根。domain 反向依赖了 target。
 3. 持久化布局依赖对聚合根做 `offsetof`，字节布局与结构体字段顺序强绑定。
 4. `applications.h` 是一个约 32 KB 的全局 extern 清单，声明 70 个符号，而实现散落在
-   `applications/`、`packages/meterbase`、`packages/dl698`、`packages/drivers`。kernel 伞头
-   `nidavellir.h:32` 无条件 include 它，于是 kernel 对外宣称了一批自己并不实现的符号。
-   2026-11-10 已删除该伞头，声明按 owner 分散到 context、infra 和 target 头，`nidavellir.h`
-   不再 include 它。
-5. 接口已经漂移：`applications/app_698_server/stub.c` 的 `read_esam_data` 和
+   旧的应用与软件包目录。kernel 伞头无条件 include 它，于是 kernel 对外宣称了一批
+   自己并不实现的符号。2026-11-10 已删除该伞头，声明按 owner 分散到 context、infra
+   和 target 头，该伞头不再 include 它。
+5. 接口已经漂移：旧 698 server stub 的 `read_esam_data` 和
    `display_oad_to_id` 签名与旧 `applications.h` 的声明不一致，靠近似符号名链接。
 6. target 关注点散在 `driver_entry.c`、`os_entry.c`、`port.h`、`targets/stategrid_meter/board/board_io.c`
    和 v85xxp arch 头里，没有单一组合根。
@@ -105,21 +120,21 @@ codec 不覆盖它们。<br>
 - 端口由消费者定义，target 组合根负责绑定。
 - 新增 SoC、board、RTOS 或 domain 只新增目录和组合根，不改已有业务规则。
 
-当前落地：`application/ports/platform` 承接看门狗和事件输出；`nidavellir.h`、`kernel/instance.h`、`kernel/pipeline.h` 和旧 kernel 源文件已删除。`stategrid_context_t` 持有产品状态、FIFO 和资源链表，`resource_tool.c` 只接受这个 context。协议组件通过显式 FIFO/context 参数和 `nd_dl698_msg_t`/`nd_dl645_msg_t` 工作。组件侧已有 `core.types`、`core.bus`、`services.channel`、FIFO 通道适配器、`protocol.dl698`、`protocol.dl645`、组件清单和 `tools/check_components.py`，产品描述在 `products/` 下。
+当前落地：`application/ports/platform` 承接看门狗和事件输出；旧 kernel 伞头、`kernel/instance.h`、`kernel/pipeline.h` 和旧 kernel 源文件已删除。`stategrid_context_t` 持有产品状态、FIFO 和资源链表，`resource_tool.c` 只接受这个 context。协议适配器通过显式 FIFO/context 参数和 `nd_dl698_msg_t`/`nd_dl645_msg_t` 工作；645 的消息类型在 `application/adapters/dl645/fr_645_message.h`，698 的消息类型在 `application/adapters/dl698/fr_698_message.h`。645 和 698 的 wrapper 都已删除，698 的接收/发送循环由 stategrid 组合根驱动。组件侧已有 `core.types`、`core.bus`、`services.channel`、FIFO 通道适配器、`protocol.dlms`、组件清单和 `tools/check_components.py`，产品描述在 `products/` 下。
 
 ## 3. 有界上下文
 
 | 上下文 | 职责 | 现状来源 |
 |---|---|---|
-| metering | 电能累计、瞬时量、需量 | `packages/meterbase/{energy,demand,electrical_measurement}.c` |
-| tariff | 费率、阶梯、时段、电价 | `packages/meterbase/{touFee,gs_month_bill,gs_step_bill}.c` |
-| events | 事件检测与记录 | `packages/meterbase/gs_*_event.c` |
-| freeze | 冻结与记录游标 | `packages/meterbase/gs_{freeze,record}.c` |
-| load_control | 继电器与负荷控制 | `packages/meterbase/relay_control.c` |
-| display | 显示模型与轮显 | `packages/meterbase/{display,gs_backlight_ctrl}.c` |
-| security | 安全策略（ESAM、密钥、权限） | `packages/{esam,crypto}` |
-| upgrade | 升级流程 | `packages/upgrade` |
-| protocol | 698 / 645 / DLMS 报文语义 | `packages/{dl698,dl645,dlms}`，属于 application 的适配器层 |
+| metering | 电能累计、瞬时量、需量 | `domain/metering/{energy,demand,measurement_average}.h` |
+| tariff | 费率、阶梯、时段、电价 | `domain/tariff/{tariff,activity_calendar}.h` |
+| events | 事件检测与记录 | `domain/events/*` |
+| freeze | 冻结与记录游标 | `domain/freeze/{schedule,capture}.h` |
+| load_control | 继电器与负荷控制 | `domain/load_control/{load_control,disconnect}.h` |
+| display | 显示模型与轮显 | `domain/display/*` |
+| security | 安全策略（ESAM、密钥、权限） | `domain/security/*` |
+| upgrade | 升级流程 | `targets/stategrid_meter/upgrade` |
+| protocol | 698 / 645 / DLMS 报文语义 | `application/adapters/{dl645,dl698}`；DLMS 在 `components/protocol/dlms`，未进产品构建 |
 
 `protocol` 不是领域上下文。它把线上字节翻译成领域值对象，放在 `application/adapters/`。
 
@@ -248,5 +263,3 @@ int main(void)
 ## 9. 待确认
 
 1. 存量设备的 EEPROM 字节布局是否必须保持完全兼容？如果必须，`serialize` 需要复刻当前 `offsetof` 布局并加版本号。
-2. `applications/` 下的协议应用是否允许保留独立可执行/可部署形态，还是统一收敛到 `application/` 分层？
-3. `packages/kernel` 的 pipeline/filter/message 机制是保留为 infra 的消息总线，还是用更简单的接口替换？

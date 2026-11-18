@@ -3,7 +3,7 @@
 #include "application/adapters/dl698/meter_base_view.h"
 #include "port.h"
 #include "fr_645_report.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
 
 int SET_2_Variable(void *instance, uint32_t id, uint8_t* buf, void *ctx)

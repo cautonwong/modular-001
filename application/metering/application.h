@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include "domain/common/allocator.h"
 #include "domain/common/calendar.h"
 #include "domain/load_control/load_control.h"
 #include "domain/metering/demand.h"
@@ -24,18 +25,15 @@ typedef struct {
     uint8_t relay_connected;
 } meter_status_t;
 
-typedef struct {
-    metering_state_t *metering;
-    nd_demand_t *demand;
-    load_control_state_t *load;
-    const nd_tariff_table_t *tariff;
-    meter_status_t status;
-} meter_application_t;
+typedef struct meter_application meter_application_t;
 
-void meter_application_init(meter_application_t *application,
-                            metering_state_t *metering, nd_demand_t *demand,
-                            load_control_state_t *load,
-                            const nd_tariff_table_t *tariff);
+meter_application_t *meter_application_create(
+    nd_allocator_t *allocator, metering_state_t *metering,
+    nd_demand_t *demand, load_control_state_t *load,
+    const nd_tariff_table_t *tariff);
+
+void meter_application_destroy(meter_application_t *application,
+                               nd_allocator_t *allocator);
 
 void meter_application_on_second(meter_application_t *application,
                                  const meter_tick_t *tick);

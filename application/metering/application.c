@@ -1,10 +1,23 @@
 #include "application/metering/application.h"
 
-void meter_application_init(meter_application_t *application,
-                            metering_state_t *metering, nd_demand_t *demand,
-                            load_control_state_t *load,
-                            const nd_tariff_table_t *tariff)
+struct meter_application {
+    metering_state_t *metering;
+    nd_demand_t *demand;
+    load_control_state_t *load;
+    const nd_tariff_table_t *tariff;
+    meter_status_t status;
+};
+
+meter_application_t *meter_application_create(
+    nd_allocator_t *allocator, metering_state_t *metering,
+    nd_demand_t *demand, load_control_state_t *load,
+    const nd_tariff_table_t *tariff)
 {
+    meter_application_t *application =
+        nd_alloc(allocator, sizeof(*application));
+    if (application == NULL) {
+        return NULL;
+    }
     application->metering = metering;
     application->demand = demand;
     application->load = load;
@@ -12,6 +25,15 @@ void meter_application_init(meter_application_t *application,
     application->status.fee = 0;
     application->status.day_table = 0;
     application->status.relay_connected = 1;
+    return application;
+}
+
+void meter_application_destroy(meter_application_t *application,
+                               nd_allocator_t *allocator)
+{
+    if (application != NULL) {
+        nd_dealloc(allocator, application, sizeof(*application));
+    }
 }
 
 void meter_application_on_second(meter_application_t *application,

@@ -5,6 +5,7 @@
 #include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
+#include "application/ports/platform.h"
 #include "application/ports/resource_access.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "fr_698.h"
@@ -12,13 +13,12 @@
 #include "domain/freeze/schedule.h"
 #include "domain/freeze/backfill.h"
 #include "domain/freeze/sequence.h"
-#include "domain/common/runtime.h"
 #include "targets/stategrid_meter/app/app_config.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/freeze/freeze_applications.h"
 #include "domain/freeze/storage.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #define CONVERT_TM_MONTH(x)  ((x<1)?0:(x-1))
 
 static void freeze_stored_datetime(const uint8_t* p, nd_datetime_t* out)
@@ -398,7 +398,7 @@ int record_rollback_after_set_time(void *instance, uint8_t finish_check)
             {
                 return 1;
             }
-            nd_runtime_watchdog_clear();
+            nd_platform_watchdog_kick();
             ret = get_record_id_info(instance, TabOAD[i], &record_id_info);
             if (ret <= 0)
             {
@@ -644,7 +644,7 @@ int day_freeze_power_on_pro(void *instance, void *task, void *mesg)
         rtc_format_change_from_tm(&record_tm,tmp);
         mem_swap_cpy(&payload[6], &tmp[0], 7);
         recv_record_process(instance, DayFreeze, payload);
-        nd_runtime_watchdog_clear();//清看门狗
+        nd_platform_watchdog_kick();//清看门狗
     }
 
 
@@ -734,7 +734,7 @@ int bill_freeze_power_on_pro(void *instance, void *task, void *mesg)
          // 记录1次结算       需根据i判断需量结算是否填空，
         // 第1结算日过后，最大需量清零                是否需要发送消息？             待添加
         recv_record_process(instance, BillFreeze, payload);
-        nd_runtime_watchdog_clear();
+        nd_platform_watchdog_kick();
     }
 
     return 0;

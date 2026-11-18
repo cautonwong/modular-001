@@ -6,10 +6,9 @@
 #include <time.h>
 
 #include "domain/common/store.h"
-#include "infra/kernel/fifo.h"
+#include "components/core/fifo/fifo.h"
 #include "infra/memory/sector_store.h"
 #include "targets/idis_ip_meter/cosem/nd_measurement_port.h"
-#include "infra/kernel/resource_blocks.h"
 #include "targets/idis_ip_meter/board/board_rn8209.h"
 #include "targets/idis_ip_meter/board/relay_pins.h"
 #include "targets/idis_ip_meter/board/uart_driver.h"

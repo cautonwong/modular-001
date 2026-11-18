@@ -6,9 +6,9 @@ application/adapters/dl698/fr_698_pack.c -Wconversion 12
 application/adapters/dl698/fr_698_pack.c -Wsign-conversion 1
 application/adapters/dl698/fr_axdr_codec.c -Wconversion 8
 domain/events/pq.c -Wconversion 7
-infra/kernel/bitarithm.h -Wconversion 1
-infra/kernel/bitarithm.h -Wsign-conversion 1
-infra/kernel/fifo.c -Wcast-qual 4
-infra/kernel/fifo.c -Wconversion 9
-infra/kernel/fifo.c -Wsign-conversion 1
+components/core/types/bitarithm.h -Wconversion 1
+components/core/types/bitarithm.h -Wsign-conversion 1
+components/core/fifo/fifo.c -Wcast-qual 4
+components/core/fifo/fifo.c -Wconversion 9
+components/core/fifo/fifo.c -Wsign-conversion 1
 targets/idis_ip_meter/cosem/classes/nd_ic_setup.c -Wconversion 1

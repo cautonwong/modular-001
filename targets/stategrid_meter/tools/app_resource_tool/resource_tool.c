@@ -3,10 +3,14 @@
 #include "targets/stategrid_meter/app/resource_ids.h"
 #include "targets/stategrid_meter/app/storage_device.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/persistence/legacy_control_block.h"
 
 #define res_conditions_true(a,b) if(a) { return b; } //a的调整满足返回b
+
+#ifdef ND_FIRMWARE_SIM
+int nd_sim_malloc_should_fail(void);
+#endif
 
 struct search_tempinfo_t
 {
@@ -212,6 +216,12 @@ int16_t update_verify(uint8_t device_name, uint32_t addr, uint16_t offset, uint8
 //初始化为0
 void *__nd_malloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_size)
 {
+#ifdef ND_FIRMWARE_SIM
+    if (nd_sim_malloc_should_fail())
+    {
+        return NULL;
+    }
+#endif
     uint32_t free = block_size - *used;
     uint32_t start = addr + *used;
 
@@ -228,6 +238,12 @@ void *__nd_malloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_si
 //不初始化
 void *__nd_calloc(uint32_t addr,uint32_t *used, uint32_t size, uint32_t block_size)
 {
+#ifdef ND_FIRMWARE_SIM
+    if (nd_sim_malloc_should_fail())
+    {
+        return NULL;
+    }
+#endif
     uint32_t free = block_size - *used;
     uint32_t start = addr + *used;
 
@@ -309,7 +325,7 @@ void* nd_calloc(stategrid_context_t *instance, uint8_t block_name, uint32_t size
 
 
 //注册API
-uint32_t *add_block(stategrid_context_t *instance, uint8_t device_name, uint8_t block_name, uint32_t block_size)
+struct resource_block_t *add_block(stategrid_context_t *instance, uint8_t device_name, uint8_t block_name, uint32_t block_size)
 {
     struct block_device_t* device = NULL;
     struct resource_block_t* block = NULL;
@@ -320,7 +336,7 @@ uint32_t *add_block(stategrid_context_t *instance, uint8_t device_name, uint8_t 
     //判断申请的字节有没有超限
     res_conditions_true((device->used + block_size) > device->size, NULL);
     block = look_up_block(instance, device, block_name);//在找block
-    res_conditions_true(block != NULL, (uint32_t*)block->first_addr);
+    res_conditions_true(block != NULL, block);
 
     re_block = look_up_block(instance, look_up_device(instance, instance->ram_device), instance->resource_block);
     res_conditions_true(re_block == NULL, NULL);
@@ -334,12 +350,12 @@ uint32_t *add_block(stategrid_context_t *instance, uint8_t device_name, uint8_t 
     block->size = block_size;
     block->used = 0x00;
     device->used += block_size;
-    list_add_tail(&block->sibling, &device->children);   
+    list_add_tail(&block->sibling, &device->children);
 
-    return (uint32_t *)block->first_addr;       
+    return block;
 }
 
-uint32_t *add_inside_block(stategrid_context_t *instance, uint8_t device_name,uint8_t block_name, uint8_t inside_block_name, uint32_t block_size, uint32_t offset)
+struct resource_block_t *add_inside_block(stategrid_context_t *instance, uint8_t device_name,uint8_t block_name, uint8_t inside_block_name, uint32_t block_size, uint32_t offset)
 {
     struct block_device_t* device = NULL;
     struct block_device_t* ram_device = NULL;
@@ -349,10 +365,11 @@ uint32_t *add_inside_block(stategrid_context_t *instance, uint8_t device_name,ui
 
     device = look_up_device(instance, device_name);//先获取device
     res_conditions_true(device == NULL, NULL);
-    //判断申请的字节有没有超限
-//    res_conditions_true((device->used + block_size) > device->size, NULL);
     block = look_up_block(instance, device, block_name);//在找block
     res_conditions_true(block == NULL, NULL);
+    //判断放在block内的区域有没有超出block
+    res_conditions_true((offset > block->size)
+                        || (block_size > (block->size - offset)), NULL);
     ram_device = look_up_device(instance, instance->ram_device); //获取ram_device
     res_conditions_true(ram_device == NULL, NULL);
 
@@ -370,7 +387,7 @@ uint32_t *add_inside_block(stategrid_context_t *instance, uint8_t device_name,ui
     inside_block->used = 0x00;
     block->used += block_size;
     list_add_tail(&inside_block->sibling, &device->children);
-    return (uint32_t *)inside_block->first_addr;
+    return inside_block;
 }
 
 stategrid_context_t *stategrid_context_create(uint8_t device_name, uint32_t first_addr, uint32_t size, uint32_t resource_blok_size,uint8_t resource_block_name)
@@ -381,6 +398,7 @@ stategrid_context_t *stategrid_context_create(uint8_t device_name, uint32_t firs
     uint32_t used = 0x00;
 
     instance = __nd_malloc(first_addr,&used,sizeof(stategrid_context_t), size);
+    res_conditions_true(instance == NULL, NULL);
     //初始化链表头
     init_list_head(&instance->dev_list);
     init_list_head(&instance->map_list);
@@ -540,7 +558,7 @@ int16_t nd_set_block(stategrid_context_t *instance, uint32_t res, uint8_t* buf, 
     return 1;
 }
 
-uint32_t* __register(stategrid_context_t *instance, uint8_t device_name, uint8_t block_name, uint8_t relation_device, uint8_t relation_name, uint32_t block_size,
+struct resource_block_t* __register(stategrid_context_t *instance, uint8_t device_name, uint8_t block_name, uint8_t relation_device, uint8_t relation_name, uint32_t block_size,
     int16_t(*fun)(stategrid_context_t *instance, uint16_t id, uint32_t *addr, uint32_t* len, uint32_t* depth))
 {
     struct block_device_t* device = NULL;
@@ -553,7 +571,7 @@ uint32_t* __register(stategrid_context_t *instance, uint8_t device_name, uint8_t
     //判断申请的字节有没有超限
     res_conditions_true((device->used + block_size) > device->size, NULL);
     block = look_up_block(instance, device, block_name);//在找block
-    res_conditions_true(block != NULL, (uint32_t*)block->first_addr);
+    res_conditions_true(block != NULL, block);
 
     re_block = look_up_block(instance, look_up_device(instance, instance->ram_device), instance->resource_block);
     res_conditions_true(re_block == NULL, NULL);
@@ -571,16 +589,16 @@ uint32_t* __register(stategrid_context_t *instance, uint8_t device_name, uint8_t
     block->hook = fun;
     device->used += block_size;
     list_add_tail(&block->sibling, &device->children);
-    return (uint32_t*)block->first_addr;
+    return block;
 }
 
-uint32_t* register_log(stategrid_context_t *instance, uint8_t device_name, uint8_t block_name, uint8_t relation_device, uint8_t relation_name, uint32_t block_size,
+struct resource_block_t* register_log(stategrid_context_t *instance, uint8_t device_name, uint8_t block_name, uint8_t relation_device, uint8_t relation_name, uint32_t block_size,
     int16_t(*fun)(stategrid_context_t *instance, uint16_t id, uint32_t* addr, uint32_t* len, uint32_t* depth))
 {
     return __register(instance, device_name, block_name, relation_device, relation_name, block_size, fun);
 }
 
-uint32_t* register_parameter(stategrid_context_t *instance, uint8_t device_name, uint8_t block_name, uint32_t block_size,
+struct resource_block_t* register_parameter(stategrid_context_t *instance, uint8_t device_name, uint8_t block_name, uint32_t block_size,
     int16_t(*fun)(stategrid_context_t *instance, uint16_t id, uint32_t *addr, uint32_t* len, uint32_t *offset))
 {
     return __register(instance, device_name, block_name, 0x00, 0x00, block_size, fun);

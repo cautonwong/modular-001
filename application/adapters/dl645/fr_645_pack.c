@@ -2,42 +2,7 @@
 #include <string.h>
 #include "application/adapters/dl645/fr_645_context.h"
 #include "application/adapters/dl645/fr_645_env.h"
-#include "application/ports/fifo.h"
-
-static uint16_t fr645_fifo_used(const fr_645_fifo_t *fifo)
-{
-    uint16_t rd = fifo->rd;
-    uint16_t wr = fifo->wr;
-    uint16_t size = fifo->buf_size;
-
-    return wr < rd ? (uint16_t)((size - rd) + wr) : (uint16_t)(wr - rd);
-}
-
-static uint16_t fr645_fifo_pop_data(fr_645_fifo_t *fifo, uint16_t len,
-                                    int (*callback)(void *, uint8_t *),
-                                    void *ctx)
-{
-    uint16_t rd = fifo->rd;
-    uint16_t left;
-    uint16_t copied = 0;
-
-    if (fr645_fifo_used(fifo) < len) {
-        return 0;
-    }
-    left = len;
-    while (left > 0) {
-        if (callback != NULL) {
-            callback(ctx, fifo->buf_ptr + rd);
-        }
-        copied++;
-        left--;
-        if (++rd >= fifo->buf_size) {
-            rd = 0;
-        }
-    }
-    fifo->rd = rd;
-    return copied;
-}
+#include "components/core/fifo/fifo.h"
 
 int __update_cs(void* pctx, uint8_t* byte)
 {
@@ -66,7 +31,7 @@ static int __pack_apdu_byte_645(void* pctx, uint8_t* byte)
 int fr_pack_645_apdu(void *, void * pipeline, nd_dl645_msg_t* mesg)
 {
     struct context_645_t* ctx = (struct context_645_t*)nd_fr645_pipeline_ctx(pipeline);
-    fr645_fifo_pop_data(&ctx->apdu, mesg->len, __pack_apdu_byte_645, pipeline);
+    fifo_popData(&ctx->apdu, mesg->len, __pack_apdu_byte_645, pipeline);
     return 1;
 }
 int fr_pack_645_head(void * instance, void * pipeline, nd_dl645_msg_t* mesg)

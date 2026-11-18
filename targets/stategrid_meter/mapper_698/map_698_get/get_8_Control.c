@@ -3,7 +3,7 @@
 #include "application/adapters/dl698/meter_base_view.h"
 #include "port.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 
 #define		F_RemoteRelayOn  	    0x01	//保电
 

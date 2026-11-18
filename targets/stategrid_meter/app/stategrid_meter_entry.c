@@ -16,25 +16,25 @@
 #include "targets/stategrid_meter/app/record_storage_adapter.h"
 #include "targets/stategrid_meter/app/relay_status_adapter.h"
 #include "targets/stategrid_meter/app/metering_input_adapter.h"
-#include "targets/stategrid_meter/app/runtime_adapter.h"
 #include "targets/stategrid_meter/app/timer_adapter.h"
 #include "resource_tool.h"
 #include "cpu_surport.h"
 #include "targets/stategrid_meter/app/app_entry.h"
 #include "targets/stategrid_meter/app/pids.h"
 #include "targets/stategrid_meter/app/stategrid_context.h"
+#include "targets/stategrid_meter/app/ram_budget.h"
 #include "targets/stategrid_meter/app/app_config.h"
 #include "targets/stategrid_meter/board/board_flash.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/persistence/legacy_control_block.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "targets/stategrid_meter/app/driver_entry.h"
 #include "targets/stategrid_meter/app/iar_linker_symbols.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
-#include "time_link.h"
-#include "infra/kernel/key_config.h"
-#include "components/protocol/dl698/nd_dl698.h"
-#include "infra/channel/fifo_channel.h"
+#include "infra/soc/v85xxp/v8500/time_link.h"
+#include "targets/stategrid_meter/app/key_config.h"
+#include "application/adapters/dl698/fr_698_message.h"
+#include "application/ports/uart_timeout.h"
 #include "application/adapters/dl645/fr_645_context.h"
 
 /* The supply callbacks take void *instance; register_* declares a typed
@@ -69,6 +69,27 @@ static stategrid_698_link_t link_4851;
 static stategrid_698_link_t link_plc;
 static stategrid_698_link_t link_ir;
 
+/* One entry per 698 channel. The 698 block is sized from
+ * STG_698_LINK_COUNT, so a link missing from this table has no budget; the
+ * static assert keeps the count and the table equal. */
+typedef struct
+{
+    stategrid_698_link_t *link;
+    uint8_t id;
+    uint8_t channel;
+} stategrid_698_channel_t;
+
+static const stategrid_698_channel_t stategrid_698_channels[] = {
+    { &link_4851, STG_PID_RX_698, UART_RS4851_CHL },
+    { &link_plc, STG_PID_PLC_RX_698, UART_MODULE_CHL },
+    { &link_ir, STG_PID_IR_RX_698, UART_IR_CHL },
+};
+
+_Static_assert(STG_698_LINK_COUNT
+                   == sizeof(stategrid_698_channels)
+                          / sizeof(stategrid_698_channels[0]),
+               "STG_698_LINK_COUNT must match the 698 channel table");
+
 static struct context_645_t ctx_645_server;
 static nd_pipeline_view_t rx645_view;
 
@@ -99,17 +120,27 @@ int update_instance_rtc(stategrid_context_t * instance)
     return 0;
 }
 
-static nd_dl698_t *dl698_components[3];
-static nd_dl698_t *dl698_plc_component;
-static size_t dl698_component_count;
-static nd_fifo_channel_t dl698_input_storage[3];
-static nd_fifo_channel_t dl698_output_storage[3];
-static nd_channel_t dl698_input_channel[3];
-static nd_channel_t dl698_output_channel[3];
+/* Unsolicited reports call ctx->send(instance, NULL, mesg); the link and the
+ * instance are fixed by the composition root. */
+static stategrid_698_link_t *dl698_plc_link;
+static stategrid_context_t *dl698_instance;
 
-static uint32_t dl698_now_ms(void *context)
+static int stategrid_698_send(stategrid_698_link_t *link,
+                              stategrid_context_t *instance,
+                              nd_dl698_msg_t *mesg)
 {
-    return context != NULL ? ((stategrid_context_t *)context)->ms : 0;
+    nd_pipeline_view_t pipeline = { 0 };
+
+    if ((link == NULL) || (instance == NULL) || (mesg == NULL)
+        || (link->ctx == NULL) || (link->out == NULL)) {
+        return -1;
+    }
+
+    pipeline.id = link->id;
+    pipeline.ctx = link->ctx;
+    pipeline.out_queue = link->out;
+    fr_tx_698_entry(instance, &pipeline, mesg);
+    return 0;
 }
 
 static int stategrid_dl698_send(void *context,
@@ -118,10 +149,47 @@ static int stategrid_dl698_send(void *context,
 {
     (void)context;
     (void)pipeline;
-    if (dl698_plc_component == NULL) {
+    if ((dl698_plc_link == NULL) || (dl698_instance == NULL) || (mesg == NULL)) {
         return -1;
     }
-    return nd_dl698_send(dl698_plc_component, mesg);
+    return stategrid_698_send(dl698_plc_link, dl698_instance, mesg);
+}
+
+static void stategrid_698_poll(stategrid_698_link_t *link,
+                               stategrid_context_t *instance)
+{
+    nd_pipeline_view_t pipeline = { 0 };
+    nd_dl698_msg_t mesg = { 0 };
+
+    if ((link == NULL) || (instance == NULL) || (link->ctx == NULL)
+        || (link->in == NULL) || (link->out == NULL)) {
+        return;
+    }
+
+    pipeline.id = link->id;
+    pipeline.ctx = link->ctx;
+    pipeline.in_queue = link->in;
+    pipeline.out_queue = link->out;
+
+    if ((fr_uart_timeout(instance, link->id) != 0)
+        && (fifoBuf_getUsed(link->in) >= 12))
+    {
+        link->ctx->fr_err = 0;
+        link->ctx->fr_err = fr_rx_698_entry(instance, &pipeline, &mesg);
+        if (link->ctx->fr_err > 0)
+        {
+            nd_event_t event = { 0 };
+
+            event.topic = ND_EVENT_DL698_FRAME;
+            event.timestamp_ms = instance->ms;
+            event.data.frame.channel = link->ctx->channel;
+            event.data.frame.length = (uint16_t)(link->ctx->min_len + 2);
+            nd_bus_publish(&event);
+
+            link->ctx->fr_err = fr_gatekeeper_698_server(instance, &pipeline,
+                                                         &mesg);
+        }
+    }
 }
 
 static int communication_channel_init(stategrid_context_t * p_instance, stategrid_698_link_t *link, uint8_t chl_type)
@@ -131,52 +199,38 @@ static int communication_channel_init(stategrid_context_t * p_instance, stategri
 
     //初始化698接收上下文
     link->ctx = nd_malloc(p_instance, control_block_698_name, sizeof(struct context_698_t));
+    if (link->ctx == NULL)
+    {
+        return false;
+    }
     ctx_698 = link->ctx;
 
     ctx_698->apdu = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
-    fifoBuf_init(ctx_698->apdu, nd_malloc(p_instance, control_block_698_name, Max698_apdu), Max698_apdu);
-
+    uint8_t* apdu = nd_malloc(p_instance, control_block_698_name, Max698_apdu);
     link->in = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
-    fifoBuf_init(link->in, nd_malloc(p_instance, control_block_698_name, Max698len), Max698len);
+    uint8_t* in = nd_malloc(p_instance, control_block_698_name, Max698len);
     link->out = nd_malloc(p_instance, control_block_698_name, sizeof(struct fifo_t));
-    fifoBuf_init(link->out, nd_malloc(p_instance, control_block_698_name, Max698len), Max698len);
+    uint8_t* out = nd_malloc(p_instance, control_block_698_name, Max698len);
+    if ((ctx_698->apdu == NULL) || (apdu == NULL) || (link->in == NULL)
+        || (in == NULL) || (link->out == NULL) || (out == NULL))
+    {
+        return false;
+    }
+    fifoBuf_init(ctx_698->apdu, apdu, Max698_apdu);
+    fifoBuf_init(link->in, in, Max698len);
+    fifoBuf_init(link->out, out, Max698len);
 
     if(chl_type<4){
         uint8_t* buf = nd_malloc(p_instance, control_block_cache, 8);
+        if (buf == NULL)
+        {
+            return false;
+        }
         fifoBuf_init(&ctx->pipe_uart[chl_type], buf, 8);
     }
     communication_chlx_init(link->out, link->in, chl_type , p_instance);
 
-    if (dl698_component_count < 3)
-    {
-        size_t index = dl698_component_count;
-        nd_dl698_config_t config;
-
-        nd_fifo_channel_init(&dl698_input_channel[index],
-                             &dl698_input_storage[index],
-                             link->in);
-        nd_fifo_channel_init(&dl698_output_channel[index],
-                             &dl698_output_storage[index],
-                             link->out);
-
-        config.instance = p_instance;
-        config.context = link->ctx;
-        config.pid = link->id;
-        config.now_ms = dl698_now_ms;
-        config.input = &dl698_input_channel[index];
-        config.output = &dl698_output_channel[index];
-        config.context->send = stategrid_dl698_send;
-
-        dl698_components[index] = nd_dl698_create(&config);
-        if (dl698_components[index] != NULL)
-        {
-            if (link->id == STG_PID_PLC_RX_698)
-            {
-                dl698_plc_component = dl698_components[index];
-            }
-            dl698_component_count++;
-        }
-    }
+    link->ctx->send = stategrid_dl698_send;
     return true;
 }
 
@@ -203,7 +257,7 @@ static void dispatch_645_rs4851(stategrid_context_t * instance)
     }
 }
 
-__no_init uint8_t nd_memory[24 * 1024]; //26
+__no_init uint8_t nd_memory[STG_RAM_ARENA_SIZE]; //26
 
 static void trace_event(uint8_t to, uint8_t ctrl)
 {
@@ -362,13 +416,10 @@ static void key_tick(stategrid_context_t *instance)
 
 static void io_poll(stategrid_context_t *instance)
 {
-    size_t i;
-
     dispatch_645_rs4851(instance);
-    for (i = 0; i < dl698_component_count; i++)
-    {
-        nd_dl698_poll(dl698_components[i]);
-    }
+    stategrid_698_poll(&link_4851, instance);
+    stategrid_698_poll(&link_plc, instance);
+    stategrid_698_poll(&link_ir, instance);
 }
 
 static void event_tick(stategrid_context_t *instance)
@@ -488,7 +539,8 @@ int baremetal_instance_entry_main(stategrid_context_t * instance, int argc, char
     memcpy(&ctx->time, &time, sizeof(struct tm));*/
     read_mcu_rtc(0x00, &ctx->time);
     ///////////////////////////////申请一个cache的BLOCK = 02/////////////////////////////////////////////
-    if (NULL == add_block(instance, RES_DEV_RAM, control_block_cache, (2108)))
+    if (NULL == add_block(instance, RES_DEV_RAM, control_block_cache,
+                          STG_RAM_CACHE_BLOCK_SIZE))
     {
         return -1;
     }
@@ -498,86 +550,161 @@ int baremetal_instance_entry_main(stategrid_context_t * instance, int argc, char
     ctx->need_data_recovery = 0x5A;
 
     uint8_t* buf = nd_malloc(instance, control_block_cache, 4);
+    if (buf == NULL)
+    {
+        return -1;
+    }
     fifoBuf_init(&ctx->pipe_rtc, buf, 4);
 
     buf = nd_malloc(instance, control_block_cache, 8);
+    if (buf == NULL)
+    {
+        return -1;
+    }
     fifoBuf_init(&ctx->pipe_key, buf, 8);
 
     ctx->apdu_cache = nd_malloc(instance, control_block_cache, cache_max);
+    if (ctx->apdu_cache == NULL)
+    {
+        return -1;
+    }
         
     /////////////////////////////////////申请一个698应用的BLOCK = 03/////////////////////////////////////////////////
-    if (NULL == add_block(instance, RES_DEV_RAM, control_block_698_name, 16 * 1024 + 640))//16
+    if (NULL == add_block(instance, RES_DEV_RAM, control_block_698_name,
+                          STG_698_BLOCK_SIZE))
     {
         return -1;
     }
 
-    link_4851.id = STG_PID_RX_698;
-    link_plc.id = STG_PID_PLC_RX_698;
-    link_ir.id = STG_PID_IR_RX_698;
-    communication_channel_init(instance, &link_4851, UART_RS4851_CHL);
+    for (unsigned i = 0; i < STG_698_LINK_COUNT; i++)
+    {
+        stategrid_698_channels[i].link->id = stategrid_698_channels[i].id;
+        if (!communication_channel_init(instance,
+                                        stategrid_698_channels[i].link,
+                                        stategrid_698_channels[i].channel))
+        {
+            return -1;
+        }
+    }
     rx645_view.id = STG_PID_RX_645;
     rx645_view.ctx = &ctx_645_server;
     rx645_view.in_queue = link_4851.in;
     rx645_view.out_queue = link_4851.out;
-    communication_channel_init(instance, &link_plc, UART_MODULE_CHL);
-    communication_channel_init(instance, &link_ir, UART_IR_CHL);
+    dl698_plc_link = &link_plc;
+    dl698_instance = instance;
     ctx->plc_698_ctx = link_plc.ctx;
 
     ////////////////////////////申请一个mbase应用的BLOCK = 04/////////////////////////////////////////////
-    mbase_cb_do_not_operation = (struct mbase_control_block_t*)add_block(instance, RES_DEV_RAM, mbase_control_block_name, 3 * 1024);
-    if (NULL == mbase_cb_do_not_operation) 
+    if (NULL == add_block(instance, RES_DEV_RAM, mbase_control_block_name, STG_RAM_MBASE_BLOCK_SIZE))
     {
         return -1;
     }
+    uint32_t mbase_addr = 0;
+    if (1 != get_block_frist_addr(instance, RES_DEV_RAM, mbase_control_block_name, &mbase_addr))
+    {
+        return -1;
+    }
+    mbase_cb_do_not_operation = (struct mbase_control_block_t*)mbase_addr;
     stategrid_context_set_mbase(ctx, mbase_cb_do_not_operation);
     //mbase分三个区
     //mbase_block_static
-    size_t mbase_block_static_size = nd_mbase_offset_static_section_end() - nd_mbase_offset_static_section_start() + 1;
-    uint32_t static_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_static, mbase_block_static_size, 0x00);
-    memset((uint8_t*)static_block, 0x00, mbase_block_static_size);
+    size_t mbase_block_static_size = STG_RAM_MBASE_STATIC_SIZE;
+    struct resource_block_t* static_block = add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_static, mbase_block_static_size, 0x00);
+    if (NULL == static_block)
+    {
+        return -1;
+    }
+    memset((uint8_t*)static_block->first_addr, 0x00, mbase_block_static_size);
     //mbase_block_cache
-    size_t mbase_block_cache_size = nd_mbase_offset_cache_section_end() -  nd_mbase_offset_cache_section_start() + 1;
-    uint32_t cache_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_cache, mbase_block_cache_size, mbase_block_static_size);
-    memset((uint8_t*)cache_block, 0x00, mbase_block_cache_size);
+    size_t mbase_block_cache_size = STG_RAM_MBASE_CACHE_SIZE;
+    struct resource_block_t* cache_block = add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_cache, mbase_block_cache_size, mbase_block_static_size);
+    if (NULL == cache_block)
+    {
+        return -1;
+    }
+    memset((uint8_t*)cache_block->first_addr, 0x00, mbase_block_cache_size);
     //mbase_block_persistent
-    size_t mbase_block_persistent_size = nd_mbase_offset_persistent_section_end() - nd_mbase_offset_persistent_section_start() + 1;
-    uint32_t persistent_block = (uint32_t)add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_persistent, mbase_block_persistent_size, mbase_block_static_size + mbase_block_cache_size);
+    size_t mbase_block_persistent_size = STG_RAM_MBASE_PERSISTENT_SIZE;
+    struct resource_block_t* persistent_block = add_inside_block(instance, RES_DEV_RAM, mbase_control_block_name, mbase_block_persistent, mbase_block_persistent_size, mbase_block_static_size + mbase_block_cache_size);
+    if (NULL == persistent_block)
+    {
+        return -1;
+    }
 
-    //注册EPROM  
-    add_device(instance, RES_DEV_EEPROM, 0x00);
+    //注册EPROM
+    if (1 != add_device(instance, RES_DEV_EEPROM, 0x00))
+    {
+        return -1;
+    }
     //注册FLASH
-    add_device(instance, RES_DEV_FLASH, BOARD_FLASH_SECTOR);
+    if (1 != add_device(instance, RES_DEV_FLASH, BOARD_FLASH_SECTOR))
+    {
+        return -1;
+    }
 
 
-    //注册参数区1 及其备份区  
-    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter_1, 1 * 1024, (resource_supply_fn)supply_parameter_1_info);
-    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter_1_bp, 1 * 1024, (resource_supply_fn)supply_parameter_1_info);
+    //注册参数区1 及其备份区
+    if (NULL == register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter_1, 1 * 1024, (resource_supply_fn)supply_parameter_1_info))
+    {
+        return -1;
+    }
+    if (NULL == register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter_1_bp, 1 * 1024, (resource_supply_fn)supply_parameter_1_info))
+    {
+        return -1;
+    }
 
     //注册事件的管理区/参数区
-    register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter, 15 * 1024, (resource_supply_fn)supply_parameter_info);
+    if (NULL == register_parameter(instance, RES_DEV_EEPROM, mbase_block_parameter, 15 * 1024, (resource_supply_fn)supply_parameter_info))
+    {
+        return -1;
+    }
 
 
     //申请一块参数保存区的EPROM区域 及备份区
-    add_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, mbase_block_static_size);//主区
-    add_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom_bp, mbase_block_static_size);//备份
-    
+    if (NULL == add_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom, mbase_block_static_size))//主区
+    {
+        return -1;
+    }
+    if (NULL == add_block(instance, RES_DEV_EEPROM, mbase_block_static_eprom_bp, mbase_block_static_size))//备份
+    {
+        return -1;
+    }
+
     //申请一块掉电保存的EPROM区域
-    add_block(instance, RES_DEV_EEPROM, mbase_block_persistent_eprom, mbase_block_persistent_size);
-    
+    if (NULL == add_block(instance, RES_DEV_EEPROM, mbase_block_persistent_eprom, mbase_block_persistent_size))
+    {
+        return -1;
+    }
+
 
     //注册事件
-    register_log(instance, RES_DEV_EEPROM, mbase_block_event, RES_DEV_EEPROM, mbase_block_parameter, 26 * 1024, (resource_supply_fn)supply_event_info);
+    if (NULL == register_log(instance, RES_DEV_EEPROM, mbase_block_event, RES_DEV_EEPROM, mbase_block_parameter, 26 * 1024, (resource_supply_fn)supply_event_info))
+    {
+        return -1;
+    }
 
     //注册冻结1-flash
     //必须为flash 首个块，和升级文件缓存 共用
-    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash1, RES_DEV_EEPROM, mbase_block_parameter, (MinuteFreeze_SECTION_SIZE) * 4 * 1024, (resource_supply_fn)supply_event_flash_1_info);
+    if (NULL == register_log(instance, RES_DEV_FLASH, mbase_block_event_flash1, RES_DEV_EEPROM, mbase_block_parameter, (MinuteFreeze_SECTION_SIZE) * 4 * 1024, (resource_supply_fn)supply_event_flash_1_info))
+    {
+        return -1;
+    }
 
     //注册冻结2-flash
-    register_log(instance, RES_DEV_FLASH, mbase_block_event_flash2, RES_DEV_EEPROM, mbase_block_parameter, (HourFreeze_SECTION_SIZE + DayFreeze_SECTION_SIZE + MonthFreeze_SECTION_SIZE) * 4 * 1024, (resource_supply_fn)supply_event_flash_2_info);
+    if (NULL == register_log(instance, RES_DEV_FLASH, mbase_block_event_flash2, RES_DEV_EEPROM, mbase_block_parameter, (HourFreeze_SECTION_SIZE + DayFreeze_SECTION_SIZE + MonthFreeze_SECTION_SIZE) * 4 * 1024, (resource_supply_fn)supply_event_flash_2_info))
+    {
+        return -1;
+    }
     //申请一块-flash
-    add_block(instance, RES_DEV_FLASH, public_block_flash, 4096*2);
+    if (NULL == add_block(instance, RES_DEV_FLASH, public_block_flash, 4096*2))
+    {
+        return -1;
+    }
     //注册一个698的MAP
-    register_map(instance, res_map_698, (resource_map_fn)resource_map_698);
+    if (NULL == register_map(instance, res_map_698, (resource_map_fn)resource_map_698))
+    {
+        return -1;
+    }
 #ifdef WIN32
     init_timer(instance);
 #endif
@@ -630,7 +757,7 @@ int main(int argc, char** argv)
     
     ndv_timer_init();
     
-    instance = stategrid_context_create(RES_DEV_RAM, (uint32_t)&nd_memory, 24 * 1024, 2 * 1024, resource_block_name);
+    instance = stategrid_context_create(RES_DEV_RAM, (uint32_t)&nd_memory, STG_RAM_ARENA_SIZE, STG_RAM_METADATA_SIZE, resource_block_name);
     if (instance == NULL)
     {
         return -1;
@@ -641,7 +768,6 @@ int main(int argc, char** argv)
     stategrid_backlight_bind();
     stategrid_relay_status_bind();
     stategrid_metering_input_bind();
-    stategrid_runtime_bind();
     stategrid_timer_bind();
 
     //初始化硬件

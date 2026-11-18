@@ -4,7 +4,7 @@
 #include "fr_698.h"
 #include "application/adapters/dl698/meter_base_view.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 
 
 

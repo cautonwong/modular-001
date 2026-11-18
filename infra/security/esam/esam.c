@@ -1,6 +1,6 @@
 #include "components/core/types/type_def.h"
 #include "components/core/types/utils.h"
-#include "time_link.h"
+#include "infra/soc/v85xxp/v8500/time_link.h"
 #include "fr_698_esam.h"
 #include "infra/security/esam/io_type.h"
 #include "esam_io.h"

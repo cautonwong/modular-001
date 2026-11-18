@@ -1,3 +1,9 @@
 # target/file count
 targets/stategrid_meter/board/cpu_v85xxp_isr.c 1
-components/protocol/dlms/pkg_dlms.c 1
+infra/boot/App/Source/common.c 3
+infra/boot/App/Source/main.c 6
+infra/boot/Drivers/Libraries/Lib_Driver/src/lib_adc.c 1
+infra/boot/Drivers/Libraries/Lib_Driver/src/lib_comp.c 1
+infra/boot/Drivers/Libraries/Lib_Driver/src/lib_pmu.c 1
+infra/boot/HD/HD_SYSTEM/hd_system.c 1
+infra/soc/v85xxp/v8500/v8500_for_single.c 1

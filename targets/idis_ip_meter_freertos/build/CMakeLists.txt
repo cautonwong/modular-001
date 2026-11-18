@@ -54,9 +54,9 @@ set(LAYER_SOURCES ${PRODUCT_SOURCES})
 set(PROTOCOL_SOURCES ${ROOT}/components/protocol/dlms/src/nd_axdr.c)
 set(INFRA_SOURCES ${ROOT}/infra/memory/byte_store.c
     ${ROOT}/infra/memory/sector_store.c
-    ${ROOT}/infra/kernel/utils.c
-    ${ROOT}/infra/kernel/fifo.c
-    ${ROOT}/infra/kernel/time_link.c)
+    ${ROOT}/components/core/types/utils.c
+    ${ROOT}/components/core/fifo/fifo.c
+    ${ROOT}/infra/soc/v85xxp/v8500/time_link.c)
 set(FREERTOS_SOURCES
     ${FREERTOS}/tasks.c
     ${FREERTOS}/queue.c
@@ -81,7 +81,6 @@ target_include_directories(idis_freertos PRIVATE
     ${APP_DIR}
     ${ROOT}
     ${ROOT}/components/protocol/dlms/include
-    ${ROOT}/infra/kernel
     ${SOC}
     ${SOC}/vendor
     ${SOC}/vendor/Lib_Driver/inc
@@ -101,7 +100,8 @@ foreach(mode_target board idis_freertos)
 endforeach()
 target_compile_options(idis_freertos PRIVATE
     -mcpu=cortex-m0 -mthumb -ffreestanding -Os -g
-    -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables)
+    -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables
+    -Werror=incompatible-pointer-types)
 # The SoC and its vendor driver library are imported as-is. GCC 14 still
 # makes an implicit declaration a hard error under -w, so downgrade it for
 # the vendor sources only.

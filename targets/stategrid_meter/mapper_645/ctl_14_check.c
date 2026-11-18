@@ -4,7 +4,7 @@
 #include "domain/common/time_format.h"
 #include "645id_table.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "port.h"
 
 

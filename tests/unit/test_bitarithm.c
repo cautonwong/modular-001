@@ -1,6 +1,6 @@
 #include "unity.h"
 
-#include "infra/kernel/bitarithm.h"
+#include "components/core/types/bitarithm.h"
 
 void setUp(void) {}
 void tearDown(void) {}

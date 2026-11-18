@@ -4,7 +4,7 @@
 #include "application/adapters/dl698/meter_base_view.h"
 #include "application/adapters/dl645/fr_645_context.h"
 #include "645id_table.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "infra/soc/v85xxp/v8500/v85xxp_system.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
 /***********************************************************************/

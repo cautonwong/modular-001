@@ -1,6 +1,6 @@
 #include "targets/stategrid_meter/app/tariff_lookup.h"
 #include "targets/stategrid_meter/app/stategrid_context.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/app/resource_ids.h"
 
 

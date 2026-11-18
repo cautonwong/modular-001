@@ -4,7 +4,7 @@
 
 #include "application/adapters/dl698/fr_698_context.h"
 #include "application/adapters/dl698/fr_698_pack.h"
-#include "application/ports/fifo.h"
+#include "components/core/fifo/fifo.h"
 
 struct fake_pipeline_t {
     uint8_t id;

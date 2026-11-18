@@ -5,7 +5,7 @@
 #define n_assert(x) ((void)0)
 #endif
 #include "application/adapters/dl645/fr_645_env.h"
-#include "application/ports/fifo.h"
+#include "components/core/fifo/fifo.h"
 #include "application/ports/record_storage.h"
 #include "application/adapters/dl645/fr_645_context.h"
 #include "application/adapters/dl645/fr_645.h"
@@ -45,57 +45,6 @@ static uint8_t uint32_to_buf_lsb(uint32_t data, uint8_t *buf)
     buf[3] = (uint8_t)(data >> 24);
     return 4;
 }
-
-static uint16_t fr645_fifo_used(const fr_645_fifo_t *fifo)
-{
-    uint16_t rd = fifo->rd;
-    uint16_t wr = fifo->wr;
-    uint16_t size = fifo->buf_size;
-
-    return wr < rd ? (uint16_t)((size - rd) + wr) : (uint16_t)(wr - rd);
-}
-
-static void fr645_fifo_init(fr_645_fifo_t *fifo, const void *buffer,
-                            uint16_t size)
-{
-    fifo->buf_ptr = (uint8_t *)buffer;
-    fifo->rd = 0;
-    fifo->wr = 0;
-    fifo->buf_size = size;
-}
-
-static void fr645_fifo_update_rd(fr_645_fifo_t *fifo, uint16_t len,
-                                 uint8_t forward)
-{
-    uint16_t rd = fifo->rd;
-
-    if (forward)
-    {
-        rd = (uint16_t)(rd + len);
-        if (rd >= fifo->buf_size)
-        {
-            rd = (uint16_t)(rd - fifo->buf_size);
-        }
-    }
-    else if (rd >= len)
-    {
-        rd = (uint16_t)(rd - len);
-    }
-    else
-    {
-        rd = (uint16_t)(fifo->buf_size - (len - rd));
-    }
-    fifo->rd = rd;
-}
-
-
-
-
-
-
-
-
-
 
 int fr_decode_645_11(void *, void *, nd_dl645_msg_t*)
 {
@@ -287,7 +236,7 @@ static int __fr_segment_tx_645_handle(void * instance, void * pipeline, nd_dl645
         {
             ctx->segment_tx_no++;
             ctx->segment_tx = 1;
-            mesg->len = fr645_fifo_used(&ctx->apdu);
+            mesg->len = fifoBuf_getUsed(&ctx->apdu);
             mesg->ctrl =  ctx->ctrl | 0x80;
             if (mesg->len > ctx->follow_segment_MaxLen)//后续帧
             {
@@ -300,7 +249,7 @@ static int __fr_segment_tx_645_handle(void * instance, void * pipeline, nd_dl645
                 //ctx->segment_tx = 1;
             }
 
-            fr645_fifo_update_rd(&ctx->apdu, 4, 0);
+            fifoBuf_update_rd(&ctx->apdu, 4, 0);
             mesg->len+=4;
             memcpy(ctx->apdu.buf_ptr + ctx->apdu.rd, data, 4);
 
@@ -388,7 +337,7 @@ uint32_t ID=0;
 
     if ((ctx->ctrl != 0x12) || (ctx->apdu.buf_ptr == NULL))
     {
-        fr645_fifo_init(&ctx->apdu, ctx->apdu_tx, max_apdu_cache_645);
+        fifoBuf_init(&ctx->apdu, ctx->apdu_tx, max_apdu_cache_645);
         ctx->segment_tx_no = 0;
         ctx->segment_tx = 0;
         ctx->report_stat_follow_flag = 0;
@@ -601,7 +550,7 @@ uint32_t ID=0;
     tx_len = tx_len;
     ctx->apdu.wr = tx_len;
     ctx->ctrl = mesg->ctrl;
-    mesg->len = fr645_fifo_used(&ctx->apdu);
+    mesg->len = fifoBuf_getUsed(&ctx->apdu);
     if (mesg->len > ctx->first_segment_MaxLen){   //后续帧
         mesg->len = ctx->first_segment_MaxLen ;
         mesg->ctrl |= FOLLOW_FRAM_FLAG;

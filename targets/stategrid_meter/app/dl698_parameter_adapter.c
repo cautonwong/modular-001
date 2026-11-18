@@ -3,7 +3,7 @@
 
 #include "port.h"
 #include "application/ports/resource_access.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 
 #include "application/adapters/dl698/parameter_port.h"
 

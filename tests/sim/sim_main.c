@@ -8,14 +8,14 @@
 
 #include "resource_tool.h"
 #include "targets/stategrid_meter/app/resource_ids.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/ram_budget.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/app/dl698_parameter_adapter.h"
 #include "targets/stategrid_meter/app/platform_adapter.h"
 #include "targets/stategrid_meter/app/backlight_adapter.h"
 #include "targets/stategrid_meter/app/record_storage_adapter.h"
 #include "targets/stategrid_meter/app/relay_status_adapter.h"
 #include "targets/stategrid_meter/app/metering_input_adapter.h"
-#include "targets/stategrid_meter/app/runtime_adapter.h"
 #include "targets/stategrid_meter/app/timer_adapter.h"
 
 #ifndef MAP_32BIT
@@ -24,9 +24,6 @@
 #ifndef MAP_FIXED_NOREPLACE
 #define MAP_FIXED_NOREPLACE 0
 #endif
-
-#define SIM_ARENA_SIZE (24u * 1024u)
-#define SIM_RESOURCE_BLOCK_SIZE (2u * 1024u)
 
 /* The firmware writes MCU control registers directly, for example GPIOC in
  * PowerOff_Save_data(). Give those addresses a real page so a scenario power
@@ -118,7 +115,7 @@ static void usage(const char *program)
            "[--trace PATH] [--scenario PATH] [--start-time "
            "'YYYY-MM-DD HH:MM:SS'] [--uart-tx PATH] [--uart-tx-hex PATH] "
            "[--relay-log PATH] [--backlight-log PATH] [--lcd-log PATH] "
-           "[--arena-size BYTES] [--verbose]\n",
+           "[--arena-size BYTES] [--fail-malloc N] [--verbose]\n",
            program);
 }
 
@@ -178,6 +175,12 @@ static int parse_args(int argc, char **argv)
             g_sim.arena_size = (unsigned)strtoul(argv[++i], NULL, 0);
             if (g_sim.arena_size == 0) {
                 fprintf(stderr, "firmware_sim: --arena-size must be positive\n");
+                return -1;
+            }
+        } else if (strcmp(argv[i], "--fail-malloc") == 0 && i + 1 < argc) {
+            g_sim.fail_malloc_at = (unsigned)strtoul(argv[++i], NULL, 0);
+            if (g_sim.fail_malloc_at == 0) {
+                fprintf(stderr, "firmware_sim: --fail-malloc must be positive\n");
                 return -1;
             }
         } else if (strcmp(argv[i], "--verbose") == 0) {
@@ -242,9 +245,10 @@ int main(int argc, char **argv)
     }
 
     instance = stategrid_context_create(RES_DEV_RAM, (uint32_t)(uintptr_t)arena,
-                               g_sim.arena_size, SIM_RESOURCE_BLOCK_SIZE,
+                               g_sim.arena_size, STG_RAM_METADATA_SIZE,
                                resource_block_name);
     if (instance == NULL) {
+        sim_trace_printf("[sim] init failed ret=%d", 2);
         fprintf(stderr, "firmware_sim: stategrid_context_create failed\n");
         sim_arena_unmap(arena, g_sim.arena_size);
         sim_devices_close();
@@ -273,7 +277,6 @@ int main(int argc, char **argv)
     stategrid_backlight_bind();
     stategrid_relay_status_bind();
     stategrid_metering_input_bind();
-    stategrid_runtime_bind();
     stategrid_timer_bind();
 
     sim_trace_printf("[sim] boot arena=%p instance=%p cycles=%u eeprom=%s "
@@ -283,6 +286,7 @@ int main(int argc, char **argv)
 
     int ret = baremetal_instance_entry_main(instance, 0, NULL);
 
+    sim_trace_printf("[sim] mallocs=%u", nd_sim_malloc_count());
     if (ret != 0) {
         sim_trace_printf("[sim] init failed ret=%d", ret);
     } else {

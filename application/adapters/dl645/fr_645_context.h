@@ -6,12 +6,7 @@
 
 
 #include "fr_645_message.h"
-typedef struct fr_645_fifo {
-    uint8_t *buf_ptr;
-    volatile uint16_t rd;
-    volatile uint16_t wr;
-    uint16_t buf_size;
-} fr_645_fifo_t;
+#include "components/core/fifo/fifo.h"
 
 #define max_apdu_cache_645  1200 
 struct context_645_t
@@ -37,7 +32,7 @@ struct context_645_t
     uint8_t seconds;//超时时间
     uint16_t tx_len;
     
-    fr_645_fifo_t apdu;
+    struct fifo_t apdu;
     
     uint8_t apdu_tx[max_apdu_cache_645]; 
     

@@ -116,7 +116,7 @@ IOStateCheck
 | RTC 秒事件 | 注入 |
 | `instance->ms` | 注入，每模拟秒 +1000 |
 | MCU 时钟、看门狗、NVIC、低功耗 | 空桩 |
-| UART/PLC/红外传输 | 只调用 `nd_dl698_poll`，没有字节注入 |
+| UART/PLC/红外传输 | 只调用 target 的 698 轮询，没有字节注入 |
 | 计量芯片 | 返回零读数，没有电压/电流/脉冲 |
 | ESAM | `openM_ioctl` 返回 -1 |
 | LCD | 写进程内 `sim_lcd`，不校验段码 |
@@ -127,13 +127,14 @@ IOStateCheck
 
 ## 固件侧发现
 
-1. `instance->ms` 在启动时置 0，之后没有 SysTick 推进
-   （`stategrid_meter_entry.c:355`）。`dl698_now_ms` 因此恒为 0。孪生自己注入
-   毫秒时间，说明这是裸机固件的真实缺口，不是仿真器造出来的。
+1. `instance->ms` 在启动时置 0，之后没有 SysTick 推进。698 帧事件的时间戳
+   因此恒为 0。孪生自己注入毫秒时间，说明这是裸机固件的真实缺口，不是仿真器
+   造出来的。
 2. WIN32 的 `main` 不创建实例，`instance` 保持 NULL，随后被
    `baremetal_instance_entry_main` 解引用。旧的 Windows 仿真路径不可用。
 3. `pl_rx_698` 的 `filter_n` 为 0，`pipeline->on_work` 不会执行；698 组帧完全靠
-   `nd_dl698_poll`。只看 pipeline trace 会误以为接收路径没跑。
+   `io_poll` 里的 698 轮询（`stategrid_meter_entry.c`）。只看 pipeline trace 会
+   误以为接收路径没跑。
 4. `COMMTAB.Addr` 和 `DISPLAYTAB.Sign` 原来用 `unsigned int` 存指针，64 位主机
    无法把数组地址当常量初始化。已改为 `uintptr_t`
    （`application/adapters/dl645/645id_table.h:111`、
@@ -143,11 +144,10 @@ IOStateCheck
    前进，否则秒数会卡在 20。
 6. target 主循环无条件调用看门狗、IRQ 泵、电源监控和
    `cpu_sleep_manage`；WIN32 之外没有宿主保护。孪生用桩承接。
-7. `resource_tool.h` 的 `#pragma pack(4)` 没有复位，泄漏到后续所有头文件。
-   `stategrid_meter_entry.c` 和 `nd_dl698.c` 因此对
-   `nd_dl698_config_t` 得出 44 和 48 两个大小，`nd_dl698_create` 返回 NULL，
-   `dl698_component_count` 为 0。已在 `circular_info_t` 后补 `#pragma pack()`，
-   698 通道恢复为 3 个；三个持久化结构的大小不变。
+7. `resource_tool.h` 的 `#pragma pack(4)` 没有复位，泄漏到后续所有头文件，
+   曾让两个编译单元对同一个 698 配置结构得出不同大小，698 通道初始化失败。
+   已在 `circular_info_t` 后补 `#pragma pack()`，698 通道恢复为 3 个；三个
+   持久化结构的大小不变。
 
 ## 已知盲区与下一步
 

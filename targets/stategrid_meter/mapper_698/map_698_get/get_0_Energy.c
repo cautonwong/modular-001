@@ -2,7 +2,7 @@
 #include "port.h"
 #include "application/adapters/dl698/meter_base_view.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 
 
 int GET_0_Energy(void *instance, uint32_t id, uint8_t* buf, uint8_t mode, void *ctx)

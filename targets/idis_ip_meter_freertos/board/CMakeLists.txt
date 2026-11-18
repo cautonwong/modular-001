@@ -18,10 +18,10 @@ target_include_directories(board PRIVATE
     ${SOC}/vendor
     ${SOC}/vendor/Lib_Driver/inc
     ${ROOT}/infra/third_party/arm/cmsis
-    ${ROOT}/infra/kernel
     ${ROOT}/application/adapters/dl698)
 target_compile_options(board PRIVATE
     -mcpu=cortex-m0 -mthumb -ffreestanding -Os -g -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables
+    -Werror=incompatible-pointer-types
     -Wno-error=implicit-function-declaration)
 
 add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/board.elf
