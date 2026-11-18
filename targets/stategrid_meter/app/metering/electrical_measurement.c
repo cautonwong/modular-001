@@ -17,7 +17,7 @@
 #include "domain/metering/metering_input.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 
 
 uint32_t over_Imax;

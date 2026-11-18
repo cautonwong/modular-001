@@ -102,9 +102,9 @@ add_library(blade_idis_skeleton STATIC
 target_include_directories(blade_idis_skeleton PUBLIC ${BLADE_ROOT})
 
 add_library(blade_infra STATIC
-    ${BLADE_ROOT}/infra/kernel/bitarithm.c
-    ${BLADE_ROOT}/infra/kernel/fifo.c
-    ${BLADE_ROOT}/infra/kernel/list.c
+    ${BLADE_ROOT}/components/core/types/bitarithm.c
+    ${BLADE_ROOT}/components/core/fifo/fifo.c
+    ${BLADE_ROOT}/components/core/types/list.c
     ${BLADE_ROOT}/infra/drivers/storage/eeprom/eeprom.c
     ${BLADE_ROOT}/infra/drivers/storage/mx25l3206e/mx25l3206e.c
     ${BLADE_ROOT}/infra/drivers/metering/rn8209/rn8209.c
@@ -235,6 +235,44 @@ if(NOT FIRMWARE_SIM_MANIFEST_RESULT EQUAL 0)
 endif()
 include(${FIRMWARE_SIM_MANIFEST})
 
+set(FIRMWARE_SIM_ENTRY ${BLADE_ROOT}/targets/stategrid_meter/app/stategrid_meter_entry.c)
+
+# The target app translation units skip the sim's -w so callback signature
+# mismatches fail the build. GCC 11 only warns about them unless they are
+# made errors.
+set(FIRMWARE_SIM_TARGET_APPS)
+foreach(source ${FIRMWARE_SIM_SOURCES})
+    if(source MATCHES "/targets/stategrid_meter/app/")
+        list(APPEND FIRMWARE_SIM_TARGET_APPS ${source})
+    endif()
+endforeach()
+list(REMOVE_ITEM FIRMWARE_SIM_SOURCES ${FIRMWARE_SIM_TARGET_APPS})
+
+add_library(firmware_sim_entry OBJECT ${FIRMWARE_SIM_ENTRY})
+target_include_directories(firmware_sim_entry PRIVATE ${FIRMWARE_SIM_INCLUDES})
+target_compile_definitions(firmware_sim_entry PRIVATE
+    ND_FIRMWARE_SIM
+    main=nd_firmware_main)
+target_compile_options(firmware_sim_entry PRIVATE
+    -fcommon
+    -fno-stack-protector
+    -Werror=incompatible-pointer-types
+    # Keep the entry's implicit declarations non-fatal on GCC 14+.
+    -Wno-error=implicit-function-declaration
+    -include "${BLADE_ROOT}/tests/sim/include/sim_compat.h"
+)
+
+add_library(firmware_sim_target_apps OBJECT ${FIRMWARE_SIM_TARGET_APPS})
+target_include_directories(firmware_sim_target_apps PRIVATE ${FIRMWARE_SIM_INCLUDES})
+target_compile_definitions(firmware_sim_target_apps PRIVATE ND_FIRMWARE_SIM)
+target_compile_options(firmware_sim_target_apps PRIVATE
+    -fcommon
+    -fno-stack-protector
+    -Werror=incompatible-pointer-types
+    -Wno-error=implicit-function-declaration
+    -include "${BLADE_ROOT}/tests/sim/include/sim_compat.h"
+)
+
 add_executable(firmware_sim
     ${FIRMWARE_SIM_SOURCES}
     ${CMAKE_CURRENT_SOURCE_DIR}/sim/sim_main.c
@@ -256,13 +294,11 @@ target_compile_options(firmware_sim PRIVATE
     -include "${BLADE_ROOT}/tests/sim/include/sim_compat.h"
 )
 target_link_options(firmware_sim PRIVATE -no-pie -Wl,--section-start=.sim_periph=0x40000000)
-target_link_libraries(firmware_sim PRIVATE m)
-set_source_files_properties(
-    ${BLADE_ROOT}/targets/stategrid_meter/app/stategrid_meter_entry.c
-    PROPERTIES COMPILE_DEFINITIONS "main=nd_firmware_main"
-)
+target_link_libraries(firmware_sim PRIVATE m firmware_sim_entry firmware_sim_target_apps)
 if(BLADE_FIRMWARE_SIM_PROFILE)
     target_compile_options(firmware_sim PRIVATE -pg)
+    target_compile_options(firmware_sim_entry PRIVATE -pg)
+    target_compile_options(firmware_sim_target_apps PRIVATE -pg)
     target_link_options(firmware_sim PRIVATE -pg)
 endif()
 
@@ -279,8 +315,10 @@ add_test(NAME firmware_acceptance
             --workdir ${CMAKE_CURRENT_BINARY_DIR}/acceptance/work
             --evidence-dir ${CMAKE_CURRENT_BINARY_DIR}/acceptance/evidence
 )
+# Each sim run has its own 60 s harness timeout; the suite writes thousands of
+# small trace files, so an I/O-loaded host needs more than two minutes.
 set_tests_properties(firmware_acceptance PROPERTIES
     LABELS acceptance
-    TIMEOUT 120
+    TIMEOUT 600
 )
 endif()

@@ -9,7 +9,7 @@
 #include "cpu_surport.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/freeze/freeze_applications.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
 
 // 设置事件上报标识或上报方式   mode  0: 上报标识      1:上报方式 (无tag)

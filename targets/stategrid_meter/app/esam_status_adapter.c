@@ -4,7 +4,7 @@
 #include "targets/stategrid_meter/app/stategrid_context.h"
 #include "application/ports/resource_access.h"
 #include "targets/stategrid_meter/persistence/legacy_control_block.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include <stddef.h>
 
 static struct mbase_control_block_t *mb(void *instance)

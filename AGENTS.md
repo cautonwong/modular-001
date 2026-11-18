@@ -30,7 +30,7 @@
 - `./ci.sh` 全绿输出。
 - `host:strict`、`host:analyzer`、`host:sim-san` 的 ctest 或告警输出。
 - target 验收 `verdict=clean` 和 evidence 目录。
-- ELF section 实测数字，以及 IDIS 的 102 KiB 链接断言。
+- ELF section 实测数字，以及 IDIS 的 103 KiB 链接断言。
 - `[clean-clone] ok`。
 
 没有证据不算完成。验证覆盖用户视角。本项目用验收矩阵当 feature map：
@@ -66,8 +66,8 @@
 
 - C11，Cortex-M0，裸机和 FreeRTOS 两种构建。domain 和 application 必须能按
   Cortex-M0 严格编译，不能引入 host libc。
-- IDIS 两个 target 的 ROM 必须小于 102 KiB，链接脚本有断言。FreeRTOS 余量约
-  1.5 KiB（CI 工具链），任何固件功能先做 ROM 账。
+- IDIS 两个 target 的 ROM 必须小于 103 KiB，链接脚本有断言。FreeRTOS 余量约
+  0.9 KiB（IRQ 构建，CI 工具链），任何固件功能先做 ROM 账。
 - 代码执行性能、功耗与唤醒、掉电安全是三大优先指标。掉电安全路径的改动需要
   真机或 HIL 证据；没有硬件时不要盲改。
 - `test-platform` 验收是 must。新功能同时补验收用例或说明为什么不能补。
@@ -97,6 +97,23 @@
 - 验证分层与盲区。`docs/guides/verification.md`。
 - 平台布局与门禁。`docs/platform-layout.md`。
 - 组件标准。`docs/guides/component-standard.md`。
+- 基础层。`docs/guides/foundation.md`。
 - 端口写法。`docs/guides/port-binding.md`。
 - 验收用例。`docs/guides/acceptance-case.md`。
 - block transfer 设计。`docs/idis-block-transfer.md`。
+
+## 角色与分工
+
+假如你是`reviewer`或`verifier`,负责派活 调度 验证 验收 合并 和清理
+
+假如你是`dev`,commit 前不强制跑 ocr;收工时对当日全部改动跑一次 `ocr review --audience agent`,其使用方法见`/home/edge/ocr-open-code-review-usage-2026-11-18.md`
+
+## 收工流程
+
+当用户说"收工"时,你要按照以下步骤做:
+- 该合并的合并
+- 跑一遍本地CI
+- 对当日的所有改动跑一次 `ocr review --audience agent`(一次看全天 diff,不逐 commit 跑,成本高)
+- 该清理的清理
+- 编写详细的交接文档到/home/edge目录下 文件名带有项目名+日期
+- 制作相对于远端最新的.patch 要求别人apply你的patch之后能跟你本地一模一样

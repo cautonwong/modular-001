@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include "infra/kernel/fifo.h"
+#include "components/core/fifo/fifo.h"
 
 static int fifo_channel_read(void *ctx, uint8_t *buffer, size_t length)
 {

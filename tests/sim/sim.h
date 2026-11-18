@@ -7,6 +7,7 @@
 typedef struct {
     unsigned cycles;
     unsigned arena_size;
+    unsigned fail_malloc_at;
     const char *eeprom_path;
     const char *flash_path;
     const char *trace_path;
@@ -49,6 +50,8 @@ void sim_log_lcd(const uint8_t *segments, unsigned len);
 void nd_sim_lcd_snapshot(void);
 
 int nd_sim_should_stop(stategrid_context_t *instance);
+int nd_sim_malloc_should_fail(void);
+unsigned nd_sim_malloc_count(void);
 void nd_sim_after_run(stategrid_context_t *instance);
 void nd_sim_filter(const char *pipeline, uint8_t filter_id, int ret);
 void nd_sim_event(uint8_t from, uint8_t to, uint8_t ctrl, uint16_t len);

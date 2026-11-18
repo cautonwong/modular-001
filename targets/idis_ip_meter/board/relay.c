@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "infra/kernel/time_link.h"
+#include "infra/soc/v85xxp/v8500/time_link.h"
 #include "targets/idis_ip_meter/board/relay_pins.h"
 
 #define   RELAY_PLUSE_WD  8

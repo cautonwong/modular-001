@@ -1,0 +1,6 @@
+name: core.fifo
+version: 0.1.0
+layer: core
+paths: [components/core/fifo]
+dependencies: []
+legacy: false

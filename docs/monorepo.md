@@ -69,7 +69,7 @@ components/<category>/<name>/
 
 旧 kernel 的 pipeline、filter、message 和全局 fifo 已在 Wave 6 删除。
 
-- `infra/kernel` 只保留 FIFO、list、RTC、timer 和通用工具，组件清单不再标记 legacy。
+- FIFO 在 `components/core/fifo`，list、bitarithm、RTC 和通用工具在 `components/core/types`，timer 在 `infra/soc/v85xxp/v8500`；`infra/kernel` 已删除。
 - `application/adapters/dl698`、`dl645` 只保留协议适配，消息类型改为私有的 `nd_dl69x_msg_t`。
 - `tools/check_components.py` 继续禁止 core、domain、application、protocol、services 组件 include product 或 SoC 平台头。
 - 新组件只能依赖公开组件和端口。
@@ -155,14 +155,14 @@ docs/
 
 ## 7. 协议应用收敛
 
-`application/apps/app_698_server`、`app_645_server`、`app_msta`、`app_dlms_client` 不再作为独立可执行或独立入口存在。它们收敛成 `components/protocol/<protocol>`。
+`application/apps/app_698_server`、`app_645_server`、`app_msta`、`app_dlms_client` 不再作为独立可执行或独立入口存在。与产品上下文耦合的协议状态机留在 `application/adapters/`，由产品组合根驱动；可复用的协议能力收敛成 `components/protocol/<protocol>`（当前是 DLMS）。
 
 统一协议组件接口：
 
 ```c
 typedef struct nd_protocol nd_protocol_t;
 
-nd_protocol_t *nd_dl698_create(const nd_protocol_config_t *config);
+nd_protocol_t *nd_protocol_create(const nd_protocol_config_t *config);
 int nd_protocol_on_frame(nd_protocol_t *protocol, const nd_frame_t *frame);
 int nd_protocol_tick(nd_protocol_t *protocol, uint32_t now_ms);
 int nd_protocol_encode(nd_protocol_t *protocol, nd_frame_t *out);
@@ -292,7 +292,7 @@ UART、PLC、RF、红外都实现这个端口。协议组件只看见通道，�
 - 落地 `components/core/bus` 和 `components/services/channel`，带 host 测试。
 - 旧 kernel 机制保持运行。
 
-当前进度：`components/core/bus`（`core.bus`）和 `components/services/channel`（`services.channel`）已落地，包含 `component.yaml`、host 测试和独立构建目标。总线是固定主题、固定订阅表、同步分发、无 malloc。通道是非阻塞字节端口，提供 read、write、flush。`infra/channel/fifo_channel` 已把旧 FIFO 包装成通道端口。秒变化和电源变化已经向总线发布，旧 pipeline 路径保持不变。domain、application、infra 的关键模块和 `products/` 下的产品描述已经补上组件元数据，`tools/check_components.py` 会检查组件 include 方向和产品引用。`protocol.dl698` 组件已经接管三个 698 通道的收发，收到完整帧时发布 `ND_EVENT_DL698_FRAME`，旧 rx pipeline 已从 recipe 移除。dl698 已不再引用 `message_t`，改用私有的 `nd_dl698_msg_t`，主动上报直接调用组件发送，tx pipeline 已删除。`protocol.dlms` 已移到 `components/protocol/dlms`，仍是未构建的 legacy 组件；`protocol.dl645` 也已完成私有消息类型和通道组件，645 产品可以直接实例化；当前单相产品没有 645 context，因此尚未接线。dlms 适配器已移除 `message_t` 并通过独立语法检查，但 DLMS 仍不在产品构建里。`components/core/buf` 提供链式 `nd_frame`/`nd_block`/`nd_cursor`，698 的分段重组已经改用块链，当前帧节点指向现有 APDU 存储。缓冲策略见 `docs/buffer-strategy.md`，当前不引入 lwIP pbuf。
+当前进度：`components/core/bus`（`core.bus`）和 `components/services/channel`（`services.channel`）已落地，包含 `component.yaml`、host 测试和独立构建目标。总线是固定主题、固定订阅表、同步分发、无 malloc。通道是非阻塞字节端口，提供 read、write、flush。`infra/channel/fifo_channel` 已把旧 FIFO 包装成通道端口。秒变化和电源变化已经向总线发布，旧 pipeline 路径保持不变。domain、application、infra 的关键模块和 `products/` 下的产品描述已经补上组件元数据，`tools/check_components.py` 会检查组件 include 方向和产品引用，并禁止 `protocol`/`services` 依赖 `application`。698 状态机在 `application/adapters/dl698`，三个 698 通道的收发由 stategrid 组合根直接驱动，收到完整帧时发布 `ND_EVENT_DL698_FRAME`；`protocol.dl698` wrapper 已删除，旧 rx/tx pipeline 已从 recipe 移除。dl698 使用私有的 `nd_dl698_msg_t`，不再引用 `message_t`；主动上报通过链路上下文的 `send` 回调发出。`protocol.dlms` 由两个 IDIS 产品在 `product.yaml` 中选择，但 IDIS 固件链接只编 `src/nd_axdr.c`；其余 `src/nd_dlms_*.c` 只在 host 测试里编译。选择是元数据，链接覆盖还没有门禁。`pkg_dlms.c` 和 `user_information.c` 已删除。`components/core/buf` 提供链式 `nd_frame`/`nd_block`/`nd_cursor`，698 的分段重组已经改用块链，当前帧节点指向现有 APDU 存储。缓冲策略见 `docs/buffer-strategy.md`，当前不引入 lwIP pbuf。
 
 阶段 3：协议收敛
 

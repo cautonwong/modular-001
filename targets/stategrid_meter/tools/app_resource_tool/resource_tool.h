@@ -2,7 +2,7 @@
 #define __RESOURCE_TOOL_H__
 #include <stdint.h>
 #include "application/ports/resource_access.h"
-#include "infra/kernel/list.h"
+#include "components/core/types/list.h"
 #include "targets/stategrid_meter/app/stategrid_context.h"
 
 enum resource_map_698_e
@@ -68,17 +68,17 @@ int16_t nd_set_block(stategrid_context_t *instance, uint32_t res, uint8_t* buf,u
 int16_t get_block_frist_addr(stategrid_context_t *instance, uint8_t device_name, uint8_t block_name, uint32_t *addr);
 
 
-uint32_t* add_inside_block(stategrid_context_t *instance, uint8_t device_name, uint8_t block_name, uint8_t inside_block_name, uint32_t block_size, uint32_t offset);
+struct resource_block_t* add_inside_block(stategrid_context_t *instance, uint8_t device_name, uint8_t block_name, uint8_t inside_block_name, uint32_t block_size, uint32_t offset);
 void* nd_malloc(stategrid_context_t *instance, uint8_t block_name, uint32_t size);
 void* nd_calloc(stategrid_context_t *instance, uint8_t block_name, uint32_t size);
-uint32_t* add_block(stategrid_context_t *instance, uint8_t device_name, uint8_t block_name, uint32_t block_size);
+struct resource_block_t* add_block(stategrid_context_t *instance, uint8_t device_name, uint8_t block_name, uint32_t block_size);
 int8_t add_device(stategrid_context_t *instance, uint8_t device_name, uint32_t sector);
 
 struct resource_map_t* register_map(stategrid_context_t *instance, uint8_t map_name,
     int (*fun)(stategrid_context_t *instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx, uint16_t mode));
-uint32_t* register_log(stategrid_context_t *instance, uint8_t device_name, uint8_t block_name, uint8_t relation_device, uint8_t relation_name, uint32_t block_size,
+struct resource_block_t* register_log(stategrid_context_t *instance, uint8_t device_name, uint8_t block_name, uint8_t relation_device, uint8_t relation_name, uint32_t block_size,
     int16_t(*fun)(stategrid_context_t *instance, uint16_t id, uint32_t* addr, uint32_t* len, uint32_t* depth));
-uint32_t* register_parameter(stategrid_context_t *instance, uint8_t device_name, uint8_t block_name, uint32_t block_size,
+struct resource_block_t* register_parameter(stategrid_context_t *instance, uint8_t device_name, uint8_t block_name, uint32_t block_size,
     int16_t(*fun)(stategrid_context_t *instance, uint16_t id, uint32_t *addr, uint32_t* len, uint32_t *offset));
 
 int16_t nd_size(void *instance, uint8_t *buf, uint32_t id);

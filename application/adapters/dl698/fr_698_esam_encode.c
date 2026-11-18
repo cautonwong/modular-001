@@ -1,4 +1,4 @@
-#include "application/ports/fifo.h"
+#include "components/core/fifo/fifo.h"
 #include "fr_698.h"
 #include "fr_698_esam.h"
 #include "application/adapters/dl698/fr_698_esam.h"

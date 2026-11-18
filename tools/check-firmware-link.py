@@ -32,6 +32,8 @@ def compile_one(source: Path, obj: Path, flags: list[str]) -> subprocess.Complet
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--keep", action="store_true")
+    parser.add_argument("--manifest", metavar="FILE",
+                        help="write the linked source list after a successful link")
     parser.add_argument("--product")
     args = parser.parse_args()
 
@@ -102,6 +104,7 @@ def main() -> int:
 
     build_dir = Path(tempfile.mkdtemp(prefix="blade-firmware-"))
     objects = []
+    linked_sources = []
     for index, source in enumerate(sources):
         if not os.path.isfile(source):
             continue
@@ -114,6 +117,7 @@ def main() -> int:
                 shutil.rmtree(build_dir, ignore_errors=True)
             return 1
         objects.append(obj)
+        linked_sources.append(source)
 
     for extra in ("startup.c", "link_stubs.c"):
         result = compile_one(GNU_DIR / extra, build_dir / extra.replace(".c", ".o"), flags)
@@ -167,6 +171,10 @@ def main() -> int:
         if not args.keep:
             shutil.rmtree(build_dir, ignore_errors=True)
         return 1
+
+    if args.manifest:
+        Path(args.manifest).write_text(
+            "".join(f"{source}\n" for source in linked_sources), encoding="utf-8")
 
     print(f"firmware link ok ({len(objects)} objects, {elf.stat().st_size} bytes)")
     if args.keep:

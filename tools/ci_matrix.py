@@ -15,7 +15,17 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from check_idis_firmware import elf_sections, section_totals
+
 ROOT = Path(__file__).resolve().parent.parent
+
+# Linked images select their board transport at compile time. The IRQ/DMA
+# lane proves both transports link; the POLL lane must stay free of them.
+IRQ_MODE_DEFINES = ("-DND_BOARD_UART_MODE=1", "-DND_BOARD_SPI_MODE=2",
+                    "-DND_BOARD_IIC_MODE=0")
+TRANSPORT_SYMBOLS = ("nd_board_uart_rx_isr", "nd_board_spi_dma_hw_start")
+TRANSPORT_TARGETS = ("idis_ip_meter", "idis_ip_meter_freertos")
 
 # Second host build: warnings are errors and the sanitizers verify runtime
 # bounds and undefined behavior. firmware_sim is excluded because it maps a
@@ -86,17 +96,19 @@ def target_kind(path: Path) -> str:
 
 
 def configure_build(matrix: Matrix, target: Path, root: Path,
-                    build_root: Path) -> Path | None:
-    build = build_root / f"ci-{target.name}"
-    if not matrix.run(f"{target.name}:configure",
-                      ["cmake", "-S", str(cmake_dir(target)), "-B", str(build),
-                       "-G", "Ninja",
-                       "-DCMAKE_TOOLCHAIN_FILE=" + str(root / "cmake/toolchains/arm-none-eabi.cmake"),
-                       "-DFREERTOS_KERNEL_DIR=" + os.environ.get(
-                           "FREERTOS_KERNEL_DIR",
-                           str(root / "infra/third_party/freertos/FreeRTOS-KernelV11.3.3"))]):
+                    build_root: Path, suffix: str = "",
+                    defines: tuple[str, ...] = ()) -> Path | None:
+    build = build_root / f"ci-{target.name}{suffix}"
+    configure = ["cmake", "-S", str(cmake_dir(target)), "-B", str(build),
+                 "-G", "Ninja",
+                 "-DCMAKE_TOOLCHAIN_FILE=" + str(root / "cmake/toolchains/arm-none-eabi.cmake"),
+                 "-DFREERTOS_KERNEL_DIR=" + os.environ.get(
+                     "FREERTOS_KERNEL_DIR",
+                     str(root / "infra/third_party/freertos/FreeRTOS-KernelV11.3.3"))]
+    configure += list(defines)
+    if not matrix.run(f"{target.name}:configure{suffix}", configure):
         return None
-    if not matrix.run(f"{target.name}:build", ["cmake", "--build", str(build)]):
+    if not matrix.run(f"{target.name}:build{suffix}", ["cmake", "--build", str(build)]):
         return None
     return build
 
@@ -104,6 +116,27 @@ def configure_build(matrix: Matrix, target: Path, root: Path,
 def firmware_elf(build: Path, target: str) -> Path:
     name = "idis_freertos.elf" if target.endswith("_freertos") else "idis.elf"
     return build / name
+
+
+def check_transport_symbols(matrix: Matrix, label: str, elf: Path,
+                            irq: bool) -> None:
+    nm = os.environ.get("NM", "arm-none-eabi-nm")
+    output = subprocess.check_output([nm, "--defined-only", str(elf)], text=True)
+    names = {line.split()[-1] for line in output.splitlines() if line.strip()}
+    wrong = [name for name in TRANSPORT_SYMBOLS if (name in names) != irq]
+    if wrong:
+        print(f"[{label}] transport symbol mismatch: " + ", ".join(wrong),
+              flush=True)
+        matrix.failures.append(label)
+        print(f"[{label}] FAILED", flush=True)
+        return
+    print(f"[{label}] ok "
+          f"({'transport' if irq else 'poll'} symbols as expected)", flush=True)
+
+
+def print_rom(label: str, elf: Path) -> None:
+    vector, text, data, _bss = section_totals(elf_sections(str(elf)))
+    print(f"[{label}] rom={vector + text + data} bytes", flush=True)
 
 
 def acceptance_cases(target: Path) -> Path | None:
@@ -219,6 +252,7 @@ def main() -> int:
     print("== shared checks ==")
     for label, command in [
         ("check:components", [sys.executable, str(root / "tools/check_components.py")]),
+        ("check:component-reachability", [sys.executable, str(root / "tools/check_component_reachability.py")]),
         ("check:component-standard", [sys.executable, str(root / "tools/check_component_standard.py")]),
         ("check:board-modes", [str(root / "tools/check-board-modes.sh")]),
         ("check:domain", [sys.executable, str(root / "tools/check_domain_contracts.py")]),
@@ -238,6 +272,7 @@ def main() -> int:
                                 "--source", str(root / "targets/stategrid_meter/mapper_698/mapper_698.c"),
                                 "--elf", str(host_build / "firmware_sim")]),
         ("check:dead-code", [sys.executable, str(root / "tools/check_dead_code.py")]),
+        ("check:mutable-globals", [sys.executable, str(root / "tools/check_mutable_globals.py")]),
         ("check:products", [sys.executable, str(root / "tools/product_manifest.py"), "--check-all"]),
     ]:
         matrix.check(label, command)
@@ -273,14 +308,39 @@ def main() -> int:
                                                 "--product", "meter_electricity_single_phase_cn"])
             print(f"TARGET {target.name}: build=gnu unit=shared acceptance=firmware_sim+firmware_acceptance")
             continue
+        if (kind == "cmake"
+                and (target / "board/board_transport.h").is_file()
+                and target.name not in TRANSPORT_TARGETS):
+            print(f"[{target.name}:transport-lane] add the target to TRANSPORT_TARGETS")
+            matrix.failures.append(f"{target.name}:transport-lane")
         build = configure_build(matrix, target, root, build_root)
         if build is None:
             continue
         elf = firmware_elf(build, target.name)
         matrix.check(f"{target.name}:firmware", [sys.executable, str(root / "tools/check_idis_firmware.py"),
                                                 str(elf)])
+        if target.name in TRANSPORT_TARGETS:
+            check_transport_symbols(matrix, f"{target.name}:poll-symbols", elf,
+                                    irq=False)
         run_target_acceptance(matrix, target, host_build, root, build_root)
+
+        if target.name in TRANSPORT_TARGETS:
+            irq_build = configure_build(matrix, target, root, build_root,
+                                        suffix="-irq", defines=IRQ_MODE_DEFINES)
+            if irq_build is not None:
+                irq_elf = firmware_elf(irq_build, target.name)
+                matrix.check(f"{target.name}:firmware-irq",
+                             [sys.executable, str(root / "tools/check_idis_firmware.py"),
+                              str(irq_elf)])
+                check_transport_symbols(matrix, f"{target.name}:irq-symbols",
+                                        irq_elf, irq=True)
+                print_rom(f"{target.name}:irq-rom", irq_elf)
         print(f"TARGET {target.name}: build=cmake unit=shared acceptance=target")
+
+    # The link evidence is the build tree, so this runs after the target matrix.
+    matrix.check("check:product-link",
+                 [sys.executable,
+                  str(root / "tools/check_product_component_usage.py")])
 
     if matrix.failures:
         print("== FAILED ==")

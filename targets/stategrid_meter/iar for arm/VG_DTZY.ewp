@@ -353,7 +353,6 @@
                 </option>
                 <option>
                     <name>CCIncludePath2</name>
-                    <state>$PROJ_DIR$\..\..\..\infra\kernel</state>
                     <state>$PROJ_DIR$\..\..\..</state>
                     <state>$PROJ_DIR$\..\..\..\targets\stategrid_meter\</state>
                     <state>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app</state>
@@ -1424,7 +1423,6 @@
                 </option>
                 <option>
                     <name>CCIncludePath2</name>
-                    <state>$PROJ_DIR$\..\..\..\infra\kernel</state>
                     <state>$PROJ_DIR$\..\..\..</state>
                     <state>$PROJ_DIR$\..\..\..\targets\stategrid_meter\</state>
                     <state>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app</state>
@@ -2339,12 +2337,6 @@
             <file>
                 <name>$PROJ_DIR$\..\..\..\components\services\channel\nd_channel.c</name>
             </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\components\protocol\dl698\nd_dl698.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\components\protocol\dl645\nd_dl645.c</name>
-            </file>
         </group>
         <group>
             <name>drivers</name>
@@ -2427,25 +2419,25 @@
         <group>
             <name>kernel</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\kernel\bitarithm.c</name>
+                <name>$PROJ_DIR$\..\..\..\components\core\types\bitarithm.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\kernel\fifo.c</name>
+                <name>$PROJ_DIR$\..\..\..\components\core\fifo\fifo.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\infra\channel\fifo_channel.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\kernel\list.c</name>
+                <name>$PROJ_DIR$\..\..\..\components\core\types\list.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\tools\app_resource_tool\resource_tool.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\infra\kernel\rtc.c</name>
+                <name>$PROJ_DIR$\..\..\..\components\core\types\rtc.c</name>
             </file>
         <file>
-                <name>$PROJ_DIR$\..\..\..\infra\kernel\utils.c</name>
+                <name>$PROJ_DIR$\..\..\..\components\core\types\utils.c</name>
             </file>
         </group>
         <group>
@@ -2620,9 +2612,6 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\common\time_format.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\domain\common\runtime.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\common\timer.c</name>
@@ -2819,9 +2808,6 @@
         <name>$PROJ_DIR$\..\app\backlight_adapter.c</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\..\app\runtime_adapter.c</name>
-    </file>
-    <file>
         <name>$PROJ_DIR$\..\app\timer_adapter.c</name>
     </file>
     <file>
@@ -2885,7 +2871,7 @@
         <name>$PROJ_DIR$\..\..\..\domain\tariff\activity_calendar.c</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\..\..\..\infra\kernel\time_link.c</name>
+        <name>$PROJ_DIR$\..\..\..\infra\soc\v85xxp\v8500\time_link.c</name>
     </file>
     <file>
         <name>$PROJ_DIR$\..\..\..\infra\memory\sector_store.c</name>

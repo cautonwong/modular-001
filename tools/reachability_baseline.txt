@@ -1,0 +1,3 @@
+# component non-production caller
+application.metering targets/host/composition.c
+services.channel tests/unit/test_fifo_channel.c

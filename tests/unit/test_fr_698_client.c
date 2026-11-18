@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "application/adapters/dl698/fr_698_internal.h"
-#include "application/ports/fifo.h"
+#include "components/core/fifo/fifo.h"
 
 struct fake_instance_t {
     uint8_t unused;

@@ -10,7 +10,7 @@
 #include "fr_698.h"
 #include "ctl_03_SafeAuthen.h"
 #include "application/adapters/dl698/fr_698_esam.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 
 
 

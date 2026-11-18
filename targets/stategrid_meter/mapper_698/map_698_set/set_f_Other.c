@@ -5,7 +5,7 @@
 #include "application/adapters/dl698/meter_base_view.h"
 #include "cpu_surport.h"
 #include "targets/stategrid_meter/app/display_applications.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 
 
 int SET_F10103XX(void *instance, uint32_t id, uint8_t* buf, void *ctx)

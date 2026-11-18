@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include "baremetal.h"
 
-#include "time_link.h"
+#include "infra/soc/v85xxp/v8500/time_link.h"
 
 static volatile uint32_t systick_ticks;
 

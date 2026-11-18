@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include "application/adapters/dl698/meter_base_view.h"
 #include "port.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 
 int read_00( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {

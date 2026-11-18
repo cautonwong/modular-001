@@ -15,7 +15,7 @@
   `-Wmissing-field-initializers`。
 - `tools/check-legacy.sh` 保留 `-w` 压厂商噪声，但用
   `-Werror=implicit-function-declaration` 把隐式声明变成错误，并编译
-  `nd_dl645.c`、`nd_dl698.c`。
+  `stategrid_meter_entry.c` 等旧源文件。
 - 数据形状用 `_Static_assert` 钉死，放在类型定义旁边：
   - `targets/idis_ip_meter/cosem/nd_idis_registry.h`：注册表条目、RAM 镜像、
     EEPROM 地址空间。
@@ -73,7 +73,7 @@ cmake --build build/ci-analyzer --target \
   容量的边界；
 - `nd_ic_mbus_client_set` 的内层 `channel` 遮蔽外层变量；
 - `nd_ic_association` 的 `generate_certificate_request` 把未初始化的栈缓冲当公钥；
-- `infra/kernel/fifo.c` 的 `fifoBuf_getByteCount` 从未写输出参数，且无人调用。
+- `components/core/fifo/fifo.c` 的 `fifoBuf_getByteCount` 从未写输出参数，且无人调用。
 
 `host:sim-san` 用 ASan 和 UBSan 重跑 `firmware_sim`、stategrid 验收矩阵，以及两个
 IDIS 验收套件（用同一个 sanitizer 版 `idis_host_runner`）。它关闭 alignment 检查：
@@ -139,7 +139,9 @@ host 指针是 8 字节，legacy 布局按 4 字节假设，对齐告警描述�
 ## 5. 当前边界
 
 - 所有验证是 host GCC + Cortex-M0 交叉编译 + 链接检查；没有 IAR 实编译、
-  真机、HIL 或现场抓包。
+  真机、HIL 或现场抓包。硬件在环的五项测量按
+  [硬件在环测量清单](hil-measurement.md) 执行；测量结果补进对应产品的记录，
+  不能从仿真推导。
 - `host:analyzer` 只覆盖生产库；`host:strict` 覆盖单元测试，不含
   `firmware_sim`；整机仿真和 IDIS host runner 由 `host:sim-san` 用 ASan 和
   UBSan 覆盖。

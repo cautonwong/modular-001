@@ -3,7 +3,7 @@
 #include "application/adapters/dl698/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_esam.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 
 const uint8_t messagebuf1[8] = {0xff,0xff,0xff,0xff,0xfc, 0x00, 0x00, 0x00};
 const uint8_t messagebuf2[16] = {0xff,0xfe,0xc4,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};

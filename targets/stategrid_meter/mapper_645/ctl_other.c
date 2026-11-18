@@ -19,7 +19,7 @@
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
 #include "domain/common/time_format.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 
 static unsigned char Cmp_RemoteCtlTime( void *instance, uint8_t* Addr );
 

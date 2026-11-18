@@ -11,8 +11,8 @@
 #include <stdint.h>
 
 #include "cpu_surport.h"
-#include "infra/kernel/fifo.h"
-#include "infra/kernel/time_link.h"
+#include "components/core/fifo/fifo.h"
+#include "infra/soc/v85xxp/v8500/time_link.h"
 #include "targets/idis_ip_meter_freertos/board/board_transport.h"
 #include "targets/idis_ip_meter_freertos/board/uart_pins.h"
 #include "uart_driver.h"

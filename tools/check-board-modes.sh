@@ -26,6 +26,7 @@ common_includes=(
 
 flags=(-std=gnu11 -mcpu=cortex-m0 -mthumb -ffreestanding -Os -g
        -ffunction-sections -fdata-sections
+       -Werror=incompatible-pointer-types
        -Wno-error=implicit-function-declaration)
 
 status=0

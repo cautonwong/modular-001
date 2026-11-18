@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Generate a consumer-defined port and its binding wrappers.
+"""Generate a consumer-defined port.
 
-Each action becomes one function pointer plus one wrapper. The generator
-keeps the guard, includes and null checks consistent with the existing
-ports; the target adapter and the composition-root bind stay hand-written.
+The port is a plain callback table. The consumer takes
+`const nd_<capability>_port_t *` in its constructor and stores it in its own
+state; there is no bind global and no forwarding wrapper.
 """
 from __future__ import annotations
 
@@ -63,42 +63,9 @@ def render_header(capability: str, actions: list[tuple[str, list[tuple[str, str]
     lines += [
         f"}} nd_{capability}_port_t;",
         "",
-        f"void nd_{capability}_bind(const nd_{capability}_port_t *port);",
+        "#endif",
+        "",
     ]
-    for name, params in actions:
-        signature = ", ".join(format_param(kind, arg) for kind, arg in params)
-        lines.append(f"int nd_{capability}_{name}({signature});")
-    lines += ["", "#endif", ""]
-    return "\n".join(lines)
-
-
-def render_source(capability: str, actions: list[tuple[str, list[tuple[str, str]]]]) -> str:
-    lines = [
-        f'#include "application/ports/{capability}.h"',
-        "",
-        "#include <stddef.h>",
-        "",
-        f"static const nd_{capability}_port_t *bound;",
-        "",
-        f"void nd_{capability}_bind(const nd_{capability}_port_t *port)",
-        "{",
-        "    bound = port;",
-        "}",
-    ]
-    for name, params in actions:
-        signature = ", ".join(format_param(kind, arg) for kind, arg in params)
-        args = ", ".join(["bound->ctx"] + [arg for _, arg in params])
-        lines += [
-            "",
-            f"int nd_{capability}_{name}({signature})",
-            "{",
-            f"    if (bound == NULL || bound->{name} == NULL) {{",
-            "        return -1;",
-            "    }",
-            f"    return bound->{name}({args});",
-            "}",
-        ]
-    lines += ["", ""]
     return "\n".join(lines)
 
 
@@ -120,17 +87,14 @@ def main() -> int:
     actions = [parse_action(text) for text in args.action]
 
     header = PORTS / f"{capability}.h"
-    source = PORTS / f"{capability}.c"
-    for path in (header, source):
-        if path.exists():
-            print(f"{path.relative_to(ROOT)} already exists", file=sys.stderr)
-            return 1
+    if header.exists():
+        print(f"{header.relative_to(ROOT)} already exists", file=sys.stderr)
+        return 1
 
     header.write_text(render_header(capability, actions), encoding="utf-8")
-    source.write_text(render_source(capability, actions), encoding="utf-8")
-    print(f"created {header.relative_to(ROOT)} and {source.relative_to(ROOT)}")
-    print("next: write the target adapter, bind in the composition root, "
-          "and add a fake-port unit test")
+    print(f"created {header.relative_to(ROOT)}")
+    print(f"next: take const nd_{capability}_port_t * in the consumer "
+          "constructor, write the target adapter, and add a fake-port unit test")
     return 0
 
 

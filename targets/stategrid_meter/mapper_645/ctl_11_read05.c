@@ -13,7 +13,7 @@
 #include "ctl_11_record.h"
 #include "cpu_surport.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "infra/soc/v85xxp/v8500/v85xxp_system.h"
 
 

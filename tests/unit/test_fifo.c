@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-#include "infra/kernel/fifo.h"
+#include "components/core/fifo/fifo.h"
 
 static unsigned char storage[8];
 static struct fifo_t fifo;

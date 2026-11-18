@@ -43,7 +43,7 @@ acceptance 用例证明，观察什么外部结果，还缺什么。单元测试
 
 | X 范围 | 排除理由 |
 |---|---|
-| `infra/kernel` 的 FIFO、list、bitarithm | 基础设施，已有单元测试 |
+| `components/core/fifo` 和 `components/core/types` 的 FIFO、list、bitarithm | 基础设施，已有单元测试 |
 | `infra/memory` 的 arena、byte_store | 基础设施，已有单元测试 |
 | `infra/channel`、`components/services/channel` | 传输管道，不是产品业务 |
 | A-XDR、645/698 帧编解码 | 由协议用例间接覆盖，不单独签收 |

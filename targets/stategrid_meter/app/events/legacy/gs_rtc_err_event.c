@@ -15,7 +15,7 @@
 #include "domain/events/rtc.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
 #include "targets/stategrid_meter/app/freeze/freeze_applications.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 
 
 static void tm_to_datetime(const struct tm *t, nd_datetime_t *d)

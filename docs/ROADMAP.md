@@ -112,7 +112,7 @@
 ### P2.3 协议适配器归位（依赖完成，forward 未绑定）
 
 - `application/adapters/dl645`、`dl698` 已按组件归位，组件依赖检查确认不 include target。
-- DLMS 组件保持独立，不进入当前产品构建。
+- DLMS 组件保持独立；两个 IDIS 产品已选择 `protocol.dlms`，但 IDIS 固件链接目前只编 `src/nd_axdr.c`。
 - 698 客户端 `forward` 仍未绑定：当前 target 没有客户端消息消费者，绑一个空回调会改变协议行为；留待真正接入客户端业务时注册。
 
 验收：适配器只依赖 application 端口和协议组件，不依赖 target。已满足。

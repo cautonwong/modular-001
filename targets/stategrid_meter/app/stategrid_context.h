@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <time.h>
 
-#include "application/ports/fifo.h"
-#include "infra/kernel/list.h"
+#include "components/core/fifo/fifo.h"
+#include "components/core/types/list.h"
 #include "targets/stategrid_meter/upgrade/upgrade_info.h"
 
 struct mbase_control_block_t;

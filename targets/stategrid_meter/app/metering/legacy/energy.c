@@ -17,7 +17,7 @@
 #define  DEC_NEG    0x10
 #include "targets/stategrid_meter/app/metering_energy_adapter.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/persistence/legacy_energy_layout.h"
 
 static uint32_t ec_pluse_cnt = 0;

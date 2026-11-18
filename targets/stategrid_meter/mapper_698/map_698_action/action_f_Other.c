@@ -2,14 +2,14 @@
 #include "fr_698.h"
 #include "application/adapters/dl698/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
-#include "application/ports/fifo.h"
+#include "components/core/fifo/fifo.h"
 #include "targets/stategrid_meter/app/display_applications.h"
 #include "application/adapters/dl698/fr_698.h"
 #include "application/adapters/dl698/fr_698_esam.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
 #include "domain/common/time_format.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 
 #define PROGRAMEND1	0x03FFFF	//程序空间1结束地址
 #define PROGRAMPROZ	0x03FFFF//0x03F800	//程序保护区起始地址

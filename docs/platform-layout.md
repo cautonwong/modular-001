@@ -21,6 +21,9 @@ product = domain profile + protocol adapters + platform(soc + board + rtos)
 
 平台差异只允许出现在 `infra/soc`、`infra/drivers`、`infra/rtos` 和 `targets/<product>`。domain、application、components 不出现具体 SoC、board、RTOS 的头文件或条件编译。
 
+共享基础层是 `components/core`（`core.types`、`core.buf`、`core.bus`、`core.fifo`），
+不依赖任何组件，规则和新增步骤见 `docs/guides/foundation.md`。
+
 `nidavellir` 已在 Wave 6 删除。目录、include 路径、组件清单和检查器例外一起移除；调度循环归 product target。
 
 ## 2. 目录布局

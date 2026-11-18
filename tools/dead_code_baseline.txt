@@ -1,6 +1,4 @@
 # file blocks
-components/protocol/dlms/pkg_dlms.c 2
-components/protocol/dlms/user_information.c 1
 infra/boot/App/Source/common.c 1
 infra/boot/App/Source/main.c 1
 infra/boot/Drivers/Libraries/CMSIS/device/lib_LoadNVR.c 1

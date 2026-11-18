@@ -11,7 +11,7 @@
 #define UPGRADE_MODE  (UPGRADE_MODE_ONLINE)
 
 
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 
 #define	IMAGE_MAP_LEN				1024	                    //位图信息长度 
 #define	IMAGE_PARA_ID				UPGRADE_PARA_INFO          //升级参数e2p 绝对地址 从0开始             60字节 

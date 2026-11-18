@@ -7,7 +7,7 @@
 #include "targets/stategrid_meter/app/freeze/freeze_applications.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
 #include "domain/common/time_format.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
 
 

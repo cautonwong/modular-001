@@ -7,7 +7,7 @@
 #include "cpu_surport.h"
 #include "application/adapters/dl645/ctl_other.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 
 
 /***********************************************************************/

@@ -5,7 +5,7 @@
 #include "targets/stategrid_meter/app/app_config.h"
 #include "targets/stategrid_meter/app/display_applications.h"
 #include "application/adapters/dl698/fr_698_esam.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 
 
 const uint8_t name_rs485[5] = {'R', 'S', '4', '8', '5'};

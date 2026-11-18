@@ -11,7 +11,7 @@
 #include "domain/common/time_format.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 //dependencies
     //1.user define
     //2.mesg[秒]

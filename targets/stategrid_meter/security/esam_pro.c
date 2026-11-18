@@ -3,7 +3,7 @@
 #include "domain/common/status.h"
 #include "targets/stategrid_meter/board/board_esam.h"
 #include "targets/stategrid_meter/board/meter_status.h"
-#include "time_link.h"
+#include "infra/soc/v85xxp/v8500/time_link.h"
 #include "fr_698_esam.h"
 #include "infra/security/esam/io_type.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"

@@ -24,8 +24,12 @@ EXCLUDED = (
     "/boards/",
     "targets/stategrid_meter/app/driver_entry.c",
     "targets/stategrid_meter/app/storage_device.c",
+    "targets/stategrid_meter/app/stategrid_meter_entry.c",
     "infra/soc/",
 )
+
+# The tick list is plain data, not register access, and the simulation runs it.
+SOC_ALLOWED = ("infra/soc/v85xxp/v8500/time_link.c",)
 
 
 def ewp_sources() -> list[str]:
@@ -35,7 +39,8 @@ def ewp_sources() -> list[str]:
     for name in names:
         path = os.path.normpath(os.path.join(PROJECT_DIR, name.replace("\\", "/").lstrip("/")))
         relative = os.path.relpath(path, ROOT).replace(os.sep, "/")
-        if any(marker in relative for marker in EXCLUDED):
+        if (any(marker in relative for marker in EXCLUDED)
+                and relative not in SOC_ALLOWED):
             continue
         result.append(relative)
     return sorted(set(result))

@@ -22,7 +22,7 @@
 #include "targets/stategrid_meter/app/events/events_applications.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
-#include "infra/kernel/resource_blocks.h"
+#include "targets/stategrid_meter/app/resource_blocks.h"
 
 #define U32toBufLSB(x)  ((uint8_t)(x)), ((uint8_t)(x>>8)), ((uint8_t)(x>>16)), ((uint8_t)(x>>24))
 #define U32toBufMSB(x)  ((uint8_t)(x>>24)),((uint8_t)(x>>16)), ((uint8_t)(x>>8)), ((uint8_t)(x))

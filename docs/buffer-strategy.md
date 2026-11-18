@@ -37,7 +37,7 @@
 ## 理由
 
 1. 这些协议不是 IP 包协议，但也不是单层字节流。链路层帧小，应用层块可能跨帧。缓冲契约必须同时支持连续帧和链式块，不能只按“小帧”设计。
-2. 现有路径已经零拷贝到链路帧边界。`nd_dl698` 和 `nd_dl645` 通过 `nd_fifo_channel_fifo` 直接使用 UART FIFO，不复制整帧；`nd_channel` 只在组件边界表达读写语义。应用层分块重组仍然复制，这是 `nd_buf_chain` 要解决的问题。
+2. 现有路径已经零拷贝到链路帧边界。698 收发循环（`targets/stategrid_meter/app/stategrid_meter_entry.c`）直接使用链路 FIFO，不复制整帧。应用层分块重组仍然复制，这是 `nd_buf_chain` 要解决的问题。
 3. `pbuf` 解决的是链式包和引用计数，不解决环形缓冲回绕。UART FIFO 是环形缓冲，要把它变成 `pbuf` 仍然需要自定义 `pbuf` 或线性化，零拷贝收益没有想象中大。
 4. `pbuf` 带入 lwIP 的内存池、`mem_malloc`、引用计数、`SYS_ARCH_PROTECT` 和配置。目标 RAM 只有 24 KB 级的固定 arena，增加一套网络缓冲生命周期会挤压现有 698/645/DLMS 上下文。
 5. 组件契约不应该绑定 lwIP 类型。domain 和 protocol 组件如果直接使用 `struct pbuf`，未来换网络栈或换传输都要改协议代码。

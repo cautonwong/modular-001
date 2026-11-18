@@ -120,7 +120,7 @@ def read_object_family(ctx):
     "ACC-645-006",
     "a frame with a bad checksum produces no response and the parser "
     "resynchronises to a following valid read in the same UART event "
-    "(fr_645_matcher.c, ringbuffer_filter in infra/kernel/fifo.c:216-267)",
+    "(fr_645_matcher.c, ringbuffer_filter in components/core/fifo/fifo.c:216-267)",
     ("645", "robustness"),
 )
 def malformed_frame_is_ignored(ctx):

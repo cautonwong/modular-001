@@ -11,7 +11,7 @@ struct host_composition {
     nd_demand_t *demand;
     load_control_state_t *load;
     nd_tariff_table_t tariff;
-    meter_application_t application;
+    meter_application_t *application;
 };
 
 host_composition_t *host_composition_create(nd_allocator_t *allocator,
@@ -51,9 +51,17 @@ host_composition_t *host_composition_create(nd_allocator_t *allocator,
     composition->parameters = config->parameters;
     composition->energy_block_offset = config->energy_block_offset;
     nd_tariff_table_init(&composition->tariff);
-    meter_application_init(&composition->application, composition->metering,
-                           composition->demand, composition->load,
-                           &composition->tariff);
+    composition->application =
+        meter_application_create(allocator, composition->metering,
+                                 composition->demand, composition->load,
+                                 &composition->tariff);
+    if (composition->application == NULL) {
+        load_control_destroy(composition->load, allocator);
+        nd_demand_destroy(composition->demand, allocator);
+        metering_destroy(composition->metering, allocator);
+        nd_dealloc(allocator, composition, sizeof(*composition));
+        return NULL;
+    }
     return composition;
 }
 
@@ -63,6 +71,7 @@ void host_composition_destroy(host_composition_t *composition,
     if (composition == NULL) {
         return;
     }
+    meter_application_destroy(composition->application, allocator);
     load_control_destroy(composition->load, allocator);
     nd_demand_destroy(composition->demand, allocator);
     metering_destroy(composition->metering, allocator);
@@ -90,7 +99,7 @@ void host_composition_set_load_command(host_composition_t *composition,
 void host_composition_second(host_composition_t *composition,
                              const host_tick_t *tick)
 {
-    meter_application_on_second(&composition->application, tick);
+    meter_application_on_second(composition->application, tick);
 }
 
 int host_composition_save(host_composition_t *composition)
@@ -104,7 +113,7 @@ void host_composition_status(const host_composition_t *composition,
                              host_status_t *status)
 {
     const meter_status_t *application_status =
-        meter_application_status(&composition->application);
+        meter_application_status(composition->application);
 
     status->fee = application_status->fee;
     status->day_table = application_status->day_table;
