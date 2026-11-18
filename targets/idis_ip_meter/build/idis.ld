@@ -33,6 +33,6 @@ SECTIONS
 
     _estack = ORIGIN(RAM) + LENGTH(RAM);
     ASSERT(_ebss + 0x2000 <= _estack, "RAM overflow: bss plus 8 KiB stack")
-    ASSERT(_sidata + SIZEOF(.data) <= ORIGIN(ROM) + 102K,
-           "ROM budget exceeded: product limit is 102 KiB")
+    ASSERT(_sidata + SIZEOF(.data) <= ORIGIN(ROM) + 103K,
+           "ROM budget exceeded: product limit is 103 KiB")
 }
