@@ -1,310 +1,245 @@
-# nidavellir-devices
+# modular-001
 
-nidavellir devices system
+`modular-001` 是一个面向智能电表、通信模块及多 SoC、board、RTOS 产品的组件化 C11 单体仓库。项目使用领域驱动的分层架构、消费者定义端口和 target 组合根装配，目标平台以 Cortex-M0 为主，并保留存量设备 EEPROM 布局兼容。
 
-## OS项目输出物 TODOs
+## 当前状态
 
-**Device 设备端**
+- 主语言为 C，并包含少量 Python、Assembly、CMake、C++ 和 Go。
+- 已落地领域、应用、协议、服务、基础设施和产品 target 分层。
+- 支持裸机及 FreeRTOS 构建。
+- 当前产品包括国网状态表、两个 IDIS IP 电表 target 和 host 仿真 target。
+- 业务组件和平台组件通过 `product.yaml` 选择。
+- 持久化兼容、依赖方向、组件归属、Cortex-M0 编译和固件链接受自动检查约束。
 
-1. **sdk.a**
+## 仓库布局
 
-`interface`
+| 路径 | 职责 |
+|---|---|
+| `domain/` | 纯领域能力：计量、费率、冻结、事件、负荷控制、显示、安全、上报等 |
+| `application/` | 用例编排和协议适配器 |
+| `components/` | 可复用 core、domain、application、protocol 和 services 组件 |
+| `infra/` | SoC、驱动、RTOS、第三方代码及基础设施适配 |
+| `targets/` | 产品组合根、board 包、应用入口、配置和构建脚本 |
+| `products/` | 产品描述：组件选择与平台选择 |
+| `tests/` | 主机单元测试、验收用例、协议语料和仿真测试 |
+| `formal/` | CBMC、TLA+ 和 Lean 形式化验证 |
+| `tools/` | 架构门禁、构建清单、固件检查和验收工具 |
+| `docs/` | 架构、平台、协议、验证和迁移文档 |
 
-- [ ] application request lib
-- [ ] callback request
-- [ ] module lib
+## 架构约束
 
-2. **os.bin**
+- `domain` 不依赖平台、协议或具体 target。
+- `application` 依赖领域契约，并通过消费者定义的端口工作。
+- `components` 不得直接依赖 SoC、board、RTOS、target 或产品目录。
+- `targets/<product>` 是唯一装配点：创建对象、绑定端口、启动调度。
+- 平台差异只出现在 `infra/soc`、`infra/drivers`、`infra/rtos` 和产品 board。
+- 聚合和资源由调用方持入或注入，不读可变全局状态，不由 domain 调用宿主 `malloc`。
+- 存量电表持久化布局必须逐字节兼容；布局偏移由静态断言和回归测试锁定。
 
-`application code + kernel + module manager + module lib + drivers`
+## C4 模型
 
-- [ ] module manager(`kernel thread`)
-- [ ] resource manager(`kernel thread`)
-- [ ] kernel
-- [ ] application init code(`main()`)
-- [ ] module manager(`application life cycle`)
-- [ ] drivers
+下面的七张图按 C4 模型的四个抽象层及关键横切视图组织。
 
-3. **modules.bin**
+### 1. 系统上下文
 
-可独立分发的应用程序
-
-- [ ] modularize applications(`applications--user thread`)
-	- [ ] base_app.bin
-	- [ ] uart_tx_app.bin*3 
-	- [ ] uart_rx_app.bin*3 
-	- [ ] inter_cpu_communication_app.bin
-- [ ] modularize drivers
-
-- [ ] demos(`iar+keil+gcc`)
-
-4. **utilities**
-- [ ] uploader
-- [ ] debug utilities(`shell + tracex`)
-- [ ] qemu
-
-5. **docs**
-
-- [ ] ppt
-- [ ] 开发文档
-
-**module dashboard**
-
-1. **开发**
-	- [ ] 申请module ID(`access token`)
-	- [ ] 展示本地module.bin
-	- [ ] 上传module到设备端(调试模式)
-	- [ ] 数据管理(上位机)
-	- [ ] 打包(签名) 
-	- [ ] 将本地module.bin发布到云端
-	
-2. **管理和部署**
-	- [ ] 下载云端module.bin列表
-	- [ ] 解析module.bin 
-	- [ ] 展示所有的module(`app store`)
-	- [ ] 发现和联接设备端
-	- [ ] 展示设备信息
-		- [ ] 硬件信息
-		- [ ] 系统信息
-		- [ ] 软件信息
-		- [ ] 运行状态信息
-	- [ ] 上传module到设备端
-	- [ ] 远程操作module
-
-## milestones
-
-|  时间   | 里程碑  |
-|  ----  | ----  |
-|2021-10-30|   合并代码并能运行<br>按照测试用例分工自测|
-|2021-11-06 |   第一次台体测试|
-|2021-11-13 |  第二次台体测试|
-|2021-11-20  | 提交WG测试|
-
-## high level design
-
-
-|     | 名  | 
-|  ----  | ----  |
-|**instances**| stategrid-meter  | 
-|**applications** |  meterbase-x/698_server/<br>698-client/dlms-server/dlms_client|
-|**nidavellir-api** |nidavellir-c/nidavellir-os/nidavellir-x-languages |
-|**packages**  | meterbase/dlms/dl645/dl698/<br>tx/zx/freertos/windows/liteos/baremetal/<br>resource-manager/drivers/cpus/filex/levelx/crypto|
-----
-
-## 生态系统
-**应用管理**
-- 用户注册
-- 应用申请
-- 开发工具链
-- 应用开发
-- 应用部署前的打包
-
-**测试管理**
-- 包级测试
-- 应用级测试
-- 设备测试
-- 部署测试
-
-**设备管理**  
-
-- 创建设备
-- 设备描述信息和注册
-- 应用部署
-
-## 举例
-
+```mermaid
+flowchart LR
+    Operator["开发 / 运维人员"] --> Repo["modular-001<br/>组件化嵌入式固件仓库"]
+    Field["现场工程师"] --> Meter["智能电表"]
+    Meter --> Repo
+    Meter -->|DL/T 698 / 645 / DLMS| Headend["主站 / 采集系统"]
+    Comm["PLC / RF 通信模块"] --> Headend
+    Repo --> CI["CI 与验收环境"]
+    Repo --> Hardware["SoC / board / HIL"]
 ```
 
-单相表: nidavellir-baremetal + app_meterbase + app_698_server
-物联网计量芯: nidavellir-baremetal + app_meterbase_1 + app_698_server(2) + app_exchange_with_m33
-物联网管理芯: nidavellir-os + app_meterbase_2 + app_698_server(3) + app_exchange_with_m0
-国网三相表: nidavellir-baremetal + app_meterbase + app_698_server(3)
+### 2. 容器视图
 
+```mermaid
+flowchart TB
+    subgraph Repo["modular-001 仓库"]
+        Domain["Domain 容器<br/>计量、费率、冻结、事件、安全"]
+        Application["Application 容器<br/>用例与协议适配"]
+        Components["Components 容器<br/>core / protocol / services"]
+        Infra["Infrastructure 容器<br/>SOC / driver / RTOS / third-party"]
+        Target["Target 容器<br/>host 与产品固件组合根"]
+        Tools["Tools 与 Tests<br/>门禁、单元、验收、仿真"]
+    end
+
+    Target --> Application
+    Target --> Domain
+    Target --> Components
+    Target --> Infra
+    Application --> Domain
+    Components --> Domain
+    Infra -->|实现端口| Application
+    Tools --> Domain
+    Tools --> Components
+    Tools --> Target
 ```
 
+### 3. 组件视图：领域与应用
 
-协议无关    --》  1. 无id   2. 地址和存储  3. 
+```mermaid
+flowchart LR
+    subgraph Domain["Domain 组件"]
+        Metering["Metering<br/>能量、需量、瞬时量"]
+        Tariff["Tariff<br/>费率、阶梯、日历"]
+        Freeze["Freeze<br/>冻结计划与序号"]
+        Events["Events<br/>去抖、记录、告警"]
+        Control["Load Control<br/>继电器与负荷控制"]
+        Security["Security<br/>权限与认证结果"]
+        Report["Report<br/>上报策略与编码规则"]
+    end
 
-其中，协议类应用(app_698_server)跟基表应用(app_meterbase)的数据转换方式如下:
+    subgraph Application["Application 组件"]
+        MeterUse["计量秒用例"]
+        Adapters["698 / 645 协议适配"]
+        Ports["消费者定义端口"]
+    end
 
-在map中实现转换，确保meterbase的协议无关性
-
-meterbase聚合根  (变量Ua)       <- map ->   ID (1.8.0)
-
-meterbase<-->resource manager  [3个分区 static ]
-
-协议   <--->  resource manager  [driver]
-
-
-map()
-{
-	sw
-}
-
-## packages
-
-含**业务概念/业务状态/业务规则**
-
-不可单独部署,但要单独发布源码和库，发布时提供移植指南，**方便供第三方进行移植和使用**。
-
-平台组件  或者叫 包
-
-基础服务层
-
-domain领域层
-
-不可单独执行
-
-导出`packages.h`供上层`application`使用
-
-每个组件的配置
-
-编程注意事项:
-
-1. 多数package能够使用到多个环境(前后台/多线程/多进程/动态/静态/dll/lib)下，故单个package不能依赖别的package，*只依赖fifo、instance->cache和消息*。更不能直接操作设备(外设和内设)，特别是业务包不能依赖操作系统包。(kernel包也不依赖  **考虑中，待定**)
-
-2. 同理，package要满足**可重入和多实例**的要求。因此，代码中不能出现全局变量，甚至文件作用域的变量。
-
-3. 消息格式设计  'cmd len data cmd' 
-
-4. 此目录单独代码仓库
-
-## nidavellir
-
-此层次是发布包。可基于此发布包开发定制的application、test和instance
-
-- bin  //发布的二级制文件和工具集
-- include //发布的开发包
-- samples // 一些例子
-- tests  //测试用例
-
-## applications
-
-调用packages构建的业务强相关的应用
-
-本质上只是package的重组和重排
-
-可单独执行
-
-可单独部署
-
-独立仓库
-
-发布时务必提供三种形态: `baremetal/thread/process`,分别对应`baremetal_entry.c;thread_entry.c;process_entry.c`。
-
-导出 applications.h
-
-###  编程模型
-
-总体上，采用消息或事件驱动模型。其中，消息队列的设计如下
-
-- 在前后台环境下，利用`fifo`来充当消息队列。
-- 在多线程和多进程环境下，利用操作系统提供的线程间通信和同步机制(信号量/事件标志/队列/邮箱/管道)来充当消息队列，提高消息处理速度。
-
-具体上，创建application可分以下步骤
-
-1. 在applications目录下新建应用目录
-
-2. 在应用目录中新建baremetal_entry.c
-
-3. baremetal_entry.c的基本模型如下
-
-```
-int app_entry(struct instance_t* instance, 
-			struct task_t* task, struct message_t* mesg)
-{
-    int r = 0;
-    //1.接入校验，验证接收到的消息的完整性和合法性
-    //2.处理消息
-    switch (mesg->ctrl)
-    {
-    case 0x__:
-		//3.调用领域层完成业务  反映用例场景
-        break;
-    case 0x__:
-		//3.调用领域层完成业务  反映用例场景
-        break;
-    default:
-        break;
-    }
-
-    return 0;
-}
-```
-### message
-
-
-```
-struct message_t
-
-head cmd len data tail
-head: 0x88
-cmd: <= 32 kernel message
-cmd: > 32  user message
-data: 
-tail: 0x88
+    MeterUse --> Metering
+    MeterUse --> Freeze
+    MeterUse --> Report
+    Adapters --> Metering
+    Adapters --> Tariff
+    Adapters --> Events
+    Adapters --> Security
+    Adapters --> Control
+    Adapters --> Ports
 ```
 
-**说明**:
+### 4. 组件视图：可复用组件与基础设施
 
-在前后台环境下，此message通过fifo传递
-在多线程环境下，此message通过queue传递
-### 资源管理
+```mermaid
+flowchart TB
+    subgraph Core["components/core"]
+        Types["types / bytes"]
+        Buf["buf / fifo"]
+        Bus["bus"]
+    end
 
+    subgraph Protocol["components/protocol"]
+        DL698["DL/T 698"]
+        DL645["DL/T 645"]
+        DLMS["DLMS"]
+    end
 
-## instances
+    subgraph Services["components/services"]
+        Channel["channel"]
+        Storage["storage"]
+        Security["security"]
+    end
 
-产品实例集合
+    subgraph Infra["infra"]
+        SOC["SOC HAL"]
+        Board["Board adapter"]
+        Drivers["器件驱动"]
+        RTOS["RTOS / 裸机"]
+    end
 
-里面的每个实例对应一个产品
+    Target["Target 组合根"]
 
-独立仓库
-
-其包括以下内容:
-
-1. 硬件配置声明: 当前实例所使用的硬件和设备配置清单
-
-2. 数据资源声明: 当前实例所使用的"数据声明"及其在硬件上的布局情况
-	
-	数据资源的声明方法？
-	
-	数据资源的管理方法？
-
-3. 组件配置声明: 当前实例所使用的组件及其配置
-
-4. 应用配置声明: 当前实例所使用的应用及其配置
-
-5. 部署方式声明: `baremetal/multi_threads/multi-processes`
-
-本目录下只有一个函数入口`xxxx_instance_entry`. **即要得到不同的instance，只需改写此入口函数**。
-
-前后台的入口函数如下:
-
-```
-int baremetal_instance_entry(int argc, char** argv)
-{
-    //1. 构造instance
-		//初始化硬件
-		//初始化固件
-		//初始化资源管理器
-			//获取设备信息
-			//获取数据模型布局
-			//绑定模型  设备 和方法
-		//初始化软件
-			//创建每个application
-			//初始化每个application
-			//每个application的control block如何初始化?且如何绑定到instance里?
-			//每个application如何访问自己的control block?
-		//链接和绑定硬件 固件 和 软件
-    //2. 启动主循环，执行此instance
-    return baremetal_loop(instance);
-}
-```
-多线程的入口函数如下:
-
+    Target --> Core
+    Target --> Protocol
+    Target --> Services
+    Target --> Infra
+    Protocol --> Core
+    Protocol --> Channel
+    Services --> Core
+    Infra -->|实现端口| Services
 ```
 
-```
-## 测试
+### 5. 产品装配视图
 
-## workflow
+```mermaid
+flowchart LR
+    Manifest["products/<product>/product.yaml"] --> Resolver["component manifest resolver"]
+    Resolver --> DomainProfile["domain profile"]
+    Resolver --> ProtocolSet["protocol components"]
+    Resolver --> PlatformSet["SOC / board / RTOS"]
+
+    subgraph Target["targets/<product>"]
+        Main["main / app 装配"]
+        Board["board 引脚与器件实例"]
+        Config["产品参数"]
+        Build["CMake / IAR / linker"]
+    end
+
+    DomainProfile --> Main
+    ProtocolSet --> Main
+    PlatformSet --> Main
+    Board --> Main
+    Config --> Main
+    Main --> Firmware["固件产物"]
+```
+
+### 6.运行时交互：协议帧到领域用例
+
+```mermaid
+sequenceDiagram
+    participant RX as 通道 / UART / PLC
+    participant P as Protocol Adapter
+    participant D as Domain Use Case
+    participant S as Storage / Metering
+    participant TX as Channel / Radio / UART
+
+    RX->>P: 接收字节帧
+    P->>P: 校验、解析、分帧
+    P->>D: 参数化领域请求
+    D->>S: 读取或更新领域状态
+    S-->>D: 值对象 / 结果
+    D-->>P: 响应语义
+    P->>P: 编码响应
+    P->>TX: 输出帧
+```
+
+### 7. 验证与交付流水线
+
+```mermaid
+flowchart LR
+    Source["Source changes"] --> Static["层依赖 / 组件 / 可变全局检查"]
+    Source --> Host["host strict / sanitizer 测试"]
+    Source --> ARM["Cortex-M0 编译检查"]
+    Source --> Link["固件链接与 section 预算"]
+    Source --> Accept["产品验收矩阵"]
+    Source --> Formal["CBMC / TLA+ / Lean"]
+
+    Static --> Verdict["Verdict"]
+    Host --> Verdict
+    ARM --> Verdict
+    Link --> Verdict
+    Accept --> Verdict
+    Formal --> Verdict
+
+    Verdict -->|clean| Artifact["固件与验收证据"]
+    Verdict -->|失败| Fix["修复并重跑门禁"]
+```
+
+## 构建与验证
+
+仓库提供统一入口：
+
+```bash
+./ci.sh
+```
+
+常用验证内容包括：
+
+- `host:strict` 与 sanitizer 测试。
+- `host:sim-san` 整机仿真。
+- Cortex-M0 严格编译。
+- 层、组件、平台边界和可变全局检查。
+- 产品清单、固件链接和 ROM/RAM 预算检查。
+- stategrid 与 IDIS 验收矩阵。
+- CBMC、TLA+ 和 Lean 形式化检查。
+
+补充架构文档：
+
+- [架构层与依赖规则](docs/architecture.md)
+- [组件化 monorepo 设计](docs/monorepo.md)
+- [平台目录与可见性规范](docs/platform-layout.md)
+- [ROADMAP](docs/ROADMAP.md)
+- [组件标准](docs/guides/component-standard.md)
+- [端口绑定](docs/guides/port-binding.md)
+- [验证分层](docs/guides/verification.md)
