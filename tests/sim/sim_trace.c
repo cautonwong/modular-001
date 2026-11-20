@@ -143,6 +143,12 @@ void nd_sim_stage(const char *name)
     sim_trace_printf("[sim] stage=%s", name);
 }
 
+void nd_sim_storage_layout(uint32_t used, uint32_t region)
+{
+    sim_trace_printf("[sim] eeprom-used=%u snapshot-region=%u margin=%u",
+                     used, region, region - used);
+}
+
 void nd_sim_system_reset(void)
 {
     sim_trace_printf("[sim] NVIC_SystemReset requested; stopping simulation");

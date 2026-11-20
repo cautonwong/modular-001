@@ -179,8 +179,8 @@ infra 实现这些端口。target 在组合根里注入。
 15. 负荷控制已迁移：`targets/stategrid_meter/app/relay_control_adapter.c` 把旧控制块、继电器输出、LED、事件和 645 上报桥接到 `load_control_state_t`；`do_relay`/`relay_led_ctl` 已接入，`Relay_Sec_Task` 已删除。
 16. 计量能量已迁移：`targets/stategrid_meter/app/metering_energy_adapter.c` 在旧电能数组和 `metering_state_t` 之间导入导出；`Energy_Meter`、停电刷新、清零、设置和两个 int64 取数函数已改用聚合。电能账本现在在零脉冲调用时也会进位，组合取数先合并原始整数和脉冲再换算，与旧公式一致。
 17. 死文件核查：10 个文件都不在 IAR 工程且无编译引用。删除了 7 个重复或未使用文件，保留 `demand.c` 和两个 bill 文件等产品范围确认。`application/meterbase` 暂存目录已清空。
-18. 用户确认保留需量和月/阶梯结算。三处文件留在 staging，当前固件没有接线：`get_1_Demand.c` 返回 `OBJECT_NOT_EXIST`，也没有账单处理函数调用两个 bill 文件。恢复功能时先迁进对应限界上下文。
-19. 需量应用层：`application/metering/demand_registry.c` 用固定数组持有多路需量对象、功率来源和输出 OAD，替代旧 `demand.c` 的链表和 malloc 接线。4 个主机测试。旧 `demand.c` 仅作为 staging 参考保留。
+18. 用户确认保留需量和月/阶梯结算。月/阶梯结算的两处文件仍在 staging，当前固件没有接线。需量已于 2026-11-19 接线，见下条。
+19. 需量应用层：`application/metering/demand_registry.c` 用固定数组持有多路需量对象、功率来源和输出 OAD。2026-11-19 固件路径接通：`targets/stategrid_meter/app/metering/demand_adapter.c` 持有 5 分钟区间式和 1 分钟×5 滑差式两个对象，`get_1_Demand.c` 通过 0x11000201/0x11000202 回读，最大值随持久区保存。旧 `demand.c` 已删除。
 20. `applications.h` 第一次拆分：35 个函数声明移到 metering、tariff、load control、freeze、events、display 六个上下文头文件；单体 `mbase_control_block_t` 移到 `nidavellir/include/kernel/legacy_control_block.h`。伞头从 708 行降到 282 行，`tools/legacy_probe.c` 的持久化偏移不变。
 21. 内核解耦：`nidavellir.h` 不再 include `applications.h`。资源块 ID、设备枚举、继电器反馈阈值和按键延时宏移到 `infra/kernel/resource_blocks.h`、`infra/board/relay_config.h`、`infra/kernel/key_config.h`。44 个 application/target 调用方改为显式 include `applications.h`，137/137 编译链接通过。
 22. 记录组迁移：`applications.h` 里的记录结构体、枚举和 13 个函数声明移到 `domain/events/legacy/gs_record.h`，头文件补齐 `stdint.h` 和前置声明。伞头从 282 行降到 213 行。
@@ -289,7 +289,7 @@ infra 实现这些端口。target 在组合根里注入。
 1. 按 `docs/esam-compatibility.md` 做真实硬件验证：正确 MAC 通过、篡改 MAC 被拒、纯 RN 通过、上报确认、断线重连和掉电重启。权限检查的广播校时和红外分支、以及安全响应尾部编码也需要真机回归。`fr_698.c` 现在已经很薄。协议层状态和客户端路径已分开，后续可以在目标组合根里注册 `forward`。
 2. 协议解析主机测试已覆盖 645/698 matcher、pack、645 数据域与地址与密码、698 AXDR、698 帧检查、698 分帧、698 连接/GET/SET/ACTION 请求和 698 客户端转发。adapters 已进入 ARM 检查且不再抑制警告。剩余协议验证需要真机回归：698 服务端 DIR 过滤、目标钩子消息类型、ESAM MAC/RN 和分帧末帧。下一步按 `docs/ROADMAP.md` 走 P1：收窄 `instance_t` 和计量端口，`mbase` 拆分仍暂缓。
 3. 清理根目录失效的 solution 文件。
-4. 需量和月/阶梯结算的 legacy 实现已随本轮移到 `targets/stategrid_meter/*/legacy`，不在当前固件构建里。排期恢复时把语义迁进 `domain/metering/demand` 和 `domain/tariff`，不要直接复活旧实现。
+4. 需量已于 2026-11-19 迁入 `domain/metering/demand` 和 `application/metering`，旧 `targets/stategrid_meter/app/metering/legacy/demand.c` 已删除。月/阶梯结算的 legacy 实现仍在 `targets/stategrid_meter/*/legacy`，不在当前固件构建里；排期恢复时把语义迁进 `domain/tariff`，不要直接复活旧实现。
 5. 内核头还可以继续按 device、tasklet、rtc 拆小；当前 `kernel_core.h` 是兼容包。
 6. 增加带链接脚本和启动文件的固件链接，以及真实硬件上的运行验证。
 7. 下阶段局部重构清单已清空：事件 id 到 OAD 目录已迁入 `domain/events/event_catalog`。产品源清单已成为固件链接输入并与 `.ewp` 双向锁定，legacy 容器已按目录拆开；后续按 `docs/ROADMAP.md`：真机回归、由清单生成 IAR 工程或组合根、698 客户端消费者接入。
@@ -297,7 +297,6 @@ infra 实现这些端口。target 在组合根里注入。
 ## 8. 已知问题与风险
 
 1. 旧代码质量低，已知缺陷：
-   - `demand.c` 滑差寄存器从不写入，平均值指针类型错误。
    - `resource.c` 的枚举定义在结构体使用之后，本身编不过。
    - `tasklet.c` 主体在 `#if 0` 里。
    - crypto 缺整个 `inc/` 目录。
@@ -327,10 +326,11 @@ infra 实现这些端口。target 在组合根里注入。
 
 仍保留，2026-11-10 用户确认保留：
 
-- `domain/metering/legacy/demand.c`：需量检测的旧实现。当前固件没有启用需量，`get_1_Demand.c` 直接返回 `OBJECT_NOT_EXIST`，也没有任何调用方创建需量对象。保留作未来范围的参考。
 - `domain/tariff/legacy/gs_month_bill.c`、`gs_step_bill.c`：月结算和阶梯结算的旧实现。当前固件没有接这两个文件，保留作未来范围的参考。
 
-恢复这些功能时，先把行为迁进 `domain/metering/demand` 和 `domain/tariff`，再删除 staging 文件；不要直接把它们重新编进 IAR 工程。
+`targets/stategrid_meter/app/metering/legacy/demand.c` 已于 2026-11-19 删除；需量走 `domain/metering/demand` + `application/metering` + `targets/stategrid_meter/app/metering/demand_adapter.c`（ACC-MET-005 到 A）。
+
+恢复月/阶梯结算时，先把行为迁进 `domain/tariff`，再删除 staging 文件；不要直接把它们重新编进 IAR 工程。
 
 ## 10. 新会话启动清单
 

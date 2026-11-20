@@ -27,6 +27,7 @@
 #include "targets/stategrid_meter/board/board_flash.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/persistence/legacy_control_block.h"
+#include "targets/stategrid_meter/persistence/legacy_energy_layout.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "targets/stategrid_meter/app/driver_entry.h"
 #include "targets/stategrid_meter/app/iar_linker_symbols.h"
@@ -36,6 +37,13 @@
 #include "application/adapters/dl698/fr_698_message.h"
 #include "application/ports/uart_timeout.h"
 #include "application/adapters/dl645/fr_645_context.h"
+#include "application/adapters/dl698/meter_base_view.h"
+#include "infra/memory/arena.h"
+#include "targets/stategrid_meter/app/metering/demand_adapter.h"
+#include "targets/stategrid_meter/app/metering_energy_adapter.h"
+#include "targets/stategrid_meter/board/board_eeprom.h"
+#include "infra/drivers/storage/block/block_ops.h"
+#include "infra/storage/pulse_snapshot.h"
 
 /* The supply callbacks take void *instance; register_* declares a typed
  * instance pointer. The ABI is identical, so match it here. */
@@ -50,6 +58,7 @@ int nd_sim_should_stop(stategrid_context_t * instance);
 void nd_sim_after_run(stategrid_context_t * instance);
 void nd_sim_event(uint8_t from, uint8_t to, uint8_t ctrl, uint16_t len);
 void nd_sim_filter(const char *pipeline, uint8_t filter_id, int ret);
+void nd_sim_storage_layout(uint32_t used, uint32_t region);
 #endif
 
 
@@ -514,6 +523,25 @@ static void sleep_tick(stategrid_context_t *instance)
     }
 }
 
+/* The snapshot region starts at STG_ENERGY_SNAPSHOT_OFFSET. A high water mark
+ * equal to the region start means the next block would land on it, so the
+ * guard rejects >=, not just >. */
+static int energy_region_free(stategrid_context_t *instance, uint32_t *out_used)
+{
+    uint32_t eeprom_used = 0;
+
+    if (get_device_used(instance, RES_DEV_EEPROM, &eeprom_used) != 1
+        || eeprom_used >= STG_ENERGY_SNAPSHOT_OFFSET)
+    {
+        return 0;
+    }
+    if (out_used != NULL)
+    {
+        *out_used = eeprom_used;
+    }
+    return 1;
+}
+
 int baremetal_instance_entry_main(stategrid_context_t * instance, int argc, char** argv)
 {
     stategrid_context_t *ctx = instance;
@@ -631,6 +659,17 @@ int baremetal_instance_entry_main(stategrid_context_t * instance, int argc, char
         return -1;
     }
 
+    /* Demand owns a fixed arena in the instance instead of a resource block so
+     * the metadata budget counts stay unchanged. */
+    nd_arena_init(&ctx->demand_arena, ctx->demand_arena_buffer,
+                  sizeof(ctx->demand_arena_buffer));
+    ctx->demand = nd_demand_adapter_create(nd_arena_allocator(&ctx->demand_arena),
+                                           nd_mb_active_power_ptr(instance));
+    if (ctx->demand == NULL)
+    {
+        return -1;
+    }
+
     //注册EPROM
     if (1 != add_device(instance, RES_DEV_EEPROM, 0x00))
     {
@@ -683,6 +722,52 @@ int baremetal_instance_entry_main(stategrid_context_t * instance, int argc, char
         return -1;
     }
 
+    /* Bind the energy snapshot after every EEPROM block is registered. The
+     * guard reads the allocator high water mark, so a future add_block that
+     * crosses 0xC000 fails boot instead of silently sharing the region. The
+     * legacy record offset is also pinned: adoption reads exactly the bytes
+     * the old firmware wrote. */
+    {
+        uint32_t eeprom_used = 0;
+        uint32_t persistent_addr = 0;
+        nd_pulse_snapshot_config_t energy_config;
+
+        if (!energy_region_free(instance, &eeprom_used)
+            || get_block_frist_addr(instance, RES_DEV_EEPROM,
+                                    mbase_block_persistent_eprom,
+                                    &persistent_addr) != 1
+            || persistent_addr + 3u != STG_ENERGY_LEGACY_RECORD_OFFSET)
+        {
+            return -1;
+        }
+        nd_eeprom_block_init(&ctx->energy_block, board_eeprom(),
+                             BOARD_EEPROM_SIZE);
+        energy_config.block = nd_eeprom_block_port(&ctx->energy_block);
+        energy_config.offset = STG_ENERGY_SNAPSHOT_OFFSET;
+        energy_config.blob_bytes = STG_ENERGY_SNAPSHOT_BLOB_BYTES;
+        if (nd_pulse_snapshot_init(&ctx->energy_store_storage,
+                                   &energy_config) != 0)
+        {
+            return -1;
+        }
+        ctx->energy_store = nd_pulse_snapshot_port(&ctx->energy_store_storage);
+        ctx->legacy_energy_offset = persistent_addr + 3u;
+        ctx->legacy_energy_flag_offset =
+            persistent_addr + legacy_energy_ec_offset();
+        ctx->legacy_energy_ec2_energy_index =
+            ((uint32_t)RES_DEV_EEPROM << 24)
+            + ((uint32_t)mbase_block_parameter_1 << 16) + Energy_block;
+        ctx->legacy_energy_ec2_month_index =
+            ((uint32_t)RES_DEV_EEPROM << 24)
+            + ((uint32_t)mbase_block_parameter_1 << 16) + UseEnergy_block;
+        /* Bind the singleton ledger once, before any read path can build a
+         * handle from mbase alone and miss the store. */
+        (void)metering_energy_ledger_from_instance(ctx);
+#ifdef ND_FIRMWARE_SIM
+        nd_sim_storage_layout(eeprom_used, STG_ENERGY_SNAPSHOT_OFFSET);
+#endif
+    }
+
     //注册冻结1-flash
     //必须为flash 首个块，和升级文件缓存 共用
     if (NULL == register_log(instance, RES_DEV_FLASH, mbase_block_event_flash1, RES_DEV_EEPROM, mbase_block_parameter, (MinuteFreeze_SECTION_SIZE) * 4 * 1024, (resource_supply_fn)supply_event_flash_1_info))
@@ -702,6 +787,13 @@ int baremetal_instance_entry_main(stategrid_context_t * instance, int argc, char
     }
     //注册一个698的MAP
     if (NULL == register_map(instance, res_map_698, (resource_map_fn)resource_map_698))
+    {
+        return -1;
+    }
+
+    /* Re-check after the last registration: a future EEPROM allocation added
+     * below this point must not silently land on the snapshot region. */
+    if (!energy_region_free(instance, NULL))
     {
         return -1;
     }

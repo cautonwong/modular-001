@@ -45,7 +45,7 @@ typedef struct {
 
 typedef struct {
     nd_alarm_state_t alarm;
-    nd_event_log_t log;
+    nd_event_log_storage_t log;
     uint16_t log_codes[ND_EVENT_LOG_MAX];
     uint8_t profile_status;
     uint8_t latest_event_code;

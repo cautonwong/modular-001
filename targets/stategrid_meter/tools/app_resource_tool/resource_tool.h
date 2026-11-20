@@ -67,6 +67,11 @@ int16_t nd_set_block(stategrid_context_t *instance, uint32_t res, uint8_t* buf,u
 
 int16_t get_block_frist_addr(stategrid_context_t *instance, uint8_t device_name, uint8_t block_name, uint32_t *addr);
 
+/* Bytes consumed by every block registered on the device. Used by the boot
+ * guard that reserves the energy snapshot region above the high water mark. */
+int get_device_used(stategrid_context_t *instance, uint8_t device_name,
+                    uint32_t *used);
+
 
 struct resource_block_t* add_inside_block(stategrid_context_t *instance, uint8_t device_name, uint8_t block_name, uint8_t inside_block_name, uint32_t block_size, uint32_t offset);
 void* nd_malloc(stategrid_context_t *instance, uint8_t block_name, uint32_t size);

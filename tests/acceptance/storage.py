@@ -10,18 +10,19 @@ The offsets below come from firmware code, not from guessing:
 
 test_storage.py re-derives these offsets from the C sources and fails when the
 decoder and the firmware disagree. Images are the flat files firmware_sim
-writes: 65535 bytes for EEPROM, 8388607 bytes for flash.
+writes: 65535 bytes for EEPROM, 4194304 bytes for flash.
 """
 
 from __future__ import annotations
 
 import hashlib
 import struct
+import zlib
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 EEPROM_SIZE = 65535
-FLASH_SIZE = 8388607
+FLASH_SIZE = 4194304
 
 # The reset counter is a uint32 in the parameter block, read and written by
 # nd_get_index/nd_set_index through the ResetCount parameter entry.
@@ -50,6 +51,23 @@ FLASH_PUBLIC_BLOCK_OFFSET = FLASH_EVENT2_BLOCK_OFFSET + FLASH_EVENT2_BLOCK_SIZE
 # Field offsets are relative to active_p and match legacy_energy_record.h.
 ENERGY_RECORD_OFFSET = EEPROM_PERSISTENT_BLOCK_OFFSET + 3
 ENERGY_RECORD_SIZE = 172
+
+# Energy snapshot slots: composition-root defaults in
+# targets/stategrid_meter/app/metering_energy_adapter.h and the record format
+# in infra/storage/pulse_snapshot.h. Two 4-byte aligned slots; the region end
+# must stay above the allocator high-water mark and below BOARD_EEPROM_SIZE.
+ENERGY_SNAPSHOT_OFFSET = 0xC000
+ENERGY_SNAPSHOT_MAGIC = 0x4E445053  # "NDPS"
+ENERGY_SNAPSHOT_VERSION = 1
+ENERGY_SNAPSHOT_HEADER_SIZE = 12
+ENERGY_SNAPSHOT_CRC_SIZE = 4
+ENERGY_SNAPSHOT_SLOTS = 2
+ENERGY_SNAPSHOT_RECORD_SIZE = (
+    ENERGY_SNAPSHOT_HEADER_SIZE + ENERGY_RECORD_SIZE + ENERGY_SNAPSHOT_CRC_SIZE
+)
+ENERGY_SNAPSHOT_REGION_END = (
+    ENERGY_SNAPSHOT_OFFSET + ENERGY_SNAPSHOT_SLOTS * ENERGY_SNAPSHOT_RECORD_SIZE
+)
 ENERGY_TARIFF_SLOTS = 13
 ENERGY_ACTIVE_P_OFFSET = 0
 ENERGY_ACTIVE_N_OFFSET = 52
@@ -59,6 +77,18 @@ ENERGY_CHECKSUM_OFFSET = 156
 ENERGY_MONTH_DEC_OFFSET = 160
 ENERGY_MONTH_OFFSET = 164
 ENERGY_USE_CHECKSUM_OFFSET = 168
+
+# EC2 backup items inside parameter_1 (mapper_698.c parameter_item_1[], each
+# item is its data followed by a 2-byte checksum). The main copy starts at
+# offset 0 and nd_set_index mirrors it into the block at 1024.
+ENERGY_EC2_ENERGY_OFFSET = 198
+ENERGY_EC2_ENERGY_SIZE = 160
+ENERGY_EC2_MONTH_OFFSET = 360
+ENERGY_EC2_MONTH_SIZE = 12
+# ec_save_success relative to persistent_section_start (meter_record.h),
+# persisted at the power-off block base.
+ENERGY_POWEROFF_FLAG = 0x5AA5
+ENERGY_POWEROFF_FLAG_OFFSET = EEPROM_PERSISTENT_BLOCK_OFFSET + 177
 
 # Record IDs from domain/events/event_id.h.
 HOUR_FREEZE_RECORD_ID = 178
@@ -224,6 +254,67 @@ def energy_record(image: bytes, offset: int = ENERGY_RECORD_OFFSET) -> EnergyRec
         use_energy_checksum_ok=use_energy_checksum
         == checksum16(raw[ENERGY_MONTH_DEC_OFFSET:ENERGY_USE_CHECKSUM_OFFSET]),
     )
+
+
+@dataclass(frozen=True)
+class SnapshotSlot:
+    slot: int
+    generation: int
+    record: EnergyRecord | None
+    valid: bool
+    blank: bool
+
+
+def energy_snapshots(image: bytes) -> tuple[SnapshotSlot, ...]:
+    """Decode both energy snapshot slots; the caller picks the latest valid.
+
+    A slot is blank when its 12-byte header is all 0xFF. The CRC is standard
+    reflected CRC-32 over header + blob, which is what infra/storage/crc32.h
+    implements.
+    """
+    slots = []
+    for slot in range(ENERGY_SNAPSHOT_SLOTS):
+        offset = ENERGY_SNAPSHOT_OFFSET + slot * ENERGY_SNAPSHOT_RECORD_SIZE
+        header = _slice(image, offset, ENERGY_SNAPSHOT_HEADER_SIZE)
+        magic, version, blob_bytes, generation = struct.unpack("<IHHI", header)
+        blank = header == b"\xff" * ENERGY_SNAPSHOT_HEADER_SIZE
+        record = None
+        valid = False
+        if not blank and blob_bytes == ENERGY_RECORD_SIZE:
+            blob_end = offset + ENERGY_SNAPSHOT_HEADER_SIZE + blob_bytes
+            crc = struct.unpack(
+                "<I", _slice(image, blob_end, ENERGY_SNAPSHOT_CRC_SIZE)
+            )[0]
+            computed = zlib.crc32(
+                _slice(image, offset, ENERGY_SNAPSHOT_HEADER_SIZE + blob_bytes)
+            ) & 0xFFFFFFFF
+            valid = (
+                magic == ENERGY_SNAPSHOT_MAGIC
+                and version == ENERGY_SNAPSHOT_VERSION
+                and crc == computed
+            )
+            if valid:
+                record = energy_record(
+                    image, offset + ENERGY_SNAPSHOT_HEADER_SIZE
+                )
+        slots.append(
+            SnapshotSlot(
+                slot=slot,
+                generation=generation,
+                record=record,
+                valid=valid,
+                blank=blank,
+            )
+        )
+    return tuple(slots)
+
+
+def latest_energy_snapshot(image: bytes) -> SnapshotSlot | None:
+    """Highest generation valid slot, or None when the store has no base."""
+    valid = [slot for slot in energy_snapshots(image) if slot.valid]
+    if not valid:
+        return None
+    return max(valid, key=lambda slot: slot.generation)
 
 
 @dataclass(frozen=True)

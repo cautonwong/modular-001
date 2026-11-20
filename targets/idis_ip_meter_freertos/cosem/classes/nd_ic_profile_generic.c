@@ -365,19 +365,21 @@ static int compare_value(const uint8_t *left, uint8_t left_length,
     return 0;
 }
 
+/* The record the predicate read is handed back so the write pass encodes the
+ * same bytes without a second store read. */
 static int row_matches_range(const nd_idis_profile_state_t *profile,
+                             const nd_profile_store_snapshot_t *snapshot,
                              uint32_t index,
-                             const profile_selection_t *selection)
+                             const profile_selection_t *selection,
+                             uint8_t *record, size_t *length)
 {
-    uint8_t record[ND_IDIS_PROFILE_RECORD_MAX];
-    size_t length = 0;
-    if (nd_profile_store_read(&profile->store, index, record, sizeof(record),
-                              &length) != 0) {
+    if (nd_profile_store_read_at(&profile->store, snapshot, index, record,
+                                 ND_IDIS_PROFILE_RECORD_MAX, length) != 0) {
         return -1;
     }
     uint16_t offsets[ND_IDIS_PROFILE_MAX_CAPTURES];
     uint16_t lengths[ND_IDIS_PROFILE_MAX_CAPTURES];
-    if (record_offsets(record, length, profile->capture_count, offsets,
+    if (record_offsets(record, *length, profile->capture_count, offsets,
                        lengths) != 0) {
         return -1;
     }
@@ -398,9 +400,10 @@ static int row_matches_range(const nd_idis_profile_state_t *profile,
 }
 
 static int count_rows(const nd_idis_profile_state_t *profile,
+                      const nd_profile_store_snapshot_t *snapshot,
                       const profile_selection_t *selection)
 {
-    uint32_t entries = nd_profile_store_entries(&profile->store);
+    uint32_t entries = snapshot->entries;
     if (selection->kind == 0) {
         return (int)entries;
     }
@@ -411,8 +414,11 @@ static int count_rows(const nd_idis_profile_state_t *profile,
         return (int)(selection->to_entry - selection->from_entry + 1);
     }
     int count = 0;
+    uint8_t record[ND_IDIS_PROFILE_RECORD_MAX];
+    size_t length = 0;
     for (uint32_t index = 0; index < entries; index++) {
-        int match = row_matches_range(profile, index, selection);
+        int match = row_matches_range(profile, snapshot, index, selection,
+                                      record, &length);
         if (match < 0) {
             return -1;
         }
@@ -543,6 +549,7 @@ static int write_row(nd_axdr_writer_t *out,
 
 static int write_rows(nd_axdr_writer_t *out,
                       const nd_idis_profile_state_t *profile,
+                      const nd_profile_store_snapshot_t *snapshot,
                       const profile_selection_t *selection, int rows)
 {
     uint8_t record[ND_IDIS_PROFILE_RECORD_MAX];
@@ -550,25 +557,26 @@ static int write_rows(nd_axdr_writer_t *out,
     uint8_t previous_length[ND_IDIS_PROFILE_MAX_CAPTURES] = {0};
     int have_previous = 0;
     nd_axdr_put_array_header(out, (uint16_t)rows);
-    uint32_t entries = nd_profile_store_entries(&profile->store);
+    uint32_t entries = snapshot->entries;
     for (uint32_t index = 0; index < entries; index++) {
         if (selection->kind == 2
             && (index + 1 < selection->from_entry
                 || index + 1 > selection->to_entry)) {
             continue;
         }
+        size_t length = 0;
         if (selection->kind == 1) {
-            int match = row_matches_range(profile, index, selection);
+            int match = row_matches_range(profile, snapshot, index, selection,
+                                          record, &length);
             if (match < 0) {
                 return -1;
             }
             if (!match) {
                 continue;
             }
-        }
-        size_t length = 0;
-        if (nd_profile_store_read(&profile->store, index, record,
-                                  sizeof(record), &length) != 0) {
+        } else if (nd_profile_store_read_at(&profile->store, snapshot, index,
+                                            record, sizeof(record),
+                                            &length) != 0) {
             return -1;
         }
         if (write_row(out, profile, selection, record, length, previous,
@@ -597,13 +605,16 @@ int nd_ic_profile_generic_get(void *ctx, uint8_t client_sap,
         nd_axdr_put_octets(out, (const uint8_t *)&profile->ln, 6);
         break;
     case 2: {
+        nd_profile_store_snapshot_t snapshot;
+        nd_profile_store_snapshot(&profile->store, &snapshot);
         profile_selection_t selection;
-        if (parse_selection(selector, nd_profile_store_entries(&profile->store),
-                            profile, &selection) != 0) {
+        if (parse_selection(selector, snapshot.entries, profile,
+                            &selection) != 0) {
             return ND_ERR_TYPE_MISMATCH;
         }
-        int rows = count_rows(profile, &selection);
-        if (rows < 0 || write_rows(out, profile, &selection, rows) != 0) {
+        int rows = count_rows(profile, &snapshot, &selection);
+        if (rows < 0
+            || write_rows(out, profile, &snapshot, &selection, rows) != 0) {
             return ND_ERR_OPERATION_NOT_POSSIBLE;
         }
         break;
@@ -659,12 +670,13 @@ static int read_unsigned_param(nd_axdr_reader_t *in, uint32_t *value)
 
 static int write_row_at(nd_axdr_writer_t *out,
                         const nd_idis_profile_state_t *profile,
+                        const nd_profile_store_snapshot_t *snapshot,
                         uint32_t index)
 {
     uint8_t record[ND_IDIS_PROFILE_RECORD_MAX];
     size_t length = 0;
-    if (nd_profile_store_read(&profile->store, index, record, sizeof(record),
-                              &length) != 0) {
+    if (nd_profile_store_read_at(&profile->store, snapshot, index, record,
+                                 sizeof(record), &length) != 0) {
         return -1;
     }
     profile_selection_t selection = {0};
@@ -683,16 +695,15 @@ int nd_ic_profile_generic_action(void *ctx, uint8_t client_sap,
                                  nd_axdr_reader_t *in, nd_axdr_writer_t *out)
 {
     nd_idis_profile_state_t *profile = nd_idis_profiles_find(ctx, ln);
-    (void)client_sap;
-    (void)in;
     (void)out;
     if (profile == NULL) {
         return ND_ERR_OBJECT_UNDEFINED;
     }
     switch (method_id) {
-    case 1:
-        nd_profile_store_reset(&profile->store);
-        return ND_OK;
+    case 1: /* reset() has no parameters; the release is not a COSEM method */
+        return nd_idis_profiles_reset(ctx, profile) == 0
+                   ? ND_OK
+                   : ND_ERR_OPERATION_NOT_POSSIBLE;
     case 3: { /* get_buffer_by_range(from, to) */
         uint32_t from = 0;
         uint32_t to = 0;
@@ -700,17 +711,19 @@ int nd_ic_profile_generic_action(void *ctx, uint8_t client_sap,
             || read_unsigned_param(in, &to) != 0 || from == 0 || to < from) {
             return ND_ERR_TYPE_MISMATCH;
         }
-        uint32_t entries = nd_profile_store_entries(&profile->store);
-        if (to > entries) {
-            to = entries;
+        nd_profile_store_snapshot_t snapshot;
+        nd_profile_store_snapshot(&profile->store, &snapshot);
+        if (to > snapshot.entries) {
+            to = snapshot.entries;
         }
         if (from > to) {
             nd_axdr_put_array_header(out, 0);
-            return ND_OK;
+            return nd_axdr_writer_ok(out) ? ND_OK
+                                          : ND_ERR_OPERATION_NOT_POSSIBLE;
         }
         nd_axdr_put_array_header(out, (uint16_t)(to - from + 1));
         for (uint32_t index = from; index <= to; index++) {
-            if (write_row_at(out, profile, index - 1) != 0) {
+            if (write_row_at(out, profile, &snapshot, index - 1) != 0) {
                 return ND_ERR_OPERATION_NOT_POSSIBLE;
             }
         }
@@ -722,11 +735,13 @@ int nd_ic_profile_generic_action(void *ctx, uint8_t client_sap,
         if (read_unsigned_param(in, &index) != 0 || index == 0) {
             return ND_ERR_TYPE_MISMATCH;
         }
-        if (index > nd_profile_store_entries(&profile->store)) {
+        nd_profile_store_snapshot_t snapshot;
+        nd_profile_store_snapshot(&profile->store, &snapshot);
+        if (index > snapshot.entries) {
             return ND_ERR_OPERATION_NOT_POSSIBLE;
         }
         nd_axdr_put_array_header(out, 1);
-        if (write_row_at(out, profile, index - 1) != 0) {
+        if (write_row_at(out, profile, &snapshot, index - 1) != 0) {
             return ND_ERR_OPERATION_NOT_POSSIBLE;
         }
         return nd_axdr_writer_ok(out) ? ND_OK

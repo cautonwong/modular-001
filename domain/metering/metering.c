@@ -64,6 +64,11 @@ void metering_clear(metering_state_t *state)
     nd_energy_clear(&state->energy);
 }
 
+void metering_clear_month(metering_state_t *state)
+{
+    nd_energy_clear_month(&state->energy);
+}
+
 void metering_set_total(metering_state_t *state, nd_energy_direction_t direction,
                         uint32_t integer)
 {

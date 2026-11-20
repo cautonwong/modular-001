@@ -1,5 +1,6 @@
 #include <inttypes.h>
 #include <arpa/inet.h>
+#include <ctype.h>
 #include <errno.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -9,6 +10,10 @@
 #include <string.h>
 
 #include "infra/memory/file_store.h"
+#include "infra/memory/sector_store.h"
+#include "infra/storage/block_memory.h"
+#include "infra/storage/pulse_store.h"
+#include "components/services/maintenance/nd_maintenance.h"
 #include "targets/idis_ip_meter/cosem/classes/nd_ic_data.h"
 #include "targets/idis_ip_meter/cosem/classes/nd_ic_script_table.h"
 #include "targets/idis_ip_meter/cosem/nd_cosem_classes.h"
@@ -26,6 +31,7 @@
 
 #define EEPROM_SIZE (64u * 1024u)
 #define FLASH_SIZE (4u * 1024u * 1024u)
+#define FLASH_SECTOR_BYTES 4096u
 #define EEPROM_EVENT 0u
 #define EEPROM_DEMAND 1024u
 #define EEPROM_DISCONNECT 2048u
@@ -46,6 +52,11 @@
 #define EEPROM_IMAGE 43008u
 #define EEPROM_SETUP 45056u
 #define EEPROM_REGISTRY ND_IDIS_REGISTRY_EEPROM_OFFSET
+#define EEPROM_ENERGY_BASE ND_IDIS_ENERGY_BASE_OFFSET
+#define EEPROM_ENERGY_BASE_ALT ND_IDIS_ENERGY_BASE_ALT_OFFSET
+#define EEPROM_ENERGY_BASE_BYTES ND_IDIS_ENERGY_BASE_BYTES
+#define FLASH_ENERGY_JOURNAL 0xA0000u
+#define FLASH_ENERGY_JOURNAL_BYTES 16384u
 
 _Static_assert(ND_IDIS_REGISTRY_EEPROM_OFFSET
                    + ND_IDIS_REGISTRY_HEADER_SIZE
@@ -110,6 +121,27 @@ static nd_clock_value_t host_clock_value(const host_idis_clock_t *clock)
         .deviation = clock->now.deviation,
         .status = clock->now.status,
     };
+}
+
+/* The host flash is a file store, which has no erase callback. The windowed
+ * sector store needs one, so erase by writing 0xFF over the sector. */
+static int flash_sector_read(void *ctx, uint32_t offset, uint8_t *buffer,
+                             size_t length)
+{
+    return nd_store_read(ctx, offset, buffer, length);
+}
+
+static int flash_sector_write(void *ctx, uint32_t offset,
+                              const uint8_t *buffer, size_t length)
+{
+    return nd_store_write(ctx, offset, buffer, length);
+}
+
+static int flash_sector_erase(void *ctx, uint32_t offset)
+{
+    uint8_t erased[FLASH_SECTOR_BYTES];
+    memset(erased, 0xFF, sizeof(erased));
+    return nd_store_write(ctx, offset, erased, sizeof(erased));
 }
 
 static int host_measurement_read(void *ctx, nd_measure_quantity_t quantity,
@@ -305,12 +337,47 @@ static int parse_obis(const char *text, nd_obis_t *ln)
 
 static void usage(const char *name)
 {
-    printf("usage: %s [--backup-files DIR] [--seconds N] [--audit] [--no-final-save] [--start-time YYYY-MM-DDTHH:MM:SS]\n", name);
+    printf("usage: %s [--backup-files DIR] [--seconds N] [--audit] [--no-final-save] [--start-time YYYY-MM-DDTHH:MM:SS] [--release-legacy N] [--uart-input HEX]\n", name);
     printf("  --backup-files DIR  persist EEPROM/flash to DIR/eeprom.bin and DIR/flash.bin\n");
     printf("  --seconds N         run N one-second ticks (default 60)\n");
     printf("  --audit             GET every attribute listed in the OBIS table and exit\n");
     printf("  --no-final-save     leave without the end-of-run state save (power-loss test)\n");
     printf("  --start-time TIME   start the simulated clock at TIME\n");
+    printf("  --release-legacy N  run the local factory legacy release with confirmation N (management SAP 1)\n");
+    printf("  --uart-input HEX    feed the local optical maintenance frame before the run\n");
+}
+
+static int parse_hex(const char *text, uint8_t *bytes, size_t capacity,
+                     size_t *length)
+{
+    size_t count = 0;
+    while (text[0] != '\0' && text[1] != '\0') {
+        if (!isxdigit((unsigned char)text[0])
+            || !isxdigit((unsigned char)text[1])) {
+            return -1;
+        }
+        char pair[3] = {text[0], text[1], '\0'};
+        if (count == capacity) {
+            return -1;
+        }
+        bytes[count++] = (uint8_t)strtoul(pair, NULL, 16);
+        text += 2;
+    }
+    if (*text != '\0' || count == 0) {
+        return -1;
+    }
+    *length = count;
+    return 0;
+}
+
+/* The local optical port is the physical gate; the release entry additionally
+ * requires management SAP 1 and a local (non-remote) association. */
+static int host_maintenance_release(void *ctx, uint32_t confirmation)
+{
+    return nd_cosem_port_release_legacy(ctx, ND_IDIS_SAP_MANAGEMENT,
+                                        confirmation) == ND_OK
+               ? 0
+               : -1;
 }
 
 static const char *obis_text(const nd_obis_t *ln, char *buffer,
@@ -533,6 +600,10 @@ int main(int argc, char **argv)
     int final_save = 1;
     nd_dlms_datetime_t start_time = {0};
     int have_start_time = 0;
+    int have_release_legacy = 0;
+    uint32_t release_legacy = 0;
+    uint8_t uart_input[64];
+    size_t uart_input_length = 0;
     for (int index = 1; index < argc; index++) {
         if (strcmp(argv[index], "--backup-files") == 0 && index + 1 < argc) {
             backup_dir = argv[++index];
@@ -542,6 +613,23 @@ int main(int argc, char **argv)
             audit = 1;
         } else if (strcmp(argv[index], "--no-final-save") == 0) {
             final_save = 0;
+        } else if (strcmp(argv[index], "--release-legacy") == 0
+                   && index + 1 < argc) {
+            char *end = NULL;
+            unsigned long value = strtoul(argv[++index], &end, 0);
+            if (end == argv[index] || *end != '\0' || value > UINT32_MAX) {
+                usage(argv[0]);
+                return 2;
+            }
+            release_legacy = (uint32_t)value;
+            have_release_legacy = 1;
+        } else if (strcmp(argv[index], "--uart-input") == 0
+                   && index + 1 < argc) {
+            if (parse_hex(argv[++index], uart_input, sizeof(uart_input),
+                          &uart_input_length) != 0) {
+                usage(argv[0]);
+                return 2;
+            }
         } else if (strcmp(argv[index], "--start-time") == 0
                    && index + 1 < argc) {
             if (parse_start_time(argv[++index], &start_time) != 0) {
@@ -560,11 +648,27 @@ int main(int argc, char **argv)
 
     nd_file_store_t eeprom;
     nd_file_store_t flash;
+    nd_sector_store_t flash_window;
+    uint8_t flash_sector[FLASH_SECTOR_BYTES];
+    nd_block_file_t energy_flash_block;
+    nd_block_file_t energy_eeprom_block;
+    nd_pulse_store_storage_t energy_pulse_storage;
     char eeprom_path[512];
     char flash_path[512];
     if (backup_dir != NULL) {
         snprintf(eeprom_path, sizeof(eeprom_path), "%s/eeprom.bin", backup_dir);
         snprintf(flash_path, sizeof(flash_path), "%s/flash.bin", backup_dir);
+        /* Open the block views first: a fresh image is extended with 0xFF,
+         * the erased state the pulse engine expects. The file store would
+         * extend it with zeros, which reads as a torn base. */
+        if (nd_block_file_open(&energy_eeprom_block, eeprom_path, EEPROM_SIZE)
+                != 0
+            || nd_block_file_open(&energy_flash_block, flash_path, FLASH_SIZE)
+                != 0) {
+            fprintf(stderr, "cannot open energy pulse blocks in %s\n",
+                    backup_dir);
+            return 1;
+        }
         if (nd_file_store_open(&eeprom, eeprom_path, EEPROM_SIZE) != 0
             || nd_file_store_open(&flash, flash_path, FLASH_SIZE) != 0) {
             fprintf(stderr, "cannot open backup files in %s\n", backup_dir);
@@ -575,6 +679,28 @@ int main(int argc, char **argv)
         fprintf(stderr, "--backup-files DIR is required for the IDIS host\n");
         return 2;
     }
+    /* The window is the host runner's read pass over the profile ring; the
+     * firmware binds it off (docs/design/record-retrieval.md). */
+    nd_sector_store_init(&flash_window, nd_file_store_port(&flash),
+                         flash_sector_read, flash_sector_erase,
+                         flash_sector_write, FLASH_SIZE, FLASH_SECTOR_BYTES,
+                         flash_sector, 1u);
+    nd_store_t *flash_store = nd_sector_store_port(&flash_window);
+    nd_pulse_store_config_t energy_pulse_config = {
+        .block = nd_block_file_port(&energy_flash_block),
+        .base_block = nd_block_file_port(&energy_eeprom_block),
+        .journal_offset = FLASH_ENERGY_JOURNAL,
+        .journal_bytes = FLASH_ENERGY_JOURNAL_BYTES,
+        .base_offset = {EEPROM_ENERGY_BASE, EEPROM_ENERGY_BASE_ALT},
+        .base_capacity = EEPROM_ENERGY_BASE_BYTES,
+        .granularity = 1u,
+    };
+    if (nd_pulse_store_init(&energy_pulse_storage, &energy_pulse_config) != 0) {
+        fprintf(stderr, "cannot initialize the energy pulse store\n");
+        return 1;
+    }
+    nd_pulse_store_t *energy_pulses =
+        nd_pulse_store_port(&energy_pulse_storage);
 
     host_idis_clock_t clock_state = {
         .now = {.year = 2026, .month = 11, .day = 11, .hour = 0, .minute = 0,
@@ -677,8 +803,12 @@ int main(int argc, char **argv)
                                 EEPROM_DISCONNECT);
     (void)nd_ic_extended_load(objects.max_demand, nd_file_store_port(&eeprom),
                               EEPROM_MAX_DEMAND);
-    (void)nd_idis_energy_load(&objects.energy, nd_file_store_port(&eeprom),
-                              EEPROM_ENERGY);
+    if (nd_idis_energy_load(&objects.energy, energy_pulses,
+                            nd_file_store_port(&eeprom),
+                            EEPROM_ENERGY) != 0) {
+        fprintf(stderr, "cannot load the energy book\n");
+        return 1;
+    }
     (void)nd_idis_clock_load(&objects.clock, nd_file_store_port(&eeprom),
                              EEPROM_CLOCK);
     (void)nd_idis_pq_load(&objects.pq, nd_file_store_port(&eeprom), EEPROM_PQ);
@@ -736,12 +866,16 @@ int main(int argc, char **argv)
     }
 
     nd_idis_profile_config_t configs[ND_IDIS_PROFILE_TABLE_COUNT];
+    nd_idis_release_marker_t marker = {
+        .store = flash_store,
+        .offset = ND_IDIS_RELEASE_MARKER_OFFSET,
+    };
     int profile_count = nd_idis_profile_table_build(
-        configs, ND_IDIS_PROFILE_TABLE_COUNT, nd_file_store_port(&flash),
-        &clock_port);
+        configs, ND_IDIS_PROFILE_TABLE_COUNT, flash_store,
+        &clock_port, NULL);
     if (profile_count < 0
         || nd_idis_profiles_init(&objects.profiles, configs,
-                                 (uint8_t)profile_count) != 0) {
+                                 (uint8_t)profile_count, 0, &marker) != 0) {
         fprintf(stderr, "profile init failed\n");
         return 1;
     }
@@ -788,7 +922,7 @@ int main(int argc, char **argv)
                                EEPROM_LIMITER);
     (void)nd_idis_image_load(&objects.image, nd_file_store_port(&eeprom),
                              EEPROM_IMAGE);
-    nd_idis_image_bind_store(&objects.image, nd_file_store_port(&flash),
+    nd_idis_image_bind_store(&objects.image, flash_store,
                              1048576u);
     (void)nd_idis_setup_load(&objects.setup, nd_file_store_port(&eeprom),
                              EEPROM_SETUP);
@@ -829,6 +963,29 @@ int main(int argc, char **argv)
         &objects.event, ND_IDIS_EVENT_LOG_POWER_FAILURE,
         nd_idis_profiles_find(&objects.profiles, &ND_OBIS_POWER_FAILURE_LOG));
     nd_idis_event_bind_profiles(&objects.event, &objects.profiles);
+    /* Same boot report as the product composition roots: a retained pre-v4
+     * image or an interrupted release holds every profile store. */
+    if (nd_idis_profiles_legacy_held(&objects.profiles)) {
+        (void)nd_idis_event_raise(&objects.event, 12);
+    }
+    if (have_release_legacy) {
+        /* The host runner is the local front end: it verifies the operator
+         * confirmation and drives the release entry directly. */
+        int result = nd_cosem_port_release_legacy(
+            &objects, ND_IDIS_SAP_MANAGEMENT, release_legacy);
+        printf("maintenance=%d\n", result);
+    }
+    if (uart_input_length > 0) {
+        nd_maintenance_t maintenance;
+        nd_maintenance_init(&maintenance);
+        int accepted = 0;
+        for (size_t index = 0; index < uart_input_length; index++) {
+            accepted = nd_maintenance_feed(&maintenance, uart_input[index],
+                                           host_maintenance_release,
+                                           &objects);
+        }
+        printf("maintenance=%d\n", accepted == 1 ? 0 : -1);
+    }
     static const nd_obis_t demand_objects[ND_IDIS_DEMAND_MAX] = {
         {1, 0, 1, 4, 0, 255}, {1, 0, 2, 4, 0, 255},
         {1, 0, 3, 4, 0, 255}, {1, 0, 4, 4, 0, 255},
@@ -880,9 +1037,9 @@ int main(int argc, char **argv)
             }
         }
         /* Simulated meter input: one active-import pulse on the active tariff. */
-        (void)nd_energy_set_add_pulses(
-            &objects.energy, ND_ENERGY_CHANNEL_ACTIVE_IMPORT,
-            nd_ic_register_activation_tariff(&objects.activation), 1);
+        (void)nd_idis_energy_pulse(
+            &objects.energy, energy_pulses, ND_ENERGY_FORWARD,
+            nd_ic_register_activation_tariff(&objects.activation));
         if (second == 30) {
             (void)nd_idis_script_execute(&objects.scripts, &port, 16,
                                          &ND_OBIS_SCRIPT_TARIFF, 2);
@@ -1085,7 +1242,6 @@ int main(int argc, char **argv)
         relays[2 + relay] = objects.mbus_disconnect[relay];
     }
     if (final_save) {
-    nd_idis_profiles_sync(&objects.profiles);
     if (nd_idis_event_save(&objects.event, nd_file_store_port(&eeprom),
                            EEPROM_EVENT) != 0
         || nd_ic_demand_save(objects.demand, nd_file_store_port(&eeprom),
@@ -1096,8 +1252,9 @@ int main(int argc, char **argv)
         || nd_ic_extended_save(objects.max_demand,
                                nd_file_store_port(&eeprom),
                                EEPROM_MAX_DEMAND) != 0
-        || nd_idis_energy_save(&objects.energy, nd_file_store_port(&eeprom),
-                               EEPROM_ENERGY) != 0
+        || nd_idis_energy_commit(&objects.energy, energy_pulses,
+                                 nd_file_store_port(&eeprom),
+                                 EEPROM_ENERGY) != 0
         || nd_idis_clock_save(&objects.clock, nd_file_store_port(&eeprom),
                               EEPROM_CLOCK) != 0
         || nd_idis_pq_save(&objects.pq, nd_file_store_port(&eeprom),
@@ -1145,7 +1302,7 @@ int main(int argc, char **argv)
 
     printf("profiles=%u registry=%u billing=%u lp1=%u lp2=%u pq=%u event_log=%u "
            "event=%u counter=%" PRIu32 " ec2=%" PRIu32
-           " alarm=0x%08" PRIX32 " scripts=%" PRIu32 "\n",
+           " alarm=0x%08" PRIX32 " scripts=%" PRIu32 " legacy_held=%d\n",
            objects.profiles.count,
            objects.association.association.base.count,
            nd_profile_store_entries(&objects.profiles.items[0].store),
@@ -1155,7 +1312,8 @@ int main(int argc, char **argv)
            nd_profile_store_entries(&objects.profiles.items[4].store),
            objects.event.latest_event_code, objects.event.counters[0],
            objects.event.counters[1], nd_alarm_bits(&objects.event.alarm, 0),
-           objects.scheduler.executed);
+           objects.scheduler.executed,
+           nd_idis_profiles_legacy_held(&objects.profiles));
     printf("max_demand=%u,%u,%u,%u rate2=%u\n",
            objects.max_demand[0].value, objects.max_demand[5].value,
            objects.max_demand[10].value, objects.max_demand[15].value,
@@ -1186,5 +1344,7 @@ int main(int argc, char **argv)
 
     nd_file_store_close(&eeprom);
     nd_file_store_close(&flash);
+    nd_block_file_close(&energy_eeprom_block);
+    nd_block_file_close(&energy_flash_block);
     return 0;
 }

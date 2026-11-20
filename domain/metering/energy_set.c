@@ -1,54 +1,35 @@
 #include "domain/metering/energy_set.h"
 
+#include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 
-static nd_energy_channel_t *channel_for_add(nd_energy_set_t *set,
-                                            nd_energy_channel_id_t channel)
+/* The channel members share one type and layout, so an offset is the whole
+ * mapping. One table serves both the writable and the read-only callers. */
+_Static_assert(offsetof(nd_energy_set_t, meter_const)
+                   == 8 * sizeof(nd_energy_channel_t),
+               "energy channels must stay one contiguous equally sized block");
+static size_t channel_offset(nd_energy_channel_id_t channel)
 {
     switch (channel) {
     case ND_ENERGY_CHANNEL_ACTIVE_IMPORT:
-        return &set->active_import;
+        return offsetof(nd_energy_set_t, active_import);
     case ND_ENERGY_CHANNEL_ACTIVE_EXPORT:
-        return &set->active_export;
+        return offsetof(nd_energy_set_t, active_export);
     case ND_ENERGY_CHANNEL_REACTIVE_Q1:
-        return &set->reactive_q1;
+        return offsetof(nd_energy_set_t, reactive_q1);
     case ND_ENERGY_CHANNEL_REACTIVE_Q2:
-        return &set->reactive_q2;
+        return offsetof(nd_energy_set_t, reactive_q2);
     case ND_ENERGY_CHANNEL_REACTIVE_Q3:
-        return &set->reactive_q3;
+        return offsetof(nd_energy_set_t, reactive_q3);
     case ND_ENERGY_CHANNEL_REACTIVE_Q4:
-        return &set->reactive_q4;
+        return offsetof(nd_energy_set_t, reactive_q4);
     case ND_ENERGY_CHANNEL_APPARENT_IMPORT:
-        return &set->apparent_import;
+        return offsetof(nd_energy_set_t, apparent_import);
     case ND_ENERGY_CHANNEL_APPARENT_EXPORT:
-        return &set->apparent_export;
+        return offsetof(nd_energy_set_t, apparent_export);
     default:
-        return NULL;
-    }
-}
-
-static const nd_energy_channel_t *channel_for_read(
-    const nd_energy_set_t *set, nd_energy_channel_id_t channel)
-{
-    switch (channel) {
-    case ND_ENERGY_CHANNEL_ACTIVE_IMPORT:
-        return &set->active_import;
-    case ND_ENERGY_CHANNEL_ACTIVE_EXPORT:
-        return &set->active_export;
-    case ND_ENERGY_CHANNEL_REACTIVE_Q1:
-        return &set->reactive_q1;
-    case ND_ENERGY_CHANNEL_REACTIVE_Q2:
-        return &set->reactive_q2;
-    case ND_ENERGY_CHANNEL_REACTIVE_Q3:
-        return &set->reactive_q3;
-    case ND_ENERGY_CHANNEL_REACTIVE_Q4:
-        return &set->reactive_q4;
-    case ND_ENERGY_CHANNEL_APPARENT_IMPORT:
-        return &set->apparent_import;
-    case ND_ENERGY_CHANNEL_APPARENT_EXPORT:
-        return &set->apparent_export;
-    default:
-        return NULL;
+        return SIZE_MAX;
     }
 }
 
@@ -68,10 +49,12 @@ int nd_energy_set_add_pulses(nd_energy_set_t *set,
     if (set == NULL) {
         return -1;
     }
-    nd_energy_channel_t *target = channel_for_add(set, channel);
-    if (target == NULL) {
+    size_t offset = channel_offset(channel);
+    if (offset == SIZE_MAX) {
         return -1;
     }
+    nd_energy_channel_t *target =
+        (nd_energy_channel_t *)((uint8_t *)set + offset);
     nd_energy_channel_add_pulses(target, tariff, pulses, set->meter_const);
     return 0;
 }
@@ -83,10 +66,12 @@ int64_t nd_energy_set_read(const nd_energy_set_t *set,
     if (set == NULL) {
         return 0;
     }
-    const nd_energy_channel_t *target = channel_for_read(set, channel);
-    if (target == NULL) {
+    size_t offset = channel_offset(channel);
+    if (offset == SIZE_MAX) {
         return 0;
     }
+    const nd_energy_channel_t *target =
+        (const nd_energy_channel_t *)((const uint8_t *)set + offset);
     return nd_energy_channel_read(target, tariff, set->meter_const, resolution);
 }
 
@@ -132,9 +117,11 @@ int64_t nd_energy_set_read_raw(const nd_energy_set_t *set,
     if (set == NULL) {
         return 0;
     }
-    const nd_energy_channel_t *target = channel_for_read(set, channel);
-    if (target == NULL) {
+    size_t offset = channel_offset(channel);
+    if (offset == SIZE_MAX) {
         return 0;
     }
+    const nd_energy_channel_t *target =
+        (const nd_energy_channel_t *)((const uint8_t *)set + offset);
     return nd_energy_channel_read_raw(target, tariff, set->meter_const);
 }

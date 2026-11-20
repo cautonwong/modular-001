@@ -10,6 +10,7 @@ import protocol
 # builders reject that address and the FF password bytes, so 645 requests are
 # framed locally the way test_dl645.py does.
 BLANK_ADDRESS = b"\xff" * 6
+BROADCAST_ADDRESS = b"\x99" * 6
 
 # A blank EEPROM leaves Pass02Err_Cnt at 0xFF, which Cmp_Password() treats as a
 # permanent lockout. Seed it to 0 so the plaintext password is compared
@@ -163,21 +164,71 @@ def _set_dar(run) -> int:
 
 @case(
     "ACC-RTC-003",
-    "a 698 time set updates the clock and the following GET returns the new "
-    "date and time",
-    ("rtc", "698", "time"),
+    "a 645 broadcast time sync (99 address, C=08) moves the clock and the "
+    "following 698 GET returns the broadcast time; a later 698 SET moves it "
+    "again and its GET returns the new time",
+    ("rtc", "645", "698", "time"),
 )
-def clock_set_via_698(ctx):
-    scenario = (
-        f"at 2 uart 0 {_time_set(1, '1c07ea0b0c0c0000')}\n"
-        f"at 4 uart 0 {_698(2, RTC_OAD)}\n"
+def clock_set_via_645_and_698(ctx):
+    broadcast = _frame(
+        BROADCAST_ADDRESS, 0x08, bytes.fromhex("300012300421")
     )
-    run = ctx.run(cycles=6, scenario=scenario)
+    scenario = (
+        f"at 2 uart 0 {broadcast.hex()}\n"
+        f"at 4 uart 0 {_698(2, RTC_OAD)}\n"
+        f"at 6 uart 0 {_time_set(3, '1c07ea0b0c0c0000')}\n"
+        f"at 8 uart 0 {_698(4, RTC_OAD)}\n"
+    )
+    run = ctx.run(cycles=10, scenario=scenario, start_time="2021-04-30 12:00:00")
+    assert run.exit_code == 0, f"firmware_sim exited {run.exit_code}"
+    assert _645(run) == [], "a broadcast time sync must not answer"
+    assert _set_dar(run) == 0
+
+    gets = _gets(run)
+    assert len(gets) == 2, [data.hex() for data in gets]
+    assert gets[0].hex() == "1c07e5041e0c0020", gets[0].hex()
+    assert gets[1].hex() == "1c07ea0b0c0c0003", gets[1].hex()
+
+
+RUN_STATE_OAD = 0x20140200
+RUN_STATE_CLOCK_ERROR = 0x0100
+
+
+def _run_state_word1(data: bytes) -> int:
+    # Attribute 2 of 0x20140200 returns seven 16-bit bit-strings, words 1..7 of
+    # the run-state block copied in native byte order (get_2_Variable.c).
+    value = protocol.axdr_decode(data)[0]
+    assert value.tag == protocol.AXDR_ARRAY and len(value.children) == 7, value
+    return int.from_bytes(value.children[0].payload, "little")
+
+
+@case(
+    "ACC-MET-009",
+    "a clock fault sets the clock-error bit 0x0100 of run-state word 1 read "
+    "through 698 0x20140200, and a 698 time set clears it",
+    ("metering", "rtc", "status"),
+)
+def run_state_clock_error(ctx):
+    scenario = (
+        "at 1 power off\n"
+        "at 3 time '2026-11-11 11:00:00'\n"
+        "at 5 power on\n"
+        f"at 7 uart 0 {_698(1, RUN_STATE_OAD)}\n"
+        f"at 10 uart 0 {_time_set(2, '1c07ea0b0c0c1e00')}\n"
+        f"at 12 uart 0 {_698(3, RUN_STATE_OAD)}\n"
+    )
+    run = ctx.run(cycles=15, scenario=scenario, start_time="2026-11-12 12:00:10")
     assert run.exit_code == 0, f"firmware_sim exited {run.exit_code}"
     assert _set_dar(run) == 0
 
-    data = _gets(run)[0]
-    assert data.hex() == "1c07ea0b0c0c0003", data.hex()
+    responses = [
+        protocol.parse_frame(frame).apdu for frame in protocol.iter_698_frames(run.uart_tx)
+    ]
+    assert len(responses) == 3, [apdu.hex() for apdu in responses]
+    before = _run_state_word1(protocol.parse_get_response(responses[0]).data)
+    after = _run_state_word1(protocol.parse_get_response(responses[2]).data)
+    assert before & RUN_STATE_CLOCK_ERROR, hex(before)
+    assert not after & RUN_STATE_CLOCK_ERROR, hex(after)
 
 
 @case(

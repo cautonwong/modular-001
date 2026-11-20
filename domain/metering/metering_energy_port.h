@@ -13,10 +13,13 @@ typedef struct nd_energy_ledger nd_energy_ledger_t;
 nd_energy_update_t metering_energy_add(nd_energy_ledger_t *ledger,
                                        nd_energy_direction_t direction,
                                        uint32_t pulses);
-void metering_energy_clear(nd_energy_ledger_t *ledger);
-void metering_energy_set_total(nd_energy_ledger_t *ledger,
-                               nd_energy_direction_t direction,
-                               uint32_t integer);
+/* Non-pulse changes return 0 once the new book is durable, -1 when the
+ * storage faulted; callers must not report success on -1. */
+int metering_energy_clear(nd_energy_ledger_t *ledger);
+int metering_energy_clear_month(nd_energy_ledger_t *ledger);
+int metering_energy_set_total(nd_energy_ledger_t *ledger,
+                              nd_energy_direction_t direction,
+                              uint32_t integer);
 int64_t metering_energy_read(nd_energy_ledger_t *ledger,
                              nd_energy_direction_t direction, uint8_t tariff,
                              nd_energy_resolution_t resolution);

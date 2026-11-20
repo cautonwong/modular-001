@@ -102,15 +102,9 @@ static const nd_obis_t ND_OBIS_DEMAND_REACTIVE_IMPORT = {1, 0, 3, 4, 0, 255};
 static const nd_obis_t ND_OBIS_DEMAND_REACTIVE_EXPORT = {1, 0, 4, 4, 0, 255};
 static const nd_obis_t ND_OBIS_DISCONNECT_CONTROL = {0, 0, 96, 3, 10, 255};
 static const nd_obis_t ND_OBIS_ACTIVITY_CALENDAR = {0, 0, 13, 0, 0, 255};
-static const nd_obis_t ND_OBIS_ACTIVITY_CALENDARS[4] = {
-    {0, 0, 13, 0, 0, 255}, {0, 0, 13, 0, 1, 255},
-    {0, 0, 13, 0, 2, 255}, {0, 1, 13, 0, 1, 255},
-};
+extern const nd_obis_t ND_OBIS_ACTIVITY_CALENDARS[4];
 static const nd_obis_t ND_OBIS_SPECIAL_DAYS = {0, 0, 11, 0, 0, 255};
-static const nd_obis_t ND_OBIS_SPECIAL_DAYS_TABLES[4] = {
-    {0, 0, 11, 0, 0, 255}, {0, 0, 11, 0, 1, 255},
-    {0, 0, 11, 0, 2, 255}, {0, 1, 11, 0, 1, 255},
-};
+extern const nd_obis_t ND_OBIS_SPECIAL_DAYS_TABLES[4];
 static const nd_obis_t ND_OBIS_AVERAGE_VOLTAGE_L1 = {1, 0, 32, 24, 0, 255};
 static const nd_obis_t ND_OBIS_AVERAGE_VOLTAGE_L2 = {1, 0, 52, 24, 0, 255};
 static const nd_obis_t ND_OBIS_AVERAGE_VOLTAGE_L3 = {1, 0, 72, 24, 0, 255};
@@ -252,11 +246,7 @@ static const nd_obis_t ND_OBIS_PUSH_5 = {0, 5, 25, 9, 0, 255};
 static const nd_obis_t ND_OBIS_PUSH_6 = {0, 6, 25, 9, 0, 255};
 static const nd_obis_t ND_OBIS_PUSH_7 = {0, 7, 25, 9, 0, 255};
 
-static inline int nd_obis_eq(const nd_obis_t *left, const nd_obis_t *right)
-{
-    return left->a == right->a && left->b == right->b && left->c == right->c
-        && left->d == right->d && left->e == right->e && left->f == right->f;
-}
+int nd_obis_eq(const nd_obis_t *left, const nd_obis_t *right);
 
 
 /* Association, SAP and security setup objects. */

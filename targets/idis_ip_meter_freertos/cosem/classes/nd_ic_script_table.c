@@ -441,9 +441,11 @@ static uint8_t table_script_actions(const nd_script_state_t *state,
 {
     if (state->ram_valid[table]) {
         const nd_script_slot_t *slot = &state->ram_scripts[table][index];
-        *actions = slot->action_count > 0
-            ? &state->ram_actions[table][slot->first_action]
-            : NULL;
+        if (slot->action_count == 0) {
+            *actions = NULL;
+            return 0;
+        }
+        *actions = &state->ram_actions[table][slot->first_action];
         return slot->action_count;
     }
     const nd_script_t *script = &state->tables[table].scripts[index];

@@ -22,7 +22,7 @@
 | `targets/` | 产品组合根、board 包、应用入口、配置和构建脚本 |
 | `products/` | 产品描述：组件选择与平台选择 |
 | `tests/` | 主机单元测试、验收用例、协议语料和仿真测试 |
-| `formal/` | CBMC、TLA+ 和 Lean 形式化验证 |
+| `formal/` | CBMC、Frama-C/Eva、TLA+ 和 Lean 形式化验证 |
 | `tools/` | 架构门禁、构建清单、固件检查和验收工具 |
 | `docs/` | 架构、平台、协议、验证和迁移文档 |
 
@@ -203,7 +203,7 @@ flowchart LR
     Source --> ARM["Cortex-M0 编译检查"]
     Source --> Link["固件链接与 section 预算"]
     Source --> Accept["产品验收矩阵"]
-    Source --> Formal["CBMC / TLA+ / Lean"]
+    Source --> Formal["CBMC / Frama-C / TLA+ / Lean"]
 
     Static --> Verdict["Verdict"]
     Host --> Verdict
@@ -232,7 +232,7 @@ flowchart LR
 - 层、组件、平台边界和可变全局检查。
 - 产品清单、固件链接和 ROM/RAM 预算检查。
 - stategrid 与 IDIS 验收矩阵。
-- CBMC、TLA+ 和 Lean 形式化检查。
+- CBMC、Frama-C Eva、TLA+ 和 Lean 形式化检查。
 
 补充架构文档：
 

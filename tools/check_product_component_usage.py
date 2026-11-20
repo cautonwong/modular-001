@@ -27,8 +27,8 @@ header-only.
 
 A non-firmware product is recorded with a non_firmware reason, and every .c
 of its selected components must resolve into the product manifest source
-list. application.metering is selected only by meter_gas and meter_water,
-neither of which builds an image.
+list. The non-firmware gas and water products select application.metering
+but build no image.
 
 A missing build, a link object with no compile rule, a newly unlinked source,
 a stale exception, a false exception premise, and an unregistered product all

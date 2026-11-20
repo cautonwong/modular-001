@@ -425,6 +425,52 @@ static void test_single_phase_rejects_l2_and_l3(void)
                                                NULL));
 }
 
+static int fake_save_energy_ok(void *ctx)
+{
+    int *calls = ctx;
+
+    (*calls)++;
+    return 0;
+}
+
+static int fake_save_energy_fails(void *ctx)
+{
+    (void)ctx;
+    return -1;
+}
+
+static void test_energy_reset_commits_before_success(void)
+{
+    nd_energy_set_t energy;
+    nd_energy_set_init(&energy, 2000);
+    TEST_ASSERT_EQUAL_INT(0, nd_energy_set_add_pulses(
+                                 &energy, ND_ENERGY_CHANNEL_ACTIVE_IMPORT, 1,
+                                 4000));
+    nd_idis_objects_t objects = {.energy = energy};
+    objects.reg.energy = &objects.energy;
+    int calls = 0;
+    objects.reg.save_energy = fake_save_energy_ok;
+    objects.reg.save_ctx = &calls;
+    uint8_t parameter[2] = {ND_AXDR_INTEGER, 0};
+    nd_axdr_reader_t in;
+    nd_axdr_reader_init(&in, parameter, sizeof(parameter));
+    TEST_ASSERT_EQUAL_INT(ND_OK,
+                          nd_cosem_port_action(&objects, 16, ND_IC_REGISTER,
+                                               &ND_OBIS_ACTIVE_ENERGY_IMPORT, 1,
+                                               &in, NULL));
+    TEST_ASSERT_EQUAL_INT(1, calls);
+    TEST_ASSERT_EQUAL_INT64(0, nd_energy_set_read_raw(
+                                  &objects.energy,
+                                  ND_ENERGY_CHANNEL_ACTIVE_IMPORT, 1));
+
+    objects.reg.save_energy = fake_save_energy_fails;
+    nd_axdr_reader_init(&in, parameter, sizeof(parameter));
+    TEST_ASSERT_EQUAL_INT(ND_ERR_OPERATION_NOT_POSSIBLE,
+                          nd_cosem_port_action(&objects, 16, ND_IC_REGISTER,
+                                               &ND_OBIS_ACTIVE_ENERGY_IMPORT, 1,
+                                               &in, NULL));
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -439,5 +485,6 @@ int main(void)
     RUN_TEST(test_parameter_reset_sets_zero);
     RUN_TEST(test_active_mask_selects_tariff);
     RUN_TEST(test_single_phase_rejects_l2_and_l3);
+    RUN_TEST(test_energy_reset_commits_before_success);
     return UNITY_END();
 }

@@ -4,6 +4,7 @@
 #include "freertos_app.h"
 #include "board_ports.h"
 #include "components/protocol/dlms/include/nd_cosem_port.h"
+#include "components/services/maintenance/nd_maintenance.h"
 #include "targets/idis_ip_meter_freertos/cosem/nd_idis_registry.h"
 #include "cpu_surport.h"
 #include "domain/common/calendar.h"
@@ -23,8 +24,10 @@
 #include "targets/idis_ip_meter_freertos/cosem/classes/nd_ic_script_table.h"
 #include "targets/idis_ip_meter_freertos/cosem/classes/nd_ic_setup.h"
 #include "targets/idis_ip_meter_freertos/cosem/classes/nd_ic_single_action.h"
+#include "targets/idis_ip_meter_freertos/cosem/nd_cosem_classes.h"
 #include "targets/idis_ip_meter_freertos/cosem/nd_cosem_port.h"
 #include "targets/idis_ip_meter_freertos/cosem/nd_idis_average.h"
+#include "targets/idis_ip_meter_freertos/cosem/nd_idis_calibration.h"
 #include "targets/idis_ip_meter_freertos/cosem/nd_idis_energy_store.h"
 #include "targets/idis_ip_meter_freertos/cosem/nd_idis_event.h"
 #include "targets/idis_ip_meter_freertos/cosem/nd_idis_event_map.h"
@@ -35,8 +38,12 @@
 #include "targets/idis_ip_meter_freertos/cosem/nd_idis_profiles.h"
 #include "targets/idis_ip_meter_freertos/cosem/nd_idis_scheduler.h"
 #include "targets/idis_ip_meter_freertos/mapper_idis/nd_idis_ids.h"
+#include "infra/drivers/storage/block/block_ops.h"
+#include "infra/storage/pulse_store.h"
 #include "infra/soc/v85xxp/v8500/time_link.h"
 #include "infra/soc/v85xxp/v8500/time_link.h"
+#include "targets/idis_ip_meter_freertos/board/board_eeprom.h"
+#include "targets/idis_ip_meter_freertos/board/board_flash.h"
 
 
 /* shortcut: fixed wait for the PMU hold-up budget; tune when hardware is known. */
@@ -64,16 +71,36 @@ enum {
     EEPROM_SETUP = 36864u,
     EEPROM_REGISTRY = ND_IDIS_REGISTRY_EEPROM_OFFSET,
     EEPROM_PERIOD = 300u,
+    EEPROM_ENERGY_BASE = ND_IDIS_ENERGY_BASE_OFFSET,
+    EEPROM_ENERGY_BASE_ALT = ND_IDIS_ENERGY_BASE_ALT_OFFSET,
+    EEPROM_ENERGY_BASE_BYTES = ND_IDIS_ENERGY_BASE_BYTES,
+    /* Free between the 640 KiB profile region and the 1 MiB image region. */
+    FLASH_ENERGY_JOURNAL = 0xA0000u,
+    FLASH_ENERGY_JOURNAL_BYTES = 16384u,
     FLASH_IMAGE = 1048576u
 };
 
 static nd_idis_objects_t objects;
-static nd_cosem_port_t port;
-static nd_clock_port_t clock_port;
-static nd_measurement_port_t measurement;
-/* cm0_systick_init() programs a 10 ms SysTick, and ndv_timer_tick() uses
- * that same unit. Keep the second counter separate from the timer ticks. */
-static uint64_t energy_pulse_fraction;
+
+/* One composition context. Ports, engine storage and the pulse accumulator
+ * are constructed once and injected, so the product adds no file-scope
+ * mutable state beyond this aggregate and the object aggregate. */
+typedef struct {
+    nd_cosem_port_t port;
+    nd_clock_port_t clock_port;
+    nd_measurement_port_t measurement;
+    nd_maintenance_t maintenance;
+    nd_pulse_store_storage_t energy_pulse_storage;
+    nd_eeprom_block_t energy_eeprom_block;
+    nd_flash_block_t energy_flash_block;
+    /* cm0_systick_init() programs a 10 ms SysTick, and ndv_timer_tick() uses
+     * that same unit. Keep the second counter separate from the timer ticks. */
+    uint64_t energy_pulse_fraction;
+    int energy_commit_pending;
+    int energy_appends_pending;
+} nd_idis_composition_t;
+
+static nd_idis_composition_t composition;
 static uint32_t last_save;
 static int power_failed;
 static int cover_open;
@@ -82,6 +109,16 @@ static int backlight;
 static int relay_connected = -1;
 static int relay_feedback_pending;
 static unsigned relay_feedback_seconds;
+
+/* The local optical port is the physical gate; the release entry additionally
+ * requires management SAP 1 and a local (non-remote) association. */
+static int maintenance_release(void *ctx, uint32_t confirmation)
+{
+    return nd_cosem_port_release_legacy(ctx, ND_IDIS_SAP_MANAGEMENT,
+                                        confirmation) == ND_OK
+               ? 0
+               : -1;
+}
 
 static int clock_read(void *ctx, nd_dlms_datetime_t *now)
 {
@@ -152,12 +189,49 @@ static nd_datetime_t datetime_from_dlms(const nd_dlms_datetime_t *now)
     };
 }
 
-static void load_persisted(void)
+static void profile_watchdog_feed(void *ctx)
+{
+    (void)ctx;
+    mcu_clear_watchdog();
+}
+
+_Static_assert(BOARD_FLASH_SIZE % BOARD_FLASH_SECTOR == 0,
+               "the energy pulse block erases whole flash sectors");
+
+static int energy_pulse_store_init(void)
+{
+    nd_eeprom_block_init(&composition.energy_eeprom_block, board_eeprom(),
+                         BOARD_EEPROM_SIZE);
+    nd_flash_block_init(&composition.energy_flash_block, board_flash(),
+                        BOARD_FLASH_SIZE);
+    nd_pulse_store_config_t config = {
+        .block = nd_flash_block_port(&composition.energy_flash_block),
+        .base_block = nd_eeprom_block_port(&composition.energy_eeprom_block),
+        .journal_offset = FLASH_ENERGY_JOURNAL,
+        .journal_bytes = FLASH_ENERGY_JOURNAL_BYTES,
+        .base_offset = {EEPROM_ENERGY_BASE, EEPROM_ENERGY_BASE_ALT},
+        .base_capacity = EEPROM_ENERGY_BASE_BYTES,
+        /* The MX25L3206E byte-program endurance is not confirmed; 8 bounds a
+         * power cut at 7 pulses and cuts byte programs by 8. */
+        .granularity = 8u,
+    };
+
+    return nd_pulse_store_init(&composition.energy_pulse_storage, &config);
+}
+
+static int load_persisted(void)
 {
     mcu_clear_watchdog();
     nd_store_t *eeprom = board_store_port();
     (void)nd_idis_clock_load(&objects.clock, eeprom, EEPROM_CLOCK);
-    (void)nd_idis_energy_load(&objects.energy, eeprom, EEPROM_ENERGY);
+    /* A present journal that cannot load the book would keep running on the
+     * zero book and silently drop the billing register; fail the boot. */
+    if (nd_idis_energy_load(
+            &objects.energy,
+            nd_pulse_store_port(&composition.energy_pulse_storage), eeprom,
+            EEPROM_ENERGY) != 0) {
+        return -1;
+    }
     (void)nd_ic_demand_load(objects.demand, eeprom, EEPROM_DEMAND);
     (void)nd_ic_extended_load(objects.max_demand, eeprom, EEPROM_MAX_DEMAND);
     (void)nd_ic_disconnect_load(&objects.disconnect, eeprom,
@@ -195,6 +269,7 @@ static void load_persisted(void)
     }
     (void)nd_idis_event_load(&objects.event, eeprom, EEPROM_EVENT);
     mcu_clear_watchdog();
+    return 0;
 }
 
 static void save_persisted(void)
@@ -202,7 +277,9 @@ static void save_persisted(void)
     mcu_clear_watchdog();
     nd_store_t *eeprom = board_store_port();
     (void)nd_idis_clock_save(&objects.clock, eeprom, EEPROM_CLOCK);
-    (void)nd_idis_energy_save(&objects.energy, eeprom, EEPROM_ENERGY);
+    (void)nd_idis_energy_save(&objects.energy,
+                              nd_pulse_store_port(&composition.energy_pulse_storage),
+                              eeprom, EEPROM_ENERGY);
     (void)nd_ic_demand_save(objects.demand, eeprom, EEPROM_DEMAND);
     (void)nd_ic_extended_save(objects.max_demand, eeprom, EEPROM_MAX_DEMAND);
     (void)nd_ic_disconnect_save(&objects.disconnect, eeprom,
@@ -234,6 +311,23 @@ static void save_persisted(void)
     mcu_clear_watchdog();
 }
 
+static int save_energy_book(void *ctx)
+{
+    (void)ctx;
+    mcu_clear_watchdog();
+    /* A reset is not a pulse: fold it into a new base and reset the journal
+     * before reporting success, or replay would resurrect the cleared bills. */
+    int result = nd_idis_energy_commit(
+        &objects.energy,
+        nd_pulse_store_port(&composition.energy_pulse_storage),
+        board_store_port(), EEPROM_ENERGY);
+    if (result == 0) {
+        composition.energy_appends_pending = 0;
+    }
+    mcu_clear_watchdog();
+    return result;
+}
+
 static void set_product_identity(void)
 {
     static const uint8_t ldn[] = "HXE1040000000001";
@@ -251,23 +345,23 @@ static void set_product_identity(void)
            sizeof(server_title));
 }
 
-static void init_objects(void)
+static int init_objects(nd_idis_calibration_status_t calibration)
 {
     memset(&objects, 0, sizeof(objects));
 
-    clock_port = (nd_clock_port_t){
+    composition.clock_port = (nd_clock_port_t){
         .ctx = NULL,
         .read = clock_read,
         .write = clock_write,
     };
-    measurement = (nd_measurement_port_t){
+    composition.measurement = (nd_measurement_port_t){
         .ctx = NULL,
         .read = board_measurement_read,
     };
 
-    nd_idis_clock_init(&objects.clock, &clock_port);
+    nd_idis_clock_init(&objects.clock, &composition.clock_port);
     nd_energy_set_init(&objects.energy, 2000);
-    nd_idis_average_init(&objects.average, &measurement);
+    nd_idis_average_init(&objects.average, &composition.measurement);
     nd_pq_config_t pq_config = {
         .voltage_sag = 2000,
         .voltage_swell = 2500,
@@ -319,27 +413,39 @@ static void init_objects(void)
     nd_idis_event_init(&objects.event, nd_idis_event_rules,
                        (uint16_t)nd_idis_event_rule_count);
 
-    int profiles_ok =
-        nd_idis_profile_table_init(&objects.profiles, board_flash_port(),
-                                   &clock_port)
-        > 0;
+    nd_profile_watchdog_t profile_watchdog = {
+        .ctx = NULL,
+        .feed = profile_watchdog_feed,
+    };
+    /* Fail closed on a pre-v4 image: keep it, hold appends, and let the bench
+     * reset/migration discard it. See docs/design/record-retrieval.md.
+     * A device error instead stops the boot: running with zero profiles
+     * leaves every class-7 object undefined, and the watchdog restarts the
+     * scan after main returns. */
+    if (nd_idis_profile_table_boot(&objects.profiles, board_flash_port(),
+                                   &composition.clock_port,
+                                   &profile_watchdog) != 0) {
+        return -1;
+    }
     mcu_clear_watchdog();
 
-    port = (nd_cosem_port_t){
+    composition.port = (nd_cosem_port_t){
         .ctx = &objects,
         .get = nd_cosem_port_get,
         .set = nd_cosem_port_set,
         .action = nd_cosem_port_action,
     };
-    nd_idis_profiles_bind_port(&objects.profiles, &port);
-    nd_idis_script_bind_port(&objects.scripts, &port);
+    nd_maintenance_init(&composition.maintenance);
+    nd_idis_profiles_bind_port(&objects.profiles, &composition.port);
+    nd_idis_script_bind_port(&objects.scripts, &composition.port);
     nd_idis_script_bind_store(&objects.scripts, board_store_port(),
                               EEPROM_SCRIPT);
     nd_idis_image_bind_store(&objects.image, board_flash_port(), FLASH_IMAGE);
 
     objects.reg.clock = &objects.clock;
     objects.reg.energy = &objects.energy;
-    objects.reg.measurement = &measurement;
+    objects.reg.save_energy = save_energy_book;
+    objects.reg.measurement = &composition.measurement;
 #ifndef IDIS_PHASES
 #define IDIS_PHASES 1
 #endif
@@ -351,7 +457,7 @@ static void init_objects(void)
     nd_idis_event_bind_log(
         &objects.event,
         nd_idis_profiles_find(&objects.profiles, &ND_OBIS_STANDARD_EVENT_LOG),
-        &port, &clock_port, 16);
+        &composition.port, &composition.clock_port, 16);
     nd_idis_event_bind_category_log(
         &objects.event, ND_IDIS_EVENT_LOG_FRAUD,
         nd_idis_profiles_find(&objects.profiles, &ND_OBIS_FRAUD_LOG));
@@ -373,18 +479,28 @@ static void init_objects(void)
         nd_idis_profiles_find(&objects.profiles, &ND_OBIS_POWER_FAILURE_LOG));
     nd_idis_event_bind_profiles(&objects.event, &objects.profiles);
 
-    load_persisted();
+    if (energy_pulse_store_init() != 0 || load_persisted() != 0) {
+        return -1;
+    }
     nd_idis_single_action_apply_defaults(&objects.single_action);
     nd_dlms_datetime_t boot_clock;
     if (clock_read(NULL, &boot_clock) != 0
         || (boot_clock.status & 0x01) != 0) {
         /* IDIS default tariff: script 1 when the clock is invalid. */
-        (void)nd_idis_script_execute(&objects.scripts, &port, 1,
+        (void)nd_idis_script_execute(&objects.scripts, &composition.port, 1,
                                      &ND_OBIS_SCRIPT_TARIFF, 1);
     }
-    if (!profiles_ok) {
+    /* Event 12: a retained pre-v4 image or an interrupted release holds every
+     * profile store, so the operator can see why no profile grows. */
+    if (nd_idis_profiles_legacy_held(&objects.profiles)) {
         (void)nd_idis_event_raise(&objects.event, 12);
     }
+    uint16_t calibration_event =
+        nd_idis_calibration_fault_event(calibration);
+    if (calibration_event != 0) {
+        (void)nd_idis_event_raise(&objects.event, calibration_event);
+    }
+    return 0;
 }
 
 static void poll_gpio(void)
@@ -424,18 +540,25 @@ static void accumulate_energy(void)
     if (board_measurement_read(NULL, ND_MEASURE_ACTIVE_POWER, 0, &power) != 0) {
         return;
     }
-    int64_t watts = power.value;
-    uint64_t magnitude = (uint64_t)(watts < 0 ? -watts : watts);
-    energy_pulse_fraction += magnitude * 1000000ULL / 1800ULL;
-    uint32_t pulses = (uint32_t)(energy_pulse_fraction / 1000000ULL);
-    energy_pulse_fraction %= 1000000ULL;
+    uint32_t pulses = nd_idis_energy_pulses(
+        &composition.energy_pulse_fraction, power.value,
+        objects.energy.meter_const);
     if (pulses > 0) {
-        nd_energy_channel_id_t channel =
-            watts < 0 ? ND_ENERGY_CHANNEL_ACTIVE_EXPORT
-                      : ND_ENERGY_CHANNEL_ACTIVE_IMPORT;
-        (void)nd_energy_set_add_pulses(
-            &objects.energy, channel,
-            nd_ic_register_activation_tariff(&objects.activation), pulses);
+        nd_energy_direction_t direction =
+            power.value < 0 ? ND_ENERGY_REVERSE : ND_ENERGY_FORWARD;
+        uint8_t tariff =
+            nd_ic_register_activation_tariff(&objects.activation);
+        nd_pulse_store_t *store =
+            nd_pulse_store_port(&composition.energy_pulse_storage);
+        composition.energy_appends_pending = 1;
+        for (uint32_t pulse = 0; pulse < pulses; pulse++) {
+            /* Each append programs flash, and FULL commits before retrying. */
+            mcu_clear_watchdog();
+            if (nd_idis_energy_pulse(&objects.energy, store, direction,
+                                     tariff) != 0) {
+                composition.energy_commit_pending = 1;
+            }
+        }
     }
 }
 
@@ -459,15 +582,20 @@ static void accumulate_demand(void)
 static void save_critical_state(void)
 {
     nd_store_t *eeprom = board_store_port();
-    (void)nd_idis_energy_save(&objects.energy, eeprom, EEPROM_ENERGY);
+    /* Power-off folds the accepted pulses that only the journal holds. With
+     * none since the last commit, the base is already current. */
+    if (composition.energy_appends_pending
+        && nd_idis_energy_commit(
+               &objects.energy,
+               nd_pulse_store_port(&composition.energy_pulse_storage), eeprom,
+               EEPROM_ENERGY) == 0) {
+        composition.energy_appends_pending = 0;
+    }
     (void)nd_ic_demand_save(objects.demand, eeprom, EEPROM_DEMAND);
     (void)nd_ic_extended_save(objects.max_demand, eeprom, EEPROM_MAX_DEMAND);
     (void)nd_idis_event_save(&objects.event, eeprom, EEPROM_EVENT);
     (void)nd_idis_power_save(&objects.power_failure, eeprom, EEPROM_POWER);
     (void)nd_idis_clock_save(&objects.clock, eeprom, EEPROM_CLOCK);
-    /* Records are already durable; metadata is the least urgent write and
-     * must not delay the energy/demand save on a failing supply. */
-    nd_idis_profiles_sync(&objects.profiles);
 }
 
 void idis_save_persisted(void)
@@ -481,6 +609,14 @@ void idis_save_persisted(void)
 static void on_second(uint32_t seconds)
 {
     mcu_clear_watchdog();
+    uint8_t maintenance_byte;
+    while (board_ir_read(&maintenance_byte)) {
+        (void)nd_maintenance_feed(&composition.maintenance, maintenance_byte,
+                                  maintenance_release, &objects);
+    }
+    /* One drain is the inter-byte timeout: a prefix left over from an
+     * earlier cycle cannot be completed by later, unrelated bytes. */
+    nd_maintenance_abort(&composition.maintenance);
     nd_dlms_datetime_t dlms;
     clock_read(NULL, &dlms);
     nd_datetime_t now = datetime_from_dlms(&dlms);
@@ -502,8 +638,8 @@ static void on_second(uint32_t seconds)
     accumulate_demand();
 
     (void)nd_idis_average_on_second(&objects.average);
-    (void)nd_idis_pq_on_second(&objects.pq, &measurement, &objects.event,
-                               &now);
+    (void)nd_idis_pq_on_second(&objects.pq, &composition.measurement,
+                               &objects.event, &now);
     (void)nd_idis_calendar_tick(&objects.calendar, &now);
     for (uint8_t index = 0; index < 3; index++) {
         (void)nd_idis_calendar_tick(&objects.calendar_extra[index], &now);
@@ -513,18 +649,21 @@ static void on_second(uint32_t seconds)
         &objects.calendar_extra[1], &objects.calendar_extra[2],
     };
     (void)nd_idis_scheduler_on_second_multi(
-        &objects.scheduler, calendars, 4, &objects.scripts, &port, 1, &now);
+        &objects.scheduler, calendars, 4, &objects.scripts, &composition.port,
+        1, &now);
     (void)nd_push_on_second(&objects.push.state, &now);
-    (void)nd_idis_single_action_on_second(&objects.single_action, &port,
-                                          &objects.scripts, 1, &now);
-    (void)nd_idis_monitor_on_second(&objects.monitors, &port, &objects.scripts,
-                                    1);
-    (void)nd_idis_limiter_on_second(&objects.limiter, &port, &objects.scripts,
-                                    1);
+    (void)nd_idis_single_action_on_second(&objects.single_action,
+                                          &composition.port, &objects.scripts,
+                                          1, &now);
+    (void)nd_idis_monitor_on_second(&objects.monitors, &composition.port,
+                                    &objects.scripts, 1);
+    (void)nd_idis_limiter_on_second(&objects.limiter, &composition.port,
+                                    &objects.scripts, 1);
     for (uint8_t channel = 1; channel <= ND_MBUS_CHANNELS; channel++) {
         (void)nd_idis_mbus_on_second(&objects.mbus, channel);
     }
-    (void)nd_idis_profiles_on_second(&objects.profiles, &port, 16, &clock);
+    (void)nd_idis_profiles_on_second(&objects.profiles, &composition.port,
+                                     16, &clock);
 
     int connected =
         objects.disconnect.control_state == ND_DISCONNECT_CONNECTED;
@@ -552,6 +691,14 @@ static void on_second(uint32_t seconds)
     if (seconds - last_save >= EEPROM_PERIOD) {
         last_save = seconds;
         freertos_request_save();
+    }
+    if (composition.energy_commit_pending
+        && nd_idis_energy_commit(
+               &objects.energy,
+               nd_pulse_store_port(&composition.energy_pulse_storage),
+               board_store_port(), EEPROM_ENERGY) == 0) {
+        composition.energy_commit_pending = 0;
+        composition.energy_appends_pending = 0;
     }
 }
 
@@ -582,11 +729,13 @@ int main(void)
     nd_board_key_input_enable();
     board_store_init();
     board_flash_init();
-    board_measurement_init();
+    nd_idis_calibration_status_t calibration = board_measurement_init();
     board_uart_init();
     board_rtc_init();
     rtc_init();
-    init_objects();
+    if (init_objects(calibration) != 0) {
+        return -1;
+    }
     mcu_clear_watchdog();
 
     freertos_start();

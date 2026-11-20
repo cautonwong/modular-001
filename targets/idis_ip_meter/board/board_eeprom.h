@@ -5,8 +5,10 @@
 
 #include "infra/drivers/storage/eeprom/eeprom.h"
 
-/* Bit 1 reports an EEPROM fault to the platform port. */
+/* Bit 1 reports a transient EEPROM bus fault. */
 extern uint8_t DEVICE_ERR;
+
+#define BOARD_EEPROM_SIZE 0xFFFFu
 
 nd_eeprom_t *board_eeprom(void);
 

@@ -652,11 +652,12 @@ uint8_t rn8209c_get( void *instance, uint8_t *p_rx, uint8_t* p_tx)
     memset( p_tx+1,0x00,4);
     if(addr >= 0xA0)    //自热影响量 0.5L
     {
-        if(addr >= 0xAF)	return false;
-        
+        uint8_t slot = (uint8_t)(addr - 0xA0);
+        if(slot >= sizeof(tmp) / sizeof(tmp[0]))	return false;
+
         s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Value_05L);
         nd_get_index(instance, s_index, (uint8_t*)&tmp[0], 30); //读取EE中的补偿值
-        memcpy( (p_tx+1), (uint8_t*)&tmp[addr-0x90], 2);
+        memcpy( (p_tx+1), (uint8_t*)&tmp[slot], 2);
         return 2;
     }
     else if(addr >= 0x90)//自热影响量 1.0L
@@ -726,7 +727,7 @@ uint8_t rn8209c_get( void *instance, uint8_t *p_rx, uint8_t* p_tx)
 int rn8209c_set( void *instance, uint8_t *p_rx )
 {
     uint8_t addr=0,lenth=0,temp_buffer[8]={0};
-    int16_t tmp,temp[30]={0,};
+    int16_t tmp,temp[15]={0,};
     uint32_t s_index=0,data=0;
     uint8_t* buf = p_rx;
     
@@ -809,14 +810,19 @@ int rn8209c_set( void *instance, uint8_t *p_rx )
     }
     else if(addr >= 0xA0)//0.5L 自热影响量
     {
-        s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Value_05L);    
+        uint8_t slot = (uint8_t)(addr - 0xA0);
+        if(slot >= sizeof(temp) / sizeof(temp[0])) return false;
+
+        s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Value_05L);
         nd_get_index(instance, s_index, (uint8_t*)&temp[0], 30);
-        memcpy((uint8_t*)&temp[addr-0xA0], (uint8_t*)(buf), 2);
+        memcpy((uint8_t*)&temp[slot], (uint8_t*)(buf), 2);
         nd_set_index(instance, s_index, (uint8_t*)&temp[0], 30);
     }
     else if(addr>=0x90)//自热影响
     {
-        s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Value_10L);    
+        if(addr >= 0x9F) return false;
+
+        s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Heat_Value_10L);
         nd_get_index(instance, s_index, (uint8_t*)&temp[0], 30);
         memcpy((uint8_t*)&temp[addr-0x90], (uint8_t*)(buf), 2);
         nd_set_index(instance, s_index, (uint8_t*)&temp[0], 30);

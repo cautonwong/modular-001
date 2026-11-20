@@ -2327,6 +2327,15 @@
             </file>
         </group>
         <group>
+            <name>metering</name>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\metering\application.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\application\metering\demand_registry.c</name>
+            </file>
+        </group>
+        <group>
             <name>components</name>
             <file>
                 <name>$PROJ_DIR$\..\..\..\components\core\bus\nd_bus.c</name>
@@ -2599,6 +2608,9 @@
                 <name>$PROJ_DIR$\..\app\metering\electrical_measurement.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\metering\demand_adapter.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\metering\legacy\energy.c</name>
             </file>
             <file>
@@ -2609,6 +2621,9 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\common\calendar.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\domain\common\store.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\common\time_format.c</name>
@@ -2781,6 +2796,21 @@
         <name>$PROJ_DIR$\..\persistence\legacy_tariff_parser.c</name>
     </file>
     <file>
+        <name>$PROJ_DIR$\..\persistence\legacy_energy_codec.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\persistence\legacy_energy_store.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\..\..\infra\drivers\storage\block\block_ops.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\..\..\infra\storage\pulse_snapshot.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\..\..\infra\storage\pulse_store.c</name>
+    </file>
+    <file>
         <name>$PROJ_DIR$\..\..\..\infra\memory\arena.c</name>
     </file>
     <file>
@@ -2860,6 +2890,9 @@
     </file>
     <file>
         <name>$PROJ_DIR$\..\..\..\domain\metering\demand_history.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\..\..\domain\metering\demand.c</name>
     </file>
     <file>
         <name>$PROJ_DIR$\..\..\..\domain\metering\energy_set.c</name>

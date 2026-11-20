@@ -284,7 +284,7 @@ target 检查。
 - `idis_ip_meter` 和 `idis_ip_meter_freertos`。CMake ARM 构建、
   `check_idis_firmware.py`（ELF section RAM/ROM、wired symbols、103 KiB
   预算断言）、11 个 Python 验收用例。
-- `host`。共享单元测试，当前 127 个，另跑 strict 和 analyzer 两层。
+- `host`。共享单元测试，另跑 strict 和 analyzer 两层。
 - `msta`。没有 build descriptor，矩阵跳过。
 
 新 target 接入。放 `app/CMakeLists.txt`、`build/CMakeLists.txt` 或 IAR `.ewp`，矩阵会自动发现。

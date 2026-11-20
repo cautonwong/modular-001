@@ -48,15 +48,32 @@ static int access_allowed(const nd_idis_objects_t *objects, uint8_t sap,
         return 1;
     }
     switch (sap) {
-    case 1:
+    case ND_IDIS_SAP_MANAGEMENT:
         return 1;
-    case 16:
+    case ND_IDIS_SAP_PUBLIC:
         return access == ND_ACCESS_GET;
-    case 102:
+    case ND_IDIS_SAP_PREESTABLISHED:
         return access == ND_ACCESS_SET || access == ND_ACCESS_ACTION;
     default:
         return 0;
     }
+}
+
+/* Not a COSEM method: a front end cannot carry RELG in class-7 reset().
+ * The local maintenance tool verifies the operator confirmation, then calls
+ * this entry; the management subject and a local client are still required. */
+int nd_cosem_port_release_legacy(void *ctx, uint8_t client_sap,
+                                 uint32_t confirmation)
+{
+    nd_idis_objects_t *objects = ctx;
+    if (objects == NULL
+        || confirmation != ND_IDIS_LEGACY_RELEASE_CONFIRMATION
+        || client_sap != ND_IDIS_SAP_MANAGEMENT || objects->remote_client) {
+        return ND_ERR_ACCESS_DENIED;
+    }
+    return nd_idis_profiles_release_legacy(&objects->profiles) == 0
+               ? ND_OK
+               : ND_ERR_OPERATION_NOT_POSSIBLE;
 }
 
 static nd_idis_calendar_state_t *calendar_state_for(
@@ -350,7 +367,8 @@ int nd_cosem_port_action(void *ctx, uint8_t client_sap, uint16_t class_id,
     }
     if (class_id == ND_IC_SCRIPT_TABLE) {
         if (local_only_script_table(ln)
-            && (objects->remote_client || client_sap == 102)) {
+            && (objects->remote_client
+                || client_sap == ND_IDIS_SAP_PREESTABLISHED)) {
             return ND_ERR_ACCESS_DENIED;
         }
         return nd_ic_script_action(&objects->scripts, client_sap, ln,

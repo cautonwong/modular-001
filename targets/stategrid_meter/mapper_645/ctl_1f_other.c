@@ -52,8 +52,7 @@ signed char Comm_Other(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *le
             
         case 0x04://参数初始化
             ret = para_init( instance );
-            meter_clr(instance);
-            if(ret < 0) 
+            if((ret < 0) || (meter_clr(instance) == 0))
                 Err_Byte = RS_ERR_OTHERS;
             break;
             

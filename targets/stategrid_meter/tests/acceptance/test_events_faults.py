@@ -169,20 +169,26 @@ def clock_fault_after_backward_jump(ctx):
     assert ended.count(b"\x1c") == 2, ended.hex()
 
 
+def _duration(payload: bytes) -> tuple[int, ...]:
+    return (int.from_bytes(payload[0:2], "big"), *payload[2:7])
+
+
 @case(
     "ACC-EVT-016",
-    "a missing metering chip raises the chip-fault event after its debounce "
-    "and the event carries a start timestamp",
+    "a missing metering chip raises the chip-fault event after its debounce; "
+    "a later chip recovery leaves the event count at one and adds a recovery "
+    "timestamp later than the start",
     ("events", "metering", "fault"),
 )
 def metering_chip_event(ctx):
     run = ctx.run(
-        cycles=304,
+        cycles=570,
         scenario=(
             "at 1 chip ok\n"
             "at 2 chip fault\n"
-            f"at 300 uart 0 {_get(1, 0x302F0400).hex()}\n"
-            f"at 301 uart 0 {_get(2, 0x302F0A00).hex()}\n"
+            "at 300 chip ok\n"
+            f"at 560 uart 0 {_get(1, 0x302F0400).hex()}\n"
+            f"at 565 uart 0 {_get(2, 0x302F0A00).hex()}\n"
         ),
     )
     assert run.exit_code == 0, f"firmware_sim exited {run.exit_code}"
@@ -190,4 +196,7 @@ def metering_chip_event(ctx):
     assert len(apdus) == 2, [apdu.hex() for apdu in apdus]
     assert protocol.parse_get_response(apdus[0]).data.hex() == "120001"
     value = protocol.parse_get_response(apdus[1]).data
-    assert value.count(b"\x1c") == 1, value.hex()
+    assert value.count(b"\x1c") == 2, value.hex()
+    event = protocol.axdr_decode(value)[0].children[0].children[1]
+    start, end = (child.payload for child in event.children)
+    assert _duration(end) > _duration(start), (_duration(start), _duration(end))

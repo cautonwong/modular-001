@@ -38,14 +38,14 @@ def _decode(frame: bytes) -> tuple[str, int, bytes]:
     return address, control, bytes((byte - DATA_OFFSET) & 0xFF for byte in raw)
 
 
-def _run(ctx, requests, *, cycles=None, seed_eeprom=None):
+def _run(ctx, requests, *, cycles=None, seed_eeprom=None, tail=""):
     lines = [
         f"at {index} uart 0 {request.hex()}"
         for index, request in enumerate(requests, 1)
     ]
     return ctx.run(
         cycles=cycles if cycles is not None else len(requests) + 3,
-        scenario="\n".join(lines) + "\n",
+        scenario="\n".join(lines) + "\n" + tail,
         seed_eeprom=seed_eeprom,
     )
 
@@ -272,7 +272,13 @@ def password_checked(ctx):
     seed = bytearray([0xFF]) * EEPROM_SIZE
     seed[PASS02_ERR_CNT_OFFSET] = 0
 
-    run = _run(ctx, [wrong], cycles=4, seed_eeprom=bytes(seed))
+    run = _run(
+        ctx,
+        [wrong],
+        cycles=10,
+        seed_eeprom=bytes(seed),
+        tail="at 4 power off\nat 6 power on\n",
+    )
     assert run.exit_code == 0, f"firmware_sim exited {run.exit_code}"
     frames = protocol.iter_645_frames(run.uart_tx)
     assert len(frames) == 1, f"expected one error response: {run.uart_tx.hex()}"
@@ -280,9 +286,16 @@ def password_checked(ctx):
     assert address == "ffffffffffff", address
     assert control == 0xDB, hex(control)
     assert data == b"\x04", data.hex()
+    assert run.eeprom[PASS02_ERR_CNT_OFFSET] == 1, run.eeprom[PASS02_ERR_CNT_OFFSET]
 
-    seed[PASS02_ERR_CNT_OFFSET] = 0
-    run = _run(ctx, [right], cycles=6, seed_eeprom=bytes(seed))
+    seed[PASS02_ERR_CNT_OFFSET] = 1
+    run = _run(
+        ctx,
+        [right],
+        cycles=10,
+        seed_eeprom=bytes(seed),
+        tail="at 4 power off\nat 6 power on\n",
+    )
     assert run.exit_code == 0, f"firmware_sim exited {run.exit_code}"
     frames = protocol.iter_645_frames(run.uart_tx)
     assert len(frames) == 1, f"expected one success response: {run.uart_tx.hex()}"
@@ -290,6 +303,7 @@ def password_checked(ctx):
     assert address == "ffffffffffff", address
     assert control == 0x9B, hex(control)
     assert data == b"", data.hex()
+    assert run.eeprom[PASS02_ERR_CNT_OFFSET] == 0, run.eeprom[PASS02_ERR_CNT_OFFSET]
 
 
 @case(

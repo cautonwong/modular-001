@@ -19,7 +19,7 @@
     },
     {
       "path": "infra/**",
-      "rule": "infra holds SoCs, boards, drivers and RTOS adapters. No kernel types cross into application, domain or components; ports stay void *. One board per product, no device abstraction. ROM stays under the target link assert (IDIS 102 KiB). A power-safety path change needs hardware evidence or an explicit note that it is untested.",
+      "rule": "infra holds SoCs, boards, drivers and RTOS adapters. No kernel types cross into application, domain or components; ports stay void *. One board per product, no device abstraction. ROM stays under the target link assert (IDIS 103 KiB). A power-safety path change needs hardware evidence or an explicit note that it is untested.",
       "merge_system_rule": true
     },
     {

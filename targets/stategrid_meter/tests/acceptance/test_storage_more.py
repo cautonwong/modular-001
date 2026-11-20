@@ -41,6 +41,12 @@ def energy_record_after_power_loss(ctx):
     assert record.energy_checksum_ok, record.energy_checksum
     assert record.use_energy_checksum_ok, record.use_energy_checksum
 
+    snapshot = storage.latest_energy_snapshot(run.eeprom)
+    assert snapshot is not None, "power off must commit a snapshot slot"
+    assert snapshot.record.forward[0].integer == 3, snapshot.record.forward[0]
+    assert snapshot.record.energy_checksum_ok, snapshot.record.energy_checksum
+    assert snapshot.generation >= 2, snapshot.generation
+
     parameter_copy = storage.energy_record(run.eeprom, 198)
     assert parameter_copy.forward[0].integer == 0, parameter_copy.forward[0]
     assert parameter_copy.energy_checksum_ok, parameter_copy.energy_checksum

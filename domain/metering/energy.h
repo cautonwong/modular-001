@@ -76,6 +76,8 @@ int64_t nd_energy_channel_read(const nd_energy_channel_t *channel,
 
 void nd_energy_clear(nd_energy_book_t *book);
 
+void nd_energy_clear_month(nd_energy_book_t *book);
+
 void nd_energy_set_total(nd_energy_book_t *book, nd_energy_direction_t direction,
                          uint32_t integer);
 

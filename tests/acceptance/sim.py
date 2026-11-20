@@ -23,7 +23,7 @@ MESSAGE_RE = re.compile(
 )
 
 EEPROM_SIZE = 65535
-FLASH_SIZE = 8388607
+FLASH_SIZE = 4194304
 
 # The 32-bit reset counter lives in the parameter block. A blank block makes
 # the firmware read 0xFFFFFFFF, so the first boot wraps to 0 and each later

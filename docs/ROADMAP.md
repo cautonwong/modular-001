@@ -1,13 +1,13 @@
 # 下一阶段路线图
 
-日期：2026-11-11  
-基线：`fe0f58b3` 之后加入事件目录迁移
+日期：2026-11-20
+基线：`c9f7214d`。数字以 `./ci.sh` 和各 checker 的输出为准，本文只记当前值。
 
 ## 1. 目标
 
 把 `modular-001` 从“按目录分层”推进到“按限界上下文和端口组织”的可复用组件仓库：
 
-- 领域层只表达业务规则，不暴露 `mbase_control_block_t`、`instance_t` 的布局。
+- domain 只表达业务规则，不暴露 `mbase_control_block_t`、`instance_t` 的布局。
 - application 只依赖消费者定义的端口，不依赖具体存储、协议或板级实现。
 - target 只做组合根、硬件适配和持久化兼容。
 - product 清单驱动构建和组合，而不是只做说明。
@@ -15,152 +15,86 @@
 
 硬约束：只做本地提交，不 push 远端。
 
-## 2. 当前基线
+## 2. 当前基线（2026-11-20）
 
-- 33 个组件清单，源文件全部有归属，跨组件未声明依赖为 0。
-- `check_layers` 0，platform boundary 0。
-- `legacy_baseline` 205/205 编译链接，`link_undefined=0`。
-- `ctest` 72/72。
-- domain/application 在 Cortex-M0 下严格编译。
-- 事件、冻结、记录捕获共 10 组规则已迁入 domain。
+- 60 个组件清单；7 个产品（3 个固件、4 个非固件）；156 个单测文件。
+- `./ci.sh`：158 个 host ctest（156 单测 + 2 仿真）、strict 156；IDIS 验收
+  两个 target 各 16 条；stategrid 验收 134 行 / 105 例。
+- 形式化：6 个 CBMC harness、2 个 Frama-C/Eva harness、4 个 TLA+ spec、
+  6 个 Lean 模块，`formal: ok`。
+- 可变全局 248 条（76 文件，28 在头文件）；product-link 源例外 22 条；
+  reachability 例外 1 条；`shortcut:` 7 条。
+- IDIS ROM（pinned Arm GNU 14.3.rel1，103 KiB = 105,472 B）：
+  裸机 POLL 94,968、裸机 IRQ 97,452、FreeRTOS POLL 99,188、
+  FreeRTOS IRQ 101,868；最紧余量 3,604 B。数字是 ROM load span（含 section
+  间对齐填充），等于链接产物的 `.bin` 大小。
+- `check_layers`、`check_components`、`check_platform_boundary` 全 0。
 
-## 3. P0 收尾迁移（已完成）
+## 3. 已完成（从待办中删除）
 
-验收标准：
+- P0 收尾迁移：组件归属、依赖闭环、严格 ARM 编译、业务规则迁 domain、
+  adapter 警告抑制删除。
+- P1 核心模型解耦：`instance_t` 删除；计量端口改 `nd_energy_ledger_t`；
+  `mbase` 边界隔离（结构体拆分仍待决策）。
+- P2.1 产品清单驱动构建：`product.yaml` 经 `tools/product_manifest.py` 生成
+  确定性源清单；固件链接与 `.ewp` 源表双向一致。
+- P2.2 兜底组件拆除：legacy 容器按目录拆开；`legacy.*`、`nidavellir/`、
+  `infra.os.baremetal` 已删除。
+- P3.3 持续集成：`./ci.sh`、验收矩阵、形式化、ROM/RAM 断言、lint 棘轮。
+- P3.4 固件链接：链接脚本、启动文件、向量表和 section 断言已接入；
+  真机运行仍未验证。
 
-- 每个 `.c/.h` 有组件归属。
-- 跨组件 include 必须声明 dependency。
-- domain/application 通过严格 ARM 编译。
-- 每项业务规则迁移都有主机测试。
-- 旧实现从 target 删除，不只做转发壳。
+## 4. P0 近期（守住绿色 + 还债）
 
-已完成：
+1. **烧可变全局：248 → 0。** 分布：stategrid 83、IDIS FreeRTOS 50、
+   IDIS 45、infra/boot 40、host 9、其余 21。先从 `application/ports/*.c`
+   的三个 `bound` 标志开始，改为组合根一次性绑定；每批跑
+   `check_mutable_globals.py`，增长需要 `mutable_globals_exceptions.txt`。
+2. **清 product-link 源例外：22 → 0。** 真死源删除，清单漏选补
+   `product.yaml`，保留项必须理由成立。拒绝 stale 例外。
+3. **清 reachability 例外：1 → 0。** 当前只有 `services.channel`：
+   补生产调用者或删除组件，二选一。
+4. **ROM 账。** IRQ 余量 3,604 B，新固件功能先看 IRQ 列；数字以
+   `tools/check_idis_firmware.py` 的 ELF 输出为准。
 
-- adapter 警告抑制全部删除，并修正 698 DIR 判断和消息类型偏移。
-- 645/698 matcher、组帧、AXDR、地址、密码、连接/GET/SET/ACTION、分帧、客户端转发测试。
-- 组件归属和依赖闭环。
-- 开关误动作、MAC 挂起、编程列表、RTC、冻结空间、回滚、上电恢复、捕获映射、方案可见性、事件目录。
+完成标准：四项清零或明确记录理由，CI 保持全绿。
 
-## 4. P1 核心模型解耦（已完成）
+## 5. P1 中期（产品化）
 
-### P1.1 收窄 `instance_t`（已完成）
+1. **IAR `.ewp` 由清单生成。** CI 校验生成结果与仓库一致，手写工程退役。
+2. **端口绑定检查自动化。** 每个端口在组合根恰好绑定一次；漏绑/多绑失败。
+   先出设计，再进 CI。
+3. **698 客户端 `forward` 落地或删除。** 有真实消费者就绑定，没有就删路径。
+4. **启动/运行时验证。** 补全向量表和 runtime init，加“复位→初始化→主循环”
+   仿真测试；真机验证仍属 HIL。
+5. **持久化契约测试。** 每个持久化块加字节级 golden test + 版本字段 +
+   迁移策略；不改旧字节布局。
 
-历史：`nidavellir/include/kernel/instance.h` 曾定义宽运行时句柄。Wave 6 已删除该类型，产品状态归 `stategrid_context_t`，application/domain 只看到不透明 `void *`。
+## 6. P2 远期（可信度与规模）
 
-工作：
+1. **HIL 自动化。** ESAM MAC/RN、上报确认、掉电重启、IR 光口、MX25
+   wait_ready、释放耗时/WDT 时序；见 `MODULAR-001-HIL-2026-11-20.md`。
+2. **形式化扩面。** CBMC 扩到 645 地址/密码解析，TLA+ 扩到冻结/回补状态机，
+   Lean 扩到循环日志容量。Frama-C Eva 已覆盖两个 store；WP 需要 why3 和
+   prover，当前 bundle 没有，能量累加的 WP 证明留到工具就位后。
+3. **性能/功耗预算。** sim 加周期计数、唤醒延迟、`-fstack-usage` 静态栈、
+   调度抖动阈值，达标后进 CI 当硬门禁。
+4. **第二个 SoC/板型。** 用真实第二产品验证端口抽象；同时处理 `mbase`
+   拆分决策门。
 
-1. 盘点 domain/application 对 `instance_t` 的实际访问，按用途分组。
-2. 为每组定义消费者端口，例如计量账本、事件存储、时钟、上报队列。
-3. target 在组合根实现端口，application 只接收端口句柄。
-4. 删除 application 对 `kernel/instance.h` 的直接 include。
+## 7. 决策门与阻塞
 
-验收：
+- `mbase_control_block_t` 拆分：需明确同意后才启动；当前只做边界隔离。
+- IAR 实编译、HIL：环境不具备。
+- Frama-C WP：官方 bundle 没有 why3，也没有系统 prover；演绎证明（含能量
+  累加）留到 why3/prover 就位后，当前 CI 只跑 Eva。
+- 103 KiB 是自限预算，不是硬件限制；若确有 100 KiB 约束再回头砍 IRQ 传输。
+- 威胁模型：用户决定暂时跳过；光口是唯一物理门禁，前端必须置
+  `remote_client=1` 且不得把 release 暴露为 COSEM 方法。
 
-- domain/application 不 include `kernel/instance.h`，也不定义 `instance_t` 布局。
-- 现有主机测试和 ARM 检查通过。
-- `tools/check_instance_boundary.py` 固化该边界。
+## 8. 验证入口
 
-### P1.2 让计量端口脱离 `mbase`（已完成）
-
-现状：`domain/metering/metering_energy_port.h:17` 仍暴露 `struct mbase_control_block_t *`。
-
-工作：
-
-1. 定义不透明账本句柄和读写函数，覆盖当前计量端口实际使用的字段。
-2. 把 `mbase` 字段访问收进 target/infra 适配器。
-3. 保持 `sizeof(struct mbase_control_block_t) = 1368`、`persistent_section_start = 849`、`active_p = 852` 不变。
-4. 用 `tools/legacy_probe.c` 和静态断言守住偏移。
-
-验收：
-
-- `domain/metering` 不 include `targets/stategrid_meter/persistence/legacy_control_block.h`。
-- 账本端口不出现 `mbase` 类型。
-- 持久化探针数值不变，205/205 链接通过。
-
-状态：端口已改为 `nd_energy_ledger_t`，target 适配器负责句柄转换，边界检查通过。
-
-### P1.3 `mbase` 边界隔离（边界完成，target 内部未收口）
-
-用户已明确暂不拆 `mbase_control_block_t`。本阶段只做隔离：
-
-- domain/application 不 include 布局，账本端口不出现 `mbase` 类型。
-- target legacy 仍直接访问字段，尚未全部收进 target 访问器。
-- 持久化仍按原结构偏移读写。
-- 在 `docs/architecture.md` 保留违规记录。
-
-决策门：只有用户明确同意后才启动结构体拆分；target 内部访问器是后续可选项，不影响分层边界。
-
-## 5. P2 组件与产品化
-
-### P2.1 产品清单驱动构建（固件链接已接入）
-
-- `check_components.py` 校验产品选择的组件依赖闭包，五个产品清单已补齐。
-- `tools/product_manifest.py` 按 product.yaml 解析闭包并生成确定性的 CMake 源清单（只收 `.c`）。
-- 宿主构建的 `products_check` 目标每次校验产品清单。
-- 固件链接使用 `--product meter_electricity_single_phase_cn`：源清单来自 product.yaml 闭包，`check-firmware-link.py` 要求它与 `.ewp` 源表双向完全一致，只在一侧出现的源文件直接失败。
-- 未参与构建的 owned 源文件通过组件的 `exclude` 显式记录；39 个组件共 205 个 `.c` 与 EWP 完全一致。
-- 尚未完成：IAR 工程本身仍手写，清单不生成 `.ewp`；组合根仍手写。
-
-### P2.2 拆掉兜底组件（检查完成，容器缩小待续）
-
-- `target.stategrid_meter` 根清单只列根目录 33 个文件，不再用宽路径加排除项。
-- 18 个 target 子目录各自建立清单，组件总数 59。
-- 59 个组件全部检查 include 依赖和层方向，legacy 不再豁免；协议组件通过 `application/ports/fifo_channel.h` 脱离 infra 头。
-- `check_components.py` 解析全部 `.ewp` 的 include 路径，按所属工程的搜索顺序解析裸头名；未构建（`exclude`）的源文件不参与依赖检查。
-- legacy 容器已按目录拆开；`legacy.*`、`nidavellir/` 和 `infra.os.baremetal` 已在 Wave 6 删除。
-
-### P2.3 协议适配器归位（依赖完成，forward 未绑定）
-
-- `application/adapters/dl645`、`dl698` 已按组件归位，组件依赖检查确认不 include target。
-- DLMS 组件保持独立；两个 IDIS 产品已选择 `protocol.dlms`，但 IDIS 固件链接目前只编 `src/nd_axdr.c`。
-- 698 客户端 `forward` 仍未绑定：当前 target 没有客户端消息消费者，绑一个空回调会改变协议行为；留待真正接入客户端业务时注册。
-
-验收：适配器只依赖 application 端口和协议组件，不依赖 target。已满足。
-
-## 6. P3 验证与交付
-
-### P3.1 真机回归（待硬件）
-
-需要设备或现场环境，按 `docs/esam-compatibility.md` 验证：
-
-- 正确 MAC 通过，篡改 MAC 被拒，纯 RN 通过。
-- 上报确认、断线重连、掉电重启后的重发状态。
-- 广播校时和红外权限分支。
-- 698 服务端 DIR 过滤、分帧末帧、目标钩子消息类型。
-
-### P3.2 协议样本库（骨架完成，现场样本待补）
-
-- `tests/corpus/` 定义现场抓包的落盘格式，`tests/unit/test_protocol_corpus.c` 用原始字节回放 645/698 matcher。
-- 已有四条回归种子，覆盖有效帧和坏校验帧。
-- 尚未完成：现场抓包需要设备或现场数据；当前样本不是现场报文。
-
-### P3.3 持续集成（已完成）
-
-- `ci.sh` 串起 `ctest`、`legacy_baseline`、`check-arm`、`check-layers`、`check-components`、`check_instance_boundary`、`check_platform_boundary` 和产品闭包检查。
-- `.github/workflows/ci.yml` 在 Ubuntu 上安装工具链后执行同一脚本。
-- 失败时保留构建日志和命令输出。
-
-### P3.4 固件链接（链接完成，硬件未验证）
-
-- 增加 GNU 链接脚本、复位向量启动文件和 `__CALL`/CSTACK 链接桩。
-- `tools/check-firmware-link.py` 用产品源清单（并与 EWP 源表双向锁定）链接出 V85XXP 256K flash / 32K RAM 的最终 ELF，`nm -u` 为 0。
-- 尚未完成：启动文件只有复位向量和默认异常处理，没有 IAR 运行时、完整向量表和板级初始化；不能当作已验证的烧录镜像。
-- 真机运行验证仍待硬件。
-
-## 7. 当前状态与剩余项
-
-已完成：P0、P1.1、P1.2、P3.3。
-
-已完成主体、仍有外部依赖：
-
-1. P2.1：产品清单已驱动固件源清单并与 EWP 双向锁定；IAR 工程生成和组合根仍手写。
-2. P2.2：59 个组件全部检查 include 依赖和层方向；legacy 容器已按目录拆开（`infra.os.baremetal` 为单文件，保持原样）。
-3. P2.3：适配器不依赖 target；698 客户端 `forward` 仍无消费者。
-4. P3.2：回放骨架已就位；现场抓包待补。
-5. P3.4：已链接最终 ELF；启动文件和运行时未在硬件验证。
-
-阻塞项：
-
-6. P3.1：需要真机或现场环境，无法在仓库内完成。
-
-P1.3 的 `mbase` 拆分是决策门，不默认启动。需量、月结、阶梯结算仍按用户要求保留在 legacy，恢复时先迁语义再删旧文件。
+- `./ci.sh`、`tools/check_formal.sh`、两个 IDIS target 的验收 runner、
+  stategrid 验收矩阵。
+- 验证分层与盲区见 `docs/guides/verification.md`；设计与决定见
+  `docs/design/`。

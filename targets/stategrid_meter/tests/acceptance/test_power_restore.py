@@ -4,11 +4,10 @@ The energy half lived in test_inputs.py; the case moved here so one case owns
 the whole row and the relay half can share the power-cycle scenario grammar.
 Evidence is external only: 645/698 response bytes, EEPROM bytes, relay capture.
 
-The demand half has no firmware path.  targets/stategrid_meter/app/metering/legacy/
-demand.c is not in the IAR manifest (only get_1_Demand.c is), the control block
-has no demand_list member, and GET_1_Demand returns -DAR_OBJECT_NOT_EXIST, so
-demand is neither initialized nor persisted nor readable.  ACC-MET-005 records
-that same product gap.
+The demand half runs in the same case: a five-minute window seeds a maximum,
+the outage saves it, and the next power on clears the current value while
+keeping the maximum and starting a fresh window at the restore time, observed
+through placeholder OAD 0x11000201.
 """
 
 from __future__ import annotations
@@ -79,6 +78,16 @@ def _get_values(run):
     return values
 
 
+def _clock(payload: bytes) -> tuple[int, ...]:
+    return (payload[0] << 8 | payload[1], payload[2], payload[3],
+            payload[4], payload[5], payload[6])
+
+
+def _clock_text(text: str) -> tuple[int, ...]:
+    return (int(text[0:4]), int(text[5:7]), int(text[8:10]),
+            int(text[11:13]), int(text[14:16]), int(text[17:19]))
+
+
 @case(
     "ACC-POWER-002",
     "active energy saved at power loss is restored after the next power on, and "
@@ -144,3 +153,28 @@ def power_restore(ctx):
     assert any(
         parts[1] == "2" and parts[-1] == "disconnect" for parts in actions
     ), relay.relay_log
+
+    demand_scenario = (
+        "at 0 meter power 100\n"
+        "at 305 power off\n"
+        "at 310 power on\n"
+        f"at 315 uart 0 {_get(1, 0x11000201)}\n"
+    )
+    demand = ctx.run(
+        cycles=320,
+        scenario=demand_scenario,
+        start_time="2024-08-28 16:40:00",
+    )
+    assert demand.exit_code == 0, f"demand run exited {demand.exit_code}"
+
+    values = _get_values(demand)
+    assert len(values) == 1, f"expected one 698 response: {demand.uart_tx.hex()}"
+    assert values[0].tag == protocol.AXDR_STRUCTURE, values[0].tag
+    current, fee, maximum, max_fee, max_time, start_time = values[0].children
+    assert current.value == 0, current.value
+    assert fee.value == 0, fee.value
+    assert maximum.value == 1000, maximum.value
+    assert max_fee.value == 1000, max_fee.value
+    assert _clock(max_time.value) == (2024, 8, 28, 16, 45, 0)
+    restore = next(cycle.time for cycle in demand.cycles if cycle.index == 310)
+    assert _clock(start_time.value) == _clock_text(restore), start_time.value

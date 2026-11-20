@@ -55,7 +55,7 @@ static void test_event_log_uses_profile_store(void)
     };
     config.captures[0] = captures[0];
     config.captures[1] = captures[1];
-    TEST_ASSERT_EQUAL_INT(0, nd_idis_profiles_init(&objects.profiles, &config, 1));
+    TEST_ASSERT_EQUAL_INT(0, nd_idis_profiles_init(&objects.profiles, &config, 1, 0, NULL));
     nd_cosem_port_t port = {
         .ctx = &objects,
         .get = nd_cosem_port_get,
@@ -73,7 +73,8 @@ static void test_event_log_uses_profile_store(void)
     TEST_ASSERT_TRUE(nd_profile_status_has(objects.profiles.items[0].status,
                                            ND_PROFILE_STATUS_PDN));
     TEST_ASSERT_EQUAL_INT(0, nd_idis_event_raise(&objects.event, 68));
-    TEST_ASSERT_EQUAL_UINT16(2, nd_event_log_count(&objects.event.log));
+    TEST_ASSERT_EQUAL_UINT16(
+        2, nd_event_log_count(nd_event_log_of(&objects.event.log)));
     TEST_ASSERT_EQUAL_UINT16(
         2, nd_profile_store_entries(
                &objects.profiles.items[0].store));
@@ -91,7 +92,8 @@ static void test_event_raise_updates_object_alarm_and_counter(void)
     TEST_ASSERT_TRUE(nd_profile_status_has(objects.event.profile_status,
                                            ND_PROFILE_STATUS_PDN));
     TEST_ASSERT_EQUAL_INT(0, nd_idis_event_raise(&objects.event, 68));
-    TEST_ASSERT_EQUAL_UINT16(4, nd_event_log_count(&objects.event.log));
+    TEST_ASSERT_EQUAL_UINT16(
+        4, nd_event_log_count(nd_event_log_of(&objects.event.log)));
 
     uint8_t buffer[16] = {0};
     nd_axdr_writer_t out;
@@ -146,10 +148,51 @@ static void test_event_state_persists_log_and_status(void)
     TEST_ASSERT_EQUAL_INT(0, nd_idis_event_load(&restored.event,
                                                 nd_byte_store_port(&store), 0));
     TEST_ASSERT_EQUAL_UINT8(7, restored.event.latest_event_code);
-    TEST_ASSERT_EQUAL_UINT16(2, nd_event_log_count(&restored.event.log));
+    TEST_ASSERT_EQUAL_UINT16(
+        2, nd_event_log_count(nd_event_log_of(&restored.event.log)));
     TEST_ASSERT_EQUAL_UINT32(2, restored.event.counters[0]);
     TEST_ASSERT_TRUE(nd_profile_status_has(restored.event.profile_status,
                                            ND_PROFILE_STATUS_PDN));
+}
+
+
+static void test_event_save_matches_persisted_record(void)
+{
+    static uint8_t memory[1024];
+    nd_byte_store_t store;
+    nd_byte_store_init(&store, memory, sizeof(memory));
+    nd_idis_objects_t objects = {0};
+    nd_idis_event_init(&objects.event, nd_idis_event_rules,
+                       nd_idis_event_rule_count);
+    TEST_ASSERT_EQUAL_INT(0, nd_idis_event_raise(&objects.event, 1));
+    TEST_ASSERT_EQUAL_INT(0, nd_idis_event_raise(&objects.event, 7));
+    TEST_ASSERT_EQUAL_INT(0, nd_idis_event_raise(&objects.event, 26));
+    TEST_ASSERT_EQUAL_INT(0, nd_idis_event_save(&objects.event,
+                                                nd_byte_store_port(&store), 0));
+
+    nd_idis_event_record_t expected;
+    memset(&expected, 0, sizeof(expected));
+    expected.magic = ND_IDIS_EVENT_MAGIC;
+    expected.latest_event_code = objects.event.latest_event_code;
+    expected.profile_status = objects.event.profile_status;
+    const nd_event_log_t *log = nd_event_log_of(&objects.event.log);
+    expected.log_count = (uint8_t)nd_event_log_count(log);
+    expected.log_head = (uint8_t)nd_event_log_head(log);
+    nd_event_log_export(log, expected.log);
+    memcpy(expected.log_codes, objects.event.log_codes,
+           sizeof(expected.log_codes));
+    memcpy(expected.counters, objects.event.counters,
+           sizeof(expected.counters));
+    memcpy(expected.registers, objects.event.alarm.registers,
+           sizeof(expected.registers));
+    memcpy(expected.filters, objects.event.alarm.filters,
+           sizeof(expected.filters));
+    memcpy(expected.descriptors, objects.event.descriptors,
+           sizeof(expected.descriptors));
+    expected.error_register = objects.event.error_register;
+
+    TEST_ASSERT_EQUAL_UINT32(500u, (uint32_t)sizeof(expected));
+    TEST_ASSERT_EQUAL_MEMORY(&expected, memory, sizeof(expected));
 }
 
 
@@ -160,7 +203,8 @@ static void test_event_raise_ex_keeps_business_fields(void)
                        nd_idis_event_rule_count);
     TEST_ASSERT_EQUAL_INT(0, nd_idis_event_raise_ex(&objects.event, 1, 2, 3,
                                                     120, -45));
-    const nd_event_record_t *record = nd_event_log_latest(&objects.event.log);
+    const nd_event_record_t *record =
+        nd_event_log_latest(nd_event_log_of(&objects.event.log));
     TEST_ASSERT_NOT_NULL(record);
     TEST_ASSERT_EQUAL_UINT8(2, record->source);
     TEST_ASSERT_EQUAL_UINT8(3, record->severity);
@@ -294,7 +338,8 @@ static void test_communication_events_26_to_29(void)
     nd_idis_event_communication(&objects.event, ND_IDIS_COMMUNICATION_LOCAL,
                                 0);
     TEST_ASSERT_EQUAL_UINT8(29, objects.event.latest_event_code);
-    TEST_ASSERT_EQUAL_UINT16(4, nd_event_log_count(&objects.event.log));
+    TEST_ASSERT_EQUAL_UINT16(
+        4, nd_event_log_count(nd_event_log_of(&objects.event.log)));
     TEST_ASSERT_EQUAL_UINT32(4, objects.event.counters[0]);
 }
 
@@ -304,6 +349,7 @@ int main(void)
     RUN_TEST(test_event_log_uses_profile_store);
     RUN_TEST(test_event_raise_updates_object_alarm_and_counter);
     RUN_TEST(test_event_state_persists_log_and_status);
+    RUN_TEST(test_event_save_matches_persisted_record);
     RUN_TEST(test_event_raise_ex_keeps_business_fields);
     RUN_TEST(test_event_data_objects);
     RUN_TEST(test_communication_events_26_to_29);

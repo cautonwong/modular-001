@@ -26,10 +26,13 @@ import argparse
 import re
 import sys
 import tempfile
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 BASELINE = ROOT / "tools" / "mutable_globals_baseline.txt"
+FROZEN = ROOT / "tools" / "mutable_globals_frozen.txt"
+EXCEPTIONS = ROOT / "tools" / "mutable_globals_exceptions.txt"
 BASES = ("domain", "application", "components", "targets", "infra")
 SKIP_DIRS = {"build", "backupfiles", ".git", "__pycache__", "tests"}
 VENDOR = {("infra", "third_party"), ("infra", "security", "crypto")}
@@ -296,6 +299,89 @@ def diff(baseline: dict[str, set[tuple[str, int]]],
     return failures
 
 
+def counts(baseline: dict[str, set[tuple[str, int]]]) -> dict[tuple[str, str], int]:
+    result: dict[tuple[str, str], int] = {}
+    for path, entries in baseline.items():
+        for name, _line in entries:
+            key = (path, name)
+            result[key] = result.get(key, 0) + 1
+    return result
+
+
+def load_frozen() -> dict[tuple[str, str], int]:
+    frozen: dict[tuple[str, str], int] = {}
+    for line in FROZEN.read_text(encoding="utf-8").splitlines():
+        line = line.split("#", 1)[0].strip()
+        if not line:
+            continue
+        path, name, count = line.rsplit(None, 2)
+        frozen[(path, name)] = int(count)
+    return frozen
+
+
+def load_exceptions() -> tuple[dict[tuple[str, str], int], list[str]]:
+    exceptions: dict[tuple[str, str], int] = {}
+    errors: list[str] = []
+    lines = EXCEPTIONS.read_text(encoding="utf-8").splitlines()
+    for number, line in enumerate(lines, start=1):
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        fields = line.split("\t")
+        if len(fields) != 5:
+            errors.append(
+                f"tools/mutable_globals_exceptions.txt:{number}: expected "
+                "5 tab-separated fields")
+            continue
+        path, name, reason, expiry, approved = (field.strip()
+                                                for field in fields)
+        if not reason or not approved:
+            errors.append(
+                f"tools/mutable_globals_exceptions.txt:{number}: reason and "
+                "approved are required")
+            continue
+        try:
+            deadline = date.fromisoformat(expiry)
+        except ValueError:
+            errors.append(
+                f"tools/mutable_globals_exceptions.txt:{number}: expiry must "
+                "be YYYY-MM-DD")
+            continue
+        if deadline < date.today():
+            errors.append(
+                f"tools/mutable_globals_exceptions.txt:{number}: exception "
+                f"expired on {expiry}")
+            continue
+        key = (path, name)
+        exceptions[key] = exceptions.get(key, 0) + 1
+    return exceptions, errors
+
+
+def growth_check(baseline: dict[str, set[tuple[str, int]]],
+                 frozen: dict[tuple[str, str], int],
+                 exceptions: dict[tuple[str, str], int]) -> list[str]:
+    failures = []
+    current = counts(baseline)
+    for (path, name), count in sorted(current.items()):
+        allowed = frozen.get((path, name), 0) + exceptions.get((path, name), 0)
+        if count > allowed:
+            failures.append(
+                f"{path}: {name!r} has {count} mutable globals; the frozen "
+                f"set plus exceptions allow {allowed}. Add a reason, expiry "
+                "and approval to tools/mutable_globals_exceptions.txt, or "
+                "remove the global")
+    for (path, name), count in sorted(exceptions.items()):
+        grown = current.get((path, name), 0) - frozen.get((path, name), 0)
+        if grown <= 0:
+            failures.append(
+                f"{path}: exception for {name!r} is stale: no growth beyond "
+                "the frozen set")
+        elif count > grown:
+            failures.append(
+                f"{path}: {count - grown} exception line(s) for {name!r} are "
+                "unused")
+    return failures
+
+
 def tree_check() -> bool:
     with tempfile.TemporaryDirectory() as temporary:
         root = Path(temporary)
@@ -380,7 +466,17 @@ def main() -> int:
         print(f"mutable globals baseline updated: {summary(current)}")
         return 0
 
-    failures = diff(load(), current)
+    baseline = load()
+    failures = diff(baseline, current)
+    if not failures:
+        try:
+            frozen = load_frozen()
+            exceptions, errors = load_exceptions()
+        except OSError as error:
+            print(f"mutable globals: cannot read the frozen set or "
+                  f"exceptions: {error}")
+            return 1
+        failures = errors + growth_check(baseline, frozen, exceptions)
     for failure in failures:
         print(failure)
     if failures:

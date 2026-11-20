@@ -303,14 +303,17 @@ signed char dl645_meter_clear(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint
                     return RS_ERR_PASS;
                 }         
                 
-                if(nd_mb_factor_mode(instance) == false) 
+                if(nd_mb_factor_mode(instance) == false)
                 {
                     record_event_no_mesg_pro(instance, NULL, MeterClrS, NULL, 1);
                 }
 
-                meter_clr(instance);
+                if (meter_clr(instance) == 0)
+                {
+                    return RS_ERR_OTHERS;
+                }
             }
-                
+
             else
                 return RS_ERR_LEN;
         }
@@ -318,14 +321,17 @@ signed char dl645_meter_clear(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint
         {
             if( ctx->apdu_rx_len == 8 )
             {
-                if(nd_mb_factor_mode(instance) == false) 
+                if(nd_mb_factor_mode(instance) == false)
                 {
                     record_event_no_mesg_pro(instance, NULL, MeterClrS, NULL, 1);
                 }
-                meter_clr(instance);
+                if (meter_clr(instance) == 0)
+                {
+                    return RS_ERR_OTHERS;
+                }
             }
             else
-                return RS_ERR_LEN;   
+                return RS_ERR_LEN;
         }
         else
         {

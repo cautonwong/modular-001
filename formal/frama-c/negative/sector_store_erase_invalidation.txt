@@ -1,0 +1,346 @@
+# Negative evidence: the Eva gate catches a deleted window invalidation.
+# Mutation: infra/memory/sector_store.c store_erase drops "store->window_valid = 0u;".
+# Command: frama-c -eva -eva-slevel 512 -eva-min-loop-unroll 8 -cpp-extra-args="-I ." formal/frama-c/sector_store_eva.c infra/memory/sector_store.c
+# Frama-C: 33.0 (Arsenic)
+# Result: exit 0, 0 alarms in the summary, but erase_window_fresh is invalid
+# (the stale window answers instead of the erased device), so the log carries
+# an [eva:alarm] line at the assertion; 231/314 statements (74%), Assertions
+# 0 valid 0 unknown 1 invalid 1 total. The validator rejects the [eva:alarm]
+# line, the invalid assertion and the pinned totals.
+[kernel] Parsing formal/frama-c/sector_store_eva.c (with preprocessing)
+[kernel] Parsing infra/memory/sector_store.c (with preprocessing)
+[eva] Analyzing a complete application starting at main
+[eva:initial-state] Values of globals at initialization
+  backing[0..7] ∈ {0}
+  window_buf[0..3] ∈ {0}
+  direct_buf[0..3] ∈ {0}
+  dst[0..7] ∈ {0}
+  src[0..7] ∈ {0}
+  windowed_read[0..3] ∈ {0}
+  direct_read[0..3] ∈ {0}
+  fail_read ∈ {0}
+  fail_erase ∈ {0}
+  fail_write ∈ {0}
+[eva] using specification for function Frama_C_make_unknown
+[eva:partition] formal/frama-c/sector_store_eva.c:162: 
+  Trace partitioning superposing up to 100 states
+[eva:acsl:unsupported] FRAMAC_SHARE/libc/string.h:134: 
+  cannot evaluate ACSL term, unsupported ACSL construct: logic function memcmp
+[eva] using specification for function memcmp
+[eva:acsl:unsupported] FRAMAC_SHARE/libc/string.h:63: 
+  cannot evaluate ACSL term, unsupported ACSL construct: logic function memcmp
+[eva:alarm] formal/frama-c/sector_store_eva.c:121: Warning: 
+  assertion 'erase_window_fresh' got status invalid (stopping propagation).
+[eva] ====== VALUES COMPUTED ======
+[eva:final-states] Values at end of function device_erase:
+  backing[0..7] ∈ [--..--]
+  __retres ∈ {0}
+[eva:final-states] Values at end of function device_read:
+  window_buf[0..3] ∈ [--..--]
+  direct_buf[0..3] ∈ [--..--]
+  dst[0..7] ∈ [--..--]
+  direct_read[0..3] ∈ {0; 255}
+  __retres ∈ {0}
+[eva:final-states] Values at end of function device_write:
+  backing[0..7] ∈ [--..--]
+  __retres ∈ {0}
+[eva:final-states] Values at end of function nd_sector_store_init:
+  store.port.ctx ∈ {{ (void *)&store }}
+       .port.read ∈ {{ &store_read }}
+       .port.write ∈ {{ &store_write }}
+       .port.erase ∈ {{ &store_erase }}
+       .ctx ∈ {0}
+       .read ∈ {{ &device_read }}
+       .erase ∈ {{ &device_erase }}
+       .write ∈ {{ &device_write }}
+       .capacity ∈ {8}
+       .sector_size ∈ {4}
+       .sector ∈ {{ &window_buf[0] }}
+       {.window_base; .window_valid} ∈ {0}
+       .window_enabled ∈ {1}
+       .[bits 688 to 703] ∈ {0}
+  direct.port.ctx ∈ {{ (void *)&direct }} or UNINITIALIZED
+        .port.read ∈ {{ &store_read }} or UNINITIALIZED
+        .port.write ∈ {{ &store_write }} or UNINITIALIZED
+        .port.erase ∈ {{ &store_erase }} or UNINITIALIZED
+        .ctx ∈ {0} or UNINITIALIZED
+        .read ∈ {{ &device_read }} or UNINITIALIZED
+        .erase ∈ {{ &device_erase }} or UNINITIALIZED
+        .write ∈ {{ &device_write }} or UNINITIALIZED
+        .capacity ∈ {8} or UNINITIALIZED
+        .sector_size ∈ {4} or UNINITIALIZED
+        .sector ∈ {{ &direct_buf[0] }} or UNINITIALIZED
+        {.window_base; .window_valid; .window_enabled; .[bits 688 to 703]} ∈
+        {0} or UNINITIALIZED
+  null.port.ctx ∈ {{ (void *)&null }} or UNINITIALIZED
+      .port.read ∈ {{ &store_read }} or UNINITIALIZED
+      .port.write ∈ {{ &store_write }} or UNINITIALIZED
+      .port.erase ∈ {{ &store_erase }} or UNINITIALIZED
+      {.ctx; .read; .erase; .write} ∈ {0} or UNINITIALIZED
+      .capacity ∈ {8} or UNINITIALIZED
+      .sector_size ∈ {4} or UNINITIALIZED
+      .sector ∈ {{ &window_buf[0] }} or UNINITIALIZED
+      {.window_base; .window_valid} ∈ {0} or UNINITIALIZED
+      .window_enabled ∈ {1} or UNINITIALIZED
+      .[bits 688 to 703] ∈ {0} or UNINITIALIZED
+  no_read.port.ctx ∈ {{ (void *)&no_read }} or UNINITIALIZED
+         .port.read ∈ {{ &store_read }} or UNINITIALIZED
+         .port.write ∈ {{ &store_write }} or UNINITIALIZED
+         .port.erase ∈ {{ &store_erase }} or UNINITIALIZED
+         {.ctx; .read} ∈ {0} or UNINITIALIZED
+         .erase ∈ {{ &device_erase }} or UNINITIALIZED
+         .write ∈ {{ &device_write }} or UNINITIALIZED
+         .capacity ∈ {8} or UNINITIALIZED
+         .sector_size ∈ {4} or UNINITIALIZED
+         .sector ∈ {{ &window_buf[0] }} or UNINITIALIZED
+         {.window_base; .window_valid} ∈ {0} or UNINITIALIZED
+         .window_enabled ∈ {1} or UNINITIALIZED
+         .[bits 688 to 703] ∈ {0} or UNINITIALIZED
+  no_erase.port.ctx ∈ {{ (void *)&no_erase }} or UNINITIALIZED
+          .port.read ∈ {{ &store_read }} or UNINITIALIZED
+          .port.write ∈ {{ &store_write }} or UNINITIALIZED
+          .port.erase ∈ {{ &store_erase }} or UNINITIALIZED
+          .ctx ∈ {0} or UNINITIALIZED
+          .read ∈ {{ &device_read }} or UNINITIALIZED
+          .erase ∈ {0} or UNINITIALIZED
+          .write ∈ {{ &device_write }} or UNINITIALIZED
+          .capacity ∈ {8} or UNINITIALIZED
+          .sector_size ∈ {4} or UNINITIALIZED
+          .sector ∈ {{ &window_buf[0] }} or UNINITIALIZED
+          {.window_base; .window_valid} ∈ {0} or UNINITIALIZED
+          .window_enabled ∈ {1} or UNINITIALIZED
+          .[bits 688 to 703] ∈ {0} or UNINITIALIZED
+  no_write.port.ctx ∈ {{ (void *)&no_write }} or UNINITIALIZED
+          .port.read ∈ {{ &store_read }} or UNINITIALIZED
+          .port.write ∈ {{ &store_write }} or UNINITIALIZED
+          .port.erase ∈ {{ &store_erase }} or UNINITIALIZED
+          .ctx ∈ {0} or UNINITIALIZED
+          .read ∈ {{ &device_read }} or UNINITIALIZED
+          .erase ∈ {{ &device_erase }} or UNINITIALIZED
+          .write ∈ {0} or UNINITIALIZED
+          .capacity ∈ {8} or UNINITIALIZED
+          .sector_size ∈ {4} or UNINITIALIZED
+          .sector ∈ {{ &window_buf[0] }} or UNINITIALIZED
+          {.window_base; .window_valid} ∈ {0} or UNINITIALIZED
+          .window_enabled ∈ {1} or UNINITIALIZED
+          .[bits 688 to 703] ∈ {0} or UNINITIALIZED
+  no_sector.port.ctx ∈ {{ (void *)&no_sector }} or UNINITIALIZED
+           .port.read ∈ {{ &store_read }} or UNINITIALIZED
+           .port.write ∈ {{ &store_write }} or UNINITIALIZED
+           .port.erase ∈ {{ &store_erase }} or UNINITIALIZED
+           {.ctx; .read; .erase; .write; .capacity; .sector_size; .sector; .window_base; .window_valid; .window_enabled; .[bits 688 to 703]} ∈
+           {0} or UNINITIALIZED
+  bad_geometry.port.ctx ∈ {{ (void *)&bad_geometry }} or UNINITIALIZED
+              .port.read ∈ {{ &store_read }} or UNINITIALIZED
+              .port.write ∈ {{ &store_write }} or UNINITIALIZED
+              .port.erase ∈ {{ &store_erase }} or UNINITIALIZED
+              {.ctx; .read; .erase; .write; .capacity; .sector_size; .sector; .window_base; .window_valid; .window_enabled; .[bits 688 to 703]} ∈
+              {0} or UNINITIALIZED
+  geometry_ok ∈ {0; 1} or UNINITIALIZED
+  valid.port.ctx ∈
+       {{ (void *)&store ; (void *)&direct ; (void *)&null ;
+          (void *)&no_read ; (void *)&no_erase ; (void *)&no_write ;
+          (void *)&no_sector ; (void *)&bad_geometry }} or UNINITIALIZED
+       .port.read ∈ {{ &store_read }} or UNINITIALIZED
+       .port.write ∈ {{ &store_write }} or UNINITIALIZED
+       .port.erase ∈ {{ &store_erase }} or UNINITIALIZED
+       .ctx ∈ {0} or UNINITIALIZED
+       .read ∈ {{ NULL ; &device_read }} or UNINITIALIZED
+       .erase ∈ {{ NULL ; &device_erase }} or UNINITIALIZED
+       .write ∈ {{ NULL ; &device_write }} or UNINITIALIZED
+       .capacity ∈ {8} or UNINITIALIZED
+       .sector_size ∈ {0; 4} or UNINITIALIZED
+       .sector ∈
+       {{ NULL ; &window_buf[0] ; &direct_buf[0] }} or UNINITIALIZED
+       {.window_base; .window_valid} ∈ {0} or UNINITIALIZED
+       .window_enabled ∈ {0; 1} or UNINITIALIZED
+       .[bits 688 to 703] ∈ {0} or UNINITIALIZED
+[eva:final-states] Values at end of function nd_sector_store_port:
+  
+[eva:final-states] Values at end of function store_erase:
+  offset ∈ [0..12]
+  length ∈ [0..12]
+  store ∈
+       {{ &store ; &direct ; &null ; &no_read ; &no_erase ; &no_write ;
+          &no_sector ; &bad_geometry }}
+  backing[0..7] ∈ [--..--]
+  __retres ∈ {-1; 0}
+[eva:final-states] Values at end of function store_read:
+  store.port.ctx ∈ {{ (void *)&store }}
+       .port.read ∈ {{ &store_read }}
+       .port.write ∈ {{ &store_write }}
+       .port.erase ∈ {{ &store_erase }}
+       .ctx ∈ {0}
+       .read ∈ {{ &device_read }}
+       .erase ∈ {{ &device_erase }}
+       .write ∈ {{ &device_write }}
+       .capacity ∈ {8}
+       .sector_size ∈ {4}
+       .sector ∈ {{ &window_buf[0] }}
+       .window_base ∈ {0; 4}
+       .window_valid ∈ {0; 1}
+       .window_enabled ∈ {1}
+       .[bits 688 to 703] ∈ {0}
+  no_erase.port.ctx ∈ {{ (void *)&no_erase }}
+          .port.read ∈ {{ &store_read }}
+          .port.write ∈ {{ &store_write }}
+          .port.erase ∈ {{ &store_erase }}
+          .ctx ∈ {0}
+          .read ∈ {{ &device_read }}
+          .erase ∈ {0}
+          .write ∈ {{ &device_write }}
+          .capacity ∈ {8}
+          .sector_size ∈ {4}
+          .sector ∈ {{ &window_buf[0] }}
+          .window_base ∈ {0; 4}
+          .window_valid ∈ {0; 1}
+          .window_enabled ∈ {1}
+          .[bits 688 to 703] ∈ {0}
+  no_write.port.ctx ∈ {{ (void *)&no_write }}
+          .port.read ∈ {{ &store_read }}
+          .port.write ∈ {{ &store_write }}
+          .port.erase ∈ {{ &store_erase }}
+          .ctx ∈ {0}
+          .read ∈ {{ &device_read }}
+          .erase ∈ {{ &device_erase }}
+          .write ∈ {0}
+          .capacity ∈ {8}
+          .sector_size ∈ {4}
+          .sector ∈ {{ &window_buf[0] }}
+          .window_base ∈ {0; 4}
+          .window_valid ∈ {0; 1}
+          .window_enabled ∈ {1}
+          .[bits 688 to 703] ∈ {0}
+  store ∈
+       {{ &store ; &direct ; &null ; &no_read ; &no_erase ; &no_write ;
+          &no_sector ; &bad_geometry }}
+  base ∈ {0; 4} or UNINITIALIZED
+  last ∈ {0; 4} or UNINITIALIZED
+  window_buf[0..3] ∈ [--..--]
+  dst[0..7] ∈ [--..--]
+  windowed_read[0] ∈ {0; 17}
+               [1] ∈ {0; 34}
+               [2] ∈ {0; 51}
+               [3] ∈ {0; 68}
+  direct_read[0..3] ∈ {0; 255}
+  __retres ∈ {-1; 0}
+[eva:final-states] Values at end of function check_window:
+  NON TERMINATING FUNCTION
+[eva:final-states] Values at end of function store_write:
+  store.port.ctx ∈ {{ (void *)&store }}
+       .port.read ∈ {{ &store_read }}
+       .port.write ∈ {{ &store_write }}
+       .port.erase ∈ {{ &store_erase }}
+       .ctx ∈ {0}
+       .read ∈ {{ &device_read }}
+       .erase ∈ {{ &device_erase }}
+       .write ∈ {{ &device_write }}
+       .capacity ∈ {8}
+       .sector_size ∈ {4}
+       .sector ∈ {{ &window_buf[0] }}
+       .window_base ∈ {0; 4}
+       .window_valid ∈ {0}
+       .window_enabled ∈ {1}
+       .[bits 688 to 703] ∈ {0}
+  direct.port.ctx ∈ {{ (void *)&direct }}
+        .port.read ∈ {{ &store_read }}
+        .port.write ∈ {{ &store_write }}
+        .port.erase ∈ {{ &store_erase }}
+        .ctx ∈ {0}
+        .read ∈ {{ &device_read }}
+        .erase ∈ {{ &device_erase }}
+        .write ∈ {{ &device_write }}
+        .capacity ∈ {8}
+        .sector_size ∈ {4}
+        .sector ∈ {{ &direct_buf[0] }}
+        {.window_base; .window_valid; .window_enabled; .[bits 688 to 703]} ∈
+        {0}
+  offset ∈ [0..12]
+  buffer ∈ {{ &src + [0..8] }}
+  length ∈ [0..12]
+  store ∈
+       {{ &store ; &direct ; &null ; &no_read ; &no_erase ; &no_write ;
+          &no_sector ; &bad_geometry }}
+  backing[0..7] ∈ [--..--]
+  window_buf[0..3] ∈ [--..--]
+  direct_buf[0..3] ∈ [--..--]
+  __retres ∈ {-1; 0}
+[eva:final-states] Values at end of function run:
+  store.port.ctx ∈ {{ (void *)&store }}
+       .port.read ∈ {{ &store_read }}
+       .port.write ∈ {{ &store_write }}
+       .port.erase ∈ {{ &store_erase }}
+       .ctx ∈ {0}
+       .read ∈ {{ &device_read }}
+       .erase ∈ {{ &device_erase }}
+       .write ∈ {{ &device_write }}
+       .capacity ∈ {8}
+       .sector_size ∈ {4}
+       .sector ∈ {{ &window_buf[0] }}
+       .window_base ∈ {0; 4}
+       .window_valid ∈ {0}
+       .window_enabled ∈ {1}
+       .[bits 688 to 703] ∈ {0}
+  direct.port.ctx ∈ {{ (void *)&direct }}
+        .port.read ∈ {{ &store_read }}
+        .port.write ∈ {{ &store_write }}
+        .port.erase ∈ {{ &store_erase }}
+        .ctx ∈ {0}
+        .read ∈ {{ &device_read }}
+        .erase ∈ {{ &device_erase }}
+        .write ∈ {{ &device_write }}
+        .capacity ∈ {8}
+        .sector_size ∈ {4}
+        .sector ∈ {{ &direct_buf[0] }}
+        {.window_base; .window_valid; .window_enabled; .[bits 688 to 703]} ∈
+        {0}
+  no_erase.port.ctx ∈ {{ (void *)&no_erase }}
+          .port.read ∈ {{ &store_read }}
+          .port.write ∈ {{ &store_write }}
+          .port.erase ∈ {{ &store_erase }}
+          .ctx ∈ {0}
+          .read ∈ {{ &device_read }}
+          .erase ∈ {0}
+          .write ∈ {{ &device_write }}
+          .capacity ∈ {8}
+          .sector_size ∈ {4}
+          .sector ∈ {{ &window_buf[0] }}
+          .window_base ∈ {0; 4}
+          .window_valid ∈ {0; 1}
+          .window_enabled ∈ {1}
+          .[bits 688 to 703] ∈ {0}
+  no_write.port.ctx ∈ {{ (void *)&no_write }}
+          .port.read ∈ {{ &store_read }}
+          .port.write ∈ {{ &store_write }}
+          .port.erase ∈ {{ &store_erase }}
+          .ctx ∈ {0}
+          .read ∈ {{ &device_read }}
+          .erase ∈ {{ &device_erase }}
+          .write ∈ {0}
+          .capacity ∈ {8}
+          .sector_size ∈ {4}
+          .sector ∈ {{ &window_buf[0] }}
+          .window_base ∈ {0; 4}
+          .window_valid ∈ {0; 1}
+          .window_enabled ∈ {1}
+          .[bits 688 to 703] ∈ {0}
+  backing[0..7] ∈ [--..--]
+  window_buf[0..3] ∈ [--..--]
+  direct_buf[0..3] ∈ [--..--]
+  dst[0..7] ∈ [--..--]
+[eva:final-states] Values at end of function main:
+  NON TERMINATING FUNCTION
+[eva:summary] ====== ANALYSIS SUMMARY ======
+  ----------------------------------------------------------------------------
+  11 functions analyzed (out of 11): 100% coverage.
+  In these functions, 231 statements reached (out of 314): 74% coverage.
+  ----------------------------------------------------------------------------
+  No errors or warnings raised during the analysis.
+  ----------------------------------------------------------------------------
+  0 alarms generated by the analysis.
+  ----------------------------------------------------------------------------
+  Evaluation of the logical properties reached by the analysis:
+    Assertions        0 valid     0 unknown     1 invalid      1 total
+    Preconditions    16 valid     0 unknown     0 invalid     16 total
+  94% of the logical properties reached have been proven.
+  ----------------------------------------------------------------------------

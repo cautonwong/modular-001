@@ -15,14 +15,8 @@ typedef struct nd_store {
     int (*erase)(void *ctx, uint32_t offset, size_t length);
 } nd_store_t;
 
-static inline int nd_store_read(const nd_store_t *store, uint32_t offset,
-                                uint8_t *buffer, size_t length)
-{
-    if (store == NULL || store->read == NULL) {
-        return -1;
-    }
-    return store->read(store->ctx, offset, buffer, length);
-}
+int nd_store_read(const nd_store_t *store, uint32_t offset,
+                  uint8_t *buffer, size_t length);
 
 static inline int nd_store_write(const nd_store_t *store, uint32_t offset,
                                  const uint8_t *buffer, size_t length)

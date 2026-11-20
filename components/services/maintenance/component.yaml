@@ -1,0 +1,6 @@
+name: services.maintenance
+version: 0.1.0
+layer: services
+paths: [components/services/maintenance]
+dependencies: []
+legacy: false

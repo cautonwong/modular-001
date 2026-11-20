@@ -125,13 +125,21 @@ def power_loss_persists(ctx):
     assert off.exit_code == 0, f"power off run exited {off.exit_code}"
     record = storage.energy_record(off.eeprom)
     assert record.forward[0].integer == 1, record.forward[0]
+    snapshot = storage.latest_energy_snapshot(off.eeprom)
+    assert snapshot is not None, "power off must commit the snapshot"
+    assert snapshot.record.forward[0].integer == 1, snapshot.record.forward[0]
 
     event = _frame(0x30110400)
     run = ctx.run(
         cycles=6,
         seed_eeprom=off.eeprom,
-        scenario=f"at 1 uart 0 {event}\n",
+        scenario=(
+            f"at 1 meter const {METER_CONST} cal 128\n"
+            f"at 1 uart 0 {event}\n"
+            f"at 2 uart 0 {_frame(0x00000401)}\n"
+        ),
     )
     assert run.exit_code == 0, f"restart exited {run.exit_code}"
-    count = _get_values(run)[0]
-    assert count.value == 1, count.value
+    values = _get_values(run)
+    assert values[0].value == 1, values[0].value
+    assert values[1].value == 100, values[1].value

@@ -1,8 +1,8 @@
 # IDIS acceptance
 
-`test_idis_acceptance.py` registers four cases with the shared runner in
-`tests/acceptance/` and drives `idis_host_runner` through its external
-contract:
+`test_idis_acceptance.py` registers the IDIS acceptance cases with the shared
+runner in `tests/acceptance/` and drives `idis_host_runner` through its
+external contract. The file is the authoritative list; the first four are:
 
 - `idis.power-loss`: PQ records and the event log survive an abrupt exit
   without the final save.

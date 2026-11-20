@@ -13,7 +13,7 @@
 #include "targets/stategrid_meter/board/uart_driver.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 
-#define SIM_SCENARIO_MAX_EVENTS 64
+#define SIM_SCENARIO_MAX_EVENTS 96
 #define SIM_SCENARIO_MAX_UART 544
 #define SIM_UART_CHANNELS 3
 
@@ -30,8 +30,10 @@ enum sim_scenario_kind {
     SIM_SCENARIO_METER,
     SIM_SCENARIO_TIME,
     SIM_SCENARIO_ENERGY_CLEAR,
+    SIM_SCENARIO_METER_CLEAR,
     SIM_SCENARIO_CHIP,
     SIM_SCENARIO_ADC,
+    SIM_SCENARIO_EEPROM,
 };
 
 enum sim_meter_field {
@@ -82,7 +84,8 @@ static FILE *backlight_log_file;
 static FILE *lcd_log_file;
 
 extern void Energy_Pluse_Add(void);
-extern void Energy_clr(stategrid_context_t *instance);
+extern int Energy_clr(stategrid_context_t *instance);
+extern int meter_clr(void *instance);
 
 static int scenario_error(const char *path, unsigned line, const char *message)
 {
@@ -342,6 +345,14 @@ int sim_scenario_load(const char *path)
                 return scenario_error(path, line_number, "adc expects an integer");
             }
             event->meter[0] = (int32_t)adc_value;
+        } else if (strcmp(token, "eeprom") == 0) {
+            event->kind = SIM_SCENARIO_EEPROM;
+            token = next_token(&cursor);
+            if ((token == NULL) || (parse_on_off(token, &event->value) != 0)) {
+                fclose(file);
+                return scenario_error(path, line_number,
+                                      "eeprom write fault expects on|off");
+            }
         } else if (strcmp(token, "pulse") == 0) {
             long count;
 
@@ -368,6 +379,10 @@ int sim_scenario_load(const char *path)
 
                 field = next_token(&cursor);
                 if (field == NULL) {
+                    break;
+                }
+                if (strcmp(field, "clear") == 0) {
+                    event->kind = SIM_SCENARIO_METER_CLEAR;
                     break;
                 }
                 token = next_token(&cursor);
@@ -457,7 +472,8 @@ int sim_scenario_load(const char *path)
                                           "direction|tariff");
                 }
             }
-            if (event->meter_mask == 0) {
+            if ((event->kind != SIM_SCENARIO_METER_CLEAR)
+                && (event->meter_mask == 0)) {
                 fclose(file);
                 return scenario_error(path, line_number,
                                       "meter expects at least one field");
@@ -599,6 +615,12 @@ void sim_scenario_apply(stategrid_context_t *instance, unsigned cycle)
                 sim_trace_printf("[sim] energy clear");
             }
             break;
+        case SIM_SCENARIO_METER_CLEAR:
+            meter_clr(instance);
+            if (g_sim.verbose) {
+                sim_trace_printf("[sim] meter clear");
+            }
+            break;
         case SIM_SCENARIO_CHIP:
             sim_meter_set_chip_fault(event->value);
             if (g_sim.verbose) {
@@ -610,6 +632,13 @@ void sim_scenario_apply(stategrid_context_t *instance, unsigned cycle)
             if (g_sim.verbose) {
                 sim_trace_printf("[sim] adc channel=%u value=%ld",
                                  event->channel, (long)event->meter[0]);
+            }
+            break;
+        case SIM_SCENARIO_EEPROM:
+            sim_eeprom_set_write_fault(event->value);
+            if (g_sim.verbose) {
+                sim_trace_printf("[sim] eeprom write fault %s",
+                                 event->value ? "on" : "off");
             }
             break;
         case SIM_SCENARIO_METER:

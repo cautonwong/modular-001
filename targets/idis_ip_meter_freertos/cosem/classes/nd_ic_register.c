@@ -745,6 +745,11 @@ int nd_ic_register_action(void *ctx, uint8_t client_sap, const nd_obis_t *ln,
         if (map.combine != 0) {
             nd_energy_set_reset(state->energy, map.second);
         }
+        /* A reset is not a pulse; persist it before reporting success. */
+        if (state->save_energy != NULL
+            && state->save_energy(state->save_ctx) != 0) {
+            return ND_ERR_OPERATION_NOT_POSSIBLE;
+        }
         return ND_OK;
     }
     return ND_ERR_OPERATION_NOT_POSSIBLE;

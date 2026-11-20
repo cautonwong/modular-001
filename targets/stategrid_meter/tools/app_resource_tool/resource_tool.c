@@ -625,6 +625,20 @@ int16_t get_block_frist_addr(stategrid_context_t *instance, uint8_t device_name,
     return 1;
 }
 
+int get_device_used(stategrid_context_t *instance, uint8_t device_name,
+                    uint32_t *used)
+{
+    struct block_device_t* device = NULL;
+
+    device = look_up_device(instance, device_name);
+    if ((device == NULL) || (used == NULL))
+    {
+        return -1;
+    }
+    *used = device->used;
+    return 1;
+}
+
 uint32_t get_curr_mark(uint8_t device_name, uint32_t addr)
 {
     uint8_t buf[10] = { 0 };

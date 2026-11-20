@@ -48,7 +48,7 @@ PREPROCESSOR = re.compile(r"(?m)^\s*#.*$")
 TYPEDEF = re.compile(r"\btypedef\b")
 CALL_PREFIX = re.compile(
     r"[=(),;]|\b(?:return|else|do|case|goto|if|while|for|switch)\b")
-SKIP_DIRS = {"build", "backupfiles", ".git", "__pycache__"}
+SKIP_DIRS = {"build", "backupfiles", ".git", ".claude", "__pycache__"}
 KEYWORDS = {
     "auto", "break", "case", "char", "const", "continue", "default", "do",
     "double", "else", "enum", "extern", "float", "for", "goto", "if",
@@ -488,6 +488,21 @@ def self_check():
             print("self-check failed: baselined test-only component was rejected")
             return 1
 
+        worktree_copy = root / ".claude/worktrees/dev/tests/unit/test_dead.c"
+        worktree_copy.parent.mkdir(parents=True)
+        worktree_copy.write_text(
+            '#include "components/demo/dead/include/nd_dead.h"\n'
+            "int test_copy(void) { return nd_dead_publish() != 0; }\n",
+            encoding="utf-8")
+        if worktree_copy in read_sources(root):
+            print("self-check failed: a .claude worktree copy entered the scan")
+            return 1
+        with redirect_stdout(io.StringIO()):
+            errors = check(root, baseline)
+        if errors:
+            print("self-check failed: a .claude worktree copy broke the baseline")
+            return 1
+
         (root / "targets/host").mkdir(parents=True)
         (root / "targets/host/host_main.c").write_text(
             '#include "components/demo/dead/include/nd_dead.h"\n'
@@ -529,7 +544,8 @@ def self_check():
             return 1
         print("self-check ok: same-name caller without the component header "
               "does not count; header-included test and host callers are "
-              "non-production; header-included firmware caller passes")
+              "non-production; header-included firmware caller passes; "
+              ".claude worktree copies are ignored")
         return 0
 
 

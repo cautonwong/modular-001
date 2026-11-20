@@ -19,6 +19,10 @@ typedef enum {
  * implementation dispatches by class_id and never exposes an object table.
  * selector is NULL for a normal GET, otherwise it holds the Green Book
  * Selective-Access-Descriptor: structure { access-selector, access-parameters }.
+ *
+ * Error contract: on any non-OK result the writer contents are undefined and
+ * may hold a partial response. The writer has no reset, so the caller must
+ * discard it and re-init before the next request.
  */
 typedef struct nd_cosem_port {
     void *ctx;

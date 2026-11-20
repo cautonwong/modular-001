@@ -111,6 +111,29 @@ static void test_registry_uses_the_injected_allocator(void)
     TEST_ASSERT_EQUAL_size_t(2, fake.dealloc_calls);
 }
 
+static void test_registry_reset_drops_the_window(void)
+{
+    int32_t power = 100;
+    nd_demand_entry_config_t entry = {&power, 0x20210200, {3, 1, 3, 0}};
+    nd_demand_registry_t *registry =
+        nd_demand_registry_create(&fake.port, &entry, 1);
+    TEST_ASSERT_NOT_NULL(registry);
+
+    accumulate_seconds(registry, 1);
+    update_log_t first = {0};
+    nd_demand_registry_on_minute(registry, on_update, &first);
+    TEST_ASSERT_EQUAL_UINT32(33, first.records[0].value);
+
+    nd_demand_registry_reset(registry);
+    accumulate_seconds(registry, 1);
+    update_log_t second = {0};
+    nd_demand_registry_on_minute(registry, on_update, &second);
+    TEST_ASSERT_EQUAL_UINT8(1, second.count);
+    TEST_ASSERT_EQUAL_UINT32(33, second.records[0].value);
+
+    nd_demand_registry_destroy(registry, &fake.port);
+}
+
 static void test_registry_rejects_invalid_arguments(void)
 {
     nd_demand_entry_config_t entry = {NULL, 0, {3, 1, 3, 0}};
@@ -126,6 +149,7 @@ int main(void)
     RUN_TEST(test_registry_reports_each_entry_with_its_oad);
     RUN_TEST(test_mode_one_entry_waits_for_the_full_window);
     RUN_TEST(test_registry_uses_the_injected_allocator);
+    RUN_TEST(test_registry_reset_drops_the_window);
     RUN_TEST(test_registry_rejects_invalid_arguments);
     return UNITY_END();
 }

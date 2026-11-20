@@ -26,6 +26,9 @@ extern sim_config_t g_sim;
 int sim_devices_init(void);
 void sim_meter_set_chip_fault(int fault);
 void sim_meter_set_adc(uint8_t channel, int32_t value);
+/* Fail every write through the board EEPROM driver; used to drive the
+ * storage-fault ACK paths from the acceptance scenario grammar. */
+void sim_eeprom_set_write_fault(int fail);
 void sim_devices_close(void);
 
 int sim_scenario_load(const char *path);
@@ -56,6 +59,7 @@ void nd_sim_after_run(stategrid_context_t *instance);
 void nd_sim_filter(const char *pipeline, uint8_t filter_id, int ret);
 void nd_sim_event(uint8_t from, uint8_t to, uint8_t ctrl, uint16_t len);
 void nd_sim_stage(const char *name);
+void nd_sim_storage_layout(uint32_t used, uint32_t region);
 void nd_sim_system_reset(void);
 
 void sim_trace_open(void);

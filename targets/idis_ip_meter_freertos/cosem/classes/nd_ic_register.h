@@ -12,6 +12,10 @@
 typedef struct {
     const nd_measurement_port_t *measurement;
     nd_energy_set_t *energy;
+    /* Persist a non-pulse book change (register reset) before reporting
+     * success; NULL keeps the book in RAM only. */
+    int (*save_energy)(void *ctx);
+    void *save_ctx;
     const nd_idis_average_state_t *average;
     nd_idis_clock_state_t *clock;
     nd_pq_state_t *pq;
