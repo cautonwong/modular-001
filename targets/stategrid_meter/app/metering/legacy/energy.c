@@ -513,12 +513,18 @@ void Energy_Pluse_Add(void)
 
 
 
-void Energy_clr(void *instance)
+int Energy_clr(void *instance)
 {
     uint32_t s_index;
     uint16_t block_len = (legacy_energy_block_span());
 
-    metering_energy_clear(metering_energy_ledger_from_instance(instance));
+    /* Mirror only a book the ledger accepted; otherwise the legacy view still
+     * holds the unknown (zero) book and must not become the next boot source. */
+    if (metering_energy_clear(
+            metering_energy_ledger_from_instance(instance)) != 0)
+    {
+        return 0;
+    }
 
     updata_EC_checksum(instance, 0);
     updata_EC_checksum(instance, 1);
@@ -529,18 +535,23 @@ void Energy_clr(void *instance)
     s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
     legacy_energy_persistent_offset());
     nd_set_offset(instance, s_index, (uint8_t*)nd_mb_active_p(instance), block_len);
+    return 1;
 }
 
-void Energy_Set(void *instance, uint32_t basedata, uint8_t dir)
+int Energy_Set(void *instance, uint32_t basedata, uint8_t dir)
 {
     uint32_t s_index;
     uint16_t block_len = (legacy_energy_block_span());
 
-    if(nd_mb_factor_mode(instance) == false)  return;
+    if(nd_mb_factor_mode(instance) == false)  return 1;
 
-    metering_energy_set_total(metering_energy_ledger_from_instance(instance),
-                              dir == 0 ? ND_ENERGY_FORWARD : ND_ENERGY_REVERSE,
-                              basedata);
+    if (metering_energy_set_total(
+            metering_energy_ledger_from_instance(instance),
+            dir == 0 ? ND_ENERGY_FORWARD : ND_ENERGY_REVERSE,
+            basedata) != 0)
+    {
+        return 0;
+    }
 
     updata_EC_checksum(instance, 0);
     updata_EC_checksum(instance, 1);
@@ -551,4 +562,5 @@ void Energy_Set(void *instance, uint32_t basedata, uint8_t dir)
     s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
     legacy_energy_persistent_offset());
     nd_set_offset(instance, s_index, (uint8_t*)nd_mb_active_p(instance), block_len);
+    return 1;
 }

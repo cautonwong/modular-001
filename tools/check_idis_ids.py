@@ -13,6 +13,8 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HEADER = os.path.join(
     ROOT, "targets/idis_ip_meter/mapper_idis/nd_idis_ids.h")
+TABLES = os.path.join(
+    ROOT, "targets/idis_ip_meter/mapper_idis/nd_idis_ids.c")
 INVENTORY = os.path.join(ROOT, "tests/gen/all_obis.csv")
 TARGET = os.path.join(ROOT, "targets/idis_ip_meter")
 
@@ -30,13 +32,15 @@ def render(tuple_values):
 
 def main():
     text = open(HEADER, encoding="utf-8").read()
+    tables = open(TABLES, encoding="utf-8").read()
     names = re.findall(r"static const nd_obis_t\s+(\w+)", text)
+    names += re.findall(r"extern const nd_obis_t\s+(\w+)", text)
     names += [n for n in re.findall(r"ND_OBIS_CONST\(\s*(\w+)", text)
               if n != "name"]
     duplicates = sorted({name for name in names if names.count(name) > 1})
     tuples = re.findall(
         r"\{\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\}",
-        text)
+        text + tables)
     tuples += re.findall(
         r"ND_OBIS_CONST\([^,]+,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,"
         r"\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)", text)

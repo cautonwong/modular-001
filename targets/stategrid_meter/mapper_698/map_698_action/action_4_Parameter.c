@@ -251,8 +251,7 @@ switch (oad)
                 case 0x04://出厂参数初始化
                     if(nd_mb_factor_mode(instance) == false)  return -DAR_UNAUTHORIZED;
                     ret = para_init( instance );
-                    meter_clr(instance);
-                    if(ret < 0)
+                    if((ret < 0) || (meter_clr(instance) == 0))
                     {
                         return -DAR_OTHERS_ERROR;
                     }
@@ -273,11 +272,14 @@ switch (oad)
                         return (-DAR_UNAUTHORIZED);
                     }
 
-                    if(nd_mb_factor_mode(instance) == false) 
+                    if(nd_mb_factor_mode(instance) == false)
                     {
                         record_event_no_mesg_pro(instance, NULL, MeterClrS, NULL, 1);
                     }
-                    meter_clr(instance);
+                    if (meter_clr(instance) == 0)
+                    {
+                        return -DAR_OTHERS_ERROR;
+                    }
                     p++;
 
 

@@ -14,6 +14,11 @@
 #define WDTPASS_KEY 0xAA5555AA
 #define WDTCLR_KEY  0x55AAAA55
 
+/* Products without a temperature ADC caller compile the channel out. */
+#ifndef ND_ADC_TEMPERATURE_SUPPORT
+#define ND_ADC_TEMPERATURE_SUPPORT 1
+#endif
+
 
 const uint32_t CODE freq[8] = { 26214400,13107200,6553600,3276800,1638400,819200,409600,204800, };
 static uint32_t get_system_clk(void)
@@ -1246,11 +1251,13 @@ uint8_t mcu_adc_start_once(uint8_t chl_type)
         /* Enable division */
         ANA->REG1 |= ADC_BAT_CAPDIV;
     }
+#if ND_ADC_TEMPERATURE_SUPPORT
     else if (chl_type == 10)
     {
         /* Configure 1/512 down-sampling rate */
         ADC_CICDownSamRateConfig(ADC_SDRSEL_DIV512);
     }
+#endif
     
     /* Enable ADC */
     ADC_Cmd(ENABLE);
@@ -1268,9 +1275,11 @@ uint32_t read_mcu_adc_measure_value(uint8_t chl_type , int32_t *adc_measure)
 {
     float value = 0, Vbatcap;
     int32_t ad = 0;
+#if ND_ADC_TEMPERATURE_SUPPORT
     int32_t P0,P1,P2;
     uint32_t retval;
     NVR_RTCINFO RTC_DataStruct;
+#endif
     NVR_BATMEARES BAT_OffsetInfo;
     
     ad =  ADC_GetADCConversionValue(chl_type);
@@ -1290,12 +1299,13 @@ uint32_t read_mcu_adc_measure_value(uint8_t chl_type , int32_t *adc_measure)
 
         if (ADC_BAT_CAPDIV & ADC_BAT_CAPDIV)
         {
-            value = ((float)ad  - 49.588)/7088.91575 + Vbatcap;
+            value = ((float)ad  - 49.588f)/7088.91575f + Vbatcap;
             value *= 10000;
         }
         *adc_measure = (int32_t)value;
 
     }
+#if ND_ADC_TEMPERATURE_SUPPORT
     else if(chl_type == 10)
     {
 
@@ -1312,11 +1322,12 @@ uint32_t read_mcu_adc_measure_value(uint8_t chl_type , int32_t *adc_measure)
             P2 = RTC_DataStruct.RTCTempP2;
         }  
 
-        value = (float)((((P0 * ((ad*ad)>>16)) + P1*ad + P2) >> 8)*10 / 256.0);
+        value = (float)((((P0 * ((ad*ad)>>16)) + P1*ad + P2) >> 8)*10 / 256.0f);
         value *= 100;
         
         *adc_measure = (int32_t)value;
     }
+#endif
 
 //    *adc_measure = (uint32_t)value;
     

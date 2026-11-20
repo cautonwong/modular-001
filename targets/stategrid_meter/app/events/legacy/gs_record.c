@@ -16,13 +16,18 @@
 #include "domain/common/status.h"
 #include "domain/events/record_message.h"
 #include "targets/stategrid_meter/app/app_config.h"
+#include "targets/stategrid_meter/app/app_entry.h"
 #include "domain/events/power_event.h"
 #include "domain/events/event_catalog.h"
 #include "domain/events/record_capture.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
+#include "targets/stategrid_meter/app/metering_energy_adapter.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
+#include "targets/stategrid_meter/app/metering/demand_adapter.h"
+#include "components/core/types/utils.h"
 
 #define U32toBufLSB(x)  ((uint8_t)(x)), ((uint8_t)(x>>8)), ((uint8_t)(x>>16)), ((uint8_t)(x>>24))
 #define U32toBufMSB(x)  ((uint8_t)(x>>24)),((uint8_t)(x>>16)), ((uint8_t)(x>>8)), ((uint8_t)(x))
@@ -590,8 +595,19 @@ int meter_clr(void *instance)
 {
     const uint8_t tmpbuf[30] = {0};
     uint32_t s_addr = 0;
-    
-    Energy_clr(instance);  
+    stategrid_context_t *ctx = (stategrid_context_t *)instance;
+    int saved = 1;
+
+    nd_demand_adapter_clear(ctx->demand, rtc_mktime(&ctx->time));
+    if (Demand_Save_data(instance) == 0)
+    {
+        saved = 0;
+    }
+
+    if (Energy_clr(instance) == 0)
+    {
+        saved = 0;
+    }
     freeze_clr(instance); //冻结清零
     event_clr(instance);  // 事件清零
     clr_record(instance, 0x30150200); //事件清零事件 清零
@@ -618,18 +634,17 @@ int meter_clr(void *instance)
     resetinfo_file = 0;
     resetinfo_line = 0;
 #endif        
-    return 1;
+    return saved;
 }
 
 //清月度用电量
 int clr_MonthEC(void *instance)
 {
-    uint32_t s_index;
-    
-    nd_mb_month_energery_dec(instance) = 0;
-    nd_mb_month_energy(instance) = 0;
-
-    updata_EC_checksum(instance, 1);
+    if (metering_energy_clear_month(
+            metering_energy_ledger_from_instance(instance)) != 0)
+    {
+        return 0;
+    }
 
     Save_EC2(instance, 1);
 

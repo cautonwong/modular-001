@@ -12,7 +12,7 @@ void nd_idis_event_init(nd_idis_event_state_t *state,
     }
     memset(state, 0, sizeof(*state));
     nd_alarm_init(&state->alarm, rules, count);
-    nd_event_log_init(&state->log);
+    nd_event_log_init(nd_event_log_of(&state->log));
     state->latest_event_code = 255;
     for (size_t index = 0; index < sizeof(state->counters)
                                       / sizeof(state->counters[0]); index++) {
@@ -85,16 +85,19 @@ uint8_t nd_idis_event_latest_code(const nd_idis_event_state_t *state,
     if (category == ND_IDIS_EVENT_LOG_STANDARD) {
         return state->latest_event_code;
     }
-    uint16_t count = state->log.count;
+    uint16_t count = nd_event_log_count(nd_event_log_of_const(&state->log));
     if (count > ND_EVENT_LOG_MAX) {
         count = ND_EVENT_LOG_MAX;
     }
+    uint16_t head = nd_event_log_head(nd_event_log_of_const(&state->log));
     for (uint16_t offset = 0; offset < count; offset++) {
-        uint16_t index = (uint16_t)((state->log.head + ND_EVENT_LOG_MAX - 1
-                                     - offset)
+        uint16_t index = (uint16_t)((head + ND_EVENT_LOG_MAX - 1 - offset)
                                     % ND_EVENT_LOG_MAX);
-        if (nd_idis_event_category_for_kind(state->log.entries[index].kind)
-            == category) {
+        const nd_event_record_t *entry =
+            nd_event_log_at(nd_event_log_of_const(&state->log),
+                            (uint16_t)(count - 1 - offset));
+        if (entry != NULL
+            && nd_idis_event_category_for_kind(entry->kind) == category) {
             return (uint8_t)state->log_codes[index];
         }
     }
@@ -169,9 +172,11 @@ static int raise_impl(nd_idis_event_state_t *state, uint16_t event_code,
         },
         .value = use_descriptor ? event_code : value,
     };
-    (void)nd_event_log_append(&state->log, &record);
-    uint16_t newest = (uint16_t)((state->log.head + ND_EVENT_LOG_MAX - 1)
-                                 % ND_EVENT_LOG_MAX);
+    (void)nd_event_log_append(nd_event_log_of(&state->log), &record);
+    uint16_t newest =
+        (uint16_t)((nd_event_log_head(nd_event_log_of(&state->log))
+                    + ND_EVENT_LOG_MAX - 1)
+                   % ND_EVENT_LOG_MAX);
     state->log_codes[newest] = event_code;
     uint8_t bits = status_bits_for_code(event_code);
     if (bits != 0) {
@@ -269,10 +274,12 @@ int nd_idis_event_save(const nd_idis_event_state_t *state, nd_store_t *store,
         .magic = ND_IDIS_EVENT_MAGIC,
         .latest_event_code = state->latest_event_code,
         .profile_status = state->profile_status,
-        .log_count = (uint8_t)state->log.count,
-        .log_head = (uint8_t)state->log.head,
+        .log_count =
+            (uint8_t)nd_event_log_count(nd_event_log_of_const(&state->log)),
+        .log_head =
+            (uint8_t)nd_event_log_head(nd_event_log_of_const(&state->log)),
     };
-    memcpy(record.log, state->log.entries, sizeof(record.log));
+    nd_event_log_export(nd_event_log_of_const(&state->log), record.log);
     memcpy(record.log_codes, state->log_codes, sizeof(record.log_codes));
     memcpy(record.counters, state->counters, sizeof(record.counters));
     memcpy(record.registers, state->alarm.registers,
@@ -298,10 +305,8 @@ int nd_idis_event_load(nd_idis_event_state_t *state, nd_store_t *store,
     }
     state->latest_event_code = record.latest_event_code;
     state->profile_status = record.profile_status;
-    state->log.count = record.log_count <= ND_EVENT_LOG_MAX ? record.log_count
-                                                             : ND_EVENT_LOG_MAX;
-    state->log.head = record.log_head < ND_EVENT_LOG_MAX ? record.log_head : 0;
-    memcpy(state->log.entries, record.log, sizeof(record.log));
+    (void)nd_event_log_import(nd_event_log_of(&state->log), record.log,
+                              record.log_count, record.log_head);
     memcpy(state->log_codes, record.log_codes, sizeof(record.log_codes));
     memcpy(state->counters, record.counters, sizeof(state->counters));
     memcpy(state->alarm.registers, record.registers,

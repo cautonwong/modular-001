@@ -1,0 +1,4 @@
+# Mutable-global growth exceptions. One line allows exactly one added global
+# beyond tools/mutable_globals_frozen.txt. Fields are tab separated:
+#   path <TAB> name <TAB> reason <TAB> YYYY-MM-DD <TAB> approved-by
+# An expired exception fails CI. Remove the line and the global when it ends.

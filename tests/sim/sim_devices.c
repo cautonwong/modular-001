@@ -10,6 +10,63 @@
 
 static file_store_t eeprom_store;
 static file_store_t flash_store;
+static int eeprom_write_fault;
+
+void sim_eeprom_set_write_fault(int fail)
+{
+    eeprom_write_fault = fail;
+}
+
+/* board_eeprom.c is replaced in the simulation, but the energy snapshot binds
+ * the real nd_eeprom driver in both builds, so the simulation supplies the
+ * same device over the file-backed image. */
+static int sim_eeprom_bus_write(void *ctx, uint8_t device, uint16_t addr,
+                                const uint8_t *buf, uint16_t len)
+{
+    (void)ctx;
+    (void)device;
+    if (eeprom_write_fault) {
+        return -1;
+    }
+    return nd_store_write(file_store_port(&eeprom_store), addr, buf, len);
+}
+
+static int sim_eeprom_bus_read(void *ctx, uint8_t device, uint16_t addr,
+                               uint8_t *buf, uint16_t len)
+{
+    (void)ctx;
+    (void)device;
+    return nd_store_read(file_store_port(&eeprom_store), addr, buf, len);
+}
+
+static void sim_eeprom_bus_delay(void *ctx, uint32_t us)
+{
+    (void)ctx;
+    (void)us;
+}
+
+static nd_eeprom_storage_t sim_eeprom_storage;
+static nd_eeprom_t *sim_eeprom;
+
+nd_eeprom_t *board_eeprom(void)
+{
+    if (sim_eeprom == NULL) {
+        static const nd_eeprom_config_t config = {
+            .bus = {
+                .ctx = NULL,
+                .write = sim_eeprom_bus_write,
+                .read = sim_eeprom_bus_read,
+                .delay_us = sim_eeprom_bus_delay,
+            },
+            .device_address = 0xA0,
+            .page_size = 0x80,
+            .size = BOARD_EEPROM_SIZE,
+        };
+
+        sim_eeprom = nd_eeprom_init(&sim_eeprom_storage, &config);
+    }
+    return sim_eeprom;
+}
 
 int nd_storage_read(uint8_t device_name, uint32_t addr, uint8_t *buf,
                     uint16_t len)

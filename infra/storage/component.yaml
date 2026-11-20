@@ -1,0 +1,7 @@
+name: infra.storage
+version: 0.1.0
+layer: infra
+paths: [infra/storage]
+dependencies: [domain.metering]
+# Host-only file I/O; the firmware engine has no stdio.
+exclude: [infra/storage/block_memory.c]

@@ -37,6 +37,8 @@ files=(
     targets/stategrid_meter/tools/app_resource_tool/resource_tool.c
     targets/stategrid_meter/app/apps/app_meter_base_entry.c
     targets/stategrid_meter/app/metering_energy_adapter.c
+    targets/stategrid_meter/persistence/legacy_energy_codec.c
+    targets/stategrid_meter/persistence/legacy_energy_store.c
     targets/stategrid_meter/app/relay_control_adapter.c
     targets/stategrid_meter/app/record_storage_adapter.c
     application/ports/record_storage.c

@@ -9,10 +9,46 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install toolchain
+      - name: Install host tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi cbmc default-jre-headless
+          sudo apt-get install -y cmake ninja-build gcc minisat default-jre-headless
+      # Pin the toolchain so ROM budget numbers cannot drift with the apt package.
+      - name: Cache ARM GNU toolchain
+        id: arm-toolchain
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/arm-gnu-toolchain-14.3.rel1-x86_64-arm-none-eabi
+          key: arm-gnu-toolchain-14.3.rel1-x86_64-arm-none-eabi
+      - name: Install ARM GNU toolchain
+        if: steps.arm-toolchain.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/arm-toolchain.tar.xz" \
+            https://developer.arm.com/-/media/Files/downloads/gnu/14.3.rel1/binrel/arm-gnu-toolchain-14.3.rel1-x86_64-arm-none-eabi.tar.xz
+          tar -xJf "$RUNNER_TEMP/arm-toolchain.tar.xz" -C "$RUNNER_TEMP"
+      - name: Put ARM GNU toolchain on PATH
+        run: echo "$RUNNER_TEMP/arm-gnu-toolchain-14.3.rel1-x86_64-arm-none-eabi/bin" >> "$GITHUB_PATH"
+      # Pin CBMC 5.12: tools/check_formal.sh pins the property count of every
+      # stage, so the solver version cannot drift. Ubuntu 24.04 apt ships
+      # 5.95.1, so install the jammy package and verify its checksum.
+      - name: Cache CBMC
+        id: cbmc
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/cbmc
+          key: cbmc-5.12-5-jammy-amd64
+      - name: Install CBMC 5.12
+        if: steps.cbmc.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/cbmc.deb" \
+            http://archive.ubuntu.com/ubuntu/pool/universe/c/cbmc/cbmc_5.12-5_amd64.deb
+          echo "be7e049151cacb7511ebff2003ebc5e2d0f761cf705b6773eee0837ead94155a  $RUNNER_TEMP/cbmc.deb" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/cbmc"
+          dpkg-deb -x "$RUNNER_TEMP/cbmc.deb" "$RUNNER_TEMP/cbmc"
+      - name: Put CBMC on PATH
+        run: echo "$RUNNER_TEMP/cbmc/usr/bin" >> "$GITHUB_PATH"
+      - name: Check CBMC version
+        run: test "$(cbmc --version)" = "5.12 (cbmc-5.12)"
       - name: Install TLA+ tools
         run: |
           curl -fsSL -o "$RUNNER_TEMP/tla2tools.jar" \
@@ -22,6 +58,28 @@ jobs:
           curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
             | sh -s -- -y --default-toolchain leanprover/lean4:v4.9.0
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      # Pin Frama-C 33.0 so the Eva summaries and alarms cannot drift. The
+      # download path carries no checksum, so the installer's embedded-MD5
+      # --check guards transport damage and the version step below pins the
+      # release that produces the statement counts in tools/check_formal.sh.
+      - name: Cache Frama-C
+        id: frama-c
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/frama-c
+          key: frama-c-33.0-Arsenic-linux-x86-64
+      - name: Install Frama-C
+        if: steps.frama-c.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/frama-c.run" \
+            https://www.frama-c.com/download/frama-c-linux-x86-64-33.0-Arsenic.run
+          sh "$RUNNER_TEMP/frama-c.run" --check
+          mkdir -p "$RUNNER_TEMP/frama-c"
+          sh "$RUNNER_TEMP/frama-c.run" --noexec --target "$RUNNER_TEMP/frama-c"
+      - name: Put Frama-C on PATH
+        run: echo "$RUNNER_TEMP/frama-c/bin" >> "$GITHUB_PATH"
+      - name: Check Frama-C version
+        run: test "$(frama-c -version | head -n 1)" = "33.0 (Arsenic)"
       - name: Checkout FreeRTOS kernel
         uses: actions/checkout@v4
         with:
@@ -35,4 +93,5 @@ jobs:
       - name: Run formal verification
         env:
           TLA2TOOLS: ${{ runner.temp }}/tla2tools.jar
+          FRAMA_C: ${{ runner.temp }}/frama-c/bin/frama-c
         run: ./tools/check_formal.sh --strict

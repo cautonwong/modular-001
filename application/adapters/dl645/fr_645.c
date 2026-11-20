@@ -606,22 +606,6 @@ int fr_tx_645_end(void * instance, void * pipeline, nd_dl645_msg_t* mesg)
     fr_pack_645_head(instance, pipeline, mesg);
     fr_pack_645_data(instance, pipeline, mesg);
     fr_pack_645_tail(instance, pipeline, mesg);
-    //ʹ�ܷ���
-#ifdef VERBOSE
-    if (ctx->tx_len > 0)
-    {
-        uint8_t buf[256];
-        printf("                   {%s,send", "dl645");
-        uint16_t len = fifoBuf_getDataPeek((struct fifo_t*)nd_fr645_pipeline_out_queue(pipeline), buf, ctx->tx_len);
-        printf(",");
-        for (size_t i = 0; i < len; i++)
-        {
-            printf("%02x", buf[i]);
-        }
-
-        printf("}\n");
-    }
-#endif
 
     return 0;
 }

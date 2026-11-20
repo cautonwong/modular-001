@@ -7,7 +7,9 @@
 
 #include "domain/common/store.h"
 #include "components/core/fifo/fifo.h"
+#include "components/core/types/measurement_scale.h"
 #include "infra/memory/sector_store.h"
+#include "targets/idis_ip_meter_freertos/cosem/nd_idis_calibration.h"
 #include "targets/idis_ip_meter_freertos/cosem/nd_measurement_port.h"
 #include "targets/idis_ip_meter_freertos/board/board_rn8209.h"
 #include "targets/idis_ip_meter_freertos/board/relay_pins.h"
@@ -21,7 +23,8 @@
 #include "lib_pmu.h"
 #include "cpu_surport.h"
 
-
+_Static_assert(BOARD_FLASH_SIZE % BOARD_FLASH_SECTOR == 0,
+               "flash capacity must be a whole number of sectors");
 
 static struct tm rtc_scratch;
 
@@ -66,30 +69,28 @@ static const UART_InitType uart_ir_config = {
     UART_FIRSTBIT_LSB, 1200,
 };
 
-#define BOARD_CALIBRATION_OFFSET 57344u
-#define BOARD_CALIBRATION_MAGIC 0x43414C31u
-typedef struct {
-    uint32_t magic;
-    int32_t voltage;
-    int32_t current;
-    int32_t power;
-} board_calibration_record_t;
-
 static int32_t calibration_voltage = 18213639;
 static int32_t calibration_current = 288020000;
 static int32_t calibration_power = 1791867;
 
-static void board_calibration_load(void)
+static nd_idis_calibration_status_t board_calibration_load(void)
 {
-    board_calibration_record_t record;
-    if (nd_eeprom_read(board_eeprom(), BOARD_CALIBRATION_OFFSET,
-                       (uint8_t *)&record, sizeof(record)) == 0
-        && record.magic == BOARD_CALIBRATION_MAGIC && record.voltage > 0
-        && record.current > 0 && record.power > 0) {
+    nd_idis_calibration_record_t record;
+    nd_idis_calibration_status_t status =
+        nd_idis_calibration_load(&record, board_store_port());
+    switch (status) {
+    case ND_IDIS_CALIBRATION_LOADED:
+    case ND_IDIS_CALIBRATION_ADOPTED:
         calibration_voltage = record.voltage;
         calibration_current = record.current;
         calibration_power = record.power;
+        break;
+    case ND_IDIS_CALIBRATION_FAULT:
+    case ND_IDIS_CALIBRATION_LOST:
+    case ND_IDIS_CALIBRATION_NONE:
+        break;
     }
+    return status;
 }
 
 static int board_store_read(void *ctx, uint32_t offset, uint8_t *buffer,
@@ -181,9 +182,10 @@ void board_store_init(void)
 void board_flash_init(void)
 {
     (void)board_flash();
+    /* Off until the board bus measurement; FreeRTOS also needs a store lock. */
     nd_sector_store_init(&flash_store, NULL, flash_read, flash_erase,
                          flash_write, BOARD_FLASH_SIZE, BOARD_FLASH_SECTOR,
-                         flash_sector);
+                         flash_sector, 0);
 }
 
 static void uart_receive_timeout(void)
@@ -220,6 +222,15 @@ void board_uart_init(void)
     uart_channel_init(1, &uart_module_config, ND_UART_MODULE,
                       UART_MODULE_CHL);
     uart_channel_init(2, &uart_ir_config, ND_UART_IR, UART_IR_CHL);
+}
+
+int board_ir_read(uint8_t *byte)
+{
+    if (byte == NULL || fifoBuf_getUsed(&uart_fifo[UART_IR_CHL]) == 0) {
+        return 0;
+    }
+    *byte = fifoBuf_getByte(&uart_fifo[UART_IR_CHL]);
+    return 1;
 }
 
 static volatile uint32_t rtc_seconds;
@@ -299,10 +310,11 @@ void board_gpio_init(void)
     (void)Isr_handle_regsit(&registration, IRQ_PMU);
 }
 
-void board_measurement_init(void)
+nd_idis_calibration_status_t board_measurement_init(void)
 {
-    board_calibration_load();
+    nd_idis_calibration_status_t status = board_calibration_load();
     (void)board_rn8209();
+    return status;
 }
 
 int board_adc_read(uint8_t channel, int32_t *value)
@@ -330,8 +342,9 @@ int board_measurement_read(void *ctx, nd_measure_quantity_t quantity,
         if (nd_rn8209_read(board_rn8209(), ND_RN8209_URMS, &raw, 3) != 0) {
             return -1;
         }
-        value = (int64_t)(((float)calibration_voltage / 1000000000.0f)
-                          * (float)raw)
+        value = measurement_scale_clamp(((float)calibration_voltage
+                                         / 1000000000.0f)
+                                        * (float)raw)
                 / 10;
         scaler = -1;
         unit = ND_MEASUREMENT_UNIT_VOLT;
@@ -341,8 +354,9 @@ int board_measurement_read(void *ctx, nd_measure_quantity_t quantity,
         if (nd_rn8209_read(board_rn8209(), ND_RN8209_IARMS, &raw, 3) != 0) {
             return -1;
         }
-        value = (int64_t)(((float)calibration_current / 1000000000.0f)
-                          * (float)raw)
+        value = measurement_scale_clamp(((float)calibration_current
+                                         / 1000000000.0f)
+                                        * (float)raw)
                 / 10;
         scaler = -3;
         unit = ND_MEASUREMENT_UNIT_AMPERE;
@@ -352,8 +366,9 @@ int board_measurement_read(void *ctx, nd_measure_quantity_t quantity,
         if (nd_rn8209_read(board_rn8209(), ND_RN8209_POWERPA, &raw, 4) != 0) {
             return -1;
         }
-        value = (int64_t)(((float)calibration_power / 1000000000.0f)
-                          * (float)(int32_t)raw);
+        value = measurement_scale_clamp(((float)calibration_power
+                                         / 1000000000.0f)
+                                        * (float)(int32_t)raw);
         unit = ND_MEASUREMENT_UNIT_WATT;
         break;
     case ND_MEASURE_FREQUENCY:

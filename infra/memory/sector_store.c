@@ -10,7 +10,27 @@ static int store_read(void *ctx, uint32_t offset, uint8_t *buffer,
         || offset > store->capacity || length > store->capacity - offset) {
         return -1;
     }
-    return store->read(store->ctx, offset, buffer, length);
+    if (store->window_enabled == 0u || length == 0u
+        || length > store->sector_size) {
+        return store->read(store->ctx, offset, buffer, length);
+    }
+    uint32_t base = offset & ~(store->sector_size - 1u);
+    uint32_t last = (offset + (uint32_t)length - 1u)
+                    & ~(store->sector_size - 1u);
+    if (last != base || store->capacity - base < store->sector_size) {
+        return store->read(store->ctx, offset, buffer, length);
+    }
+    if (store->window_valid == 0u || store->window_base != base) {
+        if (store->read(store->ctx, base, store->sector,
+                        store->sector_size) != 0) {
+            store->window_valid = 0u;
+            return -1;
+        }
+        store->window_base = base;
+        store->window_valid = 1u;
+    }
+    memcpy(buffer, store->sector + (offset - base), length);
+    return 0;
 }
 
 static int store_write(void *ctx, uint32_t offset, const uint8_t *buffer,
@@ -22,6 +42,7 @@ static int store_write(void *ctx, uint32_t offset, const uint8_t *buffer,
         || offset > store->capacity || length > store->capacity - offset) {
         return -1;
     }
+    store->window_valid = 0u;
     while (length > 0u) {
         uint32_t sector_base = offset & ~(store->sector_size - 1u);
         uint32_t in_sector = offset - sector_base;
@@ -70,6 +91,7 @@ static int store_erase(void *ctx, uint32_t offset, size_t length)
         || offset > store->capacity || length > store->capacity - offset) {
         return -1;
     }
+    store->window_valid = 0u;
     while (length > 0u) {
         if (store->erase(store->ctx, offset) != 0) {
             return -1;
@@ -83,12 +105,20 @@ static int store_erase(void *ctx, uint32_t offset, size_t length)
 void nd_sector_store_init(nd_sector_store_t *store, void *ctx,
                           nd_sector_read_fn read, nd_sector_erase_fn erase,
                           nd_sector_write_fn write, uint32_t capacity,
-                          uint32_t sector_size, uint8_t *sector_buffer)
+                          uint32_t sector_size, uint8_t *sector_buffer,
+                          uint8_t enable_window)
 {
     if (store == NULL) {
         return;
     }
-    *store = (nd_sector_store_t){
+    /* The sector arithmetic relies on a nonzero power-of-two sector size, a
+     * whole number of sectors, and a buffer that holds a sector. Invalid
+     * geometry zeroes the device half but keeps the port wired, so every call
+     * fails closed with -1. */
+    int geometry_ok = sector_buffer != NULL && sector_size != 0u
+                      && (sector_size & (sector_size - 1u)) == 0u
+                      && capacity % sector_size == 0u;
+    nd_sector_store_t valid = {
         .ctx = ctx,
         .read = read,
         .erase = erase,
@@ -96,11 +126,22 @@ void nd_sector_store_init(nd_sector_store_t *store, void *ctx,
         .capacity = capacity,
         .sector_size = sector_size,
         .sector = sector_buffer,
+        .window_enabled = enable_window,
+        .port = {
+            .ctx = store,
+            .read = store_read,
+            .write = store_write,
+            .erase = store_erase,
+        },
     };
-    store->port.ctx = store;
-    store->port.read = store_read;
-    store->port.write = store_write;
-    store->port.erase = store_erase;
+    *store = geometry_ok ? valid : (nd_sector_store_t){
+        .port = {
+            .ctx = store,
+            .read = store_read,
+            .write = store_write,
+            .erase = store_erase,
+        },
+    };
 }
 
 nd_store_t *nd_sector_store_port(nd_sector_store_t *store)

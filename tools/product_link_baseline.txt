@@ -13,25 +13,17 @@
 # A check that stops holding fails the gate; the reason stays prose for humans.
 # non_firmware <product> <reason>
 
-source meter_electricity_single_phase_idis application.ports application/ports/platform.c check=test=tests/CMakeLists.txt host test only: tests/CMakeLists.txt compiles it; no IDIS translation unit calls it
-source meter_electricity_single_phase_idis application.ports application/ports/record_storage.c check=test=tests/CMakeLists.txt host test only: tests/CMakeLists.txt compiles it; no IDIS translation unit calls it
-source meter_electricity_single_phase_idis application.ports application/ports/resource_access.c check=test=tests/CMakeLists.txt host test only: tests/CMakeLists.txt compiles it; no IDIS translation unit calls it
-source meter_electricity_single_phase_idis core.types components/core/types/bitarithm.c check=test=tests/CMakeLists.txt host test only: tests/CMakeLists.txt compiles it for test_bitarithm.c; linked firmware uses the bitarithm.h inline helpers
+source meter_electricity_single_phase_idis core.types components/core/types/bitarithm.c check=test=tests/CMakeLists.txt host test only: tests/CMakeLists.txt compiles it for test_bitarithm.c; no linked IDIS source includes bitarithm.h
 source meter_electricity_single_phase_idis core.types components/core/types/list.c check=test=tests/CMakeLists.txt host test only: tests/CMakeLists.txt compiles it for test_list.c; no linked IDIS source includes components/core/types/list.h
 source meter_electricity_single_phase_idis core.types components/core/types/rtc.c check=unselected=application.adapters.dl698 unused by this product: the only callers are in application.adapters.dl698, which this product does not select
-source meter_electricity_single_phase_idis services.channel components/services/channel/nd_channel.c check=closure=application.ports manifest closure of application.ports; no header or object is in the IDIS link
 source meter_electricity_single_phase_idis protocol.dlms components/protocol/dlms/src/nd_dlms_apdu.c check=test=tests/CMakeLists.txt test only: tests/CMakeLists.txt compiles it; the firmware links nd_axdr.c only
 source meter_electricity_single_phase_idis protocol.dlms components/protocol/dlms/src/nd_dlms_assoc.c check=test=tests/CMakeLists.txt test only: tests/CMakeLists.txt compiles it; the firmware links nd_axdr.c only
 source meter_electricity_single_phase_idis protocol.dlms components/protocol/dlms/src/nd_dlms_security.c check=test=tests/CMakeLists.txt test only: tests/CMakeLists.txt compiles it; the firmware links nd_axdr.c only
 source meter_electricity_single_phase_idis protocol.dlms components/protocol/dlms/src/nd_dlms_server.c check=test=tests/CMakeLists.txt test only: tests/CMakeLists.txt compiles it; the firmware links nd_axdr.c only
 
-source meter_electricity_single_phase_idis_freertos application.ports application/ports/platform.c check=test=tests/CMakeLists.txt host test only: tests/CMakeLists.txt compiles it; no IDIS translation unit calls it
-source meter_electricity_single_phase_idis_freertos application.ports application/ports/record_storage.c check=test=tests/CMakeLists.txt host test only: tests/CMakeLists.txt compiles it; no IDIS translation unit calls it
-source meter_electricity_single_phase_idis_freertos application.ports application/ports/resource_access.c check=test=tests/CMakeLists.txt host test only: tests/CMakeLists.txt compiles it; no IDIS translation unit calls it
-source meter_electricity_single_phase_idis_freertos core.types components/core/types/bitarithm.c check=test=tests/CMakeLists.txt host test only: tests/CMakeLists.txt compiles it for test_bitarithm.c; linked firmware uses the bitarithm.h inline helpers
+source meter_electricity_single_phase_idis_freertos core.types components/core/types/bitarithm.c check=test=tests/CMakeLists.txt host test only: tests/CMakeLists.txt compiles it for test_bitarithm.c; no linked IDIS source includes bitarithm.h
 source meter_electricity_single_phase_idis_freertos core.types components/core/types/list.c check=test=tests/CMakeLists.txt host test only: tests/CMakeLists.txt compiles it for test_list.c; no linked IDIS source includes components/core/types/list.h
 source meter_electricity_single_phase_idis_freertos core.types components/core/types/rtc.c check=unselected=application.adapters.dl698 unused by this product: the only callers are in application.adapters.dl698, which this product does not select
-source meter_electricity_single_phase_idis_freertos services.channel components/services/channel/nd_channel.c check=closure=application.ports manifest closure of application.ports; no header or object is in the IDIS link
 source meter_electricity_single_phase_idis_freertos protocol.dlms components/protocol/dlms/src/nd_dlms_apdu.c check=test=tests/CMakeLists.txt test only: tests/CMakeLists.txt compiles it; the firmware links nd_axdr.c only
 source meter_electricity_single_phase_idis_freertos protocol.dlms components/protocol/dlms/src/nd_dlms_assoc.c check=test=tests/CMakeLists.txt test only: tests/CMakeLists.txt compiles it; the firmware links nd_axdr.c only
 source meter_electricity_single_phase_idis_freertos protocol.dlms components/protocol/dlms/src/nd_dlms_security.c check=test=tests/CMakeLists.txt test only: tests/CMakeLists.txt compiles it; the firmware links nd_axdr.c only
@@ -39,5 +31,5 @@ source meter_electricity_single_phase_idis_freertos protocol.dlms components/pro
 
 non_firmware comm_plc no firmware image: PLC communication module assembly; its sources resolve through the product manifest only
 non_firmware comm_rf no firmware image: RF communication module assembly; its sources resolve through the product manifest only
-non_firmware meter_gas no firmware image: gas meter assembly; application.metering is selected only by meter_gas and meter_water and neither product builds an image
-non_firmware meter_water no firmware image: water meter assembly; application.metering is selected only by meter_gas and meter_water and neither product builds an image
+non_firmware meter_gas no firmware image: gas meter assembly; its sources resolve through the product manifest only
+non_firmware meter_water no firmware image: water meter assembly; its sources resolve through the product manifest only

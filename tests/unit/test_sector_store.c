@@ -51,7 +51,7 @@ void setUp(void)
     fail_erase = 0;
     fail_write = 0;
     nd_sector_store_init(&store, NULL, fake_read, fake_erase, fake_write,
-                         CAPACITY, SECTOR_SIZE, workspace);
+                         CAPACITY, SECTOR_SIZE, workspace, 0);
 }
 
 void tearDown(void) {}
@@ -108,6 +108,24 @@ static void test_backend_failure_propagates(void)
                                              changed, sizeof(changed)));
 }
 
+static void test_erase_failure_propagates(void)
+{
+    uint8_t value[4] = {1, 2, 3, 4};
+    uint8_t blank[SECTOR_SIZE];
+    memset(blank, 0xFF, sizeof(blank));
+
+    TEST_ASSERT_EQUAL_INT(0, nd_store_write(nd_sector_store_port(&store), 0,
+                                            value, sizeof(value)));
+    fail_erase = 1;
+    TEST_ASSERT_EQUAL_INT(-1, nd_store_erase(nd_sector_store_port(&store), 0,
+                                             SECTOR_SIZE));
+    TEST_ASSERT_EQUAL_MEMORY(value, memory, sizeof(value));
+    fail_erase = 0;
+    TEST_ASSERT_EQUAL_INT(0, nd_store_erase(nd_sector_store_port(&store), 0,
+                                            SECTOR_SIZE));
+    TEST_ASSERT_EQUAL_MEMORY(blank, memory, SECTOR_SIZE);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -115,5 +133,6 @@ int main(void)
     RUN_TEST(test_overwrite_erases_and_same_value_does_not);
     RUN_TEST(test_bounds_fail_without_writing);
     RUN_TEST(test_backend_failure_propagates);
+    RUN_TEST(test_erase_failure_propagates);
     return UNITY_END();
 }

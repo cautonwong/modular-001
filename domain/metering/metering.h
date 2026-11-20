@@ -44,6 +44,8 @@ int64_t metering_read_combined(const metering_state_t *state, uint8_t tariff,
 
 void metering_clear(metering_state_t *state);
 
+void metering_clear_month(metering_state_t *state);
+
 void metering_set_total(metering_state_t *state, nd_energy_direction_t direction,
                         uint32_t integer);
 

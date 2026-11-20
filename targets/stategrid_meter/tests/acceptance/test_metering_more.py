@@ -74,6 +74,15 @@ def _image() -> bytes:
     return parameters.set_parameters(BLANK_IMAGE, {"meter_const": METER_CONST})
 
 
+def _lcd_frames(run) -> dict[int, bytes]:
+    frames = {}
+    for line in run.lcd_log:
+        fields = line.split()
+        assert fields[0] == "cycle" and fields[5] == "fb" and len(fields[6]) == 320, line
+        frames[int(fields[1])] = bytes.fromhex(fields[6])
+    return frames
+
+
 @case(
     "ACC-MET-003",
     "pulses injected while tariff 2 is selected add to the F2 slot of OAD "
@@ -201,6 +210,9 @@ def energy_save_threshold(ctx):
     record = storage.energy_record(saved.eeprom, 198)
     assert record.forward[0].integer == 30, record.forward[0]
     assert record.energy_checksum_ok, record
+    snapshot = storage.latest_energy_snapshot(saved.eeprom)
+    assert snapshot is not None, "the save threshold must commit a snapshot"
+    assert snapshot.record.forward[0].integer == 30, snapshot.record.forward[0]
 
     early = ctx.run(cycles=40, scenario=_threshold_scenario(29), seed_eeprom=image)
     assert early.exit_code == 0, f"firmware_sim exited {early.exit_code}"
@@ -208,6 +220,9 @@ def energy_save_threshold(ctx):
     record = storage.energy_record(early.eeprom, 198)
     assert record.forward[0].integer == 0, record.forward[0]
     assert record.energy_checksum_ok, record
+    snapshot = storage.latest_energy_snapshot(early.eeprom)
+    assert snapshot is not None, "the clear still commits a generation"
+    assert snapshot.record.forward[0].integer == 0, snapshot.record.forward[0]
 
 
 def _set(piid: int, oad: int, data: bytes) -> bytes:
@@ -269,8 +284,9 @@ def metering_chip_fault_event(ctx):
 @case(
     "ACC-MET-012",
     "injected temperature and battery ADC values are readable over 698 with "
-    "their documented scaling",
-    ("metering", "adc", "temperature"),
+    "their documented scaling, and battery undervoltage sets then clears the "
+    "LCD battery segment in lcd.log",
+    ("metering", "adc", "temperature", "lcd"),
 )
 def temperature_and_battery(ctx):
     scenario = (
@@ -279,10 +295,20 @@ def temperature_and_battery(ctx):
         "at 3 adc battery 33000\n"
         f"at 5 uart 0 {_get(1, 0x20100200).hex()}\n"
         f"at 6 uart 0 {_get(2, 0x20110200).hex()}\n"
+        "at 10 adc battery 28000\n"
+        "at 20 adc battery 31000\n"
+        f"at 26 uart 0 {_get(3, 0x20110200).hex()}\n"
     )
-    run = ctx.run(cycles=8, scenario=scenario)
+    run = ctx.run(cycles=30, scenario=scenario)
     assert run.exit_code == 0, f"firmware_sim exited {run.exit_code}"
     values = _get_values(run)
-    assert [value.value for value in values] == [25, 330], [
+    assert [value.value for value in values] == [25, 330, 310], [
         value.value for value in values
     ]
+
+    # DS_Chr_Bat is Lcdcon[18] bit 0x10, packed into FB[10] bit 0x2000, which
+    # is byte 41 bit 0x20 of the little-endian 160-byte lcd.log frame.
+    frames = _lcd_frames(run)
+    assert not frames[8][41] & 0x20, frames[8][40:44].hex()
+    assert frames[16][41] & 0x20, frames[16][40:44].hex()
+    assert not frames[28][41] & 0x20, frames[28][40:44].hex()

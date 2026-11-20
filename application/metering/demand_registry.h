@@ -30,4 +30,6 @@ void nd_demand_registry_on_second(nd_demand_registry_t *registry);
 void nd_demand_registry_on_minute(nd_demand_registry_t *registry,
                                   nd_demand_update_cb_t callback, void *ctx);
 
+void nd_demand_registry_reset(nd_demand_registry_t *registry);
+
 #endif

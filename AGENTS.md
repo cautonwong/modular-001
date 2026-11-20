@@ -23,6 +23,21 @@
 - 验证是审查的对象。没有验证证据不算完成。
 - 规则集中在本文件，其他文档只链接，避免规则漂移。
 
+## 规则与执行
+
+能自动化的规则必须列出执行者；没有执行者的只剩判断项。
+
+| 规则 | 执行 |
+| --- | --- |
+| 不新增可变全局 | `check:mutable-globals` 对比 `tools/mutable_globals_frozen.txt`；增长需在 `tools/mutable_globals_exceptions.txt` 写理由、到期日、批准人，过期即失败 |
+| 设计记录不引用临时证据 | `check:doc-evidence` 拒绝 `docs/design` 里的 `/tmp/` 路径 |
+| 依赖方向、端口与组合根 | `check:layers`、`check:components` |
+| 公开头不新增可变 struct | `check:public-structs` 棘轮 |
+| FreeRTOS 线程模型不漂移 | `check:rtos-model` 对比 `docs/design/freertos-thread-model.md` 的配置与任务常量；改值必须同时改文档和 checker |
+| ROM 103 KiB | 链接断言、`check_idis_firmware.py`、`check:rom-budget-docs` |
+| 完成 = 证据 | `./ci.sh`、验收 `verdict=clean`、`check_formal.sh` |
+| dev 在独立 worktree，主工作树留在 main | 无自动检查；合并前由 verifier 核对 |
+
 ## 完成定义
 
 完成 = 静态分析通过 + 测试通过 + 运行时验证证据。证据至少一种：
@@ -35,13 +50,15 @@
 
 没有证据不算完成。验证覆盖用户视角。本项目用验收矩阵当 feature map：
 
-- stategrid 的 122 行矩阵和 `tools/check_acceptance_matrix.py`。
+- stategrid 的验收矩阵和 `tools/check_acceptance_matrix.py`。
 - IDIS 两个 target 的 Python 验收用例和 `tests/acceptance/runner.py`。
 
-形式化工具已进 CI。`formal/cbmc` 证明 A-XDR 长度解码和定长跳过的边界，
-`formal/tla` 检查 block transfer 状态机，`formal/lean` 证明 FIFO 容量算术。
-本地缺工具时 `tools/check_formal.sh` 跳过，GitHub workflow 安装 CBMC、Java/TLA+
-和 Lean 后按 `--strict` 运行。关键算法仍优先加属性测试或小输入空间穷举。
+形式化工具已进 CI。`formal/cbmc` 证明 A-XDR 长度解码、定长跳过和能量脉冲
+header 解析的边界，`formal/frama-c` 用 Eva 抽象解释证明两个 store 的请求范围和
+窗口状态（WP 需 why3/prover，暂不可用），`formal/tla` 检查 block transfer 状态
+机和脉冲 journal 的崩溃协议，`formal/lean` 证明 FIFO 容量和脉冲 lane 的整数算术。
+本地缺工具时 `tools/check_formal.sh` 跳过，GitHub workflow 安装 CBMC、Frama-C、
+Java/TLA+ 和 Lean 后按 `--strict` 运行。关键算法仍优先加属性测试或小输入空间穷举。
 
 每个产品 target 必须有一个 `tests/acceptance` 验收入口。入口里的 case 数按矩阵，
 不限制为一条。共享用例用 `CASES` 指向同一份目录，不复制。缺入口或 `CASES`
@@ -66,8 +83,9 @@
 
 - C11，Cortex-M0，裸机和 FreeRTOS 两种构建。domain 和 application 必须能按
   Cortex-M0 严格编译，不能引入 host libc。
-- IDIS 两个 target 的 ROM 必须小于 103 KiB，链接脚本有断言。FreeRTOS 余量约
-  0.9 KiB（IRQ 构建，CI 工具链），任何固件功能先做 ROM 账。
+- IDIS 两个 target 的 ROM 必须小于 103 KiB，链接脚本有断言。余量以
+  `tools/check_idis_firmware.py` 的 ELF section 输出和 CI 日志为准，本文不重复
+  数字；任何固件功能先做 ROM 账。
 - 代码执行性能、功耗与唤醒、掉电安全是三大优先指标。掉电安全路径的改动需要
   真机或 HIL 证据；没有硬件时不要盲改。
 - `test-platform` 验收是 must。新功能同时补验收用例或说明为什么不能补。
@@ -86,9 +104,11 @@
 - [x] 转换告警棘轮。`tools/check_conversion.py` 和 `host:conversion`。
 - [x] 死代码棘轮。`tools/check_dead_code.py`。
 - [x] 运行时验证。`host:strict`（ASan/UBSan）、`host:sim-san`（整机仿真和 IDIS
-  host runner）、stategrid 91 条验收、IDIS 各 11 条验收、EEPROM 损坏采样。
-- [x] 形式化检查。`tools/check_formal.sh`：CBMC（A-XDR）、TLA+（block
-  transfer）、Lean（FIFO 容量）。GitHub workflow 安装工具后按 `--strict` 跑。
+  host runner）、两个 target 的验收套件（条数见验收矩阵和 runner 输出）、
+  EEPROM 损坏采样。
+- [x] 形式化检查。`tools/check_formal.sh`：CBMC（A-XDR）、Frama-C/Eva（两个
+  store）、TLA+（block transfer）、Lean（FIFO 容量）。GitHub workflow 安装工具后
+  按 `--strict` 跑。
 - [ ] 并发与性能预算的自动阈值。当前只有 ROM/RAM 断言和验收，没有调度时序预算。
 - [ ] IAR 实编译和 HIL。环境不具备。
 
@@ -101,6 +121,7 @@
 - 端口写法。`docs/guides/port-binding.md`。
 - 验收用例。`docs/guides/acceptance-case.md`。
 - block transfer 设计。`docs/idis-block-transfer.md`。
+- 记录检索策略与门禁。`docs/design/record-retrieval.md`。
 
 ## 角色与分工
 

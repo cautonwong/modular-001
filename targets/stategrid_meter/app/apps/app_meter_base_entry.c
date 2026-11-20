@@ -26,6 +26,9 @@
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "targets/stategrid_meter/app/driver_entry.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
+#include "components/core/types/utils.h"
+#include "targets/stategrid_meter/app/metering/demand_adapter.h"
+#include "targets/stategrid_meter/app/metering_energy_adapter.h"
 
 /* Target-only services the composition root still calls directly. */
 void fr_dl645_sec_task(void *instance, void *pipeline);
@@ -49,11 +52,15 @@ int PowerOff_Save_data(stategrid_context_t *instance)
     size_t mbase_block_persistent_size = nd_mbase_offset_persistent_section_end() - nd_mbase_offset_persistent_section_start() + 1;
     uint32_t addr = 0;
     uint32_t res = 0, tmp_u32;
+    int mirror = 1;
     struct mbase_control_block_t* mbase_cb;
     void *pipeline = NULL;
     struct message_t *mesg = NULL;
     mbase_cb = ctx->mbase;
-    
+
+    nd_demand_adapter_save(ctx->demand, nd_mbase_persistent_blank_space(mbase_cb),
+                           nd_mbase_size_persistent_blank_space());
+
     __disable_irq();
     
     CLK_AHBPeriphralCmd((CLK_AHBPERIPHRAL_GPIO), ENABLE);
@@ -65,14 +72,44 @@ int PowerOff_Save_data(stategrid_context_t *instance)
     //先刷新停电时间ram
     ndv_memcopy((uint8_t *)(&nd_mbase_powerdown_tm(mbase_cb)),  (uint8_t *)&ctx->time,  sizeof(nd_mbase_powerdown_tm(mbase_cb)));
 
-    Energy_Meter_PowerOFF(instance, pipeline); 
+    Energy_Meter_PowerOFF(instance, pipeline);
+    /* The snapshot is the authoritative energy store; the legacy block write
+     * below stays as the downgrade mirror. The commit must happen while the
+     * supply is still up. */
+    (void)metering_energy_commit(instance);
 
-    nd_mbase_ec_save_success(mbase_cb) = 0x5AA5;  //保存前 置 标志  
+    if (metering_energy_restore_pending(instance))
+    {
+        /* Nothing trustworthy to mirror. Keep the durable legacy energy area
+         * and do not claim it with 0x5AA5, instead of writing the zero book. */
+        size_t ec_size = nd_mbase_offset_persistent_energy_EC_label()
+                       - nd_mbase_offset_persistent_section_start();
+        uint32_t ram = 0;
+        uint32_t s_index = (uint32_t)(RES_DEV_EEPROM << 24)
+                         + ((uint32_t)mbase_block_persistent_eprom << 16);
+
+        get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_persistent,
+                             &ram);
+        if (nd_get_offset(instance, s_index, (uint8_t *)(uintptr_t)ram,
+                          (uint16_t)ec_size) < 0)
+        {
+            /* The RAM energy prefix stays the unknown (zero) book, so the
+             * block write below would replace the durable mirror with it. */
+            mirror = 0;
+        }
+    }
+    else
+    {
+        nd_mbase_ec_save_success(mbase_cb) = 0x5AA5;  //保存前 置 标志
+    }
 
     //获取对应的RAM地址
-    get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
-    res = get_res(RES_DEV_EEPROM, mbase_block_persistent_eprom);
-    nd_set_block(instance, res, (uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;   
+    if (mirror)
+    {
+        get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
+        res = get_res(RES_DEV_EEPROM, mbase_block_persistent_eprom);
+        nd_set_block(instance, res, (uint8_t *)addr,mbase_block_persistent_size); //将RAM中的数据保存到EPROM;
+    }
 
     //保存 冻结停电时间
     if (nd_mbase_frz_replenish_end(mbase_cb) == 0x5A)
@@ -112,6 +149,37 @@ int PowerOff_Save_data(stategrid_context_t *instance)
     __enable_irq();
     
     return true;
+}
+
+/* A total clear must reach the EEPROM before it returns: the meter can reset
+ * without a power-off save, and the next boot would restore stale maxima. */
+int Demand_Save_data(stategrid_context_t *instance)
+{
+    stategrid_context_t *ctx = ((stategrid_context_t *)instance);
+    size_t mbase_block_persistent_size = nd_mbase_offset_persistent_section_end() - nd_mbase_offset_persistent_section_start() + 1;
+    uint32_t addr = 0;
+    uint32_t res = 0;
+
+    if (nd_demand_adapter_save(ctx->demand, nd_mbase_persistent_blank_space(ctx->mbase),
+                               nd_mbase_size_persistent_blank_space()) != 0)
+    {
+        ctx->storage_fault = 1;
+        return 0;
+    }
+    if (metering_energy_restore_pending(instance))
+    {
+        /* The RAM energy prefix is the unknown (zero) book; the block write
+         * below would replace the durable legacy record with it. */
+        return 0;
+    }
+    get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_persistent, &addr);
+    res = get_res(RES_DEV_EEPROM, mbase_block_persistent_eprom);
+    if (nd_set_block(instance, res, (uint8_t *)addr, mbase_block_persistent_size) < 0)
+    {
+        ctx->storage_fault = 1;
+        return 0;
+    }
+    return 1;
 }
 
 
@@ -265,6 +333,12 @@ int app_meter_base_event(stategrid_context_t * instance, uint8_t event)
             ND_SIM_STAGE("Energy_Pluse_Count");
             Energy_Pluse_Count(instance, pipeline);
 
+            /* After the energy stage so the simulator's injected power is visible. */
+            if (ctx->demand != NULL)
+            {
+                nd_demand_adapter_on_second(ctx->demand, rtc_mktime(&ctx->time));
+            }
+
             ND_SIM_STAGE("Energy_Meter");
             Energy_Meter(instance, pipeline);
 
@@ -307,7 +381,14 @@ int app_meter_base_event(stategrid_context_t * instance, uint8_t event)
             //上电需要恢复数据   //跳过电能恢复 由电能模块处理  
             addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
                 nd_mbase_offset_persistent_energy_EC_label()  -  nd_mbase_offset_persistent_section_start());
-            nd_get_offset(instance, addr, (uint8_t*)&nd_mbase_persistent_energy_EC_label(mbase_cb), (mbase_block_persistent_size - persitent_ec_size));           
+            nd_get_offset(instance, addr, (uint8_t*)&nd_mbase_persistent_energy_EC_label(mbase_cb), (mbase_block_persistent_size - persitent_ec_size));
+            if (ctx->demand != NULL)
+            {
+                nd_demand_adapter_restore(ctx->demand,
+                                          nd_mbase_persistent_blank_space(mbase_cb),
+                                          nd_mbase_size_persistent_blank_space(),
+                                          rtc_mktime(&ctx->time));
+            }
             //获取对应的RAM地址
             //get_block_frist_addr(instance,RES_DEV_RAM, mbase_block_persistent,&addr);//RAM对应的地址
             //nd_get_block(instance,RES_DEV_EEPROM, mbase_block_persistent_eprom,(uint8_t *)(addr + persitent_ec_size),(mbase_block_persistent_size - persitent_ec_size)); //将EPROM中的数据恢复到RAM;        

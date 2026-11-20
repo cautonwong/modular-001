@@ -5,6 +5,8 @@
 
 #define ND_MX25L3206E_PAGE_SIZE 256u
 #define ND_MX25L3206E_SECTOR_SIZE 4096u
+/* Datasheet capacity: 32 Mbit. The board asserts its flash size equals it. */
+#define ND_MX25L3206E_CAPACITY_BYTES 0x400000u
 
 /* The bus is injected by the board. select(1) drives chip select low for one
  * command; transfer sends tx bytes and then receives rx bytes in that window. */

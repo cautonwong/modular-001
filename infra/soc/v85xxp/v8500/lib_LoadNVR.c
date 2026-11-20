@@ -121,18 +121,18 @@ uint32_t NVR_GetADCVoltageParameter(uint32_t Mode, NVR_ADCVOLPARA *Parameter)
       else
       {
         tmp_int = (int32_t)*(NVR_5VPARA_BASEADDR2+2*(Mode-0x100UL));
-        Parameter->aParameter = (float)(tmp_int / 100000000.0);
+        Parameter->aParameter = (float)(tmp_int / 100000000.0f);
         tmp_int = (int32_t)*(NVR_5VPARA_BASEADDR2+2*(Mode-0x100UL)+1);
-        Parameter->bParameter = (float)(tmp_int / 100000000.0);
+        Parameter->bParameter = (float)(tmp_int / 100000000.0f);
         return 0;
       }
     }
     else
     {
       tmp_int = (int32_t)*(NVR_5VPARA_BASEADDR1+2*(Mode-0x100UL));
-      Parameter->aParameter = (float)(tmp_int / 100000000.0);
+      Parameter->aParameter = (float)(tmp_int / 100000000.0f);
       tmp_int = (int32_t)*(NVR_5VPARA_BASEADDR1+2*(Mode-0x100UL)+1);
-      Parameter->bParameter = (float)(tmp_int / 100000000.0);
+      Parameter->bParameter = (float)(tmp_int / 100000000.0f);
       return 0;
     }
   }
@@ -156,18 +156,18 @@ uint32_t NVR_GetADCVoltageParameter(uint32_t Mode, NVR_ADCVOLPARA *Parameter)
       else
       {
         tmp_int = (int32_t)*(NVR_3VPARA_BASEADDR2+2*(Mode));
-        Parameter->aParameter = (float)(tmp_int / 100000000.0);
+        Parameter->aParameter = (float)(tmp_int / 100000000.0f);
         tmp_int = (int32_t)*(NVR_3VPARA_BASEADDR2+2*(Mode)+1);
-        Parameter->bParameter = (float)(tmp_int / 100000000.0);
+        Parameter->bParameter = (float)(tmp_int / 100000000.0f);
         return 0;
       } 
     }
     else
     {
       tmp_int = (int32_t)*(NVR_3VPARA_BASEADDR1+2*(Mode));
-      Parameter->aParameter = (float)(tmp_int / 100000000.0);
+      Parameter->aParameter = (float)(tmp_int / 100000000.0f);
       tmp_int = (int32_t)*(NVR_3VPARA_BASEADDR1+2*(Mode)+1);
-      Parameter->bParameter = (float)(tmp_int / 100000000.0);
+      Parameter->bParameter = (float)(tmp_int / 100000000.0f);
       return 0;
     }
   }
@@ -191,8 +191,8 @@ uint32_t NVR_GetBATOffset(NVR_BATMEARES *MEAResult)
   checksum = ~(bat_r + bat_c);
   if (checksum == (*NVR_BATMEA_CHECHSUM1))
   {
-    MEAResult->BATRESResult = (float)((int32_t)bat_r / 1000.0);
-    MEAResult->BATCAPResult = (float)((int32_t)bat_c / 1000.0);
+    MEAResult->BATRESResult = (float)((int32_t)bat_r / 1000.0f);
+    MEAResult->BATCAPResult = (float)((int32_t)bat_c / 1000.0f);
     return 0;
   }
 
@@ -202,8 +202,8 @@ uint32_t NVR_GetBATOffset(NVR_BATMEARES *MEAResult)
   checksum = ~(bat_r + bat_c);
   if (checksum == (*NVR_BATMEA_CHECHSUM2))
   {
-    MEAResult->BATRESResult = (float)((int32_t)bat_r / 1000.0);
-    MEAResult->BATCAPResult = (float)((int32_t)bat_c / 1000.0);
+    MEAResult->BATRESResult = (float)((int32_t)bat_r / 1000.0f);
+    MEAResult->BATCAPResult = (float)((int32_t)bat_c / 1000.0f);
     return 0;
   }
   else
@@ -277,7 +277,7 @@ uint32_t NVR_GetInfo_LoadRTCData(NVR_RTCINFO *RTCTempData)
   
   /* Get PCLK */
   RTCTempData->APBClock = CLK_GetPCLKFreq();
-  pclk_mul = RTCTempData->APBClock / 6553600.0;
+  pclk_mul = RTCTempData->APBClock / 6553600.0f;
   
   rtc_data1 = *NVR_RTC1_P1_P0;
   rtc_data2 = *NVR_RTC1_P2;

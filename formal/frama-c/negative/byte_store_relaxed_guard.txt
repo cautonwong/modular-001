@@ -1,0 +1,184 @@
+# Negative evidence: the Eva gate catches a relaxed byte store guard.
+# Mutation: infra/memory/byte_store.c store_write drops "offset > store->size".
+# Command: frama-c -eva -eva-slevel 512 -eva-min-loop-unroll 8 -cpp-extra-args="-I ." formal/frama-c/byte_store_eva.c infra/memory/byte_store.c
+# Frama-C: 33.0 (Arsenic)
+# Result: exit 0 (Frama-C does not exit on alarms), 126/127 statements (99%),
+# and memcpy valid_dest is invalid at infra/memory/byte_store.c:23, so the log
+# carries an [eva:alarm] line; Preconditions 9 valid 1 unknown. The validator
+# rejects the [eva:alarm] line, the statement totals and the property totals,
+# so the negative does not depend on the rejected_write assertion, which stays
+# valid because Eva does not return from the failing memcpy call.
+[kernel] Parsing formal/frama-c/byte_store_eva.c (with preprocessing)
+[kernel] Parsing infra/memory/byte_store.c (with preprocessing)
+[eva] Analyzing a complete application starting at main
+[eva:initial-state] Values of globals at initialization
+  store ∈ {0}
+  backing[0..7] ∈ {0}
+  dst[0..7] ∈ {0}
+  src[0..7] ∈ {0}
+  before[0..7] ∈ {0}
+  dst_before[0..7] ∈ {0}
+[eva:partition] formal/frama-c/byte_store_eva.c:46: 
+  Trace partitioning superposing up to 100 states
+[eva:acsl:unsupported] FRAMAC_SHARE/libc/string.h:134: 
+  cannot evaluate ACSL term, unsupported ACSL construct: logic function memcmp
+[eva:partition] formal/frama-c/byte_store_eva.c:53: 
+  Trace partitioning superposing up to 200 states
+[eva:partition] formal/frama-c/byte_store_eva.c:53: 
+  Trace partitioning superposing up to 300 states
+[eva:partition] formal/frama-c/byte_store_eva.c:53: 
+  Trace partitioning superposing up to 400 states
+[eva:partition] formal/frama-c/byte_store_eva.c:53: 
+  Trace partitioning superposing up to 500 states
+[eva:partition] formal/frama-c/byte_store_eva.c:74: 
+  Trace partitioning superposing up to 100 states
+[eva:alarm] infra/memory/byte_store.c:23: Warning: 
+  function memcpy: precondition 'valid_dest' got status invalid.
+[eva:partition] formal/frama-c/byte_store_eva.c:80: 
+  Trace partitioning superposing up to 200 states
+[eva:partition] formal/frama-c/byte_store_eva.c:80: 
+  Trace partitioning superposing up to 300 states
+[eva:partition] formal/frama-c/byte_store_eva.c:80: 
+  Trace partitioning superposing up to 400 states
+[eva] ====== VALUES COMPUTED ======
+[eva:final-states] Values at end of function nd_byte_store_init:
+  store.port.ctx ∈ {{ (void *)&store }}
+       .port.read ∈ {{ &store_read }}
+       .port.write ∈ {{ &store_write }}
+       .port.erase ∈ {0}
+       .data ∈ {{ &backing[0] }}
+       .size ∈ {8}
+[eva:final-states] Values at end of function nd_byte_store_port:
+  __retres ∈ {{ &store.port }}
+[eva:final-states] Values at end of function snapshot:
+  i ∈ {8}
+  before[0] ∈ {1}
+        [1] ∈ {2}
+        [2] ∈ {3}
+        [3] ∈ {4}
+        [4] ∈ {5}
+        [5] ∈ {6}
+        [6] ∈ {7}
+        [7] ∈ {8}
+  dst_before[0..7] ∈ {0; 238}
+[eva:final-states] Values at end of function store_read:
+  store_0 ∈ {{ &store }}
+  dst[0] ∈ [1..238]
+     [1] ∈ {2; 3; 4; 5; 6; 7; 8; 238}
+     [2] ∈ {3; 4; 5; 6; 7; 8; 238}
+     [3] ∈ {4; 5; 6; 7; 8; 238}
+     [4] ∈ {5; 6; 7; 8; 238}
+     [5] ∈ {6; 7; 8; 238}
+     [6] ∈ {7; 8; 238}
+     [7] ∈ {8; 238}
+  __retres ∈ {-1; 0}
+[eva:final-states] Values at end of function check_read:
+  Frama_C_entropy_source ∈ [--..--]
+  offset ∈ [0..10]
+  length ∈ [0..10]
+  result ∈ {-1; 0}
+  dst[0] ∈ [1..238]
+     [1] ∈ {2; 3; 4; 5; 6; 7; 8; 238}
+     [2] ∈ {3; 4; 5; 6; 7; 8; 238}
+     [3] ∈ {4; 5; 6; 7; 8; 238}
+     [4] ∈ {5; 6; 7; 8; 238}
+     [5] ∈ {6; 7; 8; 238}
+     [6] ∈ {7; 8; 238}
+     [7] ∈ {8; 238}
+  before[0] ∈ {1}
+        [1] ∈ {2}
+        [2] ∈ {3}
+        [3] ∈ {4}
+        [4] ∈ {5}
+        [5] ∈ {6}
+        [6] ∈ {7}
+        [7] ∈ {8}
+  dst_before[0..7] ∈ {238}
+[eva:final-states] Values at end of function store_write:
+  store_0 ∈ {{ &store }}
+  backing[0] ∈ {1; 101}
+         [1] ∈ {2; 101; 102}
+         [2] ∈ {3; 101; 102; 103}
+         [3] ∈ {4; 101; 102; 103; 104}
+         [4] ∈ {5; 101; 102; 103; 104; 105}
+         [5] ∈ {6; 101; 102; 103; 104; 105; 106}
+         [6] ∈ {7; 101; 102; 103; 104; 105; 106; 107}
+         [7] ∈ [8..108]
+  __retres ∈ {-1; 0}
+[eva:final-states] Values at end of function check_write:
+  Frama_C_entropy_source ∈ [--..--]
+  offset ∈ [0..8]
+  length ∈ [0..10]
+  result ∈ {-1; 0}
+  backing[0] ∈ {1; 101}
+         [1] ∈ {2; 101; 102}
+         [2] ∈ {3; 101; 102; 103}
+         [3] ∈ {4; 101; 102; 103; 104}
+         [4] ∈ {5; 101; 102; 103; 104; 105}
+         [5] ∈ {6; 101; 102; 103; 104; 105; 106}
+         [6] ∈ {7; 101; 102; 103; 104; 105; 106; 107}
+         [7] ∈ [8..108]
+  before[0] ∈ {1}
+        [1] ∈ {2}
+        [2] ∈ {3}
+        [3] ∈ {4}
+        [4] ∈ {5}
+        [5] ∈ {6}
+        [6] ∈ {7}
+        [7] ∈ {8}
+[eva:final-states] Values at end of function main:
+  Frama_C_entropy_source ∈ [--..--]
+  store.port.ctx ∈ {{ (void *)&store }}
+       .port.read ∈ {{ &store_read }}
+       .port.write ∈ {{ &store_write }}
+       .port.erase ∈ {0}
+       .data ∈ {{ &backing[0] }}
+       .size ∈ {8}
+  backing[0] ∈ {1; 101}
+         [1] ∈ {2; 101; 102}
+         [2] ∈ {3; 101; 102; 103}
+         [3] ∈ {4; 101; 102; 103; 104}
+         [4] ∈ {5; 101; 102; 103; 104; 105}
+         [5] ∈ {6; 101; 102; 103; 104; 105; 106}
+         [6] ∈ {7; 101; 102; 103; 104; 105; 106; 107}
+         [7] ∈ [8..108]
+  dst[0] ∈ [1..238]
+     [1] ∈ {2; 3; 4; 5; 6; 7; 8; 238}
+     [2] ∈ {3; 4; 5; 6; 7; 8; 238}
+     [3] ∈ {4; 5; 6; 7; 8; 238}
+     [4] ∈ {5; 6; 7; 8; 238}
+     [5] ∈ {6; 7; 8; 238}
+     [6] ∈ {7; 8; 238}
+     [7] ∈ {8; 238}
+  src[0] ∈ {101}
+     [1] ∈ {102}
+     [2] ∈ {103}
+     [3] ∈ {104}
+     [4] ∈ {105}
+     [5] ∈ {106}
+     [6] ∈ {107}
+     [7] ∈ {108}
+  before[0] ∈ {1}
+        [1] ∈ {2}
+        [2] ∈ {3}
+        [3] ∈ {4}
+        [4] ∈ {5}
+        [5] ∈ {6}
+        [6] ∈ {7}
+        [7] ∈ {8}
+  dst_before[0..7] ∈ {238}
+  __retres ∈ {0}
+[eva:summary] ====== ANALYSIS SUMMARY ======
+  ----------------------------------------------------------------------------
+  8 functions analyzed (out of 8): 100% coverage.
+  In these functions, 126 statements reached (out of 127): 99% coverage.
+  ----------------------------------------------------------------------------
+  No errors or warnings raised during the analysis.
+  ----------------------------------------------------------------------------
+  0 alarms generated by the analysis.
+  ----------------------------------------------------------------------------
+  Evaluation of the logical properties reached by the analysis:
+    Assertions       11 valid     0 unknown     0 invalid     11 total
+    Preconditions     9 valid     1 unknown     0 invalid     10 total
+  95% of the logical properties reached have been proven.
+  ----------------------------------------------------------------------------

@@ -35,7 +35,9 @@ typedef struct {
 
 int nd_idis_profile_init(nd_idis_profile_state_t *profile, nd_store_t *store,
                          uint32_t base_offset, uint16_t capacity,
-                         uint16_t slot_size, const nd_obis_t *ln,
+                         uint16_t slot_size, uint16_t sector_size,
+                         const nd_profile_store_opts_t *store_opts,
+                         const nd_obis_t *ln,
                          const nd_clock_port_t *clock,
                          const nd_capture_object_t *captures,
                          uint8_t capture_count, uint32_t capture_period,

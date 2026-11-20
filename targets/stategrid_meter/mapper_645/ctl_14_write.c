@@ -326,8 +326,7 @@ unsigned char CommWrite_SpecProc( void *instance,  unsigned char* prx, unsigned 
 				break;
 		case 0xA8000105://默认参数初始化命令
                 ret = para_init( instance );
-                meter_clr(instance);
-                if(ret < 0) return -1;
+                if((ret < 0) || (meter_clr(instance) == 0)) return -1;
 				break;
 		case 0xA8000203://校表参数
 		case 0xA8000204://校表参数
@@ -376,11 +375,11 @@ unsigned char CommWrite_SpecProc( void *instance,  unsigned char* prx, unsigned 
                 break;                
         case 0xA8FFFFF0:    //设置正向电能底度
                 memcpy((uint8_t*)&temp, prx, 4);
-                Energy_Set(instance, temp, 0);
+                if (Energy_Set(instance, temp, 0) == 0) return -1;
                 break;
         case 0xA8FFFFF1:    //设置反向电能底度
                 memcpy((uint8_t*)&temp, prx, 4);
-                Energy_Set(instance, temp, 1);
+                if (Energy_Set(instance, temp, 1) == 0) return -1;
                 break;
         default:
                 return 1;

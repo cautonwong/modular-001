@@ -30,3 +30,10 @@ bool nd_platform_device_error(void)
     }
     return false;
 }
+
+void nd_platform_device_error_reported(void)
+{
+    if ((bound != NULL) && (bound->device_error_reported != NULL)) {
+        bound->device_error_reported(bound->ctx);
+    }
+}

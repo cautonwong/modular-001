@@ -45,7 +45,8 @@ static void test_sag_raises_domain_event(void)
     nd_datetime_t now = {.year = 2026, .month = 11, .day = 11};
     TEST_ASSERT_EQUAL_INT(1, nd_idis_pq_on_second(&pq, &measurement, &events,
                                                    &now));
-    const nd_event_record_t *record = nd_event_log_latest(&events.log);
+    const nd_event_record_t *record =
+        nd_event_log_latest(nd_event_log_of(&events.log));
     TEST_ASSERT_NOT_NULL(record);
     TEST_ASSERT_EQUAL_UINT8(ND_EVENT_VOLTAGE_SAG, record->kind);
     TEST_ASSERT_EQUAL_UINT8(76, events.latest_event_code);
@@ -67,7 +68,8 @@ static void test_missing_voltage_raises_cut_event(void)
     nd_datetime_t now = {.year = 2026, .month = 11, .day = 11};
     TEST_ASSERT_EQUAL_INT(1, nd_idis_pq_on_second(&pq, &measurement, &events,
                                                    &now));
-    const nd_event_record_t *record = nd_event_log_latest(&events.log);
+    const nd_event_record_t *record =
+        nd_event_log_latest(nd_event_log_of(&events.log));
     TEST_ASSERT_NOT_NULL(record);
     TEST_ASSERT_EQUAL_UINT8(ND_EVENT_VOLTAGE_MISSING, record->kind);
     TEST_ASSERT_EQUAL_UINT8(82, events.latest_event_code);

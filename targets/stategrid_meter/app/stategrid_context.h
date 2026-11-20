@@ -6,9 +6,13 @@
 
 #include "components/core/fifo/fifo.h"
 #include "components/core/types/list.h"
+#include "infra/drivers/storage/block/block_ops.h"
+#include "infra/memory/arena.h"
+#include "infra/storage/pulse_snapshot.h"
 #include "targets/stategrid_meter/upgrade/upgrade_info.h"
 
 struct mbase_control_block_t;
+struct nd_demand_adapter;
 
 /* The stategrid_meter composition context: the resource lists, the protocol
  * channel state and the persistent cache pointers used by the product. */
@@ -30,6 +34,21 @@ typedef struct stategrid_context_t
     uint32_t ac_power_off_sec_cnt;
     uint32_t ms;
     struct mbase_control_block_t *mbase;
+    uint8_t demand_arena_buffer[256];
+    nd_arena_t demand_arena;
+    struct nd_demand_adapter *demand;
+    /* Energy snapshot: the block adapter and the store storage live in the
+     * instance, not in file-scope globals. legacy_energy_offset is the
+     * measured 172-byte power-off record; the flag and EC2 indices are the
+     * other sources the first-boot adoption mirrors from Check_EC_recover. */
+    nd_eeprom_block_t energy_block;
+    nd_pulse_snapshot_storage_t energy_store_storage;
+    nd_pulse_store_t *energy_store;
+    uint32_t legacy_energy_offset;
+    uint32_t legacy_energy_flag_offset;
+    uint32_t legacy_energy_ec2_energy_index;
+    uint32_t legacy_energy_ec2_month_index;
+    uint8_t storage_fault;
     struct fifo_t *meter_events;
     struct fifo_t *lowpower_events;
     struct fifo_t *records;

@@ -8,8 +8,8 @@ namespace BladeFormal
 /-- Free space in a ring buffer. -/
 def free (capacity used : Nat) : Nat := capacity - used
 
-theorem free_le_capacity (capacity used : Nat) : free capacity used ≤ capacity := by
-  simp [free]
+theorem free_le_capacity (capacity used : Nat) : free capacity used ≤ capacity :=
+  Nat.sub_le capacity used
 
 theorem free_of_full (capacity : Nat) : free capacity capacity = 0 := by
   simp [free]

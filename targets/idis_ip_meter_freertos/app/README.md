@@ -47,8 +47,23 @@ remaining vector entries and the timer/DMA handlers are present but have no
 product consumer. LCD and ESAM are stategrid-meter features and stay out of
 this IDIS image.
 
-RN8209 scaling reads a calibration record from EEPROM offset `0xE000` when
-the record magic and all three factors are valid. Blank EEPROM falls back to
-the `REAL_K_*_INIT` constants. The legacy `nd_get_index()` resource lookup is
-still a stub, so factory calibration parameters beyond the three scale
-factors are not read.
+RN8209 scaling reads the factory calibration from EEPROM offset `0xE400`.
+The record is used only when its magic matches and the voltage, current and
+power factors are each greater than zero. The record has no checksum field,
+so a slot whose magic does not match looks like unwritten media. `0xE400` is
+authoritative. The legacy `0xE000` slot is read only while `0xE400` has no
+usable record; a valid legacy record is adopted, rewritten to `0xE400` (a
+failed rewrite is retried on the next boot), and then never read again
+because the old offset belongs to the registry blob. The production tool must
+write `0xE400`; a tool that keeps writing `0xE000` corrupts registry entries
+255-256 and the firmware cannot prevent it.
+
+Boot reports two cases as COSEM event 14 (NV memory error): a record that
+carries the magic but a non-positive factor, and a legacy slot that a saved
+registry blob covers. Both keep the compiled default factors in
+`board_ports.c`. Blank media, and a legacy slot overwritten by anything other
+than a registry blob, is indistinguishable from never-calibrated and uses the
+defaults with no event. That is the documented deployment risk of a meter
+whose calibration the registry destroyed before this firmware shipped. The
+legacy `nd_get_index()` resource lookup is still a stub, so factory
+calibration parameters beyond the three scale factors are not read.

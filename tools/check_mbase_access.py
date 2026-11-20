@@ -15,9 +15,6 @@ SKIP_DIRS = {".git", ".claude", "third_party", "docs", "tests", "tools"}
 SKIP_FILES = {
     "targets/stategrid_meter/persistence/meter_record.c",
     "targets/stategrid_meter/persistence/meter_record.h",
-    # Excluded from the VG_DTZY source table and refers to a field that no
-    # longer exists in the legacy struct.
-    "targets/stategrid_meter/app/metering/legacy/demand.c",
 }
 
 ACCESS_PATTERNS = (

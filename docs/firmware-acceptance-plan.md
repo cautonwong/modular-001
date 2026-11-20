@@ -23,7 +23,7 @@
 - `tests/sim/sim_main.c`：MAP_32BIT 低 4 GiB 内存、真实 `create_instance`、
   真实 `baremetal_instance_entry_main`、文件后端 EEPROM/flash。
 - `tests/sim/sim_trace.c`：每周期时间/trace、报文、filter、应用阶段日志。
-- `tests/sim/sim_devices.c`：EEPROM 65535 字节、flash 8388607 字节，擦除值 0xFF。
+- `tests/sim/sim_devices.c`：EEPROM 65535 字节、flash 4194304 字节，擦除值 0xFF。
 - `tests/sim/sim_stubs.c`：MCU/板级入口的空实现，计量芯片返回零值。
 - `tools/firmware_sim_manifest.py`：从 IAR `.ewp` 派生 172 个可移植源文件。
 - `tests/CMakeLists.txt`：`firmware_sim` 目标和 3 周期 ctest 冒烟。
@@ -93,7 +93,7 @@ ctest 增加 `firmware_acceptance`，直接调用同一个运行器。退出码�
 
 | id | 观察 | 通过条件 |
 |---|---|---|
-| `ACC-BOOT-001` | 空白镜像冷启动 3 秒 | 退出 0；3 条周期时间从 23:59:50 起逐秒；EEPROM 65535、flash 8388607 字节；复位计数 0；flash 未被写 |
+| `ACC-BOOT-001` | 空白镜像冷启动 3 秒 | 退出 0；3 条周期时间从 23:59:50 起逐秒；EEPROM 65535、flash 4194304 字节；复位计数 0；flash 未被写 |
 | `ACC-RTC-001` | 35 秒跨午夜 | 每秒恰好 +1 秒；最后到 00:00:24；00:00:20 的硬件对时后时钟继续走 |
 | `ACC-PERSIST-001` | 同一镜像连续启动 3 次 | 复位计数 0→1→2；每次追加一条开机事件，前一条不被覆盖；前 2 KiB 参数副本逐字节不变；非 0xFF 字节增加；flash 不变 |
 | `ACC-CYCLE-001` | 1 个 `MSG_SECOND` | 14 个业务阶段按固定顺序各跑一次；`app_meter_base` filter 返回 0；收到 RTC 消息；没有 `NVIC_SystemReset` |

@@ -53,10 +53,8 @@ int nd_idis_registry_remove(nd_idis_registry_t *registry, uint8_t class_id,
         nd_idis_registry_entry_t *entry = &registry->entries[index];
         if (entry->class_id == class_id
             && memcmp(&entry->ln, ln, sizeof(*ln)) == 0) {
-            size_t tail = (size_t)(registry->count - index - 1);
-            if (tail > 0) {
-                memmove(entry, entry + 1,
-                        tail * sizeof(nd_idis_registry_entry_t));
+            for (uint16_t move = index; move + 1u < registry->count; move++) {
+                registry->entries[move] = registry->entries[move + 1];
             }
             registry->count--;
             return 0;
@@ -69,6 +67,27 @@ uint32_t nd_idis_registry_blob_size(uint16_t count)
 {
     return ND_IDIS_REGISTRY_HEADER_SIZE + ND_IDIS_REGISTRY_TRAILER_SIZE
            + (uint32_t)count * ND_IDIS_REGISTRY_ENTRY_SIZE;
+}
+
+int nd_idis_registry_covers(const nd_store_t *store, uint32_t offset,
+                            uint32_t target)
+{
+    if (store == NULL) {
+        return 0;
+    }
+    uint8_t header[ND_IDIS_REGISTRY_HEADER_SIZE];
+    if (nd_store_read(store, offset, header, sizeof(header)) != 0
+        || memcmp(header, ND_IDIS_REGISTRY_MAGIC, 4) != 0
+        || header[4] != ND_IDIS_REGISTRY_FORMAT
+        || header[5] != ND_IDIS_REGISTRY_ENTRY_SIZE) {
+        return 0;
+    }
+    uint16_t count = (uint16_t)((header[6] << 8) | header[7]);
+    if (count > ND_IDIS_REGISTRY_MAX) {
+        return 0;
+    }
+    return offset <= target
+           && target < offset + nd_idis_registry_blob_size(count);
 }
 
 int nd_idis_registry_load(nd_idis_registry_t *registry, const nd_store_t *store,

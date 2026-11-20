@@ -66,7 +66,7 @@ static const nd_eeprom_config_t eeprom_config = {
     },
     .device_address = 0xA0,
     .page_size = 0x80,
-    .size = 0xFFFF,
+    .size = BOARD_EEPROM_SIZE,
 };
 
 nd_eeprom_t *board_eeprom(void)

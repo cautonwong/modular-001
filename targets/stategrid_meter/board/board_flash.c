@@ -35,6 +35,9 @@ static void bus_delay(void *ctx, uint32_t us)
 static nd_mx25l3206e_storage_t flash_storage;
 static nd_mx25l3206e_t *flash;
 
+_Static_assert(BOARD_FLASH_SIZE % BOARD_FLASH_SECTOR == 0,
+               "flash capacity must be a whole number of sectors");
+
 static const nd_mx25l3206e_config_t flash_config = {
     .bus = {
         .ctx = NULL,

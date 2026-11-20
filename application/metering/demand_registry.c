@@ -94,3 +94,13 @@ void nd_demand_registry_on_minute(nd_demand_registry_t *registry,
         }
     }
 }
+
+void nd_demand_registry_reset(nd_demand_registry_t *registry)
+{
+    if (registry == NULL) {
+        return;
+    }
+    for (uint8_t index = 0; index < registry->count; index++) {
+        nd_demand_reset(registry->entries[index].demand);
+    }
+}

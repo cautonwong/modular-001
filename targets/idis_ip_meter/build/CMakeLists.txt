@@ -34,9 +34,10 @@ include(${CMAKE_CURRENT_BINARY_DIR}/product_sources.cmake)
 list(TRANSFORM PRODUCT_SOURCES PREPEND "${ROOT}/")
 # The domain and device-driver closure comes from product.yaml and the
 # component manifests; the target no longer compiles every file itself.
-list(FILTER PRODUCT_SOURCES INCLUDE REGEX "/domain/|/infra/drivers/")
+list(FILTER PRODUCT_SOURCES INCLUDE REGEX "/domain/|/infra/drivers/|/infra/storage/")
 set(LAYER_SOURCES ${PRODUCT_SOURCES})
 set(PROTOCOL_SOURCES ${ROOT}/components/protocol/dlms/src/nd_axdr.c)
+set(MAINTENANCE_SOURCES ${ROOT}/components/services/maintenance/nd_maintenance.c)
 set(INFRA_SOURCES ${ROOT}/infra/memory/byte_store.c
     ${ROOT}/infra/memory/sector_store.c
     ${ROOT}/components/core/types/utils.c
@@ -49,6 +50,7 @@ add_executable(idis
     ${IDIS_SOURCES}
     ${LAYER_SOURCES}
     ${PROTOCOL_SOURCES}
+    ${MAINTENANCE_SOURCES}
     ${INFRA_SOURCES})
 
 target_include_directories(idis PRIVATE
@@ -59,7 +61,11 @@ target_include_directories(idis PRIVATE
     ${SOC}/vendor/Lib_Driver/inc
     ${ROOT}/infra/third_party/arm/cmsis)
 
-target_compile_definitions(idis PRIVATE IDIS_PHASES=${IDIS_PHASES})
+set(ND_ADC_TEMPERATURE_SUPPORT 0 CACHE STRING
+    "0 compiles out the temperature ADC channel; IDIS has no caller")
+target_compile_definitions(idis PRIVATE
+    IDIS_PHASES=${IDIS_PHASES}
+    ND_ADC_TEMPERATURE_SUPPORT=${ND_ADC_TEMPERATURE_SUPPORT})
 # Board transport modes are compile-time and selected per product. Defaults
 # keep the polling path that has HIL history.
 set(ND_BOARD_UART_MODE 0 CACHE STRING "0 poll, 1 irq")
@@ -85,6 +91,7 @@ target_link_options(idis PRIVATE
     -mcpu=cortex-m0 -mthumb -nostartfiles
     -T ${CMAKE_CURRENT_SOURCE_DIR}/idis.ld
     -Wl,--gc-sections
+    -Wl,--sort-section=alignment
     -Wl,-Map=${CMAKE_BINARY_DIR}/idis.map)
 set_target_properties(idis PROPERTIES SUFFIX ".elf")
 

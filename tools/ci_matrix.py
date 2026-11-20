@@ -135,8 +135,8 @@ def check_transport_symbols(matrix: Matrix, label: str, elf: Path,
 
 
 def print_rom(label: str, elf: Path) -> None:
-    vector, text, data, _bss = section_totals(elf_sections(str(elf)))
-    print(f"[{label}] rom={vector + text + data} bytes", flush=True)
+    vector, text, data, _bss, exidx = section_totals(elf_sections(str(elf)))
+    print(f"[{label}] rom={vector + text + data + exidx} bytes", flush=True)
 
 
 def acceptance_cases(target: Path) -> Path | None:
@@ -256,9 +256,13 @@ def main() -> int:
         ("check:component-standard", [sys.executable, str(root / "tools/check_component_standard.py")]),
         ("check:board-modes", [str(root / "tools/check-board-modes.sh")]),
         ("check:domain", [sys.executable, str(root / "tools/check_domain_contracts.py")]),
+        ("check:public-structs", [sys.executable, str(root / "tools/check_public_structs.py")]),
         ("check:rtos", [sys.executable, str(root / "tools/check_rtos_targets.py")]),
+        ("check:rtos-model", [sys.executable, str(root / "tools/check_rtos_model.py")]),
         ("check:ids", [sys.executable, str(root / "tools/check_idis_ids.py")]),
         ("check:id-docs", [sys.executable, str(root / "tools/check_idis_docs.py")]),
+        ("check:rom-budget-docs", [sys.executable, str(root / "tools/check_rom_budget_docs.py")]),
+        ("check:doc-evidence", [sys.executable, str(root / "tools/check_doc_evidence.py")]),
         ("check:audit", [sys.executable, str(root / "tools/check_idis_audit.py"),
                          str(host_build / "idis_host_runner")]),
         ("check:acceptance-matrix", [sys.executable, str(root / "tools/check_acceptance_matrix.py")]),
@@ -271,6 +275,7 @@ def main() -> int:
         ("check:param-tables", [sys.executable, str(root / "tools/check_param_tables.py"),
                                 "--source", str(root / "targets/stategrid_meter/mapper_698/mapper_698.c"),
                                 "--elf", str(host_build / "firmware_sim")]),
+        ("check:ram-budget-counts", [sys.executable, str(root / "tools/check_ram_budget_counts.py")]),
         ("check:dead-code", [sys.executable, str(root / "tools/check_dead_code.py")]),
         ("check:mutable-globals", [sys.executable, str(root / "tools/check_mutable_globals.py")]),
         ("check:products", [sys.executable, str(root / "tools/product_manifest.py"), "--check-all"]),
@@ -318,7 +323,7 @@ def main() -> int:
             continue
         elf = firmware_elf(build, target.name)
         matrix.check(f"{target.name}:firmware", [sys.executable, str(root / "tools/check_idis_firmware.py"),
-                                                str(elf)])
+                                                "--self-check", str(elf)])
         if target.name in TRANSPORT_TARGETS:
             check_transport_symbols(matrix, f"{target.name}:poll-symbols", elf,
                                     irq=False)
@@ -331,7 +336,7 @@ def main() -> int:
                 irq_elf = firmware_elf(irq_build, target.name)
                 matrix.check(f"{target.name}:firmware-irq",
                              [sys.executable, str(root / "tools/check_idis_firmware.py"),
-                              str(irq_elf)])
+                              "--self-check", str(irq_elf)])
                 check_transport_symbols(matrix, f"{target.name}:irq-symbols",
                                         irq_elf, irq=True)
                 print_rom(f"{target.name}:irq-rom", irq_elf)

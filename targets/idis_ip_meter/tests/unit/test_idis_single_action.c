@@ -237,7 +237,7 @@ static void test_default_billing_schedule_captures(void)
     config.captures[0] = (nd_capture_object_t){
         ND_IC_CLOCK, ND_OBIS_CLOCK, 2, 0};
     TEST_ASSERT_EQUAL_INT(0,
-                          nd_idis_profiles_init(&objects.profiles, &config, 1));
+                          nd_idis_profiles_init(&objects.profiles, &config, 1, 0, NULL));
     nd_idis_profiles_bind_port(&objects.profiles, &port);
     nd_idis_single_action_apply_defaults(&objects.single_action);
 

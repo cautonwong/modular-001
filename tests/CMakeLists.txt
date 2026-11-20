@@ -17,7 +17,8 @@ add_custom_target(products_check ALL
 add_library(unity STATIC third_party/unity/src/unity.c)
 target_include_directories(unity PUBLIC third_party/unity/src)
 
-add_library(test_support STATIC support/fake_allocator.c support/file_store.c)
+add_library(test_support STATIC support/fake_allocator.c support/file_store.c
+    support/pulse_harness.c)
 target_include_directories(test_support PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${BLADE_ROOT}
@@ -44,6 +45,7 @@ add_library(blade_components STATIC
     ${BLADE_ROOT}/components/core/bus/nd_bus.c
     ${BLADE_ROOT}/components/core/buf/nd_buf.c
     ${BLADE_ROOT}/components/services/channel/nd_channel.c
+    ${BLADE_ROOT}/components/services/maintenance/nd_maintenance.c
 )
 target_include_directories(blade_components PUBLIC ${BLADE_ROOT})
 
@@ -83,6 +85,7 @@ add_library(blade_idis_skeleton STATIC
     ${BLADE_ROOT}/targets/idis_ip_meter/cosem/classes/nd_ic_setup.c
     ${BLADE_ROOT}/targets/idis_ip_meter/cosem/classes/nd_ic_association.c
     ${BLADE_ROOT}/targets/idis_ip_meter/cosem/nd_idis_registry.c
+    ${BLADE_ROOT}/targets/idis_ip_meter/cosem/nd_idis_calibration.c
     ${BLADE_ROOT}/targets/idis_ip_meter/cosem/nd_idis_mbus.c
     ${BLADE_ROOT}/targets/idis_ip_meter/cosem/nd_idis_average.c
     ${BLADE_ROOT}/targets/idis_ip_meter/cosem/nd_idis_pq.c
@@ -90,6 +93,7 @@ add_library(blade_idis_skeleton STATIC
     ${BLADE_ROOT}/targets/idis_ip_meter/cosem/nd_idis_capture.c
     ${BLADE_ROOT}/targets/idis_ip_meter/cosem/nd_idis_energy_store.c
     ${BLADE_ROOT}/targets/idis_ip_meter/mapper_idis/nd_idis_energy.c
+    ${BLADE_ROOT}/targets/idis_ip_meter/mapper_idis/nd_idis_ids.c
     ${BLADE_ROOT}/targets/idis_ip_meter/cosem/nd_idis_profiles.c
     ${BLADE_ROOT}/targets/idis_ip_meter/cosem/nd_idis_profile_table.c
     ${BLADE_ROOT}/targets/idis_ip_meter/cosem/nd_idis_scheduler.c
@@ -107,6 +111,7 @@ add_library(blade_infra STATIC
     ${BLADE_ROOT}/components/core/types/list.c
     ${BLADE_ROOT}/infra/drivers/storage/eeprom/eeprom.c
     ${BLADE_ROOT}/infra/drivers/storage/mx25l3206e/mx25l3206e.c
+    ${BLADE_ROOT}/infra/drivers/storage/block/block_ops.c
     ${BLADE_ROOT}/infra/drivers/metering/rn8209/rn8209.c
     ${BLADE_ROOT}/infra/drivers/security/esam/esam.c
     ${BLADE_ROOT}/infra/channel/fifo_channel.c
@@ -115,6 +120,9 @@ add_library(blade_infra STATIC
     ${BLADE_ROOT}/infra/memory/sector_store.c
     ${BLADE_ROOT}/infra/memory/file_store.c
     ${BLADE_ROOT}/infra/memory/parameter_store.c
+    ${BLADE_ROOT}/infra/storage/pulse_store.c
+    ${BLADE_ROOT}/infra/storage/pulse_snapshot.c
+    ${BLADE_ROOT}/infra/storage/block_memory.c
 )
 target_include_directories(blade_infra PUBLIC ${BLADE_ROOT})
 target_link_libraries(blade_infra PUBLIC blade_domain)
@@ -125,7 +133,7 @@ add_library(blade_target_stategrid STATIC
     ${BLADE_ROOT}/targets/stategrid_meter/persistence/legacy_tariff_parser.c
     ${BLADE_ROOT}/targets/stategrid_meter/app/tariff_lookup.c
 )
-target_link_libraries(blade_target_stategrid PUBLIC blade_domain)
+target_link_libraries(blade_target_stategrid PUBLIC blade_domain blade_infra)
 
 add_library(blade_application STATIC
     ${BLADE_ROOT}/application/metering/application.c
@@ -159,7 +167,7 @@ add_executable(host_runner ${BLADE_ROOT}/targets/host/host_main.c)
 target_link_libraries(host_runner PRIVATE blade_target_host)
 
 add_executable(idis_host_runner ${BLADE_ROOT}/targets/host/idis_host_main.c)
-target_link_libraries(idis_host_runner PRIVATE blade_idis_skeleton blade_infra)
+target_link_libraries(idis_host_runner PRIVATE blade_idis_skeleton blade_components blade_infra)
 
 file(GLOB TEST_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/unit/*.c"
@@ -183,11 +191,39 @@ foreach(src ${TEST_SOURCES})
     if(name STREQUAL "test_board_transport")
         target_link_libraries(${name} PRIVATE blade_board_transport)
     endif()
+    if(name STREQUAL "test_mbase_search_counts")
+        # The 698 resource manager is packed to 4 bytes and hosts 8-byte
+        # pointers, so its list nodes are misaligned only on the host. The
+        # firmware sim disables alignment checks for the same reason.
+        target_compile_options(${name} PRIVATE -fno-sanitize=alignment)
+    endif()
+    if(name MATCHES "^test_metering_energy_")
+        target_sources(${name} PRIVATE
+            ${BLADE_ROOT}/targets/stategrid_meter/app/metering_energy_adapter.c)
+    endif()
     add_test(NAME ${name} COMMAND ${name})
 endforeach()
 
 target_include_directories(test_file_persistence PRIVATE
     ${BLADE_ROOT}/targets/stategrid_meter
+)
+
+target_sources(test_demand_adapter PRIVATE
+    ${BLADE_ROOT}/targets/stategrid_meter/app/metering/demand_adapter.c
+)
+
+# rn8209c_get lives in the legacy metering translation unit. The test drives
+# that entry directly and supplies the rest of the unit's linker surface.
+target_sources(test_rn8209c_get PRIVATE
+    ${BLADE_ROOT}/targets/stategrid_meter/app/metering/electrical_measurement.c
+)
+target_include_directories(test_rn8209c_get PRIVATE
+    ${BLADE_ROOT}/infra/soc/v85xxp/v8500
+)
+target_link_libraries(test_rn8209c_get PRIVATE m)
+set_source_files_properties(
+    ${BLADE_ROOT}/targets/stategrid_meter/app/metering/electrical_measurement.c
+    PROPERTIES COMPILE_OPTIONS "-w;-Wno-error=implicit-function-declaration"
 )
 
 target_sources(test_fr_698_frame PRIVATE
@@ -208,6 +244,20 @@ target_sources(test_fr_698_set_len PRIVATE
 )
 target_sources(test_fr_698_client PRIVATE
     ${BLADE_ROOT}/application/adapters/dl698/fr_698_client.c
+)
+
+# The mbase search count test compiles the legacy resource manager directly.
+# It is vendor-style code with implicit declarations and unused helpers, so it
+# keeps its own -w; the test file itself stays under the shared warning flags.
+target_sources(test_mbase_search_counts PRIVATE
+    ${BLADE_ROOT}/targets/stategrid_meter/tools/app_resource_tool/resource_tool.c
+    ${BLADE_ROOT}/components/core/types/utils.c
+    ${BLADE_ROOT}/components/core/types/list.c
+)
+set_source_files_properties(
+    ${BLADE_ROOT}/targets/stategrid_meter/tools/app_resource_tool/resource_tool.c
+    ${BLADE_ROOT}/components/core/types/utils.c
+    PROPERTIES COMPILE_OPTIONS "-w;-Wno-error=implicit-function-declaration"
 )
 
 # ---------------------------------------------------------------------------

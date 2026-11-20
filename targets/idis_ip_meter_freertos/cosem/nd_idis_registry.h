@@ -55,6 +55,12 @@ int nd_idis_registry_remove(nd_idis_registry_t *registry, uint8_t class_id,
 int nd_idis_registry_load(nd_idis_registry_t *registry, const nd_store_t *store,
                           uint32_t offset);
 
+/* Returns 1 when a well-formed blob header at offset describes a blob whose
+ * written bytes, header and trailer included, reach target. Reads the header
+ * only, so a corrupt tail does not change the answer. */
+int nd_idis_registry_covers(const nd_store_t *store, uint32_t offset,
+                            uint32_t target);
+
 uint32_t nd_idis_registry_blob_size(uint16_t count);
 
 #endif

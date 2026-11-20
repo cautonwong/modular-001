@@ -75,6 +75,7 @@ void report_2015state_judge(void * instance)
             report_645state_judge(instance, RPT_2015_MEMORIZER_ERR);
             report_2015state_update(instance, RPT_2015_MEMORIZER_ERR);
         }
+        nd_platform_device_error_reported();
     }
     else
     {

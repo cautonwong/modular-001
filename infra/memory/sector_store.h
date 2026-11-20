@@ -9,6 +9,8 @@
 /*
  * Byte store over a NOR-like device: reads are direct, writes are
  * read-modify-erase-write of one sector. The caller owns the sector buffer.
+ * When enabled, reads are served from a one-sector read-through window kept
+ * in that buffer; any write or erase invalidates the window.
  */
 typedef int (*nd_sector_read_fn)(void *ctx, uint32_t offset, uint8_t *buffer,
                                  size_t length);
@@ -25,12 +27,16 @@ typedef struct {
     uint32_t capacity;
     uint32_t sector_size;
     uint8_t *sector;
+    uint32_t window_base;
+    uint8_t window_valid;
+    uint8_t window_enabled;
 } nd_sector_store_t;
 
 void nd_sector_store_init(nd_sector_store_t *store, void *ctx,
                           nd_sector_read_fn read, nd_sector_erase_fn erase,
                           nd_sector_write_fn write, uint32_t capacity,
-                          uint32_t sector_size, uint8_t *sector_buffer);
+                          uint32_t sector_size, uint8_t *sector_buffer,
+                          uint8_t enable_window);
 nd_store_t *nd_sector_store_port(nd_sector_store_t *store);
 
 #endif

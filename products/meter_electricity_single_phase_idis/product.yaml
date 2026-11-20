@@ -11,19 +11,17 @@ components:
   - domain.load_control
   - domain.mbus
   - domain.push
-  # Host-test only in this firmware: no application.ports source is linked;
-  # application.ports pulls services.channel into the manifest closure. Both
-  # are recorded in tools/product_link_baseline.txt.
-  - application.ports
   - domain.report
   - domain.security
   - soc.v85xxp_v8500
+  - driver.storage_block
   - driver.storage_eeprom
   - driver.storage_mx25l3206e
+  - infra.storage
   - driver.metering_rn8209
   - driver.security_esam
   - core.fifo
-  - services.channel
+  - services.maintenance
   # The firmware links src/nd_axdr.c only; src/nd_dlms_*.c are test-only.
   - protocol.dlms
   - third_party.arm_cmsis

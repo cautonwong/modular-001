@@ -3,4 +3,6 @@ open Lake DSL
 
 package blade_formal
 
-lean_lib BladeFormal
+@[default_target]
+lean_lib BladeFormal where
+  globs := #[.submodules `BladeFormal]

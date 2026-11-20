@@ -19,7 +19,7 @@ cmake --build build --target firmware_sim
 ```
 
 默认镜像写在 `backupfiles/firmware_eeprom.bin`（65535 字节）和
-`backupfiles/firmware_flash.bin`（8388607 字节），首次打开全部填 `0xFF`。
+`backupfiles/firmware_flash.bin`（4194304 字节），首次打开全部填 `0xFF`。
 `--eeprom`、`--flash` 可以指向独立场景目录。`--verbose` 才输出报文、filter 和
 应用阶段；不加时只输出每周期的时间行。
 

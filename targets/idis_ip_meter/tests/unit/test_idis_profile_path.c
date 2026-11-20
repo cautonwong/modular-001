@@ -12,6 +12,78 @@
 static nd_dlms_datetime_t fake_clock_now;
 static uint32_t fake_measurement_base;
 
+typedef struct {
+    nd_store_t port;
+    nd_store_t inner;
+    unsigned int reads;
+    unsigned int append_at_read;
+    uint8_t append_times;
+    uint8_t append_minute;
+    nd_idis_profile_state_t *append_profile;
+} counting_store_t;
+
+static counting_store_t counted;
+
+/* A save worker appending while GET scans: the hook runs after the read that
+ * took the count to append_at_read, i.e. the last read of the count pass. */
+static void append_matching_record(counting_store_t *store)
+{
+    nd_idis_profile_state_t *profile = store->append_profile;
+    uint8_t record[64];
+    nd_axdr_writer_t writer;
+    nd_axdr_writer_init(&writer, record, sizeof(record));
+    for (uint8_t col = 0; col < profile->capture_count; col++) {
+        const nd_capture_object_t *capture = &profile->captures[col];
+        nd_capture_value_t value = {0};
+        if (capture->class_id == ND_IC_CLOCK) {
+            value.type = ND_CAPTURE_CLOCK;
+            value.value.clock.time.year = 2026;
+            value.value.clock.time.month = 11;
+            value.value.clock.time.day = 11;
+            value.value.clock.time.minute = store->append_minute;
+            value.value.clock.day_of_week = 7;
+        } else {
+            value.type = ND_CAPTURE_SIGNED;
+            value.value.signed_value = fake_measurement_base;
+        }
+        TEST_ASSERT_EQUAL_INT(0,
+                              nd_idis_capture_write(capture, &value, &writer));
+    }
+    nd_datetime_t time = {.year = 2026, .month = 11, .day = 11,
+                          .minute = store->append_minute};
+    TEST_ASSERT_EQUAL_INT(0,
+                          nd_profile_store_append(&profile->store, &time, 0,
+                                                  record, writer.len));
+}
+
+static int counting_read(void *ctx, uint32_t offset, uint8_t *buffer,
+                         size_t length)
+{
+    counting_store_t *store = ctx;
+    int status = store->inner.read(store->inner.ctx, offset, buffer, length);
+    store->reads++;
+    if (store->append_at_read != 0 && store->reads == store->append_at_read) {
+        store->append_at_read = 0;
+        for (uint8_t i = 0; i < store->append_times; i++) {
+            append_matching_record(store);
+        }
+    }
+    return status;
+}
+
+static int counting_write(void *ctx, uint32_t offset, const uint8_t *buffer,
+                          size_t length)
+{
+    counting_store_t *store = ctx;
+    return store->inner.write(store->inner.ctx, offset, buffer, length);
+}
+
+static int counting_erase(void *ctx, uint32_t offset, size_t length)
+{
+    counting_store_t *store = ctx;
+    return store->inner.erase(store->inner.ctx, offset, length);
+}
+
 void setUp(void)
 {
     fake_clock_now = (nd_dlms_datetime_t){
@@ -23,6 +95,7 @@ void setUp(void)
         .second = 0,
     };
     fake_measurement_base = 2300;
+    counted.append_times = 1;
 }
 void tearDown(void) {}
 
@@ -75,7 +148,7 @@ static void test_profile_action_capture_and_get(void)
     };
     config.captures[0] = captures[0];
     config.captures[1] = captures[1];
-    TEST_ASSERT_EQUAL_INT(0, nd_idis_profiles_init(&objects.profiles, &config, 1));
+    TEST_ASSERT_EQUAL_INT(0, nd_idis_profiles_init(&objects.profiles, &config, 1, 0, NULL));
     nd_cosem_port_t port = {
         .ctx = &objects,
         .get = nd_cosem_port_get,
@@ -164,7 +237,7 @@ static void test_profile_on_second_uses_capture_period(void)
         .capture_period = 60,
     };
     config.captures[0] = captures[0];
-    TEST_ASSERT_EQUAL_INT(0, nd_idis_profiles_init(&objects.profiles, &config, 1));
+    TEST_ASSERT_EQUAL_INT(0, nd_idis_profiles_init(&objects.profiles, &config, 1, 0, NULL));
     nd_cosem_port_t port = {
         .ctx = &objects,
         .get = nd_cosem_port_get,
@@ -215,7 +288,7 @@ static void test_multiple_profiles_are_independent(void)
 
     nd_idis_objects_t objects = {0};
     objects.clock.port = &clock_port;
-    TEST_ASSERT_EQUAL_INT(0, nd_idis_profiles_init(&objects.profiles, configs, 2));
+    TEST_ASSERT_EQUAL_INT(0, nd_idis_profiles_init(&objects.profiles, configs, 2, 0, NULL));
     nd_cosem_port_t port = {
         .ctx = &objects,
         .get = nd_cosem_port_get,
@@ -344,7 +417,7 @@ static nd_idis_profile_state_t *setup_profile(nd_idis_objects_t *objects,
     memset(objects, 0, sizeof(*objects));
     objects->clock.port = clock_port;
     objects->reg.measurement = measurement;
-    if (nd_idis_profiles_init(&objects->profiles, &config, 1) != 0) {
+    if (nd_idis_profiles_init(&objects->profiles, &config, 1, 0, NULL) != 0) {
         return NULL;
     }
     nd_cosem_port_t port = {
@@ -455,6 +528,562 @@ static void test_profile_selective_clock_range(void)
                                             &selector_reader, &out));
     TEST_ASSERT_EQUAL_UINT8(0x01, buffer[0]);
     TEST_ASSERT_EQUAL_UINT8(2, buffer[1]);
+}
+
+/* One read per entry in the count pass, one per entry in the write pass. The
+ * predicate hands its record to the encoder, so a match costs no extra read. */
+static void test_profile_value_range_get_read_counts(void)
+{
+    static uint8_t memory[4096];
+    nd_byte_store_t store;
+    nd_clock_port_t clock_port = {.ctx = NULL, .read = fake_clock_read};
+    nd_measurement_port_t measurement = {.ctx = NULL,
+                                         .read = fake_measurement};
+    nd_idis_objects_t objects;
+    nd_idis_profile_state_t *profile =
+        setup_profile(&objects, &store, memory, sizeof(memory), &clock_port,
+                      &measurement, 0, 60, 0, 0);
+    TEST_ASSERT_NOT_NULL(profile);
+    counted.inner = *nd_byte_store_port(&store);
+    counted.port = (nd_store_t){.ctx = &counted,
+                                .read = counting_read,
+                                .write = counting_write,
+                                .erase = counting_erase};
+    profile->store.store = &counted.port;
+
+    nd_cosem_port_t port = {
+        .ctx = &objects,
+        .get = nd_cosem_port_get,
+        .set = nd_cosem_port_set,
+        .action = nd_cosem_port_action,
+    };
+    nd_clock_value_t now = {.time = {.year = 2026, .month = 11, .day = 11}};
+    for (uint8_t index = 0; index < 3; index++) {
+        now.time.minute = index;
+        fake_clock_now = (nd_dlms_datetime_t){
+            .year = 2026, .month = 11, .day = 11, .minute = index};
+        TEST_ASSERT_EQUAL_INT(ND_OK,
+                              nd_idis_profile_capture(profile, &port, 16, &now));
+    }
+
+    uint8_t selector[128];
+    size_t selector_length = make_clock_range_selector(selector,
+                                                       sizeof(selector), 0, 0,
+                                                       0, 3);
+    nd_axdr_reader_t selector_reader;
+    nd_axdr_reader_init(&selector_reader, selector, selector_length);
+    uint8_t buffer[256];
+    nd_axdr_writer_t out;
+    nd_axdr_writer_init(&out, buffer, sizeof(buffer));
+    counted.reads = 0;
+    TEST_ASSERT_EQUAL_INT(ND_OK,
+                          nd_cosem_port_get(&objects, 16, ND_IC_PROFILE_GENERIC,
+                                            &ND_OBIS_BILLING_PROFILE, 2,
+                                            &selector_reader, &out));
+    TEST_ASSERT_EQUAL_UINT(6, counted.reads);
+    TEST_ASSERT_EQUAL_UINT8(0x01, buffer[0]);
+    TEST_ASSERT_EQUAL_UINT8(3, buffer[1]);
+
+    selector_length = make_clock_range_selector(selector, sizeof(selector), 5,
+                                                0, 6, 0);
+    nd_axdr_reader_init(&selector_reader, selector, selector_length);
+    nd_axdr_writer_init(&out, buffer, sizeof(buffer));
+    counted.reads = 0;
+    TEST_ASSERT_EQUAL_INT(ND_OK,
+                          nd_cosem_port_get(&objects, 16, ND_IC_PROFILE_GENERIC,
+                                            &ND_OBIS_BILLING_PROFILE, 2,
+                                            &selector_reader, &out));
+    TEST_ASSERT_EQUAL_UINT(6, counted.reads);
+    TEST_ASSERT_EQUAL_UINT8(0x01, buffer[0]);
+    TEST_ASSERT_EQUAL_UINT8(0, buffer[1]);
+
+    nd_axdr_writer_init(&out, buffer, sizeof(buffer));
+    counted.reads = 0;
+    TEST_ASSERT_EQUAL_INT(ND_OK,
+                          nd_cosem_port_get(&objects, 16, ND_IC_PROFILE_GENERIC,
+                                            &ND_OBIS_BILLING_PROFILE, 2, NULL,
+                                            &out));
+    TEST_ASSERT_EQUAL_UINT(3, counted.reads);
+    TEST_ASSERT_EQUAL_UINT8(0x01, buffer[0]);
+    TEST_ASSERT_EQUAL_UINT8(3, buffer[1]);
+
+    selector_length = make_entry_selector(selector, sizeof(selector), 2, 3, 1,
+                                          2);
+    nd_axdr_reader_init(&selector_reader, selector, selector_length);
+    nd_axdr_writer_init(&out, buffer, sizeof(buffer));
+    counted.reads = 0;
+    TEST_ASSERT_EQUAL_INT(ND_OK,
+                          nd_cosem_port_get(&objects, 16, ND_IC_PROFILE_GENERIC,
+                                            &ND_OBIS_BILLING_PROFILE, 2,
+                                            &selector_reader, &out));
+    TEST_ASSERT_EQUAL_UINT(2, counted.reads);
+    TEST_ASSERT_EQUAL_UINT8(0x01, buffer[0]);
+    TEST_ASSERT_EQUAL_UINT8(2, buffer[1]);
+}
+
+/* Parse a GET response: declared array length and structures actually present. */
+static int response_rows(const uint8_t *buffer, size_t length,
+                         uint16_t *declared, unsigned int *rows)
+{
+    nd_axdr_reader_t in;
+    nd_axdr_reader_init(&in, buffer, length);
+    if (nd_axdr_get_tag(&in) != ND_AXDR_ARRAY) {
+        return -1;
+    }
+    *declared = nd_axdr_get_length(&in);
+    unsigned int count = 0;
+    while (nd_axdr_remaining(&in) > 0) {
+        if (nd_axdr_get_tag(&in) != ND_AXDR_STRUCTURE) {
+            return -1;
+        }
+        uint16_t fields = nd_axdr_get_length(&in);
+        for (uint16_t field = 0; field < fields; field++) {
+            if (nd_axdr_skip_value(&in) != 0) {
+                return -1;
+            }
+        }
+        count++;
+    }
+    *rows = count;
+    return 0;
+}
+
+/* Minutes of the clock column, first in every profile row. */
+static unsigned int response_clock_minutes(const uint8_t *buffer, size_t length,
+                                           uint8_t *minutes,
+                                           unsigned int capacity)
+{
+    nd_axdr_reader_t in;
+    nd_axdr_reader_init(&in, buffer, length);
+    if (nd_axdr_get_tag(&in) != ND_AXDR_ARRAY) {
+        return 0;
+    }
+    (void)nd_axdr_get_length(&in);
+    unsigned int count = 0;
+    while (nd_axdr_remaining(&in) > 0) {
+        if (nd_axdr_get_tag(&in) != ND_AXDR_STRUCTURE) {
+            return 0;
+        }
+        uint16_t fields = nd_axdr_get_length(&in);
+        if (fields == 0 || nd_axdr_get_tag(&in) != ND_AXDR_DATE_TIME) {
+            return 0;
+        }
+        (void)nd_axdr_get_u16(&in);
+        (void)nd_axdr_get_u8(&in);
+        (void)nd_axdr_get_u8(&in);
+        (void)nd_axdr_get_u8(&in);
+        (void)nd_axdr_get_u8(&in);
+        uint8_t minute = nd_axdr_get_u8(&in);
+        (void)nd_axdr_get_u8(&in);
+        (void)nd_axdr_get_u8(&in);
+        (void)nd_axdr_get_i16(&in);
+        (void)nd_axdr_get_u8(&in);
+        if (count < capacity) {
+            minutes[count] = minute;
+        }
+        count++;
+        for (uint16_t field = 1; field < fields; field++) {
+            if (nd_axdr_skip_value(&in) != 0) {
+                return 0;
+            }
+        }
+    }
+    return count;
+}
+
+static void test_profile_get_snapshot_holds_header_and_rows(void)
+{
+    static uint8_t memory[4096];
+    nd_byte_store_t store;
+    nd_clock_port_t clock_port = {.ctx = NULL, .read = fake_clock_read};
+    nd_measurement_port_t measurement = {.ctx = NULL,
+                                         .read = fake_measurement};
+    nd_idis_objects_t objects;
+    nd_idis_profile_state_t *profile =
+        setup_profile(&objects, &store, memory, sizeof(memory), &clock_port,
+                      &measurement, 0, 0, 0, 0);
+    TEST_ASSERT_NOT_NULL(profile);
+    counted.inner = *nd_byte_store_port(&store);
+    counted.port = (nd_store_t){.ctx = &counted,
+                                .read = counting_read,
+                                .write = counting_write,
+                                .erase = counting_erase};
+    counted.append_profile = profile;
+    counted.append_minute = 3;
+    counted.append_at_read = 0;
+    profile->store.store = &counted.port;
+
+    nd_cosem_port_t port = {
+        .ctx = &objects,
+        .get = nd_cosem_port_get,
+        .set = nd_cosem_port_set,
+        .action = nd_cosem_port_action,
+    };
+    nd_clock_value_t now = {.time = {.year = 2026, .month = 11, .day = 11}};
+    for (uint8_t index = 0; index < 3; index++) {
+        now.time.minute = index;
+        fake_clock_now = (nd_dlms_datetime_t){
+            .year = 2026, .month = 11, .day = 11, .minute = index};
+        TEST_ASSERT_EQUAL_INT(ND_OK,
+                              nd_idis_profile_capture(profile, &port, 16, &now));
+    }
+
+    uint8_t selector[128];
+    size_t selector_length = make_clock_range_selector(selector,
+                                                       sizeof(selector), 0, 0,
+                                                       0, 3);
+    nd_axdr_reader_t selector_reader;
+    nd_axdr_reader_init(&selector_reader, selector, selector_length);
+    uint8_t buffer[256];
+    nd_axdr_writer_t out;
+    nd_axdr_writer_init(&out, buffer, sizeof(buffer));
+    counted.reads = 0;
+    counted.append_at_read = 3;
+    TEST_ASSERT_EQUAL_INT(ND_OK,
+                          nd_cosem_port_get(&objects, 16, ND_IC_PROFILE_GENERIC,
+                                            &ND_OBIS_BILLING_PROFILE, 2,
+                                            &selector_reader, &out));
+    TEST_ASSERT_EQUAL_UINT16(4, nd_profile_store_entries(&profile->store));
+
+    uint16_t declared = 0;
+    unsigned int rows = 0;
+    TEST_ASSERT_EQUAL_INT(0, response_rows(buffer, out.len, &declared, &rows));
+    TEST_ASSERT_EQUAL_UINT16(3, declared);
+    TEST_ASSERT_EQUAL_UINT(declared, rows);
+}
+
+static void test_profile_get_rejects_append_that_wraps_snapshot(void)
+{
+    static uint8_t memory[4096];
+    nd_byte_store_t store;
+    nd_clock_port_t clock_port = {.ctx = NULL, .read = fake_clock_read};
+    nd_measurement_port_t measurement = {.ctx = NULL,
+                                         .read = fake_measurement};
+    nd_idis_objects_t objects;
+    nd_idis_profile_state_t *profile =
+        setup_profile(&objects, &store, memory, sizeof(memory), &clock_port,
+                      &measurement, 0, 0, 0, 0);
+    TEST_ASSERT_NOT_NULL(profile);
+    counted.inner = *nd_byte_store_port(&store);
+    counted.port = (nd_store_t){.ctx = &counted,
+                                .read = counting_read,
+                                .write = counting_write,
+                                .erase = counting_erase};
+    counted.append_profile = profile;
+    counted.append_minute = 8;
+    counted.append_at_read = 0;
+    profile->store.store = &counted.port;
+
+    nd_cosem_port_t port = {
+        .ctx = &objects,
+        .get = nd_cosem_port_get,
+        .set = nd_cosem_port_set,
+        .action = nd_cosem_port_action,
+    };
+    nd_clock_value_t now = {.time = {.year = 2026, .month = 11, .day = 11}};
+    for (uint8_t index = 0; index < 8; index++) {
+        now.time.minute = index;
+        fake_clock_now = (nd_dlms_datetime_t){
+            .year = 2026, .month = 11, .day = 11, .minute = index};
+        TEST_ASSERT_EQUAL_INT(ND_OK,
+                              nd_idis_profile_capture(profile, &port, 16, &now));
+    }
+    TEST_ASSERT_EQUAL_UINT16(8, nd_profile_store_entries(&profile->store));
+
+    uint8_t selector[128];
+    size_t selector_length = make_clock_range_selector(selector,
+                                                       sizeof(selector), 0, 0,
+                                                       0, 8);
+    nd_axdr_reader_t selector_reader;
+    nd_axdr_reader_init(&selector_reader, selector, selector_length);
+    uint8_t buffer[256];
+    nd_axdr_writer_t out;
+    nd_axdr_writer_init(&out, buffer, sizeof(buffer));
+    counted.reads = 0;
+    counted.append_at_read = 8;
+    TEST_ASSERT_EQUAL_INT(ND_ERR_OPERATION_NOT_POSSIBLE,
+                          nd_cosem_port_get(&objects, 16, ND_IC_PROFILE_GENERIC,
+                                            &ND_OBIS_BILLING_PROFILE, 2,
+                                            &selector_reader, &out));
+    TEST_ASSERT_EQUAL_UINT(0, counted.append_at_read);
+}
+
+static void test_profile_action_range_snapshot_holds_rows(void)
+{
+    static uint8_t memory[4096];
+    nd_byte_store_t store;
+    nd_clock_port_t clock_port = {.ctx = NULL, .read = fake_clock_read};
+    nd_measurement_port_t measurement = {.ctx = NULL,
+                                         .read = fake_measurement};
+    nd_idis_objects_t objects;
+    nd_idis_profile_state_t *profile =
+        setup_profile(&objects, &store, memory, sizeof(memory), &clock_port,
+                      &measurement, 0, 0, 0, 0);
+    TEST_ASSERT_NOT_NULL(profile);
+    counted.inner = *nd_byte_store_port(&store);
+    counted.port = (nd_store_t){.ctx = &counted,
+                                .read = counting_read,
+                                .write = counting_write,
+                                .erase = counting_erase};
+    counted.append_profile = profile;
+    counted.append_minute = 8;
+    counted.append_at_read = 0;
+    profile->store.store = &counted.port;
+
+    nd_cosem_port_t port = {
+        .ctx = &objects,
+        .get = nd_cosem_port_get,
+        .set = nd_cosem_port_set,
+        .action = nd_cosem_port_action,
+    };
+    nd_clock_value_t now = {.time = {.year = 2026, .month = 11, .day = 11}};
+    for (uint8_t index = 0; index < 8; index++) {
+        now.time.minute = index;
+        fake_clock_now = (nd_dlms_datetime_t){
+            .year = 2026, .month = 11, .day = 11, .minute = index};
+        TEST_ASSERT_EQUAL_INT(ND_OK,
+                              nd_idis_profile_capture(profile, &port, 16, &now));
+    }
+    TEST_ASSERT_EQUAL_UINT16(8, nd_profile_store_entries(&profile->store));
+
+    uint8_t range[4] = {ND_AXDR_INTEGER, 1, ND_AXDR_INTEGER, 8};
+    nd_axdr_reader_t in;
+    nd_axdr_reader_init(&in, range, sizeof(range));
+    uint8_t buffer[256];
+    nd_axdr_writer_t out;
+    nd_axdr_writer_init(&out, buffer, sizeof(buffer));
+    counted.reads = 0;
+    counted.append_at_read = 1;
+    TEST_ASSERT_EQUAL_INT(ND_OK,
+                          nd_cosem_port_action(&objects, 16,
+                                               ND_IC_PROFILE_GENERIC,
+                                               &ND_OBIS_BILLING_PROFILE, 3,
+                                               &in, &out));
+    TEST_ASSERT_EQUAL_UINT(0, counted.append_at_read);
+    TEST_ASSERT_EQUAL_UINT(8, counted.reads);
+    TEST_ASSERT_EQUAL_UINT16(8, nd_profile_store_entries(&profile->store));
+
+    uint16_t declared = 0;
+    unsigned int rows = 0;
+    TEST_ASSERT_EQUAL_INT(0, response_rows(buffer, out.len, &declared, &rows));
+    TEST_ASSERT_EQUAL_UINT16(8, declared);
+    TEST_ASSERT_EQUAL_UINT(8, rows);
+    uint8_t minutes[8] = {0};
+    TEST_ASSERT_EQUAL_UINT(
+        8, response_clock_minutes(buffer, out.len, minutes, 8));
+    const uint8_t expected[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(expected, minutes, 8);
+}
+
+static void test_profile_action_index_snapshot_holds_row(void)
+{
+    static uint8_t memory[4096];
+    nd_byte_store_t store;
+    nd_clock_port_t clock_port = {.ctx = NULL, .read = fake_clock_read};
+    nd_measurement_port_t measurement = {.ctx = NULL,
+                                         .read = fake_measurement};
+    nd_idis_objects_t objects;
+    nd_idis_profile_state_t *profile =
+        setup_profile(&objects, &store, memory, sizeof(memory), &clock_port,
+                      &measurement, 0, 0, 0, 0);
+    TEST_ASSERT_NOT_NULL(profile);
+    counted.inner = *nd_byte_store_port(&store);
+    counted.port = (nd_store_t){.ctx = &counted,
+                                .read = counting_read,
+                                .write = counting_write,
+                                .erase = counting_erase};
+    counted.append_profile = profile;
+    counted.append_minute = 8;
+    counted.append_at_read = 0;
+    profile->store.store = &counted.port;
+
+    nd_cosem_port_t port = {
+        .ctx = &objects,
+        .get = nd_cosem_port_get,
+        .set = nd_cosem_port_set,
+        .action = nd_cosem_port_action,
+    };
+    nd_clock_value_t now = {.time = {.year = 2026, .month = 11, .day = 11}};
+    for (uint8_t index = 0; index < 8; index++) {
+        now.time.minute = index;
+        fake_clock_now = (nd_dlms_datetime_t){
+            .year = 2026, .month = 11, .day = 11, .minute = index};
+        TEST_ASSERT_EQUAL_INT(ND_OK,
+                              nd_idis_profile_capture(profile, &port, 16, &now));
+    }
+
+    uint8_t index_bytes[2] = {ND_AXDR_INTEGER, 1};
+    nd_axdr_reader_t in;
+    nd_axdr_reader_init(&in, index_bytes, sizeof(index_bytes));
+    uint8_t buffer[64];
+    nd_axdr_writer_t out;
+    nd_axdr_writer_init(&out, buffer, sizeof(buffer));
+    counted.reads = 0;
+    counted.append_at_read = 1;
+    TEST_ASSERT_EQUAL_INT(ND_OK,
+                          nd_cosem_port_action(&objects, 16,
+                                               ND_IC_PROFILE_GENERIC,
+                                               &ND_OBIS_BILLING_PROFILE, 4,
+                                               &in, &out));
+    TEST_ASSERT_EQUAL_UINT(0, counted.append_at_read);
+    TEST_ASSERT_EQUAL_UINT(1, counted.reads);
+    TEST_ASSERT_EQUAL_UINT16(8, nd_profile_store_entries(&profile->store));
+
+    uint16_t declared = 0;
+    unsigned int rows = 0;
+    TEST_ASSERT_EQUAL_INT(0, response_rows(buffer, out.len, &declared, &rows));
+    TEST_ASSERT_EQUAL_UINT16(1, declared);
+    TEST_ASSERT_EQUAL_UINT(1, rows);
+    uint8_t minutes[1] = {0};
+    TEST_ASSERT_EQUAL_UINT(1,
+                           response_clock_minutes(buffer, out.len, minutes, 1));
+    TEST_ASSERT_EQUAL_UINT8(0, minutes[0]);
+}
+
+/* The store hook only fires inside a row read, after the action took its
+ * snapshot and clamped from/to (or the index) to snapshot.entries. No store
+ * call sits between the snapshot and the bound, so a store-injected append
+ * cannot observe that window; what the hook does lock is that the row reads
+ * use the frozen snapshot. A full ring wraps on the injected appends, so the
+ * first row's slot moves after it is emitted and the second row's slot moves
+ * before read_at validates it. Method 4 reads one slot and the hook fires
+ * after that read, so the same injection cannot reject its already-buffered
+ * row; both methods reject through the same write_row_at read_at check,
+ * covered here through method 3. */
+static void test_profile_action_range_rejection_retries_cleanly(void)
+{
+    static uint8_t memory[4096];
+    nd_byte_store_t store;
+    nd_byte_store_init(&store, memory, sizeof(memory));
+    nd_clock_port_t clock_port = {.ctx = NULL, .read = fake_clock_read};
+    nd_measurement_port_t measurement = {.ctx = NULL,
+                                         .read = fake_measurement};
+    const nd_capture_object_t captures[] = {
+        {ND_IC_CLOCK, ND_OBIS_CLOCK, 2, 0},
+        {ND_IC_REGISTER, ND_OBIS_VOLTAGE_L1, 2, 0},
+    };
+    nd_idis_profile_config_t config = {
+        .ln = ND_OBIS_BILLING_PROFILE,
+        .store = nd_byte_store_port(&store),
+        .base_offset = 0,
+        .capacity = 2,
+        .slot_size = 128,
+        .clock = &clock_port,
+        .capture_count = 2,
+        .capture_period = 0,
+    };
+    config.captures[0] = captures[0];
+    config.captures[1] = captures[1];
+    nd_idis_objects_t objects = {0};
+    objects.clock.port = &clock_port;
+    objects.reg.measurement = &measurement;
+    TEST_ASSERT_EQUAL_INT(0,
+                          nd_idis_profiles_init(&objects.profiles, &config, 1,
+                                                0, NULL));
+    nd_cosem_port_t port = {
+        .ctx = &objects,
+        .get = nd_cosem_port_get,
+        .set = nd_cosem_port_set,
+        .action = nd_cosem_port_action,
+    };
+    nd_idis_profiles_bind_port(&objects.profiles, &port);
+    nd_idis_profile_state_t *profile = &objects.profiles.items[0];
+    counted.inner = *nd_byte_store_port(&store);
+    counted.port = (nd_store_t){.ctx = &counted,
+                                .read = counting_read,
+                                .write = counting_write,
+                                .erase = counting_erase};
+    counted.append_profile = profile;
+    counted.append_minute = 8;
+    counted.append_at_read = 0;
+    profile->store.store = &counted.port;
+
+    nd_clock_value_t now = {.time = {.year = 2026, .month = 11, .day = 11}};
+    for (uint8_t index = 0; index < 2; index++) {
+        now.time.minute = index;
+        fake_clock_now = (nd_dlms_datetime_t){
+            .year = 2026, .month = 11, .day = 11, .minute = index};
+        TEST_ASSERT_EQUAL_INT(ND_OK,
+                              nd_idis_profile_capture(profile, &port, 16, &now));
+    }
+    TEST_ASSERT_EQUAL_UINT16(2, nd_profile_store_entries(&profile->store));
+
+    uint8_t range[4] = {ND_AXDR_INTEGER, 1, ND_AXDR_INTEGER, 2};
+    nd_axdr_reader_t in;
+    nd_axdr_reader_init(&in, range, sizeof(range));
+    uint8_t buffer[256];
+    nd_axdr_writer_t out;
+    nd_axdr_writer_init(&out, buffer, sizeof(buffer));
+    counted.reads = 0;
+    counted.append_at_read = 1;
+    counted.append_times = 2;
+    TEST_ASSERT_EQUAL_INT(ND_ERR_OPERATION_NOT_POSSIBLE,
+                          nd_cosem_port_action(&objects, 16,
+                                               ND_IC_PROFILE_GENERIC,
+                                               &ND_OBIS_BILLING_PROFILE, 3,
+                                               &in, &out));
+    /* The port contract leaves the writer contents undefined on an error, so
+     * the retry below is the observable recovery, not the partial bytes. */
+    TEST_ASSERT_EQUAL_UINT(2, counted.reads);
+
+    /* On a non-OK result the caller discards and re-inits the writer. */
+    counted.append_at_read = 0;
+    nd_axdr_writer_init(&out, buffer, sizeof(buffer));
+    nd_axdr_reader_init(&in, range, sizeof(range));
+    TEST_ASSERT_EQUAL_INT(ND_OK,
+                          nd_cosem_port_action(&objects, 16,
+                                               ND_IC_PROFILE_GENERIC,
+                                               &ND_OBIS_BILLING_PROFILE, 3,
+                                               &in, &out));
+    uint16_t declared = 0;
+    unsigned int rows = 0;
+    TEST_ASSERT_EQUAL_INT(0, response_rows(buffer, out.len, &declared, &rows));
+    TEST_ASSERT_EQUAL_UINT16(2, declared);
+    TEST_ASSERT_EQUAL_UINT(2, rows);
+    uint8_t minutes[2] = {0};
+    TEST_ASSERT_EQUAL_UINT(2,
+                           response_clock_minutes(buffer, out.len, minutes, 2));
+    const uint8_t expected[2] = {8, 8};
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(expected, minutes, 2);
+}
+
+static void test_profile_action_empty_range_checks_writer(void)
+{
+    static uint8_t memory[4096];
+    nd_byte_store_t store;
+    nd_clock_port_t clock_port = {.ctx = NULL, .read = fake_clock_read};
+    nd_measurement_port_t measurement = {.ctx = NULL,
+                                         .read = fake_measurement};
+    nd_idis_objects_t objects;
+    nd_idis_profile_state_t *profile =
+        setup_profile(&objects, &store, memory, sizeof(memory), &clock_port,
+                      &measurement, 0, 0, 0, 0);
+    TEST_ASSERT_NOT_NULL(profile);
+    TEST_ASSERT_EQUAL_UINT16(0, nd_profile_store_entries(&profile->store));
+
+    uint8_t range[4] = {ND_AXDR_INTEGER, 1, ND_AXDR_INTEGER, 2};
+    nd_axdr_reader_t in;
+    nd_axdr_reader_init(&in, range, sizeof(range));
+    uint8_t small[1];
+    nd_axdr_writer_t out;
+    nd_axdr_writer_init(&out, small, sizeof(small));
+    TEST_ASSERT_EQUAL_INT(ND_ERR_OPERATION_NOT_POSSIBLE,
+                          nd_cosem_port_action(&objects, 16,
+                                               ND_IC_PROFILE_GENERIC,
+                                               &ND_OBIS_BILLING_PROFILE, 3,
+                                               &in, &out));
+
+    uint8_t buffer[8];
+    nd_axdr_writer_init(&out, buffer, sizeof(buffer));
+    nd_axdr_reader_init(&in, range, sizeof(range));
+    TEST_ASSERT_EQUAL_INT(ND_OK,
+                          nd_cosem_port_action(&objects, 16,
+                                               ND_IC_PROFILE_GENERIC,
+                                               &ND_OBIS_BILLING_PROFILE, 3,
+                                               &in, &out));
+    TEST_ASSERT_EQUAL_size_t(2, out.len);
+    TEST_ASSERT_EQUAL_UINT8(ND_AXDR_ARRAY, buffer[0]);
+    TEST_ASSERT_EQUAL_UINT8(0, buffer[1]);
 }
 
 static void test_profile_compresses_repeated_values(void)
@@ -751,6 +1380,13 @@ int main(void)
     RUN_TEST(test_multiple_profiles_are_independent);
     RUN_TEST(test_profile_selective_entry);
     RUN_TEST(test_profile_selective_clock_range);
+    RUN_TEST(test_profile_value_range_get_read_counts);
+    RUN_TEST(test_profile_get_snapshot_holds_header_and_rows);
+    RUN_TEST(test_profile_get_rejects_append_that_wraps_snapshot);
+    RUN_TEST(test_profile_action_range_snapshot_holds_rows);
+    RUN_TEST(test_profile_action_index_snapshot_holds_row);
+    RUN_TEST(test_profile_action_range_rejection_retries_cleanly);
+    RUN_TEST(test_profile_action_empty_range_checks_writer);
     RUN_TEST(test_profile_compresses_repeated_values);
     RUN_TEST(test_profile_compresses_status);
     RUN_TEST(test_profile_encodes_delta_values);

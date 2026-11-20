@@ -2,6 +2,8 @@
 
 #include <string.h>
 
+#include "domain/metering/pulse_lane.h"
+
 static nd_energy_channel_t *channel_of(nd_energy_book_t *book,
                                        nd_energy_direction_t direction)
 {
@@ -16,7 +18,7 @@ static const nd_energy_channel_t *channel_of_const(
 
 static uint8_t valid_tariff(uint8_t tariff)
 {
-    return (tariff == ND_TARIFF_TOTAL || tariff >= ND_TARIFF_SLOTS) ? 1 : tariff;
+    return nd_energy_pulse_tariff(tariff);
 }
 
 static int64_t amount_in_0_0001(const nd_energy_book_t *book,
@@ -213,6 +215,11 @@ void nd_energy_clear(nd_energy_book_t *book)
 {
     memset(&book->forward, 0, sizeof(book->forward));
     memset(&book->reverse, 0, sizeof(book->reverse));
+    memset(&book->month, 0, sizeof(book->month));
+}
+
+void nd_energy_clear_month(nd_energy_book_t *book)
+{
     memset(&book->month, 0, sizeof(book->month));
 }
 

@@ -2,7 +2,7 @@
 
 ## 退出条件
 
-`docs/firmware-acceptance-matrix.md` 的 122 行全部为 `A` 或 `X`，且：
+`docs/firmware-acceptance-matrix.md` 的 134 行全部为 `A` 或 `X`，且：
 
 1. `ctest --test-dir build` 全绿，`firmware_acceptance` 全绿。
 2. `./ci.sh` 全绿（ARM 205 源、链接、固件对象、持久化偏移、组件清单）。
@@ -22,7 +22,7 @@
 |---|---|---|
 | S1 场景与 UART 捕获 | `--scenario`、`--start-time`、`--uart-tx`；电源/开盖/按键/反馈注入 | 注入帧进入真实 DL698 栈，TX 捕获非空；原 76 测试全绿 |
 | S2 协议编解码 | `tests/acceptance/protocol.py`，645/698 组帧与解析 | 已知报文向量 round-trip；独立 ctest |
-| S3 规范映射 | `docs/firmware-acceptance-spec-notes.md`，122 行到产品用例 | 每行有规范引用或无规范说明 |
+| S3 规范映射 | `docs/firmware-acceptance-spec-notes.md`，134 行到产品用例 | 每行有规范引用或无规范说明 |
 | S4 计量/费率/冻结 | 脉冲、电参、参数、时间用例 | 对应矩阵行 `A`，外部产物断言 |
 | S5 事件/负荷/显示 | 事件输入、继电器、背光、LCD 用例 | 同上 |
 | S6 645/698 | 读写、控制、对象族、分帧用例 | 同上 |
@@ -42,6 +42,7 @@
 | `at <cycle> pulse <1..64>` | 调用 `Energy_Pluse_Add()` count 次；`Energy_Pluse_Count` 只在 `0 < cnt < 64` 时搬运，故单周期应不超过 63 个脉冲；64 会卡在累加器里不再搬运，用于覆盖该边界 |
 | `at <cycle> meter <field> <value> ...` | 在 `Energy_Pluse_Count` 阶段（`Electrical_measurement` 之后、`Energy_Meter` 之前）写 mbase |
 | `at <cycle> energy clear` | 调用 `Energy_clr(instance)`：清电能数组、更新校验和、写 EC2 与 EC1 |
+| `at <cycle> meter clear` | 调用 `meter_clr(instance)`：电能、冻结、事件和需量最大值清零，需量最大值立即写回持久区 |
 | `at <cycle> time 'YYYY-MM-DD HH:MM:SS'` | 替换 `instance->time` |
 
 `meter` 字段（全部经 `meter_record.h` 生成的访问器写入，不直接碰结构体成员）：
@@ -104,3 +105,6 @@
 - 2026-11-13：修复 `get_4_Parameter.c` 在无 698 上下文时解引用 `p_ctx->CA` 的空指针，并在仿真器实现 `write_mcu_rtc` 的 BCD 写入。ACC-RTC-003/004 与 ACC-EVT-007 转为 A；RTC-005 仍缺冻结回退的外部断言。
 - 2026-11-13：仿真器增加 `chip ok|fault` 与 `adc temperature|battery` 激励。计量芯片故障事件（ACC-MET-007、ACC-EVT-016）和温度/电池读数（ACC-MET-012）转为 A。芯片默认按故障态启动以保持既有电气量用例的早退路径，用例先 `chip ok` 再触发故障。
 - 2026-11-13：`IOStateCheck` 按模拟秒推进继电器反馈计数，ACC-LC-005 的误动事件转为 A；计数比真实 10 ms ISR 慢 100 倍，已在代码里标注 shortcut。
+- 2026-11-19：需量固件路径接通。`demand_adapter.c` 同时运行 5 分钟区间式和 1 分钟×5 滑差式两个对象，共用有功功率源；GET 通过占位 OAD 0x11000201/0x11000202 回读当前值、最大值、费率需量和时间。最大值保存在持久区空白 36 字节，掉电重启后当前需量清零、最大值保留、起始时间为恢复时刻。ACC-MET-005 转 A，ACC-POWER-002 增加需量回读断言；旧 `legacy/demand.c` 删除。
+- 2026-11-20：审计矩阵 134 行、105 个 `@case`。88 个 A 行逐个核对断言面：补强 ACC-EVT-001 的恢复时间戳、ACC-EVT-008 的持续脉冲、ACC-645-005 的密码错误计数；把 ACC-RTC-003、ACC-MET-007、ACC-MET-011、ACC-MET-012、ACC-EVT-004、ACC-EVT-016、ACC-LC-005、ACC-LC-006、ACC-645-006、ACC-698-003、ACC-698-008 的判据收窄到产品实际可外部观测的行为，未覆盖部分写入阻塞列。矩阵头、第 5 节和本文计数统一为 134 行、A=88、X=46；`check:acceptance-matrix` 绿色，`firmware_acceptance` verdict=clean。
+- 2026-11-20：修正复核发现。ACC-RTC-003 增加 645 广播校时（99 地址、C=08，12:00:00 起广播 12:00:30，GET 回读 12:00:32）；ACC-MET-009 经 698 GET 0x20140200 的 word1 时钟故障 bit 0x0100 置位/清零转为 A；ACC-MET-012 增加 LCD 电池段断言；ACC-EVT-016 注入芯片恢复、断言计数不变且事件值出现结束时间；ACC-EVT-001 解析起止时间戳；修正 demand golden 的布局出处。矩阵 134 行，A=89、X=45。

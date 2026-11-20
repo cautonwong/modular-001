@@ -199,11 +199,11 @@ uint32_t ADC_CalculateVoltage(uint32_t Mode, int16_t adc_data, float *Voltage)
       {
         if (((Mode&0xFUL) == 3UL) || ((Mode&0xFUL) == 5UL))      /* VDD/BATRTC, Resistive */
         {
-          *Voltage = (float)(0.00015392*(float)adc_data + 0.06667986) + BAT_OffsetInfo.BATRESResult;
+          *Voltage = (float)(0.00015392f*(float)adc_data + 0.06667986f) + BAT_OffsetInfo.BATRESResult;
         }
         else                                                     /* VDD/BATRTC, Capacitive */
         {
-          *Voltage = (float)(0.00014107*(float)adc_data  - 0.00699515) + BAT_OffsetInfo.BATCAPResult;
+          *Voltage = (float)(0.00014107f*(float)adc_data  - 0.00699515f) + BAT_OffsetInfo.BATCAPResult;
         }
       }
     }
@@ -213,30 +213,30 @@ uint32_t ADC_CalculateVoltage(uint32_t Mode, int16_t adc_data, float *Voltage)
       {
         if ((Mode&0xFUL) == 0UL)      /* No divider */
         {
-          *Voltage = (float)(0.00003678*(float)adc_data + 0.00235783);
+          *Voltage = (float)(0.00003678f*(float)adc_data + 0.00235783f);
         }
         else if ((Mode&0xFUL) == 1UL) /* Resistive */
         {
-          *Voltage = (float)(0.00016129*(float)adc_data + 0.00673599);
+          *Voltage = (float)(0.00016129f*(float)adc_data + 0.00673599f);
         }
         else                          /* Capacitive */
         {
-          *Voltage = (float)(0.00014076*(float)adc_data - 0.00753319);
+          *Voltage = (float)(0.00014076f*(float)adc_data - 0.00753319f);
         }
       }
       else                 /* Power supply: 3.3V */
       {
         if ((Mode&0xFUL) == 0UL)      /* No divider */
         {
-          *Voltage = (float)(0.00003680*(float)adc_data + 0.00205011);
+          *Voltage = (float)(0.00003680f*(float)adc_data + 0.00205011f);
         }
         else if ((Mode&0xFUL) == 1UL) /* Resistive */
         {
-          *Voltage = (float)(0.00016425*(float)adc_data + 0.03739179);
+          *Voltage = (float)(0.00016425f*(float)adc_data + 0.03739179f);
         }
         else                          /* Capacitive */
         {
-          *Voltage = (float)(0.00014051*(float)adc_data - 0.00023322);
+          *Voltage = (float)(0.00014051f*(float)adc_data - 0.00023322f);
         }
       }
     }
@@ -311,11 +311,11 @@ uint32_t ADC_GetVDDVoltage_Fast(uint32_t Division, ADC_CalResType *CalResults)
   /* Calculate the voltage of VDD */
   if (Division & ADC_BAT_CAPDIV)
   {
-    CalResults->VDDVoltage = (0.00014107*(float)data - 0.00699515) + Vbatcap;
+    CalResults->VDDVoltage = (0.00014107f*(float)data - 0.00699515f) + Vbatcap;
   }
   else
   {
-    CalResults->VDDVoltage = (0.00015392*(float)data + 0.06667986) + Vbatres;
+    CalResults->VDDVoltage = (0.00015392f*(float)data + 0.06667986f) + Vbatres;
   }
   
   /* ADC resource release */
@@ -392,11 +392,11 @@ uint32_t ADC_GetVDDVoltage_Normal(uint32_t Division, ADC_CalResType *CalResults)
   /* Calculate the voltage of  VDD */
   if (Division & ADC_BAT_CAPDIV)
   {
-    CalResults->VDDVoltage = (0.00014107*(float)data - 0.00699515) + Vbatcap;
+    CalResults->VDDVoltage = (0.00014107f*(float)data - 0.00699515f) + Vbatcap;
   }
   else
   {
-    CalResults->VDDVoltage = (0.00015392*(float)data + 0.06667986) + Vbatres;
+    CalResults->VDDVoltage = (0.00015392f*(float)data + 0.06667986f) + Vbatres;
   }
   
   /* ADC resource release */
@@ -467,11 +467,11 @@ uint32_t ADC_GetBATRTCVoltage_Fast(uint32_t Division, ADC_CalResType *CalResults
   /* Calculate the voltage of BAT1 */
   if (Division & ADC_BAT_CAPDIV)
   {
-    CalResults->BATRTCVoltage = (0.00014107*(float)data  - 0.00699515) + Vbatcap;
+    CalResults->BATRTCVoltage = (0.00014107f*(float)data  - 0.00699515f) + Vbatcap;
   }
   else
   {
-    CalResults->BATRTCVoltage = (0.00015392*(float)data  + 0.06667986) + Vbatres;
+    CalResults->BATRTCVoltage = (0.00015392f*(float)data  + 0.06667986f) + Vbatres;
   }
   /* ADC resource release */
   ADC_DeInit();
@@ -546,11 +546,11 @@ uint32_t ADC_GetBATRTCVoltage_Normal(uint32_t Division, ADC_CalResType *CalResul
   /* Calculate the voltage of BAT1 */
   if (Division & ADC_BAT_CAPDIV)
   {
-    CalResults->BATRTCVoltage = (0.00014107*(float)data  - 0.00699515) + Vbatcap;
+    CalResults->BATRTCVoltage = (0.00014107f*(float)data  - 0.00699515f) + Vbatcap;
   }
   else
   {
-    CalResults->BATRTCVoltage = (0.00015392*(float)data  + 0.06667986) + Vbatres;
+    CalResults->BATRTCVoltage = (0.00015392f*(float)data  + 0.06667986f) + Vbatres;
   }
   
   /* ADC resource release */
@@ -624,7 +624,7 @@ uint32_t ADC_GetTemperature(ADC_CalResType *CalResults)
   ADC_DeInit();
     
   /* Calculate temperature */
-  CalResults->Temperature = (float)((((P0 * ((adc_data*adc_data)>>16)) + P1*adc_data + P2) >> 8) / 256.0);
+  CalResults->Temperature = (float)((((P0 * ((adc_data*adc_data)>>16)) + P1*adc_data + P2) >> 8) / 256.0f);
   
   return (0);
 }

@@ -63,14 +63,6 @@ def power_event(ctx):
     assert b"\x1c" in current, current.hex()
 
 
-def clock_fault_event(ctx):
-    before, (after, current) = _event_after_power_cycle(ctx, 0x302E0400, 0x302E0A00)
-
-    assert before == 0, before
-    assert after == 0, after
-    assert b"\x1c" not in current, current.hex()
-
-
 @case(
     "ACC-EVT-005",
     "a 698 parameter write creates one programming event with a timestamp",
@@ -105,9 +97,14 @@ def programming_event(ctx):
     assert b"\x1c" in value, value.hex()
 
 
+def _duration(payload: bytes) -> tuple[int, ...]:
+    return (int.from_bytes(payload[0:2], "big"), *payload[2:7])
+
+
 @case(
     "ACC-EVT-001",
-    "a cover opening longer than the 3 s debounce creates an event record",
+    "a cover opening longer than the 3 s debounce creates an event record "
+    "whose recovery timestamp is later than its start timestamp",
     ("events", "cover"),
 )
 def cover_open_event(ctx):
@@ -115,16 +112,32 @@ def cover_open_event(ctx):
     after = _cover_value(ctx, "at 2 cover open\nat 8 cover closed\n")
 
     assert b"\x1c" not in before, before.hex()
-    assert b"\x1c" in after, after.hex()
-    assert after != before
+    assert after.count(b"\x1c") == 2, after.hex()
+    event = protocol.axdr_decode(after)[0].children[0].children[1]
+    start, end = (child.payload for child in event.children)
+    assert len(start) == 7 and len(end) == 7, (start.hex(), end.hex())
+    assert _duration(end) > _duration(start), (_duration(start), _duration(end))
 
 
 @case(
     "ACC-EVT-008",
-    "a cover pulse shorter than the debounce time does not create an event",
+    "a cover pulse shorter than the debounce time does not create an event, "
+    "and the 1 s twin brackets the 3 s debounce at 2 s and 3 s",
     ("events", "debounce"),
 )
 def cover_debounce(ctx):
-    data = _cover_value(ctx, "at 2 cover open\nat 3 cover closed\n")
+    short = _cover_value(ctx, "at 2 cover open\nat 3 cover closed\n")
 
-    assert data == bytes.fromhex("010102020002020000"), data.hex()
+    assert short == bytes.fromhex("010102020002020000"), short.hex()
+
+    # The twin samples the cover once per second, so 2 s and 3 s are the
+    # closest samples on each side of the 3 s debounce.
+    below = _cover_value(ctx, "at 2 cover open\nat 4 cover closed\n")
+    assert below == short, below.hex()
+
+    at_debounce = _cover_value(ctx, "at 2 cover open\nat 5 cover closed\n")
+    assert at_debounce.count(b"\x1c") == 2, at_debounce.hex()
+
+    sustained = _cover_value(ctx, "at 2 cover open\nat 8 cover closed\n")
+    assert sustained.count(b"\x1c") == 2, sustained.hex()
+    assert sustained != short

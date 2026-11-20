@@ -9,6 +9,9 @@ typedef struct nd_platform_port {
     void (*watchdog_kick)(void *ctx);
     void (*event_output_set)(void *ctx, bool enable);
     bool (*device_error)(void *ctx);
+    /* Called once the device error has been reported, so a latched fault may
+     * clear only after the reporter observed it. */
+    void (*device_error_reported)(void *ctx);
 } nd_platform_port_t;
 
 void nd_platform_bind(const nd_platform_port_t *port);
@@ -16,5 +19,6 @@ void nd_platform_watchdog_kick(void);
 void nd_platform_event_output_set(bool enable);
 /* True while the board reports a memory (EEPROM) fault. */
 bool nd_platform_device_error(void);
+void nd_platform_device_error_reported(void);
 
 #endif
