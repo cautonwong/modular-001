@@ -16,7 +16,7 @@ IDIS 的 COSEM profile GET 在 1152 行 PQ 上要扫整环。修改前的成本�
 | entry-range GET，k 行 | 2k | k | 触达的扇区数 |
 
 - P-a：每条记录一次 128 B 整槽读，替代 20 B 头加 payload 的两次读。
-- P-c：count 趟读过的记录在 write 趟复用，value-range GET 从 3N 降到 2N。
+- P-c：write 趟匹配时读到的记录直接用于编码，value-range GET 从 3N 降到 2N。
 - P-b：`nd_sector_store` 的读透窗口，复用它已有的 4 KiB 扇区缓冲；一次对齐
   填充服务 32 条记录。
 
@@ -52,28 +52,39 @@ IDIS 的 COSEM profile GET 在 1152 行 PQ 上要扫整环。修改前的成本�
   取一次 `nd_profile_store_snapshot`（head/entries/next_sequence 的 RAM 快照），
   parse_selection 与两趟扫描都只用快照值，不再重读活 entries。每次读由快照
   计算物理槽，并校验记录头 sequence 等于
-  `snapshot.next_sequence - snapshot.entries + index`。快照之后 append 若未
-  覆盖快照窗口，响应与快照完全一致；若满了环并覆盖旧槽，sequence 不匹配，
-  GET 返回 operation-not-possible，客户端重试即可。reset 在 head 写一条
-  reset mark 并推进 sequence：mark 落在快照读窗口之外时旧记录仍物理存在，
-  读到的仍是快照时刻的一致视图；mark 落在窗口内（快照后的 append 已把 head
-  推进到窗口）时，只有尚未读到的槽会让 `read_at` 看到非记录 kind 并令 GET
-  返回 operation-not-possible；已读过的槽不受影响，GET 按快照完成。窗口内的
-  槽被后续 append 复用同样由 sequence 拒绝。快照只占 RAM，不增加 store 读
+  `snapshot.next_sequence - snapshot.entries + index`。快照之后 append 若
+  没有触达快照窗口，响应与快照完全一致；若满了环并覆盖旧槽，sequence 不
+  匹配，GET 返回 operation-not-possible，客户端重试即可。append 在 head
+  扇区对齐时先擦整个 head 扇区再写记录，擦除会让该扇区落在快照读窗口内的
+  槽变成空槽，不要求满环；reset 在 head 写一条 reset mark 并推进 sequence，
+  head 扇区对齐时同样先擦整个 head 扇区，`read_at` 按非记录 kind 拒绝
+  空槽。
+  reset mark 或擦除产生的空槽在快照读窗口之外时，快照内的旧记录仍物理
+  存在，读到的仍是快照时刻的一致视图；在窗口内时，当前趟尚未读到的槽令
+  GET 返回 operation-not-possible，当前趟已发行的槽不会被重读，响应保持
+  快照。
+  value-range 选择时两趟都会重读每个槽，所以 count 趟读过不保护 emit 趟，
+  只有 emit 趟已经越过的槽才不受影响。非对齐 head 的 mark 走 sector store 的
+  read-modify-erase-write：它重写整个扇区缓冲，其他槽字节不变；只有写窗口
+  内掉电会丢数据，顺序一致性模型不覆盖掉电路径。窗口内的槽被后续 append
+  复用同样由 sequence 拒绝。快照只占 RAM，不增加 store 读
   （P-a/P-c 的读计数不变）。TLA+ `formal/tla/ProfileGet.tla` 的 SnapshotSpec
-  证明 `CountEqualsEmitted`；Reset 在模型里写 head 槽（mark 不可读）并推进
-  sequence，mark 落在窗口外、窗口内未读槽和窗口内已读槽三种情况都在证明范围
-  内。旧的两趟并发 spec 保留为反例文档（header 1、append 一条匹配记录、
-  emit 2 行）。
+  证明 `CountEqualsEmitted`；Reset 在模型里写 head 槽（mark 不可读），head
+  对齐时擦除整个扇区。Append 按实现建模：head 对齐时先擦整个扇区再写记录，
+  该扇区其余槽置空。cfg 用每扇区 2 槽的实例让擦除覆盖 head 之外的槽；旧写法
+  只写 head 槽，会留下已被擦除却仍可读的槽；临时探针（未入库）能在旧写法上复现“GET 完成
+  时发行了已擦除记录”的假完成，新模型无此路径。窗口外、窗口内当前趟未读槽、
+  当前趟已发行槽三种情况都在证明范围内。旧的两趟并发 spec 保留为反例文档
+  （header 1、append 一条匹配记录、emit 2 行）。
   第二个 actor（save worker、查询 worker 或 block session）现在可以与
   **attribute-2 GET** 以及 class-7 methods 3/4（`get_buffer_by_range` /
   `get_buffer_by_index`）重叠而不产生不一致响应。methods 3/4 进入动作时
   取一次同样的 `nd_profile_store_snapshot`：数组头与每一行都从快照计算，
   `get_buffer_by_index` 的上界用 `snapshot.entries`，行读走
   `nd_profile_store_read_at`，不再按行读实时 entries。没有新增 TLA+ 模型：
-  快照之后越界或覆盖快照窗口的 append 由 `read_at` 的 sequence 校验拒绝，
-  即 `SnapshotSpec` 的 sequence-rejection 不变量，动作路径直接复用；被拒时
-  返回 operation-not-possible，客户端重试。
+  快照之后越界、覆盖或擦空快照窗口的 append 由 `read_at` 拒绝（空槽或
+  sequence 不匹配），即 `SnapshotSpec` 的读拒绝不变量，动作路径直接复用；
+  被拒时返回 operation-not-possible，客户端重试。
 
 ## 4. 698 的映射与取舍
 
@@ -117,11 +128,14 @@ IDIS 的 COSEM profile GET 在 1152 行 PQ 上要扫整环。修改前的成本�
   （698 mark 搜索的 `ceil(log2 n) + 1` 探测界、窗口单调收缩、记录索引
   `(read_ptr + i) % span` 单射）、`formal/cbmc/profile_slot.c`
   （编译真实的 `nd_profile_store.c`，证明槽头校验与 payload 拷贝边界）、
-  `formal/tla/ProfileGet.tla`（SnapshotSpec 证明 `CountEqualsEmitted`；旧的
-  两趟并发 spec 保留为反例文档）；都接进 `tools/check_formal.sh`
+  `formal/tla/ProfileGet.tla`（SnapshotSpec 证明 `CountEqualsEmitted`；append
+  与 reset 在 head 扇区对齐时的整扇区擦除都建模；旧的两趟并发 spec 保留为
+  反例文档）；都接进 `tools/check_formal.sh`
   （Lean 由 lake 的模块 glob 枚举）。`ProfileGet.tla` 把 sequence 抽象为
   无界 Natural，实现是 16 位 modulo 65536；模型不覆盖“精确 65,536 次 append
-  后旧槽 sequence 再次等于预测值”的别名情形，这是已知残余，不在证明范围内。
+  后旧槽 sequence 再次等于预测值”的别名情形。模型还把扇区擦除和记录写当成
+  原子一步，擦除进行中的并发读、擦除/写窗口内掉电和擦除时序不在证明范围。
+  两者都是已知残余。
 
 ## 7. profile 存储的 pre-v4 升级路径与启动扫描预算
 

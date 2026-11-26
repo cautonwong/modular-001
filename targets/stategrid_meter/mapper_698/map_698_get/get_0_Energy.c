@@ -1,12 +1,14 @@
 #include "fr_698.h"
 #include "port.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
 
 
 int GET_0_Energy(void *instance, uint32_t id, uint8_t* buf, uint8_t mode, void *ctx)
 {    
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint8_t i;
     uint16_t OI;
     uint8_t attr_index, attribute,Num;
@@ -70,7 +72,7 @@ int GET_0_Energy(void *instance, uint32_t id, uint8_t* buf, uint8_t mode, void *
     }
     
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3);    //读取费率个数
-    nd_get_index(instance, s_index, (uint8_t*)&Num, 1);
+    nd_get_index_port(port, s_index, (uint8_t*)&Num, 1);
     if((Num==0) || (Num>12))
     {
         Num = 0;

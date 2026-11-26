@@ -10,6 +10,13 @@ enum {
     ND_SECURITY_REQUEST_ALLOW = 1
 };
 
+enum {
+    ND_SECURITY_SA_UNICAST = 0,
+    ND_SECURITY_SA_WILDCARD = 1,
+    ND_SECURITY_SA_GROUP = 2,
+    ND_SECURITY_SA_BROADCAST = 3
+};
+
 typedef struct {
     uint8_t security_choice;
     uint8_t verification_choice;
@@ -24,7 +31,6 @@ typedef struct {
     uint8_t report_response;
     uint8_t get_request;
     uint8_t plain_read_allowed;
-    uint32_t oad;
 } nd_security_request_t;
 
 int nd_security_request_check(const nd_security_request_t *request);

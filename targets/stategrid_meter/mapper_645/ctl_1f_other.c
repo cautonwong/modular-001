@@ -1,13 +1,14 @@
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
 #include "targets/stategrid_meter/app/resource_ids.h"
 #include "resource_ids.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "645id_table.h"
 #include "cpu_surport.h"
 #include "application/adapters/dl645/ctl_other.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
+#include "application/adapters/dl645/fr_645_env.h"
 
 
 /***********************************************************************/
@@ -17,6 +18,7 @@
 /***********************************************************************/
 signed char Comm_Other(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     signed char ret=0;
 	unsigned char Err_Byte=0, rx_len=0;
     uint32_t s_index=0;
@@ -46,7 +48,7 @@ signed char Comm_Other(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *le
             {
                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                             nd_mb_offset_factor_mode());
-                nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_factor_mode(instance), 1);//存储至EE
+                nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_factor_mode(instance), 1);//存储至EE
             }
             break;
             

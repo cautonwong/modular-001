@@ -2,7 +2,7 @@
 #include "components/core/fifo/fifo.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "fr_698.h"
-#include "meter_base_view.h"
+#include "application/ports/meter_base.h"
 #include "fr_698_internal.h"
 
 

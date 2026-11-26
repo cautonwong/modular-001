@@ -48,37 +48,68 @@ STRUCT_BODY = re.compile(r"struct\s+\w+\s*\{([^{}]*)\}", re.DOTALL)
 STRUCT_MEMBER = re.compile(r"\b(\w+)\s*(?:\[[^\]]*\])?\s*;")
 
 
+def _manifest_value(text):
+    text = text.strip()
+    if text.startswith("[") and text.endswith("]"):
+        return [item.strip().strip("'\"") for item in text[1:-1].split(",")
+                if item.strip()]
+    if text.lower() in ("true", "false"):
+        return text.lower() == "true"
+    return text.strip("'\"")
+
+
 def parse_manifest(path):
     data = {}
-    list_key = None
+    block = None
+    entry = None
+    kind = None
     with open(path, encoding="utf-8", errors="replace") as handle:
-        for raw in handle:
-            line = raw.split("#", 1)[0].strip()
-            if not line:
+        for number, raw in enumerate(handle, 1):
+            text = raw.split("#", 1)[0].rstrip()
+            if not text.strip():
                 continue
-            if line.startswith("- ") and list_key is not None:
-                item = line[2:].strip().strip("'\"")
-                if item:
-                    data[list_key].append(item)
+            line = text.strip()
+            if block is not None and text[0].isspace():
+                if line.startswith("- "):
+                    if kind == "mapping" and entry is None:
+                        raise SystemExit(
+                            f"{path}:{number}: list item outside a mapping entry")
+                    item = line[2:].strip().strip("'\"")
+                    if item:
+                        if kind == "mapping":
+                            data[block][entry].append(item)
+                        else:
+                            if kind is None:
+                                kind = "list"
+                            data[block].append(item)
+                    continue
+                if ":" not in line:
+                    continue
+                if kind == "list":
+                    raise SystemExit(
+                        f"{path}:{number}: mapping entry after list items")
+                if kind is None:
+                    kind = "mapping"
+                    data[block] = {}
+                key, _, value = line.partition(":")
+                key = key.strip()
+                value = value.strip()
+                data[block][key] = _manifest_value(value) if value else []
+                entry = key if not value else None
                 continue
-            if ":" not in line:
+            block = None
+            entry = None
+            kind = None
+            if line.startswith("- ") or ":" not in line:
                 continue
             key, value = line.split(":", 1)
             key = key.strip()
             value = value.strip()
-            if value.startswith("[") and value.endswith("]"):
-                items = [item.strip().strip("'\"") for item in value[1:-1].split(",")]
-                data[key] = [item for item in items if item]
-                list_key = None
-            elif not value:
+            if not value:
                 data[key] = []
-                list_key = key
-            elif value.lower() in ("true", "false"):
-                data[key] = value.lower() == "true"
-                list_key = None
+                block = key
             else:
-                data[key] = value.strip("'\"")
-                list_key = None
+                data[key] = _manifest_value(value)
     return data
 
 

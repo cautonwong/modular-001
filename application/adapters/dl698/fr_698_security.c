@@ -6,10 +6,11 @@
 #include "fr_698_esam.h"
 #include "parameter_port.h"
 #include "application/adapters/dl698/fr_698_esam.h"
-#include "meter_base_view.h"
+#include "application/ports/meter_base.h"
 #include "domain/common/status.h"
 #include "domain/security/security_mode.h"
 #include "domain/security/security_request.h"
+#include "application/adapters/dl698/security_mode_map.h"
 #include "fr_698_esam_flow.h"
 
 static int fr_698_security_request_check(void * instance, void * pipeline);
@@ -54,12 +55,12 @@ int fr_security_request(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 
 static int fr_698_esam_plain_read_check(void * instance, void * pipeline, uint8_t client_index, uint32_t oad)
 {
-    if ((0 == nd_mb_auth_on(instance)) || (true == fr_698_current_connect_status_get(instance, pipeline, client_index))) //身份认证未启用或当前客户机应用链接状态
+    if ((0 == nd_mb_get_auth_on(instance)) || (true == fr_698_current_connect_status_get(instance, pipeline, client_index))) //身份认证未启用或当前客户机应用链接状态
     {
         return 1;
     }
 
-    if ((1 == client_index) && nd_mb_term_auth_timeout(instance))//终端
+    if ((1 == client_index) && nd_mb_get_term_auth_timeout(instance))//终端
     {
         return 1;
     }
@@ -71,7 +72,7 @@ static int fr_698_esam_plain_read_check(void * instance, void * pipeline, uint8_
 static int fr_infrared_auth_check(void * instance, void * pipeline, uint8_t cmd, uint32_t oad)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
-    if (ctx->channel != FR_698_CHL_IR || (nd_mb_infrared_auth_timeout(instance) != 0) || (nd_mb_factor_mode(instance) == true))
+    if (ctx->channel != FR_698_CHL_IR || (nd_mb_get_infrared_auth_timeout(instance) != 0) || (nd_mb_get_factor_mode(instance) == true))
     {
         return 1;
     }
@@ -91,7 +92,7 @@ static int fr_infrared_auth_check(void * instance, void * pipeline, uint8_t cmd,
     if (cmd == 2)
     {
 
-        if( *nd_fr698_power_state(instance) != ND_AC_POWER_ON ) //停电下不支持红外认证
+        if( nd_mb_get_power_state(instance) != ND_POWER_ON ) //停电下不支持红外认证
         {
             return -DAR_SECURITY_AUTH_FAILED;
         }
@@ -117,19 +118,22 @@ static int fr_infrared_auth_check(void * instance, void * pipeline, uint8_t cmd,
     return -DAR_RW_REJECT;
 }
 
-#if 1   //----698安全模式字-----------------------------开始
+#if 1
 
 #if 1
 
-static int __explicit_security_mode(void *, void *, uint16_t oi, uint16_t* mode, uint8_t* tmp_buf)
+static int __explicit_security_mode(void * instance, void * pipeline, uint16_t oi, uint16_t* mode, uint8_t* tmp_buf)
 {
     uint8_t* tmp, i, count, maxnum;
     uint16_t oi2;
 
+    (void)pipeline;
+
     *mode = 0xffff;
     tmp = tmp_buf;
 
-    if (dl698_parameter_read(DL698_PARAM_SECURITY_MODE_EXDATA, tmp,
+    if (dl698_parameter_read(nd_fr698_parameter_port(instance),
+                             DL698_PARAM_SECURITY_MODE_EXDATA, tmp,
                              SecurityMode_EXData_LEN) != 0)
     {
         return -1;
@@ -170,7 +174,8 @@ static uint16_t __security_mode_word_get(void * instance, void * pipeline, uint3
 
     (void)pipeline;
 
-    if (dl698_parameter_read(DL698_PARAM_SECURITY_MODE_EN, &flag, 1) != 0)
+    if (dl698_parameter_read(nd_fr698_parameter_port(instance),
+                             DL698_PARAM_SECURITY_MODE_EN, &flag, 1) != 0)
     {
         return 0xffff;
     }
@@ -211,7 +216,7 @@ static int __security_mode_word_check(void * instance, void * pipeline, uint8_t 
         client_index = 0;
     }
 
-    if (nd_mb_factor_mode(instance) == true)
+    if (nd_mb_get_factor_mode(instance) == true)
     {
         return 1;
     }
@@ -223,7 +228,7 @@ static int __security_mode_word_check(void * instance, void * pipeline, uint8_t 
         {
             return -DAR_RW_REJECT;
         }
-        if (nd_mb_infrared_auth_timeout(instance) == 0)
+        if (nd_mb_get_infrared_auth_timeout(instance) == 0)
         {
             return 1;
         }
@@ -296,7 +301,7 @@ int security_mode_word_check(void * instance, void * pipeline, uint8_t cmd, uint
 
 }
 #endif
-#endif    //----698安全模式字-----------------------------结束
+#endif
 
 
 
@@ -308,14 +313,14 @@ uint8_t fr_698_current_connect_status_get(void * instance, void *, uint8_t clien
     uint8_t rlt = 0, i;
     uint8_t comm_chn[4] = { FR_698_CHL_IR, FR_698_CHL_RS485_1,  FR_698_CHL_PLC,  FR_698_CHL_RS485_2 };
 
-    if(!nd_mb_valid(instance))
+    if(!nd_mb_get_valid(instance))
     {
         return 0;
     }
 
     for (i = 0; i < (sizeof(comm_chn) / sizeof(comm_chn[0])); i++)
     {
-        if (nd_mb_current_connect_channel(instance)[client_index] == comm_chn[i])
+        if (nd_mb_get_current_connect_channel(instance, client_index) == comm_chn[i])
         {
             break;
         }
@@ -325,7 +330,7 @@ uint8_t fr_698_current_connect_status_get(void * instance, void *, uint8_t clien
         return 0;
     }
 
-    rlt |= nd_mb_connect_status(instance)[i][client_index];
+    rlt |= nd_mb_get_connect_status(instance, i, client_index);
 
     return rlt;
 }
@@ -337,37 +342,41 @@ static int fr_698_security_request_check(void * instance, void * pipeline)
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     nd_security_request_t request = {0};
     uint8_t* data = ctx->security_data;
+    uint32_t oad;
     int result;
 
-    request.security_choice = ctx->security_choice;
-    request.verification_choice = ctx->verification_choice;
+    request.security_choice = nd_security_choice_from_wire(ctx->security_choice);
+    request.verification_choice =
+        nd_security_verification_from_wire(ctx->verification_choice);
     request.client_index = CA_TYPE_TER(ctx->CA) ? 1 : 0;
-    request.sa_type = (uint8_t)SA_TYPE(ctx->SA);
+    request.sa_type = nd_security_sa_from_wire((uint8_t)SA_TYPE(ctx->SA));
     request.channel_is_ir = (ctx->channel == FR_698_CHL_IR);
     request.connected = fr_698_current_connect_status_get(
         instance, pipeline, request.client_index);
-    request.auth_on = nd_mb_auth_on(instance);
-    request.term_auth_timeout = nd_mb_term_auth_timeout(instance);
-    request.infrared_auth_timeout = nd_mb_infrared_auth_timeout(instance);
+    request.auth_on = nd_mb_get_auth_on(instance);
+    request.term_auth_timeout = nd_mb_get_term_auth_timeout(instance);
+    request.infrared_auth_timeout = nd_mb_get_infrared_auth_timeout(instance);
     request.report_response = (ctx->service == SECURITY_Response)
                               && (data[0] == REPORT_Response);
     request.get_request = (data[0] == GET_Request);
-    request.oad = ((uint32_t)data[3] << 24) | ((uint32_t)data[4] << 16)
-                  | ((uint32_t)data[5] << 8) | data[6];
+    oad = ((uint32_t)data[3] << 24) | ((uint32_t)data[4] << 16)
+          | ((uint32_t)data[5] << 8) | data[6];
 
     if ((request.security_choice == ND_SECURITY_CHOICE_PLAIN)
         && (request.verification_choice == ND_SECURITY_AUTH_RN)
         && request.get_request) {
         request.plain_read_allowed =
             fr_698_esam_plain_read_check(instance, pipeline,
-                                         request.client_index,
-                                         request.oad) > 0;
+                                         request.client_index, oad) > 0;
         request.any_connected =
             fr_698_current_connect_status_get(instance, pipeline, 0)
             || fr_698_current_connect_status_get(instance, pipeline, 1);
     }
 
     result = nd_security_request_check(&request);
+    if (result == ND_SECURITY_REQUEST_ALLOW) {
+        result = nd_security_broadcast_time_rule(oad, &request);
+    }
     if (result == ND_SECURITY_REQUEST_ALLOW) {
         return 1;
     }
@@ -397,7 +406,7 @@ uint32_t fr_698_current_esam_timeout_get(void * instance, void *, uint8_t client
     
     for (i = 0; i < (sizeof(comm_chn) / sizeof(comm_chn[0])); i++)
     {
-        if (nd_mb_current_connect_channel(instance)[client_index] == comm_chn[i])
+        if (nd_mb_get_current_connect_channel(instance, client_index) == comm_chn[i])
         {
             break;
         }
@@ -408,7 +417,7 @@ uint32_t fr_698_current_esam_timeout_get(void * instance, void *, uint8_t client
         return 0;
     }
     
-    return nd_mb_esam_connect_timeout(instance)[i][client_index];
+    return nd_mb_get_esam_connect_timeout(instance, i, client_index);
 }
 
 uint8_t fr_698_current_channel_num_get(void * instance, void * pipeline)
@@ -431,7 +440,7 @@ uint8_t fr_698_current_channel_num_get(void * instance, void * pipeline)
     
     for (i = 0; i < (sizeof(comm_chn) / sizeof(comm_chn[0])); i++)
     {
-        if (nd_mb_current_connect_channel(instance)[client_index] == comm_chn[i]) // 应用连接时
+        if (nd_mb_get_current_connect_channel(instance, client_index) == comm_chn[i]) // 应用连接时
         {
             break;
         }

@@ -32,6 +32,8 @@ def compile_one(source: Path, obj: Path, flags: list[str]) -> subprocess.Complet
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--keep", action="store_true")
+    parser.add_argument("--elf", metavar="FILE",
+                        help="copy the linked ELF here for later checks")
     parser.add_argument("--manifest", metavar="FILE",
                         help="write the linked source list after a successful link")
     parser.add_argument("--product")
@@ -171,6 +173,12 @@ def main() -> int:
         if not args.keep:
             shutil.rmtree(build_dir, ignore_errors=True)
         return 1
+
+    if args.elf:
+        target = Path(args.elf)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(elf, target)
+        print(f"linked ELF: {target}")
 
     if args.manifest:
         Path(args.manifest).write_text(

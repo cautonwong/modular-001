@@ -142,7 +142,7 @@ void device_power_open(stategrid_context_t *instance, void *pipeline)
 }
 
 void irq_transform_to_instance(stategrid_context_t *instance) { (void)instance; }
-void irq_system_init(void) {}
+void board_irq_bind(stategrid_board_state_t *state) { (void)state; }
 void communication_chlx_init(struct fifo_t *txfifo, struct fifo_t *rxfifo,
                              uint8_t chl_type, stategrid_context_t *instance)
 {
@@ -179,7 +179,11 @@ void gpio_configuration_AC(void) {}
 void fnINTTC3_Init(uint8_t cmd) { (void)cmd; }
 uint8_t Magnetic_hold_relay_Init(void) { return 0; }
 
-uint8_t DEVICE_ERR = 0;
+uint8_t nd_board_device_error(const stategrid_board_state_t *state)
+{
+    (void)state;
+    return 0;
+}
 
 uint8_t ANA_GetStatus(uint32_t status_mask) { (void)status_mask; return 0; }
 void CLK_AHBPeriphralCmd(uint32_t peripheral, uint32_t state)
@@ -190,7 +194,11 @@ void CLK_AHBPeriphralCmd(uint32_t peripheral, uint32_t state)
 int nd_board_cover_closed(void) { return sim_scenario_cover_closed(); }
 void nd_board_cover_input_enable(void) {}
 int nd_board_key_released(void) { return sim_scenario_key_released(); }
-nd_esam_t *board_esam(void) { return NULL; }
+nd_esam_t *board_esam(stategrid_board_state_t *state)
+{
+    (void)state;
+    return NULL;
+}
 void report_port_open(stategrid_context_t *instance) { (void)instance; }
 void reset_all_channel_baud(stategrid_context_t *instance) { (void)instance; }
 uint8_t write_mcu_rtc_date(uint8_t addr, uint8_t *buf, uint16_t len)

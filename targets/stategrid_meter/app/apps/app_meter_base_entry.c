@@ -1,4 +1,5 @@
 #include "targets/stategrid_meter/app/message.h"
+#include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "targets/stategrid_meter/app/resource_ids.h"
 #include "resource_tool.h"
@@ -48,6 +49,8 @@ void nd_sim_stage(const char *name);
 
 int PowerOff_Save_data(stategrid_context_t *instance)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     stategrid_context_t *ctx = ((stategrid_context_t *)instance);
     size_t mbase_block_persistent_size = nd_mbase_offset_persistent_section_end() - nd_mbase_offset_persistent_section_start() + 1;
     uint32_t addr = 0;
@@ -90,7 +93,7 @@ int PowerOff_Save_data(stategrid_context_t *instance)
 
         get_block_frist_addr(instance, RES_DEV_RAM, mbase_block_persistent,
                              &ram);
-        if (nd_get_offset(instance, s_index, (uint8_t *)(uintptr_t)ram,
+        if (nd_get_offset_port(port, s_index, (uint8_t *)(uintptr_t)ram,
                           (uint16_t)ec_size) < 0)
         {
             /* The RAM energy prefix stays the unknown (zero) book, so the
@@ -116,7 +119,7 @@ int PowerOff_Save_data(stategrid_context_t *instance)
     {
         tmp_u32 = rtc_mktime((&nd_mbase_powerdown_tm(mbase_cb)));
         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PDTime_Frez); // 冻结停电时间
-        nd_set_index(instance, addr, (uint8_t *)(&tmp_u32), 4);
+        nd_set_index_port(port, addr, (uint8_t *)(&tmp_u32), 4);
         nd_mbase_frz_replenish_end(mbase_cb) = 0;
     }
 
@@ -284,6 +287,8 @@ void SecTick_Task(stategrid_context_t * instance,  void * pipeline)
 // !!!在此app中不做IO操作!!!
 int app_meter_base_event(stategrid_context_t * instance, uint8_t event)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     stategrid_context_t *ctx = ((stategrid_context_t *)instance);
     size_t mbase_block_persistent_size = nd_mbase_offset_persistent_section_end() - nd_mbase_offset_persistent_section_start() + 1;
     size_t mbase_block_static_size = nd_mbase_offset_static_section_end() - nd_mbase_offset_static_section_start() + 1;
@@ -381,7 +386,7 @@ int app_meter_base_event(stategrid_context_t * instance, uint8_t event)
             //上电需要恢复数据   //跳过电能恢复 由电能模块处理  
             addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
                 nd_mbase_offset_persistent_energy_EC_label()  -  nd_mbase_offset_persistent_section_start());
-            nd_get_offset(instance, addr, (uint8_t*)&nd_mbase_persistent_energy_EC_label(mbase_cb), (mbase_block_persistent_size - persitent_ec_size));
+            nd_get_offset_port(port, addr, (uint8_t*)&nd_mbase_persistent_energy_EC_label(mbase_cb), (mbase_block_persistent_size - persitent_ec_size));
             if (ctx->demand != NULL)
             {
                 nd_demand_adapter_restore(ctx->demand,
@@ -430,18 +435,18 @@ int app_meter_base_event(stategrid_context_t * instance, uint8_t event)
             nd_mbase_plc_baut_tick(mbase_cb) = 1; 
             //获取防潜开关
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Pstart_En);
-            nd_get_index(instance, addr, (uint8_t*)&nd_mbase_no_filt(mbase_cb), 1);
+            nd_get_index_port(port, addr, (uint8_t*)&nd_mbase_no_filt(mbase_cb), 1);
             
             //背光配置字
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Blt_Alarm_Byte);
-            nd_get_index(instance, addr, (uint8_t*)&nd_mbase_blt_alarm(mbase_cb), 4);
+            nd_get_index_port(port, addr, (uint8_t*)&nd_mbase_blt_alarm(mbase_cb), 4);
             
             //大电流延时时间赋值
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectValue);
-            nd_get_index(instance, addr, tmp, 4); 
+            nd_get_index_port(port, addr, tmp, 4);
             mem_swap_cpy((uint8_t*)&nd_mbase_I_Prot(mbase_cb), tmp, 4);
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectTime);
-            nd_get_index(instance, addr, tmp, 2); 
+            nd_get_index_port(port, addr, tmp, 2);
             mem_swap_cpy((uint8_t*)&nd_mbase_Prot_time(mbase_cb), tmp, 2);
             
             freeze_power_on_pro(instance, pipeline, mesg);
@@ -485,6 +490,8 @@ int app_meter_base_event(stategrid_context_t * instance, uint8_t event)
 
 int app_meter_lowpower_event(stategrid_context_t * instance, uint8_t event)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     stategrid_context_t *ctx = ((stategrid_context_t *)instance);
     struct mbase_control_block_t* mbase_control_block;
     uint32_t addr = 0;
@@ -513,7 +520,7 @@ int app_meter_lowpower_event(stategrid_context_t * instance, uint8_t event)
         //上电需要恢复数据   //跳过电能恢复 由电能模块处理
         addr = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
             nd_mbase_offset_persistent_energy_EC_label()  -  nd_mbase_offset_persistent_section_start());
-        nd_get_offset(instance, addr, (uint8_t*)&nd_mbase_persistent_energy_EC_label(mbase_control_block), (mbase_block_persistent_size - persitent_ec_size));
+        nd_get_offset_port(port, addr, (uint8_t*)&nd_mbase_persistent_energy_EC_label(mbase_control_block), (mbase_block_persistent_size - persitent_ec_size));
 
         rtc_check_poweron(instance);
         Energy_Meter_PowerON(instance, pipeline);

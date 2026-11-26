@@ -1,0 +1,4 @@
+# Acceptance cases with no matrix row. One per line: <case-id> <reason>.
+# A stale entry fails the guard: remove it when the case disappears or gets a
+# row. Prefer adding a matrix row; use this file only for cases a row cannot
+# describe.

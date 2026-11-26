@@ -1,5 +1,0 @@
-# component non-production caller
-# services.channel is selected by meter_electricity_single_phase_cn and
-# nd_channel.c is an IAR link input; application/ports/fifo_channel.h and
-# infra/channel consume nd_channel_t. Only the host tests call the wrappers.
-services.channel tests/unit/test_fifo_channel.c

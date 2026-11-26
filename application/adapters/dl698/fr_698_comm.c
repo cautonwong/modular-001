@@ -24,24 +24,6 @@ int __nd_action(void * instance, uint32_t id, uint8_t* buf, uint16_t buf_size, v
     return nd_action(instance, id, buf, buf_size, ctx);
 }
 
-int16_t nd_get_index(void *ctx, uint32_t index, uint8_t* buf, uint16_t buf_size)
-{
-    (void)ctx;
-    (void)index;
-    (void)buf;
-    (void)buf_size;
-    return 0;
-}
-
-int16_t nd_set_index(void *ctx, uint32_t index, uint8_t* buf, uint16_t buf_size)
-{
-    (void)ctx;
-    (void)index;
-    (void)buf;
-    (void)buf_size;
-    return 0;
-}
-
 #endif
 
 

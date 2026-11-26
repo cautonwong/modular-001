@@ -23,6 +23,17 @@ typedef struct {
     uint8_t day_table;
 } nd_tariff_holiday_t;
 
+typedef enum {
+    ND_TARIFF_VALID = 0,
+    ND_TARIFF_ERR_EMPTY,
+    ND_TARIFF_ERR_COUNT,
+    ND_TARIFF_ERR_VALUE,
+    ND_TARIFF_ERR_DATE,
+    ND_TARIFF_ERR_TIME,
+    ND_TARIFF_ERR_ORDER,
+    ND_TARIFF_ERR_SPACING,
+} nd_tariff_error_t;
+
 typedef struct {
     uint8_t holiday_count;
     nd_tariff_holiday_t holidays[ND_TARIFF_MAX_HOLIDAYS];
@@ -40,6 +51,15 @@ typedef struct {
 } nd_tariff_table_t;
 
 void nd_tariff_table_init(nd_tariff_table_t *table);
+
+nd_tariff_error_t nd_tariff_validate_seasons(
+    const nd_tariff_interval_t *seasons, uint8_t count,
+    uint8_t day_table_count);
+
+nd_tariff_error_t nd_tariff_validate_periods(
+    const nd_tariff_interval_t *periods, uint8_t count, uint8_t fee_count);
+
+nd_tariff_error_t nd_tariff_table_validate(const nd_tariff_table_t *table);
 
 uint8_t nd_tariff_find_interval(const nd_tariff_interval_t *intervals,
                                 uint8_t count, uint16_t now);

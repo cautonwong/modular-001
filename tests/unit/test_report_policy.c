@@ -1,6 +1,6 @@
 #include "unity.h"
 
-#include "domain/report/report_policy.h"
+#include "application/adapters/dl698/report_policy.h"
 
 void setUp(void) {}
 void tearDown(void) {}

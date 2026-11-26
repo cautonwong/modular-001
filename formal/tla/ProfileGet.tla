@@ -8,17 +8,25 @@
 (* slot from the snapshot's head/entries and validate the sequence stored   *)
 (* in the record header against snapshot->next_sequence - entries + index.  *)
 (* An append with room writes outside the snapshot window and leaves the    *)
-(* response identical to the snapshot. An append that wraps a full ring      *)
-(* overwrites a slot in the snapshot window, so its sequence changes, the   *)
-(* read fails, and GET returns ND_ERR_OPERATION_NOT_POSSIBLE; the client    *)
-(* retries. A reset between the passes writes a mark at head and bumps      *)
-(* next_sequence. If the mark lands outside the snapshot's read window the  *)
-(* old records stay physically present, so the response is still the        *)
-(* consistent pre-reset snapshot. A mark in a slot the scan has not read    *)
-(* yet makes read_at see SLOT_MARK instead of SLOT_RECORD and rejects, and  *)
-(* GET returns operation-not-possible; the client retries. A mark in a slot *)
-(* the scan already read changes nothing it has emitted, so the GET         *)
-(* finishes with the snapshot rows.                                         *)
+(* response identical to the snapshot, unless it starts at a sector-aligned *)
+(* head: append first erases the whole sector at head, so every other slot  *)
+(* of that sector becomes blank. A snapshot-window slot in that sector the  *)
+(* current pass has not read yet makes read_at reject it, and GET returns   *)
+(* operation-not-possible; slots the pass already read stay in the          *)
+(* response. An append that wraps a full ring overwrites a slot in the      *)
+(* snapshot window, so its sequence changes and the read fails the same     *)
+(* way; the client retries. A reset between the passes writes a mark at     *)
+(* head and bumps next_sequence. If the mark and the sector it erases lie   *)
+(* outside the snapshot's read window, the old records stay physically      *)
+(* present, so the response is still the consistent pre-reset snapshot.     *)
+(* When head is sector-aligned, reset first erases the whole sector         *)
+(* starting at head, so the erase blanks every slot of that sector, not     *)
+(* just the mark slot. A mark or a blank slot the current pass has not      *)
+(* read yet makes read_at reject it, and GET returns operation-not-         *)
+(* possible. Slots the current pass already emitted are not read again, so  *)
+(* they leave the response the pre-reset snapshot. For a value-range        *)
+(* selector both passes re-read every slot, so a count pass that already    *)
+(* read a slot does not protect the emit pass.                              *)
 (*                                                                          *)
 (* Abstraction: sequence numbers are unbounded Naturals here, while the     *)
 (* implementation stores them in 16 bits and compares modulo 65536. The     *)
@@ -177,9 +185,21 @@ AbortDone ==
                    snap_head, snap_entries, snap_next>>
 
 \* A second actor may append or reset at any point, including mid-GET.
+\* nd_profile_store_append erases the sector that starts at head when head is
+\* sector-aligned, then writes the record at head.
+SectorBase == (head \div SectorSlots) * SectorSlots
+
+AppendSlots(r) ==
+    IF head % SectorSlots = 0
+    THEN [i \in 0..Phys-1 |->
+              IF i >= SectorBase /\ i < SectorBase + SectorSlots
+              THEN IF i = head THEN r ELSE Empty
+              ELSE slots[i]]
+    ELSE [slots EXCEPT ![head] = r]
+
 AppendRecord(r) ==
     /\ r \in Records
-    /\ slots' = [slots EXCEPT ![head] = r]
+    /\ slots' = AppendSlots(r)
     /\ seqs' = [seqs EXCEPT ![head] = next_sequence]
     /\ head' = (head + 1) % Phys
     /\ entries' = IF entries < Capacity THEN entries + 1 ELSE entries
@@ -187,15 +207,23 @@ AppendRecord(r) ==
     /\ UNCHANGED <<mode, cursor, span, snap_head, snap_entries, snap_next,
                    count, emitted>>
 
-\* nd_profile_store_reset writes a mark at head with the current sequence,
-\* then clears the window and moves head past it. The mark is not a record:
-\* modeling it as Empty makes SnapReadOK false, so a mark in a snapshot slot
-\* the GET has not read yet aborts it. A mark outside the window, or in a
-\* slot already read, leaves the response the pre-reset snapshot; the GET
-\* completes.
+\* nd_profile_store_reset erases the sector that starts at head when head is
+\* sector-aligned, then writes a mark at head with the current sequence. The
+\* mark is not a record: modeling it as Empty makes SnapReadOK false. A
+\* non-aligned reset reaches the mark through the sector store's
+\* read-modify-erase-write, which rewrites the whole sector buffer, so the
+\* other slots keep their bytes and only the mark slot changes.
+ResetSlots ==
+    IF head % SectorSlots = 0
+    THEN [i \in 0..Phys-1 |->
+              IF i >= SectorBase /\ i < SectorBase + SectorSlots
+              THEN Empty
+              ELSE slots[i]]
+    ELSE [slots EXCEPT ![head] = Empty]
+
 Reset ==
     /\ entries' = 0
-    /\ slots' = [slots EXCEPT ![head] = Empty]
+    /\ slots' = ResetSlots
     /\ seqs' = [seqs EXCEPT ![head] = next_sequence]
     /\ head' = (head + 1) % Phys
     /\ next_sequence' = next_sequence + 1
@@ -370,7 +398,8 @@ CountEqualsEmitted ==
 Inv == TypeOK /\ CountEqualsEmitted
 
 \* Bounds the otherwise unbounded sequence counter so TLC's state space stays
-\* finite. The cfg uses a small ring; 6 allows the wrap cases it needs.
-NextSequenceBound == next_sequence < 6
+\* finite. The cfg uses a small ring; 7 lets four appends carry a stale
+\* snapshot's window under the sector an aligned reset then erases.
+NextSequenceBound == next_sequence < 7
 
 =============================================================================

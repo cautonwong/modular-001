@@ -1,6 +1,6 @@
 #include "targets/stategrid_meter/board/meter_status.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
-#include "domain/common/status.h"
+#include "targets/stategrid_meter/app/meter_wire_status.h"
 #include "targets/stategrid_meter/app/stategrid_context.h"
 #include "targets/stategrid_meter/persistence/legacy_control_block.h"
 #include <stddef.h>
@@ -36,7 +36,7 @@ void nd_meter_status_emu_error_set(void *ctx, int is_error)
 
     if (block != NULL)
     {
-        nd_mbase_EmuErrS_status(block) = is_error ? ND_EVENT_SET : ND_EVENT_RESET;
+        nd_mbase_EmuErrS_status(block) = is_error ? ND_WIRE_STATUS_SET : ND_WIRE_STATUS_RESET;
     }
 }
 

@@ -13,8 +13,6 @@ typedef enum {
     ND_EVENT_POWER_CHANGE,
     ND_EVENT_KEY,
     ND_EVENT_ALARM,
-    ND_EVENT_DL698_FRAME,
-    ND_EVENT_DL645_FRAME,
     ND_EVENT_TOPIC_COUNT
 } nd_event_topic_t;
 
@@ -32,10 +30,6 @@ typedef struct {
         struct {
             uint32_t mask;
         } alarm;
-        struct {
-            uint8_t channel;
-            uint16_t length;
-        } frame;
     } data;
 } nd_event_t;
 

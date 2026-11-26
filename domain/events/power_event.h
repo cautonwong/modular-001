@@ -3,10 +3,6 @@
 
 #include <stdint.h>
 
-/* The 0xAA suffix closes the event at power-on time instead of the stored
- * power-down time. */
-uint8_t nd_event_close_uses_poweron(uint32_t oad);
-
 typedef struct {
     uint32_t power_off_acc;
     uint32_t power_off_low;

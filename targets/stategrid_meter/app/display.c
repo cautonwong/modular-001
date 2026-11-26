@@ -1,4 +1,5 @@
 #include "target.h"
+#include "domain/tariff/tariff.h"
 #include "targets/stategrid_meter/app/resource_ids.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "resource_ids.h"
@@ -6,13 +7,14 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <time.h>
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "application/ports/resource_access.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "string.h"
-#include "domain/display/backlight.h"
+#include "targets/stategrid_meter/app/display/backlight.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
 #include "lib_conf.h"
 #include "cpu_surport.h"
 #include "targets/stategrid_meter/app/display_applications.h"
@@ -491,7 +493,7 @@ unsigned short display_oad_to_id(unsigned char *oad, unsigned char *oad_son, uns
         memcpy((unsigned char*)&oad2, (unsigned char*)oad, 4);
         if(((oad2 & 0xFFFFFF00) != 0x00000400) && ((oad2 & 0xFFFFFF00) != 0x00100400) && ((oad2 & 0xFFFFFF00) != 0x00200400)
                && ((oad2 & 0xFFFFFF00) != 0x00000200) && ((oad2 & 0xFFFFFF00) != 0x00100200) && ((oad2 & 0xFFFFFF00) != 0x00200200))   return 0;
-        if (((oad2 & 0x000000FF) == 0) || ((oad2 & 0x000000FF) > (MaxFeeNum + 1))) //电能不支持块, 
+        if (((oad2 & 0x000000FF) == 0) || ((oad2 & 0x000000FF) > (ND_TARIFF_MAX_FEES + 1))) //电能不支持块, 
         {
             return 0;
         }
@@ -685,7 +687,7 @@ void Send_DisplayData(void *instance, void *pipeline)
 void AllDisplayLCD(void *instance, void *pipeline)
 {
 	
-    nd_backlight_set(1);
+    nd_backlight_set(stategrid_backlight_port(instance), 1);
 	if((nd_mb_lcd_poweron_all_dis_time(instance) > 30) || (nd_mb_lcd_poweron_all_dis_time(instance) == 0))
 		nd_mb_auto_inv(instance) = 5;
     else
@@ -708,6 +710,8 @@ void AllDisplayLCD(void *instance, void *pipeline)
 /***********************************************************************/
 void Key_Display(void *instance, void *pipeline, uint8_t ctr)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint16_t pageid=0;
     uint32_t    s_index = 0;
     
@@ -717,7 +721,7 @@ void Key_Display(void *instance, void *pipeline, uint8_t ctr)
         if( *nd_fr698_power_state(instance) == AC_POWER_ON )
         {
             nd_mb_backlight_tmr(instance) = nd_mb_backlight_key_time(instance);//按键时,背光点亮
-            nd_backlight_set(1); // 这里打开背光,保证显示与背光相对同步，测试提出显示与背光没有同步
+            nd_backlight_set(stategrid_backlight_port(instance), 1);
         }
         else
         {
@@ -759,7 +763,7 @@ void Key_Display(void *instance, void *pipeline, uint8_t ctr)
         }
         
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + nd_mb_key(instance));
-        nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
+        nd_get_index_port(port, s_index, (uint8_t*)&pageid, 2);
         if(pageid ==  0xFFFF)    pageid = 0xA001;
         nd_mb_page_id(instance) = pageid;
         
@@ -792,6 +796,8 @@ void Key_Display(void *instance, void *pipeline, uint8_t ctr)
 /***********************************************************************/
 void Get_DisplayPage(void *instance, void *pipeline)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint16_t pageid;
     uint32_t s_index = 0;
       
@@ -825,7 +831,7 @@ void Get_DisplayPage(void *instance, void *pipeline)
             }
             
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AutoDisplayList + nd_mb_auto_ptr(instance));
-            nd_get_index(instance, s_index, (uint8_t*)&pageid, 2);
+            nd_get_index_port(port, s_index, (uint8_t*)&pageid, 2);
             if(pageid ==  0xFFFF)    pageid = 0xA001;
             nd_mb_page_id(instance) = pageid;
 		}

@@ -1,6 +1,6 @@
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "application/ports/resource_access.h"
 #include "port.h"
@@ -8,7 +8,7 @@
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
-#include "domain/common/time_format.h"
+#include "components/services/time_format/time_format.h"
 #include "components/core/types/utils.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
 #endif // !WIN32
@@ -54,6 +54,7 @@ unsigned long GetTotalSec( unsigned char* Addr )
 
 int ACTION_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     struct context_698_t* pctx = (struct context_698_t*)ctx;
     uint8_t  method,i, tmpbuf[20] = {0};
     uint16_t oad,temp=0;
@@ -145,7 +146,7 @@ switch (oad)
                         {
                             //记录时钟故障(时钟非法)
                             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBroadcastTimeERR);
-                            nd_get_index(instance, s_index, (uint8_t*)&tmpbuf[0], 3);
+                            nd_get_index_port(port, s_index, (uint8_t*)&tmpbuf[0], 3);
                             if((tmpbuf[0] != (uint8_t)nd_fr698_time(instance)->tm_year)||(tmpbuf[1] != (uint8_t)nd_fr698_time(instance)->tm_mon)||(tmpbuf[2] != (uint8_t)nd_fr698_time(instance)->tm_mday))
                             {
 
@@ -154,7 +155,7 @@ switch (oad)
                                 tmpbuf[2] = nd_fr698_time(instance)->tm_mday;
                                 
                                 s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBroadcastTimeERR);
-                                nd_set_index(instance, s_index, (uint8_t*)&tmpbuf[0], 3);
+                                nd_set_index_port(port, s_index, (uint8_t*)&tmpbuf[0], 3);
                                 nd_mb_rtc_errs_status(instance) = 1;
                             }
                             return -DAR_OTHERS_ERROR;
@@ -167,7 +168,7 @@ switch (oad)
                         for(i=0; i<3; i++)
                         {
                             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
-                            nd_get_index(instance, s_index, (uint8_t*)&time_js[0], 2);
+                            nd_get_index_port(port, s_index, (uint8_t*)&time_js[0], 2);
                             time_js[2] = time_js[1];
                             time_js[3] = time_js[0];
                             time_js[0] = 0;//sec
@@ -203,7 +204,7 @@ switch (oad)
                     timer_set[5] = tmpbuf[1];
                     timer_set[6] = tmpbuf[0];
                     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
-                    nd_set_index(instance, s_index, timer_set, 7);
+                    nd_set_index_port(port, s_index, timer_set, 7);
                     
 
                     mem_swap_cpy((uint8_t*)&oad, p, 2);
@@ -230,7 +231,7 @@ switch (oad)
                     timer_set[5] = tmpbuf[1];
                     timer_set[6] = tmpbuf[0];
                     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
-                    nd_set_index(instance, s_index, timer_set, 7);
+                    nd_set_index_port(port, s_index, timer_set, 7);
 
                     record_event_no_mesg_pro(instance, NULL, BroadcastTimeS, NULL, 1);// 广播校时记录
                     after_Time_set_hook(instance);

@@ -1,5 +1,6 @@
 #include "unity.h"
 
+#include "application/adapters/dl698/security_mode_map.h"
 #include "domain/security/security_mode.h"
 
 void setUp(void) {}

@@ -33,7 +33,7 @@ int do_sum(uint8_t* buff, uint16_t length)
     return result;
 }
 
-int16_t verify_data(uint8_t device_name, uint32_t addr, uint16_t offset, uint8_t* buf, uint16_t size, uint16_t len)
+int16_t verify_data(stategrid_context_t *instance, uint8_t device_name, uint32_t addr, uint16_t offset, uint8_t* buf, uint16_t size, uint16_t len)
 {
     uint16_t row[] = { offset, offset + size, len - 0x02, len - 0x01 };
     uint16_t coordinate[4][2] = { {0,0}, {0,0}, {0,0}, {0,0} };
@@ -48,7 +48,7 @@ int16_t verify_data(uint8_t device_name, uint32_t addr, uint16_t offset, uint8_t
     {
         uint16_t copy = 0;
 
-        res_conditions_true(0x00 > nd_storage_read(device_name, addr, s_buf, len), -1);
+        res_conditions_true(0x00 > nd_storage_read(instance, device_name, addr, s_buf, len), -1);
         if (offset < len && offset < sizeof(s_buf)) {
             copy = (uint16_t)(sizeof(s_buf) - offset);
             if (copy > len - offset) {
@@ -81,7 +81,7 @@ int16_t verify_data(uint8_t device_name, uint32_t addr, uint16_t offset, uint8_t
     for (k = 0x00; k < cnt + 1; k++)
     {
         u_len = (k == cnt) ? (len % 128) : 128;
-        res_conditions_true(0x00 > nd_storage_read(device_name, addr + k * 128, s_buf, u_len), -1);
+        res_conditions_true(0x00 > nd_storage_read(instance, device_name, addr + k * 128, s_buf, u_len), -1);
         //更新数据类容
         if ((k >= coordinate[0][0]) && (k <= coordinate[1][0]))
         {
@@ -124,7 +124,7 @@ int16_t verify_data(uint8_t device_name, uint32_t addr, uint16_t offset, uint8_t
     return 1;
 }
 
-int16_t update_verify(uint8_t device_name, uint32_t addr, uint16_t offset, uint8_t* buf, uint16_t size, uint16_t len)
+int16_t update_verify(stategrid_context_t *instance, uint8_t device_name, uint32_t addr, uint16_t offset, uint8_t* buf, uint16_t size, uint16_t len)
 {
     uint16_t row[] = { offset, offset + size, len - 0x02, len - 0x01 };
     uint16_t coordinate[4][2] = { {0,0}, {0,0}, {0,0}, {0,0} };
@@ -139,7 +139,7 @@ int16_t update_verify(uint8_t device_name, uint32_t addr, uint16_t offset, uint8
     {
         uint16_t copy = 0;
 
-        res_conditions_true(0x00 > nd_storage_read(device_name, addr, s_buf, len), -1);
+        res_conditions_true(0x00 > nd_storage_read(instance, device_name, addr, s_buf, len), -1);
         if (offset < sizeof(s_buf)) {
             copy = (uint16_t)(sizeof(s_buf) - offset);
             if (copy > size) {
@@ -150,7 +150,7 @@ int16_t update_verify(uint8_t device_name, uint32_t addr, uint16_t offset, uint8
         checksum += do_sum(s_buf, len - 0x02);
         s_buf[len - 0x02] = (uint8_t)(checksum >> 8);
         s_buf[len - 0x01] = (uint8_t)checksum;
-        res_conditions_true(0x00 > nd_storage_write(device_name, addr, s_buf, len), -1);
+        res_conditions_true(0x00 > nd_storage_write(instance, device_name, addr, s_buf, len), -1);
 
         return 1;
     }
@@ -167,7 +167,7 @@ int16_t update_verify(uint8_t device_name, uint32_t addr, uint16_t offset, uint8
     for (k = 0x00; k < cnt + 1; k++)
     {
         u_len = (k == cnt) ? (len % 128) : 128;
-        res_conditions_true(0x00 > nd_storage_read(device_name, addr + k * 128, s_buf, u_len), -1);
+        res_conditions_true(0x00 > nd_storage_read(instance, device_name, addr + k * 128, s_buf, u_len), -1);
         //更新数据类容
         if ((k >= coordinate[0][0]) && (k <= coordinate[1][0]))
         {            
@@ -206,7 +206,7 @@ int16_t update_verify(uint8_t device_name, uint32_t addr, uint16_t offset, uint8
             }
         }
         //保存数据
-        res_conditions_true(0x00 > nd_storage_write(device_name, addr + k * 128, s_buf, u_len), -1);
+        res_conditions_true(0x00 > nd_storage_write(instance, device_name, addr + k * 128, s_buf, u_len), -1);
     }
 
 
@@ -399,6 +399,7 @@ stategrid_context_t *stategrid_context_create(uint8_t device_name, uint32_t firs
 
     instance = __nd_malloc(first_addr,&used,sizeof(stategrid_context_t), size);
     res_conditions_true(instance == NULL, NULL);
+    instance->board = stategrid_board_root();
     //初始化链表头
     init_list_head(&instance->dev_list);
     init_list_head(&instance->map_list);
@@ -452,7 +453,7 @@ int8_t add_device(stategrid_context_t *instance, uint8_t device_name, uint32_t s
     device->device_name = device_name;
     device->first_addr = 0x00000000;
     device->page_size = sector;
-    device->size = nd_storage_size(device_name);
+    device->size = nd_storage_size(instance, device_name);
     init_list_head(&device->sibling);
     init_list_head(&device->children);
     list_add_tail(&device->sibling, &instance->dev_list);
@@ -537,7 +538,7 @@ int16_t nd_get_block(stategrid_context_t *instance, uint32_t res, uint8_t* buf,u
     block = look_up_block(instance, device, (uint8_t)(res >> 16));
 
     res_conditions_true((block != NULL) && (buf_size <= block->size),
-        nd_storage_read(device->device_name, block->first_addr, buf, block->size) == 0 ? 1 : -1);
+        nd_storage_read(instance, device->device_name, block->first_addr, buf, block->size) == 0 ? 1 : -1);
 
     return 1;
 }
@@ -553,7 +554,7 @@ int16_t nd_set_block(stategrid_context_t *instance, uint32_t res, uint8_t* buf, 
 
     block = look_up_block(instance, device, (uint8_t)(res >> 16));
     res_conditions_true((block != NULL) && (buf_size <= block->size),
-        nd_storage_write(device->device_name, block->first_addr, buf, block->size) == 0 ? 1 : -1);
+        nd_storage_write(instance, device->device_name, block->first_addr, buf, block->size) == 0 ? 1 : -1);
 
     return 1;
 }
@@ -639,26 +640,26 @@ int get_device_used(stategrid_context_t *instance, uint8_t device_name,
     return 1;
 }
 
-uint32_t get_curr_mark(uint8_t device_name, uint32_t addr)
+uint32_t get_curr_mark(stategrid_context_t *instance, uint8_t device_name, uint32_t addr)
 {
     uint8_t buf[10] = { 0 };
 
-    (void)nd_storage_read(device_name, addr, buf, 0x04);
+    (void)nd_storage_read(instance, device_name, addr, buf, 0x04);
     //return buf_to_uint32_lsb(buf);
     return buf_to_uint32_msb(buf);
 }
 
-uint16_t search_enum_way(uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t *info, uint8_t direct)
+uint16_t search_enum_way(stategrid_context_t *instance, uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t *info, uint8_t direct)
 {
     uint16_t ptr, next_ptr;
     uint32_t cmp, next_cmp;
 
     ptr = end;
     next_ptr = ((start + 1) > end) ? start : (end - 1);
-    cmp = get_curr_mark(info->device_name, info->addr + info->offset + ptr * info->unit_size);
+    cmp = get_curr_mark(instance, info->device_name, info->addr + info->offset + ptr * info->unit_size);
     while (next_ptr >= start)
     {
-        next_cmp = get_curr_mark(info->device_name, info->addr + info->offset + next_ptr * info->unit_size);
+        next_cmp = get_curr_mark(instance, info->device_name, info->addr + info->offset + next_ptr * info->unit_size);
         res_conditions_true(cmp == key, ptr);
 
         if ((key >= next_cmp) && (key < cmp))
@@ -677,7 +678,7 @@ uint16_t search_enum_way(uint32_t key, uint16_t start, uint16_t end, struct sear
     return 0xFFFF;
 }
 
-uint16_t search_mid_way(uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t* info, uint8_t direct)
+uint16_t search_mid_way(stategrid_context_t *instance, uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t* info, uint8_t direct)
 {
     uint16_t min_ptr, max_ptr, mid_ptr = 0xFFFF;
     uint32_t mid_cmp, temp_cmp;
@@ -686,14 +687,14 @@ uint16_t search_mid_way(uint32_t key, uint16_t start, uint16_t end, struct searc
     while ((direct < 0x02) && (max_ptr >= min_ptr))
     {
         mid_ptr = (min_ptr + max_ptr) / 2;
-        mid_cmp = get_curr_mark(info->device_name, info->addr + info->offset + mid_ptr * info->unit_size);
+        mid_cmp = get_curr_mark(instance, info->device_name, info->addr + info->offset + mid_ptr * info->unit_size);
         res_conditions_true(mid_cmp == key, mid_ptr);
 
         if (key > mid_cmp)
         {
             res_conditions_true(mid_ptr == max_ptr, 0xFFFF);
             min_ptr = mid_ptr + 1;
-            temp_cmp = get_curr_mark(info->device_name, info->addr + info->offset + min_ptr * info->unit_size);
+            temp_cmp = get_curr_mark(instance, info->device_name, info->addr + info->offset + min_ptr * info->unit_size);
             res_conditions_true(key == temp_cmp, min_ptr);
             res_conditions_true(key < temp_cmp, (min_ptr - direct));
         }
@@ -701,7 +702,7 @@ uint16_t search_mid_way(uint32_t key, uint16_t start, uint16_t end, struct searc
         {
             res_conditions_true(mid_ptr == min_ptr, 0xFFFF);
             max_ptr = mid_ptr - 0x01;
-            temp_cmp = get_curr_mark(info->device_name, info->addr + info->offset + max_ptr * info->unit_size);
+            temp_cmp = get_curr_mark(instance, info->device_name, info->addr + info->offset + max_ptr * info->unit_size);
             res_conditions_true(key == temp_cmp, max_ptr);
             res_conditions_true(key > temp_cmp, (mid_ptr - direct));
         }
@@ -709,10 +710,10 @@ uint16_t search_mid_way(uint32_t key, uint16_t start, uint16_t end, struct searc
     return mid_ptr;
 }
 
-int __search_smoke(struct circular_info_t* info, struct search_tempinfo_t* tempinfo, uint16_t *sptr,uint8_t mode)
+int __search_smoke(stategrid_context_t *instance, struct circular_info_t* info, struct search_tempinfo_t* tempinfo, uint16_t *sptr,uint8_t mode)
 {
-    uint32_t temp1 = get_curr_mark(tempinfo->device_name, tempinfo->addr + tempinfo->offset + sptr[0] * tempinfo->unit_size);
-    uint32_t temp2 = get_curr_mark(tempinfo->device_name, tempinfo->addr + tempinfo->offset + sptr[1] * tempinfo->unit_size);
+    uint32_t temp1 = get_curr_mark(instance, tempinfo->device_name, tempinfo->addr + tempinfo->offset + sptr[0] * tempinfo->unit_size);
+    uint32_t temp2 = get_curr_mark(instance, tempinfo->device_name, tempinfo->addr + tempinfo->offset + sptr[1] * tempinfo->unit_size);
 
     res_conditions_true(info->end_mark < info->start_mark, -1);
     switch (mode)
@@ -732,8 +733,8 @@ int __search_smoke(struct circular_info_t* info, struct search_tempinfo_t* tempi
         break;
     case 0x02:  //有反转
     {
-        uint32_t temp3 = get_curr_mark(tempinfo->device_name, tempinfo->addr + tempinfo->offset + sptr[2] * tempinfo->unit_size);
-        uint32_t temp4 = get_curr_mark(tempinfo->device_name, tempinfo->addr + tempinfo->offset + sptr[3] * tempinfo->unit_size);
+        uint32_t temp3 = get_curr_mark(instance, tempinfo->device_name, tempinfo->addr + tempinfo->offset + sptr[2] * tempinfo->unit_size);
+        uint32_t temp4 = get_curr_mark(instance, tempinfo->device_name, tempinfo->addr + tempinfo->offset + sptr[3] * tempinfo->unit_size);
 
         if (info->start_mark <= temp3)
         {
@@ -762,8 +763,8 @@ int __search_smoke(struct circular_info_t* info, struct search_tempinfo_t* tempi
     return 1;
 }
 
-int16_t __search_circular(struct circular_info_t* info, struct log_manager_t* manager, struct search_tempinfo_t *tempinfo,
-    uint16_t (*fun)(uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t* info, uint8_t direct))
+int16_t __search_circular(stategrid_context_t *instance, struct circular_info_t* info, struct log_manager_t* manager, struct search_tempinfo_t *tempinfo,
+    uint16_t (*fun)(stategrid_context_t *instance, uint32_t key, uint16_t start, uint16_t end, struct search_tempinfo_t* info, uint8_t direct))
 {
     uint16_t ptr[4] = { manager->r_ptr, 0x00, 0x00, 0x00 };
     uint16_t start_ptr = 0x00, end_ptr = 0x00;
@@ -787,7 +788,7 @@ int16_t __search_circular(struct circular_info_t* info, struct log_manager_t* ma
         cnt = 0x02;  //需要找两次；
     }
 
-    if (0x00 > __search_smoke(info, tempinfo, ptr, cnt))
+    if (0x00 > __search_smoke(instance, info, tempinfo, ptr, cnt))
     {
         info->read_ptr = 0x00;
         info->valid_num = 0x00;
@@ -795,17 +796,17 @@ int16_t __search_circular(struct circular_info_t* info, struct log_manager_t* ma
         return 0x00;
     }
     
-    start_ptr = fun(info->start_mark, ptr[0], ptr[1], tempinfo, 0x00);
+    start_ptr = fun(instance, info->start_mark, ptr[0], ptr[1], tempinfo, 0x00);
     if ((start_ptr == 0xFFFF) && (cnt == 0x02))
     {
-        start_ptr = fun(info->start_mark, ptr[2], ptr[3], tempinfo, 0x00);
+        start_ptr = fun(instance, info->start_mark, ptr[2], ptr[3], tempinfo, 0x00);
         start_mark = 1;
     }
 
-    end_ptr = fun(info->end_mark, ptr[0], ptr[1], tempinfo, 0x01);
+    end_ptr = fun(instance, info->end_mark, ptr[0], ptr[1], tempinfo, 0x01);
     if ((end_ptr == 0xFFFF) && (cnt == 0x02))
     {
-        end_ptr = fun(info->end_mark, ptr[2], ptr[3], tempinfo, 0x01);
+        end_ptr = fun(instance, info->end_mark, ptr[2], ptr[3], tempinfo, 0x01);
         end_mark = 1;
     }
 
@@ -842,7 +843,7 @@ int16_t __search_circular(struct circular_info_t* info, struct log_manager_t* ma
 }
 
 
-int16_t search_circular(uint8_t device_name, uint32_t addr, struct circular_info_t* info, struct log_manager_t* manager,uint32_t max_num)
+int16_t search_circular(stategrid_context_t *instance, uint8_t device_name, uint32_t addr, struct circular_info_t* info, struct log_manager_t* manager,uint32_t max_num)
 {
     struct search_tempinfo_t tempinfo;
 
@@ -861,14 +862,14 @@ int16_t search_circular(uint8_t device_name, uint32_t addr, struct circular_info
         case 0x01:  //序号二分查找
             tempinfo.offset = CIRCULAR_OFFSET_SEQUENCE;  // 01
             //tempinfo.offset = 0x00;
-            return __search_circular(info, manager, &tempinfo, search_mid_way);
+            return __search_circular(instance, info, manager, &tempinfo, search_mid_way);
         case 0x02: //时间二分查找
             tempinfo.offset = CIRCULAR_OFFSET_TIME; // 06
             //tempinfo.offset = 0x04;
-            return __search_circular(info, manager, &tempinfo, search_mid_way);
+            return __search_circular(instance, info, manager, &tempinfo, search_mid_way);
         case 0x03: //时间枚举法查找
             tempinfo.offset = 0x04;
-            return __search_circular(info, manager, &tempinfo, search_enum_way);
+            return __search_circular(instance, info, manager, &tempinfo, search_enum_way);
         default:
             break;
         }
@@ -876,14 +877,14 @@ int16_t search_circular(uint8_t device_name, uint32_t addr, struct circular_info
     return -1;
 }
 #ifndef WIN32
-int application_norflash_erase(uint8_t device_name, uint32_t addr, uint32_t len)
+int application_norflash_erase(stategrid_context_t *instance, uint8_t device_name, uint32_t addr, uint32_t len)
 {
     uint32_t temp;
 
     temp = ((addr + len) / 4096) * 4096;
     if ((addr <= temp) && (addr + len > temp))
     {
-        return nd_storage_erase(device_name, temp) == 0 ? 1 : -1;
+        return nd_storage_erase(instance, device_name, temp) == 0 ? 1 : -1;
     }
     return 1;
 }
@@ -915,7 +916,7 @@ static int16_t log_append_engine(stategrid_context_t *instance, uint32_t index, 
     block02->hook(instance, (uint16_t)index, &addr02, &len02, NULL);
     res_conditions_true(len02 != (sizeof(struct log_manager_t)+2), -1);
     //读管理区
-    if (0x00 > verify_data(device02->device_name, block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
+    if (0x00 > verify_data(instance, device02->device_name, block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
         sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02))
     {
         manager.max_num = depth;
@@ -934,10 +935,10 @@ static int16_t log_append_engine(stategrid_context_t *instance, uint32_t index, 
     //判断是否需要察扇区
     if (device01->device_name == RES_DEV_FLASH)//FLASH才会擦除
     {
-        res_conditions_true(0x00 > application_norflash_erase(device01->device_name, block01->first_addr + addr01, unit_size), -1);
+        res_conditions_true(0x00 > application_norflash_erase(instance, device01->device_name, block01->first_addr + addr01, unit_size), -1);
     }
 #endif // WIN32
-    res_conditions_true(0x00 > nd_storage_write(device01->device_name, block01->first_addr + addr01,
+    res_conditions_true(0x00 > nd_storage_write(instance, device01->device_name, block01->first_addr + addr01,
         buf, unit_size), -1);
     
     //保存管理区
@@ -963,7 +964,7 @@ static int16_t log_append_engine(stategrid_context_t *instance, uint32_t index, 
         manager.w_ptr = 0x00;
     }
         
-    res_conditions_true(0x00 > update_verify(device02->device_name, block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
+    res_conditions_true(0x00 > update_verify(instance, device02->device_name, block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
         sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02), -1);
 
 
@@ -996,7 +997,7 @@ static int16_t log_append_revise_engine(stategrid_context_t *instance, uint32_t 
     block02->hook(instance, (uint16_t)index, &addr02, &len02, NULL);
     res_conditions_true(len02 != (sizeof(struct log_manager_t)+2), -1);
     //读管理区
-    if (0x00 > verify_data(device02->device_name, block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
+    if (0x00 > verify_data(instance, device02->device_name, block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
         sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02))
     {
         manager.max_num = depth;
@@ -1022,7 +1023,7 @@ static int16_t log_append_revise_engine(stategrid_context_t *instance, uint32_t 
     }
     
     addr01 += manager.w_ptr * manager.unit_size + offset;    
-    res_conditions_true(0x00 > nd_storage_write(device01->device_name, block01->first_addr + addr01,
+    res_conditions_true(0x00 > nd_storage_write(instance, device01->device_name, block01->first_addr + addr01,
         buf, unit_size), -1);
 
     return unit_size;
@@ -1056,13 +1057,13 @@ static int16_t log_output_engine(stategrid_context_t *instance, uint32_t index, 
         res_conditions_true((block02 == NULL) || (block02->hook == NULL), -1);
         block02->hook(instance, (uint16_t)index, &addr02, &len02, NULL);
 
-        res_conditions_true(0x00 > verify_data(device02->device_name, block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
+        res_conditions_true(0x00 > verify_data(instance, device02->device_name, block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
             sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02), -1);
         info->unit_size = manager.unit_size;
         info->valid_num = manager.num;
         info->read_ptr = manager.r_ptr;
         res_conditions_true((info->valid_num == 0x00) || (manager.unit_size == 0x00), 0x00);
-        search_circular(device01->device_name, block01->first_addr + addr01, info, &manager, len01 / manager.unit_size);
+        search_circular(instance, device01->device_name, block01->first_addr + addr01, info, &manager, len01 / manager.unit_size);
     }
     //读取数据
     res_conditions_true(info->curr_num >= info->valid_num, 0);
@@ -1080,38 +1081,38 @@ static int16_t log_output_engine(stategrid_context_t *instance, uint32_t index, 
     }
 
     addr01 += ut_ptr * info->unit_size;
-    res_conditions_true(0x00 > nd_storage_read(device01->device_name, block01->first_addr + addr01, buf, info->unit_size), -1);
+    res_conditions_true(0x00 > nd_storage_read(instance, device01->device_name, block01->first_addr + addr01, buf, info->unit_size), -1);
     info->curr_num++;
 
     return info->unit_size;
 }
 
-int16_t _Data_handling(uint32_t addr_a, uint32_t addr_b, int32_t len, struct block_device_t* device)
+int16_t _Data_handling(stategrid_context_t *instance, uint32_t addr_a, uint32_t addr_b, int32_t len, struct block_device_t* device)
 {
     uint8_t buf[256];
     uint16_t size = 0;
     int32_t offset = 0, s_len = len;
     uint64_t step;
 
-    res_conditions_true(0x00 > nd_storage_read(device->device_name, addr_b + 4096, (uint8_t *)&step, 8), -1);
+    res_conditions_true(0x00 > nd_storage_read(instance, device->device_name, addr_b + 4096, (uint8_t *)&step, 8), -1);
     if((step != 0xFCFCFCFCFCFCFCFC) && (step != 0xF8F8F8F8F8F8F8F8) && (step != 0xFFFFFFFFFFFFFFFF) &&
        (step != 0xF0F0F0F0F0F0F0F0) && (step != 0xE0E0E0E0E0E0E0E0))
     {
         uint32_t t_addr = addr_b + 4096;
-        res_conditions_true(0x00 > nd_storage_erase(device->device_name, t_addr), -1);
+        res_conditions_true(0x00 > nd_storage_erase(instance, device->device_name, t_addr), -1);
         step = 0xFCFCFCFCFCFCFCFC;
-        res_conditions_true(0x00 > nd_storage_write(device->device_name, addr_b + 4096, (uint8_t *)&step, 8), -1);
+        res_conditions_true(0x00 > nd_storage_write(instance, device->device_name, addr_b + 4096, (uint8_t *)&step, 8), -1);
     }
 
     switch(step)
     {
     case 0xFFFFFFFFFFFFFFFF:
       step = 0xFCFCFCFCFCFCFCFC;
-      res_conditions_true(0x00 > nd_storage_write(device->device_name, addr_b + 4096, (uint8_t *)&step, 8), -1);
+      res_conditions_true(0x00 > nd_storage_write(instance, device->device_name, addr_b + 4096, (uint8_t *)&step, 8), -1);
     case 0xFCFCFCFCFCFCFCFC:  //公共擦除  FC
-      res_conditions_true(0x00 > nd_storage_erase(device->device_name, addr_b), -1);
+      res_conditions_true(0x00 > nd_storage_erase(instance, device->device_name, addr_b), -1);
       step = 0xF8F8F8F8F8F8F8F8;
-      res_conditions_true(0x00 > nd_storage_write(device->device_name, addr_b + 4096, (uint8_t *)&step, 8), -1);
+      res_conditions_true(0x00 > nd_storage_write(instance, device->device_name, addr_b + 4096, (uint8_t *)&step, 8), -1);
     case 0xF8F8F8F8F8F8F8F8:  //数据拷贝 F8
       offset = 0;
       while(s_len > 0)
@@ -1119,17 +1120,17 @@ int16_t _Data_handling(uint32_t addr_a, uint32_t addr_b, int32_t len, struct blo
           if(s_len > 256) { size = 256; }
           else{ size = s_len; }
           
-          res_conditions_true(0x00 > nd_storage_read(device->device_name, addr_a + offset, buf, size), -1);
-          res_conditions_true(0x00 > nd_storage_write(device->device_name, addr_b + offset, buf, size), -1);
+          res_conditions_true(0x00 > nd_storage_read(instance, device->device_name, addr_a + offset, buf, size), -1);
+          res_conditions_true(0x00 > nd_storage_write(instance, device->device_name, addr_b + offset, buf, size), -1);
           offset += size;
           s_len -= size;
       }
       step = 0xF0F0F0F0F0F0F0F0;
-      res_conditions_true(0x00 > nd_storage_write(device->device_name, addr_b + 4096, (uint8_t *)&step, 8), -1);
+      res_conditions_true(0x00 > nd_storage_write(instance, device->device_name, addr_b + 4096, (uint8_t *)&step, 8), -1);
     case 0xF0F0F0F0F0F0F0F0:  //目标区擦除 F0
-      res_conditions_true(0x00 > nd_storage_erase(device->device_name, addr_a), -1);
+      res_conditions_true(0x00 > nd_storage_erase(instance, device->device_name, addr_a), -1);
       step = 0xE0E0E0E0E0E0E0E0;
-      res_conditions_true(0x00 > nd_storage_write(device->device_name, addr_b + 4096, (uint8_t *)&step, 8), -1);
+      res_conditions_true(0x00 > nd_storage_write(instance, device->device_name, addr_b + 4096, (uint8_t *)&step, 8), -1);
     case 0xE0E0E0E0E0E0E0E0:  //目标区数据拷贝 E0
       s_len = len;
       offset = 0;
@@ -1138,13 +1139,13 @@ int16_t _Data_handling(uint32_t addr_a, uint32_t addr_b, int32_t len, struct blo
           if(s_len > 256) { size = 256; }
           else{ size = s_len; }
           
-          res_conditions_true(0x00 > nd_storage_read(device->device_name, addr_b + offset, buf, size), -1);
-          res_conditions_true(0x00 > nd_storage_write(device->device_name, addr_a + offset, buf, size), -1);
+          res_conditions_true(0x00 > nd_storage_read(instance, device->device_name, addr_b + offset, buf, size), -1);
+          res_conditions_true(0x00 > nd_storage_write(instance, device->device_name, addr_a + offset, buf, size), -1);
           offset += size;
           s_len -= size;
       }
       step = 0x0000000000000000;
-      res_conditions_true(0x00 > nd_storage_write(device->device_name, addr_b + 4096, (uint8_t *)&step, 8), -1);
+      res_conditions_true(0x00 > nd_storage_write(instance, device->device_name, addr_b + 4096, (uint8_t *)&step, 8), -1);
     }
     return 1;
 }
@@ -1178,7 +1179,7 @@ uint16_t nd_log_append_rollback(stategrid_context_t *instance, uint32_t index, u
     res_conditions_true((block02 == NULL) || (block02->hook == NULL), 0);
     block02->hook(instance, (uint16_t)index, &addr02, &len02, NULL);
 
-    res_conditions_true(0x00 > verify_data(device02->device_name, block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
+    res_conditions_true(0x00 > verify_data(instance, device02->device_name, block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
         sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02), 0);
     res_conditions_true((manager.num == 0x00) || (manager.unit_size == 0x00), 0x00);
     over_num = len01 / manager.unit_size;
@@ -1190,11 +1191,11 @@ uint16_t nd_log_append_rollback(stategrid_context_t *instance, uint32_t index, u
     info.start_mark = 0;
     //计算上一次的
     info.end_mark = last_time;
-    search_circular(device01->device_name, block01->first_addr + addr01, &info, &manager, len01 / manager.unit_size);
+    search_circular(instance, device01->device_name, block01->first_addr + addr01, &info, &manager, len01 / manager.unit_size);
     last_num = info.valid_num;
     //当前一次的
     info.end_mark = curr_time;
-    search_circular(device01->device_name, block01->first_addr + addr01, &info, &manager, len01 / manager.unit_size);
+    search_circular(instance, device01->device_name, block01->first_addr + addr01, &info, &manager, len01 / manager.unit_size);
     curr_num = info.valid_num;
     res_conditions_true(last_num < curr_num, 0);
     if(last_num > curr_num)
@@ -1216,7 +1217,7 @@ uint16_t nd_log_append_rollback(stategrid_context_t *instance, uint32_t index, u
                 manager.w_ptr = 0;
             }
             //更新管理区
-            res_conditions_true(0x00 > update_verify(device02->device_name, block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
+            res_conditions_true(0x00 > update_verify(instance, device02->device_name, block02->first_addr + addr02, 0x00, (uint8_t*)&manager,
                 sizeof(struct log_manager_t), sizeof(struct log_manager_t) + 0x02), 0);
         }
         //搬运数据
@@ -1228,7 +1229,7 @@ uint16_t nd_log_append_rollback(stategrid_context_t *instance, uint32_t index, u
         
         if(s_len > 0)
         {
-            res_conditions_true(0x00 > _Data_handling(block01->first_addr + addr01, block03->first_addr, s_len, device01), 0);
+            res_conditions_true(0x00 > _Data_handling(instance, block01->first_addr + addr01, block03->first_addr, s_len, device01), 0);
         }   
         
     }
@@ -1260,7 +1261,7 @@ static int log_clean_engine(stategrid_context_t *instance, uint32_t index)
     block02->hook(instance, (uint16_t)index, &addr02, &len02, NULL);
 
     memset(buf, 0x00, 20);
-    res_conditions_true(0x00 > nd_storage_write(device02->device_name, block02->first_addr + addr02, buf, len02), -1);
+    res_conditions_true(0x00 > nd_storage_write(instance, device02->device_name, block02->first_addr + addr02, buf, len02), -1);
 
     return 1;
 }
@@ -1281,7 +1282,7 @@ int16_t __nd_get_index(stategrid_context_t *instance, uint32_t index, uint8_t* b
     addr += block->first_addr;
     res_conditions_true(addr + offset + size > block->first_addr + block->size, -1);
     //获取数据
-    res_conditions_true(0x00 > verify_data(device->device_name, addr, offset, buf, size, len), -1);
+    res_conditions_true(0x00 > verify_data(instance, device->device_name, addr, offset, buf, size, len), -1);
 
     return size;
 }
@@ -1321,7 +1322,7 @@ int16_t __nd_set_index(stategrid_context_t *instance, uint32_t index, uint8_t* b
     addr += block->first_addr;
     res_conditions_true(addr + offset + size > block->first_addr + block->size, -1);
 
-    res_conditions_true(0x00 > update_verify(device->device_name, addr, offset, buf, size, len), -1);
+    res_conditions_true(0x00 > update_verify(instance, device->device_name, addr, offset, buf, size, len), -1);
 
     return size;
 }
@@ -1358,8 +1359,8 @@ static int16_t resource_get_offset(void *ctx, uint32_t offset, uint8_t* buf, uin
     addr = block->first_addr + (uint16_t)offset;
     res_conditions_true(addr + len > block->first_addr + block->size, -1);
 
-    res_conditions_true(0x00 > nd_storage_read(device->device_name, addr, buf, len), -1);
-    //res_conditions_true(0x00 > verify_data(buf, len), -1);
+    res_conditions_true(0x00 > nd_storage_read(instance, device->device_name, addr, buf, len), -1);
+    //res_conditions_true(0x00 > verify_data(instance, buf, len), -1);
 
     return len;
 }
@@ -1377,8 +1378,8 @@ int16_t __nd_set_offset(stategrid_context_t *instance, uint32_t offset, uint8_t*
     addr = block->first_addr + (uint16_t)offset;
     res_conditions_true(addr + len > block->first_addr + block->size, -1);
 
-    //update_verify(buf, len);
-    res_conditions_true(0x00 > nd_storage_write(device->device_name, addr, buf, len), -1);
+    //update_verify(instance, buf, len);
+    res_conditions_true(0x00 > nd_storage_write(instance, device->device_name, addr, buf, len), -1);
 
     return len;
 }
@@ -1472,10 +1473,10 @@ static int16_t resource_set_offset_flash(void *ctx, uint8_t blockname, uint32_t 
     //跨页是否 擦除
     if(check_erase)
     {
-        res_conditions_true(0x00 > application_norflash_erase(device->device_name, addr, len), -1);
+        res_conditions_true(0x00 > application_norflash_erase(instance, device->device_name, addr, len), -1);
     }
 
-    res_conditions_true(0x00 > nd_storage_write(device->device_name, addr, buf, len), -1);
+    res_conditions_true(0x00 > nd_storage_write(instance, device->device_name, addr, buf, len), -1);
 
     return len;
 }
@@ -1494,8 +1495,8 @@ static int16_t resource_get_offset_flash(void *ctx, uint8_t blockname, uint32_t 
     addr = block->first_addr + addr_offset;
     res_conditions_true(addr + len > block->first_addr + block->size, -1);
 
-    res_conditions_true(0x00 > nd_storage_read(device->device_name, addr, buf, len), -1);
-    //res_conditions_true(0x00 > verify_data(buf, len), -1);
+    res_conditions_true(0x00 > nd_storage_read(instance, device->device_name, addr, buf, len), -1);
+    //res_conditions_true(0x00 > verify_data(instance, buf, len), -1);
 
     return len;
 }
@@ -1535,24 +1536,21 @@ static int16_t resource_log_append_revise(void *ctx, uint32_t index,
                                     offset, unit_size);
 }
 
-static nd_resource_port_t port;
-
-void resource_tool_bind(stategrid_context_t *ctx)
+void resource_tool_attach(stategrid_context_t *ctx)
 {
-    port.ctx = ctx;
-    port.get_index = resource_get_index;
-    port.set_index = resource_set_index;
-    port.get_offset = resource_get_offset;
-    port.set_offset = resource_set_offset;
-    port.get_index_e2p = resource_get_index_e2p;
-    port.set_index_e2p = resource_set_index_e2p;
-    port.get_offset_flash = resource_get_offset_flash;
-    port.set_offset_flash = resource_set_offset_flash;
-    port.log_output = resource_log_output;
-    port.log_clean = resource_log_clean;
-    port.log_append = resource_log_append;
-    port.log_append_revise = resource_log_append_revise;
-    nd_resource_bind(&port);
+    ctx->resource.ctx = ctx;
+    ctx->resource.get_index = resource_get_index;
+    ctx->resource.set_index = resource_set_index;
+    ctx->resource.get_offset = resource_get_offset;
+    ctx->resource.set_offset = resource_set_offset;
+    ctx->resource.get_index_e2p = resource_get_index_e2p;
+    ctx->resource.set_index_e2p = resource_set_index_e2p;
+    ctx->resource.get_offset_flash = resource_get_offset_flash;
+    ctx->resource.set_offset_flash = resource_set_offset_flash;
+    ctx->resource.log_output = resource_log_output;
+    ctx->resource.log_clean = resource_log_clean;
+    ctx->resource.log_append = resource_log_append;
+    ctx->resource.log_append_revise = resource_log_append_revise;
 }
 
 

@@ -1,33 +1,8 @@
-# Per-product link coverage exceptions. Keep entries exact: a source that
-# becomes linked fails until its exception is removed.
-# A component is covered per source; there is no component-wide pass.
-# source <product> <component> <repo-relative source> check=<kind>=<arg> <reason>
-# check=header=<includer>:<header>  a linked source reaches the includer, the
-#                                  includer includes the repo-relative header,
-#                                  and the header is owned by the exception component
-# check=unselected=<component>      the product does not select the caller component
-#                                  and the caller is not in the product's dependency
-#                                  closure
-# check=test=<manifest>             the test build compiles the source
-# check=closure=<component>         the exception component is in this component's closure
-# A check that stops holding fails the gate; the reason stays prose for humans.
+# Product link baseline: non-firmware product reasons only.
+# A component source must be selected by some firmware product or compiled by
+# tests/CMakeLists.txt; the checker fails otherwise. product.yaml sources:
+# decides what a selected component contributes.
 # non_firmware <product> <reason>
-
-source meter_electricity_single_phase_idis core.types components/core/types/bitarithm.c check=test=tests/CMakeLists.txt host test only: tests/CMakeLists.txt compiles it for test_bitarithm.c; no linked IDIS source includes bitarithm.h
-source meter_electricity_single_phase_idis core.types components/core/types/list.c check=test=tests/CMakeLists.txt host test only: tests/CMakeLists.txt compiles it for test_list.c; no linked IDIS source includes components/core/types/list.h
-source meter_electricity_single_phase_idis core.types components/core/types/rtc.c check=unselected=application.adapters.dl698 unused by this product: the only callers are in application.adapters.dl698, which this product does not select
-source meter_electricity_single_phase_idis protocol.dlms components/protocol/dlms/src/nd_dlms_apdu.c check=test=tests/CMakeLists.txt test only: tests/CMakeLists.txt compiles it; the firmware links nd_axdr.c only
-source meter_electricity_single_phase_idis protocol.dlms components/protocol/dlms/src/nd_dlms_assoc.c check=test=tests/CMakeLists.txt test only: tests/CMakeLists.txt compiles it; the firmware links nd_axdr.c only
-source meter_electricity_single_phase_idis protocol.dlms components/protocol/dlms/src/nd_dlms_security.c check=test=tests/CMakeLists.txt test only: tests/CMakeLists.txt compiles it; the firmware links nd_axdr.c only
-source meter_electricity_single_phase_idis protocol.dlms components/protocol/dlms/src/nd_dlms_server.c check=test=tests/CMakeLists.txt test only: tests/CMakeLists.txt compiles it; the firmware links nd_axdr.c only
-
-source meter_electricity_single_phase_idis_freertos core.types components/core/types/bitarithm.c check=test=tests/CMakeLists.txt host test only: tests/CMakeLists.txt compiles it for test_bitarithm.c; no linked IDIS source includes bitarithm.h
-source meter_electricity_single_phase_idis_freertos core.types components/core/types/list.c check=test=tests/CMakeLists.txt host test only: tests/CMakeLists.txt compiles it for test_list.c; no linked IDIS source includes components/core/types/list.h
-source meter_electricity_single_phase_idis_freertos core.types components/core/types/rtc.c check=unselected=application.adapters.dl698 unused by this product: the only callers are in application.adapters.dl698, which this product does not select
-source meter_electricity_single_phase_idis_freertos protocol.dlms components/protocol/dlms/src/nd_dlms_apdu.c check=test=tests/CMakeLists.txt test only: tests/CMakeLists.txt compiles it; the firmware links nd_axdr.c only
-source meter_electricity_single_phase_idis_freertos protocol.dlms components/protocol/dlms/src/nd_dlms_assoc.c check=test=tests/CMakeLists.txt test only: tests/CMakeLists.txt compiles it; the firmware links nd_axdr.c only
-source meter_electricity_single_phase_idis_freertos protocol.dlms components/protocol/dlms/src/nd_dlms_security.c check=test=tests/CMakeLists.txt test only: tests/CMakeLists.txt compiles it; the firmware links nd_axdr.c only
-source meter_electricity_single_phase_idis_freertos protocol.dlms components/protocol/dlms/src/nd_dlms_server.c check=test=tests/CMakeLists.txt test only: tests/CMakeLists.txt compiles it; the firmware links nd_axdr.c only
 
 non_firmware comm_plc no firmware image: PLC communication module assembly; its sources resolve through the product manifest only
 non_firmware comm_rf no firmware image: RF communication module assembly; its sources resolve through the product manifest only

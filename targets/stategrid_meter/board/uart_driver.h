@@ -20,6 +20,7 @@ enum uart_chl_t
 
 
 struct fifo_t;
+struct stategrid_board_state;
 
 struct uart_chl_init_t
 {
@@ -34,22 +35,29 @@ struct uart_chl_init_t
 
     uint8_t mcu_uart_index;
     uint8_t chl_type;
-    void (*CallBackReceiveTimeOut)();
-    void (*CallBackSendTimeOut)(void *CallBackSendPara);
-    void *CallBackSendPara;
+    void (*CallBackReceiveTimeOut)(void *CallBackPara);
+    void (*CallBackSendTimeOut)(void *CallBackPara);
+    void *CallBackPara;
 };
 
 
-extern int uart_chl_initialize(struct uart_chl_init_t *uart_chl);
-extern int uart_chl_open(uint8_t chl_type);
+extern int uart_chl_initialize(struct stategrid_board_state *state,
+                               struct uart_chl_init_t *uart_chl);
+extern int uart_chl_open(struct stategrid_board_state *state,
+                         uint8_t chl_type);
 
-void nd_board_uart_init(size_t index, const void *config);
-void nd_board_uart_tx_enable(size_t index, uint8_t enable);
-void nd_board_uart_rx_enable(size_t index, uint8_t enable);
-int nd_board_uart_write(size_t index, uint8_t byte);
-int nd_board_uart_tx_done(size_t index);
-int nd_board_uart_read(size_t index, uint8_t *byte);
-int nd_board_uart_rx_done(size_t index);
+void nd_board_uart_init(struct stategrid_board_state *state, size_t index,
+                        const void *config);
+void nd_board_uart_tx_enable(struct stategrid_board_state *state,
+                             size_t index, uint8_t enable);
+void nd_board_uart_rx_enable(struct stategrid_board_state *state,
+                             size_t index, uint8_t enable);
+int nd_board_uart_write(struct stategrid_board_state *state, size_t index,
+                        uint8_t byte);
+int nd_board_uart_tx_done(struct stategrid_board_state *state, size_t index);
+int nd_board_uart_read(struct stategrid_board_state *state, size_t index,
+                       uint8_t *byte);
+int nd_board_uart_rx_done(struct stategrid_board_state *state, size_t index);
 
 
 

@@ -7,16 +7,13 @@ struct load_control_state {
     uint32_t alarm_minutes;
     uint32_t current_limit_minutes;
     uint32_t limit_minutes;
-    uint32_t key_ticks;
     uint8_t switch_on;
     uint8_t last_switch_on;
     uint8_t last_switch_known;
-    uint8_t led_flash;
     uint8_t relay_do;
     uint8_t meter_clear;
     uint8_t switch_on_success;
     uint8_t switch_off_success;
-    uint8_t relay_error_record;
     uint8_t relay_true;
     uint8_t misoperation;
 };
@@ -132,20 +129,8 @@ void load_control_second(load_control_state_t *state, const nd_load_inputs_t *in
     if ((command & ND_LOAD_REMOTE_ON) || command == ND_LOAD_REMOTE_NULL) {
         if ((command & ND_LOAD_REMOTE_ON)
             && ((command & ND_LOAD_REMOTE_OFF) || (command & ND_LOAD_REMOTE_ON_ALLOW))) {
-            if (inputs->key_pressed) {
-                if (state->key_ticks < 3) {
-                    state->key_ticks++;
-                }
-                if (state->key_ticks >= 3) {
-                    state->switch_on = 1;
-                    command &= (uint8_t)~ND_LOAD_REMOTE_OFF;
-                    command &= (uint8_t)~ND_LOAD_REMOTE_ON_ALLOW;
-                    state->key_ticks = 0;
-                    state->led_flash = 2;
-                }
-            } else {
-                state->key_ticks = 0;
-            }
+            /* The manual key release is handled by the target; it clears the
+             * bits before the command reaches this decision. */
         } else {
             state->switch_on = 1;
         }
@@ -168,19 +153,7 @@ void load_control_second(load_control_state_t *state, const nd_load_inputs_t *in
             }
         }
     } else if (command & ND_LOAD_REMOTE_ON_ALLOW) {
-        if (inputs->key_pressed) {
-            if (state->key_ticks < 3) {
-                state->key_ticks++;
-            }
-            if (state->key_ticks >= 3) {
-                state->switch_on = 1;
-                command &= (uint8_t)~ND_LOAD_REMOTE_ON_ALLOW;
-                state->key_ticks = 0;
-                state->led_flash = 2;
-            }
-        } else {
-            state->key_ticks = 0;
-        }
+        /* ON_ALLOW alone waits for the key; without it nothing actuates. */
     } else {
         state->switch_on = 1;
     }
@@ -194,16 +167,15 @@ void load_control_second(load_control_state_t *state, const nd_load_inputs_t *in
         actions->transition = 1;
         if (state->switch_on) {
             actions->connect = 1;
-            if (state->meter_clear != 0x5A) {
+            if (!state->meter_clear) {
                 actions->event_switch_on = 1;
-                state->switch_on_success = 0x5A;
+                state->switch_on_success = 1;
             }
         } else {
             actions->disconnect = 1;
             actions->event_switch_off = 1;
-            state->switch_off_success = 0x5A;
+            state->switch_off_success = 1;
         }
-        state->relay_error_record = 0x5A;
         state->last_switch_on = state->switch_on;
         state->relay_do = 0;
     }
@@ -227,11 +199,6 @@ void load_control_feedback(load_control_state_t *state,
 {
     memset(feedback, 0, sizeof(*feedback));
 
-    if (inputs->full_display) {
-        feedback->led_on = 1;
-        return;
-    }
-
     if (inputs->active_power == 0
         && inputs->relay_off_elapsed >= inputs->feedback_threshold) {
         state->relay_true = 1;
@@ -243,22 +210,15 @@ void load_control_feedback(load_control_state_t *state,
 
     if (((state->command & ND_LOAD_REMOTE_ON_ALLOW) && state->relay_true)
         || ((state->command & ND_LOAD_REMOTE_ON) && (state->command & ND_LOAD_REMOTE_OFF))
-        || state->led_flash > 0) {
-        if (state->led_flash > 0) {
-            state->led_flash--;
-        }
-        feedback->led_blink = 1;
-        feedback->led_on = (uint8_t)(inputs->second_parity & 1);
+        || inputs->suppress_feedback) {
         return;
     }
-
-    feedback->led_on = state->relay_true;
 
     if (state->switch_on == 0) {
         if (state->relay_true == 0 || inputs->current > (int32_t)inputs->min_current) {
             state->misoperation = 1;
         } else {
-            if (state->switch_off_success == 0x5A) {
+            if (state->switch_off_success) {
                 feedback->event_switch_off = 1;
                 state->switch_off_success = 0;
             }
@@ -268,7 +228,7 @@ void load_control_feedback(load_control_state_t *state,
         if (state->relay_true == 1) {
             state->misoperation = 1;
         } else {
-            if (state->switch_on_success == 0x5A) {
+            if (state->switch_on_success) {
                 feedback->event_switch_on = 1;
                 state->switch_on_success = 0;
             }

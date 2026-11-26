@@ -1,10 +1,11 @@
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "targets/stategrid_meter/app/resource_ids.h"
 
 #include <stddef.h>
 
 #include "targets/stategrid_meter/app/stategrid_context.h"
 #include "application/ports/resource_access.h"
+#include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/persistence/legacy_control_block.h"
 #include "targets/stategrid_meter/app/metering_energy_adapter.h"
@@ -188,18 +189,23 @@ uint16_t *nd_mb_backlight_tmr_ptr(void *instance)
 
 void nd_mb_save_report_2015_state(void *instance)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     struct mbase_control_block_t *mbase_cb = mb(instance);
     uint32_t addr = ((uint32_t)RES_DEV_EEPROM << 24)
                     + ((uint32_t)mbase_block_persistent_eprom << 16)
                     + nd_mbase_offset_report_2015state()
                     - nd_mbase_offset_persistent_section_start();
 
-    nd_set_offset(instance, addr, (uint8_t *)&nd_mbase_report_2015state(mbase_cb)[0],
-                  4 * 4);
+    nd_set_offset_port(port, addr,
+                       (uint8_t *)&nd_mbase_report_2015state(mbase_cb)[0],
+                       4 * 4);
 }
 
 void nd_mb_save_active_report_state(void *instance)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     struct mbase_control_block_t *mbase_cb = mb(instance);
     uint32_t addr = ((uint32_t)RES_DEV_EEPROM << 24)
                     + ((uint32_t)mbase_block_persistent_eprom << 16)
@@ -209,8 +215,9 @@ void nd_mb_save_active_report_state(void *instance)
                    - nd_mbase_offset_active_report_CMDtype()
                    + sizeof(nd_mbase_active_report_retry_cnt(mbase_cb));
 
-    nd_set_offset(instance, addr, (uint8_t *)&nd_mbase_active_report_CMDtype(mbase_cb),
-                  len);
+    nd_set_offset_port(port, addr,
+                       (uint8_t *)&nd_mbase_active_report_CMDtype(mbase_cb),
+                       len);
 }
 
 uint8_t *nd_mb_boardadjtime_ptr(void *instance)

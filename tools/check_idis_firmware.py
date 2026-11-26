@@ -67,7 +67,6 @@ REQUIRED_SYMBOLS = [
     "write_mcu_rtc",
     "board_uart_init",
     "board_gpio_init",
-    "board_rtc_init",
     "board_key_event_take",
     "uart_chl_initialize",
     "ndv_timer_tick",

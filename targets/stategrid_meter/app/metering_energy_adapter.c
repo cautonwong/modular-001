@@ -50,8 +50,8 @@ static struct nd_energy_ledger ledger;
 static int legacy_read(void *ctx, uint32_t offset, uint8_t *buffer,
                        size_t length)
 {
-    return nd_storage_read((uint8_t)(uintptr_t)ctx, offset, buffer,
-                           (uint16_t)length);
+    return nd_storage_read(ledger.instance, (uint8_t)(uintptr_t)ctx, offset,
+                           buffer, (uint16_t)length);
 }
 
 /* The parameter manager serves each EC2 item by its composite resource index,
@@ -59,7 +59,10 @@ static int legacy_read(void *ctx, uint32_t offset, uint8_t *buffer,
 static int parameter_read(void *ctx, uint32_t index, uint8_t *buffer,
                           size_t length)
 {
-    return nd_get_index(ctx, index, buffer, (uint16_t)length) < 0 ? -1 : 0;
+    const nd_resource_port_t *port = ctx;
+
+    return nd_get_index_port(port, index, buffer, (uint16_t)length) < 0
+           ? -1 : 0;
 }
 
 static const nd_store_t legacy_store = {
@@ -83,7 +86,7 @@ nd_energy_ledger_t *metering_energy_ledger_from_instance(
         ledger.legacy_flag_offset = instance->legacy_energy_flag_offset;
         ledger.ec2_energy_index = instance->legacy_energy_ec2_energy_index;
         ledger.ec2_month_index = instance->legacy_energy_ec2_month_index;
-        ledger.parameter_store.ctx = instance;
+        ledger.parameter_store.ctx = &instance->resource;
         ledger.parameter_store.read = parameter_read;
     }
     ledger.legacy_store = &legacy_store;

@@ -1,17 +1,19 @@
 
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
+#include "domain/tariff/tariff.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
-#include "domain/common/status.h"
+#include "targets/stategrid_meter/app/meter_wire_status.h"
 #include "fr_698.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
-#include "domain/tariff/tariff_lookup.h"
+#include "targets/stategrid_meter/app/tariff_lookup.h"
 #include "domain/common/timer.h"
-#include "domain/common/time_format.h"
+#include "components/services/time_format/time_format.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
+#include "targets/stategrid_meter/app/stategrid_context.h"
 //dependencies
     //1.user define
     //2.mesg[秒]
@@ -86,6 +88,8 @@ void rtc_format_change_from_tm_BCD(struct tm *time, uint8_t* p)
 
 void FeeTable_Change(void *instance, void *pipeline)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
 	unsigned char i,j;
 	unsigned long CurrentTime,ChangeTime,addr=0,s_index;
     unsigned int year;
@@ -104,7 +108,7 @@ void FeeTable_Change(void *instance, void *pipeline)
 	for( i=0;i<2;i++ )
 	{
         addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonTable_Changetime + i);
-        nd_get_index(instance, addr, Buf, 7); 
+        nd_get_index_port(port, addr, Buf, 7);
         Buf[6] = 0;
         year = ((uint16_t)Buf[0]<<8) + Buf[1];
         Buf[1] = (uint8_t)(year-2000);
@@ -134,10 +138,10 @@ void FeeTable_Change(void *instance, void *pipeline)
                     for(j=0; j<14; j++)
                     {
                         s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Season_Table1+j);  //读取备用套时区表
-                        nd_get_index(instance, s_index, (uint8_t*)&Buf[j*3], 3);
+                        nd_get_index_port(port, s_index, (uint8_t*)&Buf[j*3], 3);
                         
                         s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Season_Table0+j);  //覆盖当前时区表
-                        nd_set_index(instance, s_index, (uint8_t*)&Buf[j*3], 3);
+                        nd_set_index_port(port, s_index, (uint8_t*)&Buf[j*3], 3);
                     }
                     nd_mb_port_tou_cut(instance) = 1;
 					break;
@@ -156,10 +160,10 @@ void FeeTable_Change(void *instance, void *pipeline)
                     for(j=0; j<8; j++)
                     {
                         s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Day_Table10 + j);
-                        nd_get_index(instance, s_index, Buf, 42);//读取备用套日时段表
+                        nd_get_index_port(port, s_index, Buf, 42);
                         
                         s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Day_Table00 + j);
-                        nd_set_index(instance, s_index, Buf, 42);//读取备用套日时段表
+                        nd_set_index_port(port, s_index, Buf, 42);
                     }
 					break;
                 default:
@@ -169,7 +173,7 @@ void FeeTable_Change(void *instance, void *pipeline)
 			memset( Buf, 0x00, 6 );
             Buf[6] = 0xFF;
             addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonTable_Changetime + i);
-            nd_set_index(instance, addr, Buf, 7); 
+            nd_set_index_port(port, addr, Buf, 7);
 		}
         else
         {
@@ -208,7 +212,7 @@ void GetTOUFee(void *instance, void *pipeline)
     uint8_t fee, period_changed;
 
     if (nd_mb_day_table_no(instance) == 0) nd_mb_day_table_no(instance) = 1;
-    if (nd_mb_day_table_no(instance) > MaxTouTabNum) nd_mb_day_table_no(instance) = MaxTouTabNum;
+    if (nd_mb_day_table_no(instance) > ND_TARIFF_MAX_DAY_TABLES) nd_mb_day_table_no(instance) = ND_TARIFF_MAX_DAY_TABLES;
 
     tariff_now_datetime(nd_fr698_time(instance), &now);
     if (tariff_lookup_reload(instance) != 0)
@@ -258,7 +262,8 @@ void TouFeePro(void *instance, void *pipeline)
     if( (nd_mb_port_tou_cut(instance)) && (nd_mb_mul_port_mode(instance) == ND_MB_FLAG_PORT_TOU_CUT) )
     {
         opreate_second_pluse(2);
-        nd_timer_start_one(ND_TIMER_MULTIFUNCTION_PORT, 8);
+        nd_timer_start_one(stategrid_timer_port(instance),
+                           ND_TIMER_MULTIFUNCTION_PORT, 8);
     }
 }
 
@@ -267,7 +272,7 @@ void Rtc_Prossecc(void *instance, void *pipeline)
 //    uint8_t buf[7];
     
     
-    if( *nd_fr698_power_state(instance) == ND_AC_POWER_ON )
+    if( *nd_fr698_power_state(instance) == ND_WIRE_POWER_ON )
     {
         if(nd_fr698_time(instance)->tm_sec != 20)//每分鐘的20秒對時
         {

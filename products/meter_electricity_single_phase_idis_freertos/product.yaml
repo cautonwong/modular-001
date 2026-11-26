@@ -9,10 +9,8 @@ components:
   - domain.freeze
   - domain.events
   - domain.load_control
-  - domain.mbus
-  - domain.push
-  - domain.report
-  - domain.security
+  - services.mbus
+  - services.push
   - soc.v85xxp_v8500
   - driver.storage_block
   - driver.storage_eeprom
@@ -25,4 +23,7 @@ components:
   # The firmware links src/nd_axdr.c only; src/nd_dlms_*.c are test-only.
   - protocol.dlms
   - third_party.arm_cmsis
-notes: IDIS Pack3 single-phase FreeRTOS target copy; CMake links domain, infra/drivers, nd_axdr.c and the IDIS target sources, not the application adapters (see tools/product_link_baseline.txt)
+sources:
+  core.types: components/core/types/utils.c
+  protocol.dlms: components/protocol/dlms/src/nd_axdr.c
+notes: IDIS Pack3 single-phase FreeRTOS target copy; CMake links domain, infra/drivers and the IDIS target sources, not the application adapters

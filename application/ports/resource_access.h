@@ -52,34 +52,33 @@ typedef struct nd_resource_port
                                  uint16_t offset, uint16_t unit_size);
 } nd_resource_port_t;
 
-void nd_resource_bind(const nd_resource_port_t *port);
-
-int16_t nd_log_output(void *ctx, uint32_t index,
-                      uint8_t *buf, uint16_t buf_size,
-                      struct circular_info_t *info);
-
-int nd_log_clean(void *ctx, uint32_t index);
-int16_t nd_log_append(void *ctx, uint32_t index, uint8_t *buf,
-                      uint16_t unit_size);
-int16_t nd_log_append_revise(void *ctx, uint32_t index, uint8_t *buf,
-                             uint16_t offset, uint16_t unit_size);
-
-int16_t nd_get_index(void *ctx, uint32_t index,
-                     uint8_t *buf, uint16_t size);
-int16_t nd_set_index(void *ctx, uint32_t index,
-                     uint8_t *buf, uint16_t size);
-int16_t nd_get_offset(void *ctx, uint32_t offset,
-                      uint8_t *buf, uint16_t len);
-int16_t nd_set_offset(void *ctx, uint32_t offset,
-                      uint8_t *buf, uint16_t len);
-int16_t nd_get_index_e2p(void *ctx, uint8_t *buf,
-                         uint8_t block_name, uint16_t id, uint16_t len);
-int16_t nd_set_index_e2p(void *ctx, uint8_t *buf,
-                         uint8_t block_name, uint16_t id, uint16_t len);
-int16_t nd_set_offset_flash(void *ctx, uint8_t blockname,
-                            uint32_t addr_offset, uint8_t *buf, uint16_t len,
-                            uint8_t check_erase);
-int16_t nd_get_offset_flash(void *ctx, uint8_t blockname,
-                            uint32_t addr_offset, uint8_t *buf, uint16_t len);
+int16_t nd_log_output_port(const nd_resource_port_t *port, uint32_t index,
+                           uint8_t *buf, uint16_t buf_size,
+                           struct circular_info_t *info);
+int nd_log_clean_port(const nd_resource_port_t *port, uint32_t index);
+int16_t nd_log_append_port(const nd_resource_port_t *port, uint32_t index,
+                           uint8_t *buf, uint16_t unit_size);
+int16_t nd_log_append_revise_port(const nd_resource_port_t *port,
+                                  uint32_t index, uint8_t *buf,
+                                  uint16_t offset, uint16_t unit_size);
+int16_t nd_get_index_port(const nd_resource_port_t *port, uint32_t index,
+                          uint8_t *buf, uint16_t size);
+int16_t nd_set_index_port(const nd_resource_port_t *port, uint32_t index,
+                          uint8_t *buf, uint16_t size);
+int16_t nd_get_offset_port(const nd_resource_port_t *port, uint32_t offset,
+                           uint8_t *buf, uint16_t len);
+int16_t nd_set_offset_port(const nd_resource_port_t *port, uint32_t offset,
+                           uint8_t *buf, uint16_t len);
+int16_t nd_get_index_e2p_port(const nd_resource_port_t *port, uint8_t *buf,
+                              uint8_t block_name, uint16_t id, uint16_t len);
+int16_t nd_set_index_e2p_port(const nd_resource_port_t *port, uint8_t *buf,
+                              uint8_t block_name, uint16_t id, uint16_t len);
+int16_t nd_set_offset_flash_port(const nd_resource_port_t *port,
+                                 uint8_t blockname, uint32_t addr_offset,
+                                 uint8_t *buf, uint16_t len,
+                                 uint8_t check_erase);
+int16_t nd_get_offset_flash_port(const nd_resource_port_t *port,
+                                 uint8_t blockname, uint32_t addr_offset,
+                                 uint8_t *buf, uint16_t len);
 
 #endif

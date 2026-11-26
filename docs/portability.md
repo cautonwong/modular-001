@@ -180,7 +180,7 @@ domain 变体不是复制整套代码，而是组合和参数化。
 这一轮已经落下第一批可移植性接缝。
 
 - `application/ports/platform.h` 和 `platform.c` 定义平台服务端口，包含看门狗和事件输出。
-- `targets/stategrid_meter/app/platform_adapter.c` 把 v85xxp 看门狗和 PLC 事件引脚接到端口，启动时由组合根绑定。
+- `targets/stategrid_meter/app/platform_adapter.c` 把 v85xxp 看门狗和 PLC 事件引脚接到端口，启动时由组合根把端口值填进产品 context。
 - `domain/common/status.h` 提供与平台无关的电源和事件状态值。
 - dl698 目录不再直接 include `port.h`、`v85xxp_system.h`、`cpu_surport.h`、`pin_function_def.h`、`lib_clk.h`、`lib_uart.h` 或 `targets/stategrid_meter/app/resource_blocks.h`。
 - `meter_base_view` 把旧单体控制块收口到 target 适配器，dl698 不再直接访问其字段。
@@ -188,7 +188,7 @@ domain 变体不是复制整套代码，而是组合和参数化。
 - `infra/security/esam/esam_status.h` 声明 ESAM 芯片异常、密钥、认证开关、表号和认证超时状态，target 的 `esam_status_adapter.c` 负责映射和保存。`fr_698_esam.c` 不再直接访问旧控制块。
 - `targets/stategrid_meter/board/meter_config.h` 固定表类型、计量校准和自热补偿参数 ID。`infra/` 目录已经不再 include `targets/stategrid_meter/app/port.h`，`fr_698_esam.c` 也不再 include `cpu_surport.h`。
 - `targets/stategrid_meter/board/board_io.{h,c}` 只提供背光、PLC 事件、继电器 LED 和反馈、表盖、按键这些语义接口。IIC、SPI、UART/RS485、RN8209、ESAM 和继电器线圈的线级操作在 `iic_pins`、`spi_pins`、`uart_pins`、`rn8209_pins`、`esam_pins`、`relay_pins` 私有头里，对应驱动只 include 自己需要的那个。原 `pin_function_def.h` 已删除，寄存器访问只在 board 实现文件里。`board_io` 是 stategrid 专用实现，不计划抽通用 board 接口。按 `docs/device-model.md`，board 在构建期选定，组合根直接调用具体 board 函数。
-- `domain/display/backlight.h` 和 `domain/load_control/relay_status.h` 是消费者定义的端口。显示和运行状态代码不再 include `board_io.h`，stategrid target 在组合根里把端口直接绑到 `board_io`。host 测试用假实现验证绑定和调用。
+- `targets/stategrid_meter/app/display/backlight.h`（原 `domain/display`，只有 stategrid 使用，已移出 domain）和 `domain/load_control/relay_status.h` 是消费者定义的端口。显示和运行状态代码不再 include `board_io.h`，stategrid target 的 adapter 在组合根把端口值填进 context，消费者经 accessor 取端口。host 测试用显式假端口验证调用和每端口独立性。
 - `domain/metering/metering_input.h` 提供温度和电池输入，返回旧 ADC 原始值。stategrid target 的 `metering_input_adapter.c` 负责映射到板级 ADC 通道，计量 legacy 代码不再直接调用 MCU ADC。
 - `infra/board` 已合并到 `targets/stategrid_meter/board`。依赖 board 的 `time_link.c`、`cpu_v85xxp_isr.c`、`esam_pro.c`、`fr_698_esam.c` 已归 SoC、board 或 security。`tools/check_platform_boundary.py` 已接入 `check-legacy.sh`，共享代码里的平台 include 和 RTOS 调度调用会失败；application/apps 的平台依赖已清零，SoC/RTOS 调用 staging 依赖也已清零；0 条 legacy kernel 头依赖进入 ratchet baseline。
 

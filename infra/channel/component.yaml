@@ -1,6 +1,0 @@
-name: infra.channel
-version: 0.1.0
-layer: infra
-paths: [infra/channel]
-dependencies: [services.channel, core.fifo, application.ports]
-legacy: false

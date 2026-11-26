@@ -4,6 +4,11 @@
 #include <stdint.h>
 #include "fr_698.h"
 
+/* The frame layer cannot size this request; dispatch it unchanged and let the
+ * service handler reject it. Never use for a max length: only for requests
+ * whose variable part makes the APDU tail unknowable before rejection. */
+#define FRM_LEN_DEFER (-2)
+
 int __get_apdu_data_len(struct context_698_t* ctx);
 int fr_segments_handle(void * instance, void * pipeline,
                        nd_dl698_msg_t* mesg);

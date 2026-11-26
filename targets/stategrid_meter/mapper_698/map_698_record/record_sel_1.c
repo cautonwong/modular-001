@@ -1,5 +1,5 @@
 #include "fr_698.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 
 
 int _record_sel_1(void *instance, uint32_t oad, uint8_t* buf, uint8_t last_no, void *info)

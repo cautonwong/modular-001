@@ -3,7 +3,7 @@
 #include <string.h>
 #include "fr_698.h"
 #include "port.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "application/ports/resource_access.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
@@ -148,6 +148,7 @@ uint8_t capture_check(uint32_t oad, uint8_t* oad_buf)
 }
 int set_frozen_capture(void *instance, uint32_t id, uint8_t* buf, struct frozen_obj_t frozen_obj, uint8_t* dar)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint8_t i,num, maxnum, scheme, offset;
     uint8_t tempbuf[200],period_buf[3 * 8], depth_buf[1 + 2 * 15];
     uint8_t* p = buf;
@@ -293,15 +294,15 @@ int set_frozen_capture(void *instance, uint32_t id, uint8_t* buf, struct frozen_
 #endif     
     // write  period
     //index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodId);
-    nd_set_index(instance, PeriodId, &period_buf[0], PeriodLen);
+    nd_set_index_port(port, PeriodId, &period_buf[0], PeriodLen);
 
     // write  Capture
     //index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + CaptureId);
-    nd_set_index(instance, CaptureId, &tempbuf[0], CaptureLen);
+    nd_set_index_port(port, CaptureId, &tempbuf[0], CaptureLen);
 
     // write  depth
     //index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + DepthId);
-    nd_set_index(instance, DepthId, &depth_buf[0], DepthLen);
+    nd_set_index_port(port, DepthId, &depth_buf[0], DepthLen);
 
     //修改关联对象后 清零处理
     ret = modify_capture_clr_pro(instance, id);

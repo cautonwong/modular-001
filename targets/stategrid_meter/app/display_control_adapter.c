@@ -4,8 +4,8 @@
 #include "targets/stategrid_meter/persistence/meter_record.h"
 
 #include "targets/stategrid_meter/app/app_config.h"
-#include "domain/display/backlight.h"
-#include "domain/display/backlight_control.h"
+#include "targets/stategrid_meter/app/display/backlight.h"
+#include "targets/stategrid_meter/app/display/backlight_control.h"
 #include "targets/stategrid_meter/persistence/legacy_control_block.h"
 #include "targets/stategrid_meter/app/stategrid_context.h"
 
@@ -41,6 +41,6 @@ int backlight_pro(stategrid_context_t *instance, void *task,
     uint16_t timer = nd_mbase_BackLightTmr(mbase_cb);
     int on = nd_backlight_tick(&inputs, &timer);
     nd_mbase_BackLightTmr(mbase_cb) = timer;
-    nd_backlight_set(on);
+    nd_backlight_set(stategrid_backlight_port(instance), on);
     return on;
 }

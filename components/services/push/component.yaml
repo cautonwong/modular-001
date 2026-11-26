@@ -1,0 +1,6 @@
+name: services.push
+version: 0.1.0
+layer: services
+paths: [components/services/push]
+dependencies: [domain.common]
+legacy: false

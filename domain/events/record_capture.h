@@ -21,10 +21,4 @@ typedef enum {
 #define ND_RECORD_CAPTURE_START_MODE 10
 #define ND_RECORD_CAPTURE_END_MODE 11
 
-uint32_t nd_record_capture_oad(nd_record_capture_kind_t kind, uint32_t oad,
-                               uint8_t program_first_is_time_set);
-
-uint8_t nd_record_capture_visible(uint8_t mode, uint32_t oad,
-                                  nd_record_kind_t record_kind);
-
 #endif

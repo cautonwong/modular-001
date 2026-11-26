@@ -44,7 +44,7 @@ DOMAIN_COMPONENTS = {
     "load_control": "domain/load_control/load_control.h + disconnect.h + target relay adapter",
     "common.clock": "domain/common/calendar.h + clock_value.h + target clock port",
     "common.clock+services.time": "clock_value.h + target NTP",
-    "m-bus": "domain/mbus + target M-Bus client + profile store",
+    "m-bus": "components/services/mbus + target M-Bus client + profile store",
     "network": "target net adapters + nd_ip_port_t",
     "protocol.push": "target push engine + nd_cosem_port + nd_ip_port",
     "protocol.link": "target HDLC/local port + nd_dlms_link_t",

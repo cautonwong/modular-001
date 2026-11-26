@@ -1,4 +1,5 @@
 # file blocks
+components/core/types/type_def.h 1
 infra/boot/App/Source/common.c 1
 infra/boot/App/Source/main.c 1
 infra/boot/Drivers/Libraries/CMSIS/device/lib_LoadNVR.c 1
@@ -6,7 +7,10 @@ infra/boot/Drivers/Libraries/Lib_Driver/src/lib_clk.c 1
 infra/boot/Drivers/Libraries/Lib_Driver/src/lib_gpio.c 1
 infra/boot/Drivers/Libraries/Lib_Driver/src/lib_uart.c 1
 infra/boot/Drivers/Libraries/Lib_Driver/src/lib_wdt.c 1
+infra/boot/HD/HD_SPI/hd_spi_hard.c 1
 infra/boot/HD/HD_SPI/nor_flash.c 1
+infra/security/crypto/src/nx_crypto_generic_ciphersuites.c 1
 infra/security/crypto/src/nx_crypto_hmac.c 1
 infra/security/esam/esam.c 1
+infra/security/esam/esam_sim.c 3
 infra/soc/v85xxp/v8500/vendor/Lib_Driver/src/lib_iso7816.c 1

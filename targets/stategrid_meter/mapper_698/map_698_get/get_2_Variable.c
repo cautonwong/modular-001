@@ -1,6 +1,7 @@
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
@@ -33,6 +34,7 @@ const ATBE3 Atbe3_table[] =
 
 int GET_2_Variable(void *instance, uint32_t id, uint8_t* buf, uint8_t mode, void *ctx)
 {    
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint8_t* p = buf;
     uint8_t i,j,maxnum=0;
     uint16_t oad;
@@ -185,7 +187,7 @@ int GET_2_Variable(void *instance, uint32_t id, uint8_t* buf, uint8_t mode, void
 
                     *p++ = TYPE_double_long_unsigned;
                     s_addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Bat_UseTime);
-                    nd_get_index(instance, s_addr, (uint8_t*)&tmp_u32, 4); 
+                    nd_get_index_port(port, s_addr, (uint8_t*)&tmp_u32, 4); 
                     tmp_u32 = tmp_u32 / 60;
                     mem_swap_cpy(p, (unsigned char*)&tmp_u32, 4);
                     p = p + 4;

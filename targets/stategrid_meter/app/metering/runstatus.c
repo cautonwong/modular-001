@@ -3,13 +3,13 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "application/ports/resource_access.h"
 #include "components/core/types/type_def.h"
-#include "domain/common/status.h"
+#include "targets/stategrid_meter/app/meter_wire_status.h"
 #include "domain/metering/run_status.h"
 #include "fr_698.h"
 #include "domain/load_control/relay_status.h"
@@ -30,8 +30,8 @@ void Meter_Run_State(void *instance, void *pipeline)
     inputs.battery_mv = nd_mbase_voltage_battery(mbase_cb);
     inputs.power_direction = nd_mbase_power_dir(mbase_cb);
     inputs.switch_error = nd_mbase_SwitchErrS_status(mbase_cb) == 1;
-    inputs.esam_error = nd_mbase_esam_chip_abnormal(mbase_cb) == ND_EVENT_SET;
-    inputs.memory_error = nd_platform_device_error();
+    inputs.esam_error = nd_mbase_esam_chip_abnormal(mbase_cb) == ND_WIRE_STATUS_SET;
+    inputs.memory_error = nd_platform_device_error(nd_fr698_platform(instance));
     inputs.rtc_error = nd_mbase_RTCErrS_status(mbase_cb) == 1;
     inputs.over_current = get_activeflag(instance, OverCurrentAS) == true;
     inputs.infrared_authenticated = nd_mbase_infrared_auth_timeout(mbase_cb) > 0;
@@ -43,7 +43,8 @@ void Meter_Run_State(void *instance, void *pipeline)
     inputs.relay_alarm = (nd_mbase_sta(mbase_cb) & F_RemoteAlarm) != 0;
     inputs.relay_commanded_off = (nd_mbase_sta(mbase_cb) & REMOTE_CMD_REALAY_OFF_STA) != 0;
     inputs.protected_supply = (nd_mbase_sta(mbase_cb) & 0x01) != 0;
-    inputs.relay_off = nd_relay_status_is_off();
+    inputs.relay_off =
+        nd_relay_status_is_off(stategrid_relay_status_port(instance));
     inputs.cover_open = get_activeflag(instance, CoverOpenS) == true;
     inputs.power_off = get_activeflag(instance, PowerOffS) == true;
 

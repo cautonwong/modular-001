@@ -123,6 +123,16 @@ uint8_t *nd_fr645_handler_code(void *instance)
     return block != NULL ? nd_mbase_handler_code(block) : 0;
 }
 
+const nd_record_storage_port_t *nd_fr645_record_storage(void *instance)
+{
+    return stategrid_record_storage_port(instance);
+}
+
+const nd_resource_port_t *nd_fr645_resource_access(void *instance)
+{
+    return stategrid_resource_port(instance);
+}
+
 uint32_t nd_fr645_pipeline_id(const void *pipeline)
 {
     const nd_pipeline_view_t *p = pipeline;

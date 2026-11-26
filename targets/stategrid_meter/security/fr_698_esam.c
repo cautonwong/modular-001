@@ -2,7 +2,7 @@
 #include "application/adapters/dl698/fr_698_env.h"
 #include "fr_698_esam.h"
 #include "infra/security/esam/io_type.h"
-#include "domain/common/status.h"
+#include "targets/stategrid_meter/app/meter_wire_status.h"
 #include "application/adapters/dl698/fr_698_esam.h"
 #include "targets/stategrid_meter/board/meter_status.h"
 #include "infra/security/esam/esam_status.h"
@@ -306,7 +306,7 @@ void esam_698_init(void *instance, uint8_t power_mode)
     int request = 0;
     struct esam_698_data_t param;
     
-    if(power_mode == ND_AC_POWER_ON)
+    if(power_mode == ND_WIRE_POWER_ON)
     {
         request = esam_type_poweron_cmd;
         esam_pro_handle(instance, fd, request, (void *)&param);

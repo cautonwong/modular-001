@@ -3,7 +3,7 @@
 #include "resource_ids.h"
 #include "components/core/types/type_def.h"
 #include "fr_698.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "cpu_surport.h"
@@ -28,6 +28,7 @@ int single_event_clear_judge(uint16_t oi)
 //记录事件清零列表
 int event_clear_omd_add(void *instance, uint32_t omd, uint16_t chn)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint8_t tempbuf[7];
 //    uint16_t id;
     uint32_t index;
@@ -42,13 +43,14 @@ int event_clear_omd_add(void *instance, uint32_t omd, uint16_t chn)
 
 
     index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + EventClr_List);
-    ret = nd_set_index(instance, index, &tempbuf[0], 7);
+    ret = nd_set_index_port(port, index, &tempbuf[0], 7);
     return ret;
 }
 
 
 int event_add_one_capture(void *instance, uint32_t oad , uint8_t *buf, uint8_t *dar)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
 
     uint8_t* p = buf;
     uint16_t i;
@@ -116,7 +118,7 @@ int event_add_one_capture(void *instance, uint32_t oad , uint8_t *buf, uint8_t *
     }
 #endif
     
-    ret = nd_get_index(instance, CaptureId, &tempbuf[0], sizeof(tempbuf));
+    ret = nd_get_index_port(port, CaptureId, &tempbuf[0], sizeof(tempbuf));
     if (ret < 0)
     {
         tempbuf[0]=0;//*dar = DAR_OTHERS_ERROR;
@@ -157,7 +159,7 @@ int event_add_one_capture(void *instance, uint32_t oad , uint8_t *buf, uint8_t *
         return -DAR_BUFFER_OVERFLOW;
     }
 
-    ret = nd_set_index(instance, CaptureId, &tempbuf[0], CaptureLen);
+    ret = nd_set_index_port(port, CaptureId, &tempbuf[0], CaptureLen);
     if (ret < 0)
     {
         *dar = DAR_OTHERS_ERROR;
@@ -180,6 +182,7 @@ int event_add_one_capture(void *instance, uint32_t oad , uint8_t *buf, uint8_t *
 
 int event_delete_one_capture(void *instance, uint32_t oad, uint8_t *buf, uint8_t* dar)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint8_t* p = buf;
     uint16_t i;
     uint8_t tempbuf[200] = { 0 };
@@ -231,7 +234,7 @@ int event_delete_one_capture(void *instance, uint32_t oad, uint8_t *buf, uint8_t
 
 
 
-    ret = nd_get_index(instance, CaptureId, &tempbuf[0], sizeof(tempbuf));
+    ret = nd_get_index_port(port, CaptureId, &tempbuf[0], sizeof(tempbuf));
     if (ret < 0)
     {
         *dar = DAR_OTHERS_ERROR;
@@ -267,7 +270,7 @@ int event_delete_one_capture(void *instance, uint32_t oad, uint8_t *buf, uint8_t
         memcpy(oadlist, oadlist + 4, CaptureLen + tempbuf - oadlist);
         tempbuf[0] -= 1;
 
-        ret = nd_set_index(instance, CaptureId, &tempbuf[0], CaptureLen);
+        ret = nd_set_index_port(port, CaptureId, &tempbuf[0], CaptureLen);
         if (ret < 0)
         {
             *dar = DAR_OTHERS_ERROR;

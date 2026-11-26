@@ -56,7 +56,6 @@ static const nd_record_storage_port_t fake_port = {
 
 void setUp(void)
 {
-    nd_record_storage_bind(NULL);
     saved_oad = saved_index = saved_oad_req = saved_oad_src = 0;
     saved_mode = 0;
     saved_di = 0;
@@ -65,37 +64,57 @@ void setUp(void)
 
 void tearDown(void) {}
 
-static void test_unbound_port_returns_error(void)
+static void test_null_port_returns_error(void)
 {
     uint32_t index = 0;
     uint8_t buffer[4] = {0};
-    TEST_ASSERT_EQUAL_INT(-1, nd_record_storage_save_index(1, &index));
+    TEST_ASSERT_EQUAL_INT(-1, nd_record_storage_save_index(NULL, 1, &index));
     TEST_ASSERT_EQUAL_INT(-1, nd_record_storage_change_format(
-                                 buffer, buffer, 1, 2, ND_RECORD_READ));
-    TEST_ASSERT_EQUAL_INT(-1, nd_record_storage_clear_program_list(NULL, NULL));
-    TEST_ASSERT_EQUAL_INT(-1, nd_record_storage_trigger_645_record(1, 0));
+                                 NULL, buffer, buffer, 1, 2, ND_RECORD_READ));
+    TEST_ASSERT_EQUAL_INT(-1, nd_record_storage_clear_program_list(
+                                 NULL, NULL, NULL));
+    TEST_ASSERT_EQUAL_INT(-1, nd_record_storage_trigger_645_record(
+                                 NULL, 1, 0));
 }
 
-static void test_bound_port_dispatches(void)
+static void test_missing_callbacks_return_error(void)
+{
+    static const nd_record_storage_port_t empty_port = {0};
+    uint32_t index = 0;
+    uint8_t buffer[4] = {0};
+    TEST_ASSERT_EQUAL_INT(-1, nd_record_storage_save_index(
+                                 &empty_port, 1, &index));
+    TEST_ASSERT_EQUAL_INT(-1, nd_record_storage_change_format(
+                                 &empty_port, buffer, buffer, 1, 2,
+                                 ND_RECORD_READ));
+    TEST_ASSERT_EQUAL_INT(-1, nd_record_storage_clear_program_list(
+                                 &empty_port, NULL, NULL));
+    TEST_ASSERT_EQUAL_INT(-1, nd_record_storage_trigger_645_record(
+                                 &empty_port, 1, 0));
+}
+
+static void test_port_dispatches(void)
 {
     uint32_t index = 0;
     uint8_t buffer[4] = {0};
-    nd_record_storage_bind(&fake_port);
 
-    TEST_ASSERT_EQUAL_INT(0, nd_record_storage_save_index(0x1234, &index));
+    TEST_ASSERT_EQUAL_INT(0, nd_record_storage_save_index(
+                                 &fake_port, 0x1234, &index));
     TEST_ASSERT_EQUAL_UINT32(0x1234, saved_oad);
     TEST_ASSERT_EQUAL_UINT32(42, index);
 
     TEST_ASSERT_EQUAL_INT(7, nd_record_storage_change_format(
-                                 buffer, buffer, 0x3000, 0x2000,
+                                 &fake_port, buffer, buffer, 0x3000, 0x2000,
                                  ND_RECORD_GET_STORE_LEN));
     TEST_ASSERT_EQUAL_UINT32(0x3000, saved_oad_req);
     TEST_ASSERT_EQUAL_UINT32(0x2000, saved_oad_src);
     TEST_ASSERT_EQUAL_INT(ND_RECORD_GET_STORE_LEN, saved_mode);
 
     TEST_ASSERT_EQUAL_INT(0,
-                          nd_record_storage_clear_program_list(NULL, NULL));
-    TEST_ASSERT_EQUAL_INT(0, nd_record_storage_trigger_645_record(0x04000401, 3));
+                          nd_record_storage_clear_program_list(
+                              &fake_port, NULL, NULL));
+    TEST_ASSERT_EQUAL_INT(0, nd_record_storage_trigger_645_record(
+                                 &fake_port, 0x04000401, 3));
     TEST_ASSERT_EQUAL_UINT32(0x04000401, saved_di);
     TEST_ASSERT_EQUAL_UINT8(3, saved_tag);
 }
@@ -103,7 +122,8 @@ static void test_bound_port_dispatches(void)
 int main(void)
 {
     UNITY_BEGIN();
-    RUN_TEST(test_unbound_port_returns_error);
-    RUN_TEST(test_bound_port_dispatches);
+    RUN_TEST(test_null_port_returns_error);
+    RUN_TEST(test_missing_callbacks_return_error);
+    RUN_TEST(test_port_dispatches);
     return UNITY_END();
 }

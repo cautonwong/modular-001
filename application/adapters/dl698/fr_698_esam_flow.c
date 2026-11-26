@@ -4,9 +4,9 @@
 #include "fr_698.h"
 #include "fr_698_esam.h"
 #include "application/adapters/dl698/fr_698_esam.h"
-#include "meter_base_view.h"
+#include "application/ports/meter_base.h"
 #include "domain/common/status.h"
-#include "domain/security/esam_result.h"
+#include "components/services/security/esam_result.h"
 #include "fr_698_esam_input.h"
 #include "application/adapters/dl698/fr_698_esam_flow.h"
 
@@ -97,7 +97,7 @@ static int __verification_RN(void * instance, void * pipeline, nd_dl698_msg_t*)
     uint16_t len = 0;
     struct esam_698_input_t input = {0};
     struct esam_698_output_t output = {0};
-    uint8_t rn_buf[12+4] = {0};  // ndv_memcopy(nd_mb_report_random_data(instance), ptr_cache, 12);
+    uint8_t rn_buf[12+4] = {0};  // nd_mb_get_report_random_data fills this below
     uint8_t mac_buf[5] = {0};
     int ret = 0;
 
@@ -108,7 +108,7 @@ static int __verification_RN(void * instance, void * pipeline, nd_dl698_msg_t*)
     fr_698_esam_input_buffers(instance, &input);
     
     
-    ndv_memcopy(rn_buf, nd_mb_report_random_data(instance), 12);
+    nd_mb_get_report_random_data(instance, rn_buf, 12);
     ndv_memcopy(mac_buf, apdu_rx + offset + 1, 4);
 
     fr_698_esam_input_store_rn(ctx, input.RN_Data, input.RN_Data_len);
@@ -121,7 +121,7 @@ static int __verification_RN(void * instance, void * pipeline, nd_dl698_msg_t*)
             input.MAC_len = 4;
             input.MAC_data = mac_buf;
             ret = check_upreport_esam_rn_mac(instance, &input, &output);
-            if (nd_mb_esam_chip_abnormal(instance) == ND_EVENT_SET)   //ESAM错误的情况下  不验证MAC 直接返回成功
+            if (nd_mb_get_esam_chip_abnormal(instance) == ND_STATUS_SET)   //ESAM错误的情况下  不验证MAC 直接返回成功
             {
                 ret = 1; 
             }

@@ -126,7 +126,7 @@ stategrid 的入口在自己的文件里：`targets/stategrid_meter/board/cpu_v8
 
 ## 5. I2C 恢复
 
-**代码路径。** EEPROM 走 bit-bang，`nd_board_iic_write`（`targets/idis_ip_meter/board/iic_driver.c:163`）和 `nd_board_iic_read`（`:185`）。每个字节的 ACK 等待在 `iic_driver.c:111` 到 `:118`，最多 200 次轮询（`:113`），超时返回失败。`nd_board_iic_init`（`:148`）只把 SDA 和 SCL 拉高，没有 9 个时钟脉冲的总线恢复序列。EEPROM 侧的错误累计在 `targets/idis_ip_meter/board/board_eeprom.c:21`，连续 5 次失败置 `DEVICE_ERR` 的位 1（`board_eeprom.c:8`）。
+**代码路径。** EEPROM 走 bit-bang，`nd_board_iic_write`（`targets/idis_ip_meter/board/iic_driver.c:163`）和 `nd_board_iic_read`（`:185`）。每个字节的 ACK 等待在 `iic_driver.c:111` 到 `:118`，最多 200 次轮询（`:113`），超时返回失败。`nd_board_iic_init`（`:148`）只把 SDA 和 SCL 拉高，没有 9 个时钟脉冲的总线恢复序列。EEPROM 侧的错误累计在 `board_eeprom.c` 的 `note_result`，连续 5 次失败置 `g_idis_app.board.DEVICE_ERR` 的位 1；次数在 `g_idis_app.board.error_streak`。
 
 IIC 的 IRQ 和 DMA 模式是失败桩（`iic_driver.c:224` 到 `:248`），`nd_board_iic_*` 直接返回 -1（`iic_driver.c:236` 和 `:247`）。这两个模式没有可测的时序。
 
@@ -134,13 +134,13 @@ IIC 的 IRQ 和 DMA 模式是失败桩（`iic_driver.c:224` 到 `:248`），`nd_
 
 **故障注入。** 在 `nd_board_iic_read` 进行中用跳线把 SDA 拉到地，保持到传输返回失败；然后松开跳线，调用一次 `nd_board_iic_init`，再读同一地址。重复 20 次。第二种注入是在读的中途用 GPIOC6 断开 EEPROM 电源，再恢复。
 
-**仪器。** 示波器，3 通道（SCL、SDA、电源或标记）。调试器读取 `DEVICE_ERR` 和 `error_streak`。
+**仪器。** 示波器，3 通道（SCL、SDA、电源或标记）。调试器读取 `g_idis_app.board.DEVICE_ERR` 和 `g_idis_app.board.error_streak`。
 
 **构建模式。** 只有 POLL，IDIS 裸机和 FreeRTOS 各一次。IIC-STUB 只用于确认返回 -1，不测恢复。
 
-**判定。** 传输必须返回，不能挂死；200 次轮询是仓库给出的上界（`iic_driver.c:113`）。恢复后第一次读取必须成功，`DEVICE_ERR` 的位 1 在第一次成功后清零（`board_eeprom.c:13` 到 `:16`）。仓库没有恢复时间预算，第一次测量记录：从故障注入到返回失败的时间、从松开跳线到第一次成功读取的时间、以及是否需要断开 EEPROM 电源才能恢复。如果 `nd_board_iic_init` 单独不能恢复，把这一点记为现状差距，不要写成通过。
+**判定。** 传输必须返回，不能挂死；200 次轮询是仓库给出的上界（`iic_driver.c:113`）。恢复后第一次读取必须成功，`g_idis_app.board.DEVICE_ERR` 的位 1 在第一次成功后由 `note_result` 清零。仓库没有恢复时间预算，第一次测量记录：从故障注入到返回失败的时间、从松开跳线到第一次成功读取的时间、以及是否需要断开 EEPROM 电源才能恢复。如果 `nd_board_iic_init` 单独不能恢复，把这一点记为现状差距，不要写成通过。
 
-**证据。** 示波器截图和 CSV（含故障和恢复段）；20 次试验的返回码和恢复时间表；`DEVICE_ERR` 读数；`run.md`。
+**证据。** 示波器截图和 CSV（含故障和恢复段）；20 次试验的返回码和恢复时间表；`g_idis_app.board.DEVICE_ERR` 读数；`run.md`。
 
 ## 6. WFI 看门狗余量
 

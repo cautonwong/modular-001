@@ -31,8 +31,11 @@ static bool platform_device_error(void *ctx)
 {
     stategrid_context_t *instance = ctx;
 
-    return (DEVICE_ERR & (1u << 1)) != 0
-        || (instance != NULL && instance->storage_fault != 0);
+    if (instance == NULL) {
+        return false;
+    }
+    return nd_board_device_error(instance->board) != 0
+        || instance->storage_fault != 0;
 }
 
 static void platform_device_error_reported(void *ctx)
@@ -40,14 +43,11 @@ static void platform_device_error_reported(void *ctx)
     metering_energy_storage_fault_reported(ctx);
 }
 
-void stategrid_platform_bind(stategrid_context_t *instance)
+void stategrid_platform_attach(stategrid_context_t *instance)
 {
-    static nd_platform_port_t port;
-
-    port.ctx = instance;
-    port.watchdog_kick = platform_watchdog_kick;
-    port.event_output_set = platform_event_output_set;
-    port.device_error = platform_device_error;
-    port.device_error_reported = platform_device_error_reported;
-    nd_platform_bind(&port);
+    instance->platform.ctx = instance;
+    instance->platform.watchdog_kick = platform_watchdog_kick;
+    instance->platform.event_output_set = platform_event_output_set;
+    instance->platform.device_error = platform_device_error;
+    instance->platform.device_error_reported = platform_device_error_reported;
 }

@@ -148,7 +148,6 @@ docs/
 | `domain/report` | 高，上报策略与协议无关 | 通道和对象列表由产品适配器提供 |
 | `domain/security` | 中，698 安全模式语义强 | 权限表和安全模式由产品参数配置 |
 | `domain/load_control` | 中，继电器语义强 | 抽象成 actuator，支持继电器、阀门、告警输出 |
-| `domain/display` | 中，电表页面强 | 页面模型和产品页面内容分离 |
 | `domain/common/parameter_store` | 高，通用键值存储契约 | 保持为端口，不绑定 EEPROM 布局 |
 
 结论：现有 domain 层是“可复用组件的候选”，不是已经可复用的组件。主要缺口是 legacy 类型、`mbase` 单体和单相电表假设。
@@ -292,7 +291,7 @@ UART、PLC、RF、红外都实现这个端口。协议组件只看见通道，�
 - 落地 `components/core/bus` 和 `components/services/channel`，带 host 测试。
 - 旧 kernel 机制保持运行。
 
-当前进度：`components/core/bus`（`core.bus`）和 `components/services/channel`（`services.channel`）已落地，包含 `component.yaml`、host 测试和独立构建目标。总线是固定主题、固定订阅表、同步分发、无 malloc。通道是非阻塞字节端口，提供 read、write、flush。`infra/channel/fifo_channel` 已把旧 FIFO 包装成通道端口。秒变化和电源变化已经向总线发布，旧 pipeline 路径保持不变。domain、application、infra 的关键模块和 `products/` 下的产品描述已经补上组件元数据，`tools/check_components.py` 会检查组件 include 方向和产品引用，并禁止 `protocol`/`services` 依赖 `application`。698 状态机在 `application/adapters/dl698`，三个 698 通道的收发由 stategrid 组合根直接驱动，收到完整帧时发布 `ND_EVENT_DL698_FRAME`；`protocol.dl698` wrapper 已删除，旧 rx/tx pipeline 已从 recipe 移除。dl698 使用私有的 `nd_dl698_msg_t`，不再引用 `message_t`；主动上报通过链路上下文的 `send` 回调发出。`protocol.dlms` 由两个 IDIS 产品在 `product.yaml` 中选择，但 IDIS 固件链接只编 `src/nd_axdr.c`；其余 `src/nd_dlms_*.c` 只在 host 测试里编译。选择是元数据，链接覆盖还没有门禁。`pkg_dlms.c` 和 `user_information.c` 已删除。`components/core/buf` 提供链式 `nd_frame`/`nd_block`/`nd_cursor`，698 的分段重组已经改用块链，当前帧节点指向现有 APDU 存储。缓冲策略见 `docs/buffer-strategy.md`，当前不引入 lwIP pbuf。
+当前进度：`components/core/bus`（`core.bus`）已落地，包含 `component.yaml`、host 测试和独立构建目标。总线是固定主题、固定订阅表、同步分发、无 malloc。`components/services/channel` 和 `infra/channel` 只有 host 测试调用，已随测试和产品选择删除。秒变化和电源变化已经向总线发布，旧 pipeline 路径保持不变。domain、application、infra 的关键模块和 `products/` 下的产品描述已经补上组件元数据，`tools/check_components.py` 会检查组件 include 方向和产品引用，并禁止 `protocol`/`services` 依赖 `application`。698 状态机在 `application/adapters/dl698`，三个 698 通道的收发由 stategrid 组合根直接驱动，frame 主题已删除，出现真实订阅者时再评审 adapter 注册；`protocol.dl698` wrapper 已删除，旧 rx/tx pipeline 已从 recipe 移除。dl698 使用私有的 `nd_dl698_msg_t`，不再引用 `message_t`；主动上报通过链路上下文的 `send` 回调发出。`protocol.dlms` 由两个 IDIS 产品在 `product.yaml` 中选择，但 IDIS 固件链接只编 `src/nd_axdr.c`；其余 `src/nd_dlms_*.c` 只在 host 测试里编译。选择是元数据，链接覆盖还没有门禁。`pkg_dlms.c` 和 `user_information.c` 已删除。`components/core/buf` 提供链式 `nd_frame`/`nd_block`/`nd_cursor`，698 的分段重组已经改用块链，当前帧节点指向现有 APDU 存储。缓冲策略见 `docs/buffer-strategy.md`，当前不引入 lwIP pbuf。
 
 阶段 3：协议收敛
 

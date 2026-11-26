@@ -1,4 +1,5 @@
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/resource_ids.h"
 #include "resource_ids.h"
 #include "components/core/types/type_def.h"
@@ -11,21 +12,17 @@
 #include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
 
-//extern uint8_t read_event_report_flag_mode(void *instance, uint32_t oad, uint8_t mode);
-
 int get_3320_attr2(void *instance, uint32_t oad, uint8_t* buf,void *ctx)
 {
     struct context_698_t* pctx = (struct context_698_t*)ctx;
 
     uint8_t* p = buf;
-    //uint16_t OI = get_OAD_OI(oad);
     uint8_t index = (uint8_t)(oad);
     uint8_t tempbuf[250] = {0};
     uint8_t* tmp = tempbuf;
     uint8_t i, count, unit_size;
-    //int ret;
 
-    if (dl698_report_list_read(pctx->channel, tempbuf, 241) != 0)
+    if (dl698_report_list_read(instance, pctx->channel, tempbuf, 241) != 0)
     {
         return -DAR_OTHERS_ERROR;
     }
@@ -119,6 +116,7 @@ int get_3320_attr3(void *instance, uint32_t oad, uint8_t* buf,void *ctx)
 //返回0xFF 未找到对象
 uint8_t read_event_report_flag_mode(void *instance, uint32_t oad, uint8_t mode)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint8_t tempbuf[2] = {0};
     struct record_storage_id_info_t  record_id_info;
     int ret;
@@ -145,7 +143,7 @@ uint8_t read_event_report_flag_mode(void *instance, uint32_t oad, uint8_t mode)
         return 0;
     }
 
-    nd_get_index(instance, AddrID, &tempbuf[0], 1);
+    nd_get_index_port(port, AddrID, &tempbuf[0], 1);
 
     return tempbuf[0];
 }
@@ -195,6 +193,7 @@ uint8_t get_event_oad_class(uint32_t oad)
 // 获取事件关联对象
 int get_event_obj(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
 
     uint8_t i, num, maxnum;
     uint8_t tempbuf[200];
@@ -224,7 +223,7 @@ int get_event_obj(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
     CaptureLen = record_id_info.capture_len;// 
     maxnum = (CaptureLen - 1) / 4;
 
-    nd_get_index(instance, CaptureId, &tempbuf[0], sizeof(tempbuf));
+    nd_get_index_port(port, CaptureId, &tempbuf[0], sizeof(tempbuf));
     oadlist = tempbuf;
     num = *oadlist++;
 
@@ -252,6 +251,7 @@ int get_event_obj(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 // 获取事件当前记录数
 int get_current_record_number(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
 #ifndef WIN32
     struct circular_info_t circular_info = { 0 };
     uint8_t temp[200]; 
@@ -280,7 +280,7 @@ int get_current_record_number(void *instance, uint32_t oad, uint8_t* buf, uint8_
     circular_info.end_mark = 0xFFFFFFFF;
     circular_info.mode = 0;
 
-    ret = nd_log_output(instance, record_id_info.save_index, temp, 1, &circular_info);
+    ret = nd_log_output_port(port, record_id_info.save_index, temp, 1, &circular_info);
 
     *p++ = TYPE_long_unsigned;
     p += uint16_to_buf_msb(circular_info.valid_num, p);
@@ -293,6 +293,7 @@ int get_current_record_number(void *instance, uint32_t oad, uint8_t* buf, uint8_
 
 int get_current_record_number_ic_24(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
 #ifndef WIN32
     uint8_t  i, num;
     uint16_t tims;
@@ -329,7 +330,7 @@ int get_current_record_number_ic_24(void *instance, uint32_t oad, uint8_t* buf, 
                 circular_info.end_mark = 0xFFFFFFFF;
                 circular_info.mode = 0;
 
-                ret = nd_log_output(instance, record_id_info.save_index, tempbuf, 1, &circular_info);
+                ret = nd_log_output_port(port, record_id_info.save_index, tempbuf, 1, &circular_info);
 
                 *p++ = TYPE_long_unsigned;
                 tims += circular_info.valid_num;
@@ -359,7 +360,7 @@ int get_current_record_number_ic_24(void *instance, uint32_t oad, uint8_t* buf, 
             circular_info.end_mark = 0xFFFFFFFF;
             circular_info.mode = 0;
 
-            ret = nd_log_output(instance, record_id_info.save_index, tempbuf, 1, &circular_info);
+            ret = nd_log_output_port(port, record_id_info.save_index, tempbuf, 1, &circular_info);
 
             *p++ = TYPE_long_unsigned;
             tims += circular_info.valid_num;
@@ -471,6 +472,7 @@ int get_struct_event_para_t(void *instance, uint32_t oad, uint8_t* buf, uint8_t*
 
 int get_current_value(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar )
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint32_t sequence;
     uint8_t* p = buf;
     struct record_storage_id_info_t  record_id_info;
@@ -516,7 +518,7 @@ int get_current_value(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar )
         //事件发生次数
         *p = TYPE_double_long_unsigned;
 
-        nd_get_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+        nd_get_index_port(port, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
 
         *p++ = TYPE_double_long_unsigned;
         p += uint32_to_buf_msb(sequence, p);
@@ -538,6 +540,7 @@ int get_current_value(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar )
 }
 int get_current_value_one_element_ic_24(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar, void* current_value)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
 #ifndef WIN32
     uint32_t sequence;
     //struct circular_info_t circular_info = { 0 };
@@ -568,7 +571,7 @@ int get_current_value_one_element_ic_24(void *instance, uint32_t oad, uint8_t* b
     *p++ = 2;
 
     //事件发生次数
-    nd_get_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+    nd_get_index_port(port, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
 
     *p++ = TYPE_double_long_unsigned;
     p += uint32_to_buf_msb(sequence, p);
@@ -696,6 +699,7 @@ int get_current_value_ic_24(void *instance, uint32_t oad, uint8_t* buf, uint8_t*
 
 int get_time_status_record(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
 #ifndef WIN32
     uint32_t sequence, time;
     struct circular_info_t circular_info = { 0 };
@@ -756,7 +760,7 @@ int get_time_status_record(void *instance, uint32_t oad, uint8_t* buf, uint8_t* 
         circular_info.end_mark = 0xFFFFFFFF;
         circular_info.mode = 0;
 
-        ret = nd_log_output(instance, record_id_info.save_index, tempbuf, 1, &circular_info);
+        ret = nd_log_output_port(port, record_id_info.save_index, tempbuf, 1, &circular_info);
 
         *p = TYPE_date_time_s;
          memset(time_buf, 0xff, sizeof(time_buf));
@@ -766,7 +770,7 @@ int get_time_status_record(void *instance, uint32_t oad, uint8_t* buf, uint8_t* 
         {
             circular_info.curr_num = circular_info.valid_num - 1;
 
-            ret = nd_log_output(instance, record_id_info.save_index, tempbuf, sizeof(tempbuf), &circular_info);
+            ret = nd_log_output_port(port, record_id_info.save_index, tempbuf, sizeof(tempbuf), &circular_info);
 
             start_t = buf_to_uint32_msb(&tempbuf[5+1]);
             end_t = buf_to_uint32_msb(&tempbuf[10+1]);
@@ -779,7 +783,7 @@ int get_time_status_record(void *instance, uint32_t oad, uint8_t* buf, uint8_t* 
                 if (circular_info.valid_num > 1)
                 {
                     circular_info.curr_num = circular_info.valid_num - 2;
-                    ret = nd_log_output(instance, record_id_info.save_index, tempbuf, sizeof(tempbuf), &circular_info);
+                    ret = nd_log_output_port(port, record_id_info.save_index, tempbuf, sizeof(tempbuf), &circular_info);
                     if (ret >= 0)
                     {
                         end_t = buf_to_uint32_msb(&tempbuf[10+1]);
@@ -819,6 +823,7 @@ int get_time_status_record(void *instance, uint32_t oad, uint8_t* buf, uint8_t* 
 
 int get_time_status_record_one_element_ic_24(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
 #ifndef WIN32
     uint32_t sequence, time;
     struct circular_info_t circular_info = { 0 };
@@ -848,7 +853,7 @@ int get_time_status_record_one_element_ic_24(void *instance, uint32_t oad, uint8
     circular_info.end_mark = 0xFFFFFFFF;
     circular_info.mode = 0;
 
-    ret = nd_log_output(instance, record_id_info.save_index, tempbuf, 1, &circular_info);
+    ret = nd_log_output_port(port, record_id_info.save_index, tempbuf, 1, &circular_info);
 
 
     *p = TYPE_date_time_s;
@@ -859,7 +864,7 @@ int get_time_status_record_one_element_ic_24(void *instance, uint32_t oad, uint8
     {
         circular_info.curr_num = circular_info.valid_num - 1;
 
-        ret = nd_log_output(instance, record_id_info.save_index, tempbuf, sizeof(tempbuf), &circular_info);
+        ret = nd_log_output_port(port, record_id_info.save_index, tempbuf, sizeof(tempbuf), &circular_info);
 
         start_t = buf_to_uint32_msb(&tempbuf[5 + 1]);
         end_t = buf_to_uint32_msb(&tempbuf[10 + 1]);
@@ -872,7 +877,7 @@ int get_time_status_record_one_element_ic_24(void *instance, uint32_t oad, uint8
             if (circular_info.valid_num > 1)
             {
                 circular_info.curr_num = circular_info.valid_num - 2;
-                ret = nd_log_output(instance, record_id_info.save_index, tempbuf, sizeof(tempbuf), &circular_info);
+                ret = nd_log_output_port(port, record_id_info.save_index, tempbuf, sizeof(tempbuf), &circular_info);
                 if (ret >= 0)
                 {
                     end_t = buf_to_uint32_msb(&tempbuf[10+1]);
@@ -1085,6 +1090,7 @@ int check_record_table_oad__support(void *instance, uint32_t oad)
 
 int GET_3_Event(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     struct context_698_t* pctx = (struct context_698_t*)ctx;
     uint8_t* p = buf;
     uint8_t tempbuf[200];
@@ -1127,7 +1133,7 @@ int GET_3_Event(void *instance, uint32_t id, uint8_t* buf, void *ctx)
         {
             index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr_List);
             len = 52;
-            nd_get_index(instance, index, p, len);
+            nd_get_index_port(port, index, p, len);
             p += len;
             return (p-buf);
         }
@@ -1137,7 +1143,7 @@ int GET_3_Event(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 
             index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + EventClr_List);
             len = 7;
-            nd_get_index(instance, index, p, len);
+            nd_get_index_port(port, index, p, len);
             p += len;
             return (p-buf);
         }
@@ -1147,7 +1153,7 @@ int GET_3_Event(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 
             index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Set_DayTab_Oad);
             len = 5;
-            nd_get_index(instance, index, p, len);
+            nd_get_index_port(port, index, p, len);
             p += len;
             return (p - buf);
         }
@@ -1156,7 +1162,7 @@ int GET_3_Event(void *instance, uint32_t id, uint8_t* buf, void *ctx)
         case 0x33140207: //编程前时段表 事件记录用
         {
             index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_DayTab);
-            ret = nd_get_index(instance, index, p, 114);
+            ret = nd_get_index_port(port, index, p, 114);
             if ((ret < 0) || (p[1] > 14) || (p[0] != TYPE_array))// 错误
             {
                 *p++ = 0;
@@ -1173,7 +1179,7 @@ int GET_3_Event(void *instance, uint32_t id, uint8_t* buf, void *ctx)
         {
             index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Set_Holiday_Oad);
             len = 5;
-            nd_get_index(instance, index, p, len);
+            nd_get_index_port(port, index, p, len);
             p += len;
             return (p - buf);
         }
@@ -1181,7 +1187,7 @@ int GET_3_Event(void *instance, uint32_t id, uint8_t* buf, void *ctx)
         case 0x33150207: //编程前节假日内容 事件记录用  
         {
             index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Holiday);
-            ret = nd_get_index(instance, index, p, 10);
+            ret = nd_get_index_port(port, index, p, 10);
             if ((ret < 0) || (p[0] != TYPE_structure))// 错误
             {
                 *p++ = 0;

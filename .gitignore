@@ -75,3 +75,7 @@ __pycache__/
 
 # Internal IDIS reference documents
 /docs/idis/
+
+# Per-worktree CI lock and agent worktrees
+/.ci.lock
+/.claude/worktrees/

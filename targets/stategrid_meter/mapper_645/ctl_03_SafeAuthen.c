@@ -1,6 +1,6 @@
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include <stdbool.h>
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_context.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "application/adapters/dl645/fr_645_context.h"
@@ -11,6 +11,7 @@
 #include "ctl_03_SafeAuthen.h"
 #include "application/adapters/dl698/fr_698_esam.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
+#include "application/adapters/dl645/fr_645_env.h"
 
 
 
@@ -334,6 +335,7 @@ output:
 // 返回0 正常应答          ＞0 其他异常应答          -1 不应答
 int dl645_remote_authenticate(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint32_t Authen_Tmr = 0;
     int ret=0;
     uint8_t *apdu = p_rx;  // 4 + 4 + 8密文 + 8 + 8
@@ -398,7 +400,7 @@ int dl645_remote_authenticate(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint
 
     
 #if 1   //获取645身份认证时效  
-    ret = nd_get_index_e2p(instance, (uint8_t *)&buffer_1[0], mbase_block_parameter, AuthTime_DL645, 2); 
+    ret = nd_get_index_e2p_port(port, (uint8_t *)&buffer_1[0], mbase_block_parameter, AuthTime_DL645, 2); 
     Authen_Tmr = buf_to_uint16_lsb(&buffer_1[0]);
     if(ret < 0)  Authen_Tmr = 30;
 #else   // 获取esam 会话时效 
@@ -435,6 +437,7 @@ int dl645_esamcleartime(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *t
 
 int dl645_Identity_auth_time_set(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 
     uint32_t time = 0;
     int ret=0;
@@ -469,7 +472,7 @@ int dl645_Identity_auth_time_set(void *instance, uint8_t *p_rx, uint8_t *p_tx, u
         return SC_ERR_OTHER;
     }
               
-    nd_set_index_e2p(instance, (uint8_t *) &time, mbase_block_parameter, AuthTime_DL645, 2); 
+    nd_set_index_e2p_port(port, (uint8_t *) &time, mbase_block_parameter, AuthTime_DL645, 2); 
     nd_mb_auth_timeout_645(instance) = time * 60;
 
     trigger_MeterWr645_record(instance, 0x070001FF, 0);
@@ -548,6 +551,7 @@ int dl645_ir_atuh_request_step1(void *instance, uint8_t *p_rx, uint8_t *p_tx, ui
 
 int dl645_ir_atuh_request_step2(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     int ret=0;
     uint8_t *apdu = p_rx;  
     uint8_t *p_tx_cache = p_tx;
@@ -578,7 +582,7 @@ int dl645_ir_atuh_request_step2(void *instance, uint8_t *p_rx, uint8_t *p_tx, ui
 
 
     addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + IrAuthenTime); //红外认证剩余时效  698和645共用
-    nd_get_index(instance, addr, buffer_1, 4); 
+    nd_get_index_port(port, addr, buffer_1, 4); 
     
     mem_swap_cpy((uint8_t*)&tempU32, buffer_1, 4);
 

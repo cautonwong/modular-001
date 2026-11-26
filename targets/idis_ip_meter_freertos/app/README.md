@@ -33,10 +33,10 @@ profiles, push state machine).
 
 Persistence is split by device. Runtime state (clock, energy, demand,
 disconnects, PQ, calendars, scripts, push, monitors, limiter, image metadata,
-setup, events) lives in the board EEPROM through `board_store_port()`. Setup
+setup, events) lives in the board EEPROM through `board_store_port(state)`. Setup
 values are read and written on demand, so the 162 parameters do not occupy
 RAM. Profile records and image blocks live in the external NOR flash through
-`board_flash_port()`; the sector store erases only when a written sector
+`board_flash_port(state)`; the sector store erases only when a written sector
 actually changes.
 
 The interrupt vector table covers all 32 peripheral IRQs and dispatches
@@ -64,6 +64,6 @@ registry blob covers. Both keep the compiled default factors in
 `board_ports.c`. Blank media, and a legacy slot overwritten by anything other
 than a registry blob, is indistinguishable from never-calibrated and uses the
 defaults with no event. That is the documented deployment risk of a meter
-whose calibration the registry destroyed before this firmware shipped. The
-legacy `nd_get_index()` resource lookup is still a stub, so factory
-calibration parameters beyond the three scale factors are not read.
+whose calibration the registry destroyed before this firmware shipped. Factory
+calibration parameters beyond the three scale factors are not read; the legacy
+`nd_get_index()` resource lookup has been removed.

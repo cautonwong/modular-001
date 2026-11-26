@@ -8,22 +8,23 @@ the products whose selected component paths live under it. A firmware target
 with no product fails, as does a non_firmware entry for a target-backed
 product. Every product that is neither is rejected.
 
-Firmware products: every .c under a selected component's paths, after the
-manifest exclude and tests/ rules, must be an input to that product's link.
-The stategrid evidence is the set of translation units compiled and passed to
-the GNU ld command by tools/check-firmware-link.py, read back from the
-manifest it writes after a successful link. This is link input, not symbol
-survival: -Wl,--gc-sections may discard every section of an input source.
+Firmware products: a selected component's resolved sources must be inputs to
+that product's link. A component without a sources: entry resolves to every .c
+under its paths, after the manifest exclude and tests/ rules. The reverse also
+holds: a source a selected component delivers must be in the product's
+resolved source list, and every repository link input must sit under a
+component path; vendor trees and paths outside the repository are build inputs
+no manifest describes. The stategrid evidence is the set of translation units
+compiled and passed to the GNU ld command by tools/check-firmware-link.py,
+read back from the manifest it writes after a successful link. This is link
+input, not symbol survival: -Wl,--gc-sections may discard every section of an
+input source.
 The two IDIS products use the executable link statement in the generated
-build.ninja. A source compiled only in tests, used only through its header,
-or not used by the product is an explicit source exception in
-tools/product_link_baseline.txt. Each exception line names a check= that
-proves its stated premise: a linked source reaches the includer, the
-includer includes a repo-relative header owned by the exception component,
-the caller component is unselected and outside the closure, the
-test build compiles the source, or the component is in manifest closure. A
-premise that stops holding fails the gate. A component with no .c is
-header-only.
+build.ninja. A component with no .c is header-only.
+
+A source of a component some firmware product selects must be selected by a
+firmware product or compiled by tests/CMakeLists.txt. The four DLMS sources
+are host-test-only through that rule; a removed test-list entry fails.
 
 A non-firmware product is recorded with a non_firmware reason, and every .c
 of its selected components must resolve into the product manifest source
@@ -31,9 +32,10 @@ list. The non-firmware gas and water products select application.metering
 but build no image.
 
 A missing build, a link object with no compile rule, a newly unlinked source,
-a stale exception, a false exception premise, and an unregistered product all
-fail. --self-check proves the per-source rule and the target derivation in
-memory and runs on every invocation.
+an undeclared link input, an unaccounted component source and an unregistered
+product all fail. --self-check proves the per-source rule, the reverse rule,
+the test-list scan and the target derivation in memory and runs on every
+invocation.
 """
 from __future__ import annotations
 
@@ -190,31 +192,22 @@ def firmware_products(root, claims):
 
 
 def load_baseline(path):
-    sources = {}
     non_firmware = {}
     if not path.exists():
-        return sources, non_firmware
+        return non_firmware
     for raw in path.read_text(encoding="utf-8").splitlines():
         line = raw.split("#", 1)[0].strip()
         if not line:
             continue
-        kind, rest = line.split(None, 1)
         try:
-            if kind == "source":
-                product, component, source, check, reason = rest.split(None, 4)
-                if not check.startswith("check="):
-                    raise ValueError
-                sources[(product, component,
-                         os.path.normpath(str(ROOT / source)))] = (
-                             reason, check[len("check="):])
-            elif kind == "non_firmware":
-                product, reason = rest.split(None, 1)
-                non_firmware[product] = reason
-            else:
+            kind, rest = line.split(None, 1)
+            if kind != "non_firmware":
                 raise ValueError
+            product, reason = rest.split(None, 1)
+            non_firmware[product] = reason
         except ValueError:
             raise SystemExit(f"{path}: bad baseline line {raw!r}") from None
-    return sources, non_firmware
+    return non_firmware
 
 
 def show(path):
@@ -224,17 +217,62 @@ def show(path):
         return str(path)
 
 
-def component_coverage(product, selected, index, linked, source_exceptions):
+THIRD_PARTY = "infra/third_party/"
+
+
+def source_claims(index):
+    """Return two source maps: raw path claims and manifest source claims."""
+    raw = {}
+    delivered = {}
+    for name, component in index.items():
+        for owned in component.get("paths", []):
+            root = ROOT / owned
+            if root.is_file():
+                candidates = [root]
+            elif root.is_dir():
+                candidates = sorted(root.rglob("*.c"))
+            else:
+                candidates = []
+            for source in candidates:
+                if source.suffix == ".c":
+                    raw.setdefault(os.path.normpath(str(source)), set()).add(name)
+        for source in product_manifest.component_sources(component):
+            delivered.setdefault(os.path.normpath(str(source)), set()).add(name)
+    return raw, delivered
+
+
+def reverse_coverage(product, selected, declared, linked, raw, delivered):
+    """Fail when a link input is not declared, the dual of forward coverage.
+
+    A linked source a selected component delivers must appear in the product's
+    resolved source list. Every other repository source must at least sit under
+    a component path; vendor trees and paths outside the repository are build
+    inputs no manifest describes. Manifest excludes stay declared by their
+    path: the IDIS targets compile them explicitly.
+    """
+    errors = []
+    for source in sorted(linked):
+        relative = os.path.relpath(source, ROOT)
+        if relative.startswith(".."):
+            continue
+        relative = relative.replace(os.sep, "/")
+        if relative.startswith(THIRD_PARTY):
+            continue
+        if source not in raw:
+            errors.append(f"{product}: linked source {show(Path(source))} is not "
+                          f"declared by any component")
+        elif delivered.get(source, set()) & selected and source not in declared:
+            errors.append(f"{product}: linked source {show(Path(source))} is not "
+                          f"declared for this product by its selected component")
+    return errors
+
+
+def component_coverage(product, groups, linked):
     """Return (errors, linked components, header-only components)."""
     errors = []
     linked_components = 0
     header_only = 0
-    for name in selected:
-        component = index.get(name)
-        if component is None:
-            errors.append(f"{product}: unknown component {name}")
-            continue
-        sources = product_manifest.component_sources(component)
+    for name, sources in groups:
         if not sources:
             header_only += 1
             continue
@@ -247,13 +285,41 @@ def component_coverage(product, selected, index, linked, source_exceptions):
         if missing:
             print(f"{product}: {name} {len(hits)}/{len(sources)} sources linked")
         for source in missing:
-            key = (product, name, os.path.normpath(str(source)))
-            if key in source_exceptions:
-                continue
             errors.append(
                 f"{product}: {name} source {show(source)} is not linked; "
-                f"link it or add a source exception with a reason to {BASELINE.name}")
+                f"link it, delete it, or narrow the selection in product.yaml")
     return errors, linked_components, header_only
+
+
+TEST_LIST = "tests/CMakeLists.txt"
+
+
+def compiled_in(source, manifest=TEST_LIST):
+    """Return True when an uncommented test-list token compiles this source."""
+    path = ROOT / manifest
+    text = path.read_text(encoding="utf-8", errors="replace") if path.is_file() else ""
+    relative = os.path.relpath(source, ROOT)
+    tokens = [token for line in text.splitlines()
+              for token in re.split(r"[\s();]+", line.split("#", 1)[0]) if token]
+    return any(token.endswith(relative) for token in tokens)
+
+
+def accounting_errors(scope, declared, index):
+    """Require every source of a firmware-selected component to land.
+
+    A component source that no firmware product selects must be compiled by
+    the host test list.
+    """
+    errors = []
+    for name in sorted(scope):
+        for source in product_manifest.component_sources(index[name]):
+            key = os.path.normpath(str(source))
+            if key in declared or compiled_in(key):
+                continue
+            errors.append(
+                f"{name} source {show(source)} is not selected by any firmware "
+                f"product and not compiled by {TEST_LIST}")
+    return errors
 
 
 def non_firmware_errors(product_file, index):
@@ -281,112 +347,17 @@ def non_firmware_errors(product_file, index):
     return errors
 
 
-def dependency_closure(index, name):
-    seen = set()
-    stack = [name]
-    while stack:
-        for dependency in index.get(stack.pop(), {}).get("dependencies", []):
-            if dependency not in seen:
-                seen.add(dependency)
-                stack.append(dependency)
-    return seen
-
-
-def owns_path(component, path):
-    target = os.path.normpath(str(ROOT / path))
-    for owned in component.get("paths", []):
-        root = os.path.normpath(str(ROOT / owned))
-        if target == root or target.startswith(root + os.sep):
-            return True
-    return False
-
-
-def include_reaches(sources, includer, index):
-    """Follow #include edges from the linked sources until the includer."""
-    target = os.path.normpath(str(ROOT / includer))
-    roots = [ROOT] + [ROOT / owned for entry in index.values()
-                      for owned in entry.get("paths", [])]
-    seen = set()
-    stack = [Path(source) for source in sources]
-    while stack:
-        current = stack.pop()
-        key = os.path.normpath(str(current))
-        if key in seen:
-            continue
-        seen.add(key)
-        try:
-            text = current.read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            continue
-        for name in re.findall(r'#\s*include\s*[<"]([^">]+)[>"]', text):
-            for candidate in [current.parent / name] + [root / name for root in roots]:
-                if os.path.normpath(str(candidate)) == target:
-                    return True
-                if candidate.suffix in (".h", ".hpp") and candidate.is_file():
-                    stack.append(candidate)
-    return False
-
-
-def check_precondition(spec, product, selected, closure, component, source, index,
-                       linked):
-    """Prove the premise an exception reason states; return an error or None."""
-    kind, _, argument = spec.partition("=")
-    if kind == "header":
-        includer, _, header = argument.partition(":")
-        path = ROOT / includer
-        pattern = r'#\s*include\s*[<"]' + re.escape(header) + r'[>"]'
-        text = path.read_text(encoding="utf-8", errors="replace") if path.is_file() else ""
-        if not re.search(pattern, text):
-            return (f"{BASELINE.name}: {os.path.relpath(source, ROOT)} check fails: "
-                    f"{includer} does not include {header}")
-        if not include_reaches(linked, includer, index):
-            return (f"{BASELINE.name}: {os.path.relpath(source, ROOT)} check fails: "
-                    f"no linked source reaches {includer}")
-        if not any(owns_path(entry, header) for entry in index.values()):
-            return (f"{BASELINE.name}: {os.path.relpath(source, ROOT)} check fails: "
-                    f"header {header} is not under any component; use its "
-                    f"repository-relative path")
-        if not owns_path(index.get(component, {}), header):
-            return (f"{BASELINE.name}: {os.path.relpath(source, ROOT)} check fails: "
-                    f"{component} does not own {header}")
-    elif kind == "unselected":
-        if argument not in index:
-            return (f"{BASELINE.name}: {os.path.relpath(source, ROOT)} check fails: "
-                    f"unknown component {argument}")
-        if argument in selected or argument in closure:
-            how = ("selects" if argument in selected
-                   else "reaches through its dependency closure")
-            return (f"{BASELINE.name}: {os.path.relpath(source, ROOT)} check fails: "
-                    f"{product} {how} {argument}")
-    elif kind == "test":
-        path = ROOT / argument
-        text = path.read_text(encoding="utf-8", errors="replace") if path.is_file() else ""
-        relative = os.path.relpath(source, ROOT)
-        lines = [line.split("#", 1)[0] for line in text.splitlines()]
-        tokens = [token for line in lines
-                  for token in re.split(r"[\s();]+", line) if token]
-        if not any(token.endswith(relative) for token in tokens):
-            return (f"{BASELINE.name}: {os.path.relpath(source, ROOT)} check fails: "
-                    f"{argument} does not compile it")
-    elif kind == "closure":
-        if component not in dependency_closure(index, argument):
-            return (f"{BASELINE.name}: {os.path.relpath(source, ROOT)} check fails: "
-                    f"{argument} does not depend on {component}")
-    else:
-        return (f"{BASELINE.name}: {os.path.relpath(source, ROOT)} has "
-                f"unknown check kind {kind}")
-    return None
-
-
 def check():
     errors = []
     index = product_manifest.component_index()
-    source_exceptions, non_firmware = load_baseline(BASELINE)
+    raw_claims, delivered_claims = source_claims(index)
+    non_firmware = load_baseline(BASELINE)
     firmware, mapping_errors = firmware_products(
         ROOT, product_target_claims(index))
     errors.extend(mapping_errors)
-    evidence = {}
     products = {}
+    scope = set()
+    declared_any = set()
 
     for product_file in product_manifest.product_paths():
         product = product_file.parent.name
@@ -404,10 +375,18 @@ def check():
         except (OSError, RuntimeError) as error:
             errors.append(str(error))
             continue
-        evidence[product] = linked
-        selected = product_manifest.parse_manifest(product_file).get("components", [])
+        groups, resolver_errors = product_manifest.product_sources(
+            product_file, index)
+        errors.extend(resolver_errors)
+        selected = {name for name, _ in groups}
+        declared = {os.path.normpath(str(source))
+                    for _, sources in groups for source in sources}
+        scope.update(selected)
+        declared_any.update(declared)
+        errors.extend(reverse_coverage(product, selected, declared, linked,
+                                       raw_claims, delivered_claims))
         product_errors, linked_count, header_only = component_coverage(
-            product, selected, index, linked, source_exceptions)
+            product, groups, linked)
         errors.extend(product_errors)
         print(f"{product}: {len(selected)} selected, {linked_count} with linked "
               f"sources, {header_only} header-only")
@@ -423,75 +402,99 @@ def check():
             errors.append(
                 f"{BASELINE.name}: non_firmware {product} is a firmware product")
 
-    for product, name, source in sorted(source_exceptions):
-        key = (product, name, os.path.normpath(source))
-        component = index.get(name)
-        if product not in evidence or component is None:
-            errors.append(f"{BASELINE.name}: {product} {name} names no firmware component")
-            continue
-        selected = product_manifest.parse_manifest(products[product]).get("components", [])
-        if name not in selected:
-            errors.append(f"{BASELINE.name}: {product} {name} is not selected; exception is stale")
-            continue
-        if key[2] not in {os.path.normpath(str(path))
-                          for path in product_manifest.component_sources(component)}:
-            errors.append(f"{BASELINE.name}: {product} {name} does not own "
-                          f"{os.path.relpath(source, ROOT)}")
-            continue
-        if key[2] in evidence[product]:
-            errors.append(f"{BASELINE.name}: {product} {os.path.relpath(source, ROOT)} "
-                          f"is linked; exception is stale")
-            continue
-        closure = product_manifest.closure(products[product], index)[0]
-        spec = source_exceptions[key][1]
-        error = check_precondition(spec, product, selected, closure, name, key[2],
-                                   index, evidence[product])
-        if error:
-            errors.append(error)
+    errors.extend(accounting_errors(scope, declared_any, index))
 
     if errors:
         for error in errors:
             print(error)
         return 1
     print(f"product link ok ({len(firmware)} firmware products, "
-          f"{len(source_exceptions)} source exceptions, "
-          f"{len(non_firmware)} non-firmware products)")
+          f"0 source exceptions, {len(non_firmware)} non-firmware products)")
     return 0
 
 
 def self_check():
+    global ROOT
     with tempfile.TemporaryDirectory(prefix="product-link-self-") as tmp:
         root = Path(tmp)
         linked = root / "linked.c"
         unlinked = root / "unlinked.c"
         linked.write_text("", encoding="utf-8")
         unlinked.write_text("", encoding="utf-8")
-        index = {"demo.partial": {"name": "demo.partial", "paths": [str(root)]}}
+        groups = [("demo.partial", [linked, unlinked])]
         linked_set = {os.path.normpath(str(linked))}
         with redirect_stdout(io.StringIO()):
-            errors, _, _ = component_coverage(
-                "demo", ["demo.partial"], index, linked_set, {})
+            errors, _, _ = component_coverage("demo", groups, linked_set)
         if len(errors) != 1 or "unlinked.c" not in errors[0]:
             print("product link self-check failed: a partially linked component "
                   f"was not rejected on its unlinked source: {errors}")
             return 1
-        exceptions = {
-            ("demo", "demo.partial", os.path.normpath(str(unlinked))): "probe"}
         with redirect_stdout(io.StringIO()):
             errors, _, _ = component_coverage(
-                "demo", ["demo.partial"], index, linked_set, exceptions)
-        if errors:
-            print("product link self-check failed: a recorded source exception "
-                  f"was rejected: {errors}")
-            return 1
-        with redirect_stdout(io.StringIO()):
-            errors, _, _ = component_coverage(
-                "demo", ["demo.partial"], index,
-                linked_set | {os.path.normpath(str(unlinked))}, {})
+                "demo", groups, linked_set | {os.path.normpath(str(unlinked))})
         if errors:
             print(f"product link self-check failed: fully linked sources were "
                   f"rejected: {errors}")
             return 1
+    with tempfile.TemporaryDirectory(prefix="product-link-reverse-") as tmp:
+        root = Path(tmp)
+        for directory in ("selected", "spare"):
+            (root / directory).mkdir()
+        declared = root / "selected/declared.c"
+        sneaked = root / "selected/sneaked.c"
+        structural = root / "spare/structural.c"
+        stray = root / "stray.c"
+        for path in (declared, sneaked, structural, stray):
+            path.write_text("", encoding="utf-8")
+        (root / "infra/third_party/freertos").mkdir(parents=True)
+        vendored = root / "infra/third_party/freertos/tasks.c"
+        vendored.write_text("", encoding="utf-8")
+        index = {"demo.selected": {"name": "demo.selected",
+                                   "paths": ["selected"]},
+                 "demo.spare": {"name": "demo.spare", "paths": ["spare"]}}
+        saved = ROOT
+        saved_manifest_root = product_manifest.ROOT
+        ROOT = root
+        product_manifest.ROOT = root
+        try:
+            raw, delivered = source_claims(index)
+            declared_set = {os.path.normpath(str(declared))}
+            errors = reverse_coverage(
+                "demo", {"demo.selected"}, declared_set,
+                {os.path.normpath(str(path))
+                 for path in (declared, sneaked)}, raw, delivered)
+            if len(errors) != 1 or "not declared for this product" not in errors[0]:
+                print("product link self-check failed: a source linked from a "
+                      f"selected component without declaration was accepted: "
+                      f"{errors}")
+                return 1
+            errors = reverse_coverage(
+                "demo", {"demo.selected"}, declared_set,
+                {os.path.normpath(str(path))
+                 for path in (declared, structural)}, raw, delivered)
+            if errors:
+                print("product link self-check failed: a source from an "
+                      f"unselected component was rejected: {errors}")
+                return 1
+            errors = reverse_coverage(
+                "demo", {"demo.selected"}, declared_set,
+                {os.path.normpath(str(path))
+                 for path in (declared, vendored)}, raw, delivered)
+            if errors:
+                print("product link self-check failed: a vendored build input "
+                      f"was rejected: {errors}")
+                return 1
+            errors = reverse_coverage(
+                "demo", {"demo.selected"}, declared_set,
+                {os.path.normpath(str(path))
+                 for path in (declared, stray)}, raw, delivered)
+            if len(errors) != 1 or "not declared by any component" not in errors[0]:
+                print("product link self-check failed: a link input no "
+                      f"component claims was accepted: {errors}")
+                return 1
+        finally:
+            ROOT = saved
+            product_manifest.ROOT = saved_manifest_root
     with tempfile.TemporaryDirectory(prefix="product-target-self-") as tmp:
         root = Path(tmp)
         (root / "targets/cmake_target/build").mkdir(parents=True)
@@ -525,68 +528,50 @@ def self_check():
     with tempfile.TemporaryDirectory(prefix="product-link-rules-") as tmp:
         root = Path(tmp)
         (root / "demo").mkdir()
-        (root / "other").mkdir()
         (root / "tests").mkdir()
-        includer = root / "demo/inc.h"
-        includer.write_text('#include "other/notowned.h"\n', encoding="utf-8")
         source = root / "demo/inc.c"
-        source.write_text('#include "inc.h"\n', encoding="utf-8")
-        user = root / "other/use.c"
-        user.write_text('#include "demo/inc.h"\n', encoding="utf-8")
-        lone = root / "demo/lone.c"
-        lone.write_text("", encoding="utf-8")
-        (root / "tests/CMakeLists.txt").write_text(
-            "# ${BLADE_ROOT}/demo/inc.c\n", encoding="utf-8")
-        global ROOT
+        source.write_text("", encoding="utf-8")
+        test_list = root / "tests/CMakeLists.txt"
+        test_list.write_text("# ${BLADE_ROOT}/demo/inc.c\n", encoding="utf-8")
+        index = {"demo.partial": {"name": "demo.partial", "paths": ["demo"]}}
         saved = ROOT
+        saved_manifest_root = product_manifest.ROOT
         ROOT = root
+        product_manifest.ROOT = root
         try:
-            index = {"demo.partial": {"name": "demo.partial",
-                                      "paths": [str(root / "demo")]},
-                     "demo.dep": {"name": "demo.dep",
-                                  "paths": [str(root / "demo")]}}
-            linked = {os.path.normpath(str(source))}
-            if not include_reaches({os.path.normpath(str(user))}, "demo/inc.h",
-                                   index):
-                print("product link self-check failed: a repository-relative "
-                      "include root was not searched")
-                return 1
-            error = check_precondition("header=demo/inc.h:other/notowned.h",
-                                       "demo", [], set(), "demo.partial", source,
-                                       index, {os.path.normpath(str(lone))})
-            if not error or "reaches" not in error:
-                print("product link self-check failed: a header premise no linked "
-                      f"source reaches was accepted: {error}")
-                return 1
-            error = check_precondition("unselected=demo.dep", "demo", [],
-                                       {"demo.dep"}, "demo.partial", source,
-                                       index, linked)
-            if not error or "dependency closure" not in error:
-                print("product link self-check failed: an unselected component "
-                      f"in the closure was accepted: {error}")
-                return 1
-            error = check_precondition("header=demo/inc.h:other/notowned.h",
-                                       "demo", [], set(), "demo.partial", source,
-                                       index, linked)
-            if not error or "under any component" not in error:
-                print("product link self-check failed: a header outside every "
-                      f"component was accepted: {error}")
-                return 1
-            error = check_precondition("test=tests/CMakeLists.txt", "demo", [],
-                                       set(), "demo.partial", source, index,
-                                       linked)
-            if not error or "does not compile" not in error:
+            key = os.path.normpath(str(source))
+            if compiled_in(key):
                 print("product link self-check failed: a commented test entry "
-                      f"was accepted: {error}")
+                      "was accepted")
+                return 1
+            errors = accounting_errors({"demo.partial"}, set(), index)
+            if len(errors) != 1 or "not selected by any firmware product" not in errors[0]:
+                print("product link self-check failed: a component source with "
+                      f"no landing was accepted: {errors}")
+                return 1
+            if accounting_errors({"demo.partial"}, {key}, index):
+                print("product link self-check failed: a selected source was "
+                      "rejected by the accounting rule")
+                return 1
+            test_list.write_text("${BLADE_ROOT}/demo/inc.c\n", encoding="utf-8")
+            if not compiled_in(key):
+                print("product link self-check failed: a test-list entry was "
+                      "not scanned")
+                return 1
+            if accounting_errors({"demo.partial"}, set(), index):
+                print("product link self-check failed: a test-compiled source "
+                      "was rejected by the accounting rule")
                 return 1
         finally:
             ROOT = saved
+            product_manifest.ROOT = saved_manifest_root
     print("product link self-check ok: a partially linked component fails on its "
-          "unlinked source; a recorded source exception passes; firmware products "
-          "derive from CMake PRODUCT and IAR component paths; a target with no "
-          "product and a product under two targets both fail; a closure-only "
-          "unselected premise, a header no linked source reaches, a header "
-          "outside every component and a commented test entry are rejected")
+          "unlinked source; firmware products derive from CMake PRODUCT and IAR "
+          "component paths; a target with no product and a product under two "
+          "targets both fail; a link input a selected component does not declare, "
+          "an unclaimed link input, a component source no product selects and a "
+          "commented test entry are rejected, while a vendored input and a "
+          "test-compiled source pass")
     return 0
 
 

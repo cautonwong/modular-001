@@ -1,4 +1,4 @@
 name: comm_rf
 version: 0.1.0
-components: [application.ports, core.bus, services.channel]
+components: [application.ports, core.bus]
 notes: RF communication module assembly; no metering domain

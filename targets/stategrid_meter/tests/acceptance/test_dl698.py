@@ -168,3 +168,69 @@ def get_object_families(ctx):
             assert len(value.children) == size, (
                 f"OAD {oad:08x} has {len(value.children)} children, expected {size}"
             )
+
+    unsupported = protocol.build_frame(
+        bytes([0x7F, 0x00, 0x33]), sa=BLANK_SA, ca=0x10, ctrl=0x43
+    )
+    error_run = ctx.run(cycles=3, scenario=f"at 1 uart 0 {unsupported.hex()}\n")
+    assert error_run.exit_code == 0, f"firmware_sim exited {error_run.exit_code}"
+    error_frames = protocol.iter_698_frames(error_run.uart_tx)
+    assert error_frames, f"no ERROR_S response: {error_run.uart_tx.hex()}"
+    piid, dar = protocol.parse_error_response(
+        protocol.parse_frame(error_frames[0]).apdu
+    )
+    assert piid == 0x33, piid
+    assert dar == 2, dar
+
+
+def _connect_reject(ctx, mode: int, mechanism: bytes = b"", *, sa_type: int = 0):
+    request = protocol.build_frame(
+        protocol.connect_request(1, mode, mechanism),
+        sa=b"\xaa" * 6 if sa_type else BLANK_SA,
+        ca=0x10,
+        ctrl=0x43,
+        sa_type=sa_type,
+    )
+    run = ctx.run(cycles=3, scenario=f"at 1 uart 0 {request.hex()}\n")
+    assert run.exit_code == 0, f"firmware_sim exited {run.exit_code}"
+    frames = protocol.iter_698_frames(run.uart_tx)
+    assert frames, f"no CONNECT response: {run.uart_tx.hex()}"
+    reply = protocol.parse_connect_response(protocol.parse_frame(frames[0]).apdu)
+    assert reply.piid == 1, reply.piid
+    assert reply.result == protocol.CONNECT_RESULT_OTHERS, reply.result
+    assert reply.extra == 0, reply.extra
+    assert (reply.send_frame_size, reply.recv_frame_size) == (0x0200, 0x0200), (
+        reply.send_frame_size,
+        reply.recv_frame_size,
+    )
+    return reply
+
+
+@case(
+    "ACC-698-014",
+    "CONNECT with mechanism choice 4 is rejected with result 255 and the "
+    "current configuration",
+    ("698", "connect"),
+)
+def connect_rejects_mechanism_four(ctx):
+    _connect_reject(ctx, 4)
+
+
+@case(
+    "ACC-698-015",
+    "CONNECT with mechanism choice 5 is rejected with result 255 and the "
+    "current configuration",
+    ("698", "connect"),
+)
+def connect_rejects_mechanism_five(ctx):
+    _connect_reject(ctx, 5)
+
+
+@case(
+    "ACC-698-016",
+    "CONNECT from a wildcard SA is rejected with result 255 and does not "
+    "negotiate the requested sizes",
+    ("698", "connect"),
+)
+def connect_rejects_wildcard_address(ctx):
+    _connect_reject(ctx, 1, b"\x06" + b"000000", sa_type=1)

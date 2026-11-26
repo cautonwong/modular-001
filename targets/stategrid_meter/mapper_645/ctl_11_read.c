@@ -1,12 +1,13 @@
 #include <stdbool.h>
 
 #include "targets/stategrid_meter/persistence/meter_record.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl645/fr_645_context.h"
 #include "645id_table.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
 #include "infra/soc/v85xxp/v8500/v85xxp_system.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
+#include "application/adapters/dl645/fr_645_env.h"
 /***********************************************************************/
 /*  函数名称：GetCommTable                                             */
 /*  函数功能：根据给定的ID,找出其在CommTab里的位置                    */
@@ -52,6 +53,7 @@ unsigned long SoftwareCHK(void)
 /***********************************************************************/
 int Direct_Read( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     unsigned char len;
     uint8_t tmpbuf[10] = {0};
     uint32_t s_index,temp=0;
@@ -64,7 +66,7 @@ int Direct_Read( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx
             break;
   		case 0xA800020F://复位次数
             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ResetCount);
-            nd_get_index(instance, s_index, tmpbuf, 4);   
+            nd_get_index_port(port, s_index, tmpbuf, 4);   
             memcpy( (unsigned char*)p_tx, tmpbuf, 4 );
             return 4;
             break;                 

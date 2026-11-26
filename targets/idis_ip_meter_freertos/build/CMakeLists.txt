@@ -15,7 +15,7 @@ endif()
 
 set(IDIS_PHASES 1 CACHE STRING "Meter phase count for this product")
 set(APP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../app)
-set(APP_SOURCES ${APP_DIR}/main.c ${APP_DIR}/startup.c ${APP_DIR}/legacy_stubs.c ${APP_DIR}/board_ports.c ${APP_DIR}/freertos.c)
+set(APP_SOURCES ${APP_DIR}/main.c ${APP_DIR}/startup.c ${APP_DIR}/board_ports.c ${APP_DIR}/freertos.c)
 add_subdirectory(${BOARD} ${CMAKE_BINARY_DIR}/board)
 # The board owns the completion primitive; this product selects the FreeRTOS
 # semaphore variant while keeping the polling transports.
@@ -49,7 +49,7 @@ include(${CMAKE_CURRENT_BINARY_DIR}/product_sources.cmake)
 list(TRANSFORM PRODUCT_SOURCES PREPEND "${ROOT}/")
 # The domain and device-driver closure comes from product.yaml and the
 # component manifests; the target no longer compiles every file itself.
-list(FILTER PRODUCT_SOURCES INCLUDE REGEX "/domain/|/infra/drivers/|/infra/storage/")
+list(FILTER PRODUCT_SOURCES INCLUDE REGEX "/domain/|/components/services/|/infra/drivers/|/infra/storage/")
 set(LAYER_SOURCES ${PRODUCT_SOURCES})
 set(PROTOCOL_SOURCES ${ROOT}/components/protocol/dlms/src/nd_axdr.c)
 set(MAINTENANCE_SOURCES ${ROOT}/components/services/maintenance/nd_maintenance.c)

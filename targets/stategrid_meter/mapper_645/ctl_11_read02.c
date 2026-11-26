@@ -1,11 +1,13 @@
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include <stddef.h>
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "645id_table.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
+#include "application/adapters/dl645/fr_645_env.h"
 
 int read_02( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 	unsigned long StAddr,tmp_u32=0;
     unsigned char len;
     uint8_t tmpbuf[10] = {0};
@@ -13,16 +15,16 @@ int read_02( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 
 	switch( ID )
 	{   
-        case 0x02010100:    //µçÑ¹
+        case 0x02010100:    //ï¿½ï¿½Ñ¹
             WORD_BCD2(p_tx, (uint16_t)nd_mb_voltage_ac(instance));
             return 2;
-        case 0x0201FF00:    //µçÑ¹Êý¾Ý¿é
+        case 0x0201FF00:    //ï¿½ï¿½Ñ¹ï¿½ï¿½ï¿½Ý¿ï¿½
             WORD_BCD2(p_tx, (uint16_t)nd_mb_voltage_ac(instance));
             memset(p_tx+2, 0xFF, 4);
             return 6;
 
-        case 0x02020100:    //µçÁ÷
-        case 0x0202FF00:    //µçÁ÷Êý¾Ý¿é
+        case 0x02020100:    //ï¿½ï¿½ï¿½ï¿½
+        case 0x0202FF00:    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½
             if(nd_mb_current_l(instance) < 0)
             {
                 temp = ~nd_mb_current_l(instance) + 1;
@@ -42,9 +44,9 @@ int read_02( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
                 return 3;
             break;
             
-        case 0x02030000:    //×ÜÓÐ¹¦¹¦ÂÊ 
+        case 0x02030000:    //ï¿½ï¿½ï¿½Ð¹ï¿½ï¿½ï¿½ï¿½ï¿½ 
         case 0x02030100:   
-        case 0x0203FF00:    //ÓÐ¹¦¹¦ÂÊÊý¾Ý¿é
+        case 0x0203FF00:    //ï¿½Ð¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½
             if(nd_mb_active_power(instance) < 0)
             {
                 temp = ~nd_mb_active_power(instance) + 1;
@@ -65,9 +67,9 @@ int read_02( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
                 return 3;
             break;
             
-        case 0x02050000:    //×ÜÊÓÔÚ¹¦ÂÊ 
+        case 0x02050000:    //ï¿½ï¿½ï¿½ï¿½ï¿½Ú¹ï¿½ï¿½ï¿½ 
         case 0x02050100:   
-        case 0x0205FF00:    //ÊÓÔÚ¹¦ÂÊÊý¾Ý¿é
+        case 0x0205FF00:    //ï¿½ï¿½ï¿½Ú¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½
             HEX_BCD(p_tx, nd_mb_apparent_power(instance));
             if(ID == 0x0205FF00)
             {
@@ -79,9 +81,9 @@ int read_02( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
                 return 3;
             break; 
             
-        case 0x02060000:    //¹¦ÂÊÒòÊý
+        case 0x02060000:    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         case 0x02060100:   
-        case 0x0206FF00:    //¹¦ÂÊÒòÊýÊý¾Ý¿é
+        case 0x0206FF00:    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½
             if(nd_mb_power_factor(instance) < 0)
             {
                 temp = ~nd_mb_power_factor(instance) + 1;
@@ -101,7 +103,7 @@ int read_02( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
             else
                 return 2;
             break;
-        case 0x02800001:    //ÁãÏßµçÁ÷
+        case 0x02800001:    //ï¿½ï¿½ï¿½ßµï¿½ï¿½ï¿½
             if(nd_mb_current_n(instance) < 0)
             {
                 temp = ~nd_mb_current_n(instance) + 1;
@@ -113,11 +115,11 @@ int read_02( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
                 HEX_BCD(p_tx, nd_mb_current_n(instance));
             }
             return 3;
-        case 0x02800002:  //ÆµÂÊ
+        case 0x02800002:  //Æµï¿½ï¿½
             HEX_BCD(p_tx, nd_mb_frequency(instance));
             return 2;
             
-        case 0x02800007:  //±íÄÚÎÂ¶È
+        case 0x02800007:  //ï¿½ï¿½ï¿½ï¿½ï¿½Â¶ï¿½
             if(nd_mb_temperature(instance) < 0)
             {
                 temp = ~nd_mb_temperature(instance)+1;
@@ -130,27 +132,27 @@ int read_02( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
             }
             return 2;
             
-        case 0x02800008:  //µç³ØµçÑ¹
+        case 0x02800008:  //ï¿½ï¿½Øµï¿½Ñ¹
             HEX_BCD(p_tx, nd_mb_voltage_battery(instance));
             return 2;  
             
-        case 0x0280000A:  //µç³ØÊ¹ÓÃÊ±¼ä
+        case 0x0280000A:  //ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½Ê±ï¿½ï¿½
             StAddr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Bat_UseTime);
-            nd_get_index(instance, StAddr, (uint8_t*)&tmp_u32, 4); 
+            nd_get_index_port(port, StAddr, (uint8_t*)&tmp_u32, 4); 
             tmp_u32 = tmp_u32 / 60;
             HEX_BCD(p_tx, tmp_u32);
             //memcpy(p_tx, (unsigned char*)&tmp_u32, 4);
             return 4;    
             
-        case 0x0280000B:  //µ±Ç°½×ÌÝµç¼Û
+        case 0x0280000B:  //ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Ýµï¿½ï¿½
             //HEX_BCD(p_tx, nd_mb_voltage_battery(instance));
             return 4;   
             
-        case 0x02800020:  //µ±Ç°µç¼Û
+        case 0x02800020:  //ï¿½ï¿½Ç°ï¿½ï¿½ï¿½
             //HEX_BCD(p_tx, nd_mb_voltage_battery(instance));
             return 4; 
             
-        case 0x02800021:  //µ±Ç°·ÑÂÊµç¼Û
+        case 0x02800021:  //ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Êµï¿½ï¿½
             //HEX_BCD(p_tx, nd_mb_voltage_battery(instance));
             return 4; 
         case 0x02800022:  //
@@ -164,7 +166,7 @@ int read_02( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
             *(p_tx+1) =(uint8_t)(temp>>8);
 
             return 2;  
-        case 0x02800023:  // 698¹²ÓÃ
+        case 0x02800023:  // 698ï¿½ï¿½ï¿½ï¿½
             temp = ((nd_mb_infrared_auth_timeout(instance) +59)/60);
             if (temp > 99)
             {

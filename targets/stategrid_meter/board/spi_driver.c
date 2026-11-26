@@ -14,6 +14,7 @@
 #include "core_cm0.h"
 #include "cpu_surport.h"
 #include "infra/soc/v85xxp/v8500/v85xxp_system.h"
+#include "board_state.h"
 #include "targets/stategrid_meter/board/board_transport.h"
 #include "targets/stategrid_meter/board/spi_driver.h"
 #include "targets/stategrid_meter/board/spi_pins.h"
@@ -214,40 +215,40 @@ static void spi_ctrl(uint8_t ctrl)
  * delay, or on CS release. The slave shifts data during the request too, hence
  * the RX sink.
  */
-static nd_board_spi_dma_t esam_dma;
-static uint8_t esam_dma_ready;
-static uint8_t esam_tx_stage[ND_BOARD_SPI_DMA_CHUNK];
-static uint8_t esam_rx_sink[ND_BOARD_SPI_DMA_CHUNK];
-static uint16_t esam_tx_used;
-
-static int esam_flush(void)
+static int esam_flush(stategrid_board_state_t *state)
 {
-    uint16_t len = esam_tx_used;
+    uint16_t len;
     int result;
 
+    if (state == NULL) {
+        return -1;
+    }
+    len = state->esam_tx_used;
     if (len == 0) {
         return 0;
     }
-    esam_tx_used = 0;
-    if (!esam_dma_ready) {
-        nd_board_spi_dma_init(&esam_dma);
-        esam_dma_ready = 1;
+    state->esam_tx_used = 0;
+    if (!state->esam_dma_ready) {
+        nd_board_spi_dma_init(&state->esam_dma);
+        state->esam_dma.hw_ctx = state;
+        state->esam_dma_ready = 1;
     }
-    result = nd_board_spi_dma_transfer(&esam_dma, esam_tx_stage,
-                                       esam_rx_sink, len,
+    result = nd_board_spi_dma_transfer(&state->esam_dma, state->esam_tx_stage,
+                                       state->esam_rx_sink, len,
                                        ND_BOARD_SPI_TIMEOUT_US);
     return result == ND_BOARD_OK ? 0 : -1;
 }
 #endif
 
 
-void nd_board_spi_flush(nd_board_spi_t bus)
+void nd_board_spi_flush(stategrid_board_state_t *state, nd_board_spi_t bus)
 {
 #if ND_BOARD_SPI_MODE == ND_BOARD_MODE_DMA
     if (bus == ND_BOARD_SPI_ESAM) {
-        (void)esam_flush();
+        (void)esam_flush(state);
     }
 #else
+    (void)state;
     (void)bus;
 #endif
 }
@@ -261,25 +262,32 @@ void nd_board_spi_init(nd_board_spi_t bus)
 }
 
 
-void nd_board_spi_select(nd_board_spi_t bus, int active)
+void nd_board_spi_select(stategrid_board_state_t *state, nd_board_spi_t bus,
+                         int active)
 {
     if (bus == ND_BOARD_SPI_FLASH) {
         spi_ctrl(active ? START : STOP);
+        return;
+    }
+    if (state == NULL) {
         return;
     }
     if (active) {
         v85xxp_spi_ctrl(START, 0);
         (void)mcu_spi_bus_init(0, 0);
     } else {
-        nd_board_spi_flush(ND_BOARD_SPI_ESAM);
+        nd_board_spi_flush(state, ND_BOARD_SPI_ESAM);
         v85xxp_spi_ctrl(STOP, 0);
     }
 }
 
 
-int nd_board_spi_transfer(nd_board_spi_t bus, const uint8_t *tx, uint8_t *rx,
-                          uint16_t len)
+int nd_board_spi_transfer(stategrid_board_state_t *state, nd_board_spi_t bus,
+                          const uint8_t *tx, uint8_t *rx, uint16_t len)
 {
+    if (state == NULL) {
+        return -1;
+    }
     if (bus == ND_BOARD_SPI_FLASH) {
         if (tx != NULL) {
             while (len > 0) {
@@ -306,17 +314,18 @@ int nd_board_spi_transfer(nd_board_spi_t bus, const uint8_t *tx, uint8_t *rx,
 #if ND_BOARD_SPI_MODE == ND_BOARD_MODE_DMA
     if (tx != NULL && rx == NULL) {
         while (len > 0) {
-            esam_tx_stage[esam_tx_used] = *tx;
-            esam_tx_used = (uint16_t)(esam_tx_used + 1u);
+            state->esam_tx_stage[state->esam_tx_used] = *tx;
+            state->esam_tx_used = (uint16_t)(state->esam_tx_used + 1u);
             tx++;
             len--;
-            if (esam_tx_used == ND_BOARD_SPI_DMA_CHUNK && esam_flush() != 0) {
+            if (state->esam_tx_used == ND_BOARD_SPI_DMA_CHUNK
+                && esam_flush(state) != 0) {
                 return -1;
             }
         }
         return 0;
     }
-    if (esam_flush() != 0) {
+    if (esam_flush(state) != 0) {
         return -1;
     }
 #endif

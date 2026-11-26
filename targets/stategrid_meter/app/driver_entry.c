@@ -18,11 +18,7 @@
 #include "targets/stategrid_meter/app/driver_entry.h"
 #include "targets/stategrid_meter/app/stategrid_context.h"
 
-static uint8_t fifo_buf[32];
-static struct fifo_t irq_fifo;
-static uint8_t meter_cover_cnt;
-
-const UART_InitType  Uart_InitType_485 = 
+const UART_InitType  Uart_InitType_485 =
 {
     UART_MODE_Msk,
     UART_PARITY_EVEN_LIB,
@@ -50,28 +46,32 @@ const UART_InitType  Uart_InitType_ir =
 
 void RTC_Second(void *para)
 {
-    fifoBuf_putByte(&irq_fifo, IRQ_RTC);
-}
+    stategrid_board_state_t *state = para;
 
-static uint8_t wpulse_light_flag = 0;
-static uint8_t wpulse_light_open = 0;
-static uint8_t wpulse_light_open_flag = 0;
-static uint8_t wplse_light_width = 0;
+    if (state != NULL) {
+        fifoBuf_putByte(&state->irq_fifo, IRQ_RTC);
+    }
+}
 
 //static uint8_t key_keep_flag = 0;
 //static uint8_t key_keep_width = 0;
 void IO_Interrupt(void *para)
 {
    uint16_t cnt;
-    
+   stategrid_board_state_t *state = para;
+
+    if (state == NULL) {
+        return;
+    }
+
     if( PMU_GetIOAINTStatus(GPIO_Pin_8))   //有功脉冲
     {
         PMU_ClearIOAINTStatus(GPIO_Pin_8);
         //GPIOF->OEN &=~BIT1;
-        //GPIOF->IE &=~BIT1; 
-        //GPIOF->ATT &=~BIT1; 
+        //GPIOF->IE &=~BIT1;
+        //GPIOF->ATT &=~BIT1;
         //IO_DAT( GPIOF_DAT, 1) = 1;
-        wpulse_light_open = 0x5a;
+        state->wpulse_light_open = 0x5a;
         //wpulse_light_flag = 0;
         fnINTTC3_Init(1);
     }
@@ -97,13 +97,13 @@ void IO_Interrupt(void *para)
                  }
                  if (cnt >= 3)
                  {
-                    fifoBuf_putByte(&irq_fifo, IRQ_PMU);
+                    fifoBuf_putByte(&state->irq_fifo, IRQ_PMU);
                  }
              }
         }
         else
         {
-            fifoBuf_putByte(&irq_fifo, IRQ_PMU);
+            fifoBuf_putByte(&state->irq_fifo, IRQ_PMU);
         }
         PMU->IOAINTSTS = BIT2;
     }
@@ -113,7 +113,12 @@ void IO_Interrupt(void *para)
 void timing_ftr(void *para)
 {
       uint8_t dly1,dly2=0;
-      
+      stategrid_board_state_t *state = para;
+
+      if (state == NULL) {
+          return;
+      }
+
       if(over_Imax == 0x55)
       {
           dly1 = 5;
@@ -124,43 +129,43 @@ void timing_ftr(void *para)
           dly1 = 10;
           dly2 = 30;
       }
-      /******************** 消抖 ********************/ 
-      if(wpulse_light_open == 0x5a)
+      /******************** 消抖 ********************/
+      if(state->wpulse_light_open == 0x5a)
       {
-          if((GPIOA->STS & BIT8) == BIT8)//消抖    
+          if((GPIOA->STS & BIT8) == BIT8)//消抖
           {
-                wpulse_light_open_flag++;
+                state->wpulse_light_open_flag++;
           }
           else
           {
-                wpulse_light_open_flag=0;
+                state->wpulse_light_open_flag=0;
           }
-          if(wpulse_light_open_flag >= dly1)//20ms
+          if(state->wpulse_light_open_flag >= dly1)//20ms
           {
 
-                wpulse_light_open = 0;
-                wpulse_light_open_flag = 0;
-                wpulse_light_flag = 0x5A;
-                wplse_light_width = 0;
+                state->wpulse_light_open = 0;
+                state->wpulse_light_open_flag = 0;
+                state->wpulse_light_flag = 0x5A;
+                state->wplse_light_width = 0;
                 GPIOF->OEN &=~BIT1;
-                GPIOF->IE &=~BIT1; 
-                GPIOF->ATT &=~BIT1; 
+                GPIOF->IE &=~BIT1;
+                GPIOF->ATT &=~BIT1;
                 IO_DAT( GPIOF_DAT, 1) = 1;
           }
       }
-      
-      /******************** 脉宽80ms ********************/ 
-      if(wpulse_light_flag == 0x5a)
+
+      /******************** 脉宽80ms ********************/
+      if(state->wpulse_light_flag == 0x5a)
       {
-          wplse_light_width++;
-          if(wplse_light_width > dly2)
+          state->wplse_light_width++;
+          if(state->wplse_light_width > dly2)
           {
                GPIOF->OEN &=~BIT1;
                GPIOF->IE &=~BIT1;
                GPIOF->ATT &=~BIT1;
                IO_DAT( GPIOF_DAT, 1) = 0;
-               wplse_light_width = 0;
-               wpulse_light_flag = 0;
+               state->wplse_light_width = 0;
+               state->wpulse_light_flag = 0;
                Energy_Pluse_Add();
                TMR_INTConfig(TMR3, DISABLE);  //Enable Timer0 interrupt
                TMR_Cmd(TMR3, DISABLE);  //Enable Timer0
@@ -176,20 +181,29 @@ void timing_ftr(void *para)
 
 }
 
-void rs485_receive_timeout(void)
+static void irq_fifo_push(void *instance, uint8_t irq)
 {
-    fifoBuf_putByte(&irq_fifo, IRQ_RS485_RX_TM_OUT);
+    stategrid_board_state_t *state = stategrid_context_board(instance);
+
+    if (state != NULL) {
+        fifoBuf_putByte(&state->irq_fifo, irq);
+    }
 }
 
-void plc_receive_timeout(void)
+void rs485_receive_timeout(void *CallBackPara)
 {
-    fifoBuf_putByte(&irq_fifo, IRQ_PLC_RX_TM_OUT);
+    irq_fifo_push(CallBackPara, IRQ_RS485_RX_TM_OUT);
 }
 
-void ir_receive_timeout(void)
+void plc_receive_timeout(void *CallBackPara)
 {
-    fifoBuf_putByte(&irq_fifo, IRQ_IR_RX_TM_OUT);
-}   
+    irq_fifo_push(CallBackPara, IRQ_PLC_RX_TM_OUT);
+}
+
+void ir_receive_timeout(void *CallBackPara)
+{
+    irq_fifo_push(CallBackPara, IRQ_IR_RX_TM_OUT);
+}
 
 const uint32_t baud_table[11]={300,600,1200,2400,4800,7200,9600,19200,38400,57600,115200};
 
@@ -289,47 +303,52 @@ void communication_chlx_init(struct fifo_t* txfifo , struct fifo_t* rxfifo , uin
         default:
             break;
     }
-    chl_init.CallBackSendPara = p_instance;
+    chl_init.CallBackPara = p_instance;
     chl_init.tx_fifo = txfifo;
     chl_init.rx_fifo = rxfifo;
     chl_init.chl_type = chl_type;    
-    uart_chl_initialize(&chl_init);
+    uart_chl_initialize(p_instance->board, &chl_init);
 }
 
-void irq_system_init(void)
+void board_irq_bind(stategrid_board_state_t *state)
 {
     struct isr_reg_ctx_t IsrReg;
-    
-    fifoBuf_init(&irq_fifo, fifo_buf, 32);
-    
+
+    if (state == NULL) {
+        return;
+    }
+
+    fifoBuf_init(&state->irq_fifo, state->irq_fifo_buf, 32);
+
     IsrReg.IsrFunctionRegister = RTC_Second;
-    IsrReg.para = (void*)(0);
+    IsrReg.para = state;
     Isr_handle_regsit((struct isr_reg_ctx_t*)&IsrReg , IRQ_RTC);
-    
+
     IsrReg.IsrFunctionRegister = IO_Interrupt;
-    IsrReg.para = (void*)(0);
+    IsrReg.para = state;
     Isr_handle_regsit((struct isr_reg_ctx_t*)&IsrReg , IRQ_PMU);
-    
+
     IsrReg.IsrFunctionRegister = timing_ftr;
-    IsrReg.para = (void*)(0);
-    Isr_handle_regsit((struct isr_reg_ctx_t*)&IsrReg , IRQ_TMR3);    
-    
+    IsrReg.para = state;
+    Isr_handle_regsit((struct isr_reg_ctx_t*)&IsrReg , IRQ_TMR3);
+
     __enable_irq();
-    
+
 }
 
 void irq_transform_to_instance(stategrid_context_t * instance)
 {
     uint8_t fifo_irq = 0;
     stategrid_context_t *ctx = ((stategrid_context_t *)instance);
+    struct fifo_t *irq_fifo = &ctx->board->irq_fifo;
 
 #ifdef DEBUG
-    if(fifoBuf_getUsed(&irq_fifo) >0)
+    if(fifoBuf_getUsed(irq_fifo) >0)
 #else
-    while(fifoBuf_getUsed(&irq_fifo) >0)
+    while(fifoBuf_getUsed(irq_fifo) >0)
 #endif
     {
-       fifo_irq = fifoBuf_getByte(&irq_fifo);
+       fifo_irq = fifoBuf_getByte(irq_fifo);
        
        switch(fifo_irq)
        {
@@ -355,7 +374,7 @@ void irq_transform_to_instance(stategrid_context_t * instance)
     }
 }
 
-void IOStateCheckInit(void);
+void IOStateCheckInit(stategrid_board_state_t *state);
 
 void mcu_main_frequency_mode(uint8_t clk_mode)
 {
@@ -399,13 +418,13 @@ void dev_init(stategrid_context_t * instance, uint8_t power_mode)
     
     //ndv_timer_init();
 	
-    IOStateCheckInit();
+    IOStateCheckInit(instance->board);
     
-    (void)board_eeprom();
+    (void)board_eeprom(instance->board);
 
     nd_board_key_input_enable();
 
-    (void)board_flash();
+    (void)board_flash(instance->board);
 
     rn8209_target_power(instance, power_mode == AC_POWER_ON);
     
@@ -438,7 +457,7 @@ void report_port_open(stategrid_context_t * instance)
     GPIOB->ATT |= BIT0;//plcrx
     GPIOB->ATT |= BIT6;//plctx
     cm0_systick_init(1);
-    uart_chl_open(UART_MODULE_CHL);
+    uart_chl_open(instance->board, UART_MODULE_CHL);
 
     if(nd_mbase_Baut_plc_neg(mbase_cb) <= 10)
     {
@@ -612,7 +631,7 @@ void rs485_init(stategrid_context_t * instance, void * pipeline)
     uint8_t i;
     struct mbase_control_block_t* mbase_cb = ((stategrid_context_t *)instance)->mbase;
     
-    uart_chl_open(UART_RS4851_CHL);
+    uart_chl_open(instance->board, UART_RS4851_CHL);
 
     for(i=0;i<11;i++)
     {
@@ -654,8 +673,8 @@ void reset_all_channel_baud(stategrid_context_t * instance)
     
     rs485_init(instance, pipeline);
 
-    uart_chl_open(UART_IR_CHL);
-    uart_chl_open(UART_MODULE_CHL);
+    uart_chl_open(instance->board, UART_IR_CHL);
+    uart_chl_open(instance->board, UART_MODULE_CHL);
 
     opreate_second_pluse(1);
     
@@ -912,18 +931,24 @@ void gpio_configuration_AC(void)
 
 static uint8_t IOState(void *ptr)
 {
+    stategrid_board_state_t *state = ptr;
+
+    if (state == NULL) {
+        return 1;
+    }
+
     if(nd_board_cover_closed())
     {
-        if(meter_cover_cnt < 50)
+        if(state->meter_cover_cnt < 50)
         {
-            meter_cover_cnt++;
+            state->meter_cover_cnt++;
         }
     }
     else
     {
-        if(meter_cover_cnt > 0)
+        if(state->meter_cover_cnt > 0)
         {
-            meter_cover_cnt--;
+            state->meter_cover_cnt--;
         }
     }
 /*
@@ -946,19 +971,23 @@ static uint8_t IOState(void *ptr)
 }
 
 
-void IOStateCheckInit(void)
+void IOStateCheckInit(stategrid_board_state_t *state)
 {
    struct tm_list_init_t tm;
 
+   if (state == NULL) {
+       return;
+   }
+
    tm.timeout = 2;
-   tm.tickpara = 0;
+   tm.tickpara = state;
    tm.tickfunc = IOState;
    tm.tm_id = METER_COVER_TM;
    tm.stoped = false;
-   
+
    ndv_timer_create(&tm);
 
-   meter_cover_cnt = 0;
+   state->meter_cover_cnt = 0;
 
 }
 
@@ -1028,11 +1057,11 @@ void IOStateCheck(stategrid_context_t * instance, void * pipeline)
     }
     else
     {
-        if(meter_cover_cnt==50)
+        if(instance->board->meter_cover_cnt==50)
         {
             nd_mbase_CoverOpenS_status(mbase_control_block) = EVENT_RESET;
         }
-        else if(meter_cover_cnt==0)
+        else if(instance->board->meter_cover_cnt==0)
         {
             nd_mbase_CoverOpenS_status(mbase_control_block) = EVENT_SET;
         }

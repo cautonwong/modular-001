@@ -1,0 +1,8 @@
+# Frozen exactly-once edges into legacy port bind functions.
+# The evidence is the linked ELF: direct bl (ARM) / call (host) instructions.
+# A bind with zero calls, more than one call, a caller outside the allowed
+# list, or only indirect/function-pointer calls fails. One line per binding:
+#   product <TAB> bind symbol <TAB> expected direct calls <TAB> allowed callers
+# A product with no row is still checked: objdump -t lists the ELF function
+# symbols, and any nd_*_bind symbol fails.
+# Checked on the stategrid ARM ELF and the host firmware_sim; IDIS binds none.

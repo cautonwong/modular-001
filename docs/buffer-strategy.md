@@ -8,7 +8,7 @@
 
 建议分两步：
 
-1. 保留 `nd_channel` 作为传输层字节流边界，现有零拷贝 FIFO 路径继续使用。
+1. 保留现有零拷贝 FIFO 通道作为传输层字节流边界。
 2. 在协议层定义传输无关的 `nd_frame`、`nd_block` 和 `nd_buf_chain`。`pbuf` 可以作为链式缓冲的一个后端，但不是协议组件必须依赖的类型。
 
 如果产品已经有 lwIP，并且需要 IP 传输，`pbuf` 是合适的链式缓冲实现。没有 lwIP 的产品不为了 698/645 单独移植 pbuf。
@@ -19,7 +19,7 @@
 
 | 层 | 698 | DLMS | 缓冲形态 |
 |---|---|---|---|
-| 传输层 | UART、PLC、红外、TCP | 串口、HDLC、TCP/UDP | 字节流，`nd_channel` |
+| 传输层 | UART、PLC、红外、TCP | 串口、HDLC、TCP/UDP | 字节流，FIFO 通道 |
 | 链路层 | 0x68 帧、长度、控制、地址、HCS/FCS | HDLC 帧、地址、控制、FCS | 小帧，`nd_frame`，可引用 RX 缓冲 |
 | 应用层 | APDU、分帧上报、分块 | APDU、块传输、分块 | 可能跨多帧，`nd_block` 或 `nd_buf_chain` |
 
@@ -92,7 +92,7 @@ typedef struct nd_cursor {
 
 ## 迁移建议
 
-1. 保持当前 `nd_channel` 和零拷贝 FIFO 通道。
+1. 保持当前零拷贝 FIFO 通道。
 2. 先建立 `nd_frame`、`nd_block`、`nd_cursor` 的契约和 host 测试，不急着接协议。
 3. 698/645 的链路帧继续用现有 FIFO 窗口，不引入 pbuf。
 4. DLMS 产品化时先用同样的通道和上下文，不引入 pbuf。

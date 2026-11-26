@@ -115,12 +115,14 @@ static int fr_pack_645_check(void * instance, void * pipeline, nd_dl645_msg_t* m
 
 static unsigned char Password_Check(void * instance, unsigned char* Pass )
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
+
     uint32_t s_index = 0;
     uint8_t Buf[4]={0,};
 
     s_index = nd_fr645_password_index(instance, *Pass);
 
-    nd_get_index(instance, s_index, (uint8_t*)&Buf[0], 4);
+    nd_get_index_port(port, s_index, (uint8_t*)&Buf[0], 4);
     return fr_645_password_matches(Pass, Buf);
 }
 const uint32_t CODE dl645_ir_readable_id[] =
@@ -424,7 +426,7 @@ uint32_t ID=0;
                 ERRBYTE = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len, ctx);
                 if(ERRBYTE == 0)
                 {
-                    nd_record_storage_trigger_645_record(ID, 0);
+                    nd_record_storage_trigger_645_record(nd_fr645_record_storage(instance), ID, 0);
                     tx_len = 0;
                 }
                 else
@@ -441,7 +443,7 @@ uint32_t ID=0;
                     ERRBYTE = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len, ctx);
                     if(ERRBYTE == 0)
                     {
-                        nd_record_storage_trigger_645_record(ID, 0);
+                        nd_record_storage_trigger_645_record(nd_fr645_record_storage(instance), ID, 0);
                         tx_len = 0;
                     }
                     else

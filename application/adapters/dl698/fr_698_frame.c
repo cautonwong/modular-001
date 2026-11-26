@@ -3,7 +3,7 @@
 #include "fr_698_pack.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "fr_698.h"
-#include "meter_base_view.h"
+#include "application/ports/meter_base.h"
 #include "fr_698_internal.h"
 
 uint8_t fr_698_get_logic_name(uint8_t *buf, uint16_t OI)
@@ -67,6 +67,9 @@ int fr_timetag_check(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
         return 1;
     }
 
+    if (FRM_LEN_DEFER == offset) {
+        return 1; // 交给 handler 拒绝：没有可信的时标位置
+    }
     if (offset < 0) {
         return offset;
     }
@@ -118,12 +121,11 @@ int fr_addr_handle(void * instance, void * pipeline, nd_dl698_msg_t*)
         return 0;
     }
     
-    if(!nd_mb_valid(instance)){
+    if(!nd_mb_get_valid(instance)){
         return 0;
     }
-    //uint8_t tsa[16] = {0};
-    //mem_swap_cpy(tsa, nd_mb_tsa(instance), SA_LEN(ctx->SA) + 1);
-    uint8_t *tsa = nd_mb_tsa(instance);
+    uint8_t tsa[16] = {0};
+    nd_mb_get_tsa(instance, tsa, SA_LEN(ctx->SA) + 1);
 #if 1 
     if(0 == get_addr_type(ctx->SA)){
         if (0 != mem_compare(ctx->addr, tsa, SA_LEN(ctx->SA) + 1)){
@@ -143,7 +145,7 @@ int fr_addr_handle(void * instance, void * pipeline, nd_dl698_msg_t*)
                 }
             }
         }
-        memcpy(ctx->addr, nd_mb_tsa(instance), SA_LEN(ctx->SA) + 1);
+        memcpy(ctx->addr, tsa, SA_LEN(ctx->SA) + 1);
     }else if(3 == get_addr_type(ctx->SA)){
         if(!((1 == (SA_LEN(ctx->SA) + 1)) && (ctx->addr[0] == 0xaa))){
             return 0;
@@ -162,7 +164,7 @@ int fr_pack_698_check(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
     struct fifo_t* fifo = (struct fifo_t*)(struct fifo_t*)nd_fr698_pipeline_in_queue(pipeline);
     //struct mbase_control_block_t* ctrl_block = (struct mbase_control_block_t*)nd_fr698_pipeline_ctx(pipeline);
     
-    if(!nd_mb_valid(instance))
+    if(!nd_mb_get_valid(instance))
     {
         return -1;
     }
@@ -205,12 +207,12 @@ int fr_pack_698_check(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
     
     if((ctx->channel == FR_698_CHL_IR) || (ctx->channel == FR_698_CHL_RS485_1))
     {
-        if(ctx->channel == FR_698_CHL_IR)  nd_mb_backlight_tmr(instance) = 2* (nd_mb_lcd_autodis_list_num(instance)) * (nd_mb_lcd_autodis_keep_sec(instance));
-        nd_mb_commdisp_ir485(instance) = 2;
+        if(ctx->channel == FR_698_CHL_IR)  nd_mb_set_backlight_tmr(instance, 2* (nd_mb_get_lcd_autodis_list_num(instance)) * (nd_mb_get_lcd_autodis_keep_sec(instance)));
+        nd_mb_set_commdisp_ir485(instance, 2);
     }
     else if(ctx->channel == FR_698_CHL_PLC)
     {
-        nd_mb_commdisp_plc(instance) = 2;
+        nd_mb_set_commdisp_plc(instance, 2);
     }
     
     return 1;
@@ -246,17 +248,21 @@ int fr_timeTag_optional(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
     
-    if(ctx->service == SECURITY_Response){
+    if ((ctx->service == SECURITY_Response) ||
+        (ctx->service == ERROR_S_Response)) {
         return 1;
     }
     if(0 == fr_follow_report_optional(instance, pipeline, mesg)){
-        p[cache->wr++] = 0x00;
+        if (cache->wr < cache->buf_size) {
+            p[cache->wr++] = 0x00;
+        }
     }
-    
-    if ((ctx->timeTag_valid >= 1) && (apdu_cache_getFree(cache) > 11)){    
+
+    if ((ctx->timeTag_valid >= 1) && (cache->wr < cache->buf_size)
+        && (apdu_cache_getFree(cache) > 11)){
         memcpy(p+cache->wr, ctx->timeTag, 11);
         cache->wr += 11;
-    }else{
+    }else if (cache->wr < cache->buf_size){
         p[cache->wr++] = 0x00;
     }
     

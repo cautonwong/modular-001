@@ -3,15 +3,16 @@
  *
  * The production search is `search_mid_way` and the record read is
  * `log_output_engine` in tools/app_resource_tool/resource_tool.c. The test
- * binds `resource_tool_bind` and drives the same `nd_log_output` entry the
- * 698 record GETs call, counting `nd_storage_read` calls at the device
- * boundary. A count query (`valid_num == 0`, one-byte buffer) pays only the
- * mark search; each record call pays one whole-slot read.
+ * fills the instance port with `resource_tool_attach` and drives the same
+ * `nd_log_output_port` entry the 698 record GETs call, counting
+ * `nd_storage_read` calls at the device boundary. A count query
+ * (`valid_num == 0`, one-byte buffer) pays only the mark search; each record
+ * call pays one whole-slot read.
  *
  * A 64-slot ring is indexed by sequence mark (mode 1) and by time mark
  * (mode 2), the two single-frame selections. GET_3_Event has no seam below
  * its 1416-line legacy path; it reaches this same manager through
- * `nd_log_output`, so the manager counts cover it too.
+ * `nd_log_output_port`, so the manager counts cover it too.
  */
 #include "unity.h"
 
@@ -36,13 +37,21 @@
 static uint8_t flash_memory[FLASH_BYTES];
 static uint8_t eeprom_memory[EEPROM_BYTES];
 
+static stategrid_board_state_t test_board;
+
+stategrid_board_state_t *stategrid_board_root(void)
+{
+    return &test_board;
+}
+
 static unsigned int mark_reads;
 static unsigned int slot_reads;
 static unsigned int other_reads;
 
-int nd_storage_read(uint8_t device_name, uint32_t addr, uint8_t *buf,
-                    uint16_t len)
+int nd_storage_read(stategrid_context_t *instance, uint8_t device_name,
+                    uint32_t addr, uint8_t *buf, uint16_t len)
 {
+    (void)instance;
     const uint8_t *memory =
         device_name == RES_DEV_FLASH ? flash_memory : eeprom_memory;
     if (len == 4u) {
@@ -56,25 +65,30 @@ int nd_storage_read(uint8_t device_name, uint32_t addr, uint8_t *buf,
     return 0;
 }
 
-int nd_storage_write(uint8_t device_name, uint32_t addr, const uint8_t *buf,
-                     uint16_t len)
+int nd_storage_write(stategrid_context_t *instance, uint8_t device_name,
+                     uint32_t addr, const uint8_t *buf, uint16_t len)
 {
+    (void)instance;
     uint8_t *memory =
         device_name == RES_DEV_FLASH ? flash_memory : eeprom_memory;
     memcpy(memory + addr, buf, len);
     return 0;
 }
 
-int nd_storage_erase(uint8_t device_name, uint32_t addr)
+int nd_storage_erase(stategrid_context_t *instance, uint8_t device_name,
+                     uint32_t addr)
 {
+    (void)instance;
     uint8_t *memory =
         device_name == RES_DEV_FLASH ? flash_memory : eeprom_memory;
     memset(memory + addr, 0xFF, 4096u);
     return 0;
 }
 
-uint32_t nd_storage_size(uint8_t device_name)
+uint32_t nd_storage_size(stategrid_context_t *instance,
+                         uint8_t device_name)
 {
+    (void)instance;
     return device_name == RES_DEV_FLASH ? FLASH_BYTES : EEPROM_BYTES;
 }
 
@@ -195,7 +209,7 @@ static void build_ring(void)
     init_list_head(&manager_block.sibling);
     list_add_tail(&manager_block.sibling, &manager_device.children);
 
-    resource_tool_bind(&instance);
+    resource_tool_attach(&instance);
 }
 
 void setUp(void)
@@ -223,8 +237,8 @@ static void run_selection(uint8_t mode, uint32_t start_mark,
     info.end_mark = end_mark;
 
     TEST_ASSERT_EQUAL_INT(0,
-                          nd_log_output(&instance, log_index, record, 1,
-                                        &info));
+                          nd_log_output_port(&instance.resource, log_index,
+                                             record, 1, &info));
     TEST_ASSERT_EQUAL_UINT16(first_slot, info.read_ptr);
     TEST_ASSERT_EQUAL_UINT16(rows, info.valid_num);
     TEST_ASSERT_EQUAL_UINT(0, slot_reads);
@@ -238,8 +252,9 @@ static void run_selection(uint8_t mode, uint32_t start_mark,
     unsigned int probes = mark_reads;
     for (uint32_t row = 0; row < rows; row++) {
         TEST_ASSERT_EQUAL_INT(SLOT_BYTES,
-                              nd_log_output(&instance, log_index, record,
-                                            sizeof(record), &info));
+                              nd_log_output_port(&instance.resource, log_index,
+                                                 record, sizeof(record),
+                                                 &info));
         TEST_ASSERT_EQUAL_UINT8(first_slot + row, record[0]);
         TEST_ASSERT_EQUAL_UINT(probes, mark_reads);
         TEST_ASSERT_EQUAL_UINT(row + 1u, slot_reads);

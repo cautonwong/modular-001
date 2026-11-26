@@ -2,7 +2,12 @@
 
 #include "components/core/bus/nd_bus.h"
 
+#include <stdio.h>
 #include <string.h>
+
+#ifndef ND_BUS_HEADER
+#define ND_BUS_HEADER "components/core/bus/nd_bus.h"
+#endif
 
 static int key_calls;
 static int power_calls;
@@ -93,18 +98,21 @@ static void test_subscribers_run_in_registration_order(void)
     TEST_ASSERT_EQUAL_INT(2, call_order[1]);
 }
 
-static void test_dl698_frame_payload_is_carried(void)
+static void test_header_names_no_protocol_topics(void)
 {
-    nd_event_t event = { ND_EVENT_DL698_FRAME, 88, { 0 } };
+    static const char *const banned[] = { "DL645", "DL698", "FRAME" };
+    char text[4096];
+    size_t length;
+    size_t i;
+    FILE *header = fopen(ND_BUS_HEADER, "r");
 
-    event.data.frame.channel = 2;
-    event.data.frame.length = 42;
-    nd_bus_subscribe(ND_EVENT_DL698_FRAME, key_handler, &key_calls);
-    TEST_ASSERT_EQUAL_INT(1, nd_bus_publish(&event));
-    TEST_ASSERT_EQUAL_INT(ND_EVENT_DL698_FRAME, last_event.topic);
-    TEST_ASSERT_EQUAL_UINT32(88, last_event.timestamp_ms);
-    TEST_ASSERT_EQUAL_INT(2, last_event.data.frame.channel);
-    TEST_ASSERT_EQUAL_INT(42, last_event.data.frame.length);
+    TEST_ASSERT_NOT_NULL(header);
+    length = fread(text, 1, sizeof(text) - 1, header);
+    fclose(header);
+    text[length] = '\0';
+    for (i = 0; i < sizeof(banned) / sizeof(banned[0]); i++) {
+        TEST_ASSERT_NULL(strstr(text, banned[i]));
+    }
 }
 
 static void test_subscribe_rejects_invalid_arguments(void)
@@ -164,7 +172,7 @@ int main(void)
     RUN_TEST(test_publish_without_subscribers_returns_zero);
     RUN_TEST(test_subscribe_dispatches_only_matching_topic);
     RUN_TEST(test_subscribers_run_in_registration_order);
-    RUN_TEST(test_dl698_frame_payload_is_carried);
+    RUN_TEST(test_header_names_no_protocol_topics);
     RUN_TEST(test_subscribe_rejects_invalid_arguments);
     RUN_TEST(test_publish_rejects_invalid_event);
     RUN_TEST(test_reset_clears_subscriptions);

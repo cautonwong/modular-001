@@ -2,7 +2,7 @@
 #include "components/core/fifo/fifo.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "fr_698.h"
-#include "meter_base_view.h"
+#include "application/ports/meter_base.h"
 #include "fr_698_internal.h"
 
 int __fr_send_handle(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
@@ -29,9 +29,9 @@ int __fr_send_handle(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
     }
 
 
-    if(0 != nd_mb_connect_timeout(instance)[channel][cilent_index])
+    if(0 != nd_mb_get_connect_timeout(instance, channel, cilent_index))
     {
-        ndv_memcopy(&connect, &cfg_connect, sizeof(cfg_connect));
+        ndv_memcopy(&connect, nd_fr698_cfg_connect(instance), sizeof(connect));
     }
     else
     {
@@ -89,7 +89,11 @@ int fr_tx_698_entry(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
         ctx->CA = 0x00;
         ctx->SA = 0x05;
         ctx->addr[0] = 0x08;
-        mem_swap_cpy(ctx->addr, nd_mb_tsa(instance), SA_LEN(ctx->SA) + 1);
+        {
+            uint8_t tsa[16] = {0};
+            nd_mb_get_tsa(instance, tsa, SA_LEN(ctx->SA) + 1);
+            mem_swap_cpy(ctx->addr, tsa, SA_LEN(ctx->SA) + 1);
+        }
         mesg->from = FR_698_PID_PLC_TX;
         mesg->len = (payload[2]<<8) + payload[3];
         

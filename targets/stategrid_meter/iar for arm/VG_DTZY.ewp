@@ -2278,6 +2278,9 @@
                 <name>$PROJ_DIR$\..\..\..\application\ports\platform.c</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\..\..\application\ports\meter_base.c</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\..\..\application\ports\record_storage.c</name>
             </file>
             <file>
@@ -2294,6 +2297,7 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_security.c</name>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\security_mode_map.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\fr_698_esam_flow.c</name>
@@ -2342,9 +2346,6 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\components\core\buf\nd_buf.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\components\services\channel\nd_channel.c</name>
             </file>
         </group>
         <group>
@@ -2432,9 +2433,6 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\components\core\fifo\fifo.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\infra\channel\fifo_channel.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\components\core\types\list.c</name>
@@ -2626,19 +2624,20 @@
                 <name>$PROJ_DIR$\..\..\..\domain\common\store.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\common\time_format.c</name>
+                <name>$PROJ_DIR$\..\..\..\components\services\time_format\time_format.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\common\timer.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\display\backlight.c</name>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\display\backlight.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\display\backlight_control.c</name>
+                <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\display\backlight_control.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\tariff\tariff.c</name>
+                <name>$PROJ_DIR$\..\..\..\domain\tariff\validate.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\metering\energy.c</name>
@@ -2656,16 +2655,16 @@
                 <name>$PROJ_DIR$\..\..\..\domain\events\duration.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\report\report_policy.c</name>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\report_policy.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\report\report_retry.c</name>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\report_retry.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\security\security_mode.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\security\esam_result.c</name>
+                <name>$PROJ_DIR$\..\..\..\components\services\security\esam_result.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\security\security_request.c</name>
@@ -2698,10 +2697,10 @@
                 <name>$PROJ_DIR$\..\..\..\domain\events\power_event.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\events\event_catalog.c</name>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\event_oad_view.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\events\record_capture.c</name>
+                <name>$PROJ_DIR$\..\..\..\application\adapters\dl698\record_capture_view.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\domain\events\neutral_current.c</name>
@@ -2722,7 +2721,7 @@
                 <name>$PROJ_DIR$\..\..\..\domain\freeze\sequence.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\domain\freeze\storage.c</name>
+                <name>$PROJ_DIR$\..\..\..\infra\storage\freeze_layout.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\targets\stategrid_meter\app\events\legacy\gs_i_over_event.c</name>
@@ -2818,6 +2817,7 @@
     </file>
     <file>
         <name>$PROJ_DIR$\..\app\relay_control_adapter.c</name>
+        <name>$PROJ_DIR$\..\app\relay_control_ui.c</name>
     </file>
     <file>
         <name>$PROJ_DIR$\..\app\record_storage_adapter.c</name>
@@ -2827,6 +2827,9 @@
     </file>
     <file>
         <name>$PROJ_DIR$\..\app\meter_base_adapter.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\app\meter_base_port.c</name>
     </file>
     <file>
         <name>$PROJ_DIR$\..\app\meter_status_adapter.c</name>

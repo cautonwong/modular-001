@@ -1,5 +1,0 @@
-name: domain.mbus
-version: 0.1.0
-layer: domain
-paths: [domain/mbus]
-dependencies: [domain.common]

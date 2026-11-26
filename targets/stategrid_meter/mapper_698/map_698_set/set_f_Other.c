@@ -2,7 +2,8 @@
 #include "targets/stategrid_meter/app/resource_ids.h"
 #include "resource_ids.h"
 #include "fr_698.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
 #include "cpu_surport.h"
 #include "targets/stategrid_meter/app/display_applications.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
@@ -10,6 +11,7 @@
 
 int SET_F10103XX(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint8_t count,maxnum = 0, offset = 0, index=0,i, tempbuf[SecurityMode_EXData_LEN+1] = {0};
     uint8_t *p = buf, *Ptmp = tempbuf;
     uint32_t s_index=0;
@@ -54,7 +56,7 @@ int SET_F10103XX(void *instance, uint32_t id, uint8_t* buf, void *ctx)
         }
 
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
-        nd_set_index(instance, s_index, tempbuf, SecurityMode_EXData_LEN);
+        nd_set_index_port(port, s_index, tempbuf, SecurityMode_EXData_LEN);
     }
     else
     {
@@ -64,7 +66,7 @@ int SET_F10103XX(void *instance, uint32_t id, uint8_t* buf, void *ctx)
         }
 
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
-        nd_get_index(instance, s_index, tempbuf, SecurityMode_EXData_LEN);
+        nd_get_index_port(port, s_index, tempbuf, SecurityMode_EXData_LEN);
         
         offset = 1 + (index - 1) * 4;
         
@@ -75,7 +77,7 @@ int SET_F10103XX(void *instance, uint32_t id, uint8_t* buf, void *ctx)
         tempbuf[offset++] = p[6];
 
         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
-        nd_set_index(instance, s_index, tempbuf, SecurityMode_EXData_LEN);
+        nd_set_index_port(port, s_index, tempbuf, SecurityMode_EXData_LEN);
 
     }
 
@@ -88,6 +90,7 @@ int SET_F10103XX(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 
 int SET_f_Other(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint16_t oad,displayid;
     uint8_t index=0,attribute,i,num=0, tempbuf[10] = {0};
     uint8_t* p = buf,Sequ=0;
@@ -110,7 +113,7 @@ int SET_f_Other(void *instance, uint32_t id, uint8_t* buf, void *ctx)
             {
                 p++;
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + IrAuthenTime);
-                nd_set_index(instance, s_index, p, 4);
+                nd_set_index_port(port, s_index, p, 4);
                 p = p + 4;
                 return (p-buf);
             }
@@ -130,7 +133,7 @@ int SET_f_Other(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                 p++;
                 tempbuf[0] = *p++;
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_En);
-                nd_set_index(instance, s_index, &tempbuf[0], 1);
+                nd_set_index_port(port, s_index, &tempbuf[0], 1);
                 return (p-buf);
             }
             else if(attribute == 0x03) //安全模式参数
@@ -193,9 +196,9 @@ int SET_f_Other(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + i);
                             }
                             if(index > 0)
-                                nd_set_index(instance, s_index, (uint8_t*)&displayid, 2); 
+                                nd_set_index_port(port, s_index, (uint8_t*)&displayid, 2); 
                             else
-                                nd_set_index(instance, s_index, (uint8_t*)&displayid, 2); 
+                                nd_set_index_port(port, s_index, (uint8_t*)&displayid, 2); 
                         }
                         return (p-buf);
                         break;
@@ -220,7 +223,7 @@ int SET_f_Other(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                                 nd_mb_offset_lcd_autodis_list_num());
                                 len = nd_mb_offset_baut_rs485() - nd_mb_offset_lcd_keydis_keep_sec();
-                                nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_lcd_autodis_list_num(instance), len);
+                                nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_lcd_autodis_list_num(instance), len);
                                 return (p-buf);
                                 break;*/
                             case 0x01://当前总对象数
@@ -234,14 +237,14 @@ int SET_f_Other(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                                     nd_mb_lcd_autodis_list_num(instance) = *p++;
                                     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                                                 nd_mb_offset_lcd_autodis_list_num());
-                                    nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_lcd_autodis_list_num(instance), 1);
+                                    nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_lcd_autodis_list_num(instance), 1);
                                 }
                                 else
                                 {
                                     nd_mb_lcd_keydis_list_num(instance) = *p++;
                                     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                                                 nd_mb_offset_lcd_keydis_list_num());
-                                    nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_lcd_keydis_list_num(instance), 1);
+                                    nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_lcd_keydis_list_num(instance), 1);
                                 }
                                 return (p-buf);
                                 break;
@@ -262,14 +265,14 @@ int SET_f_Other(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                                 mem_swap_cpy((unsigned char*)&nd_mb_lcd_autodis_keep_sec(instance), p, 2);
                                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                                             nd_mb_offset_lcd_autodis_keep_sec());
-                                nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_lcd_autodis_keep_sec(instance), 2);
+                                nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_lcd_autodis_keep_sec(instance), 2);
                             }
                             else
                             {
                                 mem_swap_cpy((unsigned char*)&nd_mb_lcd_keydis_keep_sec(instance), p, 2);
                                 s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                                             nd_mb_offset_lcd_keydis_keep_sec());
-                                nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_lcd_keydis_keep_sec(instance), 2);
+                                nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_lcd_keydis_keep_sec(instance), 2);
                             }
                             p = p + 2;
                             return (p-buf);
@@ -307,7 +310,7 @@ int SET_f_Other(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 
                     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                     nd_mb_offset_factor_mode());
-                    nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_factor_mode(instance), sizeof(nd_mb_factor_mode(instance)));
+                    nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_factor_mode(instance), sizeof(nd_mb_factor_mode(instance)));
                 }
                 return (p-buf);
                 break;

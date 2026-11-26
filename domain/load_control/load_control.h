@@ -24,7 +24,6 @@ typedef struct {
     uint32_t protection_current;
     uint32_t protection_minutes;
     uint8_t factory_mode;
-    uint8_t key_pressed;
 } nd_load_inputs_t;
 
 typedef struct {
@@ -42,13 +41,10 @@ typedef struct {
     uint32_t relay_on_elapsed;
     uint32_t feedback_threshold;
     uint32_t min_current;
-    uint8_t second_parity;
-    uint8_t full_display;
+    uint8_t suppress_feedback;
 } nd_load_feedback_inputs_t;
 
 typedef struct {
-    uint8_t led_on;
-    uint8_t led_blink;
     uint8_t misoperation;
     uint8_t event_switch_on;
     uint8_t event_switch_off;

@@ -15,10 +15,13 @@ static uint16_t hw_lens[8];
 static nd_board_spi_dma_t *hw_active;
 static int hw_complete_in_start;
 static int watchdog_kicks;
+static void *hw_ctxs[8];
 
-int nd_board_spi_dma_hw_start(const uint8_t *tx, uint8_t *rx, uint16_t len)
+int nd_board_spi_dma_hw_start(void *ctx, const uint8_t *tx, uint8_t *rx,
+                              uint16_t len)
 {
     if (hw_start_calls < 8) {
+        hw_ctxs[hw_start_calls] = ctx;
         hw_txs[hw_start_calls] = tx;
         hw_rxs[hw_start_calls] = rx;
         hw_lens[hw_start_calls] = len;
@@ -34,13 +37,15 @@ int nd_board_spi_dma_hw_start(const uint8_t *tx, uint8_t *rx, uint16_t len)
     return hw_start_result;
 }
 
-void nd_board_spi_dma_hw_stop(void)
+void nd_board_spi_dma_hw_stop(void *ctx)
 {
+    (void)ctx;
     hw_stop_calls++;
 }
 
-void nd_board_spi_dma_hw_wait_idle(void)
+void nd_board_spi_dma_hw_wait_idle(void *ctx)
 {
+    (void)ctx;
     hw_wait_idle_calls++;
 }
 
@@ -62,6 +67,7 @@ void setUp(void)
     memset(hw_txs, 0, sizeof(hw_txs));
     memset(hw_rxs, 0, sizeof(hw_rxs));
     memset(hw_lens, 0, sizeof(hw_lens));
+    memset(hw_ctxs, 0, sizeof(hw_ctxs));
 }
 
 void tearDown(void) {}
@@ -265,6 +271,21 @@ static void test_spi_transfer_chunks_long_buffers(void)
     TEST_ASSERT_EQUAL_INT(0, hw_stop_calls);
 }
 
+static void test_spi_hw_ctx_reaches_the_hw_start(void)
+{
+    nd_board_spi_dma_t dma;
+    uint8_t tx[4] = { 1, 2, 3, 4 };
+    static int marker;
+
+    nd_board_spi_dma_init(&dma);
+    TEST_ASSERT_NULL(dma.hw_ctx);
+    dma.hw_ctx = &marker;
+    TEST_ASSERT_EQUAL_INT(ND_BOARD_OK, nd_board_spi_dma_start(&dma, tx, NULL,
+                                                              4));
+    TEST_ASSERT_EQUAL_PTR(&marker, hw_ctxs[0]);
+    nd_board_spi_dma_tx_done(&dma);
+}
+
 static void test_spi_start_failure_is_reported(void)
 {
     nd_board_spi_dma_t dma;
@@ -288,6 +309,7 @@ int main(void)
     RUN_TEST(test_isr_completes_the_ready_primitive);
     RUN_TEST(test_uart_read_returns_buffered_byte);
     RUN_TEST(test_uart_read_times_out_on_empty_ring);
+    RUN_TEST(test_spi_hw_ctx_reaches_the_hw_start);
     RUN_TEST(test_spi_two_channels_complete_in_any_order);
     RUN_TEST(test_spi_tx_only_completes_on_tx_done);
     RUN_TEST(test_spi_rejects_empty_and_busy_transfers);

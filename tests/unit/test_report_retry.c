@@ -1,6 +1,6 @@
 #include "unity.h"
 
-#include "domain/report/report_retry.h"
+#include "application/adapters/dl698/report_retry.h"
 
 void setUp(void) {}
 void tearDown(void) {}

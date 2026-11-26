@@ -2,38 +2,31 @@
 
 #include <stddef.h>
 
-static const nd_platform_port_t *bound;
-
-void nd_platform_bind(const nd_platform_port_t *port)
+void nd_platform_watchdog_kick(const nd_platform_port_t *port)
 {
-    bound = port;
-}
-
-void nd_platform_watchdog_kick(void)
-{
-    if ((bound != NULL) && (bound->watchdog_kick != NULL)) {
-        bound->watchdog_kick(bound->ctx);
+    if ((port != NULL) && (port->watchdog_kick != NULL)) {
+        port->watchdog_kick(port->ctx);
     }
 }
 
-void nd_platform_event_output_set(bool enable)
+void nd_platform_event_output_set(const nd_platform_port_t *port, bool enable)
 {
-    if ((bound != NULL) && (bound->event_output_set != NULL)) {
-        bound->event_output_set(bound->ctx, enable);
+    if ((port != NULL) && (port->event_output_set != NULL)) {
+        port->event_output_set(port->ctx, enable);
     }
 }
 
-bool nd_platform_device_error(void)
+bool nd_platform_device_error(const nd_platform_port_t *port)
 {
-    if ((bound != NULL) && (bound->device_error != NULL)) {
-        return bound->device_error(bound->ctx);
+    if ((port != NULL) && (port->device_error != NULL)) {
+        return port->device_error(port->ctx);
     }
     return false;
 }
 
-void nd_platform_device_error_reported(void)
+void nd_platform_device_error_reported(const nd_platform_port_t *port)
 {
-    if ((bound != NULL) && (bound->device_error_reported != NULL)) {
-        bound->device_error_reported(bound->ctx);
+    if ((port != NULL) && (port->device_error_reported != NULL)) {
+        port->device_error_reported(port->ctx);
     }
 }

@@ -100,6 +100,7 @@ int nd_board_uart_rx_read(nd_board_uart_rx_t *rx, uint8_t *byte,
 
 typedef struct {
     nd_board_op_t op;
+    void *hw_ctx;
     const uint8_t *tx;
     uint8_t *rx;
     uint16_t len;
@@ -117,23 +118,32 @@ int nd_board_spi_dma_transfer(nd_board_spi_dma_t *dma, const uint8_t *tx,
                               uint8_t *rx, uint16_t len, uint32_t timeout_us);
 
 /* Implemented by the SoC glue in firmware and by a fake in host tests. */
-int nd_board_spi_dma_hw_start(const uint8_t *tx, uint8_t *rx, uint16_t len);
-void nd_board_spi_dma_hw_stop(void);
+int nd_board_spi_dma_hw_start(void *ctx, const uint8_t *tx, uint8_t *rx,
+                              uint16_t len);
+void nd_board_spi_dma_hw_stop(void *ctx);
 /*
  * TX DMA completion means the bytes reached the SPI FIFO, not that they left
  * the shifter. The caller waits here before releasing chip select.
  */
-void nd_board_spi_dma_hw_wait_idle(void);
+void nd_board_spi_dma_hw_wait_idle(void *ctx);
 void nd_board_watchdog_kick(void);
 
 #if ND_BOARD_UART_MODE == ND_BOARD_MODE_IRQ
-void nd_board_uart_irq_init(size_t index, const void *config);
-void nd_board_uart_irq_tx_enable(size_t index, uint8_t enable);
-void nd_board_uart_irq_rx_enable(size_t index, uint8_t enable);
-int nd_board_uart_irq_write(size_t index, uint8_t byte);
-int nd_board_uart_irq_tx_done(size_t index);
-int nd_board_uart_irq_read(size_t index, uint8_t *byte);
-int nd_board_uart_irq_rx_done(size_t index);
+struct stategrid_board_state;
+void nd_board_uart_irq_init(struct stategrid_board_state *state, size_t index,
+                            const void *config);
+void nd_board_uart_irq_tx_enable(struct stategrid_board_state *state,
+                                 size_t index, uint8_t enable);
+void nd_board_uart_irq_rx_enable(struct stategrid_board_state *state,
+                                 size_t index, uint8_t enable);
+int nd_board_uart_irq_write(struct stategrid_board_state *state, size_t index,
+                            uint8_t byte);
+int nd_board_uart_irq_tx_done(struct stategrid_board_state *state,
+                              size_t index);
+int nd_board_uart_irq_read(struct stategrid_board_state *state, size_t index,
+                           uint8_t *byte);
+int nd_board_uart_irq_rx_done(struct stategrid_board_state *state,
+                              size_t index);
 #endif
 
 #endif

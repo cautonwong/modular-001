@@ -12,6 +12,7 @@
 #include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/app/dl698_parameter_adapter.h"
 #include "targets/stategrid_meter/app/platform_adapter.h"
+#include "targets/stategrid_meter/app/meter_base_port.h"
 #include "targets/stategrid_meter/app/backlight_adapter.h"
 #include "targets/stategrid_meter/app/record_storage_adapter.h"
 #include "targets/stategrid_meter/app/relay_status_adapter.h"
@@ -271,13 +272,14 @@ int main(int argc, char **argv)
         instance->time.tm_sec = 50;
     }
 
-    dl698_parameter_bind(instance);
-    stategrid_platform_bind(instance);
-    stategrid_record_storage_bind(instance);
-    stategrid_backlight_bind();
-    stategrid_relay_status_bind();
-    stategrid_metering_input_bind();
-    stategrid_timer_bind();
+    dl698_parameter_attach(instance);
+    stategrid_platform_attach(instance);
+    stategrid_record_storage_attach(instance);
+    stategrid_meter_base_attach(instance);
+    stategrid_backlight_attach(instance);
+    stategrid_relay_status_attach(instance);
+    stategrid_metering_input_attach(instance);
+    stategrid_timer_attach(instance);
 
     sim_trace_printf("[sim] boot arena=%p instance=%p cycles=%u eeprom=%s "
                      "flash=%s",

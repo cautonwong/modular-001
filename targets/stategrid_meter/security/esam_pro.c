@@ -1,12 +1,13 @@
 #include "components/core/types/type_def.h"
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
-#include "domain/common/status.h"
+#include "targets/stategrid_meter/app/meter_wire_status.h"
 #include "targets/stategrid_meter/board/board_esam.h"
 #include "targets/stategrid_meter/board/meter_status.h"
 #include "infra/soc/v85xxp/v8500/time_link.h"
 #include "fr_698_esam.h"
 #include "infra/security/esam/io_type.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
+#include "targets/stategrid_meter/board/board_state.h"
 #include "targets/stategrid_meter/security/esam_pro.h"
 
 enum verification_choice_e
@@ -24,6 +25,11 @@ enum sec
 };
 
 
+
+static stategrid_board_state_t *board_from_hal(void *esam_hal)
+{
+    return (stategrid_board_state_t *)esam_hal;
+}
 
 static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8_t type, void *esam_hal)
 {
@@ -65,7 +71,7 @@ static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8
     }
 
     rx_len = len;
-    sw = (uint16_t)nd_esam_transceive(board_esam(), head, esam_in->data_buf,
+    sw = (uint16_t)nd_esam_transceive(board_esam(board_from_hal(esam_hal)), head, esam_in->data_buf,
                                       len, esam_in->data_buf, &rx_len);
     len = rx_len;
 
@@ -91,7 +97,7 @@ static int __comm_esam_handle(uint8_t *head, struct esam_698_data_t *para, uint8
     else
     {
         esam_out->esam_chip_abnormal =
-            nd_esam_link_ok(board_esam()) ? ND_EVENT_RESET : ND_EVENT_SET;
+            nd_esam_link_ok(board_esam(board_from_hal(esam_hal))) ? ND_WIRE_STATUS_RESET : ND_WIRE_STATUS_SET;
         esam_out->esam_err_no = sw;
         return -1;
     }
@@ -161,12 +167,12 @@ static uint8_t f_esam_type_point_get_data2(struct esam_698_data_t *para, void *e
 //////////////////////////////////////////////////////////////////////////////////
 static int f_esam_698_power_ctrl_on(struct esam_698_data_t *para, void *esam_hal)
 {
-    return nd_esam_power_on(board_esam());
+    return nd_esam_power_on(board_esam(board_from_hal(esam_hal)));
 }
 
 static int f_esam_698_power_ctrl_off(struct esam_698_data_t *para, void *esam_hal)
 {
-    return nd_esam_power_off(board_esam());
+    return nd_esam_power_off(board_esam(board_from_hal(esam_hal)));
 }
 
 static int f_esam_type_read_esam_no(struct esam_698_data_t *para, void *esam_hal)
@@ -488,7 +494,8 @@ int esam_pro_handle(void *instance, int fd, int request, void *param)
     //打开电源
     if (nd_meter_status_esam_power(instance) == 0)
     {
-        ret = f_esam_698_power_ctrl_on((struct esam_698_data_t *)param, 0);
+        ret = f_esam_698_power_ctrl_on((struct esam_698_data_t *)param,
+                                stategrid_context_board(instance));
         nd_meter_status_esam_power_set(instance, 1, 10);
         if (ret < 0) //停电 退出
         {
@@ -498,7 +505,8 @@ int esam_pro_handle(void *instance, int fd, int request, void *param)
     
     if((request < esam_type_max_cmd) && (request >= esam_type_base)){
 
-        ret = Func_esam[request - esam_type_base].pFunc((struct esam_698_data_t *)param, 0);
+        ret = Func_esam[request - esam_type_base].pFunc(
+            (struct esam_698_data_t *)param, stategrid_context_board(instance));
 
         if (( request != esam_type_poweroff_cmd ) && ( request != esam_type_poweron_cmd ))
         {

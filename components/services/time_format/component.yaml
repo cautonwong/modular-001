@@ -1,0 +1,6 @@
+name: services.time_format
+version: 0.1.0
+layer: services
+paths: [components/services/time_format]
+dependencies: [domain.common]
+legacy: false

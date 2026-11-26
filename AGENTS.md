@@ -30,11 +30,17 @@
 | 规则 | 执行 |
 | --- | --- |
 | 不新增可变全局 | `check:mutable-globals` 对比 `tools/mutable_globals_frozen.txt`；增长需在 `tools/mutable_globals_exceptions.txt` 写理由、到期日、批准人，过期即失败 |
-| 设计记录不引用临时证据 | `check:doc-evidence` 拒绝 `docs/design` 里的 `/tmp/` 路径 |
+| 旧端口绑定 guard | `check:port-bindings-sim` 和 `meter_electricity_single_phase_cn:port-bindings`：表内有行时对比链接 ELF 的直接 `bl`/`call` 边，0 次、多次、调用者不符或仅间接调用即失败；产品无行时扫描 ELF 函数符号，任何 `nd_`、`stategrid_`、`dl698_` 或 `resource_tool_` 前缀的 `*_bind` 符号即失败 |
+| 设计记录和计划不引用临时证据 | `check:doc-evidence` 拒绝 `docs/design` 和 `docs/plans` 里的临时或仓库外路径（`/tmp`、`/home`、`/root`、`/var/tmp`） |
 | 依赖方向、端口与组合根 | `check:layers`、`check:components` |
+| 产品选中的组件必须有同一产品闭包 caller | `check:product-callers`：只查固件产品；组件公共函数必须在同一 product 闭包内被 include 可见地调用，跨产品、测试/host 和组件自调用不 credit，基线为空 |
 | 公开头不新增可变 struct | `check:public-structs` 棘轮 |
 | FreeRTOS 线程模型不漂移 | `check:rtos-model` 对比 `docs/design/freertos-thread-model.md` 的配置与任务常量；改值必须同时改文档和 checker |
 | ROM 103 KiB | 链接断言、`check_idis_firmware.py`、`check:rom-budget-docs` |
+| 形式化文档清单和 TLA 常数与 formal 产物一致 | `check:formal-docs --self-check`：列出所有 TLA/Lean/CBMC 文件，并对照 EnergyPulse/Snapshot cfg 的常数 |
+| 同一根目录同时只跑一个 CI/formal | `ci_matrix.py` 和 `check_formal.sh` 共用 worktree 根 `.ci.lock`；第二实例立即失败并报占用 pid；锁不在 `build/` 下，清 build 不会释放 |
+| 验证脚本不得在 pipefail 下用会提前退出的管道读者 | `check:shell-pipes` 拒绝以 `grep -q/-m`、`head`、`sed q`、`awk exit` 结尾的管道；例外需同行理由、到期日、批准人 |
+| ISR 向量处理不得给回调传裸 NULL | `check:isr-para` 扫描 target 的 `*_IRQHandler`，发现 `foo(NULL)` 即失败；必须走注册表 para |
 | 完成 = 证据 | `./ci.sh`、验收 `verdict=clean`、`check_formal.sh` |
 | dev 在独立 worktree，主工作树留在 main | 无自动检查；合并前由 verifier 核对 |
 
@@ -55,7 +61,7 @@
 
 形式化工具已进 CI。`formal/cbmc` 证明 A-XDR 长度解码、定长跳过和能量脉冲
 header 解析的边界，`formal/frama-c` 用 Eva 抽象解释证明两个 store 的请求范围和
-窗口状态（WP 需 why3/prover，暂不可用），`formal/tla` 检查 block transfer 状态
+窗口状态（WP 仍不作门禁），`formal/tla` 检查 block transfer 状态
 机和脉冲 journal 的崩溃协议，`formal/lean` 证明 FIFO 容量和脉冲 lane 的整数算术。
 本地缺工具时 `tools/check_formal.sh` 跳过，GitHub workflow 安装 CBMC、Frama-C、
 Java/TLA+ 和 Lean 后按 `--strict` 运行。关键算法仍优先加属性测试或小输入空间穷举。
@@ -63,6 +69,25 @@ Java/TLA+ 和 Lean 后按 `--strict` 运行。关键算法仍优先加属性测�
 每个产品 target 必须有一个 `tests/acceptance` 验收入口。入口里的 case 数按矩阵，
 不限制为一条。共享用例用 `CASES` 指向同一份目录，不复制。缺入口或 `CASES`
 指向不存在的目录时 `ci_matrix.py` 直接失败。
+
+## 验证强度
+
+`/verify` 和 `/interrogate` 按 skill 文本执行，不是斜杠命令：`/verify` 是
+`cursor-team-kit` 的 `verify-this`，`/interrogate` 是 `pstack` 的 `interrogate`。
+
+任何“已修好 / 有改善”的声明，先写可证伪命题，跑 baseline（修复前或父提交）与
+treatment（修复后）同一命令，比较原始产物，只给 `VERIFIED`、`NOT VERIFIED` 或
+`INCONCLUSIVE`，保留工件路径。没有 baseline 按 `INCONCLUSIVE`，不靠日志复述。
+
+`/interrogate` 按风险分级。每切片必跑：删除、覆盖或迁移用户数据；并发、事件循环、
+生命周期或资源所有权；解析器、协议帧或网络输入边界；安全、权限或崩溃恢复；
+单次 diff 超过约 500 行或跨模块。可攒到每天或每批一次：纯重命名、移动、格式、
+注释；只加测试或文档；单文件小改且无数据、网络、并发影响，已有 focused 测试覆盖。
+
+对抗评审只收能用运行证明的发现（命令、实际输出、按意图应得的输出）。verifier
+逐条复跑，只保留可复现且违背意图的发现；风格、命名和需要未来改动才成立的推测
+不计。评审发现的缺陷与普通缺陷同规则，在同一次改动里补可执行守卫或正反夹具，
+用现有 checker 的 `--self-check` 和 `ci_matrix.py` 执行，不另建登记脚本。
 
 ## 架构约束
 
@@ -125,7 +150,7 @@ Java/TLA+ 和 Lean 后按 `--strict` 运行。关键算法仍优先加属性测�
 
 ## 角色与分工
 
-假如你是`reviewer`或`verifier`,负责派活 调度 验证 验收 合并 和清理
+假如你是`reviewer`或`verifier`,负责派活 调度 验证(以/verify和/interrogate验证) 验收 合并 和清理。同时维护信任金字塔：每条规则要有执行者，能自动化的进工具和 CI，判断项留在本文。
 
 假如你是`dev`,commit 前不强制跑 ocr;收工时对当日全部改动跑一次 `ocr review --audience agent`,其使用方法见`/home/edge/ocr-open-code-review-usage-2026-11-18.md`
 

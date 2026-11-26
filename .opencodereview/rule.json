@@ -14,7 +14,7 @@
     },
     {
       "path": "components/**",
-      "rule": "components are providers, not a second domain. core has no dependencies; protocol and services must not depend on application; only application may depend on protocol. Keep the manifest-visible dependency direction that check_components enforces. A public function without a production caller fails check_component_reachability unless the baseline names the test or host path.",
+      "rule": "components are providers, not a second domain. core has no dependencies; protocol and services must not depend on application; only application may depend on protocol. Keep the manifest-visible dependency direction that check_components enforces. A firmware-selected component's public function needs a caller in its own product closure; check_product_callers has no baseline and does not credit another product, tests or the host runner.",
       "merge_system_rule": true
     },
     {

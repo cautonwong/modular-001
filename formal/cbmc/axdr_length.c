@@ -36,8 +36,20 @@ int main(void)
                          "0x82 returns the next two bytes");
         __CPROVER_assert(reader.pos == 3, "0x82 consumes three bytes");
     }
-    if (reader.err == 0 && input[0] == 0x83) {
-        __CPROVER_assert(reader.pos == 4, "0x83 consumes four bytes");
+    if (input[0] == 0x83) {
+        uint32_t value = ((uint32_t)input[1] << 16)
+                         | ((uint32_t)input[2] << 8) | input[3];
+
+        if (value > 0xFFFFu) {
+            __CPROVER_assert(reader.err != 0,
+                             "0x83 rejects values above UINT16_MAX");
+            __CPROVER_assert(length == 0,
+                             "0x83 returns zero when out of range");
+        } else if (reader.err == 0) {
+            __CPROVER_assert(length == (uint16_t)value,
+                             "0x83 returns the 24-bit value");
+            __CPROVER_assert(reader.pos == 4, "0x83 consumes four bytes");
+        }
     }
     if (input[0] >= 0x84) {
         __CPROVER_assert(reader.err != 0, "reserved length form is rejected");

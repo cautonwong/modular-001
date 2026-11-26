@@ -12,6 +12,7 @@
 #include "targets/idis_ip_meter/cosem/nd_idis_calibration.h"
 #include "targets/idis_ip_meter/cosem/nd_measurement_port.h"
 #include "targets/idis_ip_meter/board/board_rn8209.h"
+#include "targets/idis_ip_meter/board/spi_driver.h"
 #include "targets/idis_ip_meter/board/relay_pins.h"
 #include "targets/idis_ip_meter/board/uart_driver.h"
 #include "targets/idis_ip_meter/board/board_eeprom.h"
@@ -28,35 +29,55 @@ _Static_assert(BOARD_FLASH_SIZE % BOARD_FLASH_SECTOR == 0,
 _Static_assert(BOARD_FLASH_SIZE == ND_MX25L3206E_CAPACITY_BYTES,
                "the board flash must be the MX25L3206E 4 MiB part");
 
-static struct tm rtc_scratch;
+static int board_store_read(void *ctx, uint32_t offset, uint8_t *buffer,
+                            size_t length);
+static int board_store_write(void *ctx, uint32_t offset,
+                             const uint8_t *buffer, size_t length);
+
+void board_bind(nd_idis_board_state_t *state)
+{
+    if (state == NULL) {
+        return;
+    }
+    state->store.ctx = state;
+    state->store.read = board_store_read;
+    state->store.write = board_store_write;
+    board_rn8209_init(state);
+    nd_board_spi_bind(state);
+}
 
 int board_rtc_read(nd_dlms_datetime_t *now)
 {
-    if (now == NULL || !read_mcu_rtc(0, &rtc_scratch)) {
+    struct tm scratch;
+
+    if (now == NULL || !read_mcu_rtc(0, &scratch)) {
         return -1;
     }
-    int year = rtc_scratch.tm_year + 1900;
-    int month = rtc_scratch.tm_mon + 1;
+    int year = scratch.tm_year + 1900;
+    int month = scratch.tm_mon + 1;
     if (year < 2020 || month < 1 || month > 12) {
         return -1;
     }
     *now = (nd_dlms_datetime_t){
         .year = (uint16_t)year,
         .month = (uint8_t)month,
-        .day = (uint8_t)rtc_scratch.tm_mday,
-        .hour = (uint8_t)rtc_scratch.tm_hour,
-        .minute = (uint8_t)rtc_scratch.tm_min,
-        .second = (uint8_t)rtc_scratch.tm_sec,
+        .day = (uint8_t)scratch.tm_mday,
+        .hour = (uint8_t)scratch.tm_hour,
+        .minute = (uint8_t)scratch.tm_min,
+        .second = (uint8_t)scratch.tm_sec,
         .status = 0,
     };
     return 0;
 }
 
-static uint8_t flash_sector[BOARD_FLASH_SECTOR];
-
 #define BOARD_UART_FIFO_BYTES 128u
-static struct fifo_t uart_fifo[3];
-static uint8_t uart_fifo_buffer[3][BOARD_UART_FIFO_BYTES];
+typedef struct {
+    uint8_t flash_sector[BOARD_FLASH_SECTOR];
+    struct fifo_t uart_fifo[3];
+    uint8_t uart_fifo_buffer[3][BOARD_UART_FIFO_BYTES];
+} board_buffers_t;
+
+static board_buffers_t board_buffers;
 
 static const UART_InitType uart_485_config = {
     UART_MODE_Msk, UART_PARITY_EVEN_LIB, UART_WORDLEN_9B,
@@ -71,21 +92,24 @@ static const UART_InitType uart_ir_config = {
     UART_FIRSTBIT_LSB, 1200,
 };
 
-static int32_t calibration_voltage = 18213639;
-static int32_t calibration_current = 288020000;
-static int32_t calibration_power = 1791867;
+static const board_measurement_calibration_t default_calibration = {
+    .voltage = 18213639,
+    .current = 288020000,
+    .power = 1791867,
+};
 
-static nd_idis_calibration_status_t board_calibration_load(void)
+static nd_idis_calibration_status_t board_calibration_load(
+    nd_idis_board_state_t *state, board_measurement_calibration_t *calibration)
 {
     nd_idis_calibration_record_t record;
     nd_idis_calibration_status_t status =
-        nd_idis_calibration_load(&record, board_store_port());
+        nd_idis_calibration_load(&record, board_store_port(state));
     switch (status) {
     case ND_IDIS_CALIBRATION_LOADED:
     case ND_IDIS_CALIBRATION_ADOPTED:
-        calibration_voltage = record.voltage;
-        calibration_current = record.current;
-        calibration_power = record.power;
+        calibration->voltage = record.voltage;
+        calibration->current = record.current;
+        calibration->power = record.power;
         break;
     case ND_IDIS_CALIBRATION_FAULT:
     case ND_IDIS_CALIBRATION_LOST:
@@ -98,11 +122,12 @@ static nd_idis_calibration_status_t board_calibration_load(void)
 static int board_store_read(void *ctx, uint32_t offset, uint8_t *buffer,
                             size_t length)
 {
-    (void)ctx;
-    if (length > 0xFFFFu) {
+    nd_idis_board_state_t *state = (nd_idis_board_state_t *)ctx;
+
+    if (state == NULL || length > 0xFFFFu) {
         return -1;
     }
-    return nd_eeprom_read(board_eeprom(), offset, buffer,
+    return nd_eeprom_read(board_eeprom(state), offset, buffer,
                           (uint16_t)length) == 0
                ? 0
                : -1;
@@ -111,12 +136,13 @@ static int board_store_read(void *ctx, uint32_t offset, uint8_t *buffer,
 static int board_store_write(void *ctx, uint32_t offset, const uint8_t *buffer,
                              size_t length)
 {
-    (void)ctx;
-    if (length > 0xFFFFu) {
+    nd_idis_board_state_t *state = (nd_idis_board_state_t *)ctx;
+
+    if (state == NULL || length > 0xFFFFu) {
         return -1;
     }
     mcu_clear_watchdog();
-    int result = nd_eeprom_write(board_eeprom(), offset, buffer,
+    int result = nd_eeprom_write(board_eeprom(state), offset, buffer,
                                  (uint16_t)length) == 0
                      ? 0
                      : -1;
@@ -127,11 +153,12 @@ static int board_store_write(void *ctx, uint32_t offset, const uint8_t *buffer,
 static int flash_read(void *ctx, uint32_t offset, uint8_t *buffer,
                       size_t length)
 {
-    (void)ctx;
-    if (length > 0xFFFFu) {
+    nd_idis_board_state_t *state = (nd_idis_board_state_t *)ctx;
+
+    if (state == NULL || length > 0xFFFFu) {
         return -1;
     }
-    return nd_mx25l3206e_read(board_flash(), offset, buffer,
+    return nd_mx25l3206e_read(board_flash(state), offset, buffer,
                               (uint16_t)length) == 0
                ? 0
                : -1;
@@ -139,8 +166,13 @@ static int flash_read(void *ctx, uint32_t offset, uint8_t *buffer,
 
 static int flash_erase(void *ctx, uint32_t offset)
 {
-    (void)ctx;
-    return nd_mx25l3206e_erase(board_flash(), offset, BOARD_FLASH_SECTOR) == 0
+    nd_idis_board_state_t *state = (nd_idis_board_state_t *)ctx;
+
+    if (state == NULL) {
+        return -1;
+    }
+    return nd_mx25l3206e_erase(board_flash(state), offset,
+                               BOARD_FLASH_SECTOR) == 0
                ? 0
                : -1;
 }
@@ -148,46 +180,48 @@ static int flash_erase(void *ctx, uint32_t offset)
 static int flash_write(void *ctx, uint32_t offset, const uint8_t *buffer,
                        size_t length)
 {
-    (void)ctx;
-    if (length > 0xFFFFu) {
+    nd_idis_board_state_t *state = (nd_idis_board_state_t *)ctx;
+
+    if (state == NULL || length > 0xFFFFu) {
         return -1;
     }
-    return nd_mx25l3206e_write(board_flash(), offset, buffer,
+    return nd_mx25l3206e_write(board_flash(state), offset, buffer,
                                (uint16_t)length) == 0
                ? 0
                : -1;
 }
 
-static nd_sector_store_t flash_store;
-
-static const nd_store_t board_store = {
-    .ctx = NULL,
-    .read = board_store_read,
-    .write = board_store_write,
-};
-
-nd_store_t *board_store_port(void)
+nd_store_t *board_store_port(nd_idis_board_state_t *state)
 {
-    return (nd_store_t *)&board_store;
+    if (state == NULL) {
+        return NULL;
+    }
+    return &state->store;
 }
 
-nd_store_t *board_flash_port(void)
+nd_store_t *board_flash_port(nd_idis_board_state_t *state)
 {
-    return nd_sector_store_port(&flash_store);
+    if (state == NULL) {
+        return NULL;
+    }
+    return nd_sector_store_port(&state->flash_store);
 }
 
-void board_store_init(void)
+void board_store_init(nd_idis_board_state_t *state)
 {
-    (void)board_eeprom();
+    (void)board_eeprom(state);
 }
 
-void board_flash_init(void)
+void board_flash_init(nd_idis_board_state_t *state)
 {
-    (void)board_flash();
+    if (state == NULL) {
+        return;
+    }
+    (void)board_flash(state);
     /* Off until the board bus measurement; FreeRTOS also needs a store lock. */
-    nd_sector_store_init(&flash_store, NULL, flash_read, flash_erase,
+    nd_sector_store_init(&state->flash_store, state, flash_read, flash_erase,
                          flash_write, BOARD_FLASH_SIZE, BOARD_FLASH_SECTOR,
-                         flash_sector, 0);
+                         board_buffers.flash_sector, 0);
 }
 
 static void uart_receive_timeout(void)
@@ -199,80 +233,76 @@ static void uart_send_timeout(void *ctx)
     (void)ctx;
 }
 
-static void uart_channel_init(uint8_t channel, const UART_InitType *config,
-                              uint8_t uart_index, uint8_t channel_type)
+static void uart_channel_init(nd_idis_board_state_t *state, uint8_t channel,
+                              const UART_InitType *config, uint8_t uart_index,
+                              uint8_t channel_type)
 {
     struct uart_chl_init_t init = {
-        .tx_fifo = &uart_fifo[channel],
-        .rx_fifo = &uart_fifo[channel],
+        .tx_fifo = &board_buffers.uart_fifo[channel],
+        .rx_fifo = &board_buffers.uart_fifo[channel],
         .uart_cfg = config,
         .mcu_uart_index = uart_index,
         .chl_type = channel_type,
         .CallBackReceiveTimeOut = uart_receive_timeout,
         .CallBackSendTimeOut = uart_send_timeout,
     };
-    (void)uart_chl_initialize(&init);
+    (void)uart_chl_initialize(state, &init);
 }
 
-void board_uart_init(void)
+void board_uart_init(nd_idis_board_state_t *state)
 {
-    fifoBuf_init(&uart_fifo[0], uart_fifo_buffer[0], BOARD_UART_FIFO_BYTES);
-    fifoBuf_init(&uart_fifo[1], uart_fifo_buffer[1], BOARD_UART_FIFO_BYTES);
-    fifoBuf_init(&uart_fifo[2], uart_fifo_buffer[2], BOARD_UART_FIFO_BYTES);
-    uart_channel_init(0, &uart_485_config, ND_UART_RS4851,
+    fifoBuf_init(&board_buffers.uart_fifo[0],
+                 board_buffers.uart_fifo_buffer[0], BOARD_UART_FIFO_BYTES);
+    fifoBuf_init(&board_buffers.uart_fifo[1],
+                 board_buffers.uart_fifo_buffer[1], BOARD_UART_FIFO_BYTES);
+    fifoBuf_init(&board_buffers.uart_fifo[2],
+                 board_buffers.uart_fifo_buffer[2], BOARD_UART_FIFO_BYTES);
+    uart_channel_init(state, 0, &uart_485_config, ND_UART_RS4851,
                       UART_RS4851_CHL);
-    uart_channel_init(1, &uart_module_config, ND_UART_MODULE,
+    uart_channel_init(state, 1, &uart_module_config, ND_UART_MODULE,
                       UART_MODULE_CHL);
-    uart_channel_init(2, &uart_ir_config, ND_UART_IR, UART_IR_CHL);
+    uart_channel_init(state, 2, &uart_ir_config, ND_UART_IR, UART_IR_CHL);
 }
 
 int board_ir_read(uint8_t *byte)
 {
-    if (byte == NULL || fifoBuf_getUsed(&uart_fifo[UART_IR_CHL]) == 0) {
+    if (byte == NULL || fifoBuf_getUsed(&board_buffers.uart_fifo[UART_IR_CHL]) == 0) {
         return 0;
     }
-    *byte = fifoBuf_getByte(&uart_fifo[UART_IR_CHL]);
+    *byte = fifoBuf_getByte(&board_buffers.uart_fifo[UART_IR_CHL]);
     return 1;
 }
 
-static volatile uint32_t rtc_seconds;
-
-static void board_rtc_isr(void *param)
-{
-    (void)param;
-    rtc_seconds++;
-}
-
-void board_rtc_init(void)
-{
-    struct isr_reg_ctx_t registration = {
-        .IsrFunctionRegister = board_rtc_isr,
-        .para = NULL,
-        .irq_index = IRQ_RTC,
-    };
-    (void)Isr_handle_regsit(&registration, IRQ_RTC);
-}
-
-static volatile uint8_t key_event;
-
 static void board_pmu_isr(void *param)
 {
-    (void)param;
+    volatile uint8_t *event = (volatile uint8_t *)param;
+
+    if (event == NULL) {
+        return;
+    }
     if (PMU_GetIOAINTStatus(GPIO_Pin_2)) {
         PMU_ClearIOAINTStatus(GPIO_Pin_2);
-        key_event = 1;
+        *event = 1;
     }
 }
 
-int board_key_event_take(void)
+int board_key_event_take(nd_idis_board_state_t *state)
 {
-    uint8_t event = key_event;
-    key_event = 0;
+    uint8_t event;
+
+    if (state == NULL) {
+        return 0;
+    }
+    event = state->key_event;
+    state->key_event = 0;
     return event != 0;
 }
 
-void board_gpio_init(void)
+void board_gpio_init(nd_idis_board_state_t *state)
 {
+    if (state == NULL) {
+        return;
+    }
     GPIOC->OEN &= ~BIT6;
     GPIOC->IE &= ~BIT6;
     GPIOC->ATT &= ~BIT6;
@@ -306,16 +336,22 @@ void board_gpio_init(void)
 
     struct isr_reg_ctx_t registration = {
         .IsrFunctionRegister = board_pmu_isr,
-        .para = NULL,
+        .para = (void *)&state->key_event,
         .irq_index = IRQ_PMU,
     };
     (void)Isr_handle_regsit(&registration, IRQ_PMU);
 }
 
-nd_idis_calibration_status_t board_measurement_init(void)
+nd_idis_calibration_status_t
+board_measurement_init(nd_idis_board_state_t *state,
+                       board_measurement_calibration_t *calibration)
 {
-    nd_idis_calibration_status_t status = board_calibration_load();
-    (void)board_rn8209();
+    if (state == NULL) {
+        return ND_IDIS_CALIBRATION_NONE;
+    }
+    *calibration = default_calibration;
+    nd_idis_calibration_status_t status = board_calibration_load(state, calibration);
+    (void)board_rn8209(state);
     return status;
 }
 
@@ -333,7 +369,15 @@ int board_adc_read(uint8_t channel, int32_t *value)
 int board_measurement_read(void *ctx, nd_measure_quantity_t quantity,
                            uint8_t phase, nd_measurement_value_t *out)
 {
-    (void)ctx;
+    const board_measurement_ctx_t *measurement = ctx;
+    const board_measurement_calibration_t *calibration;
+    nd_rn8209_t *rn8209;
+
+    if (measurement == NULL || measurement->calibration == NULL) {
+        return -1;
+    }
+    calibration = measurement->calibration;
+    rn8209 = board_rn8209(measurement->state);
     (void)phase;
     uint32_t raw = 0;
     int64_t value = 0;
@@ -341,10 +385,10 @@ int board_measurement_read(void *ctx, nd_measure_quantity_t quantity,
     nd_measurement_unit_t unit = ND_MEASUREMENT_UNIT_NONE;
     switch (quantity) {
     case ND_MEASURE_VOLTAGE:
-        if (nd_rn8209_read(board_rn8209(), ND_RN8209_URMS, &raw, 3) != 0) {
+        if (nd_rn8209_read(rn8209, ND_RN8209_URMS, &raw, 3) != 0) {
             return -1;
         }
-        value = measurement_scale_clamp(((float)calibration_voltage
+        value = measurement_scale_clamp(((float)calibration->voltage
                                          / 1000000000.0f)
                                         * (float)raw)
                 / 10;
@@ -353,10 +397,10 @@ int board_measurement_read(void *ctx, nd_measure_quantity_t quantity,
         break;
     case ND_MEASURE_CURRENT:
     case ND_MEASURE_CURRENT_SUM:
-        if (nd_rn8209_read(board_rn8209(), ND_RN8209_IARMS, &raw, 3) != 0) {
+        if (nd_rn8209_read(rn8209, ND_RN8209_IARMS, &raw, 3) != 0) {
             return -1;
         }
-        value = measurement_scale_clamp(((float)calibration_current
+        value = measurement_scale_clamp(((float)calibration->current
                                          / 1000000000.0f)
                                         * (float)raw)
                 / 10;
@@ -365,16 +409,16 @@ int board_measurement_read(void *ctx, nd_measure_quantity_t quantity,
         break;
     case ND_MEASURE_ACTIVE_POWER:
     case ND_MEASURE_TOTAL_ACTIVE_POWER:
-        if (nd_rn8209_read(board_rn8209(), ND_RN8209_POWERPA, &raw, 4) != 0) {
+        if (nd_rn8209_read(rn8209, ND_RN8209_POWERPA, &raw, 4) != 0) {
             return -1;
         }
-        value = measurement_scale_clamp(((float)calibration_power
+        value = measurement_scale_clamp(((float)calibration->power
                                          / 1000000000.0f)
                                         * (float)(int32_t)raw);
         unit = ND_MEASUREMENT_UNIT_WATT;
         break;
     case ND_MEASURE_FREQUENCY:
-        if (nd_rn8209_read(board_rn8209(), ND_RN8209_UFREQ, &raw, 2) != 0) {
+        if (nd_rn8209_read(rn8209, ND_RN8209_UFREQ, &raw, 2) != 0) {
             return -1;
         }
         value = raw;

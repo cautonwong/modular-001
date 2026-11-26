@@ -88,6 +88,6 @@ struct resource_block_t* register_parameter(stategrid_context_t *instance, uint8
 
 int16_t nd_size(void *instance, uint8_t *buf, uint32_t id);
 
-void resource_tool_bind(stategrid_context_t *ctx);
+void resource_tool_attach(stategrid_context_t *ctx);
 
 #endif

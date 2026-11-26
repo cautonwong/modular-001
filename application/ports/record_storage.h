@@ -19,12 +19,15 @@ typedef struct nd_record_storage_port {
     int (*trigger_645_record)(void *ctx, uint32_t di, uint8_t tag);
 } nd_record_storage_port_t;
 
-void nd_record_storage_bind(const nd_record_storage_port_t *port);
-int nd_record_storage_save_index(uint32_t oad, uint32_t *index);
-int nd_record_storage_change_format(uint8_t *des, const uint8_t *src,
+int nd_record_storage_save_index(const nd_record_storage_port_t *port,
+                                 uint32_t oad, uint32_t *index);
+int nd_record_storage_change_format(const nd_record_storage_port_t *port,
+                                    uint8_t *des, const uint8_t *src,
                                     uint32_t oad_req, uint32_t oad_src,
                                     int mode);
-int nd_record_storage_clear_program_list(void *pipeline, void *mesg);
-int nd_record_storage_trigger_645_record(uint32_t di, uint8_t tag);
+int nd_record_storage_clear_program_list(const nd_record_storage_port_t *port,
+                                         void *pipeline, void *mesg);
+int nd_record_storage_trigger_645_record(
+    const nd_record_storage_port_t *port, uint32_t di, uint8_t tag);
 
 #endif

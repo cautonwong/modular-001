@@ -1,10 +1,5 @@
 #include "domain/events/power_event.h"
 
-uint8_t nd_event_close_uses_poweron(uint32_t oad)
-{
-    return (uint8_t)((oad & 0xFFu) == 0xAAu);
-}
-
 void nd_event_power_resume(nd_event_power_resume_state_t *state)
 {
     state->power_off_acc += state->power_off_low;

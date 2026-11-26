@@ -3,11 +3,11 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <time.h>
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "port.h"
-#include "domain/common/status.h"
+#include "targets/stategrid_meter/app/meter_wire_status.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "domain/events/cover_open.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
@@ -32,7 +32,7 @@ int CoverOpen_event_judge(void *instance, void *task, void *mesg)
         .accumulated_low_power_seconds = 0,
     };
 
-    uint8_t cover_open = (ctrl_block->CoverOpenS_status == ND_EVENT_SET);
+    uint8_t cover_open = (ctrl_block->CoverOpenS_status == ND_WIRE_STATUS_SET);
     nd_event_transition_t result = nd_cover_open_step(&state, &rule, cover_open, 0);
 
     ctrl_block->CoverOpenS_duration = state.debounce.duration;
@@ -69,7 +69,7 @@ int CoverOpen_event_LowPower_pro(void *instance, void *task, void *mesg)
             .accumulated_low_power_seconds = ctrl_block->CoverOpenS_time_low_power_cnt,
         };
 
-        uint8_t cover_open = (ctrl_block->CoverOpenS_status == ND_EVENT_SET);
+        uint8_t cover_open = (ctrl_block->CoverOpenS_status == ND_WIRE_STATUS_SET);
         nd_event_transition_t transition = nd_cover_open_step(&state, &rule, cover_open, 1);
 
         ctrl_block->CoverOpenS_duration = state.debounce.duration;

@@ -170,9 +170,10 @@ static inline int harness_read_base(legacy_energy_record_t *record)
     return status == ND_PULSE_OK && length == sizeof(*record) ? 0 : -1;
 }
 
-int nd_storage_read(uint8_t device_name, uint32_t addr, uint8_t *buf,
-                    uint16_t len)
+int nd_storage_read(stategrid_context_t *instance, uint8_t device_name,
+                    uint32_t addr, uint8_t *buf, uint16_t len)
 {
+    (void)instance;
     (void)device_name;
     if (addr > sizeof(harness.eeprom)
         || len > sizeof(harness.eeprom) - addr) {

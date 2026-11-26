@@ -9,12 +9,8 @@ static int board_relay_is_off(void *ctx)
     return nd_board_relay_is_off();
 }
 
-static const nd_relay_status_port_t relay_status_port = {
-    .ctx = NULL,
-    .is_off = board_relay_is_off,
-};
-
-void stategrid_relay_status_bind(void)
+void stategrid_relay_status_attach(stategrid_context_t *instance)
 {
-    nd_relay_status_bind(&relay_status_port);
+    instance->relay_status.ctx = NULL;
+    instance->relay_status.is_off = board_relay_is_off;
 }

@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "application/ports/resource_access.h"
 #include "cpu_surport.h"
@@ -61,14 +61,16 @@ void tm_to_mcu_rtc_bcd(struct tm t, uint8_t *des)
 //保存时钟电池工作时间
 int save_RtcBat_work_time(void *instance)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint32_t addr = 0, batTime = 0;
     int ret;
 
     //保存电池工作时间
     addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Bat_UseTime);
-    ret = nd_get_index(instance, addr, (uint8_t *)&batTime, 4);
+    ret = nd_get_index_port(port, addr, (uint8_t *)&batTime, 4);
     batTime += nd_mb_battery_used_time_cnt(instance);
-    ret = nd_set_index(instance, addr, (uint8_t *)&batTime, 4);
+    ret = nd_set_index_port(port, addr, (uint8_t *)&batTime, 4);
     nd_mb_battery_used_time_cnt(instance) = 0;
 
 }
@@ -77,6 +79,8 @@ int save_RtcBat_work_time(void *instance)
 //上电时钟检查
 int rtc_check_poweron(void *instance)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint8_t year = 0, mark = 0, buffer[8] = {0}, temp[8] = {0}, settimebuf[8] = {0};
     uint32_t t_now = 0, t_pd = 0, addr = 0;
     struct tm temp_tm; 
@@ -110,13 +114,13 @@ int rtc_check_poweron(void *instance)
         rtc_format_change_from_tm(nd_fr698_time(instance),temp); 
         mem_swap_cpy( &buffer[0], &temp[0], 7);
         addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
-        nd_set_index(instance, addr, buffer, 7);
+        nd_set_index_port(port, addr, buffer, 7);
         
         //保存校时后时间 
         rtc_format_change_from_tm(&temp_tm,temp); 
         mem_swap_cpy( &buffer[0], &temp[0], 7);
         addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
-        nd_set_index(instance, addr, buffer, 7);
+        nd_set_index_port(port, addr, buffer, 7);
 
         record_rollback_after_set_time(instance, 0); // 翻转覆盖
 
@@ -139,13 +143,15 @@ int rtc_check_poweron(void *instance)
 //写当前时间到停电时间
 void write_powerdown_time(void *instance)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint32_t addr;
 
     *nd_mb_powerdown_tm_ptr(instance) = *nd_fr698_time(instance);
 
     addr = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
         nd_mbase_offset_powerdown_tm()) -  nd_mbase_offset_persistent_section_start();
-    nd_set_offset(instance, addr, (uint8_t *)nd_mb_powerdown_tm_ptr(instance),
+    nd_set_offset_port(port, addr, (uint8_t *)nd_mb_powerdown_tm_ptr(instance),
                   sizeof(struct tm));
 }
 

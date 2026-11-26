@@ -6,8 +6,14 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "application/adapters/dl698/parameter_port.h"
+#include "application/ports/platform.h"
+#include "application/ports/record_storage.h"
+#include "application/ports/resource_access.h"
+
 struct tm;
 struct nd_dl698_msg;
+struct connect_request_t;
 
 /* Legacy services the adapter consumes; implemented by kernel or target. */
 void ndv_memcopy(void *tb, void *sb, uint16_t length);
@@ -53,6 +59,13 @@ uint8_t *nd_fr698_power_state(void *instance);
 uint8_t *nd_fr698_reset_flag(void *instance);
 uint32_t nd_fr698_ms(void *instance);
 uint32_t *nd_fr698_ac_power_off_sec_cnt(void *instance);
+uint8_t *nd_fr698_rtc_cnt(void *instance);
+uint16_t *nd_fr698_report_flag(void *instance);
+struct connect_request_t *nd_fr698_cfg_connect(void *instance);
+const nd_platform_port_t *nd_fr698_platform(void *instance);
+const nd_record_storage_port_t *nd_fr698_record_storage(void *instance);
+const nd_resource_port_t *nd_fr698_resource_access(void *instance);
+const nd_dl698_parameter_port_t *nd_fr698_parameter_port(void *instance);
 
 void *nd_fr698_pipeline_ctx(const void *pipeline);
 uint32_t nd_fr698_pipeline_id(const void *pipeline);

@@ -1,0 +1,6 @@
+# One executable Frama-C negative case per line:
+# name@harness@source@expected alarm count@expected alarm text@sed mutation
+# The mutation runs on a temporary copy of the source only; the unmutated
+# originals must stay at zero alarms.
+byte_store_relaxed_guard@formal/frama-c/byte_store_eva.c@infra/memory/byte_store.c@1@precondition 'valid_dest' got status invalid@20s/if (offset > store->size || length > store->size - offset) {/if (length > store->size - offset) {/
+sector_store_erase_invalidation@formal/frama-c/sector_store_eva.c@infra/memory/sector_store.c@1@assertion 'erase_window_fresh' got status invalid@94s/    store->window_valid = 0u;//

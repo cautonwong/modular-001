@@ -47,4 +47,4 @@ core 组件不依赖任何其他组件，供 domain、application、services、i
 
 `check:components` 的自检覆盖 include 方向和依赖方向；`host:strict` 和
 `host:sim-san` 编译并运行 core 的 host 测试（`test_fifo`、`test_list`、
-`test_bitarithm`、`test_fifo_channel`）。
+`test_bitarithm`）。

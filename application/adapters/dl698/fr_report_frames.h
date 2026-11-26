@@ -2,7 +2,7 @@
 #define ND_APPLICATION_DL698_FR_REPORT_FRAMES_H
 
 #include "fr_698.h"
-#include "domain/report/report_retry.h"
+#include "application/adapters/dl698/report_retry.h"
 
 uint8_t report_channel_check(void * instance, uint16_t channel);
 void report_port_open(void * instance);

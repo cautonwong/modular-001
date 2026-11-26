@@ -12,9 +12,11 @@ gcc -std=gnu11 -DWIN32 -I "${root}" \
     "${root}/tools/legacy_probe.c" -o "${binary}"
 
 output="$("${binary}")"
-printf '%s\n' "${output}" | grep -Eq '^sizeof\(struct mbase_control_block_t\) = 1368$'
-printf '%s\n' "${output}" | grep -Eq '^persistent_section_start +849$'
-printf '%s\n' "${output}" | grep -Eq '^active_p +852$'
-printf '%s\n' "${output}" | grep -Eq '^active_n +904$'
+# Here-strings, not `printf | grep -q`: with pipefail an early grep exit can
+# SIGPIPE the writer under load and turn a passing check into exit 141.
+grep -E '^sizeof\(struct mbase_control_block_t\) = 1368$' <<< "${output}" >/dev/null
+grep -E '^persistent_section_start +849$' <<< "${output}" >/dev/null
+grep -E '^active_p +852$' <<< "${output}" >/dev/null
+grep -E '^active_n +904$' <<< "${output}" >/dev/null
 
 echo "persistence offsets unchanged (size 1368, persistent 849, active_p 852)"

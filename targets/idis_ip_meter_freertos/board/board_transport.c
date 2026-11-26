@@ -194,7 +194,7 @@ int nd_board_spi_dma_start(nd_board_spi_dma_t *dma, const uint8_t *tx,
     dma->rx_active = rx != NULL ? 1 : 0;
     dma->busy = 1;
     nd_board_op_reset(&dma->op);
-    if (nd_board_spi_dma_hw_start(tx, rx, len) != 0) {
+    if (nd_board_spi_dma_hw_start(dma->hw_ctx, tx, rx, len) != 0) {
         dma->tx_active = 0;
         dma->rx_active = 0;
         dma->busy = 0;

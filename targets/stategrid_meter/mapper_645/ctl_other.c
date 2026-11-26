@@ -3,7 +3,7 @@
 #include "targets/stategrid_meter/app/channels.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "resource_ids.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
@@ -18,13 +18,14 @@
 #include "targets/stategrid_meter/app/app_config.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
-#include "domain/common/time_format.h"
+#include "components/services/time_format/time_format.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
 
 static unsigned char Cmp_RemoteCtlTime( void *instance, uint8_t* Addr );
 
 signed char Broadcast_timeadj(void *instance, uint8_t chl, uint8_t* p_rx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint8_t Buf[7] = {0,},i;
     int32_t Lng1=0,Lng2=0;
     uint32_t s_index=0;
@@ -80,7 +81,7 @@ signed char Broadcast_timeadj(void *instance, uint8_t chl, uint8_t* p_rx)
         for(i=0;i<3;i++)//避免月结算时校时。
         {
             s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
-            nd_get_index(instance, s_index, (uint8_t*)&Buf[2], 2); 
+            nd_get_index_port(port, s_index, (uint8_t*)&Buf[2], 2); 
             mem_swap_cpy(Buf, (uint8_t*)&Buf[2], 2);
             if( (Buf[0]>23) || (Buf[1]>28) )
                 continue;
@@ -144,7 +145,7 @@ signed char Broadcast_timeadj(void *instance, uint8_t chl, uint8_t* p_rx)
                     rtc_get_from_tm(instance,temp);
                     mem_swap_cpy( &buffer[0], &temp[0], 7);
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
-                    nd_set_index(instance, s_index, buffer, 7);
+                    nd_set_index_port(port, s_index, buffer, 7);
                     
                     nd_mb_boardadjtime(instance) = 0xAA;
                     Buf[0] = (*(p_rx+10));
@@ -161,7 +162,7 @@ signed char Broadcast_timeadj(void *instance, uint8_t chl, uint8_t* p_rx)
                     rtc_get_from_tm(instance,temp);
                     mem_swap_cpy( &buffer[0], &temp[0], 7);
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
-                    nd_set_index(instance, s_index, buffer, 7);
+                    nd_set_index_port(port, s_index, buffer, 7);
                     
                     record_event_no_mesg_pro(instance, NULL, BroadcastTimeS, NULL, 1);// 骞挎挱鏍℃椂璁板綍
                     after_Time_set_hook(instance);
@@ -185,6 +186,7 @@ signed char Broadcast_timeadj(void *instance, uint8_t chl, uint8_t* p_rx)
 
 signed char meteraddr_write(void *instance, uint8_t* p_rx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint32_t s_index = 0;    
     
     if( (nd_mb_factor_mode(instance) == true) || (nd_mb_cover_open_s_status(instance) == EVENT_SET) )
@@ -194,7 +196,7 @@ signed char meteraddr_write(void *instance, uint8_t* p_rx)
             memcpy(nd_mb_tsa(instance), p_rx+10, 6);
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                     nd_mb_offset_tsa());
-            nd_set_offset(instance, s_index, nd_mb_tsa(instance), 6); 
+            nd_set_offset_port(port, s_index, nd_mb_tsa(instance), 6); 
             return 0;
         }
         else
@@ -480,6 +482,7 @@ static unsigned char Cmp_RemoteCtlTime( void *instance, uint8_t* Addr )
 
 signed char CommRemoteCtl_Process(void *instance,  uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx,  uint16_t RemotCtrResult)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 	signed char Err_Byte=0;
 	unsigned long Lng1,s_index=0;
 	unsigned char DataLen, Cmd=0, TmpBuffer[20]={0,};
@@ -618,7 +621,7 @@ signed char CommRemoteCtl_Process(void *instance,  uint8_t *p_rx, uint8_t *p_tx,
                         
 						nd_mb_alarmmin(instance) = 0;
                         s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Remote_RelayOffTime);//跳闸告警
-                        nd_get_index(instance, s_index, TmpBuffer, 2);
+                        nd_get_index_port(port, s_index, TmpBuffer, 2);
                         mem_swap_cpy((uint8_t*)&nd_mb_alarmmin(instance), TmpBuffer, 2);
                         
 						nd_mb_alarmmin(instance) = nd_mb_alarmmin(instance)*60;
@@ -843,6 +846,7 @@ signed char ctl_freeze(void *instance, uint8_t chl, uint8_t* p_rx)
 
 signed char chg_baut(void *instance, uint8_t* p_rx, struct context_645_t* ctx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint8_t len = *(p_rx+9), Err=0;
     uint32_t s_index=0;
     
@@ -883,7 +887,7 @@ signed char chg_baut(void *instance, uint8_t* p_rx, struct context_645_t* ctx)
             }
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_baut_rs485());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_baut_rs485(instance), 1);
+            nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_baut_rs485(instance), 1);
             nd_mb_baud_chg(instance) = 0x01;  //更新串口波特率
         }
         return Err;
