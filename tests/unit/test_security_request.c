@@ -99,37 +99,6 @@ static void test_plain_rn_get_with_plain_read_and_any_link_bypasses_auth(void)
                           nd_security_request_check(&value));
 }
 
-static void test_broadcast_time_oad_rules(void)
-{
-    nd_security_request_t value = request();
-
-    value.oad = 0x40007F00u;
-    value.sa_type = 0;
-    value.security_choice = ND_SECURITY_CHOICE_CIPHER;
-    value.verification_choice = ND_SECURITY_AUTH_SID_MAC;
-    TEST_ASSERT_EQUAL_INT(ND_SECURITY_REQUEST_DENIED,
-                          nd_security_request_check(&value));
-
-    value.connected = 1;
-    TEST_ASSERT_EQUAL_INT(ND_SECURITY_REQUEST_ALLOW,
-                          nd_security_request_check(&value));
-
-    value.sa_type = 3;
-    value.connected = 0;
-    value.verification_choice = ND_SECURITY_AUTH_RN;
-    TEST_ASSERT_EQUAL_INT(ND_SECURITY_REQUEST_SILENT,
-                          nd_security_request_check(&value));
-
-    value.sa_type = 1;
-    value.connected = 1;
-    TEST_ASSERT_EQUAL_INT(ND_SECURITY_REQUEST_REJECTED,
-                          nd_security_request_check(&value));
-
-    value.sa_type = 2;
-    TEST_ASSERT_EQUAL_INT(ND_SECURITY_REQUEST_SILENT,
-                          nd_security_request_check(&value));
-}
-
 int main(void)
 {
     UNITY_BEGIN();
@@ -139,6 +108,5 @@ int main(void)
     RUN_TEST(test_plain_master_auth_and_ir_rules);
     RUN_TEST(test_plain_terminal_auth_timeout_bypasses_link);
     RUN_TEST(test_plain_rn_get_with_plain_read_and_any_link_bypasses_auth);
-    RUN_TEST(test_broadcast_time_oad_rules);
     return UNITY_END();
 }

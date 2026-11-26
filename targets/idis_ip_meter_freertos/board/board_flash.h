@@ -10,6 +10,8 @@
 #define BOARD_FLASH_SIZE 0x400000u
 #define BOARD_FLASH_SECTOR 4096u
 
-nd_mx25l3206e_t *board_flash(void);
+struct nd_idis_board_state;
+
+nd_mx25l3206e_t *board_flash(struct nd_idis_board_state *state);
 
 #endif

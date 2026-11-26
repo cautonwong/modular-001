@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 
+#include "board_state.h"
 #include "cpu_surport.h"
 #include "targets/idis_ip_meter_freertos/board/rn8209_pins.h"
 #include "targets/idis_ip_meter_freertos/board/uart_driver.h"
@@ -20,33 +21,34 @@ static const UART_InitType rn8209_uart_config = {
     4800 * ND_BOARD_RN8209_FR_K,
 };
 
-static int uart_ready;
-
-static void uart_prepare(void)
+static void uart_prepare(nd_idis_board_state_t *state)
 {
-    nd_board_uart_init(ND_BOARD_RN8209_UART, &rn8209_uart_config);
-    uart_ready = 1;
+    nd_board_uart_init(state, ND_BOARD_RN8209_UART, &rn8209_uart_config);
+    state->uart_ready = 1;
 }
 
 static int bus_write(void *ctx, const uint8_t *buf, uint16_t len, int hold_tx)
 {
+    nd_idis_board_state_t *state = (nd_idis_board_state_t *)ctx;
     size_t index = ND_BOARD_RN8209_UART;
     int result = 0;
     uint16_t i;
 
-    (void)ctx;
-    if (!uart_ready) {
-        uart_prepare();
+    if (state == NULL) {
+        return -1;
     }
-    nd_board_uart_tx_enable(index, 2);
+    if (!state->uart_ready) {
+        uart_prepare(state);
+    }
+    nd_board_uart_tx_enable(state, index, 2);
     for (i = 0; i < len; i++) {
         long timeout = 2000;
 
-        if (nd_board_uart_write(index, buf[i]) != 0) {
+        if (nd_board_uart_write(state, index, buf[i]) != 0) {
             result = -1;
             break;
         }
-        while (!nd_board_uart_tx_done(index) && timeout > 1) {
+        while (!nd_board_uart_tx_done(state, index) && timeout > 1) {
             if (ANA_GetStatus(ANA_STATUS_VDCINDROP)) {
                 return ND_RN8209_BUS_POWER_DOWN;
             }
@@ -54,29 +56,33 @@ static int bus_write(void *ctx, const uint8_t *buf, uint16_t len, int hold_tx)
         }
     }
     if (!hold_tx) {
-        nd_board_uart_tx_enable(index, 0);
+        nd_board_uart_tx_enable(state, index, 0);
     }
     return result;
 }
 
 static int bus_read(void *ctx, uint8_t *buf, uint16_t len)
 {
+    nd_idis_board_state_t *state = (nd_idis_board_state_t *)ctx;
     size_t index = ND_BOARD_RN8209_UART;
     uint16_t i;
 
-    (void)ctx;
-    nd_board_uart_rx_enable(index, 2);
-    nd_board_uart_tx_enable(index, 0);
+    if (state == NULL) {
+        return -1;
+    }
+
+    nd_board_uart_rx_enable(state, index, 2);
+    nd_board_uart_tx_enable(state, index, 0);
     for (i = 0; i < len; i++) {
         long timeout = 5000;
 
-        while (!nd_board_uart_rx_done(index) && timeout > 1) {
+        while (!nd_board_uart_rx_done(state, index) && timeout > 1) {
             if (ANA_GetStatus(ANA_STATUS_VDCINDROP)) {
                 return ND_RN8209_BUS_POWER_DOWN;
             }
             timeout--;
         }
-        if (nd_board_uart_read(index, &buf[i]) != 0) {
+        if (nd_board_uart_read(state, index, &buf[i]) != 0) {
             return -1;
         }
     }
@@ -108,32 +114,43 @@ static void reset_line(void)
 
 static void bus_reset(void *ctx, int power_on)
 {
-    (void)ctx;
+    nd_idis_board_state_t *state = (nd_idis_board_state_t *)ctx;
+
+    if (state == NULL) {
+        return;
+    }
     reset_line();
     if (power_on) {
         nd_rn8209_tx_line_output();
         nd_rn8209_tx_line_set(1);
-        uart_prepare();
+        uart_prepare(state);
     }
 }
 
-static nd_rn8209_storage_t storage;
-static nd_rn8209_t *dev;
-
-static const nd_rn8209_config_t config = {
-    .bus = {
-        .ctx = NULL,
-        .write = bus_write,
-        .read = bus_read,
-        .delay_us = bus_delay,
-        .reset = bus_reset,
-    },
-};
-
-nd_rn8209_t *board_rn8209(void)
+void board_rn8209_init(nd_idis_board_state_t *state)
 {
-    if (dev == NULL) {
-        dev = nd_rn8209_init(&storage, &config);
+    if (state == NULL) {
+        return;
     }
-    return dev;
+    if (state->rn8209 == NULL) {
+        nd_rn8209_config_t config = {
+            .bus = {
+                .ctx = state,
+                .write = bus_write,
+                .read = bus_read,
+                .delay_us = bus_delay,
+                .reset = bus_reset,
+            },
+        };
+
+        state->rn8209 = nd_rn8209_init(&state->rn8209_storage, &config);
+    }
+}
+
+nd_rn8209_t *board_rn8209(nd_idis_board_state_t *state)
+{
+    if (state == NULL) {
+        return NULL;
+    }
+    return state->rn8209;
 }

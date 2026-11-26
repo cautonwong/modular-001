@@ -3,11 +3,11 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <time.h>
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "port.h"
-#include "domain/common/status.h"
+#include "targets/stategrid_meter/app/meter_wire_status.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "domain/events/generic.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
@@ -27,7 +27,7 @@ int EmuErr_event_judge(void *instance, void *task, void *mesg)
         },
         .accumulated_seconds = ctrl_block->EmuErrS_acc_time,
     };
-    uint8_t condition = (ctrl_block->EmuErrS_status == ND_EVENT_SET);
+    uint8_t condition = (ctrl_block->EmuErrS_status == ND_WIRE_STATUS_SET);
 
     nd_event_transition_t result =
         nd_generic_event_step(&state, ctrl_block->EmuErrS_duration_para, condition);

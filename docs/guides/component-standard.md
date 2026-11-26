@@ -42,7 +42,7 @@ dependencies: [domain.common]
 - 用仓库根相对路径 include，例如 `"domain/example/example.h"`。
 - 头文件自己能编译。需要的前置类型用前向声明，不靠调用方先 include。
 - 函数全部在头文件里声明。`check-arm.sh` 对 domain 和 application 启用了 `-Wmissing-prototypes`。
-- 可变全局变量不进头文件。需要共享状态时给访问器，参考 `nd_platform_device_error()`。
+- 可变全局变量不进头文件。需要共享状态时给访问器，参考 `nd_fr698_time()`。
 - 消费者定义的端口放 `application/ports/`，实现放在 target 的组合根里绑定。模板见 `docs/guides/port-binding.md`。
 - 头文件不 include `targets/` 或 `infra/soc`。这些由 `check:platform` 和 `check:layers` 拦截。
 

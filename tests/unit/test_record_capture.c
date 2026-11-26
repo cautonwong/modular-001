@@ -1,6 +1,6 @@
 #include "unity.h"
 
-#include "domain/events/record_capture.h"
+#include "application/adapters/dl698/record_capture_view.h"
 
 void setUp(void) {}
 void tearDown(void) {}

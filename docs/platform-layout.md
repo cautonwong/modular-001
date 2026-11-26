@@ -139,8 +139,9 @@ components:
 - 每个 SoC、driver 目录都带 `component.yaml`，`layer: platform`，`name` 使用 `<类别>.<名字>`。RTOS 不做通用组件选择，由 target 直接绑定。
 - 产品 board 在 `targets/<product>/board`，不进入 `component.yaml` 选择。多个产品共享时复制到各自 target，不设 `board.<名字>` 组件。
 - `product.yaml` 的 `components` 列表选择业务组件和平台组件；RTOS 由 target 直接选择和绑定。`tools/check_components.py` 校验名字存在。
+- `product.yaml` 可用 `sources:` 把某个选中组件收窄到具体 `.c`（仓库相对路径，必须属于该组件）；没有条目的组件贡献全部源。两个 IDIS 产品以此只选固件实际链接的 `core.types/utils.c` 和 `protocol.dlms/src/nd_axdr.c`。
 - `targets/<product>/app` 只写组合根。创建对象、绑定端口、启动节拍，不写业务规则。
-- `product.yaml` 是选择描述；当前 CMake 仍显式列出源文件，迁移到读取描述前必须保持两边一致。IAR 工程和 CMake 目标都不应出现两套互相矛盾的平台清单。
+- `product.yaml` 是选择描述；IDIS 的 CMake 从 `product_manifest.py --cmake` 生成 `PRODUCT_SOURCES`，按层过滤后再显式补 target、协议和维护源，`check:product-link` 逐源核对链接输入与解析清单。IAR 工程和 CMake 目标都不应出现两套互相矛盾的平台清单。
 - 同一产品可以选多个 board 变体，但一次构建只选一个。变体差异放在 `targets/<product>/board`。
 
 ## 6. 强制检查

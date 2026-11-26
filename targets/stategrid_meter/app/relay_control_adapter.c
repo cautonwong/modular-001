@@ -2,6 +2,7 @@
 #include "targets/stategrid_meter/app/resource_ids.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "targets/stategrid_meter/app/stategrid_context.h"
+#include "application/adapters/dl698/fr_698_env.h"
 
 #include "fr_645_report.h"
 #include "fr_698.h"
@@ -9,6 +10,7 @@
 #include "targets/stategrid_meter/board/board_io.h"
 
 #include "domain/load_control/load_control.h"
+#include "targets/stategrid_meter/app/relay_control_ui.h"
 #include "infra/memory/arena.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
@@ -20,6 +22,8 @@ uint16_t relay_off_chk, relay_on_chk;
 
 void save_relay_state(stategrid_context_t *instance)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     struct mbase_control_block_t *mbase_cb = ((stategrid_context_t *)instance)->mbase;
     uint32_t s_addr = ((uint32_t)(RES_DEV_EEPROM << 24)
                        + ((uint32_t)mbase_block_persistent_eprom << 16)
@@ -27,7 +31,7 @@ void save_relay_state(stategrid_context_t *instance)
                        - nd_mbase_offset_persistent_section_start());
     uint32_t len = nd_mbase_offset_sta() - nd_mbase_offset_cmd()
                    + sizeof(nd_mbase_sta(mbase_cb));
-    nd_set_offset(instance, s_addr, (uint8_t *)&nd_mbase_cmd(mbase_cb), len);
+    nd_set_offset_port(port, s_addr, (uint8_t *)&nd_mbase_cmd(mbase_cb), len);
 }
 
 /* shortcut: one relay state per firmware. Move it into the target
@@ -52,6 +56,8 @@ void relay_control_second(void *instance)
     nd_load_inputs_t inputs;
     nd_load_actions_t actions;
     uint8_t voltage_blocked;
+    uint8_t command;
+    uint8_t voltage_ok;
 
     if (state == NULL) {
         return;
@@ -64,12 +70,19 @@ void relay_control_second(void *instance)
     inputs.protection_current = nd_mbase_I_Prot(mbase_cb);
     inputs.protection_minutes = nd_mbase_Prot_time(mbase_cb);
     inputs.factory_mode = nd_mbase_factor_mode(mbase_cb);
-    inputs.key_pressed = (uint8_t)nd_board_key_pressed();
 
     load_control_set_timers(state, nd_mbase_alarmmin(mbase_cb), nd_mbase_imaxmin(mbase_cb),
                             nd_mbase_limitmin(mbase_cb));
-    load_control_set_command(state, nd_mbase_sta(mbase_cb));
-    load_control_set_meter_clear(state, nd_mbase_meterclear(mbase_cb));
+    command = nd_mbase_sta(mbase_cb);
+    voltage_ok = (uint8_t)(inputs.factory_mode
+                           || (inputs.voltage >= inputs.volt_low
+                               && inputs.voltage <= inputs.volt_high));
+    relay_control_ui_key_tick(&((stategrid_context_t *)instance)->relay_ui,
+                              &command, (uint8_t)nd_board_key_pressed(),
+                              voltage_ok);
+    load_control_set_command(state, command);
+    load_control_set_meter_clear(state,
+                                 (uint8_t)(nd_mbase_meterclear(mbase_cb) == 0x5A));
     if (nd_mbase_relay_do(mbase_cb) == 0x5A) {
         load_control_request_repeat(state);
     }
@@ -120,6 +133,7 @@ void relay_control_led(void *instance)
     load_control_state_t *state = relay_state();
     nd_load_feedback_inputs_t inputs;
     nd_load_feedback_t feedback;
+    relay_control_led_t led;
 
     if (nd_mbase_Page_ID(mbase_cb) == 0xFFFF) {
         nd_board_relay_led_set(1);
@@ -135,18 +149,18 @@ void relay_control_led(void *instance)
     inputs.relay_on_elapsed = relay_on_chk;
     inputs.feedback_threshold = Relay_Ck_Time;
     inputs.min_current = MIN_CURRENT;
-    inputs.second_parity = ((stategrid_context_t *)instance)->time.tm_sec;
-    inputs.full_display = 0;
+    inputs.suppress_feedback =
+        (uint8_t)(((stategrid_context_t *)instance)->relay_ui.led_flash > 0);
 
     load_control_feedback(state, &inputs, &feedback);
 
+    led = relay_control_ui_led(&((stategrid_context_t *)instance)->relay_ui,
+                               load_control_command(state),
+                               load_control_relay_true(state),
+                               ((stategrid_context_t *)instance)->time.tm_sec);
     nd_mbase_relay_true_sta(mbase_cb) = load_control_relay_true(state);
-    if (feedback.led_on) {
-        nd_board_relay_led_set(1);
-    } else {
-        nd_board_relay_led_set(0);
-    }
-    if (feedback.led_blink) {
+    nd_board_relay_led_set(led.led_on);
+    if (led.led_blink) {
         return;
     }
 

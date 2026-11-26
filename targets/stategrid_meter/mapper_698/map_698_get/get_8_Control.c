@@ -1,6 +1,7 @@
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
 #include "port.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
@@ -9,6 +10,7 @@
 
 int GET_8_Control(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint16_t oad;
     uint8_t index,attribute;
     uint8_t* p=buf;
@@ -42,24 +44,24 @@ int GET_8_Control(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                             *p++ = 2;
                             *p++ = TYPE_double_long_unsigned;
                             addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectValue);
-                            nd_get_index(instance, addr, p, 4); 
+                            nd_get_index_port(port, addr, p, 4); 
                             p = p + 4;
                             *p++ = TYPE_long_unsigned;
                             addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectTime);
-                            nd_get_index(instance, addr, p, 2); 
+                            nd_get_index_port(port, addr, p, 2); 
                             p = p + 2;
                             return (p-buf);
                             break;
                         case 0x01:
                             *p++ = TYPE_double_long_unsigned;
                             addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectValue);
-                            nd_get_index(instance, addr, p, 4); 
+                            nd_get_index_port(port, addr, p, 4); 
                             p = p + 4;
                             return (p-buf);
                         case 0x02:
                             *p++ = TYPE_long_unsigned;
                             addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectTime);
-                            nd_get_index(instance, addr, p, 2); 
+                            nd_get_index_port(port, addr, p, 2); 
                             p = p + 2;
                             return (p-buf);
                         default:

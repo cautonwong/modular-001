@@ -48,8 +48,9 @@ static void sim_eeprom_bus_delay(void *ctx, uint32_t us)
 static nd_eeprom_storage_t sim_eeprom_storage;
 static nd_eeprom_t *sim_eeprom;
 
-nd_eeprom_t *board_eeprom(void)
+nd_eeprom_t *board_eeprom(stategrid_board_state_t *state)
 {
+    (void)state;
     if (sim_eeprom == NULL) {
         static const nd_eeprom_config_t config = {
             .bus = {
@@ -68,9 +69,10 @@ nd_eeprom_t *board_eeprom(void)
     return sim_eeprom;
 }
 
-int nd_storage_read(uint8_t device_name, uint32_t addr, uint8_t *buf,
-                    uint16_t len)
+int nd_storage_read(stategrid_context_t *instance, uint8_t device_name,
+                    uint32_t addr, uint8_t *buf, uint16_t len)
 {
+    (void)instance;
     if (device_name == RES_DEV_EEPROM) {
         return nd_store_read(file_store_port(&eeprom_store), addr, buf, len);
     }
@@ -80,9 +82,10 @@ int nd_storage_read(uint8_t device_name, uint32_t addr, uint8_t *buf,
     return -1;
 }
 
-int nd_storage_write(uint8_t device_name, uint32_t addr, const uint8_t *buf,
-                     uint16_t len)
+int nd_storage_write(stategrid_context_t *instance, uint8_t device_name,
+                     uint32_t addr, const uint8_t *buf, uint16_t len)
 {
+    (void)instance;
     if (device_name == RES_DEV_EEPROM) {
         return nd_store_write(file_store_port(&eeprom_store), addr, buf, len);
     }
@@ -92,16 +95,20 @@ int nd_storage_write(uint8_t device_name, uint32_t addr, const uint8_t *buf,
     return -1;
 }
 
-int nd_storage_erase(uint8_t device_name, uint32_t addr)
+int nd_storage_erase(stategrid_context_t *instance, uint8_t device_name,
+                     uint32_t addr)
 {
     /* The old sim control stub ignored erase; the image must stay untouched. */
+    (void)instance;
     (void)device_name;
     (void)addr;
     return 0;
 }
 
-uint32_t nd_storage_size(uint8_t device_name)
+uint32_t nd_storage_size(stategrid_context_t *instance,
+                         uint8_t device_name)
 {
+    (void)instance;
     if (device_name == RES_DEV_EEPROM) {
         return BOARD_EEPROM_SIZE;
     }
@@ -195,8 +202,9 @@ static const nd_rn8209_config_t sim_rn8209_config = {
     },
 };
 
-nd_rn8209_t *board_rn8209(void)
+nd_rn8209_t *board_rn8209(stategrid_board_state_t *state)
 {
+    (void)state;
     if (sim_rn8209 == NULL) {
         sim_rn8209_regs[ND_RN8209_SYSCON] = 0x1643u;
         sim_rn8209_regs[ND_RN8209_EMUCON] = 0x0001u;

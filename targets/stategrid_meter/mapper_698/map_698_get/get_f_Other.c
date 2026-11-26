@@ -1,6 +1,6 @@
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/app_config.h"
 #include "targets/stategrid_meter/app/display_applications.h"
@@ -32,6 +32,7 @@ uint8_t get_current_plc_baud(void *instance)
 
 int GET_f_Other(void *instance, uint32_t id, uint8_t* buf,  void *ctx)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
 #ifndef WIN32
     void *pipeline = NULL;
     struct context_698_t* p_ctx = (struct context_698_t*)ctx;
@@ -248,7 +249,7 @@ int GET_f_Other(void *instance, uint32_t id, uint8_t* buf,  void *ctx)
                     if(index != 0)
                     {
                         s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
-                        nd_get_index(instance, s_index, (uint8_t*)&displayid, 2);
+                        nd_get_index_port(port, s_index, (uint8_t*)&displayid, 2);
                         len = display_id_to_oad( displayid, esam_inf );
                         if(len == 5)
                         {
@@ -294,7 +295,7 @@ int GET_f_Other(void *instance, uint32_t id, uint8_t* buf,  void *ctx)
                         for(i=0;i<maxnum;i++)
                         {
                             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
-                            nd_get_index(instance, s_index, (uint8_t*)&displayid, 2);
+                            nd_get_index_port(port, s_index, (uint8_t*)&displayid, 2);
                             len = display_id_to_oad( displayid, esam_inf );
                             if(len == 5)
                             {
@@ -416,7 +417,7 @@ int GET_f_Other(void *instance, uint32_t id, uint8_t* buf,  void *ctx)
                     if( schem )//事件记录用
                     {
                         addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_KeyVer);
-                        nd_get_index(instance, addr, p, 18);
+                        nd_get_index_port(port, addr, p, 18);
                         p += 18;
                         return (p-buf);
                     }
@@ -478,7 +479,7 @@ int GET_f_Other(void *instance, uint32_t id, uint8_t* buf,  void *ctx)
                 case 0x0E://红外认证时效
                     *p++ = TYPE_double_long_unsigned;
                     addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + IrAuthenTime);
-                    nd_get_index(instance, addr, p, 4); 
+                    nd_get_index_port(port, addr, p, 4); 
                     p = p + 4;
                     return (p - buf);
                     break;
@@ -614,7 +615,7 @@ int GET_f_Other(void *instance, uint32_t id, uint8_t* buf,  void *ctx)
                 break;
                 case 0x02://安全模式参数
                     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_En);
-                    nd_get_index(instance, s_index, ptr_tmp, 1);
+                    nd_get_index_port(port, s_index, ptr_tmp, 1);
                     *p++ = TYPE_enum;
                     *p++ = ptr_tmp[0];
                     return (p-buf);
@@ -627,7 +628,7 @@ int GET_f_Other(void *instance, uint32_t id, uint8_t* buf,  void *ctx)
 
                     ptr_tmp[0] = 0;
                     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
-                    nd_get_index(instance, s_index, ptr_tmp, SecurityMode_EXData_LEN);
+                    nd_get_index_port(port, s_index, ptr_tmp, SecurityMode_EXData_LEN);
                     count = ptr_tmp[0];
 
                     if (count == 0)
@@ -696,7 +697,7 @@ int GET_f_Other(void *instance, uint32_t id, uint8_t* buf,  void *ctx)
         {
             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr645_List);
             len = 52;
-            nd_get_index(instance, s_index, p, len);
+            nd_get_index_port(port, s_index, p, len);
             p += len;
             return (p-buf);
         }

@@ -11,14 +11,20 @@ statics included, and non-static file-scope declarations that start at column 0
 and live at brace depth 0. Function-local non-statics are indented or inside
 braces, so they do not count. const objects, const pointers, extern
 declarations, typedefs, prototypes and function definitions are not counted.
-IAR @ placement is dropped before the declarator name is read.
+IAR @ placement is dropped before the declarator name is read. Anonymous
+struct, union and enum objects are counted through their declarator name.
+Function-pointer declarators are counted unless the pointer itself is const,
+and __attribute__/__declspec clauses are stripped before parsing. Function
+prototypes, including ones with function-pointer parameters or a pointer
+return, are not variables and are skipped.
 
 Owned sources are domain, application, components, targets and infra.
 infra/third_party, infra/soc/**/vendor and infra/security/crypto are vendor trees,
 tests are not shipped, and build/backupfiles directories are generated, so
-the scan skips them. Declarations produced by macros and overlapping #if
-branches are not parsed. Macro expansion needs per-file preprocessor flags,
-so a macro-generated global stays a blind spot.
+the scan skips them. Declarations produced by macros are expanded from the
+`#define` bodies in the scanned tree before parsing: object-like and
+function-like macros, including token pasting and multi-line bodies, count at
+the invocation line. Overlapping #if branches are still not parsed.
 """
 from __future__ import annotations
 
@@ -38,7 +44,13 @@ SKIP_DIRS = {"build", "backupfiles", ".git", "__pycache__", "tests"}
 VENDOR = {("infra", "third_party"), ("infra", "security", "crypto")}
 COMMENTS = re.compile(r"/\*.*?\*/|//[^\n]*", re.DOTALL)
 STATIC = re.compile(r"^[ \t]*static\b", re.MULTILINE)
+DEFINE = re.compile(
+    r"^\s*#\s*define\s+(?P<name>[A-Za-z_]\w*)"
+    r"(?:\((?P<args>[^)]*)\))?\s+(?P<body>.*)$")
 IDENT = re.compile(r"[A-Za-z_]\w*")
+FUNCTION_POINTER = re.compile(r"\(\s*\*(?P<const>const\s+)?(?P<name>[A-Za-z_]\w*)")
+ATTRIBUTE = re.compile(r"__attribute__|__declspec")
+AGGREGATE_KEYWORD = re.compile(r"\b(?:struct|union|enum)\b")
 QUALIFIERS = {"const", "volatile", "static", "inline", "struct", "union",
               "enum", "register", "extern"}
 STATEMENT_KEYWORDS = {"return", "goto", "if", "else", "while", "for",
@@ -56,6 +68,32 @@ SELF_CHECK = (
     ("static int helper(void) { return 0; }", []),
     ("    static int local;", [("local", 1)]),
     ("static int first, *second;", [("first", 1), ("second", 1)]),
+    # anonymous aggregates: the brace body hides the type, so the single
+    # declarator name is the first fragment's last identifier
+    ("static struct { int x; } state;", [("state", 1)]),
+    ("static union { int x; uint8_t b[4]; } *shared;", [("shared", 1)]),
+    ("static enum { A, B } mode;", [("mode", 1)]),
+    ("static struct { int x; } first, *second;",
+     [("first", 1), ("second", 1)]),
+    ("static const struct { int x; } fixed = {0};", []),
+    ("static struct { int x; } *const pinned = 0;", []),
+    ("struct { int x; } value;", [("value", 1)]),
+    ("void run(void) {\n    static struct { int x; } local;\n}",
+     [("local", 2)]),
+    ("static struct named { int x; } tagged;", [("tagged", 1)]),
+    # function pointers and attribute clauses
+    ("static void (*handler)(void);", [("handler", 1)]),
+    ("static void (*const handler)(void);", []),
+    ("static int (*handlers[2])(void);", [("handlers", 1)]),
+    ("int filter(int (*callback)(void *), void *ctx);", []),
+    ("uint32_t (*get_ptr(void *instance))[2];", []),
+    ("static int x = f(1);", [("x", 1)]),
+    ("static int aligned_buf[4] __attribute__((aligned(4)));",
+     [("aligned_buf", 1)]),
+    ("static struct { int x; } state __attribute__((aligned(4)));",
+     [("state", 1)]),
+    ("static struct __attribute__((packed)) { int x; } packed;",
+     [("packed", 1)]),
     # two same-named statics in one file stay distinct
     ("void a(void) {\n    static int state;\n}\n"
      "void b(void) {\n    static int state;\n}",
@@ -72,11 +110,109 @@ SELF_CHECK = (
     ("int helper(void) { return 0; }", []),
     ("void run(void) {\n    int local;\n}", []),
     ("void run(void) {\nint unindented;\n}", []),
+    # macros expanding to file-scope declarations
+    ("#define HOLD static int counter\nHOLD;", [("counter", 2)]),
+    ("#define DECL(name) static uint8_t name[4]\nDECL(buffer);",
+     [("buffer", 2)]),
+    ("#define DECL(name) static int *name\nDECL(cursor);", [("cursor", 2)]),
+    ("#define PIN static int *const\nPIN fixed;", []),
+    ("#define PASTE(a, b) static int a##b\nPASTE(shared, _count);",
+     [("shared_count", 2)]),
+    ("#define HOLD \\\n    static int counter\nHOLD;", [("counter", 3)]),
 )
 
 
 def strip_comments(text: str) -> str:
     return COMMENTS.sub(lambda match: "\n" * match.group(0).count("\n"), text)
+
+
+def join_continuations(text: str) -> str:
+    return re.sub(r"\\\n", " ", text)
+
+
+def collect_macros(text: str) -> dict[str, tuple[list[str] | None, str]]:
+    macros: dict[str, tuple[list[str] | None, str]] = {}
+    for line in join_continuations(strip_comments(text)).splitlines():
+        match = DEFINE.match(line)
+        if match is None:
+            continue
+        name, arglist, body = match.group("name"), match.group("args"), match.group("body")
+        params = None
+        if arglist is not None:
+            params = [param.strip() for param in arglist.split(",") if param.strip()]
+        macros[name] = (params, body.strip())
+    return macros
+
+
+def matching_paren(text: str, start: int) -> int | None:
+    depth = 0
+    for position in range(start, len(text)):
+        if text[position] == "(":
+            depth += 1
+        elif text[position] == ")":
+            depth -= 1
+            if depth == 0:
+                return position
+    return None
+
+
+def split_args(text: str) -> list[str]:
+    parts: list[str] = []
+    depth = 0
+    current: list[str] = []
+    for char in text:
+        if char in "([{":
+            depth += 1
+        elif char in ")]}":
+            depth = max(0, depth - 1)
+        if char == "," and depth == 0:
+            parts.append("".join(current).strip())
+            current = []
+        else:
+            current.append(char)
+    if current or parts:
+        parts.append("".join(current).strip())
+    return parts
+
+
+def expand(text: str, macros: dict[str, tuple[list[str] | None, str]],
+           active: frozenset[str] = frozenset(), depth: int = 0) -> str:
+    if depth > 8:
+        return text
+    for _ in range(64):
+        for match in IDENT.finditer(text):
+            name = match.group(0)
+            if name not in macros or name in active:
+                continue
+            params, body = macros[name]
+            if body.startswith("#") and not body.startswith("##"):
+                continue
+            if params is None:
+                replacement = expand(body, macros, active | {name}, depth + 1)
+                text = text[:match.start()] + replacement + text[match.end():]
+                break
+            position = match.end()
+            while position < len(text) and text[position].isspace():
+                position += 1
+            if position >= len(text) or text[position] != "(":
+                continue
+            end = matching_paren(text, position)
+            if end is None:
+                continue
+            args = [expand(arg, macros, active | {name}, depth + 1)
+                    for arg in split_args(text[position + 1:end])]
+            if len(args) != len(params):
+                continue
+            replacement = body
+            for param, arg in zip(params, args):
+                replacement = re.sub(rf"\b{re.escape(param)}\b", arg, replacement)
+            replacement = re.sub(r"\s*##\s*", "", replacement)
+            replacement = expand(replacement, macros, active | {name}, depth + 1)
+            text = text[:match.start()] + replacement + text[end + 1:]
+            break
+        else:
+            return text
+    return text
 
 
 def statement(text: str, start: int) -> str | None:
@@ -113,6 +249,36 @@ def strip_braces(stmt: str) -> str:
     return "".join(kept)
 
 
+def strip_attributes(stmt: str) -> str:
+    """Drop __attribute__/__declspec clauses, which may contain parentheses."""
+    out = []
+    position = 0
+    while True:
+        match = ATTRIBUTE.search(stmt, position)
+        if match is None:
+            out.append(stmt[position:])
+            return "".join(out)
+        out.append(stmt[position:match.start()])
+        start = match.end()
+        while start < len(stmt) and stmt[start].isspace():
+            start += 1
+        if start >= len(stmt) or stmt[start] != "(":
+            position = match.end()
+            continue
+        depth = 0
+        end = start
+        for index in range(start, len(stmt)):
+            if stmt[index] == "(":
+                depth += 1
+            elif stmt[index] == ")":
+                depth -= 1
+                if depth == 0:
+                    end = index + 1
+                    break
+        out.append(" " + "\n" * stmt[match.start():end].count("\n"))
+        position = end
+
+
 def fragments(stmt: str) -> list[str]:
     """Split a declaration at top-level commas, including initializers."""
     parts: list[str] = []
@@ -132,13 +298,48 @@ def fragments(stmt: str) -> list[str]:
     return parts
 
 
+def anonymous_aggregate(stmt: str) -> bool:
+    """True when the declaration's first aggregate keyword is followed by the
+    brace body, so the single declarator name is the declaration's last
+    identifier. Nested anonymous members in a named tag do not count."""
+    match = AGGREGATE_KEYWORD.search(stmt)
+    if match is None:
+        return False
+    return stmt[match.end():].lstrip().startswith("{")
+
+
+def is_prototype(stmt: str) -> bool:
+    """True for a function prototype, including one returning a pointer."""
+    head = stmt.split("=", 1)[0]
+    match = re.search(r"\(", head)
+    if match is None:
+        return False
+    if head[match.end():].lstrip().startswith("*"):
+        pointer = FUNCTION_POINTER.search(head)
+        return bool(pointer is not None
+                    and head[pointer.end():].lstrip().startswith("("))
+    before = head[:match.start()].rstrip()
+    return bool(before and (before[-1].isalnum() or before[-1] == "_"))
+
+
 def declared(stmt: str) -> list[tuple[str, str]]:
     """Classify every declarator in a declaration as a mutable pointer,
     array, or object."""
     found: list[tuple[str, str]] = []
+    stmt = strip_attributes(stmt)
+    if is_prototype(stmt):
+        return found
+    anonymous = anonymous_aggregate(stmt)
     base_const = False
     for index, fragment in enumerate(fragments(strip_braces(stmt))):
         decl = fragment.split("@", 1)[0].split("=", 1)[0]
+        pointer = FUNCTION_POINTER.search(decl)
+        if pointer is not None:
+            if pointer.group("const") is None:
+                found.append(("pointer", pointer.group("name")))
+            if index == 0:
+                base_const = "const" in decl[:pointer.start()].split()
+            continue
         if "(" in decl:
             continue
         bare = []
@@ -155,7 +356,7 @@ def declared(stmt: str) -> list[tuple[str, str]]:
         if any(token in STATEMENT_KEYWORDS for token in tokens):
             continue
         names = [token for token in tokens if token not in QUALIFIERS]
-        if not names or (index == 0 and len(names) < 2):
+        if not names or (index == 0 and len(names) < 2 and not anonymous):
             continue
         name = names[-1]
         position = flat.rfind(name)
@@ -212,8 +413,28 @@ def depth_zero_lines(text: str) -> list[int]:
     return offsets
 
 
-def mutable(text: str) -> list[tuple[str, str, int]]:
+def mask_defines(text: str) -> str:
+    """Blank macro definitions, keeping line numbers, so a body line is not
+    mistaken for a declaration where it is written."""
+    out: list[str] = []
+    in_define = False
+    for line in text.splitlines(keepends=True):
+        stripped = line.rstrip("\n")
+        if in_define or re.match(r"\s*#\s*define\b", line):
+            out.append("\n" if line.endswith("\n") else "")
+            in_define = stripped.endswith("\\")
+            continue
+        out.append(line)
+    return "".join(out)
+
+
+def mutable(text: str,
+            macros: dict[str, tuple[list[str] | None, str]] | None = None
+            ) -> list[tuple[str, str, int]]:
     text = strip_comments(text)
+    if macros is None:
+        macros = collect_macros(text)
+    text = strip_attributes(mask_defines(text))
     found: list[tuple[str, str, int]] = []
     for match in STATIC.finditer(text):
         stmt = statement(text, match.start())
@@ -223,6 +444,23 @@ def mutable(text: str) -> list[tuple[str, str, int]]:
     for offset in depth_zero_lines(text):
         if not text[offset].isalpha() and text[offset] != "_":
             continue
+        first = IDENT.match(text, offset)
+        if first is not None and first.group(0) in macros:
+            stmt = statement(text, offset)
+            if stmt is None:
+                newline = text.find("\n", offset)
+                invocation = text[offset:newline if newline >= 0 else len(text)]
+            else:
+                invocation = stmt
+            expanded = expand(invocation, macros)
+            if expanded.strip() != invocation.strip():
+                line = text.count("\n", 0, offset) + 1
+                for segment in expanded.split(";"):
+                    if segment.strip():
+                        found.extend(
+                            (kind, name, line)
+                            for kind, name in declared(segment))
+                continue
         stmt = statement(text, offset)
         if stmt is None or re.match(r"\s*(static|extern|typedef)\b", stmt):
             continue
@@ -231,8 +469,8 @@ def mutable(text: str) -> list[tuple[str, str, int]]:
     return found
 
 
-def names(root: Path = ROOT) -> dict[str, set[tuple[str, int]]]:
-    found: dict[str, set[tuple[str, int]]] = {}
+def scanned(root: Path) -> list[tuple[str, Path]]:
+    files: list[tuple[str, Path]] = []
     for base in BASES:
         if not (root / base).is_dir():
             continue
@@ -246,10 +484,25 @@ def names(root: Path = ROOT) -> dict[str, set[tuple[str, int]]]:
                 continue
             if rel.parts[:2] == ("infra", "soc") and "vendor" in rel.parts:
                 continue
-            entries = {(name, line) for _, name, line in mutable(
-                path.read_text(encoding="utf-8", errors="replace"))}
-            if entries:
-                found[rel.as_posix()] = entries
+            files.append((rel.as_posix(), path))
+    return files
+
+
+def names(root: Path = ROOT) -> dict[str, set[tuple[str, int]]]:
+    files = scanned(root)
+    macros: dict[str, tuple[list[str] | None, str]] = {}
+    for _rel, path in files:
+        for name, macro in collect_macros(
+                path.read_text(encoding="utf-8", errors="replace")).items():
+            macros.setdefault(name, macro)
+    found: dict[str, set[tuple[str, int]]] = {}
+    for rel, path in files:
+        text = path.read_text(encoding="utf-8", errors="replace")
+        merged = dict(macros)
+        merged.update(collect_macros(text))
+        entries = {(name, line) for _, name, line in mutable(text, merged)}
+        if entries:
+            found[rel] = entries
     return found
 
 
@@ -393,10 +646,13 @@ def tree_check() -> bool:
             "static const int limit = 3;\n"
             "extern int shared;\n"
             "int helper(void);\n"
-            "static inline int read(void) { return 0; }\n",
+            "static inline int read(void) { return 0; }\n"
+            "#define SHARED_STATE static int shared_state\n",
             encoding="utf-8")
         (root / "domain" / "state.c").write_text(
-            "static int local_state;\n", encoding="utf-8")
+            "#define LOCAL_STATE static int local_state\n"
+            "LOCAL_STATE;\n"
+            "SHARED_STATE;\n", encoding="utf-8")
         (root / "tests").mkdir()
         (root / "tests" / "test_state.c").write_text(
             "static int test_state;\n", encoding="utf-8")
@@ -405,7 +661,7 @@ def tree_check() -> bool:
             "static int vendor_state;\n", encoding="utf-8")
         expected = {
             "domain/state.h": {("counter", 1), ("buffer", 2), ("cursor", 3)},
-            "domain/state.c": {("local_state", 1)},
+            "domain/state.c": {("local_state", 2), ("shared_state", 3)},
         }
         got = names(root)
         if got != expected:
@@ -455,10 +711,13 @@ def self_check() -> bool:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--update", action="store_true")
+    parser.add_argument("--self-check", action="store_true")
     args = parser.parse_args()
 
     if not self_check():
         return 1
+    if args.self_check:
+        return 0
 
     current = names()
     if args.update:

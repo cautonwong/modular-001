@@ -3,11 +3,11 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <time.h>
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "port.h"
-#include "domain/common/status.h"
+#include "targets/stategrid_meter/app/meter_wire_status.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "domain/events/generic.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
@@ -66,7 +66,7 @@ void PowerAbnormal_LowPower_pro(void *instance, void *task, void *mesg)
     {
         if(( ctrl_block->power_abnormal_tick == 5 ))
         {
-            if (ctrl_block->PowerAbnormalS_status == ND_EVENT_SET)
+            if (ctrl_block->PowerAbnormalS_status == ND_WIRE_STATUS_SET)
             {
                 nd_event_duration_t debounce = { 0 };
 

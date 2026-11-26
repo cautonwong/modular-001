@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"

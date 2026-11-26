@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <time.h>
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "port.h"
@@ -11,6 +11,7 @@
 #include "application/ports/resource_access.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "domain/events/program_list.h"
+#include "application/adapters/dl698/event_oad_view.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/persistence/legacy_control_block.h"
 
@@ -21,6 +22,8 @@
 // 编程列表清零
 int MeterWr_obj_list_clear(void *instance, void *task, void *mesg)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint8_t tempbuf[52];
     uint32_t index = 0;
     int ret;
@@ -30,13 +33,15 @@ int MeterWr_obj_list_clear(void *instance, void *task, void *mesg)
     tempbuf[1] = 0;
 
     index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr_List);;
-    ret = nd_set_index(instance, index, &tempbuf[0], sizeof(tempbuf));
+    ret = nd_set_index_port(port, index, &tempbuf[0], sizeof(tempbuf));
     return ret;
 }
 
 // 更新编程列表
 int MeterWr_obj_list_add(void *instance, void *task, void *mesg, uint32_t oad, uint8_t tag)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     struct mbase_control_block_t* ctrl_block  = ((stategrid_context_t *)instance)->mbase;
     uint8_t payload[100];
     uint8_t ofset, tempbuf[52];
@@ -46,7 +51,7 @@ int MeterWr_obj_list_add(void *instance, void *task, void *mesg, uint32_t oad, u
     memset(tempbuf, 0, sizeof(tempbuf));
 
     index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr_List);;
-    ret = nd_get_index(instance, index, &tempbuf[0], sizeof(tempbuf));
+    ret = nd_get_index_port(port, index, &tempbuf[0], sizeof(tempbuf));
 
     if (ret < 0)
     {
@@ -67,7 +72,7 @@ int MeterWr_obj_list_add(void *instance, void *task, void *mesg, uint32_t oad, u
     tempbuf[1]++;
 
     index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr_List);;
-    ret = nd_set_index(instance, index, &tempbuf[0], sizeof(tempbuf));
+    ret = nd_set_index_port(port, index, &tempbuf[0], sizeof(tempbuf));
 
     if (first) //
     {
@@ -90,6 +95,8 @@ int MeterWr_obj_list_add(void *instance, void *task, void *mesg, uint32_t oad, u
 // 编程列表清零
 int MeterWr645_obj_list_clear(void *instance, void *task, void *mesg)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint8_t tempbuf[52];
     uint32_t index = 0;
     int ret;
@@ -99,13 +106,15 @@ int MeterWr645_obj_list_clear(void *instance, void *task, void *mesg)
     tempbuf[1] = 0;
 
     index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr645_List);;
-    ret = nd_set_index(instance, index, &tempbuf[0], sizeof(tempbuf));
+    ret = nd_set_index_port(port, index, &tempbuf[0], sizeof(tempbuf));
     return ret;
 }
 
 // 更新编程列表
 int MeterWr645_obj_list_add(void *instance, void *task, void *mesg, uint32_t oad, uint8_t tag)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     struct mbase_control_block_t* ctrl_block  = ((stategrid_context_t *)instance)->mbase;
     uint8_t payload[100];
     uint8_t ofset, tempbuf[52];
@@ -115,7 +124,7 @@ int MeterWr645_obj_list_add(void *instance, void *task, void *mesg, uint32_t oad
     memset(tempbuf, 0, sizeof(tempbuf));
 
     index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr645_List);;
-    ret = nd_get_index(instance, index, &tempbuf[0], sizeof(tempbuf));
+    ret = nd_get_index_port(port, index, &tempbuf[0], sizeof(tempbuf));
 
     if (ret < 0)
     {
@@ -136,7 +145,7 @@ int MeterWr645_obj_list_add(void *instance, void *task, void *mesg, uint32_t oad
     tempbuf[1]++;
 
     index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MeterWr645_List);;
-    ret = nd_set_index(instance, index, &tempbuf[0], sizeof(tempbuf));
+    ret = nd_set_index_port(port, index, &tempbuf[0], sizeof(tempbuf));
 
     if (first) //
     {

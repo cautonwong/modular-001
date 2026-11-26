@@ -6,14 +6,10 @@
 #include "application/adapters/dl698/fr_698_context.h"
 #include "application/adapters/dl698/fr_698_internal.h"
 #include "components/core/fifo/fifo.h"
+#include "support/fake_meter_base.h"
 
 struct fake_instance_t {
-    uint8_t tsa[16];
-    uint16_t backlight;
-    uint16_t keep_sec;
-    uint8_t list_num;
-    uint8_t commdisp_plc;
-    uint8_t commdisp_ir485;
+    int unused;
 };
 
 struct fake_pipeline_t {
@@ -50,42 +46,6 @@ struct tm *nd_fr698_time(void *unused)
     static struct tm value;
     (void)unused;
     return &value;
-}
-
-int nd_mb_valid(void *unused)
-{
-    (void)unused;
-    return 1;
-}
-
-uint8_t *nd_mb_tsa_ptr(struct fake_instance_t *self)
-{
-    return self->tsa;
-}
-
-uint16_t *nd_mb_backlight_tmr_ptr(struct fake_instance_t *self)
-{
-    return &self->backlight;
-}
-
-uint16_t *nd_mb_lcd_autodis_keep_sec_ptr(struct fake_instance_t *self)
-{
-    return &self->keep_sec;
-}
-
-uint8_t *nd_mb_lcd_autodis_list_num_ptr(struct fake_instance_t *self)
-{
-    return &self->list_num;
-}
-
-uint8_t *nd_mb_commdisp_plc_ptr(struct fake_instance_t *self)
-{
-    return &self->commdisp_plc;
-}
-
-uint8_t *nd_mb_commdisp_ir485_ptr(struct fake_instance_t *self)
-{
-    return &self->commdisp_ir485;
 }
 
 uint8_t mem_compare(void *data1, void *data2, uint16_t length)
@@ -162,6 +122,8 @@ uint32_t rtc_mktime(struct tm *unused)
 void setUp(void)
 {
     memset(&instance, 0, sizeof(instance));
+    test_meter_base_reset();
+    test_meter_base_set_valid(1);
 }
 
 void tearDown(void) {}
@@ -197,14 +159,14 @@ static void test_698_server_accepts_request_and_sets_channel(void)
     ctx.SA = 0x01;
     ctx.addr[0] = 0x12;
     ctx.addr[1] = 0x34;
-    instance.tsa[0] = 0x12;
-    instance.tsa[1] = 0x34;
+    test_meter_base_tsa()[0] = 0x12;
+    test_meter_base_tsa()[1] = 0x34;
     pipeline.ctx = &ctx;
     pipeline.id = FR_698_PID_RX;
 
     TEST_ASSERT_EQUAL_INT(1, fr_pack_698_check(&instance, &pipeline, NULL));
     TEST_ASSERT_EQUAL_UINT8(FR_698_CHL_RS485_1, ctx.channel);
-    TEST_ASSERT_EQUAL_UINT8(2, instance.commdisp_ir485);
+    TEST_ASSERT_EQUAL_INT(2, *test_meter_base_commdisp_ir485());
 }
 
 static void test_698_wildcard_address_matches_and_canonicalizes(void)
@@ -216,8 +178,8 @@ static void test_698_wildcard_address_matches_and_canonicalizes(void)
     ctx.SA = 0x41;
     ctx.addr[0] = 0x1a;
     ctx.addr[1] = 0xa4;
-    instance.tsa[0] = 0x12;
-    instance.tsa[1] = 0x34;
+    test_meter_base_tsa()[0] = 0x12;
+    test_meter_base_tsa()[1] = 0x34;
     pipeline.ctx = &ctx;
 
     TEST_ASSERT_EQUAL_INT(1, fr_addr_handle(&instance, &pipeline, NULL));
@@ -261,6 +223,93 @@ static void test_698_effective_check_masks_wildcard_address(void)
     TEST_ASSERT_EQUAL_UINT8(0x01, ctx.SA);
 }
 
+static void test_698_time_tag_optional_keeps_normal_tail(void)
+{
+    struct context_698_t ctx;
+    struct fake_pipeline_t pipeline;
+    static uint8_t buffer[64];
+    struct fifo_t cache;
+
+    memset(&ctx, 0, sizeof(ctx));
+    memset(buffer, 0, sizeof(buffer));
+    fifoBuf_init(&cache, buffer, sizeof(buffer));
+    ctx.apdu = &cache;
+    ctx.service = GET_Request;
+    ctx.timeTag_valid = 1;
+    memset(ctx.timeTag, 0x5a, sizeof(ctx.timeTag));
+    pipeline.ctx = &ctx;
+
+    TEST_ASSERT_EQUAL_INT(1, fr_timeTag_optional(&instance, &pipeline, NULL));
+    TEST_ASSERT_EQUAL_UINT16(sizeof(ctx.timeTag) + 1, cache.wr);
+    TEST_ASSERT_EQUAL_HEX8(0x00, buffer[0]);
+    TEST_ASSERT_EACH_EQUAL_HEX8(0x5a, &buffer[1], sizeof(ctx.timeTag));
+}
+
+static void test_698_time_tag_optional_drops_tail_at_buffer_end(void)
+{
+    struct context_698_t ctx;
+    struct fake_pipeline_t pipeline;
+    static uint8_t buffer[2000];
+    struct fifo_t cache;
+
+    memset(&ctx, 0, sizeof(ctx));
+    memset(buffer, 0, sizeof(buffer));
+    fifoBuf_init(&cache, buffer, sizeof(buffer));
+    cache.wr = sizeof(buffer) - 1;
+    ctx.apdu = &cache;
+    ctx.service = GET_Request;
+    ctx.timeTag_valid = 0;
+    pipeline.ctx = &ctx;
+
+    TEST_ASSERT_EQUAL_INT(1, fr_timeTag_optional(&instance, &pipeline, NULL));
+    TEST_ASSERT_EQUAL_UINT16(sizeof(buffer), cache.wr);
+    TEST_ASSERT_EQUAL_HEX8(0x00, buffer[sizeof(buffer) - 1]);
+}
+
+static void test_698_time_tag_optional_writes_nothing_when_full(void)
+{
+    struct context_698_t ctx;
+    struct fake_pipeline_t pipeline;
+    static uint8_t buffer[2000];
+    struct fifo_t cache;
+
+    memset(&ctx, 0, sizeof(ctx));
+    memset(buffer, 0xAA, sizeof(buffer));
+    fifoBuf_init(&cache, buffer, sizeof(buffer));
+    cache.wr = sizeof(buffer);
+    ctx.apdu = &cache;
+    ctx.service = GET_Request;
+    ctx.timeTag_valid = 1;
+    memset(ctx.timeTag, 0x5a, sizeof(ctx.timeTag));
+    pipeline.ctx = &ctx;
+
+    TEST_ASSERT_EQUAL_INT(1, fr_timeTag_optional(&instance, &pipeline, NULL));
+    TEST_ASSERT_EQUAL_UINT16(sizeof(buffer), cache.wr);
+    TEST_ASSERT_EACH_EQUAL_HEX8(0xAA, &buffer[sizeof(buffer) - 4], 4);
+}
+
+static void test_698_time_tag_optional_skips_error_tail(void)
+{
+    struct context_698_t ctx;
+    struct fake_pipeline_t pipeline;
+    static uint8_t buffer[16];
+    struct fifo_t cache;
+
+    memset(&ctx, 0, sizeof(ctx));
+    memset(buffer, 0, sizeof(buffer));
+    fifoBuf_init(&cache, buffer, sizeof(buffer));
+    cache.wr = 3;
+    ctx.apdu = &cache;
+    ctx.service = ERROR_S_Response;
+    ctx.timeTag_valid = 1;
+    memset(ctx.timeTag, 0x5a, sizeof(ctx.timeTag));
+    pipeline.ctx = &ctx;
+
+    TEST_ASSERT_EQUAL_INT(1, fr_timeTag_optional(&instance, &pipeline, NULL));
+    TEST_ASSERT_EQUAL_UINT16(3, cache.wr);
+    TEST_ASSERT_EACH_EQUAL_HEX8(0x00, buffer, 3);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -269,5 +318,9 @@ int main(void)
     RUN_TEST(test_698_wildcard_address_matches_and_canonicalizes);
     RUN_TEST(test_698_rejects_broadcast_for_set_and_get);
     RUN_TEST(test_698_effective_check_masks_wildcard_address);
+    RUN_TEST(test_698_time_tag_optional_keeps_normal_tail);
+    RUN_TEST(test_698_time_tag_optional_drops_tail_at_buffer_end);
+    RUN_TEST(test_698_time_tag_optional_writes_nothing_when_full);
+    RUN_TEST(test_698_time_tag_optional_skips_error_tail);
     return UNITY_END();
 }

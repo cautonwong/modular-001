@@ -1,43 +1,46 @@
 #include "645id_table.h"
+#include "domain/tariff/tariff.h"
 #include <stddef.h>
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
 #include "port.h"
+#include "application/adapters/dl645/fr_645_env.h"
 
 
 typedef struct
 {
-    unsigned short  fsid; //ÏÔÊ¾ÏîID
+    unsigned short  fsid; //ï¿½ï¿½Ê¾ï¿½ï¿½ID
     unsigned long   id645; //oad
-    unsigned char   sequ;//ÐòºÅ
+    unsigned char   sequ;//ï¿½ï¿½ï¿½
 } DISPTAB;
 
 const  DISPTAB Display645Tab[] =
 {
-    //µ±Ç°Ê±¼ä
-    0xA001,     0x04000101,     0x00,   //ÈÕÆÚ
-    0xA002,     0x04000102,     0x00,   //Ê±¼ä
-    0xA003,     0x02010100,     0x00,   //µçÑ¹
-    0xA006,     0x02020100,     0x00,   //»ðÏßµçÁ÷
-    0xA009,     0x02800001,     0x00,   //ÁãÏßµçÁ÷
-    0xA00A,     0x02030000,     0x00,   //AÏà¹¦ÂÊ
-    0xA00B,     0x02030100,     0x00,   //AÏà¹¦ÂÊ
-    0xA012,     0x02060000,     0x00,   //AÏà¹¦ÂÊÒòÊý
-    0xA013,     0x02060100,     0x00,   //AÏà¹¦ÂÊÒòÊý
+    //ï¿½ï¿½Ç°Ê±ï¿½ï¿½
+    0xA001,     0x04000101,     0x00,   //ï¿½ï¿½ï¿½ï¿½
+    0xA002,     0x04000102,     0x00,   //Ê±ï¿½ï¿½
+    0xA003,     0x02010100,     0x00,   //ï¿½ï¿½Ñ¹
+    0xA006,     0x02020100,     0x00,   //ï¿½ï¿½ï¿½ßµï¿½ï¿½ï¿½
+    0xA009,     0x02800001,     0x00,   //ï¿½ï¿½ï¿½ßµï¿½ï¿½ï¿½
+    0xA00A,     0x02030000,     0x00,   //Aï¿½à¹¦ï¿½ï¿½
+    0xA00B,     0x02030100,     0x00,   //Aï¿½à¹¦ï¿½ï¿½
+    0xA012,     0x02060000,     0x00,   //Aï¿½à¹¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    0xA013,     0x02060100,     0x00,   //Aï¿½à¹¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     
-    0xB001,		0x04000401,     0x00,   //±íµØÖ·¸ß4Î»
-    0xB002,		0x04000401,     0x01,   //±íµØÖ·µÍ8Î»
-    0xB003,		0x04000402,     0x00,   //±íºÅ¸ß4Î»
-    0xB004,		0x04000402,     0x01,   //±íºÅµÍ8Î»
-    0xB005,		0x0400040E,     0x00,   //¿Í»§±àºÅ¸ß4Î»
-    0xB006,		0x0400040E,     0x01,   //¿Í»§±àºÅµÍ8Î»
-    0xB007,		0x04000409,     0x00,   //µç±íÓÐ¹¦³£Êý  
+    0xB001,		0x04000401,     0x00,   //ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½4Î»
+    0xB002,		0x04000401,     0x01,   //ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½8Î»
+    0xB003,		0x04000402,     0x00,   //ï¿½ï¿½ï¿½Å¸ï¿½4Î»
+    0xB004,		0x04000402,     0x01,   //ï¿½ï¿½ï¿½Åµï¿½8Î»
+    0xB005,		0x0400040E,     0x00,   //ï¿½Í»ï¿½ï¿½ï¿½Å¸ï¿½4Î»
+    0xB006,		0x0400040E,     0x01,   //ï¿½Í»ï¿½ï¿½ï¿½Åµï¿½8Î»
+    0xB007,		0x04000409,     0x00,   //ï¿½ï¿½ï¿½ï¿½Ð¹ï¿½ï¿½ï¿½ï¿½ï¿½  
 };
 
 
 void displayid_to_645id( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint8_t IDL1, IDL0, maxnum, i, id[3]={0,};
     uint32_t addr=0, index, id_645=0;
     uint16_t displayid=0;
@@ -53,7 +56,7 @@ void displayid_to_645id( void *instance, unsigned long ID , uint8_t *p_rx, uint8
         addr = KeyDisplayList + IDL0 - 1;
     
     index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
-    nd_get_index(instance, index, (uint8_t *)&displayid, 2);
+    nd_get_index_port(port, index, (uint8_t *)&displayid, 2);
     
     for(i=0; i<maxnum; i++)
     {
@@ -70,13 +73,13 @@ void displayid_to_645id( void *instance, unsigned long ID , uint8_t *p_rx, uint8
     id[0] = displayid & 0x000F;
     switch(id[2])
     {
-        case 0xC0:  //ÕýÏò
+        case 0xC0:  //ï¿½ï¿½ï¿½ï¿½
             id_645 = 0x00010000 + ((uint32_t)(id[0]-1) << 8) + id[1];
             break;
-        case 0xD0:  //·´Ïò
+        case 0xD0:  //ï¿½ï¿½ï¿½ï¿½
             id_645 = 0x00020000 + ((uint32_t)(id[0]-1) << 8) + id[1];
             break;
-        case 0xE0:  //×éºÏ
+        case 0xE0:  //ï¿½ï¿½ï¿½
             id_645 = 0x00000000 + ((uint32_t)(id[0]-1) << 8) + id[1];
             break;
     }
@@ -86,6 +89,7 @@ void displayid_to_645id( void *instance, unsigned long ID , uint8_t *p_rx, uint8
 
 uint8_t get_645_Seasonday_table( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint32_t addr=0, s_index;
     uint8_t season_num=0, day_num=0, temp[42]={0,}, i, IDL0=0;
     uint16_t IDH = 0;
@@ -95,19 +99,19 @@ uint8_t get_645_Seasonday_table( void *instance, unsigned long ID , uint8_t *p_r
     
     if(IDL0 == 0)
     {
-        if(ID == 0x04010000)    //µÚÒ»Ì×Ê±Çø
+        if(ID == 0x04010000)    //ï¿½ï¿½Ò»ï¿½ï¿½Ê±ï¿½ï¿½
             addr = Season_Table0;
-        else if(ID == 0x04020000)   //µÚ¶þÌ×Ê±Çø
+        else if(ID == 0x04020000)   //ï¿½Ú¶ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
             addr = Season_Table1;
         
         s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para);
-        nd_get_index(instance, s_index, &season_num, 1);
-        if(season_num > MaxSeasonNum) season_num = MaxSeasonNum;
+        nd_get_index_port(port, s_index, &season_num, 1);
+        if(season_num > ND_TARIFF_MAX_SEASONS) season_num = ND_TARIFF_MAX_SEASONS;
 
         for(i=0; i<season_num; i++)
         {
             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
-            nd_get_index(instance, s_index, temp, 3);
+            nd_get_index_port(port, s_index, temp, 3);
             *p_tx++ = BYTE_BCD(temp[2]);
             *p_tx++ = BYTE_BCD(temp[1]);
             *p_tx++ = BYTE_BCD(temp[0]);
@@ -116,17 +120,17 @@ uint8_t get_645_Seasonday_table( void *instance, unsigned long ID , uint8_t *p_r
     }
     else
     {
-        if(IDH == 0x0401)   //µÚÒ»Ì×Ê±¶Î
+        if(IDH == 0x0401)   //ï¿½ï¿½Ò»ï¿½ï¿½Ê±ï¿½ï¿½
             addr = Day_Table00 + IDL0 - 1;
-        else if(IDH == 0x0402)   //µÚ¶þÌ×Ê±¶Î
+        else if(IDH == 0x0402)   //ï¿½Ú¶ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
             addr = Day_Table10 + IDL0 - 1;
         
         s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para+2);
-        nd_get_index(instance, s_index, &day_num, 1);
-        if(day_num > MaxTouNum) day_num = MaxTouNum;
+        nd_get_index_port(port, s_index, &day_num, 1);
+        if(day_num > ND_TARIFF_MAX_PERIODS) day_num = ND_TARIFF_MAX_PERIODS;
         
         s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
-        nd_get_index(instance, s_index, temp, 42);
+        nd_get_index_port(port, s_index, temp, 42);
         
         for(i=0; i<day_num; i++)
         {
@@ -140,15 +144,16 @@ uint8_t get_645_Seasonday_table( void *instance, unsigned long ID , uint8_t *p_r
 
 int8_t get_645_holiyday_table( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint32_t s_index;
     uint8_t IDL0=0, temp[6] = {0,};
     uint16_t year=0;
     
     IDL0 = ID & 0x000000FF;
-    if(IDL0 > MaxHolidayNum)    return -1;
+    if(IDL0 > ND_TARIFF_MAX_HOLIDAYS)    return -1;
     
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + HoliDay_Table + IDL0 - 1);
-    nd_get_index(instance, s_index, temp, 6);
+    nd_get_index_port(port, s_index, temp, 6);
     *p_tx++ = BYTE_BCD(temp[5]);
     *p_tx++ = BYTE_BCD(temp[3]);
     *p_tx++ = BYTE_BCD(temp[2]);
@@ -167,38 +172,39 @@ int8_t get_645_holiyday_table( void *instance, unsigned long ID , uint8_t *p_rx,
 
 int read_04( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint8_t MemType,buf[200] = {0,}, Ptr,len=0;
     unsigned short Format=0;
     unsigned long Addr,Info,addr1,IDx=0;
     
     IDx = ID & 0xFFFFFF00;
     
-    switch(IDx) //ÏÔÊ¾¡¢Ê±Çø¡¢Ê±¶Î¡¢¹«¹²¼ÙÈÕ²ÎÊýÌØÊâ´¦Àí
+    switch(IDx) //ï¿½ï¿½Ê¾ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Ê±ï¿½Î¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½â´¦ï¿½ï¿½
     {
-        case 0x04040100:    //×Ô¶¯Ñ­»·ÏÔÊ¾
-        case 0x04040200:    //°´¼üÑ­»·ÏÔÊ¾
+        case 0x04040100:    //ï¿½Ô¶ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½Ê¾
+        case 0x04040200:    //ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½Ê¾
             displayid_to_645id(instance, ID, p_rx, p_tx);
             return 5;
             break;
-        case 0x04010000:    //µÚÒ»Ì×Ê±Çø¡¢Ê±¶Î±íÊý¾Ý
-        case 0x04020000:    //µÚ¶þÌ×Ê±Çø¡¢Ê±¶Î±íÊý¾Ý
+        case 0x04010000:    //ï¿½ï¿½Ò»ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Ê±ï¿½Î±ï¿½ï¿½ï¿½ï¿½ï¿½
+        case 0x04020000:    //ï¿½Ú¶ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Ê±ï¿½Î±ï¿½ï¿½ï¿½ï¿½ï¿½
             len = get_645_Seasonday_table(instance, ID, p_rx, p_tx);
             return len;
             break;
-        case 0x04030000:    //¹«¹²¼ÙÈÕ±í
+        case 0x04030000:    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ±ï¿½
             return get_645_holiyday_table(instance, ID, p_rx, p_tx);
             break;
 
     }
     
-    Ptr = GetCommTable( ID );//²é±í
+    Ptr = GetCommTable( ID );//ï¿½ï¿½ï¿½
 	if( Ptr == 0xFF )
 		return -1;
 	Addr = CommTab[Ptr].Addr;
     Format = CommTab[Ptr].format;
 	Info = CommTab[Ptr].Info;
 
-	if( (Info & CommData_R) == 0 ) //Êý¾Ý²»¿É¶Á
+	if( (Info & CommData_R) == 0 ) //ï¿½ï¿½ï¿½Ý²ï¿½ï¿½É¶ï¿½
 		return -1;
 		
 	len = (unsigned char)(Info & CommDataLen);
@@ -206,7 +212,7 @@ int read_04( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
     
     if(Format != FORMAT_00)
     {
-        if(ID == 0xA800020C)    //¶Á¼ÆÁ¿Ð¾Æ¬
+        if(ID == 0xA800020C)    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¾Æ¬
         {
             Addr = *(p_rx+4);
         }
@@ -217,13 +223,13 @@ int read_04( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 	if(MemType == Mem_E2PROM)  
 	{
 		addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Addr);
-		nd_get_index(instance, addr1, buf, len);
+		nd_get_index_port(port, addr1, buf, len);
         mem_swap_cpy(p_tx, buf, len);
 	}
 	else if(MemType == Mem_E2PROM_BP)  
 	{
 		addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Addr);
-		nd_get_index(instance, addr1, p_tx, len);        
+		nd_get_index_port(port, addr1, p_tx, len);        
 	}
 	else
 	{

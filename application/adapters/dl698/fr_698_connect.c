@@ -6,7 +6,7 @@
 #include "fr_698_internal.h"
 #include "application/adapters/dl698/fr_698.h"
 #include "application/adapters/dl698/fr_698_esam.h"
-#include "meter_base_view.h"
+#include "application/ports/meter_base.h"
 
 
 
@@ -84,21 +84,6 @@ struct connect_request_t get_default_connect_para(uint8_t channel)
 
 
 
-struct connect_request_t cfg_connect = {
-    0x0016,
-    {0xFF,0xFF,0xFF,0xff,0xc0,0x00,0x00,0x00},
-    {0xFF,0xFE,0xC4,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
-    0x0200,
-    0x0200,
-    0x01,
-    0x07d0,
-    0x00001C20,
-    0x00
-};
-    
-    
-
-
 static int __common_process(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
 static int __password_process(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
 static int __symmetry_process(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
@@ -130,8 +115,9 @@ const pFunc_security_process Func_security[] =
 };
 
 
-static int __common_process(void *, void * pipeline, nd_dl698_msg_t*)
+static int __common_process(void * instance, void * pipeline, nd_dl698_msg_t*)
 {
+    struct connect_request_t *cfg = nd_fr698_cfg_connect(instance);
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
@@ -151,24 +137,24 @@ static int __common_process(void *, void * pipeline, nd_dl698_msg_t*)
     memset((p_apdu+cache->wr), 0x30, 32);//厂家信息
     cache->wr = cache->wr + 32;
     
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.pro_ver, 2);//版本号
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg->pro_ver, 2);//版本号
     cache->wr = cache->wr + 2;
-    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.protocal_conformance, 8);//期望协议一致性块
+    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&cfg->protocal_conformance, 8);//期望协议一致性块
     cache->wr = cache->wr + 8;
-    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.function_conformance, 16);  //期望的功能一致性块 
+    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&cfg->function_conformance, 16);  //期望的功能一致性块
     cache->wr = cache->wr + 16;
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.send_frm_size, 2);    //发送最大尺寸
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg->send_frm_size, 2);    //发送最大尺寸
     cache->wr = cache->wr + 2;
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.recv_frm_size, 2);    //接收最大尺寸
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg->recv_frm_size, 2);    //接收最大尺寸
     cache->wr = cache->wr + 2;
-    *(p_apdu+cache->wr) = cfg_connect.client_win_size;//客户机接收帧最大窗口尺寸
+    *(p_apdu+cache->wr) = cfg->client_win_size;//客户机接收帧最大窗口尺寸
     cache->wr = cache->wr + 1;
 
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.client_apdu_size, 2);    //客户机最大可处理帧尺寸
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg->client_apdu_size, 2);    //客户机最大可处理帧尺寸
     cache->wr = cache->wr + 2;
 
     p_connect_timeout = (p_apdu+cache->wr);
-    mem_swap_cpy(p_connect_timeout, (uint8_t*)&cfg_connect.connect_time, 4);     //期望的应用连接超时时间    
+    mem_swap_cpy(p_connect_timeout, (uint8_t*)&cfg->connect_time, 4);     //期望的应用连接超时时间
     cache->wr = cache->wr + 4;
 
 
@@ -184,6 +170,7 @@ static int __common_process(void *, void * pipeline, nd_dl698_msg_t*)
 
 static int __password_process(void * instance, void * pipeline, nd_dl698_msg_t*)
 {
+    struct connect_request_t *cfg = nd_fr698_cfg_connect(instance);
 
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -239,24 +226,24 @@ static int __password_process(void * instance, void * pipeline, nd_dl698_msg_t*)
     memset((p_apdu+cache->wr), 0x30, 32);//厂家信息
     cache->wr = cache->wr + 32;
     
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.pro_ver, 2);//版本号
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg->pro_ver, 2);//版本号
     cache->wr = cache->wr + 2;
-    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.protocal_conformance, 8);//期望协议一致性块
+    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&cfg->protocal_conformance, 8);//期望协议一致性块
     cache->wr = cache->wr + 8;
-    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.function_conformance, 16);  //期望的功能一致性块 
+    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&cfg->function_conformance, 16);  //期望的功能一致性块
     cache->wr = cache->wr + 16;
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.send_frm_size, 2);    //发送最大尺寸
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg->send_frm_size, 2);    //发送最大尺寸
     cache->wr = cache->wr + 2;
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.recv_frm_size, 2);    //接收最大尺寸
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg->recv_frm_size, 2);    //接收最大尺寸
     cache->wr = cache->wr + 2;
-    *(p_apdu+cache->wr) = cfg_connect.client_win_size;//客户机接收帧最大窗口尺寸
+    *(p_apdu+cache->wr) = cfg->client_win_size;//客户机接收帧最大窗口尺寸
     cache->wr = cache->wr + 1;
 
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.client_apdu_size, 2);    //客户机最大可处理帧尺寸
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg->client_apdu_size, 2);    //客户机最大可处理帧尺寸
     cache->wr = cache->wr + 2;
 
     p_connect_timeout = (p_apdu+cache->wr);
-    mem_swap_cpy(p_connect_timeout, (uint8_t*)&cfg_connect.connect_time, 4);     //期望的应用连接超时时间    
+    mem_swap_cpy(p_connect_timeout, (uint8_t*)&cfg->connect_time, 4);     //期望的应用连接超时时间
     cache->wr = cache->wr + 4;
 
     if (ret == DL698_SEC_SUCCESS)
@@ -281,23 +268,28 @@ static int __password_process(void * instance, void * pipeline, nd_dl698_msg_t*)
 
         if (esam_session_timeout == 0)
         {
-            esam_session_timeout = nd_mb_connect_timeout(instance)[channel][cilent_index];
+            esam_session_timeout = (uint32_t)nd_mb_get_connect_timeout(
+                instance, channel, cilent_index);
         }
 
-        if (nd_mb_connect_timeout(instance)[channel][cilent_index] > esam_session_timeout)
+        if ((uint32_t)nd_mb_get_connect_timeout(instance, channel,
+                                                cilent_index)
+            > esam_session_timeout)
         {
-            nd_mb_connect_timeout(instance)[channel][cilent_index] = esam_session_timeout;
-            mem_swap_cpy(p_connect_timeout, (uint8_t*)&nd_mb_connect_timeout(instance)[channel][cilent_index], 4);     //期望的应用连接超时时间
+            nd_mb_set_connect_timeout(instance, channel, cilent_index,
+                                      (int32_t)esam_session_timeout);
+            mem_swap_cpy(p_connect_timeout, (uint8_t*)&esam_session_timeout, 4);     //期望的应用连接超时时间
         }
-        
-        nd_mb_esam_connect_timeout(instance)[channel][cilent_index] = esam_session_timeout;
-        
-        nd_mb_current_connect_channel(instance)[cilent_index] = channel;
-        nd_mb_connect_status(instance)[channel][cilent_index] = true;
-        nd_mb_connect_timeout_cnt(instance)[channel][cilent_index] = 0;
+
+        nd_mb_set_esam_connect_timeout(instance, channel, cilent_index,
+                                       (int32_t)esam_session_timeout);
+
+        nd_mb_set_current_connect_channel(instance, cilent_index, channel);
+        nd_mb_set_connect_status(instance, channel, cilent_index, true);
+        nd_mb_set_connect_timeout_cnt(instance, channel, cilent_index, 0);
 
         
-        nd_record_storage_clear_program_list(pipeline, NULL);
+        nd_record_storage_clear_program_list(nd_fr698_record_storage(instance), pipeline, NULL);
         return DL698_SEC_SUCCESS;        
     }
     else
@@ -317,6 +309,7 @@ static int __password_process(void * instance, void * pipeline, nd_dl698_msg_t*)
 
 static int __symmetry_process(void * instance, void * pipeline, nd_dl698_msg_t*)
 {
+    struct connect_request_t *cfg = nd_fr698_cfg_connect(instance);
     
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
@@ -357,27 +350,27 @@ static int __symmetry_process(void * instance, void * pipeline, nd_dl698_msg_t*)
     memset((p_apdu+cache->wr), 0x30, 32);//厂家信息
     cache->wr = cache->wr + 32;
     
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.pro_ver, 2);//版本号
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg->pro_ver, 2);//版本号
     cache->wr = cache->wr + 2;
-    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.protocal_conformance, 8);//期望协议一致性块
+    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&cfg->protocal_conformance, 8);//期望协议一致性块
     cache->wr = cache->wr + 8;
-    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.function_conformance, 16);  //期望的功能一致性块 
+    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&cfg->function_conformance, 16);  //期望的功能一致性块
     cache->wr = cache->wr + 16;
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.send_frm_size, 2);    //发送最大尺寸
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg->send_frm_size, 2);    //发送最大尺寸
     cache->wr = cache->wr + 2;
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.recv_frm_size, 2);    //接收最大尺寸
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg->recv_frm_size, 2);    //接收最大尺寸
     cache->wr = cache->wr + 2;
-    *(p_apdu+cache->wr) = cfg_connect.client_win_size;//客户机接收帧最大窗口尺寸
+    *(p_apdu+cache->wr) = cfg->client_win_size;//客户机接收帧最大窗口尺寸
     cache->wr = cache->wr + 1;
 
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.client_apdu_size, 2);    //客户机最大可处理帧尺寸
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg->client_apdu_size, 2);    //客户机最大可处理帧尺寸
     cache->wr = cache->wr + 2;
 
     p_connect_timeout = (p_apdu+cache->wr);
-    mem_swap_cpy(p_connect_timeout, (uint8_t*)&cfg_connect.connect_time, 4);     //期望的应用连接超时时间    
+    mem_swap_cpy(p_connect_timeout, (uint8_t*)&cfg->connect_time, 4);     //期望的应用连接超时时间
     cache->wr = cache->wr + 4;
 
-    nd_mb_connect_timeout(instance)[channel][cilent_index] = cfg_connect.connect_time;
+    nd_mb_set_connect_timeout(instance, channel, cilent_index, cfg->connect_time);
 
 
     len_len = esam_consult_key(instance, CA_TYPE_TER(ctx->CA) , buf+1 );
@@ -422,31 +415,33 @@ static int __symmetry_process(void * instance, void * pipeline, nd_dl698_msg_t*)
 
         if (esam_session_timeout == 0)
         {
-            esam_session_timeout = nd_mb_connect_timeout(instance)[channel][cilent_index];
+            esam_session_timeout = (uint32_t)nd_mb_get_connect_timeout(
+                instance, channel, cilent_index);
         }
 
-        if (nd_mb_connect_timeout(instance)[channel][cilent_index] > esam_session_timeout)
+        if ((uint32_t)nd_mb_get_connect_timeout(instance, channel,
+                                                cilent_index)
+            > esam_session_timeout)
         {
-            nd_mb_connect_timeout(instance)[channel][cilent_index] = esam_session_timeout;
-            mem_swap_cpy(p_connect_timeout, (uint8_t*)&nd_mb_connect_timeout(instance)[channel][cilent_index], 4);     //期望的应用连接超时时间
+            nd_mb_set_connect_timeout(instance, channel, cilent_index,
+                                      (int32_t)esam_session_timeout);
+            mem_swap_cpy(p_connect_timeout, (uint8_t*)&esam_session_timeout, 4);     //期望的应用连接超时时间
         }
-        
-        nd_mb_esam_connect_timeout(instance)[channel][cilent_index] = esam_session_timeout;
-        
-        nd_mb_current_connect_channel(instance)[cilent_index] = channel;
-        nd_mb_connect_status(instance)[channel][cilent_index] = true;
-        nd_mb_connect_timeout_cnt(instance)[channel][cilent_index] = 0;
+
+        nd_mb_set_esam_connect_timeout(instance, channel, cilent_index,
+                                       (int32_t)esam_session_timeout);
+
+        nd_mb_set_current_connect_channel(instance, cilent_index, channel);
+        nd_mb_set_connect_status(instance, channel, cilent_index, true);
+        nd_mb_set_connect_timeout_cnt(instance, channel, cilent_index, 0);
 
         
         if(1 == cilent_index)//建立终端应用链接时，要失效终端身份认证
         {
-            nd_mb_term_auth_timeout(instance) = 0;
+            nd_mb_set_term_auth_timeout(instance, 0);
         }
 
-//        nd_mb_clientaddr(instance) = ctx->CA;
-
-        
-        nd_record_storage_clear_program_list(pipeline, NULL);
+        nd_record_storage_clear_program_list(nd_fr698_record_storage(instance), pipeline, NULL);
         return DAR_SUCCESS;
     }
     else
@@ -456,14 +451,15 @@ static int __symmetry_process(void * instance, void * pipeline, nd_dl698_msg_t*)
         *(p_apdu+cache->wr) = 0;//认证附加信息
         cache->wr++;
 
-        nd_mb_connect_status(instance)[channel][cilent_index] = false;
-        nd_mb_connect_timeout(instance)[channel][cilent_index]   = 0;
+        nd_mb_set_connect_status(instance, channel, cilent_index, false);
+        nd_mb_set_connect_timeout(instance, channel, cilent_index, 0);
         return DAR_ESAM_CHECK_FAILED;
     }
 }
 
-static int __signature_process(void *, void * pipeline, nd_dl698_msg_t*)
+static int __signature_process(void * instance, void * pipeline, nd_dl698_msg_t*)
 {
+    struct connect_request_t *cfg = nd_fr698_cfg_connect(instance);
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct fifo_t* cache = ctx->apdu;
@@ -483,24 +479,24 @@ static int __signature_process(void *, void * pipeline, nd_dl698_msg_t*)
     memset((p_apdu+cache->wr), 0x30, 32);//厂家信息
     cache->wr = cache->wr + 32;
     
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.pro_ver, 2);//版本号
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg->pro_ver, 2);//版本号
     cache->wr = cache->wr + 2;
-    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.protocal_conformance, 8);//期望协议一致性块
+    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&cfg->protocal_conformance, 8);//期望协议一致性块
     cache->wr = cache->wr + 8;
-    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.function_conformance, 16);  //期望的功能一致性块 
+    ndv_memcopy((p_apdu+cache->wr), (uint8_t*)&cfg->function_conformance, 16);  //期望的功能一致性块
     cache->wr = cache->wr + 16;
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.send_frm_size, 2);    //发送最大尺寸
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg->send_frm_size, 2);    //发送最大尺寸
     cache->wr = cache->wr + 2;
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.recv_frm_size, 2);    //接收最大尺寸
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg->recv_frm_size, 2);    //接收最大尺寸
     cache->wr = cache->wr + 2;
-    *(p_apdu+cache->wr) = cfg_connect.client_win_size;//客户机接收帧最大窗口尺寸
+    *(p_apdu+cache->wr) = cfg->client_win_size;//客户机接收帧最大窗口尺寸
     cache->wr = cache->wr + 1;
 
-    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg_connect.client_apdu_size, 2);    //客户机最大可处理帧尺寸
+    mem_swap_cpy((p_apdu+cache->wr), (uint8_t*)&cfg->client_apdu_size, 2);    //客户机最大可处理帧尺寸
     cache->wr = cache->wr + 2;
 
     p_connect_timeout = (p_apdu+cache->wr);
-    mem_swap_cpy(p_connect_timeout, (uint8_t*)&cfg_connect.connect_time, 4);     //期望的应用连接超时时间    
+    mem_swap_cpy(p_connect_timeout, (uint8_t*)&cfg->connect_time, 4);     //期望的应用连接超时时间
     cache->wr = cache->wr + 4;
 
 
@@ -559,20 +555,15 @@ int fr_handle_disconnect(void * instance, void * pipeline, nd_dl698_msg_t*)
     }
     
         
-    nd_mb_connect_timeout(instance)[ctx->channel][cilent_index] = 0;
-    nd_mb_esam_connect_timeout(instance)[ctx->channel][cilent_index] = 0;
-    nd_mb_connect_status(instance)[ctx->channel][cilent_index] = false;
+    nd_mb_set_connect_timeout(instance, ctx->channel, cilent_index, 0);
+    nd_mb_set_esam_connect_timeout(instance, ctx->channel, cilent_index, 0);
+    nd_mb_set_connect_status(instance, ctx->channel, cilent_index, false);
     
-    if ((nd_mb_connect_status(instance)[ctx->channel][0] == false)&& (nd_mb_connect_status(instance)[ctx->channel][1] == false))
+    if ((nd_mb_get_connect_status(instance, ctx->channel, 0) == false)&& (nd_mb_get_connect_status(instance, ctx->channel, 1) == false))
     {
-        nd_record_storage_clear_program_list(pipeline, NULL);
+        nd_record_storage_clear_program_list(nd_fr698_record_storage(instance), pipeline, NULL);
     }
     
-    //复位ESAM
-    //memcpy(p + cache->wr, apdu_rx+ctx->apdu_rx_offset, 2);
-    //cache->wr += 2;
-    //ctx->apdu_rx_offset += 1; 
-    //cache->wr += 1;
     offset = cache->wr;
     p[offset-2] = p[offset-1];
     p[offset-1] = 0;
@@ -582,28 +573,69 @@ int fr_handle_disconnect(void * instance, void * pipeline, nd_dl698_msg_t*)
 
 
 
+static int __connect_reject(void * instance, void * pipeline)
+{
+    struct connect_request_t *cfg = nd_fr698_cfg_connect(instance);
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t *p = cache->buf_ptr;
+
+    cache->wr = cache->wr - 3;
+    *(p + cache->wr) |= 0x82;  //应答
+    cache->wr++;
+    *(p + cache->wr) = ctx->PIID;
+    cache->wr++;
+    memset(p + cache->wr, 0x30, 32);//厂家信息
+    cache->wr = cache->wr + 32;
+
+    mem_swap_cpy(p + cache->wr, (uint8_t*)&cfg->pro_ver, 2);//版本号
+    cache->wr = cache->wr + 2;
+    ndv_memcopy(p + cache->wr, (uint8_t*)&cfg->protocal_conformance, 8);
+    cache->wr = cache->wr + 8;
+    ndv_memcopy(p + cache->wr, (uint8_t*)&cfg->function_conformance, 16);
+    cache->wr = cache->wr + 16;
+    mem_swap_cpy(p + cache->wr, (uint8_t*)&cfg->send_frm_size, 2);
+    cache->wr = cache->wr + 2;
+    mem_swap_cpy(p + cache->wr, (uint8_t*)&cfg->recv_frm_size, 2);
+    cache->wr = cache->wr + 2;
+    *(p + cache->wr) = cfg->client_win_size;
+    cache->wr = cache->wr + 1;
+    mem_swap_cpy(p + cache->wr, (uint8_t*)&cfg->client_apdu_size, 2);
+    cache->wr = cache->wr + 2;
+    mem_swap_cpy(p + cache->wr, (uint8_t*)&cfg->connect_time, 4);
+    cache->wr = cache->wr + 4;
+
+    *(p + cache->wr) = DL698_SEC_OTHERS_ERR;
+    cache->wr++;
+    *(p + cache->wr) = 0;//认证附加信息
+    cache->wr++;
+    return DL698_SEC_OTHERS_ERR;
+}
+
+
 int fr_handle_connect(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 {
+    struct connect_request_t *cfg = nd_fr698_cfg_connect(instance);
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
-    //struct fifo_t* cache = ctx->apdu;
     uint8_t *apdu_rx = ctx->apdu_d_rx;
     struct connect_request_t connect = {0};
     struct connect_request_t default_connect_para = {0};
     struct connect_request_t cfg_connect_cache = {0};
     int result = DAR_OTHERS_ERROR;
+    int reject = 0;
     uint16_t offset = 0;
     uint8_t channel = 0;
-    
+
     if((ctx)&&(ctx->channel < FR_698_CHL_NUM))
     {
         channel = ctx->channel;
     }
 
 
-    
-    // 通配地址 拒绝服务   //此代码是否有问题？？？  待调整
-    if(SA_TYPE_GENERAL == SA_TYPE(ctx->SA)) {
-        result = DAR_OTHERS_ERROR;
+
+    // 通配地址 拒绝服务；fr_apdu_effective_check 会清掉类型位，用解析时快照
+    if(SA_TYPE_GENERAL == ctx->sa_type_raw) {
+        reject = 1;
     }
     
     //memcpy(&connect, apdu_rx+ctx->apdu_rx_offset, sizeof(struct connect_request_t));
@@ -632,34 +664,35 @@ int fr_handle_connect(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
     mem_swap_cpy((uint8_t*)&connect.connect_time,(apdu_rx +  ctx->apdu_rx_offset + offset),  4);        //期望的应用链接超时时间
     offset += 4;
 
-    connect.connect_mode = *(apdu_rx +  ctx->apdu_rx_offset + offset);// 认证模式
+    connect.connect_mode = *(apdu_rx +  ctx->apdu_rx_offset + offset);
     offset += 1;
 
-    cfg_connect.connect_mode = connect.connect_mode;
-    
     ctx->apdu_rx_offset += sizeof(struct connect_request_t);
-    
-    if (connect.connect_mode > 4){
-        result = DAR_OTHERS_ERROR;
+
+    if (connect.connect_mode >= Security_MAX){
+        reject = 1;
     }
 
-    //先暂存
-    ndv_memcopy((uint8_t *)&cfg_connect_cache, (uint8_t *)&cfg_connect, sizeof(struct connect_request_t));
+    if (reject) {
+        (void)__connect_reject(instance, pipeline);
+        return 1;
+    }
+
+    ndv_memcopy((uint8_t *)&cfg_connect_cache, (uint8_t *)cfg, sizeof(struct connect_request_t));
+    cfg->connect_mode = connect.connect_mode;
     default_connect_para = get_default_connect_para(channel);
-    ___get_consult_info(&cfg_connect, &connect, &default_connect_para);
+    ___get_consult_info(cfg, &connect, &default_connect_para);
     
     if (Security_MAX > connect.connect_mode){
         if(Func_security[connect.connect_mode]){
             result = Func_security[connect.connect_mode](instance, pipeline, mesg);
             if (result == DL698_SEC_SUCCESS)
             {
-                nd_mb_clientaddr(instance)[channel] = ctx->CA;
-                //mbase_cb->connect_mode[ctx->channel] = cfg_connect.connect_mode;
+                nd_mb_set_clientaddr(instance, channel, ctx->CA);
             }
             else
             {
-                //失败恢复应用链接信息
-                ndv_memcopy((uint8_t *)&cfg_connect, (uint8_t *)&cfg_connect_cache, sizeof(struct connect_request_t));
+                ndv_memcopy((uint8_t *)cfg, (uint8_t *)&cfg_connect_cache, sizeof(struct connect_request_t));
             }
         }
     }
@@ -668,6 +701,10 @@ int fr_handle_connect(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 }
 
 
+_Static_assert(sizeof(struct connect_request_t) == 38,
+               "CONNECT wire body must stay 38 bytes; get_CONNECT_Request_len "
+               "and fr_handle_connect share these offsets");
+
 int get_CONNECT_Request_len(void *, void * pipeline, nd_dl698_msg_t*)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
@@ -675,6 +712,10 @@ int get_CONNECT_Request_len(void *, void * pipeline, nd_dl698_msg_t*)
     int offset = 0;
     uint8_t *apdu = ctx->apdu_d_rx + ctx->apdu_rx_offset;
 
+    if (ctx->apdu_len_after_decode
+        < (uint32_t)ctx->apdu_rx_offset + sizeof(struct connect_request_t)) {
+        return -1;
+    }
     offset = 37;
     apdu += offset;
     switch (apdu[0])
@@ -701,7 +742,7 @@ int get_CONNECT_Request_len(void *, void * pipeline, nd_dl698_msg_t*)
         offset += len;
         break;
     default:
-        return -1;
+        return FRM_LEN_DEFER;
         break;
     }
     return offset;
@@ -732,16 +773,15 @@ int fr_handle_disconnect2(void * instance,  void * pipeline,  uint8_t cilent_ind
     }
 
      
-    nd_mb_connect_timeout(instance)[channel][cilent_index] = 0;
-    nd_mb_esam_connect_timeout(instance)[channel][cilent_index] = 0;
-    nd_mb_connect_status(instance)[channel][cilent_index] = false;
+    nd_mb_set_connect_timeout(instance, channel, cilent_index, 0);
+    nd_mb_set_esam_connect_timeout(instance, channel, cilent_index, 0);
+    nd_mb_set_connect_status(instance, channel, cilent_index, false);
     
-    if ((nd_mb_connect_status(instance)[channel][0] == false)&& (nd_mb_connect_status(instance)[channel][1] == false))
+    if ((nd_mb_get_connect_status(instance, channel, 0) == false)&& (nd_mb_get_connect_status(instance, channel, 1) == false))
     {
-        nd_record_storage_clear_program_list(pipeline, NULL);
+        nd_record_storage_clear_program_list(nd_fr698_record_storage(instance), pipeline, NULL);
     }
     
-    //复位ESAM
     return 1;
 }
 

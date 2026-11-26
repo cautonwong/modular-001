@@ -1,6 +1,7 @@
 #include "unity.h"
 
 #include "domain/events/power_event.h"
+#include "application/adapters/dl698/event_oad_view.h"
 
 void setUp(void) {}
 void tearDown(void) {}

@@ -8,11 +8,13 @@ the shell script.
 from __future__ import annotations
 
 import argparse
+import fcntl
 import os
 import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -176,11 +178,69 @@ def run_target_acceptance(matrix: Matrix, target: Path, host_build: Path,
                    ["bash", str(script), str(runner_path)])
 
 
+def acquire_ci_lock(root: Path, quiet: bool = False):
+    handle = open(root / ".ci.lock", "a+", encoding="utf-8")
+    try:
+        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        handle.seek(0)
+        pid = handle.read().strip()
+        if not quiet:
+            print(f"ci: another ci.sh is already running for {root} "
+                  f"(pid {pid or 'unknown'}); wait for it or use another worktree",
+                  file=sys.stderr)
+        handle.close()
+        return None
+    handle.seek(0)
+    handle.truncate()
+    handle.write(f"{os.getpid()}\n")
+    handle.flush()
+    return handle
+
+
+def lock_self_check() -> bool:
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        first = acquire_ci_lock(root, quiet=True)
+        if first is None:
+            return False
+        second = acquire_ci_lock(root, quiet=True)
+        if second is not None:
+            second.close()
+            first.close()
+            return False
+        build = root / "build"
+        build.mkdir()
+        build.rmdir()
+        after_wipe = acquire_ci_lock(root, quiet=True)
+        if after_wipe is not None:
+            after_wipe.close()
+            first.close()
+            return False
+        first.close()
+        third = acquire_ci_lock(root, quiet=True)
+        if third is None:
+            return False
+        third.close()
+    return True
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=ROOT)
+    parser.add_argument("--self-check", action="store_true",
+                        help="verify the CI lock exclusivity and exit")
     args = parser.parse_args()
     root = args.root.resolve()
+    if not lock_self_check():
+        print("ci: lock self-check failed", file=sys.stderr)
+        return 1
+    if args.self_check:
+        print("ci lock self-check ok")
+        return 0
+    lock = acquire_ci_lock(root)
+    if lock is None:
+        return 1
     matrix = Matrix(root)
 
     print("== host tests ==")
@@ -252,33 +312,51 @@ def main() -> int:
     print("== shared checks ==")
     for label, command in [
         ("check:components", [sys.executable, str(root / "tools/check_components.py")]),
-        ("check:component-reachability", [sys.executable, str(root / "tools/check_component_reachability.py")]),
+        ("check:product-callers", [sys.executable, str(root / "tools/check_product_callers.py"),
+                                   "--self-check"]),
         ("check:component-standard", [sys.executable, str(root / "tools/check_component_standard.py")]),
         ("check:board-modes", [str(root / "tools/check-board-modes.sh")]),
-        ("check:domain", [sys.executable, str(root / "tools/check_domain_contracts.py")]),
-        ("check:public-structs", [sys.executable, str(root / "tools/check_public_structs.py")]),
+        ("check:domain", [sys.executable, str(root / "tools/check_domain_contracts.py"),
+                          "--self-check"]),
+        ("check:domain-definitions", [sys.executable, str(root / "tools/check_domain_definitions.py"),
+                                      "--self-check"]),
+        ("check:public-structs", [sys.executable, str(root / "tools/check_public_structs.py"),
+                                 "--self-check"]),
         ("check:rtos", [sys.executable, str(root / "tools/check_rtos_targets.py")]),
         ("check:rtos-model", [sys.executable, str(root / "tools/check_rtos_model.py")]),
         ("check:ids", [sys.executable, str(root / "tools/check_idis_ids.py")]),
         ("check:id-docs", [sys.executable, str(root / "tools/check_idis_docs.py")]),
         ("check:rom-budget-docs", [sys.executable, str(root / "tools/check_rom_budget_docs.py")]),
         ("check:doc-evidence", [sys.executable, str(root / "tools/check_doc_evidence.py")]),
+        ("check:shell-pipes", [sys.executable, str(root / "tools/check_shell_pipes.py")]),
+        ("check:isr-para", [sys.executable, str(root / "tools/check_isr_para.py")]),
         ("check:audit", [sys.executable, str(root / "tools/check_idis_audit.py"),
                          str(host_build / "idis_host_runner")]),
-        ("check:acceptance-matrix", [sys.executable, str(root / "tools/check_acceptance_matrix.py")]),
+        ("check:acceptance-matrix", [sys.executable, str(root / "tools/check_acceptance_matrix.py"),
+                                     "--self-check"]),
+        ("check:board-esam-deferral", [sys.executable, str(root / "tools/check_board_esam_deferral.py"),
+                                       "--self-check"]),
+        ("check:formal-docs", [sys.executable, str(root / "tools/check_formal_docs.py"),
+                               "--self-check"]),
         ("check:layers", [str(root / "tools/check-layers.sh")]),
         ("check:target-kernel", [sys.executable, str(root / "tools/check_target_kernel.py")]),
         ("check:idis-twins", [sys.executable, str(root / "tools/check_idis_twins.py")]),
         ("check:platform", [sys.executable, str(root / "tools/check_platform_boundary.py")]),
         ("check:drivers", [sys.executable, str(root / "tools/check_drivers.py")]),
         ("check:meter-record", [sys.executable, str(root / "tools/gen_meter_record.py"), "--check"]),
+        ("check:tariff-limits", [sys.executable, str(root / "tools/check_tariff_limits.py"),
+                                 "--self-check"]),
         ("check:param-tables", [sys.executable, str(root / "tools/check_param_tables.py"),
                                 "--source", str(root / "targets/stategrid_meter/mapper_698/mapper_698.c"),
                                 "--elf", str(host_build / "firmware_sim")]),
         ("check:ram-budget-counts", [sys.executable, str(root / "tools/check_ram_budget_counts.py")]),
-        ("check:dead-code", [sys.executable, str(root / "tools/check_dead_code.py")]),
+        ("check:dead-code", [sys.executable, str(root / "tools/check_dead_code.py"),
+                           "--self-check"]),
         ("check:mutable-globals", [sys.executable, str(root / "tools/check_mutable_globals.py")]),
         ("check:products", [sys.executable, str(root / "tools/product_manifest.py"), "--check-all"]),
+        ("check:port-bindings-sim", [sys.executable, str(root / "tools/check_port_bindings.py"),
+                                     "--product", "meter_electricity_single_phase_cn",
+                                     "--elf", str(host_build / "firmware_sim")]),
     ]:
         matrix.check(label, command)
 
@@ -309,8 +387,18 @@ def main() -> int:
             matrix.check(f"{target.name}:persistence", [str(root / "tools/check-persistence.sh")])
             matrix.check(f"{target.name}:instance", [sys.executable, str(root / "tools/check_instance_boundary.py")])
             matrix.check(f"{target.name}:mbase", [sys.executable, str(root / "tools/check_mbase_access.py")])
+            bindings_elf = build_root / f"{target.name}-port-bindings.elf"
             matrix.check(f"{target.name}:link", [sys.executable, str(root / "tools/check-firmware-link.py"),
-                                                "--product", "meter_electricity_single_phase_cn"])
+                                                "--product", "meter_electricity_single_phase_cn",
+                                                "--elf", str(bindings_elf)])
+            matrix.check(f"{target.name}:port-bindings", [
+                sys.executable, str(root / "tools/check_port_bindings.py"),
+                "--product", "meter_electricity_single_phase_cn",
+                "--elf", str(bindings_elf),
+                "--objdump", os.environ.get("OBJDUMP", "arm-none-eabi-objdump")])
+            matrix.check(f"{target.name}:board-esam-deferral", [
+                sys.executable, str(root / "tools/check_board_esam_deferral.py"),
+                "--elf", f"{target.name}={bindings_elf}"])
             print(f"TARGET {target.name}: build=gnu unit=shared acceptance=firmware_sim+firmware_acceptance")
             continue
         if (kind == "cmake"
@@ -324,6 +412,9 @@ def main() -> int:
         elf = firmware_elf(build, target.name)
         matrix.check(f"{target.name}:firmware", [sys.executable, str(root / "tools/check_idis_firmware.py"),
                                                 "--self-check", str(elf)])
+        matrix.check(f"{target.name}:board-esam-deferral", [
+            sys.executable, str(root / "tools/check_board_esam_deferral.py"),
+            "--elf", f"{target.name}={elf}"])
         if target.name in TRANSPORT_TARGETS:
             check_transport_symbols(matrix, f"{target.name}:poll-symbols", elf,
                                     irq=False)

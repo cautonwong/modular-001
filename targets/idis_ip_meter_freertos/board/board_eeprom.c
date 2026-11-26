@@ -1,49 +1,56 @@
 #include "targets/idis_ip_meter_freertos/board/board_eeprom.h"
 
+#include "board_state.h"
 #include "cpu_surport.h"
 #include "targets/idis_ip_meter_freertos/board/iic_driver.h"
 
 #define ND_EEPROM_ERROR_JUDGE 5u
 
-uint8_t DEVICE_ERR = 0;
-static uint8_t error_streak;
-
-static void note_result(int ok)
+static void note_result(struct nd_idis_board_state *state, int ok)
 {
-    if (ok) {
-        error_streak = 0;
-        DEVICE_ERR &= (uint8_t)~(1u << 1);
+    if (state == NULL) {
         return;
     }
-    if (error_streak < ND_EEPROM_ERROR_JUDGE) {
-        error_streak++;
+    if (ok) {
+        state->error_streak = 0;
+        state->DEVICE_ERR &= (uint8_t)~(1u << 1);
+        return;
     }
-    if (error_streak >= ND_EEPROM_ERROR_JUDGE) {
-        DEVICE_ERR |= (uint8_t)(1u << 1);
+    if (state->error_streak < ND_EEPROM_ERROR_JUDGE) {
+        state->error_streak++;
+    }
+    if (state->error_streak >= ND_EEPROM_ERROR_JUDGE) {
+        state->DEVICE_ERR |= (uint8_t)(1u << 1);
     }
 }
 
 static int bus_write(void *ctx, uint8_t device, uint16_t addr,
                      const uint8_t *buf, uint16_t len)
 {
+    struct nd_idis_board_state *state = (struct nd_idis_board_state *)ctx;
     uint8_t prefix[2] = { (uint8_t)(addr >> 8), (uint8_t)addr };
     int result;
 
-    (void)ctx;
+    if (state == NULL) {
+        return -1;
+    }
     result = nd_board_iic_write(device, prefix, sizeof(prefix), buf, len);
-    note_result(result == 0);
+    note_result(state, result == 0);
     return result;
 }
 
 static int bus_read(void *ctx, uint8_t device, uint16_t addr, uint8_t *buf,
                     uint16_t len)
 {
+    struct nd_idis_board_state *state = (struct nd_idis_board_state *)ctx;
     uint8_t prefix[2] = { (uint8_t)(addr >> 8), (uint8_t)addr };
     int result;
 
-    (void)ctx;
+    if (state == NULL) {
+        return -1;
+    }
     result = nd_board_iic_read(device, prefix, sizeof(prefix), buf, len);
-    note_result(result == 0);
+    note_result(state, result == 0);
     return result;
 }
 
@@ -53,9 +60,6 @@ static void bus_delay(void *ctx, uint32_t us)
     mcu_clear_watchdog();
     mcu_delay_us((uint16_t)us);
 }
-
-static nd_eeprom_storage_t eeprom_storage;
-static nd_eeprom_t *eeprom;
 
 static const nd_eeprom_config_t eeprom_config = {
     .bus = {
@@ -69,11 +73,17 @@ static const nd_eeprom_config_t eeprom_config = {
     .size = BOARD_EEPROM_SIZE,
 };
 
-nd_eeprom_t *board_eeprom(void)
+nd_eeprom_t *board_eeprom(struct nd_idis_board_state *state)
 {
-    if (eeprom == NULL) {
-        nd_board_iic_init();
-        eeprom = nd_eeprom_init(&eeprom_storage, &eeprom_config);
+    if (state == NULL) {
+        return NULL;
     }
-    return eeprom;
+    if (state->eeprom == NULL) {
+        nd_eeprom_config_t config = eeprom_config;
+
+        nd_board_iic_init();
+        config.bus.ctx = state;
+        state->eeprom = nd_eeprom_init(&state->eeprom_storage, &config);
+    }
+    return state->eeprom;
 }

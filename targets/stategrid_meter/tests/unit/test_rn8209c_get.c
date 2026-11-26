@@ -10,7 +10,8 @@
 
 #include "unity.h"
 
-#include "application/adapters/dl698/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "components/core/types/utils.h"
 #include "domain/metering/metering_input.h"
 #include "infra/drivers/metering/rn8209/rn8209.h"
@@ -20,10 +21,6 @@
 #include "targets/stategrid_meter/board/board_rn8209.h"
 #include "targets/stategrid_meter/board/meter_status.h"
 
-int nd_get_index(void *instance, uint32_t index, uint8_t *buffer,
-                 uint16_t length);
-int nd_set_index(void *instance, uint32_t index, const uint8_t *buffer,
-                 uint16_t length);
 int start_emu_signal_pro(void);
 uint8_t rn8209c_get(void *instance, uint8_t *p_rx, uint8_t *p_tx);
 int rn8209c_set(void *instance, uint8_t *p_rx);
@@ -199,10 +196,10 @@ uint32_t *nd_mb_voltage_battery_ptr(void *instance)
     return &mb_voltage_battery;
 }
 
-int nd_get_index(void *instance, uint32_t index, uint8_t *buffer,
-                 uint16_t length)
+static int16_t fake_get_index(void *ctx, uint32_t index, uint8_t *buffer,
+                              uint16_t length)
 {
-    (void)instance;
+    (void)ctx;
     reads++;
     last_index = index;
     last_length = length;
@@ -211,10 +208,10 @@ int nd_get_index(void *instance, uint32_t index, uint8_t *buffer,
     return 0;
 }
 
-int nd_set_index(void *instance, uint32_t index, const uint8_t *buffer,
-                 uint16_t length)
+static int16_t fake_set_index(void *ctx, uint32_t index, uint8_t *buffer,
+                              uint16_t length)
 {
-    (void)instance;
+    (void)ctx;
     sets++;
     last_set_index = index;
     last_set_length = length;
@@ -223,13 +220,33 @@ int nd_set_index(void *instance, uint32_t index, const uint8_t *buffer,
     return 0;
 }
 
+static const nd_resource_port_t fake_port = {
+    .get_index = fake_get_index,
+    .set_index = fake_set_index,
+};
+
+const nd_resource_port_t *nd_fr698_resource_access(void *instance)
+{
+    (void)instance;
+    return &fake_port;
+}
+
 int start_emu_signal_pro(void)
 {
     return 0;
 }
 
-nd_rn8209_t *board_rn8209(void)
+static stategrid_board_state_t test_board_state;
+
+stategrid_board_state_t *stategrid_context_board(void *instance)
 {
+    (void)instance;
+    return &test_board_state;
+}
+
+nd_rn8209_t *board_rn8209(stategrid_board_state_t *state)
+{
+    (void)state;
     return NULL;
 }
 
@@ -291,8 +308,10 @@ uint8_t mcu_delay_us(volatile uint16_t count)
     return 0;
 }
 
-int nd_metering_input_read(nd_metering_input_t input, int32_t *value)
+int nd_metering_input_read(const nd_metering_input_port_t *port,
+                           nd_metering_input_t input, int32_t *value)
 {
+    (void)port;
     (void)input;
     (void)value;
     return -1;

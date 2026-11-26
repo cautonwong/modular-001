@@ -3,9 +3,14 @@
 
 `typedef struct { ... } name_t;` in a public header exposes the field layout
 to every consumer, so callers can offsetof or mutate it and the type can never
-become an aggregate. The baseline records the current set as one `path name`
-line per definition: a new definition fails, and a baseline entry with no
-definition behind it also fails until --update rewrites the baseline.
+become an aggregate. The scan also counts `typedef union { ... } name_t;`,
+file-scope `struct tag { ... };` and `union tag { ... };` definitions; a
+tagged definition without a typedef is recorded as `struct:tag` or
+`union:tag`. An opaque `struct tag;` declaration is not a definition and is
+not counted, and definitions nested inside another definition belong to the
+outer entry. The baseline records the current set as one `path name` line per
+definition: a new definition fails, and a baseline entry with no definition
+behind it also fails until --update rewrites the baseline.
 
 Making an aggregate opaque keeps the typedef name in the header and moves the
 body into the .c file, so the definition leaves the scan and its baseline line
@@ -26,7 +31,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 BASELINE = ROOT / "tools" / "public_struct_baseline.txt"
 BASES = ("domain", "application")
-TYPEDEF_STRUCT = re.compile(r"\btypedef\s+struct\b")
+TYPEDEF_AGGREGATE = re.compile(r"\btypedef\s+(?:struct|union)\b")
+TAGGED_AGGREGATE = re.compile(r"\b(struct|union)\s+([A-Za-z_]\w*)\s*\{")
 COMMENTS = re.compile(r"/\*.*?\*/|//[^\n]*", re.DOTALL)
 IDENT = re.compile(r"[A-Za-z_]\w*")
 
@@ -47,10 +53,27 @@ def closing_brace(text: str, start: int) -> int | None:
     return None
 
 
+def brace_depths(text: str) -> list[int]:
+    depths = [0] * (len(text) + 1)
+    depth = 0
+    for index, char in enumerate(text):
+        depths[index] = depth
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth = max(0, depth - 1)
+    depths[len(text)] = depth
+    return depths
+
+
 def definitions(text: str) -> list[str]:
     text = strip_comments(text)
-    found = []
-    for match in TYPEDEF_STRUCT.finditer(text):
+    depths = brace_depths(text)
+    found: list[str] = []
+    bodies: list[tuple[int, int]] = []
+    for match in TYPEDEF_AGGREGATE.finditer(text):
+        if depths[match.start()] != 0:
+            continue
         open_brace = text.find("{", match.end())
         semicolon = text.find(";", match.end())
         if open_brace < 0 or 0 <= semicolon < open_brace:
@@ -61,6 +84,20 @@ def definitions(text: str) -> list[str]:
         name = IDENT.search(text[end + 1:text.find(";", end)])
         if name is not None:
             found.append(name.group(0))
+            bodies.append((open_brace, end))
+    for match in TAGGED_AGGREGATE.finditer(text):
+        if depths[match.start()] != 0:
+            continue
+        if text[:match.start()].rstrip().endswith("typedef"):
+            continue
+        open_brace = match.end() - 1
+        if any(start <= open_brace <= stop for start, stop in bodies):
+            continue
+        end = closing_brace(text, open_brace)
+        if end is None:
+            continue
+        found.append(f"{match.group(1)}:{match.group(2)}")
+        bodies.append((open_brace, end))
     return found
 
 
@@ -123,20 +160,27 @@ def tree_check() -> bool:
         (root / "domain").mkdir()
         (root / "application" / "ports").mkdir(parents=True)
         header = root / "domain" / "thing.h"
+        (root / "application" / "ports" / "store.h").write_text(
+            "typedef struct nd_store { void *ctx; } nd_store_t;\n",
+            encoding="utf-8")
         header.write_text(
             "typedef struct {\n"
             "    int value;\n"
             "} nd_thing_t;\n"
             "/* typedef struct { int hidden; } nd_commented_t; */\n"
-            "typedef struct nd_opaque nd_opaque_t;\n",
-            encoding="utf-8")
-        (root / "application" / "ports" / "store.h").write_text(
-            "typedef struct nd_store { void *ctx; } nd_store_t;\n",
+            "typedef struct nd_opaque nd_opaque_t;\n"
+            "typedef union { int a; long b; } nd_union_t;\n"
+            "struct nd_tagged {\n"
+            "    union { int x; long y; } member;\n"
+            "};\n"
+            "union nd_shared { int a; long b; };\n"
+            "struct nd_forward;\n",
             encoding="utf-8")
         baseline = root / "baseline.txt"
         first = scan(root)
         expected = {
-            "domain/thing.h": {"nd_thing_t"},
+            "domain/thing.h": {"nd_thing_t", "nd_union_t",
+                               "struct:nd_tagged", "union:nd_shared"},
             "application/ports/store.h": {"nd_store_t"},
         }
         if first != expected:
@@ -156,8 +200,11 @@ def tree_check() -> bool:
             print(f"public structs self-check failed: new struct reported "
                   f"{added}")
             return False
-        header.write_text("typedef struct nd_thing nd_thing_t;\n",
-                          encoding="utf-8")
+        header.write_text(
+            "typedef struct nd_thing nd_thing_t;\n"
+            "typedef union { int a; long b; } nd_union_t;\n"
+            "struct nd_tagged { union { int x; long y; } member; };\n"
+            "union nd_shared { int a; long b; };\n", encoding="utf-8")
         stale = diff(load(baseline), scan(root))
         if len(stale) != 1 or "nd_thing_t" not in stale[0]:
             print(f"public structs self-check failed: removed struct reported "
@@ -175,7 +222,8 @@ def main() -> int:
     if not tree_check():
         return 1
     if args.self_check:
-        print("public structs self-check ok")
+        print("public structs self-check ok (typedef, tagged and union "
+              "definitions counted; opaque and nested bodies ignored)")
         return 0
 
     current = scan()

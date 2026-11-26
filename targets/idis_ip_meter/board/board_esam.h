@@ -3,6 +3,8 @@
 
 #include "infra/drivers/security/esam/esam.h"
 
-nd_esam_t *board_esam(void);
+struct nd_idis_board_state;
+
+nd_esam_t *board_esam(struct nd_idis_board_state *state);
 
 #endif

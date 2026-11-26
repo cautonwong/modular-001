@@ -13,7 +13,7 @@ typedef struct nd_metering_input_port {
     int (*read)(void *ctx, nd_metering_input_t input, int32_t *value);
 } nd_metering_input_port_t;
 
-void nd_metering_input_bind(const nd_metering_input_port_t *port);
-int nd_metering_input_read(nd_metering_input_t input, int32_t *value);
+int nd_metering_input_read(const nd_metering_input_port_t *port,
+                           nd_metering_input_t input, int32_t *value);
 
 #endif

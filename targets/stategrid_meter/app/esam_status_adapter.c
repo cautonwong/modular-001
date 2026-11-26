@@ -5,6 +5,7 @@
 #include "application/ports/resource_access.h"
 #include "targets/stategrid_meter/persistence/legacy_control_block.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
+#include "application/adapters/dl698/fr_698_env.h"
 #include <stddef.h>
 
 static struct mbase_control_block_t *mb(void *instance)
@@ -46,6 +47,8 @@ void nd_esam_status_auth_on_set(void *instance, uint8_t on)
 int nd_esam_status_meter_no_update(void *instance,
                                    const uint8_t *meter_no)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     struct mbase_control_block_t *block = mb(instance);
     uint32_t addr;
     int i;
@@ -72,7 +75,7 @@ int nd_esam_status_meter_no_update(void *instance,
     addr = ((uint32_t)(RES_DEV_EEPROM << 24)
             + ((uint32_t)mbase_block_static_eprom << 16)
             + nd_mbase_offset_meterNo());
-    nd_set_offset(instance, addr, nd_mbase_meterNo(block), 6);
+    nd_set_offset_port(port, addr, nd_mbase_meterNo(block), 6);
     return 1;
 }
 

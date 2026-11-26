@@ -26,12 +26,8 @@ static int board_read(void *ctx, nd_metering_input_t input, int32_t *value)
     return read_mcu_adc_measure_value(channel, value) != 0;
 }
 
-static const nd_metering_input_port_t metering_input_port = {
-    .ctx = NULL,
-    .read = board_read,
-};
-
-void stategrid_metering_input_bind(void)
+void stategrid_metering_input_attach(stategrid_context_t *instance)
 {
-    nd_metering_input_bind(&metering_input_port);
+    instance->metering_input.ctx = NULL;
+    instance->metering_input.read = board_read;
 }

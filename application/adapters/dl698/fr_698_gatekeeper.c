@@ -2,7 +2,7 @@
 #include "components/core/fifo/fifo.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "fr_698.h"
-#include "meter_base_view.h"
+#include "application/ports/meter_base.h"
 #include "fr_698_internal.h"
 
 int fr_check_service_and_choice(void *, void * pipeline, nd_dl698_msg_t* mesg)
@@ -38,6 +38,23 @@ int fr_check_service_and_choice(void *, void * pipeline, nd_dl698_msg_t* mesg)
 
 
 //struct fifo_t* s_fifo;
+static void __write_error_response(void * pipeline, uint16_t resp_start,
+                                   uint8_t dar)
+{
+    struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
+    struct fifo_t* cache = ctx->apdu;
+    uint8_t *p = cache->buf_ptr;
+
+    ctx->service = ERROR_S_Response;
+    cache->wr = resp_start;
+    *(p + cache->wr) = ERROR_S_Response;
+    cache->wr++;
+    *(p + cache->wr) = ctx->PIID;
+    cache->wr++;
+    *(p + cache->wr) = dar;
+    cache->wr++;
+}
+
 int fr_gatekeeper_698_server(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
 {
     struct context_698_t* ctx = (struct context_698_t*)nd_fr698_pipeline_ctx(pipeline);
@@ -49,6 +66,8 @@ int fr_gatekeeper_698_server(void * instance, void * pipeline, nd_dl698_msg_t* m
     uint8_t service = 0;
     uint32_t tmp_u32 = 0;
     uint32_t apdu_offset_len_cache = 0;
+    uint16_t wr_before = 0;
+    uint16_t resp_start = 0;
     //uint8_t err_s_response_flag = 0;
 
     log_info(" OK.\n");
@@ -149,8 +168,10 @@ int fr_gatekeeper_698_server(void * instance, void * pipeline, nd_dl698_msg_t* m
     }
     else if (ret < 0)
     {
-        ctx->service = ERROR_S_Response;
-        ctx->err_n = 1; // apdu 无法解析
+        if (FRM_LEN_DEFER != ret) {
+            ctx->service = ERROR_S_Response;
+            ctx->err_n = 1; // apdu 无法解析
+        }
     }
 
     mesg->from  = nd_fr698_pipeline_id(pipeline);//从哪里来
@@ -162,6 +183,7 @@ int fr_gatekeeper_698_server(void * instance, void * pipeline, nd_dl698_msg_t* m
     fifoBuf_putByte(cache, mesg->ctrl);
     fifoBuf_putByte(cache, mesg->qos);
     fifoBuf_putByte(cache, ctx->PIID);
+    resp_start = (uint16_t)(cache->wr - 3);
 
     if(fr_check_service_and_choice(instance, pipeline, mesg)){
         if (ctx->service != ERROR_S_Response)
@@ -179,7 +201,7 @@ int fr_gatekeeper_698_server(void * instance, void * pipeline, nd_dl698_msg_t* m
 
     
     //mac挂起判断
-    if((nd_mb_mac_suspend_state(instance) == true) && ((service == SECURITY_Request) || (ctx->service == SET_Request) || (ctx->service == ACTION_Request)))
+    if((nd_mb_get_mac_suspend_state(instance) == true) && ((service == SECURITY_Request) || (ctx->service == SET_Request) || (ctx->service == ACTION_Request)))
     {
         //ctx->service = SECURITY_Response;
         //service = SECURITY_Response;
@@ -211,11 +233,13 @@ int fr_gatekeeper_698_server(void * instance, void * pipeline, nd_dl698_msg_t* m
         }
     }
     
+    wr_before = cache->wr;
+
     switch (ctx->service)
     {
         case CONNECT_Request:
             err_no = fr_handle_connect(instance, pipeline, mesg);
-            break;   
+            break;
         case RELEASE_Request:
             err_no = fr_handle_disconnect(instance, pipeline, mesg);
             break;
@@ -238,11 +262,17 @@ int fr_gatekeeper_698_server(void * instance, void * pipeline, nd_dl698_msg_t* m
             cache->wr = 4;
             break;
         default:
-            cache->buf_ptr[0] = ERROR_S_Response;
-            cache->buf_ptr[2] = ctx->err_n;
+            __write_error_response(pipeline, resp_start, (uint8_t)ctx->err_n);
             break;
     }
-    
+
+    if ((ctx->service == CONNECT_Request) || (ctx->service == GET_Request) ||
+        (ctx->service == SET_Request) || (ctx->service == ACTION_Request)) {
+        if (cache->wr == wr_before) {
+            __write_error_response(pipeline, resp_start, DAR_OTHERS_ERROR);
+        }
+    }
+
     log_info("security_encode:\n");
     log_hex(ctx->apdu->buf_ptr, fifoBuf_getUsed(ctx->apdu));
     

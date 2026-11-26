@@ -171,6 +171,7 @@ int nd_board_uart_rx_read(nd_board_uart_rx_t *rx, uint8_t *byte,
 
 void nd_board_spi_dma_init(nd_board_spi_dma_t *dma)
 {
+    dma->hw_ctx = NULL;
     dma->tx = NULL;
     dma->rx = NULL;
     dma->len = 0;
@@ -194,7 +195,7 @@ int nd_board_spi_dma_start(nd_board_spi_dma_t *dma, const uint8_t *tx,
     dma->rx_active = rx != NULL ? 1 : 0;
     dma->busy = 1;
     nd_board_op_reset(&dma->op);
-    if (nd_board_spi_dma_hw_start(tx, rx, len) != 0) {
+    if (nd_board_spi_dma_hw_start(dma->hw_ctx, tx, rx, len) != 0) {
         dma->tx_active = 0;
         dma->rx_active = 0;
         dma->busy = 0;
@@ -249,7 +250,7 @@ int nd_board_spi_dma_transfer(nd_board_spi_dma_t *dma, const uint8_t *tx,
         }
         result = nd_board_op_wait(&dma->op, timeout_us);
         if (result != ND_BOARD_OK) {
-            nd_board_spi_dma_hw_stop();
+            nd_board_spi_dma_hw_stop(dma->hw_ctx);
             dma->tx_active = 0;
             dma->rx_active = 0;
             dma->busy = 0;
@@ -257,6 +258,6 @@ int nd_board_spi_dma_transfer(nd_board_spi_dma_t *dma, const uint8_t *tx,
         }
         offset = (uint16_t)(offset + chunk);
     }
-    nd_board_spi_dma_hw_wait_idle();
+    nd_board_spi_dma_hw_wait_idle(dma->hw_ctx);
     return ND_BOARD_OK;
 }

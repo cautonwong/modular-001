@@ -1,10 +1,24 @@
 #include "unity.h"
 #include "infra/memory/byte_store.h"
 
+#include <string.h>
+
 #include "targets/idis_ip_meter/cosem/nd_cosem_classes.h"
 #include "targets/idis_ip_meter/cosem/nd_cosem_port.h"
 #include "targets/idis_ip_meter/cosem/nd_idis_objects.h"
 #include "targets/idis_ip_meter/mapper_idis/nd_idis_ids.h"
+
+#define DEMAND_MAGIC 0x44454D31u
+#define DEMAND_ITEMS_OFFSET 4u
+#define DEMAND_ITEM_BYTES 44u
+#define DEMAND_VERSION_OFFSET \
+    (DEMAND_ITEMS_OFFSET + ND_IDIS_DEMAND_MAX * DEMAND_ITEM_BYTES)
+#define DEMAND_CRC_OFFSET (DEMAND_VERSION_OFFSET + 4u)
+#define DEMAND_RECORD_BYTES (DEMAND_CRC_OFFSET + 2u)
+#define DEMAND_VERSION 1u
+
+_Static_assert(sizeof(nd_idis_demand_state_t) == DEMAND_ITEM_BYTES,
+               "the demand record prefix is persisted; item size cannot change");
 
 static nd_idis_objects_t objects;
 
@@ -265,6 +279,194 @@ static void test_demand_state_persists(void)
     TEST_ASSERT_EQUAL_UINT8(4, restored.demand[0].history.status);
 }
 
+static void put_u32_le(uint8_t *out, uint32_t value)
+{
+    out[0] = (uint8_t)value;
+    out[1] = (uint8_t)(value >> 8);
+    out[2] = (uint8_t)(value >> 16);
+    out[3] = (uint8_t)(value >> 24);
+}
+
+static uint32_t get_u32_le(const uint8_t *in)
+{
+    return (uint32_t)in[0] | ((uint32_t)in[1] << 8)
+        | ((uint32_t)in[2] << 16) | ((uint32_t)in[3] << 24);
+}
+
+static uint16_t get_u16_le(const uint8_t *in)
+{
+    return (uint16_t)((uint16_t)in[0] | ((uint16_t)in[1] << 8));
+}
+
+static uint16_t record_crc(const uint8_t *data, size_t length)
+{
+    uint16_t crc = 0xFFFFu;
+    for (size_t index = 0; index < length; index++) {
+        crc ^= (uint16_t)((uint16_t)data[index] << 8);
+        for (uint8_t bit = 0; bit < 8; bit++) {
+            crc = (crc & 0x8000u) ? (uint16_t)((crc << 1) ^ 0x1021u)
+                                  : (uint16_t)(crc << 1);
+        }
+    }
+    return crc;
+}
+
+static void write_legacy_record(uint8_t *record,
+                                const nd_idis_demand_state_t *states)
+{
+    memset(record, 0xFF, DEMAND_RECORD_BYTES);
+    put_u32_le(record, DEMAND_MAGIC);
+    memcpy(record + DEMAND_ITEMS_OFFSET, states,
+           ND_IDIS_DEMAND_MAX * sizeof(*states));
+}
+
+static void test_demand_legacy_record_loads(void)
+{
+    static uint8_t memory[512];
+    nd_byte_store_t store;
+    nd_byte_store_init(&store, memory, sizeof(memory));
+    write_legacy_record(memory, objects.demand);
+    nd_idis_objects_t restored = {0};
+    TEST_ASSERT_EQUAL_INT(0, nd_ic_demand_load(restored.demand,
+                                                nd_byte_store_port(&store), 0));
+    TEST_ASSERT_EQUAL_UINT32(100, restored.demand[0].current.current_value);
+    TEST_ASSERT_EQUAL_UINT32(50, restored.demand[0].history.last_value);
+    TEST_ASSERT_EQUAL_UINT8(4, restored.demand[0].history.status);
+}
+
+static void test_demand_new_record_has_documented_tail(void)
+{
+    static uint8_t memory[512];
+    nd_byte_store_t store;
+    nd_byte_store_init(&store, memory, sizeof(memory));
+    memset(memory, 0, sizeof(memory));
+    TEST_ASSERT_EQUAL_INT(0, nd_ic_demand_save(objects.demand,
+                                                nd_byte_store_port(&store), 0));
+    uint8_t raw[DEMAND_RECORD_BYTES];
+    TEST_ASSERT_EQUAL_INT(0, nd_store_read(nd_byte_store_port(&store), 0, raw,
+                                           sizeof(raw)));
+    TEST_ASSERT_EQUAL_UINT32(DEMAND_MAGIC, get_u32_le(raw));
+    TEST_ASSERT_EQUAL_MEMORY(objects.demand, raw + DEMAND_ITEMS_OFFSET,
+                             ND_IDIS_DEMAND_MAX * sizeof(*objects.demand));
+    TEST_ASSERT_EQUAL_UINT32(DEMAND_VERSION,
+                             get_u32_le(raw + DEMAND_VERSION_OFFSET));
+    TEST_ASSERT_EQUAL_UINT16(record_crc(raw, DEMAND_CRC_OFFSET),
+                             get_u16_le(raw + DEMAND_CRC_OFFSET));
+    nd_idis_objects_t restored = {0};
+    TEST_ASSERT_EQUAL_INT(0, nd_ic_demand_load(restored.demand,
+                                                nd_byte_store_port(&store), 0));
+    TEST_ASSERT_EQUAL_UINT32(100, restored.demand[0].current.current_value);
+}
+
+static void test_demand_corrupted_crc_is_rejected(void)
+{
+    static uint8_t memory[512];
+    nd_byte_store_t store;
+    nd_byte_store_init(&store, memory, sizeof(memory));
+    memset(memory, 0, sizeof(memory));
+    TEST_ASSERT_EQUAL_INT(0, nd_ic_demand_save(objects.demand,
+                                                nd_byte_store_port(&store), 0));
+    nd_idis_objects_t restored = {0};
+    memory[DEMAND_ITEMS_OFFSET + 4] ^= 1u;
+    TEST_ASSERT_EQUAL_INT(-1, nd_ic_demand_load(restored.demand,
+                                                 nd_byte_store_port(&store), 0));
+    memory[DEMAND_ITEMS_OFFSET + 4] ^= 1u;
+    TEST_ASSERT_EQUAL_INT(0, nd_ic_demand_load(restored.demand,
+                                                nd_byte_store_port(&store), 0));
+    memory[DEMAND_CRC_OFFSET] ^= 1u;
+    TEST_ASSERT_EQUAL_INT(-1, nd_ic_demand_load(restored.demand,
+                                                 nd_byte_store_port(&store), 0));
+}
+
+static void test_demand_unknown_version_is_rejected(void)
+{
+    static uint8_t memory[512];
+    nd_byte_store_t store;
+    nd_byte_store_init(&store, memory, sizeof(memory));
+    memset(memory, 0, sizeof(memory));
+    TEST_ASSERT_EQUAL_INT(0, nd_ic_demand_save(objects.demand,
+                                                nd_byte_store_port(&store), 0));
+    put_u32_le(memory + DEMAND_VERSION_OFFSET, 2u);
+    nd_idis_objects_t restored = {0};
+    TEST_ASSERT_EQUAL_INT(-1, nd_ic_demand_load(restored.demand,
+                                                 nd_byte_store_port(&store), 0));
+    memset(memory, 0, sizeof(memory));
+    put_u32_le(memory, DEMAND_MAGIC);
+    memcpy(memory + DEMAND_ITEMS_OFFSET, objects.demand,
+           ND_IDIS_DEMAND_MAX * sizeof(*objects.demand));
+    TEST_ASSERT_EQUAL_INT(-1, nd_ic_demand_load(restored.demand,
+                                                 nd_byte_store_port(&store), 0));
+}
+
+static void test_demand_dirty_tail_is_rejected(void)
+{
+    static uint8_t memory[512];
+    nd_byte_store_t store;
+    nd_byte_store_init(&store, memory, sizeof(memory));
+    write_legacy_record(memory, objects.demand);
+    memset(memory + DEMAND_VERSION_OFFSET, 0,
+           DEMAND_RECORD_BYTES - DEMAND_VERSION_OFFSET);
+    nd_idis_objects_t restored = {0};
+    TEST_ASSERT_EQUAL_INT(-1, nd_ic_demand_load(restored.demand,
+                                                 nd_byte_store_port(&store), 0));
+    TEST_ASSERT_EQUAL_UINT32(0, restored.demand[0].current.current_value);
+
+    write_legacy_record(memory, objects.demand);
+    put_u32_le(memory + DEMAND_VERSION_OFFSET, DEMAND_VERSION);
+    TEST_ASSERT_EQUAL_INT(-1, nd_ic_demand_load(restored.demand,
+                                                 nd_byte_store_port(&store), 0));
+    TEST_ASSERT_EQUAL_UINT32(0, restored.demand[0].current.current_value);
+}
+
+static void test_demand_downgrade_then_upgrade_is_rejected(void)
+{
+    static uint8_t memory[512];
+    nd_byte_store_t store;
+    nd_byte_store_init(&store, memory, sizeof(memory));
+    TEST_ASSERT_EQUAL_INT(0, nd_ic_demand_save(objects.demand,
+                                                nd_byte_store_port(&store), 0));
+    /* Old firmware rewrites the magic and items prefix and never touches the
+     * newer version and CRC tail, so the stored CRC no longer matches. */
+    objects.demand[0].current.current_value = 7;
+    objects.demand[0].history.last_value = 9;
+    put_u32_le(memory, DEMAND_MAGIC);
+    memcpy(memory + DEMAND_ITEMS_OFFSET, objects.demand,
+           ND_IDIS_DEMAND_MAX * sizeof(*objects.demand));
+    TEST_ASSERT_EQUAL_UINT32(DEMAND_VERSION,
+                             get_u32_le(memory + DEMAND_VERSION_OFFSET));
+    nd_idis_objects_t restored = {0};
+    TEST_ASSERT_EQUAL_INT(-1, nd_ic_demand_load(restored.demand,
+                                                 nd_byte_store_port(&store), 0));
+    TEST_ASSERT_EQUAL_UINT32(0, restored.demand[0].current.current_value);
+}
+
+static void test_demand_record_migrates_from_legacy(void)
+{
+    static uint8_t memory[512];
+    nd_byte_store_t store;
+    nd_byte_store_init(&store, memory, sizeof(memory));
+    write_legacy_record(memory, objects.demand);
+    uint8_t prefix[DEMAND_VERSION_OFFSET];
+    memcpy(prefix, memory, sizeof(prefix));
+    nd_idis_objects_t restored = {0};
+    TEST_ASSERT_EQUAL_INT(0, nd_ic_demand_load(restored.demand,
+                                                nd_byte_store_port(&store), 0));
+    TEST_ASSERT_EQUAL_INT(0, nd_ic_demand_save(restored.demand,
+                                                nd_byte_store_port(&store), 0));
+    uint8_t raw[DEMAND_RECORD_BYTES];
+    TEST_ASSERT_EQUAL_INT(0, nd_store_read(nd_byte_store_port(&store), 0, raw,
+                                           sizeof(raw)));
+    TEST_ASSERT_EQUAL_MEMORY(prefix, raw, sizeof(prefix));
+    TEST_ASSERT_EQUAL_UINT32(DEMAND_VERSION,
+                             get_u32_le(raw + DEMAND_VERSION_OFFSET));
+    TEST_ASSERT_EQUAL_UINT16(record_crc(raw, DEMAND_CRC_OFFSET),
+                             get_u16_le(raw + DEMAND_CRC_OFFSET));
+    nd_idis_objects_t reloaded = {0};
+    TEST_ASSERT_EQUAL_INT(0, nd_ic_demand_load(reloaded.demand,
+                                                nd_byte_store_port(&store), 0));
+    TEST_ASSERT_EQUAL_UINT32(50, reloaded.demand[0].history.last_value);
+}
+
 static void test_accumulated_power_feeds_capture(void)
 {
     nd_idis_demand_accumulate(&objects.demand_acc[0], 1000);
@@ -290,6 +492,13 @@ int main(void)
     RUN_TEST(test_last_average_and_apparent_groups);
     RUN_TEST(test_average_total_and_net_power);
     RUN_TEST(test_demand_state_persists);
+    RUN_TEST(test_demand_legacy_record_loads);
+    RUN_TEST(test_demand_new_record_has_documented_tail);
+    RUN_TEST(test_demand_corrupted_crc_is_rejected);
+    RUN_TEST(test_demand_unknown_version_is_rejected);
+    RUN_TEST(test_demand_dirty_tail_is_rejected);
+    RUN_TEST(test_demand_downgrade_then_upgrade_is_rejected);
+    RUN_TEST(test_demand_record_migrates_from_legacy);
     RUN_TEST(test_accumulated_power_feeds_capture);
     return UNITY_END();
 }

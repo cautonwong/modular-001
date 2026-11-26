@@ -19,10 +19,22 @@ void stategrid_context_init(stategrid_context_t *ctx)
     ctx->meter_events = &meter_events;
     ctx->lowpower_events = &lowpower_events;
     ctx->records = &records;
+    ctx->cfg_connect = default_connect;
+    /* The link starts unauthenticated until CONNECT negotiates a mode. */
+    ctx->cfg_connect.connect_mode = 0;
+    ctx->relay_ui.key_ticks = 0;
+    ctx->relay_ui.led_flash = 0;
 }
 
 void stategrid_context_set_mbase(stategrid_context_t *ctx,
                                  struct mbase_control_block_t *mbase)
 {
     ctx->mbase = mbase;
+}
+
+stategrid_board_state_t *stategrid_context_board(void *instance)
+{
+    stategrid_context_t *ctx = instance;
+
+    return ctx != NULL ? ctx->board : NULL;
 }

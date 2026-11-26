@@ -1,16 +1,40 @@
 #include "targets/idis_ip_meter/cosem/classes/nd_ic_demand.h"
 
+#include <string.h>
+
 #include "domain/common/calendar.h"
 #include "targets/idis_ip_meter/cosem/nd_idis_objects.h"
 #include "targets/idis_ip_meter/cosem/classes/nd_ic_extended_register.h"
 #include "targets/idis_ip_meter/mapper_idis/nd_idis_ids.h"
 
+/* Old firmware reads the magic and items prefix unchanged; version and CRC
+ * were appended after it. */
 #define ND_IDIS_DEMAND_MAGIC 0x44454D31u
+#define ND_IDIS_DEMAND_VERSION 1u
+#define ND_IDIS_DEMAND_VERSION_BLANK 0xFFFFFFFFu
+#define ND_IDIS_DEMAND_ITEMS_OFFSET 4u
+#define ND_IDIS_DEMAND_ITEMS_BYTES \
+    (ND_IDIS_DEMAND_MAX * sizeof(nd_idis_demand_state_t))
+#define ND_IDIS_DEMAND_VERSION_OFFSET \
+    (ND_IDIS_DEMAND_ITEMS_OFFSET + ND_IDIS_DEMAND_ITEMS_BYTES)
+#define ND_IDIS_DEMAND_CRC_OFFSET (ND_IDIS_DEMAND_VERSION_OFFSET + 4u)
+#define ND_IDIS_DEMAND_RECORD_BYTES (ND_IDIS_DEMAND_CRC_OFFSET + 2u)
 
-typedef struct {
-    uint32_t magic;
-    nd_idis_demand_state_t items[ND_IDIS_DEMAND_MAX];
-} nd_idis_demand_record_t;
+_Static_assert(sizeof(nd_idis_demand_state_t) == 44u,
+               "demand record prefix layout is persisted");
+
+static uint16_t crc16_update(uint16_t crc, const uint8_t *data, size_t length)
+{
+    for (size_t index = 0; index < length; index++) {
+        crc ^= (uint16_t)((uint16_t)data[index] << 8);
+        for (uint8_t bit = 0; bit < 8; bit++) {
+            crc = (crc & 0x8000u)
+                ? (uint16_t)((uint16_t)(crc << 1) ^ 0x1021u)
+                : (uint16_t)(crc << 1);
+        }
+    }
+    return crc;
+}
 
 static void put_datetime_octets(nd_axdr_writer_t *out,
                                 const nd_datetime_t *time)
@@ -430,12 +454,17 @@ int nd_ic_demand_save(const nd_idis_demand_state_t *states, nd_store_t *store,
     if (states == NULL || store == NULL) {
         return -1;
     }
-    nd_idis_demand_record_t record = {.magic = ND_IDIS_DEMAND_MAGIC};
-    for (uint8_t index = 0; index < ND_IDIS_DEMAND_MAX; index++) {
-        record.items[index] = states[index];
-    }
-    return nd_store_write(store, offset, (const uint8_t *)&record,
-                          sizeof(record));
+    uint8_t record[ND_IDIS_DEMAND_RECORD_BYTES];
+    const uint32_t magic = ND_IDIS_DEMAND_MAGIC;
+    const uint32_t version = ND_IDIS_DEMAND_VERSION;
+    memcpy(record, &magic, sizeof(magic));
+    memcpy(&record[ND_IDIS_DEMAND_ITEMS_OFFSET], states,
+           ND_IDIS_DEMAND_ITEMS_BYTES);
+    memcpy(&record[ND_IDIS_DEMAND_VERSION_OFFSET], &version, sizeof(version));
+    const uint16_t crc = crc16_update(0xFFFFu, record,
+                                      ND_IDIS_DEMAND_CRC_OFFSET);
+    memcpy(&record[ND_IDIS_DEMAND_CRC_OFFSET], &crc, sizeof(crc));
+    return nd_store_write(store, offset, record, sizeof(record));
 }
 
 int nd_ic_demand_load(nd_idis_demand_state_t *states, nd_store_t *store,
@@ -444,13 +473,28 @@ int nd_ic_demand_load(nd_idis_demand_state_t *states, nd_store_t *store,
     if (states == NULL || store == NULL) {
         return -1;
     }
-    nd_idis_demand_record_t record;
-    if (nd_store_read(store, offset, (uint8_t *)&record, sizeof(record)) != 0
-        || record.magic != ND_IDIS_DEMAND_MAGIC) {
+    uint8_t record[ND_IDIS_DEMAND_RECORD_BYTES];
+    if (nd_store_read(store, offset, record, sizeof(record)) != 0) {
         return -1;
     }
-    for (uint8_t index = 0; index < ND_IDIS_DEMAND_MAX; index++) {
-        states[index] = record.items[index];
+    uint32_t magic;
+    memcpy(&magic, record, sizeof(magic));
+    if (magic != ND_IDIS_DEMAND_MAGIC) {
+        return -1;
     }
+    /* A record from before the tail existed leaves the version blank. */
+    uint32_t version;
+    memcpy(&version, &record[ND_IDIS_DEMAND_VERSION_OFFSET], sizeof(version));
+    if (version != ND_IDIS_DEMAND_VERSION_BLANK) {
+        uint16_t crc;
+        memcpy(&crc, &record[ND_IDIS_DEMAND_CRC_OFFSET], sizeof(crc));
+        if (version != ND_IDIS_DEMAND_VERSION
+            || crc != crc16_update(0xFFFFu, record,
+                                   ND_IDIS_DEMAND_CRC_OFFSET)) {
+            return -1;
+        }
+    }
+    memcpy(states, &record[ND_IDIS_DEMAND_ITEMS_OFFSET],
+           ND_IDIS_DEMAND_ITEMS_BYTES);
     return 0;
 }

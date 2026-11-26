@@ -442,7 +442,6 @@ extern uint8_t get_event_oad_class(uint32_t oad);
 
 
 
-extern struct connect_request_t cfg_connect;
 extern const struct connect_request_t default_connect;
 extern int fr_security_encode(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
 extern uint32_t dt_buf_to_second(uint8_t* dt);
@@ -451,8 +450,8 @@ extern uint8_t fr_698_current_connect_status_get(void * instance, void * pipelin
 extern struct connect_request_t get_default_connect_para(uint8_t channel);
 
 
-int dl698_report_list_read(uint16_t channel, uint8_t* buffer, uint16_t length);
-int dl698_report_list_write(uint16_t channel, const uint8_t* buffer, uint16_t length);
+int dl698_report_list_read(void * instance, uint16_t channel, uint8_t* buffer, uint16_t length);
+int dl698_report_list_write(void * instance, uint16_t channel, const uint8_t* buffer, uint16_t length);
 extern int get_capture_list(void *instance, uint32_t oad, uint32_t *rcsd_list, uint8_t mode);
 extern uint8_t get_upreport_esam_rn_mac(void *instance, uint8_t *apdu, uint8_t apdu_len , uint8_t *dst);
 extern uint8_t read_event_report_flag_mode(void *instance, uint32_t oad, uint8_t mode);
@@ -467,8 +466,8 @@ int fr_tx_698_entry(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
 int GET_record_sel_1(void *instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t buf_size, void *ctx);
 int GET_record_sel_2(void *instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t buf_size, void *ctx);
 int GET_record_sel_9(void *instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t buf_size, void *ctx);
-uint8_t nd_fr698_report_pending(void);
-void nd_fr698_report_clear(void);
+uint8_t nd_fr698_report_pending(void *instance);
+void nd_fr698_report_clear(void *instance);
 int fr_gatekeeper_698_client(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
 int fr_gatekeeper_698_server(void * instance, void * pipeline, nd_dl698_msg_t* mesg);
 #pragma pack(pop)

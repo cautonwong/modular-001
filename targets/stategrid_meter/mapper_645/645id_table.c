@@ -1,6 +1,7 @@
 #include "targets/stategrid_meter/persistence/meter_record.h"
+#include "domain/tariff/tariff.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "645id_table.h"
 #include "port.h"
@@ -14,6 +15,7 @@
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
 #include "targets/stategrid_meter/mapper_698/factory_cfg.h"
 #include "targets/stategrid_meter/mapper_698/mapper_698.h"
+#include "application/adapters/dl645/fr_645_env.h"
 
 typedef uint8_t (*data_check_fun)(void *instance, uint32_t addr, uint8_t *, uint8_t *);
 
@@ -197,12 +199,13 @@ static uint8_t dl645rd_datetime(void *instance, uint32_t addr, uint8_t *databuf,
 
 static uint8_t dl645rd_chgtime(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint32_t addr1=0;
     uint16_t temp=0;
     uint8_t buf[7] = {0,};
     
     addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
-    nd_get_index(instance, addr1, buf, 7);
+    nd_get_index_port(port, addr1, buf, 7);
     
     *databuf++ = BYTE_BCD(buf[5]);  
     *databuf++ = BYTE_BCD(buf[4]);
@@ -226,6 +229,7 @@ static uint8_t dl645rd_meteraddr(void *instance, uint32_t addr, uint8_t *databuf
 
 static uint8_t dl645rd_hex_bcd(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint32_t addr1=0;
     uint32_t temp=0;
     uint8_t buf[4] = {0,},len=0, storage_len = 0;
@@ -248,7 +252,7 @@ static uint8_t dl645rd_hex_bcd(void *instance, uint32_t addr, uint8_t *databuf, 
     }
     
     addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
-    nd_get_index(instance, addr1, buf, storage_len);
+    nd_get_index_port(port, addr1, buf, storage_len);
     mem_swap_cpy((uint8_t*)&temp, buf, storage_len);
     
     if(addr == ImaxProtectValue)
@@ -270,6 +274,7 @@ const uint8_t baud645[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
 const uint8_t baud698[8] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x06, 0x07, 0x00};
 static uint8_t dl645rd_ram(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint32_t id=0,StAddr=0, s_index = 0;
     uint8_t i=0,j,index=0, Baut = 0;
     uint16_t sate=0,sate1=0;
@@ -393,13 +398,13 @@ static uint8_t dl645rd_ram(void *instance, uint32_t addr, uint8_t *databuf, uint
         case 0xA8F00003:    //多功能配置字+
             memset(databuf, 0, 2);
             addr = ((DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Meter_Type);
-            nd_get_index(instance, addr, (uint8_t*)databuf, 2); //区分判断 是否已经设置过表型
+            nd_get_index_port(port, addr, (uint8_t*)databuf, 2); //区分判断 是否已经设置过表型
             //memcpy(databuf, (uint8_t *)&nd_mb_metertype(instance), 2);
             break;
         case 0xA8F00002:    //背光配置字
             memset(databuf, 0, 4);
             addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Blt_Alarm_Byte);
-            nd_get_index(instance, addr, (uint8_t*)databuf, 4); 
+            nd_get_index_port(port, addr, (uint8_t*)databuf, 4); 
             //memcpy(databuf, (uint8_t *)&nd_mb_blt_alarm(instance), 2);
             break;
         case 0xA8F00051://掉电主动上报的阈值时间(秒)hex  0x0E10
@@ -421,25 +426,26 @@ static uint8_t dl645rd_ram(void *instance, uint32_t addr, uint8_t *databuf, uint
 
 static uint8_t dl645rd_loction(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint32_t addr1=0;
     uint8_t buf[10] = {0,};
     
     addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location1);
-    nd_get_index(instance, addr1, buf, 10);
+    nd_get_index_port(port, addr1, buf, 10);
     *databuf++ = buf[9];
     *databuf++ = buf[7];
     *databuf++ = buf[5];
     *databuf++ = buf[3];
     
     addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location2);
-    nd_get_index(instance, addr1, buf, 10);
+    nd_get_index_port(port, addr1, buf, 10);
     *databuf++ = buf[9];
     *databuf++ = buf[7];
     *databuf++ = buf[5];
     *databuf++ = buf[3];
     
     addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location3);
-    nd_get_index(instance, addr1, buf, 5);
+    nd_get_index_port(port, addr1, buf, 5);
     *databuf++ = buf[4];
     *databuf++ = buf[3];
     *databuf++ = buf[2];
@@ -449,11 +455,12 @@ static uint8_t dl645rd_loction(void *instance, uint32_t addr, uint8_t *databuf, 
 
 static uint8_t dl645rd_blanceday(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint32_t addr1=0;
     uint8_t buf[2] = {0,};
     
     addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
-    nd_get_index(instance, addr1, buf, 2);
+    nd_get_index_port(port, addr1, buf, 2);
     *databuf++ = BYTE_BCD(buf[1]);
     *databuf++ = BYTE_BCD(buf[0]);
     return 0;
@@ -461,10 +468,11 @@ static uint8_t dl645rd_blanceday(void *instance, uint32_t addr, uint8_t *databuf
 
 static uint8_t dl645rd_runbyte(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint32_t s_index = 0;
  
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
-    nd_get_index(instance, s_index, databuf, 1);
+    nd_get_index_port(port, s_index, databuf, 1);
     
     if(nd_mb_relay_ctl_mode(instance) == 0)   //（0：脉冲式，1：保持式）
         *databuf |= 0x01;
@@ -487,6 +495,7 @@ static uint8_t dl645rd_runbyte(void *instance, uint32_t addr, uint8_t *databuf, 
 
 static uint8_t dl645rd_hex_string(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint8_t i=0,word=0;
     uint32_t addr1 = 0;
     
@@ -497,7 +506,7 @@ static uint8_t dl645rd_hex_string(void *instance, uint32_t addr, uint8_t *databu
             break;
         case Weekend:  //周休日特征字
             addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
-            nd_get_index(instance, addr1, (uint8_t*)&word, 1);
+            nd_get_index_port(port, addr1, (uint8_t*)&word, 1);
             break;
     }
     *databuf = 0;
@@ -533,6 +542,7 @@ static uint8_t dl645rd_report_stat(void *instance, uint32_t addr, uint8_t *datab
 
 static uint8_t dl645wt_date(void *instance, uint32_t addr, uint8_t *prx, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint8_t day = 0, settimebuf[4]={0,};
     uint8_t buffer[10]={0},temp[10]={0};
     uint32_t s_index = 0;
@@ -541,7 +551,7 @@ static uint8_t dl645wt_date(void *instance, uint32_t addr, uint8_t *prx, uint8_t
     rtc_get_from_tm(instance,temp);
     mem_swap_cpy( &buffer[0], &temp[0], 7);
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
-    nd_set_index(instance, s_index, buffer, 7);
+    nd_set_index_port(port, s_index, buffer, 7);
 
     day = nd_fr698_time(instance)->tm_mday;
     prx++;
@@ -556,7 +566,7 @@ static uint8_t dl645wt_date(void *instance, uint32_t addr, uint8_t *prx, uint8_t
     rtc_get_from_tm(instance,temp);
     mem_swap_cpy( &buffer[0], &temp[0], 7);
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
-    nd_set_index(instance, s_index, buffer, 7);
+    nd_set_index_port(port, s_index, buffer, 7);
     
     if(day != nd_fr698_time(instance)->tm_mday)  //跨日，清除广播校时标志位
     {
@@ -571,6 +581,7 @@ static uint8_t dl645wt_date(void *instance, uint32_t addr, uint8_t *prx, uint8_t
 
 static uint8_t dl645wt_time(void *instance, uint32_t addr, uint8_t *prx, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint8_t settimebuf[3]={0,};
     uint8_t buffer[10]={0},temp[10]={0};
     uint32_t s_index = 0;
@@ -579,7 +590,7 @@ static uint8_t dl645wt_time(void *instance, uint32_t addr, uint8_t *prx, uint8_t
     rtc_get_from_tm(instance,temp);
     mem_swap_cpy( &buffer[0], &temp[0], 7);
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
-    nd_set_index(instance, s_index, buffer, 7);
+    nd_set_index_port(port, s_index, buffer, 7);
     
     settimebuf[0] = *prx++;//日
     settimebuf[1] = *prx++;//月
@@ -591,7 +602,7 @@ static uint8_t dl645wt_time(void *instance, uint32_t addr, uint8_t *prx, uint8_t
     rtc_get_from_tm(instance,temp);
     mem_swap_cpy( &buffer[0], &temp[0], 7);
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
-    nd_set_index(instance, s_index, buffer, 7);
+    nd_set_index_port(port, s_index, buffer, 7);
 
 
     record_event_no_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
@@ -602,6 +613,7 @@ static uint8_t dl645wt_time(void *instance, uint32_t addr, uint8_t *prx, uint8_t
 
 static uint8_t dl645wt_datetime(void *instance, uint32_t addr, uint8_t *prx, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint8_t day = 0, settimebuf[7]={0,};
     uint8_t buffer[10]={0},temp[10]={0};
     uint32_t s_index = 0;
@@ -610,7 +622,7 @@ static uint8_t dl645wt_datetime(void *instance, uint32_t addr, uint8_t *prx, uin
     rtc_get_from_tm(instance,temp);
     mem_swap_cpy( &buffer[0], &temp[0], 7);
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
-    nd_set_index(instance, s_index, buffer, 7);
+    nd_set_index_port(port, s_index, buffer, 7);
     
     day = nd_fr698_time(instance)->tm_mday;
     settimebuf[0] = *prx++;//秒
@@ -632,7 +644,7 @@ static uint8_t dl645wt_datetime(void *instance, uint32_t addr, uint8_t *prx, uin
     rtc_get_from_tm(instance,temp);
     mem_swap_cpy( &buffer[0], &temp[0], 7);
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
-    nd_set_index(instance, s_index, buffer, 7);
+    nd_set_index_port(port, s_index, buffer, 7);
 
 
     record_event_no_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
@@ -644,6 +656,7 @@ static uint8_t dl645wt_datetime(void *instance, uint32_t addr, uint8_t *prx, uin
 
 static uint8_t dl645wt_chgtime(void *instance, uint32_t addr, uint8_t *prx, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint32_t addr1=0;
     uint16_t year=0;
     uint8_t buf[7] = {0,};
@@ -657,26 +670,28 @@ static uint8_t dl645wt_chgtime(void *instance, uint32_t addr, uint8_t *prx, uint
     mem_swap_cpy((uint8_t*)&buf[0], (uint8_t*)&year, 2);//
 
     addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
-    nd_set_index(instance, addr1, buf, 7);
+    nd_set_index_port(port, addr1, buf, 7);
     
     return 0;
 }
 
 static uint8_t dl645wt_meteraddr(void *instance, uint32_t addr, uint8_t *prx, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint32_t s_index=0;
     
     memcpy(nd_mb_tsa(instance), prx, 6);
     
     s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
             nd_mb_offset_tsa());
-    nd_set_offset(instance, s_index, nd_mb_tsa(instance), 6); 
+    nd_set_offset_port(port, s_index, nd_mb_tsa(instance), 6); 
     
     return 0;
 }
 
 static uint8_t dl645wt_hex_bcd(void *instance, uint32_t addr, uint8_t *prx, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 
     uint32_t addr1=0;
     uint32_t temp=0,data=0;
@@ -723,7 +738,7 @@ static uint8_t dl645wt_hex_bcd(void *instance, uint32_t addr, uint8_t *prx, uint
     mem_swap_cpy((uint8_t*)&temp, (uint8_t*)&data, storage_len);
     
     addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
-    nd_set_index(instance, addr1, (uint8_t*)&temp, storage_len);
+    nd_set_index_port(port, addr1, (uint8_t*)&temp, storage_len);
 
 
 
@@ -760,6 +775,7 @@ static uint8_t dl645wt_hex_bcd(void *instance, uint32_t addr, uint8_t *prx, uint
 
 static uint8_t dl645wt_ram(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     
     uint32_t id=0,s_index=0,dt=0;
     uint16_t temp=0;
@@ -772,38 +788,38 @@ static uint8_t dl645wt_ram(void *instance, uint32_t addr, uint8_t *databuf, uint
             nd_mb_lcd_autodis_list_num(instance) = BCD_BYTE(*databuf);
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_lcd_autodis_list_num());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_lcd_autodis_list_num(instance), 1);
+            nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_lcd_autodis_list_num(instance), 1);
             break;
         case 0x04000302:    //轮显每屏时间
             memcpy((uint8_t*)&temp, databuf, 2);
             nd_mb_lcd_autodis_keep_sec(instance) = word_bcd_to_hex(temp);
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_lcd_autodis_keep_sec());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_lcd_autodis_keep_sec(instance), 2);
+            nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_lcd_autodis_keep_sec(instance), 2);
             break;
         case 0x04000303:    //电能小数位数
             nd_mb_energy_point(instance) = BCD_BYTE(*databuf);
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_energy_point());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_energy_point(instance), 1);
+            nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_energy_point(instance), 1);
             break;
         case 0x04000304:    //功率小数尾数
             nd_mb_power_point(instance) = BCD_BYTE(*databuf);
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_power_point());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_power_point(instance), 1);
+            nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_power_point(instance), 1);
             break;
         case 0x04000305:    //按显屏数
             nd_mb_lcd_keydis_list_num(instance) = BCD_BYTE(*databuf);
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_lcd_keydis_list_num());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_lcd_keydis_list_num(instance), 1);
+            nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_lcd_keydis_list_num(instance), 1);
             break;
         case 0x04000308:    //全显时间
             nd_mb_lcd_poweron_all_dis_time(instance) = BCD_BYTE(*databuf);
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_lcd_poweron_all_dis_time());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_lcd_poweron_all_dis_time(instance), 1);
+            nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_lcd_poweron_all_dis_time(instance), 1);
             break;
         case 0x04000701:    //紅外波特率設置無效
             break;
@@ -831,7 +847,7 @@ static uint8_t dl645wt_ram(void *instance, uint32_t addr, uint8_t *databuf, uint
             }
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_baut_plc());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_baut_plc(instance), 1);
+            nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_baut_plc(instance), 1);
             nd_mb_baud_chg(instance) = 0x02;  //更新串口波特率  
             break;
         case 0x04000703:    //485波特率
@@ -858,7 +874,7 @@ static uint8_t dl645wt_ram(void *instance, uint32_t addr, uint8_t *databuf, uint
             }
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_baut_rs485());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_baut_rs485(instance), 1);
+            nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_baut_rs485(instance), 1);
             nd_mb_baud_chg(instance) = 0x01;  //更新串口波特率
             break;
         case 0x04001104:  //主动上报模式字
@@ -866,7 +882,7 @@ static uint8_t dl645wt_ram(void *instance, uint32_t addr, uint8_t *databuf, uint
             //保存 645上报模式字
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
             nd_mb_offset_report_mode_645());
-            nd_set_offset(instance, s_index, (uint8_t*)nd_mb_report_mode_645(instance), 8);
+            nd_set_offset_port(port, s_index, (uint8_t*)nd_mb_report_mode_645(instance), 8);
 
             report_mode_set_from_645(instance, databuf);
             break;
@@ -876,13 +892,13 @@ static uint8_t dl645wt_ram(void *instance, uint32_t addr, uint8_t *databuf, uint
             nd_mb_over_current_threshold(instance) = temp*1000;
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_over_current_threshold());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_over_current_threshold(instance), 4);
+            nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_over_current_threshold(instance), 4);
             break;
         case 0x04090802:    //过流事件阈值
             nd_mb_over_current_duration_para(instance) = BCD_BYTE(*databuf);
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_over_current_duration_para());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_over_current_duration_para(instance), 1);
+            nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_over_current_duration_para(instance), 1);
             break;
             
         case 0x04100901:    //按键显示每屏时间
@@ -890,35 +906,35 @@ static uint8_t dl645wt_ram(void *instance, uint32_t addr, uint8_t *databuf, uint
             nd_mb_lcd_keydis_keep_sec(instance) = word_bcd_to_hex(temp);
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_lcd_keydis_keep_sec());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_lcd_keydis_keep_sec(instance), 2);
+            nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_lcd_keydis_keep_sec(instance), 2);
             break;
         case 0xA8F00002:    //背光报警配置字
             memcpy((uint8_t*)&nd_mb_blt_alarm(instance), databuf, 4);
 
             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Blt_Alarm_Byte);
-            nd_set_index(instance, s_index, (uint8_t*)&nd_mb_blt_alarm(instance), 4);
+            nd_set_index_port(port, s_index, (uint8_t*)&nd_mb_blt_alarm(instance), 4);
             break;
         case 0xA8F00003:    //多功能配置字
             memcpy((uint8_t*)&nd_mb_metertype(instance), databuf, 2);
             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + Meter_Type);
-            nd_set_index(instance, s_index, (uint8_t*)&nd_mb_metertype(instance), 2);
+            nd_set_index_port(port, s_index, (uint8_t*)&nd_mb_metertype(instance), 2);
             break;
         case 0xA8F00051://掉电主动上报的阈值时间(秒)hex  0x0E10
             memcpy(&nd_mb_active_report_sec_limit(instance), databuf, 2);                
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_active_report_sec_limit());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_active_report_sec_limit(instance), 2);//存储至EE  
+            nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_active_report_sec_limit(instance), 2);//存储至EE  
             break;  
         case 0xA8F00052://工频防潜开关
             nd_mb_no_filt(instance) = *databuf;
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_no_filt());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_no_filt(instance), 1);//存储至EE  
+            nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_no_filt(instance), 1);//存储至EE  
             break;
         case 0xA8F00055: //电能定量保存阈值hex       --0.01kwh  
             memcpy((uint8_t*)&nd_mb_ec_save_diff(instance), databuf, 2);
             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + EC_SaveDiff_E);
-            nd_set_index(instance, s_index, (uint8_t*)&nd_mb_ec_save_diff(instance), 2);
+            nd_set_index_port(port, s_index, (uint8_t*)&nd_mb_ec_save_diff(instance), 2);
             break;  
     }
     return 0;
@@ -926,22 +942,24 @@ static uint8_t dl645wt_ram(void *instance, uint32_t addr, uint8_t *databuf, uint
 
 static uint8_t dl645wt_loction(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint32_t s_index = 0;
   
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location1);
-    nd_set_index(instance, s_index, databuf, 10); 
+    nd_set_index_port(port, s_index, databuf, 10); 
     
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location2);
-    nd_set_index(instance, s_index, databuf, 10);   
+    nd_set_index_port(port, s_index, databuf, 10);   
     
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location3);
-    nd_set_index(instance, s_index, databuf, 5);
+    nd_set_index_port(port, s_index, databuf, 5);
 
     return 0;
 }
 
 static uint8_t dl645wt_blanceday(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 
     uint32_t addr1=0;
     uint8_t buf[2] = {0};
@@ -951,14 +969,14 @@ static uint8_t dl645wt_blanceday(void *instance, uint32_t addr, uint8_t *databuf
     //-保存编程前
     nd_get(instance, 0x41160200, buftmp, 20, NULL);
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Balance);
-    nd_set_index(instance, s_index, buftmp, 20);
+    nd_set_index_port(port, s_index, buftmp, 20);
     buftmp[0] = buftmp[5]; // 第一结算日 
     buftmp[1] = buftmp[7];
 
     buf[1] = BCD_BYTE(*databuf++);
     buf[0] = BCD_BYTE(*databuf++);
     addr1 = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
-    nd_set_index(instance, addr1, buf, 2);
+    nd_set_index_port(port, addr1, buf, 2);
 
 
     if( addr == Balance_Time )
@@ -977,6 +995,7 @@ static uint8_t dl645wt_blanceday(void *instance, uint32_t addr, uint8_t *databuf
 
 static uint8_t dl645wt_runbyte(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint32_t s_index =0;
     
     if(*databuf & 0x01)
@@ -986,7 +1005,7 @@ static uint8_t dl645wt_runbyte(void *instance, uint32_t addr, uint8_t *databuf, 
 
     s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
     nd_mb_offset_relay_ctl_mode());
-    nd_set_offset(instance, s_index, &nd_mb_relay_ctl_mode(instance), sizeof(nd_mb_relay_ctl_mode(instance)));  
+    nd_set_offset_port(port, s_index, &nd_mb_relay_ctl_mode(instance), sizeof(nd_mb_relay_ctl_mode(instance)));  
 
     
     if(*databuf & 0x02) 
@@ -996,17 +1015,18 @@ static uint8_t dl645wt_runbyte(void *instance, uint32_t addr, uint8_t *databuf, 
 
     s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
     nd_mb_offset_lcd_12_mean());
-    nd_set_offset(instance, s_index, &nd_mb_lcd_12_mean(instance), sizeof(nd_mb_lcd_12_mean(instance)));  
+    nd_set_offset_port(port, s_index, &nd_mb_lcd_12_mean(instance), sizeof(nd_mb_lcd_12_mean(instance)));  
 
    
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
-    nd_set_index(instance, s_index, databuf, 1);
+    nd_set_index_port(port, s_index, databuf, 1);
     
     return 0;
 }
 
 static uint8_t dl645wt_hex_string(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint8_t i=0,word=0;
     uint32_t s_index = 0;
     uint8_t tmpbuf[30] = {0};
@@ -1026,18 +1046,18 @@ static uint8_t dl645wt_hex_string(void *instance, uint32_t addr, uint8_t *databu
             //保存编程前
             nd_get(instance, 0x41120200, tmpbuf, 3, NULL);
             addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
-            nd_set_index(instance, addr, tmpbuf, 3);
+            nd_set_index_port(port, addr, tmpbuf, 3);
 
             nd_mb_active_energy_cal_word(instance) = word;
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_active_energy_cal_word());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_active_energy_cal_word(instance), 1);
+            nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_active_energy_cal_word(instance), 1);
 
             record_event_no_mesg_pro(instance, NULL, ActCombWrS, NULL, 1);// 
             break;
         case Weekend:  //周休日特征字
             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
-            nd_set_index(instance, s_index, (uint8_t*)&word, 1);
+            nd_set_index_port(port, s_index, (uint8_t*)&word, 1);
             break;
     }
     return 0;
@@ -1045,6 +1065,7 @@ static uint8_t dl645wt_hex_string(void *instance, uint32_t addr, uint8_t *databu
 
 static uint8_t dl645wt_daytable(void *instance, uint32_t addr, uint8_t *databuf, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint32_t s_index;
     uint8_t i,temp[42]={0,};
     
@@ -1056,7 +1077,7 @@ static uint8_t dl645wt_daytable(void *instance, uint32_t addr, uint8_t *databuf,
             temp[1] = BCD_BYTE(*databuf++);
             temp[0] = BCD_BYTE(*databuf++);
             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
-            nd_set_index(instance, s_index, temp, 3);
+            nd_set_index_port(port, s_index, temp, 3);
         }
     }
     else
@@ -1068,7 +1089,7 @@ static uint8_t dl645wt_daytable(void *instance, uint32_t addr, uint8_t *databuf,
             temp[i*3+0] = BCD_BYTE(*databuf++);
         }
         s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
-        nd_set_index(instance, s_index, temp, 3*MaxTouNum);
+        nd_set_index_port(port, s_index, temp, 3*ND_TARIFF_MAX_PERIODS);
     }
     return 0;
 }

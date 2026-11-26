@@ -106,6 +106,7 @@ typedef struct {
     volatile uint8_t tx_active;
     volatile uint8_t rx_active;
     volatile uint8_t busy;
+    void *hw_ctx;
 } nd_board_spi_dma_t;
 
 void nd_board_spi_dma_init(nd_board_spi_dma_t *dma);
@@ -117,7 +118,8 @@ int nd_board_spi_dma_transfer(nd_board_spi_dma_t *dma, const uint8_t *tx,
                               uint8_t *rx, uint16_t len, uint32_t timeout_us);
 
 /* Implemented by the SoC glue in firmware and by a fake in host tests. */
-int nd_board_spi_dma_hw_start(const uint8_t *tx, uint8_t *rx, uint16_t len);
+int nd_board_spi_dma_hw_start(void *ctx, const uint8_t *tx, uint8_t *rx,
+                              uint16_t len);
 void nd_board_spi_dma_hw_stop(void);
 /*
  * TX DMA completion means the bytes reached the SPI FIFO, not that they left
@@ -126,14 +128,22 @@ void nd_board_spi_dma_hw_stop(void);
 void nd_board_spi_dma_hw_wait_idle(void);
 void nd_board_watchdog_kick(void);
 
+struct nd_idis_board_state;
+typedef struct nd_idis_board_state nd_idis_board_state_t;
+
 #if ND_BOARD_UART_MODE == ND_BOARD_MODE_IRQ
-void nd_board_uart_irq_init(size_t index, const void *config);
-void nd_board_uart_irq_tx_enable(size_t index, uint8_t enable);
-void nd_board_uart_irq_rx_enable(size_t index, uint8_t enable);
-int nd_board_uart_irq_write(size_t index, uint8_t byte);
-int nd_board_uart_irq_tx_done(size_t index);
-int nd_board_uart_irq_read(size_t index, uint8_t *byte);
-int nd_board_uart_irq_rx_done(size_t index);
+void nd_board_uart_irq_init(nd_idis_board_state_t *state, size_t index,
+                            const void *config);
+void nd_board_uart_irq_tx_enable(nd_idis_board_state_t *state, size_t index,
+                                 uint8_t enable);
+void nd_board_uart_irq_rx_enable(nd_idis_board_state_t *state, size_t index,
+                                 uint8_t enable);
+int nd_board_uart_irq_write(nd_idis_board_state_t *state, size_t index,
+                            uint8_t byte);
+int nd_board_uart_irq_tx_done(nd_idis_board_state_t *state, size_t index);
+int nd_board_uart_irq_read(nd_idis_board_state_t *state, size_t index,
+                           uint8_t *byte);
+int nd_board_uart_irq_rx_done(nd_idis_board_state_t *state, size_t index);
 #endif
 
 #endif

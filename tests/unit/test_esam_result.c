@@ -1,6 +1,6 @@
 #include "unity.h"
 
-#include "domain/security/esam_result.h"
+#include "components/services/security/esam_result.h"
 
 void setUp(void) {}
 void tearDown(void) {}

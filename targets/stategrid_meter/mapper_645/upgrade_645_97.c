@@ -1,5 +1,5 @@
 #include "upgrade_645_97.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/app_entry.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
@@ -7,6 +7,7 @@
 #include "target.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "port.h"
+#include "application/adapters/dl645/fr_645_env.h"
 
 //待调整     函数名替换
 
@@ -57,19 +58,21 @@ static uint8_t get_UPmode_len(const uint8_t mode, uint8_t *len)
 
 static uint8_t clear_image_data(void *instance)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint8_t buf = 0xFF;
     //只需擦除第一个扇区， 其余的下载文件时自动清除
-	nd_set_offset_flash(instance, IMAGE_DATA_ID_BLOCK, 0, &buf, 1, 1); //跨页擦除
+	nd_set_offset_flash_port(port, IMAGE_DATA_ID_BLOCK, 0, &buf, 1, 1); //跨页擦除
 	return true;
 }
 
 uint8_t set_image_state(void *instance, const uint8_t state, struct image_transfer_state_t *image_transfer_state)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 	if (state != image_transfer_state->transfer_enable)/*写升级参数*/
 	{
 		image_transfer_state->transfer_enable = state;
 		
-        if (0 > nd_set_index_e2p(instance, (uint8_t*)image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))
+        if (0 > nd_set_index_e2p_port(port, (uint8_t*)image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))
         {
             return false;
         }     
@@ -81,6 +84,7 @@ uint8_t set_image_state(void *instance, const uint8_t state, struct image_transf
 
 static uint8_t process_id_0xcb50(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 	uint8_t *pdata = p_rx + 0x04;
 	struct image_transfer_state_t image_transfer_state;
 
@@ -91,7 +95,7 @@ static uint8_t process_id_0xcb50(void *instance, uint8_t *p_rx, uint8_t *p_tx, u
 	memset((uint8_t*)&image_transfer_state, 0x00, sizeof(struct image_transfer_state_t));
 	image_transfer_state.transfer_enable = transfer_initiated;
     nd_mb_upgrade_check_flag(instance) = 0;
-    if (0 > nd_set_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
+    if (0 > nd_set_index_e2p_port(port, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
 	{
 		return false;
 	}
@@ -102,11 +106,12 @@ static uint8_t process_id_0xcb50(void *instance, uint8_t *p_rx, uint8_t *p_tx, u
 
 uint8_t get_imange_transfer_para(void *instance, uint8_t *buff, const uint8_t len, const uint8_t offset)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 	struct image_transfer_state_t image_transfer_state;
 
 	memset((uint8_t *)&image_transfer_state, 0x00, sizeof(struct image_transfer_state_t));
 
-    if (0 > nd_get_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
+    if (0 > nd_get_index_e2p_port(port, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
 	{
 		return false;
 	}
@@ -119,6 +124,7 @@ uint8_t get_imange_transfer_para(void *instance, uint8_t *buff, const uint8_t le
 
 static uint8_t process_id_0xcb51(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 	uint8_t position;
 	uint8_t transfer_state;
 	uint8_t *pdata = p_rx + 0x04;
@@ -135,7 +141,7 @@ static uint8_t process_id_0xcb51(void *instance, uint8_t *p_rx, uint8_t *p_tx, u
 		return false;
 	}
 
-    if (0 > nd_get_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
+    if (0 > nd_get_index_e2p_port(port, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
 	{
 		return false;
 	}
@@ -148,7 +154,7 @@ static uint8_t process_id_0xcb51(void *instance, uint8_t *p_rx, uint8_t *p_tx, u
 	image_transfer_state.transfer_mode = pdata[0];
 	image_transfer_state.transfer_enable = transfer_set_mode;
 
-    if (0 > nd_set_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))
+    if (0 > nd_set_index_e2p_port(port, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))
 	{
 		return false;
 	}
@@ -159,19 +165,20 @@ static uint8_t process_id_0xcb51(void *instance, uint8_t *p_rx, uint8_t *p_tx, u
 
 static uint8_t process_id_0xcb53(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 	uint8_t *pdata = p_rx + 0x04;
     uint32_t second = 1;
 	struct image_transfer_state_t image_transfer_state;
 
     nd_mb_upgrade_max_block_count(instance) = 0; 
-    if (0 > nd_get_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
+    if (0 > nd_get_index_e2p_port(port, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
 	{
 		return false;
 	}
 	ndv_memcopy(&image_transfer_state.file_type, pdata, ctx->apdu_rx_len - 6);
 	image_transfer_state.transfer_enable = image_identify;
 
-    if (0 > nd_set_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))
+    if (0 > nd_set_index_e2p_port(port, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))
 	{
 		return false;
 	}
@@ -206,19 +213,21 @@ static uint8_t process_id_0xcb53(void *instance, uint8_t *p_rx, uint8_t *p_tx, u
 
 void reboot(void *instance)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint32_t value = IMAGE_ENABLE_FLAG;
 
     nd_mb_frz_min_start_dlysec(instance) = 0; //单相
     
     PowerOff_Save_data(instance); //数据保存
 
-    nd_set_index_e2p(instance, (uint8_t*)&value, IMAGE_PARA_BLOCK, IMAGE_PARA_ID2, 4);
+    nd_set_index_e2p_port(port, (uint8_t*)&value, IMAGE_PARA_BLOCK, IMAGE_PARA_ID2, 4);
     
     NVIC_SystemReset();  /* 直接复位CM3及外围电路 */
 }
 
 uint8_t meter_update_check(void *instance)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 //	uint32_t value;
 	uint32_t now_second = 0,check_second = 0;
 
@@ -230,7 +239,7 @@ uint8_t meter_update_check(void *instance)
 		return false;
 	}
 
-    if (0 > nd_get_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
+    if (0 > nd_get_index_e2p_port(port, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
 	{
 	    nd_mb_upgrade_check_flag(instance) = 0;
 		return false;
@@ -248,7 +257,7 @@ uint8_t meter_update_check(void *instance)
 	{
 		memset(image_transfer_state.datatime, 0x00,0x04);
         
-        if (0 > nd_set_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))
+        if (0 > nd_set_index_e2p_port(port, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))
 		{
 			return false;
 		}
@@ -261,6 +270,7 @@ uint8_t meter_update_check(void *instance)
 
 static uint8_t image_crc_check(void *instance, uint8_t *buff)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 	uint8_t len, result;
 	uint16_t crc16 = 0xFFFF;
 	uint16_t image_crc;
@@ -268,7 +278,7 @@ static uint8_t image_crc_check(void *instance, uint8_t *buff)
 
 	struct image_transfer_state_t image_transfer_state;
 
-    if (0 > nd_get_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
+    if (0 > nd_get_index_e2p_port(port, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
 	{
 		return check_other_reason;
 	}
@@ -301,7 +311,7 @@ static uint8_t image_crc_check(void *instance, uint8_t *buff)
 			len = (uint8_t)(data_len - data_len_count);
 		}
 		
-		if (0 > nd_get_offset_flash(instance, IMAGE_DATA_ID_BLOCK, data_len_count + IMAGE_MAP_LEN, buff, len))
+		if (0 > nd_get_offset_flash_port(port, IMAGE_DATA_ID_BLOCK, data_len_count + IMAGE_MAP_LEN, buff, len))
 		{
 			return check_other_reason;
 		}
@@ -346,6 +356,7 @@ static uint8_t process_id_0xcb55(void *instance, uint8_t *p_rx, uint8_t *p_tx, u
 
 static uint8_t process_id_0xcb58(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     int ret = 0;
     struct tm  upgrade_time;
 	uint32_t second;
@@ -360,7 +371,7 @@ static uint8_t process_id_0xcb58(void *instance, uint8_t *p_rx, uint8_t *p_tx, u
         return false;
     }
 
-    if (0 > nd_get_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))
+    if (0 > nd_get_index_e2p_port(port, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))
 	{
 		return false;
 	}
@@ -426,6 +437,7 @@ static uint8_t is_illagle_frame_len(struct image_transfer_state_t *image_transfe
 
 static uint8_t process_id_0xcafd(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     int ret = 0;
 
 	uint8_t image_data_len = 0, bit_map = 0, erase_flag = 1;
@@ -448,7 +460,7 @@ static uint8_t process_id_0xcafd(void *instance, uint8_t *p_rx, uint8_t *p_tx, u
 	{
 		return false;
 	}
-    if (0 > nd_get_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))
+    if (0 > nd_get_index_e2p_port(port, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))
 	{
 		return false;
 	}
@@ -495,20 +507,20 @@ static uint8_t process_id_0xcafd(void *instance, uint8_t *p_rx, uint8_t *p_tx, u
     }
 
 
-    if (0 > nd_set_offset_flash(instance, IMAGE_DATA_ID_BLOCK, image_data_offset_addr, pdata + 8, image_data_len, erase_flag)) //跨页擦除
+    if (0 > nd_set_offset_flash_port(port, IMAGE_DATA_ID_BLOCK, image_data_offset_addr, pdata + 8, image_data_len, erase_flag)) //跨页擦除
 	{
 		return false;
 	}
 
 	bit_map_offset_addr = current_block_count / 8;/*位图处理*/
 
-    if (0 > nd_get_offset_flash(instance, IMAGE_DATA_ID_BLOCK, bit_map_offset_addr, &bit_map, 0x01)) 
+    if (0 > nd_get_offset_flash_port(port, IMAGE_DATA_ID_BLOCK, bit_map_offset_addr, &bit_map, 0x01)) 
 	{
 		return false;
 	}
 	bit_map &= ~(0x80 >> (current_block_count % 8));
 
-    nd_set_offset_flash(instance, IMAGE_DATA_ID_BLOCK, bit_map_offset_addr, &bit_map, 1, 0); //跨页不擦除
+    nd_set_offset_flash_port(port, IMAGE_DATA_ID_BLOCK, bit_map_offset_addr, &bit_map, 1, 0); //跨页不擦除
 	
 
 	if ((transfer_image_data != image_transfer_state.transfer_enable)
@@ -516,7 +528,7 @@ static uint8_t process_id_0xcafd(void *instance, uint8_t *p_rx, uint8_t *p_tx, u
 	{
 		image_transfer_state.transfer_enable = transfer_image_data;
 		ndv_memcopy((uint8_t *)image_transfer_state.block_num, pdata, 0x04);
-        if (0 > nd_set_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
+        if (0 > nd_set_index_e2p_port(port, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
 		{
 			return false;
 		}
@@ -630,6 +642,7 @@ static uint8_t process_id_0xcb52(void *instance, uint8_t *p_rx, uint8_t *p_tx, u
 
 static uint8_t process_id_0xcb54(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 	uint8_t count;
 	uint8_t *p_rxdata = p_rx + 2;
 	uint8_t *p_txdata = p_tx;
@@ -637,7 +650,7 @@ static uint8_t process_id_0xcb54(void *instance, uint8_t *p_rx, uint8_t *p_tx, u
 	uint16_t end_bit_map;
 	struct image_transfer_state_t image_transfer_state;
 
-    if (0 > nd_get_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
+    if (0 > nd_get_index_e2p_port(port, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
 	{
 		return false;
 	}
@@ -661,7 +674,7 @@ static uint8_t process_id_0xcb54(void *instance, uint8_t *p_rx, uint8_t *p_tx, u
 		}
 	}
 
-    if (0 > nd_get_offset_flash(instance, IMAGE_DATA_ID_BLOCK, start_bit_map, p_txdata, end_bit_map))
+    if (0 > nd_get_offset_flash_port(port, IMAGE_DATA_ID_BLOCK, start_bit_map, p_txdata, end_bit_map))
     {
         return false;
     }
@@ -682,11 +695,12 @@ static uint8_t process_id_0xcb54(void *instance, uint8_t *p_rx, uint8_t *p_tx, u
 
 static uint8_t process_id_0xcb56(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 	uint8_t *pbuff = p_tx;
 
 	struct image_transfer_state_t image_transfer_state;
 
-    if (0 > nd_get_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
+    if (0 > nd_get_index_e2p_port(port, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
 	{
 		return false;
 	}
@@ -713,13 +727,14 @@ static uint8_t process_id_0xcb56(void *instance, uint8_t *p_rx, uint8_t *p_tx, u
 
 static uint8_t process_id_0xcb57(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *tx_len, struct context_645_t* ctx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 	uint8_t *pbuff = p_tx;
 	uint32_t block_size;
 	uint32_t image_size;
 	
 	struct image_transfer_state_t image_transfer_state;
 
-    if (0 > nd_get_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
+    if (0 > nd_get_index_e2p_port(port, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
 	{
 		return false;
 	}
@@ -807,11 +822,12 @@ const struct image_read_id_t  *find_image_read_id_processor(uint16_t id)
 //升级状态失效   _单相
 uint8_t disable_upgrade(void *instance)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     struct image_transfer_state_t image_transfer_state;
     memset((uint8_t*)&image_transfer_state, 0x00, sizeof(struct image_transfer_state_t));
     image_transfer_state.transfer_enable = transfer_not_initiated;
     nd_mb_upgrade_check_flag(instance) = 0;
-    if (0 > nd_set_index_e2p(instance, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
+    if (0 > nd_set_index_e2p_port(port, (uint8_t*)&image_transfer_state, IMAGE_PARA_BLOCK, IMAGE_PARA_ID, sizeof(struct image_transfer_state_t)))	
 	{
 		return false;
 	}    

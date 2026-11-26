@@ -71,6 +71,7 @@ int __matcher_698(void* pctx, uint8_t* b)
         ctx->hcs = update_crc16(ctx->hcs, byte);
         ctx->fcs = update_crc16(ctx->fcs, byte);
         ctx->SA = byte;//SA
+        ctx->sa_type_raw = (uint8_t)get_addr_type(ctx->SA);
         ctx->index = 0;
         ctx->step = 6;
         if(SA_LOGIC_TYPE(ctx->SA)){

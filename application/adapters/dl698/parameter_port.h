@@ -25,12 +25,12 @@ typedef struct nd_dl698_parameter_port {
                  const uint8_t *buffer, size_t length);
 } nd_dl698_parameter_port_t;
 
-void dl698_bind_parameters(const nd_dl698_parameter_port_t *port);
-
-int dl698_parameter_read(dl698_parameter_t parameter, uint8_t *buffer,
+int dl698_parameter_read(const nd_dl698_parameter_port_t *port,
+                         dl698_parameter_t parameter, uint8_t *buffer,
                          size_t length);
 
-int dl698_parameter_write(dl698_parameter_t parameter,
+int dl698_parameter_write(const nd_dl698_parameter_port_t *port,
+                          dl698_parameter_t parameter,
                           const uint8_t *buffer, size_t length);
 
 #endif

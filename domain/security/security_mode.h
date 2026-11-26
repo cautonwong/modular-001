@@ -30,10 +30,7 @@ enum {
     ND_SECURITY_AUTH_SID = 3
 };
 
-uint16_t nd_security_mode_lookup(uint16_t oi);
 int nd_security_mode_check(uint16_t mode, uint8_t cmd, uint8_t security_choice,
                            uint8_t verification_choice);
-int nd_security_plain_read_allowed(uint32_t oad);
-int nd_security_infrared_oad_allowed(uint32_t oad);
 
 #endif

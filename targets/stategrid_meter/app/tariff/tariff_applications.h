@@ -11,12 +11,6 @@ unsigned char TouTab_Format_Check(void *instance,
                                   unsigned char *Addr, unsigned char *Len);
 unsigned long GetTotalMin(unsigned char *Addr);
 
-#define MaxSeasonNum 14
-#define MaxTouNum 14
-#define MaxFeeNum 12
-#define MaxHolidayNum 20
-#define MaxTouTabNum 8
-#define MaxStepNum 6
 
 #define F_TOUChange 0x01
 #define F_DAYTABChange 0x02

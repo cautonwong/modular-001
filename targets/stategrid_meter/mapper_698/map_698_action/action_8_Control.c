@@ -2,7 +2,8 @@
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include <stdbool.h>
 #include "fr_698.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
 
@@ -46,6 +47,7 @@ void app_handle_mac_suspend(void *instance, uint32_t oad)
 
 int ACTION_8_Parameter(void *instance, uint32_t id, uint8_t* buf, void *pctx)
 {   
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     struct context_698_t* ctx = (struct context_698_t*)pctx;
     
     uint8_t* p = buf;
@@ -177,10 +179,10 @@ int ACTION_8_Parameter(void *instance, uint32_t id, uint8_t* buf, void *pctx)
                     nd_mb_alarmmin(instance) = Alarm_min;
                     //大电流延时时间赋值
                     addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectValue);
-                    nd_get_index(instance, addr, password, 4); 
+                    nd_get_index_port(port, addr, password, 4); 
                     mem_swap_cpy((uint8_t*)&nd_mb_i_prot(instance), password, 4);
                     addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ImaxProtectTime);
-                    nd_get_index(instance, addr, (uint8_t*)password, 2); 
+                    nd_get_index_port(port, addr, (uint8_t*)password, 2); 
                     mem_swap_cpy((uint8_t*)&nd_mb_prot_time(instance), password, 2);
                     if((abs(nd_mb_current_l(instance)) > (nd_mb_i_prot(instance) / 10)) && (nd_mb_i_prot(instance) != 0))
                     {
@@ -219,7 +221,7 @@ int ACTION_8_Parameter(void *instance, uint32_t id, uint8_t* buf, void *pctx)
                         //p = p + 3;
                         
                         addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Password);
-                        nd_get_index(instance, addr, password_des, 8); 
+                        nd_get_index_port(port, addr, password_des, 8); 
                         
                         if((mem_compare(password_des, password, 8)!=0) || (nd_mb_password_err_cnt(instance) >= 3))
                         {

@@ -1,6 +1,6 @@
 #include "unity.h"
 
-#include "domain/display/backlight_control.h"
+#include "targets/stategrid_meter/app/display/backlight_control.h"
 
 void setUp(void) {}
 void tearDown(void) {}

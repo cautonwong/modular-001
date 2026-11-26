@@ -3,9 +3,10 @@
 #
 # --strict makes a missing tool a failure; the GitHub workflow uses it after
 # installing CBMC, Frama-C, Java/TLA+ and Lean. Local runs skip what is not
-# installed. Frama-C 33 runs only the Eva plugin: the bundle carries the why3
-# runtime but no external prover (Alt-Ergo/Z3/CVC5), so WP can only discharge
-# trivial goals with Qed and is not part of this gate.
+# installed. Frama-C 33 runs only the Eva plugin. WP is not part of this gate:
+# the bundle ships the why3 runtime and prover detection data but no prover,
+# and with a system z3 or Alt-Ergo the store contracts still time out or come
+# back unknown.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -13,6 +14,17 @@ STRICT=0
 [ "${1:-}" = "--strict" ] && STRICT=1
 FAILED=0
 MISSING=0
+
+# One lock per worktree, shared with ci_matrix.py and kept outside build/ so
+# wiping the build directory does not release a running job.
+exec 9>>"$ROOT/.ci.lock"
+if command -v flock >/dev/null 2>&1; then
+    if ! flock -n 9; then
+        echo "formal: another ci.sh or check_formal.sh is running for $ROOT" >&2
+        exit 1
+    fi
+fi
+printf '%s\n' "$$" >&9
 
 # Property and statement totals per harness. A check call added or removed,
 # or production code reaching new statements, changes these; the mismatch
@@ -70,7 +82,7 @@ cbmc_check() {
 
 echo "== cbmc: A-XDR length decoder =="
 if need cbmc; then
-    cbmc_check "A-XDR length decoder" 498 \
+    cbmc_check "A-XDR length decoder" 502 \
         "$ROOT/formal/cbmc/axdr_length.c" "$ROOT/components/protocol/dlms/src/nd_axdr.c" \
         -I "$ROOT" -I "$ROOT/components/protocol/dlms/include" \
         --unwind 1 --bounds-check --pointer-check --div-by-zero-check \
@@ -242,6 +254,11 @@ if need "$FRAMA_C_BIN"; then
         "$SECTOR_TOTAL_STATEMENTS" || FAILED=1
 fi
 
+echo "== frama-c: negative mutation cases =="
+if need "$FRAMA_C_BIN"; then
+    bash "$ROOT/tools/check_formal_negatives.sh" || FAILED=1
+fi
+
 # TLA2TOOLS names the jar; CI downloads it to the runner temp. A local run
 # may also leave it in formal/tla/ or /tmp (the jar is never committed).
 TLA_JAR=""
@@ -277,6 +294,7 @@ fi
 echo "== lean: FIFO, pulse, profile and energy snapshot arithmetic =="
 if need lean && need lake; then
     (cd "$ROOT/formal/lean" && lake build) || FAILED=1
+    python3 "$ROOT/tools/check_lean_manifest.py" || FAILED=1
 fi
 
 if [ "$FAILED" -ne 0 ]; then

@@ -4,12 +4,12 @@
 #include <stdint.h>
 
 #include "infra/drivers/storage/eeprom/eeprom.h"
+#include "targets/stategrid_meter/board/board_state.h"
 
 #define BOARD_EEPROM_SIZE 0xFFFFu
 
-/* Bit 1 reports an EEPROM fault to the platform port. */
-extern uint8_t DEVICE_ERR;
-
-nd_eeprom_t *board_eeprom(void);
+nd_eeprom_t *board_eeprom(stategrid_board_state_t *state);
+/* Bit 1 of DEVICE_ERR, the EEPROM fault the platform port reports. */
+uint8_t nd_board_device_error(const stategrid_board_state_t *state);
 
 #endif

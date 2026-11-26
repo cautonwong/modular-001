@@ -14,11 +14,10 @@ typedef struct nd_platform_port {
     void (*device_error_reported)(void *ctx);
 } nd_platform_port_t;
 
-void nd_platform_bind(const nd_platform_port_t *port);
-void nd_platform_watchdog_kick(void);
-void nd_platform_event_output_set(bool enable);
+void nd_platform_watchdog_kick(const nd_platform_port_t *port);
+void nd_platform_event_output_set(const nd_platform_port_t *port, bool enable);
 /* True while the board reports a memory (EEPROM) fault. */
-bool nd_platform_device_error(void);
-void nd_platform_device_error_reported(void);
+bool nd_platform_device_error(const nd_platform_port_t *port);
+void nd_platform_device_error_reported(const nd_platform_port_t *port);
 
 #endif

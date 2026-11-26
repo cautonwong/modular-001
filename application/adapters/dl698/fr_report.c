@@ -5,11 +5,11 @@
 #include "fr_698_internal.h"
 #include "parameter_port.h"
 #include "report_list.h"
-#include "meter_base_view.h"
+#include "application/ports/meter_base.h"
 #include "application/ports/platform.h"
 #include "domain/common/status.h"
-#include "domain/report/report_policy.h"
-#include "domain/report/report_retry.h"
+#include "application/adapters/dl698/report_policy.h"
+#include "application/adapters/dl698/report_retry.h"
 #include "fr_645_report.h"
 #include "fr_report_frames.h"
 
@@ -23,63 +23,68 @@
 void report_2015state_judge(void * instance)
 {
 
-    static uint8_t   rtc_cnt = 0;
+    uint8_t *rtc_cnt = nd_fr698_rtc_cnt(instance);
+    const nd_platform_port_t *platform = nd_fr698_platform(instance);
+
+    if (rtc_cnt == NULL) {
+        return;
+    }
 
 
-    if( nd_mb_voltage_battery(instance) < 300 ) //电池电压低
+    if( nd_mb_get_voltage_battery(instance) < 300 ) //电池电压低
     {
 
-        if(rtc_cnt > 2)
+        if(*rtc_cnt > 2)
         {
-            if (!(nd_mb_report_2015_cache(instance) & RPT_2015_RTC_BATTERY_LOW))
+            if (!(nd_mb_get_report_2015_cache(instance) & RPT_2015_RTC_BATTERY_LOW))
             {
-                nd_mb_report_2015_cache(instance) |= RPT_2015_RTC_BATTERY_LOW;
+                nd_mb_set_report_2015_cache(instance, nd_mb_get_report_2015_cache(instance) | RPT_2015_RTC_BATTERY_LOW);
                 report_645state_judge(instance, RPT_2015_RTC_BATTERY_LOW);
                 report_2015state_update(instance, RPT_2015_RTC_BATTERY_LOW);
             }
         }
         else
         {
-            rtc_cnt++;
+            (*rtc_cnt)++;
         }
     }
-    else if( nd_mb_voltage_battery(instance) > 305 ) //电池电压低
+    else if( nd_mb_get_voltage_battery(instance) > 305 ) //电池电压低
     {
-        rtc_cnt = 0;
-        nd_mb_report_2015_cache(instance) &=~RPT_2015_RTC_BATTERY_LOW;
+        *rtc_cnt = 0;
+        nd_mb_set_report_2015_cache(instance, nd_mb_get_report_2015_cache(instance) & ~RPT_2015_RTC_BATTERY_LOW);
     }
 
     //ESAM故障
-    if ( nd_mb_esam_chip_abnormal(instance) == ND_EVENT_SET )
+    if ( nd_mb_get_esam_chip_abnormal(instance) == ND_STATUS_SET )
     {
-        if (!(nd_mb_report_2015_cache(instance) & RPT_2015_ESAM_ERR))
+        if (!(nd_mb_get_report_2015_cache(instance) & RPT_2015_ESAM_ERR))
         {
-            nd_mb_report_2015_cache(instance) |= RPT_2015_ESAM_ERR;
+            nd_mb_set_report_2015_cache(instance, nd_mb_get_report_2015_cache(instance) | RPT_2015_ESAM_ERR);
             report_645state_judge(instance, RPT_2015_ESAM_ERR);
             report_2015state_update(instance, RPT_2015_ESAM_ERR);
         }
     }
     else
     {
-        nd_mb_report_2015_cache(instance) &=~RPT_2015_ESAM_ERR;
+        nd_mb_set_report_2015_cache(instance, nd_mb_get_report_2015_cache(instance) & ~RPT_2015_ESAM_ERR);
     }
 
 
 
     //存储器故障
-    if ( nd_platform_device_error() )
+    if ( nd_platform_device_error(platform) )
     {
-        if (!(nd_mb_report_2015_cache(instance) & RPT_2015_MEMORIZER_ERR))
+        if (!(nd_mb_get_report_2015_cache(instance) & RPT_2015_MEMORIZER_ERR))
         {
-            nd_mb_report_2015_cache(instance) |= RPT_2015_MEMORIZER_ERR;
+            nd_mb_set_report_2015_cache(instance, nd_mb_get_report_2015_cache(instance) | RPT_2015_MEMORIZER_ERR);
             report_645state_judge(instance, RPT_2015_MEMORIZER_ERR);
             report_2015state_update(instance, RPT_2015_MEMORIZER_ERR);
         }
-        nd_platform_device_error_reported();
+        nd_platform_device_error_reported(platform);
     }
     else
     {
-        nd_mb_report_2015_cache(instance) &=~RPT_2015_MEMORIZER_ERR;
+        nd_mb_set_report_2015_cache(instance, nd_mb_get_report_2015_cache(instance) & ~RPT_2015_MEMORIZER_ERR);
     }
 
 
@@ -91,14 +96,14 @@ void report_2015state_judge(void * instance)
 
 
 
-//获取跟随上报使能开关
-static uint8_t follow_report_enable_get(void *)
+static uint8_t follow_report_enable_get(void * instance)
 {
     int ret;
     uint8_t buf[5] = {0};
 
-    ret = dl698_parameter_read(DL698_PARAM_REPORT_FOLLOW_EN, buf, 1);
-    if ((ret == 0) && (1 == buf[0]))//是否打开跟随上报
+    ret = dl698_parameter_read(nd_fr698_parameter_port(instance),
+                               DL698_PARAM_REPORT_FOLLOW_EN, buf, 1);
+    if ((ret == 0) && (1 == buf[0]))
     {
         return 1;
     }
@@ -120,7 +125,7 @@ uint16_t len = 0;
     uint8_t num = 0, flag = 0, rptmode = 0;
 
 
-    if((ctx == NULL) || !nd_mb_valid(instance))
+    if((ctx == NULL) || !nd_mb_get_valid(instance))
     {
         return 0;
     }
@@ -143,7 +148,7 @@ uint16_t len = 0;
         flag |= 0x01;
     }
 
-    mask = nd_mb_report_2015_state(instance)[ctx->channel];
+    mask = nd_mb_get_report_2015_state(instance, ctx->channel);
     rptmode = read_event_report_flag_mode(instance, 0x20150200, 1);
     if(rptmode != 1 )
     {
@@ -219,7 +224,7 @@ static dl698_parameter_t report_3320_key(uint16_t channel)
     }
 }
 
-int dl698_report_list_read(uint16_t channel, uint8_t* buffer, uint16_t length)
+int dl698_report_list_read(void * instance, uint16_t channel, uint8_t* buffer, uint16_t length)
 {
     dl698_parameter_t key = report_3320_key(channel);
 
@@ -227,10 +232,11 @@ int dl698_report_list_read(uint16_t channel, uint8_t* buffer, uint16_t length)
     {
         return -1;
     }
-    return dl698_parameter_read(key, buffer, length);
+    return dl698_parameter_read(nd_fr698_parameter_port(instance), key, buffer,
+                                length);
 }
 
-int dl698_report_list_write(uint16_t channel, const uint8_t* buffer, uint16_t length)
+int dl698_report_list_write(void * instance, uint16_t channel, const uint8_t* buffer, uint16_t length)
 {
     dl698_parameter_t key = report_3320_key(channel);
 
@@ -238,28 +244,28 @@ int dl698_report_list_write(uint16_t channel, const uint8_t* buffer, uint16_t le
     {
         return -1;
     }
-    return dl698_parameter_write(key, buffer, length);
+    return dl698_parameter_write(nd_fr698_parameter_port(instance), key,
+                                 buffer, length);
 }
 
-// 上报通道使能检查
-uint8_t report_channel_check(void *, uint16_t channel)
+uint8_t report_channel_check(void * instance, uint16_t channel)
 {
     uint8_t buf[13] = {0};
 
-    if (dl698_parameter_read(DL698_PARAM_REPORT_CHANNEL, buf, sizeof(buf)) < 0)
+    if (dl698_parameter_read(nd_fr698_parameter_port(instance),
+                             DL698_PARAM_REPORT_CHANNEL, buf, sizeof(buf)) < 0)
     {
         return false;
     }
 
     return nd_report_channel_enabled(channel, buf, sizeof(buf));
 }
-//获取3320中最新的 跟随上报 oad
 uint32_t follow_report_3320List_Latest_oad_get(void * instance, uint8_t chn)
 {
     nd_report_list_t list;
     uint8_t buf[241], i, rptmode;
 
-    if (dl698_report_list_read((uint16_t)chn, buf, sizeof(buf)) != 0)
+    if (dl698_report_list_read(instance, (uint16_t)chn, buf, sizeof(buf)) != 0)
     {
         return 0;
     }
@@ -286,6 +292,7 @@ void EventOut_698_check(void *instance)
 {
 uint8_t rptmode, count;
     uint32_t mask;
+    const nd_platform_port_t *platform = nd_fr698_platform(instance);
 
 
     //eventout受43000700允许跟随上报开关影响             //后续做成可配
@@ -293,7 +300,7 @@ uint8_t rptmode, count;
     {
         if (0 == follow_report_enable_get(instance))//是否打开跟随上报
         {
-            nd_platform_event_output_set(false);
+            nd_platform_event_output_set(platform, false);
             return;
         }
     }
@@ -301,7 +308,7 @@ uint8_t rptmode, count;
     //是否是上报通道
     if (false == report_channel_check(instance, FR_698_CHL_PLC))
     {
-        nd_platform_event_output_set(false);
+        nd_platform_event_output_set(platform, false);
         return;
     }
 
@@ -312,7 +319,7 @@ uint8_t rptmode, count;
         count = 1;
     }
 
-    mask = nd_mb_report_2015_state(instance)[FR_698_CHL_PLC];
+    mask = nd_mb_get_report_2015_state(instance, FR_698_CHL_PLC);
 
     rptmode = read_event_report_flag_mode(instance, 0x20150200, 1);
     if(rptmode != 1 )
@@ -322,11 +329,11 @@ uint8_t rptmode, count;
 
     if ((count == 0) && (mask == 0))
     {
-        nd_platform_event_output_set(false); //关闭
+        nd_platform_event_output_set(platform, false);
     }
     else
     {
-        nd_platform_event_output_set(true);   //打开 置高
+        nd_platform_event_output_set(platform, true);
     }
 }
 
@@ -337,16 +344,16 @@ void report_3320list_2015state_clear(void * instance)
 
     for (i = 0; i< 4; i++)
     {
-        nd_mb_report_2015_state(instance)[i] = 0;
+        nd_mb_set_report_2015_state(instance, i, 0);
 
         buf[0] = 0;
-        dl698_report_list_write((uint16_t)i, buf, 1);
+        dl698_report_list_write(instance, (uint16_t)i, buf, 1);
     }
     //跟随上报状态字 存e2p
-    nd_mb_save_report_2015_state(instance);
+    nd_mb_do_save_report_2015_state(instance);
 
 
-    nd_mb_report_2015_cache(instance) = 0;
+    nd_mb_set_report_2015_cache(instance, 0);
 
 
     EventOut_698_check(instance);
@@ -388,8 +395,8 @@ uint8_t need_report_piid = false;
         {
             if(active_report_3320list_confirmed(instance))
             {
-                nd_mb_active_report_cmdtype(instance) &=~ ACTIVE_REPORT_3320;
-                nd_mb_active_report_retry_cnt(instance)[R_3320] = 0;
+                nd_mb_set_active_report_cmdtype(instance, nd_mb_get_active_report_cmdtype(instance) & ~ACTIVE_REPORT_3320);
+                nd_mb_set_active_report_retry_cnt(instance, R_3320, 0);
                 need_report_piid = true;
             }
         }
@@ -398,20 +405,20 @@ uint8_t need_report_piid = false;
 
             if(report_3320list_confirmed(instance, FR_698_CHL_PLC, oad&0xFFFFFF00, 0))
             {
-                //nd_mb_active_report_cmdtype(instance) &=~ ACTIVE_REPORT_3011_END; //挪report_3320list_confirmed里面
-                //nd_mb_active_report_retry_cnt(instance)[R_3011_END] = 0;
+                //nd_mb_set_active_report_cmdtype(instance, nd_mb_get_active_report_cmdtype(instance) & ~ACTIVE_REPORT_3011_END); //挪report_3320list_confirmed里面
+                //nd_mb_set_active_report_retry_cnt(instance, R_3011_END, 0);
                 need_report_piid = true;
             }
         }
         else if(oad == 0x20150200)
         {
-            if(nd_mb_report_2015_state(instance)[FR_698_CHL_PLC] == 0)//确认2015时没有要确认的数据，则不做后续处理
+            if(nd_mb_get_report_2015_state(instance, FR_698_CHL_PLC) == 0)//确认2015时没有要确认的数据，则不做后续处理
             {
                 return 0;
             }
-            nd_mb_report_2015_state(instance)[FR_698_CHL_PLC] = 0;
-            nd_mb_active_report_cmdtype(instance) &=~ ACTIVE_REPORT_2015;
-            nd_mb_active_report_retry_cnt(instance)[R_2015] = 0;
+            nd_mb_set_report_2015_state(instance, FR_698_CHL_PLC, 0);
+            nd_mb_set_active_report_cmdtype(instance, nd_mb_get_active_report_cmdtype(instance) & ~ACTIVE_REPORT_2015);
+            nd_mb_set_active_report_retry_cnt(instance, R_2015, 0);
             need_report_piid = true;
 
             State2015_reset = 0xFFFFFFFF;
@@ -419,7 +426,7 @@ uint8_t need_report_piid = false;
         }
     }
     if(need_report_piid)
-        nd_mb_report_piid(instance)++;
+        nd_mb_set_report_piid(instance, nd_mb_get_report_piid(instance) + 1);
 
     EventOut_698_check(instance);
     return 0;
@@ -435,15 +442,15 @@ uint8_t need_report_piid = false;
 void clear_active_report_time_count(void * instance, enum active_report_type_t type)
 {
 
-    nd_mb_active_report_retry_dly(instance)[type] = 0;
-    nd_mb_active_report_retry_cnt(instance)[type] = 0;
+    nd_mb_set_active_report_retry_dly(instance, type, 0);
+    nd_mb_set_active_report_retry_cnt(instance, type, 0);
 
     if ((type == R_3011_START)||(type == R_3011_END))
     {
-        nd_mb_active_report_retry_dly(instance)[R_3011_START] = 0;
-        nd_mb_active_report_retry_cnt(instance)[R_3011_START] = 0;
-        nd_mb_active_report_retry_dly(instance)[R_3011_END] = 0;
-        nd_mb_active_report_retry_cnt(instance)[R_3011_END] = 0;
+        nd_mb_set_active_report_retry_dly(instance, R_3011_START, 0);
+        nd_mb_set_active_report_retry_cnt(instance, R_3011_START, 0);
+        nd_mb_set_active_report_retry_dly(instance, R_3011_END, 0);
+        nd_mb_set_active_report_retry_cnt(instance, R_3011_END, 0);
     }
 
 }
@@ -460,20 +467,20 @@ static void active_report_normal_CMD_set(void * instance, uint8_t chn, uint8_t s
     {
         if(setType)//3320
         {
-            nd_mb_active_report_cmdtype(instance) |= ACTIVE_REPORT_3320;
+            nd_mb_set_active_report_cmdtype(instance, nd_mb_get_active_report_cmdtype(instance) | ACTIVE_REPORT_3320);
         }
         else//2015
         {
-            nd_mb_active_report_cmdtype(instance) |= ACTIVE_REPORT_2015;
+            nd_mb_set_active_report_cmdtype(instance, nd_mb_get_active_report_cmdtype(instance) | ACTIVE_REPORT_2015);
         }
 
         //3320和2015 可合并上报，可分开确认
         clear_active_report_time_count(instance, R_3320);
         clear_active_report_time_count(instance, R_2015);
 
-        if (*nd_fr698_power_state(instance) == ND_AC_POWER_OFF)
+        if (nd_mb_get_power_state(instance) == ND_POWER_OFF)
         {
-            nd_mb_save_active_report_state(instance);
+            nd_mb_do_save_active_report_state(instance);
         }
     }
 }
@@ -484,9 +491,7 @@ static void active_report_normal_CMD_set(void * instance, uint8_t chn, uint8_t s
 
 
 
-//更新 3320列表，
 //add_or_del: 0 删除  1新增,          0xFF: 传入属性6，自动删除属性6/7/8/9 [针对分项事件清零]
-//chn通道
 static uint8_t report_3320list_update(void * instance, uint8_t chn, uint8_t add_or_del, uint32_t oad)
 {
     nd_report_list_t list;
@@ -495,7 +500,7 @@ static uint8_t report_3320list_update(void * instance, uint8_t chn, uint8_t add_
     uint32_t masked_oad = oad & 0xffff1fff;
     uint8_t rptmode;
 
-    if (dl698_report_list_read((uint16_t)chn, buf, sizeof(buf)) != 0)
+    if (dl698_report_list_read(instance, (uint16_t)chn, buf, sizeof(buf)) != 0)
     {
         return false;
     }
@@ -504,7 +509,7 @@ static uint8_t report_3320list_update(void * instance, uint8_t chn, uint8_t add_
         return false;
     }
 
-    if (add_or_del == 0xFF) //针对分项事件清零 删除属性6/7/8/9
+    if (add_or_del == 0xFF)
     {
         variants = 4;
     }
@@ -537,7 +542,7 @@ static uint8_t report_3320list_update(void * instance, uint8_t chn, uint8_t add_
     {
         return false;
     }
-    return dl698_report_list_write((uint16_t)chn, buf, sizeof(buf)) == 0;
+    return dl698_report_list_write(instance, (uint16_t)chn, buf, sizeof(buf)) == 0;
 }
 
 
@@ -564,7 +569,7 @@ void report_3320list_add(void * instance,uint32_t oad)
     if (get_OAD_OI(oad) == 0x3013)
     {
         //测试秘钥状态0-私钥 1-公钥
-        if ( nd_mb_key_state(instance) == true )
+        if ( nd_mb_get_key_state(instance) == true )
         {
             return;
         }
@@ -583,15 +588,14 @@ void report_3320list_add(void * instance,uint32_t oad)
 
 }
 
-//上报列表中只确认主动上报oad
-uint8_t active_report_3320list_confirmed(void * instance)//确认掉3320里面处于主动上报的OAD
+uint8_t active_report_3320list_confirmed(void * instance)
 {
     nd_report_list_t list;
     uint8_t *tmpbuf = nd_fr698_apdu_cache(instance);
     uint8_t i = 0, removed = 0;
     uint8_t rptmode;
 
-    if (dl698_report_list_read(FR_698_CHL_PLC, tmpbuf, 241) != 0)
+    if (dl698_report_list_read(instance, FR_698_CHL_PLC, tmpbuf, 241) != 0)
     {
         return false;
     }
@@ -623,7 +627,7 @@ uint8_t active_report_3320list_confirmed(void * instance)//确认掉3320里面�
     {
         return false;
     }
-    return dl698_report_list_write(FR_698_CHL_PLC, tmpbuf, 241) == 0;
+    return dl698_report_list_write(instance, FR_698_CHL_PLC, tmpbuf, 241) == 0;
 }
 
 
@@ -649,8 +653,8 @@ uint8_t report_3320list_confirmed(void * instance, uint8_t chn, uint32_t oad, ui
     {
         if(0x3011 == get_OAD_OI(oad)) // 3320中确认3011，同步也要确认停电上报事件
         {
-            nd_mb_active_report_cmdtype(instance) &=~ ACTIVE_REPORT_3011_END;
-            nd_mb_active_report_retry_cnt(instance)[R_3011_END] = 0;
+            nd_mb_set_active_report_cmdtype(instance, nd_mb_get_active_report_cmdtype(instance) & ~ACTIVE_REPORT_3011_END);
+            nd_mb_set_active_report_retry_cnt(instance, R_3011_END, 0);
         }
 
     }
@@ -693,11 +697,11 @@ uint8_t report_2015state_update(void * instance, uint32_t mask)
     uint8_t comm_chn[4] = { FR_698_CHL_IR, FR_698_CHL_RS485_1,  FR_698_CHL_PLC,  FR_698_CHL_RS485_2 };
     uint8_t i, rptmode;
 
-    if (nd_report_2015_enabled(nd_mb_report_2015_mode(instance), mask))
+    if (nd_report_2015_enabled(nd_mb_get_report_2015_mode(instance), mask))
     {
         for (i = 0; i< (sizeof(comm_chn) / sizeof(comm_chn[0])); i++)
         {
-            nd_mb_report_2015_state(instance)[i] |= mask;
+            nd_mb_set_report_2015_state(instance, i, nd_mb_get_report_2015_state(instance, i) | mask);
             if(comm_chn[i] == FR_698_CHL_PLC)
             {
                 rptmode = read_event_report_flag_mode(instance, 0x20150200, 1);
@@ -714,14 +718,16 @@ uint8_t report_2015state_update(void * instance, uint32_t mask)
     return true;
 }
 
-//主动上报 使能 检查
-uint8_t active_report_enable_check(void *, void *, nd_dl698_msg_t*)
+uint8_t active_report_enable_check(void * instance, void * pipeline, nd_dl698_msg_t*)
 {
     int ret;
 #if 1
     uint8_t flag = 0;
 
-    ret = dl698_parameter_read(DL698_PARAM_REPORT_ACTIVE_EN, &flag, 1);
+    (void)pipeline;
+
+    ret = dl698_parameter_read(nd_fr698_parameter_port(instance),
+                               DL698_PARAM_REPORT_ACTIVE_EN, &flag, 1);
 
 
     if ((ret < 0) || (flag == 0))
@@ -733,7 +739,6 @@ uint8_t active_report_enable_check(void *, void *, nd_dl698_msg_t*)
     return true;
 }
 
-//3011事件的主动上报方式和标识  检查
 //eventtype: 0掉电发生，1掉电恢复
 //返回true 上报， false 不上报
 uint8_t active_report_check_3011(void * instance, void *, nd_dl698_msg_t*, uint8_t *buf, uint8_t eventtype)
@@ -741,11 +746,13 @@ uint8_t active_report_check_3011(void * instance, void *, nd_dl698_msg_t*, uint8
     uint8_t rptflag, rptmode;
     int has_start_record = 1;
 
-    if (eventtype == 1) //恢复
+    if (eventtype == 1)
     {
         nd_report_list_t list;
 
-        if (dl698_parameter_read(DL698_PARAM_REPORT_3320_LIST_PLC, buf, 241) != 0)
+        if (dl698_parameter_read(nd_fr698_parameter_port(instance),
+                                 DL698_PARAM_REPORT_3320_LIST_PLC, buf,
+                                 241) != 0)
         {
             return false;
         }
@@ -768,16 +775,20 @@ uint8_t active_report_check_3011(void * instance, void *, nd_dl698_msg_t*, uint8
 }
 
 // 掉电事件 发生和恢复 主动上报组帧(apdu)
-static uint16_t report_flag = 0;
-
-uint8_t nd_fr698_report_pending(void)
+uint8_t nd_fr698_report_pending(void *instance)
 {
-    return report_flag == 0xa55a;
+    uint16_t *flag = nd_fr698_report_flag(instance);
+
+    return flag != NULL && *flag == 0xa55a;
 }
 
-void nd_fr698_report_clear(void)
+void nd_fr698_report_clear(void *instance)
 {
-    report_flag = 0;
+    uint16_t *flag = nd_fr698_report_flag(instance);
+
+    if (flag != NULL) {
+        *flag = 0;
+    }
 }
 
 static void report_retry_load(void * instance,
@@ -785,12 +796,12 @@ static void report_retry_load(void * instance,
 {
     uint8_t i;
 
-    retry->cmdtype = nd_mb_active_report_cmdtype(instance);
-    retry->piid = nd_mb_report_piid(instance);
+    retry->cmdtype = nd_mb_get_active_report_cmdtype(instance);
+    retry->piid = nd_mb_get_report_piid(instance);
     for (i = 0; i < ND_REPORT_RETRY_COUNT; i++)
     {
-        retry->retry_dly[i] = nd_mb_active_report_retry_dly(instance)[i];
-        retry->retry_cnt[i] = nd_mb_active_report_retry_cnt(instance)[i];
+        retry->retry_dly[i] = nd_mb_get_active_report_retry_dly(instance, i);
+        retry->retry_cnt[i] = nd_mb_get_active_report_retry_cnt(instance, i);
     }
 }
 
@@ -799,12 +810,12 @@ static void report_retry_store(void * instance,
 {
     uint8_t i;
 
-    nd_mb_active_report_cmdtype(instance) = retry->cmdtype;
-    nd_mb_report_piid(instance) = retry->piid;
+    nd_mb_set_active_report_cmdtype(instance, retry->cmdtype);
+    nd_mb_set_report_piid(instance, retry->piid);
     for (i = 0; i < ND_REPORT_RETRY_COUNT; i++)
     {
-        nd_mb_active_report_retry_dly(instance)[i] = retry->retry_dly[i];
-        nd_mb_active_report_retry_cnt(instance)[i] = retry->retry_cnt[i];
+        nd_mb_set_active_report_retry_dly(instance, i, retry->retry_dly[i]);
+        nd_mb_set_active_report_retry_cnt(instance, i, retry->retry_cnt[i]);
     }
 }
 
@@ -817,12 +828,12 @@ static int fr_active_report_pro(void * instance, void * pipeline, nd_dl698_msg_t
 
     report_retry_load(instance, &retry);
 
-    input.power_on = (*nd_fr698_power_state(instance) == ND_AC_POWER_ON);
+    input.power_on = (nd_mb_get_power_state(instance) == ND_POWER_ON);
     input.reset_flag = *nd_fr698_reset_flag(instance);
     input.ac_power_off_sec = *nd_fr698_ac_power_off_sec_cnt(instance);
-    input.power_on_sec = nd_mb_power_on_sec_accum(instance);
-    input.power_on_sec_limit = nd_mb_active_report_sec_limit(instance);
-    input.power_on_report_delay = nd_mb_poweron_active_report_dly(instance);
+    input.power_on_sec = nd_mb_get_power_on_sec_accum(instance);
+    input.power_on_sec_limit = nd_mb_get_active_report_sec_limit(instance);
+    input.power_on_report_delay = nd_mb_get_poweron_active_report_dly(instance);
 
     action = nd_report_retry_next(&retry, &input);
 
@@ -844,7 +855,13 @@ static int fr_active_report_pro(void * instance, void * pipeline, nd_dl698_msg_t
             if ((len > 0) && get_data)
             {
                 report_port_open(instance);
-                report_flag = 0xa55a;
+                {
+                    uint16_t *flag = nd_fr698_report_flag(instance);
+
+                    if (flag != NULL) {
+                        *flag = 0xa55a;
+                    }
+                }
             }
         }
     }

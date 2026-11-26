@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "domain/common/store.h"
-#include "domain/mbus/mbus_client.h"
+#include "components/services/mbus/mbus_client.h"
 #include "targets/idis_ip_meter/cosem/classes/nd_ic_mbus_value.h"
 
 #define ND_IDIS_MBUS_PORTS 2

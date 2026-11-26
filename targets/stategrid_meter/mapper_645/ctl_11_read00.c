@@ -1,42 +1,44 @@
 #include "645id_table.h"
 #include <stddef.h>
 #include <stdbool.h>
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "port.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
+#include "application/adapters/dl645/fr_645_env.h"
 
 int read_00( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint8_t IDL0, IDL1, data[100]={0,}, len = 0, i, fv=0;
     uint16_t IDH=0;
     uint32_t oad698=0, temp=0, s_index=0;
     
-    IDL0 = ID & 0x000000FF; //µ±Ç°orÀúÊ·
-    IDL1 = (uint8_t)((ID & 0x0000FF00) >> 8);   //Êý¾Ý¿éor×Ü·ÑÂÊ
+    IDL0 = ID & 0x000000FF; //ï¿½ï¿½Ç°orï¿½ï¿½Ê·
+    IDL1 = (uint8_t)((ID & 0x0000FF00) >> 8);   //ï¿½ï¿½ï¿½Ý¿ï¿½orï¿½Ü·ï¿½ï¿½ï¿½
     IDH = (uint16_t)((ID & 0xFFFF0000) >> 16);
     
     switch(IDH)
     {
-        case 0x0000:    //×éºÏ
+        case 0x0000:    //ï¿½ï¿½ï¿½
             oad698 = 0x00000200;
             break;
-        case 0x0001:    //ÕýÏò
+        case 0x0001:    //ï¿½ï¿½ï¿½ï¿½
             oad698 = 0x00100200;
             break;
-        case 0x0002:    //·´Ïò
+        case 0x0002:    //ï¿½ï¿½ï¿½ï¿½
             oad698 = 0x00200200;
             break;
-        case 0x000C:    //ÔÂ¶ÈÓÃµçÁ¿
+        case 0x000C:    //ï¿½Â¶ï¿½ï¿½Ãµï¿½ï¿½ï¿½
             oad698 = 0x20310200;
             break;
-        case 0x000B:    //½áËãÖÜÆÚÓÃµçÁ¿
+        case 0x000B:    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½
             oad698 = 0x20310200;
             break;    
         default:
             return -1;
             break;
     }
-    if(IDL1 == 0xFF)    //Êý¾Ý¿é
+    if(IDL1 == 0xFF)    //ï¿½ï¿½ï¿½Ý¿ï¿½
     {
         oad698 = oad698 & 0xFFFFFF00;
     }
@@ -44,16 +46,16 @@ int read_00( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx)
     {
         if((IDH == 0x0000) || (IDH == 0x0001) || (IDH == 0x0002))
         {
-            s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para+3);//¶ÁÈ¡·ÑÂÊÊý
-            nd_get_index(instance, s_index, (uint8_t *)&fv, 1);
+            s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para+3);//ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            nd_get_index_port(port, s_index, (uint8_t *)&fv, 1);
             if(IDL1 > fv) return -1;
-            oad698 = oad698 | (IDL1+1); //·ÑÂÊ
+            oad698 = oad698 | (IDL1+1); //ï¿½ï¿½ï¿½ï¿½
         }
     }
     
-    if(IDL0 == 0x00)//µ±Ç°
+    if(IDL0 == 0x00)//ï¿½ï¿½Ç°
     {
-        if(IDL1 == 0xFF)    //Êý¾Ý¿é
+        if(IDL1 == 0xFF)    //ï¿½ï¿½ï¿½Ý¿ï¿½
         {
             nd_get(instance, oad698, data, 9, NULL);
             

@@ -18,7 +18,7 @@ add_library(unity STATIC third_party/unity/src/unity.c)
 target_include_directories(unity PUBLIC third_party/unity/src)
 
 add_library(test_support STATIC support/fake_allocator.c support/file_store.c
-    support/pulse_harness.c)
+    support/pulse_harness.c support/fake_meter_base.c)
 target_include_directories(test_support PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${BLADE_ROOT}
@@ -30,12 +30,8 @@ file(GLOB DOMAIN_SOURCES CONFIGURE_DEPENDS
     "${BLADE_ROOT}/domain/metering/*.c"
     "${BLADE_ROOT}/domain/tariff/*.c"
     "${BLADE_ROOT}/domain/load_control/*.c"
-    "${BLADE_ROOT}/domain/mbus/*.c"
-    "${BLADE_ROOT}/domain/push/*.c"
     "${BLADE_ROOT}/domain/events/*.c"
     "${BLADE_ROOT}/domain/freeze/*.c"
-    "${BLADE_ROOT}/domain/display/*.c"
-    "${BLADE_ROOT}/domain/report/*.c"
     "${BLADE_ROOT}/domain/security/*.c"
 )
 add_library(blade_domain STATIC ${DOMAIN_SOURCES})
@@ -44,10 +40,14 @@ target_include_directories(blade_domain PUBLIC ${BLADE_ROOT})
 add_library(blade_components STATIC
     ${BLADE_ROOT}/components/core/bus/nd_bus.c
     ${BLADE_ROOT}/components/core/buf/nd_buf.c
-    ${BLADE_ROOT}/components/services/channel/nd_channel.c
     ${BLADE_ROOT}/components/services/maintenance/nd_maintenance.c
+    ${BLADE_ROOT}/components/services/security/esam_result.c
+    ${BLADE_ROOT}/components/services/time_format/time_format.c
+    ${BLADE_ROOT}/components/services/push/push.c
+    ${BLADE_ROOT}/components/services/mbus/mbus_client.c
 )
 target_include_directories(blade_components PUBLIC ${BLADE_ROOT})
+target_link_libraries(blade_components PUBLIC blade_domain)
 
 add_library(blade_board_transport STATIC
     ${BLADE_ROOT}/targets/stategrid_meter/board/board_transport.c
@@ -114,7 +114,6 @@ add_library(blade_infra STATIC
     ${BLADE_ROOT}/infra/drivers/storage/block/block_ops.c
     ${BLADE_ROOT}/infra/drivers/metering/rn8209/rn8209.c
     ${BLADE_ROOT}/infra/drivers/security/esam/esam.c
-    ${BLADE_ROOT}/infra/channel/fifo_channel.c
     ${BLADE_ROOT}/infra/memory/arena.c
     ${BLADE_ROOT}/infra/memory/byte_store.c
     ${BLADE_ROOT}/infra/memory/sector_store.c
@@ -123,6 +122,7 @@ add_library(blade_infra STATIC
     ${BLADE_ROOT}/infra/storage/pulse_store.c
     ${BLADE_ROOT}/infra/storage/pulse_snapshot.c
     ${BLADE_ROOT}/infra/storage/block_memory.c
+    ${BLADE_ROOT}/infra/storage/freeze_layout.c
 )
 target_include_directories(blade_infra PUBLIC ${BLADE_ROOT})
 target_link_libraries(blade_infra PUBLIC blade_domain)
@@ -132,6 +132,8 @@ add_library(blade_target_stategrid STATIC
     ${BLADE_ROOT}/targets/stategrid_meter/persistence/legacy_energy_store.c
     ${BLADE_ROOT}/targets/stategrid_meter/persistence/legacy_tariff_parser.c
     ${BLADE_ROOT}/targets/stategrid_meter/app/tariff_lookup.c
+    ${BLADE_ROOT}/targets/stategrid_meter/app/display/backlight.c
+    ${BLADE_ROOT}/targets/stategrid_meter/app/display/backlight_control.c
 )
 target_link_libraries(blade_target_stategrid PUBLIC blade_domain blade_infra)
 
@@ -139,6 +141,7 @@ add_library(blade_application STATIC
     ${BLADE_ROOT}/application/metering/application.c
     ${BLADE_ROOT}/application/metering/demand_registry.c
     ${BLADE_ROOT}/application/ports/record_storage.c
+    ${BLADE_ROOT}/application/ports/meter_base.c
     ${BLADE_ROOT}/application/ports/resource_access.c
     ${BLADE_ROOT}/application/adapters/dl698/dl698_time.c
     ${BLADE_ROOT}/application/adapters/dl698/parameter_port.c
@@ -150,6 +153,8 @@ add_library(blade_application STATIC
     ${BLADE_ROOT}/application/adapters/dl645/fr_645_data.c
     ${BLADE_ROOT}/application/adapters/dl645/fr_645_addr.c
     ${BLADE_ROOT}/application/adapters/dl645/fr_645_password.c
+    ${BLADE_ROOT}/application/adapters/dl698/report_policy.c
+    ${BLADE_ROOT}/application/adapters/dl698/report_retry.c
     ${BLADE_ROOT}/application/adapters/dl698/fr_698_matcher.c
     ${BLADE_ROOT}/application/adapters/dl698/fr_698_pack.c
     ${BLADE_ROOT}/application/adapters/dl698/fr_axdr_codec.c
@@ -191,6 +196,19 @@ foreach(src ${TEST_SOURCES})
     if(name STREQUAL "test_board_transport")
         target_link_libraries(${name} PRIVATE blade_board_transport)
     endif()
+    if(name STREQUAL "test_meter_base_port")
+        target_sources(${name} PRIVATE
+            ${BLADE_ROOT}/targets/stategrid_meter/app/meter_base_adapter.c
+            ${BLADE_ROOT}/targets/stategrid_meter/app/meter_base_port.c)
+        target_include_directories(${name} PRIVATE
+            ${BLADE_ROOT}/targets/stategrid_meter/app)
+        target_compile_options(${name} PRIVATE -ffunction-sections -fdata-sections)
+        target_link_options(${name} PRIVATE -Wl,--gc-sections)
+    endif()
+    if(name STREQUAL "test_nd_bus")
+        target_compile_definitions(${name} PRIVATE
+            ND_BUS_HEADER="${BLADE_ROOT}/components/core/bus/nd_bus.h")
+    endif()
     if(name STREQUAL "test_mbase_search_counts")
         # The 698 resource manager is packed to 4 bytes and hosts 8-byte
         # pointers, so its list nodes are misaligned only on the host. The
@@ -214,6 +232,52 @@ target_sources(test_demand_adapter PRIVATE
 
 # rn8209c_get lives in the legacy metering translation unit. The test drives
 # that entry directly and supplies the rest of the unit's linker surface.
+target_link_libraries(test_time_format PRIVATE blade_domain)
+
+target_sources(test_event_catalog PRIVATE
+    ${BLADE_ROOT}/application/adapters/dl698/event_oad_view.c
+)
+target_sources(test_record_capture PRIVATE
+    ${BLADE_ROOT}/application/adapters/dl698/record_capture_view.c
+)
+target_sources(test_power_event PRIVATE
+    ${BLADE_ROOT}/application/adapters/dl698/event_oad_view.c
+)
+target_sources(test_program_list PRIVATE
+    ${BLADE_ROOT}/application/adapters/dl698/event_oad_view.c
+)
+
+target_sources(test_security_mode PRIVATE
+    ${BLADE_ROOT}/application/adapters/dl698/security_mode_map.c
+)
+
+target_sources(test_security_mode_map PRIVATE
+    ${BLADE_ROOT}/application/adapters/dl698/security_mode_map.c
+)
+
+target_sources(test_tariff_check_645 PRIVATE
+    ${BLADE_ROOT}/targets/stategrid_meter/mapper_645/ctl_14_check.c
+    ${BLADE_ROOT}/components/core/types/utils.c
+)
+target_include_directories(test_tariff_check_645 PRIVATE
+    ${BLADE_ROOT}/application/adapters/dl645
+    ${BLADE_ROOT}/targets/stategrid_meter/app
+    ${BLADE_ROOT}/targets/stategrid_meter
+)
+target_compile_options(test_tariff_check_645 PRIVATE
+    -ffunction-sections -fdata-sections
+)
+target_link_options(test_tariff_check_645 PRIVATE -Wl,--gc-sections)
+set_source_files_properties(
+    ${BLADE_ROOT}/targets/stategrid_meter/mapper_645/ctl_14_check.c
+    ${BLADE_ROOT}/components/core/types/utils.c
+    PROPERTIES COMPILE_OPTIONS "-w;-Wno-error=implicit-function-declaration;-ffunction-sections;-fdata-sections"
+)
+
+target_sources(test_relay_control_ui PRIVATE
+    ${BLADE_ROOT}/targets/stategrid_meter/app/relay_control_ui.c
+)
+
 target_sources(test_rn8209c_get PRIVATE
     ${BLADE_ROOT}/targets/stategrid_meter/app/metering/electrical_measurement.c
 )
@@ -236,6 +300,9 @@ target_sources(test_fr_698_connect_len PRIVATE
     ${BLADE_ROOT}/application/adapters/dl698/fr_698_connect.c
     ${BLADE_ROOT}/application/ports/record_storage.c
 )
+target_sources(test_fr_698_gatekeeper PRIVATE
+    ${BLADE_ROOT}/application/adapters/dl698/fr_698_gatekeeper.c
+)
 target_sources(test_fr_698_get_len PRIVATE
     ${BLADE_ROOT}/application/adapters/dl698/fr_698_get.c
 )
@@ -244,6 +311,90 @@ target_sources(test_fr_698_set_len PRIVATE
 )
 target_sources(test_fr_698_client PRIVATE
     ${BLADE_ROOT}/application/adapters/dl698/fr_698_client.c
+)
+target_sources(test_idis_board_transport_context PRIVATE
+    ${BLADE_ROOT}/targets/idis_ip_meter/board/board_transport.c
+)
+target_sources(test_idis_uart_descriptor PRIVATE
+    ${BLADE_ROOT}/targets/idis_ip_meter/board/uart_driver.c
+)
+target_include_directories(test_idis_uart_descriptor PRIVATE
+    ${BLADE_ROOT}/infra/soc/v85xxp/v8500
+)
+target_sources(test_idis_board_eeprom_state PRIVATE
+    ${BLADE_ROOT}/targets/idis_ip_meter/board/board_eeprom.c
+    ${BLADE_ROOT}/infra/drivers/storage/eeprom/eeprom.c
+)
+target_include_directories(test_idis_board_eeprom_state PRIVATE
+    ${BLADE_ROOT}/infra/soc/v85xxp/v8500
+)
+target_sources(test_idis_board_flash_state PRIVATE
+    ${BLADE_ROOT}/targets/idis_ip_meter/app/board_ports.c
+    ${BLADE_ROOT}/targets/idis_ip_meter/board/board_flash.c
+)
+target_include_directories(test_idis_board_flash_state PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/sim/include
+    ${BLADE_ROOT}/infra/soc/v85xxp/v8500
+    ${BLADE_ROOT}/infra/soc/v85xxp/v8500/vendor
+    ${BLADE_ROOT}/infra/soc/v85xxp/v8500/vendor/Lib_Driver/inc
+)
+target_compile_options(test_idis_board_flash_state PRIVATE
+    -include "${CMAKE_CURRENT_SOURCE_DIR}/sim/include/sim_compat.h"
+)
+target_sources(test_stategrid_storage_state PRIVATE
+    ${BLADE_ROOT}/targets/stategrid_meter/app/storage_device.c
+    ${BLADE_ROOT}/targets/stategrid_meter/board/board_eeprom.c
+    ${BLADE_ROOT}/targets/stategrid_meter/board/board_flash.c
+    ${BLADE_ROOT}/infra/drivers/storage/eeprom/eeprom.c
+    ${BLADE_ROOT}/infra/drivers/storage/mx25l3206e/mx25l3206e.c
+)
+target_include_directories(test_stategrid_storage_state PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/sim/include
+    ${BLADE_ROOT}/infra/soc/v85xxp/v8500
+    ${BLADE_ROOT}/infra/soc/v85xxp/v8500/vendor
+    ${BLADE_ROOT}/infra/soc/v85xxp/v8500/vendor/Lib_Driver/inc
+    ${BLADE_ROOT}/targets/stategrid_meter/board
+)
+target_compile_options(test_stategrid_storage_state PRIVATE
+    -include "${CMAKE_CURRENT_SOURCE_DIR}/sim/include/sim_compat.h"
+)
+target_sources(test_stategrid_esam_state PRIVATE
+    ${BLADE_ROOT}/targets/stategrid_meter/board/board_esam.c
+)
+target_include_directories(test_stategrid_esam_state PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/sim/include
+    ${BLADE_ROOT}/infra/soc/v85xxp/v8500
+    ${BLADE_ROOT}/infra/soc/v85xxp/v8500/vendor
+    ${BLADE_ROOT}/infra/soc/v85xxp/v8500/vendor/Lib_Driver/inc
+    ${BLADE_ROOT}/targets/stategrid_meter/board
+)
+target_compile_options(test_stategrid_esam_state PRIVATE
+    -include "${CMAKE_CURRENT_SOURCE_DIR}/sim/include/sim_compat.h"
+)
+target_sources(test_stategrid_rn8209_state PRIVATE
+    ${BLADE_ROOT}/targets/stategrid_meter/board/board_rn8209.c
+)
+target_include_directories(test_stategrid_rn8209_state PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/sim/include
+    ${BLADE_ROOT}/infra/soc/v85xxp/v8500
+    ${BLADE_ROOT}/infra/soc/v85xxp/v8500/vendor
+    ${BLADE_ROOT}/infra/soc/v85xxp/v8500/vendor/Lib_Driver/inc
+    ${BLADE_ROOT}/targets/stategrid_meter/board
+)
+target_compile_options(test_stategrid_rn8209_state PRIVATE
+    -include "${CMAKE_CURRENT_SOURCE_DIR}/sim/include/sim_compat.h"
+)
+target_sources(test_idis_board_esam_state PRIVATE
+    ${BLADE_ROOT}/targets/idis_ip_meter/board/board_esam.c
+)
+target_include_directories(test_idis_board_esam_state PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/sim/include
+    ${BLADE_ROOT}/infra/soc/v85xxp/v8500
+    ${BLADE_ROOT}/infra/soc/v85xxp/v8500/vendor
+    ${BLADE_ROOT}/infra/soc/v85xxp/v8500/vendor/Lib_Driver/inc
+)
+target_compile_options(test_idis_board_esam_state PRIVATE
+    -include "${CMAKE_CURRENT_SOURCE_DIR}/sim/include/sim_compat.h"
 )
 
 # The mbase search count test compiles the legacy resource manager directly.

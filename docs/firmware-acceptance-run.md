@@ -65,7 +65,7 @@
 | `--backlight-log PATH` | `cycle <n> time <...> value 0\|1`，每次 `nd_board_backlight_set` 一行 |
 | `--lcd-log PATH` | `cycle <n> time <...> fb <320 位十六进制>`，每个 `Display` 阶段后快照 160 字节 `FB` |
 
-`tests/acceptance/sim.py` 的 `SimRun` 暴露 `relay_log`、`backlight_log`、`lcd_log` 三个列表。`relay_feedback` 仍是板级输入：仿真中由 `nd_board_relay_is_off()` 返回，`metering/runstatus.c` 的 `nd_relay_status_is_off()` 路径读取；真实硬件的 `SysTick_Handler`（`soc/cpu_v85xxp_isr.c`）用它累计 `relay_off_chk`/`relay_on_chk`，仿真不运行该 ISR。
+`tests/acceptance/sim.py` 的 `SimRun` 暴露 `relay_log`、`backlight_log`、`lcd_log` 三个列表。`relay_feedback` 仍是板级输入：仿真中由 `nd_board_relay_is_off()` 返回，`metering/runstatus.c` 经 `nd_relay_status_is_off(stategrid_relay_status_port(instance))` 读取；真实硬件的 `SysTick_Handler`（`targets/stategrid_meter/board/cpu_v85xxp_isr.c`）用它累计 `relay_off_chk`/`relay_on_chk`，仿真不运行该 ISR。
 
 ## 已知限制与修复
 

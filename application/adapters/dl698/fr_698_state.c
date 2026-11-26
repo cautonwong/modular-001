@@ -3,7 +3,7 @@
 #include "application/adapters/dl698/fr_698_env.h"
 #include "fr_698.h"
 #include "fr_698_internal.h"
-#include "meter_base_view.h"
+#include "application/ports/meter_base.h"
 
 int fr_ctx_clear(void *, void * pipeline, nd_dl698_msg_t*)
 {
@@ -19,7 +19,7 @@ int fr_ctx_clear(void *, void * pipeline, nd_dl698_msg_t*)
 int fr698_inital(void * instance, void *)
 {
 
-    nd_mb_current_connect_channel(instance)[0] = 0;
-    nd_mb_current_connect_channel(instance)[1] = 0;
+    nd_mb_set_current_connect_channel(instance, 0, 0);
+    nd_mb_set_current_connect_channel(instance, 1, 0);
     return 1;
 }

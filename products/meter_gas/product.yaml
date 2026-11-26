@@ -1,4 +1,4 @@
 name: meter_gas
 version: 0.1.0
-components: [domain.common, domain.metering, domain.freeze, domain.events, domain.load_control, domain.tariff, application.metering, application.ports, core.bus, services.channel]
+components: [domain.common, domain.metering, domain.freeze, domain.events, domain.load_control, domain.tariff, application.metering, application.ports, core.bus]
 notes: gas meter assembly; quantity and valve components are still planned

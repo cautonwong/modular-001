@@ -1,8 +1,10 @@
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
+#define MaxStepNum 6
+#include "domain/tariff/tariff.h"
 #include "targets/stategrid_meter/app/resource_ids.h"
 #include "resource_ids.h"
 #include "components/core/types/utils.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "application/adapters/dl645/fr_645_context.h"
@@ -11,8 +13,9 @@
 #include "cpu_surport.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
-#include "domain/common/time_format.h"
+#include "components/services/time_format/time_format.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
+#include "application/adapters/dl645/fr_645_env.h"
 
 struct factor_adj_meter_t factory3;
 struct ADJ_POFFSET_T adj_poffset;
@@ -211,7 +214,7 @@ uint8_t get_645daytable_info( void *instance,  uint8_t* prx, uint32_t ID, uint8_
     
     IDH = (uint16_t)((ID & 0xFFFF0000) >> 16);
     IDL0 = (uint8_t)(ID & 0x000000FF);
-    if(IDL0 > MaxTouTabNum) return RS_ERR_OTHERS;
+    if(IDL0 > ND_TARIFF_MAX_DAY_TABLES) return RS_ERR_OTHERS;
     
     switch(IDH)
     {
@@ -232,7 +235,7 @@ uint8_t get_645daytable_info( void *instance,  uint8_t* prx, uint32_t ID, uint8_
     }
     memcpy(Addr, (uint8_t*)&addr1, 4);
     *Format = FORMAT_0D;
-    addr1 = CommData_WR + CommData_E2PROM + CommData_SECONDLY + 3*MaxSeasonNum;
+    addr1 = CommData_WR + CommData_E2PROM + CommData_SECONDLY + 3*ND_TARIFF_MAX_SEASONS;
     memcpy(Info, (uint8_t*)&addr1, 2);
     return 0;
 }
@@ -244,7 +247,7 @@ uint8_t get_645holiday_info( void *instance,  uint8_t* prx, uint32_t ID, uint8_t
     uint16_t year=0;
     
     IDL0 = ID & 0x000000FF;
-    if((IDL0 > MaxHolidayNum) || (IDL0 == 0))    return RS_ERR_OTHERS;
+    if((IDL0 > ND_TARIFF_MAX_HOLIDAYS) || (IDL0 == 0))    return RS_ERR_OTHERS;
     
     temp[5] = BCD_BYTE(*(prx+12));
     temp[3] = BCD_BYTE(*(prx+13));     //日
@@ -302,6 +305,7 @@ int8_t GetCommAddrInfo(void *instance, uint8_t *p_rx, uint32_t ID, uint8_t* Addr
 /***********************************************************************/
 unsigned char CommWrite_SpecProc( void *instance,  unsigned char* prx, unsigned long ID )
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     unsigned char buf[10] = {0,},settimebuf[7]={0,},day=0;
     unsigned long s_index = 0,temp=0;
     signed char ret = 0,err=0;
@@ -339,7 +343,7 @@ unsigned char CommWrite_SpecProc( void *instance,  unsigned char* prx, unsigned 
 		case 0xA6000305://启动阈值和脉冲速率
                 memcpy(buf, prx, 4);
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ADJ_Other);//写入脉冲速率
-                nd_set_index(instance, s_index, buf, 4);
+                nd_set_index_port(port, s_index, buf, 4);
 				break;
         case 0xA8000208://单点校表
                 //0000C350 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 0000D742 0000C350 000055F0
@@ -397,6 +401,7 @@ unsigned char CommWrite_SpecProc( void *instance,  unsigned char* prx, unsigned 
 /***********************************************************************/
 uint8_t CommWrite_DataCheck( void *instance, uint32_t ID, uint8_t *p_rx, uint8_t * Len )
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 	unsigned char Err_Byte=0;
 	unsigned char IDL0,IDL1,IDH0,IDH1,Num = 0;
 	unsigned int Tmp = 0;
@@ -431,20 +436,20 @@ uint8_t CommWrite_DataCheck( void *instance, uint32_t ID, uint8_t *p_rx, uint8_t
 				break;
 		case 0x04000201://年时区数
 		        u16_tmp = BCD_BYTE(*p_rx);
-				if(( u16_tmp > MaxSeasonNum ) || ( u16_tmp == 0))
+				if(( u16_tmp > ND_TARIFF_MAX_SEASONS ) || ( u16_tmp == 0))
 					Err_Byte = RS_ERR_SEAOV;
 
 			    nd_mb_fee(instance) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
 				break;
 		case 0x04000202://日时段表数
 		        u16_tmp = BCD_BYTE(*p_rx);
-				if(( u16_tmp > MaxTouTabNum ) || ( u16_tmp == 0))
+				if(( u16_tmp > ND_TARIFF_MAX_DAY_TABLES ) || ( u16_tmp == 0))
 					Err_Byte = RS_ERR_OTHERS;
 				nd_mb_fee(instance) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;	
 				break;
 		case 0x04000203://日时段数
 				u16_tmp = BCD_BYTE(*p_rx);
-				if(( u16_tmp > MaxTouNum ) || ( u16_tmp == 0))
+				if(( u16_tmp > ND_TARIFF_MAX_PERIODS ) || ( u16_tmp == 0))
 					Err_Byte = RS_ERR_TOUOV;
                 nd_mb_fee(instance) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
 				break;
@@ -474,21 +479,21 @@ uint8_t CommWrite_DataCheck( void *instance, uint32_t ID, uint8_t *p_rx, uint8_t
 		case 0x04000205://公共假日数
                 u16_tmp = buf_to_uint16_lsb(p_rx);
 				Tmp = word_bcd_to_hex( u16_tmp );
-				if( Tmp > MaxHolidayNum )
+				if( Tmp > ND_TARIFF_MAX_HOLIDAYS )
 					Err_Byte = RS_ERR_OTHERS;
 				nd_mb_fee(instance) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;	
 				break;
 		case 0x04000802://周休日时段表号
 				//E2P_Read( (unsigned char*)&Num, Day_Table_Num, 1 );
-				Num = MaxTouTabNum; 
-				if( ((*p_rx) == 0) || ((*p_rx) > MaxTouTabNum ) )
+				Num = ND_TARIFF_MAX_DAY_TABLES; 
+				if( ((*p_rx) == 0) || ((*p_rx) > ND_TARIFF_MAX_DAY_TABLES ) )
 					Err_Byte = RS_ERR_OTHERS;
                 //else
 					//HisRecord_Write(WeekendProRec,START);
 					
                 nd_get(instance, 0x40130200, buftmp, 2, NULL);
                 s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_WeekTab);
-                nd_set_index(instance, s_index, buftmp, 2);
+                nd_set_index_port(port, s_index, buftmp, 2);
                 //不一定设置成功
                 record_event_no_mesg_pro(instance, NULL, WeekTabWrS, NULL, 1);// 周休日编程事件 
 
@@ -588,7 +593,7 @@ uint8_t CommWrite_DataCheck( void *instance, uint32_t ID, uint8_t *p_rx, uint8_t
 						//if(Err_Byte == 0)
 							//HisRecord_Write(SeasonTabProRec,START);
 					}
-					else if( IDL0 <= MaxTouTabNum )//日时段表
+					else if( IDL0 <= ND_TARIFF_MAX_DAY_TABLES )//日时段表
 					{
 						//if(nd_mb_factor_mode(instance) == true)
 						//	Err_Byte = 0;
@@ -602,8 +607,8 @@ uint8_t CommWrite_DataCheck( void *instance, uint32_t ID, uint8_t *p_rx, uint8_t
 				else if( (ID >= 0x04030001) && (ID <= 0x040300FE) )//公共假日
 				{
                     s_index = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 4);    //读取日时段个数
-                    nd_get_index(instance, s_index, (uint8_t*)&Num, 1);
-   					if( Num > MaxTouTabNum ) Num = MaxTouTabNum;
+                    nd_get_index_port(port, s_index, (uint8_t*)&Num, 1);
+   					if( Num > ND_TARIFF_MAX_DAY_TABLES ) Num = ND_TARIFF_MAX_DAY_TABLES;
 					if((*p_rx == 0) && (*(p_rx+1) == 0) && (*(p_rx+2) == 0) && (*(p_rx+3) == 0)
                        && (*(p_rx+4) == 0)&& (*(p_rx+5) == 0))
 					{
@@ -654,14 +659,14 @@ unsigned char Cmp_CommDataLen( unsigned long ID, unsigned char DataLen, unsigned
 		{
 			if( (DataLen%3) != 0 )//数据长度不是3的倍数
 				Err_Byte = RS_ERR_LEN;
-			else if( DataLen > 3*MaxSeasonNum )
+			else if( DataLen > 3*ND_TARIFF_MAX_SEASONS )
 				Err_Byte = RS_ERR_SEAOV;//年时区数超
 		}
-		else if( IDL0 <= MaxTouTabNum )//日时段表
+		else if( IDL0 <= ND_TARIFF_MAX_DAY_TABLES )//日时段表
 		{
 			if( (DataLen%3) != 0 )//数据长度不是3的倍数
 				Err_Byte = RS_ERR_LEN;
-			else if( DataLen > 3*MaxTouNum )
+			else if( DataLen > 3*ND_TARIFF_MAX_PERIODS )
 				Err_Byte = RS_ERR_TOUOV;//日时段数超
 		}
 	}
@@ -693,6 +698,7 @@ unsigned char Cmp_CommDataLen( unsigned long ID, unsigned char DataLen, unsigned
 /***********************************************************************/
 signed char Comm_Write(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len, struct context_645_t* ctx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     signed char ret=0;
 	unsigned char Err_Byte=0,Ptr,Format=0,rx_len=0,buf[32]={0,};
 	uint32_t s_index=0, Addr,Info,addr1,block=0,ID;
@@ -756,7 +762,7 @@ signed char Comm_Write(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *le
         {
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_factor_mode());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_factor_mode(instance), 1);//存储至EE
+            nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_factor_mode(instance), 1);//存储至EE
             return 0;
         }
         else
@@ -816,7 +822,7 @@ signed char Comm_Write(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *le
             else
                 mem_swap_cpy(buf, p_rx+12, *len);
 			addr1 = ((RES_DEV_EEPROM << 24) + (block << 16) + Addr);
-			nd_set_index(instance, addr1, buf, *len); 
+			nd_set_index_port(port, addr1, buf, *len); 
             return 0;
 		}
         else if(ret == 0)

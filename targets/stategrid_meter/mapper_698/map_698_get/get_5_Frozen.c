@@ -1,11 +1,13 @@
 #include "fr_698.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 
 // 获取冻结关联对象
 int get_frozen_obj(void *instance, uint32_t oad, uint8_t* buf, struct frozen_obj_t frozen_obj, uint8_t* dar)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
 
     uint8_t i, num, maxnum, scheme;
     uint8_t tempbuf[200], period[1 + 3 * 8], depth[1 + 2 * 15];
@@ -40,16 +42,16 @@ int get_frozen_obj(void *instance, uint32_t oad, uint8_t* buf, struct frozen_obj
     
     OI = (uint16_t)(oad >> 16);
 
-    nd_get_index(instance, CaptureId, &tempbuf[0], sizeof(tempbuf));
+    nd_get_index_port(port, CaptureId, &tempbuf[0], sizeof(tempbuf));
     oadlist = tempbuf;
     num = *oadlist++;
 
     // 周期
-    nd_get_index(instance, PeriodId, &period[0], sizeof(period));
+    nd_get_index_port(port, PeriodId, &period[0], sizeof(period));
     tmp0 = period;
 
     // 深度
-    nd_get_index(instance, DepthId, &depth[0], sizeof(depth));
+    nd_get_index_port(port, DepthId, &depth[0], sizeof(depth));
     tmp1 = depth;
 
     /*

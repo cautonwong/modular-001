@@ -1,5 +1,5 @@
 #include "targets/stategrid_meter/persistence/meter_record.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/upgrade/upgrade_info.h"
 

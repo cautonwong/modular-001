@@ -1,7 +1,7 @@
 #include <string.h>
 
 #include "fr_698.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "components/core/types/utils.h"
 #include "targets/stategrid_meter/app/stategrid_context.h"
 #include "targets/stategrid_meter/app/metering/demand_adapter.h"

@@ -1,6 +1,7 @@
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
+#include "application/adapters/dl698/fr_698_env.h"
 #include "port.h"
 #include "fr_645_report.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
@@ -8,6 +9,7 @@
 
 int SET_2_Variable(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint16_t oad;
     uint8_t attribute;
     uint8_t* p = buf;
@@ -38,7 +40,7 @@ int SET_2_Variable(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 
                 s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                 nd_mb_offset_report_2015mode());
-                nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_report_2015_mode(instance), 4);
+                nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_report_2015_mode(instance), 4);
 
                 report_2015mode_set_from_698(instance);
 

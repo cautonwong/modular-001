@@ -3,7 +3,7 @@
 #include "resource_ids.h"
 #include "components/core/types/type_def.h"
 #include "fr_698.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "fr_645_report.h"
 #include "cpu_surport.h"
@@ -15,6 +15,7 @@
 // 设置事件上报标识或上报方式   mode  0: 上报标识      1:上报方式 (无tag)
 int set_event_report_flag_mode(void *instance, uint32_t oad, uint8_t value, uint8_t mode)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     struct record_storage_id_info_t  record_id_info;
     int ret;
     uint32_t AddrID = 0;
@@ -44,7 +45,7 @@ int set_event_report_flag_mode(void *instance, uint32_t oad, uint8_t value, uint
 
     }
 
-    ret = nd_set_index(instance, AddrID, &value, 1);
+    ret = nd_set_index_port(port, AddrID, &value, 1);
     if(ret <= 0)
     {
         return -DAR_OTHERS_ERROR;
@@ -93,6 +94,7 @@ int fr_set_event_report_flag_mode(void *instance, uint32_t oad, uint8_t* buf, ui
 // 设置事件关联对象
 int set_event_obj(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
 
     uint8_t i, num, maxnum, Schem;
     uint8_t tempbuf[200]; //oadlist
@@ -175,7 +177,7 @@ int set_event_obj(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
         return -DAR_BUFFER_OVERFLOW;
     }
 
-    nd_set_index(instance, info.capture_index, &tempbuf[0], (1 + num * 4));
+    nd_set_index_port(port, info.capture_index, &tempbuf[0], (1 + num * 4));
 
     //修改关联对象后 清零处理
     ret = modify_capture_clr_pro(instance, oad);
@@ -187,6 +189,7 @@ int set_event_obj(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 
 int set_struct_event_para_t(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     struct event_para_pack_t para_pack;
     uint8_t* p;
     int16_t ret;
@@ -262,7 +265,7 @@ int set_struct_event_para_t(void *instance, uint32_t oad, uint8_t* buf, uint8_t*
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
     nd_mb_offset_over_current_threshold());
     s_len = nd_mb_offset_zero_line_errs_duration_para() - nd_mb_offset_over_current_threshold() + sizeof(nd_mb_zero_line_errs_duration_para(instance));
-    nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_over_current_threshold(instance), s_len);  
+    nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_over_current_threshold(instance), s_len);  
     
     
     *dar = DAR_SUCCESS;

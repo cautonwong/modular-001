@@ -1,6 +1,6 @@
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "components/core/fifo/fifo.h"
 #include "targets/stategrid_meter/app/display_applications.h"
@@ -8,7 +8,7 @@
 #include "application/adapters/dl698/fr_698_esam.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
-#include "domain/common/time_format.h"
+#include "components/services/time_format/time_format.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
 
 #define PROGRAMEND1	0x03FFFF	//程序空间1结束地址
@@ -130,6 +130,7 @@ int16_t ActionFile( void *instance, uint32_t id, uint8_t* inbuf, uint16_t buf_si
 
 int _f101_m127_action(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
 
     uint8_t  i, count, maxnum;
     uint8_t* p = buf;
@@ -163,7 +164,7 @@ int _f101_m127_action(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_si
 
     nd_fr698_apdu_cache(instance)[0] = 0;
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
-    nd_get_index(instance, s_index, ptr_tmp, SecurityMode_EXData_LEN);
+    nd_get_index_port(port, s_index, ptr_tmp, SecurityMode_EXData_LEN);
 
     maxnum = (SecurityMode_EXData_LEN - 1) / 4;
     count = *ptr_tmp++;
@@ -189,7 +190,7 @@ int _f101_m127_action(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_si
                 memcpy(ptr_tmp + 2, (uint8_t*)&obj_right, 2);
 
                 s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
-                nd_set_index(instance, s_index, nd_fr698_apdu_cache(instance), SecurityMode_EXData_LEN);
+                nd_set_index_port(port, s_index, nd_fr698_apdu_cache(instance), SecurityMode_EXData_LEN);
 
                 return (p - buf);
             }
@@ -203,12 +204,13 @@ int _f101_m127_action(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_si
     nd_fr698_apdu_cache(instance)[0]++;
 
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
-    nd_set_index(instance, s_index, nd_fr698_apdu_cache(instance), SecurityMode_EXData_LEN);
+    nd_set_index_port(port, s_index, nd_fr698_apdu_cache(instance), SecurityMode_EXData_LEN);
 
     return (p - buf);
 }
 int _f101_m128_action(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx) 
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint8_t  i, count, maxnum;
     uint8_t* p = buf;
     uint32_t s_index = 0;
@@ -229,7 +231,7 @@ int _f101_m128_action(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_si
     p += 2;
     nd_fr698_apdu_cache(instance)[0] = 0;
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
-    nd_get_index(instance, s_index, ptr_tmp, SecurityMode_EXData_LEN);
+    nd_get_index_port(port, s_index, ptr_tmp, SecurityMode_EXData_LEN);
 
     maxnum = (SecurityMode_EXData_LEN - 1) / 4;
     count = *ptr_tmp++;
@@ -260,13 +262,14 @@ int _f101_m128_action(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_si
     memcpy(ptr_tmp, ptr_tmp + 4, nd_fr698_apdu_cache(instance) + SecurityMode_EXData_LEN - ptr_tmp);
 
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
-    nd_set_index(instance, s_index, nd_fr698_apdu_cache(instance), SecurityMode_EXData_LEN);
+    nd_set_index_port(port, s_index, nd_fr698_apdu_cache(instance), SecurityMode_EXData_LEN);
 
     return (p - buf);
 
 }
 int _f101_m129_action(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void* ctx)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint8_t  i,count;
     uint8_t* p = buf;
     uint32_t s_index = 0;
@@ -290,7 +293,7 @@ int _f101_m129_action(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_si
 
     nd_fr698_apdu_cache(instance)[0] = 0;
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
-    nd_get_index(instance, s_index, ptr_tmp, SecurityMode_EXData_LEN);
+    nd_get_index_port(port, s_index, ptr_tmp, SecurityMode_EXData_LEN);
 
     num = *p++;
 
@@ -360,7 +363,7 @@ int _f101_m129_action(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_si
         nd_fr698_apdu_cache(instance)[0] = count;
 
         s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
-        nd_set_index(instance, s_index, nd_fr698_apdu_cache(instance), SecurityMode_EXData_LEN);
+        nd_set_index_port(port, s_index, nd_fr698_apdu_cache(instance), SecurityMode_EXData_LEN);
 
         return (p - buf);
     }
@@ -422,6 +425,7 @@ int connect_failture(void *instance, uint8_t* req_buf, struct context_698_t* ctx
 
 int ACTION_F_Other(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     void *pipeline = NULL;
     struct context_698_t* p_ctx = (struct context_698_t*)ctx;
     struct fifo_t* cache = p_ctx->apdu;
@@ -582,7 +586,7 @@ int ACTION_F_Other(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size,
                         ndv_memcopy(nd_mb_meter_no(instance), &buffer[5+ tmp_len - 6], 6);  
                         addr = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_meter_no());
-                        nd_set_offset(instance, addr, nd_mb_meter_no(instance), 6);     
+                        nd_set_offset_port(port, addr, nd_mb_meter_no(instance), 6);     
                     }
                     break;
 
@@ -590,7 +594,7 @@ int ACTION_F_Other(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size,
                     {
                         if (tmp_len != 6)  return -DAR_TYPE_NOT_MATCH;
                         s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + User_Number);
-                        nd_set_index(instance, s_index, p_data, 6); 
+                        nd_set_index_port(port, s_index, p_data, 6); 
                     }
                     break;
 
@@ -627,7 +631,7 @@ int ACTION_F_Other(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size,
                 read_esam_info(instance, esam_inf,0X04);
                 memcpy(&keybuf[2], (uint8_t*)&esam_inf[0], 16);
                 addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_KeyVer);
-                nd_set_index(instance, addr, &keybuf[0], 18);
+                nd_set_index_port(port, addr, &keybuf[0], 18);
 
                 uint8_t *pdata = apdu_rx + 3;
                 rxlen = esam_key_updata(instance, pdata, txlen);
@@ -777,7 +781,7 @@ int ACTION_F_Other(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size,
                 else
                 {
                     addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + IrAuthenTime);
-                    nd_get_index(instance, addr, buffer, 4); 
+                    nd_get_index_port(port, addr, buffer, 4); 
                     
                     mem_swap_cpy((uint8_t*)&temp, buffer, 4);
                    
@@ -813,7 +817,7 @@ int ACTION_F_Other(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size,
                 }
                 memset(ptr_tmp, 0, SecurityMode_EXData_LEN);
                 s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SecurityMode_EXData);
-                nd_set_index(instance, s_index, ptr_tmp, SecurityMode_EXData_LEN);
+                nd_set_index_port(port, s_index, ptr_tmp, SecurityMode_EXData_LEN);
                 p += 2;
                 return (p - buf);
             }
@@ -854,7 +858,7 @@ int ACTION_F_Other(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size,
                     
                     s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                     nd_mb_offset_baut_rs485());
-                    nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_baut_rs485(instance), 1);
+                    nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_baut_rs485(instance), 1);
                 }
                 
                 p = p + 7;
@@ -960,7 +964,7 @@ int ACTION_F_Other(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size,
                         
                         s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_baut_plc());
-                        nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_baut_plc(instance), 1);
+                        nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_baut_plc(instance), 1);
                     }
                 }
                 p = p + 5;
@@ -991,7 +995,7 @@ int ACTION_F_Other(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size,
                         nd_mb_key(instance) = 0;
                     }
                     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + nd_mb_key(instance));
-                    nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
+                    nd_get_index_port(port, s_index, (uint8_t*)&pageid, 2); 
                     if(pageid == 0xFFFF)
                     {
                         pageid = 0xFFFE; //避免上下翻出现全屏
@@ -1017,7 +1021,7 @@ int ACTION_F_Other(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size,
                         nd_mb_key(instance) = 0;
                     }
                     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + KeyDisplayList + nd_mb_key(instance));
-                    nd_get_index(instance, s_index, (uint8_t*)&pageid, 2); 
+                    nd_get_index_port(port, s_index, (uint8_t*)&pageid, 2); 
                     if(pageid == 0xFFFF)
                     {
                         pageid = 0xFFFE; //避免上下翻出现全屏

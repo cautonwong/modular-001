@@ -2,6 +2,6 @@
 #define ND_TARGET_STATEGRID_RECORD_STORAGE_ADAPTER_H
 
 #include "targets/stategrid_meter/app/stategrid_context.h"
-void stategrid_record_storage_bind(stategrid_context_t *instance);
+void stategrid_record_storage_attach(stategrid_context_t *instance);
 
 #endif

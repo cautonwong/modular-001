@@ -5,6 +5,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define MCU_UART_NUM 7
+
+struct nd_idis_board_state;
+typedef struct nd_idis_board_state nd_idis_board_state_t;
+
 #define ND_UART_RS4851 0
 #define ND_UART_MODULE 4
 #define ND_UART_IR 5
@@ -34,22 +39,29 @@ struct uart_chl_init_t
 
     uint8_t mcu_uart_index;
     uint8_t chl_type;
-    void (*CallBackReceiveTimeOut)();
+    void (*CallBackReceiveTimeOut)(void);
     void (*CallBackSendTimeOut)(void *CallBackSendPara);
     void *CallBackSendPara;
 };
 
 
-extern int uart_chl_initialize(struct uart_chl_init_t *uart_chl);
-extern int uart_chl_open(uint8_t chl_type);
+extern int uart_chl_initialize(nd_idis_board_state_t *state,
+                               struct uart_chl_init_t *uart_chl);
+extern int uart_chl_open(nd_idis_board_state_t *state, uint8_t chl_type);
+uint8_t uart_time_process(void *tickpara);
+void UartReceiveHandle(void *para);
+void UartTransmissionHandle(void *para);
 
-void nd_board_uart_init(size_t index, const void *config);
-void nd_board_uart_tx_enable(size_t index, uint8_t enable);
-void nd_board_uart_rx_enable(size_t index, uint8_t enable);
-int nd_board_uart_write(size_t index, uint8_t byte);
-int nd_board_uart_tx_done(size_t index);
-int nd_board_uart_read(size_t index, uint8_t *byte);
-int nd_board_uart_rx_done(size_t index);
+void nd_board_uart_init(nd_idis_board_state_t *state, size_t index,
+                        const void *config);
+void nd_board_uart_tx_enable(nd_idis_board_state_t *state, size_t index,
+                             uint8_t enable);
+void nd_board_uart_rx_enable(nd_idis_board_state_t *state, size_t index,
+                             uint8_t enable);
+int nd_board_uart_write(nd_idis_board_state_t *state, size_t index, uint8_t byte);
+int nd_board_uart_tx_done(nd_idis_board_state_t *state, size_t index);
+int nd_board_uart_read(nd_idis_board_state_t *state, size_t index, uint8_t *byte);
+int nd_board_uart_rx_done(nd_idis_board_state_t *state, size_t index);
 
 
 

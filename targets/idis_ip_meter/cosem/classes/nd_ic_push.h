@@ -3,7 +3,7 @@
 
 #include "components/protocol/dlms/include/nd_cosem_port.h"
 #include "domain/common/store.h"
-#include "domain/push/push.h"
+#include "components/services/push/push.h"
 
 #define ND_IDIS_PUSH_OBJECTS_MAX 16
 

@@ -320,9 +320,12 @@ def _unescape(raw: bytes) -> bytes:
 HEAD = 0x68
 END = 0x16
 
+SVC_CONNECT_REQ = 0x02
 SVC_GET_REQ = 0x05
 SVC_SET_REQ = 0x06
 SVC_ACTION_REQ = 0x07
+SVC_ERROR_RES = 0xEE
+SVC_CONNECT_RES = 0x82
 SVC_GET_RES = 0x85
 SVC_SET_RES = 0x86
 SVC_ACTION_RES = 0x87
@@ -400,14 +403,18 @@ def build_frame(
     sa: bytes = b"\x01",
     ca: int = 0x10,
     ctrl: int = 0x43,
+    sa_type: int = 0,
 ) -> bytes:
     """Wrap an APDU in a 698 frame: 68 | L | C | SA | CA | HCS | APDU | FCS | 16."""
     if not apdu:
         raise FrameError("APDU must not be empty")
     if not 1 <= len(sa) <= 16:
         raise FrameError(f"SA length must be 1..16, got {len(sa)}")
+    if not 0 <= sa_type <= 3:
+        raise FrameError(f"SA type must be 0..3, got {sa_type}")
 
-    body = bytes([ctrl]) + bytes([(len(sa) - 1) & 0x0F]) + bytes(sa) + bytes([ca])
+    sa_header = ((sa_type & 0x03) << 6) | ((len(sa) - 1) & 0x0F)
+    body = bytes([ctrl]) + bytes([sa_header]) + bytes(sa) + bytes([ca])
     # L counts every byte except the two delimiters (dlt698.py: build_frame).
     l_field = 2 + len(body) + 2 + len(apdu) + 2
     if l_field > 0x3FFF:
@@ -535,6 +542,18 @@ def parse_set_response(apdu: bytes) -> tuple[int, int]:
     return apdu[2], apdu[7]
 
 
+def parse_error_response(apdu: bytes) -> tuple[int, int]:
+    """Public structure: service 0xEE, PIID, DAR, then the optional time tag.
+    """
+    if not apdu or apdu[0] != SVC_ERROR_RES:
+        raise FrameError(f"not an ERROR_S-Response: {apdu.hex()}")
+    if len(apdu) not in (3, 14):
+        raise FrameError(
+            f"ERROR_S-Response is {len(apdu)} bytes, expected 3 or 14: {apdu.hex()}"
+        )
+    return apdu[1], apdu[2]
+
+
 def action_request(
     piid: int,
     oi: int,
@@ -604,6 +623,85 @@ def parse_action_response(apdu: bytes) -> ActionResult:
     elif rest[0] != 0x00:
         raise FrameError(f"unknown ACTION-Response data flag: 0x{rest[0]:02X}")
     return ActionResult(piid=piid, oi=oi, method=method, mode=mode, dar=dar, data=data)
+
+
+# CONNECT wire body before the mechanism choice: version(2) + protocol
+# conformance(8) + function conformance(16) + send(2) + recv(2) + window(1) +
+# client APDU size(2) + connect timeout(4).
+_CONNECT_VERSION = b"\x00\x16"
+_CONNECT_PROTOCOL_CONFORMANCE = bytes.fromhex("ffffffffc0000000")
+_CONNECT_FUNCTION_CONFORMANCE = bytes.fromhex("fffec400" + "00" * 12)
+_CONNECT_SEND = b"\x01\x00"
+_CONNECT_RECV = b"\x01\x00"
+_CONNECT_WINDOW = b"\x01"
+_CONNECT_APDU_SIZE = b"\x01\x00"
+_CONNECT_TIMEOUT = b"\x00\x00\x1c\x20"
+
+CONNECT_RESULT_OTHERS = 255
+
+
+def connect_request(
+    piid: int,
+    mode: int,
+    mechanism: bytes = b"",
+    time_tag: bytes = _APDU_TIME_TAG,
+) -> bytes:
+    """CONNECT-Request-Normal: 02 | PIID | 38-byte body | mechanism | tail.
+
+    `mode` is the ConnectMechanismInfo choice tag; `mechanism` is the choice
+    payload (octet string length+data for PasswordSecurity). The frame sizes
+    are deliberately 0x0100 so a rejection response that echoes negotiated
+    values is distinguishable from the current configuration.
+    """
+    if not 0 <= mode <= 0xFF:
+        raise FrameError(f"connect mode must be 0..255, got {mode}")
+    body = (
+        _CONNECT_VERSION
+        + _CONNECT_PROTOCOL_CONFORMANCE
+        + _CONNECT_FUNCTION_CONFORMANCE
+        + _CONNECT_SEND
+        + _CONNECT_RECV
+        + _CONNECT_WINDOW
+        + _CONNECT_APDU_SIZE
+        + _CONNECT_TIMEOUT
+        + bytes([mode])
+    )
+    return bytes([SVC_CONNECT_REQ, piid & 0xFF]) + body + mechanism + time_tag
+
+
+@dataclass(frozen=True)
+class ConnectResponse:
+    """A parsed CONNECT-Response built by the rejection path."""
+
+    piid: int
+    send_frame_size: int
+    recv_frame_size: int
+    result: int
+    extra: int
+
+
+def parse_connect_response(apdu: bytes) -> ConnectResponse:
+    """Parse the CONNECT-Response shape written by __connect_reject.
+
+    Layout after the service and PIID: 32 vendor bytes, version(2), protocol
+    conformance(8), function conformance(16), send(2), recv(2), window(1),
+    client APDU size(2), connect timeout(4), result, security data flag.
+    """
+    fixed = 2 + 32 + 2 + 8 + 16 + 2 + 2 + 1 + 2 + 4 + 2
+    if len(apdu) < fixed:
+        raise FrameError(
+            f"CONNECT-Response is {len(apdu)} bytes, expected at least {fixed}: "
+            f"{apdu.hex()}"
+        )
+    if apdu[0] != SVC_CONNECT_RES:
+        raise FrameError(f"not a CONNECT-Response: service code 0x{apdu[0]:02X}")
+    return ConnectResponse(
+        piid=apdu[1],
+        send_frame_size=int.from_bytes(apdu[60:62], "big"),
+        recv_frame_size=int.from_bytes(apdu[62:64], "big"),
+        result=apdu[71],
+        extra=apdu[72],
+    )
 
 
 @dataclass(frozen=True)

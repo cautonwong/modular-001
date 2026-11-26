@@ -165,12 +165,10 @@ void TMR3_IRQHandler(void)
     if( TMR_GetINTStatus(TMR3))
     {
         TMR_ClearINTStatus(TMR3);
-        /*
         if((Isr_Function[IRQ_TMR3].IsrFunctionRegister)&&(Isr_Function[IRQ_TMR3].irq_index==IRQ_TMR3))
         {
             Isr_Function[IRQ_TMR3].IsrFunctionRegister(Isr_Function[IRQ_TMR3].para);
-        }*/
-        timing_ftr(NULL);
+        }
     }
 }
 
@@ -287,7 +285,10 @@ void RTC_IRQHandler(void)
   */
 void PMU_IRQHandler(void)
 {
-    IO_Interrupt(NULL);
+    if((Isr_Function[IRQ_PMU].IsrFunctionRegister)&&(Isr_Function[IRQ_PMU].irq_index==IRQ_PMU))
+    {
+        Isr_Function[IRQ_PMU].IsrFunctionRegister(Isr_Function[IRQ_PMU].para);
+    }
 }
 
 

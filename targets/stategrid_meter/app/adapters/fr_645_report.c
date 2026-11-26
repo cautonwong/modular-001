@@ -1,7 +1,8 @@
 #include <string.h>
+#include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/resource_ids.h"
 
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/ports/resource_access.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "targets/stategrid_meter/app/channels.h"
@@ -29,19 +30,23 @@ struct double_protocol_report_map_t
 
 int report_645stat_save(void *instance)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     int ret = 0;
     
-    ret = nd_set_index_e2p(instance, (uint8_t *) nd_mb_report_stat_645(instance), mbase_block_parameter, report_stat_645_E, 108); 
+    ret = nd_set_index_e2p_port(port, (uint8_t *) nd_mb_report_stat_645(instance), mbase_block_parameter, report_stat_645_E, 108);
 
     return ret;
 }
 
 int report_645stat_recover(void *instance)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     int ret = 0;
 
     memset((uint8_t *) nd_mb_report_stat_645(instance), 0, 108);
-    ret = nd_get_index_e2p(instance, (uint8_t *) nd_mb_report_stat_645(instance), mbase_block_parameter, report_stat_645_E, 108); 
+    ret = nd_get_index_e2p_port(port, (uint8_t *) nd_mb_report_stat_645(instance), mbase_block_parameter, report_stat_645_E, 108);
     if(ret < 0)
     {
         memset((uint8_t *) nd_mb_report_stat_645(instance), 0, 108);
@@ -127,6 +132,8 @@ static const uint8_t  double_protocol_report_map_num =sizeof(double_protocol_rep
 // 入参:mode 645上报模式字数据，  数据长度8byte
 void report_mode_set_from_645(void *instance, uint8_t* report_mode)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
 
     uint8_t cnt, mod_cnt645 = 0,  value = 0;
     uint32_t mod_cnt_2015 = 0xFFFFFFFF,event_oad = 0xFFFFFFFF;
@@ -175,7 +182,7 @@ void report_mode_set_from_645(void *instance, uint8_t* report_mode)
             
             s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
             nd_mb_offset_report_2015mode());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_report_2015_mode(instance), 4);
+            nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_report_2015_mode(instance), 4);
         }
 
         if (0xFFFFFFFF != event_oad) //事件
@@ -199,6 +206,8 @@ void report_mode_set_from_645(void *instance, uint8_t* report_mode)
 //698设置跟随上报模式字,更新645的上报模式字
 void report_2015mode_set_from_698(void *instance)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint8_t cnt, mod_cnt645 = 0, value = 0;
 
     uint32_t mod_cnt_2015 = 0xFFFFFFFF, event_oad = 0xFFFFFFFF;
@@ -252,7 +261,7 @@ void report_2015mode_set_from_698(void *instance)
     //保存 645上报模式字
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
     nd_mb_offset_report_mode_645());
-    nd_set_offset(instance, s_index, (uint8_t*)nd_mb_report_mode_645(instance), 8);
+    nd_set_offset_port(port, s_index, (uint8_t*)nd_mb_report_mode_645(instance), 8);
 
     EventOut_698_check(instance);  
 }
@@ -261,6 +270,8 @@ void report_2015mode_set_from_698(void *instance)
 // 入参:mode 698设置事件oad和上报标识，
 void report_3320flag_set_from_698(void *instance, uint32_t oad, uint8_t value)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint8_t cnt, mod_cnt645 = 0, rptmode = 0;
     uint32_t s_index;
     uint32_t mod_cnt_2015 = 0xFFFFFFFF, event_oad = 0xFFFFFFFF;
@@ -321,7 +332,7 @@ void report_3320flag_set_from_698(void *instance, uint32_t oad, uint8_t value)
     //保存 645上报模式字
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
     nd_mb_offset_report_mode_645());
-    nd_set_offset(instance, s_index, (uint8_t*)nd_mb_report_mode_645(instance), 8);
+    nd_set_offset_port(port, s_index, (uint8_t*)nd_mb_report_mode_645(instance), 8);
 
     EventOut_698_check(instance);  
 
@@ -332,6 +343,8 @@ void report_3320flag_set_from_698(void *instance, uint32_t oad, uint8_t value)
 // 入参:mode 698设置事件oad和上报标识，
 void report_3320mode_set_from_698(void *instance, uint32_t oad, uint8_t value)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint8_t cnt, mod_cnt645 = 0, rptmode = 0;
     uint32_t s_index;
     uint32_t mod_cnt_2015 = 0xFFFFFFFF, event_oad = 0xFFFFFFFF;
@@ -368,7 +381,7 @@ void report_3320mode_set_from_698(void *instance, uint32_t oad, uint8_t value)
     //保存 645上报模式字
     s_index = ((uint32_t)(RES_DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
     nd_mb_offset_report_mode_645());
-    nd_set_offset(instance, s_index, (uint8_t*)nd_mb_report_mode_645(instance), 8);
+    nd_set_offset_port(port, s_index, (uint8_t*)nd_mb_report_mode_645(instance), 8);
 
     EventOut_698_check(instance);  
 
@@ -701,6 +714,8 @@ void report_645state_reset_sec_judge(void *instance)
 
 void report_state_read_pro(void *instance, uint8_t *buff, uint8_t *length)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint8_t delay = 1;
     uint8_t cnt, index, num = 0;
     int ret = 0;
@@ -725,7 +740,7 @@ void report_state_read_pro(void *instance, uint8_t *buff, uint8_t *length)
     buff[13 + num] = 0xAA;
     *length = 14 + num;
 
-    ret = nd_get_index_e2p(instance, (uint8_t *)&delay, mbase_block_parameter, ReportRstTime, 1); 
+    ret = nd_get_index_e2p_port(port, (uint8_t *)&delay, mbase_block_parameter, ReportRstTime, 1);
     if (ret < 0)
     {
         delay = 0x30;
@@ -753,6 +768,8 @@ void dlt645_clear_follow_para(void *instance, struct context_645_t* ctx)
 ***************************************************/
 int report_push_data_judge(void *instance, uint8_t* databuf,  struct context_645_t* ctx)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint8_t charact = 0, length = 0;
     uint8_t tmp[12] = {0};
     int ret = 0;
@@ -766,9 +783,9 @@ int report_push_data_judge(void *instance, uint8_t* databuf,  struct context_645
         }
 
         
-        /*读后续帧上报标志*/ /*读698是否开启跟随上报*/   // 山东698跟随上报关联645后续帧  需要特殊处理 
-        //ret = nd_get_index_e2p(instance, (uint8_t *)&charact, mbase_block_parameter, FollowReport_en, 1); 
-        ret = nd_get_index_e2p(instance, (uint8_t *)&charact, mbase_block_parameter, MeterRunWord, 1); 
+        // 山东698跟随上报关联645后续帧
+        //ret = nd_get_index_e2p_port(port, (uint8_t *)&charact, mbase_block_parameter, FollowReport_en, 1);
+        ret = nd_get_index_e2p_port(port, (uint8_t *)&charact, mbase_block_parameter, MeterRunWord, 1);
         if(ret < 0)
         {
             charact = 0;

@@ -2,7 +2,7 @@
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "targets/stategrid_meter/tools/app_resource_tool/resource_tool.h"
 #include "fr_698.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 
@@ -595,20 +595,21 @@ int16_t supply_event_info(void *instance, uint16_t event_flag, uint32_t* addr, u
 
 int16_t supply_event_flash_1_info(void *instance, uint16_t event_flag, uint32_t* addr, uint32_t* size, uint32_t* depth)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint16_t i;
     uint32_t addr_index;
     uint16_t sector_size[9] = { 0 };
     uint8_t tempbuf[2*8] = { 0 };
     int ret;
     addr_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MinFrez_Sectors); //待调整  可优化到ram
-    ret = nd_get_index(instance, addr_index, (uint8_t*)&sector_size[0], 18);
+    ret = nd_get_index_port(port, addr_index, (uint8_t*)&sector_size[0], 18);
     if (ret < 0)
     {
         memset(&sector_size[0], 0, sizeof(sector_size));
     }
 
     addr_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MinuteFreeze_depth);//待调整  可优化到ram
-    ret = nd_get_index(instance, addr_index, (uint8_t*)&tempbuf[0], 16);
+    ret = nd_get_index_port(port, addr_index, (uint8_t*)&tempbuf[0], 16);
     if (ret < 0)
     {
         memset(&tempbuf[0], 0, sizeof(tempbuf));
@@ -1263,6 +1264,7 @@ int get_record_id_info(void *instance, uint32_t oad, struct record_storage_id_in
 // mode = 1，获取记录头；   mode=2，获取配置关联对象， mode = 3，获取所有关联对象
 int get_capture_list(void *instance, uint32_t oad, uint32_t *rcsd_list, uint8_t mode)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint8_t i, num;
     uint32_t *p = (rcsd_list + 1);
     uint32_t rcsd_num = 0;
@@ -1302,7 +1304,7 @@ int get_capture_list(void *instance, uint32_t oad, uint32_t *rcsd_list, uint8_t 
 
     if(mode & 0x02)
     {  
-        nd_get_index(instance, info.capture_index, &tempbuf[0], sizeof(tempbuf));
+        nd_get_index_port(port, info.capture_index, &tempbuf[0], sizeof(tempbuf));
      
         num = tempbuf[0];
         if (num > REQ_RCSD_MAXNUM)
@@ -1733,6 +1735,7 @@ int fc_fun_07(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, 
 // 电能数据 存储和协议转换  
 int fc_fun_Energy(void *instance, uint32_t oad_req, uint32_t oad_src,uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
 
     uint8_t i, /*type,*/ attr, index, index_src,  /*len, */block_num = (4+1);
     uint16_t oi;
@@ -1750,7 +1753,7 @@ int fc_fun_Energy(void *instance, uint32_t oad_req, uint32_t oad_src,uint8_t *de
     index_src = get_OAD_Index(oad_src);
 
     addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3); //读取费率数
-    nd_get_index(instance, addr, &block_num, 1); 
+    nd_get_index_port(port, addr, &block_num, 1); 
     
     block_num += 1;   // 总加 费率个数
     if(block_num > 13)  block_num = 13;
@@ -1994,6 +1997,7 @@ const struct format_conversion_t format_conversion_tab[] =
 //
 int record_change_format(void *instance, uint8_t *des,  uint8_t* src, uint32_t oad_req, uint32_t oad_src, enum format_conversion_mode mode)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint16_t i, OI;
     uint8_t type, attr, index, len, block_num = (4+1);
     uint32_t addr, cmp_oad = 0;
@@ -2013,7 +2017,7 @@ int record_change_format(void *instance, uint8_t *des,  uint8_t* src, uint32_t o
             }
 
             addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3); //读取费率数
-            nd_get_index(instance, addr, &block_num, 1); 
+            nd_get_index_port(port, addr, &block_num, 1); 
             
             block_num += 1;   // 总加 费率个数
 
@@ -2278,6 +2282,7 @@ int resource_map_698(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_siz
 
 int para_init(void *instance )
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint16_t i,num=0,s_len,j,sm=0;
     uint32_t s_index=0;
     int ret;
@@ -2325,12 +2330,12 @@ int para_init(void *instance )
     s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
     nd_mb_offset_meter_no());
     s_len = nd_mb_offset_over_current_threshold() - nd_mb_offset_meter_no();
-    nd_set_offset(instance, s_index, (uint8_t*)nd_mb_meter_no(instance), s_len);
+    nd_set_offset_port(port, s_index, (uint8_t*)nd_mb_meter_no(instance), s_len);
     
     memset(nd_mb_tsa(instance), 0x11, 6);//表地址
     s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
     nd_mb_offset_tsa());
-    nd_set_offset(instance, s_index, nd_mb_tsa(instance), 6);
+    nd_set_offset_port(port, s_index, nd_mb_tsa(instance), 6);
     
 
     nd_mb_over_current_threshold(instance) = 720000;         //参数 电能表过流事件-电流触发下限 
@@ -2354,7 +2359,7 @@ int para_init(void *instance )
     s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
     nd_mb_offset_over_current_threshold());
     s_len = nd_mb_offset_factor_mode() - nd_mb_offset_over_current_threshold() + sizeof(nd_mb_factor_mode(instance));
-    nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_over_current_threshold(instance), s_len);  
+    nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_over_current_threshold(instance), s_len);  
 
     // 波特率更新标志
     nd_mb_baud_chg(instance) = 0xFF;
@@ -2363,7 +2368,7 @@ int para_init(void *instance )
     nd_mb_sta(instance) = 0; //继电器命令状态
     s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
         nd_mb_offset_sta()) -  nd_mb_offset_persistent_section_start();
-    nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_sta(instance), sizeof(nd_mb_sta(instance)));
+    nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_sta(instance), sizeof(nd_mb_sta(instance)));
 
     //双备份区初始化
     num = sizeof(parameter_item_1)/sizeof(parameter_item_t);
@@ -2375,7 +2380,7 @@ int para_init(void *instance )
             p_data = parameter_item_1[i].data;
                     
             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + parameter_item_1[i].paramerer_index);
-            nd_set_index(instance, s_index, (uint8_t*)(p_data), parameter_item_1[i].len); 
+            nd_set_index_port(port, s_index, (uint8_t*)(p_data), parameter_item_1[i].len); 
         }
     }
 
@@ -2394,7 +2399,7 @@ int para_init(void *instance )
             {
 
                 s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + parameter_item[i].paramerer_index);
-                nd_set_index(instance, s_index, (uint8_t*)(p_data), parameter_item[i].len); 
+                nd_set_index_port(port, s_index, (uint8_t*)(p_data), parameter_item[i].len); 
             }
             else
             {
@@ -2409,7 +2414,7 @@ int para_init(void *instance )
                 for(j=0; j<sm; j++)
                 {
                     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + parameter_item[i].paramerer_index + j);
-                    nd_set_index(instance, s_index, (uint8_t*)(p_data+1), (*p_data)); 
+                    nd_set_index_port(port, s_index, (uint8_t*)(p_data+1), (*p_data)); 
                 }
             }
         }
@@ -2428,6 +2433,7 @@ int para_init(void *instance )
 //条件: 开盖,参数校验区异常, 表型读取异常,
 int auto_parameter_inital(void *instance)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint32_t s_index = 0;
     int ret = 0;
     uint8_t* buf = nd_fr698_apdu_cache(instance);
@@ -2438,7 +2444,7 @@ int auto_parameter_inital(void *instance)
     nd_board_cover_input_enable();
     if(!nd_board_cover_closed())//开盖下
     {
-        ret = nd_get_index_e2p(instance, buf, mbase_block_parameter, ParaInitFinish_Flag, 2);  //判断 完成标志
+        ret = nd_get_index_e2p_port(port, buf, mbase_block_parameter, ParaInitFinish_Flag, 2);
         if((ret > 0) && ((buf[0] == 0x55) || (buf[1] == 0x55) || (buf[2] == 0xaa) || (buf[1] != 0xaa)) )
         {
             return 0;
@@ -2452,7 +2458,7 @@ int auto_parameter_inital(void *instance)
 
         for(i=0;i<(sizeof(check_id)/sizeof(check_id[0]));i++) //判断 三个 mbase_block_parameter 区参数 
         {
-            ret = nd_get_index_e2p(instance, buf, mbase_block_parameter, check_id[i], 1); 
+            ret = nd_get_index_e2p_port(port, buf, mbase_block_parameter, check_id[i], 1); 
             if(ret > 0)
             {
                 break;
@@ -2465,7 +2471,7 @@ int auto_parameter_inital(void *instance)
             reset_all_channel_baud(instance); 
             //执行完成标志
             buf[0] = 0x55; buf[1] = 0x55; buf[2] = 0xaa; buf[3] = 0xaa;
-            nd_set_index_e2p(instance, buf, mbase_block_parameter, ParaInitFinish_Flag, 2);  //写完成标志
+            nd_set_index_e2p_port(port, buf, mbase_block_parameter, ParaInitFinish_Flag, 2);
             return 1;
         } 
     }   

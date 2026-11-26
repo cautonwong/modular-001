@@ -270,8 +270,6 @@ static int __fr_handle_get_record_request(void * instance, void * pipeline, nd_d
     return 1;
 }
 
-uint8_t cnt = 0;
-
 static int __fr_handle_get_next_request(void *, void *, nd_dl698_msg_t*)
 {
 
@@ -315,7 +313,6 @@ int fr_handle_get_request(void * instance, void * pipeline, nd_dl698_msg_t* mesg
             next_choice = 1;
             ctx->next_last_frm = 0;
             ctx->next_index2_frm = 0;
-            cnt = 0;
             break;
         case GetRequestRecord:
         case GetRequestRecordList:
@@ -324,7 +321,6 @@ int fr_handle_get_request(void * instance, void * pipeline, nd_dl698_msg_t* mesg
             next_choice = 2;
             ctx->next_last_frm = 0;
             ctx->next_index2_frm = 0;
-            cnt = 0;
             break;
         case GetRequestNext:
             __fr_handle_get_next_request(instance, pipeline, mesg);

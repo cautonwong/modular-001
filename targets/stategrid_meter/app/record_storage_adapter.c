@@ -5,8 +5,6 @@
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/persistence/legacy_control_block.h"
 
-static nd_record_storage_port_t port;
-
 static int target_save_index(void *ctx, uint32_t oad, uint32_t *index)
 {
     struct record_storage_id_info_t info;
@@ -37,12 +35,11 @@ static int target_trigger_645_record(void *ctx, uint32_t di, uint8_t tag)
     return trigger_MeterWr645_record((stategrid_context_t *)ctx, di, tag);
 }
 
-void stategrid_record_storage_bind(stategrid_context_t *instance)
+void stategrid_record_storage_attach(stategrid_context_t *instance)
 {
-    port.ctx = instance;
-    port.save_index = target_save_index;
-    port.change_format = target_change_format;
-    port.clear_program_list = target_clear_program_list;
-    port.trigger_645_record = target_trigger_645_record;
-    nd_record_storage_bind(&port);
+    instance->record_storage.ctx = instance;
+    instance->record_storage.save_index = target_save_index;
+    instance->record_storage.change_format = target_change_format;
+    instance->record_storage.clear_program_list = target_clear_program_list;
+    instance->record_storage.trigger_645_record = target_trigger_645_record;
 }

@@ -6,7 +6,7 @@
 #include <time.h>
 
 #include "cpu_surport.h"
-#include "domain/common/status.h"
+#include "targets/stategrid_meter/app/meter_wire_status.h"
 #include "targets/stategrid_meter/persistence/legacy_control_block.h"
 #include "targets/stategrid_meter/app/stategrid_context.h"
 #include "targets/stategrid_meter/board/meter_config.h"
@@ -575,7 +575,7 @@ void sim_scenario_apply(stategrid_context_t *instance, unsigned cycle)
             scenario_cover_closed = event->value;
             if (mbase != NULL) {
                 nd_mbase_CoverOpenS_status(mbase) =
-                    event->value ? ND_EVENT_RESET : ND_EVENT_SET;
+                    event->value ? ND_WIRE_STATUS_RESET : ND_WIRE_STATUS_SET;
             }
             if (g_sim.verbose) {
                 sim_trace_printf("[sim] cover %s", event->value ? "closed" : "open");

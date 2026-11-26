@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <time.h>
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "port.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
@@ -13,13 +13,14 @@
 #include "fr_698.h"
 #include "application/ports/resource_access.h"
 #include "fr_645_report.h"
-#include "domain/common/status.h"
+#include "targets/stategrid_meter/app/meter_wire_status.h"
 #include "domain/events/record_message.h"
 #include "targets/stategrid_meter/app/app_config.h"
 #include "targets/stategrid_meter/app/app_entry.h"
 #include "domain/events/power_event.h"
-#include "domain/events/event_catalog.h"
 #include "domain/events/record_capture.h"
+#include "application/adapters/dl698/event_oad_view.h"
+#include "application/adapters/dl698/record_capture_view.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
@@ -347,6 +348,8 @@ void record_event_no_mesg_pro(void *instance, void *task, uint16_t RecordId, uin
 
 void clr_sequence(void *instance, uint32_t sequence_index)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint32_t sequence = 0, s_index = 0;
     uint16_t SeqId = (uint16_t)sequence_index;
 
@@ -357,17 +360,19 @@ void clr_sequence(void *instance, uint32_t sequence_index)
 
         s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
         nd_mb_offset_minute_freeze_seq()) + ((SeqId - MinuteFreeze1_seq) * 4) -  nd_mb_offset_persistent_section_start();
-        nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_minute_freeze_seq(instance)[SeqId - MinuteFreeze1_seq], 4);
+        nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_minute_freeze_seq(instance)[SeqId - MinuteFreeze1_seq], 4);
     }
     else
     {
-        nd_set_index(instance, sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+        nd_set_index_port(port, sequence_index, (uint8_t*)&sequence, sizeof(sequence));
     }
 }
 
 //冻结或事件清零 接口    传入要清除的oad 
 int clr_record(void *instance, uint32_t oad)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint32_t s_index = 0;
     uint8_t i, tmpbuf[10] = {0};
     struct record_storage_id_info_t info;
@@ -380,7 +385,7 @@ int clr_record(void *instance, uint32_t oad)
     }
 
     //清记录
-    nd_log_clean(instance, info.save_index);
+    nd_log_clean_port(port, info.save_index);
     //清序号
     clr_sequence(instance, info.sequence_index);
 
@@ -430,7 +435,7 @@ int clr_record(void *instance, uint32_t oad)
             //清最近一次广播导致时钟异常时间
             memset(tmpbuf, 0, sizeof(tmpbuf));
             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBroadcastTimeERR);
-            nd_set_index(instance, s_index, &tmpbuf[0], 3);
+            nd_set_index_port(port, s_index, &tmpbuf[0], 3);
             nd_mb_rtc_errs_status(instance) = 0; //清时钟故障标志   
         }
             break;
@@ -593,6 +598,8 @@ int freeze_clr(void *instance)
 // 电表清零
 int meter_clr(void *instance)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     const uint8_t tmpbuf[30] = {0};
     uint32_t s_addr = 0;
     stategrid_context_t *ctx = (stategrid_context_t *)instance;
@@ -618,7 +625,7 @@ int meter_clr(void *instance)
         clr_record(instance, 0x30130200);
 
         s_addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Bat_UseTime);// 电池使用时间
-        nd_set_index(instance, s_addr, (uint8_t*)tmpbuf, 4);
+        nd_set_index_port(port, s_addr, (uint8_t*)tmpbuf, 4);
     }
 
     //其他清零    待添加
@@ -654,12 +661,14 @@ int clr_MonthEC(void *instance)
 //清最近一次结算时间   //清最近一次日冻结时间 // LastBillingTime +  LastDayFreezTime
 int clr_last_bill_time(void *instance, uint32_t ID)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint32_t s_index;
     uint8_t tmpbuf[10] = {0};
     
     memset(tmpbuf, 0, sizeof(tmpbuf));
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ID);
-    nd_set_index(instance, s_index, &tmpbuf[0], 6);
+    nd_set_index_port(port, s_index, &tmpbuf[0], 6);
     return 1;
 }
 
@@ -708,20 +717,23 @@ int event_poweroff_save(void *instance, void *pipeline, void *mesg)
     
     
     
-    //s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+    //const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+    //s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) +
     //nd_mb_offset_active_flag());
-    //nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_active_flag(instance)[0], 100);     
+    //nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_active_flag(instance)[0], 100);
 
-    //s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
+    //s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) +
     //nd_mb_offset_active_flag());
     //s_len = nd_mb_offset_v_powerdown_tm() - nd_mb_offset_active_flag();
-    //nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_active_flag(instance)[0], s_len);  
+    //nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_active_flag(instance)[0], s_len);
     return 1;
 }
 
 //停电下每秒调用  主要处理事件累计时间
 int event_LowPower_pro(void *instance, void *pipeline, void *mesg)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint32_t s_index;
 
     /*
@@ -740,7 +752,7 @@ int event_LowPower_pro(void *instance, void *pipeline, void *mesg)
     {
         s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + 
                     (nd_mb_offset_active_flag() -  nd_mb_offset_persistent_section_start()) );
-        nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_active_flag(instance)[0], 50);               
+        nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_active_flag(instance)[0], 50);
     }
 
     
@@ -969,6 +981,8 @@ uint8_t check_scheme(enum scheme_mode mode, uint32_t obj, uint16_t record_id)
 //获取当前序号值 序号累加 分钟冻结序号 存ram，掉电存e2p
 void get_record_sequence_add(void *instance, uint32_t sequence_index, uint8_t *dst)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint32_t sequence = 0;
     uint16_t SeqId = (uint16_t)sequence_index;
 
@@ -979,10 +993,10 @@ void get_record_sequence_add(void *instance, uint32_t sequence_index, uint8_t *d
     }
     else
     {
-        nd_get_index(instance, sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+        nd_get_index_port(port, sequence_index, (uint8_t*)&sequence, sizeof(sequence));
         mem_swap_cpy(dst, (uint8_t*)&sequence, 4);
         sequence++;
-        nd_set_index(instance, sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+        nd_set_index_port(port, sequence_index, (uint8_t*)&sequence, sizeof(sequence));
     }
 }
 
@@ -990,6 +1004,8 @@ void get_record_sequence_add(void *instance, uint32_t sequence_index, uint8_t *d
 //mode 0-7 为冻结方案， 10为 事件发生 11为 结束
 int read_record_capture(void *instance, uint8_t* databuf, uint32_t* CaptureList, enum scheme_mode mode, uint16_t* remain_size,  struct record_storage_id_info_t *record_id_info, uint8_t* payload)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint8_t* p, i, scheme_valid = true;
     int16_t single_len = 0;
     uint32_t obj;
@@ -1005,7 +1021,7 @@ int read_record_capture(void *instance, uint8_t* databuf, uint32_t* CaptureList,
         //read last1
         if(mode == END_MODE)  // 结束需要先获取上一次存储数据
         {
-            ret = nd_log_output(instance, record_id_info->save_index,  p, 1, &circular_info);
+            ret = nd_log_output_port(port, record_id_info->save_index,  p, 1, &circular_info);
             if(ret < 0)
             {
                 return -1;
@@ -1018,7 +1034,7 @@ int read_record_capture(void *instance, uint8_t* databuf, uint32_t* CaptureList,
             
             circular_info.curr_num = circular_info.valid_num - 1;//上1次
 
-            ret = nd_log_output(instance, record_id_info->save_index,  p, circular_info.unit_size, &circular_info);
+            ret = nd_log_output_port(port, record_id_info->save_index,  p, circular_info.unit_size, &circular_info);
             if(ret < 0)
             {
                 return -1;
@@ -1126,6 +1142,8 @@ int read_record_capture(void *instance, uint8_t* databuf, uint32_t* CaptureList,
 //直接提供record_id  可不走消息 记录事件
 int recv_record_process(void *instance, uint16_t record_id, uint8_t* payload)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
 
     uint8_t mode = START_MODE;//enum scheme_mode mode = START_MODE;
     uint8_t data_buff[400] = { 0 };
@@ -1169,11 +1187,11 @@ int recv_record_process(void *instance, uint16_t record_id, uint8_t* payload)
     //调用ND_SET保存数据
     if (mode == END_MODE)
     {
-        nd_log_append_revise(instance, record_id_info.save_index, data_buff, 0, (pdata - data_buff));
+        nd_log_append_revise_port(port, record_id_info.save_index, data_buff, 0, (pdata - data_buff));
     }
     else
     {
-        nd_log_append(instance, record_id_info.save_index, data_buff, (pdata - data_buff));
+        nd_log_append_port(port, record_id_info.save_index, data_buff, (pdata - data_buff));
     }
 
 
@@ -1200,7 +1218,7 @@ int recv_record_process(void *instance, uint16_t record_id, uint8_t* payload)
         report_3320list_add(instance,Oad|(event_scheme<<13)); 
         if(PowerOffS == record_id)
         {
-            if(( *nd_fr698_power_state(instance) == ND_AC_POWER_ON ) && (nd_mb_power_on_sec_accum(instance) >= nd_mb_active_report_sec_limit(instance)))
+            if(( *nd_fr698_power_state(instance) == ND_WIRE_POWER_ON ) && (nd_mb_power_on_sec_accum(instance) >= nd_mb_active_report_sec_limit(instance)))
             {
                 nd_mb_active_report_cmdtype(instance) |= ACTIVE_REPORT_3011_START;
                 nd_mb_active_report_cmdtype(instance) &=~ ACTIVE_REPORT_3011_END;
@@ -1208,14 +1226,14 @@ int recv_record_process(void *instance, uint16_t record_id, uint8_t* payload)
                 
                 s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
                 nd_mb_offset_power_on_sec_accum()) -  nd_mb_offset_persistent_section_start();
-                nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_power_on_sec_accum(instance), 4);
+                nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_power_on_sec_accum(instance), 4);
             }
         }
         else if(PowerOffE == record_id)
         {
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
             nd_mb_offset_power_on_sec_accum())  -  nd_mb_offset_persistent_section_start();
-            nd_get_offset(instance, s_index, (uint8_t*)&last_poweron_time, 4);
+            nd_get_offset_port(port, s_index, (uint8_t*)&last_poweron_time, 4);
         
             nd_mb_active_report_cmdtype(instance) &=~ ACTIVE_REPORT_3011_START;
             
@@ -1228,7 +1246,7 @@ int recv_record_process(void *instance, uint16_t record_id, uint8_t* payload)
             last_poweron_time = 0;
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
             nd_mb_offset_power_on_sec_accum())  -  nd_mb_offset_persistent_section_start();
-            nd_set_offset(instance, s_index, (uint8_t*)&last_poweron_time, 4);
+            nd_set_offset_port(port, s_index, (uint8_t*)&last_poweron_time, 4);
         }
 
     }

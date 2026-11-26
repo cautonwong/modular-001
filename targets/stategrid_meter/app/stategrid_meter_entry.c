@@ -1,4 +1,5 @@
 #include "targets/stategrid_meter/board/uart_driver.h"
+#include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "targets/stategrid_meter/app/resource_ids.h"
 #include "targets/stategrid_meter/board/board_io.h"
@@ -12,6 +13,7 @@
 #include "targets/stategrid_meter/mapper_698/factory_cfg.h"
 #include "targets/stategrid_meter/app/dl698_parameter_adapter.h"
 #include "targets/stategrid_meter/app/platform_adapter.h"
+#include "targets/stategrid_meter/app/meter_base_port.h"
 #include "targets/stategrid_meter/app/backlight_adapter.h"
 #include "targets/stategrid_meter/app/record_storage_adapter.h"
 #include "targets/stategrid_meter/app/relay_status_adapter.h"
@@ -37,7 +39,7 @@
 #include "application/adapters/dl698/fr_698_message.h"
 #include "application/ports/uart_timeout.h"
 #include "application/adapters/dl645/fr_645_context.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "infra/memory/arena.h"
 #include "targets/stategrid_meter/app/metering/demand_adapter.h"
 #include "targets/stategrid_meter/app/metering_energy_adapter.h"
@@ -187,14 +189,6 @@ static void stategrid_698_poll(stategrid_698_link_t *link,
         link->ctx->fr_err = fr_rx_698_entry(instance, &pipeline, &mesg);
         if (link->ctx->fr_err > 0)
         {
-            nd_event_t event = { 0 };
-
-            event.topic = ND_EVENT_DL698_FRAME;
-            event.timestamp_ms = instance->ms;
-            event.data.frame.channel = link->ctx->channel;
-            event.data.frame.length = (uint16_t)(link->ctx->min_len + 2);
-            nd_bus_publish(&event);
-
             link->ctx->fr_err = fr_gatekeeper_698_server(instance, &pipeline,
                                                          &mesg);
         }
@@ -268,6 +262,21 @@ static void dispatch_645_rs4851(stategrid_context_t * instance)
 
 __no_init uint8_t nd_memory[STG_RAM_ARENA_SIZE]; //26
 
+static stategrid_board_state_t stategrid_board;
+
+void stategrid_board_init(stategrid_board_state_t *state)
+{
+    if (state == NULL) {
+        return;
+    }
+    memset(state, 0, sizeof(*state));
+}
+
+stategrid_board_state_t *stategrid_board_root(void)
+{
+    return &stategrid_board;
+}
+
 static void trace_event(uint8_t to, uint8_t ctrl)
 {
 #ifdef ND_FIRMWARE_SIM
@@ -320,6 +329,8 @@ static void publish_power_event(stategrid_context_t *instance, uint8_t on)
 
 static void power_tick(stategrid_context_t *instance)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
 #ifndef WIN32
     uint32_t addr = 0;
     int ret = 0;
@@ -342,7 +353,7 @@ static void power_tick(stategrid_context_t *instance)
     else if (ac_power_on_monitor())
     {
         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + ND_METER_TYPE_PARAM_ID);
-        ret = nd_get_index(instance, addr, (uint8_t*)&metertype, 2);
+        ret = nd_get_index_port(port, addr, (uint8_t*)&metertype, 2);
         if(ret < 0)
         {
             metertype = (uint16_t)(init_Meter_Type[0] |
@@ -492,8 +503,7 @@ static void lowpower_tick(stategrid_context_t *instance)
  * busy delay so the last byte leaves the shift register. */
 static void report_poll(stategrid_context_t *instance)
 {
-    (void)instance;
-    if (nd_fr698_report_pending())
+    if (nd_fr698_report_pending(instance))
     {
         uint32_t tick_report = 0x4FFFF;
         uint16_t dly = 0;
@@ -511,7 +521,7 @@ static void report_poll(stategrid_context_t *instance)
             }
             tick_report--;
         }
-        nd_fr698_report_clear();
+        nd_fr698_report_clear(instance);
     }
 }
 
@@ -544,11 +554,13 @@ static int energy_region_free(stategrid_context_t *instance, uint32_t *out_used)
 
 int baremetal_instance_entry_main(stategrid_context_t * instance, int argc, char** argv)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     stategrid_context_t *ctx = instance;
 
     stategrid_context_init(ctx);
 
-    resource_tool_bind(ctx);
+    resource_tool_attach(ctx);
 
 
     csstack_base_init();
@@ -740,7 +752,7 @@ int baremetal_instance_entry_main(stategrid_context_t * instance, int argc, char
         {
             return -1;
         }
-        nd_eeprom_block_init(&ctx->energy_block, board_eeprom(),
+        nd_eeprom_block_init(&ctx->energy_block, board_eeprom(ctx->board),
                              BOARD_EEPROM_SIZE);
         energy_config.block = nd_eeprom_block_port(&ctx->energy_block);
         energy_config.offset = STG_ENERGY_SNAPSHOT_OFFSET;
@@ -808,9 +820,9 @@ int baremetal_instance_entry_main(stategrid_context_t * instance, int argc, char
     //复位次数
     uint32_t count = 0;
     addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + ResetCount);
-    nd_get_index(instance, addr, (uint8_t*)&count, sizeof(count));
+    nd_get_index_port(port, addr, (uint8_t*)&count, sizeof(count));
     count++;
-    nd_set_index(instance, addr, (uint8_t*)&count, sizeof(count));   
+    nd_set_index_port(port, addr, (uint8_t*)&count, sizeof(count));
 
     ctx->ac_power_status = AC_POWER_OFF; // 初始化为停电模式
     
@@ -849,24 +861,26 @@ int main(int argc, char** argv)
     
     ndv_timer_init();
     
+    stategrid_board_init(&stategrid_board);
     instance = stategrid_context_create(RES_DEV_RAM, (uint32_t)&nd_memory, STG_RAM_ARENA_SIZE, STG_RAM_METADATA_SIZE, resource_block_name);
     if (instance == NULL)
     {
         return -1;
     }
-    dl698_parameter_bind(instance);
-    stategrid_platform_bind(instance);
-    stategrid_record_storage_bind(instance);
-    stategrid_backlight_bind();
-    stategrid_relay_status_bind();
-    stategrid_metering_input_bind();
-    stategrid_timer_bind();
+    dl698_parameter_attach(instance);
+    stategrid_platform_attach(instance);
+    stategrid_record_storage_attach(instance);
+    stategrid_meter_base_attach(instance);
+    stategrid_backlight_attach(instance);
+    stategrid_relay_status_attach(instance);
+    stategrid_metering_input_attach(instance);
+    stategrid_timer_attach(instance);
 
     //初始化硬件
     dev_init(instance, AC_POWER_OFF);
 
     //初始化固件
-    irq_system_init();
+    board_irq_bind(instance->board);
 #endif // !WIN32
 
     baremetal_instance_entry_main(instance, argc, argv);

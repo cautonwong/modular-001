@@ -1,12 +1,13 @@
 #include "targets/stategrid_meter/persistence/meter_record.h"
+#include "domain/tariff/tariff.h"
 #include "fr_698.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "port.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/freeze/freeze_applications.h"
 #include "targets/stategrid_meter/app/tariff/tariff_applications.h"
-#include "domain/common/time_format.h"
+#include "components/services/time_format/time_format.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/mapper_698/resource_map.h"
 
@@ -74,6 +75,7 @@ const general_set4  general_set4_talble[] =
 
 int general_set_4_para(void *instance, uint32_t id, uint8_t* buf)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
 //    struct mbase_control_block_t* mbase_cb;
     uint16_t oad,i,year2;
     uint8_t attribute,timer[6];
@@ -100,11 +102,11 @@ int general_set_4_para(void *instance, uint32_t id, uint8_t* buf)
                         break;
                     case 0x4013://周休日日时段表号
                         if(*p != 17) return -DAR_TYPE_NOT_MATCH;
-                        if (( p[1] ==  0 ) || ( p[1] >  MaxTouTabNum )) return -DAR_OTHERS_ERROR;
+                        if (( p[1] ==  0 ) || ( p[1] >  ND_TARIFF_MAX_DAY_TABLES )) return -DAR_OTHERS_ERROR;
                         //保存编程前
                         nd_get(instance, id, timer, 2, NULL);
                         addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_WeekTab);
-                        nd_set_index(instance, addr, timer, 2);
+                        nd_set_index_port(port, addr, timer, 2);
                         record_event_no_mesg_pro(instance, NULL, WeekTabWrS, NULL, 1);// 周休日编程事件
                         nd_mb_fee(instance) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
                         break;
@@ -172,7 +174,7 @@ int general_set_4_para(void *instance, uint32_t id, uint8_t* buf)
                 ndv_memcopy(ptr_tmp, (p + general_set4_talble[i].offset), datalen);
               
                 addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + general_set4_talble[i].s_index);
-                nd_set_index(instance, addr, ptr_tmp, general_set4_talble[i].len); 
+                nd_set_index_port(port, addr, ptr_tmp, general_set4_talble[i].len); 
                 return tag_datalen;//(general_set4_talble[i].offset + general_set4_talble[i].len);
             }
             else
@@ -187,6 +189,7 @@ int general_set_4_para(void *instance, uint32_t id, uint8_t* buf)
 
 int set_support_protocol_list(void *instance, uint32_t id, uint8_t* buf)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
 
     uint8_t i;
     uint8_t* p = buf;
@@ -237,7 +240,7 @@ int set_support_protocol_list(void *instance, uint32_t id, uint8_t* buf)
         }
 
         addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Protocol_List);
-        nd_set_index(instance, addr, tmp_cache, (uint16_t)(tmp - tmp_cache)); 
+        nd_set_index_port(port, addr, tmp_cache, (uint16_t)(tmp - tmp_cache)); 
         p = p + (uint16_t)(tmp - tmp_cache);
 
     }
@@ -251,11 +254,11 @@ int set_support_protocol_list(void *instance, uint32_t id, uint8_t* buf)
         }
 
         addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Protocol_List);
-        nd_get_index(instance, addr, tmp_cache, 76); 
+        nd_get_index_port(port, addr, tmp_cache, 76); 
 
         ndv_memcopy((tmp_cache + (index - 1) * maxlen + 1), &p[1], len + 1);
 
-        nd_set_index(instance, addr, tmp_cache, 76); 
+        nd_set_index_port(port, addr, tmp_cache, 76); 
 
         p += (len + 2);
     }
@@ -266,6 +269,7 @@ int set_support_protocol_list(void *instance, uint32_t id, uint8_t* buf)
 
 int set4300(void *instance, uint32_t id, uint8_t* buf)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint8_t j, i,timer[6], num, Tnum, tmpbuf[60] ={0};
     uint8_t* ptr_tmp = nd_fr698_apdu_cache(instance);
     uint8_t* p = buf;
@@ -328,7 +332,7 @@ int set4300(void *instance, uint32_t id, uint8_t* buf)
             ndv_memcopy(ptr_tmp, (p + set4300_table[i].offset), datalen);
 
             addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + set4300_table[i].s_index);
-            nd_set_index(instance, addr, ptr_tmp, set4300_table[i].len); 
+            nd_set_index_port(port, addr, ptr_tmp, set4300_table[i].len); 
 
             EventOut_698_check(instance);  
             
@@ -365,7 +369,7 @@ int set4300(void *instance, uint32_t id, uint8_t* buf)
                         
                         p = p + set4300_table[i].offset;
                         addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + set4300_table[i].s_index);
-                        nd_set_index(instance, addr, p, set4300_table[i].len); 
+                        nd_set_index_port(port, addr, p, set4300_table[i].len); 
                         p = p + set4300_table[i].len ;
                     }
                 }
@@ -414,7 +418,7 @@ int set4300(void *instance, uint32_t id, uint8_t* buf)
             }
 
             addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Report_channel);
-            nd_set_index(instance, addr, tmpbuf, 13); 
+            nd_set_index_port(port, addr, tmpbuf, 13); 
 
             EventOut_698_check(instance);  
             return (p-buf);            
@@ -443,19 +447,19 @@ int CheckData400C(uint8_t *p,uint8_t index)
     switch(index)
     {
         case 0:
-          if(*(p+1) > 14)   return DAR_TIME_ZONE_EXCEED;
+          if(*(p+1) > ND_TARIFF_MAX_SEASONS)   return DAR_TIME_ZONE_EXCEED;
           break;
         case 2:
-          if(*(p+1) > 14)   return DAR_DAY_INTERVAL_EXCEED;
+          if(*(p+1) > ND_TARIFF_MAX_PERIODS)   return DAR_DAY_INTERVAL_EXCEED;
           break;
         case 1:
-          if(*(p+1) > 8)   return DAR_OTHERS_ERROR;
+          if(*(p+1) > ND_TARIFF_MAX_DAY_TABLES)   return DAR_OTHERS_ERROR;
           break;
         case 3:
-          if(*(p+1) > 12)   return DAR_TARIFF_NUM_EXCEED;
+          if(*(p+1) > ND_TARIFF_MAX_FEES)   return DAR_TARIFF_NUM_EXCEED;
           break;
         case 4:
-          if(*(p+1) > 20)   return DAR_BUFFER_OVERFLOW;
+          if(*(p+1) > ND_TARIFF_MAX_HOLIDAYS)   return DAR_BUFFER_OVERFLOW;
           break;
     }
     return 0;
@@ -483,12 +487,16 @@ int after_Time_set_hook(void *instance)
 }
 int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 {    
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint16_t oad,year2,year1;
     uint8_t index,attribute,i,num,buffer[42]={0},temp[114]={0},num_hourtab=0,year,timer[6];
     int dar =0;
     uint8_t* p = buf;
     uint32_t s_index = 0x00,addr=0;
     uint16_t cur_v = 0, last_v = 0xFFFF, first_v = 0,max_v = 0, period = 15, last_fee=1, first_fee=1; //时段检查
+    nd_tariff_interval_t tariff_entries[ND_TARIFF_MAX_SEASONS];
+    nd_tariff_error_t tariff_error;
+    uint8_t tariff_count = 0;
     int len=0;
     
     if(!nd_mb_valid(instance))
@@ -540,7 +548,7 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
     log_info("%02x-%02x-%02x-%02x-%02x-%02x\n", buffer[0],buffer[1],buffer[2],buffer[3],buffer[4],buffer[5]);
 
                 addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
-                nd_set_index(instance, addr, buffer, 7);
+                nd_set_index_port(port, addr, buffer, 7);
                 
                 mem_swap_cpy((uint8_t*)&oad, p, 2);
                 year = oad - 2000;
@@ -567,7 +575,7 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                 rtc_get_from_tm(instance,temp);
                 mem_swap_cpy( &buffer[0], &temp[0], 7);
                 addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
-                nd_set_index(instance, addr, buffer, 7);
+                nd_set_index_port(port, addr, buffer, 7);
 
                 record_event_no_mesg_pro(instance, NULL, SetTimeS, NULL, 1);// 校时记录
                 after_Time_set_hook(instance);
@@ -587,7 +595,7 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                         mem_swap_cpy((uint8_t*)&nd_mb_limit_t_min(instance), p, 2);
                         s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_limit_t_min());
-                        nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_limit_t_min(instance), 2);
+                        nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_limit_t_min(instance), 2);
                         p = p + 2;
                     }
                     if((index == 0)||(index == 2))
@@ -596,7 +604,7 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                         mem_swap_cpy((uint8_t*)&nd_mb_limit_t_max(instance), p, 2);
                         s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_limit_t_max());
-                        nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_limit_t_max(instance), 2);
+                        nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_limit_t_max(instance), 2);
                         p = p + 2;
                     }
 
@@ -633,12 +641,12 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                     mem_swap_cpy(nd_mb_tsa(instance), buffer, 6);
                     s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                     nd_mb_offset_tsa());
-                    nd_set_offset(instance, s_index, (uint8_t*)nd_mb_tsa(instance), 6);
+                    nd_set_offset_port(port, s_index, (uint8_t*)nd_mb_tsa(instance), 6);
                 }
                 else
                 {
                     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + User_Number);
-                    nd_set_index(instance, s_index, buffer, 6); 
+                    nd_set_index_port(port, s_index, buffer, 6); 
                 }
                 p = p + len;
                 return (p-buf);
@@ -652,15 +660,15 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                 
                 p = p + 2;
                 addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location1);
-                nd_set_index(instance, addr, p, 10); 
+                nd_set_index_port(port, addr, p, 10); 
                 p = p + 10;
                 
                 addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location2);
-                nd_set_index(instance, addr, p, 10); 
+                nd_set_index_port(port, addr, p, 10); 
                 p = p + 10;
                 
                 addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Meter_Location3);
-                nd_set_index(instance, addr, p, 5); 
+                nd_set_index_port(port, addr, p, 5); 
                 p = p + 5;
                 
                 return (p-buf);
@@ -714,7 +722,7 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                     s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                     nd_mb_offset_lcd_poweron_all_dis_time());
                     uint16_t s_len = nd_mb_offset_lcd_autodis_list_num() - nd_mb_offset_lcd_poweron_all_dis_time();
-                    nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_lcd_poweron_all_dis_time(instance), s_len);
+                    nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_lcd_poweron_all_dis_time(instance), s_len);
                     
                     return (p-buf);
                 }
@@ -739,7 +747,7 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                     
                     s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                     nd_mb_offset_lcd_poweron_all_dis_time() + offset[index-1]);
-                    nd_set_offset(instance, s_index, (uint8_t*)idbuf[index-1], lens[index-1]);
+                    nd_set_offset_port(port, s_index, (uint8_t*)idbuf[index-1], lens[index-1]);
                     
                     p = p + lens[index-1];
                     return (p-buf);
@@ -765,7 +773,7 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                     if( dar != 0 ) return -dar;
                     p++;
                     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + i);
-                    nd_set_index(instance, s_index, p, 1); 
+                    nd_set_index_port(port, s_index, p, 1); 
                     p++;
                 }
                 nd_mb_fee(instance) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
@@ -777,21 +785,21 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                 if( dar != 0 ) return -dar;
                 p++;
                 s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + (index - 1));
-                nd_set_index(instance, s_index, p, 1); 
+                nd_set_index_port(port, s_index, p, 1); 
                 p++;
                 nd_mb_fee(instance) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
                 return (p-buf);
             }
             break;
         case 0x4011://公共假日表
-            if((index == 0) || (index > 20))    return -DAR_RW_REJECT;
+            if((index == 0) || (index > ND_TARIFF_MAX_HOLIDAYS))    return -DAR_RW_REJECT;
             if((p[3] == 0xFF) && (p[4] == 0xFF) && (p[5] == 0xFF) && (p[6] == 0xFF) && (p[7] == 0xFF) && (p[9] == 0xFF))
             {
                 //支持全FF  湖北
             }
             else
             {
-                if(((*(p+9)) == 0) || ((*(p+9)) > MaxTouTabNum))    return -DAR_RW_REJECT;
+                if(((*(p+9)) == 0) || ((*(p+9)) > ND_TARIFF_MAX_DAY_TABLES))    return -DAR_RW_REJECT;
             
                 mem_swap_cpy((uint8_t*)&year2, p+3, 2);
                 if(year2 < 2000) return -DAR_OTHERS_ERROR;
@@ -807,12 +815,12 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
             // 编程事件-保存编程前
             nd_get(instance, id, temp, 10, NULL);
             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Holiday);
-            nd_set_index(instance, s_index, temp, 10);                                          
+            nd_set_index_port(port, s_index, temp, 10);                                          
 
             temp[0] = TYPE_OAD;
             uint32_to_buf_msb(id, &temp[1]);
             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Set_Holiday_Oad);
-            nd_set_index(instance, s_index, temp, 5);
+            nd_set_index_port(port, s_index, temp, 5);
        
             p = p + 3;
             memcpy(buffer, p, 5);
@@ -820,7 +828,7 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
             buffer[5] = *p++;
  
             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + HoliDay_Table + (index-1));
-            nd_set_index(instance, s_index, buffer, 6); 
+            nd_set_index_port(port, s_index, buffer, 6); 
 
             record_event_no_mesg_pro(instance, NULL, HolidayWrS, NULL, 1);// 公共假日编程事件
             nd_mb_fee(instance) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
@@ -831,19 +839,19 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
             max_v = 0;
             last_v = 0xFFFF;
             period = 1;
-            if(index > MaxSeasonNum)    return -DAR_TIME_ZONE_EXCEED;
+            if(index > ND_TARIFF_MAX_SEASONS)    return -DAR_TIME_ZONE_EXCEED;
             if((oad == 0x4014) && (nd_mb_factor_mode(instance) == false))    return    -DAR_RW_REJECT;
             if(index == 0)
             {
                 num = *(p+1);
-                if(num>MaxSeasonNum) return -DAR_TIME_ZONE_EXCEED;
+                if(num>ND_TARIFF_MAX_SEASONS) return -DAR_TIME_ZONE_EXCEED;
                 if(num == 0) return -DAR_RW_REJECT;
                 for(i=0; i<num; i++)
                 {
                     if((*(p+2+8*i+3) > 12) || (*(p+2+8*i+3) == 0)) return -DAR_RW_REJECT;
                     if((*(p+2+8*i+5) > 31) || (*(p+2+8*i+5) == 0)) return -DAR_RW_REJECT;
                     if(*(p+2+8*i+5) > MonTab[*(p+2+8*i+3)]) return -DAR_RW_REJECT;
-                    if(((*(p+2+8*i+7)) == 0)||((*(p+2+8*i+7)) > MaxTouTabNum))  return -DAR_RW_REJECT;
+                    if(((*(p+2+8*i+7)) == 0)||((*(p+2+8*i+7)) > ND_TARIFF_MAX_DAY_TABLES))  return -DAR_RW_REJECT;
                 }
             }
             else
@@ -852,7 +860,7 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                 if((*(p+3) > 12) || (*(p+3) == 0))  return -DAR_RW_REJECT;
                 if((*(p+5) > 31) || (*(p+5) == 0))  return -DAR_RW_REJECT;
                 if(*(p+5) > MonTab[*(p+3)])     return -DAR_RW_REJECT;
-                if(((*(p+7)) == 0)||((*(p+7)) > MaxTouTabNum)) return -DAR_RW_REJECT;
+                if(((*(p+7)) == 0)||((*(p+7)) > ND_TARIFF_MAX_DAY_TABLES)) return -DAR_RW_REJECT;
             }
             
             if(oad == 0x4014)   
@@ -865,13 +873,13 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
             {
                 nd_get(instance, 0x40150200, temp, 114, NULL);
                 s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_SeasonT);
-                nd_set_index(instance, s_index, temp, 114);
+                nd_set_index_port(port, s_index, temp, 114);
             }
 
             if(index == 0)
             {
                 num = *(p+1);
-                if(num>MaxSeasonNum) num = MaxSeasonNum;
+                if(num>ND_TARIFF_MAX_SEASONS) num = ND_TARIFF_MAX_SEASONS;
                 p = p + 2;
                 for(i=0; i<num; i++)
                 {
@@ -926,9 +934,22 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                 }
                 
                 
-                if(num < MaxSeasonNum)
+                for(i=0; i<num; i++)
                 {
-                    for(i=num; i<MaxSeasonNum; i++)
+                    tariff_entries[i].start = (uint16_t)(((uint16_t)buffer[0+i*3] << 8) | buffer[1+i*3]);
+                    tariff_entries[i].value = buffer[2+i*3];
+                }
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 1);
+                nd_get_index_port(port, s_index, &tariff_count, 1);
+                tariff_error = nd_tariff_validate_seasons(tariff_entries, num, tariff_count);
+                if(tariff_error == ND_TARIFF_ERR_COUNT || tariff_error == ND_TARIFF_ERR_EMPTY)
+                    return -DAR_TIME_ZONE_EXCEED;
+                if(tariff_error != ND_TARIFF_VALID)
+                    return -DAR_RW_REJECT;
+
+                if(num < ND_TARIFF_MAX_SEASONS)
+                {
+                    for(i=num; i<ND_TARIFF_MAX_SEASONS; i++)
                     {
                         buffer[0+i*3] = buffer[0+(num-1)*3];
                         buffer[1+i*3] = buffer[1+(num-1)*3];
@@ -936,7 +957,7 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                     }
                 }
                 s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr);
-                nd_set_index(instance, s_index, buffer, 3*MaxSeasonNum);
+                nd_set_index_port(port, s_index, buffer, 3*ND_TARIFF_MAX_SEASONS);
             }
             else
             {
@@ -948,17 +969,17 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                 buffer[2] = *p++;
                 
                 s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para);
-                nd_get_index(instance, s_index, &num, 1);
-                if(num > MaxSeasonNum) num = MaxSeasonNum;
+                nd_get_index_port(port, s_index, &num, 1);
+                if(num > ND_TARIFF_MAX_SEASONS) num = ND_TARIFF_MAX_SEASONS;
                 for(i=0; i<num; i++)
                 {
                     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + i);
-                    nd_get_index(instance, s_index, temp, 3);
+                    nd_get_index_port(port, s_index, temp, 3);
                     if((buffer[0] == temp[0]) && (buffer[1] == temp[1]) && (buffer[2] != temp[2]))  return -DAR_RW_REJECT;
                 }
                 
                 s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index-1));
-                nd_set_index(instance, s_index, buffer, 3);
+                nd_set_index_port(port, s_index, buffer, 3);
             }
             record_event_no_mesg_pro(instance, NULL, SeasonTabWrS, NULL, 1);// 
             nd_mb_fee(instance) |= F_TOUChange + F_ChangeTmOn + F_DAYTABChange;
@@ -966,7 +987,7 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
             break;
         case 0x4016://当前套日时段表
         case 0x4017://备用套日时段表
-            if((index > MaxTouTabNum) || (index == 0))    return -DAR_RW_REJECT;
+            if((index > ND_TARIFF_MAX_DAY_TABLES) || (index == 0))    return -DAR_RW_REJECT;
             if((oad == 0x4016) && (nd_mb_factor_mode(instance) == false))    return    -DAR_RW_REJECT;
             
             if(oad == 0x4016)
@@ -1004,14 +1025,14 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                         }
                     }
                     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + j);
-                    nd_set_index(instance, s_index, buffer, 42);
+                    nd_set_index_port(port, s_index, buffer, 42);
                 }
             }
             else*/
             {
                 p++;
                 num_hourtab = *p++; //日时段数，每日切换数
-                if((num_hourtab > MaxTouNum)) 
+                if((num_hourtab > ND_TARIFF_MAX_PERIODS)) 
                 {
                     return -DAR_DAY_INTERVAL_EXCEED;
                 }
@@ -1022,10 +1043,10 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                 for(i=0; i<num_hourtab; i++)
                 {
                     if ((p[0] != TYPE_structure) || (p[1] != 3) || (p[2] != TYPE_unsigned)  || (p[4] != TYPE_unsigned) || (p[6] != TYPE_unsigned)
-                        || (p[3] > 23) || (p[5] > 59) || (p[7] > MaxFeeNum)|| (p[7] == 0)) 
+                        || (p[3] > 23) || (p[5] > 59) || (p[7] > ND_TARIFF_MAX_FEES)|| (p[7] == 0)) 
                     
                     {
-                        if (p[7] > MaxFeeNum) 
+                        if (p[7] > ND_TARIFF_MAX_FEES) 
                         {
                             return -DAR_TARIFF_NUM_EXCEED;
                         }
@@ -1084,7 +1105,22 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                 }
                 
 
-                for(i=num_hourtab; i < MaxTouNum; i++)
+                for(i=0; i<num_hourtab; i++)
+                {
+                    tariff_entries[i].start = (uint16_t)(((uint16_t)buffer[0+i*3] << 8) | buffer[1+i*3]);
+                    tariff_entries[i].value = buffer[2+i*3];
+                }
+                s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3);
+                nd_get_index_port(port, s_index, &tariff_count, 1);
+                tariff_error = nd_tariff_validate_periods(tariff_entries, num_hourtab, tariff_count);
+                if(tariff_error == ND_TARIFF_ERR_VALUE)
+                    return -DAR_TARIFF_NUM_EXCEED;
+                if(tariff_error == ND_TARIFF_ERR_COUNT)
+                    return -DAR_DAY_INTERVAL_EXCEED;
+                if(tariff_error != ND_TARIFF_VALID)
+                    return -DAR_RW_REJECT;
+
+                for(i=num_hourtab; i < ND_TARIFF_MAX_PERIODS; i++)
                 {
                     buffer[0+i*3] = buffer[0+(num_hourtab-1)*3];
                     buffer[1+i*3] = buffer[1+(num_hourtab-1)*3];
@@ -1096,17 +1132,17 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                 {
                     nd_get(instance, id, temp, 114, NULL);
                     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_DayTab);
-                    nd_set_index(instance, s_index, temp, 114);
+                    nd_set_index_port(port, s_index, temp, 114);
 
                     temp[0] = TYPE_OAD;
                     uint32_to_buf_msb(id, &temp[1]);
                     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Set_DayTab_Oad);
-                    nd_set_index(instance, s_index, temp, 5);
+                    nd_set_index_port(port, s_index, temp, 5);
                 }            
                 
                 
                 s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + addr + (index - 1));
-                nd_set_index(instance, s_index, buffer, 42);
+                nd_set_index_port(port, s_index, buffer, 42);
                 
             }
 
@@ -1121,13 +1157,13 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
 
             nd_get(instance, id, timer, 3, NULL);
             addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_ActCom);
-            nd_set_index(instance, addr, timer, 3);
+            nd_set_index_port(port, addr, timer, 3);
           
             nd_mb_active_energy_cal_word(instance) = *(p+2);
             
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_static_eprom << 16) + 
                         nd_mb_offset_active_energy_cal_word());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_active_energy_cal_word(instance), 1);
+            nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_active_energy_cal_word(instance), 1);
             
             record_event_no_mesg_pro(instance, NULL, ActCombWrS, NULL, 1);// 
             break;
@@ -1136,7 +1172,7 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
             //-保存编程前
             nd_get(instance, 0x41160200, temp, 20, NULL);
             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSet_Balance);
-            nd_set_index(instance, s_index, temp, 20);
+            nd_set_index_port(port, s_index, temp, 20);
             temp[0] = temp[5]; // 第一结算日 
             temp[1] = temp[7];
             
@@ -1163,11 +1199,11 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                 for(i=0;i<num;i++)
                 {                   
                     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
-                    nd_set_index(instance, s_index, &buffer[2*i], 2); 
+                    nd_set_index_port(port, s_index, &buffer[2*i], 2); 
                     
                     memset(&buffer[2*i], 0xaa, 2);
                     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
-                    nd_get_index(instance, s_index, &buffer[2*i], 2);
+                    nd_get_index_port(port, s_index, &buffer[2*i], 2);
                     if(i == 0)
                     {
                         if ( (buffer[2*i] != temp[0]) || (buffer[1 + (2*i)] != temp[1]) ) //第一结算日改变
@@ -1196,7 +1232,7 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                 }
                 
                 s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + (index - 1));
-                nd_set_index(instance, s_index, buffer, 2);
+                nd_set_index_port(port, s_index, buffer, 2);
                 if(index == 1)
                 {
                     if ( (buffer[0] != temp[0]) || (buffer[1] != temp[1]) ) //第一结算日改变
@@ -1239,7 +1275,7 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
     if(len != 0)
     {
         addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + s_index);
-        nd_set_index(instance, addr, p, len); 
+        nd_set_index_port(port, addr, p, len); 
         p = p + len;
     }
     return (p-buf);

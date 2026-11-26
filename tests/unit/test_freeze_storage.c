@@ -1,6 +1,6 @@
 #include "unity.h"
 
-#include "domain/freeze/storage.h"
+#include "infra/storage/freeze_layout.h"
 
 void setUp(void) {}
 void tearDown(void) {}

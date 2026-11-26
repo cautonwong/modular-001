@@ -4,10 +4,10 @@
 #include "fr_698_env.h"
 #include "parameter_port.h"
 #include "report_list.h"
-#include "meter_base_view.h"
+#include "application/ports/meter_base.h"
 #include "domain/common/status.h"
-#include "domain/report/report_policy.h"
-#include "domain/report/report_retry.h"
+#include "application/adapters/dl698/report_policy.h"
+#include "application/adapters/dl698/report_retry.h"
 #include "report_encoder.h"
 
 int active_report_3011_pro(void * instance, void * pipeline, nd_dl698_msg_t* mesg, uint8_t eventtype)
@@ -46,7 +46,7 @@ int active_report_3011_pro(void * instance, void * pipeline, nd_dl698_msg_t* mes
     {
         return 0;
     }
-    if (nd_report_encoder_begin_3011(&encoder, nd_mb_report_piid(instance),
+    if (nd_report_encoder_begin_3011(&encoder, nd_mb_get_report_piid(instance),
                                      eventtype) != 0)
     {
         return 0;
@@ -102,16 +102,18 @@ int active_report_3011_pro(void * instance, void * pipeline, nd_dl698_msg_t* mes
 
     if (eventtype)
     {
-        int esam_abnormal = (nd_mb_esam_chip_abnormal(instance)
-                             == ND_EVENT_SET);
+        int esam_abnormal = (nd_mb_get_esam_chip_abnormal(instance)
+                             == ND_STATUS_SET);
+        uint8_t random_data[12] = {0};
 
+        nd_mb_get_report_random_data(instance, random_data, 12);
         if (!esam_abnormal)
         {
             get_upreport_esam_rn_mac(instance, esam_apdu_p, apdu_len,
                                      esam_tail);
         }
         if (nd_report_encoder_rn_mac_tail(&encoder,
-                                          nd_mb_report_random_data(instance),
+                                          random_data,
                                           esam_abnormal ? NULL : esam_tail,
                                           esam_abnormal) != 0)
         {
@@ -123,7 +125,6 @@ int active_report_3011_pro(void * instance, void * pipeline, nd_dl698_msg_t* mes
     return (int)encoder.offset;
 }
 
-//获取模块通道 3320上报列表中主动上报 oad
 //函数返回值为主动上报oad个数，    传入buf空间需保证300字节 
 uint8_t active_report_3320list_get(void * instance, void *, nd_dl698_msg_t*, uint8_t* buf)
 {
@@ -132,7 +133,8 @@ uint8_t active_report_3320list_get(void * instance, void *, nd_dl698_msg_t*, uin
     uint8_t i, count = 0, rptmode;
     uint8_t *p = buf;
 
-    if (dl698_parameter_read(DL698_PARAM_REPORT_3320_LIST_PLC, tmp_buf,
+    if (dl698_parameter_read(nd_fr698_parameter_port(instance),
+                             DL698_PARAM_REPORT_3320_LIST_PLC, tmp_buf,
                              sizeof(tmp_buf)) != 0)
     {
         return 0;
@@ -167,16 +169,15 @@ uint32_t report_2015_get(void * instance, void *, nd_dl698_msg_t*, uint16_t chn,
 
     rptmode = read_event_report_flag_mode(instance, 0x20150200, 1);
 
-    if (rptmode != mode)//上报方式为跟随上报，才能跟随上报
+    if (rptmode != mode)
     {
         return 0;
     }
 
-    value = nd_mb_report_2015_state(instance)[chn%4];  //FR_698_CHL_PLC
+    value = nd_mb_get_report_2015_state(instance, chn%4);  //FR_698_CHL_PLC
 
     return value;
 }
-// 常规的3320和2015 主动上报组帧(apdu)
 // get_data:0 只判断是否需要上报。  其他:获取一次上报内容
 int active_report_normal_pro(void * instance, void * pipeline, nd_dl698_msg_t* mesg, uint8_t get_data, nd_report_retry_t* retry)
 {
@@ -238,7 +239,7 @@ int active_report_normal_pro(void * instance, void * pipeline, nd_dl698_msg_t* m
         return 0;
     }
     if (nd_report_encoder_begin_normal(&encoder,
-                                       nd_mb_report_piid(instance), num) != 0)
+                                       nd_mb_get_report_piid(instance), num) != 0)
     {
         return 0;
     }
@@ -260,10 +261,13 @@ int active_report_normal_pro(void * instance, void * pipeline, nd_dl698_msg_t* m
     apdu = data_buf + encoder.apdu_start;
     len_apdu = (uint16_t)(encoder.offset - encoder.apdu_start);
 
-    if (nd_mb_esam_chip_abnormal(instance) == ND_EVENT_SET)
+    uint8_t random_data[12] = {0};
+
+    nd_mb_get_report_random_data(instance, random_data, 12);
+    if (nd_mb_get_esam_chip_abnormal(instance) == ND_STATUS_SET)
     {
         if (nd_report_encoder_rn_mac_tail(&encoder,
-                                          nd_mb_report_random_data(instance),
+                                          random_data,
                                           NULL, 1) != 0)
         {
             return 0;
@@ -273,7 +277,7 @@ int active_report_normal_pro(void * instance, void * pipeline, nd_dl698_msg_t* m
     {
         get_upreport_esam_rn_mac(instance, apdu, len_apdu, esam_tail);
         if (nd_report_encoder_rn_mac_tail(&encoder,
-                                          nd_mb_report_random_data(instance),
+                                          random_data,
                                           esam_tail, 0) != 0)
         {
             return 0;

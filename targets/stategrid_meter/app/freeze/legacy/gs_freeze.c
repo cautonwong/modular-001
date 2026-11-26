@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
 #include "targets/stategrid_meter/persistence/meter_record.h"
@@ -17,7 +17,7 @@
 #include "targets/stategrid_meter/app/events/events_applications.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/freeze/freeze_applications.h"
-#include "domain/freeze/storage.h"
+#include "infra/storage/freeze_layout.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
 #define CONVERT_TM_MONTH(x)  ((x<1)?0:(x-1))
 
@@ -54,6 +54,8 @@ static void freeze_now_datetime(const struct tm* time, nd_datetime_t* out)
 //并且计算保存分钟冻结8个方案中每个方案的空间大小偏移(扇区)
 int cal_record_size_sectors(void *instance, uint8_t *capture_ptr, uint8_t *depth_ptr, uint32_t oad)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint8_t scheme = 0,obj_num, scheme_num, tmpbuf[220] = {0};
     uint16_t i, k, recordID = 0;
     uint16_t sector_size[9];
@@ -188,7 +190,7 @@ int cal_record_size_sectors(void *instance, uint8_t *capture_ptr, uint8_t *depth
         if ((oad & 0xFFFF0000) == 0x50020000)
         {
             addr_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + MinFrez_Sectors);
-            nd_set_index(instance, addr_index, (uint8_t*)&sector_size[0], 18);
+            nd_set_index_port(port, addr_index, (uint8_t*)&sector_size[0], 18);
         }
 
         return 1;
@@ -201,6 +203,8 @@ int cal_record_size_sectors(void *instance, uint8_t *capture_ptr, uint8_t *depth
 //分冻结 各方案空间分配  恢复出厂参数时，分钟冻结必须调用 
 int freez_size_sectors_init(void *instance, uint32_t oad)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint8_t tempbuf[200], depth[1 + 2 * 15];
     uint32_t CaptureId, DepthId /*, oad = 0x50020200*/;
     struct record_storage_id_info_t  record_id_info;
@@ -221,13 +225,13 @@ int freez_size_sectors_init(void *instance, uint32_t oad)
     //maxnum = (CaptureLen - 1) / 4;
 
     //获取捕获对象
-    ret = nd_get_index(instance, CaptureId, &tempbuf[0], sizeof(tempbuf));
+    ret = nd_get_index_port(port, CaptureId, &tempbuf[0], sizeof(tempbuf));
     if (ret < 0)
     {
         return -1;
     }
     // 深度
-    ret = nd_get_index(instance, DepthId, &depth[0], sizeof(depth));
+    ret = nd_get_index_port(port, DepthId, &depth[0], sizeof(depth));
     if (ret < 0)
     {
         return -1;
@@ -285,6 +289,8 @@ int instant_freeze_judge(void *instance, void *task, void *mesg)
 
 int rollback_sequence(void *instance, uint32_t oad,  uint16_t rollback_num)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
 
     uint32_t sequence = 0, s_index = 0;
     struct record_storage_id_info_t record_id_info; 
@@ -306,13 +312,13 @@ int rollback_sequence(void *instance, uint32_t oad,  uint16_t rollback_num)
     }
     else
     {
-        nd_get_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+        nd_get_index_port(port, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
     }
 
     circular_info.start_mark = 0;
     circular_info.end_mark = 0xffffffffU;
     circular_info.mode =   0;
-    ret = nd_log_output(instance, record_id_info.save_index,  tmpbuf, 1, &circular_info);
+    ret = nd_log_output_port(port, record_id_info.save_index,  tmpbuf, 1, &circular_info);
 
     sequence = nd_freeze_sequence_rollback(sequence, rollback_num,
                                            (uint8_t)(circular_info.valid_num != 0));
@@ -323,11 +329,11 @@ int rollback_sequence(void *instance, uint32_t oad,  uint16_t rollback_num)
 
         s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
         nd_mb_offset_minute_freeze_seq()) + ((SeqId - MinuteFreeze1_seq) * 4) -  nd_mb_offset_persistent_section_start();
-        nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_minute_freeze_seq(instance)[SeqId - MinuteFreeze1_seq], 4);
+        nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_minute_freeze_seq(instance)[SeqId - MinuteFreeze1_seq], 4);
     }
     else
     {
-        nd_set_index(instance, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+        nd_set_index_port(port, record_id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
     }
 
     return 1;
@@ -339,6 +345,8 @@ int rollback_sequence(void *instance, uint32_t oad,  uint16_t rollback_num)
 //              其他- 回滚操作
 int record_rollback_after_set_time(void *instance, uint8_t finish_check)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
 
     struct record_storage_id_info_t record_id_info; 
     uint8_t i, num = 0, buffer[10] = { 0xFF };
@@ -346,6 +354,7 @@ int record_rollback_after_set_time(void *instance, uint8_t finish_check)
     uint32_t addr,last_timesec, curr_timesec;
     uint16_t rollback_seq_num[11] = { 0 };
     int ret = 0;
+    const nd_platform_port_t *platform = nd_fr698_platform(instance);
     //uint16_t FlagID[] = { MinuteFreeze1, MinuteFreeze2, MinuteFreeze3, MinuteFreeze4, MinuteFreeze5, MinuteFreeze6, MinuteFreeze7, MinuteFreeze8, HourFreeze, DayFreeze, MonthFreeze, };
     uint32_t TabOAD[11] = { 0x50020200, 0x50022200, 0x50024200, 0x50026200, 0x50028200, 0x5002A200, 0x5002C200, 0x5002E200, 0x50030200, 0x50040200, 0x50060200, };
 
@@ -360,7 +369,7 @@ int record_rollback_after_set_time(void *instance, uint8_t finish_check)
 
     //时间合法性判断 待调整
     addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + BeforSetT_Time);
-    ret = nd_get_index(instance, addr, buffer, 7);
+    ret = nd_get_index_port(port, addr, buffer, 7);
     if (ret < 0)
     {
         return -1;
@@ -370,7 +379,7 @@ int record_rollback_after_set_time(void *instance, uint8_t finish_check)
 
     //时间合法性判断 待调整
     addr = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + AfterSetT_Time);
-    ret = nd_get_index(instance, addr, buffer, 7);
+    ret = nd_get_index_port(port, addr, buffer, 7);
     if (ret < 0)
     {
         return -1;
@@ -387,7 +396,7 @@ int record_rollback_after_set_time(void *instance, uint8_t finish_check)
             
             addr = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
             nd_mb_offset_record_rollback_flag()) -  nd_mb_offset_persistent_section_start();
-            nd_set_offset(instance, addr, (uint8_t*)&nd_mb_record_rollback_flag(instance), sizeof(nd_mb_record_rollback_flag(instance)));
+            nd_set_offset_port(port, addr, (uint8_t*)&nd_mb_record_rollback_flag(instance), sizeof(nd_mb_record_rollback_flag(instance)));
         }
         
         num = 0;
@@ -398,7 +407,7 @@ int record_rollback_after_set_time(void *instance, uint8_t finish_check)
             {
                 return 1;
             }
-            nd_platform_watchdog_kick();
+            nd_platform_watchdog_kick(platform);
             ret = get_record_id_info(instance, TabOAD[i], &record_id_info);
             if (ret <= 0)
             {
@@ -420,7 +429,7 @@ int record_rollback_after_set_time(void *instance, uint8_t finish_check)
             
             addr = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
             nd_mb_offset_record_rollback_flag()) -  nd_mb_offset_persistent_section_start();
-            nd_set_offset(instance, addr, (uint8_t*)&nd_mb_record_rollback_flag(instance), sizeof(nd_mb_record_rollback_flag(instance)));
+            nd_set_offset_port(port, addr, (uint8_t*)&nd_mb_record_rollback_flag(instance), sizeof(nd_mb_record_rollback_flag(instance)));
         }
     }
 
@@ -429,6 +438,8 @@ int record_rollback_after_set_time(void *instance, uint8_t finish_check)
 #endif
 int minute_freeze_judge(void *instance, void *task, void *mesg)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint8_t i, period[24];
     uint32_t index;
     nd_datetime_t now;
@@ -442,7 +453,7 @@ int minute_freeze_judge(void *instance, void *task, void *mesg)
 
     // 周期
     index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
-    nd_get_index(instance, index, &period[0], sizeof(period));
+    nd_get_index_port(port, index, &period[0], sizeof(period));
 
     freeze_now_datetime(nd_fr698_time(instance), &now);
 
@@ -462,6 +473,8 @@ int minute_freeze_judge(void *instance, void *task, void *mesg)
 }
 int hour_freeze_judge(void *instance, void *task, void *mesg)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint8_t period[24];
     uint32_t index;
     nd_datetime_t now;
@@ -477,7 +490,7 @@ int hour_freeze_judge(void *instance, void *task, void *mesg)
     }
     // 周期
     index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
-    nd_get_index(instance, index, &period[0], sizeof(period));
+    nd_get_index_port(port, index, &period[0], sizeof(period));
 
     freeze_now_datetime(nd_fr698_time(instance), &now);
     freeze_period.valid = period[0];
@@ -493,6 +506,8 @@ int hour_freeze_judge(void *instance, void *task, void *mesg)
 
 int day_freeze_judge(void *instance, void *task, void *mesg)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint8_t period[24]= {0}, tmp[10] = {0};
     uint32_t index;
     nd_datetime_t now;
@@ -510,7 +525,7 @@ int day_freeze_judge(void *instance, void *task, void *mesg)
 
     // 周期
     index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
-    nd_get_index(instance, index, &period[0], sizeof(period));
+    nd_get_index_port(port, index, &period[0], sizeof(period));
 
     freeze_now_datetime(nd_fr698_time(instance), &now);
     freeze_period.valid = period[0];
@@ -527,7 +542,7 @@ int day_freeze_judge(void *instance, void *task, void *mesg)
         tmp[5] = (uint8_t)((nd_fr698_time(instance)->tm_year + 1900)-2000);
 
         index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastDayFreezTime);
-        nd_set_index(instance, index, &tmp[0], 6);
+        nd_set_index_port(port, index, &tmp[0], 6);
 
         //send_recordflag_mesg(instance, task,  FlagID, NULL);
         recv_record_process(instance, FlagID, NULL);
@@ -552,8 +567,9 @@ int month_freeze_judge(void *instance, void *task, void *mesg)
     //待添加
 
     // 周期
+    //const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     //index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PeriodID);
-    //nd_get_index(instance, index, &period[0], sizeof(period));
+    //nd_get_index_port(port, index, &period[0], sizeof(period));
 
     //if (1 == freeze_judge(instance, &period[0], 60 * 24, &record_time))
     {
@@ -570,6 +586,8 @@ int month_freeze_judge(void *instance, void *task, void *mesg)
 //上电日冻结补冻结处理
 int day_freeze_power_on_pro(void *instance, void *task, void *mesg)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     
     uint8_t tmp[10];
     struct tm pd_tm;
@@ -581,10 +599,11 @@ int day_freeze_power_on_pro(void *instance, void *task, void *mesg)
     uint16_t    period;
     uint8_t count, i;
     int ret;
+    const nd_platform_port_t *platform = nd_fr698_platform(instance);
 
     //获取周期 天
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + DayFreeze_period);
-    nd_get_index(instance, s_index, &tmp[0], 3);
+    nd_get_index_port(port, s_index, &tmp[0], 3);
     
     period =  buf_to_uint16_msb(&tmp[1]);
     if (period == 0)
@@ -597,7 +616,7 @@ int day_freeze_power_on_pro(void *instance, void *task, void *mesg)
     if (false == rtc_tm_valid(&nd_mb_v_powerdown_tm(instance)))    // 模拟停电时间无效          取上次停电时间
     {
         s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PDTime_Frez); // 冻结停电时间
-        ret = nd_get_index(instance, s_index, (uint8_t *)&tmp_u32, 4);
+        ret = nd_get_index_port(port, s_index, (uint8_t *)&tmp_u32, 4);
         rtc_localtime(tmp_u32, &pd_tm);
 
         if ((ret < 0) || (tmp_u32 == 0) || (false == rtc_tm_valid(&pd_tm)))   // 冻结停电时间无效  则使用电表停电时间
@@ -614,7 +633,7 @@ int day_freeze_power_on_pro(void *instance, void *task, void *mesg)
     freeze_now_datetime(&pd_tm, &pd_dt);
 
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastDayFreezTime);
-    nd_get_index(instance, s_index, &tmp[0], 6);
+    nd_get_index_port(port, s_index, &tmp[0], 6);
     freeze_stored_datetime(tmp, &last_dt);
 
     count = nd_freeze_day_backfill(&now_dt, &pd_dt, &last_dt, period,
@@ -635,7 +654,7 @@ int day_freeze_power_on_pro(void *instance, void *task, void *mesg)
         tmp[5] = (uint8_t)(dates[i].year - 2000);
 
         s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastDayFreezTime);
-        nd_set_index(instance, s_index, &tmp[0], 6);
+        nd_set_index_port(port, s_index, &tmp[0], 6);
 
         // 本条记录存储的时间
         uint32_to_buf_msb(0x20210200, &payload[0]);
@@ -644,7 +663,7 @@ int day_freeze_power_on_pro(void *instance, void *task, void *mesg)
         rtc_format_change_from_tm(&record_tm,tmp);
         mem_swap_cpy(&payload[6], &tmp[0], 7);
         recv_record_process(instance, DayFreeze, payload);
-        nd_platform_watchdog_kick();//清看门狗
+        nd_platform_watchdog_kick(platform);
     }
 
 
@@ -656,6 +675,8 @@ int day_freeze_power_on_pro(void *instance, void *task, void *mesg)
 //  上电补结算冻结处理           上电调用 
 int bill_freeze_power_on_pro(void *instance, void *task, void *mesg)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     
     uint8_t tmp[10];
     struct tm pd_tm;
@@ -667,13 +688,14 @@ int bill_freeze_power_on_pro(void *instance, void *task, void *mesg)
     //uint8_t *p = payload;
     uint8_t count, i;
     int ret = 0;
+    const nd_platform_port_t *platform = nd_fr698_platform(instance);
 
     ndv_memcopy((uint8_t *)&pd_tm,(uint8_t *)(&nd_mb_v_powerdown_tm(instance)), sizeof(nd_mb_v_powerdown_tm(instance)));
 
     if (false == rtc_tm_valid(&nd_mb_v_powerdown_tm(instance)))    // 模拟停电时间无效          取上次停电时间
     {
         s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PDTime_Frez); // 冻结停电时间
-        ret = nd_get_index(instance, s_index, (uint8_t *)&tmp_u32, 4);
+        ret = nd_get_index_port(port, s_index, (uint8_t *)&tmp_u32, 4);
         rtc_localtime(tmp_u32, &pd_tm);
         if ((ret < 0) || (tmp_u32 == 0)  || (false == rtc_tm_valid(&pd_tm)))   // 冻结停电时间无效  则使用电表停电时间
         {
@@ -689,13 +711,13 @@ int bill_freeze_power_on_pro(void *instance, void *task, void *mesg)
     freeze_now_datetime(&pd_tm, &pd_dt);
 
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillingTime);
-    nd_get_index(instance, s_index, &tmp[0], 6);
+    nd_get_index_port(port, s_index, &tmp[0], 6);
     freeze_stored_datetime(tmp, &last_dt);
 
     for(i=0;i<ND_FREEZE_BILL_DATES;i++)
     {
         s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
-        nd_get_index(instance, s_index, tmp, 2);
+        nd_get_index_port(port, s_index, tmp, 2);
         bill_dates[i].day = tmp[0];
         bill_dates[i].hour = tmp[1];
     }
@@ -723,7 +745,7 @@ int bill_freeze_power_on_pro(void *instance, void *task, void *mesg)
         tmp[5] = (uint8_t)(events[i].when.year - 2000);
 
         s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillingTime);
-        nd_set_index(instance, s_index, &tmp[0], 6);
+        nd_set_index_port(port, s_index, &tmp[0], 6);
 
         // 本条记录存储的时间
         uint32_to_buf_msb(0x20210200, &payload[0]);
@@ -734,7 +756,7 @@ int bill_freeze_power_on_pro(void *instance, void *task, void *mesg)
          // 记录1次结算       需根据i判断需量结算是否填空，
         // 第1结算日过后，最大需量清零                是否需要发送消息？             待添加
         recv_record_process(instance, BillFreeze, payload);
-        nd_platform_watchdog_kick();
+        nd_platform_watchdog_kick(platform);
     }
 
     return 0;
@@ -745,6 +767,8 @@ int bill_freeze_power_on_pro(void *instance, void *task, void *mesg)
 //结算冻结
 int bill_freeze_judge(void *instance, void *task, void *mesg)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
         uint32_t s_index;
         nd_datetime_t now, last_bill;
         uint8_t tmp[20];
@@ -759,7 +783,7 @@ int bill_freeze_judge(void *instance, void *task, void *mesg)
         }
 
         s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillTimeID);
-        nd_get_index(instance, s_index, &tmp[0], 6);
+        nd_get_index_port(port, s_index, &tmp[0], 6);
 
         last_bill.second = tmp[0];
         last_bill.minute = tmp[1];
@@ -771,7 +795,7 @@ int bill_freeze_judge(void *instance, void *task, void *mesg)
         for(i=0;i<3;i++)
         {
             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + Balance_Time + i);
-            nd_get_index(instance, s_index, tmp, 2);
+            nd_get_index_port(port, s_index, tmp, 2);
             billdate[i][0] = tmp[0];
             billdate[i][1] = tmp[1];
         }
@@ -806,7 +830,7 @@ int bill_freeze_judge(void *instance, void *task, void *mesg)
             tmp[5] = (uint8_t)(now.year - 2000);
 
             s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + LastBillTimeID);
-            nd_set_index(instance, s_index, &tmp[0], 6);
+            nd_set_index_port(port, s_index, &tmp[0], 6);
 
             recv_record_process(instance, FlagID, NULL);
             last_bill = now;
@@ -900,6 +924,8 @@ int recover_minFreeze_sequence(void *instance)
 // 上电调用
 int freeze_power_on_pro(void *instance, void *task, void *mesg)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint32_t tmp_u32 = 0, s_index;
     
     nd_mb_trigger_insfreeze_delay_sec(instance) = 0xFFFF; 
@@ -917,7 +943,7 @@ int freeze_power_on_pro(void *instance, void *task, void *mesg)
     
     tmp_u32 = 0;
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter << 16) + PDTime_Frez); // 清冻结停电时间
-    nd_set_index(instance, s_index, (uint8_t *)&tmp_u32, 4);
+    nd_set_index_port(port, s_index, (uint8_t *)&tmp_u32, 4);
     
     memset((uint8_t *)(&nd_mb_v_powerdown_tm(instance)), 0 , sizeof(nd_mb_v_powerdown_tm(instance)));
     return 1;

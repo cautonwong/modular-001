@@ -1,4 +1,5 @@
 #include "board_transport.h"
+#include "board_state.h"
 
 #include "cpu_surport.h"
 #include "target.h"
@@ -14,43 +15,46 @@ void nd_board_watchdog_kick(void)
 
 #if ND_BOARD_UART_MODE == ND_BOARD_MODE_IRQ
 
-static nd_board_uart_rx_t uart_rx[ND_BOARD_UART_CHANNELS];
-static nd_board_op_t uart_tx[ND_BOARD_UART_CHANNELS];
-
 static void uart_rx_isr(void *para)
 {
-    size_t index = (size_t)(uintptr_t)para;
+    nd_idis_uart_irq_t *unit = (nd_idis_uart_irq_t *)para;
     uint8_t byte;
 
-    if (mcu_uart_recive_byte(&byte, index)) {
-        nd_board_uart_rx_isr(&uart_rx[index], byte);
+    if (unit != NULL && mcu_uart_recive_byte(&byte, unit->index)) {
+        nd_board_uart_rx_isr(&unit->rx, byte);
     }
 }
 
 static void uart_tx_isr(void *para)
 {
-    size_t index = (size_t)(uintptr_t)para;
+    nd_idis_uart_irq_t *unit = (nd_idis_uart_irq_t *)para;
 
-    nd_board_op_complete(&uart_tx[index], ND_BOARD_OK);
+    if (unit != NULL) {
+        nd_board_op_complete(&unit->tx, ND_BOARD_OK);
+    }
 }
 
-void nd_board_uart_irq_init(size_t index, const void *config)
+void nd_board_uart_irq_init(nd_idis_board_state_t *state, size_t index,
+                            const void *config)
 {
     struct isr_reg_ctx_t reg;
+    nd_idis_uart_irq_t *unit;
 
-    if (index >= ND_BOARD_UART_CHANNELS) {
+    if (state == NULL || index >= ND_BOARD_UART_CHANNELS) {
         return;
     }
-    nd_board_uart_rx_init(&uart_rx[index]);
-    (void)nd_board_op_init(&uart_tx[index]);
+    unit = &state->uart[index];
+    unit->index = (uint8_t)index;
+    nd_board_uart_rx_init(&unit->rx);
+    (void)nd_board_op_init(&unit->tx);
 
     reg.IsrFunctionRegister = uart_rx_isr;
-    reg.para = (void *)(uintptr_t)index;
+    reg.para = unit;
     reg.irq_index = 0;
     (void)Isr_handle_regsit(&reg, IRQ_UART0_RX + (index << 1));
 
     reg.IsrFunctionRegister = uart_tx_isr;
-    reg.para = (void *)(uintptr_t)index;
+    reg.para = unit;
     reg.irq_index = 0;
     (void)Isr_handle_regsit(&reg, IRQ_UART0_TX + (index << 1));
 
@@ -58,55 +62,61 @@ void nd_board_uart_irq_init(size_t index, const void *config)
     mcu_uart_recive_enable(1, index);
 }
 
-void nd_board_uart_irq_tx_enable(size_t index, uint8_t enable)
+void nd_board_uart_irq_tx_enable(nd_idis_board_state_t *state, size_t index,
+                                 uint8_t enable)
 {
+    (void)state;
     if (index < ND_BOARD_UART_CHANNELS) {
         mcu_uart_send_enable(enable != 0 ? 1 : 0, index);
     }
 }
 
-void nd_board_uart_irq_rx_enable(size_t index, uint8_t enable)
+void nd_board_uart_irq_rx_enable(nd_idis_board_state_t *state, size_t index,
+                                 uint8_t enable)
 {
+    (void)state;
     if (index < ND_BOARD_UART_CHANNELS) {
         mcu_uart_recive_enable(enable != 0 ? 1 : 0, index);
     }
 }
 
-int nd_board_uart_irq_write(size_t index, uint8_t byte)
+int nd_board_uart_irq_write(nd_idis_board_state_t *state, size_t index,
+                            uint8_t byte)
 {
-    if (index >= ND_BOARD_UART_CHANNELS) {
+    if (state == NULL || index >= ND_BOARD_UART_CHANNELS) {
         return -1;
     }
-    nd_board_op_reset(&uart_tx[index]);
+    nd_board_op_reset(&state->uart[index].tx);
     return mcu_uart_send_byte(byte, index) ? 0 : -1;
 }
 
-int nd_board_uart_irq_tx_done(size_t index)
+int nd_board_uart_irq_tx_done(nd_idis_board_state_t *state, size_t index)
 {
-    if (index >= ND_BOARD_UART_CHANNELS) {
+    if (state == NULL || index >= ND_BOARD_UART_CHANNELS) {
         return 0;
     }
-    return nd_board_op_take(&uart_tx[index]);
+    return nd_board_op_take(&state->uart[index].tx);
 }
 
-int nd_board_uart_irq_read(size_t index, uint8_t *byte)
+int nd_board_uart_irq_read(nd_idis_board_state_t *state, size_t index,
+                           uint8_t *byte)
 {
-    if (index >= ND_BOARD_UART_CHANNELS) {
+    if (state == NULL || index >= ND_BOARD_UART_CHANNELS) {
         return -1;
     }
-    return nd_board_uart_rx_read(&uart_rx[index], byte,
+    return nd_board_uart_rx_read(&state->uart[index].rx, byte,
                               ND_BOARD_UART_RX_TIMEOUT_US)
                == ND_BOARD_OK
            ? 0
            : -1;
 }
 
-int nd_board_uart_irq_rx_done(size_t index)
+int nd_board_uart_irq_rx_done(nd_idis_board_state_t *state, size_t index)
 {
-    if (index >= ND_BOARD_UART_CHANNELS) {
+    if (state == NULL || index >= ND_BOARD_UART_CHANNELS) {
         return 0;
     }
-    return nd_board_uart_rx_statue(&uart_rx[index]);
+    return nd_board_uart_rx_statue(&state->uart[index].rx);
 }
 
 #endif
@@ -115,9 +125,6 @@ int nd_board_uart_irq_rx_done(size_t index)
 
 #define ND_BOARD_SPI_DMA_TX_CH DMA_CHANNEL_2
 #define ND_BOARD_SPI_DMA_RX_CH DMA_CHANNEL_3
-
-static nd_board_spi_dma_t spi_dma;
-static uint8_t spi_dma_ready;
 
 static void spi_dma_config(DMA_InitType *cfg, uint32_t src, uint32_t dst,
                            uint16_t len, uint32_t request, uint32_t src_mode,
@@ -155,35 +162,43 @@ static void spi_dma_stop(void)
 
 static void spi_dma_isr(void *para)
 {
-    (void)para;
+    nd_idis_board_state_t *state = (nd_idis_board_state_t *)para;
 
+    if (state == NULL) {
+        return;
+    }
     if (DMA_GetINTStatus(DMA_INTSTS_C2DA)) {
         DMA_ClearINTStatus(DMA_INTSTS_C2DA);
         DMA_INTConfig(DMA_INT_C2DA, DISABLE);
-        nd_board_spi_dma_tx_done(&spi_dma);
+        nd_board_spi_dma_tx_done(&state->spi_dma);
     }
     if (DMA_GetINTStatus(DMA_INTSTS_C3DA)) {
         DMA_ClearINTStatus(DMA_INTSTS_C3DA);
         DMA_INTConfig(DMA_INT_C3DA, DISABLE);
-        nd_board_spi_dma_rx_done(&spi_dma);
+        nd_board_spi_dma_rx_done(&state->spi_dma);
     }
-    if (spi_dma.tx_active == 0 && spi_dma.rx_active == 0) {
+    if (state->spi_dma.tx_active == 0 && state->spi_dma.rx_active == 0) {
         spi_dma_stop();
     }
 }
 
-int nd_board_spi_dma_hw_start(const uint8_t *tx, uint8_t *rx, uint16_t len)
+int nd_board_spi_dma_hw_start(void *ctx, const uint8_t *tx, uint8_t *rx,
+                              uint16_t len)
 {
+    nd_idis_board_state_t *state = (nd_idis_board_state_t *)ctx;
     DMA_InitType cfg;
 
-    if (spi_dma_ready == 0) {
+    if (state == NULL) {
+        return -1;
+    }
+    if (state->spi_dma_ready == 0) {
         struct isr_reg_ctx_t reg;
 
         reg.IsrFunctionRegister = spi_dma_isr;
-        reg.para = NULL;
+        reg.para = state;
         reg.irq_index = 0;
         (void)Isr_handle_regsit(&reg, IRQ_DMA);
-        spi_dma_ready = 1;
+        state->spi_dma_ready = 1;
     }
 
     DMA_DeInit(ND_BOARD_SPI_DMA_TX_CH);
@@ -239,8 +254,10 @@ void nd_board_spi_dma_hw_wait_idle(void)
 
 #else
 
-int nd_board_spi_dma_hw_start(const uint8_t *tx, uint8_t *rx, uint16_t len)
+int nd_board_spi_dma_hw_start(void *ctx, const uint8_t *tx, uint8_t *rx,
+                              uint16_t len)
 {
+    (void)ctx;
     (void)tx;
     (void)rx;
     (void)len;

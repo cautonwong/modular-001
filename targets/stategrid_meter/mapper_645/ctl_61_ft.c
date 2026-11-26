@@ -1,5 +1,5 @@
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "645id_table.h"
 
 signed char ft_adj_set_meter(void *instance, uint8_t *p_rx, uint8_t *p_tx, uint8_t *len)

@@ -2,5 +2,5 @@ name: application.adapters.dl698
 version: 0.1.0
 layer: application
 paths: [application/adapters/dl698]
-dependencies: [application.adapters.dl645, application.ports, domain.common, domain.events, domain.report, domain.security, domain.tariff, core.buf, core.fifo]
+dependencies: [application.adapters.dl645, application.ports, domain.common, domain.events, domain.security, services.security, services.time_format, domain.tariff, core.buf, core.fifo]
 legacy: false

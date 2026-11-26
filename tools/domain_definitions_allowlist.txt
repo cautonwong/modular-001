@@ -1,0 +1,14 @@
+# name reason
+metering_energy_add the target metering_energy_adapter implements the energy ledger port
+metering_energy_clear the target metering_energy_adapter implements the energy ledger port
+metering_energy_clear_month the target metering_energy_adapter implements the energy ledger port
+metering_energy_read the target metering_energy_adapter implements the energy ledger port
+metering_energy_read_combined the target metering_energy_adapter implements the energy ledger port
+metering_energy_set_total the target metering_energy_adapter implements the energy ledger port
+nd_pulse_store_append infra/storage/pulse_store implements the pulse journal port
+nd_pulse_store_base infra/storage/pulse_store implements the pulse journal port
+nd_pulse_store_commit infra/storage/pulse_store implements the pulse journal port
+nd_pulse_store_replay infra/storage/pulse_store implements the pulse journal port
+nd_record_message_send the target record_message_adapter implements the record message port
+relay_control_led the target relay_control_adapter implements the relay command port
+relay_control_second the target relay_control_adapter implements the relay command port

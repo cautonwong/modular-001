@@ -1,6 +1,6 @@
 #include "application/adapters/dl645/fr_645_context.h"
 #include <stddef.h>
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 //#include "645id_table.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "fr_axdr.h"

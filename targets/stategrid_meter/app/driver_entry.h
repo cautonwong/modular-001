@@ -7,7 +7,7 @@
 struct fifo_t;
 
 void dev_init(stategrid_context_t *instance, uint8_t power_mode);
-void irq_system_init(void);
+void board_irq_bind(stategrid_board_state_t *state);
 void irq_transform_to_instance(stategrid_context_t *instance);
 void communication_chlx_init(struct fifo_t *txfifo, struct fifo_t *rxfifo,
                              uint8_t chl_type, stategrid_context_t *instance);

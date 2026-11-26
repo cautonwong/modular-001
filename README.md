@@ -7,7 +7,7 @@
 - 主语言为 C，并包含少量 Python、Assembly、CMake、C++ 和 Go。
 - 已落地领域、应用、协议、服务、基础设施和产品 target 分层。
 - 支持裸机及 FreeRTOS 构建。
-- 当前产品包括国网状态表、两个 IDIS IP 电表 target 和 host 仿真 target。
+- 当前固件产品是 stategrid 单相表和两个 IDIS IP 电表；PLC、RF、气表、水表是非固件装配。host 是仿真 target。
 - 业务组件和平台组件通过 `product.yaml` 选择。
 - 持久化兼容、依赖方向、组件归属、Cortex-M0 编译和固件链接受自动检查约束。
 
@@ -15,9 +15,9 @@
 
 | 路径 | 职责 |
 |---|---|
-| `domain/` | 纯领域能力：计量、费率、冻结、事件、负荷控制、显示、安全、上报等 |
+| `domain/` | 纯领域能力：计量、费率、冻结、事件、负荷控制、安全策略和语义状态 |
 | `application/` | 用例编排和协议适配器 |
-| `components/` | 可复用 core、domain、application、protocol 和 services 组件 |
+| `components/` | 可复用 core、protocol 和 services 组件 |
 | `infra/` | SoC、驱动、RTOS、第三方代码及基础设施适配 |
 | `targets/` | 产品组合根、board 包、应用入口、配置和构建脚本 |
 | `products/` | 产品描述：组件选择与平台选择 |
@@ -35,6 +35,24 @@
 - 平台差异只出现在 `infra/soc`、`infra/drivers`、`infra/rtos` 和产品 board。
 - 聚合和资源由调用方持入或注入，不读可变全局状态，不由 domain 调用宿主 `malloc`。
 - 存量电表持久化布局必须逐字节兼容；布局偏移由静态断言和回归测试锁定。
+
+## 变化频率与层的位置
+
+架构设计的一个核心目标，是把变化限制在局部：高频变化发生在边缘，低频变化留在中心。变化不是随机散布在代码库，而是被有意识地赶到边缘。
+
+| 变化强度（由低到高） | 本仓库的落点 |
+|---|---|
+| 核心业务不变量 | `domain/` 的计算、状态机、持久化兼容布局；布局由静态断言和回归测试锁定 |
+| 契约 / 接口 | `application/ports/`、`domain/common` 的消费者端口和组件公开契约头；消费者定义，保持稳定 |
+| 领域模型 | `domain/` 的实体、值对象和领域服务 |
+| 应用用例 | `application/metering` 的用例；产品编排在 `targets/<product>/app` |
+| 业务策略 / 规则 | 语义策略在 `domain/`；客户策略数据在 `products/` 和 `targets/`；不下沉到适配器 |
+| 工作流 / Agent / Skill | `tools/` 与开发侧脚本，不进产品固件 |
+| 客户定制逻辑 | `products/`、`targets/<product>/` 和 board 包 |
+| 外部系统适配器 | `application/adapters/`、`components/protocol`、`components/services`、`infra/` |
+| UI / 页面 / 交互 | `targets/` 的人机交互与显示代码 |
+
+判据：新增或修改逻辑时，先问它变化的频率有多高，再问它该待在哪一层。`check:layers` 和 `check:components` 固定依赖方向，`check:product-callers` 固定产品闭包；变化频率是它们管不到的语义判据。
 
 ## C4 模型
 
@@ -89,7 +107,6 @@ flowchart LR
         Events["Events<br/>去抖、记录、告警"]
         Control["Load Control<br/>继电器与负荷控制"]
         Security["Security<br/>权限与认证结果"]
-        Report["Report<br/>上报策略与编码规则"]
     end
 
     subgraph Application["Application 组件"]
@@ -100,7 +117,6 @@ flowchart LR
 
     MeterUse --> Metering
     MeterUse --> Freeze
-    MeterUse --> Report
     Adapters --> Metering
     Adapters --> Tariff
     Adapters --> Events
@@ -119,16 +135,21 @@ flowchart TB
         Bus["bus"]
     end
 
+    subgraph Application["application/adapters"]
+        DL698["DL/T 698 适配"]
+        DL645["DL/T 645 适配"]
+    end
+
     subgraph Protocol["components/protocol"]
-        DL698["DL/T 698"]
-        DL645["DL/T 645"]
         DLMS["DLMS"]
     end
 
     subgraph Services["components/services"]
-        Channel["channel"]
-        Storage["storage"]
+        TimeFormat["time_format"]
         Security["security"]
+        Push["push"]
+        Mbus["mbus"]
+        IpMaintenance["ip / maintenance"]
     end
 
     subgraph Infra["infra"]
@@ -140,14 +161,16 @@ flowchart TB
 
     Target["Target 组合根"]
 
+    Target --> Application
     Target --> Core
     Target --> Protocol
     Target --> Services
     Target --> Infra
+    Application --> Core
+    Application --> Services
     Protocol --> Core
-    Protocol --> Channel
     Services --> Core
-    Infra -->|实现端口| Services
+    Infra -->|实现端口| Application
 ```
 
 ### 5. 产品装配视图
@@ -229,7 +252,7 @@ flowchart LR
 - `host:strict` 与 sanitizer 测试。
 - `host:sim-san` 整机仿真。
 - Cortex-M0 严格编译。
-- 层、组件、平台边界和可变全局检查。
+- 层、组件、平台边界、产品闭包 caller 和可变全局检查。
 - 产品清单、固件链接和 ROM/RAM 预算检查。
 - stategrid 与 IDIS 验收矩阵。
 - CBMC、Frama-C Eva、TLA+ 和 Lean 形式化检查。

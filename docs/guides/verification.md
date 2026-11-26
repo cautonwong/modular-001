@@ -149,12 +149,13 @@ Assertions/Preconditions 总数，所以计数口径必须稳定：CI 用 CBMC 5
 | --- | --- | --- |
 | CBMC | 有界模型检验，按 harness 声明的路径和展开深度枚举 | A-XDR、脉冲 header、profile slot、两个 store |
 | Frama-C Eva | 抽象解释，无外部 prover，小输入空间用状态分裂加循环展开枚举 | 两个 store 的请求范围、内存安全、窗口状态和设备错误路径 |
-| Frama-C WP | 演绎验证，需要 why3 和外部 prover | 当前不可作门禁：bundle 带 why3 运行时（`lib/why3/why3.cmxs`），但没有外部 prover（Alt-Ergo/Z3/CVC5），`frama-c -wp` 只能用内置 Qed 证平凡目标，store 契约无法验证 |
+| Frama-C WP | 演绎验证，需要 why3 和外部 prover | 不作门禁：bundle 带 why3 运行时（`lib/why3/why3.cmxs`）和 prover 检测数据但不带 prover；真目标可证，但假目标在 z3/Alt-Ergo/CVC5 上是 Timeout/Unknown，拿不到 invalid（Phase 0，见 `docs/design/wp-decision.md`）；store 契约仍不闭合（历史 26/46） |
 | TLA+ | 显式状态模型检验 | block transfer、脉冲 journal、profile GET |
 | Lean | 交互式定理证明（算术模型） | FIFO、脉冲、profile ring、mbase |
 
 - `formal/cbmc/axdr_length.c`：四个符号字节输入，CBMC 证明长度解码不越界，
-  0x81/0x82/0x83 的消耗字节数正确，保留形式被拒绝。
+  0x81/0x82/0x83 的消耗字节数正确，保留形式被拒绝；0x83 的 24-bit 值在
+  `UINT16_MAX` 以内时返回该值，超出时置 `err` 并返回 0。
 - `formal/cbmc/axdr_skip.c`：符号化的定长标签和缓冲区长度，CBMC 证明完整值
   消耗固定字节数，截断值返回错误，位置始终在缓冲区内。
 - `formal/cbmc/pulse_headers.c`：符号化的存储后端和代际号（`--nondet-static`），
@@ -196,22 +197,33 @@ Assertions/Preconditions 总数，所以计数口径必须稳定：CI 用 CBMC 5
   `1..next-1`、不重复、完成后关闭、新 NORMAL GET 从块 1 重新开始。
 - `formal/tla/EnergyPulse.tla`：能量脉冲 journal 的崩溃协议。覆盖
   NO_BASE/INVALID/ACTIVE/FAULT、每方向 unary lane、marker 时间线、base 双 slot
-  与 generation、journal header 代际。TLC 在 2 方向、每方向 3 bit、2 个 marker
-  slot、granularity 2、2 代 base、每方向 4 个脉冲的界内穷举，检查恢复不重复计数、
+  与 generation、journal header 代际。TLC 在 2 方向、Capacity=2（每方向 2 bit）、
+  Markers=2、Granularity=2、MaxGen=2（2 代 base）、MaxPulses=3（每方向 3 个
+  脉冲）的界内穷举，检查恢复不重复计数、
   每次 commit 窗口内已接受丢失不超过 granularity、journal 只在代际匹配时计入、
   base generation 单调、marker 时间线有序、恢复的 bit 是连续前缀。
-- `formal/tla/ProfileGet.tla`：profile GET 的两趟（`count_rows` 再
-  `write_rows`）。在 6 slot、每 sector 2 slot 的 ring 上，append、reset 和两趟
-  扫描交错，TLC 检查 `CountEqualsEmitted`（header 是已发行行数的上界，结束时
-  相等）和 `GridStable`（每趟只读自己的 live window 快照）。文件显式建模了
-  pass 之间的并发 append（`ConcurrentSpec`）：它违反 `CountEqualsEmitted`，
-  因为当前两趟没有快照，`write_rows` 重新读取 `entries`，会发行比 count 多的行。
+- `formal/tla/Snapshot.tla`：stategrid 双 slot 能量快照，MaxGen=3，每个写步可
+  撕裂；恢复选最高代且 header/blob/CRC 完整的 slot，检查恢复代/值不混合、
+  无有效 slot 才恢复 0；设备读错误不在模型内，由
+  `tests/unit/test_energy_snapshot_adoption.c` 覆盖。
+- `formal/tla/ProfileGet.tla`：profile GET 的 `SnapshotSpec`。在 4 slot（2 槽
+  ring 加一个备用扇区、每扇区 2 槽）的界内实例上，append、reset 和两趟扫描
+  交错；GET 先取 head/entries/next_sequence 快照，两趟都从快照推导物理槽并
+  校验记录头 sequence 等于 `snapshot.next_sequence - snapshot.entries +
+  index`。TLC 检查 `TypeOK` 和 `CountEqualsEmitted`（header 是已发行行数的
+  上界，GET 完成时相等）。append 与 reset 在 head 扇区对齐时先擦除整个扇区；
+  快照窗口内被擦空的槽让读失败，GET 返回 operation-not-possible。旧的两趟
+  协议（`LegacySpec`）和 pass 之间并发 append 的反例（`LegacyConcurrentSpec`：
+  count 后 append 一条匹配记录，emit 发行两行）保留为文档，不被 cfg 检查。
+  sequence 抽象为无界 Natural，16 位回绕别名不在证明范围。
 - `formal/lean/BladeFormal/Fifo.lean`：FIFO 容量算术模型，证明
   `used + free = capacity`（`used <= capacity` 时）和满时空闲为 0。
 - `formal/lean/BladeFormal/Pulse.lean`：脉冲引擎的整数算术。证明 unary lane 的
   扫描只数连续清零位、扫描停在第一个置位、在 cursor 写位严格推进扫描；
   pending 缓冲严格小于 granularity，所以 `accepted - recovered <= granularity`；
   以及 wrap 擦除次数 `(pulses + capacity - 1) / capacity` 覆盖脉冲数且是最小值。
+- `formal/lean/BladeFormal/Snapshot.lean`：172 字节 legacy energy 记录的分半
+  checksum 校验，torn half 独立性。
 - `formal/lean/BladeFormal/ProfileRing.lean`：profile ring 和两趟 GET 的算术。
   证明 `nd_profile_store_read` 的环索引到物理 slot 映射在 live window 上单射，
   `entries + sector_slots <= phys` 时 append 前的 spare sector 擦除不碰 live
@@ -227,13 +239,16 @@ Assertions/Preconditions 总数，所以计数口径必须稳定：CI 用 CBMC 5
 边界：CBMC 只证明 harness 声明的输入长度和展开深度；Eva 只覆盖 harness 枚举的
 offset/length 和具体字节内容，且 `-eva-min-loop-unroll` 的界与 harness 的固定
 容量绑定；TLA+ 是协议模型，不是 C
-实现，且 `EnergyPulse` 用 3 bit 的抽象 lane（小于一个字节），C 的 byte-end
+实现，且 `EnergyPulse` 用 Capacity=2（每方向 2 bit）的抽象 lane，C 的 byte-end
 flush 不参与；granularity ≤ 容量时两边的 flush 规则都是 pending ≥
-granularity；Lean 是算术模型，尚未做 C 细化。脉冲模型不覆盖“设备报错后引擎
-继续运行”的路径，那条路径由 `tests/unit/test_pulse_store_crash.c` 的故障注入
-覆盖。`ProfileGet` 的并发 append 缺口是实现缺口，不是模型缺口：pass 之间没有
-快照，`ConcurrentSpec` 的 TLC 反例是 header 与已发行行数不等的真实行为，修实现
-时需要同一快照或 pass 间校验；`profile_slot.c` 的 payload 内容取固定模式，
+granularity；Lean 是算术模型，尚未做 C 细化。脉冲模型已建模设备报错后引擎
+继续运行的路径；只有端口状态码 ERROR 与 IO_ERROR 的映射不在模型内，由
+`tests/unit/test_pulse_store_faults.c` 覆盖。`ProfileGet` 的 `SnapshotSpec`
+覆盖已实现的快照协议，旧两趟实现的
+反例保留在 `LegacyConcurrentSpec`（pass 之间没有快照，header 与已发行行数
+不等），不是当前实现的缺口；append 与 reset 在 head 扇区对齐时的整扇区
+擦除已建模，但擦除和记录写是原子一步，擦除进行中的并发读和擦除/写窗口内
+掉电不在证明范围；`profile_slot.c` 的 payload 内容取固定模式，
 越界只由长度和 capacity 决定，符号化 108 字节 payload 会让 CRC 公式不可解。
 `byte_store.c` 和 `sector_store.c` 的 CBMC proof 用 8 字节后端；sector harness
 固定 2 个 4 字节扇区，`nd_sector_store_init` 在运行期检查扇区大小非零且为 2 的
@@ -241,12 +256,48 @@ granularity；Lean 是算术模型，尚未做 C 细化。脉冲模型不覆盖�
 返回 -1；host 用例覆盖接受和四种拒绝。Eva 的两个 harness 用同一几何，sector
 harness 另执行一次零扇区大小的拒绝调用；byte harness 的字节内容取固定模式，
 sector harness 只在具体字节上断言窗口值，符号内容仍由 CBMC 证明。官方 Frama-C
-bundle 带 why3 运行时（`lib/why3/why3.cmxs`），但没有外部 prover
-（Alt-Ergo/Z3/CVC5），所以 `-wp` 只剩内置 Qed 能证平凡目标，store 契约无法验证，
-暂不进 CI；能量累加的 WP 证明留到外部 prover 就位后。负例证据在
-`formal/frama-c/negative/`：放宽 byte 写保护、删除擦除的窗口失效各留一份带
-Frama-C 版本头的输出，验证器分别以 `[eva:alarm]` 行和 invalid 断言拒绝；同目录
-的 10-alarm fixture 在门禁启动时自检，证明 0 alarm 计数是锚定的。
+bundle 带 why3 运行时（`lib/why3/why3.cmxs`）和 prover 检测数据
+（`share/why3/provers-detection-data.conf`），但不带 prover。本机装 z3 4.8.12/
+4.13.0、Alt-Ergo 2.0.0 或 CVC5 后 `frama-c -wp` 能证真目标，但假目标拿不到
+`invalid`：Phase 0 玩具契约（`formal/frama-c/wp/`，无内存、无量词）在 z3
+4.8.12 和 Alt-Ergo 2.6.5 上是 Timeout，在 Alt-Ergo 2.0.0 和 CVC5 1.2.1/1.3.1
+上是 Unknown；同一个真目标在五个版本上都是 valid（0.013–0.026 s，且由外部
+prover 而不是 Qed 证明）。卡点是 WP 预置的量化算术 prelude：假目标要求 prover
+对带全称公理的查询返回 sat，三类 solver 都给不出；去掉 prelude 后 z3 立即返回
+sat。没有可复现的 `invalid` 判定，`-wp` 不作门禁，决策与 per-goal 计数见
+`docs/design/wp-decision.md`。store 契约同样不闭合：byte_store 的带 behavior
+契约副本（临时文件，未入库）26/46 证明、12 Timeout、8 Unknown，z3 两个版本
+结果一致；Alt-Ergo 2.0.0 在另一份 8-goal inv 契约上 7/8，`inv_ensures`
+Timeout。生成的 SMT 上 z3 返回 unknown（`'and' cannot be used in patterns`），
+生成的 `.why` 上 Alt-Ergo Timeout。这些 store 数字是历史证据，不是基线；
+卡点是量化内存/分离编码。能量累加的 WP 证明留到 prelude 收窄或
+prover 升级后再试（去掉 `\separated`/全称 region 后缀条件；进门禁需 pin
+solver 版本与目标数）。负例证据在 `formal/frama-c/negative/`：放宽 byte 写
+保护、删除擦除的窗口失效各留一份带 Frama-C 版本头的输出，验证器分别以
+`[eva:alarm]` 行和 invalid 断言拒绝；同目录的 10-alarm fixture 在门禁启动时
+自检，证明 0 alarm 计数是锚定的。
+
+### 已知盲区
+
+- `formal/cbmc/profile_slot.c` 的 `mock_read` 只在越界时返回 -1，store 读错误
+  路径未证明。
+- `formal/tla/ProfileGet.tla` 只建模 GET，profile ring 的 SET/ACTION 方法 3/4
+  未建模。
+
+WP 的复现命令（`frama-c` 为 33.0 bundle；先按决策记录 pin solver 版本）：
+
+```sh
+# Phase 0 玩具契约：假目标必须 invalid，真目标必须 valid（默认 5 s）
+python3 tools/check_wp.py --self-check
+FRAMA_C=<frama-c-bundle>/bin/frama-c python3 tools/check_wp.py --solver z3
+# Alt-Ergo 2.6.5 或 CVC5 需要把对应 release 放到 PATH 最前
+PATH=<solver-release>/bin:$PATH FRAMA_C=<frama-c-bundle>/bin/frama-c \
+    python3 tools/check_wp.py --solver alt-ergo
+# 历史 store 契约副本（未入库，仅记录）
+frama-c -wp -wp-prover z3 -wp-timeout 20 -wp-cache none byte_store_wp.c # 26/46
+frama-c -wp -wp-prover alt-ergo -wp-timeout 30 -wp-cache none inv_wp.c    # 7/8
+```
+
 `MbaseSearch` 是搜索协议模型，`test_mbase_search_counts` 在
 `nd_storage_read` 边界计数；两者都不穿过 `GET_5_Frozen`/`GET_3_Event` 的
 legacy 编码路径，那条路径没有干净接缝。

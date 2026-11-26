@@ -52,33 +52,35 @@ static uint32_t parameter_address(uint16_t id)
 static int read_parameter(void *ctx, dl698_parameter_t parameter,
                           uint8_t *buffer, size_t length)
 {
+    const nd_resource_port_t *port = ctx;
+
     uint16_t id;
 
     if (parameter_index(parameter, &id) != 0) {
         return -1;
     }
-    return nd_get_index(ctx, parameter_address(id), buffer, (uint16_t)length) < 0
+    return nd_get_index_port(port, parameter_address(id), buffer,
+                             (uint16_t)length) < 0
            ? -1 : 0;
 }
 
 static int write_parameter(void *ctx, dl698_parameter_t parameter,
                            const uint8_t *buffer, size_t length)
 {
+    const nd_resource_port_t *port = ctx;
+
     uint16_t id;
 
     if (parameter_index(parameter, &id) != 0) {
         return -1;
     }
-    return nd_set_index(ctx, parameter_address(id), (uint8_t *)buffer,
-                        (uint16_t)length) < 0 ? -1 : 0;
+    return nd_set_index_port(port, parameter_address(id), (uint8_t *)buffer,
+                             (uint16_t)length) < 0 ? -1 : 0;
 }
 
-void dl698_parameter_bind(stategrid_context_t *instance)
+void dl698_parameter_attach(stategrid_context_t *instance)
 {
-    static nd_dl698_parameter_port_t port;
-
-    port.ctx = instance;
-    port.read = read_parameter;
-    port.write = write_parameter;
-    dl698_bind_parameters(&port);
+    instance->parameter.ctx = &instance->resource;
+    instance->parameter.read = read_parameter;
+    instance->parameter.write = write_parameter;
 }

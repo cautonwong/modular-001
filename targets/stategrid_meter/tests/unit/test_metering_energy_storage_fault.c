@@ -94,7 +94,6 @@ void setUp(void)
     ec2_fail = 0;
     memset(ec2_energy, 0xFF, sizeof(ec2_energy));
     memset(ec2_month, 0xFF, sizeof(ec2_month));
-    nd_resource_bind(NULL);
 }
 
 void tearDown(void) {}
@@ -142,7 +141,7 @@ static void test_persistent_ec2_energy_read_fault_stays_pending_until_recovered(
 
     seed_ec1(2u);
     seed_ec2(5u);
-    nd_resource_bind(&test_port);
+    harness.instance.resource = test_port;
     ec2_fail = 1;
     ledger = harness_bind();
 
@@ -177,7 +176,7 @@ static void test_torn_store_ec2_energy_fault_recovers_the_mirror_with_a_fault(vo
                             + ND_PULSE_SNAPSHOT_HEADER_BYTES] ^= 2u;
     seed_ec1(2u);
     seed_ec2(5u);
-    nd_resource_bind(&test_port);
+    harness.instance.resource = test_port;
     ec2_fail = 1;
     harness_reboot();
     ledger = harness_bind();

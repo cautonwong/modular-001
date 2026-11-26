@@ -1,6 +1,6 @@
 #include "targets/stategrid_meter/persistence/meter_record.h"
 #include "fr_698.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "application/adapters/dl698/fr_698.h"
@@ -11,6 +11,7 @@
 
 int freeze_add_one_capture(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint8_t num, maxnum, scheme, offset;
     uint8_t tempbuf[200], period_buf[3 * 8], depth_buf[1 + 2 * 15];
 //    uint8_t* tmp0, * tmp1;
@@ -76,15 +77,15 @@ int freeze_add_one_capture(void *instance, uint32_t oad, uint8_t* buf, uint8_t* 
 
     scheme = (uint8_t)((capture_oad >> 13) & 0x07); //方案号
 
-    nd_get_index(instance, CaptureId, &tempbuf[0], CaptureLen);
+    nd_get_index_port(port, CaptureId, &tempbuf[0], CaptureLen);
     oadlist = tempbuf;
     num = *oadlist++;
 
     // 周期
-    nd_get_index(instance, PeriodId, &period_buf[0], PeriodLen);
+    nd_get_index_port(port, PeriodId, &period_buf[0], PeriodLen);
 
     // 深度
-    nd_get_index(instance, DepthId, &depth_buf[0], DepthLen);
+    nd_get_index_port(port, DepthId, &depth_buf[0], DepthLen);
 
     if (num > maxnum)  // 关联对象按个数的1.3倍限制 or 按默认存储空间的1.3倍限制
     {
@@ -154,13 +155,13 @@ int freeze_add_one_capture(void *instance, uint32_t oad, uint8_t* buf, uint8_t* 
     }
 #endif   
     // write  period
-    nd_set_index(instance, PeriodId, &period_buf[0], PeriodLen);
+    nd_set_index_port(port, PeriodId, &period_buf[0], PeriodLen);
 
     // write  Capture
-    nd_set_index(instance, CaptureId, &tempbuf[0], CaptureLen);
+    nd_set_index_port(port, CaptureId, &tempbuf[0], CaptureLen);
 
     // write  depth
-    nd_set_index(instance, DepthId, &depth_buf[0], DepthLen);
+    nd_set_index_port(port, DepthId, &depth_buf[0], DepthLen);
 
     //修改关联对象后 清零处理
     ret = modify_capture_clr_pro(instance, oad);
@@ -177,6 +178,7 @@ int freeze_add_one_capture(void *instance, uint32_t oad, uint8_t* buf, uint8_t* 
 
 int freeze_delete_one_capture(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint8_t i, num, maxnum, scheme, offset;
     uint8_t tempbuf[200], period_buf[3 * 8],depth_buf[1 + 2 * 15];
 //    uint8_t* tmp0, * tmp1;
@@ -218,9 +220,9 @@ int freeze_delete_one_capture(void *instance, uint32_t oad, uint8_t* buf, uint8_
 
 
     // 周期
-    nd_get_index(instance, PeriodId, &period_buf[0], PeriodLen);
+    nd_get_index_port(port, PeriodId, &period_buf[0], PeriodLen);
 
-    ret = nd_get_index(instance, CaptureId, &tempbuf[0], CaptureLen);
+    ret = nd_get_index_port(port, CaptureId, &tempbuf[0], CaptureLen);
     if (ret < 0)
     {
         *dar = DAR_OTHERS_ERROR;
@@ -270,10 +272,10 @@ int freeze_delete_one_capture(void *instance, uint32_t oad, uint8_t* buf, uint8_
         tempbuf[0] -= 1;
     
         // write  period
-        nd_set_index(instance, PeriodId, &period_buf[0], PeriodLen);
+        nd_set_index_port(port, PeriodId, &period_buf[0], PeriodLen);
     
         // write  Capture
-        nd_set_index(instance, CaptureId, &tempbuf[0], CaptureLen);
+        nd_set_index_port(port, CaptureId, &tempbuf[0], CaptureLen);
         //修改关联对象后 清零处理
         ret = modify_capture_clr_pro(instance, oad);
         if (ret < 0)
@@ -288,6 +290,7 @@ int freeze_delete_one_capture(void *instance, uint32_t oad, uint8_t* buf, uint8_
 
 int freeze_add_multi_capture(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint8_t add_num, num, maxnum, scheme, offset;
     uint8_t tempbuf[200], period_buf[3 * 8], depth_buf[1 + 2 * 15];
 //    uint8_t* tmp0, * tmp1;
@@ -330,7 +333,7 @@ int freeze_add_multi_capture(void *instance, uint32_t oad, uint8_t* buf, uint8_t
     add_num = *p++;
 
     // 获取关联对象
-    nd_get_index(instance, CaptureId, &tempbuf[0], CaptureLen);
+    nd_get_index_port(port, CaptureId, &tempbuf[0], CaptureLen);
     oadlist = tempbuf;
     oadlist++;
     num = tempbuf[0] + add_num;
@@ -341,10 +344,10 @@ int freeze_add_multi_capture(void *instance, uint32_t oad, uint8_t* buf, uint8_t
     }
 
     // 获取周期
-    nd_get_index(instance, PeriodId, &period_buf[0], PeriodLen);
+    nd_get_index_port(port, PeriodId, &period_buf[0], PeriodLen);
 
     // 获取深度
-    nd_get_index(instance, DepthId, &depth_buf[0], DepthLen);
+    nd_get_index_port(port, DepthId, &depth_buf[0], DepthLen);
 
     while (add_num--)
     {
@@ -431,13 +434,13 @@ int freeze_add_multi_capture(void *instance, uint32_t oad, uint8_t* buf, uint8_t
     }
 #endif    
     // write  period
-    nd_set_index(instance, PeriodId, &period_buf[0], PeriodLen);
+    nd_set_index_port(port, PeriodId, &period_buf[0], PeriodLen);
 
     // write  Capture
-    nd_set_index(instance, CaptureId, &tempbuf[0], CaptureLen);
+    nd_set_index_port(port, CaptureId, &tempbuf[0], CaptureLen);
 
     // write  depth
-    nd_set_index(instance, DepthId, &depth_buf[0], DepthLen);
+    nd_set_index_port(port, DepthId, &depth_buf[0], DepthLen);
 
     //修改关联对象后 清零处理
     ret = modify_capture_clr_pro(instance, oad);
@@ -452,6 +455,7 @@ int freeze_add_multi_capture(void *instance, uint32_t oad, uint8_t* buf, uint8_t
 
 int freeze_delete_all_capture(void *instance, uint32_t oad, uint8_t* buf, uint8_t* dar)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint8_t maxnum;//, scheme;//, offset;num, 
     uint8_t tempbuf[200], period_buf[3 * 8], depth_buf[1 + 2 * 15];
     uint8_t* p = buf;
@@ -490,13 +494,13 @@ int freeze_delete_all_capture(void *instance, uint32_t oad, uint8_t* buf, uint8_
     memset(tempbuf, 0, sizeof(tempbuf));
 
     // write  period
-    nd_set_index(instance, PeriodId, &period_buf[0], PeriodLen);
+    nd_set_index_port(port, PeriodId, &period_buf[0], PeriodLen);
 
     // write  Capture
-    nd_set_index(instance, CaptureId, &tempbuf[0], CaptureLen);
+    nd_set_index_port(port, CaptureId, &tempbuf[0], CaptureLen);
 
     // write  depth
-    nd_set_index(instance, DepthId, &depth_buf[0], DepthLen);
+    nd_set_index_port(port, DepthId, &depth_buf[0], DepthLen);
 
 
     //修改关联对象后 清零处理

@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "application/ports/resource_access.h"
 #include "targets/stategrid_meter/app/meter_flags.h"
@@ -112,6 +112,8 @@ int updata_EC_checksum(void *instance, uint8_t type)
 //type :0 电量   1 用电量
 int16_t Save_EC2(void *instance, uint8_t type)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint16_t len_tmp, energy_len =  (legacy_energy_checksum_span());
     uint16_t use_energy_len =  (legacy_energy_use_checksum_span());
     uint32_t s_index;
@@ -139,7 +141,7 @@ int16_t Save_EC2(void *instance, uint8_t type)
     } 
 
     s_index = (uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_parameter_1 << 16) + ID;
-    ret = nd_set_index(instance, s_index, p_tmp, len_tmp); 
+    ret = nd_set_index_port(port, s_index, p_tmp, len_tmp);
     if (ret < 0) //无效 暂不处理
     {
         return -1;
@@ -155,6 +157,8 @@ int16_t Save_EC2(void *instance, uint8_t type)
 //mode :0 上电校验恢复   1 运行期校验恢复
 int16_t Check_EC_recover(void *instance, uint8_t type, uint8_t mode)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint32_t check_sum[2] = {0,};
     uint32_t addr = 0x00,s_index;
     uint16_t i, len_tmp, energy_len =  (legacy_energy_checksum_span());
@@ -203,13 +207,13 @@ int16_t Check_EC_recover(void *instance, uint8_t type, uint8_t mode)
             p_block = (uint8_t*)nd_mb_active_p(instance);
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
                     legacy_energy_persistent_offset());
-            nd_get_offset(instance, s_index, p_block, block_len);
+            nd_get_offset_port(port, s_index, p_block, block_len);
 
             // EC1 只使用一次   // 需清标志      
             nd_mb_ec_save_success(instance) = 0;
             s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
                     legacy_energy_ec_offset());
-            nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_ec_save_success(instance), legacy_energy_ec_size());
+            nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_ec_save_success(instance), legacy_energy_ec_size());
 
             ret = judge_EC_checksum(instance, type);
 
@@ -229,7 +233,7 @@ int16_t Check_EC_recover(void *instance, uint8_t type, uint8_t mode)
 
     //读EC2 
     s_index = (uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_parameter_1 << 16) + ID;
-    ret = nd_get_index(instance, s_index, p_tmp, len_tmp); 
+    ret = nd_get_index_port(port, s_index, p_tmp, len_tmp);
     if (ret < 0) //无效 暂不处理
     {
         return -1;
@@ -300,6 +304,8 @@ void Energy_Meter(void *instance, void *pipeline)
 
 void Energy_Meter_PowerON(void *instance, void *pipeline)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint32_t s_index;
     int ret = 0;
 
@@ -313,12 +319,12 @@ void Energy_Meter_PowerON(void *instance, void *pipeline)
         nd_mb_ec_save_success(instance) = 0;
         s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
                 legacy_energy_ec_offset());
-        nd_set_offset(instance, s_index, (uint8_t*)&nd_mb_ec_save_success(instance), legacy_energy_ec_size());
+        nd_set_offset_port(port, s_index, (uint8_t*)&nd_mb_ec_save_success(instance), legacy_energy_ec_size());
     }
 
     //电量保存阈值 读取
     s_index = ((DEV_EEPROM << 24) + (mbase_block_parameter_1 << 16) + EC_SaveDiff_E);
-    ret = nd_get_index(instance, s_index, (uint8_t*)&nd_mb_ec_save_diff(instance), 2);
+    ret = nd_get_index_port(port, s_index, (uint8_t*)&nd_mb_ec_save_diff(instance), 2);
     if(ret < 0)
     {
         nd_mb_ec_save_diff(instance) = 200; //默认2度一存。
@@ -515,6 +521,8 @@ void Energy_Pluse_Add(void)
 
 int Energy_clr(void *instance)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint32_t s_index;
     uint16_t block_len = (legacy_energy_block_span());
 
@@ -534,12 +542,14 @@ int Energy_clr(void *instance)
     //清 EC1
     s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
     legacy_energy_persistent_offset());
-    nd_set_offset(instance, s_index, (uint8_t*)nd_mb_active_p(instance), block_len);
+    nd_set_offset_port(port, s_index, (uint8_t*)nd_mb_active_p(instance), block_len);
     return 1;
 }
 
 int Energy_Set(void *instance, uint32_t basedata, uint8_t dir)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
     uint32_t s_index;
     uint16_t block_len = (legacy_energy_block_span());
 
@@ -561,6 +571,6 @@ int Energy_Set(void *instance, uint32_t basedata, uint8_t dir)
     //清 EC1
     s_index = ((uint32_t)(DEV_EEPROM << 24) + ((uint32_t)mbase_block_persistent_eprom << 16) + \
     legacy_energy_persistent_offset());
-    nd_set_offset(instance, s_index, (uint8_t*)nd_mb_active_p(instance), block_len);
+    nd_set_offset_port(port, s_index, (uint8_t*)nd_mb_active_p(instance), block_len);
     return 1;
 }

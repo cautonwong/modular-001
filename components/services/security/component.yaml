@@ -1,0 +1,6 @@
+name: services.security
+version: 0.1.0
+layer: services
+paths: [components/services/security]
+dependencies: []
+legacy: false

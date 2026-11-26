@@ -9,10 +9,13 @@
   field is lost, and `layout` records the frozen on-media spans from
   legacy_energy_record.h, ending at byte 172.
 
-  CRC rejection is modeled at the acceptance boundary: a record is accepted
-  exactly when both stored checksums equal the checksum of the encoded body.
-  `accept_sealed` is the writer's side; `accept_rejects` is the reader's side
-  used by `legacy_energy_restore` before a legacy adoption.
+  CRC rejection is modeled per half: `acceptEnergy` checks the energy
+  checksum, `acceptMonth` checks the month checksum, and `accept` is their
+  conjunction. `accept_sealed` is the writer's side; the two rejection
+  theorems are the reader's gates, and the torn theorems show a valid half is
+  still adopted while the whole record is rejected. `legacy_energy_store.c`
+  adopts the energy and month halves independently, so a torn half of one
+  source does not discard the other half.
 -/
 namespace BladeFormal
 
@@ -99,22 +102,30 @@ def sealRecord (body : List Nat) : SealedRecord where
   energyChecksum := checksum body
   useChecksum := checksum body
 
-/-- The reader accepts only a record whose stored checksums match the body.
-    The C restore path additionally has the dual-slot CRC; this predicate is
-    the legacy-adoption gate in `legacy_energy_valid`. -/
-def accept (record : SealedRecord) : Bool :=
+def acceptEnergy (record : SealedRecord) : Bool :=
   record.energyChecksum == checksum record.body
-    && record.useChecksum == checksum record.body
+
+def acceptMonth (record : SealedRecord) : Bool :=
+  record.useChecksum == checksum record.body
+
+/-- The whole-record gate: both halves valid. The C restore path additionally
+    has the dual-slot CRC; this predicate is the legacy-adoption gate in
+    `legacy_energy_valid`. -/
+def accept (record : SealedRecord) : Bool :=
+  acceptEnergy record && acceptMonth record
 
 theorem accept_sealed (body : List Nat) : accept (sealRecord body) = true := by
-  simp [accept, sealRecord]
+  simp [accept, acceptEnergy, acceptMonth, sealRecord]
 
-/-- Any record whose stored checksum differs from the computed one is
-    rejected, so a torn or stale legacy record cannot be imported. -/
-theorem accept_rejects (record : SealedRecord)
+theorem accept_rejects_energy (record : SealedRecord)
     (h : record.energyChecksum ≠ checksum record.body) :
     accept record = false := by
-  simp [accept, h]
+  simp [accept, acceptEnergy, h]
+
+theorem accept_rejects_month (record : SealedRecord)
+    (h : record.useChecksum ≠ checksum record.body) :
+    accept record = false := by
+  simp [accept, acceptMonth, h]
 
 /-- Changing the body without resealing changes the checksum unless the two
     bodies have the same sum, so the reader's gate sees a stale checksum. -/
@@ -122,6 +133,26 @@ theorem tamper_detected (tampered : List Nat) (c : Nat)
     (h : checksum tampered ≠ c) :
     accept { body := tampered, energyChecksum := c, useChecksum := c } = false := by
   have flipped : c ≠ checksum tampered := fun same => h same.symm
-  simp [accept, flipped]
+  simp [accept, acceptEnergy, acceptMonth, flipped]
+
+theorem torn_month_keeps_energy (body : List Nat) (bad : Nat)
+    (h : bad ≠ checksum body) :
+    acceptEnergy { body := body, energyChecksum := checksum body,
+                   useChecksum := bad } = true
+      ∧ acceptMonth { body := body, energyChecksum := checksum body,
+                      useChecksum := bad } = false
+      ∧ accept { body := body, energyChecksum := checksum body,
+                 useChecksum := bad } = false := by
+  simp [accept, acceptEnergy, acceptMonth, h]
+
+theorem torn_energy_keeps_month (body : List Nat) (bad : Nat)
+    (h : bad ≠ checksum body) :
+    acceptMonth { body := body, energyChecksum := bad,
+                  useChecksum := checksum body } = true
+      ∧ acceptEnergy { body := body, energyChecksum := bad,
+                       useChecksum := checksum body } = false
+      ∧ accept { body := body, energyChecksum := bad,
+                 useChecksum := checksum body } = false := by
+  simp [accept, acceptEnergy, acceptMonth, h]
 
 end BladeFormal

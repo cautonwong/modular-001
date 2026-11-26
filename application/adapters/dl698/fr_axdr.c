@@ -6,7 +6,7 @@
 #include "fr_axdr_codec.h"
 #include "application/ports/platform.h"
 #include "application/ports/record_storage.h"
-#include "domain/common/time_format.h"
+#include "components/services/time_format/time_format.h"
 
 
 
@@ -779,13 +779,10 @@ int single_len, orig_len;
         for(k=1; k < (rcsd_src[0] + 1); k++)
         {
             if (true == check_capture_exist(rcsd_req[i], rcsd_src[k]))
-            //if (rcsd_req[i] == rcsd_src[k])  // 
             {
-                //特殊rcsd长度处理
-                single_len = nd_record_storage_change_format(tmpbuf, p_src, rcsd_req[i], 0, ND_RECORD_GET_STORE_LEN);
+                single_len = nd_record_storage_change_format(nd_fr698_record_storage(instance), tmpbuf, p_src, rcsd_req[i], 0, ND_RECORD_GET_STORE_LEN);
                 if (single_len < 0)
                 {
-                    //正常处理
                     single_len = nd_size(instance, tmpbuf,rcsd_req[i]);
                 }
 
@@ -810,7 +807,7 @@ int single_len, orig_len;
                     }
                     else
                     {
-                        orig_len = nd_record_storage_change_format(tmpbuf, p_src, rcsd_req[i], rcsd_src[k], ND_RECORD_READ);
+                        orig_len = nd_record_storage_change_format(nd_fr698_record_storage(instance), tmpbuf, p_src, rcsd_req[i], rcsd_src[k], ND_RECORD_READ);
                         if (orig_len >= 0)
                         {
                             if (mode)
@@ -841,7 +838,7 @@ int single_len, orig_len;
             }
             else
             {
-                single_len = nd_record_storage_change_format(tmpbuf, p_src, rcsd_src[k], 0, ND_RECORD_GET_STORE_LEN);
+                single_len = nd_record_storage_change_format(nd_fr698_record_storage(instance), tmpbuf, p_src, rcsd_src[k], 0, ND_RECORD_GET_STORE_LEN);
                 if (single_len < 0)
                 {
                     single_len = nd_size(instance, tmpbuf,rcsd_src[k]);
@@ -1181,8 +1178,11 @@ uint8_t *p;
 //读记录型数据打包
 int record_data_package(void * instance, uint32_t oad, uint8_t* buf, struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t buf_size,  void *ctx)
 {
+    const nd_resource_port_t *port = nd_fr698_resource_access(instance);
+
 #ifndef WIN32
     struct context_698_t* p_ctx = (struct context_698_t*)ctx;
+    const nd_platform_port_t *platform = nd_fr698_platform(instance);
     uint32_t record_save_index = 0;
     struct circular_info_t circular_info = {0};
     uint32_t *rcsd_req = (uint32_t *)rcsd_info; // 待定
@@ -1231,10 +1231,9 @@ int record_data_package(void * instance, uint32_t oad, uint8_t* buf, struct rsd_
         return record_response_null(buf);
     }
     
-    //方案号 
     rcsd_schem = rcsd_req_schem_pro(oad, rcsd_req);
     oad_schem = oad | (rcsd_schem<<13);
-    ret = nd_record_storage_save_index(oad_schem, &record_save_index);
+    ret = nd_record_storage_save_index(nd_fr698_record_storage(instance), oad_schem, &record_save_index);
     if(ret < 0)
     {
         return -DAR_OBJECT_NOT_EXIST;
@@ -1272,7 +1271,7 @@ int record_data_package(void * instance, uint32_t oad, uint8_t* buf, struct rsd_
                 rsd_info->interval = 0; 
                 circular_info.mode = 0;
             }
-            ret = nd_log_output(instance, record_save_index,  ptr_tmp, 1, &circular_info);
+            ret = nd_log_output_port(port, record_save_index,  ptr_tmp, 1, &circular_info);
             circular_info.mode =   rsd_info->mode; 
             
             if ((0 == non_period) && (rsd_info->select == 1) && ((rsd_info->mode == 2) || (rsd_info->mode == 3))) //方法1  周期性冻结 按时间搜索 返回最近一条
@@ -1285,7 +1284,7 @@ int record_data_package(void * instance, uint32_t oad, uint8_t* buf, struct rsd_
             break;
             
         case 9: //上n次
-            ret = nd_log_output(instance, record_save_index,  ptr_tmp, 1, &circular_info);
+            ret = nd_log_output_port(port, record_save_index,  ptr_tmp, 1, &circular_info);
 
             if (rsd_info->last_no == 0) // WS测试要求 读取上0次返回越界
             {
@@ -1321,9 +1320,9 @@ int record_data_package(void * instance, uint32_t oad, uint8_t* buf, struct rsd_
     read_num = circular_info.valid_num;
     for (i = circular_info.curr_num; i < read_num; i++)
     {
-        nd_platform_watchdog_kick();
+        nd_platform_watchdog_kick(platform);
         //获取1条记录内容
-        ret = nd_log_output(instance, record_save_index,  ptr_tmp, circular_info.unit_size, &circular_info);
+        ret = nd_log_output_port(port, record_save_index,  ptr_tmp, circular_info.unit_size, &circular_info);
         if(ret < 0)
         {
             return -DAR_OTHERS_ERROR;

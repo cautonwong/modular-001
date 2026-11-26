@@ -2,7 +2,7 @@
 #include "targets/stategrid_meter/app/resource_ids.h"
 #include "resource_ids.h"
 #include "components/core/types/type_def.h"
-#include "application/adapters/dl698/meter_base_view.h"
+#include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "application/adapters/dl698/fr_698_env.h"
 #include "application/ports/resource_access.h"
 #include "application/adapters/dl645/fr_645_context.h"
@@ -15,6 +15,7 @@
 #include "targets/stategrid_meter/app/events/gs_record.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
 #include "infra/soc/v85xxp/v8500/v85xxp_system.h"
+#include "application/adapters/dl645/fr_645_env.h"
 
 
 
@@ -384,6 +385,7 @@ const uint16_t Load_di2_06_645oad_len[] =
 
 uint16_t get_645record_rate_obj_len(void *instance,uint16_t obj_len)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 
     uint8_t single_len = 0;
     uint32_t addr;
@@ -394,7 +396,7 @@ uint16_t get_645record_rate_obj_len(void *instance,uint16_t obj_len)
     if (obj_len & 0x8000)
     {
         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3); //读取费率数
-        nd_get_index(instance, addr, &tariff_num, 1); 
+        nd_get_index_port(port, addr, &tariff_num, 1); 
         
         tariff_num += 1;   // 总加 费率个数
         if(tariff_num > 13)  tariff_num = 13;
@@ -458,6 +460,7 @@ int SwitchOn_sub_index_check(uint32_t ID)
 // 通过oad 获取 事件相关的存储地址信息
 int get_record_645_id_info(void *instance, uint32_t ID, struct record_storage_645_id_info_t* info)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     union dl645_DI_t DI;
     uint32_t oad = 0;
     uint16_t SaveId = 0, SeqId = 0, CaptureId = 0, PeriodId = 0, DepthId = 0, ReportFlagId = 0, ReportModeId = 0;
@@ -699,7 +702,7 @@ int get_record_645_id_info(void *instance, uint32_t ID, struct record_storage_64
             
             temp = 12;
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3); //读取费率数
-            nd_get_index(instance, addr, &temp, 1); 
+            nd_get_index_port(port, addr, &temp, 1); 
             if(temp > 12)
             {
                 temp = 4;
@@ -1473,6 +1476,7 @@ int fc_fun_12_645(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *d
 // 电能数据 存储和协议转换  
 int fc_fun_Energy_645(void *instance, uint32_t oad_req, uint32_t oad_src,uint8_t *des, uint8_t* src, enum format_conversion_mode mode)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 
     uint8_t i, /*type,*/ attr, index, index_src,  /*len, */block_num = (4+1);
     uint16_t oi;
@@ -1490,7 +1494,7 @@ int fc_fun_Energy_645(void *instance, uint32_t oad_req, uint32_t oad_src,uint8_t
     index_src = get_OAD_Index(oad_src);
 
     addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3); //读取费率数
-    nd_get_index(instance, addr, &block_num, 1); 
+    nd_get_index_port(port, addr, &block_num, 1); 
     
     block_num += 1;   // 总加 费率个数
     if(block_num > 13)  block_num = 13;
@@ -1647,6 +1651,7 @@ const struct format_conversion_t format_conversion_tab_645[] =
 //
 int record_change_format_645(void *instance, uint8_t *des,  uint8_t* src, uint32_t oad_req, uint32_t oad_src, enum format_conversion_mode mode)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint16_t i;
     uint8_t type, attr, index, len, block_num = (4+1);
     uint32_t addr, cmp_oad = 0;
@@ -1659,7 +1664,7 @@ int record_change_format_645(void *instance, uint8_t *des,  uint8_t* src, uint32
         case 0: //电能
         {
             addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3); //读取费率数
-            nd_get_index(instance, addr, &block_num, 1); 
+            nd_get_index_port(port, addr, &block_num, 1); 
             
             block_num += 1;   // 总加 费率个数
             if (mode == RFC_GET_ORIGINAL_LEN) 
@@ -1868,6 +1873,7 @@ int event_acc_number_times_DI_check(void *instance, unsigned long ID)
 //获取冻结模式字
 uint8_t get_freeze_mode(void *instance,  uint8_t dlt645_id_d2)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint8_t mode;
     uint32_t s_addr = 0;
     int ret = 0;
@@ -1900,7 +1906,7 @@ uint8_t get_freeze_mode(void *instance,  uint8_t dlt645_id_d2)
             break;
     }
 
-    ret = nd_get_index_e2p(instance, &mode,  mbase_block_parameter, s_addr, 1);
+    ret = nd_get_index_e2p_port(port, &mode,  mbase_block_parameter, s_addr, 1);
     if (ret < 0)
     {
         mode = 0xFF;
@@ -2260,6 +2266,7 @@ int record_response_null_645(void *instance,  uint8_t *des, uint8_t *src, uint32
 //645读记录型数据打包
 int record_data_package645(void *instance, uint32_t ID, uint8_t* buf,  struct rsd_info_t *rsd_info, uint32_t *rcsd_info, uint16_t *capture_645len,  uint8_t  package_type,   void *ctx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 #ifndef WIN32
 
     union dl645_DI_t DI;
@@ -2309,7 +2316,7 @@ int record_data_package645(void *instance, uint32_t ID, uint8_t* buf,  struct rs
             {
                 circular_info.mode = 0;
             }
-            ret = nd_log_output(instance, record_id_info.id_info.save_index,  ptr_tmp, 1, &circular_info);
+            ret = nd_log_output_port(port, record_id_info.id_info.save_index,  ptr_tmp, 1, &circular_info);
             circular_info.mode =   rsd_info->mode; 
             
             if ((0 == non_period) && (rsd_info->select == 1) && ((rsd_info->mode == 2) || (rsd_info->mode == 3))) //方法1  周期性冻结 按时间搜索 返回最近一条
@@ -2322,7 +2329,7 @@ int record_data_package645(void *instance, uint32_t ID, uint8_t* buf,  struct rs
             break;
             
         case 9: //上n次
-            ret = nd_log_output(instance, record_id_info.id_info.save_index,  ptr_tmp, 1, &circular_info);
+            ret = nd_log_output_port(port, record_id_info.id_info.save_index,  ptr_tmp, 1, &circular_info);
             if ((rsd_info->last_no == 0) || (rsd_info->last_no > circular_info.valid_num))
             {
                 return record_response_null_645(instance, p, ptr_tmp, rcsd_req, rcsd_src, capture_645len,  ID);
@@ -2355,7 +2362,7 @@ int record_data_package645(void *instance, uint32_t ID, uint8_t* buf,  struct rs
     {
         v85xxp_clear_watchdog();
         //获取1条记录内容
-        ret = nd_log_output(instance, record_id_info.id_info.save_index,  ptr_tmp, circular_info.unit_size, &circular_info);
+        ret = nd_log_output_port(port, record_id_info.id_info.save_index,  ptr_tmp, circular_info.unit_size, &circular_info);
         if(ret < 0)
         {
             return record_response_null_645(instance, p, ptr_tmp, rcsd_req, rcsd_src, capture_645len, ID);
@@ -2501,6 +2508,7 @@ int record_data_package645_packageAA(void *instance, uint8_t* dest, uint8_t* src
 // 返回0 正常应答        返回＞0 异常应答
 int read_05( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, uint8_t *tx_len)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     union dl645_DI_t DI;
     struct record_storage_645_id_info_t  info;
     int ret;
@@ -2540,7 +2548,7 @@ int read_05( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, ui
             sequence = 0;
             if(ret == 1) //总次数
             {
-                nd_get_index(instance, info.id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
+                nd_get_index_port(port, info.id_info.sequence_index, (uint8_t*)&sequence, sizeof(sequence));
             }
             else
             {
@@ -2576,7 +2584,7 @@ int read_05( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, ui
     {
         temp = 12;
         addr = ((RES_DEV_EEPROM << 24) + (mbase_block_parameter << 16) + SeasonDay_Para + 3); //读取费率数
-        nd_get_index(instance, addr, &temp, 1); 
+        nd_get_index_port(port, addr, &temp, 1); 
         if(temp > 12)
         {
             temp = 4;
@@ -2770,6 +2778,7 @@ int read_05( void *instance, unsigned long ID , uint8_t *p_rx, uint8_t* p_tx, ui
 // -1 无数据
 int load_search_copy_first_time(void *instance, uint8_t *buf, struct load_rsd_info_t *load_rsd_info, struct record_storage_645_id_info_t  *info)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     uint32_t start_sec = 0, first_sec = 0, spec_sec = 0, end_sec = 0, cur_sec = 0, tmp_sec = 0;  
     struct circular_info_t circular_info = {0};
     uint8_t *ptr_tmp = buf;//nd_fr698_apdu_cache(instance);  
@@ -2780,13 +2789,13 @@ int load_search_copy_first_time(void *instance, uint8_t *buf, struct load_rsd_in
     circular_info.start_mark = 0;
     circular_info.end_mark = 0xFFFFFFFF;
     circular_info.mode =   2;
-    ret = nd_log_output(instance, info->id_info.save_index,  ptr_tmp, 1, &circular_info);
+    ret = nd_log_output_port(port, info->id_info.save_index,  ptr_tmp, 1, &circular_info);
 
     if (circular_info.valid_num == 0)
     {
         return -1;
     }
-    ret = nd_log_output(instance, info->id_info.save_index,  ptr_tmp, circular_info.unit_size, &circular_info);
+    ret = nd_log_output_port(port, info->id_info.save_index,  ptr_tmp, circular_info.unit_size, &circular_info);
     
     first_sec = buf_to_uint32_msb((ptr_tmp + CIRCULAR_OFFSET_TIME)); //首条记录时间
     //fc_fun_01_645(instance, uint32_t oad_req, uint32_t oad_src, uint8_t * des, uint8_t * src, enum format_conversion_mode mode, struct format_conversion_t * fc)
@@ -2867,7 +2876,7 @@ int load_search_copy_first_time(void *instance, uint8_t *buf, struct load_rsd_in
     circular_info.start_mark = load_rsd_info->rsd_info.start_mark;
     circular_info.end_mark = load_rsd_info->rsd_info.end_mark;
     circular_info.mode =   2;
-    ret = nd_log_output(instance, info->id_info.save_index,  ptr_tmp, 1, &circular_info);
+    ret = nd_log_output_port(port, info->id_info.save_index,  ptr_tmp, 1, &circular_info);
     if(ret < 0)
     {
         return -1;
@@ -2881,6 +2890,7 @@ int load_search_copy_first_time(void *instance, uint8_t *buf, struct load_rsd_in
 //新负荷记录补数据.  src_buf 缓存长度 大于1500字节
 int load_response_fill_645(void *instance,  uint8_t *des, uint8_t *src_buf, uint32_t *rcsd_req, uint32_t *rcsd_src, uint16_t *capture_645len,  uint32_t ID, struct circular_info_t fill_info)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     union dl645_DI_t DI;
     int one_len = 0;
     uint8_t *p = des;
@@ -2905,11 +2915,11 @@ int load_response_fill_645(void *instance,  uint8_t *des, uint8_t *src_buf, uint
         circular_info.start_mark = 0;
         circular_info.end_mark = fill_info.start_mark;
         circular_info.mode =   2;
-        ret = nd_log_output(instance, record_id_info.id_info.save_index,  ptr_tmp, 1, &circular_info);
+        ret = nd_log_output_port(port, record_id_info.id_info.save_index,  ptr_tmp, 1, &circular_info);
 
         circular_info.curr_num = circular_info.valid_num - 1;
         //circular_info.valid_num = circular_info.curr_num + 1;
-        ret = nd_log_output(instance, record_id_info.id_info.save_index,  ptr_tmp, circular_info.unit_size, &circular_info);
+        ret = nd_log_output_port(port, record_id_info.id_info.save_index,  ptr_tmp, circular_info.unit_size, &circular_info);
 
         //开始打包
         one_len = record_package_01_645(instance, p, ptr_tmp, rcsd_req, rcsd_src, capture_645len,  ID);
@@ -2938,6 +2948,7 @@ int load_response_fill_645(void *instance,  uint8_t *des, uint8_t *src_buf, uint
 
 int search_load_scheme_No(void *instance, uint32_t rcsd_req, uint8_t *scheme, uint32_t *period_sec, struct record_storage_645_id_info_t  *info)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
     struct circular_info_t circular_info = {0};
     uint8_t i,k,scheme_no = 0;
     uint32_t tmpU32 = 0,rcsd_src[50] = {0};
@@ -2960,7 +2971,7 @@ int search_load_scheme_No(void *instance, uint32_t rcsd_req, uint8_t *scheme, ui
     }
 
     //周期
-    nd_get_index(instance, info->id_info.period_index , &period_buf[0], sizeof(period_buf));
+    nd_get_index_port(port, info->id_info.period_index , &period_buf[0], sizeof(period_buf));
 
     tmpU32 = buf_to_uint16_msb(&period_buf[scheme_no * 3 + 1]);  // scheme_no * 3 + 1    and   scheme_no * 3 + 2
     tmpU32 = tmpU32 * 60;
@@ -2979,6 +2990,7 @@ int search_load_scheme_No(void *instance, uint32_t rcsd_req, uint8_t *scheme, ui
 //645读负荷数据
 int load_data_package645(void *instance, uint32_t ID, uint8_t* buf,  struct load_rsd_info_t *load_rsd_info, struct record_storage_645_id_info_t *record_id_info, uint32_t *rcsd_info, uint16_t *capture_645len,  uint8_t  package_type,  struct context_645_t* ctx)
 {
+    const nd_resource_port_t *port = nd_fr645_resource_access(instance);
 #ifndef WIN32
 
     union dl645_DI_t DI;
@@ -3025,7 +3037,7 @@ int load_data_package645(void *instance, uint32_t ID, uint8_t* buf,  struct load
             {
                 circular_info.mode = 0;
             }
-            ret = nd_log_output(instance, record_id_info->id_info.save_index,  ptr_tmp, 1, &circular_info);
+            ret = nd_log_output_port(port, record_id_info->id_info.save_index,  ptr_tmp, 1, &circular_info);
             circular_info.mode =   rsd_info->mode; 
             
             if ((0 == non_period) && (rsd_info->select == 1) && ((rsd_info->mode == 2) || (rsd_info->mode == 3))) //方法1  周期性冻结 按时间搜索 返回最近一条
@@ -3038,7 +3050,7 @@ int load_data_package645(void *instance, uint32_t ID, uint8_t* buf,  struct load
             break;
             
         case 9: //上n次
-            ret = nd_log_output(instance, record_id_info->id_info.save_index,  ptr_tmp, 1, &circular_info);
+            ret = nd_log_output_port(port, record_id_info->id_info.save_index,  ptr_tmp, 1, &circular_info);
             if ((rsd_info->last_no == 0) || (rsd_info->last_no > circular_info.valid_num))
             {
                 return -DAR_BUFFER_OVERFLOW; //无数据 ，外部已判断
@@ -3086,7 +3098,7 @@ int load_data_package645(void *instance, uint32_t ID, uint8_t* buf,  struct load
 
         v85xxp_clear_watchdog();
         //获取1条记录内容
-        ret = nd_log_output(instance, record_id_info->id_info.save_index,  ptr_tmp, circular_info.unit_size, &circular_info);
+        ret = nd_log_output_port(port, record_id_info->id_info.save_index,  ptr_tmp, circular_info.unit_size, &circular_info);
         if(ret < 0)
         {
             return -DAR_BUFFER_OVERFLOW;
