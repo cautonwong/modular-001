@@ -1,5 +1,10 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include "sim.h"
 
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -108,6 +113,62 @@ static void *sim_peripheral_map(size_t size)
         return NULL;
     }
     return base;
+}
+
+/*
+ * Stack high-water. Paint the unused main-thread stack below the current
+ * frame, run the firmware, then find the deepest painted byte the run
+ * overwrote. The count includes host libc frames reached from firmware code
+ * (stdio trace, allocation); it is a simulator proxy, not the Cortex-M0 stack.
+ * ASan builds use fake stack frames, so they report zero instead.
+ */
+#define SIM_STACK_PAINT 0x5a
+#define SIM_STACK_GUARD 4096u
+#define SIM_STACK_RESERVE 256u
+
+static unsigned char *stack_paint_low;
+static size_t stack_paint_size;
+
+static int sim_stack_paint(void)
+{
+    pthread_attr_t attr;
+    void *base = NULL;
+    size_t size = 0;
+    uintptr_t low;
+    uintptr_t high;
+
+    if (pthread_getattr_np(pthread_self(), &attr) != 0) {
+        return -1;
+    }
+    if (pthread_attr_getstack(&attr, &base, &size) != 0) {
+        pthread_attr_destroy(&attr);
+        return -1;
+    }
+    pthread_attr_destroy(&attr);
+
+    low = (uintptr_t)base + SIM_STACK_GUARD;
+    high = (uintptr_t)__builtin_frame_address(0) - SIM_STACK_RESERVE;
+    if ((base == NULL) || (high <= low)) {
+        return -1;
+    }
+    stack_paint_low = (unsigned char *)low;
+    stack_paint_size = (size_t)(high - low);
+    memset(stack_paint_low, SIM_STACK_PAINT, stack_paint_size);
+    return 0;
+}
+
+static unsigned sim_stack_high_water(void)
+{
+    size_t first = 0;
+
+    if (stack_paint_low == NULL) {
+        return 0;
+    }
+    while ((first < stack_paint_size)
+           && (stack_paint_low[first] == SIM_STACK_PAINT)) {
+        first++;
+    }
+    return (unsigned)(stack_paint_size - first);
 }
 
 static void usage(const char *program)
@@ -286,7 +347,15 @@ int main(int argc, char **argv)
                      arena, (void *)instance, g_sim.cycles, g_sim.eeprom_path,
                      g_sim.flash_path);
 
+    int stack_painted = -1;
+#if !defined(__SANITIZE_ADDRESS__)
+    stack_painted = sim_stack_paint();
+#endif
+
     int ret = baremetal_instance_entry_main(instance, 0, NULL);
+
+    sim_stats_stack_high_water(stack_painted == 0 ? sim_stack_high_water() : 0);
+    sim_stats_report();
 
     sim_trace_printf("[sim] mallocs=%u", nd_sim_malloc_count());
     if (ret != 0) {

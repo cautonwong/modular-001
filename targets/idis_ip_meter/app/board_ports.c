@@ -269,7 +269,7 @@ int board_ir_read(uint8_t *byte)
     if (byte == NULL || fifoBuf_getUsed(&board_buffers.uart_fifo[UART_IR_CHL]) == 0) {
         return 0;
     }
-    *byte = fifoBuf_getByte(&board_buffers.uart_fifo[UART_IR_CHL]);
+    *byte = (uint8_t)fifoBuf_getByte(&board_buffers.uart_fifo[UART_IR_CHL]);
     return 1;
 }
 

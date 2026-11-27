@@ -1,6 +1,8 @@
 # Blade 四层架构
 
-状态：草案，等待勘察报告校订。
+状态：已接受（2026-11-27）。依赖方向和组件边界由 `check:layers`、
+`check:components` 和 `AGENTS.md` 门禁；第 2 节的部分条目是 2026-11-10 的
+迁移基线记录。
 工作分支：`main`。
 
 ## 1. 四层与依赖规则
@@ -41,7 +43,7 @@ infra/         SOCes / boards / interrupt / RTOSes / HALes。实现上层定义�
 - `tools/check_product_component_usage.py` 用构建产物逐源检查产品链接覆盖。固件产品从 `targets/` 派生，不靠手写清单：有 `app/` 或 `build/` CMake 的 target 是固件，用 `set(PRODUCT ...)` 指定产品；有 `iar for arm` `.ewp` 的 target 是固件，按产品选中的组件路径归属产品（组件 `paths` 指向 target 目录本身也算选中该 target）。固件 target 没有产品、同一产品归属两个固件 target、或给固件产品登记 `non_firmware` 都失败；没有固件 target 的产品必须登记 `non_firmware`。stategrid 的证据是 `check-firmware-link.py` 把 IAR EWP 源清单编译并交给 `arm-none-eabi-gcc` 链接后写出的 `--manifest`；它记录的是链接输入（编译并传给 ld 的翻译单元），不是符号存活：`-Wl,--gc-sections` 可能丢掉某个源的全部 section。当前 231 个产品源中有 22 个在 `firmware.elf` 里没有任何已定义全局符号存活（`arm-none-eabi-nm --defined-only`）；要求符号存活会把它们变成 22 条例外，所以门禁只声明链接输入，符号存活是残余。两个 IDIS 产品取 `build/ci-*/build.ninja` 唯一的可执行链接语句，链接对象必须有编译规则。没有 `.c` 的组件按 header-only 通过。每个被选中组件的解析源清单（`product.yaml` 的 `sources:` 可把组件收窄到具体 `.c`；没有 `sources:` 的组件贡献 `paths` 下全部源，扣除 `exclude` 和 `tests/`）都必须是该产品链接的输入；新增未链接源、链接对象缺编译规则、产品无链接证据都失败。反查规则同样生效：被选中组件交付的源若出现在链接里，必须在产品解析清单中；仓库内每个链接输入必须落在某个组件的 `paths` 下，`infra/third_party/` 和仓库外路径是构建输入，不要求清单声明。全局 accounting 规则：某个固件产品选中的组件，其每个 `.c` 必须被至少一个固件产品选中，或被 `tests/CMakeLists.txt` 编译，否则失败。`protocol.dlms` 的四个 `nd_dlms_*.c` 由测试清单保有，`core.types` 的 `bitarithm.c`/`list.c`/`rtc.c` 由 stategrid 的全量选择保有。非固件产品按 `non_firmware` 登记原因，并核对选中组件的 `.c` 都在 `product_manifest` 源清单里；`meter_gas` 和 `meter_water` 没有固件镜像，登记为 manifest-only。`tools/product_link_baseline.txt` 现在只登记 `non_firmware`。自检每次运行都证明部分链接会在新源上失败、反查规则拒绝被选中组件未声明的链接源和无组件声明的链接输入、accounting 规则拒绝无落点的组件源、注释掉的 `test` 条目被忽略，vendored 输入和测试编译的源通过，固件产品从 CMake `PRODUCT` 和 IAR 组件路径派生，无产品 target 和双 target 产品都失败。残余：EWP 里 `fr_698_comm.c` 和 `resource_access.c` 都定义 `nd_get_index`，dl698 那个在 `WIN32_U_TEST` 下编译为空；检查不解析预处理条件。
 - `tools/check_mutable_globals.py` 扫描受管层的 `.c` 和 `.h`，规则相同：`static` 声明，含函数内 `static` 局部；以及位于行首、花括号深度为 0 的非 `static` 文件作用域声明。可变指针、数组和对象计数；`const` 对象、`const` 指针、`extern` 声明、`typedef`、函数原型和函数定义不计数，IAR 的 `@` 位置后缀先去掉。`tools/mutable_globals_baseline.txt` 按“路径 名字 行号”每行一条：同一文件里两个同名全局是两条，删一个再在另一行加一个会同时报新条目和过期条目；移动行号也会失败，直到 `--update`。当前条数和文件数只以 `tools/mutable_globals_baseline.txt` 和 `python3 tools/check_mutable_globals.py` 的输出为准，本文不重复数字。基线只降不升：新增条目必须先在代码里消除，或按 `--update` 流程写明理由更新基线；过期条目会让检查失败。扫描跳过 `tests/`、`infra/third_party`、`infra/soc` 下的 `vendor/` 子树、`infra/security/crypto` 和构建目录。剩余盲区：宏展开产生的声明看不到，宏可能带参数，安全展开要逐文件的预处理标志；`#if` 两个分支都参与解析；函数内 `static` 仍按债务计数；非 `static` 函数局部靠行首缩进和花括号深度排除。
 - `components/core` 和 `components/services` 是模板。`components/protocol` 现在只有 DLMS；698 状态机在 `application/adapters/dl698`，由 stategrid target 驱动。两个 IDIS 产品的选择已与构建对齐：除被 CMake 过滤的 `application.metering`、`application.adapters.dl645`、`application.adapters.dl698` 和 `core.buf` 外，`application.ports` 也已移除；没有 IDIS 翻译单元 include 它们的头，CMake 也把它们过滤出链接。`protocol.dlms` 的固件链接只编 `src/nd_axdr.c`，其余 `src/nd_dlms_*.c` 只在 host 测试里编译。两个 IDIS 产品的 `sources:` 只声明 `core.types` 的 `utils.c` 和 `protocol.dlms` 的 `src/nd_axdr.c`，链接输入与 ROM 不变。DLMS 的四个 test-only 源和 `core.types` 的 `bitarithm.c`/`list.c` 由 `tests/CMakeLists.txt` 编译，`rtc.c` 由 stategrid 的全量 `core.types` 选择保有；非固件产品也按 `non_firmware` 登记原因。`tools/product_link_baseline.txt` 不再有 source 例外。
-- stategrid_meter 的 RAM 预算和 OOM 覆盖也编在代码里。`targets/stategrid_meter/app/ram_budget.h` 定义 24 KiB arena、2 KiB 元数据区、cache 2108 B、mbase 3 KiB，并按 `STG_698_LINK_COUNT` 推导 698 块；共享分配入口 `__nd_malloc`/`__nd_calloc` 按 4 字节取整，元数据、cache 和 698 块的分配项按同样方式取整；mbase 三区按 `offsetof` 的原始大小放置，不经过分配器。断言分两层：每个块内部先算自己的占用（元数据 = context + 4 个 `block_device_t` + 17 个 `resource_block_t`；cache = RTC 4 + key 8 + `cache_max` + 每 698 通道 8；mbase = static + cache + persistent 三区；698 = 通道数 × 单通道）并断言不超过块大小，再断言四个块之和不超过 arena。host 当前：元数据 1968/2048 B、cache 2084/2108 B（余 24 B）、698 17136 B、mbase 1361/3072 B；四块按块大小合计 24364 B（2048 + 2108 + 17136 + 3072），arena 总余量 212 B（不是某个块的 headroom；内部 used 之和为 22549 B）。Cortex-M0 用 arm-none-eabi-gcc 的 sizeof：元数据 1420/2048 B、mbase 1321/3072 B、698 16572 B，总余量 776 B；IAR 实编译仍未跑。运行时每个 `add_block`/`add_inside_block`/`add_device`/`register_parameter`/`register_log`/`register_map` 结果都检查，`add_inside_block` 拒绝 `offset + size > block->size`，`stategrid_context_create` 的第一个分配也检查，所以溢出在启动时失败而不是静默重叠；`add_block`/`add_inside_block`/`register_parameter`/`register_log` 返回资源块描述符而不是可能为 0 的存储地址，EEPROM/flash 首块地址 0 不再被误判为失败；`register_map` 本来就返回 `resource_map_t` 描述符。`stategrid_meter_entry.c` 的 698 通道表与计数不一致编译失败，所以加第四个通道必须先改计数，而计数一变预算断言就重算：当前产品只有 RS485-1、PLC 和 IR 三个 698 通道，第四个不是产品配置。`__no_init nd_memory[STG_RAM_ARENA_SIZE]`、`stategrid_context_create` 和 host 模拟的 arena 默认值共用这组宏。ACC-BOOT-002 先跑一次正常启动，从模拟器的 `[sim] mallocs=N` 读共享分配入口的调用总数，再对 1..N 逐个 `--fail-malloc`，断言退出非 0、`init failed`、无 `done`；当前正常启动 `mallocs=49`（3 次 context create、7 次 `add_block`、3 次 `add_inside_block`、2 次 `add_device`、7 次 `register_*`、27 次 `nd_malloc`），测试同时断言总数不低于 49，掉回旧的 27 会失败。元数据断言里的设备数和块数由 `tools/check_ram_budget_counts.py` 校验：`stategrid_context_create` 各分配一个设备和根块，`add_device` 和 `register_map` 各分配一个设备，`add_block`、`add_inside_block`、`register_parameter`、`register_log` 各分配一个块，映射依据是 `resource_tool.c` 里这些函数实际调用的 `__nd_malloc`，`check:ram-budget-counts` 在 CI 里跑；盲区：号码随工具链布局变化，文档数字只是当前编译输出。
+- stategrid_meter 的 RAM 预算和 OOM 覆盖也编在代码里。`targets/stategrid_meter/app/ram_budget.h` 定义 24 KiB arena、2 KiB + 128 B 元数据区、cache 2108 B、mbase 3 KiB，并按 `STG_698_LINK_COUNT` 推导 698 块；共享分配入口 `__nd_malloc`/`__nd_calloc` 按 4 字节取整，元数据、cache 和 698 块的分配项按同样方式取整；mbase 三区按 `offsetof` 的原始大小放置，不经过分配器。断言分两层：每个块内部先算自己的占用（元数据 = context + 4 个 `block_device_t` + 17 个 `resource_block_t`；cache = RTC 4 + key 8 + `cache_max` + 每 698 通道 8；mbase = static + cache + persistent 三区；698 = 通道数 × 单通道）并断言不超过块大小，再断言四个块之和不超过 arena。host 当前：元数据 2168/2176 B、cache 2084/2108 B（余 24 B）、698 17136 B、mbase 1361/3072 B；四块按块大小合计 24492 B（2176 + 2108 + 17136 + 3072），arena 总余量 84 B（不是某个块的 headroom；内部 used 之和为 22749 B）。Cortex-M0 用 arm-none-eabi-gcc 的 sizeof：元数据 1588/2176 B、mbase 1321/3072 B、698 16572 B，总余量 648 B；IAR 实编译仍未跑。运行时每个 `add_block`/`add_inside_block`/`add_device`/`register_parameter`/`register_log`/`register_map` 结果都检查，`add_inside_block` 拒绝 `offset + size > block->size`，`stategrid_context_create` 的第一个分配也检查，所以溢出在启动时失败而不是静默重叠；`add_block`/`add_inside_block`/`register_parameter`/`register_log` 返回资源块描述符而不是可能为 0 的存储地址，EEPROM/flash 首块地址 0 不再被误判为失败；`register_map` 本来就返回 `resource_map_t` 描述符。`stategrid_meter_entry.c` 的 698 通道表与计数不一致编译失败，所以加第四个通道必须先改计数，而计数一变预算断言就重算：当前产品只有 RS485-1、PLC 和 IR 三个 698 通道，第四个不是产品配置。`__no_init nd_memory[STG_RAM_ARENA_SIZE]`、`stategrid_context_create` 和 host 模拟的 arena 默认值共用这组宏。ACC-BOOT-002 先跑一次正常启动，从模拟器的 `[sim] mallocs=N` 读共享分配入口的调用总数，再对 1..N 逐个 `--fail-malloc`，断言退出非 0、`init failed`、无 `done`；当前正常启动 `mallocs=49`（3 次 context create、7 次 `add_block`、3 次 `add_inside_block`、2 次 `add_device`、7 次 `register_*`、27 次 `nd_malloc`），测试同时断言总数不低于 49，掉回旧的 27 会失败。元数据断言里的设备数和块数由 `tools/check_ram_budget_counts.py` 校验：`stategrid_context_create` 各分配一个设备和根块，`add_device` 和 `register_map` 各分配一个设备，`add_block`、`add_inside_block`、`register_parameter`、`register_log` 各分配一个块，映射依据是 `resource_tool.c` 里这些函数实际调用的 `__nd_malloc`，`check:ram-budget-counts` 在 CI 里跑；盲区：号码随工具链布局变化，文档数字只是当前编译输出。
 
 合并 `components` 到 `domain` 会把协议、通道、缓冲和 IP 放进模型层，破坏依赖方向和 `check_components.py` 的边界。
 
@@ -284,6 +286,18 @@ int main(void)
 旧工程文件在和旧目录一起删除的单元里统一处理，不作为新代码的验证依据。
 
 
-## 9. 待确认
+## 9. 已确认
 
-1. 存量设备的 EEPROM 字节布局是否必须保持完全兼容？如果必须，`serialize` 需要复刻当前 `offsetof` 布局并加版本号。
+1. 存量设备的 EEPROM 字节布局必须逐字节兼容。`serialize` 复刻当前 `offsetof`
+   布局并加版本号，见 §2.1。
+
+## 10. 决策记录
+
+已落地的核心决定记录在 `docs/adr/`。本文只保留架构规则，不复述决定。
+
+- [ADR-0001：mbase 拆分](adr/0001-mbase-split.md)
+- [ADR-0002：IDIS ROM 预算 103 KiB](adr/0002-rom-budget-103-kib.md)
+- [ADR-0003：端口绑定](adr/0003-port-binding.md)
+- [ADR-0004：IDIS FreeRTOS 线程模型](adr/0004-rtos-thread-model.md)
+
+索引见 [docs/adr/README.md](adr/README.md)。

@@ -1,9 +1,7 @@
 """Load-control acceptance rows ACC-LC-002/004/006/008.
 
 Evidence is external only: 698 response APDUs, relay.log, backlight.log and
-EEPROM bytes. The two BLOCKED cases pin seams that are absent from the twin;
-they pass by asserting the current (limited) behavior, the convention used by
-the other *-BLOCKED cases in this suite.
+EEPROM bytes.
 """
 
 from __future__ import annotations
@@ -219,12 +217,13 @@ def key_control(ctx):
 
 @case(
     "ACC-LC-008",
-    "after power-on initializes the voltage window and factory mode is exited, "
-    "the relay does not close at 300 V or 100 V and closes only after the "
-    "voltage returns to 220 V",
+    "outside factory mode the relay does not close at 300 V or 100 V, and a "
+    "remote close during an alarm does not actuate either; the held close "
+    "connects once the voltage returns or the alarm is cleared, and a new "
+    "close after a trip reconnects",
     ("load-control", "safety-gate", "relay"),
 )
-def voltage_gate(ctx):
+def safety_gate(ctx):
     scenario = (
         "at 0 meter voltage 220\n"
         "at 0 meter current 5\n"
@@ -240,63 +239,48 @@ def voltage_gate(ctx):
         f"at 18 uart 0 {_timed_action(4, 0x8000, 0x82, CLOSE)}\n"
         "at 20 meter voltage 220\n"
         f"at 21 uart 0 {_timed_action(5, 0x8000, 0x82, CLOSE)}\n"
-        f"at 24 uart 0 {_get(6, STATUS)}\n"
+        f"at 24 uart 0 {_timed_action(6, 0x8000, 0x81, TRIP)}\n"
+        f"at 26 uart 0 {_timed_action(7, 0x8000, 0x7F, ZERO)}\n"
+        f"at 28 uart 0 {_timed_action(8, 0x8000, 0x82, CLOSE)}\n"
+        f"at 30 uart 0 {_get(9, STATUS)}\n"
+        f"at 31 uart 0 {_get(10, ALARM)}\n"
+        f"at 33 uart 0 {_timed_action(11, 0x8000, 0x80, ZERO)}\n"
+        f"at 36 uart 0 {_get(12, STATUS)}\n"
+        f"at 37 uart 0 {_timed_action(13, 0x8000, 0x81, TRIP)}\n"
+        f"at 39 uart 0 {_timed_action(14, 0x8000, 0x82, CLOSE)}\n"
+        f"at 42 uart 0 {_get(15, STATUS)}\n"
     )
-    run = ctx.run(cycles=28, scenario=scenario)
+    run = ctx.run(cycles=46, scenario=scenario)
     assert run.exit_code == 0, f"firmware_sim exited {run.exit_code}"
 
     responses = _responses(run)
     assert [kind for kind, _ in responses] == [
-        "action", "action", "action", "action", "get",
+        "action", "action", "action", "action", "action", "action", "action",
+        "get", "get", "action", "get", "action", "action", "get",
     ], [kind for kind, _ in responses]
-    assert all(response.dar == 0 for _, response in responses[:-1])
-    assert responses[-1][1].data == bytes.fromhex("040800")
+    actions = [response for kind, response in responses if kind == "action"]
+    assert all(response.dar == 0 for response in actions), [
+        response.dar for response in actions
+    ]
+    gets = [response.data for kind, response in responses if kind == "get"]
+    assert gets == [
+        bytes.fromhex("040800"),  # close accepted, command state cleared
+        bytes.fromhex("040880"),  # alarm on
+        bytes.fromhex("040800"),  # held close connects after alarm clear
+        bytes.fromhex("040800"),  # new close after the trip
+    ], gets
 
     relay = _relay(run)
     disconnects = [cycle for cycle, action in relay if action == "disconnect"]
     connects = [cycle for cycle, action in relay if action == "connect"]
     assert disconnects and min(disconnects) >= 10, relay
     assert not [cycle for cycle in connects if 13 <= cycle <= 19], relay
-    assert connects and connects[-1] >= 20, relay
-
-
-@case(
-    "ACC-LC-008-BLOCKED",
-    "outside factory mode an alarm-on state does not gate a remote close: the "
-    "close is accepted and the relay connects, so the alarm half of the safety "
-    "gate has no firmware path",
-    ("load-control", "safety-gate", "alarm"),
-)
-def alarm_does_not_gate_close(ctx):
-    scenario = (
-        "at 0 meter voltage 220\n"
-        "at 0 meter current 5\n"
-        "at 1 power off\n"
-        "at 3 power on\n"
-        "at 4 meter voltage 220\n"
-        "at 4 meter current 5\n"
-        f"at 5 uart 0 {_set(1, FACTORY_MODE, ZERO)}\n"
-        f"at 10 uart 0 {_timed_action(2, 0x8000, 0x81, TRIP)}\n"
-        f"at 12 uart 0 {_timed_action(3, 0x8000, 0x7F, ZERO)}\n"
-        f"at 14 uart 0 {_timed_action(4, 0x8000, 0x82, CLOSE)}\n"
-        f"at 16 uart 0 {_get(5, STATUS)}\n"
-        f"at 17 uart 0 {_get(6, ALARM)}\n"
-    )
-    run = ctx.run(cycles=20, scenario=scenario)
-    assert run.exit_code == 0, f"firmware_sim exited {run.exit_code}"
-
-    responses = _responses(run)
-    assert [kind for kind, _ in responses] == [
-        "action", "action", "action", "get", "get",
-    ], [kind for kind, _ in responses]
-    assert responses[0][1].dar == 0
-    assert responses[1][1].dar == 0, "alarm-on must be accepted"
-    assert responses[2][1].dar == 0, "close must be accepted"
-    assert responses[3][1].data == bytes.fromhex("040800")
-    assert responses[4][1].data == bytes.fromhex("040880")
-
-    connects = [cycle for cycle, action in _relay(run) if action == "connect"]
-    assert connects and connects[-1] >= 14, run.relay_log
+    assert any(20 <= cycle <= 23 for cycle in connects), relay
+    assert 24 in disconnects, relay
+    assert not [cycle for cycle in connects if 25 <= cycle <= 32], relay
+    assert any(33 <= cycle <= 36 for cycle in connects), relay
+    assert 37 in disconnects, relay
+    assert 39 in connects, relay
 
 
 @case(

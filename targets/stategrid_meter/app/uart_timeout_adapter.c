@@ -19,7 +19,7 @@ int fr_uart_timeout(void *ctx, uint8_t pid)
     }
 
     if (fifoBuf_getUsed(&context->pipe_uart[index]) > 0) {
-        uint8_t byte = fifoBuf_getByte(&context->pipe_uart[index]);
+        uint8_t byte = (uint8_t)fifoBuf_getByte(&context->pipe_uart[index]);
 
         if (IRQ_UART_RX_TM_OUT == byte) {
             return 1;

@@ -70,8 +70,13 @@ int fr_segments_handle(void * instance, void * pipeline, nd_dl698_msg_t* mesg)
     uint32_t offset=0;
     
     if(ctx->segment_rx == 0xffff){
-        ctx->segment_rx = fifoBuf_getByte(fifo);
-        ctx->segment_rx += (fifoBuf_getByte(fifo) << 8);
+        int16_t segment_lo = fifoBuf_getByte(fifo);
+        int16_t segment_hi = fifoBuf_getByte(fifo);
+        if (segment_lo < 0 || segment_hi < 0) {
+            return -1;
+        }
+        ctx->segment_rx = (uint16_t)segment_lo;
+        ctx->segment_rx += (uint16_t)(segment_hi << 8);
     }
     
     s = ctx->segment_rx;

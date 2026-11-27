@@ -66,7 +66,7 @@ uint8_t axdr_decode(uint8_t type, const uint8_t *buf, uint16_t *len);
 uint8_t axdr_data_len_decode(uint8_t type, uint8_t* buf, uint16_t* len);
 
 uint8_t axdr_len_encode(uint8_t* buf, uint16_t len);
-uint16_t axdr_get_len(const uint8_t *data);
+uint16_t axdr_get_len(const uint8_t *data, uint16_t remaining);
 
 uint16_t get_octet_string(struct context_698_t* ctx, uint16_t *offset, uint16_t *len_len);
 
@@ -87,7 +87,7 @@ struct rsd_info_t
 
 
 
-uint16_t axdr_record_len_get(uint8_t* data, uint16_t* rsdLen, uint16_t* rcsdLen);
+uint16_t axdr_record_len_get(uint8_t* data, uint16_t remaining, uint16_t* rsdLen, uint16_t* rcsdLen);
 uint8_t check_capture_exist(uint32_t rcsd_req, uint32_t rcsd_src);
 uint32_t dt_buf_to_month(uint8_t* dt);
 struct data_time_s_t;

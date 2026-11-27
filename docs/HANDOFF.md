@@ -1,6 +1,7 @@
 # Blade DDD / Clean Architecture 交接文档
 
-更新于 2026-11-10。新会话从这里接着干。
+更新于 2026-11-10。本文是当时的历史记录，正文数字（例如 73 个主机测试）是
+2026-11-10 的基线；当前数字以 `./ci.sh` 输出为准，架构和门禁见 `AGENTS.md`。
 
 ## 1. 目标
 
@@ -73,7 +74,7 @@ tools/         checks and probes
 
 ## 4. 已验证的东西
 
-- 73 个 Unity 测试二进制，全绿。
+- 73 个 Unity 测试二进制，全绿（2026-11-10 基线；当前数字以 `./ci.sh` 输出为准）。
 - 旧工程 ARM GCC 编译基线 `205/205`。
 - 旧工程整体重定位链接，内部未定义符号为 0。
 - 层依赖检查通过。
@@ -104,7 +105,8 @@ python3 tools/legacy_baseline.py
 
 预期输出：
 
-- `ctest` 显示 `100% tests passed, 0 tests failed out of 73`
+- `ctest` 显示 `100% tests passed, 0 tests failed out of 73`（2026-11-10 基线；
+  当前数字见 `./ci.sh`）
 - `legacy_baseline.py` 显示 `sources=205 ok=205 failed=0 missing_files=0` 和 `link_undefined=0`
 - `check-firmware-link.py` 显示 `firmware link ok`
 - `check_components.py` 显示 `components ok (59 manifests)`

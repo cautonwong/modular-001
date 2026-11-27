@@ -3,6 +3,19 @@
 
 #include <stdint.h>
 
+#ifndef ND_MUST_USE
+#if defined(__GNUC__)
+#define ND_MUST_USE __attribute__((warn_unused_result))
+#else
+#define ND_MUST_USE
+#endif
+#endif
+
+/* GCC does not accept a (void) cast for warn_unused_result; legacy call
+ * sites assign and discard so check:unused-result can freeze them. */
+#define ND_RECORD_STORAGE_DISCARD(expr) \
+    do { int nd_discarded_result = (expr); (void)nd_discarded_result; } while (0)
+
 enum nd_record_format_mode {
     ND_RECORD_WRITE = 0,
     ND_RECORD_READ,
@@ -19,15 +32,15 @@ typedef struct nd_record_storage_port {
     int (*trigger_645_record)(void *ctx, uint32_t di, uint8_t tag);
 } nd_record_storage_port_t;
 
-int nd_record_storage_save_index(const nd_record_storage_port_t *port,
+ND_MUST_USE int nd_record_storage_save_index(const nd_record_storage_port_t *port,
                                  uint32_t oad, uint32_t *index);
-int nd_record_storage_change_format(const nd_record_storage_port_t *port,
+ND_MUST_USE int nd_record_storage_change_format(const nd_record_storage_port_t *port,
                                     uint8_t *des, const uint8_t *src,
                                     uint32_t oad_req, uint32_t oad_src,
                                     int mode);
-int nd_record_storage_clear_program_list(const nd_record_storage_port_t *port,
+ND_MUST_USE int nd_record_storage_clear_program_list(const nd_record_storage_port_t *port,
                                          void *pipeline, void *mesg);
-int nd_record_storage_trigger_645_record(
+ND_MUST_USE int nd_record_storage_trigger_645_record(
     const nd_record_storage_port_t *port, uint32_t di, uint8_t tag);
 
 #endif

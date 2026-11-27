@@ -30,9 +30,16 @@ int fr_gatekeeper_698_client(void * instance, void * pipeline, nd_dl698_msg_t* m
     }
     fifoBuf_removeData(fifo, APDU_OFFSET(ctx->SA));
 
-    ctx->service = fifoBuf_getByte(fifo);
-    ctx->choice = fifoBuf_getByte(fifo);
-    ctx->PIID = fifoBuf_getByte(fifo);
+    int16_t service = fifoBuf_getByte(fifo);
+    int16_t choice = fifoBuf_getByte(fifo);
+    int16_t piid = fifoBuf_getByte(fifo);
+
+    if (service < 0 || choice < 0 || piid < 0) {
+        return -1;
+    }
+    ctx->service = (uint8_t)service;
+    ctx->choice = (uint8_t)choice;
+    ctx->PIID = (uint8_t)piid;
     //ctx->PIID |= (1 << 6);//PIID-ACD
 
     if (ctx->forward != NULL) {

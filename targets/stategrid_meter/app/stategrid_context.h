@@ -26,6 +26,7 @@
 
 struct mbase_control_block_t;
 struct nd_demand_adapter;
+struct load_control_state;
 
 struct nd_fr698_report_state {
     uint8_t rtc_cnt;
@@ -82,6 +83,10 @@ typedef struct stategrid_context_t
     const nd_meter_base_port_t *meter_base;
     struct nd_fr698_report_state fr698_report;
     relay_control_ui_state_t relay_ui;
+    /* Relay load control owns a fixed arena in the instance like demand. */
+    uint8_t relay_state_buffer[128];
+    nd_arena_t relay_state_arena;
+    struct load_control_state *relay_control;
     struct connect_request_t cfg_connect;
     stategrid_board_state_t *board;
 } stategrid_context_t;

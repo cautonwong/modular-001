@@ -190,6 +190,110 @@ static void test_alarm_timer_arms_current_limit_and_blocks_off(void)
     TEST_ASSERT_TRUE(actions.disconnect);
 }
 
+static void test_alarm_flag_blocks_remote_close_until_cleared(void)
+{
+    tick_command(ND_LOAD_REMOTE_ON);
+    tick_command(ND_LOAD_REMOTE_OFF);
+
+    nd_load_actions_t actions =
+        tick_command(ND_LOAD_REMOTE_ON | ND_LOAD_REMOTE_ALARM);
+    TEST_ASSERT_FALSE(actions.connect);
+
+    actions = tick_command(ND_LOAD_REMOTE_ON);
+    TEST_ASSERT_TRUE(actions.connect);
+    TEST_ASSERT_TRUE(actions.event_switch_on);
+}
+
+static void test_alarm_flag_blocks_pretrip_direct_close(void)
+{
+    tick_command(ND_LOAD_REMOTE_ON);
+    tick_command(ND_LOAD_REMOTE_OFF);
+
+    nd_load_actions_t actions =
+        tick_command(ND_LOAD_REMOTE_ALARM | ND_LOAD_REMOTE_PRETRIP_DIRECT);
+    TEST_ASSERT_FALSE(actions.connect);
+    TEST_ASSERT_EQUAL_UINT8(ND_LOAD_REMOTE_ALARM, load_control_command(state));
+
+    actions = tick();
+    TEST_ASSERT_FALSE(actions.connect);
+
+    actions = tick_command(ND_LOAD_REMOTE_ON);
+    TEST_ASSERT_TRUE(actions.connect);
+}
+
+static void test_alarm_flag_blocks_key_cleared_on_allow_close(void)
+{
+    tick_command(ND_LOAD_REMOTE_ON);
+    tick_command(ND_LOAD_REMOTE_OFF);
+
+    nd_load_actions_t actions =
+        tick_command(ND_LOAD_REMOTE_ON_ALLOW | ND_LOAD_REMOTE_ALARM);
+    TEST_ASSERT_FALSE(actions.connect);
+    TEST_ASSERT_EQUAL_UINT8(ND_LOAD_REMOTE_ON_ALLOW | ND_LOAD_REMOTE_ALARM,
+                            load_control_command(state));
+
+    actions = tick_command(ND_LOAD_REMOTE_ALARM); /* the key clears ON_ALLOW */
+    TEST_ASSERT_FALSE(actions.connect);
+
+    actions = tick_command(ND_LOAD_REMOTE_NULL); /* alarm cleared */
+    TEST_ASSERT_TRUE(actions.connect);
+}
+
+static void test_alarm_flag_does_not_block_remote_off(void)
+{
+    tick_command(ND_LOAD_REMOTE_ON);
+
+    nd_load_actions_t actions =
+        tick_command(ND_LOAD_REMOTE_OFF | ND_LOAD_REMOTE_ALARM);
+
+    TEST_ASSERT_TRUE(actions.disconnect);
+}
+
+static void test_alarm_delay_blocks_remote_close(void)
+{
+    tick_command(ND_LOAD_REMOTE_ON);
+    tick_command(ND_LOAD_REMOTE_OFF);
+
+    load_control_set_timers(state, 2, 0, 0);
+    nd_load_actions_t actions = tick_command(ND_LOAD_REMOTE_ON);
+    TEST_ASSERT_FALSE(actions.connect);
+    TEST_ASSERT_EQUAL_UINT32(1, load_control_alarm_minutes(state));
+
+    actions = tick_command(ND_LOAD_REMOTE_ON);
+    TEST_ASSERT_TRUE(actions.connect);
+}
+
+static void test_current_limit_alone_does_not_block_remote_close(void)
+{
+    tick_command(ND_LOAD_REMOTE_ON);
+    tick_command(ND_LOAD_REMOTE_OFF);
+
+    inputs.current = 1000;
+    load_control_set_timers(state, 0, 300, 0);
+    nd_load_actions_t actions = tick_command(ND_LOAD_REMOTE_ON);
+
+    TEST_ASSERT_TRUE(actions.connect);
+}
+
+static void test_voltage_gate_and_alarm_both_block_remote_close(void)
+{
+    tick_command(ND_LOAD_REMOTE_ON);
+    tick_command(ND_LOAD_REMOTE_OFF);
+
+    inputs.factory_mode = 0;
+    inputs.voltage = 50;
+    nd_load_actions_t actions =
+        tick_command(ND_LOAD_REMOTE_ON | ND_LOAD_REMOTE_ALARM);
+    TEST_ASSERT_FALSE(actions.connect);
+
+    inputs.voltage = 220;
+    actions = tick_command(ND_LOAD_REMOTE_ON | ND_LOAD_REMOTE_ALARM);
+    TEST_ASSERT_FALSE(actions.connect);
+
+    actions = tick_command(ND_LOAD_REMOTE_ON);
+    TEST_ASSERT_TRUE(actions.connect);
+}
+
 static nd_load_feedback_inputs_t base_feedback(void)
 {
     nd_load_feedback_inputs_t in;
@@ -314,6 +418,13 @@ int main(void)
     RUN_TEST(test_cleared_key_command_connects);
     RUN_TEST(test_repeat_actuates_without_reporting);
     RUN_TEST(test_alarm_timer_arms_current_limit_and_blocks_off);
+    RUN_TEST(test_alarm_flag_blocks_remote_close_until_cleared);
+    RUN_TEST(test_alarm_flag_blocks_pretrip_direct_close);
+    RUN_TEST(test_alarm_flag_blocks_key_cleared_on_allow_close);
+    RUN_TEST(test_alarm_flag_does_not_block_remote_off);
+    RUN_TEST(test_alarm_delay_blocks_remote_close);
+    RUN_TEST(test_current_limit_alone_does_not_block_remote_close);
+    RUN_TEST(test_voltage_gate_and_alarm_both_block_remote_close);
     RUN_TEST(test_limit_timer_counts_down_and_is_readable);
     RUN_TEST(test_feedback_flags_a_closed_relay_while_disconnected);
     RUN_TEST(test_feedback_confirms_disconnect_and_reports_once);

@@ -35,6 +35,8 @@
 | 依赖方向、端口与组合根 | `check:layers`、`check:components` |
 | 产品选中的组件必须有同一产品闭包 caller | `check:product-callers`：只查固件产品；组件公共函数必须在同一 product 闭包内被 include 可见地调用，跨产品、测试/host 和组件自调用不 credit，基线为空 |
 | 公开头不新增可变 struct | `check:public-structs` 棘轮 |
+| P0/P1 X 验收行必须有风险记录 | `check:risk-register`：从 `docs/firmware-acceptance-matrix.md` 动态取 P0/P1 X 集合，与 `docs/risk-register.md` 的 id 集合严格相等；`accept` 需批准人，`fix`/`defer` 过期即失败 |
+| 存储端口返回值不得静默丢弃 | `check:unused-result`：`ND_MUST_USE` 调用点的丢弃计数冻结在 `tools/unused_result_baseline.txt`，增加失败；`(void)` 也计入 |
 | FreeRTOS 线程模型不漂移 | `check:rtos-model` 对比 `docs/design/freertos-thread-model.md` 的配置与任务常量；改值必须同时改文档和 checker |
 | ROM 103 KiB | 链接断言、`check_idis_firmware.py`、`check:rom-budget-docs` |
 | 形式化文档清单和 TLA 常数与 formal 产物一致 | `check:formal-docs --self-check`：列出所有 TLA/Lean/CBMC 文件，并对照 EnergyPulse/Snapshot cfg 的常数 |
@@ -78,6 +80,13 @@ Java/TLA+ 和 Lean 后按 `--strict` 运行。关键算法仍优先加属性测�
 任何“已修好 / 有改善”的声明，先写可证伪命题，跑 baseline（修复前或父提交）与
 treatment（修复后）同一命令，比较原始产物，只给 `VERIFIED`、`NOT VERIFIED` 或
 `INCONCLUSIVE`，保留工件路径。没有 baseline 按 `INCONCLUSIVE`，不靠日志复述。
+
+- 先写规格再写代码。规格至少包含业务规则、不变量、可观测输出、验收判据和
+  非目标，放单元 brief 或 `docs/plans/<unit>-spec.md`。实现、测试和 VERDICT
+  引用同一份规格。执行：reviewer 在 brief 里写，verifier 按规格验收。
+- 独立测试的预期值来自规格，不从实现或新代码输出反推。verifier 至少独立
+  推导一个期望值并保留推导记录；baseline/treatment 只证明差异，不替代规格
+  推导。执行：verifier 判断，VERDICT 引用规格条目。
 
 `/interrogate` 按风险分级。每切片必跑：删除、覆盖或迁移用户数据；并发、事件循环、
 生命周期或资源所有权；解析器、协议帧或网络输入边界；安全、权限或崩溃恢复；

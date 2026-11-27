@@ -348,7 +348,7 @@ void irq_transform_to_instance(stategrid_context_t * instance)
     while(fifoBuf_getUsed(irq_fifo) >0)
 #endif
     {
-       fifo_irq = fifoBuf_getByte(irq_fifo);
+       fifo_irq = (uint8_t)fifoBuf_getByte(irq_fifo);
        
        switch(fifo_irq)
        {

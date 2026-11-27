@@ -316,7 +316,7 @@ int16_t fifoBuf_getBytePeek(struct fifo_t *buf)
     return buf->buf_ptr[rd];            // return the byte
 }
 
-uint8_t fifoBuf_getByte(struct fifo_t *buf)
+int16_t fifoBuf_getByte(struct fifo_t *buf)
 {       // get a data byte from the buffer
 
     uint16_t rd = buf->rd;
@@ -325,9 +325,8 @@ uint8_t fifoBuf_getByte(struct fifo_t *buf)
 
     // get number of bytes available
     uint16_t num_bytes = fifoBuf_getUsed(buf);
-    //n_assert(num_bytes >= 1);
     if (num_bytes < 1)
-        return 0;                      // no byte returned
+        return -1;                     // empty FIFO, not a stored zero
 
     uint8_t b = buff[rd];
     if (++rd >= buf_size)

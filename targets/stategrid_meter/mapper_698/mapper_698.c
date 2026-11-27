@@ -1387,9 +1387,9 @@ int fc_fun_03(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, 
     //uint8_t num = 0;
 
 
-    if (mode == RFC_GET_ORIGINAL_LEN) 
+    if (mode == RFC_GET_ORIGINAL_LEN)
     {
-        return axdr_get_len(src); 
+        return axdr_get_len(src, fc->store_len);
     }
     /*    
         else if (mode == RFC_GET_STORE_LEN) 
@@ -1407,7 +1407,7 @@ int fc_fun_03(void *instance, uint32_t oad_req, uint32_t oad_src, uint8_t *des, 
     }
     else if (mode == RFC_READ)
     {
-        decode_len = axdr_get_len(src); 
+        decode_len = axdr_get_len(src, fc->store_len);
 
         if (decode_len > fc->store_len)
         {
@@ -2240,7 +2240,7 @@ int resource_map_698(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_siz
         case 0x3:// 事件
             return SET_3_Event(instance, id, buf, ctx);
         case 0x4://参变量
-            return SET_4_Parameter(instance, id, buf, ctx);
+            return SET_4_Parameter(instance, id, buf, buf_size, ctx);
         case 0x5:// 事件
             return SET_5_Frozen(instance, id, buf, ctx);
         case 0x8:// 控制类

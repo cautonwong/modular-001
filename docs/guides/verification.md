@@ -3,6 +3,21 @@
 目标：把能机器检查的约束写进代码和 CI，让后续功能工作只剩“各就各位、填空”。
 每一层都给出可重跑的证据，不依赖人的记性。
 
+## 0. 规格与独立预期
+
+先写规格，再写代码和测试。规格放单元 brief 或 `docs/plans/<unit>-spec.md`，
+最少五栏：
+
+1. 业务规则：输入到输出的判断。
+2. 不变量：任何时刻必须成立的状态。
+3. 可观测输出：用户或协议能看到的值，例如 DAR、GET 回读、relay.log、ELF section。
+4. 验收判据：每条输出对应的期望值。
+5. 非目标：本单元明确不做的部分。
+
+测试的期望值从这五栏来，不从实现读。实现方写的断言不能单独作为独立证据；
+verifier 至少独立推导一个期望值，并把推导写在 VERDICT 里。baseline/treatment
+对照只证明差异存在，不证明期望值正确。规格有歧义时停在规格，不带歧义实现。
+
 ## 1. 编译期约束
 
 - `tools/check-arm.sh` 对 `domain/`、`application/` 用
@@ -93,6 +108,10 @@ host 指针是 8 字节，legacy 布局按 4 字节假设，对齐告警描述�
 - `nd_idis_single_action_load` 接受持久化记录里超过 8 个时段的 `time_count`；
 - `ctl_11_read.c` 用 `unsigned long` 接收 4 字节 DI，LP64 host 上高 4 字节未初始化。
 
+执行性能、功耗与唤醒、掉电安全三项预算的目标、测量方法和当前值见
+[运行预算](../design/timing-budget.md)。`check:budgets` 在 CI 里重跑 sim 测量并
+记录当前值；没有 HIL 证据的项保持 pending。
+
 ## 4. 有界穷举与性质测试
 
 对状态空间小、输入长度有界的纯函数，用穷举代替抽样。当前覆盖：
@@ -158,6 +177,11 @@ Assertions/Preconditions 总数，所以计数口径必须稳定：CI 用 CBMC 5
   `UINT16_MAX` 以内时返回该值，超出时置 `err` 并返回 0。
 - `formal/cbmc/axdr_skip.c`：符号化的定长标签和缓冲区长度，CBMC 证明完整值
   消耗固定字节数，截断值返回错误，位置始终在缓冲区内。
+- `formal/cbmc/axdr_698_len.c`：直接编译 698 legacy 长度解码器
+  （`fr_axdr_codec.c`），剩余字节数符号化。CBMC 证明字符串、bit string 和
+  定长标量的返回值不超过剩余字节，帧长不足时返回 0 且不越界读取；递归的
+  array/structure 由 `tests/unit/test_fr_axdr_codec.c` 覆盖，CBMC 5.12 无法
+  在可用规模内编码该递归。
 - `formal/cbmc/pulse_headers.c`：符号化的存储后端和代际号（`--nondet-static`），
   CBMC 证明 base 记录和 journal header 的解析不越界，magic、version、长度或
   代际不匹配时不接受，接受时字段与 CRC 一致。

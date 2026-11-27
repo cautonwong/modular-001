@@ -40,11 +40,24 @@ int get_SET_and_ACTION_Request_len(void *, void * pipeline, nd_dl698_msg_t*)
     }
     for (i = 0; i < list; i++)
     {
+        if (len + 4 > (int)fr_698_rx_remaining(ctx))
+        {
+            return -1;
+        }
         len += 4;
-        axdr_len = axdr_get_len(apdu+len);
+        axdr_len = axdr_get_len(apdu + len,
+                (uint16_t)(fr_698_rx_remaining(ctx) - (uint16_t)len));
+        if (axdr_len == 0)
+        {
+            return -1;
+        }
         len += axdr_len;
         if (ctx->choice == 0x03)
         {
+            if (len + 5 > (int)fr_698_rx_remaining(ctx))
+            {
+                return -1;
+            }
             len += 5;
         }
     }
@@ -58,7 +71,7 @@ static int __fr_handle_one_object(void * instance, void * pipeline, nd_dl698_msg
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
     uint32_t oad = mesg->id;
-    uint16_t len = 0;
+    uint16_t len = fr_698_rx_remaining(ctx);
     uint16_t offset = 0;
     uint8_t req_type = 0;
     int r = 0;
@@ -96,8 +109,9 @@ static int __fr_handle_one_object(void * instance, void * pipeline, nd_dl698_msg
             {
                 p[cache->wr++] = 0;
             }
-            r = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
-            return r; 
+            r = axdr_get_len(apdu_rx + ctx->apdu_rx_offset,
+                             fr_698_rx_remaining(ctx));
+            return r;
         }  
         
         if(2 != ctx->timeTag_valid){
@@ -120,7 +134,8 @@ static int __fr_handle_one_object(void * instance, void * pipeline, nd_dl698_msg
             if(ACTION_Request == ctx->service){
                 p[cache->wr++] = 0;
             }
-            r = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+            r = axdr_get_len(apdu_rx + ctx->apdu_rx_offset,
+                             fr_698_rx_remaining(ctx));
         }
         else
         {
@@ -234,7 +249,8 @@ int fr_handle_set_action_request(void * instance, void * pipeline, nd_dl698_msg_
                 r = security_mode_word_check(instance, pipeline, 0, get_oad);
                 if(r < 0)
                 {
-                    ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+                    ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset,
+                                                        fr_698_rx_remaining(ctx));
                     p[offset] = 0x00;//DAR
                     p[cache->wr++] = -r;
                     return 1;
