@@ -426,7 +426,7 @@ uint32_t ID=0;
                 ERRBYTE = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len, ctx);
                 if(ERRBYTE == 0)
                 {
-                    nd_record_storage_trigger_645_record(nd_fr645_record_storage(instance), ID, 0);
+                    ND_RECORD_STORAGE_DISCARD(nd_record_storage_trigger_645_record(nd_fr645_record_storage(instance), ID, 0));
                     tx_len = 0;
                 }
                 else
@@ -443,7 +443,7 @@ uint32_t ID=0;
                     ERRBYTE = Comm_Write(instance, apdu_rx+10, ctx->apdu_tx, (uint8_t*)&tx_len, ctx);
                     if(ERRBYTE == 0)
                     {
-                        nd_record_storage_trigger_645_record(nd_fr645_record_storage(instance), ID, 0);
+                        ND_RECORD_STORAGE_DISCARD(nd_record_storage_trigger_645_record(nd_fr645_record_storage(instance), ID, 0));
                         tx_len = 0;
                     }
                     else

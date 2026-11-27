@@ -21,6 +21,30 @@ static FILE *trace_file;
 static unsigned cycle_index;
 static unsigned malloc_calls;
 
+/* Budget counters. The stage counter runs even without --verbose so a plain
+ * run still measures the per-pass work. */
+static unsigned stage_count_this_cycle;
+static unsigned stage_count_max;
+static unsigned stage_count_total;
+static int power_off_pending;
+static unsigned power_off_cycle;
+static unsigned power_off_entry_passes;
+static int power_off_measured;
+static int wake_pending;
+static unsigned wake_cycle;
+static unsigned wake_latency_passes;
+static int wake_measured;
+static unsigned watchdog_kicks;
+static unsigned watchdog_max_gap;
+static unsigned watchdog_last_cycle;
+static int watchdog_seen;
+static unsigned stack_high_water_bytes;
+
+static unsigned stats_current_cycle(void)
+{
+    return cycle_index > 0 ? cycle_index - 1 : 0;
+}
+
 void sim_trace_open(void)
 {
     if (g_sim.trace_path == NULL) {
@@ -76,6 +100,17 @@ int nd_sim_should_stop(stategrid_context_t *instance)
     if (cycle_index >= g_sim.cycles) {
         return 1;
     }
+
+    /* Finalize the pass that just ended before this pass's scenario applies. */
+    if (stage_count_this_cycle > stage_count_max) {
+        stage_count_max = stage_count_this_cycle;
+    }
+    if (power_off_pending && (cycle_index > 0) && (stage_count_this_cycle == 0)) {
+        power_off_entry_passes = cycle_index - 1 - power_off_cycle;
+        power_off_measured = 1;
+        power_off_pending = 0;
+    }
+    stage_count_this_cycle = 0;
 
     sim_scenario_apply(instance, cycle_index);
 
@@ -137,6 +172,14 @@ void nd_sim_event(uint8_t from, uint8_t to, uint8_t ctrl, uint16_t len)
 void nd_sim_stage(const char *name)
 {
     sim_scenario_apply_stage(name);
+    stage_count_total++;
+    stage_count_this_cycle++;
+    if (wake_pending && (stage_count_max > 0)
+        && (stage_count_this_cycle >= stage_count_max)) {
+        wake_latency_passes = stats_current_cycle() - wake_cycle;
+        wake_measured = 1;
+        wake_pending = 0;
+    }
     if (!g_sim.verbose) {
         return;
     }
@@ -154,4 +197,68 @@ void nd_sim_system_reset(void)
     sim_trace_printf("[sim] NVIC_SystemReset requested; stopping simulation");
     sim_trace_close();
     exit(3);
+}
+
+void sim_stats_power(int on, unsigned cycle)
+{
+    if (on) {
+        wake_pending = 1;
+        wake_cycle = cycle;
+        wake_measured = 0;
+        return;
+    }
+    wake_pending = 0;
+    if (!power_off_pending) {
+        power_off_pending = 1;
+        power_off_cycle = cycle;
+        power_off_measured = 0;
+    }
+}
+
+void sim_stats_watchdog_kick(void)
+{
+    unsigned cycle = stats_current_cycle();
+    unsigned gap;
+
+    watchdog_kicks++;
+    if (watchdog_seen) {
+        gap = cycle - watchdog_last_cycle;
+        if (gap > watchdog_max_gap) {
+            watchdog_max_gap = gap;
+        }
+    }
+    watchdog_last_cycle = cycle;
+    watchdog_seen = 1;
+}
+
+void sim_stats_stack_high_water(unsigned bytes)
+{
+    stack_high_water_bytes = bytes;
+}
+
+void sim_stats_report(void)
+{
+    char wake[16];
+    char power_off[16];
+
+    if (stage_count_this_cycle > stage_count_max) {
+        stage_count_max = stage_count_this_cycle;
+    }
+    if (wake_measured) {
+        snprintf(wake, sizeof(wake), "%u", wake_latency_passes);
+    } else {
+        snprintf(wake, sizeof(wake), "none");
+    }
+    if (power_off_measured) {
+        snprintf(power_off, sizeof(power_off), "%u", power_off_entry_passes);
+    } else {
+        snprintf(power_off, sizeof(power_off), "none");
+    }
+    sim_trace_printf("[sim] stats cycles=%u stages=%u stage-max=%u "
+                     "wake-latency-passes=%s power-off-entry-passes=%s "
+                     "watchdog-kicks=%u watchdog-max-gap-passes=%u "
+                     "stack-high-water-bytes=%u",
+                     cycle_index, stage_count_total, stage_count_max,
+                     wake, power_off, watchdog_kicks, watchdog_max_gap,
+                     stack_high_water_bytes);
 }

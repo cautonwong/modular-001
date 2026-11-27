@@ -19,7 +19,7 @@ const uint32_t baud_table[11] = {
 };
 
 void mcu_init(void *init_type) { (void)init_type; }
-void mcu_clear_watchdog(void) {}
+void mcu_clear_watchdog(void) { sim_stats_watchdog_kick(); }
 uint8_t mcu_delay_us(volatile uint16_t count) { (void)count; return 0; }
 int mcu_delay_ms_power_down_quit(volatile uint16_t count) { (void)count; return 0; }
 uint8_t ac_power_off_monitor(void) { return (uint8_t)!sim_scenario_power_on(); }

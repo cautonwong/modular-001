@@ -26,7 +26,12 @@ static void test_byte_put_peek_and_get(void)
 
     TEST_ASSERT_EQUAL_UINT8('a', fifoBuf_getByte(&fifo));
     TEST_ASSERT_EQUAL_UINT16(0, fifoBuf_getUsed(&fifo));
-    TEST_ASSERT_EQUAL_UINT8(0, fifoBuf_getByte(&fifo));
+
+    fifoBuf_putByte(&fifo, 0x00);
+    TEST_ASSERT_EQUAL_INT(0, fifoBuf_getByte(&fifo));
+    TEST_ASSERT_EQUAL_UINT16(0, fifoBuf_getUsed(&fifo));
+
+    TEST_ASSERT_EQUAL_INT(-1, fifoBuf_getByte(&fifo));
     TEST_ASSERT_EQUAL_INT(-1, fifoBuf_getBytePeek(&fifo));
 }
 

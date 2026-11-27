@@ -20,7 +20,9 @@
  * check their own layout.
  */
 #define STG_RAM_ARENA_SIZE (24u * 1024u)
-#define STG_RAM_METADATA_SIZE (2u * 1024u)
+/* The relay load-control arena lives in the context, so the metadata block
+ * carries its 128-byte buffer on top of the 2 KiB. */
+#define STG_RAM_METADATA_SIZE (2u * 1024u + 128u)
 #define STG_RAM_CACHE_BLOCK_SIZE 2108u
 #define STG_RAM_MBASE_BLOCK_SIZE (3u * 1024u)
 

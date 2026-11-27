@@ -363,6 +363,8 @@ int GET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
     int ret;
     uint8_t channel = 0;
     
+    /* Internal before-set snapshots call this with ctx == NULL; the channel
+     * and client index then fall back to 0. */
     if((p_ctx)&&(p_ctx->channel < FR_698_CHL_NUM))
     {
         channel = p_ctx->channel;

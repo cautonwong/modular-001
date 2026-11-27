@@ -98,6 +98,19 @@ if need cbmc; then
         --signed-overflow-check --conversion-check || FAILED=1
 fi
 
+echo "== cbmc: 698 A-XDR bounded length decoder =="
+if need cbmc; then
+    # The remaining count is symbolic; recursive structured values are covered
+    # by tests/unit/test_fr_axdr_codec.c because CBMC 5.12 cannot encode that
+    # recursion at a useful size.
+    cbmc_check "698 A-XDR bounded length decoder" 324 \
+        "$ROOT/formal/cbmc/axdr_698_len.c" \
+        "$ROOT/application/adapters/dl698/fr_axdr_codec.c" \
+        -I "$ROOT" \
+        --unwind 3 --unwinding-assertions --bounds-check --pointer-check \
+        --div-by-zero-check --signed-overflow-check --conversion-check || FAILED=1
+fi
+
 echo "== cbmc: pulse base record and journal header parsers =="
 if need cbmc; then
     cbmc_check "pulse header parsers" 1770 \

@@ -1,0 +1,3 @@
+# file discarded_calls
+application/adapters/dl645/fr_645.c 2
+application/adapters/dl698/fr_698_connect.c 4

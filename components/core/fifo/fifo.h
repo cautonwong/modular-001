@@ -19,7 +19,8 @@ uint16_t fifoBuf_getFree(struct fifo_t *buf);
 void ringbuffer_clear(struct fifo_t *buf);
 void fifoBuf_removeData(struct fifo_t *buf, uint16_t len);
 int16_t fifoBuf_getBytePeek(struct fifo_t *buf);
-uint8_t fifoBuf_getByte(struct fifo_t *buf);
+/* Returns the byte, or -1 when the FIFO is empty. */
+int16_t fifoBuf_getByte(struct fifo_t *buf);
 int16_t fifoBuf_peekByteB(struct fifo_t *buf, uint16_t offset);
 int16_t fifoBuf_peekByteBuf(struct fifo_t *buf, uint16_t offset, uint8_t *data,
                             uint16_t len);

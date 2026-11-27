@@ -13,7 +13,8 @@ int SET_2_Variable(void *instance, uint32_t id, uint8_t *buf, void *ctx);
 int GET_3_Event(void *instance, uint32_t id, uint8_t *buf, void *ctx);
 int SET_3_Event(void *instance, uint32_t id, uint8_t *buf, void *ctx);
 int GET_4_Parameter(void *instance, uint32_t id, uint8_t *buf, void *ctx);
-int SET_4_Parameter(void *instance, uint32_t id, uint8_t *buf, void *ctx);
+int SET_4_Parameter(void *instance, uint32_t id, uint8_t *buf,
+                    uint16_t buf_size, void *ctx);
 int ACTION_2_Variable(void *instance, uint32_t id, uint8_t *buf, void *ctx);
 int ACTION_3_Event(void *instance, uint32_t id, uint8_t *buf, void *ctx);
 int ACTION_4_Parameter(void *instance, uint32_t id, uint8_t *buf, void *ctx);

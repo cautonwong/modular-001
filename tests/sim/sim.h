@@ -62,6 +62,14 @@ void nd_sim_stage(const char *name);
 void nd_sim_storage_layout(uint32_t used, uint32_t region);
 void nd_sim_system_reset(void);
 
+/* Budget measurements recorded by one run. sim_trace.c owns the counters;
+ * sim_script.c reports power events, sim_stubs.c reports watchdog kicks, and
+ * sim_main.c supplies the host stack high-water mark. */
+void sim_stats_power(int on, unsigned cycle);
+void sim_stats_watchdog_kick(void);
+void sim_stats_stack_high_water(unsigned bytes);
+void sim_stats_report(void);
+
 void sim_trace_open(void);
 void sim_trace_close(void);
 void sim_trace_printf(const char *format, ...);

@@ -10,6 +10,7 @@
 #define FRM_LEN_DEFER (-2)
 
 int __get_apdu_data_len(struct context_698_t* ctx);
+uint16_t fr_698_rx_remaining(const struct context_698_t *ctx);
 int fr_segments_handle(void * instance, void * pipeline,
                        nd_dl698_msg_t* mesg);
 int handle_scrambler(void * instance, void * pipeline,

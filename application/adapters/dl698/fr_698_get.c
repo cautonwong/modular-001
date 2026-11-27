@@ -40,11 +40,16 @@ int get_GET_Request_len(void *, void * pipeline, nd_dl698_msg_t*)
         }
 
         for (i = 0; i < list; i++){
+            if ((uint16_t)(p - apdu) + 4 > fr_698_rx_remaining(ctx)){
+                return -1;
+            }
             p += 4;
             if ((ctx->choice == 0x03) || (ctx->choice == 0x04)){
                 rsd_len = 0;
                 rcsd_len = 0;
-                p += axdr_record_len_get(p, &rsd_len, &rcsd_len);
+                p += axdr_record_len_get(p,
+                        (uint16_t)(fr_698_rx_remaining(ctx) - (uint16_t)(p - apdu)),
+                        &rsd_len, &rcsd_len);
                 if (rsd_len == 0 || rcsd_len == 0){
                     return -1;
                 }
@@ -86,7 +91,8 @@ static int fr_get_one_object(void * instance, void * pipeline, nd_dl698_msg_t* m
 
         r = security_mode_word_check(instance, pipeline, 0, oad);
         if(r < 0){
-            ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+            ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset,
+                                                fr_698_rx_remaining(ctx));
             p[offset] = 0x00;//DAR
             p[cache->wr++] = -r;
             return 1;
@@ -183,7 +189,8 @@ static int __fr_handle_get_record_request(void * instance, void * pipeline, nd_d
             rsd_ret = rsd_decode(instance, pipeline, mesg->id, &rsd_info);
             if (rsd_ret < 0)
             {
-                ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+                ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset,
+                                                fr_698_rx_remaining(ctx));
                 p[cache->wr++] = 0x00; //rcsd
                 p[cache->wr++] = 0x00;//DAR
                 p[cache->wr++] = -rsd_ret;
@@ -214,7 +221,8 @@ static int __fr_handle_get_record_request(void * instance, void * pipeline, nd_d
             if ((rcsd_ret < 0 ))
             {
 
-                ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+                ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset,
+                                                fr_698_rx_remaining(ctx));
                 p[cache->wr++] = 0x00;//DAR
                 p[cache->wr++] = -rcsd_ret;
                 return rcsd_ret;  // 想返回dar  如何处理 ？？
@@ -223,7 +231,8 @@ static int __fr_handle_get_record_request(void * instance, void * pipeline, nd_d
             //安全模式判断
             ret = security_mode_word_check(instance, pipeline, 0, mesg->id);
             if(ret < 0){
-                ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+                ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset,
+                                                fr_698_rx_remaining(ctx));
                 p[cache->wr++] = 0x00;//DAR
                 p[cache->wr++] = -ret;
                 return ret;

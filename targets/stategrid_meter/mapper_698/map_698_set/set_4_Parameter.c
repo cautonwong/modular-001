@@ -73,7 +73,7 @@ const general_set4  general_set4_talble[] =
 #define		set4num			sizeof(general_set4_talble)/sizeof(general_set4)
 
 
-int general_set_4_para(void *instance, uint32_t id, uint8_t* buf)
+int general_set_4_para(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
 {
     const nd_resource_port_t *port = nd_fr698_resource_access(instance);
 //    struct mbase_control_block_t* mbase_cb;
@@ -159,7 +159,7 @@ int general_set_4_para(void *instance, uint32_t id, uint8_t* buf)
                         nd_mb_password_err_cnt(instance) = 0;     //修改密码，密码锁清零
                         break;
                 }
-                tag_datalen = axdr_get_len(p);
+                tag_datalen = axdr_get_len(p, buf_size);
                  
                 memset(ptr_tmp, 0, (general_set4_talble[i].offset + general_set4_talble[i].len)); //补空
                 if (general_set4_talble[i].offset > tag_datalen)
@@ -267,7 +267,7 @@ int set_support_protocol_list(void *instance, uint32_t id, uint8_t* buf)
 }
 
 
-int set4300(void *instance, uint32_t id, uint8_t* buf)
+int set4300(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size)
 {
     const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint8_t j, i,timer[6], num, Tnum, tmpbuf[60] ={0};
@@ -316,7 +316,7 @@ int set4300(void *instance, uint32_t id, uint8_t* buf)
                     break;
 
             }
-            tag_datalen = axdr_get_len(p);
+            tag_datalen = axdr_get_len(p, buf_size);
              
             memset(ptr_tmp, 0, (set4300_table[i].offset + set4300_table[i].len)); //补空
             if (set4300_table[i].offset > tag_datalen)
@@ -485,7 +485,7 @@ int after_Time_set_hook(void *instance)
     
     return 1;
 }
-int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
+int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, uint16_t buf_size, void *ctx)
 {    
     const nd_resource_port_t *port = nd_fr698_resource_access(instance);
     uint16_t oad,year2,year1;
@@ -503,7 +503,7 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
     {
         return -DAR_OTHERS_ERROR;
     }
-    len = general_set_4_para(instance, id, buf);
+    len = general_set_4_para(instance, id, buf, buf_size);
     if(len != 0)
     {
         return len;
@@ -1249,7 +1249,7 @@ int SET_4_Parameter(void *instance, uint32_t id, uint8_t* buf, void *ctx)
                 return -DAR_RW_REJECT;
             break;
         case 0x4300://设备信息
-            return set4300(instance, id, buf);
+            return set4300(instance, id, buf, buf_size);
 
         /*            
         case 0x4400:

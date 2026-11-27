@@ -30,10 +30,12 @@
   间对齐填充），等于链接产物的 `.bin` 大小。
 - `check_layers`、`check_components`、`check_platform_boundary` 全 0。
 
-2026-11-25 更新：components 58；host 166（164 单测 + 2 仿真），strict 164；
-product-link 源例外 0（产品级 `sources:` 选择 + 全局 accounting 规则，见
-`docs/product-link-audit.md`）；reachability 0；ROM load span
-95,344 / 97,948 / 99,624 / 102,432，最紧余量 3,040 B。
+2026-11-27 更新（基线 `8cdf7c30`）：169 个单测文件；host 166→171（164→169
+单测加 2 个仿真），strict 164→169；stategrid 验收 143→144 行 / 109 例；
+CBMC harness 6→7；可变全局 117→114（stategrid 50→47，40 文件，28 在头文件）；
+components 58；product-link 源例外 0（产品级 `sources:` 选择加全局 accounting
+规则，见 `docs/product-link-audit.md`）；reachability 0；ROM load span
+95,356 / 97,956 / 99,632 / 102,444，最紧余量 3,028 B。
 
 ## 3. 已完成（从待办中删除）
 
@@ -56,11 +58,11 @@ product-link 源例外 0（产品级 `sources:` 选择 + 全局 accounting 规�
 
 ## 4. P0 近期（守住绿色 + 还债）
 
-1. **烧可变全局：117 → 0。** 分布：stategrid 50、infra 46、host 9、
+1. **烧可变全局：114 → 0。** 分布：stategrid 47、infra 46、host 9、
    IDIS 5、IDIS FreeRTOS 4、components 3。先从 `application/ports/*.c`
    的三个 `bound` 标志开始，改为组合根一次性绑定；每批跑
    `check_mutable_globals.py`，增长需要 `mutable_globals_exceptions.txt`。
-2. **ROM 账。** IRQ 余量 3,040 B，新固件功能先看 IRQ 列；数字以
+2. **ROM 账。** IRQ 余量 3,028 B，新固件功能先看 IRQ 列；数字以
    `tools/check_idis_firmware.py` 的 ELF 输出为准。
 
 完成标准：待办清零或明确记录理由，CI 保持全绿。

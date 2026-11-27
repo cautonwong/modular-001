@@ -11,13 +11,15 @@
 
 #include "domain/load_control/load_control.h"
 #include "targets/stategrid_meter/app/relay_control_ui.h"
-#include "infra/memory/arena.h"
 #include "targets/stategrid_meter/app/resource_blocks.h"
 #include "targets/stategrid_meter/app/events/events_applications.h"
 #include "targets/stategrid_meter/app/metering/metering_applications.h"
 #include "targets/stategrid_meter/board/relay_config.h"
 #include "targets/stategrid_meter/persistence/legacy_control_block.h"
 
+/* The SysTick vector handler owns these feedback counters. IRQ_SYSTICK is
+ * registered by ndv_timer_init with a NULL para, so the handler cannot reach
+ * the instance; moving them needs a timer para contract change. */
 uint16_t relay_off_chk, relay_on_chk;
 
 void save_relay_state(stategrid_context_t *instance)
@@ -34,25 +36,10 @@ void save_relay_state(stategrid_context_t *instance)
     nd_set_offset_port(port, s_addr, (uint8_t *)&nd_mbase_cmd(mbase_cb), len);
 }
 
-/* shortcut: one relay state per firmware. Move it into the target
- * composition root when the target owns instance state. */
-static uint8_t state_buffer[128];
-static nd_arena_t state_arena;
-static load_control_state_t *control;
-
-static load_control_state_t *relay_state(void)
-{
-    if (control == NULL) {
-        nd_arena_init(&state_arena, state_buffer, sizeof(state_buffer));
-        control = load_control_create(nd_arena_allocator(&state_arena));
-    }
-    return control;
-}
-
 void relay_control_second(void *instance)
 {
     struct mbase_control_block_t *mbase_cb = ((stategrid_context_t *)instance)->mbase;
-    load_control_state_t *state = relay_state();
+    load_control_state_t *state = ((stategrid_context_t *)instance)->relay_control;
     nd_load_inputs_t inputs;
     nd_load_actions_t actions;
     uint8_t voltage_blocked;
@@ -130,7 +117,7 @@ void relay_control_second(void *instance)
 void relay_control_led(void *instance)
 {
     struct mbase_control_block_t *mbase_cb = ((stategrid_context_t *)instance)->mbase;
-    load_control_state_t *state = relay_state();
+    load_control_state_t *state = ((stategrid_context_t *)instance)->relay_control;
     nd_load_feedback_inputs_t inputs;
     nd_load_feedback_t feedback;
     relay_control_led_t led;

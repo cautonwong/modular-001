@@ -289,7 +289,7 @@ static int __password_process(void * instance, void * pipeline, nd_dl698_msg_t*)
         nd_mb_set_connect_timeout_cnt(instance, channel, cilent_index, 0);
 
         
-        nd_record_storage_clear_program_list(nd_fr698_record_storage(instance), pipeline, NULL);
+        ND_RECORD_STORAGE_DISCARD(nd_record_storage_clear_program_list(nd_fr698_record_storage(instance), pipeline, NULL));
         return DL698_SEC_SUCCESS;        
     }
     else
@@ -441,7 +441,7 @@ static int __symmetry_process(void * instance, void * pipeline, nd_dl698_msg_t*)
             nd_mb_set_term_auth_timeout(instance, 0);
         }
 
-        nd_record_storage_clear_program_list(nd_fr698_record_storage(instance), pipeline, NULL);
+        ND_RECORD_STORAGE_DISCARD(nd_record_storage_clear_program_list(nd_fr698_record_storage(instance), pipeline, NULL));
         return DAR_SUCCESS;
     }
     else
@@ -561,7 +561,7 @@ int fr_handle_disconnect(void * instance, void * pipeline, nd_dl698_msg_t*)
     
     if ((nd_mb_get_connect_status(instance, ctx->channel, 0) == false)&& (nd_mb_get_connect_status(instance, ctx->channel, 1) == false))
     {
-        nd_record_storage_clear_program_list(nd_fr698_record_storage(instance), pipeline, NULL);
+        ND_RECORD_STORAGE_DISCARD(nd_record_storage_clear_program_list(nd_fr698_record_storage(instance), pipeline, NULL));
     }
     
     offset = cache->wr;
@@ -779,7 +779,7 @@ int fr_handle_disconnect2(void * instance,  void * pipeline,  uint8_t cilent_ind
     
     if ((nd_mb_get_connect_status(instance, channel, 0) == false)&& (nd_mb_get_connect_status(instance, channel, 1) == false))
     {
-        nd_record_storage_clear_program_list(nd_fr698_record_storage(instance), pipeline, NULL);
+        ND_RECORD_STORAGE_DISCARD(nd_record_storage_clear_program_list(nd_fr698_record_storage(instance), pipeline, NULL));
     }
     
     return 1;

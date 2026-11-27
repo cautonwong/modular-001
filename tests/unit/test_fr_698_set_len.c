@@ -19,6 +19,15 @@ void *nd_fr698_pipeline_ctx(const void *pipeline)
     return ((const struct fake_pipeline_t *)pipeline)->ctx;
 }
 
+uint16_t fr_698_rx_remaining(const struct context_698_t *ctx)
+{
+    if (ctx->apdu_rx_offset >= ctx->apdu_rx_len)
+    {
+        return 0;
+    }
+    return (uint16_t)(ctx->apdu_rx_len - ctx->apdu_rx_offset);
+}
+
 uint32_t buf_to_uint32_msb(uint8_t *unused)
 {
     (void)unused;
@@ -89,6 +98,7 @@ static void test_698_set_normal_consumes_oad_and_value(void)
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
+    ctx.apdu_rx_len = 64;
     ctx.choice = 1;
     ctx.apdu_d_rx[4] = TYPE_null;
 
@@ -102,6 +112,7 @@ static void test_698_set_list_consumes_count_and_values(void)
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
+    ctx.apdu_rx_len = 64;
     ctx.choice = 2;
     ctx.apdu_d_rx[0] = 2;
     ctx.apdu_d_rx[5] = TYPE_null;
@@ -117,6 +128,7 @@ static void test_698_action_list_consumes_selectors(void)
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
+    ctx.apdu_rx_len = 64;
     ctx.choice = 3;
     ctx.apdu_d_rx[0] = 2;
     ctx.apdu_d_rx[5] = TYPE_null;
@@ -132,7 +144,21 @@ static void test_698_set_rejects_unknown_choice(void)
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
+    ctx.apdu_rx_len = 64;
     ctx.choice = 4;
+
+    TEST_ASSERT_EQUAL_INT(-1, get_SET_and_ACTION_Request_len(NULL, &pipeline, NULL));
+}
+
+static void test_698_set_rejects_truncated_value(void)
+{
+    struct context_698_t ctx;
+    struct fake_pipeline_t pipeline;
+
+    memset(&ctx, 0, sizeof(ctx));
+    pipeline.ctx = &ctx;
+    ctx.apdu_rx_len = 4;
+    ctx.choice = 1;
 
     TEST_ASSERT_EQUAL_INT(-1, get_SET_and_ACTION_Request_len(NULL, &pipeline, NULL));
 }
@@ -144,5 +170,6 @@ int main(void)
     RUN_TEST(test_698_set_list_consumes_count_and_values);
     RUN_TEST(test_698_action_list_consumes_selectors);
     RUN_TEST(test_698_set_rejects_unknown_choice);
+    RUN_TEST(test_698_set_rejects_truncated_value);
     return UNITY_END();
 }

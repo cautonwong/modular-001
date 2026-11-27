@@ -78,7 +78,7 @@ void UartTransmissionHandle(void *para)
     {
         if(fifoBuf_getUsed(dev->tx_fifo) > 0 )
         {
-            tx_data = fifoBuf_getByte(dev->tx_fifo);
+            tx_data = (uint8_t)fifoBuf_getByte(dev->tx_fifo);
             mcu_uart_send_byte(tx_data, uartIndex);
             dev->tx_time_out = UART_TX_TIME_OUT;
         }
@@ -138,7 +138,7 @@ uint8_t uart_time_process(void *tickpara)
             nd_uart_rs485_receiver_disable();
         }
         chl->tx_time_out = UART_TX_TIME_OUT;
-        send_data = fifoBuf_getByte(chl->tx_fifo);
+        send_data = (uint8_t)fifoBuf_getByte(chl->tx_fifo);
         if(chl->chl_type == UART_IR_CHL) //禁止红外自发自收
         {
             mcu_uart_recive_enable(0 , chl->mcu_uart_index);

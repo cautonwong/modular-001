@@ -26,7 +26,8 @@ int16_t supply_event_flash_2_info(void *instance,
 int resource_map_698(void *instance, uint32_t id, uint8_t *buf,
                      uint16_t buf_size, void *ctx, uint16_t mode);
 int check_metertype_OI_valid(void *instance, uint16_t OI);
-int general_set_4_para(void *instance, uint32_t id, uint8_t *buf);
+int general_set_4_para(void *instance, uint32_t id, uint8_t *buf,
+                       uint16_t buf_size);
 void fr_dl698_power_on(void *instance,
                        void *pipeline);
 void fr_dl698_sec_task(void *instance,

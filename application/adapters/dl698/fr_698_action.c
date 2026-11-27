@@ -21,7 +21,7 @@ static int __fr_handle_one_object(void * instance, void * pipeline, nd_dl698_msg
     struct fifo_t* cache = ctx->apdu;
     uint8_t* p = cache->buf_ptr;
     uint32_t oad = mesg->id;
-    uint16_t len = 0;
+    uint16_t len = fr_698_rx_remaining(ctx);
     uint16_t offset = 0;
     uint8_t req_type = 0;
     int r = 0;
@@ -58,7 +58,8 @@ static int __fr_handle_one_object(void * instance, void * pipeline, nd_dl698_msg
             {
                 p[cache->wr++] = 0;
             }
-            r = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+            r = axdr_get_len(apdu_rx + ctx->apdu_rx_offset,
+                             fr_698_rx_remaining(ctx));
             return r;
         }
         
@@ -75,7 +76,8 @@ static int __fr_handle_one_object(void * instance, void * pipeline, nd_dl698_msg
         {
             p[cache->wr++] = -r;//DAR
             p[cache->wr++] = 0;
-            r = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+            r = axdr_get_len(apdu_rx + ctx->apdu_rx_offset,
+                             fr_698_rx_remaining(ctx));
         }
         else
         {
@@ -145,7 +147,8 @@ int fr_handle_action_request(void * instance, void * pipeline, nd_dl698_msg_t* m
                 r = security_mode_word_check(instance, pipeline, 0, get_oad);
                 if(r < 0)
                 {
-                    ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+                    ctx->apdu_rx_offset += axdr_get_len(apdu_rx + ctx->apdu_rx_offset,
+                                                        fr_698_rx_remaining(ctx));
                     p[cache->wr++] = -r;
                     if(ACTION_Request == ctx->service)
                     {

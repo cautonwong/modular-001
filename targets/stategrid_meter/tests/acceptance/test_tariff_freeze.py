@@ -177,41 +177,70 @@ def day_period_switch(ctx):
     assert fee2.value == 100, fee2.value
 
 
-HOLIDAY_IMAGE = _image(
-    **{
-        "5670": bytes([1, 3, 1, 3, 1]),
-        "5808": bytes([1, 1, 1]),
-        "5896": bytes([0, 0, 1] * 14 + [0, 0, 2] * 14 + [0, 0, 3] * 14),
-        "5680": bytes([0x07, 0xE5, 5, 1, 6, 2]),
-        "5802": bytes([0xFD]),
-        "5805": bytes([3]),
-    }
-)
+WEEKEND_REST_MASK = bytes([0x04, 0x08, 0xFD])
+WEEKEND_REST_TABLE = bytes([0x11, 0x03])
+HOLIDAY_2021_05_01 = bytes(
+    [0x02, 0x02, 0x1A, 0x07, 0xE5, 0x05, 0x01, 0x06, 0x11, 0x02])
+
+
+def _holiday_tariff_setup(holiday_count: int) -> list[str]:
+    return [
+        "at 0 energy clear",
+        f"at 0 uart 0 {_write_645('A8000100', FACTORY_MODE).hex()}",
+        f"at 1 uart 0 {_set(1, 0x400C0200, _counts(1, 3, 1, 3, holiday_count)).hex()}",
+        f"at 2 uart 0 {_set(2, 0x40140200, _season_table([(1, 1, 1)])).hex()}",
+        f"at 3 uart 0 {_set(3, 0x40160201, _day_table([(0, 0, 1)])).hex()}",
+        f"at 4 uart 0 {_set(4, 0x40160202, _day_table([(0, 0, 2)])).hex()}",
+        f"at 5 uart 0 {_set(5, 0x40160203, _day_table([(0, 0, 3)])).hex()}",
+        f"at 6 uart 0 {_set(6, 0x40120200, WEEKEND_REST_MASK).hex()}",
+        f"at 7 uart 0 {_set(7, 0x40130200, WEEKEND_REST_TABLE).hex()}",
+    ]
+
+
+def _holiday_tariff_scenario() -> str:
+    return "\n".join(
+        _holiday_tariff_setup(1)
+        + [
+            f"at 8 uart 0 {_set(8, 0x40110201, HOLIDAY_2021_05_01).hex()}",
+            "at 10 meter const 3200 cal 128",
+            "at 16 pulse 32",
+            "at 22 pulse 32",
+            f"at 26 uart 0 {_get(10, 0x00000400).hex()}",
+            f"at 27 uart 0 {_get(11, 0x40110201).hex()}",
+        ]
+    ) + "\n"
 
 
 @case(
-    "ACC-TAR-003-BLOCKED",
-    "the seeded holiday table reads back as 2021-05-01 table 2, but current "
-    "firmware keeps both pulses in fee slot 1 instead of applying the holiday "
-    "table; this pins the defect behind the excluded row",
-    ("tariff", "energy", "holiday"),
+    "ACC-TAR-003",
+    "the workday mask selects rest-day table 3 on Saturday 2021-05-01, and a "
+    "698 SET 0x4011 holiday for that date reads back as 2021-05-01 table 2 "
+    "and moves both pulses from fee 1 to fee 2",
+    ("tariff", "energy", "holiday", "698"),
 )
 def holiday_and_rest_day(ctx):
-    # 698 SET 0x4011 crashes in GET_4_Parameter.c:385, so seed the tables.
-    scenario = "\n".join(
-        [
-            "at 0 energy clear",
-            "at 1 meter const 3200 cal 128",
-            "at 6 pulse 32",
-            "at 12 pulse 32",
-            f"at 14 uart 0 {_get(10, 0x00000400).hex()}",
+    rest = "\n".join(
+        _holiday_tariff_setup(0)
+        + [
+            "at 10 meter const 3200 cal 128",
+            "at 16 pulse 32",
+            "at 22 pulse 32",
+            f"at 26 uart 0 {_get(10, 0x00000400).hex()}",
         ]
     ) + "\n"
-    run = ctx.run(cycles=16, scenario=scenario, seed_eeprom=HOLIDAY_IMAGE)
+    run = ctx.run(cycles=28, scenario=rest)
     assert run.exit_code == 0, f"firmware_sim exited {run.exit_code}"
+    assert _set_dars(run) == [0, 0, 0, 0, 0, 0, 0], _set_dars(run)
+    slots = _energy_slots(_get_values(run)[0])
+    assert slots == [200, 0, 0, 200], slots
 
-    array = _get_values(run)[0]
-    assert _energy_slots(array) == [200, 200, 0, 0], _energy_slots(array)
+    run = ctx.run(cycles=30, scenario=_holiday_tariff_scenario())
+    assert run.exit_code == 0, f"firmware_sim exited {run.exit_code}"
+    assert _set_dars(run) == [0, 0, 0, 0, 0, 0, 0, 0], _set_dars(run)
+    array, holiday = _get_values(run)
+    slots = _energy_slots(array)
+    assert slots == [200, 0, 200, 0], slots
+    assert holiday.value == (bytes([0x07, 0xE5, 0x05, 0x01, 0x06]), 2), holiday.value
 
 
 @case(
@@ -268,11 +297,11 @@ def tariff_parameters_survive_restart(ctx):
 
 
 @case(
-    "ACC-TAR-009-BLOCKED",
-    "the 00:15 period boundary is correct, but a 2021-05-01 holiday overlapping "
-    "a weekend does not select the holiday table; this pins the defect behind "
-    "the excluded row",
-    ("tariff", "boundary", "holiday"),
+    "ACC-TAR-009",
+    "a day-table boundary starting at 00:15 keeps the 00:14:59 pulse in fee 1 "
+    "and the 00:15:00 pulse in fee 2, and a 2021-05-01 holiday table overrides "
+    "rest-day table 3 for that Saturday",
+    ("tariff", "boundary", "holiday", "698"),
 )
 def tou_boundary_and_holiday_priority(ctx):
     boundary = "\n".join(
@@ -291,26 +320,19 @@ def tou_boundary_and_holiday_priority(ctx):
     ) + "\n"
     run = ctx.run(cycles=35, scenario=boundary)
     assert run.exit_code == 0, f"firmware_sim exited {run.exit_code}"
+    assert _set_dars(run) == [0, 0, 0], _set_dars(run)
     assert run.cycles[29].time == "2021-05-01 00:14:59", run.cycles[29].time
     assert run.cycles[30].time == "2021-05-01 00:15:00", run.cycles[30].time
     array = _get_values(run)[0]
     assert _energy_slots(array) == [200, 100, 100], _energy_slots(array)
 
-    holiday_scenario = "\n".join(
-        [
-            "at 0 energy clear",
-            "at 1 meter const 3200 cal 128",
-            "at 6 pulse 32",
-            "at 12 pulse 32",
-            f"at 14 uart 0 {_get(10, 0x00000400).hex()}",
-        ]
-    ) + "\n"
-    holiday = ctx.run(
-        cycles=16, scenario=holiday_scenario, seed_eeprom=HOLIDAY_IMAGE
-    )
+    holiday = ctx.run(cycles=30, scenario=_holiday_tariff_scenario())
     assert holiday.exit_code == 0, f"firmware_sim exited {holiday.exit_code}"
-    slots = _energy_slots(_get_values(holiday)[0])
-    assert slots == [200, 200, 0, 0], slots
+    assert _set_dars(holiday) == [0, 0, 0, 0, 0, 0, 0, 0], _set_dars(holiday)
+    array, value = _get_values(holiday)
+    slots = _energy_slots(array)
+    assert slots == [200, 0, 200, 0], slots
+    assert value.value == (bytes([0x07, 0xE5, 0x05, 0x01, 0x06]), 2), value.value
 
 
 @case(

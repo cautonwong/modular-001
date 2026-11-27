@@ -3,6 +3,7 @@
 #include "application/adapters/dl698/fr_698_env.h"
 #include "application/ports/resource_access.h"
 #include "fr_698.h"
+#include "fr_698_internal.h"
 #include "fr_axdr_codec.h"
 #include "application/ports/platform.h"
 #include "application/ports/record_storage.h"
@@ -11,7 +12,17 @@
 
 
 
-uint16_t axdr_record_len_get(uint8_t* data, uint16_t* rsdLen, uint16_t* rcsdLen)
+/* Bytes received but not parsed yet. Bounds every A-XDR read on the APDU. */
+uint16_t fr_698_rx_remaining(const struct context_698_t *ctx)
+{
+    if (ctx->apdu_rx_offset >= ctx->apdu_rx_len)
+    {
+        return 0;
+    }
+    return (uint16_t)(ctx->apdu_rx_len - ctx->apdu_rx_offset);
+}
+
+uint16_t axdr_record_len_get(uint8_t* data, uint16_t remaining, uint16_t* rsdLen, uint16_t* rcsdLen)
 {
     uint8_t  tmpData, * p = data;
     uint16_t len;
@@ -20,7 +31,7 @@ uint16_t axdr_record_len_get(uint8_t* data, uint16_t* rsdLen, uint16_t* rcsdLen)
     /* rsd */
     tmpData = *(p - 1);
     *(p - 1) = TYPE_RSD;
-    len = axdr_get_len(p - 1);
+    len = axdr_get_len(p - 1, (uint16_t)(remaining + 1));
     if (len == 0)
     {
         *(p - 1) = tmpData;
@@ -28,7 +39,12 @@ uint16_t axdr_record_len_get(uint8_t* data, uint16_t* rsdLen, uint16_t* rcsdLen)
     }
     //len -= 1;
     *(p - 1) = tmpData;
+    if (len > remaining)
+    {
+        return 0;
+    }
     p += len;
+    remaining = (uint16_t)(remaining - len);
 
     if (rsdLen != NULL)
     {
@@ -38,7 +54,7 @@ uint16_t axdr_record_len_get(uint8_t* data, uint16_t* rsdLen, uint16_t* rcsdLen)
     /* rcsd */
     tmpData = *(p - 1);
     *(p - 1) = TYPE_RCSD;
-    len = axdr_get_len(p - 1);
+    len = axdr_get_len(p - 1, (uint16_t)(remaining + 1));
     if (len == 0)
     {
         *(p - 1) = tmpData;
@@ -218,7 +234,12 @@ static int decode_rsd_event_selector_1(void * instance, void * pipeline, uint32_
     rsd_oad = buf_to_uint32_msb(p);
     
     rx_offset_cache = ctx->apdu_rx_offset;
-    data_len = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+    data_len = axdr_get_len(apdu_rx + ctx->apdu_rx_offset,
+                            fr_698_rx_remaining(ctx));
+    if (data_len == 0)
+    {
+        return 0;
+    }
     rx_offset_cache += data_len;
     switch (rsd_oad)
     {
@@ -310,7 +331,12 @@ static int decode_rsd_freeze_selector_1(void * instance, void * pipeline, uint32
     rsd_oad = buf_to_uint32_msb(p);
 
     rx_offset_cache = ctx->apdu_rx_offset;
-    data_len = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
+    data_len = axdr_get_len(apdu_rx + ctx->apdu_rx_offset,
+                            fr_698_rx_remaining(ctx));
+    if (data_len == 0)
+    {
+        return 0;
+    }
     rx_offset_cache += data_len;
     
     switch (rsd_oad)
@@ -361,14 +387,32 @@ static int decode_rsd_freeze_selector_2(void * instance, void * pipeline, uint32
     uint16_t oi = get_OAD_OI(oad);
     uint16_t data_len = 0;
     uint16_t rx_offset_cache = 0;
+    uint16_t remain = 0, item_len = 0;
 
     rsd_oad = buf_to_uint32_msb(&apdu_rx[ctx->apdu_rx_offset]);
     ctx->apdu_rx_offset += 4;
 
     rx_offset_cache = ctx->apdu_rx_offset;
-    data_len = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
-    data_len += axdr_get_len(apdu_rx + ctx->apdu_rx_offset + data_len);
-    data_len += axdr_get_len(apdu_rx + ctx->apdu_rx_offset + data_len);
+    remain = fr_698_rx_remaining(ctx);
+    data_len = axdr_get_len(apdu_rx + ctx->apdu_rx_offset, remain);
+    if (data_len == 0)
+    {
+        return 0;
+    }
+    remain = (uint16_t)(remain - data_len);
+    item_len = axdr_get_len(apdu_rx + ctx->apdu_rx_offset + data_len, remain);
+    if (item_len == 0)
+    {
+        return 0;
+    }
+    data_len = (uint16_t)(data_len + item_len);
+    remain = (uint16_t)(remain - item_len);
+    item_len = axdr_get_len(apdu_rx + ctx->apdu_rx_offset + data_len, remain);
+    if (item_len == 0)
+    {
+        return 0;
+    }
+    data_len = (uint16_t)(data_len + item_len);
     rx_offset_cache += data_len;
     
     switch (rsd_oad)
@@ -524,6 +568,7 @@ static int decode_rsd_event_selector_2(void * instance, void * pipeline, uint32_
     uint16_t value=0, data_len = 0;
     uint32_t rsd_oad = 0;
     uint16_t rx_offset_cache = 0;
+    uint16_t remain = 0, item_len = 0;
 
     
     memcpy(p, apdu_rx + ctx->apdu_rx_offset, 4);
@@ -531,9 +576,26 @@ static int decode_rsd_event_selector_2(void * instance, void * pipeline, uint32_
     rsd_oad = buf_to_uint32_msb(p);
 
     rx_offset_cache = ctx->apdu_rx_offset;
-    data_len = axdr_get_len(apdu_rx + ctx->apdu_rx_offset);
-    data_len += axdr_get_len(apdu_rx + ctx->apdu_rx_offset + data_len);
-    data_len += axdr_get_len(apdu_rx + ctx->apdu_rx_offset + data_len);
+    remain = fr_698_rx_remaining(ctx);
+    data_len = axdr_get_len(apdu_rx + ctx->apdu_rx_offset, remain);
+    if (data_len == 0)
+    {
+        return 0;
+    }
+    remain = (uint16_t)(remain - data_len);
+    item_len = axdr_get_len(apdu_rx + ctx->apdu_rx_offset + data_len, remain);
+    if (item_len == 0)
+    {
+        return 0;
+    }
+    data_len = (uint16_t)(data_len + item_len);
+    remain = (uint16_t)(remain - item_len);
+    item_len = axdr_get_len(apdu_rx + ctx->apdu_rx_offset + data_len, remain);
+    if (item_len == 0)
+    {
+        return 0;
+    }
+    data_len = (uint16_t)(data_len + item_len);
     rx_offset_cache += data_len;
     
     switch (rsd_oad)

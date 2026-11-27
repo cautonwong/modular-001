@@ -540,6 +540,7 @@ void sim_scenario_apply(stategrid_context_t *instance, unsigned cycle)
         switch (event->kind) {
         case SIM_SCENARIO_POWER:
             scenario_power_on = event->value;
+            sim_stats_power(event->value, cycle);
             if (g_sim.verbose) {
                 sim_trace_printf("[sim] power %s", event->value ? "on" : "off");
             }
@@ -863,7 +864,7 @@ void sim_uart_drain(void)
             continue;
         }
         while (fifoBuf_getUsed(tx) > 0) {
-            uint8_t byte = fifoBuf_getByte(tx);
+            uint8_t byte = (uint8_t)fifoBuf_getByte(tx);
 
             if (channel == UART_RS4851_CHL) {
                 uart_emit(byte);

@@ -114,6 +114,13 @@ static void tick_timers(load_control_state_t *state, const nd_load_inputs_t *inp
     }
 }
 
+/* Alarm forbids closing the relay; opening stays allowed. Both the remote
+ * alarm flag and a pending alarm/trip delay count as alarm. */
+static uint8_t close_blocked(const load_control_state_t *state, uint8_t command)
+{
+    return (command & ND_LOAD_REMOTE_ALARM) != 0 || state->alarm_minutes > 0;
+}
+
 void load_control_second(load_control_state_t *state, const nd_load_inputs_t *inputs,
                          nd_load_actions_t *actions)
 {
@@ -131,7 +138,7 @@ void load_control_second(load_control_state_t *state, const nd_load_inputs_t *in
             && ((command & ND_LOAD_REMOTE_OFF) || (command & ND_LOAD_REMOTE_ON_ALLOW))) {
             /* The manual key release is handled by the target; it clears the
              * bits before the command reaches this decision. */
-        } else {
+        } else if (!close_blocked(state, command)) {
             state->switch_on = 1;
         }
     } else if (command & ND_LOAD_REMOTE_OFF) {
@@ -144,7 +151,9 @@ void load_control_second(load_control_state_t *state, const nd_load_inputs_t *in
             state->switch_on = 0;
             if (state->limit_minutes == 0) {
                 if (command & ND_LOAD_REMOTE_PRETRIP_DIRECT) {
-                    state->switch_on = 1;
+                    if (!close_blocked(state, command)) {
+                        state->switch_on = 1;
+                    }
                 } else if (command & ND_LOAD_REMOTE_PRETRIP_ALLOW) {
                     command |= ND_LOAD_REMOTE_ON_ALLOW;
                 }
@@ -154,7 +163,7 @@ void load_control_second(load_control_state_t *state, const nd_load_inputs_t *in
         }
     } else if (command & ND_LOAD_REMOTE_ON_ALLOW) {
         /* ON_ALLOW alone waits for the key; without it nothing actuates. */
-    } else {
+    } else if (!close_blocked(state, command)) {
         state->switch_on = 1;
     }
 

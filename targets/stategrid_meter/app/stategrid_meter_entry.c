@@ -41,6 +41,7 @@
 #include "application/adapters/dl645/fr_645_context.h"
 #include "targets/stategrid_meter/persistence/meter_base_view.h"
 #include "infra/memory/arena.h"
+#include "domain/load_control/load_control.h"
 #include "targets/stategrid_meter/app/metering/demand_adapter.h"
 #include "targets/stategrid_meter/app/metering_energy_adapter.h"
 #include "targets/stategrid_meter/board/board_eeprom.h"
@@ -252,7 +253,7 @@ static void dispatch_645_rs4851(stategrid_context_t * instance)
     {
         return;
     }
-    fifoBuf_getByte(irq);
+    (void)fifoBuf_getByte(irq);
     memset(&mesg, 0, sizeof(mesg));
     if (fr_rx_645_entry(instance, &rx645_view, &mesg) > 0)
     {
@@ -378,7 +379,7 @@ static void second_tick(stategrid_context_t *instance)
 
     if (fifoBuf_getUsed(&ctx->pipe_rtc) > 0)
     {
-        uint8_t byte = fifoBuf_getByte(&ctx->pipe_rtc);
+        uint8_t byte = (uint8_t)fifoBuf_getByte(&ctx->pipe_rtc);
 #if WIN32
         if (byte == 1)
 #else
@@ -405,7 +406,7 @@ static void key_tick(stategrid_context_t *instance)
 
     if (fifoBuf_getUsed(&ctx->pipe_key) > 0)
     {
-        uint8_t byte = fifoBuf_getByte(&ctx->pipe_key);
+        uint8_t byte = (uint8_t)fifoBuf_getByte(&ctx->pipe_key);
 #if WIN32
         if (byte == 2)
 #else
@@ -459,7 +460,7 @@ static void meter_base_tick(stategrid_context_t *instance)
 
     if (fifoBuf_getUsed(ctx->meter_events) > 0)
     {
-        uint8_t ctrl = fifoBuf_getByte(ctx->meter_events);
+        uint8_t ctrl = (uint8_t)fifoBuf_getByte(ctx->meter_events);
         int ret = app_meter_base_event(instance, ctrl);
 
 #ifdef ND_FIRMWARE_SIM
@@ -489,7 +490,7 @@ static void lowpower_tick(stategrid_context_t *instance)
 
     if (fifoBuf_getUsed(ctx->lowpower_events) > 0)
     {
-        uint8_t ctrl = fifoBuf_getByte(ctx->lowpower_events);
+        uint8_t ctrl = (uint8_t)fifoBuf_getByte(ctx->lowpower_events);
         int ret = app_meter_lowpower_event(instance, ctrl);
 
 #ifdef ND_FIRMWARE_SIM
@@ -678,6 +679,15 @@ int baremetal_instance_entry_main(stategrid_context_t * instance, int argc, char
     ctx->demand = nd_demand_adapter_create(nd_arena_allocator(&ctx->demand_arena),
                                            nd_mb_active_power_ptr(instance));
     if (ctx->demand == NULL)
+    {
+        return -1;
+    }
+
+    /* Relay load control owns a fixed arena in the instance like demand. */
+    nd_arena_init(&ctx->relay_state_arena, ctx->relay_state_buffer,
+                  sizeof(ctx->relay_state_buffer));
+    ctx->relay_control = load_control_create(nd_arena_allocator(&ctx->relay_state_arena));
+    if (ctx->relay_control == NULL)
     {
         return -1;
     }

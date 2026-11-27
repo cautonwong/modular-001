@@ -30,10 +30,20 @@ uint8_t *nd_fr698_apdu_cache(void *unused)
     return cache;
 }
 
-uint16_t axdr_record_len_get(uint8_t *unused, uint16_t *rsd_len,
-                             uint16_t *rcsd_len)
+uint16_t fr_698_rx_remaining(const struct context_698_t *ctx)
+{
+    if (ctx->apdu_rx_offset >= ctx->apdu_rx_len)
+    {
+        return 0;
+    }
+    return (uint16_t)(ctx->apdu_rx_len - ctx->apdu_rx_offset);
+}
+
+uint16_t axdr_record_len_get(uint8_t *unused, uint16_t remaining,
+                             uint16_t *rsd_len, uint16_t *rcsd_len)
 {
     (void)unused;
+    (void)remaining;
     *rsd_len = record_rsd;
     *rcsd_len = record_rcsd;
     return record_len_return;
@@ -152,6 +162,7 @@ static void test_698_get_normal_consumes_one_oad(void)
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
+    ctx.apdu_rx_len = 64;
     ctx.choice = 1;
 
     TEST_ASSERT_EQUAL_INT(4, get_GET_Request_len(NULL, &pipeline, NULL));
@@ -164,6 +175,7 @@ static void test_698_get_normal_list_consumes_count_and_oads(void)
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
+    ctx.apdu_rx_len = 64;
     ctx.choice = 2;
     ctx.apdu_d_rx[0] = 2;
 
@@ -177,6 +189,7 @@ static void test_698_get_record_consumes_oad_and_selectors(void)
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
+    ctx.apdu_rx_len = 64;
     ctx.choice = 3;
 
     TEST_ASSERT_EQUAL_INT(9, get_GET_Request_len(NULL, &pipeline, NULL));
@@ -189,6 +202,7 @@ static void test_698_get_record_list_consumes_each_record(void)
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
+    ctx.apdu_rx_len = 64;
     ctx.choice = 4;
     ctx.apdu_d_rx[0] = 2;
 
@@ -202,6 +216,7 @@ static void test_698_get_record_rejects_empty_selectors(void)
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
+    ctx.apdu_rx_len = 64;
     ctx.choice = 3;
     record_rsd = 0;
 
@@ -215,11 +230,26 @@ static void test_698_get_next_and_unknown_choice(void)
 
     memset(&ctx, 0, sizeof(ctx));
     pipeline.ctx = &ctx;
+    ctx.apdu_rx_len = 64;
 
     ctx.choice = 5;
     TEST_ASSERT_EQUAL_INT(2, get_GET_Request_len(NULL, &pipeline, NULL));
 
     ctx.choice = 6;
+    TEST_ASSERT_EQUAL_INT(-1, get_GET_Request_len(NULL, &pipeline, NULL));
+}
+
+static void test_698_get_rejects_truncated_oad_list(void)
+{
+    struct context_698_t ctx;
+    struct fake_pipeline_t pipeline;
+
+    memset(&ctx, 0, sizeof(ctx));
+    pipeline.ctx = &ctx;
+    ctx.apdu_rx_len = 2;
+    ctx.choice = 2;
+    ctx.apdu_d_rx[0] = 2;
+
     TEST_ASSERT_EQUAL_INT(-1, get_GET_Request_len(NULL, &pipeline, NULL));
 }
 
@@ -232,5 +262,6 @@ int main(void)
     RUN_TEST(test_698_get_record_list_consumes_each_record);
     RUN_TEST(test_698_get_record_rejects_empty_selectors);
     RUN_TEST(test_698_get_next_and_unknown_choice);
+    RUN_TEST(test_698_get_rejects_truncated_oad_list);
     return UNITY_END();
 }
