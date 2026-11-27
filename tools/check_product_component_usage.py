@@ -218,6 +218,8 @@ def show(path):
 
 
 THIRD_PARTY = "infra/third_party/"
+# CI checks the kernel out here; it is a build input, not a repository source.
+FREERTOS_CHECKOUT = ".freertos-kernel/"
 
 
 def source_claims(index):
@@ -256,7 +258,7 @@ def reverse_coverage(product, selected, declared, linked, raw, delivered):
         if relative.startswith(".."):
             continue
         relative = relative.replace(os.sep, "/")
-        if relative.startswith(THIRD_PARTY):
+        if relative.startswith((THIRD_PARTY, FREERTOS_CHECKOUT)):
             continue
         if source not in raw:
             errors.append(f"{product}: linked source {show(Path(source))} is not "
